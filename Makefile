@@ -49,7 +49,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip check-commits startup-bench energy-sample energy-compare \
+	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip ui-preview check-commits startup-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits
 
@@ -149,6 +149,10 @@ ui-watch: $(UI_DEPS)
 ## Start the Vite dev server on localhost:5173
 ui-dev: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run dev
+
+## Open the interface in a browser against a fake host, with hot reload and no Xcode (lilo-ui/preview/)
+ui-preview: $(UI_DEPS)
+	@npm --prefix $(UI_DIR) run dev -- --open /preview/
 
 ## Run ESLint + svelte-check
 ui-lint: $(UI_DEPS)
