@@ -71,6 +71,11 @@ function callNative(win: any, payload: any): Promise<any> {
 // "Chrome" (or "Google Chrome") is swapped, so each locale keeps its own wording around it.
 const BUTTON_LABEL = 'button > [jsname="V67aGc"]';
 const CHROME_NAME = /(?:Google\s)?Chrome/g;
+// The store trusts Chrome 142+ only when the server saw Chrome's own request headers, which WebKit
+// never sends, so it shows switch-to-Chrome prompts that lead to Chrome's download page: the header
+// callout titled #promo-header, and the listing banner whose "Install Chrome" button has this log id.
+const CHROME_CALLOUT = '[role="dialog"][aria-labelledby="promo-header"]';
+const INSTALL_CHROME_BUTTON = 'button[jslog^="276336;"]';
 
 // The store is a SPA that re-renders its button (status, install, remove), so relabel on DOM
 // changes, at most once per frame.
@@ -80,6 +85,11 @@ function relabelStoreButtons(win: any): void {
   let queued = false;
   const relabel = () => {
     queued = false;
+    for (const callout of doc.querySelectorAll(CHROME_CALLOUT)) callout.style.display = 'none';
+    for (const button of doc.querySelectorAll(INSTALL_CHROME_BUTTON)) {
+      const banner = button.parentElement?.closest('[jscontroller]');
+      if (banner) banner.style.display = 'none';
+    }
     for (const label of doc.querySelectorAll(BUTTON_LABEL)) {
       for (const node of label.childNodes) {
         if (node.nodeType === 3 && node.data.includes('Chrome')) node.data = node.data.replace(CHROME_NAME, 'Lilo');

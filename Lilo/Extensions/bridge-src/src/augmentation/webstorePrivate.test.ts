@@ -86,14 +86,31 @@ describe('webstorePrivate shim', () => {
     assert.equal(win.chrome.runtime.lastError, undefined);
   });
 
-  // Minimal DOM: elements with attributes and children, text nodes, and the one selector the
-  // relabeling queries (a [jsname="V67aGc"] label that is a direct child of a button).
+  // Minimal DOM: elements with attributes, inline style and children, text nodes, and selectors made
+  // of a tag and [attr], [attr="v"] or [attr^="v"] parts, with an optional `parent > ` step.
+  function matches(el: any, selector: string): boolean {
+    const [parent, self] = selector.includes(' > ') ? selector.split(' > ') : [null, selector];
+    const [, tag, attrs] = /^(\w*)(.*)$/.exec(self)!;
+    if (tag && el.tag !== tag) return false;
+    for (const [, name, op, value] of attrs.matchAll(/\[([\w-]+)(?:(\^?=)"([^"]*)")?\]/g)) {
+      const v = el.attrs[name];
+      if (v === undefined || (op === '=' && v !== value) || (op === '^=' && !v.startsWith(value))) return false;
+    }
+    return !parent || (el.parentElement !== null && matches(el.parentElement, parent));
+  }
+  const descendants = (el: any): any[] =>
+    el.childNodes.filter((c: any) => c.nodeType !== 3).flatMap((c: any) => [c, ...descendants(c)]);
   function h(tag: string, attrs: Record<string, string>, ...children: any[]): any {
     const el: any = {
-      tag, attrs, parentElement: null,
+      tag, attrs, style: {}, parentElement: null,
       childNodes: children.map((c) => (typeof c === 'string' ? { nodeType: 3, data: c } : c)),
       getAttribute: (name: string) => el.attrs[name] ?? null,
       setAttribute: (name: string, value: string) => { el.attrs[name] = value; },
+      closest: (selector: string) => {
+        let node = el;
+        while (node && !matches(node, selector)) node = node.parentElement;
+        return node;
+      },
     };
     for (const c of el.childNodes) if (c.nodeType !== 3) c.parentElement = el;
     return el;
@@ -112,11 +129,9 @@ describe('webstorePrivate shim', () => {
     let onMutation = () => {};
     let frame = () => {};
     const observed: any = { frames: 0 };
-    const labels = (el: any): any[] => el.childNodes.filter((c: any) => c.nodeType !== 3).flatMap((c: any) =>
-      [...(c.attrs.jsname === 'V67aGc' && el.tag === 'button' ? [c] : []), ...labels(c)]);
     const win: any = {
       location: { hostname: 'chromewebstore.google.com' }, navigator: {},
-      document: { querySelectorAll: (sel: string) => (sel === 'button > [jsname="V67aGc"]' ? labels(root) : []) },
+      document: { querySelectorAll: (sel: string) => descendants(root).filter((el) => matches(el, sel)) },
       MutationObserver: class {
         constructor(cb: () => void) { onMutation = cb; }
         observe(target: any) { observed.target = target; }
@@ -155,5 +170,34 @@ describe('webstorePrivate shim', () => {
     page.frame();
     assert.equal(text(install), 'Remove from Lilo');
     assert.equal(install.getAttribute('aria-label'), 'Remove uBlock Origin Lite from Lilo');
+  });
+
+  it('hides the prompts to switch to Chrome and keeps the install button', () => {
+    // The header callout and the listing banner as the French store renders them to a browser it
+    // does not trust as Chrome, around the listing's own action area.
+    const callout = h('div', { role: 'dialog', 'aria-labelledby': 'promo-header', jscontroller: 'h4ilFc' },
+      h('aside', {},
+        h('h2', { id: 'promo-header' }, 'Passer à Chrome ?'),
+        h('p', {}, "Google recommande d'utiliser Chrome lorsque vous vous servez d'extensions et de thèmes."),
+        h('button', { jscontroller: 'O626Fe', jslog: '274193; track:click,keyboard_enter' }, h('span', { jsname: 'V67aGc' }, 'Non, merci')),
+        h('div', { jscontroller: 'w9C4d', jslog: '274189; track:click,keyboard_enter' },
+          h('span', { jsname: 'V67aGc' }, 'Oui'),
+          h('a', { href: 'https://www.google.com/chrome/?brand=GGRF', 'aria-label': 'Oui' }))));
+    const banner = h('div', { jscontroller: 'o2G9me', id: 'c3' },
+      h('div', {},
+        h('div', {}, h('div', {}, 'Passez à Chrome pour installer des extensions et des thèmes')),
+        h('div', {}, h('div', { 'data-is-touch-wrapper': 'true' },
+          h('button', { jscontroller: 'O626Fe', jslog: '276336; metadata:W1s=; track:click,keyboard_enter' },
+            h('span', { jsname: 'V67aGc' }, 'Installer Chrome'))))));
+    const listing = h('section', { jscontroller: 'zKiH5d' }, banner, actionArea('Ajouter à Google Chrome'));
+    const page = storePage(h('body', {}, h('header', { role: 'banner', jscontroller: 'MT4Hub' }, callout), listing));
+    page.mutate();
+    page.frame();
+    assert.equal(callout.style.display, 'none');
+    assert.equal(banner.style.display, 'none');
+    assert.equal(listing.style.display, undefined);
+    const install = listing.childNodes[1];
+    assert.equal(install.style.display, undefined);
+    assert.equal(text(install.childNodes[0]), 'Ajouter à Lilo');
   });
 });

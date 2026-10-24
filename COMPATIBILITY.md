@@ -83,7 +83,7 @@ Of all 500 extensions of `top-extensions.json` (`make ext-smoke TOP=500`, on 202
 Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), and as Safari everywhere else:
 
 - **Web pages** get WebKit's Safari user agent, with no Lilo token, so sites serve their Safari variant.
-- **The Chrome Web Store** (`chromewebstore.google.com`) gets a Chrome user agent and `navigator.userAgentData`, and a `chrome.webstorePrivate` shim, so its install button works; Lilo relabels it "Add to Lilo". The packages and update checks Lilo downloads from `clients2.google.com` send the same Chrome user agent.
+- **The Chrome Web Store** (`chromewebstore.google.com`) gets a Chrome user agent and `navigator.userAgentData`, and a `chrome.webstorePrivate` shim, so its install button works; Lilo relabels it "Add to Lilo" and hides the store's prompts to switch to Chrome. The packages and update checks Lilo downloads from `clients2.google.com` send the same Chrome user agent.
 - **Extension code** (extension pages, the background worker and content scripts' isolated world) reads Chrome's `navigator.userAgent`, `appVersion`, `vendor` and `userAgentData`; the page around a content script keeps the Safari one.
 - **What it means for you:** extensions install and update from the store as in Chrome, and sites never see a Chrome identity. The store and its terms are made for Chrome, and Google does not endorse Lilo: Google could change the store or its update service so that installs or updates from Lilo stop working.
 
