@@ -770,6 +770,7 @@ final class ProfileExtensionRegistry {
     /// Tears the registry down for cache eviction, unloading every context but never the persisted list or on-disk state.
     /// Pending permission prompts are denied first: WebKit's checked completion handlers crash if dropped uninvoked.
     func teardown() {
+        restoring = nil
         updater.stop()
         onExtensionsChanged = nil
         for id in Array(pendingPermissionRequests.keys) {
@@ -1085,10 +1086,40 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Persistence
 
+    private var restoring: Task<Void, Never>?
+    /// Until a restore starts, the registry knows only the extensions loaded since it was built.
+    var isRestored: Bool { restoring != nil }
+
+    /// Runs once, for the first window to show the profile or the settings acting on it; a later call waits for that one.
     func restore() async {
-        await restoreStoredExtensions()
-        notifyExtensionsChanged()
-        updater.start()
+        if restoring == nil {
+            restoring = Task {
+                await restoreStoredExtensions()
+                notifyExtensionsChanged()
+                updater.start()
+            }
+        }
+        await restoring?.value
+    }
+
+    /// The rows of every installed extension from storage alone, for a profile no window shows: listing it loads none.
+    func storedBridgePayloads() async -> [[String: Any]] {
+        let states = (try? await extensionStorage.loadAccessStates()) ?? [:]
+        return ((try? await extensionStorage.loadAll()) ?? []).map { stored in
+            let facts = storedManifestFacts(for: stored)
+            return [
+                "id": stored.id,
+                "name": stored.name,
+                "version": stored.version,
+                "isEnabled": stored.isEnabled,
+                "runtimeStatus": "loaded",
+                "iconDataURL": facts.iconDataURL,
+                "webStoreURL": facts.webStoreURL,
+                "declinedUpdate": states[stored.id]?.declinedUpdateVersion ?? "",
+                "allowsPrivateAccess": states[stored.id]?.allowsPrivateAccess == true,
+                "allowsUserScripts": states[stored.id]?.allowsUserScripts == true
+            ] as [String: Any]
+        }
     }
 
     // MARK: - User scripts

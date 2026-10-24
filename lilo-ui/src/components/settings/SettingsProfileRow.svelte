@@ -4,6 +4,7 @@
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
+  import { showProfileExtensions } from "../../stores/extensions.svelte";
   import { closeSettingsShell, openSettings } from "../../stores/panels.svelte";
   import { getActiveProfileId } from "../../stores/profiles.svelte";
   import { setClearDataSheetOpen } from "../../stores/settings.svelte";
@@ -57,9 +58,8 @@
     action();
   }
 
-  // The extension settings list the window's own profile: a space of this one shows it there.
   function manageExtensions(): void {
-    if (!isActive && spaces[0]) spaceActions.switchTo(spaces[0].id);
+    showProfileExtensions(profile.id);
     openSettings("extensions");
   }
 
@@ -133,11 +133,9 @@
           <button class="float-row" role="menuitem" onclick={() => pick(() => (recoloring ? closeColors() : (recoloring = true)))}>
             {t("settings.profiles.changeColor")}
           </button>
-          {#if isActive || spaces.length > 0}
-            <button class="float-row" role="menuitem" onclick={() => pick(manageExtensions)}>
-              {t("settings.profiles.manageExtensions")}
-            </button>
-          {/if}
+          <button class="float-row" role="menuitem" onclick={() => pick(manageExtensions)}>
+            {t("settings.profiles.manageExtensions")}
+          </button>
           <!-- The clear-data flow acts on the window's own profile only. -->
           {#if isActive}
             <button class="float-row" role="menuitem" onclick={() => pick(() => setClearDataSheetOpen(true))}>

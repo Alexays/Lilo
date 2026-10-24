@@ -1,5 +1,6 @@
 <script lang="ts">
   import { extensionActions } from "../../lib/bridge/actions";
+  import { showProfileExtensions } from "../../stores/extensions.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { openSettingsSubpage, revealSetting } from "../../stores/panels.svelte";
   import ExtensionRow from "../extensions/ExtensionRow.svelte";
@@ -35,7 +36,11 @@
       {#each results.extensions as extension (extension.id)}
         <ExtensionRow
           {extension}
-          onopen={() => openSettingsSubpage("extensions", `extension:${extension.id}`)}
+          onopen={() => {
+            // The search covers the window's profile: its detail page is there.
+            showProfileExtensions("");
+            openSettingsSubpage("extensions", `extension:${extension.id}`);
+          }}
           onmenu={(anchor) => extensionActions.showContextMenu(extension.id, anchor.x, anchor.y, anchor.width, anchor.height)}
         />
       {/each}

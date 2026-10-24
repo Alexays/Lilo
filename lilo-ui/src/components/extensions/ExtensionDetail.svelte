@@ -67,12 +67,12 @@
     if (event.key === "Escape") {
       recordingCommand = null;
     } else if (event.key === "Backspace" || event.key === "Delete") {
-      extensionActions.setCommandShortcut(extension.id, command, "", 0);
+      extensionActions.setCommandShortcut(extension.id, command, "", 0, extension.profileId);
       recordingCommand = null;
     } else {
       const shortcut = shortcutFromKeyEvent(event);
       if (!shortcut) return;
-      extensionActions.setCommandShortcut(extension.id, command, shortcut.key, shortcut.modifiers);
+      extensionActions.setCommandShortcut(extension.id, command, shortcut.key, shortcut.modifiers, extension.profileId);
       recordingCommand = null;
     }
   }
@@ -89,7 +89,7 @@
 
   function addSite() {
     if (!draftHost) return;
-    if (!sites.includes(draftHost)) extensionActions.setSiteAccess(extension.id, [...sites, draftHost]);
+    if (!sites.includes(draftHost)) extensionActions.setSiteAccess(extension.id, [...sites, draftHost], extension.profileId);
     siteDraft = "";
     siteFieldKey += 1;
   }
@@ -98,6 +98,7 @@
     extensionActions.setSiteAccess(
       extension.id,
       sites.filter((site) => site !== host),
+      extension.profileId,
     );
   }
 </script>
@@ -112,7 +113,7 @@
   {:else if extension.runtimeStatus === "failed"}
     <div class="detail-notice detail-failed" role="alert">
       <span class="detail-notice-text">{t("extensions.failedTitle")}{extension.error ? ` ${extension.error}` : ""}</span>
-      <UiButton disabled={pending} onclick={() => enableExtension(extension.id)}>{t("extensions.retry")}</UiButton>
+      <UiButton disabled={pending} onclick={() => enableExtension(extension.id, extension.profileId)}>{t("extensions.retry")}</UiButton>
     </div>
   {/if}
 
@@ -126,7 +127,7 @@
       {#if updating}
         <ExtensionSpinner />
       {/if}
-      <UiButton disabled={updating} onclick={() => updateExtension(extension.id)}>
+      <UiButton disabled={updating} onclick={() => updateExtension(extension.id, extension.profileId)}>
         {extension.declinedUpdate ? t("extensions.review") : t("extensions.update")}
       </UiButton>
     </div>
@@ -171,7 +172,7 @@
           checked={extension.isEnabled}
           disabled={pending}
           ariaLabel={t("extensions.enabledToggleLabel", { name })}
-          onchange={(checked) => (checked ? enableExtension(extension.id) : disableExtension(extension.id))}
+          onchange={(checked) => (checked ? enableExtension(extension.id, extension.profileId) : disableExtension(extension.id, extension.profileId))}
         />
       {/snippet}
     </UiListRow>
@@ -181,7 +182,7 @@
           <UiToggle
             checked={extension.allowsPrivateAccess ?? false}
             ariaLabel={t("extensions.allowPrivate")}
-            onchange={(checked) => extensionActions.setPrivateAccess(extension.id, checked)}
+            onchange={(checked) => extensionActions.setPrivateAccess(extension.id, checked, extension.profileId)}
           />
         {/snippet}
       </UiListRow>
@@ -191,7 +192,7 @@
             <UiToggle
               checked={extension.allowsUserScripts ?? false}
               ariaLabel={t("extensions.allowUserScripts")}
-              onchange={(checked) => extensionActions.setUserScripts(extension.id, checked)}
+              onchange={(checked) => extensionActions.setUserScripts(extension.id, checked, extension.profileId)}
             />
           {/snippet}
         </UiListRow>

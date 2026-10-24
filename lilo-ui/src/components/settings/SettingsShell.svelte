@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
-  import { getExtensions } from "../../stores/extensions.svelte";
+  import { getShownExtensions, showProfileExtensions } from "../../stores/extensions.svelte";
   import {
     closeSettingsShell,
     closeSettingsSubpage,
@@ -30,15 +30,17 @@
     if (subpage === "blockerSites") return t(settingTitleKey("blockerSites"));
     if (subpage?.startsWith("site:")) return subpage.slice("site:".length);
     if (subpage?.startsWith("extension:")) {
-      const extension = getExtensions().find((candidate) => `extension:${candidate.id}` === subpage);
+      const extension = getShownExtensions()?.find((candidate) => `extension:${candidate.id}` === subpage);
       if (extension) return resolveDisplayName(extension);
     }
     const meta = SETTINGS_SECTIONS.find((candidate) => candidate.id === section);
     return meta ? t(meta.labelKey) : "";
   });
 
+  // Settings > Extensions opens on the window's own profile.
   $effect(() => {
     if (shellOpen) loadSettingsSurface();
+    else showProfileExtensions("");
   });
 
   // Escape unwinds one level: the search, then a drill-in page, then the surface itself.

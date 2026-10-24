@@ -140,9 +140,10 @@ extension MainWindowController {
     // MARK: - Extension Context Menu
 
     /// `pinned` is nil where pinning does not apply (the settings list), else the address-bar pin state.
-    func showExtensionContextMenu(extensionId: String, anchorRect: NSRect?, pinned: Bool? = nil) {
+    /// The settings name `profileId` for a profile the window does not show: its options open in no tab here.
+    func showExtensionContextMenu(extensionId: String, anchorRect: NSRect?, pinned: Bool? = nil, profileId: UUID? = nil) {
         let menu = NSMenu()
-        let context = profileContext?.extensions.context(for: extensionId)
+        let context = profileId == nil || profileId == profileContext?.profileId ? profileContext?.extensions.context(for: extensionId) : nil
         // The extension's own action menu (contextMenus with the "action" context) leads, as in Chrome.
         if pinned != nil, let adapter = tabManager.activeOpenTabId.flatMap({ tabManager.tabAdapter(for: $0) }),
            let actionItems = context?.action(for: adapter)?.menuItems, !actionItems.isEmpty {

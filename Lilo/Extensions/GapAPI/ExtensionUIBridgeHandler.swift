@@ -179,6 +179,11 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     /// Invoked when the UI asks to load an unpacked extension; the host presents a folder picker.
     var onLoadUnpacked: (() -> Void)?
 
+    /// The registry of another existing profile, built (not restored) through the profile context cache.
+    var profileRegistryProvider: (@MainActor (UUID) -> ProfileExtensionRegistry?)?
+    /// Hands the settings the rows of a profile its window does not show; `live` once its registry is restored.
+    var onProfileExtensions: ((_ profileId: UUID, _ rows: [[String: Any]], _ live: Bool) -> Void)?
+
     private func settle(id: String, action: String, _ result: Any?) -> Any? {
         let error = (result as? BridgeError)?.message
         onActionCompleted?(id, action, error == nil, error)
@@ -199,7 +204,8 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         "checkExtensionUpdates",
         "updateExtension",
         "openExtensionPopup",
-        "updateExtensionPopupAnchor"
+        "updateExtensionPopupAnchor",
+        "getProfileExtensions"
     ]
 
     /// Extensions reach only these; install and uninstall stay on the chrome UI bridge.
@@ -213,6 +219,32 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         extensionRegistryProvider?()
     }
 
+    /// The profile a settings message names when the window shows another one.
+    private func otherProfileId(of message: BridgeMessage) -> UUID? {
+        guard let profileId = message.uuid("profileId"), profileId != extensionRegistry?.profileId else { return nil }
+        return profileId
+    }
+
+    /// The registry a settings action applies to: the window's, or the named profile's, restored first
+    /// (as showing it in a window would) so it knows every installed extension before one changes.
+    private func targetRegistry(for message: BridgeMessage) async -> ProfileExtensionRegistry? {
+        guard let profileId = otherProfileId(of: message) else { return extensionRegistry }
+        guard let registry = profileRegistryProvider?(profileId) else { return nil }
+        await registry.restore()
+        return registry
+    }
+
+    /// Stored rows until the profile's registry is restored, so listing a profile no window shows starts none of its extensions.
+    private func sendProfileExtensions(_ profileId: UUID, live: Bool) async {
+        guard let registry = profileRegistryProvider?(profileId) else { return }
+        if live || registry.isRestored {
+            await registry.restore()
+            onProfileExtensions?(profileId, registry.extensionBridgePayloads(activeTab: nil), true)
+        } else {
+            onProfileExtensions?(profileId, await registry.storedBridgePayloads(), false)
+        }
+    }
+
     /// `action.openPopup` opens the caller's popup, in the caller's profile; `runtime.extensionViews`
     /// lists its pages on screen outside tabs.
     func handle(_ call: GapCall) async -> Any? {
@@ -224,6 +256,17 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     }
 
     func handle(message: BridgeMessage) async -> Any? {
+        if message.action == "getProfileExtensions" {
+            if let profileId = otherProfileId(of: message) { await sendProfileExtensions(profileId, live: message.bool("live")) }
+            return nil
+        }
+        let result = await handleAction(message)
+        // Nothing tells this window about another profile's changes: its settings get the rows again.
+        if let profileId = otherProfileId(of: message) { await sendProfileExtensions(profileId, live: true) }
+        return result
+    }
+
+    private func handleAction(_ message: BridgeMessage) async -> Any? {
         switch message.action {
         case "installExtension":
             return await handleInstallExtension(message: message)
@@ -239,11 +282,11 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         case "setExtensionSiteAccess":
             return await handleSetExtensionSiteAccess(message: message)
         case "setExtensionPrivateAccess":
-            guard let id = message.string("id"), let registry = extensionRegistry else { return BridgeError("Missing extension id") }
+            guard let id = message.string("id"), let registry = await targetRegistry(for: message) else { return BridgeError("Missing extension id") }
             await registry.access.setPrivateAccess(extensionId: id, allowed: message.bool("allowed"))
             return ["success": true]
         case "setExtensionUserScripts":
-            guard let id = message.string("id"), let registry = extensionRegistry else { return BridgeError("Missing extension id") }
+            guard let id = message.string("id"), let registry = await targetRegistry(for: message) else { return BridgeError("Missing extension id") }
             await registry.setUserScriptsAllowed(extensionId: id, allowed: message.bool("allowed"))
             return ["success": true]
         case "acceptExtensionHostAccessRequest":
@@ -251,7 +294,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             await registry.access.acceptHostAccessRequest(extensionId: id, on: registry.delegate.windowAdapter?.visibleActiveAdapter)
             return ["success": true]
         case "setExtensionCommandShortcut":
-            guard let id = message.string("id"), let command = message.string("command"), let registry = extensionRegistry else {
+            guard let id = message.string("id"), let command = message.string("command"), let registry = await targetRegistry(for: message) else {
                 return BridgeError("Missing extension command")
             }
             let key = message.string("key").flatMap { $0.isEmpty ? nil : $0 }
@@ -263,7 +306,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             return ["success": true]
         case "updateExtension":
             guard let id = message.string("id") else { return BridgeError("Missing extension id") }
-            guard let registry = extensionRegistry else {
+            guard let registry = await targetRegistry(for: message) else {
                 return settle(id: id, action: "update", BridgeError("Extension registry not available"))
             }
             let succeeded = await registry.updater.updateExtension(extensionId: id)
@@ -340,7 +383,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
 
     private func handleEnableExtension(message: BridgeMessage) async -> Any? {
         guard let id = message.string("id") else { return BridgeError("Missing extension id") }
-        guard let registry = extensionRegistry else {
+        guard let registry = await targetRegistry(for: message) else {
             return settle(id: id, action: "enable", BridgeError("Extension registry not available"))
         }
         do {
@@ -354,7 +397,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
     /// An empty `hosts` restores the extension's manifest hosts; anything else restricts it.
     private func handleSetExtensionSiteAccess(message: BridgeMessage) async -> Any? {
         guard let id = message.string("id") else { return BridgeError("Missing extension id") }
-        guard let registry = extensionRegistry else {
+        guard let registry = await targetRegistry(for: message) else {
             return settle(id: id, action: "siteAccess", BridgeError("Extension registry not available"))
         }
         await registry.access.setSiteAccess(extensionId: id, hosts: message.payload["hosts"] as? [String] ?? [])
@@ -363,7 +406,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
 
     private func handleDisableExtension(message: BridgeMessage) async -> Any? {
         guard let id = message.string("id") else { return BridgeError("Missing extension id") }
-        guard let registry = extensionRegistry else {
+        guard let registry = await targetRegistry(for: message) else {
             return settle(id: id, action: "disable", BridgeError("Extension registry not available"))
         }
         await registry.disable(extensionId: id)
@@ -372,7 +415,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
 
     private func handleUninstallExtension(message: BridgeMessage) async -> Any? {
         guard let id = message.string("id") else { return BridgeError("Missing extension id") }
-        guard let registry = extensionRegistry else {
+        guard let registry = await targetRegistry(for: message) else {
             return settle(id: id, action: "uninstall", BridgeError("Extension registry not available"))
         }
         await registry.unload(extensionId: id)

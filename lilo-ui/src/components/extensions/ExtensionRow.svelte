@@ -117,10 +117,10 @@
   {/if}
 
   {#if failed}
-    <UiButton disabled={pending} onclick={() => enableExtension(extension.id)}>{t("extensions.retry")}</UiButton>
+    <UiButton disabled={pending} onclick={() => enableExtension(extension.id, extension.profileId)}>{t("extensions.retry")}</UiButton>
   {:else}
     {#if extension.declinedUpdate || extension.availableUpdate}
-      <UiButton disabled={updating} onclick={() => updateExtension(extension.id)}>
+      <UiButton disabled={updating} onclick={() => updateExtension(extension.id, extension.profileId)}>
         {extension.declinedUpdate ? t("extensions.review") : t("extensions.update")}
       </UiButton>
     {/if}
@@ -129,7 +129,7 @@
       disabled={pending}
       ariaLabel={t("extensions.enabledToggleLabel", { name })}
       onchange={(checked) =>
-        checked ? enableExtension(extension.id) : disableExtension(extension.id)}
+        checked ? enableExtension(extension.id, extension.profileId) : disableExtension(extension.id, extension.profileId)}
     />
   {/if}
 

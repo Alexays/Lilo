@@ -351,22 +351,24 @@ export const downloadActions = {
 };
 
 export const extensionActions = {
-	enable: emitId("enableExtension"),
-	disable: emitId("disableExtension"),
-	uninstall: emitId("uninstallExtension"),
+	// `profileId` is set for a profile the window does not show.
+	enable: (id: string, profileId?: string): void => emit("enableExtension", { id, profileId }),
+	disable: (id: string, profileId?: string): void => emit("disableExtension", { id, profileId }),
+	uninstall: (id: string, profileId?: string): void => emit("uninstallExtension", { id, profileId }),
 	install: (path: string): void => emit("installExtension", { path }),
-	setSiteAccess: (id: string, hosts: string[]): void =>
-		emit("setExtensionSiteAccess", { id, hosts }),
-	setPrivateAccess: (id: string, allowed: boolean): void =>
-		emit("setExtensionPrivateAccess", { id, allowed }),
-	setUserScripts: (id: string, allowed: boolean): void =>
-		emit("setExtensionUserScripts", { id, allowed }),
-	setCommandShortcut: (id: string, command: string, key: string, modifiers: number): void =>
-		emit("setExtensionCommandShortcut", { id, command, key, modifiers }),
+	setSiteAccess: (id: string, hosts: string[], profileId?: string): void =>
+		emit("setExtensionSiteAccess", { id, hosts, profileId }),
+	setPrivateAccess: (id: string, allowed: boolean, profileId?: string): void =>
+		emit("setExtensionPrivateAccess", { id, allowed, profileId }),
+	setUserScripts: (id: string, allowed: boolean, profileId?: string): void =>
+		emit("setExtensionUserScripts", { id, allowed, profileId }),
+	setCommandShortcut: (id: string, command: string, key: string, modifiers: number, profileId?: string): void =>
+		emit("setExtensionCommandShortcut", { id, command, key, modifiers, profileId }),
+	loadProfile: (profileId: string, live: boolean): void => emit("getProfileExtensions", { profileId, live }),
 	acceptHostAccessRequest: emitId("acceptExtensionHostAccessRequest"),
 	loadDebuggers: emitEmpty("getExtensionDebuggers"),
 	cancelDebugging: emitId("cancelExtensionDebugging"),
-	update: emitId("updateExtension"),
+	update: (id: string, profileId?: string): void => emit("updateExtension", { id, profileId }),
 	checkUpdates: emitEmpty("checkExtensionUpdates"),
 	loadUnpacked: emitEmpty("loadUnpackedExtension"),
 	openPopup: (
@@ -384,8 +386,9 @@ export const extensionActions = {
 		width: number,
 		height: number,
 		pinned?: boolean,
+		profileId?: string,
 	): void =>
-		emit("showExtensionContextMenu", { id, x, y, width, height, pinned }),
+		emit("showExtensionContextMenu", { id, x, y, width, height, pinned, profileId }),
 	updatePopupAnchor: (
 		id: string,
 		x: number,

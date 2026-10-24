@@ -17,6 +17,7 @@ export interface FakeHostWorld {
 	treeItemsBySpace: Record<string, BridgeSidebarTreeItemSnapshot[]>;
 	foldersBySpace?: Record<string, BridgeTabFolderSnapshot[]>;
 	profiles?: BridgeProfileSnapshot[];
+	activeProfileId?: string;
 	sidebarWidth?: number;
 	// The native bindings' keys by action id, as the host sends them after the initial state.
 	shortcutKeys?: Record<string, string>;
@@ -284,6 +285,7 @@ async function installFakeHost(
 				sidebarVisible: true,
 				spaces: state.spaces,
 				profiles: state.profiles,
+				activeProfileId: state.activeProfileId,
 				activeSpaceId: state.activeSpaceId,
 			},
 			{ event: "shortcutKeys", keys: state.shortcutKeys ?? {} },

@@ -726,15 +726,18 @@ export interface BridgeCommandPayloadMap {
 
 	installExtension: { path: string };
 	loadUnpackedExtension: EmptyPayload;
-	uninstallExtension: { id: string };
-	enableExtension: { id: string };
-	disableExtension: { id: string };
-	updateExtension: { id: string };
+	// `profileId` names a profile the window does not show, picked in Settings > Extensions.
+	uninstallExtension: { id: string; profileId?: string };
+	enableExtension: { id: string; profileId?: string };
+	disableExtension: { id: string; profileId?: string };
+	updateExtension: { id: string; profileId?: string };
 	checkExtensionUpdates: EmptyPayload;
-	setExtensionSiteAccess: { id: string; hosts: string[] };
-	setExtensionPrivateAccess: { id: string; allowed: boolean };
-	setExtensionUserScripts: { id: string; allowed: boolean };
-	setExtensionCommandShortcut: { id: string; command: string; key: string; modifiers: number };
+	setExtensionSiteAccess: { id: string; hosts: string[]; profileId?: string };
+	setExtensionPrivateAccess: { id: string; allowed: boolean; profileId?: string };
+	setExtensionUserScripts: { id: string; allowed: boolean; profileId?: string };
+	setExtensionCommandShortcut: { id: string; command: string; key: string; modifiers: number; profileId?: string };
+	/** Answered by `profileExtensionsLoaded`; `live` restores the profile's registry for the full rows. */
+	getProfileExtensions: { profileId: string; live: boolean };
 	acceptExtensionHostAccessRequest: { id: string };
 	getExtensionDebuggers: EmptyPayload;
 	/** Detaches every chrome.debugger session of the extension, `id` from `extensionDebuggers`. */
@@ -774,6 +777,7 @@ export interface BridgeCommandPayloadMap {
 		width: number;
 		height: number;
 		pinned?: boolean;
+		profileId?: string;
 	};
 }
 
@@ -960,6 +964,8 @@ export interface BridgeEventPayloadMap {
 	// changed enabled row leaves out an unchanged `iconDataURL`.
 	// downloadUiEnabled: false while an extension hid the download UI (chrome.downloads.setUiOptions).
 	extensionsChanged: { ids: string[]; extensions: BridgeExtensionSnapshot[]; updateCheck?: BridgeExtensionUpdateCheck; downloadUiEnabled?: boolean };
+	// Every row of a profile the window does not show; `live` once they come from its restored registry, else from storage.
+	profileExtensionsLoaded: { profileId: string; live: boolean; extensions: BridgeExtensionSnapshot[] };
 	// A UI-initiated enable/disable/uninstall/update/store install settled: lets the panel resolve its
 	// pending state crisply (success or failure) instead of waiting on a timeout.
 	extensionActionCompleted: {

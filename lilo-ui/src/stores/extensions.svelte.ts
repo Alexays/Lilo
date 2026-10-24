@@ -11,10 +11,13 @@ import {
 	coerceRuntimeStatus,
 	type ExtensionRuntimeStatus,
 } from "../components/extensions/extensionPanelModel";
+import { getActiveProfileId, getProfileById } from "./profiles.svelte";
 import { getActiveSpace } from "./spaces.svelte";
 
 export interface ExtensionState extends BridgeExtensionSnapshot {
 	runtimeStatus: ExtensionRuntimeStatus;
+	/** Set on the rows of a profile the window does not show: every action names it. */
+	profileId?: string;
 }
 
 // Raw: every `extensionsChanged` (badge updates land during page loads) rebuilds the list,
@@ -28,6 +31,7 @@ type PendingAction = "enable" | "disable" | "uninstall";
 interface PendingEntry {
 	action: PendingAction;
 	timeout: ReturnType<typeof setTimeout>;
+	profileId?: string;
 }
 
 // If no `extensionsChanged` snapshot confirms the action within this window we treat it as
@@ -42,6 +46,9 @@ let _updating = $state.raw<Record<string, boolean>>({});
 let _installing = $state.raw<Record<string, boolean>>({});
 let _updateCheck = $state.raw<BridgeExtensionUpdateCheck>({});
 let _downloadUiEnabled = $state(true);
+// The profile Settings > Extensions shows instead of the window's, and its rows once they arrive.
+let _shownProfileId = $state("");
+let _profileExtensions = $state.raw<{ profileId: string; live: boolean; extensions: ExtensionState[] } | null>(null);
 
 // Icons are rendered as <img src>; only data:image/ URLs from the native side
 // are trusted. Anything else (javascript:, http(s):, arbitrary schemes) is dropped.
@@ -126,12 +133,13 @@ function clearPending(id: string): void {
 	_pending = rest;
 }
 
-// Reconcile every in-flight action against a freshly arrived snapshot. Confirmed actions
+// Reconcile every in-flight action on the snapshot's profile against it. Confirmed actions
 // clear their pending state; unconfirmed ones keep spinning until they confirm or time out.
-function reconcilePending(): void {
+function reconcilePending(extensions: ExtensionState[], profileId?: string): void {
 	for (const id of Object.keys(_pending)) {
 		const entry = _pending[id];
-		const snapshot = _extensions.find((e) => e.id === id);
+		if (entry.profileId !== profileId) continue;
+		const snapshot = extensions.find((e) => e.id === id);
 		if (isActionSatisfied(entry.action, snapshot)) clearPending(id);
 	}
 }
@@ -139,11 +147,11 @@ function reconcilePending(): void {
 // Begin an in-flight action: record intent, clear any stale error, run the command, and arm
 // the failure timeout. Does nothing if an action is already pending for this id, which guards
 // against double-submission and toggle races.
-function beginAction(id: string, action: PendingAction, run: () => void): void {
+function beginAction(id: string, action: PendingAction, profileId: string | undefined, run: () => void): void {
 	if (_pending[id]) return;
 	clearExtensionError(id);
 	const timeout = setTimeout(() => failAction(id), PENDING_TIMEOUT_MS);
-	_pending = { ..._pending, [id]: { action, timeout } };
+	_pending = { ..._pending, [id]: { action, timeout, profileId } };
 	run();
 }
 
@@ -171,7 +179,7 @@ export function applyExtensionInitialState(
 	_extensions = Array.isArray(extensions)
 		? extensions.map((e) => parseExtension(e))
 		: [];
-	reconcilePending();
+	reconcilePending(_extensions);
 }
 
 export function initExtensionStore(): void {
@@ -190,7 +198,16 @@ export function initExtensionStore(): void {
 		_extensions = next;
 		if (data.updateCheck) _updateCheck = data.updateCheck;
 		_downloadUiEnabled = data.downloadUiEnabled !== false;
-		reconcilePending();
+		reconcilePending(_extensions);
+	});
+	on("profileExtensionsLoaded", (data) => {
+		if (data.profileId !== _shownProfileId) return;
+		const extensions = (Array.isArray(data.extensions) ? data.extensions : []).map((e) => ({
+			...parseExtension(e),
+			profileId: data.profileId,
+		}));
+		_profileExtensions = { profileId: data.profileId, live: data.live === true, extensions };
+		reconcilePending(extensions, data.profileId);
 	});
 	on("extensionActionCompleted", (data) => {
 		if (typeof data?.id !== "string") return;
@@ -216,6 +233,37 @@ export function isDownloadUiEnabled(): boolean {
 
 export function getExtensions(): ExtensionState[] {
 	return _extensions;
+}
+
+/** The profile Settings > Extensions shows when it is not the window's own; empty otherwise. */
+export function getShownExtensionsProfileId(): string {
+	return _shownProfileId !== getActiveProfileId() && getProfileById(_shownProfileId) ? _shownProfileId : "";
+}
+
+/** Shows `profileId`'s extensions in Settings > Extensions; the window's profile, or "", shows its own. */
+export function showProfileExtensions(profileId: string): void {
+	const shown = profileId === getActiveProfileId() ? "" : profileId;
+	_shownProfileId = shown;
+	_profileExtensions = null;
+	if (shown) extensionActions.loadProfile(shown, false);
+}
+
+/** The rows Settings > Extensions lists: null while another profile's are on their way. */
+export function getShownExtensions(): ExtensionState[] | null {
+	const profileId = getShownExtensionsProfileId();
+	if (!profileId) return _extensions;
+	return _profileExtensions?.profileId === profileId ? _profileExtensions.extensions : null;
+}
+
+/** False while the shown profile's rows come from storage only: its detail page waits for the full ones. */
+export function areShownExtensionsLive(): boolean {
+	return !getShownExtensionsProfileId() || _profileExtensions?.live === true;
+}
+
+/** Asks for the shown profile's full rows, which restores its registry as showing it in a window would. */
+export function loadLiveShownExtensions(): void {
+	const profileId = getShownExtensionsProfileId();
+	if (profileId) extensionActions.loadProfile(profileId, true);
 }
 
 /** The extensions that run where the window is: a private space runs only those allowed there. */
@@ -265,11 +313,11 @@ export function getExtensionUpdateCheck(): BridgeExtensionUpdateCheck {
 }
 
 /** Applies an available update, or asks again for the permissions a declined one adds. */
-export function updateExtension(id: string): void {
+export function updateExtension(id: string, profileId?: string): void {
 	if (_updating[id]) return;
 	clearExtensionError(id);
 	_updating = { ..._updating, [id]: true };
-	extensionActions.update(id);
+	extensionActions.update(id, profileId);
 }
 
 export function checkExtensionUpdates(): void {
@@ -288,15 +336,16 @@ export function clearExtensionError(id: string): void {
 	_errors = rest;
 }
 
-export function enableExtension(id: string): void {
-	beginAction(id, "enable", () => extensionActions.enable(id));
+// `profileId` names a profile the window does not show (ExtensionState.profileId).
+export function enableExtension(id: string, profileId?: string): void {
+	beginAction(id, "enable", profileId, () => extensionActions.enable(id, profileId));
 }
 
-export function disableExtension(id: string): void {
-	beginAction(id, "disable", () => extensionActions.disable(id));
+export function disableExtension(id: string, profileId?: string): void {
+	beginAction(id, "disable", profileId, () => extensionActions.disable(id, profileId));
 }
 
-export function uninstallExtension(id: string): void {
-	beginAction(id, "uninstall", () => extensionActions.uninstall(id));
+export function uninstallExtension(id: string, profileId?: string): void {
+	beginAction(id, "uninstall", profileId, () => extensionActions.uninstall(id, profileId));
 }
 

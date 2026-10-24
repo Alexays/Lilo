@@ -401,6 +401,14 @@ extension MainWindowController {
             self?.bridgeRouter.send(event: "extensionActionCompleted", data: data)
         }
         extensionUIHandler.onLoadUnpacked = { [weak self] in self?.loadUnpackedExtension(nil) }
+        // Only a known profile: the cache would create a database for any other id.
+        extensionUIHandler.profileRegistryProvider = { [weak self] profileId in
+            guard let context = self?.context, context.profileManager?.profiles.contains(where: { $0.id == profileId }) == true else { return nil }
+            return try? context.profileContexts.context(for: profileId).extensions
+        }
+        extensionUIHandler.onProfileExtensions = { [weak self] profileId, rows, live in
+            self?.bridgeRouter.send(event: "profileExtensionsLoaded", data: ["profileId": profileId.uuidString, "extensions": rows, "live": live])
+        }
         bridgeRouter.register(handler: extensionUIHandler)
         DebuggerBridgeHandler.shared.attach(to: bridgeRouter)
 
