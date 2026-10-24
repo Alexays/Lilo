@@ -454,10 +454,14 @@ final class ProfileExtensionRegistry {
             unsafeBitCast(config.webViewConfiguration.method(for: delaysLaunch), to: SetBool.self)(config.webViewConfiguration, delaysLaunch, false)
         }
 
-        // Injected into every WebView the controller manages.
+        // Injected into every frame of the WebViews the controller manages but web pages', where it would only exit.
         if let url = Bundle.appResourceURL("ChromeAPIAugmentation", extension: "js"),
            let source = try? String(contentsOf: url, encoding: .utf8) {
-            userContentController.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+            let webPages = ["http://*/*", "https://*/*"]
+            userContentController.addUserScript(
+                ExtensionUserScripts.makeMatchingUserScript?(source, .atDocumentStart, false, [], webPages, .page)
+                    ?? WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page)
+            )
         } else {
             Self.logger.error("ChromeAPIAugmentation.js not found in bundle: Chrome API bridge will be absent")
         }

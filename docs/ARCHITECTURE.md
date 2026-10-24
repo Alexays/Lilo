@@ -295,8 +295,9 @@ The controller follows Chrome's side panel coordinator: the window has one exten
 
 3. Content script injection
    └─ Handled natively by WKWebExtension on navigation
-   └─ ChromeAPIAugmentation.js injected into extension page contexts
-      (augments window.chrome with app-facing APIs)
+   └─ ChromeAPIAugmentation.js injected into extension page contexts,
+      not into the web pages they frame (augments window.chrome with
+      app-facing APIs)
 ```
 
 ### Extension lifecycle
