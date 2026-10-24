@@ -53,7 +53,7 @@ The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub
 2. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-notarize` (UI bundle + extension bridge + archive, export, notarize, staple).
 3. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs, notarizes and staples the DMG itself.
 4. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
-5. Creates a **draft** GitHub release with the DMG and the appcast attached and auto-generated notes. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
+5. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
 ## Secrets
 
@@ -97,8 +97,7 @@ Once Apple grants it:
    spctl -a -vvv /Volumes/Lilo/Lilo.app
    xcrun stapler validate /Volumes/Lilo/Lilo.app
    ```
-2. Replace the generated release notes with the version's section of `CHANGELOG.md`.
-3. Publish the draft release.
-4. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
+2. Publish the draft release.
+3. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
    sha256 (`shasum -a 256 Lilo.dmg`), so `brew install --cask alexays/tap/lilo` and
    `brew upgrade` pick it up.
