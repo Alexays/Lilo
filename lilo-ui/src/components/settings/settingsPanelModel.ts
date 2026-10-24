@@ -106,7 +106,7 @@ export interface SettingModel {
   section: SettingsSectionId;
   /** Catalog key of the group heading the setting sits under. */
   groupKey: SettingsGroupKey;
-  /** The switch this setting only means something under: shown, indented, while it is on. */
+  /** The switch this setting only means something under: shown while it is on. */
   requires?: SettingId;
 }
 
@@ -137,7 +137,8 @@ export type SettingsGlyph =
   | "globe"
   | "cylinder"
   | "text"
-  | "command";
+  | "command"
+  | "laptop";
 
 export interface SettingsGroupIcon {
   glyph: SettingsGlyph;
@@ -159,6 +160,8 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.profiles": { glyph: "person", tint: "blue" },
   "settings.groups.tabsWindows": { glyph: "tabs", tint: "indigo" },
   "settings.groups.contentBlocking": { glyph: "noSign", tint: "green" },
+  "settings.groups.blockerCategories": { glyph: "privacy", tint: "green" },
+  "settings.groups.blockerExceptions": { glyph: "globe", tint: "green" },
   "settings.groups.sitePermissions": { glyph: "hand", tint: "blue" },
   "settings.groups.protection": { glyph: "lock", tint: "green" },
   "settings.groups.browsingData": { glyph: "clock", tint: "teal" },
@@ -175,6 +178,7 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.terminalAppearanceGroup": { glyph: "halfCircle", tint: "purple" },
   "settings.terminalBehaviorGroup": { glyph: "terminal", tint: "gray" },
   "settings.terminalSleepGroup": { glyph: "moon", tint: "indigo" },
+  "settings.terminalLidGroup": { glyph: "laptop", tint: "indigo" },
   // The Shortcuts page titles each list with a menu's name, so they all share one tile.
   "settings.shortcuts": { glyph: "command", tint: "indigo" },
   "featureFlags.title": { glyph: "flag", tint: "gray" },
@@ -249,14 +253,14 @@ export const SETTINGS: SettingModel[] = [
   { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "peekPinnedTabLinks", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "contentBlocker", section: "privacy", groupKey: "settings.groups.contentBlocking" },
-  { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerBadware", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerAnnoyances", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerRegional", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "filterLists", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerSites", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
-  { id: "blockerAllowedDomains", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "blockerBadware", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "blockerAnnoyances", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "blockerRegional", section: "privacy", groupKey: "settings.groups.blockerCategories", requires: "contentBlocker" },
+  { id: "filterLists", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
+  { id: "blockerSites", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
+  { id: "blockerAllowedDomains", section: "privacy", groupKey: "settings.groups.blockerExceptions", requires: "contentBlocker" },
   { id: "permissionNotifications", section: "privacy", groupKey: "settings.groups.sitePermissions" },
   { id: "permissionMedia", section: "privacy", groupKey: "settings.groups.sitePermissions" },
   { id: "permissionLocation", section: "privacy", groupKey: "settings.groups.sitePermissions" },

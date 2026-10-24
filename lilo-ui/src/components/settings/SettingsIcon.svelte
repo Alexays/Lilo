@@ -137,6 +137,9 @@
     <path d="M4 8.4h12" />
     <path d="M4 11.8h12" />
     <path d="M4 15.2h7.4" />
+  {:else if name === "laptop"}
+    <rect x="4.4" y="4.6" width="11.2" height="8" rx="1.4" />
+    <path d="M2.6 15.4h14.8" />
   {:else if name === "command"}
     <path d="M7.6 7.6H5.8a1.8 1.8 0 1 1 1.8-1.8v8.4a1.8 1.8 0 1 1-1.8-1.8h8.4a1.8 1.8 0 1 1-1.8 1.8V5.8a1.8 1.8 0 1 1 1.8 1.8Z" />
   {/if}

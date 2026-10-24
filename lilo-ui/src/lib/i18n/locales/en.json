@@ -40,9 +40,7 @@
 		"terminalNotify": "Notify when a long command finishes",
 		"terminalNotifyDescription": "After 10 seconds, when you are elsewhere.",
 		"terminalSleepGroup": "Sleep",
-		"terminalPreventSleep": "Keep the Mac awake while a command works",
-		"terminalPreventSleepDescription": "A command that printed nothing for 5 minutes, or that waits for your answer, does not count.",
-		"terminalLidClosed": "Even with the lid closed",
+		"terminalPreventSleepDescription": "Not for a command waiting for you or silent for 5 minutes.",
 		"terminalLidStatus": {
 			"unsigned": "Requires a signed build of Lilo.",
 			"notRegistered": "Installs a system helper that macOS asks you to allow once.",
@@ -51,11 +49,11 @@
 			"notFound": "The system helper is missing: reinstall Lilo."
 		},
 		"terminalLidApprove": "Open System Settings",
-		"terminalLidBatteryFloor": "Give sleep back below this battery level",
-		"terminalLidMaxHours": "Maximum duration",
+		"terminalLidBatteryFloor": "Stop below this battery level",
+		"terminalLidMaxHours": "Stop after",
 		"terminalLidFreezeApps": "Pause other apps",
 		"terminalLidFreezeAppsDescription": "Apps resume where they were when the lid opens.",
-		"terminalLidNeverFreeze": "Except",
+		"terminalLidNeverFreeze": "Keep running",
 		"terminalLidAddApp": "Add an app...",
 		"terminalLidRemoveApp": "Remove {app}",
 		"terminalOptionKey": "Option key",
@@ -160,7 +158,9 @@
 			"tabsWindows": "Tabs and windows",
 			"sitePermissions": "Site permissions",
 			"profiles": "Profiles",
-			"otherAppLinks": "Links from other apps"
+			"otherAppLinks": "Links from other apps",
+			"blockerCategories": "What Lilo blocks",
+			"blockerExceptions": "Lists and exceptions"
 		},
 		"searchPlaceholder": "Search settings",
 		"searchResultsTitle": "Search results",
@@ -301,32 +301,32 @@
 			},
 			"contentBlocker": {
 				"title": "Block ads and trackers",
-				"description": "Blocks known ad and tracker requests on the next page load.",
+				"description": "Applies from the next page load.",
 				"keywords": "adblock tracking blocker"
 			},
 			"blockerTrackers": {
-				"title": "Block trackers",
-				"description": "Blocks tracking scripts and pixels.",
+				"title": "Trackers",
+				"description": "Tracking scripts and pixels.",
 				"keywords": "privacy tracking"
 			},
 			"blockerCookieNotices": {
-				"title": "Hide cookie notices",
-				"description": "Removes consent banners, refusing where possible.",
+				"title": "Cookie notices",
+				"description": "Refused where possible, then hidden.",
 				"keywords": "cookies consent gdpr"
 			},
 			"blockerAnnoyances": {
-				"title": "Hide pop-ups and social widgets",
+				"title": "Pop-ups and social widgets",
 				"description": "May break some sites.",
 				"keywords": "popup newsletter social"
 			},
 			"blockerBadware": {
-				"title": "Block dangerous sites",
-				"description": "Blocks known scam and malware sites.",
+				"title": "Dangerous sites",
+				"description": "Known scam and malware sites.",
 				"keywords": "malware phishing scam"
 			},
 			"blockerRegional": {
-				"title": "Regional lists",
-				"description": "Adds ad lists for your system languages.",
+				"title": "Regional ad lists",
+				"description": "For your system languages.",
 				"keywords": "language country"
 			},
 			"filterLists": {
@@ -336,7 +336,7 @@
 			},
 			"blockerAllowedDomains": {
 				"title": "Requests never blocked",
-				"description": "On every site, subdomains included. Separate them with commas.",
+				"description": "On every site, subdomains included, separated by commas.",
 				"keywords": "allowlist whitelist exception unblock",
 				"placeholder": "t.example.com, cdn.example.org"
 			},
@@ -417,22 +417,22 @@
 			},
 			"agentControl": {
 				"title": "Let AI agents use Lilo",
-				"description": "Claude Code, Codex or Cursor work in their own Agents space, signed in nowhere by default, without touching your keyboard. Lilo has no AI of its own.",
+				"description": "Claude Code, Codex or Cursor work in their own Agents space. Lilo has no AI of its own.",
 				"keywords": "agent ai mcp claude codex cursor automation remote control"
 			},
 			"agentAskBeforeActions": {
-				"title": "Ask before an agent sends, pays, deletes or publishes",
-				"description": "The agent waits for your answer before it clicks or submits such a button.",
+				"title": "Ask before sending, paying, deleting or publishing",
+				"description": "The agent waits for your answer.",
 				"keywords": "agent approval confirm payment purchase order delete send publish"
 			},
 			"agentAlwaysAllowed": {
-				"title": "Always allowed sites",
-				"description": "Agents send, pay, delete and publish there without asking.",
-				"forget": "Forget always-allowed sites ({count})"
+				"title": "Always allowed",
+				"description": "Agents act on these sites without asking.",
+				"remove": "Remove {host}"
 			},
 			"agentOther": {
 				"title": "Other agents",
-				"description": "Copies the MCP configuration for any other client."
+				"description": "Any other MCP client, with Lilo's configuration."
 			},
 			"autoplay": {
 				"title": "Autoplay",
@@ -465,7 +465,7 @@
 			},
 			"blockerSites": {
 				"title": "Sites without blocking",
-				"description": "None. Turn blocking off for a site from its controls in the address bar.",
+				"description": "Turn blocking off for a site from the address bar.",
 				"keywords": "exception allowlist whitelist site broken disable"
 			},
 			"permissionNotifications": {
@@ -499,7 +499,6 @@
 		},
 		"filterLists": {
 			"update": "Update now",
-			"updating": "Updating...",
 			"summary": "{lists} lists",
 			"updated": "updated {time}"
 		},
@@ -532,15 +531,19 @@
 				"cursor": "Cursor"
 			},
 			"connect": "Connect",
-			"copy": "Copy",
+			"copy": "Copy configuration",
 			"clientDescription": "Adds Lilo to its MCP servers.",
 			"clientConnected": "Lilo is in its MCP servers.",
-			"connectedBadge": "Connected",
-			"connected": "Connected",
-			"acting": "Acting now",
 			"lastSeen": "Last seen {time}",
-			"allowed": "Allowed",
-			"revoke": "Remove"
+			"revoke": "Remove",
+			"readyDescription": "Lilo asks you the first time it connects.",
+			"status": {
+				"acting": "Acting now",
+				"connected": "Connected",
+				"allowed": "Allowed",
+				"notInstalled": "Not installed",
+				"ready": "Set up"
+			}
 		},
 		"navGroups": {
 			"tools": "Tools"
@@ -625,7 +628,21 @@
 			"noResults": "No shortcut matches."
 		},
 		"terminalAppearanceGroup": "Appearance",
-		"terminalLidStopUnder": "Stop below this battery level, or after"
+		"terminalSleepMode": "Keep the Mac awake during commands",
+		"terminalSleepModes": {
+			"off": "Off",
+			"command": "On",
+			"lid": "Lid closed too"
+		},
+		"terminalLidGroup": "Lid closed",
+		"terminalLidHelper": "System helper",
+		"terminalLidBadge": {
+			"unsigned": "Unavailable",
+			"notRegistered": "Not installed",
+			"requiresApproval": "Needs approval",
+			"enabled": "Allowed",
+			"notFound": "Missing"
+		}
 	},
 	"nav": {
 		"navigationControls": "Navigation controls",

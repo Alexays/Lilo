@@ -46,6 +46,7 @@
   import ThemePicker from "./ThemePicker.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
+  import UiChip from "../ui/UiChip.svelte";
   import UiLinkRow from "../ui/UiLinkRow.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
   import UiSegmented from "../ui/UiSegmented.svelte";
@@ -116,8 +117,6 @@
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
-    if (id === "blockerSites") return blockerSites.length > 0 ? blockerSites.join(", ") : t(settingDescriptionKey(id));
-    if (id === "agentAlwaysAllowed") return alwaysAllowed.join(", ");
     if (id === "appUpdates") {
       if (updater && !updater.available) return t("settings.items.appUpdates.unavailable");
       if (!updater?.lastCheck) return t(settingDescriptionKey(id));
@@ -140,7 +139,6 @@
       return parts.join(" · ");
     }
     if (id === "filterLists" && blockerStatus) {
-      if (blockerStatus.updating) return t("settings.filterLists.updating");
       if (!blockerStatus.updated) return t(settingDescriptionKey(id));
       const updated = new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short" })
         .format(blockerStatus.updated * 1000);
@@ -177,6 +175,16 @@
       ariaLabel={title}
       oncommit={(value) => setSetting("contentBlockerAllowedDomains", value.trim())}
     />
+  {:else if id === "agentAlwaysAllowed"}
+    <span class="chips">
+      {#each alwaysAllowed as host (host)}
+        <UiChip
+          label={host}
+          removeLabel={t("settings.items.agentAlwaysAllowed.remove", { host })}
+          onremove={() => setSetting("agentAlwaysAllowedSites", JSON.stringify(alwaysAllowed.filter((entry) => entry !== host)))}
+        />
+      {/each}
+    </span>
   {:else if id === "newProfile"}
     {#key profileFieldKey}
       <UiTextField
@@ -215,10 +223,6 @@
           {t("settings.defaultBrowserSet")}
         </UiButton>
       {/if}
-    {:else if id === "agentAlwaysAllowed"}
-      <UiButton onclick={() => setSetting("agentAlwaysAllowedSites", "[]")}>
-        {t("settings.items.agentAlwaysAllowed.forget", { count: alwaysAllowed.length })}
-      </UiButton>
     {:else if id === "importBrowsers"}
       <UiButton onclick={() => { closeSettingsShell(); startOnboarding("import"); }}>{t("settings.importBrowsersAction")}</UiButton>
     {:else if id === "passwordManager"}
@@ -308,7 +312,7 @@
     {:else if id === "newSpace"}
       <UiButton onclick={openAddEditor}>{t("settings.items.newSpace.action")}</UiButton>
     {:else if id === "filterLists"}
-      <UiButton disabled={blockerStatus?.updating} onclick={() => settingsActions.updateFilterLists()}>
+      <UiButton busy={blockerStatus?.updating} onclick={() => settingsActions.updateFilterLists()}>
         {t("settings.filterLists.update")}
       </UiButton>
     {:else if id === "checkExtensionUpdates"}
@@ -317,9 +321,16 @@
       <UiButton onclick={() => extensionActions.loadUnpacked()}>{t("extensions.loadUnpacked")}</UiButton>
     {:else if id === "deviceSetup"}
       <UiButton onclick={() => settingsActions.forgetDeviceSetup()}>{t("settings.devices.forget")}</UiButton>
-    {:else if id === "agentOther"}
-      <UiButton onclick={() => settingsActions.connectAgentClient("other")}>{t("settings.agents.copy")}</UiButton>
     {/if}
   {/snippet}
 </UiListRow>
 {/if}
+
+<style>
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+  }
+</style>

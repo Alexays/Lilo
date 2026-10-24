@@ -147,10 +147,11 @@ test.describe("in French at the window's minimum size", () => {
 				downloadsFolder: "/Users/me/Documents/Téléchargements très importants du projet",
 				agentControlEnabled: "true",
 				agentAlwaysAllowedSites: JSON.stringify(["github.com", "docs.google.com"]),
+				terminalLidClosed: "true",
 			},
 		}));
 
-		for (const section of ["Général", "Onglets et espaces", "Agents IA", "Avancé"]) {
+		for (const section of ["Général", "Onglets et espaces", "Confidentialité", "Terminal", "Agents IA", "Avancé"]) {
 			await page.locator(".section-nav-button").filter({ hasText: section }).click();
 			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
 			await expect(rows.first()).toBeVisible();
@@ -313,4 +314,130 @@ test("a settings group's heading shows a decorative tile and keeps its height", 
 	await page.getByRole("searchbox", { name: "Search settings" }).fill("download");
 	await expect(page.locator(".ui-shell-frame .ui-inset-list-icon")).toHaveCount(0);
 	expect(await titleHeight()).toBe(withIcon);
+});
+
+test("the sleep modes write the switches' settings keys", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.locator(".section-nav-button").filter({ hasText: "Terminal" }).click();
+
+	const modes = page.getByRole("radiogroup", { name: "Keep the Mac awake during commands" });
+	const lidGroup = page.getByRole("region", { name: "Lid closed", exact: true });
+	const lastSettings = async (count: number) =>
+		(await sentCommands(page)).filter((command) => command.action === "setSetting").slice(-count).map((command) => command.payload);
+	await expect(modes.getByRole("radio", { name: "On" })).toBeChecked();
+	await expect(lidGroup).toHaveCount(0);
+
+	await modes.getByRole("radio", { name: "Lid closed too" }).click();
+	expect(await lastSettings(2)).toEqual([{ key: "terminalPreventSleep", value: "true" }, { key: "terminalLidClosed", value: "true" }]);
+	await expect(lidGroup).toBeVisible();
+	await expect(lidGroup.locator(".ui-badge")).toHaveText("Not installed");
+
+	// Off leaves the lid choice for next time, as turning the first switch off did.
+	await modes.getByRole("radio", { name: "Off" }).click();
+	expect(await lastSettings(1)).toEqual([{ key: "terminalPreventSleep", value: "false" }]);
+	await expect(lidGroup).toHaveCount(0);
+	await modes.getByRole("radio", { name: "Lid closed too" }).click();
+	await expect(lidGroup).toBeVisible();
+
+	await modes.getByRole("radio", { name: "On" }).click();
+	expect(await lastSettings(2)).toEqual([{ key: "terminalPreventSleep", value: "true" }, { key: "terminalLidClosed", value: "false" }]);
+	await expect(lidGroup).toHaveCount(0);
+});
+
+test("a build that cannot run the sleep helper offers no lid mode", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { terminalLidClosed: "true" } }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "keepAwakeChanged", keepsAwake: false, agents: [], tabIds: [], holdsLidClosed: false, helperStatus: "unsigned",
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "Terminal" }).click();
+
+	const modes = page.getByRole("radiogroup", { name: "Keep the Mac awake during commands" });
+	await expect(modes.getByRole("radio")).toHaveText(["Off", "On"]);
+	await expect(modes.getByRole("radio", { name: "On" })).toBeChecked();
+	await expect(page.getByRole("region", { name: "Lid closed", exact: true })).toHaveCount(0);
+});
+
+test("an always-allowed site's chip removes that site only", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "settingsLoaded",
+		settings: { agentControlEnabled: "true", agentAlwaysAllowedSites: JSON.stringify(["github.com", "docs.google.com"]) },
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+
+	const row = page.locator('[data-setting-id="agentAlwaysAllowed"]');
+	await expect(row.locator(".ui-chip")).toHaveText(["github.com", "docs.google.com"]);
+	await row.getByRole("button", { name: "Remove github.com" }).click();
+
+	await expect(row.locator(".ui-chip")).toHaveText(["docs.google.com"]);
+	const sent = (await sentCommands(page)).filter((command) => command.action === "setSetting");
+	expect(sent.at(-1)?.payload).toEqual({ key: "agentAlwaysAllowedSites", value: JSON.stringify(["docs.google.com"]) });
+});
+
+test("each agent app shows its status as a badge and at most one action", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
+	const icon = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+	await page.evaluate((icon) => window.__lilo!.receive({
+		event: "agentClientsLoaded",
+		clients: [
+			{ id: "claudeCode", configured: true, icon },
+			{ id: "cursor", configured: true, icon: null },
+			{ id: "codex", configured: false, icon },
+			{ id: "claudeDesktop", configured: true, icon },
+		],
+		allowed: [{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" }],
+	}), icon);
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "agentActivity", clients: [{ name: "claude-code", busy: false, actingTabIds: [] }], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true,
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+
+	const row = (name: string) => page.locator(".agent-row").filter({ has: page.locator(".ui-list-row-title", { hasText: name }) });
+	const expectRow = async (name: string, badge: string | null, buttons: string[]) => {
+		await expect(row(name).locator(".ui-badge")).toHaveText(badge ? [badge] : []);
+		await expect(row(name).getByRole("button")).toHaveText(buttons);
+	};
+	await expectRow("Claude Code", "Connected", ["Remove"]);
+	await expectRow("Cursor", "Not installed", []);
+	await expectRow("Codex", null, ["Connect"]);
+	await expectRow("Claude Desktop", "Set up", []);
+	await expectRow("Other agents", null, ["Copy configuration"]);
+	await expect(row("Claude Code").locator(".ui-badge")).toHaveClass(/success/);
+
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "agentActivity", clients: [{ name: "claude-code", busy: true, actingTabIds: [] }], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true,
+	}));
+	await expectRow("Claude Code", "Acting now", ["Remove"]);
+	await page.evaluate(() => window.__lilo!.receive({ event: "agentActivity", clients: [], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true }));
+	await expectRow("Claude Code", "Allowed", ["Remove"]);
+
+	await row("Claude Code").getByRole("button", { name: "Remove" }).click();
+	const revoked = (await sentCommands(page)).filter((command) => command.action === "revokeAgentClient");
+	expect(revoked.map((command) => command.payload)).toEqual([{ name: "claude-code" }]);
+});
+
+test("content blocking splits into its switch, what it blocks, and its lists", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "settingsLoaded", settings: { contentBlockerAllowlist: JSON.stringify(["lemonde.fr", "bbc.co.uk"]) },
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "Privacy" }).click();
+
+	const frame = page.locator(".ui-shell-frame");
+	const titles = frame.locator(".ui-inset-list-title");
+	await expect(titles).toContainText(["Content blocking", "What Lilo blocks", "Lists and exceptions", "Site permissions"]);
+	const sites = frame.locator('[data-setting-id="blockerSites"] .ui-link-row');
+	await expect(sites.locator(".ui-link-row-count")).toHaveText("2");
+	await expect(sites).not.toContainText("lemonde.fr");
+
+	await frame.locator('[data-setting-id="contentBlocker"]').locator(".ui-toggle").click();
+	await expect(frame.getByRole("region", { name: "What Lilo blocks" })).toHaveCount(0);
+	await expect(frame.locator('[data-setting-id="blockerSites"]')).toHaveCount(0);
 });

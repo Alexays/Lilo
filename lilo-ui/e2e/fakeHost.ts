@@ -34,7 +34,7 @@ declare global {
 	}
 }
 
-async function installFakeHost(
+export async function installFakeHost(
 	page: Page,
 	world: FakeHostWorld,
 ): Promise<void> {

@@ -3,6 +3,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getAgentClients } from "../../stores/agents.svelte";
   import { connectAgentClient, getAgentClientsSnapshot, isConnectingAgentClient } from "../../stores/settings.svelte";
+  import SettingsIcon from "./SettingsIcon.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -37,31 +38,35 @@
 {#each rows as row (row.key)}
   {@const live = getAgentClients().find((client) => row.agents.some((agent) => agent.name === client.name))}
   {@const seen = Math.max(0, ...row.agents.map((agent) => agent.lastSeen ?? 0))}
-  {#snippet appIcon()}<img src={row.client?.icon} alt="" />{/snippet}
-  <div class="agent-row">
+  <!-- Most telling first: acting or connected now, allowed in before, then how far the app is set up. -->
+  {@const status = live
+    ? live.busy ? "acting" : "connected"
+    : row.agents.length ? "allowed" : row.client?.configured ? row.client.icon ? "ready" : "notInstalled" : "notSetUp"}
+  {#snippet icon()}
+    {#if row.client?.icon}<img src={row.client.icon} alt="" />{:else}<span class="placeholder"><SettingsIcon name="agents" /></span>{/if}
+  {/snippet}
+  <div class="agent-row" data-agent-status={status}>
     <UiListRow
-      icon={row.client?.icon ? appIcon : undefined}
+      {icon}
       title={row.title}
-      description={live
-        ? t(live.busy ? "settings.agents.acting" : "settings.agents.connected")
-        : seen
-          ? t("settings.agents.lastSeen", { time: lastSeen(seen) })
-          : row.agents.length
-            ? t("settings.agents.allowed")
-            : t(row.client?.configured ? "settings.agents.clientConnected" : "settings.agents.clientDescription")}
+      description={status === "allowed" && seen
+        ? t("settings.agents.lastSeen", { time: lastSeen(seen) })
+        : status === "ready" ? t("settings.agents.readyDescription")
+        : status === "notSetUp" ? t("settings.agents.clientDescription") : undefined}
     >
       {#snippet action()}
-        {#if live}
-          <UiBadge tone="success">{t("settings.agents.connectedBadge")}</UiBadge>
-        {/if}
-        {#if row.client && !row.client.configured}
-          <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => connectAgentClient(row.client?.id ?? "")}>
-            {t("settings.agents.connect")}
-          </UiButton>
+        {#if status !== "notSetUp"}
+          <UiBadge tone={status === "acting" ? "accent" : status === "connected" ? "success" : "neutral"}>
+            {t(`settings.agents.status.${status}`)}
+          </UiBadge>
         {/if}
         {#if row.agents.length}
           <UiButton onclick={() => row.agents.forEach((agent) => settingsActions.revokeAgentClient(agent.name))}>
             {t("settings.agents.revoke")}
+          </UiButton>
+        {:else if row.client && !row.client.configured}
+          <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => connectAgentClient(row.client?.id ?? "")}>
+            {t("settings.agents.connect")}
           </UiButton>
         {/if}
       {/snippet}
@@ -69,18 +74,32 @@
   </div>
 {/each}
 
-<style>
-  .agent-row {
-    padding-left: 16px;
-    border-left: 2px solid var(--separator);
-  }
+<div class="agent-row" data-setting-id="agentOther">
+  <UiListRow title={t("settings.items.agentOther.title")} description={t("settings.items.agentOther.description")}>
+    {#snippet icon()}<span class="placeholder"><SettingsIcon name="grid" /></span>{/snippet}
+    {#snippet action()}
+      <UiButton onclick={() => settingsActions.connectAgentClient("other")}>{t("settings.agents.copy")}</UiButton>
+    {/snippet}
+  </UiListRow>
+</div>
 
+<style>
   .agent-row :global(.ui-list-row-icon) {
     width: 24px;
   }
 
-  img {
+  img,
+  .placeholder {
     width: 24px;
     height: 24px;
+  }
+
+  /* Where an app icon would be: a quiet tile, so every title lines up. */
+  .placeholder {
+    display: grid;
+    place-items: center;
+    border-radius: 26%;
+    background: var(--bg-hover);
+    color: var(--text-muted);
   }
 </style>

@@ -40,9 +40,7 @@
 		"terminalNotify": "Prévenir quand une longue commande se termine",
 		"terminalNotifyDescription": "Au-delà de 10 secondes, si vous êtes ailleurs.",
 		"terminalSleepGroup": "Veille",
-		"terminalPreventSleep": "Garder le Mac éveillé pendant qu'une commande travaille",
-		"terminalPreventSleepDescription": "Une commande qui n'a rien écrit depuis 5 minutes, ou qui attend votre réponse, ne compte pas.",
-		"terminalLidClosed": "Même capot fermé",
+		"terminalPreventSleepDescription": "Pas pour une commande qui vous attend ou muette depuis 5 minutes.",
 		"terminalLidStatus": {
 			"unsigned": "Nécessite une version signée de Lilo.",
 			"notRegistered": "Installe un assistant système que macOS vous demandera d'autoriser une fois.",
@@ -51,11 +49,11 @@
 			"notFound": "L'assistant système est introuvable : réinstallez Lilo."
 		},
 		"terminalLidApprove": "Ouvrir Réglages Système",
-		"terminalLidBatteryFloor": "Rétablir la veille sous ce niveau de batterie",
-		"terminalLidMaxHours": "Durée maximale",
+		"terminalLidBatteryFloor": "Arrêter sous ce niveau de batterie",
+		"terminalLidMaxHours": "Arrêter après",
 		"terminalLidFreezeApps": "Mettre en pause les autres apps",
 		"terminalLidFreezeAppsDescription": "Les apps reprennent à l'ouverture du capot, là où elles en étaient.",
-		"terminalLidNeverFreeze": "Sauf",
+		"terminalLidNeverFreeze": "Laisser tourner",
 		"terminalLidAddApp": "Ajouter une app...",
 		"terminalLidRemoveApp": "Retirer {app}",
 		"terminalOptionKey": "Touche Option",
@@ -160,7 +158,9 @@
 			"tabsWindows": "Onglets et fenêtres",
 			"sitePermissions": "Autorisations des sites",
 			"profiles": "Profils",
-			"otherAppLinks": "Liens venant d'autres apps"
+			"otherAppLinks": "Liens venant d'autres apps",
+			"blockerCategories": "Ce que Lilo bloque",
+			"blockerExceptions": "Listes et exceptions"
 		},
 		"searchPlaceholder": "Rechercher un réglage",
 		"searchResultsTitle": "Résultats",
@@ -301,32 +301,32 @@
 			},
 			"contentBlocker": {
 				"title": "Bloquer pubs et traqueurs",
-				"description": "Bloque les requêtes publicitaires et de pistage connues au prochain chargement.",
+				"description": "S'applique dès le prochain chargement de page.",
 				"keywords": "bloqueur publicité pistage"
 			},
 			"blockerTrackers": {
-				"title": "Bloquer les traqueurs",
-				"description": "Bloque les scripts et pixels de pistage.",
+				"title": "Traqueurs",
+				"description": "Scripts et pixels de pistage.",
 				"keywords": "confidentialité pistage"
 			},
 			"blockerCookieNotices": {
-				"title": "Masquer les bannières cookies",
-				"description": "Retire les bannières de consentement, en refusant si possible.",
+				"title": "Bannières cookies",
+				"description": "Refusées si possible, puis masquées.",
 				"keywords": "cookies consentement rgpd"
 			},
 			"blockerAnnoyances": {
-				"title": "Masquer popups et widgets sociaux",
+				"title": "Popups et widgets sociaux",
 				"description": "Peut casser certains sites.",
 				"keywords": "popup newsletter réseaux sociaux"
 			},
 			"blockerBadware": {
-				"title": "Bloquer les sites dangereux",
-				"description": "Bloque les sites connus d'arnaque et de malware.",
+				"title": "Sites dangereux",
+				"description": "Sites connus d'arnaque et de malware.",
 				"keywords": "malware hameçonnage arnaque"
 			},
 			"blockerRegional": {
-				"title": "Listes régionales",
-				"description": "Ajoute les listes des langues de votre système.",
+				"title": "Listes publicitaires régionales",
+				"description": "Pour les langues de votre système.",
 				"keywords": "langue pays"
 			},
 			"filterLists": {
@@ -336,7 +336,7 @@
 			},
 			"blockerAllowedDomains": {
 				"title": "Requêtes jamais bloquées",
-				"description": "Sur tous les sites, sous-domaines compris. Séparez-les par des virgules.",
+				"description": "Sur tous les sites, sous-domaines compris, séparés par des virgules.",
 				"keywords": "liste blanche exception débloquer autoriser",
 				"placeholder": "t.exemple.com, cdn.exemple.org"
 			},
@@ -417,22 +417,22 @@
 			},
 			"agentControl": {
 				"title": "Laisser les agents IA utiliser Lilo",
-				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents, connectés nulle part par défaut, sans toucher à votre clavier. Lilo n'embarque aucune IA.",
+				"description": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents. Lilo n'embarque aucune IA.",
 				"keywords": "agent ia mcp claude codex cursor automatisation pilotage"
 			},
 			"agentAskBeforeActions": {
-				"title": "Demander avant qu'un agent envoie, paie, supprime ou publie",
-				"description": "L'agent attend votre réponse avant de cliquer sur un tel bouton ou de valider un tel formulaire.",
+				"title": "Demander avant d'envoyer, payer, supprimer ou publier",
+				"description": "L'agent attend votre réponse.",
 				"keywords": "agent approbation confirmer paiement achat commande supprimer envoyer publier"
 			},
 			"agentAlwaysAllowed": {
-				"title": "Sites toujours autorisés",
-				"description": "Les agents y envoient, paient, suppriment et publient sans demander.",
-				"forget": "Oublier les sites toujours autorisés ({count})"
+				"title": "Toujours autorisés",
+				"description": "Les agents y agissent sans demander.",
+				"remove": "Retirer {host}"
 			},
 			"agentOther": {
 				"title": "Autres agents",
-				"description": "Copie la configuration MCP pour tout autre client."
+				"description": "Tout autre client MCP, avec la configuration de Lilo."
 			},
 			"autoplay": {
 				"title": "Lecture automatique",
@@ -465,7 +465,7 @@
 			},
 			"blockerSites": {
 				"title": "Sites sans blocage",
-				"description": "Aucun. Le blocage se coupe pour un site depuis ses contrôles, dans la barre d'adresse.",
+				"description": "Le blocage se coupe pour un site depuis la barre d'adresse.",
 				"keywords": "exception liste blanche site cassé désactiver"
 			},
 			"permissionNotifications": {
@@ -499,7 +499,6 @@
 		},
 		"filterLists": {
 			"update": "Mettre à jour",
-			"updating": "Mise à jour...",
 			"summary": "{lists} listes",
 			"updated": "mises à jour le {time}"
 		},
@@ -532,15 +531,19 @@
 				"cursor": "Cursor"
 			},
 			"connect": "Connecter",
-			"copy": "Copier",
+			"copy": "Copier la configuration",
 			"clientDescription": "Ajoute Lilo à ses serveurs MCP.",
 			"clientConnected": "Lilo figure dans ses serveurs MCP.",
-			"connectedBadge": "Connecté",
-			"connected": "Connecté",
-			"acting": "En train d'agir",
 			"lastSeen": "Vu {time}",
-			"allowed": "Autorisé",
-			"revoke": "Retirer"
+			"revoke": "Retirer",
+			"readyDescription": "Lilo vous demande à sa première connexion.",
+			"status": {
+				"acting": "En train d'agir",
+				"connected": "Connecté",
+				"allowed": "Autorisé",
+				"notInstalled": "Non installé",
+				"ready": "Configuré"
+			}
 		},
 		"navGroups": {
 			"tools": "Outils"
@@ -625,7 +628,21 @@
 			"noResults": "Aucun raccourci ne correspond."
 		},
 		"terminalAppearanceGroup": "Apparence",
-		"terminalLidStopUnder": "Arrêter sous ce niveau de batterie, ou après"
+		"terminalSleepMode": "Garder le Mac éveillé pendant les commandes",
+		"terminalSleepModes": {
+			"off": "Non",
+			"command": "Oui",
+			"lid": "Même capot fermé"
+		},
+		"terminalLidGroup": "Capot fermé",
+		"terminalLidHelper": "Assistant système",
+		"terminalLidBadge": {
+			"unsigned": "Indisponible",
+			"notRegistered": "Non installé",
+			"requiresApproval": "À autoriser",
+			"enabled": "Autorisé",
+			"notFound": "Introuvable"
+		}
 	},
 	"nav": {
 		"navigationControls": "Commandes de navigation",

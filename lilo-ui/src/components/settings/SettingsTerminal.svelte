@@ -3,9 +3,12 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, getTerminalOptions, setSetting } from "../../stores/settings.svelte";
   import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
+  import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
+  import UiChip from "../ui/UiChip.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
+  import UiSegmented from "../ui/UiSegmented.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import { getAppNames, getKeepAwakeState, getRunningApps, neverFreezeList, withApp, withoutApp } from "../../stores/keepAwake.svelte";
@@ -35,9 +38,13 @@
   const freezeApps = $derived(getSetting("terminalLidFreezeApps", "true") !== "false");
   const neverFreeze = $derived(neverFreezeList(getSetting("terminalLidNeverFreeze", "")));
   const keepAwake = $derived(getKeepAwakeState());
-  // The helper only exists while the mode is on: off, it says what turning it on does, unless
-  // the build can never run it.
-  const lidStatus = $derived(lidClosed || keepAwake.helperStatus === "unsigned" ? keepAwake.helperStatus : "notRegistered");
+  // Off keeps the lid choice for next time, as the two switches did; a build that can never run the helper has no lid mode.
+  const sleepMode = $derived(!preventSleep ? "off" : lidClosed && keepAwake.helperStatus !== "unsigned" ? "lid" : "command");
+  const sleepModes = $derived(keepAwake.helperStatus === "unsigned" ? ["off", "command"] : ["off", "command", "lid"]);
+  function setSleepMode(mode: string): void {
+    setSetting("terminalPreventSleep", mode === "off" ? "false" : "true");
+    if (mode !== "off") setSetting("terminalLidClosed", mode === "lid" ? "true" : "false");
+  }
   const batteryOptions = $derived([10, 15, 20, 30, 40].map((percent) => ({ value: String(percent), label: percentFormat.format(percent / 100) })));
   const durationOptions = [2, 4, 8, 12, 24].map((hours) => ({ value: String(hours), label: `${hours} h` }));
   const addableApps = $derived(
@@ -45,11 +52,11 @@
   );
   const saveNeverFreeze = (list: string[]) => setSetting("terminalLidNeverFreeze", JSON.stringify(list));
   $effect(() => {
-    if (lidClosed && freezeApps) keepAwakeActions.loadRunningApps();
+    if (sleepMode === "lid" && freezeApps) keepAwakeActions.loadRunningApps();
   });
   $effect(() => {
     const unnamed = neverFreeze.filter((bundleId) => !getAppNames()[bundleId]);
-    if (lidClosed && freezeApps && unnamed.length > 0) keepAwakeActions.loadAppNames(unnamed);
+    if (sleepMode === "lid" && freezeApps && unnamed.length > 0) keepAwakeActions.loadAppNames(unnamed);
   });
 </script>
 
@@ -160,145 +167,99 @@
 
   <UiInsetList title={t("settings.terminalSleepGroup")}>
     {#snippet icon()}<SettingsGroupIcon group="settings.terminalSleepGroup" />{/snippet}
-    <UiListRow title={t("settings.terminalPreventSleep")} description={t("settings.terminalPreventSleepDescription")}>
+    <UiListRow
+      title={t("settings.terminalSleepMode")}
+      description={keepAwake.helperStatus === "unsigned" ? t("settings.terminalLidStatus.unsigned") : t("settings.terminalPreventSleepDescription")}
+    >
       {#snippet action()}
-        <UiToggle
-          checked={preventSleep}
-          ariaLabel={t("settings.terminalPreventSleep")}
-          onchange={(value) => setSetting("terminalPreventSleep", value ? "true" : "false")}
+        <UiSegmented
+          value={sleepMode}
+          options={sleepModes.map((mode) => ({ value: mode, label: t(`settings.terminalSleepModes.${mode}`) }))}
+          ariaLabel={t("settings.terminalSleepMode")}
+          onchange={setSleepMode}
         />
       {/snippet}
     </UiListRow>
-    {#if preventSleep}
-      <div class="nested">
-        <UiListRow title={t("settings.terminalLidClosed")} description={t(`settings.terminalLidStatus.${lidStatus}`)}>
+  </UiInsetList>
+
+  {#if sleepMode === "lid"}
+    <UiInsetList title={t("settings.terminalLidGroup")}>
+      {#snippet icon()}<SettingsGroupIcon group="settings.terminalLidGroup" />{/snippet}
+      <UiListRow
+        title={t("settings.terminalLidHelper")}
+        description={keepAwake.helperStatus === "enabled" ? undefined : t(`settings.terminalLidStatus.${keepAwake.helperStatus}`)}
+      >
+        {#snippet action()}
+          <UiBadge tone={keepAwake.helperStatus === "enabled" ? "success" : keepAwake.helperStatus === "notFound" ? "danger" : "neutral"}>
+            {t(`settings.terminalLidBadge.${keepAwake.helperStatus}`)}
+          </UiBadge>
+          {#if keepAwake.helperStatus === "requiresApproval"}
+            <UiButton onclick={() => keepAwakeActions.openLoginItems()}>{t("settings.terminalLidApprove")}</UiButton>
+          {/if}
+        {/snippet}
+      </UiListRow>
+      <UiListRow title={t("settings.terminalLidBatteryFloor")}>
+        {#snippet action()}
+          <UiSelect
+            value={getSetting("terminalLidBatteryFloor", "20")}
+            options={batteryOptions}
+            ariaLabel={t("settings.terminalLidBatteryFloor")}
+            onchange={(value) => setSetting("terminalLidBatteryFloor", value)}
+          />
+        {/snippet}
+      </UiListRow>
+      <UiListRow title={t("settings.terminalLidMaxHours")}>
+        {#snippet action()}
+          <UiSelect
+            value={getSetting("terminalLidMaxHours", "8")}
+            options={durationOptions}
+            ariaLabel={t("settings.terminalLidMaxHours")}
+            onchange={(value) => setSetting("terminalLidMaxHours", value)}
+          />
+        {/snippet}
+      </UiListRow>
+      <UiListRow title={t("settings.terminalLidFreezeApps")} description={t("settings.terminalLidFreezeAppsDescription")}>
+        {#snippet action()}
+          <UiToggle
+            checked={freezeApps}
+            ariaLabel={t("settings.terminalLidFreezeApps")}
+            onchange={(value) => setSetting("terminalLidFreezeApps", value ? "true" : "false")}
+          />
+        {/snippet}
+      </UiListRow>
+      {#if freezeApps}
+        <UiListRow title={t("settings.terminalLidNeverFreeze")}>
+          {#if neverFreeze.length > 0}
+            <span class="chips">
+              {#each neverFreeze as bundleId (bundleId)}
+                <UiChip
+                  label={getAppNames()[bundleId] ?? bundleId}
+                  removeLabel={t("settings.terminalLidRemoveApp", { app: getAppNames()[bundleId] ?? bundleId })}
+                  onremove={() => saveNeverFreeze(withoutApp(neverFreeze, bundleId))}
+                />
+              {/each}
+            </span>
+          {/if}
           {#snippet action()}
-            {#if lidClosed && keepAwake.helperStatus === "requiresApproval"}
-              <UiButton onclick={() => keepAwakeActions.openLoginItems()}>{t("settings.terminalLidApprove")}</UiButton>
-            {/if}
-            <UiToggle
-              checked={lidClosed}
-              disabled={keepAwake.helperStatus === "unsigned"}
-              ariaLabel={t("settings.terminalLidClosed")}
-              onchange={(value) => setSetting("terminalLidClosed", value ? "true" : "false")}
+            <UiSelect
+              value=""
+              options={[{ value: "", label: t("settings.terminalLidAddApp") }, ...addableApps]}
+              ariaLabel={t("settings.terminalLidAddApp")}
+              onchange={(value) => value && saveNeverFreeze(withApp(neverFreeze, value))}
             />
           {/snippet}
         </UiListRow>
-      </div>
-      {#if lidClosed}
-        <div class="nested deep">
-          <UiListRow title={t("settings.terminalLidStopUnder")}>
-            {#snippet action()}
-              <UiSelect
-                value={getSetting("terminalLidBatteryFloor", "20")}
-                options={batteryOptions}
-                ariaLabel={t("settings.terminalLidBatteryFloor")}
-                onchange={(value) => setSetting("terminalLidBatteryFloor", value)}
-              />
-              <UiSelect
-                value={getSetting("terminalLidMaxHours", "8")}
-                options={durationOptions}
-                ariaLabel={t("settings.terminalLidMaxHours")}
-                onchange={(value) => setSetting("terminalLidMaxHours", value)}
-              />
-            {/snippet}
-          </UiListRow>
-        </div>
-        <div class="nested deep">
-          <UiListRow title={t("settings.terminalLidFreezeApps")} description={t("settings.terminalLidFreezeAppsDescription")}>
-            {#snippet action()}
-              <UiToggle
-                checked={freezeApps}
-                ariaLabel={t("settings.terminalLidFreezeApps")}
-                onchange={(value) => setSetting("terminalLidFreezeApps", value ? "true" : "false")}
-              />
-            {/snippet}
-          </UiListRow>
-        </div>
-        {#if freezeApps}
-          <div class="nested deep">
-            <UiListRow title={t("settings.terminalLidNeverFreeze")}>
-              <div class="chips">
-                {#each neverFreeze as bundleId (bundleId)}
-                  <span class="chip">
-                    {getAppNames()[bundleId] ?? bundleId}
-                    <button
-                      class="chip-remove"
-                      type="button"
-                      aria-label={t("settings.terminalLidRemoveApp", { app: getAppNames()[bundleId] ?? bundleId })}
-                      onclick={() => saveNeverFreeze(withoutApp(neverFreeze, bundleId))}
-                    >
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true">
-                        <path d="m1.5 1.5 5 5m0-5-5 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-                      </svg>
-                    </button>
-                  </span>
-                {/each}
-              </div>
-              {#snippet action()}
-                <UiSelect
-                  value=""
-                  options={[{ value: "", label: t("settings.terminalLidAddApp") }, ...addableApps]}
-                  ariaLabel={t("settings.terminalLidAddApp")}
-                  onchange={(value) => value && saveNeverFreeze(withApp(neverFreeze, value))}
-                />
-              {/snippet}
-            </UiListRow>
-          </div>
-        {/if}
       {/if}
-    {/if}
-  </UiInsetList>
+    </UiInsetList>
+  {/if}
 {/if}
 
 <style>
-  .nested {
-    padding-left: 16px;
-    border-left: 2px solid var(--separator);
-  }
-
-  .nested.deep {
-    margin-left: 18px;
-  }
-
   .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-  }
-
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 4px 2px 8px;
-    border-radius: var(--radius-chip);
-    background: var(--bg-hover);
-    color: var(--text-primary);
-    font-size: var(--font-size-sm);
-  }
-
-  .chip-remove {
-    display: grid;
-    place-items: center;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-  }
-
-  .chip-remove:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-  }
-
-  .chip-remove:focus-visible {
-    outline: var(--focus-outline);
+    gap: var(--space-6);
+    margin-top: var(--space-6);
   }
 
   .preview {
