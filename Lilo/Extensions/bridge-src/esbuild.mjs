@@ -80,7 +80,8 @@ const lazyGapModules = {
   setup(build) {
     build.onLoad({ filter: /[/\\]shared[/\\]gap-modules\.ts$/ }, (args) => {
       if (args.path !== gapModulesFile) return undefined;
-      const imports = [...coreImports].map(([file, names]) => [file, [...names].join(', ')]);
+      // Sorted: esbuild loads the core modules concurrently, so their insertion order varies between builds.
+      const imports = [...coreImports].sort(([a], [b]) => (a < b ? -1 : 1)).map(([file, names]) => [file, [...names].sort().join(', ')]);
       return {
         contents: `${imports.map(([file, names]) => `import { ${names} } from ${JSON.stringify(file)};`).join('\n')}
 const core = { ${imports.map(([file, names]) => `${JSON.stringify(coreKey(file))}: { ${names} }`).join(', ')} };
