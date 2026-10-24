@@ -50,8 +50,12 @@ enum NativeMessaging {
     }
 
     /// Directories searched for `<name>.json`, in priority order: Lilo's own first, then the
-    /// browsers whose hosts (password managers, etc.) are commonly installed system-wide.
+    /// browsers whose hosts (password managers, etc.) are commonly installed system-wide. An isolated
+    /// data folder (LILO_APP_SUPPORT_DIR) searches only its own, so tests never start the Mac's hosts.
     private static let manifestDirectories: [String] = {
+        if let isolated = ProcessInfo.processInfo.environment["LILO_APP_SUPPORT_DIR"], !isolated.isEmpty {
+            return ["\(isolated)/NativeMessagingHosts"]
+        }
         let appSupport = "\(NSHomeDirectory())/Library/Application Support"
         return [
             "\(appSupport)/Lilo/NativeMessagingHosts",

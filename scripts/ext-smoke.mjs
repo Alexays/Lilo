@@ -1,7 +1,8 @@
 // Usage: node scripts/ext-smoke.mjs [--top 100] [--ids a,b] [--shards 6]. Exits non-zero on a regression.
 // Each shard takes every shards-th extension so slow ones spread evenly; past six, shards only load the machine.
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -35,15 +36,19 @@ const shards = await Promise.all(Array.from({ length: shardCount }, (_, shard) =
     ...shard === 0 ? ['-only-testing:LiloTests/RealExtensionSmokeTests/testProbeReportsEveryDeclaredNamespaceComplete',
       '-only-testing:LiloTests/RealExtensionSmokeTests/testStoreExtensionFeaturesWorkOnALocalPage'] : []];
   const log = join(out, `shard-${shard}.log`);
+  // An isolated data folder keeps the extensions off the native hosts installed on this Mac. In the
+  // temporary folder, as the agent socket inside it must fit a socket path.
+  const support = mkdtempSync(join(tmpdir(), 'lilo-smoke-'));
   const child = spawn('xcodebuild', ['test-without-building', ...xcodebuild, ...tests, '-resultBundlePath', join(out, `shard-${shard}.xcresult`)], {
     cwd: root,
-    env: { ...process.env, TEST_RUNNER_LILO_SMOKE_IDS: ids.join(','), TEST_RUNNER_LILO_SMOKE_REPORT: report },
+    env: { ...process.env, TEST_RUNNER_LILO_SMOKE_IDS: ids.join(','), TEST_RUNNER_LILO_SMOKE_REPORT: report, TEST_RUNNER_LILO_APP_SUPPORT_DIR: support },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const output = [];
   child.stdout.on('data', (chunk) => output.push(chunk));
   child.stderr.on('data', (chunk) => output.push(chunk));
   child.on('close', (status) => {
+    rmSync(support, { recursive: true, force: true });
     writeFileSync(log, Buffer.concat(output));
     let results = [];
     try { results = readFileSync(report, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch { /* none written */ }
