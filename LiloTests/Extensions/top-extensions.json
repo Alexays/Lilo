@@ -1,0 +1,2506 @@
+{
+ "measured": "2026-10-19",
+ "source": "Chrome Web Store user counts: the 500 most used of every store category's first 1000 extensions and of those their store pages relate (make top-extensions)",
+ "extensions": [
+  {
+   "name": "Adobe Acrobat: PDF edit, convert, sign tools",
+   "id": "efaidnbmnnnibpcajpcglclefindmkaj",
+   "users": 347000000
+  },
+  {
+   "name": "McAfee® WebAdvisor",
+   "id": "fheoggkfdfchfphceeifdbepaooicaho",
+   "users": 165000000
+  },
+  {
+   "name": "迅雷下载支持",
+   "id": "ncennffkjdiamlpmcbajkmaiiiddgioo",
+   "users": 86000000
+  },
+  {
+   "name": "AdBlock — block ads across the web",
+   "id": "gighmmpiobklfepjocnamgkkbiglidom",
+   "users": 65000000
+  },
+  {
+   "name": "Chrome Remote Desktop",
+   "id": "inomeogfingihgjfjlpeplalcfajhgai",
+   "users": 41000000
+  },
+  {
+   "name": "Grammarly: AI Writing Assistant and Grammar Checker App",
+   "id": "kbfnbcaeplbcioakkpcpgfkobkghlhen",
+   "users": 41000000
+  },
+  {
+   "name": "Adblock Plus - free ad blocker",
+   "id": "cfhdojbkjhnklbpkdaibdccddilifddb",
+   "users": 40000000
+  },
+  {
+   "name": "Google Translate",
+   "id": "aapbdbdomjkkjkaonfhkkikfgjllcleb",
+   "users": 38000000
+  },
+  {
+   "name": "Microsoft Single Sign On",
+   "id": "ppnbnpeolgkicgegkbkbjmhlideopiji",
+   "users": 36000000
+  },
+  {
+   "name": "Cisco Webex Extension",
+   "id": "jlhmfgmfgeifomenelglieieghnjghma",
+   "users": 22000000
+  },
+  {
+   "name": "uBlock Origin Lite",
+   "id": "ddkjiahejlhfcafbddmgiahcphecmpfh",
+   "users": 21000000
+  },
+  {
+   "name": "360 Internet Protection",
+   "id": "glcimepnljoholdmjchkloafkggfoijh",
+   "users": 20000000
+  },
+  {
+   "name": "Claude",
+   "id": "fcoeoabgfenejglbffodgkkbkcdhcgfn",
+   "users": 19000000
+  },
+  {
+   "name": "AdGuard AdBlocker",
+   "id": "bgnkhhnnamicmpeenaelnjfhikgbkllg",
+   "users": 17000000
+  },
+  {
+   "name": "VPN for Chrome: NordVPN proxy protection",
+   "id": "fjoaledfpmneenckfbpdfhkmimnjocfa",
+   "users": 15000000
+  },
+  {
+   "name": "Free VPN for Chrome - VPN Proxy VeePN",
+   "id": "majdfhpaihoncoakbjgbdhglocklcgno",
+   "users": 15000000
+  },
+  {
+   "name": "Honey: Automated Coupons & Rewards",
+   "id": "bmnlcjabgnpnenekpadlanbbkooimhnj",
+   "users": 13000000
+  },
+  {
+   "name": "Tampermonkey",
+   "id": "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+   "users": 12000000
+  },
+  {
+   "name": "Malwarebytes Browser Guard",
+   "id": "ihcjicgdanjaechkgeegckofjjedodee",
+   "users": 12000000
+  },
+  {
+   "name": "Adblock for Youtube™",
+   "id": "cmedhionkhpnakcndndgjdbohmhepckk",
+   "users": 11000000
+  },
+  {
+   "name": "GoFullPage - Full Page Screen Capture",
+   "id": "fdpohaocaechififmbbbbbknoalclacl",
+   "users": 11000000
+  },
+  {
+   "name": "Online Security",
+   "id": "llbcnfanfmjhpedaedhbcnpgeepdnnok",
+   "users": 11000000
+  },
+  {
+   "name": "Endpoint Verification",
+   "id": "callobklhcbilhphinckomhgkigmfocg",
+   "users": 10000000
+  },
+  {
+   "name": "Netflix Party is now Teleparty",
+   "id": "oocalimimngaihdkbihfgmpkcpnmlaoa",
+   "users": 10000000
+  },
+  {
+   "name": "Authenticator",
+   "id": "bhghoamapcdpbohphigoooaddinpkbai",
+   "users": 9000000
+  },
+  {
+   "name": "Foxit PDF Creator",
+   "id": "cifnddnffldieaamihfkhkdgnbhfmaci",
+   "users": 9000000
+  },
+  {
+   "name": "NordPass® Password Manager & Digital Vault",
+   "id": "eiaeiblijfjekdanodkjadfinkhbfgcd",
+   "users": 9000000
+  },
+  {
+   "name": "Zotero Connector",
+   "id": "ekhagklcjbdpajgpjgmbionohlpdbjgc",
+   "users": 9000000
+  },
+  {
+   "name": "Free VPN for Chrome - VPN Proxy 1clickVPN",
+   "id": "fcfhplploccackoneaefokcmbjfbkenj",
+   "users": 9000000
+  },
+  {
+   "name": "Screencastify - Screen Video Recorder",
+   "id": "mmeijimgabbpbgpdklnllpncmdofkcpn",
+   "users": 9000000
+  },
+  {
+   "name": "Avira Password Manager",
+   "id": "caljgklbbfbcjjanaijlacgncafpegll",
+   "users": 8000000
+  },
+  {
+   "name": "touchenex 확장",
+   "id": "dncepekefegjiljlfbihljgogephdhph",
+   "users": 8000000
+  },
+  {
+   "name": "Avira Browser Safety",
+   "id": "flliilndjeohchalpbbcdekjklbdgfkk",
+   "users": 8000000
+  },
+  {
+   "name": "LastPass: Free Password Manager",
+   "id": "hdokiejnpimakedhajhdlcegeplioahd",
+   "users": 8000000
+  },
+  {
+   "name": "Zoom Chrome Extension",
+   "id": "kgjfgplpablkjnlkjmjdecgdpfankdle",
+   "users": 8000000
+  },
+  {
+   "name": "Loom – Screen Recorder & Screen Capture",
+   "id": "liecbddmkiiihnedobmlmillhodjkdmb",
+   "users": 8000000
+  },
+  {
+   "name": "Google Keep Chrome Extension",
+   "id": "lpcaedmchfhocbbapmcbpinfpgnhiddi",
+   "users": 8000000
+  },
+  {
+   "name": "Bitwarden Password Manager",
+   "id": "nngceckbapebfimnlniiiahkandclblb",
+   "users": 8000000
+  },
+  {
+   "name": "Browsec VPN - Free VPN for Chrome",
+   "id": "omghfjlpggmjjaagoclmmobgdodcjboh",
+   "users": 8000000
+  },
+  {
+   "name": "1Password – Password Manager",
+   "id": "aeblfdkhhhdcdjpifhhbdiojplfjncoa",
+   "users": 7000000
+  },
+  {
+   "name": "Dark Reader",
+   "id": "eimadpbcbfnmbkopoojfekhnkhdbieeh",
+   "users": 7000000
+  },
+  {
+   "name": "Urban VPN Proxy",
+   "id": "eppiocemhmnlbhjplcgkofciiegomcon",
+   "users": 7000000
+  },
+  {
+   "name": "EndNote Click",
+   "id": "fjgncogppolhfdpijihbpfmeohpaadpc",
+   "users": 7000000
+  },
+  {
+   "name": "iCloud Bookmarks",
+   "id": "fkepacicchenbjecpbpbclokcabebhah",
+   "users": 7000000
+  },
+  {
+   "name": "Save to Google Drive",
+   "id": "gmbmikajjgmnabiglmofipeabaddhgne",
+   "users": 7000000
+  },
+  {
+   "name": "ChatGPT",
+   "id": "hehggadaopoacecdllhhajmbjkdcmajg",
+   "users": 7000000
+  },
+  {
+   "name": "Volume Master",
+   "id": "jghecgabfgfdldnmbfkhmffcabddioke",
+   "users": 7000000
+  },
+  {
+   "name": "WPS PDF - Read, Edit, Fill, Convert, and AI Chat PDF with Ease",
+   "id": "kdpelmjpfafjppnhbloffcjpeomlnpah",
+   "users": 7000000
+  },
+  {
+   "name": "iCloud Passwords",
+   "id": "pejdijmoenmkgeppbflobdenhhabjlaj",
+   "users": 7000000
+  },
+  {
+   "name": "AnyDoc Translator - Translate Web and PDF",
+   "id": "aopddeflghjljihihabdclejbojaomaf",
+   "users": 6000000
+  },
+  {
+   "name": "Microsoft Bing Homepage & Search for Chrome",
+   "id": "ddojnmkongaimkdddgmcccldlfhokcfb",
+   "users": 6000000
+  },
+  {
+   "name": "React Developer Tools",
+   "id": "fmkadmapgofadopljbjfkapdkoienihi",
+   "users": 6000000
+  },
+  {
+   "name": "Save to Pinterest",
+   "id": "gpdjojdkbbmdfjfahjcgigfpmkopogic",
+   "users": 6000000
+  },
+  {
+   "name": "Quillbot: AI Writing Assistant with Humanizer, Paraphraser & AI Detector",
+   "id": "iidnbdjijdkbmajdffnidomddglmieko",
+   "users": 6000000
+  },
+  {
+   "name": "Video Download Helper",
+   "id": "lmjnegcaeklhafolokijcfjliaokphfk",
+   "users": 6000000
+  },
+  {
+   "name": "Shazam: Find song names from your browser",
+   "id": "mmioliijnhnoblpgimnlajmefafdfilb",
+   "users": 6000000
+  },
+  {
+   "name": "Custom Cursor for Chrome™",
+   "id": "ogdlpmhglpejoiomcodnpjnfgcpmgale",
+   "users": 6000000
+  },
+  {
+   "name": "Norton Password Manager",
+   "id": "admmjipmmciaobhojoghlmleefbicajg",
+   "users": 5000000
+  },
+  {
+   "name": "Sider: Chat with all AI: GPT-5, Claude, DeepSeek, Gemini, Grok",
+   "id": "difoiogjjojoaoomphldepapgpbgkhkb",
+   "users": 5000000
+  },
+  {
+   "name": "Video Downloader Professional",
+   "id": "elicpjhcidhpjomhibiffojpinpmmpil",
+   "users": 5000000
+  },
+  {
+   "name": "Return YouTube Dislike",
+   "id": "gebbhagfogifgggkldgodflihgfeippi",
+   "users": 5000000
+  },
+  {
+   "name": "Okta Browser Plugin",
+   "id": "glnpjglilkicbckjpbgcfkogebgllemb",
+   "users": 5000000
+  },
+  {
+   "name": "Avast Online Security & Privacy",
+   "id": "gomekmidlodglbbmalcneegieacbdmki",
+   "users": 5000000
+  },
+  {
+   "name": "Read Aloud: A Text to Speech Voice Reader",
+   "id": "hdhinadidafjejdhmfkjgnolgimiaplp",
+   "users": 5000000
+  },
+  {
+   "name": "Norton Safe Search",
+   "id": "mpnlkmlkncncpgnnkmkgoobfpnjmblnk",
+   "users": 5000000
+  },
+  {
+   "name": "Keepa - Amazon Price Tracker",
+   "id": "neebplgakaahbhdphmkckjjcegoiijjo",
+   "users": 5000000
+  },
+  {
+   "name": "네이버 동영상 플러그인",
+   "id": "ooadnieabchijkibjpeieeliohjidnjj",
+   "users": 5000000
+  },
+  {
+   "name": "ColorZilla",
+   "id": "bhlhnicpbhignbdhedgjhgdocnmhomnp",
+   "users": 4000000
+  },
+  {
+   "name": "DuckDuckGo Search & Tracker Protection",
+   "id": "bkdgflcldnnnapblkhphbgpggdiikppg",
+   "users": 4000000
+  },
+  {
+   "name": "DeepL: translate and write with AI",
+   "id": "cofdbpoegempjloogbagkncekinflcnj",
+   "users": 4000000
+  },
+  {
+   "name": "Web PKI",
+   "id": "dcngeagmmhegagicpcmpinaoklddcgon",
+   "users": 4000000
+  },
+  {
+   "name": "Hola VPN - Your Website Unblocker",
+   "id": "gkojfkhlekighikafcpjkiklfbnlmeio",
+   "users": 4000000
+  },
+  {
+   "name": "BTRoblox - Making Roblox Better",
+   "id": "hbkpclpemjeibhioopcebchdmohaieln",
+   "users": 4000000
+  },
+  {
+   "name": "IE Tab",
+   "id": "hehijbfgiekmjfkfjpbkbammjbdenadd",
+   "users": 4000000
+  },
+  {
+   "name": "Trellix Endpoint Security Web Control",
+   "id": "jjkchpdmjjdmalgembblgafllbpcjlei",
+   "users": 4000000
+  },
+  {
+   "name": "Ad Blocker: Stands AdBlocker",
+   "id": "lgblnfidahcdcjddiepkckcfdhpknnjh",
+   "users": 4000000
+  },
+  {
+   "name": "Google Input Tools",
+   "id": "mclkkofklkfljcocdinagocijmpgbhab",
+   "users": 4000000
+  },
+  {
+   "name": "Awesome Screen Recorder & Screenshot",
+   "id": "nlipoenfbbikpbjkfpfillcgkoblgpmj",
+   "users": 4000000
+  },
+  {
+   "name": "LINE",
+   "id": "ophjlpahpchlmihnnnihgmmeilfjmjjc",
+   "users": 4000000
+  },
+  {
+   "name": "vidIQ Vision for YouTube",
+   "id": "pachckjkecffpdphbpmfolblodfkgbhl",
+   "users": 4000000
+  },
+  {
+   "name": "RoPro - Enhance Your Roblox Experience",
+   "id": "adbacgifemdbhdkfppmeilbgppmhaobf",
+   "users": 3000000
+  },
+  {
+   "name": "Free Download Manager",
+   "id": "ahmpjcflkgiildlgicmcieglgoilbfdp",
+   "users": 3000000
+  },
+  {
+   "name": "BetterTTV",
+   "id": "ajopnjidmegmdimjlfnijceegpefgped",
+   "users": 3000000
+  },
+  {
+   "name": "7TV",
+   "id": "ammjkodgmmoknidbanneddgankgfejfh",
+   "users": 3000000
+  },
+  {
+   "name": "Touch VPN - Secure and unlimited VPN proxy",
+   "id": "bihmplhobchoageeokmgbdihknkjbknd",
+   "users": 3000000
+  },
+  {
+   "name": "Microsoft Defender Browser Protection",
+   "id": "bkbeeeffjjeopflfhgeknacdieedcoml",
+   "users": 3000000
+  },
+  {
+   "name": "Immersive Translate: AI Web, PDF & Video Translator",
+   "id": "bpoadfkcbjbfhfodiogcnhhhpibjhbnh",
+   "users": 3000000
+  },
+  {
+   "name": "Mendeley Web Importer",
+   "id": "dagcmkpagjlhakfdhnbomgmjdpkdklff",
+   "users": 3000000
+  },
+  {
+   "name": "Volume Booster",
+   "id": "ejkiikneibegknkgimmihdpcbcedgmpo",
+   "users": 3000000
+  },
+  {
+   "name": "Microsoft Bing Search with Rewards",
+   "id": "fbgcedjacmlbgleddnoacbnijgmiolem",
+   "users": 3000000
+  },
+  {
+   "name": "Meta Ads Data Advisor",
+   "id": "fdgfkebogiimcoedlicjlajpkdmockpc",
+   "users": 3000000
+  },
+  {
+   "name": "Wappalyzer - Technology profiler",
+   "id": "gppongmhjkpfnbhagpmjfkannfbllamg",
+   "users": 3000000
+  },
+  {
+   "name": "WhatFont",
+   "id": "jabopobgcpjmedljpbcaablpmlmfcogm",
+   "users": 3000000
+  },
+  {
+   "name": "Tag Assistant",
+   "id": "kejbdjndbnbjgmefkgdddjlbokphdefk",
+   "users": 3000000
+  },
+  {
+   "name": "Google Scholar Button",
+   "id": "ldipcbpaocekfooobnbcddclnhejkcpn",
+   "users": 3000000
+  },
+  {
+   "name": "Take Webpage Screenshots Entirely - FireShot",
+   "id": "mcbpblocgmgfnpjjppndjkmgjaogfceg",
+   "users": 3000000
+  },
+  {
+   "name": "Coupert - Automatic Coupon Finder & Cash Back",
+   "id": "mfidniedemcgceagapgdekdbmanojomk",
+   "users": 3000000
+  },
+  {
+   "name": "Google Dictionary (by Google)",
+   "id": "mgijmajocgfcbeboacabfgobmjgjcoja",
+   "users": 3000000
+  },
+  {
+   "name": "Mailtrack® – Email Tracker for Gmail",
+   "id": "ndnaehgpjlnokgebbaldlmgkapkpjkkb",
+   "users": 3000000
+  },
+  {
+   "name": "Video Speed Controller",
+   "id": "nffaoalbilbmmfgbnbgppjihopabppdk",
+   "users": 3000000
+  },
+  {
+   "name": "Sound Booster - increase volume up",
+   "id": "nmigaijibiabddkkmjhlehchpmgbokfj",
+   "users": 3000000
+  },
+  {
+   "name": "Monica: All-In-One AI Assist & Smartest  AI Agent",
+   "id": "ofpnmcalabcbjgholdjcjblkibolbppb",
+   "users": 3000000
+  },
+  {
+   "name": "Smallpdf—Edit, Convert, Compress, & AI Summarize PDF",
+   "id": "ohfgljdgelakfkefopgklcohadegdpjf",
+   "users": 3000000
+  },
+  {
+   "name": "Image downloader - Imageye",
+   "id": "agionbommeaifngbhincahgmoflcikhm",
+   "users": 2000000
+  },
+  {
+   "name": "Free VPN Proxy - 1VPN",
+   "id": "akcocjjpkmlniicdeemdceeajlmoabhg",
+   "users": 2000000
+  },
+  {
+   "name": "Web Signer",
+   "id": "bbafmabaelnnkondpfpjmdklbmfnbmol",
+   "users": 2000000
+  },
+  {
+   "name": "JSON Formatter",
+   "id": "bcjindcccaagfpapjjmafapmmgkkhgoa",
+   "users": 2000000
+  },
+  {
+   "name": "Bitmoji",
+   "id": "bfgdeiadkckfbkeigkoncpdieiiefpig",
+   "users": 2000000
+  },
+  {
+   "name": "Keeper® Password Manager & Digital Vault",
+   "id": "bfogiafebfohielmmehodmfbbebbbpei",
+   "users": 2000000
+  },
+  {
+   "name": "Pop up blocker for Chrome™ - Poper Blocker",
+   "id": "bkkbcggnhapdmkeljlodobbkopceiche",
+   "users": 2000000
+  },
+  {
+   "name": "OneTab",
+   "id": "chphlpgkkbolifaimnlloiipkdnihall",
+   "users": 2000000
+  },
+  {
+   "name": "BetterCampus (prev. BetterCanvas)",
+   "id": "cndibmoanboadcifjkjbdpjgfedanolh",
+   "users": 2000000
+  },
+  {
+   "name": "Image Downloader",
+   "id": "cnpniohnfphhjihaiiggeabnkjhpaldj",
+   "users": 2000000
+  },
+  {
+   "name": "Google Scholar PDF Reader",
+   "id": "dahenjhkoodjbpjheillcadbppiidmhp",
+   "users": 2000000
+  },
+  {
+   "name": "Dark Mode",
+   "id": "dmghijelimhndkbmpgbldicpogfkceaj",
+   "users": 2000000
+  },
+  {
+   "name": "WA Web Plus by Elbruz Technologies",
+   "id": "ekcgkejcjdcmonfpmnljobemcbpnkamh",
+   "users": 2000000
+  },
+  {
+   "name": "OrangeMonkey",
+   "id": "ekmeppjgajofkpiofbebgcbohbmfldaf",
+   "users": 2000000
+  },
+  {
+   "name": "マイナポータル",
+   "id": "fjjibalalngebiaophebgkkohaaggphf",
+   "users": 2000000
+  },
+  {
+   "name": "Stylish - Custom themes for any website",
+   "id": "fjnbnpbmkenffdnngjfgmeleoegfcffe",
+   "users": 2000000
+  },
+  {
+   "name": "My Apps Secure Sign-in Extension",
+   "id": "ggjhpefgjjfobnfoldnjipclpcfbgbhl",
+   "users": 2000000
+  },
+  {
+   "name": "Proton Pass: Free Password Manager",
+   "id": "ghmbeldphafepmbegfdlkpapadhbakde",
+   "users": 2000000
+  },
+  {
+   "name": "Free VPN For Chrome & Ad blocker — Planet VPN",
+   "id": "hipncndjamdcmphkgngojegjblibadbe",
+   "users": 2000000
+  },
+  {
+   "name": "Cookie-Editor",
+   "id": "hlkenndednhfkekhgcdicdfddnkalmdm",
+   "users": 2000000
+  },
+  {
+   "name": "Screen Recorder",
+   "id": "hniebljpgcogalllopnjokppmgbhaden",
+   "users": 2000000
+  },
+  {
+   "name": "Free VPN For Chrome - VPN Extension - Windscribe",
+   "id": "hnmpcagpplmpfojmgmnngilcnanddlhb",
+   "users": 2000000
+  },
+  {
+   "name": "Language Reactor",
+   "id": "hoombieeljmmljlkjmnheibnpciblicm",
+   "users": 2000000
+  },
+  {
+   "name": "YouBoost - VPN for YouTube. Unblock YouTube. VPN for browser",
+   "id": "jddgbeighonaipjikdnfdpiefhoomlae",
+   "users": 2000000
+  },
+  {
+   "name": "Pie Adblock - A Powerful Free Ad Blocker",
+   "id": "jpkfgepcmmchgfbjblnodjhldacghenp",
+   "users": 2000000
+  },
+  {
+   "name": "Proton VPN: Fast & Secure",
+   "id": "jplgfhpmjnbigmhklmmbgecoobifkmpa",
+   "users": 2000000
+  },
+  {
+   "name": "Momentum",
+   "id": "laookkfknpbbblfpciffpaejjkokdgca",
+   "users": 2000000
+  },
+  {
+   "name": "Google Mail Checker",
+   "id": "mihcahmgecmbnbcchbopgniflfhgnkff",
+   "users": 2000000
+  },
+  {
+   "name": "Ghostery AdBlocker for Privacy",
+   "id": "mlomiejdfkolichcflejclcbmpeaniij",
+   "users": 2000000
+  },
+  {
+   "name": "SponsorBlock for YouTube - Skip Sponsorships",
+   "id": "mnjggcdmjocbbbhaepdhchncahnbgone",
+   "users": 2000000
+  },
+  {
+   "name": "HID Credential Management Extension",
+   "id": "ncphcdigcdkjeagemagmchkgommoifjd",
+   "users": 2000000
+  },
+  {
+   "name": "YouTube Summary with ChatGPT & Claude",
+   "id": "nmmicjeknamkfloonkhhcjmomieiodli",
+   "users": 2000000
+  },
+  {
+   "name": "AdBlocker Ultimate",
+   "id": "ohahllgiabjaoigichmmfljhkcfikeof",
+   "users": 2000000
+  },
+  {
+   "name": "Scribe: AI Documentation, SOPs & Process Intelligence",
+   "id": "okfkdaglfjjjfefdcppliegebpoegaii",
+   "users": 2000000
+  },
+  {
+   "name": "AI Grammar Checker & Paraphraser – LanguageTool",
+   "id": "oldceeleldhonbafppcapldpdifcinji",
+   "users": 2000000
+  },
+  {
+   "name": "Visual Bookmarks",
+   "id": "pchfckkccldkbclgdepkaonamkignanh",
+   "users": 2000000
+  },
+  {
+   "name": "Evernote Web Clipper",
+   "id": "pioclpoplcdbaefihamjohnefbikjilc",
+   "users": 2000000
+  },
+  {
+   "name": "Device Recovery Utility",
+   "id": "pocpnlppkickgojjlmhdmidojbmbodfm",
+   "users": 2000000
+  },
+  {
+   "name": "Enhancer for YouTube™",
+   "id": "ponfpcnoihfmfllpaingbgckeeldkhle",
+   "users": 2000000
+  },
+  {
+   "name": "Easy Auto Refresh",
+   "id": "aabcgdmkeabbnleenpncegpcngjpnjkc",
+   "users": 1000000
+  },
+  {
+   "name": "Certisign WebSigner",
+   "id": "acfifjfajpekbmhmjppnmmjgmhjkildl",
+   "users": 1000000
+  },
+  {
+   "name": "My Doodle",
+   "id": "acnonhmkejidodnppipkffhfjbfiogha",
+   "users": 1000000
+  },
+  {
+   "name": "Surfshark Chrome VPN extension — fast, private, and free to start",
+   "id": "ailoabdmgclmfmhdagmlohpjlbpffblp",
+   "users": 1000000
+  },
+  {
+   "name": "SEOquake: On-Page SEO Checker",
+   "id": "akdgnmcogleenhbclghghlkkdndkjdjc",
+   "users": 1000000
+  },
+  {
+   "name": "h264ify",
+   "id": "aleakchihdccplidncghkekgioiakgal",
+   "users": 1000000
+  },
+  {
+   "name": "Apollo.io: Free B2B Phone Number & Email Finder",
+   "id": "alhgpfoeiimagjlnfekdhkjlkiomcapa",
+   "users": 1000000
+  },
+  {
+   "name": "Chat with all AI models (Gemini, Claude, DeepSeek…) & AI Agents | AITOPIA",
+   "id": "becfinhbfclcgokjlobojlnldbfillpf",
+   "users": 1000000
+  },
+  {
+   "name": "Web Developer",
+   "id": "bfbameneiokkgbdmiekhjnmfkcnldhhm",
+   "users": 1000000
+  },
+  {
+   "name": "Turn Off the Lights",
+   "id": "bfbmjmiodbnnpllbbbfblcplfjjepjdn",
+   "users": 1000000
+  },
+  {
+   "name": "Dualless",
+   "id": "bgdpkilkheacbboffppjgceiplijhfpd",
+   "users": 1000000
+  },
+  {
+   "name": "MEGA",
+   "id": "bigefpfhnfcobdlfbedofhhaibnlghod",
+   "users": 1000000
+  },
+  {
+   "name": "Keep Awake",
+   "id": "bijihlabcfdnabacffofojgmehjdielb",
+   "users": 1000000
+  },
+  {
+   "name": "SEO META in 1 CLICK",
+   "id": "bjogjfinolnhfhkbipphpdlldadpnmhc",
+   "users": 1000000
+  },
+  {
+   "name": "Tab Resize - split screen layouts",
+   "id": "bkpenclhmiealbebdopglffmfdiilejc",
+   "users": 1000000
+  },
+  {
+   "name": "Lighthouse",
+   "id": "blipmdconlkpinefehnmjammfjpmpbjk",
+   "users": 1000000
+  },
+  {
+   "name": "ChatbotsPlace: All-in-One AI Sidebar (ChatGPT, Claude & Gemini)",
+   "id": "cbapcdnkcgiajboppakkhjmdolbkinge",
+   "users": 1000000
+  },
+  {
+   "name": "Get cookies.txt LOCALLY",
+   "id": "cclelndahbckbenkjhflpdbgdldlbecc",
+   "users": 1000000
+  },
+  {
+   "name": "Bitdefender Web Sage",
+   "id": "cfnpidifppmenkapgihekkeednfoenal",
+   "users": 1000000
+  },
+  {
+   "name": "Watch2Gether",
+   "id": "cimpffimgeipdhnhjohpbehjkcdpjolg",
+   "users": 1000000
+  },
+  {
+   "name": "Mobile simulator - responsive testing tool",
+   "id": "ckejmhbmlajgoklhgbapkiccekfoccmk",
+   "users": 1000000
+  },
+  {
+   "name": "Stylus",
+   "id": "clngdbkpkpeebahjckkjfobafhncgmne",
+   "users": 1000000
+  },
+  {
+   "name": "Steam Inventory Helper",
+   "id": "cmeakgjggjdlcpncigglobpjbkabhmjl",
+   "users": 1000000
+  },
+  {
+   "name": "Obsidian Web Clipper",
+   "id": "cnjifjpddelmedmihgijeibhnjfabmlf",
+   "users": 1000000
+  },
+  {
+   "name": "MultiPassword — Password manager",
+   "id": "cnlhokffphohmfcddnibpohmkdfafdli",
+   "users": 1000000
+  },
+  {
+   "name": "Clear Cache",
+   "id": "cppjkneekbjaeellbfkmgnhonkkjfpdn",
+   "users": 1000000
+  },
+  {
+   "name": "ActivID CMS extension",
+   "id": "ddfoinleihmgpkhfmemkncgffilfahnm",
+   "users": 1000000
+  },
+  {
+   "name": "User-Agent Switcher for Chrome",
+   "id": "djflhoibgkdhkhhcedjiklpkjnoahfmg",
+   "users": 1000000
+  },
+  {
+   "name": "AHA Music - Song Finder for Browser",
+   "id": "dpacanjfikmhoddligfbehkpomnbgblf",
+   "users": 1000000
+  },
+  {
+   "name": "Session Buddy - Tab & Bookmark Manager",
+   "id": "edacconmaakjimmfgnblocblbcdcpbko",
+   "users": 1000000
+  },
+  {
+   "name": "Screenshot Tool - Screen Capture & Editor",
+   "id": "edlifbnjlicfpckhgjhflgkeeibhhcii",
+   "users": 1000000
+  },
+  {
+   "name": "Ecosia - The search engine that plants trees",
+   "id": "eedlgdlajadkbbjoobobefphmfkcchfk",
+   "users": 1000000
+  },
+  {
+   "name": "BlockSite Block Websites & Stay Focused",
+   "id": "eiimnmioipafcokbfikbljfdeojpcgbh",
+   "users": 1000000
+  },
+  {
+   "name": "Scribbr Citation Generator",
+   "id": "epbobagokhieoonfplomdklollconnkl",
+   "users": 1000000
+  },
+  {
+   "name": "uBlock",
+   "id": "epcnnfbjfcgphgdmggkamkmgojdagdnn",
+   "users": 1000000
+  },
+  {
+   "name": "FrankerFaceZ",
+   "id": "fadndhdgpmmaapbmfcknlfgcflmmmieb",
+   "users": 1000000
+  },
+  {
+   "name": "Dashlane — Password Manager",
+   "id": "fdjamakpfbbddfjaooikfcpapjohcfmg",
+   "users": 1000000
+  },
+  {
+   "name": "ExpressVPN: VPN & proxy browser extension",
+   "id": "fgddmllnllkalaagkghckoinaemmogpe",
+   "users": 1000000
+  },
+  {
+   "name": "Tactiq: AI note taker for Google Meet, Zoom and MS Teams",
+   "id": "fggkaccpbmombhnjkjokndojfgagejfb",
+   "users": 1000000
+  },
+  {
+   "name": "Google Analytics Opt-out Add-on (by Google)",
+   "id": "fllaojicojecljbmefodhfapmkghcbnh",
+   "users": 1000000
+  },
+  {
+   "name": "Click&Clean",
+   "id": "ghgabhipcejejjmhhchfonmamedcbeod",
+   "users": 1000000
+  },
+  {
+   "name": "Shimeji Browser Extension",
+   "id": "gohjpllcolmccldfdggmamodembldgpc",
+   "users": 1000000
+  },
+  {
+   "name": "OneNote Web Clipper",
+   "id": "gojbdfnpnhogfdgjbigejoaolejmgdhk",
+   "users": 1000000
+  },
+  {
+   "name": "Keywords Everywhere - Keyword Tool",
+   "id": "hbapdpeemoojbophdfndmlgdhppljgmp",
+   "users": 1000000
+  },
+  {
+   "name": "Klarna | Shop now, Pay Later",
+   "id": "hfapbcheiepjppjbnkphkmegjlipojba",
+   "users": 1000000
+  },
+  {
+   "name": "Auto Refresh Plus | Page Monitor",
+   "id": "hgeljhfekpckiiplhkigfehkdpldcggm",
+   "users": 1000000
+  },
+  {
+   "name": "Video Downloader Plus",
+   "id": "hkdmdpdhfaamhgaojpelccmeehpfljgf",
+   "users": 1000000
+  },
+  {
+   "name": "Eye Dropper",
+   "id": "hmdcmlfkchdmnmnmheododdhjedfccka",
+   "users": 1000000
+  },
+  {
+   "name": "Google Meet Enhanced Experience",
+   "id": "hodiladlefdpcbemnbbcpclbmknkiaem",
+   "users": 1000000
+  },
+  {
+   "name": "Similarweb - Website Traffic, AI Traffic & SEO Checker",
+   "id": "hoklmmgfnpapgjgcpechhaamimifchmp",
+   "users": 1000000
+  },
+  {
+   "name": "Boxel Rebound",
+   "id": "iginnfkhmmfhlkagcmpgofnjhanpmklb",
+   "users": 1000000
+  },
+  {
+   "name": "Screen Recorder & Screenshot App for Chrome | Scrnli",
+   "id": "ijejnggjjphlenbhmjhhgcdpehhacaal",
+   "users": 1000000
+  },
+  {
+   "name": "Stream Recorder - HLS & m3u8 Video Downloader",
+   "id": "iogidnfllpdhagebkblkgbfijkbkjdmm",
+   "users": 1000000
+  },
+  {
+   "name": "Transpose: pitch ▸ speed ▸ loop",
+   "id": "ioimlbgefgadofblnajllknopjboejda",
+   "users": 1000000
+  },
+  {
+   "name": "Unpaywall",
+   "id": "iplffkdpngmdjhlpjmppncnlhomiipha",
+   "users": 1000000
+  },
+  {
+   "name": "Free VPN Proxy - VPN for Chrome uVPN",
+   "id": "jaoafpkngncfpfggjefnekilbkcpjdgp",
+   "users": 1000000
+  },
+  {
+   "name": "Privacy Extension For WhatsApp Web",
+   "id": "jbojhlhhggfmmkpefknmbdhlaghehini",
+   "users": 1000000
+  },
+  {
+   "name": "MSN + Bing for Chrome",
+   "id": "jhikancdgcieieaapcjmbpjflikjgkpn",
+   "users": 1000000
+  },
+  {
+   "name": "Violentmonkey",
+   "id": "jinjaccalgkegednnccohejagnlnfdag",
+   "users": 1000000
+  },
+  {
+   "name": "CSFloat Market Checker",
+   "id": "jjicbefpemnphinccgikpdaagjebbnhg",
+   "users": 1000000
+  },
+  {
+   "name": "Tasks for Canvas – now supporting Blackboard, D2L Brightspace",
+   "id": "kabafodfnabokkkddjbnkgbcbmipdlmb",
+   "users": 1000000
+  },
+  {
+   "name": "Reddit Enhancement Suite",
+   "id": "kbmfpngjjgdllneeigpgjifpgocmfgmb",
+   "users": 1000000
+  },
+  {
+   "name": "Jitsi Meetings",
+   "id": "kglhbbefdnlheedjiejgomgmfplipfeb",
+   "users": 1000000
+  },
+  {
+   "name": "Unhook - Remove YouTube Recommended & Shorts",
+   "id": "khncfooichmfjbepaaaebmommgaepoid",
+   "users": 1000000
+  },
+  {
+   "name": "CRXLauncher",
+   "id": "kiilhncajadbgbmdbdcopdpnmdhlbdle",
+   "users": 1000000
+  },
+  {
+   "name": "Notion Web Clipper",
+   "id": "knheggckgoiihginacbkhaalnibhilkk",
+   "users": 1000000
+  },
+  {
+   "name": "NaturalReader - AI Text to Speech",
+   "id": "kohfgcgbkjodfcfkcackpagifgbcmimk",
+   "users": 1000000
+  },
+  {
+   "name": "Speechify — Text to Speech",
+   "id": "ljflmlehinmoeknoonhibbjpldiijjmm",
+   "users": 1000000
+  },
+  {
+   "name": "Scener",
+   "id": "lkhjgdkpibcepflmlgahofcmeagjmecc",
+   "users": 1000000
+  },
+  {
+   "name": "LibKey Nomad",
+   "id": "lkoeejijapdihgbegpljiehpnlkadljb",
+   "users": 1000000
+  },
+  {
+   "name": "Antidote Connector",
+   "id": "lmbopdiikkamfphhgcckcjhojnokgfeo",
+   "users": 1000000
+  },
+  {
+   "name": "Redux DevTools",
+   "id": "lmhkpmbekcpmknklioeibfkpmmfibljd",
+   "users": 1000000
+  },
+  {
+   "name": "Free VPN & Proxy For Chrome - VPNLY",
+   "id": "lneaocagcijjdpkcabeanfpdbmapcjjg",
+   "users": 1000000
+  },
+  {
+   "name": "Cashback service LetyShops",
+   "id": "lphicbbhfmllgmomkkhjfkpbdlncafbn",
+   "users": 1000000
+  },
+  {
+   "name": "Browser Security Plus",
+   "id": "mhkgegcmcapcgmnnloigolapjkajgfmd",
+   "users": 1000000
+  },
+  {
+   "name": "TubeBuddy for YouTube™",
+   "id": "mhkhmbddkmdggbhaaaodilponhnccicb",
+   "users": 1000000
+  },
+  {
+   "name": "Ace Script",
+   "id": "mjbepbhonbojpoaenhckjocchgfiaofo",
+   "users": 1000000
+  },
+  {
+   "name": "UltraSurf Security, Privacy & Freedom VPN",
+   "id": "mjnbclmflcpookeapghfhapeffmpodij",
+   "users": 1000000
+  },
+  {
+   "name": "Repeek (formerly FACEIT Enhancer)",
+   "id": "mokknliiomknodkdmpcellamkopbdmao",
+   "users": 1000000
+  },
+  {
+   "name": "Vue.js devtools",
+   "id": "nhdogjmejiglipccpnnnanhbledajbpd",
+   "users": 1000000
+  },
+  {
+   "name": "Video Downloader PLUS",
+   "id": "njgehaondchbmjmajphnhlojfnbfokng",
+   "users": 1000000
+  },
+  {
+   "name": "Helium 10 for Amazon Sellers, Influencers, and Walmart Sellers",
+   "id": "njmehopjdpcckochcggncklnlmikcbnb",
+   "users": 1000000
+  },
+  {
+   "name": "Hotspot Shield Free VPN Proxy - Unlimited VPN",
+   "id": "nlbejmccbhkncgokjcmghpfloaajcffj",
+   "users": 1000000
+  },
+  {
+   "name": "Wordtune: AI Paraphrasing and Grammar Tool",
+   "id": "nllcnknpjnininklegdoijpljgdjkijc",
+   "users": 1000000
+  },
+  {
+   "name": "PDF Viewer",
+   "id": "oemmndcbldboiebfnladdacbdfmadadm",
+   "users": 1000000
+  },
+  {
+   "name": "Checker Plus for Gmail™",
+   "id": "oeopbcgkkoapgobdbedcemjljbihmemj",
+   "users": 1000000
+  },
+  {
+   "name": "Instant Data Scraper",
+   "id": "ofaokhiedipichpaobibbnahnkdoiiah",
+   "users": 1000000
+  },
+  {
+   "name": "PrintFriendly: Print, PDF Editor & Full Page Screenshot",
+   "id": "ohlencieiipommannpdfcmfdpjjmeolj",
+   "users": 1000000
+  },
+  {
+   "name": "HubSpot Sales",
+   "id": "oiiaigjnkhngdbnoookogelabohpglmd",
+   "users": 1000000
+  },
+  {
+   "name": "The QR Code Generator",
+   "id": "oijdcdmnjjgnnhgljmhkjlablaejfeeb",
+   "users": 1000000
+  },
+  {
+   "name": "AIPRM for ChatGPT",
+   "id": "ojnbohmppadfgpejeebfnmnknjdlckgj",
+   "users": 1000000
+  },
+  {
+   "name": "Scopus Document Download Manager",
+   "id": "ojplelelocihfchkdaebocpankipadmp",
+   "users": 1000000
+  },
+  {
+   "name": "Buyhatke: Price History & Tracker, Spend Lens",
+   "id": "ojplmecpdpgccookcobabopnaifgidhf",
+   "users": 1000000
+  },
+  {
+   "name": "TunnelBear VPN",
+   "id": "omdakjcmkglenbhjadbccaookpfjihpa",
+   "users": 1000000
+  },
+  {
+   "name": "Adding Furigana Function - Sateraito Office",
+   "id": "ondlbgninleaekgfkbbaloinfojpcmdn",
+   "users": 1000000
+  },
+  {
+   "name": "SetupVPN - Lifetime Free VPN",
+   "id": "oofgbpoabipfcfjapgnbbjjaenockbdp",
+   "users": 1000000
+  },
+  {
+   "name": "Ambient light for YouTube™",
+   "id": "paponcgjfojgemddooebbgniglhkajkj",
+   "users": 1000000
+  },
+  {
+   "name": "Brisk Teaching - AI that Works Where Teachers Work",
+   "id": "pcblbflgdkdfdjpjifeppkljdnaekohj",
+   "users": 1000000
+  },
+  {
+   "name": "Unblock Youku - 海外华人回国追剧听歌加速器 - 云界 VPN",
+   "id": "pdnfnkhpgegpcingjbfihlkjeighnddk",
+   "users": 1000000
+  },
+  {
+   "name": "MyBib: Free Citation Generator",
+   "id": "phidhnmbkbkbkbknhldmpmnacgicphkf",
+   "users": 1000000
+  },
+  {
+   "name": "Privacy Badger",
+   "id": "pkehgijcmpdhfbdbbnkijodmdjhbjlgp",
+   "users": 1000000
+  },
+  {
+   "name": "Soda PDF Viewer: Edit, Convert, Compress PDF files",
+   "id": "achogidmbhmofkmpgamphmlebdhgkdhc",
+   "users": 900000
+  },
+  {
+   "name": "QR Code Generator",
+   "id": "afpbjjgbdimpioenaedcjgkaigggcdpp",
+   "users": 900000
+  },
+  {
+   "name": "Cute Cursors - Custom Cursor for Chrome™",
+   "id": "anflghppebdhjipndogapfagemgnlblh",
+   "users": 900000
+  },
+  {
+   "name": "Turbo VPN - Secure Free VPN Proxy",
+   "id": "bnlofglpdlboacepdieejiecfbfpmhlb",
+   "users": 900000
+  },
+  {
+   "name": "Merlin AI",
+   "id": "camppjleccjaphfdbohjdohecfnoikec",
+   "users": 900000
+  },
+  {
+   "name": "CertiPlugin Chrome",
+   "id": "chgajipdilbjolpgafadpdggjaeeapic",
+   "users": 900000
+  },
+  {
+   "name": "JSONVue",
+   "id": "chklaanhfefbnpoihckbnefhakgolnmc",
+   "users": 900000
+  },
+  {
+   "name": "SBlock - Super Ad Blocker",
+   "id": "cmdgdghfledlbkbciggfjblphiafkcgg",
+   "users": 900000
+  },
+  {
+   "name": "MozBar",
+   "id": "eakacpaijcpapndcfffdgphdiccmpknp",
+   "users": 900000
+  },
+  {
+   "name": "video downloader - CocoCut",
+   "id": "ekhbcipncbkfpkaianbjbcbmfehjflpf",
+   "users": 900000
+  },
+  {
+   "name": "Fonts Ninja",
+   "id": "eljapbgkmlngdpckoiiibecpemleclhh",
+   "users": 900000
+  },
+  {
+   "name": "CyberGhost VPN – Proxy for Chrome",
+   "id": "ffbkglfijbcbgblgflchnbphjdllaogb",
+   "users": 900000
+  },
+  {
+   "name": "I don't care about cookies",
+   "id": "fihnjjcciajhdojfnbdddfaoknhalnja",
+   "users": 900000
+  },
+  {
+   "name": "Total Adblock - Ad Blocker",
+   "id": "gekdekpbfehejjiecgonmgmepbdnaggp",
+   "users": 900000
+  },
+  {
+   "name": "Degreed Extension",
+   "id": "inehghpkjjjdgpnagcbogckbonilnidc",
+   "users": 900000
+  },
+  {
+   "name": "OneLogin for Google Chrome",
+   "id": "ioalpmibngobedobkmbhgmadaphocjdn",
+   "users": 900000
+  },
+  {
+   "name": "Secure Shell",
+   "id": "iodihamcpbpeioajjeobimgagajmlibd",
+   "users": 900000
+  },
+  {
+   "name": "Page Marker - Draw on Web",
+   "id": "jfiihjeimjpkpoaekpdpllpaeichkiod",
+   "users": 900000
+  },
+  {
+   "name": "Web Scraper - Free Web Scraping",
+   "id": "jnhgnonknehpejjnehehllkliplmbmhn",
+   "users": 900000
+  },
+  {
+   "name": "Forest: stay focused, be present",
+   "id": "kjacjjdnoddnpbbcjilcajfhhbdhkpgk",
+   "users": 900000
+  },
+  {
+   "name": "IBM Aspera Connect",
+   "id": "kpoecbkildamnnchnlgoboipnblgikpn",
+   "users": 900000
+  },
+  {
+   "name": "Google Docs Dark Mode",
+   "id": "lgjhepbpjcmfmjlpkkdjlbgomamkgonb",
+   "users": 900000
+  },
+  {
+   "name": "Boomerang for Gmail",
+   "id": "mdanidgdpmkimeiiojknlnekblgmpdll",
+   "users": 900000
+  },
+  {
+   "name": "FetchV - Video Downloader for m3u8 & hls",
+   "id": "nfmmmhanepmpifddlkkmihkalkoekpfd",
+   "users": 900000
+  },
+  {
+   "name": "ImTranslator: Translator, Dictionary, TTS",
+   "id": "noaijdpnepcgjemiklgfkcfbkokogabh",
+   "users": 900000
+  },
+  {
+   "name": "ColorPick Eyedropper",
+   "id": "ohcpnigalekghcmgcdcenkpelffpdolg",
+   "users": 900000
+  },
+  {
+   "name": "Proxy SwitchyOmega 3 (ZeroOmega)",
+   "id": "pfnededegaaopdmhkdmcofjmoldfiped",
+   "users": 900000
+  },
+  {
+   "name": "Allow Copy +",
+   "id": "ajhbdcgfhlhhmocddefknjjkejcfpbnj",
+   "users": 800000
+  },
+  {
+   "name": "eID Chrome Extension",
+   "id": "bkbdaodnaecdijpajecpncpdomgcoakc",
+   "users": 800000
+  },
+  {
+   "name": "Glean",
+   "id": "cfpdompphcacgpjfbonkdokgjhgabpij",
+   "users": 800000
+  },
+  {
+   "name": "Foxified",
+   "id": "cldmemdnllncchfahbcnjijheaolemfk",
+   "users": 800000
+  },
+  {
+   "name": "Color Picker for Chrome™",
+   "id": "clldacgmdnnanihiibdgemajcfkmfhia",
+   "users": 800000
+  },
+  {
+   "name": "WebCRX",
+   "id": "ddgilliopjknmglnpkegbjpoilgachlm",
+   "users": 800000
+  },
+  {
+   "name": "Smarty",
+   "id": "edjkecefjhobekadlkdkopkggdefpgfp",
+   "users": 800000
+  },
+  {
+   "name": "Kimi",
+   "id": "fldmhceldgbpfpkbgopacenieobmligc",
+   "users": 800000
+  },
+  {
+   "name": "The Camelizer",
+   "id": "ghnomdcacenbmilgjigehppbamfndblo",
+   "users": 800000
+  },
+  {
+   "name": "Sicoob | Internet banking",
+   "id": "gjbpjhlbcoeccolhmgcgamdepmcpekno",
+   "users": 800000
+  },
+  {
+   "name": "Text Blaze: Templates and Snippets",
+   "id": "idgadaccgipmpannjkmfddolnnhmeklj",
+   "users": 800000
+  },
+  {
+   "name": "cat-catch",
+   "id": "jfedfbgedapdagkghmgibemcoggfppbb",
+   "users": 800000
+  },
+  {
+   "name": "CrxMouse: Mouse Gestures",
+   "id": "jlgkpaicikihijadgifklkbpdajbkhjo",
+   "users": 800000
+  },
+  {
+   "name": "SteamDB",
+   "id": "kdbmhfkmnlmbkgbabkdealhhbfhlmmon",
+   "users": 800000
+  },
+  {
+   "name": "LoiLo Web Card",
+   "id": "kjafdcgbeaoamegadobmjdlllmlgfina",
+   "users": 800000
+  },
+  {
+   "name": "Adobe Photoshop",
+   "id": "kjchkpkjpiloipaonppkmepcbhcncedo",
+   "users": 800000
+  },
+  {
+   "name": "Window Resizer",
+   "id": "kkelicaakdanhinjdeammmilcgefonfh",
+   "users": 800000
+  },
+  {
+   "name": "QR Code Reader - Sateraito Office",
+   "id": "lfkmkidopioccceiemjmndppkadgbmid",
+   "users": 800000
+  },
+  {
+   "name": "Allow CORS: Access-Control-Allow-Origin",
+   "id": "lhobafahddgcelffkeicbaginigeejlf",
+   "users": 800000
+  },
+  {
+   "name": "RoGold - Level Up Roblox",
+   "id": "mafcicncghogpdpaieifglifaagndbni",
+   "users": 800000
+  },
+  {
+   "name": "Assinatura Digital no Navegador",
+   "id": "mbpaklahifpfndjiefdfjhmkefppocfm",
+   "users": 800000
+  },
+  {
+   "name": "Chrono Download Manager",
+   "id": "mciiogijehkdemklbdcbfkefimifhecn",
+   "users": 800000
+  },
+  {
+   "name": "KeePassXC-Browser",
+   "id": "oboonakemofpalcgghocfoadofidjkkk",
+   "users": 800000
+  },
+  {
+   "name": "Open Multiple URLs",
+   "id": "oifijhaokejakekmnjmphonojcfkpbbh",
+   "users": 800000
+  },
+  {
+   "name": "買い物ポケット",
+   "id": "pgmbeccjfkdbpdjfoldaahpfamjjafma",
+   "users": 800000
+  },
+  {
+   "name": "Custom Cursors for Chrome",
+   "id": "phfkifnjcmdcmljnnablahicoabkokbg",
+   "users": 800000
+  },
+  {
+   "name": "Postman Interceptor",
+   "id": "aicmkgpgakddgnaphhhpliifpcfhicfo",
+   "users": 700000
+  },
+  {
+   "name": "eJOY AI Dictionary",
+   "id": "amfojhdiedpdnlijjbhjnhokbnohfdfb",
+   "users": 700000
+  },
+  {
+   "name": "CRX Emulator",
+   "id": "bekkpoinfafbjglppgdobfdeckghdhlo",
+   "users": 700000
+  },
+  {
+   "name": "WOT: Website Security & Safety Checker",
+   "id": "bhmmomiinigofkjcapegjjndpbikblnp",
+   "users": 700000
+  },
+  {
+   "name": "Stacker - Falling tetra blocks!",
+   "id": "bnchicpgbdgahiecgofdabidjihblaff",
+   "users": 700000
+  },
+  {
+   "name": "Calendly Browser Extension",
+   "id": "cbhilkcodigmigfbnphipnnmamjfkipp",
+   "users": 700000
+  },
+  {
+   "name": "NeatDownloadManager Extension",
+   "id": "cpcifbdmkopohnnofedkjghjiclmhdah",
+   "users": 700000
+  },
+  {
+   "name": "Turbo Downloader for Instagram",
+   "id": "cpgaheeihidjmolbakklolchdplenjai",
+   "users": 700000
+  },
+  {
+   "name": "Screen Recorder for Google Chrome™",
+   "id": "eclbecdgdoahkliaijlpkigldlkojjdn",
+   "users": 700000
+  },
+  {
+   "name": "Scratch Addons",
+   "id": "fbeffbjdlemaoicjdapfpikkikjoneco",
+   "users": 700000
+  },
+  {
+   "name": "Tampermonkey BETA",
+   "id": "gcalenpjmijncebpfijmoaglllgpjagf",
+   "users": 700000
+  },
+  {
+   "name": "Cuponomia - Cupom e Cashback",
+   "id": "gidejehfgombmkfflghejpncblgfkagj",
+   "users": 700000
+  },
+  {
+   "name": "GNOME Shell integration",
+   "id": "gphhapmejobijbbhgpjhcjognlahblep",
+   "users": 700000
+  },
+  {
+   "name": "Hunter - Email Finder Extension",
+   "id": "hgmhmanijnjhaffoampdlllchpolkdnj",
+   "users": 700000
+  },
+  {
+   "name": "Douga Getter",
+   "id": "hhbcihapcmaemjinlbgafnjjihbdmjnf",
+   "users": 700000
+  },
+  {
+   "name": "WAVE Evaluation Tool",
+   "id": "jbbplnpkjmmeebjpijfedlgcdilocofh",
+   "users": 700000
+  },
+  {
+   "name": "Global Speed - Video Speed Control",
+   "id": "jpbjcnkcffbooppibceonlgknpkniiff",
+   "users": 700000
+  },
+  {
+   "name": "StayFocusd – Website Blocker & Focus Timer & Shorts Blocker",
+   "id": "laankejkbhbdhmipfmgcngdelahlfoji",
+   "users": 700000
+  },
+  {
+   "name": "html.to.design",
+   "id": "ldnheaepmnmbjjjahokphckbpgciiaed",
+   "users": 700000
+  },
+  {
+   "name": "MaxAI: Ask AI anything as you browse (GPT, Gemini, Claude, Grok, etc.)",
+   "id": "mhnlakgilnojmhinhkckjpncpbhabphi",
+   "users": 700000
+  },
+  {
+   "name": "SingleFile",
+   "id": "mpiodijhokgodhhofbcjdecpffjipkle",
+   "users": 700000
+  },
+  {
+   "name": "Hoxx VPN Proxy",
+   "id": "nbcojefnccbanplpoffopkoepjmhgdgh",
+   "users": 700000
+  },
+  {
+   "name": "Virtru Email Protection",
+   "id": "nemmanchfojaehgkbgcfmdiidbopakpp",
+   "users": 700000
+  },
+  {
+   "name": "Send from Gmail (by Google)",
+   "id": "pgphcomnlaojlmmcjmiddhdapjpbgeoc",
+   "users": 700000
+  },
+  {
+   "name": "Voice In - Voice Typing & Speech-to-Text Dictation",
+   "id": "pjnefijmagpdjfhhkpljicbbpicelgko",
+   "users": 700000
+  },
+  {
+   "name": "RoboForm Password Manager",
+   "id": "pnlccmojcmeohlpggmfnbbiapkmbliob",
+   "users": 700000
+  },
+  {
+   "name": "Streak CRM for Gmail",
+   "id": "pnnfemgpilpdaojpnkjdgfgbnnjojfik",
+   "users": 700000
+  },
+  {
+   "name": "Talend API Tester - Free Edition",
+   "id": "aejoelaoggembcahagimdiliamlcdmfm",
+   "users": 600000
+  },
+  {
+   "name": "TikTok Pixel Helper",
+   "id": "aelgobmabdmlfmiblddjfnjodalhidnn",
+   "users": 600000
+  },
+  {
+   "name": "Ultimate Car Driving Game",
+   "id": "aomkpefnllinimbhddlfhelelngakbbn",
+   "users": 600000
+  },
+  {
+   "name": "Keyword Surfer",
+   "id": "bafijghppfhdpldihckdcadbcobikaca",
+   "users": 600000
+  },
+  {
+   "name": "Earth View from Google Earth",
+   "id": "bhloflhklmhfpedakmangadcdofhnnoh",
+   "users": 600000
+  },
+  {
+   "name": "遊戲橘子擴充元件",
+   "id": "cgakmbkklpmijhckpolanjijghgfpeoa",
+   "users": 600000
+  },
+  {
+   "name": "Plasma Integration",
+   "id": "cimiefiiaegbelhefglklhhakcgmhkai",
+   "users": 600000
+  },
+  {
+   "name": "True Key™ by McAfee",
+   "id": "cpaibbcbodhimfnjnakiidgbpiehfgci",
+   "users": 600000
+  },
+  {
+   "name": "Vimium",
+   "id": "dbepggeogbaibhgnhhndojpepiihcmeb",
+   "users": 600000
+  },
+  {
+   "name": "ImageAssistant Batch Image Downloader",
+   "id": "dbjbempljhcmhlfpfacalomonjpalpko",
+   "users": 600000
+  },
+  {
+   "name": "Sumopaint - Online Image Editor",
+   "id": "dpgjihldbpodlmnjolekemlfbcajnmod",
+   "users": 600000
+  },
+  {
+   "name": "Copyfish 🐟 Free OCR Software",
+   "id": "eenjdnjldapjajjofmldgmkjaienebbj",
+   "users": 600000
+  },
+  {
+   "name": "Email Extract - Email Extractor Tool",
+   "id": "ejecpjcajdpbjbmlcojcohgenjngflac",
+   "users": 600000
+  },
+  {
+   "name": "Vimeo Record - Screen & Webcam Recorder",
+   "id": "ejfmffkmeigkphomnpabpdabfddeadcb",
+   "users": 600000
+  },
+  {
+   "name": "Translate for Chrome -Translator, Dictionary",
+   "id": "elpmkbbdldhoiggkjfpgibmjioncklbn",
+   "users": 600000
+  },
+  {
+   "name": "Music Equalizer & Bass Booster – Sound Enhancer for Chrome",
+   "id": "fedoeoceggohfajbhbadkfhgckjkieop",
+   "users": 600000
+  },
+  {
+   "name": "FoxyProxy",
+   "id": "gcknhkkoolaabfmlnjonogaaifnjlfnp",
+   "users": 600000
+  },
+  {
+   "name": "Sweezy Cursors ★ Custom Cursor for Chrome™",
+   "id": "gdcfjidbchfpojnfifkgghbamkdmbdaf",
+   "users": 600000
+  },
+  {
+   "name": "Ripple Tool",
+   "id": "gikbaopejleepnfocphkejjbgaifnico",
+   "users": 600000
+  },
+  {
+   "name": "Guardio Protection for Chrome",
+   "id": "gjfpmkejnolcfklaaddjnckanhhgegla",
+   "users": 600000
+  },
+  {
+   "name": "Salesforce Inspector Reloaded",
+   "id": "hpijlohoihegkfehhibggnkbjhoemldh",
+   "users": 600000
+  },
+  {
+   "name": "Netmirror Extension",
+   "id": "imeeoinlogcehkhfjcopabijecfobcod",
+   "users": 600000
+  },
+  {
+   "name": "Email Finder by ContactOut – Email Lookup Tool",
+   "id": "jjdemeiffadmmjhkbbpglgnlgeafomjo",
+   "users": 600000
+  },
+  {
+   "name": "Google Analytics Debugger",
+   "id": "jnkmfdileelhofjcijamephohjechhna",
+   "users": 600000
+  },
+  {
+   "name": "Google Voice (by Google)",
+   "id": "kcnhkahnjcbndmmehfkdnkjomaanaooo",
+   "users": 600000
+  },
+  {
+   "name": "Get Token Cookie",
+   "id": "naciaagbkifhpnoodlkhbejjldaiffcm",
+   "users": 600000
+  },
+  {
+   "name": "Hide Google AI Overviews",
+   "id": "neibhohkbmfjninidnaoacabkjonbahn",
+   "users": 600000
+  },
+  {
+   "name": "Lightning Autofill",
+   "id": "nlmmgnhgdeffjkdckmikfpnddkbbfkkk",
+   "users": 600000
+  },
+  {
+   "name": "Ubersuggest - SEO and Keyword Discovery",
+   "id": "nmpgaoofmjlimabncmnmnopjabbflegf",
+   "users": 600000
+  },
+  {
+   "name": "Cite This For Me: Web Citer",
+   "id": "nnnmhgkokpalnmbeighfomegjfkklkle",
+   "users": 600000
+  },
+  {
+   "name": "Read Aloud TTS: Text to Speech AI Voice Generator",
+   "id": "npdkkcjlmhcnnaoobfdjndibfkkhhdfn",
+   "users": 600000
+  },
+  {
+   "name": "edpuzzle",
+   "id": "oligonmocnihangdjlloenpndnniikol",
+   "users": 600000
+  },
+  {
+   "name": "Detailed SEO Extension",
+   "id": "pfjdepjjfjjahkjfpkcgfmfhmnakjfba",
+   "users": 600000
+  },
+  {
+   "name": "Equalizer for Chrome browser",
+   "id": "abikfbojmghmfjdjlbagiamkinbmbaic",
+   "users": 500000
+  },
+  {
+   "name": "Free VPN for Chrome - Troywell VPN",
+   "id": "adlpodnneegcnbophopdmhedicjbcgco",
+   "users": 500000
+  },
+  {
+   "name": "Glasp Web Highlighter: PDF & Web Highlight",
+   "id": "blillmbchncajnhkjfdnincfndboieik",
+   "users": 500000
+  },
+  {
+   "name": "Advanced Font Settings",
+   "id": "caclkomlalccbpcdllchkeecicepbmbm",
+   "users": 500000
+  },
+  {
+   "name": "Cloudpath Certificate Generator",
+   "id": "cbbhcllfnbkdobgnejfoajgfiooeifeb",
+   "users": 500000
+  },
+  {
+   "name": "Manus AI Browser Operator",
+   "id": "cecngibhkljoiafhjfmcgbmikfogdiko",
+   "users": 500000
+  },
+  {
+   "name": "Send to Kindle for Google Chrome™",
+   "id": "cgdjpilhipecahhcilnafpblkieebhea",
+   "users": 500000
+  },
+  {
+   "name": "Markdown Viewer",
+   "id": "ckkdlimhmcjmikdlpkmbgfkaikojcbjk",
+   "users": 500000
+  },
+  {
+   "name": "DragFree (Mouse Unblock+Char Count+Image Save+Capture)",
+   "id": "cnfngpgfjllafbghaimjcmailafcdhod",
+   "users": 500000
+  },
+  {
+   "name": "Karma | Online shopping, but better",
+   "id": "emalgedpdlghbkikiaeocoblajamonoh",
+   "users": 500000
+  },
+  {
+   "name": "wanteeed",
+   "id": "emnoomldgleagdjapdeckpmebokijail",
+   "users": 500000
+  },
+  {
+   "name": "VKSaver - скачать музыку ВК",
+   "id": "fgimllnamdeacpaddbdafchhcmapebgj",
+   "users": 500000
+  },
+  {
+   "name": "Speak Subtitles for YouTube",
+   "id": "fjoiihoancoimepbgfcmopaciegpigpa",
+   "users": 500000
+  },
+  {
+   "name": "FantasyPros: Win your Fantasy League",
+   "id": "gfbepnlhpkbgbkcebjnfhgjckibfdfkc",
+   "users": 500000
+  },
+  {
+   "name": "Dark Theme - Dark mode for Chrome",
+   "id": "gjjbmfigjpgnehjioicaalopaikcnheo",
+   "users": 500000
+  },
+  {
+   "name": "VPN Free - Betternet Unlimited VPN Proxy",
+   "id": "gjknjjomckknofjidppipffbpoekiipm",
+   "users": 500000
+  },
+  {
+   "name": "Screenshot YouTube",
+   "id": "gjoijpfmdhbjkkgnmahganhoinjjpohk",
+   "users": 500000
+  },
+  {
+   "name": "Beyond 20",
+   "id": "gnblbpbepfbfmoobegdogkglpbhcjofh",
+   "users": 500000
+  },
+  {
+   "name": "AdGuard VPN: free & secure proxy",
+   "id": "hhdobjgopfphlmjbmnpglhfcgppchgje",
+   "users": 500000
+  },
+  {
+   "name": "Bitly | Short links and QR Codes",
+   "id": "iabeihobmhlgpkcgjiloemdbofjbdcic",
+   "users": 500000
+  },
+  {
+   "name": "VK Music Saver — download music from VK",
+   "id": "ijgkbcbalaekboipcmaefchfjpognmog",
+   "users": 500000
+  },
+  {
+   "name": "OceanHero: Save Our Oceans by Surfing the Web",
+   "id": "ijpgjiobapjdadigoagamcmhmdfdggmg",
+   "users": 500000
+  },
+  {
+   "name": "オクリンクプラス Webページスクリーンショット機能",
+   "id": "impenancelenbicfndonhfnegiikfpec",
+   "users": 500000
+  },
+  {
+   "name": "Emoji Keyboard by JoyPixels®",
+   "id": "ipdjnhgkpapgippgcgkfcbpdpcgifncb",
+   "users": 500000
+  },
+  {
+   "name": "Page Ruler",
+   "id": "jcbmcnpepaddcedmjdcmhbekjhbfnlff",
+   "users": 500000
+  },
+  {
+   "name": "DS Amazon Quick View",
+   "id": "jkompbllimaoekaogchhkmkdogpkhojg",
+   "users": 500000
+  },
+  {
+   "name": "Todoist for Chrome: Planner & Calendar",
+   "id": "jldhpllghnbhlbpcmnajkpdmadaolakh",
+   "users": 500000
+  },
+  {
+   "name": "Tag Assistant Companion",
+   "id": "jmekfmbnaedfebfnmakmokmlfpblbfdm",
+   "users": 500000
+  },
+  {
+   "name": "AI Grammar and Spell Checker by Ginger",
+   "id": "kdfieneakcjfaiglcfcgkidlkmlijjnh",
+   "users": 500000
+  },
+  {
+   "name": "GPTZero: AI Detection & Writing Replay",
+   "id": "kgobeoibakoahbfnlficpmibdbkdchap",
+   "users": 500000
+  },
+  {
+   "name": "iGraal | Shopping with Savings",
+   "id": "kmhkepipobnjllejbafajoemahjejdcm",
+   "users": 500000
+  },
+  {
+   "name": "YouTube to NotebookLM - YouTube to Gemini Notebook",
+   "id": "kobncfkmjelbefaoohoblamnbackjggk",
+   "users": 500000
+  },
+  {
+   "name": "DotVPN: Fast & Private VPN",
+   "id": "kpiecbcckbofpmkkkdibbllpinceiihk",
+   "users": 500000
+  },
+  {
+   "name": "Raindrop.io",
+   "id": "ldgfbffkinooeloadekpmfoklnobpien",
+   "users": 500000
+  },
+  {
+   "name": "NCapture",
+   "id": "lgomjifbpjfhpodjhihemafahhmegbek",
+   "users": 500000
+  },
+  {
+   "name": "Auto Refresh Page - reload page",
+   "id": "lkhdihmnnmnmpibnadlgjfmalbaoenem",
+   "users": 500000
+  },
+  {
+   "name": "MSN New Tab",
+   "id": "lklfbkdigihjaaeamncibechhgalldgl",
+   "users": 500000
+  },
+  {
+   "name": "Speed Dial [FVD] - New Tab Page, 3D, Sync...",
+   "id": "llaficoajjainaijghjlofdfmbjpebpa",
+   "users": 500000
+  },
+  {
+   "name": "SellerSprite - Amazon Research Tool",
+   "id": "lnbmbgocenenhhhdojdielgnmeflbnfb",
+   "users": 500000
+  },
+  {
+   "name": "Desktop app for Google Tasks",
+   "id": "lpofefdiokgmcdnnaigddelnfamkkghi",
+   "users": 500000
+  },
+  {
+   "name": "7TV",
+   "id": "lppmekppnliemjclknbagdhoocikieoi",
+   "users": 500000
+  },
+  {
+   "name": "CSS Peeper",
+   "id": "mbnbehikldjhnfehhnaidhjhoofhpehk",
+   "users": 500000
+  },
+  {
+   "name": "Tabby Cat",
+   "id": "mefhakmgclhhfbdadeojlkbllmecialg",
+   "users": 500000
+  },
+  {
+   "name": "Scrolling screenshot tool & screen capture",
+   "id": "mfpiaehgjbbfednooihadalhehabhcjo",
+   "users": 500000
+  },
+  {
+   "name": "Boxel 3D",
+   "id": "mjjgmlmpeaikcaajghilhnioimmaibon",
+   "users": 500000
+  },
+  {
+   "name": "AVG Online Security",
+   "id": "nbmoafcmbajniiapeidgficgifbfmjfo",
+   "users": 500000
+  },
+  {
+   "name": "Meet Attendance",
+   "id": "nenibigflkdikhamlnekfppbganmojlg",
+   "users": 500000
+  },
+  {
+   "name": "Focus To-Do: Pomodoro Timer & To Do List",
+   "id": "ngceodoilcgpmkijopinlkmohnfifjfb",
+   "users": 500000
+  },
+  {
+   "name": "Fathom AI Note Taker for Google Meet",
+   "id": "nhocmlminaplaendbabmoemehbpgdemn",
+   "users": 500000
+  },
+  {
+   "name": "Save Image As PNG",
+   "id": "nkokmeaibnajheohncaamjggkanfbphi",
+   "users": 500000
+  },
+  {
+   "name": "Exporter for Followers",
+   "id": "nmnhoiehpdfllknopjkhjgoddkpnmfpa",
+   "users": 500000
+  },
+  {
+   "name": "Password Alert",
+   "id": "noondiphcddnnabmjcihcjfbhfklnnep",
+   "users": 500000
+  },
+  {
+   "name": "LexiFlow",
+   "id": "oalnnpgcgikdnenhjigoaencbppcmgel",
+   "users": 500000
+  },
+  {
+   "name": "Enable Right Click for Google Chrome™",
+   "id": "ofgdcdohlhjfdhbnfkikfeakhpojhpgm",
+   "users": 500000
+  },
+  {
+   "name": "Snake",
+   "id": "oppflpnigmhkldmdmmbnopidlhahanji",
+   "users": 500000
+  },
+  {
+   "name": "Jetwriter AI: Reply Emails, Ask Page, Summarize, Fix Grammar, and More",
+   "id": "pdnenlnelpdomajfejgapbdpmjkfpjkp",
+   "users": 500000
+  },
+  {
+   "name": "RSS Feed Reader",
+   "id": "pnjaodmkngahhkoihejjehlcdlnohgmp",
+   "users": 500000
+  },
+  {
+   "name": "SignalHire - find email or phone number",
+   "id": "aeidadjdhppdffggfgjpanbafaedankd",
+   "users": 400000
+  },
+  {
+   "name": "PreMiD",
+   "id": "agjnjboanicjcpenljmaaigopkgdnihi",
+   "users": 400000
+  },
+  {
+   "name": "Read AI",
+   "id": "aiamjjeggglngiggkmmbnpnpeejjejaf",
+   "users": 400000
+  },
+  {
+   "name": "Google Meet Attendance List",
+   "id": "appcnhiefcidclcdjeahgklghghihfok",
+   "users": 400000
+  },
+  {
+   "name": "NoteGPT: YouTube Summary, Chat with AI Assistant, ChatGPT DeepSeek Claude",
+   "id": "baecjmoceaobpnffgnlkloccenkoibbb",
+   "users": 400000
+  },
+  {
+   "name": "Read on reMarkable",
+   "id": "bfhkfdnddlhfippjbflipboognpdpoeh",
+   "users": 400000
+  },
+  {
+   "name": "User-Agent Switcher and Manager",
+   "id": "bhchdcejhohfmigjafbampogmaanbfkg",
+   "users": 400000
+  },
+  {
+   "name": "Font Finder",
+   "id": "bhiichidigehdgphoambhjbekalahgha",
+   "users": 400000
+  },
+  {
+   "name": "Google Docs Quick Create",
+   "id": "bldgenmjegcnjebiongilahhcjldgmlm",
+   "users": 400000
+  },
+  {
+   "name": "ExpressKeys: Password Manager",
+   "id": "blgcbajigpdfohpgcmbbfnphcgifjopc",
+   "users": 400000
+  },
+  {
+   "name": "Mute Tab",
+   "id": "blljobffcekcbopmkgfhpcjmbfnelkfg",
+   "users": 400000
+  },
+  {
+   "name": "Fake Filler",
+   "id": "bnjjngeaknajbdcgpfkgnonkmififhfo",
+   "users": 400000
+  },
+  {
+   "name": "'Improve YouTube!' 🎧 (for YouTube & Videos)",
+   "id": "bnomihfieiccainjcjblhegjgglakjdd",
+   "users": 400000
+  },
+  {
+   "name": "Cursor Helper - Custom Cursors",
+   "id": "bogabmgabnjabjbiggmfkdocbjgackfo",
+   "users": 400000
+  },
+  {
+   "name": "WhatRuns",
+   "id": "cmkdbmfndkfgebldhnkbfhlneefdaaip",
+   "users": 400000
+  },
+  {
+   "name": "Search by Image",
+   "id": "cnojnbdhbhnkbcieeekonklommdnndci",
+   "users": 400000
+  },
+  {
+   "name": "buykers | coupons and discount codes",
+   "id": "dacdinoicboceafielngnmjjplncljhj",
+   "users": 400000
+  },
+  {
+   "name": "Infinity New Tab",
+   "id": "dbfmnekepjoapopniengjbcpnbljalfg",
+   "users": 400000
+  },
+  {
+   "name": "Adblock Ad Blocker Pro",
+   "id": "dgjbaljgolmlcmmklmmeafecikidmjpi",
+   "users": 400000
+  },
+  {
+   "name": "Passbolt - Open source password manager",
+   "id": "didegimhafipceonhjepacocaffmoppf",
+   "users": 400000
+  },
+  {
+   "name": "TickerIQ Crypto Price Ticker",
+   "id": "dlaajbpfmppphhflganljdalclmcockl",
+   "users": 400000
+  },
+  {
+   "name": "Bonjourr · Minimalist New Tab Page",
+   "id": "dlnejlppicbjfcfcedcflplfjajinajd",
+   "users": 400000
+  },
+  {
+   "name": "Augmented Steam",
+   "id": "dnhpnfgdlenaccegplpojghhmaamnnfp",
+   "users": 400000
+  },
+  {
+   "name": "HARPA AI: Web Automation with ChatGPT, Claude, Gemini, Grok",
+   "id": "eanggfilgoajaocelnaflolkadkeghjp",
+   "users": 400000
+  },
+  {
+   "name": "Alitools Shopping Assistant",
+   "id": "eenflijjbchafephdplkdmeenekabdfb",
+   "users": 400000
+  },
+  {
+   "name": "GMass: Powerful mail merge for Gmail",
+   "id": "ehomdgjhgmbidokdgicgmdiedadncbgf",
+   "users": 400000
+  },
+  {
+   "name": "Email Finder by Snov.io",
+   "id": "einnffiilpmgldkapbikhkeicohlaapj",
+   "users": 400000
+  },
+  {
+   "name": "Chrome Reporting Extension",
+   "id": "emahakmocgideepebncgnmlmliepgpgb",
+   "users": 400000
+  },
+  {
+   "name": "Voice Control for ChatGPT",
+   "id": "eollffkcakegifhacjnlnegohfdlidhn",
+   "users": 400000
+  },
+  {
+   "name": "Certificate Enrollment for ChromeOS",
+   "id": "fhndealchbngfhdoncgcokameljahhog",
+   "users": 400000
+  },
+  {
+   "name": "Figma",
+   "id": "fkmaohpngenfoccdgceedjkfhkdcohmg",
+   "users": 400000
+  },
+  {
+   "name": "Smart Sidebar: Chat GPT, Claude & DeepSeek",
+   "id": "fnmihdojmnkclgjpcoonokmkhjpjechg",
+   "users": 400000
+  },
+  {
+   "name": "Directo - Travel Deals - Save on Hotels",
+   "id": "fonalplhodhnenmokepaijoemaednpjm",
+   "users": 400000
+  },
+  {
+   "name": "Wayback Machine",
+   "id": "fpnmgdkabkmnadcjpehmlllkndpkmiak",
+   "users": 400000
+  },
+  {
+   "name": "IBA Opt-out (by Google)",
+   "id": "gbiekjoijknlhijdjbaadobpkdhmoebb",
+   "users": 400000
+  },
+  {
+   "name": "Muzli - Design inspiration hub",
+   "id": "glcipcfhmopcgidicgdociohdoicpdfc",
+   "users": 400000
+  },
+  {
+   "name": "Picture in Picture - floating video player",
+   "id": "gmehookibnphigonphocphhcepbijeen",
+   "users": 400000
+  },
+  {
+   "name": "TinEye Reverse Image Search",
+   "id": "haebnnbpedcbhciplfhjjkbafijpncjl",
+   "users": 400000
+  },
+  {
+   "name": "Ahrefs SEO Toolbar",
+   "id": "hgmoccdbjhknikckedaaebbpdeebhiei",
+   "users": 400000
+  },
+  {
+   "name": "MyLOFT",
+   "id": "hljakogpibfgelmoegmajaeefcnefngd",
+   "users": 400000
+  },
+  {
+   "name": "Allow Right-Click",
+   "id": "hnafhkjheookmokbkpnfpmemlppjdgoi",
+   "users": 400000
+  },
+  {
+   "name": "Looper for YouTube",
+   "id": "iggpfpnahkgpnindfkdncknoldgnccdg",
+   "users": 400000
+  },
+  {
+   "name": "Mate Translate – translator, dictionary",
+   "id": "ihmgiclibbndffejedjimfjmfoabpcke",
+   "users": 400000
+  },
+  {
+   "name": "2048",
+   "id": "ijkmjnaahlnmdjjlbhbjbhlnmadmmlgg",
+   "users": 400000
+  },
+  {
+   "name": "IObit Surfing Protection",
+   "id": "imgpenhngnbnmhdkpdfnfhdpmfgmihdn",
+   "users": 400000
+  },
+  {
+   "name": "ZoogVPN - Free VPN for Chrome & Proxy",
+   "id": "immngomjofcbflgcckkfddnbpmjokbjh",
+   "users": 400000
+  },
+  {
+   "name": "Distill Web Monitor",
+   "id": "inlikjemeeknofckkjolnjbpehgadgge",
+   "users": 400000
+  },
+  {
+   "name": "Responsive Viewer",
+   "id": "inmopeiepgfljkpkidclfgbgbmfcennb",
+   "users": 400000
+  },
+  {
+   "name": "Yahoo Homepage",
+   "id": "jdanfkhnfpagoijgfmklhgakdicpnfil",
+   "users": 400000
+  },
+  {
+   "name": "Email Extractor by Mailsumo • Bulk Email Scraper",
+   "id": "jdianbbpnakhcmfkcckaboohfgnngfcc",
+   "users": 400000
+  },
+  {
+   "name": "Screen Recorder",
+   "id": "jdopnakmnlnccgpfpmjmdjjohmcdgabp",
+   "users": 400000
+  },
+  {
+   "name": "Disconnect — Tracker Protection",
+   "id": "jeoacafpbcihiomhlakheieifhpjdfeo",
+   "users": 400000
+  },
+  {
+   "name": "Ice Dodo",
+   "id": "jhidcpailhmpjpbdbhceiaeeggkalgmd",
+   "users": 400000
+  },
+  {
+   "name": "Youtube-shorts block",
+   "id": "jiaopdjbehhjgokpphdfgmapkobbnmjp",
+   "users": 400000
+  },
+  {
+   "name": "Salesforce",
+   "id": "jjghhkepijgakdammjldcbnjehfkfmha",
+   "users": 400000
+  },
+  {
+   "name": "daily.dev | Where developers discover what's next",
+   "id": "jlmpjdjjbgclbocgajdjefcidcncaied",
+   "users": 400000
+  },
+  {
+   "name": "View Image",
+   "id": "jpcmhcelnjdmblfmjabdeclccemkghjk",
+   "users": 400000
+  },
+  {
+   "name": "CS2 Trader - Steam Trading Enhancer",
+   "id": "kaibcgikagnkfgjnibflebpldakfhfih",
+   "users": 400000
+  },
+  {
+   "name": "Speed Test for Chrome - WiFi speedtest",
+   "id": "khhnfdoljialnlomkdkphhdhngfppabl",
+   "users": 400000
+  },
+  {
+   "name": "Substital: Add subtitles to videos and movies",
+   "id": "kkkbiiikppgjdiebcabomlbidfodipjg",
+   "users": 400000
+  },
+  {
+   "name": "Save.to - formerly Save to Notion",
+   "id": "ldmmifpegigmeammaeckplhnjbbpccmm",
+   "users": 400000
+  },
+  {
+   "name": "Video Downloader - Download M3U8, MP4, HLS and Live Streams",
+   "id": "lfdconleibeikjpklmlahaihpnkpmlch",
+   "users": 400000
+  },
+  {
+   "name": "Tango – Document and Automate Your Processes",
+   "id": "lggdbpblkekjjbobadliahffoaobaknh",
+   "users": 400000
+  },
+  {
+   "name": "Screenshot & Screen Video Recorder",
+   "id": "lhannfkhjdhmibllojbbdjdbpegidojj",
+   "users": 400000
+  },
+  {
+   "name": "axe DevTools - Web Accessibility Testing",
+   "id": "lhdoppojpmngadmnindnejefpokejbdd",
+   "users": 400000
+  },
+  {
+   "name": "Eagle for Chrome",
+   "id": "lieogkinebikhdchceieedcigeafdkid",
+   "users": 400000
+  },
+  {
+   "name": "Record, Transcribe & ChatGPT/Claude for Google Meet",
+   "id": "lknmjhcajhfbbglglccadlfdjbaiifig",
+   "users": 400000
+  },
+  {
+   "name": "Live Stream Downloader",
+   "id": "looepbdllpjgdmkpdcdffhdbmpbcfekj",
+   "users": 400000
+  },
+  {
+   "name": "Adblocker for Youtube™",
+   "id": "maekfnoeejhpjfkfmdlckioggdcdofpg",
+   "users": 400000
+  },
+  {
+   "name": "Lusha - Easily find B2B contact information",
+   "id": "mcebeofpilippmndlpcghpmghcljajna",
+   "users": 400000
+  },
+  {
+   "name": "CrossPilot",
+   "id": "migomhggnppjdijnfkiimcpjgnhmnale",
+   "users": 400000
+  },
+  {
+   "name": "DocHub - Sign PDF from Gmail",
+   "id": "mjgcgnfikekladnkhnimljcalfibijha",
+   "users": 400000
+  },
+  {
+   "name": "Enable right click - allow copy & select",
+   "id": "mlloloooolpffjkjaclpfpeednngpjon",
+   "users": 400000
+  },
+  {
+   "name": "Plugins",
+   "id": "mmcblfncjaclajmegihojiekebofjcen",
+   "users": 400000
+  },
+  {
+   "name": "Netflix Party",
+   "id": "mmnbenehknklpbendgmgngeaignppnbe",
+   "users": 400000
+  },
+  {
+   "name": "Web Paint - Page Marker & Editor",
+   "id": "mnopmeepcnldaopgndiielmfoblaennk",
+   "users": 400000
+  },
+  {
+   "name": "SAML-tracer",
+   "id": "mpdajninpobndbfcldcmbpnnbhibjmch",
+   "users": 400000
+  },
+  {
+   "name": "SkrivaText",
+   "id": "nbllaikcjebbpdemmekhnciekkjodlla",
+   "users": 400000
+  },
+  {
+   "name": "SelectorsHub",
+   "id": "ndgimibanhlabgdgjcpbbndiehljcpfh",
+   "users": 400000
+  },
+  {
+   "name": "RoValra - Roblox Improved",
+   "id": "njcickgebhnpgmoodjdgohkclfplejli",
+   "users": 400000
+  },
+  {
+   "name": "Video Speed Controller - video manager",
+   "id": "nkkhljadiejecbgelalchmjncoilpnlk",
+   "users": 400000
+  },
+  {
+   "name": "RSS Subscription Extension (by Google)",
+   "id": "nlbjncdgjeocebhnmkbbbdekmmmcbfjd",
+   "users": 400000
+  },
+  {
+   "name": "Draftback",
+   "id": "nnajoiemfpldioamchanognpjmocgkbg",
+   "users": 400000
+  },
+  {
+   "name": "Zoom Video - UltraWide Fill",
+   "id": "ochhcgamjcnhpaekcckimgofnedofplf",
+   "users": 400000
+  },
+  {
+   "name": "Toggl Track: Productivity & Time Tracker",
+   "id": "oejgccbfbmkkpaidnkphaiaecficdnfn",
+   "users": 400000
+  },
+  {
+   "name": "Maps Scraper by Presto",
+   "id": "oilholdcmnjkebdhokhaamalceecjbip",
+   "users": 400000
+  },
+  {
+   "name": "EditThisCookie (V3)",
+   "id": "ojfebgpkimhlhcblbalbfjblapadhbol",
+   "users": 400000
+  }
+ ]
+}

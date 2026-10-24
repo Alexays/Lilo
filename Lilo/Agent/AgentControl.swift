@@ -1,0 +1,468 @@
+import AppKit
+import Security
+import WebKit
+import os
+
+/// Lets local AI agents drive Lilo over MCP: one session per socket connection.
+@MainActor
+final class AgentControl {
+    static let defaultSocketURL = URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "agent.sock")
+
+    private static let logger = Logger(liloCategory: "agent-control")
+    let socketURL: URL
+    private(set) weak var context: BrowserContext?
+    private var server: AgentSocketServer?
+    private(set) var sessions: [AgentSession] = []
+    /// The Agents space is emptied of past conversations' folders once per run, before the first agent works.
+    var agentsSpaceCleaned = false
+    /// How long a dropped connection's session waits for lilo-mcp to reconnect (it tries for 30 seconds) before
+    /// its tabs go.
+    static var reconnectGrace: Duration = .seconds(35)
+    /// Chrome-style integer ids for tabs, stable for the app's lifetime.
+    var tabNumbers: [UUID: Int] = [:]
+    var nextTabNumber = 1
+    /// Tabs currently flagged `isAgentControlled`, to clear the ones that left a folder.
+    var controlledTabIds: Set<UUID> = []
+    /// Hosts agent tabs of a space no window shows: off screen, transparent, never key, out of
+    /// Mission Control, and clickless for the user.
+    lazy var parkingWindow: NSWindow = {
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1280, height: 800), styleMask: [.borderless], backing: .buffered, defer: false)
+        // Never on screen, yet VoiceOver names it.
+        window.title = "Agent Tabs".localized
+        window.alphaValue = 0
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.transient, .ignoresCycle, .stationary]
+        window.isReleasedWhenClosed = false
+        window.orderFrontRegardless()
+        return window
+    }()
+    /// Console and network capture of each controlled tab.
+    var captures: [UUID: AgentCapture] = [:]
+    /// The inspector of each tab a devtools tool ran on.
+    var inspectors: [UUID: AgentInspector] = [:]
+    /// Inspectors of tabs that left the agent, still undoing their changes before closing the frontend.
+    var inspectorReleases: [UUID: Task<Void, Never>] = [:]
+    /// Frames of each tab `gif_creator` recorded, and the tabs still recording.
+    var recordings: [UUID: [CGImage]] = [:]
+    var recordingTabs: Set<UUID> = []
+    /// Screenshots an agent took, by id, for `upload_image`.
+    var screenshots: [(id: String, png: Data)] = []
+    var nextScreenshotNumber = 1
+
+    init(context: BrowserContext, socketURL: URL = AgentControl.defaultSocketURL) {
+        self.context = context
+        self.socketURL = socketURL
+    }
+
+    func inspector(for tabId: UUID, engine: WKWebViewTab) async throws -> AgentInspector {
+        // The user closing the inspector they opened on the tab ends this connection too, and reopening
+        // it gives the tab a new frontend.
+        if let inspector = inspectors[tabId], inspector.isCurrent { return inspector }
+        // A release still running would close the frontend this connection picks up.
+        await inspectorReleases[tabId]?.value
+        let inspector = try await AgentInspector.connect(to: engine.wkWebView)
+        // The tab may have left the agent while the inspector started: nothing may reach it now.
+        guard engine.isAgentControlled else {
+            await inspector.release()
+            throw AgentToolError("The tab left your tab group")
+        }
+        // Another call may have connected while this one waited: keep the first.
+        if let existing = inspectors[tabId], existing.isCurrent {
+            inspector.disconnect()
+            return existing
+        }
+        inspectors[tabId] = inspector
+        return inspector
+    }
+
+    func setEnabled(_ enabled: Bool) {
+        if enabled {
+            guard server == nil else { return }
+            let server = AgentSocketServer(path: socketURL) { [weak self] in self?.accept($0) }
+            do {
+                try server.start()
+                self.server = server
+                Task { await wipeAgentsProfile() }
+            } catch {
+                Self.logger.error("agent socket failed to start: \(error.localizedDescription, privacy: .public)")
+            }
+        } else {
+            stopAll()
+            server?.stop()
+            server = nil
+        }
+    }
+
+    /// Known clients' handshake names as people know them: "claude-code" is Claude Code.
+    static func displayName(_ clientName: String) -> String {
+        [
+            "claude-code": "Claude Code", "claude-ai": "Claude", "codex": "Codex", "codex-mcp-client": "Codex",
+            "cursor": "Cursor", "cursor-vscode": "Cursor"
+        ][clientName.lowercased()] ?? clientName
+    }
+
+    /// Stopped for good: no reconnection takes the sessions back.
+    func stopAll() {
+        for session in sessions {
+            session.connection.close()
+            end(session)
+        }
+    }
+
+    private var activityPending = false
+    /// The agents Space while the sidebar leaves it out, so the menu bar leaves it out too.
+    private(set) var hiddenAgentsSpaceId: UUID?
+
+    /// Tells every window which agents are connected and which are acting now, once per main-thread turn.
+    /// A tab keeps its activity dot this long after the agent's last action on it, so quick clicks read
+    /// as one stretch of work rather than a flicker.
+    static let actingLinger: TimeInterval = 2
+
+    func publishActivity() {
+        guard !activityPending else { return }
+        activityPending = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let context else { return }
+            activityPending = false
+            let authorized = sessions.filter(\.isAuthorized)
+            let since = Date().addingTimeInterval(-Self.actingLinger)
+            let clients = Set(authorized.map(\.clientName)).sorted().map { name in
+                let mine = authorized.filter { $0.clientName == name }
+                // A tab of the call running now, however long it takes, or of one that just ended.
+                let acting = mine.flatMap { session in
+                    session.actedOn.filter { $0.value > since || (session.activeCalls > 0 && $0.value >= session.callStartedAt) }.keys
+                }
+                return ["name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString)] as [String: Any]
+            }
+            let spaceId = context.settingsStore?.get(Self.agentsSpaceKey) ?? ""
+            // With no agent working there and no tab left, the space has nothing to show: the bar leaves it
+            // out. The blank tab a space keeps after its last close does not count.
+            let visible = sessions.contains { agentsSpaceFolder(of: $0) != nil } || UUID(uuidString: spaceId).flatMap { context.browserState.structuralProjection(forSpace: $0) }?
+                .tabs.contains { !$0.isClosed && ($0.kind != .web || $0.url != nil) } == true
+            hiddenAgentsSpaceId = visible ? nil : UUID(uuidString: spaceId)
+            let profileId = context.settingsStore?.get(Self.agentsProfileKey) ?? ""
+            for window in context.windows.windows {
+                window.bridgeRouter?.send(event: "agentActivity", data: [
+                    "clients": clients, "agentsSpaceId": spaceId, "agentsProfileId": profileId, "agentsSpaceVisible": visible
+                ])
+            }
+        }
+    }
+
+    private static let allowedClientsKey = "agentAllowedClients"
+    /// The question asked of each client, by name and identity, and how many of its connections still wait on it.
+    private var pendingConsents: [String: (question: Task<Bool, Never>, waiting: Int)] = [:]
+    /// Questions shown in the drawers, by request id, until the user answers.
+    private(set) var pendingConsentAnswers: [String: CheckedContinuation<Bool, Never>] = [:]
+
+    /// The client names the user let drive Lilo, each with the identities (`clientIdentity`) it was allowed as.
+    var allowedClients: [String: [String]] {
+        context?.settingsStore?.get(Self.allowedClientsKey)
+            .flatMap { try? JSONDecoder().decode([String: [String]].self, from: Data($0.utf8)) } ?? [:]
+    }
+
+    private func saveAllowedClients(_ clients: [String: [String]]) {
+        if let data = try? JSONEncoder().encode(clients), let json = String(bytes: data, encoding: .utf8) {
+            context?.settingsStore?.set(Self.allowedClientsKey, value: json)
+        }
+    }
+
+    /// Forgets one client's approval and drops its connections: it has to ask again.
+    func revoke(_ name: String) {
+        var clients = allowedClients
+        clients[name] = nil
+        saveAllowedClients(clients)
+        for session in sessions where session.clientName == name {
+            session.connection.close()
+            end(session)
+        }
+    }
+
+    /// What an approval binds to, and the executable shown when asking: the agent that launched `lilo-mcp`,
+    /// else the socket's peer itself. A Developer ID or App Store signed agent is known by its signing
+    /// identifier and team, so its updates keep the approval; any other by its path. Empty when unknown.
+    nonisolated static func clientIdentity(peer: pid_t) -> (identity: String, executable: String) {
+        func code(_ pid: pid_t) -> (code: SecCode, staticCode: SecStaticCode, path: String)? {
+            var code: SecCode?
+            var staticCode: SecStaticCode?
+            var url: CFURL?
+            guard pid > 0, SecCodeCopyGuestWithAttributes(nil, [kSecGuestAttributePid: pid] as CFDictionary, [], &code) == errSecSuccess,
+                  let code, SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
+                  SecCodeCopyPath(staticCode, [], &url) == errSecSuccess, let url else { return nil }
+            return (code, staticCode, (url as URL).resolvingSymlinksInPath().path)
+        }
+        guard var client = code(peer) else { return ("", "") }
+        // lilo-mcp only relays: the agent is the process that launched it.
+        if client.path == URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path {
+            var info = proc_bsdinfo()
+            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0,
+                  let parent = code(pid_t(info.pbi_ppid)) else { return ("", "") }
+            client = parent
+        }
+        let executable = (client.path as NSString).abbreviatingWithTildeInPath
+        var info: CFDictionary?
+        SecCodeCopySigningInformation(client.staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
+        let signing = info as? [String: Any]
+        var requirement: SecRequirement?
+        // The team only counts once Apple's chain vouches for it; a quote would let a name rewrite the requirement.
+        if let team = signing?[kSecCodeInfoTeamIdentifier as String] as? String,
+           let identifier = signing?[kSecCodeInfoIdentifier as String] as? String, !(team + identifier).contains("\""),
+           SecRequirementCreateWithString(
+               "identifier \"\(identifier)\" and anchor apple generic and certificate leaf[subject.OU] = \"\(team)\"" as CFString, [], &requirement
+           ) == errSecSuccess, SecCodeCheckValidity(client.code, [], requirement) == errSecSuccess {
+            return ("\(identifier) \(team)", executable)
+        }
+        return (client.path, executable)
+    }
+
+    private static let lastSeenKey = "agentClientLastSeen"
+
+    /// When each allowed client last connected or left, in seconds since 1970.
+    var lastSeen: [String: TimeInterval] {
+        context?.settingsStore?.get(Self.lastSeenKey)
+            .flatMap { try? JSONDecoder().decode([String: TimeInterval].self, from: Data($0.utf8)) } ?? [:]
+    }
+
+    private func markSeen(_ name: String) {
+        var seen = lastSeen
+        seen[name] = Date().timeIntervalSince1970
+        if let data = try? JSONEncoder().encode(seen), let json = String(bytes: data, encoding: .utf8) {
+            context?.settingsStore?.set(Self.lastSeenKey, value: json)
+        }
+    }
+
+    /// Asks the user the first time a client name connects from an executable; concurrent connections of one
+    /// client share the question. The name alone is no credential: any program can claim it.
+    func authorize(_ session: AgentSession) async -> Bool {
+        let name = session.clientName
+        // Reading code signatures touches the disk: off the main thread, before any approval is looked up.
+        if session.identity.isEmpty {
+            let peer = session.connection.peerPID
+            (session.identity, session.executable) = await Task.detached { AgentControl.clientIdentity(peer: peer) }.value
+        }
+        guard !session.identity.isEmpty else { return false }
+        if allowedClients[name]?.contains(session.identity) == true {
+            markSeen(name)
+            return true
+        }
+        let key = name + "\n" + session.identity
+        let question = pendingConsents[key]?.question ?? Task { @MainActor in await self.askConsent(name, executable: session.executable) }
+        pendingConsents[key] = (question, (pendingConsents[key]?.waiting ?? 0) + 1)
+        // A connection that leaves stops waiting; the last one to leave withdraws the question, so a late
+        // answer approves no client that is gone.
+        let allowed = await withTaskCancellationHandler { await question.value } onCancel: {
+            Task { @MainActor in
+                guard let pending = self.pendingConsents[key], pending.question == question else { return }
+                self.pendingConsents[key]?.waiting -= 1
+                if pending.waiting == 1 { question.cancel() }
+            }
+        }
+        if pendingConsents[key]?.question == question { pendingConsents[key] = nil }
+        if allowed, allowedClients[name]?.contains(session.identity) != true {
+            var clients = allowedClients
+            clients[name, default: []].append(session.identity)
+            saveAllowedClients(clients)
+            markSeen(name)
+        }
+        return allowed
+    }
+
+    /// Asked in every window's address-bar drawer, which leaves the user's typing alone; the Dock icon
+    /// bounces when Lilo is in the background. Unanswered for two minutes, or cancelled, reads as no.
+    func askConsent(
+        _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, timeout: TimeInterval = 120
+    ) async -> Bool {
+        guard let windows = context?.windows.windows, !windows.isEmpty else { return false }
+        let requestId = UUID().uuidString
+        for window in windows {
+            window.bridgeRouter?.send(event: "agentControlRequested", data: [
+                "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
+                "action": action ?? NSNull()
+            ])
+        }
+        if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: false) }
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { pendingConsentAnswers[requestId] = $0 }
+        } onCancel: {
+            Task { @MainActor [weak self] in self?.answerConsent(requestId, granted: false) }
+        }
+    }
+
+    static let asksBeforeActionsKey = "agentAskBeforeActions"
+    static let alwaysAllowedSitesKey = "agentAlwaysAllowedSites"
+
+    /// Sites where the user always lets agents send, pay, delete or publish, their subdomains included.
+    var alwaysAllowedSites: [String] {
+        context?.settingsStore?.get(Self.alwaysAllowedSitesKey)
+            .flatMap { try? JSONDecoder().decode([String].self, from: Data($0.utf8)) } ?? []
+    }
+
+    /// Asks the user before a click or Enter whose target sends, pays, buys, orders, deletes, transfers, publishes
+    /// or signs up, and before a request the page's cookies sign. `target` locates the control for AgentPage.js's
+    /// `consequential`; `kind` is "click", "enter" or "fetch", whose `label` is the request.
+    func approveConsequentialAction(
+        _ kind: String, target: [String: Any] = [:], label: String? = nil, frame: WKFrameInfo?, engine: WKWebViewTab, session: AgentSession
+    ) async throws {
+        guard context?.settingsStore?.get(Self.asksBeforeActionsKey) != "false" else { return }
+        let site = engine.currentURL?.host() ?? ""
+        guard !alwaysAllowedSites.contains(where: { site == $0 || site.hasSuffix("." + $0) }) else { return }
+        var found = label
+        if found == nil {
+            let answer = try await AgentTools.page(engine, "consequential", target, in: frame)
+            found = answer as? String
+            // Focus inside a frame (an embedded payment form): the frame holding the field says what Enter submits.
+            if found == nil, (answer as? [String: Any])?["inFrame"] != nil {
+                for (_, subframe) in await AgentTools.subframes(of: engine) {
+                    found = try? await AgentTools.page(engine, "consequential", target, in: subframe) as? String
+                    if found != nil { break }
+                }
+            }
+        }
+        guard let label = found else { return }
+        // Answered before the tool's own 60 s deadline, so the agent learns the user is needed.
+        let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
+        guard await askConsent(session.clientName, action: action, timeout: 45) else {
+            let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
+            throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
+        }
+    }
+
+    /// Asks the user before a page receives one of their files, whatever the setting above: an agent could
+    /// otherwise hand any file it can name to any site. Returns the file, its symbolic links resolved.
+    func approveUpload(_ url: URL, engine: WKWebViewTab, session: AgentSession) async throws -> URL {
+        let file = url.resolvingSymlinksInPath()
+        let site = engine.currentURL?.host() ?? ""
+        let path = (file.path as NSString).abbreviatingWithTildeInPath
+        let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
+        guard await askConsent(session.clientName, action: action, timeout: 45) else {
+            throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
+        }
+        return file
+    }
+
+    /// The user's answer from a window's drawer: the others drop the same question. `alwaysAllowSite` is the
+    /// site of an action the user always allows from now on.
+    func answerConsent(_ requestId: String, granted: Bool, alwaysAllowSite: String? = nil) {
+        guard let answer = pendingConsentAnswers.removeValue(forKey: requestId) else { return }
+        if granted, let site = alwaysAllowSite, !site.isEmpty, !alwaysAllowedSites.contains(site),
+           let data = try? JSONEncoder().encode(alwaysAllowedSites + [site]), let list = String(bytes: data, encoding: .utf8) {
+            context?.settingsStore?.set(Self.alwaysAllowedSitesKey, value: list)
+        }
+        for window in context?.windows.windows ?? [] {
+            window.bridgeRouter?.send(event: "permissionRequestClosed", data: ["requestId": requestId])
+        }
+        answer.resume(returning: granted)
+    }
+
+    /// The session's tabs go back to normal first, then close: an engine held elsewhere keeps no agent state.
+    private func end(_ closing: AgentSession) {
+        guard sessions.contains(where: { $0 === closing }) else { return }
+        sessions.removeAll { $0 === closing }
+        refreshControlledTabs()
+        for request in closing.requests.values { request.cancel() }
+        if closing.isAuthorized { markSeen(closing.clientName) }
+        context?.powerKeeper.terminalEnded(closing.id)
+        dropFolder(of: closing)
+        dropIsolatedSpace(of: closing)
+        publishActivity()
+        // The last agent with tabs gone, nothing it did in the agents' profile is kept for the next one.
+        if !sessions.contains(where: { agentsSpaceFolder(of: $0) != nil }) { Task { await wipeAgentsProfile() } }
+    }
+
+    /// lilo-mcp replays the handshake from the same process when it reconnects: the new connection carries on
+    /// the conversation its dropped one held, with its tabs.
+    func resumeDroppedSession(into session: AgentSession) {
+        let pid = session.connection.peerPID
+        guard pid > 0, let dropped = sessions.first(where: {
+            $0 !== session && $0.connection.isClosed && $0.isAuthorized && $0.connection.peerPID == pid && $0.clientName == session.clientName
+        }) else { return }
+        session.folderId = dropped.folderId
+        session.isolatedSpaceId = dropped.isolatedSpaceId
+        session.title = dropped.title
+        session.projectName = dropped.projectName
+        session.actedOn = dropped.actedOn
+        sessions.removeAll { $0 === dropped }
+        context?.powerKeeper.terminalEnded(dropped.id)
+    }
+
+    private func accept(_ connection: AgentConnection) {
+        let session = AgentSession(connection: connection)
+        sessions.append(session)
+        connection.onClose = { [weak self, weak session] in
+            guard let self, let session else { return }
+            // A cancelled request gets no reply, and stops what it was doing for a client that is gone.
+            for request in session.requests.values { request.cancel() }
+            // Lilo may drop a connection the bridge then makes again: its tabs, and what the agent set on them, wait.
+            guard session.isAuthorized, session.folderId != nil || session.isolatedSpaceId != nil, Self.reconnectGrace > .zero else {
+                return end(session)
+            }
+            Task { [weak self] in
+                try? await Task.sleep(for: Self.reconnectGrace)
+                self?.end(session)
+            }
+        }
+        connection.onMessage = { [weak self, weak session] data in
+            guard let self, let session else { return }
+            let message = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let requestId = message?["method"] != nil ? message?["id"] as? AnyHashable : nil
+            let request = Task { @MainActor in
+                let reply = await AgentMCP.handle(message, session: session, control: self)
+                if let requestId { session.requests[requestId] = nil }
+                guard !Task.isCancelled else { return }
+                if let reply {
+                    // A screenshot's reply is megabytes of JSON: encoded off the main thread.
+                    nonisolated(unsafe) let reply = reply
+                    guard let line = await Task.detached(operation: { AgentConnection.line(reply) }).value else { return }
+                    session.connection.send(line)
+                }
+                if session.isRefused { session.connection.close() }
+            }
+            if let requestId { session.requests[requestId] = request }
+        }
+    }
+}
+
+@MainActor
+final class AgentSession {
+    let connection: AgentConnection
+    /// `clientInfo.name` from the MCP handshake: what the agent calls itself, never a credential.
+    var clientName = "Agent"
+    /// The process behind the connection, which approvals bind to: see `AgentControl.clientIdentity`. Empty until
+    /// the handshake reads it.
+    var identity = ""
+    var executable = ""
+    var lastActivity = Date()
+    let id = UUID()
+    /// Tool calls in flight, for the activity indicator.
+    var activeCalls = 0
+    /// The client's requests still running, by JSON-RPC id: `notifications/cancelled` or the connection
+    /// closing cancels them.
+    var requests: [AnyHashable: Task<Void, Never>] = [:]
+    /// When this agent last acted on each tab, for the activity dot.
+    var actedOn: [UUID: Date] = [:]
+    var callStartedAt = Date.distantPast
+    /// The calls in flight on a tab, by call: one the client gave up on keeps running in the page.
+    var tabCalls: [UUID: (tab: Int, tool: String, startedAt: Date)] = [:]
+    /// Its own tab folder in the Agents space, created with its first tab: one per conversation.
+    var folderId: UUID?
+    /// Its private space for isolated tabs, created with the first one and deleted when it leaves.
+    var isolatedSpaceId: UUID?
+    /// What its folder is named after: the task it gave, else its project folder, else when it came.
+    var title: String?
+    var projectName: String?
+    let connectedAt = Date()
+    /// It offered its project folders (MCP roots) at the handshake.
+    var supportsRoots = false
+    /// Handlers of the replies awaited from the client to Lilo's own requests, by request id.
+    var pendingReplies: [String: ([String: Any]?) -> Void] = [:]
+    var nextRequestId = 1
+    /// Set once the user allowed this client; tools answer nothing before.
+    var isAuthorized = false
+    /// The user said no: the connection closes after the reply.
+    var isRefused = false
+
+    init(connection: AgentConnection) {
+        self.connection = connection
+    }
+}

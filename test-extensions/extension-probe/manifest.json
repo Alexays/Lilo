@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Lilo MV3 Compat Probe",
+  "version": "1.0.0",
+  "description": "Probes how much of Chrome MV3 actually works in Lilo on this machine. Open the toolbar popup for the report.",
+  "default_locale": "en",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MV3 Probe"
+  },
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "devtools_page": "devtools.html",
+  "omnibox": {
+    "keyword": "liloprobe"
+  },
+  "commands": {
+    "probe-command": {
+      "description": "Lilo probe test command (fires commands.onCommand)",
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y"
+      }
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-isolated.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-main.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "probe_ruleset",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "externally_connectable": {
+    "matches": ["https://example.com/*"]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["war.js"],
+      "matches": ["<all_urls>"],
+      "use_dynamic_url": true
+    }
+  ],
+  "host_permissions": ["<all_urls>"],
+  "optional_permissions": ["topSites", "geolocation"],
+  "permissions": [
+    "alarms",
+    "storage",
+    "cookies",
+    "tabs",
+    "tabGroups",
+    "scripting",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "notifications",
+    "history",
+    "bookmarks",
+    "downloads",
+    "management",
+    "idle",
+    "contextMenus",
+    "webNavigation",
+    "webRequest"
+  ]
+}

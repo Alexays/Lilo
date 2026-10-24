@@ -1,0 +1,56 @@
+// The emoji picker's catalog, search and skin tones. Loaded with the picker only: the dataset is its own chunk.
+
+import { EMOJI_GROUPS } from "./emojiData.gen";
+
+export interface EmojiEntry {
+  emoji: string;
+  name: string;
+  /** Takes a skin tone modifier. */
+  tones: boolean;
+  /** Folded name and keywords, each word between spaces so a query word matches word starts or whole words. */
+  terms: string;
+  keywords: string;
+}
+
+/** The skin tone modifiers, by the index the setting stores; 0 is the default yellow. */
+export const SKIN_TONES = ["", "\u{1F3FB}", "\u{1F3FC}", "\u{1F3FD}", "\u{1F3FE}", "\u{1F3FF}"];
+
+const fold = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+const wordsOf = (text: string) => fold(text).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+export const EMOJI_CATEGORIES: EmojiEntry[][] = EMOJI_GROUPS.map((group) =>
+  group.split("\n").map((line) => {
+    const [emoji, name, keywords = "", tones] = line.split("\t");
+    return { emoji, name, tones: tones === "1", terms: ` ${wordsOf(name).join(" ")} `, keywords: ` ${keywords} ` };
+  }),
+);
+
+// Keyed without FE0F and tone modifiers, so a remembered toned pick finds its name.
+const byBase = new Map(EMOJI_CATEGORIES.flat().map((entry) => [entry.emoji.replace(/\uFE0F/g, ""), entry]));
+
+export function emojiName(emoji: string): string {
+  return byBase.get(emoji.replace(/\uFE0F|[\u{1F3FB}-\u{1F3FF}]/gu, ""))?.name ?? emoji;
+}
+
+/** The modifier goes after the first code point, in place of its FE0F: the form Unicode lists for a single person. */
+export function withTone(entry: EmojiEntry, tone: string): string {
+  if (!tone || !entry.tones) return entry.emoji;
+  const [first, ...rest] = entry.emoji;
+  return first + tone + (rest[0] === "\uFE0F" ? rest.slice(1) : rest).join("");
+}
+
+/** Entries holding every query word at a word start: whole words of the name first, then name word
+ * starts, then keywords. */
+export function searchEmoji(query: string): EmojiEntry[] {
+  const words = wordsOf(query).map((word) => ` ${word}`);
+  if (words.length === 0) return [];
+  const ranks: EmojiEntry[][] = [[], [], []];
+  for (const category of EMOJI_CATEGORIES) {
+    for (const entry of category) {
+      if (words.every((word) => entry.terms.includes(`${word} `))) ranks[0].push(entry);
+      else if (words.every((word) => entry.terms.includes(word))) ranks[1].push(entry);
+      else if (words.every((word) => entry.terms.includes(word) || entry.keywords.includes(word))) ranks[2].push(entry);
+    }
+  }
+  return ranks.flat();
+}

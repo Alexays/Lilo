@@ -1,0 +1,143 @@
+import os
+import WebKit
+import XCTest
+@testable import Lilo
+
+@MainActor
+final class WKEngineFactoryPageConfigurationTests: XCTestCase {
+    func testTabsKeepFraudulentWebsiteWarningsAndLeaveScreenTimeToLilo() throws {
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        let features = (WKPreferences.self as AnyObject).perform(NSSelectorFromString("_internalDebugFeatures"))?.takeUnretainedValue() as? [NSObject]
+        let screenTime = try XCTUnwrap(features?.first { $0.value(forKey: "key") as? String == "ScreenTimeEnabled" })
+        let preferences = tab.wkWebView.configuration.preferences
+        let isEnabled = NSSelectorFromString("_isEnabledForFeature:")
+        typealias IsEnabled = @convention(c) (NSObject, Selector, AnyObject) -> ObjCBool
+
+        XCTAssertTrue(preferences.isFraudulentWebsiteWarningEnabled, "Safe Browsing warnings are Lilo's only phishing and malware protection")
+        XCTAssertFalse(unsafeBitCast(preferences.method(for: isEnabled), to: IsEnabled.self)(preferences, isEnabled, screenTime).boolValue,
+                       "WebKit's own Screen Time client would duplicate Lilo's STWebpageController")
+    }
+
+    func testUserAgentAdvertisesTheRunningSafariVersion() {
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        XCTAssertEqual(tab.wkWebView.configuration.applicationNameForUserAgent,
+                       "Version/\(os.majorVersion).\(os.minorVersion) Safari/605.1.15")
+    }
+
+    /// A page's change to navigator.credentials outlives a collection, as in Chrome: WebKit makes a new
+    /// object once nothing holds it, which lost a password manager's passkey hooks.
+    func testNavigatorCredentialsKeepsWhatThePageSetOnIt() async throws {
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        defer { tab.teardown() }
+        tab.wkWebView.loadHTMLString("<p>sign in</p>", baseURL: URL(string: "https://example.com/"))
+        _ = await pollUntil { tab.wkWebView.url != nil && !tab.wkWebView.isLoading }
+
+        _ = try await tab.wkWebView.evaluateJavaScript("navigator.credentials.get = function hooked() {}; 1")
+        for _ in 0..<20 {
+            _ = try await tab.wkWebView.evaluateJavaScript("for (let i = 0; i < 200000; i++) ({ i }); 1")
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        let kept = try await tab.wkWebView.evaluateJavaScript("navigator.credentials.get.name") as? String
+        XCTAssertEqual(kept, "hooked")
+    }
+
+    /// WebKit gates its third-party cookie blocking on tracking prevention: off, as by default, a site embedded
+    /// elsewhere still gets the cookies it set as a first party, though it cannot set new ones there.
+    func testOnlyTrackingPreventionKeepsFirstPartyCookiesFromThirdPartyRequests() async throws {
+        let seen = OSAllocatedUnfairLock<[String]>(initialState: [])
+        let embedded = try await TinyHTTPServer { request in
+            let cookie = request.split(separator: "\r\n").first { $0.lowercased().hasPrefix("cookie:") }.map(String.init) ?? ""
+            if request.hasPrefix("GET /echo ") { seen.withLock { $0.append(cookie) } }
+            return ("200 OK", ["Content-Type: text/html", "Set-Cookie: id=1; Path=/"], Data("embedded".utf8))
+        }
+        let embedder = try await TinyHTTPServer(index: "<iframe src='http://localhost:\(embedded.port)/echo'></iframe>")
+        let factory = WKEngineFactory()
+
+        func embeddedCookie(trackingPrevention: Bool) async throws -> String? {
+            factory.setTrackingPrevention(trackingPrevention)
+            let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: false, identifier: nil)))
+            defer { tab.teardown() }
+            tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://localhost:\(embedded.port)/"))))
+            _ = await pollUntil { tab.wkWebView.url != nil && !tab.wkWebView.isLoading }
+            let before = seen.withLock { $0.count }
+            tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(embedder.port)/"))))
+            _ = await pollUntil(timeout: 10) { seen.withLock { $0.count } > before }
+            return seen.withLock { $0.count > before ? $0.last : nil }
+        }
+
+        let off = try await embeddedCookie(trackingPrevention: false)
+        let on = try await embeddedCookie(trackingPrevention: true)
+        XCTAssertEqual(off, "Cookie: id=1", "WebKit now blocks third-party cookies without tracking prevention: PRIVACY.md can say so")
+        XCTAssertEqual(on, "")
+    }
+
+    /// A page that asked Lilo something (here notification permission) and then navigates itself must
+    /// not be held behind a beforeunload panel: the reply is not the user interacting with the page.
+    func testANativeReplyLeavesThePageWithoutUserActivation() async throws {
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = tab.wkWebView
+        defer {
+            window.close()
+            tab.teardown()
+        }
+        // Read through the URL: the test's own evaluateJavaScript would count as a user gesture.
+        tab.wkWebView.loadHTMLString("""
+            <script>
+            addEventListener('beforeunload', event => event.preventDefault());
+            Notification.requestPermission().then(() => { location.href = 'about:blank#' + navigator.userActivation.hasBeenActive });
+            </script>
+            """, baseURL: URL(string: "https://example.com/"))
+
+        let left = await pollUntil(timeout: 5) { tab.wkWebView.url?.absoluteString.hasPrefix("about:blank#") == true }
+        XCTAssertTrue(left, "the page's own navigation went through, with no leave prompt holding it")
+        XCTAssertEqual(tab.wkWebView.url?.absoluteString, "about:blank#false", "the reply gave the page no user activation")
+    }
+
+    func testTrackingPreventionIsOffOnEveryStoreByDefault() {
+        let factory = WKEngineFactory()
+        let stores = [
+            factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString),
+            factory.createDataStore(persistent: false, identifier: nil),
+            factory.defaultDataStore(),
+        ]
+        for store in stores {
+            XCTAssertEqual(store.backingStore.value(forKey: "resourceLoadStatisticsEnabled") as? Bool, false, store.identifier)
+        }
+    }
+
+    func testTrackingPreventionSettingReachesExistingStores() async {
+        let factory = WKEngineFactory()
+        let stores = [
+            factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString),
+            factory.createDataStore(persistent: false, identifier: nil),
+            factory.defaultDataStore(),
+        ]
+        let enabled = { stores.map { $0.backingStore.value(forKey: "resourceLoadStatisticsEnabled") as? Bool } }
+
+        factory.setTrackingPrevention(true)
+        XCTAssertEqual(enabled(), [true, true, true])
+        XCTAssertEqual(factory.createDataStore(persistent: false, identifier: nil).backingStore.value(forKey: "resourceLoadStatisticsEnabled") as? Bool, true)
+
+        // Off lands once WebKit has cleared its statistics. The network process answers a store's clears
+        // in order, so one sent after the factory's comes back once the factory's completion has run.
+        factory.setTrackingPrevention(false)
+        let clear = NSSelectorFromString("_clearResourceLoadStatistics:")
+        for store in stores.map(\.backingStore) where store.responds(to: clear) {
+            await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+                let cleared: @convention(block) () -> Void = { done.resume() }
+                store.perform(clear, with: cleared)
+            }
+        }
+        XCTAssertEqual(enabled(), [false, false, false])
+    }
+}

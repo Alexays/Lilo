@@ -1,0 +1,21 @@
+# Git-ignored local overrides, auto-included by the Makefile.
+# Copy to `Makefile.local` and fill in your values.
+#
+# Why: without it, `make install-debug`, `make install` (release without LILO_TEAM_ID) and
+# the test targets (whose host runs as fr.arouillard.lilo.tests) sign ad-hoc. The signature changes on every rebuild, so macOS no longer trusts the
+# binary: camera and microphone access are asked again, and so is WebKit's
+# "Lilo WebCrypto Master Key" keychain item ("Always Allow" never sticks).
+# Signing with a stable Apple Development identity gives a constant designated
+# requirement, so you authorize each of them once. A free Apple ID's Personal Team
+# (Xcode > Settings > Accounts) is enough to get an Apple Development certificate.
+#
+# Find your identities:  security find-identity -v -p codesigning
+# The value in parentheses after your name is the team ID.
+
+export LILO_DEBUG_TEAM_ID := REPLACE_WITH_TEAM_ID
+# Optional: pin an exact certificate (defaults to "Apple Development").
+# export LILO_DEBUG_CODE_SIGN_IDENTITY := Apple Development
+
+# Release signing only, once Apple grants the browser passkey entitlement: a Developer ID
+# provisioning profile that includes it. See docs/RELEASING.md.
+# export LILO_PROVISIONING_PROFILE := /path/to/Lilo_Developer_ID.provisionprofile

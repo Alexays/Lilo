@@ -1,0 +1,8 @@
+{
+  "appName": {
+    "message": "Lilo MV3 Compat Probe"
+  },
+  "appDesc": {
+    "message": "Probes how much of Chrome MV3 actually works in Lilo on this machine."
+  }
+}

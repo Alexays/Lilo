@@ -1,0 +1,285 @@
+// Extension system, content scripts, popups.
+
+import AppKit
+import WebKit
+
+// MARK: - Extension Context
+
+extension MainWindowController {
+    func setupExtensions() {
+        // Shared by every window: extensions act on the window the user works in.
+        context.engineFactory.tabGroupsContextProvider = { [weak context] registry in
+            guard let window = context?.windows.window(showingProfileOf: registry) else { return nil }
+            return TabGroupsContext(
+                tabManager: window.tabManager,
+                applyCommand: { [weak window] command in
+                    guard let window else {
+                        throw NSError(domain: "Lilo.TabGroups", code: 0, userInfo: [NSLocalizedDescriptionKey: "Window gone"])
+                    }
+                    return try window.applyBrowserCommand(command)
+                },
+                registry: window.profileContext?.extensions
+            )
+        }
+        // chrome.contentSettings reads the user's own choice for the types Lilo asks about.
+        context.engineFactory.contentSettingsHandler.userSetting = { [weak context] type, origin in
+            guard let context, ["camera", "microphone", "location", "notifications"].contains(type) else { return nil }
+            if let decision = context.sitePermissionStore.decision(forOrigin: origin, type: type) { return decision ? "allow" : "block" }
+            return context.settingsStore.refusesPermissionRequests(type) ? "block" : nil
+        }
+        context.engineFactory.sessionsContextProvider = { [weak context] registry in
+            guard let context, let window = context.windows.window(showingProfileOf: registry) else { return nil }
+            return SessionsContext(
+                recentlyClosedURLs: context.recentlyClosed.recentEntries.filter(window.isVisibleToExtensions).compactMap {
+                    if case .page(let url) = $0.content { url } else { nil }
+                },
+                restore: { [weak window] index in window?.restoreClosedTabForExtension(at: index) }
+            )
+        }
+    }
+
+    /// The cached registry whose profile has `extensionId` loaded. Used to address app-level events
+    /// (e.g. a notification click handled by AppDelegate) to the right profile.
+    func registryOwning(extensionId: String) -> ProfileExtensionRegistry? {
+        context.profileContexts.allContexts
+            .first { $0.extensions.loadedExtensions.contains { $0.id == extensionId } }?
+            .extensions
+    }
+
+    /// Presents a folder picker and loads the chosen directory as an unpacked extension (must
+    /// contain manifest.json), with the same install-consent dialog as any other install. Reached
+    /// from the Develop menu and the Extensions panel button.
+    @objc func loadUnpackedExtension(_ sender: Any?) {
+        guard let registry = profileContext?.extensions, let window else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = false
+        panel.prompt = "Load".localized
+        panel.message = "Select an unpacked extension folder (must contain manifest.json)".localized
+        panel.beginSheetModal(for: window) { response in
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in
+                do {
+                    let review = try ExtensionInstallReview.load(from: url)
+                    guard review.confirmInstall() else { return }
+                    try await registry.load(from: url)
+                } catch {
+                    let alert = NSAlert()
+                    alert.alertStyle = .warning
+                    alert.messageText = "Couldn't load extension".localized
+                    alert.informativeText = error.localizedDescription
+                    alert.addButton(withTitle: "OK".localized)
+                    alert.runModal()
+                }
+            }
+        }
+    }
+
+    // MARK: - Internal wiring
+
+    /// Points the tab manager and `registry`'s delegate at each other on every profile activation, so a cached registry restores
+    /// a coherent window. A private space shows in the private extension window, seen only by extensions allowed there.
+    func bindExtensionRegistry(_ registry: ProfileExtensionRegistry) {
+        guard let window else { return }
+        let windowAdapter = registry.windowAdapter(for: window, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
+        windowAdapter.tabManager = tabManager
+        tabManager.windowAdapter = windowAdapter
+
+        registry.delegate.tabManager = tabManager
+        registry.delegate.windowController = self
+        registry.delegate.windows = context.windows
+        tabManager.extensionRegistry = registry
+        registry.onExtensionsChanged = { [weak context, weak registry] in
+            context?.windows.windows.forEach { if $0.profileContext?.extensions === registry { $0.sendExtensionsChangedEvent() } }
+        }
+
+        registry.notifyWindowOpened()
+        // A profile switch keeps the same NSWindow key, so windowDidBecomeKey doesn't re-fire: focus
+        // the now-active registry explicitly so its controller is focused and its keep-alive starts.
+        registry.notifyWindowFocused(window.isKeyWindow)
+    }
+
+    // MARK: - Bridge Events
+
+    /// Ships the full id list plus only the rows that changed since the last send; a row whose icon is
+    /// unchanged leaves `iconDataURL` out and the chrome keeps the one it holds.
+    func sendExtensionsChangedEvent() {
+        guard let bridgeRouter else { return }
+        let registry = profileContext?.extensions
+        let rows = registry?.extensionBridgePayloads(activeTab: tabManager.activeOpenTabId.flatMap { tabManager.tabAdapter(for: $0) }) ?? []
+        var ids: [String] = []
+        var changed: [[String: Any]] = []
+        var sent: [String: [String: Any]] = [:]
+        ids.reserveCapacity(rows.count)
+        for row in rows {
+            guard let id = row["id"] as? String else { continue }
+            ids.append(id)
+            sent[id] = row
+            guard let previous = sentExtensionRows[id] else {
+                changed.append(row)
+                continue
+            }
+            guard !(previous as NSDictionary).isEqual(to: row) else { continue }
+            var delta = row
+            if let icon = row["iconDataURL"] as? String, icon == previous["iconDataURL"] as? String {
+                delta["iconDataURL"] = nil
+            }
+            changed.append(delta)
+        }
+        sentExtensionRows = sent
+        bridgeRouter.send(event: "extensionsChanged", data: [
+            "ids": ids,
+            "extensions": changed,
+            "updateCheck": registry?.updater.status ?? [:],
+            "downloadUiEnabled": registry?.downloadUiDisabledBy.isEmpty ?? true
+        ])
+    }
+
+    // MARK: - Extension Context Menu
+
+    /// `pinned` is nil where pinning does not apply (the settings list), else the address-bar pin state.
+    func showExtensionContextMenu(extensionId: String, anchorRect: NSRect?, pinned: Bool? = nil, canPin: Bool = true) {
+        let menu = NSMenu()
+        let context = profileContext?.extensions.context(for: extensionId)
+        // The extension's own action menu (contextMenus with the "action" context) leads, as in Chrome.
+        if pinned != nil, let adapter = tabManager.activeOpenTabId.flatMap({ tabManager.tabAdapter(for: $0) }),
+           let actionItems = context?.action(for: adapter)?.menuItems, !actionItems.isEmpty {
+            profileContext?.extensions.noteUserGestures(choosing: actionItems, extensionId: extensionId)
+            for item in actionItems { menu.addItem(item) }
+            menu.addItem(.separator())
+        }
+        let send = { (action: String) in self.bridgeRouter?.send(event: "extensionMenuAction", data: ["id": extensionId, "action": action]) }
+        if let pinned {
+            let pin = menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
+            if !pinned, !canPin { pin.action = nil }
+        }
+        menu.addItem("Details".localized, icon: .details) { send("details") }
+        if let url = context?.optionsPageURL {
+            menu.addItem("Options".localized, icon: .options) { self.createTabStateFirst(url: url, activate: true) }
+        }
+        menu.addItem(.separator())
+        menu.addItem("Remove…".localized, icon: .delete) { send("remove") }
+
+        presentContextMenu(menu, anchorRect: anchorRect)
+    }
+
+    func extensionDiagnosticsSnapshots() -> [[String: Any]] {
+        context.profileContexts.allContexts.flatMap { $0.extensions.backgroundDiagnosticsSnapshots() }
+    }
+
+    func sendExtensionPermissionRequest(
+        requestId: String,
+        extensionId: String,
+        extensionName: String,
+        permissions: [String],
+        origins: [String],
+        type: String
+    ) {
+        bridgeRouter?.send(event: "extensionPermissionRequested", data: [
+            "requestId": requestId,
+            "extensionId": extensionId,
+            "extensionName": extensionName,
+            "permissions": permissions,
+            "origins": origins,
+            "type": type
+        ])
+    }
+
+    func resolveExtensionPermissionRequest(requestId: String, granted: Bool) {
+        profileContext?.extensions.resolvePermissionRequest(id: requestId, granted: granted)
+    }
+
+    // MARK: - Engine Configuration
+
+    func configureEngineIfNeeded(_ engine: WKWebViewTab) {
+        // Navigation, dialogs and permission prompts go to the window that shows the page.
+        engine.delegate = self
+        engine.tabManager = tabManager
+        engine.popupWebViewProvider = { [weak self, weak engine] configuration, requestedURL, features in
+            self?.createPopupWebView(configuration: configuration, requestedURL: requestedURL, features: features, opener: engine)
+        }
+    }
+
+    /// Detached popups that WebKit released without a `window.close()`, so their close handlers
+    /// can be dropped from `popupCloseHandlersByWebViewId`.
+    private static let liveDetachedPopupWebViews = NSHashTable<WKWebView>.weakObjects()
+    /// Content controllers already carrying the close bridge. The popup configuration shares its
+    /// opener's controller, so installing per popup would stack one more script on every page using it.
+    private static let popupCloseBridgeControllers = NSHashTable<WKUserContentController>.weakObjects()
+
+    /// A popup that becomes a tab closes through WebKit's own `webViewDidClose`; only a detached
+    /// extension popup, which has no UI delegate, needs the `window.close()` bridge.
+    func createPopupWebView(
+        configuration: WKWebViewConfiguration,
+        requestedURL: URL?,
+        features: WKWindowFeatures? = nil,
+        opener: WKWebViewTab? = nil
+    ) -> WKWebView? {
+        if Self.shouldCreateDetachedExtensionPopup(for: requestedURL) {
+            installPopupCloseBridge(on: configuration.userContentController)
+            let webView = WKWebView(frame: .zero, configuration: configuration)
+            let webViewId = ObjectIdentifier(webView)
+            let liveIds = Set(Self.liveDetachedPopupWebViews.allObjects.map { ObjectIdentifier($0) })
+            popupCloseHandlersByWebViewId = popupCloseHandlersByWebViewId.filter { liveIds.contains($0.key) }
+            Self.liveDetachedPopupWebViews.add(webView)
+            popupCloseHandlersByWebViewId[webViewId] = { [weak self, weak webView] in
+                webView?.stopLoading()
+                self?.popupCloseHandlersByWebViewId.removeValue(forKey: webViewId)
+            }
+            return webView
+        }
+
+        if let features, let opener, Self.requestsPopup(features) {
+            return openPagePopup(configuration: configuration, features: features, opener: opener)
+        }
+
+        guard let popupTab = createTabStateFirst(
+            url: requestedURL,
+            activate: true,
+            nativeConfiguration: configuration
+        ) else { return nil }
+        guard let popupEngine = tabManager.engineTab(for: popupTab.id) else { return nil }
+        configureEngineIfNeeded(popupEngine)
+        return popupEngine.view as? WKWebView
+    }
+
+    static func shouldCreateDetachedExtensionPopup(for requestedURL: URL?) -> Bool {
+        requestedURL?.scheme?.lowercased() == "chrome-extension"
+    }
+
+    func installPopupCloseBridge(on userContentController: WKUserContentController) {
+        guard !Self.popupCloseBridgeControllers.contains(userContentController) else { return }
+        Self.popupCloseBridgeControllers.add(userContentController)
+        let nativeCloseScript = WKUserScript(
+            source: #"""
+            (() => {
+                // The controller may be a regular tab's (an extension URL opened from a page): its
+                // pages keep WebKit's own window.close.
+                if (!/^(webkit|chrome)-extension:$/.test(location.protocol)) return;
+                if (window.__liloNativePopupCloseInstalled) return;
+                window.__liloNativePopupCloseInstalled = true;
+
+                const closePopup = () => {
+                    window.__liloPageClosing?.();
+                    try {
+                        window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
+                    } catch (error) {
+                        console.error('Failed to close popup natively', error);
+                    }
+                };
+
+                window.close = closePopup;
+                globalThis.close = closePopup;
+            })();
+            """#,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true
+        )
+
+        userContentController.removeScriptMessageHandler(forName: "liloPopupHost")
+        userContentController.addUserScript(nativeCloseScript)
+        userContentController.add(PopupCloseScriptHandler(windows: context.windows), name: "liloPopupHost")
+    }
+}

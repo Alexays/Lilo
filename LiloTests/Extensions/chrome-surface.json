@@ -1,0 +1,10515 @@
+{
+ "chromeTypes": "0.1.457",
+ "surface": [
+  {
+   "path": "accessibilityFeatures",
+   "kind": "namespace",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.spokenFeedback",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.largeCursor",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.stickyKeys",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.highContrast",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.screenMagnifier",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.autoclick",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.virtualKeyboard",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.caretHighlight",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.cursorHighlight",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.cursorColor",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.dockedMagnifier",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.focusHighlight",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.selectToSpeak",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.switchAccess",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.animationPolicy",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "accessibilityFeatures.dictation",
+   "kind": "property",
+   "permissions": [
+    "accessibilityFeatures.modify",
+    "accessibilityFeatures.read"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "action",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onClicked",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onClicked.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onClicked.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onClicked.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onClicked.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onUserSettingsChanged",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onUserSettingsChanged.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onUserSettingsChanged.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onUserSettingsChanged.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.onUserSettingsChanged.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setTitle",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getTitle",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setIcon",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setPopup",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getPopup",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setBadgeText",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getBadgeText",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setBadgeBackgroundColor",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getBadgeBackgroundColor",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.setBadgeTextColor",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getBadgeTextColor",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.enable",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.disable",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.isEnabled",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.getUserSettings",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "action.openPopup",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "action"
+   ],
+   "worker": true
+  },
+  {
+   "path": "alarms",
+   "kind": "namespace",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.onAlarm",
+   "kind": "event",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.onAlarm.addListener",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.onAlarm.removeListener",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.onAlarm.hasListener",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.onAlarm.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.create",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.get",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.getAll",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.clear",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "alarms.clearAll",
+   "kind": "function",
+   "permissions": [
+    "alarms"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks",
+   "kind": "namespace",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.FolderType",
+   "kind": "enum",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.ROOT_NODE_ID",
+   "kind": "property",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onCreated",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onCreated.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onCreated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onCreated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onCreated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onRemoved",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onRemoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onRemoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onRemoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChanged",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onMoved",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onMoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onMoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onMoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onMoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChildrenReordered",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChildrenReordered.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChildrenReordered.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChildrenReordered.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onChildrenReordered.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportBegan",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportBegan.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportBegan.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportBegan.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportBegan.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportEnded",
+   "kind": "event",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportEnded.addListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportEnded.removeListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportEnded.hasListener",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.onImportEnded.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.get",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.getChildren",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.getRecent",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.getTree",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.getSubTree",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.search",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.create",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.move",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.update",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.remove",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "bookmarks.removeTree",
+   "kind": "function",
+   "permissions": [
+    "bookmarks"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData",
+   "kind": "namespace",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.settings",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.remove",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeCache",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeCacheStorage",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeCookies",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeDownloads",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeFileSystems",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeFormData",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeHistory",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeIndexedDB",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeLocalStorage",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "browsingData.removeServiceWorkers",
+   "kind": "function",
+   "permissions": [
+    "browsingData"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "commands",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.onCommand",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.onCommand.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.onCommand.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.onCommand.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.onCommand.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "commands.getAll",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "commands"
+   ],
+   "worker": true
+  },
+  {
+   "path": "contentSettings",
+   "kind": "namespace",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.Scope",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.AutoVerifyContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.ClipboardContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.CookiesContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.ImagesContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.JavascriptContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.LocationContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.PopupsContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.NotificationsContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.MicrophoneContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.CameraContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.MultipleAutomaticDownloadsContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.SoundContentSetting",
+   "kind": "enum",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.autoVerify",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.cookies",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.images",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.javascript",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.location",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.plugins",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.popups",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.notifications",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.fullscreen",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.mouselock",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.microphone",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.clipboard",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.camera",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.unsandboxedPlugins",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contentSettings.automaticDownloads",
+   "kind": "property",
+   "permissions": [
+    "contentSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus",
+   "kind": "namespace",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.ContextType",
+   "kind": "enum",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.ItemType",
+   "kind": "enum",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.ACTION_MENU_TOP_LEVEL_LIMIT",
+   "kind": "property",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.onClicked",
+   "kind": "event",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.onClicked.addListener",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.onClicked.removeListener",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.onClicked.hasListener",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.onClicked.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.create",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.update",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.remove",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "contextMenus.removeAll",
+   "kind": "function",
+   "permissions": [
+    "contextMenus"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies",
+   "kind": "namespace",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.SameSiteStatus",
+   "kind": "enum",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.OnChangedCause",
+   "kind": "enum",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.onChanged",
+   "kind": "event",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.onChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.onChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.onChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.onChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.get",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.getAll",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.set",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.remove",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.getAllCookieStores",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "cookies.getPartitionKey",
+   "kind": "function",
+   "permissions": [
+    "cookies"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger",
+   "kind": "namespace",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.TargetInfoType",
+   "kind": "enum",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.DetachReason",
+   "kind": "enum",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onEvent",
+   "kind": "event",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onEvent.addListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onEvent.removeListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onEvent.hasListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onEvent.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onDetach",
+   "kind": "event",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onDetach.addListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onDetach.removeListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onDetach.hasListener",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.onDetach.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.attach",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.detach",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.sendCommand",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "debugger.getTargets",
+   "kind": "function",
+   "permissions": [
+    "debugger"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent",
+   "kind": "namespace",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged",
+   "kind": "event",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.addRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.getRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeContent.onPageChanged.removeRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeContent"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest",
+   "kind": "namespace",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.ResourceType",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.RequestMethod",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.DomainType",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.HeaderOperation",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.RuleActionType",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.UnsupportedRegexReason",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.RuleConditionKeys",
+   "kind": "enum",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.GUARANTEED_MINIMUM_STATIC_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_DYNAMIC_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_DYNAMIC_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_SESSION_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_UNSAFE_SESSION_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.GETMATCHEDRULES_QUOTA_INTERVAL",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_GETMATCHEDRULES_CALLS_PER_INTERVAL",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_REGEX_RULES",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_STATIC_RULESETS",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.MAX_NUMBER_OF_ENABLED_STATIC_RULESETS",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.DYNAMIC_RULESET_ID",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.SESSION_RULESET_ID",
+   "kind": "property",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.onRuleMatchedDebug",
+   "kind": "event",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.onRuleMatchedDebug.addListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.onRuleMatchedDebug.removeListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.onRuleMatchedDebug.hasListener",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.onRuleMatchedDebug.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.updateDynamicRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getDynamicRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.updateSessionRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getSessionRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.updateEnabledRulesets",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getEnabledRulesets",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.updateStaticRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getDisabledRuleIds",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getMatchedRules",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.setExtensionActionOptions",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.isRegexSupported",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.getAvailableStaticRuleCount",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "declarativeNetRequest.testMatchOutcome",
+   "kind": "function",
+   "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture",
+   "kind": "namespace",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.DesktopCaptureSourceType",
+   "kind": "enum",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.SystemAudioPreferenceEnum",
+   "kind": "enum",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.WindowAudioPreferenceEnum",
+   "kind": "enum",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.SelfCapturePreferenceEnum",
+   "kind": "enum",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.chooseDesktopMedia",
+   "kind": "function",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "desktopCapture.cancelChooseDesktopMedia",
+   "kind": "function",
+   "permissions": [
+    "desktopCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "devtools.inspectedWindow",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.tabId",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceAdded",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceAdded.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceAdded.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceAdded.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceAdded.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceContentCommitted",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceContentCommitted.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceContentCommitted.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceContentCommitted.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.onResourceContentCommitted.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow._eval",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.reload",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.inspectedWindow.getResources",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onRequestFinished",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onRequestFinished.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onRequestFinished.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onRequestFinished.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onRequestFinished.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onNavigated",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onNavigated.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onNavigated.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onNavigated.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.onNavigated.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.network.getHAR",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.Theme",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.elements",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.sources",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.themeName",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.create",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.setOpenResourceHandler",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.openResource",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.panels.setThemeChangeHandler",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "devtools_page"
+   ],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStarted",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStarted.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStarted.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStarted.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStarted.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStopped",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStopped.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStopped.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStopped.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.performance.onProfilingStopped.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.recorder",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.recorder.registerRecorderExtensionPlugin",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "devtools.recorder.createView",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "dom",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "dom.openOrClosedShadowRoot",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads",
+   "kind": "namespace",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.FilenameConflictAction",
+   "kind": "enum",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.HttpMethod",
+   "kind": "enum",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.InterruptReason",
+   "kind": "enum",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.DangerType",
+   "kind": "enum",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.State",
+   "kind": "enum",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onCreated",
+   "kind": "event",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onCreated.addListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onCreated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onCreated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onCreated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onErased",
+   "kind": "event",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onErased.addListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onErased.removeListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onErased.hasListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onErased.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onChanged",
+   "kind": "event",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onDeterminingFilename",
+   "kind": "event",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onDeterminingFilename.addListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onDeterminingFilename.removeListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onDeterminingFilename.hasListener",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.onDeterminingFilename.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.download",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.search",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.pause",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.resume",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.cancel",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.getFileIcon",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.open",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.show",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.showDefaultFolder",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.erase",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.removeFile",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.acceptDanger",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "downloads.setUiOptions",
+   "kind": "function",
+   "permissions": [
+    "downloads"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension.ViewType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension.inIncognitoContext",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension.getViews",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "extension.isAllowedIncognitoAccess",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension.isAllowedFileSchemeAccess",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "extension.setUpdateUrlData",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings",
+   "kind": "namespace",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.ScriptCode",
+   "kind": "enum",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.GenericFamily",
+   "kind": "enum",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.LevelOfControl",
+   "kind": "enum",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onFontChanged",
+   "kind": "event",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onFontChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onFontChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onFontChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onFontChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFontSizeChanged",
+   "kind": "event",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFontSizeChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFontSizeChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFontSizeChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFontSizeChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFixedFontSizeChanged",
+   "kind": "event",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFixedFontSizeChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFixedFontSizeChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFixedFontSizeChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onDefaultFixedFontSizeChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onMinimumFontSizeChanged",
+   "kind": "event",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onMinimumFontSizeChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onMinimumFontSizeChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onMinimumFontSizeChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.onMinimumFontSizeChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.clearFont",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.getFont",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.setFont",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.getFontList",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.clearDefaultFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.getDefaultFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.setDefaultFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.clearDefaultFixedFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.getDefaultFixedFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.setDefaultFixedFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.clearMinimumFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.getMinimumFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "fontSettings.setMinimumFontSize",
+   "kind": "function",
+   "permissions": [
+    "fontSettings"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm",
+   "kind": "namespace",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.MAX_MESSAGE_SIZE",
+   "kind": "property",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessage",
+   "kind": "event",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessage.addListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessage.removeListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessage.hasListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessage.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessagesDeleted",
+   "kind": "event",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessagesDeleted.addListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessagesDeleted.removeListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessagesDeleted.hasListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onMessagesDeleted.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onSendError",
+   "kind": "event",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onSendError.addListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onSendError.removeListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onSendError.hasListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.onSendError.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.register",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.unregister",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "gcm.send",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history",
+   "kind": "namespace",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.TransitionType",
+   "kind": "enum",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisited",
+   "kind": "event",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisited.addListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisited.removeListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisited.hasListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisited.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisitRemoved",
+   "kind": "event",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisitRemoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisitRemoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisitRemoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.onVisitRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.search",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.getVisits",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.addUrl",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.deleteUrl",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.deleteRange",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "history.deleteAll",
+   "kind": "function",
+   "permissions": [
+    "history"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "i18n",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "i18n.getAcceptLanguages",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "i18n.getMessage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "i18n.getUILanguage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "i18n.detectLanguage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity",
+   "kind": "namespace",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.AccountStatus",
+   "kind": "enum",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.onSignInChanged",
+   "kind": "event",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.onSignInChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.onSignInChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.onSignInChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.onSignInChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.getAuthToken",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.getProfileUserInfo",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.removeCachedAuthToken",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.clearAllCachedAuthTokens",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.launchWebAuthFlow",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "identity.getRedirectURL",
+   "kind": "function",
+   "permissions": [
+    "identity"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle",
+   "kind": "namespace",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.IdleState",
+   "kind": "enum",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.onStateChanged",
+   "kind": "event",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.onStateChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.onStateChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.onStateChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.onStateChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.queryState",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "idle.setDetectionInterval",
+   "kind": "function",
+   "permissions": [
+    "idle"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID",
+   "kind": "namespace",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.onTokenRefresh",
+   "kind": "event",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.onTokenRefresh.addListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.onTokenRefresh.removeListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.onTokenRefresh.hasListener",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.onTokenRefresh.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.getID",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.getCreationTime",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.getToken",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.deleteToken",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "instanceID.deleteID",
+   "kind": "function",
+   "permissions": [
+    "gcm"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management",
+   "kind": "namespace",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.LaunchType",
+   "kind": "enum",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.ExtensionDisabledReason",
+   "kind": "enum",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.ExtensionType",
+   "kind": "enum",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.ExtensionInstallType",
+   "kind": "enum",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onInstalled",
+   "kind": "event",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onInstalled.addListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onInstalled.removeListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onInstalled.hasListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onInstalled.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onUninstalled",
+   "kind": "event",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onUninstalled.addListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onUninstalled.removeListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onUninstalled.hasListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onUninstalled.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onEnabled",
+   "kind": "event",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onEnabled.addListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onEnabled.removeListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onEnabled.hasListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onEnabled.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onDisabled",
+   "kind": "event",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onDisabled.addListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onDisabled.removeListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onDisabled.hasListener",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.onDisabled.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.getAll",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.get",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.getSelf",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.getPermissionWarningsById",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.getPermissionWarningsByManifest",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.setEnabled",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.uninstall",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.uninstallSelf",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.launchApp",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.createAppShortcut",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.setLaunchType",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.generateAppForLink",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "management.installReplacementWebApp",
+   "kind": "function",
+   "permissions": [
+    "management"
+   ],
+   "manifest": [
+    "replacement_web_app"
+   ],
+   "worker": true
+  },
+  {
+   "path": "mimeHandler",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "mime_types_handler"
+   ],
+   "worker": true
+  },
+  {
+   "path": "mimeHandler.getStreamInfo",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "mime_types_handler"
+   ],
+   "worker": true
+  },
+  {
+   "path": "mimeHandler.abortAndFallbackToNativeHandler",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "mime_types_handler"
+   ],
+   "worker": true
+  },
+  {
+   "path": "mimeHandler.setMimeHandlerOptions",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "mime_types_handler"
+   ],
+   "worker": true
+  },
+  {
+   "path": "mimeHandler.getMimeHandlerOptions",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "mime_types_handler"
+   ],
+   "worker": true
+  },
+  {
+   "path": "notifications",
+   "kind": "namespace",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.TemplateType",
+   "kind": "enum",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.PermissionLevel",
+   "kind": "enum",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClosed",
+   "kind": "event",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClosed.addListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClosed.removeListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClosed.hasListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClosed.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClicked",
+   "kind": "event",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClicked.addListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClicked.removeListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClicked.hasListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onClicked.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onButtonClicked",
+   "kind": "event",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onButtonClicked.addListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onButtonClicked.removeListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onButtonClicked.hasListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onButtonClicked.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onPermissionLevelChanged",
+   "kind": "event",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onPermissionLevelChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onPermissionLevelChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onPermissionLevelChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.onPermissionLevelChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.create",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.update",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.clear",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.getAll",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "notifications.getPermissionLevel",
+   "kind": "function",
+   "permissions": [
+    "notifications"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "offscreen",
+   "kind": "namespace",
+   "permissions": [
+    "offscreen"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "offscreen.Reason",
+   "kind": "enum",
+   "permissions": [
+    "offscreen"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "offscreen.createDocument",
+   "kind": "function",
+   "permissions": [
+    "offscreen"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "offscreen.closeDocument",
+   "kind": "function",
+   "permissions": [
+    "offscreen"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "offscreen.hasDocument",
+   "kind": "function",
+   "permissions": [
+    "offscreen"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "omnibox",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.DescriptionStyleType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.OnInputEnteredDisposition",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputStarted",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputStarted.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputStarted.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputStarted.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputStarted.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputChanged",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputChanged.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputChanged.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputChanged.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputChanged.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputEntered",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputEntered.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputEntered.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputEntered.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputEntered.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputCancelled",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputCancelled.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputCancelled.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputCancelled.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onInputCancelled.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onDeleteSuggestion",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onDeleteSuggestion.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onDeleteSuggestion.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onDeleteSuggestion.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.onDeleteSuggestion.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "omnibox.setDefaultSuggestion",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [
+    "omnibox"
+   ],
+   "worker": true
+  },
+  {
+   "path": "pageCapture",
+   "kind": "namespace",
+   "permissions": [
+    "pageCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "pageCapture.saveAsMHTML",
+   "kind": "function",
+   "permissions": [
+    "pageCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onAdded",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onAdded.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onAdded.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onAdded.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onAdded.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onRemoved",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onRemoved.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onRemoved.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onRemoved.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.onRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.getAll",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.contains",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.request",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.remove",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.addHostAccessRequest",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "permissions.removeHostAccessRequest",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "power",
+   "kind": "namespace",
+   "permissions": [
+    "power"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "power.Level",
+   "kind": "enum",
+   "permissions": [
+    "power"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "power.requestKeepAwake",
+   "kind": "function",
+   "permissions": [
+    "power"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "power.releaseKeepAwake",
+   "kind": "function",
+   "permissions": [
+    "power"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider",
+   "kind": "namespace",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.PrintError",
+   "kind": "enum",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetPrintersRequested",
+   "kind": "event",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetPrintersRequested.addListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetPrintersRequested.removeListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetPrintersRequested.hasListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetPrintersRequested.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetUsbPrinterInfoRequested",
+   "kind": "event",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetUsbPrinterInfoRequested.addListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetUsbPrinterInfoRequested.removeListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetUsbPrinterInfoRequested.hasListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetUsbPrinterInfoRequested.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetCapabilityRequested",
+   "kind": "event",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetCapabilityRequested.addListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetCapabilityRequested.removeListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetCapabilityRequested.hasListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onGetCapabilityRequested.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onPrintRequested",
+   "kind": "event",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onPrintRequested.addListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onPrintRequested.removeListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onPrintRequested.hasListener",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "printerProvider.onPrintRequested.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "printerProvider"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy",
+   "kind": "namespace",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy.IPHandlingPolicy",
+   "kind": "enum",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy.AutofillBlockedType",
+   "kind": "enum",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy.network",
+   "kind": "property",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy.services",
+   "kind": "property",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "privacy.websites",
+   "kind": "property",
+   "permissions": [
+    "privacy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy",
+   "kind": "namespace",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.Scheme",
+   "kind": "enum",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.Mode",
+   "kind": "enum",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.settings",
+   "kind": "property",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.onProxyError",
+   "kind": "event",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.onProxyError.addListener",
+   "kind": "function",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.onProxyError.removeListener",
+   "kind": "function",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.onProxyError.hasListener",
+   "kind": "function",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "proxy.onProxyError.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "proxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "publicSuffix",
+   "kind": "namespace",
+   "permissions": [
+    "publicSuffix"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "publicSuffix.DomainEncoding",
+   "kind": "enum",
+   "permissions": [
+    "publicSuffix"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "publicSuffix.isKnownSuffix",
+   "kind": "function",
+   "permissions": [
+    "publicSuffix"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "publicSuffix.getKnownSuffix",
+   "kind": "function",
+   "permissions": [
+    "publicSuffix"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "publicSuffix.getDomain",
+   "kind": "function",
+   "permissions": [
+    "publicSuffix"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList",
+   "kind": "namespace",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryAdded",
+   "kind": "event",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryAdded.addListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryAdded.removeListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryAdded.hasListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryAdded.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryRemoved",
+   "kind": "event",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryRemoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryRemoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryRemoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryUpdated",
+   "kind": "event",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryUpdated.addListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryUpdated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryUpdated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.onEntryUpdated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.addEntry",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.removeEntry",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.updateEntry",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "readingList.query",
+   "kind": "function",
+   "permissions": [
+    "readingList"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.PlatformOs",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.PlatformArch",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.RequestUpdateCheckStatus",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.OnInstalledReason",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.OnLoadedReason",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.OnRestartRequiredReason",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.ContextType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.lastError",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.id",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onStartup",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onStartup.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onStartup.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onStartup.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onStartup.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onInstalled",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onInstalled.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onInstalled.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onInstalled.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onInstalled.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onEnabled",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onEnabled.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onEnabled.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onEnabled.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onEnabled.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onExtensionLoaded",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onExtensionLoaded.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onExtensionLoaded.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onExtensionLoaded.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onExtensionLoaded.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspend",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspend.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspend.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspend.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspend.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspendCanceled",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspendCanceled.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspendCanceled.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspendCanceled.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onSuspendCanceled.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUpdateAvailable",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUpdateAvailable.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUpdateAvailable.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUpdateAvailable.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUpdateAvailable.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnect",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnect.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnect.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnect.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnect.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectExternal",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectExternal.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectExternal.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectExternal.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectExternal.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptConnect",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptConnect.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptConnect.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptConnect.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptConnect.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectNative",
+   "kind": "event",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectNative.addListener",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectNative.removeListener",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectNative.hasListener",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onConnectNative.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessage",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessage.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessage.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessage.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessage.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessageExternal",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessageExternal.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessageExternal.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessageExternal.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onMessageExternal.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptMessage",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptMessage.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptMessage.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptMessage.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onUserScriptMessage.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onRestartRequired",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onRestartRequired.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onRestartRequired.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onRestartRequired.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.onRestartRequired.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.openOptionsPage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.getManifest",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.getVersion",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.getURL",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.setUninstallURL",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.reload",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.requestUpdateCheck",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.restart",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.restartAfterDelay",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.connect",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.connectNative",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.sendMessage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.sendNativeMessage",
+   "kind": "function",
+   "permissions": [
+    "nativeMessaging"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.getPlatformInfo",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "runtime.getPackageDirectoryEntry",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "runtime.getContexts",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting",
+   "kind": "namespace",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.StyleOrigin",
+   "kind": "enum",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.ExecutionWorld",
+   "kind": "enum",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.executeScript",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.insertCSS",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.removeCSS",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.registerContentScripts",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.getRegisteredContentScripts",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.unregisterContentScripts",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "scripting.updateContentScripts",
+   "kind": "function",
+   "permissions": [
+    "scripting"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "search",
+   "kind": "namespace",
+   "permissions": [
+    "search"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "search.Disposition",
+   "kind": "enum",
+   "permissions": [
+    "search"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "search.query",
+   "kind": "function",
+   "permissions": [
+    "search"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions",
+   "kind": "namespace",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.MAX_SESSION_RESULTS",
+   "kind": "property",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.onChanged",
+   "kind": "event",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.onChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.onChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.onChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.onChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.getRecentlyClosed",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.getDevices",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sessions.restore",
+   "kind": "function",
+   "permissions": [
+    "sessions"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel",
+   "kind": "namespace",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.Side",
+   "kind": "enum",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onOpened",
+   "kind": "event",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onOpened.addListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onOpened.removeListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onOpened.hasListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onOpened.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onClosed",
+   "kind": "event",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onClosed.addListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onClosed.removeListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onClosed.hasListener",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.onClosed.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.setOptions",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.getOptions",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.setPanelBehavior",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.getPanelBehavior",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.open",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.getLayout",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "sidePanel.close",
+   "kind": "function",
+   "permissions": [
+    "sidePanel"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage",
+   "kind": "namespace",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.AccessLevel",
+   "kind": "enum",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.sync",
+   "kind": "property",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.local",
+   "kind": "property",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.managed",
+   "kind": "property",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.session",
+   "kind": "property",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.onChanged",
+   "kind": "event",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.onChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.onChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.onChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "storage.onChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.cpu",
+   "kind": "namespace",
+   "permissions": [
+    "system.cpu"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.cpu.getInfo",
+   "kind": "function",
+   "permissions": [
+    "system.cpu"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display",
+   "kind": "namespace",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.LayoutPosition",
+   "kind": "enum",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.ActiveState",
+   "kind": "enum",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.MirrorMode",
+   "kind": "enum",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.onDisplayChanged",
+   "kind": "event",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.onDisplayChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.onDisplayChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.onDisplayChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.onDisplayChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.getInfo",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.getDisplayLayout",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.setDisplayProperties",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.setDisplayLayout",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.enableUnifiedDesktop",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.overscanCalibrationStart",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.overscanCalibrationAdjust",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.overscanCalibrationReset",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.overscanCalibrationComplete",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.showNativeTouchCalibration",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.startCustomTouchCalibration",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.completeCustomTouchCalibration",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.clearTouchCalibration",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.display.setMirrorMode",
+   "kind": "function",
+   "permissions": [
+    "system.display"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.memory",
+   "kind": "namespace",
+   "permissions": [
+    "system.memory"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.memory.getInfo",
+   "kind": "function",
+   "permissions": [
+    "system.memory"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage",
+   "kind": "namespace",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.StorageUnitType",
+   "kind": "enum",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.EjectDeviceResultCode",
+   "kind": "enum",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onAttached",
+   "kind": "event",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onAttached.addListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onAttached.removeListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onAttached.hasListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onAttached.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onDetached",
+   "kind": "event",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onDetached.addListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onDetached.removeListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onDetached.hasListener",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.onDetached.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.getInfo",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "system.storage.ejectDevice",
+   "kind": "function",
+   "permissions": [
+    "system.storage"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture",
+   "kind": "namespace",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.TabCaptureState",
+   "kind": "enum",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.onStatusChanged",
+   "kind": "event",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.onStatusChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.onStatusChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.onStatusChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.onStatusChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.capture",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": false
+  },
+  {
+   "path": "tabCapture.getCapturedTabs",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabCapture.getMediaStreamId",
+   "kind": "function",
+   "permissions": [
+    "tabCapture"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups",
+   "kind": "namespace",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.Color",
+   "kind": "enum",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.TAB_GROUP_ID_NONE",
+   "kind": "property",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onCreated",
+   "kind": "event",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onCreated.addListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onCreated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onCreated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onCreated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onUpdated",
+   "kind": "event",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onUpdated.addListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onUpdated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onUpdated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onUpdated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onMoved",
+   "kind": "event",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onMoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onMoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onMoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onMoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onRemoved",
+   "kind": "event",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onRemoved.addListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onRemoved.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onRemoved.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.onRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.get",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.query",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.update",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabGroups.move",
+   "kind": "function",
+   "permissions": [
+    "tabGroups"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.TabStatus",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.MutedInfoReason",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.ZoomSettingsMode",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.ZoomSettingsScope",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.WindowType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.SPLIT_VIEW_ID_NONE",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.TAB_ID_NONE",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.TAB_INDEX_NONE",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onCreated",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onCreated.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onCreated.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onCreated.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onCreated.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onUpdated",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onUpdated.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onUpdated.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onUpdated.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onUpdated.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onMoved",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onMoved.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onMoved.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onMoved.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onMoved.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onActivated",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onActivated.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onActivated.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onActivated.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onActivated.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onHighlighted",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onHighlighted.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onHighlighted.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onHighlighted.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onHighlighted.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onDetached",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onDetached.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onDetached.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onDetached.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onDetached.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onAttached",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onAttached.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onAttached.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onAttached.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onAttached.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onRemoved",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onRemoved.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onRemoved.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onRemoved.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onReplaced",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onReplaced.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onReplaced.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onReplaced.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onReplaced.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onZoomChange",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onZoomChange.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onZoomChange.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onZoomChange.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.onZoomChange.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.get",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.getCurrent",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.connect",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.sendMessage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.create",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.createSplit",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.duplicate",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.query",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.highlight",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.update",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.move",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.reload",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.remove",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.group",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.ungroup",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.unsplit",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.detectLanguage",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.captureVisibleTab",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.setZoom",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.getZoom",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.setZoomSettings",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.getZoomSettings",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.discard",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.goForward",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tabs.goBack",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "topSites",
+   "kind": "namespace",
+   "permissions": [
+    "topSites"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "topSites.get",
+   "kind": "function",
+   "permissions": [
+    "topSites"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts",
+   "kind": "namespace",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.EventType",
+   "kind": "enum",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.onVoicesChanged",
+   "kind": "event",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.onVoicesChanged.addListener",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.onVoicesChanged.removeListener",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.onVoicesChanged.hasListener",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.onVoicesChanged.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.speak",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.stop",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.pause",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.resume",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.isSpeaking",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "tts.getVoices",
+   "kind": "function",
+   "permissions": [
+    "tts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine",
+   "kind": "namespace",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.TtsClientSource",
+   "kind": "enum",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.LanguageInstallStatus",
+   "kind": "enum",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeak",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeak.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeak.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeak.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeak.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeakWithAudioStream",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeakWithAudioStream.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeakWithAudioStream.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeakWithAudioStream.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onSpeakWithAudioStream.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onStop",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onStop.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onStop.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onStop.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onStop.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onPause",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onPause.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onPause.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onPause.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onPause.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onResume",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onResume.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onResume.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onResume.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onResume.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onInstallLanguageRequest",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onInstallLanguageRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onInstallLanguageRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onInstallLanguageRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onInstallLanguageRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onUninstallLanguageRequest",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onUninstallLanguageRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onUninstallLanguageRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onUninstallLanguageRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onUninstallLanguageRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onLanguageStatusRequest",
+   "kind": "event",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onLanguageStatusRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onLanguageStatusRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onLanguageStatusRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.onLanguageStatusRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.updateVoices",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "ttsEngine.updateLanguage",
+   "kind": "function",
+   "permissions": [
+    "ttsEngine"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts",
+   "kind": "namespace",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.ExecutionWorld",
+   "kind": "enum",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.register",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.getScripts",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.unregister",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.update",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.execute",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.configureWorld",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.getWorldConfigurations",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "userScripts.resetWorldConfiguration",
+   "kind": "function",
+   "permissions": [
+    "userScripts"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy",
+   "kind": "namespace",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRemoteSessionStateChange",
+   "kind": "event",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRemoteSessionStateChange.addListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRemoteSessionStateChange.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRemoteSessionStateChange.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRemoteSessionStateChange.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onCreateRequest",
+   "kind": "event",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onCreateRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onCreateRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onCreateRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onCreateRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onGetRequest",
+   "kind": "event",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onGetRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onGetRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onGetRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onGetRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onIsUvpaaRequest",
+   "kind": "event",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onIsUvpaaRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onIsUvpaaRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onIsUvpaaRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onIsUvpaaRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRequestCanceled",
+   "kind": "event",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRequestCanceled.addListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRequestCanceled.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRequestCanceled.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.onRequestCanceled.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.completeCreateRequest",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.completeGetRequest",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.completeIsUvpaaRequest",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.attach",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webAuthenticationProxy.detach",
+   "kind": "function",
+   "permissions": [
+    "webAuthenticationProxy"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation",
+   "kind": "namespace",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.TransitionType",
+   "kind": "enum",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.TransitionQualifier",
+   "kind": "enum",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onBeforeNavigate",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onBeforeNavigate.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onBeforeNavigate.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onBeforeNavigate.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onBeforeNavigate.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCommitted",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCommitted.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCommitted.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCommitted.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCommitted.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onDOMContentLoaded",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onDOMContentLoaded.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onDOMContentLoaded.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onDOMContentLoaded.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onDOMContentLoaded.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCompleted",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCompleted.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCompleted.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCompleted.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCompleted.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onErrorOccurred",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onErrorOccurred.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onErrorOccurred.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onErrorOccurred.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onErrorOccurred.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCreatedNavigationTarget",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCreatedNavigationTarget.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCreatedNavigationTarget.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCreatedNavigationTarget.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onCreatedNavigationTarget.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onReferenceFragmentUpdated",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onReferenceFragmentUpdated.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onReferenceFragmentUpdated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onReferenceFragmentUpdated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onReferenceFragmentUpdated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onTabReplaced",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onTabReplaced.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onTabReplaced.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onTabReplaced.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onTabReplaced.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onHistoryStateUpdated",
+   "kind": "event",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onHistoryStateUpdated.addListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onHistoryStateUpdated.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onHistoryStateUpdated.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.onHistoryStateUpdated.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.getFrame",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webNavigation.getAllFrames",
+   "kind": "function",
+   "permissions": [
+    "webNavigation"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest",
+   "kind": "namespace",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.ResourceType",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnBeforeRequestOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnBeforeSendHeadersOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnSendHeadersOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnHeadersReceivedOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnAuthRequiredOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnResponseStartedOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnBeforeRedirectOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnCompletedOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.OnErrorOccurredOptions",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.IgnoredActionType",
+   "kind": "enum",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.MAX_HANDLER_BEHAVIOR_CHANGED_CALLS_PER_10_MINUTES",
+   "kind": "property",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRequest",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRequest.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRequest.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRequest.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRequest.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeSendHeaders",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeSendHeaders.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeSendHeaders.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeSendHeaders.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeSendHeaders.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onSendHeaders",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onSendHeaders.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onSendHeaders.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onSendHeaders.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onSendHeaders.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onHeadersReceived",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onHeadersReceived.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onHeadersReceived.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onHeadersReceived.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onHeadersReceived.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onAuthRequired",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onAuthRequired.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onAuthRequired.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onAuthRequired.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onAuthRequired.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onResponseStarted",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onResponseStarted.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onResponseStarted.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onResponseStarted.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onResponseStarted.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRedirect",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRedirect.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRedirect.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRedirect.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onBeforeRedirect.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onCompleted",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onCompleted.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onCompleted.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onCompleted.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onCompleted.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onErrorOccurred",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onErrorOccurred.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onErrorOccurred.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onErrorOccurred.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onErrorOccurred.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onActionIgnored",
+   "kind": "event",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onActionIgnored.addListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onActionIgnored.removeListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onActionIgnored.hasListener",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.onActionIgnored.hasListeners",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "webRequest.handlerBehaviorChanged",
+   "kind": "function",
+   "permissions": [
+    "webRequest"
+   ],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows",
+   "kind": "namespace",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.WindowType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.WindowState",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.CreateType",
+   "kind": "enum",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.WINDOW_ID_NONE",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.WINDOW_ID_CURRENT",
+   "kind": "property",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onCreated",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onCreated.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onCreated.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onCreated.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onCreated.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onRemoved",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onRemoved.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onRemoved.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onRemoved.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onRemoved.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onFocusChanged",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onFocusChanged.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onFocusChanged.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onFocusChanged.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onFocusChanged.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onBoundsChanged",
+   "kind": "event",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onBoundsChanged.addListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onBoundsChanged.removeListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onBoundsChanged.hasListener",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.onBoundsChanged.hasListeners",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.get",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.getCurrent",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.getLastFocused",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.getAll",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.create",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.update",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  },
+  {
+   "path": "windows.remove",
+   "kind": "function",
+   "permissions": [],
+   "manifest": [],
+   "worker": true
+  }
+ ]
+}

@@ -1,0 +1,410 @@
+// Retries what WebKit rejects and Chrome accepts. Patches go on the prototypes `chrome` and WebKit's `browser` share,
+// so extensions reaching the API either way get them. SW-safe: no window/document/webkit.
+import { bridgeChrome, callbackify, withLastError } from './callbackify.ts';
+import { ChromeEvent, eventStandIns } from './chrome-event.ts';
+import { CHANNEL_HOST, gapCall } from './ipc.ts';
+import type { NamespaceCompat, Patch } from './chrome-compat.ts';
+
+const unknownPermission = /'([^']+)' is not a valid permission/;
+const invalidPattern = /'([^']+)' is not a valid pattern/;
+const unknownResourceType = /'([^']+)' is an unknown resource type/;
+const invalidMatchPattern = /'([^']+)' is an invalid match pattern/;
+
+interface Permissions {
+  permissions?: string[];
+  origins?: string[];
+}
+
+/**
+ * Drops each permission WebKit does not know and each origin it rejects (wss:, which Chrome takes); Lilo answers
+ * for the dropped ones.
+ */
+async function withoutUnknownPermissions(request: Permissions, call: (known: Permissions) => Promise<any>): Promise<{ result: any; unknown: string[] }> {
+  let known = [...(request?.permissions ?? [])];
+  let origins = request?.origins && [...request.origins];
+  const unknown: string[] = [];
+  for (;;) {
+    try {
+      return { result: await call({ ...request, permissions: known, ...(origins && { origins }) }), unknown };
+    } catch (error) {
+      const message = String((error as Error)?.message);
+      const name = unknownPermission.exec(message)?.[1];
+      const origin = invalidPattern.exec(message)?.[1];
+      if (name && known.includes(name)) {
+        known = known.filter((permission) => permission !== name);
+        unknown.push(name);
+      } else if (origin && origins?.includes(origin)) {
+        origins = origins.filter((pattern) => pattern !== origin);
+        unknown.push(origin);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+const asksForSomething = (request: Permissions) => Boolean(request.permissions?.length || request.origins?.length);
+
+// Lilo grants these to every extension for its own channel to Lilo: an extension holds one when its manifest
+// requires it or the user granted it at Lilo's prompt.
+const grantedForLilo = new Set(['nativeMessaging']);
+const notRequired = (request: Permissions, declared: Set<string>) =>
+  (request?.permissions ?? []).filter((name) => grantedForLilo.has(name) && !declared.has(name));
+/** The permissions Lilo holds for the extension, as this context last learned them. */
+export const heldByLilo = new Set<string>();
+
+/** The manifest's permissions plus the optional ones WebKit grants no request for that the user granted. */
+export async function readHeldByLilo(): Promise<Set<string>> {
+  const held = await gapCall<string[]>('permissions', 'held');
+  heldByLilo.clear();
+  held.forEach((name) => heldByLilo.add(name));
+  return heldByLilo;
+}
+
+export function permissionsPatches(declared: () => Set<string>, declaredOrigins: () => string[], declaredOptional: () => string[]): Record<string, Patch> {
+  const isDeclared = (name: string) => declared().has(name) || declaredOrigins().includes(name);
+  const withoutNames = (request: Permissions, names: string[]) => ({ ...request, permissions: request?.permissions?.filter((name) => !names.includes(name)) });
+  return {
+    contains: (original) => function (this: unknown, request: Permissions, callback?: (result: boolean) => void) {
+      return callbackify(async () => {
+        const forLilo = notRequired(request, declared());
+        const { result, unknown } = await withoutUnknownPermissions(withoutNames(request, forLilo), (known) => original.call(this, known));
+        const asked = [...forLilo, ...unknown].filter((name) => !isDeclared(name));
+        if (!result || asked.length === 0) return result;
+        const held = await readHeldByLilo();
+        return asked.every((name) => held.has(name));
+      }, callback);
+    },
+    request: (original) => function (this: unknown, request: Permissions, callback?: (granted: boolean) => void) {
+      return callbackify(async () => {
+        let origins = request?.origins && [...request.origins];
+        // One prompt for the whole request, Lilo's: WebKit rejects such a request before it prompts.
+        const promptedByLilo = async () => {
+          const granted = await gapCall<boolean>('permissions', 'request', { permissions: request?.permissions ?? [], origins: origins ?? [] });
+          if (granted) request?.permissions?.forEach((name) => heldByLilo.add(name));
+          return granted;
+        };
+        if (notRequired(request, declared()).length > 0) return promptedByLilo();
+        for (;;) {
+          const asked = { ...request, ...(origins && { origins }) };
+          try {
+            return asksForSomething(asked) ? await original.call(this, asked) : true;
+          } catch (error) {
+            const message = String((error as Error)?.message);
+            if (unknownPermission.test(message)) return promptedByLilo();
+            const origin = invalidPattern.exec(message)?.[1];
+            if (!origin || !origins?.includes(origin)) throw error;
+            if (!isDeclared(origin)) return false;
+            origins = origins.filter((pattern) => pattern !== origin);
+          }
+        }
+      }, callback);
+    },
+    remove: (original) => function (this: unknown, request: Permissions, callback?: (removed: boolean) => void) {
+      return callbackify(async () => {
+        // Removing it from WebKit would cut Lilo's channel.
+        const forLilo = notRequired(request, declared());
+        const { result, unknown } = await withoutUnknownPermissions(withoutNames(request, forLilo), (known) =>
+          asksForSomething(known) ? original.call(this, known) : Promise.resolve(false));
+        if (unknown.some((name) => declared().has(name))) throw new Error('You cannot remove required permissions.');
+        const optional = [...forLilo, ...unknown.filter((name) => request?.permissions?.includes(name))];
+        if (optional.length === 0) return result;
+        await gapCall('permissions', 'remove', { permissions: optional });
+        optional.forEach((name) => heldByLilo.delete(name));
+        return true;
+      }, callback);
+    },
+    getAll: (original) => function (this: unknown, callback?: (permissions: Permissions) => void) {
+      return callbackify(async () => {
+        const all: Permissions = await original.call(this);
+        const fromWebKit = new Set(all.permissions ?? []);
+        // Asked only when an optional permission may be Lilo's to grant.
+        const held = declaredOptional().some((name) => !fromWebKit.has(name) || grantedForLilo.has(name)) ? await readHeldByLilo() : declared();
+        const permissions = [...new Set([...fromWebKit, ...held])];
+        return { ...all, permissions: permissions.filter((name) => !grantedForLilo.has(name) || held.has(name)) };
+      }, callback);
+    },
+  };
+}
+
+/** Each WebKit event's listeners, for Chrome's hasListeners, which WebKit's events lack. */
+const eventListeners = new WeakMap<object, Set<unknown>>();
+/** A page's WebKit events with listeners, which its window.close() removes; null once closed, none in a worker. */
+let pageEvents: Set<object> | null | undefined;
+
+export function trackPageListeners(page: boolean): void {
+  pageEvents = page ? new Set() : undefined;
+}
+
+export function removePageListeners(): void {
+  for (const event of pageEvents ?? []) {
+    for (const listener of [...eventListeners.get(event) ?? []]) (event as any).removeListener(listener);
+  }
+  pageEvents = null;
+}
+
+/**
+ * Retries only a listener rejected for resource types or URL patterns WebKit does not know (and never reports); a
+ * filter left empty matches nothing, so it is skipped. A non-function listener is ignored, as in Chrome.
+ */
+export const chromeEvent: NamespaceCompat = {
+  add: {
+    hasListeners(this: object) { return eventStandIns.get(this)?.hasListeners() ?? (eventListeners.get(this)?.size ?? 0) > 0; },
+  },
+  patch: {
+    addListener: (original) => function (this: any, ...args: any[]) {
+      if (typeof args[0] !== 'function') return undefined;
+      const standIn = eventStandIns.get(this);
+      if (standIn) return (standIn.addListener as (...a: unknown[]) => void)(...args);
+      if (pageEvents === null) return undefined;
+      let filter = args[1];
+      for (;;) {
+        try {
+          const result = original.apply(this, args[1] === filter ? args : [args[0], filter, ...args.slice(2)]);
+          let listeners = eventListeners.get(this);
+          if (!listeners) eventListeners.set(this, (listeners = new Set()));
+          listeners.add(args[0]);
+          pageEvents?.add(this);
+          return result;
+        } catch (error) {
+          const message = String((error as Error)?.message);
+          const type = unknownResourceType.exec(message)?.[1];
+          const pattern = invalidMatchPattern.exec(message)?.[1];
+          if (type && filter?.types?.includes(type)) {
+            filter = { ...filter, types: filter.types.filter((t: string) => t !== type) };
+            if (filter.types.length === 0) return undefined;
+          } else if (pattern && filter?.urls?.includes(pattern)) {
+            filter = { ...filter, urls: filter.urls.filter((url: string) => url !== pattern) };
+            if (filter.urls.length === 0) return undefined;
+          } else {
+            throw error;
+          }
+        }
+      }
+    },
+    removeListener: (original) => function (this: any, listener: any) {
+      if (typeof listener !== 'function') return undefined;
+      const standIn = eventStandIns.get(this);
+      if (standIn) return standIn.removeListener(listener);
+      eventListeners.get(this)?.delete(listener);
+      return original.call(this, listener);
+    },
+    hasListener: (original) => function (this: any, listener: any) {
+      if (typeof listener !== 'function') return false;
+      const standIn = eventStandIns.get(this);
+      return standIn ? standIn.hasListener(listener) : original.call(this, listener);
+    },
+  },
+};
+
+/** Chrome still takes the MV2 action contexts, as the action's; WebKit rejects them. */
+const actionContexts = new Set(['browser_action', 'page_action']);
+const withActionContexts = (properties: any) => (Array.isArray(properties?.contexts) && properties.contexts.some((c: string) => actionContexts.has(c))
+  ? { ...properties, contexts: [...new Set(properties.contexts.map((c: string) => (actionContexts.has(c) ? 'action' : c)))] }
+  : properties);
+
+const invalidMenuPattern = /The '(documentUrlPatterns|targetUrlPatterns)' value is invalid, because '(.*)' is not a valid pattern\./;
+const missingMenuTitle = /missing required keys: 'title'|The 'title' value is invalid, because it must not be empty/;
+const noMenuTitle = 'All menu items except for separators must have a title';
+const ancestorMenuParent = /Parent menu item cannot be itself or another ancestor/;
+// No extension id has a "v", so no document or link matches it.
+const matchesNothing = 'chrome-extension://invalid/*';
+
+/**
+ * MV2 action contexts count as the action's, a null `parentId` as none, and URL patterns WebKit rejects are dropped;
+ * a list left empty matches nothing rather than everything.
+ */
+function withChromeMenuProperties(call: (properties: any) => unknown, properties: any): unknown {
+  properties = withActionContexts(properties);
+  if (properties?.parentId === null) {
+    properties = { ...properties };
+    delete properties.parentId;
+  }
+  for (;;) {
+    try {
+      return call(properties);
+    } catch (error) {
+      const [, key, pattern] = invalidMenuPattern.exec(String((error as Error)?.message)) ?? [];
+      if (!key || pattern === matchesNothing || !properties?.[key]?.includes?.(pattern)) throw error;
+      const patterns = properties[key].filter((p: string) => p !== pattern);
+      properties = { ...properties, [key]: patterns.length > 0 ? patterns : [matchesNothing] };
+    }
+  }
+}
+
+export const contextMenusPatches: Record<string, Patch> = {
+  create: (original) => function (this: unknown, properties: any, ...rest: unknown[]) {
+    try {
+      return withChromeMenuProperties((chromeProperties) => original.call(this, chromeProperties, ...rest), properties);
+    } catch (error) {
+      if (!missingMenuTitle.test(String((error as Error)?.message))) throw error;
+      // Chrome returns the id, creates no item, and reports it as runtime.lastError.
+      const callback = rest[0] as (() => void) | undefined;
+      if (typeof callback === 'function') callbackify(() => Promise.reject(new Error(noMenuTitle)), callback);
+      else console.error(`Unchecked runtime.lastError: ${noMenuTitle}`);
+      return properties?.id;
+    }
+  },
+  update: (original) => function (this: unknown, id: unknown, properties: any, callback?: () => void) {
+    const update = (changes: unknown) => withChromeMenuProperties((chromeProperties) => original.call(this, id, chromeProperties), changes);
+    const updated = update(properties);
+    return callbackify(() => Promise.resolve(updated).catch((error) => {
+      // WebKit refuses any ancestor as the new parent, the current one included; Chrome only a cycle.
+      if (!ancestorMenuParent.test(String(error?.message)) || properties.parentId === id) throw error;
+      const changes = { ...properties };
+      delete changes.parentId;
+      return update(changes);
+    }), callback);
+  },
+};
+
+/**
+ * Chrome's alarms.create returns a promise or takes a trailing callback; WebKit's returns nothing, and
+ * takes the callback for the alarm info and rejects it.
+ */
+export const alarmsPatches: Record<string, Patch> = {
+  create: (original) => function (this: unknown, ...args: unknown[]) {
+    const callback = typeof args[args.length - 1] === 'function' ? args.pop() as () => void : undefined;
+    return callbackify(() => Promise.resolve(original.apply(this, args)), callback);
+  },
+};
+
+/** Chrome reads a null tabId as none; WebKit rejects it. */
+const nullTabIdAsNone: Patch = (original) => function (this: unknown, details: any, ...rest: unknown[]) {
+  return original.call(this, details?.tabId === null ? { ...details, tabId: undefined } : details, ...rest);
+};
+
+export const actionPatches: Record<string, Patch> = Object.fromEntries([
+  'setIcon', 'setTitle', 'getTitle', 'setPopup', 'getPopup', 'setBadgeText', 'getBadgeText',
+  'setBadgeBackgroundColor', 'getBadgeBackgroundColor', 'setBadgeTextColor', 'getBadgeTextColor',
+].map((name) => [name, nullTabIdAsNone]));
+
+/** Chrome's getMessage answers whatever its `this`; WebKit's returns undefined off its namespace. */
+export const i18nPatches: Record<string, Patch> = {
+  getMessage: (original, self) => function (this: unknown, ...args: unknown[]) {
+    return original.apply(self(this), args);
+  },
+};
+
+/** The content script registrations WebKit has not answered yet. */
+const registering = new Set<Promise<unknown>>();
+
+/**
+ * Settles once no registration is in flight: Chrome answers them before the event that started the
+ * worker, WebKit later (Tactiq's onInstalled unregisters what its startup is still registering).
+ */
+export async function registrationsSettled(): Promise<void> {
+  while (registering.size) await Promise.allSettled(registering);
+}
+
+const registration: Patch = (original, self) => function (this: unknown, ...args: any[]) {
+  const last = args.length - 1;
+  const callback = typeof args[last] === 'function' ? args.pop() : undefined;
+  const result: Promise<unknown> = original.apply(self(this), args);
+  registering.add(result);
+  result.then(() => registering.delete(result), () => registering.delete(result));
+  return callbackify(() => result, callback);
+};
+
+const noMatches = /The 'matches' value is invalid, because it must specify at least one match pattern for script with ID '(.*)'\./;
+
+// WebKit scripts the extension's own pages, Chrome refuses them: a popup shown in a tab that scripts the
+// active tab (Jetwriter) reaches itself.
+async function refuseOwnPages(injection: any): Promise<void> {
+  const chrome = bridgeChrome();
+  const tabId = injection?.target?.tabId;
+  const url: string | undefined = typeof tabId === 'number' ? (await chrome.tabs.get(tabId).catch(() => undefined))?.url : undefined;
+  if (!url?.startsWith(chrome.runtime.getURL(''))) return;
+  // Chrome names the page only to an extension that may read tab urls.
+  throw new Error(await chrome.permissions.contains({ permissions: ['tabs'] })
+    ? `Cannot access contents of url "${url}". Extension manifest must request permission to access this host.`
+    : 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.');
+}
+
+const ownPagesRefused: Patch = (original) => function (this: unknown, injection: any, callback?: (result: unknown) => void) {
+  return callbackify(async () => {
+    await refuseOwnPages(injection);
+    return original.call(this, injection);
+  }, callback);
+};
+
+export const scriptingPatches: Record<string, Patch> = {
+  // Chrome injects into a document once it has loaded unless asked to inject immediately; WebKit always
+  // injects at once, so Lilo first waits for the target documents in an injection of its own.
+  executeScript: (original, self) => function (this: unknown, injection: any, callback?: (results: unknown) => void) {
+    const namespace = self(this);
+    return callbackify(async () => {
+      await refuseOwnPages(injection);
+      if (injection?.injectImmediately !== true && injection?.target !== undefined) {
+        await original.call(namespace, {
+          target: injection.target,
+          injectImmediately: true,
+          // Runs in the target document, named as an argument: the worker has none, which its prelude must never name.
+          func: (name: string) => {
+            const page = (globalThis as any)[name];
+            return page.readyState !== 'loading' || new Promise((resolve) => page.addEventListener('DOMContentLoaded', () => resolve(true), { once: true }));
+          },
+          args: ['document'],
+        }).catch(() => {});
+      }
+      return original.call(namespace, injection);
+    }, callback);
+  },
+  insertCSS: ownPagesRefused,
+  removeCSS: ownPagesRefused,
+  registerContentScripts: (original, self) => function (this: unknown, scripts: any, ...rest: unknown[]) {
+    try {
+      return registration(original, self).call(this, scripts, ...rest);
+    } catch (error) {
+      const id = noMatches.exec(String((error as Error)?.message))?.[1];
+      const script = id === undefined ? undefined : scripts?.find?.((s: any) => s?.id === id);
+      if (!script) throw error;
+      // Chrome rejects the call where WebKit throws.
+      const message = script.matches === undefined ? `Script with ID '${id}' must specify 'matches'.` : `Script with ID '${id}' must specify at least one match.`;
+      return callbackify(() => Promise.reject(new Error(message)), rest[0] as (() => void) | undefined);
+    }
+  },
+  updateContentScripts: registration,
+  unregisterContentScripts: registration,
+};
+
+/**
+ * WebKit sets no runtime.lastError when a native port's host is missing or fails, so Lilo sends Chrome's on ports
+ * this marks. connectNative is an own property of WebKit's runtime, and wrapping `browser` breaks WebKit.
+ */
+export function nativeMessagingAsChrome(runtime: any): Record<PropertyKey, unknown> {
+  return {
+    connectNative(application: string) {
+      if (application === CHANNEL_HOST) return runtime.connectNative(application);
+      // `?` never appears in a host name: Lilo strips the mark and knows this port is served here.
+      const port = runtime.connectNative(`${application}?lilo`);
+      let error: string | undefined;
+      let disconnected = false;
+      const served = {
+        name: port.name,
+        sender: port.sender,
+        onMessage: new ChromeEvent<[unknown, unknown]>(),
+        onDisconnect: new ChromeEvent<[unknown]>(),
+        postMessage: (message: unknown) => {
+          if (disconnected) throw new Error('Attempting to use a disconnected port object');
+          port.postMessage(message);
+        },
+        disconnect: () => {
+          disconnected = true;
+          port.disconnect();
+        },
+      };
+      port.onMessage.addListener((message: any) => {
+        if (typeof message?.liloNativePortError === 'string') error = message.liloNativePortError;
+        else served.onMessage.dispatch(message, served);
+      });
+      port.onDisconnect.addListener(() => {
+        disconnected = true;
+        if (error === undefined) served.onDisconnect.dispatch(served);
+        else withLastError(error, () => served.onDisconnect.dispatch(served));
+      });
+      port.postMessage({ liloNativePortOpened: true });
+      return served;
+    },
+  };
+}

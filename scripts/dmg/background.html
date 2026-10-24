@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Content coordinates of the DMG window; settings.py puts the icons at (180, 176) and (460, 176). -->
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { width: 640px; height: 400px; overflow: hidden; position: relative; background: #efe9fb; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); }
+  .grain { position: absolute; inset: 0; opacity: .18; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  .pane { position: absolute; left: 60px; right: 60px; top: 70px; height: 236px; border-radius: 28px;
+    background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.75);
+    box-shadow: 0 30px 60px rgba(74,47,200,.18), inset 0 1px 0 rgba(255,255,255,.9); backdrop-filter: blur(24px); }
+  svg { position: absolute; inset: 0; }
+</style></head>
+<body>
+  <div class="blob" style="width:380px;height:340px;left:-100px;top:-80px;background:#b7a0ff;opacity:.8"></div>
+  <div class="blob" style="width:320px;height:300px;right:-90px;top:-40px;background:#ffc9ae;opacity:.8"></div>
+  <div class="blob" style="width:360px;height:280px;left:180px;bottom:-170px;background:#a9e8cf;opacity:.75"></div>
+  <div class="grain"></div>
+  <div class="pane"></div>
+  <svg width="640" height="400" viewBox="0 0 640 400" fill="none" stroke="#4a2fc8" stroke-opacity=".7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M266 176 H372"/>
+    <path d="M364 166 L376 176 L364 186"/>
+  </svg>
+</body></html>

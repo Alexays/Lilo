@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+
+ENABLE_HARDENED_RUNTIME = YES
+DEAD_CODE_STRIPPING = YES

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/Alexays/Lilo/discussions
+    about: Ask questions and discuss ideas in GitHub Discussions
+  - name: Security vulnerability
+    url: https://github.com/Alexays/Lilo/security/advisories/new
+    about: Report vulnerabilities privately through a GitHub security advisory, never in a public issue
+  - name: Extension compatibility reference
+    url: https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md
+    about: Known differences from Chrome, to check before filing an extension report

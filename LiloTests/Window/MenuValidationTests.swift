@@ -1,0 +1,173 @@
+import AppKit
+import XCTest
+@testable import Lilo
+
+/// Menu bar items act on the active tab: one that cannot act on it is greyed out.
+@MainActor
+final class MenuValidationTests: XCTestCase {
+    private var browserContext: TemporaryBrowserContext!
+    private var window: MainWindowController!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        browserContext = try await TemporaryBrowserContext()
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        window = makeTestWindow(context, showing: space.id)
+    }
+
+    override func tearDown() {
+        window.pagePopups.values.forEach { $0.close() }
+        window.littleWindows.values.forEach { $0.window.close() }
+        window.tabManager.terminalHost.liveTabIds.forEach(window.tabManager.terminalHost.forget)
+        browserContext.tearDown()
+        browserContext = nil
+        super.tearDown()
+    }
+
+    private func isEnabled(_ action: Selector) -> Bool {
+        window.validateUserInterfaceItem(NSMenuItem(title: "", action: action, keyEquivalent: ""))
+    }
+
+    /// File > Open as Tab, as the menu bar builds it.
+    private func openAsTabItem() throws -> NSMenuItem {
+        let saved = NSApp.mainMenu
+        defer { NSApp.mainMenu = saved }
+        AppDelegate().setupMainMenu()
+        let file = try XCTUnwrap(NSApp.mainMenu?.items.first { $0.title == "File".localized }?.submenu)
+        return try XCTUnwrap(file.items.first { $0.title == "Open as Tab".localized })
+    }
+
+    private func pageEngine() -> WKWebViewTab {
+        window.context.engineFactory.createTab(configuration: .init(
+            dataStore: window.tabManager.dataStore, tabId: nil, nativeConfiguration: nil, profileId: window.tabManager.profileId
+        ))
+    }
+
+    private let pageActions = [
+        #selector(MainWindowController.reloadCurrentPage(_:)),
+        #selector(MainWindowController.printCurrentPage(_:)),
+        #selector(MainWindowController.toggleReader(_:)),
+        #selector(MainWindowController.togglePictureInPicture(_:))
+    ]
+
+    func testPageActionsAreOffOnATerminal() throws {
+        XCTAssertNotNil(window.createTerminalTab(activate: true))
+
+        for action in pageActions { XCTAssertFalse(isEnabled(action), "\(action)") }
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.zoomInCurrentPage(_:))), "a terminal zooms its text")
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.showFindBar(_:))), "and finds in it")
+    }
+
+    func testPageActionsAreOnForAPage() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        webView.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
+
+        for action in pageActions { XCTAssertTrue(isEnabled(action), "\(action)") }
+    }
+
+    func testReopenLastClosedTabNeedsAClosedTab() throws {
+        let reopen = #selector(MainWindowController.restoreClosedTab(_:))
+        XCTAssertFalse(isEnabled(reopen))
+
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+        window.closeTabStateFirst(id: tab.id)
+
+        XCTAssertTrue(isEnabled(reopen))
+    }
+
+    func testALongClosedPageTitleEndsWithAnEllipsis() throws {
+        let url = try XCTUnwrap(URL(string: "https://example.com/" + String(repeating: "a", count: 80)))
+        browserContext.context.recentlyClosed.push(.page(url), spaceId: try XCTUnwrap(window.tabManager.currentSpaceId), parentFolderId: nil, section: nil, sortOrder: nil)
+        let menu = NSMenu()
+
+        window.populateRecentlyClosedMenu(menu)
+
+        let title = try XCTUnwrap(menu.items.first?.title)
+        XCTAssertEqual(title.count, 60)
+        XCTAssertTrue(title.hasSuffix("\u{2026}"), title)
+    }
+
+    func testTheReaderItemSaysHideInReaderMode() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        webView.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
+        let item = NSMenuItem(title: "", action: #selector(MainWindowController.toggleReader(_:)), keyEquivalent: "")
+
+        window.toggleReader(nil)
+
+        XCTAssertTrue(window.validateUserInterfaceItem(item))
+        XCTAssertEqual(item.title, "Hide Reader".localized)
+
+        window.toggleReader(nil)
+
+        XCTAssertTrue(window.validateUserInterfaceItem(item))
+        XCTAssertEqual(item.title, "Show Reader".localized)
+    }
+
+    func testDuplicateTabOpensTheCopyRightBelowTheOriginal() throws {
+        let original = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/a")))
+        _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/b")))
+        _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/c")))
+        window.activateTabStateFirst(id: original.id)
+
+        window.duplicateCurrentTab(nil)
+
+        let copy = try XCTUnwrap(window.tabManager.activeOpenTabId)
+        XCTAssertNotEqual(copy, original.id)
+        XCTAssertEqual(window.tabManager.tab(for: copy)?.url, original.url)
+        let order = window.tabManager.openTabs.map(\.id)
+        XCTAssertEqual(order.firstIndex(of: copy), order.firstIndex(of: original.id).map { $0 + 1 })
+    }
+
+    func testOpenAsTabIsCommandOAndOffInTheBrowserWindowAlone() throws {
+        let item = try openAsTabItem()
+        _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+
+        XCTAssertEqual(item.keyEquivalent, "o")
+        XCTAssertEqual(item.keyEquivalentModifierMask, .command)
+        XCTAssertFalse(window.validateUserInterfaceItem(item))
+    }
+
+    func testOpenAsTabOpensThePeekShownInTheBrowserWindow() throws {
+        let item = try openAsTabItem()
+        let opener = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+        window.openLinkPeek(try XCTUnwrap(URL(string: "https://other.test/article")), from: opener.id)
+        let popup = try XCTUnwrap(window.pagePopups.values.first)
+
+        XCTAssertTrue(window.validateUserInterfaceItem(item))
+        XCTAssertTrue(try XCTUnwrap(window.window).tryToPerform(try XCTUnwrap(item.action), with: item))
+
+        XCTAssertTrue(window.pagePopups.isEmpty)
+        XCTAssertTrue(window.tabManager.engineTab(for: popup.engine.id) === popup.engine)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, popup.engine.id)
+    }
+
+    func testOpenAsTabOpensThePageOfAPopupWindow() throws {
+        let item = try openAsTabItem()
+        let opener = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))
+        let engine = pageEngine()
+        window.presentPagePopup(engine, openerTabId: opener.id, contentSize: NSSize(width: 400, height: 300), topLeft: nil, inPeek: false)
+        let popupWindow = try XCTUnwrap(window.pagePopups[engine.id]?.window)
+
+        XCTAssertTrue(popupWindow.tryToPerform(try XCTUnwrap(item.action), with: item))
+
+        XCTAssertTrue(window.pagePopups.isEmpty)
+        XCTAssertTrue(window.tabManager.engineTab(for: engine.id) === engine)
+    }
+
+    func testOpenAsTabMovesALittleWindowIntoItsSpace() throws {
+        let item = try openAsTabItem()
+        window.didCompleteSessionRestore = true
+        let little = try XCTUnwrap(window.openLittleWindow(url: nil))
+
+        XCTAssertTrue(little.window.tryToPerform(try XCTUnwrap(item.action), with: item))
+
+        XCTAssertTrue(window.littleWindows.isEmpty)
+        XCTAssertEqual(window.tabManager.currentSpaceId, little.spaceId)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, little.engine.id)
+    }
+}

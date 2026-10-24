@@ -1,0 +1,366 @@
+import type {
+  BridgeSitePermissionSnapshot,
+  BridgeWebsiteDataSnapshot,
+  BridgeZoomLevelSnapshot,
+} from "../../lib/bridge/protocol";
+import type { SettingsSectionId } from "../../stores/panels.svelte";
+
+// This model is intentionally i18n-free (it's unit-tested under tsx, which can't load the
+// rune-based translator). It exposes catalog KEYS; the Svelte consumers resolve them with t(),
+// which keeps the labels reactive to locale changes.
+
+interface SettingsSectionModel {
+  id: SettingsSectionId;
+  labelKey: string;
+}
+
+// Terminal and agents sit under their own label; advanced sits apart (after a separator): it holds
+// developer tooling, not everyday settings.
+export const SETTINGS_NAV_GROUPS: { id: string; labelKey?: string; sections: SettingsSectionModel[] }[] = [
+  {
+    id: "main",
+    sections: [
+      { id: "general", labelKey: "settings.sections.general" },
+      { id: "appearance", labelKey: "settings.sections.appearance" },
+      { id: "tabs", labelKey: "settings.sections.tabs" },
+      { id: "privacy", labelKey: "settings.sections.privacy" },
+      { id: "extensions", labelKey: "settings.sections.extensions" },
+    ],
+  },
+  {
+    id: "tools",
+    labelKey: "settings.navGroups.tools",
+    sections: [
+      { id: "terminal", labelKey: "settings.sections.terminal" },
+      { id: "agents", labelKey: "settings.sections.agents" },
+    ],
+  },
+  { id: "advanced", sections: [{ id: "advanced", labelKey: "settings.sections.advanced" }] },
+];
+
+export const SETTINGS_SECTIONS: SettingsSectionModel[] = SETTINGS_NAV_GROUPS.flatMap((group) => group.sections);
+
+export type SettingId =
+  | "defaultBrowser"
+  | "importBrowsers"
+  | "replayOnboarding"
+  | "language"
+  | "searchEngine"
+  | "searchSuggestions"
+  | "askDownloadLocation"
+  | "searchEngines"
+  | "downloadsFolder"
+  | "autoPictureInPicture"
+  | "autoplay"
+  | "autoDevices"
+  | "deviceSetup"
+  | "appUpdates"
+  | "autoUpdate"
+  | "shortcuts"
+  | "theme"
+  | "appIcon"
+  | "defaultZoom"
+  | "minimumFontSize"
+  | "newSpace"
+  | "newProfile"
+  | "lifecyclePreset"
+  | "singleWindow"
+  | "littleWindowHotKey"
+  | "externalLinkDefault"
+  | "externalLinkRules"
+  | "peekPinnedTabLinks"
+  | "developMenu"
+  | "contentBlocker"
+  | "blockerTrackers"
+  | "blockerCookieNotices"
+  | "blockerBadware"
+  | "blockerAnnoyances"
+  | "blockerRegional"
+  | "filterLists"
+  | "blockerSites"
+  | "blockerAllowedDomains"
+  | "permissionNotifications"
+  | "permissionMedia"
+  | "permissionLocation"
+  | "sites"
+  | "httpsOnly"
+  | "sendGPC"
+  | "preventCrossSiteTracking"
+  | "folderAutoLock"
+  | "clearOnQuit"
+  | "clearData"
+  | "autoUpdateExtensions"
+  | "checkExtensionUpdates"
+  | "passwordManager"
+  | "agentControl"
+  | "agentAskBeforeActions"
+  | "agentAlwaysAllowed"
+  | "agentOther"
+  | "processManager"
+  | "diagnostics"
+  | "designSystem"
+  | "loadUnpacked";
+
+export interface SettingModel {
+  id: SettingId;
+  section: SettingsSectionId;
+  /** Catalog key of the group heading the setting sits under. */
+  groupKey: string;
+  /** The switch this setting only means something under: shown, indented, while it is on. */
+  requires?: SettingId;
+}
+
+/** Boolean settings: stored key and the value an unset key means. */
+export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback: boolean }>> = {
+  searchSuggestions: { key: "searchSuggestions", fallback: true },
+  askDownloadLocation: { key: "askDownloadLocation", fallback: false },
+  autoPictureInPicture: { key: "autoPictureInPicture", fallback: true },
+  autoDevices: { key: "autoDeviceSwitching", fallback: false },
+  singleWindow: { key: "singleWindow", fallback: false },
+  littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
+  peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
+  contentBlocker: { key: "contentBlockerEnabled", fallback: true },
+  blockerTrackers: { key: "blockerTrackers", fallback: true },
+  blockerCookieNotices: { key: "blockerCookieNotices", fallback: true },
+  blockerBadware: { key: "blockerBadware", fallback: true },
+  blockerAnnoyances: { key: "blockerAnnoyances", fallback: false },
+  blockerRegional: { key: "blockerRegional", fallback: true },
+  httpsOnly: { key: "httpsOnly", fallback: false },
+  sendGPC: { key: "sendGPC", fallback: true },
+  preventCrossSiteTracking: { key: "preventCrossSiteTracking", fallback: false },
+  clearOnQuit: { key: "clearSiteDataOnQuit", fallback: false },
+  autoUpdateExtensions: { key: "autoUpdateExtensions", fallback: true },
+  agentControl: { key: "agentControlEnabled", fallback: false },
+  agentAskBeforeActions: { key: "agentAskBeforeActions", fallback: true },
+  developMenu: { key: "showDevelopMenu", fallback: true },
+};
+
+/** Whether a boolean setting is on, read through `get(key, fallback)`. */
+export function isToggleOn(id: SettingId, get: (key: string, fallback: string) => string): boolean {
+  const toggle = SETTING_TOGGLES[id];
+  return toggle ? get(toggle.key, String(toggle.fallback)) === "true" : false;
+}
+
+// Order is display order: groups appear in the order their first setting does.
+export const SETTINGS: SettingModel[] = [
+  { id: "defaultBrowser", section: "general", groupKey: "settings.groups.browser" },
+  { id: "importBrowsers", section: "general", groupKey: "settings.groups.browser" },
+  { id: "language", section: "general", groupKey: "settings.groups.browser" },
+  { id: "externalLinkDefault", section: "general", groupKey: "settings.groups.otherAppLinks" },
+  { id: "externalLinkRules", section: "general", groupKey: "settings.groups.otherAppLinks" },
+  { id: "searchEngine", section: "general", groupKey: "settings.groups.search" },
+  { id: "searchSuggestions", section: "general", groupKey: "settings.groups.search" },
+  { id: "searchEngines", section: "general", groupKey: "settings.groups.search" },
+  { id: "downloadsFolder", section: "general", groupKey: "settings.groups.downloads" },
+  { id: "askDownloadLocation", section: "general", groupKey: "settings.groups.downloads" },
+  { id: "autoPictureInPicture", section: "general", groupKey: "settings.groups.media" },
+  { id: "autoplay", section: "general", groupKey: "settings.groups.media" },
+  { id: "autoDevices", section: "general", groupKey: "settings.groups.media" },
+  { id: "deviceSetup", section: "general", groupKey: "settings.groups.media", requires: "autoDevices" },
+  { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },
+  { id: "autoUpdate", section: "general", groupKey: "settings.groups.lilo" },
+  { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
+  { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
+  { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
+  { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },
+  { id: "newProfile", section: "tabs", groupKey: "settings.groups.profiles" },
+  { id: "lifecyclePreset", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "singleWindow", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "peekPinnedTabLinks", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "contentBlocker", section: "privacy", groupKey: "settings.groups.contentBlocking" },
+  { id: "blockerTrackers", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerCookieNotices", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerBadware", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerAnnoyances", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerRegional", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "filterLists", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerSites", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "blockerAllowedDomains", section: "privacy", groupKey: "settings.groups.contentBlocking", requires: "contentBlocker" },
+  { id: "permissionNotifications", section: "privacy", groupKey: "settings.groups.sitePermissions" },
+  { id: "permissionMedia", section: "privacy", groupKey: "settings.groups.sitePermissions" },
+  { id: "permissionLocation", section: "privacy", groupKey: "settings.groups.sitePermissions" },
+  { id: "sites", section: "privacy", groupKey: "settings.groups.sitePermissions" },
+  { id: "httpsOnly", section: "privacy", groupKey: "settings.groups.protection" },
+  { id: "sendGPC", section: "privacy", groupKey: "settings.groups.protection" },
+  { id: "preventCrossSiteTracking", section: "privacy", groupKey: "settings.groups.protection" },
+  { id: "folderAutoLock", section: "privacy", groupKey: "settings.groups.protection" },
+  { id: "clearOnQuit", section: "privacy", groupKey: "settings.groups.browsingData" },
+  { id: "clearData", section: "privacy", groupKey: "settings.groups.browsingData" },
+  { id: "autoUpdateExtensions", section: "extensions", groupKey: "settings.groups.updates" },
+  { id: "checkExtensionUpdates", section: "extensions", groupKey: "settings.groups.updates" },
+  { id: "passwordManager", section: "extensions", groupKey: "settings.groups.passwords" },
+  { id: "agentControl", section: "agents", groupKey: "settings.groups.agentAccess" },
+  { id: "agentAskBeforeActions", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
+  { id: "agentAlwaysAllowed", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
+  { id: "agentOther", section: "agents", groupKey: "settings.groups.agentClients", requires: "agentControl" },
+  { id: "developMenu", section: "advanced", groupKey: "settings.groups.tools" },
+  { id: "processManager", section: "advanced", groupKey: "settings.groups.tools" },
+  { id: "diagnostics", section: "advanced", groupKey: "settings.groups.tools" },
+  { id: "designSystem", section: "advanced", groupKey: "settings.groups.tools" },
+  { id: "loadUnpacked", section: "advanced", groupKey: "settings.groups.tools" },
+  { id: "replayOnboarding", section: "advanced", groupKey: "settings.groups.tools" },
+];
+
+export function settingTitleKey(id: SettingId): string {
+  return `settings.items.${id}.title`;
+}
+
+export function settingDescriptionKey(id: SettingId): string {
+  return `settings.items.${id}.description`;
+}
+
+interface SettingsGroupModel {
+  groupKey: string;
+  settings: SettingId[];
+}
+
+/** A section's groups in display order; `visible` drops settings whose switch is off. */
+export function sectionGroups(
+  section: SettingsSectionId,
+  visible: (setting: SettingModel) => boolean = () => true,
+): SettingsGroupModel[] {
+  const groups: SettingsGroupModel[] = [];
+  for (const setting of SETTINGS) {
+    if (setting.section !== section || !visible(setting)) continue;
+    const group = groups.find((candidate) => candidate.groupKey === setting.groupKey);
+    if (group) group.settings.push(setting.id);
+    else groups.push({ groupKey: setting.groupKey, settings: [setting.id] });
+  }
+  return groups;
+}
+
+function normalizeSearchText(text: string): string {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
+/** Every whitespace-separated query term must appear somewhere in the haystack. */
+export function matchesSearch(haystack: string, query: string): boolean {
+  const terms = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return false;
+  const text = normalizeSearchText(haystack);
+  return terms.every((term) => text.includes(term));
+}
+
+/** Settings whose title, description, group, section, or keywords match, in display order. */
+export function searchSettings(query: string, resolve: (key: string) => string): SettingModel[] {
+  return SETTINGS.filter((setting) => {
+    const section = SETTINGS_SECTIONS.find((candidate) => candidate.id === setting.section);
+    const haystack = [
+      resolve(settingTitleKey(setting.id)),
+      resolve(settingDescriptionKey(setting.id)),
+      // Extra search terms (synonyms, the other surfaces' wording) that are never displayed.
+      resolve(`settings.items.${setting.id}.keywords`),
+      resolve(setting.groupKey),
+      section ? resolve(section.labelKey) : "",
+    ].join(" ");
+    return matchesSearch(haystack, query);
+  });
+}
+
+/** A rule sending links from other apps somewhere: `destination` is "little" or a Space id. */
+export interface LinkRule {
+  match: "host" | "contains";
+  pattern: string;
+  destination: string;
+}
+
+/** The `externalLinkRules` setting, a JSON array; malformed entries are dropped. */
+export function parseLinkRules(stored: string): LinkRule[] {
+  try {
+    const parsed: unknown = JSON.parse(stored || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry): entry is LinkRule => {
+      const rule = entry as Partial<Record<keyof LinkRule, unknown>> | null;
+      return (
+        (rule?.match === "host" || rule?.match === "contains") &&
+        typeof rule.pattern === "string" &&
+        typeof rule.destination === "string"
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
+/** The sites the content blocker skips, stored as a JSON array of hosts. */
+export function parseBlockerSites(stored: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(stored || "[]");
+    return Array.isArray(parsed) ? parsed.filter((host): host is string => typeof host === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function formatDownloadsFolderLabel(
+  path: string | undefined,
+  fallback = "Downloads",
+): string {
+  const trimmed = path?.trim();
+  if (!trimmed) return fallback;
+  const parts = trimmed.split("/").filter(Boolean);
+  return parts.at(-1) ?? fallback;
+}
+
+export type BrowsingDataKind = "history" | "cookies" | "cache" | "siteData";
+export const BROWSING_DATA_KINDS: BrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
+
+export interface SiteSummary {
+  /** Registrable domain when WebKit reports data for it, otherwise the bare host. */
+  key: string;
+  permissions: BridgeSitePermissionSnapshot[];
+  /** WebKit data record name to remove, when the site stores data. */
+  dataName: string | null;
+  dataKinds: BridgeWebsiteDataSnapshot["kinds"];
+  zoomLevels: BridgeZoomLevelSnapshot[];
+}
+
+function hostOf(origin: string): string {
+  try {
+    return new URL(origin).hostname.toLowerCase();
+  } catch {
+    return origin.toLowerCase();
+  }
+}
+
+/**
+ * One row per site. WebKit names data records by registrable domain, so a host joins the record it falls under
+ * (meet.google.com joins google.com); hosts without data group by themselves, minus a leading "www.".
+ */
+export function buildSites(
+  permissions: BridgeSitePermissionSnapshot[],
+  websiteData: BridgeWebsiteDataSnapshot[],
+  zoomLevels: BridgeZoomLevelSnapshot[],
+): SiteSummary[] {
+  const sites = new Map<string, SiteSummary>();
+  const siteFor = (key: string): SiteSummary => {
+    let site = sites.get(key);
+    if (!site) {
+      site = { key, permissions: [], dataName: null, dataKinds: [], zoomLevels: [] };
+      sites.set(key, site);
+    }
+    return site;
+  };
+  for (const record of websiteData) {
+    const site = siteFor(record.name.toLowerCase());
+    site.dataName = record.name;
+    site.dataKinds = record.kinds;
+  }
+  const keyForHost = (host: string): string => {
+    for (const record of websiteData) {
+      const name = record.name.toLowerCase();
+      if (host === name || host.endsWith(`.${name}`)) return name;
+    }
+    return host.replace(/^www\./, "");
+  };
+  for (const permission of permissions) {
+    siteFor(keyForHost(hostOf(permission.origin))).permissions.push(permission);
+  }
+  for (const level of zoomLevels) {
+    siteFor(keyForHost(level.host.toLowerCase())).zoomLevels.push(level);
+  }
+  return [...sites.values()].sort((a, b) => a.key.localeCompare(b.key));
+}

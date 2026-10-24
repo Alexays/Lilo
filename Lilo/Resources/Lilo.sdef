@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<!-- Mirrors Chrome's and Safari's tab model (window tabs, active tab, URL, title) so automation
+     tools written for them work against Lilo unchanged. -->
+<dictionary title="Lilo Terminology" xmlns:xi="http://www.w3.org/2003/XInclude">
+    <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
+
+    <suite name="Lilo Suite" code="Lilo" description="Lilo windows and tabs.">
+        <class-extension extends="window" description="A browser window.">
+            <element type="tab" description="The tabs of the window's current space.">
+                <cocoa key="scriptTabs"/>
+            </element>
+            <property name="active tab" code="LiAT" type="tab" access="r" description="The tab shown in the window.">
+                <cocoa key="scriptActiveTab"/>
+            </property>
+            <property name="active tab index" code="LiAI" type="integer" description="The index of the active tab; setting it shows that tab.">
+                <cocoa key="scriptActiveTabIndex"/>
+            </property>
+        </class-extension>
+
+        <class name="tab" code="LiTb" plural="tabs" description="A browser tab.">
+            <cocoa class="LiloScriptTab"/>
+            <property name="id" code="ID  " type="text" access="r" description="The tab's unique identifier.">
+                <cocoa key="uniqueID"/>
+            </property>
+            <property name="title" code="LiTt" type="text" access="r" description="The page title.">
+                <cocoa key="scriptTitle"/>
+            </property>
+            <property name="URL" code="LiUR" type="text" description="The page address; setting it loads that address.">
+                <cocoa key="scriptURL"/>
+            </property>
+            <property name="loading" code="LiLd" type="boolean" access="r" description="Whether the page is still loading.">
+                <cocoa key="scriptLoading"/>
+            </property>
+            <responds-to command="close">
+                <cocoa method="handleCloseScriptCommand:"/>
+            </responds-to>
+            <responds-to command="reload">
+                <cocoa method="handleReloadScriptCommand:"/>
+            </responds-to>
+            <responds-to command="go back">
+                <cocoa method="handleGoBackScriptCommand:"/>
+            </responds-to>
+            <responds-to command="go forward">
+                <cocoa method="handleGoForwardScriptCommand:"/>
+            </responds-to>
+        </class>
+
+        <command name="reload" code="LiloRlod" description="Reload a tab.">
+            <direct-parameter type="specifier" description="The tab to reload."/>
+        </command>
+        <command name="go back" code="LiloBack" description="Go back in a tab's history.">
+            <direct-parameter type="specifier" description="The tab."/>
+        </command>
+        <command name="go forward" code="LiloFwrd" description="Go forward in a tab's history.">
+            <direct-parameter type="specifier" description="The tab."/>
+        </command>
+    </suite>
+</dictionary>

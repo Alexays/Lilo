@@ -1,0 +1,1 @@
+{"mcpServers": {"browser": {"command": "npx", "args": ["-y", "chrome-devtools-mcp@1.11.0", "--isolated"]}}}

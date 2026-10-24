@@ -1,0 +1,564 @@
+:root {
+  /* Arc-inspired light theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #e2daf1;
+  --bg-tertiary: #d4cbe6;
+  --bg-hover: rgba(0, 0, 0, 0.06);
+  --bg-active: #ffffff;
+  --bg-selected: #ffffff;
+  --bg-elevated: #ffffff;
+
+  --text-primary: #1d1d1f;
+  /* No lighter: secondary text keeps AA on a hover-gray tile and on a profile's color wash. */
+  --text-secondary: #69696e;
+  --text-muted: #76767c;
+
+  --accent: #5865f2;
+  --accent-hover: #4752c4;
+  --accent-text: #ffffff;
+  /* Accent-colored text on the app's surfaces; --accent itself is too light for small text. */
+  --accent-ink: color-mix(in srgb, var(--accent) 70%, var(--text-primary));
+
+  --border: rgba(0, 0, 0, 0.08);
+  --separator: rgba(0, 0, 0, 0.06);
+
+  --danger: #ef4444;
+  --danger-text: #b42318;
+  /* The light theme's danger text in both themes: the base the error surfaces tint from. */
+  --danger-deep: #b42318;
+  /* A program or page waiting on the user. */
+  --attention: #ffb547;
+  --success: #15803d;
+  --success-text: #166534;
+  --keep-awake: #c98a12;
+  --agents: #d97757;
+
+  /* Semantic sidebar-section colors: pinned (drop zones, divider gate) and bookmarks. */
+  --color-pin: #5fd79a;
+  --color-bookmark: #ffcc57;
+
+  /* Keyboard focus ring: use with `outline-offset: -2px` on rows that clip their painting
+     (overflow: hidden / contain: paint) so the ring stays inside the box. */
+  --focus-outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+
+  --sidebar-width: 260px;
+  --sidebar-bg: var(--bg-secondary);
+  --sidebar-contrast: #1d1d1f;
+  --content-inset: 8px;
+
+  --density-1: 4px;
+
+  /* Type scale: 13px is the macOS body size. */
+  /* Counters on an icon badge only. */
+  --font-size-3xs: 9px;
+  --font-size-2xs: 10px;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 22px;
+  /* The onboarding wordmark only. */
+  --font-size-display: 56px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing steps on a 2px grid; each name is its value. */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  --radius-2xs: 2px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-chip: 999px;
+
+  --control-height-sm: 24px;
+  --control-height-md: 28px;
+  --control-height-lg: 32px;
+  --disabled-opacity: 0.45;
+
+  /* Elevation, lowest first: a control's knob or pill, a raised chip, a floating card. */
+  --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.14);
+  --shadow-sm: 0 2px 8px rgba(10, 15, 28, 0.16);
+  --shadow-md: 0 10px 24px rgba(10, 15, 28, 0.12);
+
+  /* Fixed colors with one role each, the same in both themes. */
+  --on-color: #ffffff;
+  --on-pastel: #1a1a2e;
+  --warning: #d97706;
+  --diff-added: #3fb950;
+  --diff-removed: #f85149;
+  --chart-2: #1d9e75;
+  --chart-3: #d4537e;
+  --hue-wheel: conic-gradient(#f1a7a5, #e8d98f, #9bd3b4, #9ac7eb, #c3a5ea, #f1a7a5);
+  --terminal-tile-bg: #1b1830;
+  --terminal-tile-text: #f4f2ff;
+  --terminal-tile-accent: #cfc4ff;
+  --terminal-tile-border: rgba(255, 255, 255, 0.12);
+
+  --motion-duration-fast: 120ms;
+  --transition-fast: var(--motion-duration-fast) ease;
+  --motion-duration-normal: 200ms;
+  --motion-duration-slow: 280ms;
+  --motion-duration-overlay: 220ms;
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-organic: cubic-bezier(0.16, 0.84, 0.32, 1);
+  --motion-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Under-damped spring (about 3% overshoot), sampled; lib/motion/spring.ts mirrors it for
+     Svelte transitions, which need a function. */
+  --motion-ease-bounce: linear(0, 0.029, 0.103, 0.202, 0.313, 0.426, 0.535, 0.634, 0.721, 0.796, 0.858, 0.908, 0.947, 0.976, 0.997, 1.012, 1.021, 1.026, 1.028, 1.028, 1.026, 1.024, 1.021, 1.018, 1.014, 1.011, 1.009, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
+
+  --chrome-content-top: var(--content-inset);
+  --chrome-content-right: var(--content-inset);
+  --chrome-content-bottom: var(--content-inset);
+  /* The sidebar narrows before the content gets under 320px, as MainWindowController.minimumContentWidth does. */
+  --sidebar-fitted-width: min(var(--sidebar-width), 100vw - 2 * var(--content-inset) - 320px);
+  --chrome-content-left-visible: calc(var(--sidebar-fitted-width) + var(--content-inset));
+  --chrome-content-left-hidden: var(--content-inset);
+  --chrome-overlay-edge-gap: 12px;
+  --chrome-overlay-boundary-radius: var(--radius-md);
+  --chrome-overlay-panel-radius: var(--radius-xl);
+  --chrome-overlay-backdrop-tint: rgba(12, 16, 24, 0.08);
+  --chrome-overlay-backdrop-blur: 7px;
+  --chrome-overlay-surface: color-mix(in srgb, var(--bg-elevated) 92%, rgba(255, 255, 255, 0.74));
+  --chrome-overlay-surface-strong: color-mix(in srgb, var(--bg-elevated) 96%, rgba(255, 255, 255, 0.9));
+  --chrome-overlay-border: color-mix(in srgb, var(--border) 88%, rgba(255, 255, 255, 0.14));
+  --chrome-overlay-shadow: 0 16px 40px rgba(10, 15, 28, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  --chrome-floating-surface: color-mix(in srgb, var(--bg-elevated) 94%, rgba(255, 255, 255, 0.78));
+  --chrome-floating-shadow: var(--shadow-md);
+  /* Global backdrop-blur cap. Every translucent overlay derives from this token or
+     --chrome-overlay-backdrop-blur; never hardcode a blur radius in a component. The chrome
+     overlay is composited above the content WKWebView, so each blurred surface costs a GPU
+     backdrop pass per frame, and a small radius keeps that sampling cheap. */
+  --chrome-floating-blur: 10px;
+
+  /* Floating surfaces (tips, cards, popovers). Declared here so they resolve against the app
+     palette: a surface floating over a tinted Space keeps neutral text and hovers. */
+  --float-surface: var(--bg-elevated);
+  --float-text: var(--text-primary);
+  --float-text-secondary: var(--text-secondary);
+  --float-text-muted: var(--text-muted);
+  --float-hover: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  --float-pressed: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --float-border: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --float-separator: var(--separator);
+  --float-shadow: 0 0 0 1px var(--float-border), 0 10px 28px rgba(10, 15, 28, 0.14), 0 2px 6px rgba(10, 15, 28, 0.08);
+  --float-radius-tip: var(--radius-sm);
+  --float-radius-card: var(--radius-md);
+  --float-radius-popover: 12px;
+  --z-popover: 10000;
+  --z-card: 10001;
+  --z-tip: 99999;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary: #16213e;
+    --bg-hover: rgba(255, 255, 255, 0.08);
+    --bg-active: rgba(255, 255, 255, 0.12);
+    --bg-selected: rgba(255, 255, 255, 0.12);
+    --bg-elevated: #1e1e2e;
+
+    --text-primary: #e8e8ee;
+    --text-secondary: #a0a0b0;
+    --text-muted: #8a8aa3;
+
+    --danger-text: #f87171;
+    --success-text: #4ade80;
+    --accent-ink: color-mix(in srgb, var(--accent) 50%, var(--text-primary));
+
+    --border: rgba(255, 255, 255, 0.08);
+    --separator: rgba(255, 255, 255, 0.06);
+
+    --sidebar-bg: var(--bg-secondary);
+    --sidebar-contrast: #f7f8fc;
+    --chrome-overlay-backdrop-tint: rgba(2, 6, 18, 0.16);
+    --chrome-overlay-surface: color-mix(in srgb, var(--bg-elevated) 92%, rgba(30, 30, 46, 0.9));
+    --chrome-overlay-surface-strong: color-mix(in srgb, var(--bg-elevated) 96%, rgba(30, 30, 46, 0.96));
+    --chrome-overlay-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --chrome-floating-surface: color-mix(in srgb, var(--bg-elevated) 94%, rgba(30, 30, 46, 0.94));
+    --float-shadow: 0 0 0 1px var(--float-border), 0 12px 32px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.16);
+    --shadow-control: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.24);
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: transparent;
+  height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html[data-booting='true'] .content-inset-zone,
+html[data-booting='true'] .sidebar,
+html[data-booting='true'] .sidebar-layout,
+html[data-booting='true'] .space-pane,
+html[data-booting='true'] .sidebar-panel {
+  transition: none;
+  opacity: 0;
+}
+
+html[data-booting='true'] #chrome-root {
+  opacity: 0;
+}
+
+html[data-booting='true'] .space-track {
+  scroll-behavior: auto;
+}
+
+/* Snaps (no `left` transition) on sidebar toggle: animating a layout property here
+   would force a chrome re-layout per frame; the native frame curtain carries the motion. */
+.chrome-content-overlay-root {
+  position: fixed;
+  top: var(--chrome-content-top);
+  left: var(--chrome-content-left-visible);
+  right: var(--chrome-content-right);
+  bottom: var(--chrome-content-bottom);
+  border-radius: var(--chrome-overlay-boundary-radius);
+}
+
+.chrome-content-overlay-root.sidebar-hidden {
+  left: var(--chrome-content-left-hidden);
+}
+
+.chrome-floating-surface {
+  background: var(--chrome-overlay-surface);
+  border: 1px solid var(--chrome-overlay-border);
+  border-radius: var(--chrome-overlay-panel-radius);
+  box-shadow: var(--chrome-overlay-shadow);
+}
+
+/* What floats over the sidebar or the page takes the Space's accent, as the sidebar does. */
+.float-surface,
+.chrome-floating-surface,
+.chrome-content-overlay-root {
+  --accent: var(--sidebar-accent);
+  --accent-hover: var(--sidebar-accent-hover);
+  --accent-text: var(--sidebar-accent-text);
+}
+
+/* Every tip, card and popover. Resets the palette the sidebar tints, since it floats above it. */
+.float-surface {
+  --text-primary: var(--float-text);
+  --text-secondary: var(--float-text-secondary);
+  --text-muted: var(--float-text-muted);
+  --bg-hover: var(--float-hover);
+  --bg-active: var(--float-pressed);
+  --border: var(--float-border);
+  --separator: var(--float-separator);
+  background: var(--float-surface);
+  box-shadow: var(--float-shadow);
+  color: var(--text-primary);
+}
+
+.float-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--float-radius-popover);
+  animation: float-popover-in 200ms var(--motion-ease-bounce) both;
+}
+
+@keyframes float-popover-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+.float-popover-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 8px 4px;
+}
+
+.float-popover-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.float-popover-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+/* Concentric with the popover: its radius less its padding. */
+.float-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-8);
+  border: 0;
+  border-radius: calc(var(--float-radius-popover) - 6px);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.float-row:hover,
+.float-row:focus-visible {
+  background: var(--bg-hover);
+  outline: none;
+}
+
+.float-row:active {
+  background: var(--bg-active);
+}
+
+.float-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 2px 0 8px;
+  border-top: 1px solid var(--separator);
+}
+
+.float-button {
+  height: var(--control-height-sm);
+  padding: 0 var(--space-10);
+  border: 0;
+  border-radius: calc(var(--float-radius-popover) - 6px);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.float-button:hover {
+  background: var(--bg-active);
+}
+
+.float-button:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-popover {
+    animation: none;
+  }
+}
+
+.sidebar-dnd-preview,
+.space-dnd-preview {
+  --sidebar-dnd-preview-bg: color-mix(
+    in srgb,
+    var(--bg-active) 88%,
+    var(--bg-hover)
+  );
+  opacity: 0.96;
+  filter: none;
+  transform-origin: top left;
+}
+
+#dnd-action-dragged-el {
+  animation: dnd-preview-lift 280ms var(--motion-ease-bounce) both;
+  outline: none !important;
+  transition: none !important;
+  contain: layout style paint;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+@keyframes dnd-preview-lift {
+  from {
+    scale: 1;
+  }
+  to {
+    scale: 1.03;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #dnd-action-dragged-el {
+    animation: none;
+  }
+}
+
+#dnd-action-dragged-el.dnd-preview-compact {
+  max-width: 156px;
+  overflow: hidden;
+}
+
+#dnd-action-dragged-el *,
+#dnd-action-dragged-el *::before,
+#dnd-action-dragged-el *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Rows and buttons carry their own pointer cursor; listing them keeps the drag cursor
+   without invalidating every element's style on drag start and end. */
+html.sidebar-dnd-active,
+body.sidebar-dnd-active,
+html.sidebar-dnd-active
+  :is(
+    button,
+    .tab-item,
+    .folder-row,
+    .bookmark-tile,
+    .new-tab-row,
+    .space-drag-wrapper,
+    .space-icon-btn,
+    .sidebar-resize-handle,
+    .nav-spacer,
+    .url-trigger,
+    .permissions-btn
+  ) {
+  cursor: grabbing !important;
+}
+
+.sidebar-dnd-preview .tab-item,
+.sidebar-dnd-preview .folder-row,
+.sidebar-dnd-preview .bookmark-tile {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  background: color-mix(
+    in srgb,
+    var(--tab-glow, var(--folder-accent, var(--accent))) 7%,
+    var(--sidebar-dnd-preview-bg)
+  ) !important;
+  box-shadow:
+    inset 0 0 0 1px
+      color-mix(
+        in srgb,
+        var(--tab-glow, var(--folder-accent, var(--accent))) 16%,
+        transparent
+      ),
+    0 8px 18px color-mix(in srgb, var(--text-primary) 12%, transparent) !important;
+}
+
+.sidebar-dnd-preview .tab-actions,
+.sidebar-dnd-preview .folder-actions {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+html.sidebar-dnd-active .tab-actions,
+html.sidebar-dnd-active .folder-actions {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+html.sidebar-dnd-active .sidebar-dnd-preview .tab-actions,
+html.sidebar-dnd-active .sidebar-dnd-preview .folder-actions {
+  opacity: 0 !important;
+}
+
+/* Constrained power (Low Power Mode / thermal pressure; `powerModeChanged` from the native
+   side toggles this class). Backdrop blur and decorative motion are pure energy cost when the
+   machine is already struggling: drop translucency and collapse animations/transitions. */
+html.reduced-power *,
+html.reduced-power *::before,
+html.reduced-power *::after {
+  backdrop-filter: none !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* System "Reduce transparency" (`reduceTransparencyChanged` toggles this class): overlays turn
+   opaque and lose their backdrop blur, as native macOS materials do. */
+html.reduced-transparency {
+  --chrome-overlay-surface: var(--bg-elevated);
+  --chrome-overlay-surface-strong: var(--bg-elevated);
+  --chrome-floating-surface: var(--bg-elevated);
+}
+
+html.reduced-transparency * {
+  backdrop-filter: none !important;
+}
+
+/* System "Increase contrast": firmer separators, secondary text and focus ring. */
+@media (prefers-contrast: more) {
+  :root {
+    --border: rgba(0, 0, 0, 0.3);
+    --separator: rgba(0, 0, 0, 0.24);
+    --text-secondary: #33334a;
+    --text-muted: #3f3f55;
+    --focus-outline: 2px solid var(--accent);
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --border: rgba(255, 255, 255, 0.32);
+    --separator: rgba(255, 255, 255, 0.26);
+    --text-secondary: #d6d6e4;
+    --text-muted: #c4c4d8;
+  }
+}
+
+/* Unfocused window (`windowFocusChanged` from the native side toggles this class).
+   Looping decorative animations (spinners, shimmers, sweeps) burn energy no one is
+   watching: pause them in place so they resume where they left off on refocus.
+   Transitions are unaffected by animation-play-state, which is intended. Listed rather than
+   `*` so a focus change restyles only the looping elements, not the whole document. */
+html.window-unfocused .tab-loader span,
+html.window-unfocused .url-progress-fill,
+html.window-unfocused .url-progress-fill::after,
+html.window-unfocused .skeleton-shimmer,
+html.window-unfocused .extension-spinner svg,
+html.window-unfocused .sidebar-dnd-placeholder,
+html.window-unfocused .space-dnd-placeholder,
+html.window-unfocused .bookmark-placeholder,
+html.window-unfocused .pinned-list,
+html.window-unfocused .bookmarked-list,
+html.window-unfocused .anim *,
+html.window-unfocused .anim *::after {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

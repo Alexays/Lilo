@@ -1,0 +1,66 @@
+name: Extension compatibility
+description: Report a Chrome extension that does not work correctly in Lilo
+title: "[Extension] "
+labels: [extension-api]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lilo runs Chrome MV3 extensions on WebKit and documents every known difference from Chrome in [COMPATIBILITY.md](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md). Check it first: an API listed as missing there is a feature request, not a bug.
+  - type: input
+    id: extension
+    attributes:
+      label: Extension name and version
+      placeholder: "uBlock Origin Lite 2025.1.1"
+    validations:
+      required: true
+  - type: input
+    id: store-link
+    attributes:
+      label: Chrome Web Store link
+      description: Or where the extension comes from, if it is not on the store.
+      placeholder: "https://chromewebstore.google.com/detail/..."
+    validations:
+      required: true
+  - type: textarea
+    id: what-fails
+    attributes:
+      label: What fails
+      description: What does not work in Lilo (the popup stays blank, a button does nothing, the page is not changed) and what the extension does in Chrome instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: false
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: |
+        Help > Diagnostics, Log tab, "Copy extension logs" copies what extensions logged. For errors on a page, Develop > Show Console (turn on the Develop menu in Settings > Advanced).
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        macOS version:
+        Lilo version or commit:
+    validations:
+      required: true
+  - type: textarea
+    id: apis
+    attributes:
+      label: Chrome APIs involved (if you know them)
+      description: For example `chrome.declarativeNetRequest` or `chrome.offscreen`, from the extension's `manifest.json` (`permissions`).
+    validations:
+      required: false

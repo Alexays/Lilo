@@ -1,0 +1,127 @@
+# Release workflow: builds, signs, notarizes, and uploads a DMG to GitHub Releases.
+# Maintainer-only: it runs on v* tags of Alexays/Lilo, never in forks, and needs these secrets:
+#   APPLE_CERT              - base64-encoded .p12 Developer ID certificate
+#   APPLE_CERT_PASSWORD     - password for the .p12
+#   APPLE_NOTARY_TEAM_ID    - Apple Developer team ID (also used as DEVELOPMENT_TEAM)
+#   APPLE_NOTARY_APPLE_ID   - Apple ID for notarytool
+#   APPLE_NOTARY_PASSWORD   - app-specific password for notarytool
+#   SPARKLE_ED_PRIVATE_KEY  - Sparkle EdDSA private key (generate_keys -x) that signs the appcast
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Never cancel a release mid-notarization.
+  cancel-in-progress: false
+
+jobs:
+  build-and-sign:
+    if: github.repository == 'Alexays/Lilo'
+    runs-on: xcode-27
+    timeout-minutes: 90
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Show selected Xcode
+        run: xcodebuild -version
+
+      - name: Install Metal Toolchain
+        run: xcodebuild -downloadComponent MetalToolchain
+
+      - name: Import certificate
+        env:
+          APPLE_CERT: ${{ secrets.APPLE_CERT }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 20)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$APPLE_CERT" | base64 --decode -o "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN_PATH" \
+            -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+
+      - name: Build libghostty-vt
+        run: make vt-build
+
+      - name: Build, sign, and notarize
+        env:
+          LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
+          LILO_NOTARY_APPLE_ID: ${{ secrets.APPLE_NOTARY_APPLE_ID }}
+          LILO_NOTARY_APP_PASSWORD: ${{ secrets.APPLE_NOTARY_PASSWORD }}
+        run: make release-notarize
+
+      # Installs the pinned dmgbuild into build/ and lays out the window from scripts/dmg/.
+      - name: Create DMG
+        run: make dmg
+
+      - name: Sign and notarize DMG
+        env:
+          LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
+          LILO_NOTARY_APPLE_ID: ${{ secrets.APPLE_NOTARY_APPLE_ID }}
+          LILO_NOTARY_APP_PASSWORD: ${{ secrets.APPLE_NOTARY_PASSWORD }}
+        run: |
+          codesign --sign "Developer ID Application" --timestamp build/Lilo.dmg
+          xcrun notarytool submit build/Lilo.dmg --wait \
+            --apple-id "$LILO_NOTARY_APPLE_ID" \
+            --team-id "$LILO_TEAM_ID" \
+            --password "$LILO_NOTARY_APP_PASSWORD"
+          xcrun stapler staple build/Lilo.dmg
+
+      - name: Generate Sparkle appcast
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/sparkle.tar.xz" \
+            https://github.com/sparkle-project/Sparkle/releases/download/2.10.0/Sparkle-2.10.0.tar.xz
+          echo "c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
+          mkdir -p "$RUNNER_TEMP/sparkle" build/appcast
+          tar -xf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle.key"
+          /bin/cp -f build/Lilo.dmg build/appcast/
+          "$RUNNER_TEMP/sparkle/bin/generate_appcast" \
+            --ed-key-file "$RUNNER_TEMP/sparkle.key" \
+            --download-url-prefix "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/" \
+            build/appcast
+          rm -f "$RUNNER_TEMP/sparkle.key"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          draft: true
+          files: |
+            build/Lilo.dmg
+            build/appcast/appcast.xml
+          generate_release_notes: true
+
+      - name: Delete temporary keychain
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain" || true
+          rm -f "$RUNNER_TEMP/cert.p12"
