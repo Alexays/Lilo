@@ -44,6 +44,8 @@ final class MediaCardRetentionTests: XCTestCase {
     private func scriptsSettled(_ engine: WKWebViewTab) async {
         await Task.yield()
         _ = await engine.hasMediaTrackControls()
+        // The simulated idle time also exceeds the extension's two-second page loan.
+        engine.lentToExtensionAt = .now - .seconds(3)
     }
 
     func testTabPausedFromCardFreezesOnlyAfterItsGrace() async throws {
