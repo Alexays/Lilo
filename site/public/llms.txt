@@ -1,6 +1,6 @@
 # Lilo
 
-> Lilo is a free, open-source (MIT) native browser for macOS, built in Swift on WebKit, the engine Safari uses, with no bundled Chromium and no Electron. It has a sidebar with Spaces that each keep their own sign-ins, runs Manifest V3 extensions from the Chrome Web Store, has terminal tabs beside your pages, and includes a local MCP server so AI agents can drive a real browser in their own Space. Lilo is in public beta.
+> Lilo is a free, open-source (MIT) browser for macOS built on WebKit, the engine Safari uses, in an app written in Swift and AppKit with a Svelte interface, with no bundled Chromium and no Electron. It has a sidebar with Spaces that each keep their own sign-ins, runs Manifest V3 extensions from the Chrome Web Store, has terminal tabs beside your pages, and includes a local MCP server so AI agents can drive a real browser in their own Space. Lilo is in public beta.
 
 Lilo is for Mac users who live in a sidebar, people leaving Arc or looking for a lighter alternative to Chrome or Safari, developers who want a terminal and localhost next to their docs, and anyone who wants their AI agents (Claude Code, Codex, Cursor or any MCP client) to browse beside them.
 

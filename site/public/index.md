@@ -1,4 +1,4 @@
-# Lilo: a native Mac browser with Spaces and Chrome extensions
+# Lilo: a Mac browser on WebKit, with Spaces and Chrome extensions
 
 > A free, open-source Arc alternative for Mac, built on WebKit: Spaces with their own sign-ins, Chrome extensions, a terminal and an MCP server for AI agents.
 
@@ -122,7 +122,7 @@ Up to four tabs side by side, a terminal next to your docs, restored exactly as 
 
 ## Your terminal lives in the sidebar.
 
-Terminal tabs sit next to your docs and your localhost, on a native Metal renderer built on libghostty. Split one beside a page, and the sidebar shows its branch and pending changes at a glance.
+Terminal tabs sit next to your docs and your localhost, on a Metal renderer built on libghostty. Split one beside a page, and the sidebar shows its branch and pending changes at a glance.
 
 - **Stays awake while it works.** A long build or an agent run keeps your Mac awake, even with the lid closed, then lets it sleep when the command ends.
 - **Tells you when it's done.** A finished or waiting command lights up its Space, so you can browse while it runs.
@@ -148,7 +148,7 @@ Yes. Lilo is free and open source under the [MIT license](https://github.com/Ale
 
 ### What is Lilo built on?
 
-WebKit, the engine Safari uses, with a native app written in Swift. No Chromium is bundled. On top of it, Lilo runs Chrome extensions from the Chrome Web Store.
+WebKit, the engine Safari uses, in an app written in Swift and AppKit, with its sidebar and settings in Svelte. No Chromium is bundled. On top of it, Lilo runs Chrome extensions from the Chrome Web Store.
 
 ### Which extensions work?
 

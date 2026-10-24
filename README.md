@@ -23,9 +23,9 @@ Light on your Mac, quick on the web. Free and open source.
 
 </div>
 
-Lilo is a native macOS browser for people who live in a sidebar, and for the AI agents that work
-beside them: Spaces with their own sign-ins, the Chrome extensions you rely on, terminal tabs beside
-your pages, a built-in MCP server, and a battery that lasts the day. If you are leaving Arc, it
+Lilo is a macOS browser built on WebKit, for people who live in a sidebar, and for the AI agents
+that work beside them: Spaces with their own sign-ins, the Chrome extensions you rely on, terminal
+tabs beside your pages, a built-in MCP server, and a battery that lasts the day. If you are leaving Arc, it
 imports your Spaces, pinned tabs and folders in a few clicks.
 
 > **Status: public beta.** Lilo is usable every day, but it is still a beta: expect rough edges and
@@ -34,9 +34,9 @@ imports your Spaces, pinned tabs and folders in a few clicks.
 
 ## Why Lilo
 
-- **Native.** Swift, AppKit and the WebKit engine already on your Mac. No bundled Chromium, no
-  Electron: lower memory use, longer battery life, and Apple's security updates with every macOS
-  release.
+- **Built on WebKit.** Swift, AppKit and the WebKit engine already on your Mac, with the sidebar
+  and settings in Svelte. No bundled Chromium, no Electron: lower memory use, longer battery life,
+  and Apple's security updates with every macOS release.
 - **Organized.** A vertical sidebar with Spaces, pinned tabs and folders. Each Space can have its
   own profile, so work and personal sign-ins live side by side in one window.
 - **Compatible.** Chrome Web Store extensions install with one click on "Add to Lilo".
@@ -86,7 +86,7 @@ imports your Spaces, pinned tabs and folders in a few clicks.
 
 **For people who build**
 
-- **Terminal tabs**: libghostty-vt terminals on a native Metal renderer, beside your pages
+- **Terminal tabs**: libghostty-vt terminals on a Metal renderer, beside your pages
   (`Cmd+D` beside, `Cmd+Shift+D` below), with the branch and pending changes in the sidebar.
 - **Changes view**: every diff of the repository, images included.
 - **Stays awake while it works**: a long command keeps the Mac awake, even with the lid closed,

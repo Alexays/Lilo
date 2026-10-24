@@ -1,4 +1,4 @@
-# Lilo : navigateur Mac natif avec espaces et extensions Chrome
+# Lilo : navigateur Mac basé sur WebKit, avec espaces et extensions Chrome
 
 > Navigateur Mac gratuit et open source, alternative à Arc : des espaces avec leurs propres connexions, les extensions Chrome et un serveur MCP pour vos agents IA.
 
@@ -122,7 +122,7 @@ Jusqu'à quatre onglets côte à côte, un terminal à côté de votre doc, rest
 
 ## Votre terminal, dans la barre latérale.
 
-Les onglets terminal côtoient votre doc et votre localhost, avec un rendu Metal natif basé sur libghostty. Placez-en un à côté d'une page : la barre latérale affiche d'un coup d'œil sa branche et ses modifications en attente.
+Les onglets terminal côtoient votre doc et votre localhost, avec un rendu Metal basé sur libghostty. Placez-en un à côté d'une page : la barre latérale affiche d'un coup d'œil sa branche et ses modifications en attente.
 
 - **Reste éveillé pendant le travail.** Une longue compilation ou un agent au travail garde votre Mac éveillé, même écran rabattu, puis le laisse se mettre en veille à la fin de la commande.
 - **Vous prévient quand c'est fini.** Une commande terminée ou en attente fait briller son espace : vous naviguez pendant qu'elle tourne.
@@ -148,7 +148,7 @@ Oui. Lilo est gratuit et open source, sous [licence MIT](https://github.com/Alex
 
 ### Sur quoi Lilo est-il basé ?
 
-Sur WebKit, le moteur de Safari, avec une app native écrite en Swift. Aucun Chromium n'est embarqué. Par-dessus, Lilo exécute les extensions Chrome du Chrome Web Store.
+Sur WebKit, le moteur de Safari, dans une app écrite en Swift et AppKit, dont la barre latérale et les réglages sont en Svelte. Aucun Chromium n'est embarqué. Par-dessus, Lilo exécute les extensions Chrome du Chrome Web Store.
 
 ### Quelles extensions fonctionnent ?
 
