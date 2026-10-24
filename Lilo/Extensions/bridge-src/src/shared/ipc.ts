@@ -1,5 +1,5 @@
 // WebKit defers a worker's idle unload while a port was active in the last 2 minutes, so an idle worker says so after
-// IDLE_MS and Lilo closes its port. SW-safe: assert-background-prelude-safe.ts rejects window/document/webkit.
+// IDLE_MS and Lilo closes its port. SW-safe: assert-background-prelude-safe.mjs rejects window/document/webkit.
 
 import { eventStandIns } from './chrome-event.ts';
 import { bridgeChrome } from './callbackify.ts';

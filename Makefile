@@ -60,11 +60,11 @@ TEST := $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-install e2e-energy \
+.PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream npm-update site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-test
 
@@ -148,20 +148,14 @@ $(XCODEGEN):
 	rm -rf '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; mkdir -p build; \
 	mv "$$work/xcodegen" '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; touch '$@'
 
-$(UI_DEPS): $(UI_DIR)/package.json $(UI_DIR)/package-lock.json
+$(UI_DEPS): $(UI_DIR)/package-lock.json
 	@npm --prefix $(UI_DIR) ci
 
-$(BRIDGE_DEPS): $(BRIDGE_DIR)/package.json $(BRIDGE_DIR)/package-lock.json
+$(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 	@npm --prefix $(BRIDGE_DIR) ci
 
 $(SITE_DEPS): site/package.json site/package-lock.json
 	@npm --prefix site ci
-
-## Refresh npm dependencies and lockfiles after updating the package manifests
-npm-update:
-	@npm --prefix $(UI_DIR) update
-	@npm --prefix $(BRIDGE_DIR) update
-	@npm --prefix site update
 
 $(CHANGIE): scripts/changie-checksums.txt
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -237,11 +231,7 @@ ui-test: $(UI_DEPS)
 
 ## Run the chrome UI end-to-end tests (Playwright)
 e2e: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run test:e2e || { echo 'If Chromium is missing, run make e2e-install' >&2; exit 1; }
-
-## Install the Chromium version used by the end-to-end tests
-e2e-install: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) exec -- playwright install chromium
+	@npm --prefix $(UI_DIR) run test:e2e || { echo 'If Chromium is missing, install it with: npx --prefix $(UI_DIR) playwright install chromium' >&2; exit 1; }
 
 # Not part of e2e: it takes about three minutes and drives the app with System Events keystrokes.
 ## Leave a Release build idle with tabs and a hidden terminal; fail on idle git, worker or snapshot work (IDLE=45 TABS=3 TERMINAL=1)

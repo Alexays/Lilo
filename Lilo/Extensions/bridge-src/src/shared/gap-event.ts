@@ -1,5 +1,5 @@
 // Each GapChromeEvent tells Lilo it is listened to; ipc.ts fires it when its envelope arrives.
-// SW-safe: no window/document/webkit. (assert-background-prelude-safe.ts)
+// SW-safe: no window/document/webkit. (assert-background-prelude-safe.mjs)
 
 import { ChromeEvent } from './chrome-event.ts';
 import { gapCall } from './ipc.ts';

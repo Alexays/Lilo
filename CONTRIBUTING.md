@@ -30,12 +30,6 @@ extensions.
 
 Python 3 comes with Xcode. No Apple Developer account is needed.
 
-The UI and website use TypeScript 6 because Svelte Check, Astro Check and typescript-eslint
-need its compiler API. The extension bridge uses TypeScript 7's compiler and Microsoft's
-`@typescript/typescript6` compatibility package for its bundle safety check.
-It invokes the TypeScript 7 compiler by package path because the compatibility package also
-installs a legacy `tsc` binary.
-
 ## Setup
 
 ```bash
@@ -143,7 +137,6 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make ui-lint` | ESLint and svelte-check over `lilo-ui/` |
 | `make ui-test` | UI unit tests, including the en/fr catalog parity check |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
-| `make e2e-install` | install the Chromium version Playwright needs |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
@@ -153,7 +146,6 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
 | `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |
-| `make npm-update` | refresh npm dependencies and lockfiles after editing the package manifests |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |

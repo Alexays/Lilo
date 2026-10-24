@@ -1,5 +1,5 @@
 // Prelude of every extension service worker: WebKit provides the baseline chrome.* there but none of the gap APIs.
-// Must not reference window/document/webkit/messageHandlers (assert-background-prelude-safe.ts).
+// Must not reference window/document/webkit/messageHandlers (assert-background-prelude-safe.mjs).
 
 import { collectGapListeners, sendGapListeners } from './shared/gap-event.ts';
 import { workerReady } from './shared/ipc.ts';
