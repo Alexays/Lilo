@@ -200,6 +200,11 @@
     scrollbar-width: none;
   }
 
+  /* WebKit autoscrolls the pager toward a pointer dragged past the sidebar, paging to the next Space. */
+  :global(html.sidebar-dnd-active) .space-track {
+    overflow-x: hidden;
+  }
+
   .space-track::-webkit-scrollbar {
     display: none;
   }

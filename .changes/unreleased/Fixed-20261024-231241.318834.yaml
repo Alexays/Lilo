@@ -1,0 +1,3 @@
+kind: Fixed
+body: Dragging a tab from the sidebar onto the page to open it in split view no longer switches to the next Space.
+time: 2026-10-24T23:12:41.318834+02:00
