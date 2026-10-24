@@ -7,6 +7,9 @@ excluded:
   - .swiftpm
   - Lilo.xcodeproj
   - Lilo/Resources
+  # Rewritten by ui-build while validate lints beside it.
+  - Lilo/Generated/ChromeUIAssets.swift
+  - Lilo/Generated/NativeStrings.swift
 
 reporter: xcode
 

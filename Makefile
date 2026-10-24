@@ -100,13 +100,16 @@ bootstrap:
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
 ## Run UI lint/tests/build, Swift lint/tests, the app build, bridge and hook checks and the release version check
-validate: $(UI_DEPS) $(BRIDGE_DEPS)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint release-status > "$$log" 2>&1 & js=$$!; \
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SWIFTLINT) $(CHANGIE)
+	@logs=$$(mktemp -d); checks=; \
+	for group in ui-lint ui-test "hooks-test ext-bridge-test swiftlint release-status"; do \
+		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
+	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \
-	wait $$js; js=$$?; [ $$js -eq 0 ] || cat "$$log"; /bin/rm -f "$$log"; \
-	[ $$swift -eq 0 ] && [ $$js -eq 0 ]
+	failed=0; for check in $$checks; do wait $${check%%:*} || { failed=1; cat "$$logs/$${check#*:}.log"; }; done; \
+	/bin/rm -rf "$$logs"; [ $$swift -eq 0 ] && [ $$failed -eq 0 ]
 
 $(UI_STAMP): $(UI_DEPS) $(UI_SOURCES)
 	@$(MAKE) --no-print-directory ui-build
@@ -187,11 +190,12 @@ ui-build: $(UI_DEPS)
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
 
-# Built once when missing so a fresh clone compiles; make ui-build refreshes it.
+# Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
+# UI source change, refreshes both.
 $(CHROME_UI_ASSETS):
 	@$(MAKE) --no-print-directory ui-build
 
-$(NATIVE_STRINGS): $(UI_DIR)/src/lib/i18n/locales/fr.json
+$(NATIVE_STRINGS):
 	@python3 scripts/generate_native_strings.py
 
 ## Regenerate the Space emoji picker's dataset from Unicode and CLDR (downloads them)
