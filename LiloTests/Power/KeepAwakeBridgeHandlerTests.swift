@@ -16,7 +16,10 @@ final class KeepAwakeBridgeHandlerTests: XCTestCase {
         XCTAssertTrue(sent)
 
         context.powerKeeper.republish()
-        await pollUntil(timeout: 0.3) { false }
+        // Queued a turn later, a raw event drains and ships after any terminal list the republish queued.
+        DispatchQueue.main.async { window.bridgeRouter.send(event: "witness") }
+        let flushed = await pollUntil { events.events.contains { $0.name == "witness" } }
+        XCTAssertTrue(flushed)
 
         XCTAssertEqual(events.events.count { $0.name == "terminalActivity" }, 1)
     }

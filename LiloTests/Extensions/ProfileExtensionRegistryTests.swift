@@ -853,9 +853,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         await restoring.value
         let manifestPath = try XCTUnwrap(registry.loadedExtensions.first?.sourcePath) + "/manifest.json"
 
-        let swept = await pollUntil(timeout: 1) { !FileManager.default.fileExists(atPath: manifestPath) }
-
-        XCTAssertFalse(swept, "the restore's sweep leaves a folder installed while it ran")
+        // The sweep moves its orphans away before the restore returns.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: manifestPath), "the restore's sweep leaves a folder installed while it ran")
     }
 
     func testRestoreSkipsDisabledExtensionsFromDatabase() async throws {
