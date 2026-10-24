@@ -19,6 +19,8 @@ concurrency:
 jobs:
   commits:
     name: Conventional Commits
+    # A squash-merged PR's fork head may no longer be present in the checkout.
+    if: github.event_name != 'pull_request' || github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
