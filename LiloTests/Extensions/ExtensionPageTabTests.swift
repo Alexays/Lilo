@@ -240,6 +240,50 @@ final class ExtensionPageTabTests: XCTestCase {
         return (window, registry, id)
     }
 
+    /// An action popup has no current tab, as in Chrome, where WebKit answers the active tab: Proton Pass then sized
+    /// its popup to the viewport, and it collapsed. The popup's own page in a tab is that tab.
+    func testAnActionPopupHasNoCurrentTabAndKeepsItsSize() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("sized")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Sized", "version": "1.0", "description": "d", "action": {"default_popup": "popup.html"}}"#,
+            "popup.html": "<style>html, body { margin: 0; width: var(--width, 420px); height: var(--height, 300px); }</style><script src='popup.js'></script>",
+            // As Proton Pass: a page shown in a tab fills it.
+            "popup.js": """
+                Promise.all([browser.tabs.getCurrent(), chrome.tabs.getCurrent()]).then(([viaBrowser, viaChrome]) => {
+                  if (viaBrowser) for (const name of ['--width', '--height']) document.documentElement.style.setProperty(name, '100%');
+                  document.title = [viaBrowser, viaChrome].map((tab) => (tab ? 'tab' : 'none')).join(' ');
+                });
+                """
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let page = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        window.activateTabStateFirst(id: page.id)
+        let adapter = window.tabManager.tabAdapter(for: page.id)
+        // A popover shows only from a window on screen.
+        window.window?.orderFront(nil)
+        defer { window.window?.orderOut(nil) }
+
+        let button = NSMenuItem()
+        button.representedObject = id
+        window.openExtensionFromMenu(button)
+        let shown = await pollUntil { context.action(for: adapter)?.popupWebView?.title == "none none" }
+        let popover = context.action(for: adapter)?.popupPopover
+        defer { popover?.close() }
+        let sized = await pollUntil(timeout: 5) { popover?.contentSize == NSSize(width: 420, height: 300) }
+
+        XCTAssertTrue(shown, "the popup reads no current tab")
+        XCTAssertTrue(sized, "the popup keeps its size: \(String(describing: popover?.contentSize))")
+        let asTab = try XCTUnwrap(window.createTabStateFirst(url: context.baseURL.appendingPathComponent("popup.html")))
+        let read = await pollUntil { window.tabManager.engineTab(for: asTab.id)?.currentTitle == "tab tab" }
+        XCTAssertTrue(read, "the popup's page in a tab reads that tab")
+    }
+
     /// Chrome runs nothing of a page after its window.close(): neither an API callback or promise it
     /// asked for next (Google Dictionary) nor the port disconnect the close itself causes (DuckDuckGo).
     func testAnExtensionPageRunsNothingAfterItsWindowClose() async throws {

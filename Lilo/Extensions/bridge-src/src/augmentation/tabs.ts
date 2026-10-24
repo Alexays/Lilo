@@ -162,6 +162,20 @@ const withheld = fixingTabs((tabs) => tabs.forEach(withoutWithheld));
 const revealed = fixingTabs(withRevealed);
 
 /**
+ * WebKit answers `tabs.getCurrent` in an action popup with the window's active tab, where Chrome answers undefined:
+ * only a page a tab shows, or a frame in one, has a current tab. Proton Pass took its popup for a tab's page and sized
+ * it to the viewport, which collapsed it.
+ */
+export const currentTabOfThisPage: Patch = (original, self) => function (this: unknown, callback?: (tab?: any) => void) {
+  return callbackify(async () => {
+    const tab = await original.call(self(this));
+    const page = (globalThis as any).location?.href?.split('#')[0];
+    const shown = (tab?.url || tab?.pendingUrl || '').split('#')[0];
+    return (globalThis as any).top !== globalThis || shown === page ? tab : undefined;
+  }, callback);
+};
+
+/**
  * WebKit rejects `chrome://` url patterns in `tabs.query`, which Chrome matches against its own pages: Lilo's one is
  * the new tab page, which `query` reports as `chrome://newtab/`. Lilo matches those patterns, WebKit the others.
  */

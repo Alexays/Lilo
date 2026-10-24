@@ -8,7 +8,7 @@ import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging } from '../augmentation/runtime.ts';
-import { chromePageQuery, tabsAdditions, onBoundsChanged, tabRevealedURLPatches, tabURLPatches, tabURLStandIns, windowRevealedURLPatches, windowURLPatches } from '../augmentation/tabs.ts';
+import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabRevealedURLPatches, tabURLPatches, tabURLStandIns, windowRevealedURLPatches, windowURLPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
 import { detectLanguage } from '../augmentation/detectLanguage.ts';
@@ -216,6 +216,8 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   }
   const query = tabsPatch.query;
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
+  const getCurrent = tabsPatch.getCurrent;
+  tabsPatch.getCurrent = (original, self) => currentTabOfThisPage(getCurrent(original, self), self);
   const compat: Record<string, NamespaceCompat> = {
     // WebKit does not expose badge colors to Swift, so the color calls are bridged onto its chrome.action.
     action: { replace: action, add: { onUserSettingsChanged: actionOnUserSettingsChanged }, patch: actionPatches },
