@@ -139,6 +139,7 @@ extension MainWindowController {
                             parentFolderId: entry.parentFolderId, section: section, insert: .index(index)
                         ))
                 }
+                tabManager.attachPreparedTabRuntime(for: tab)
                 return tab
             } catch {
                 Self.logger.error("restore removed tab failed: \(error.localizedDescription, privacy: .public)")

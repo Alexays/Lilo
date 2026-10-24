@@ -60,6 +60,7 @@ extension MainWindowController {
                     spaceId: spaceId, kind: .tab, itemId: tab.id, parentFolderId: nil, section: .unpinned, insert: .index(index)
                 ))
             }
+            tabManager.attachPreparedTabRuntime(for: tab)
             restoredId = tab.id
         }
         if entries.count == 1, let restoredId { activateTabStateFirst(id: restoredId) }

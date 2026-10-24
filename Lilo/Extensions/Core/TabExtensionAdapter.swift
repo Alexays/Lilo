@@ -6,8 +6,8 @@ import WebKit
 final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     /// One identity for the tab's whole life, like Chrome: a discarded tab keeps its extension tab id.
     let tabId: UUID
-    /// Nil while the tab is discarded: it stays open to extensions with no page behind it, and holds
-    /// no reference to the torn-down engine.
+    /// Nil while the tab is unloaded (restored, discarded): it stays open to extensions with no page
+    /// behind it, and holds no reference to a torn-down engine.
     var engineTab: WKWebViewTab?
     weak var extensionWindow: (any WKWebExtensionWindow)?
     /// The opener extensions see as `openerTabId`; in memory only, like Chrome's.
@@ -21,11 +21,15 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     private static let discardedError = NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "The tab is discarded"])
     private static let windowUnavailableError = NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "The tab's window is unavailable"])
 
-    init(engineTab: WKWebViewTab, extensionWindow: (any WKWebExtensionWindow)? = nil, profileId: UUID? = nil) {
-        self.tabId = engineTab.id
+    init(tabId: UUID, engineTab: WKWebViewTab?, extensionWindow: (any WKWebExtensionWindow)? = nil, profileId: UUID? = nil) {
+        self.tabId = tabId
         self.engineTab = engineTab
         self.extensionWindow = extensionWindow
         self.profileId = profileId
+    }
+
+    convenience init(engineTab: WKWebViewTab, extensionWindow: (any WKWebExtensionWindow)? = nil, profileId: UUID? = nil) {
+        self.init(tabId: engineTab.id, engineTab: engineTab, extensionWindow: extensionWindow, profileId: profileId)
     }
 
     // MARK: - WKWebExtensionTab

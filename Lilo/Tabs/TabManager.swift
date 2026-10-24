@@ -173,12 +173,13 @@ final class TabManager {
         return Tab(id: engine.id, url: url, title: engine.currentTitle ?? Tab.fallbackTitle(for: url), spaceId: currentSpaceId)
     }
 
-    func attachPreparedTabRuntime(for tab: Tab) {
-        guard engineHost.tabAdapter(for: tab.id) == nil,
-              let engine = engineHost.engine(for: tab.id),
+    /// Opens `tab` to extensions, loaded or not, as Chrome lists every tab; `opener` is its `openerTabId`.
+    func attachPreparedTabRuntime(for tab: Tab, opener: UUID? = nil) {
+        guard tab.kind == .web, !tab.isClosed, engineHost.tabAdapter(for: tab.id) == nil,
               let registry = extensionRegistry,
               let window = windowAdapter,
-              let adapter = installExtensionAdapter(for: engine, tabId: tab.id, window: window) else { return }
+              let adapter = installExtensionAdapter(tabId: tab.id, engine: engineHost.engine(for: tab.id), window: window) else { return }
+        adapter.parent = opener.flatMap(engineHost.tabAdapter(for:))
         registry.controller.didOpenTab(adapter)
     }
 
@@ -431,7 +432,7 @@ final class TabManager {
             existingAdapter.engineTab = engine
             windowAdapter?.add(tab: existingAdapter)
         } else if let registry = extensionRegistry, let window = windowAdapter,
-                  let adapter = installExtensionAdapter(for: engine, tabId: id, window: window) {
+                  let adapter = installExtensionAdapter(tabId: id, engine: engine, window: window) {
             registry.controller.didOpenTab(adapter)
         }
 
@@ -463,15 +464,12 @@ final class TabManager {
         }
     }
 
-    /// Nil for a private tab: no extension is granted private data, so private tabs are never announced.
-    private func installExtensionAdapter(
-        for engine: WKWebViewTab,
-        tabId: UUID,
-        window: WindowExtensionAdapter
-    ) -> TabExtensionAdapter? {
+    /// Nil for a tab of the other privacy than `window`'s. An unloaded tab (no `engine`) is in the displayed space, whose
+    /// privacy the window follows.
+    func installExtensionAdapter(tabId: UUID, engine: WKWebViewTab?, window: WindowExtensionAdapter) -> TabExtensionAdapter? {
         // A private tab lives only in the private extension window, which hides it from extensions not allowed there.
-        guard engine.isPrivateBrowsing == window.isPrivateWindow, let registry = extensionRegistry else { return nil }
-        let adapter = TabExtensionAdapter(engineTab: engine, extensionWindow: window, profileId: registry.profileId)
+        guard engine.map({ $0.isPrivateBrowsing == window.isPrivateWindow }) ?? true else { return nil }
+        let adapter = TabExtensionAdapter(tabId: tabId, engineTab: engine, extensionWindow: window, profileId: extensionRegistry?.profileId)
         adapter.tabManager = self
         engineHost.setTabAdapter(adapter, for: tabId)
         window.add(tab: adapter)
