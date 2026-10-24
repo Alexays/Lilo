@@ -160,7 +160,15 @@ extension MainWindowController {
     @objc func viewPageSource(_ sender: Any?) {
         guard let url = tabManager.visibleActiveTab?.url, url.scheme == "http" || url.scheme == "https",
               let source = URL(string: "\(ViewSourceSchemeHandler.scheme):\(url.absoluteString)") else { return }
-        createTabStateFirst(url: source)
+        // The markup the tab already loaded: a re-fetch costs a slow link the whole page, and may get another one.
+        let handedOver = tabManager.activeEngineTab.map { engine in
+            WebViewPrivateAccessors(engine.wkWebView).mainResourceData { [weak self] data in
+                guard let self else { return }
+                if let data, engine.currentURL == url { context.engineFactory.viewSourceSchemeHandler.handOver(data, of: url) }
+                createTabStateFirst(url: source)
+            }
+        } ?? false
+        if !handedOver { createTabStateFirst(url: source) }
     }
     @objc func duplicateCurrentTab(_ sender: Any?) { if let tab = tabManager.visibleActiveTab { duplicateTab(tab) } }
     @objc func restoreClosedTab(_ sender: Any?) { _ = restoreClosedTabStateFirst() }

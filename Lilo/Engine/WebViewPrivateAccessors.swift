@@ -66,6 +66,18 @@ struct WebViewPrivateAccessors {
         }
     }
 
+    /// The main frame's response body as loaded, from `_getMainResourceDataWithCompletionHandler:`.
+    /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
+    @discardableResult
+    func mainResourceData(completion: @escaping @MainActor (Data?) -> Void) -> Bool {
+        guard let (selector, imp) = method("_getMainResourceDataWithCompletionHandler:") else { return false }
+        typealias DataMethod = @convention(c) (NSObject, Selector, @escaping @convention(block) (NSData?, NSError?) -> Void) -> Void
+        unsafeBitCast(imp, to: DataMethod.self)(object, selector) { data, _ in
+            MainActor.assumeIsolated { completion(data as Data?) }
+        }
+        return true
+    }
+
     /// Invokes a private selector taking a `void (^)(BOOL)` completion (e.g. `_suspendPage:`).
     /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
     @discardableResult

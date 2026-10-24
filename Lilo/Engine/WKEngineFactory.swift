@@ -156,7 +156,7 @@ final class WKEngineFactory {
     let tabShareFrameSchemeHandler = TabShareFrameSchemeHandler()
     /// chrome.tabCapture and chrome.desktopCapture; `BrowserContext` wires its picker and ferry.
     let captureHandler = CaptureBridgeHandler()
-    private let viewSourceSchemeHandler = ViewSourceSchemeHandler()
+    let viewSourceSchemeHandler = ViewSourceSchemeHandler()
 
     /// A web view's profile registry, from the profile id its extension controller was configured with,
     /// which survives a rebuild of the profile's context. Gap calls authenticate against it, and
