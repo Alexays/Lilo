@@ -311,6 +311,56 @@ final class ChromeAPIShimTests: XCTestCase {
         )
         try controller.unload(context)
     }
+
+    /// A script `executeScript` injects runs the content compat: `tabs.sendMessage` tells its listener from none,
+    /// and `insertCSS` reaches the frame named.
+    func testScriptedContentScriptsAnswerAsChrome() async throws {
+        let server = try await TinyHTTPServer { request in
+            let body = request.hasPrefix("GET /frame ") ? "<p>frame</p>" : #"<p>top</p><iframe src="/frame"></iframe>"#
+            return ("200 OK", ["Content-Type: text/html"], Data(body.utf8))
+        }
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Scripted", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
+             "permissions": ["scripting", "webNavigation"], "host_permissions": ["<all_urls>"]}
+            """,
+            "content.js": "chrome.runtime.onMessage.addListener((message, sender, reply) => { if (message === 'ping') reply('pong'); });",
+            "sw.js": """
+            let ran = false;
+            chrome.tabs.onUpdated.addListener(async (tabId, change) => {
+              if (change.status !== 'complete' || ran) return;
+              ran = true;
+              const outcome = (sent) => sent.then((answer) => String(answer), (error) => error.message);
+              const results = [await outcome(chrome.tabs.sendMessage(tabId, 'ping'))];
+              await chrome.scripting.executeScript({ target: { tabId, allFrames: true }, files: ['content.js'] });
+              results.push(await outcome(chrome.tabs.sendMessage(tabId, 'ping')), await outcome(chrome.tabs.sendMessage(tabId, 'quiet')));
+              results.push(await new Promise((resolve) => chrome.tabs.sendMessage(tabId, 'quiet', () => resolve(chrome.runtime.lastError?.message))));
+              const frames = await chrome.webNavigation.getAllFrames({ tabId });
+              const child = frames.find((frame) => frame.frameId !== 0).frameId;
+              await chrome.scripting.insertCSS({ target: { tabId, frameIds: [child] }, css: 'p { color: rgb(1, 2, 3) }' });
+              const colors = await chrome.scripting.executeScript({
+                target: { tabId, allFrames: true }, func: () => getComputedStyle(document.querySelector('p')).color,
+              });
+              results.push(colors.map((color) => `${color.frameId === 0 ? 'top' : 'child'} ${color.result}`).sort().join(', '));
+              chrome.action.setTitle({ title: results.join(' | ') });
+            });
+            """
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Scripted" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, [
+            "Could not establish connection. Receiving end does not exist.", "pong", "undefined",
+            "The message port closed before a response was received.", "child rgb(1, 2, 3), top rgb(0, 0, 0)"
+        ].joined(separator: " | "))
+    }
 }
 
 @MainActor

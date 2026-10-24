@@ -5,7 +5,7 @@ import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns 
 import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { declarativeNetRequestPatches, staticRulesAdditions } from './dnr-rules.ts';
 import { storageAreaPatches } from './storage-area.ts';
-import { answerAsChrome, lastErrorWithoutAnswer } from './message-answers.ts';
+import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging } from '../augmentation/runtime.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
@@ -209,7 +209,25 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     (listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()),
     noReceiver,
   );
-  const tabsPatch: Record<string, Patch> = { ...tabPatches(withheldURLs), sendMessage: (original) => lastErrorWithoutAnswer(original, noReceiver) };
+  // Asked when nobody answered a tab's message: its content scripts answer the probe once one listens. Chrome also
+  // delivers it to the extension's own pages the tab shows, which the probe does not reach: those count as listening.
+  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => function (this: unknown, tabId: unknown, _message: unknown, options?: unknown) {
+    const tabs = self(this) as any;
+    const target = options !== null && typeof options === 'object' ? [options] : [];
+    const showsOwnPage = async () => {
+      const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+      const base = chrome.runtime?.getURL?.('');
+      return typeof tab?.url === 'string' && !!base && tab.url.startsWith(base);
+    };
+    return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
+      async (listens) => (listens === true || await showsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
+      noReceiver,
+    );
+  };
+  const tabsPatch: Record<string, Patch> = {
+    ...tabPatches(withheldURLs),
+    sendMessage: (original, self) => lastErrorWithoutAnswer(original, tabNoAnswer(original, self), true),
+  };
   const query = tabsPatch.query;
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
   const getCurrent = tabsPatch.getCurrent;
