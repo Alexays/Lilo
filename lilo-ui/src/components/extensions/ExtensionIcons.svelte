@@ -12,16 +12,14 @@
 </script>
 
 <script lang="ts">
+  import { flip } from "svelte/animate";
   import { cubicOut } from "svelte/easing";
   import ExtensionsPopover from "./ExtensionsPopover.svelte";
   import {
     getEnabledExtensions,
     type ExtensionState,
   } from "../../stores/extensions.svelte";
-  import {
-    canPinMoreExtensions,
-    getPinnedExtensionIds,
-  } from "../../stores/extensionPins.svelte";
+  import { getPinnedExtensionIds } from "../../stores/extensionPins.svelte";
   import {
     getSettingsShellSection,
     isSettingsShellOpen,
@@ -38,19 +36,25 @@
     badgeTextColor,
     displayInitial,
     extensionIconSrc,
+    fitPinnedCount,
     resolveDisplayName,
   } from "./extensionPanelModel";
 
   const extensions = $derived(getEnabledExtensions());
-  const pinnedIds = $derived(getPinnedExtensionIds());
+  const pinnedIds = $derived(
+    getPinnedExtensionIds().filter((id) => extensions.some((ext) => ext.id === id)),
+  );
+  // The address bar's width, set by the resize observer below. Only a change of the count reaches
+  // the icons, so a sidebar drag never re-renders them between two fits.
+  let barWidth = $state(0);
+  const inlineCount = $derived(fitPinnedCount(barWidth, pinnedIds.length));
+  const inlineIds = $derived(pinnedIds.slice(0, inlineCount));
   const pinned = $derived(
-    pinnedIds
-      .map((id) => extensions.find((ext) => ext.id === id))
-      .filter((ext): ext is ExtensionState => ext !== undefined),
+    inlineIds.map((id) => extensions.find((ext) => ext.id === id) as ExtensionState),
   );
   // A badge on a folded-away extension would be invisible otherwise.
   const hasFoldedBadge = $derived(
-    extensions.some((ext) => ext.badgeText && !pinnedIds.includes(ext.id)),
+    extensions.some((ext) => ext.badgeText && !inlineIds.includes(ext.id)),
   );
 
   // Switching to a space on another profile swaps the whole extension set. The incoming icons
@@ -59,19 +63,26 @@
   const SWAP_OUT_MS = 140;
 
   function floatOut(node: HTMLElement) {
-    const container = node.parentElement;
-    const top = node.offsetTop;
     // Measured from the right edge, which is the cluster's anchor: the ghost then holds its
-    // place on screen even as the row narrows around it.
-    const right = container
-      ? container.clientWidth - node.offsetLeft - node.offsetWidth
-      : 0;
+    // place on screen even as the row narrows around it. Rects, not offsets: a flip in progress
+    // has already moved it.
+    const box = node.getBoundingClientRect();
+    const container = node.parentElement?.getBoundingClientRect() ?? box;
+    // Out of the flow now, not on the outro's first frame: animate:flip measures where the icons
+    // that stay land right after this, and Svelte's own fix skips an icon still animating.
+    const inline = node.style.cssText;
+    node.style.cssText +=
+      `;position: absolute; right: ${container.right - box.right}px;` +
+      `top: ${box.top - container.top}px; transform: none`;
     return {
       duration: prefersReducedMotion() ? 0 : SWAP_OUT_MS,
       easing: cubicOut,
-      css: (t: number) =>
-        `position: absolute; right: ${right}px; top: ${top}px;` +
-        `opacity: ${t}; transform: scale(${0.55 + 0.45 * t});`,
+      css: (t: number) => `opacity: ${t}; transform: scale(${0.55 + 0.45 * t});`,
+      // An icon back before it is gone (the sidebar widened again) gets its outro reset at t = 1,
+      // once Svelte has lifted the outro's inert.
+      tick: (t: number) => {
+        if (t === 1 && !node.inert) node.style.cssText = inline;
+      },
     };
   }
 
@@ -91,9 +102,9 @@
     const next = new Map<string, DOMRect>();
     for (const [id, node] of pinnedAnchors) next.set(id, node.getBoundingClientRect());
     // Folded-away extensions anchor a shortcut-opened popup (_execute_action) on the menu button.
-    if (triggerEl && unpinnedIds) {
+    if (triggerEl && foldedIds) {
       const rect = triggerEl.getBoundingClientRect();
-      for (const id of unpinnedIds.split(",")) next.set(id, rect);
+      for (const id of foldedIds.split(",")) next.set(id, rect);
     }
     for (const [id, rect] of next) {
       const sent = sentAnchors.get(id);
@@ -129,24 +140,29 @@
     };
   }
 
-  const unpinnedIds = $derived(
+  const foldedIds = $derived(
     extensions
-      .filter((ext) => !pinnedIds.includes(ext.id))
+      .filter((ext) => !inlineIds.includes(ext.id))
       .map((ext) => ext.id)
       .join(","),
   );
   $effect(() => {
-    if (triggerEl && unpinnedIds) schedulePopupAnchors();
+    if (triggerEl && foldedIds) schedulePopupAnchors();
   });
 
-  // The address row resizes with the sidebar, and the cluster as icons come and go: both move
+  // The address bar resizes with the sidebar, and the cluster as icons come and go: both move
   // the anchors without resizing the icons themselves.
   $effect(() => {
     const cluster = clusterEl;
-    const row = cluster?.parentElement;
-    if (!cluster || !row) return;
-    const observer = new ResizeObserver(schedulePopupAnchors);
-    observer.observe(row);
+    const bar = cluster?.closest(".url-trigger");
+    if (!cluster || !bar) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === bar) barWidth = entry.borderBoxSize[0].inlineSize;
+      }
+      schedulePopupAnchors();
+    });
+    observer.observe(bar);
     observer.observe(cluster);
     window.addEventListener("resize", schedulePopupAnchors);
     return () => {
@@ -184,7 +200,6 @@
       rect.width,
       rect.height,
       true,
-      canPinMoreExtensions(),
     );
   }
 </script>
@@ -196,6 +211,7 @@
         class="extension-icon"
         class:action-disabled={!ext.actionEnabled}
         style={`--icon-index: ${index}`}
+        animate:flip={{ duration: prefersReducedMotion() ? 0 : 260, easing: cubicOut }}
         out:floatOut|global
         use:reportPopupAnchor={ext.id}
         use:tooltip={{
@@ -269,6 +285,7 @@
     {#if popoverOpen && triggerEl}
       <ExtensionsPopover
         anchor={triggerEl}
+        overflowIds={pinnedIds.slice(inlineCount)}
         onclose={() => {
           popoverOpen = false;
         }}

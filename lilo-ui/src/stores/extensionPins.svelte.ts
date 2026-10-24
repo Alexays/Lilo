@@ -5,8 +5,6 @@ import { on } from "../lib/bridge";
 import { settingsActions } from "../lib/bridge/actions";
 import { getExtensions } from "./extensions.svelte";
 
-export const MAX_PINNED_EXTENSIONS = 3;
-
 const SETTING_KEY = "pinnedExtensions";
 
 let _pinned = $state.raw<string[]>([]);
@@ -26,12 +24,10 @@ function parsePinned(raw: string | undefined): string[] {
 	return raw
 		.split(",")
 		.map((id) => id.trim())
-		.filter(Boolean)
-		.slice(0, MAX_PINNED_EXTENSIONS);
+		.filter(Boolean);
 }
 
-// Ids of uninstalled extensions stay in the setting until the next write but never count:
-// they would otherwise hold a slot nobody can free.
+// Ids of uninstalled extensions stay in the setting until the next write but never show.
 const _pinnedIds = $derived(_pinned.filter((id) => getExtensions().some((ext) => ext.id === id)));
 
 export function getPinnedExtensionIds(): string[] {
@@ -42,19 +38,20 @@ export function isExtensionPinned(id: string): boolean {
 	return getPinnedExtensionIds().includes(id);
 }
 
-export function canPinMoreExtensions(): boolean {
-	return getPinnedExtensionIds().length < MAX_PINNED_EXTENSIONS;
+function savePinned(pinned: string[]): void {
+	_pinned = pinned;
+	// Applied locally first: the host echoes settingsLoaded back on the same value.
+	settingsActions.set(SETTING_KEY, pinned.join(","));
+}
+
+/** Pins `id` after the existing pins; a no-op when it is already pinned. */
+export function pinExtension(id: string): void {
+	const pinned = getPinnedExtensionIds();
+	if (!pinned.includes(id)) savePinned([...pinned, id]);
 }
 
 export function toggleExtensionPin(id: string): void {
 	const pinned = getPinnedExtensionIds();
-	if (pinned.includes(id)) {
-		_pinned = pinned.filter((pinnedId) => pinnedId !== id);
-	} else if (pinned.length < MAX_PINNED_EXTENSIONS) {
-		_pinned = [...pinned, id];
-	} else {
-		return;
-	}
-	// Applied locally first: the host echoes settingsLoaded back on the same value.
-	settingsActions.set(SETTING_KEY, _pinned.join(","));
+	if (pinned.includes(id)) savePinned(pinned.filter((pinnedId) => pinnedId !== id));
+	else pinExtension(id);
 }

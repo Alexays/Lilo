@@ -7,6 +7,7 @@ import {
   displayInitial,
   extensionCapabilities,
   filterExtensions,
+  fitPinnedCount,
   formatShortcut,
   isExtensionDegraded,
   normalizeSiteHost,
@@ -160,4 +161,24 @@ test("a badge without a text color gets black or white, whichever contrasts more
   assert.equal(badgeTextColor("rgba(255, 214, 0, 255)", ""), "#000");
   assert.equal(badgeTextColor("#eb0a00", "#ffff00"), "#ffff00");
   assert.equal(badgeTextColor("red", ""), null);
+});
+
+test("pinned icons fill the address bar's room and the rest fold into the menu", () => {
+  // The narrowest sidebar (200px) gives a 180px bar, the default (260px) a 240px one, the widest (480px) 460px.
+  assert.equal(fitPinnedCount(180, 8), 2);
+  assert.equal(fitPinnedCount(240, 8), 4);
+  assert.equal(fitPinnedCount(460, 8), 8);
+  // One slot is 24px: the fifth icon needs the bar 24px wider than the first width that fits four.
+  assert.equal(fitPinnedCount(217, 8), 3);
+  assert.equal(fitPinnedCount(218, 8), 4);
+  assert.equal(fitPinnedCount(241, 8), 4);
+  assert.equal(fitPinnedCount(242, 8), 5);
+  // Fewer pins than slots all show.
+  assert.equal(fitPinnedCount(460, 3), 3);
+});
+
+test("an unmeasured or cramped bar folds every pin, and no pins leave nothing to fit", () => {
+  assert.equal(fitPinnedCount(0, 2), 0);
+  assert.equal(fitPinnedCount(140, 1), 0);
+  assert.equal(fitPinnedCount(300, 0), 0);
 });

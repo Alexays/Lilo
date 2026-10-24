@@ -376,7 +376,7 @@ export const extensionActions = {
 		width: number,
 		height: number,
 	): void => emit("openExtensionPopup", { id, x, y, width, height }),
-	// `pinned`/`canPin` add the address-bar pin item; the settings list leaves them out.
+	// `pinned` adds the address-bar pin item; the settings list leaves it out.
 	showContextMenu: (
 		id: string,
 		x: number,
@@ -384,9 +384,8 @@ export const extensionActions = {
 		width: number,
 		height: number,
 		pinned?: boolean,
-		canPin?: boolean,
 	): void =>
-		emit("showExtensionContextMenu", { id, x, y, width, height, pinned, canPin }),
+		emit("showExtensionContextMenu", { id, x, y, width, height, pinned }),
 	updatePopupAnchor: (
 		id: string,
 		x: number,

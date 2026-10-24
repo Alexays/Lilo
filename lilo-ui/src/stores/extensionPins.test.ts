@@ -39,13 +39,12 @@ test("the pinned list comes from the settings snapshot", async () => {
 	assert.equal(store.isExtensionPinned("gamma"), false);
 });
 
-test("uninstalled ids neither show nor hold a slot, and drop on the next write", async () => {
+test("uninstalled ids never show, and drop on the next write", async () => {
 	const posted = stubBridgeWindow();
 	const store = await loadPinsStore();
 
 	settings("alpha,gone,beta");
 	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta"]);
-	assert.equal(store.canPinMoreExtensions(), true);
 
 	store.toggleExtensionPin("gamma");
 	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta", "gamma"]);
@@ -58,7 +57,7 @@ test("uninstalled ids neither show nor hold a slot, and drop on the next write",
 	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "gamma"]);
 });
 
-test("toggling pins persists the list and stops at the cap", async () => {
+test("toggling pins persists the list in pin order, with no cap", async () => {
 	const posted = stubBridgeWindow();
 	const store = await loadPinsStore();
 
@@ -68,28 +67,35 @@ test("toggling pins persists the list and stops at the cap", async () => {
 		payload: { key: "pinnedExtensions", value: "alpha" },
 	});
 
-	store.toggleExtensionPin("beta");
-	store.toggleExtensionPin("gamma");
-	assert.equal(store.canPinMoreExtensions(), false);
-
-	store.toggleExtensionPin("delta");
-	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta", "gamma"]);
+	for (const id of ["beta", "gamma", "delta", "a", "b"]) store.toggleExtensionPin(id);
+	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta", "gamma", "delta", "a", "b"]);
 	assert.deepEqual(posted.at(-1), {
 		action: "setSetting",
-		payload: { key: "pinnedExtensions", value: "alpha,beta,gamma" },
+		payload: { key: "pinnedExtensions", value: "alpha,beta,gamma,delta,a,b" },
 	});
 
 	store.toggleExtensionPin("beta");
-	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "gamma"]);
-	assert.equal(store.canPinMoreExtensions(), true);
+	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "gamma", "delta", "a", "b"]);
 });
 
-test("a stored list longer than the cap is truncated", async () => {
+test("pinning an already pinned extension changes nothing", async () => {
+	const posted = stubBridgeWindow();
+	const store = await loadPinsStore();
+
+	store.pinExtension("alpha");
+	store.pinExtension("beta");
+	const writes = posted.length;
+	store.pinExtension("alpha");
+	assert.deepEqual(store.getPinnedExtensionIds(), ["alpha", "beta"]);
+	assert.equal(posted.length, writes);
+});
+
+test("a long stored list is kept whole, in its order", async () => {
 	stubBridgeWindow();
 	const store = await loadPinsStore();
 
-	settings("a,b,c,d,e");
-	assert.deepEqual(store.getPinnedExtensionIds(), ["a", "b", "c"]);
+	settings("e,a,d,b,c");
+	assert.deepEqual(store.getPinnedExtensionIds(), ["e", "a", "d", "b", "c"]);
 });
 
 test("the native context menu's pin item toggles the pin", async () => {

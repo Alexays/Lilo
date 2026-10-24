@@ -8,11 +8,11 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { extensionActions, tabActions } from "../../lib/bridge/actions";
   import { openSettings } from "../../stores/panels.svelte";
-  import { getEnabledExtensions } from "../../stores/extensions.svelte";
   import {
-    MAX_PINNED_EXTENSIONS,
-    canPinMoreExtensions,
-    getPinnedExtensionIds,
+    getEnabledExtensions,
+    type ExtensionState,
+  } from "../../stores/extensions.svelte";
+  import {
     isExtensionPinned,
     toggleExtensionPin,
   } from "../../stores/extensionPins.svelte";
@@ -27,10 +27,18 @@
   const WEB_STORE_URL = "https://chromewebstore.google.com";
   const VIEWPORT_MARGIN = 8;
 
-  let { anchor, onclose }: { anchor: HTMLElement; onclose: () => void } =
-    $props();
+  // `overflowIds`: the pinned extensions the address bar has no room for, in pin order.
+  let {
+    anchor,
+    overflowIds,
+    onclose,
+  }: { anchor: HTMLElement; overflowIds: string[]; onclose: () => void } = $props();
 
   const extensions = $derived(getEnabledExtensions());
+  const listed = $derived([
+    ...overflowIds.map((id) => extensions.find((ext) => ext.id === id) as ExtensionState),
+    ...extensions.filter((ext) => !overflowIds.includes(ext.id)),
+  ]);
   let rootEl = $state<HTMLDivElement>();
 
   // The popup anchors on the trigger, not on the row: the popover is gone by the time the
@@ -57,7 +65,6 @@
       rect.width,
       rect.height,
       isExtensionPinned(id),
-      canPinMoreExtensions(),
     );
   }
 
@@ -95,10 +102,9 @@
   }
 
   function pinTooltip(id: string): string {
-    if (isExtensionPinned(id)) return t("extensions.unpinFromAddressBar");
-    if (!canPinMoreExtensions())
-      return t("extensions.pinLimitReached", { count: MAX_PINNED_EXTENSIONS });
-    return t("extensions.pinToAddressBar");
+    return isExtensionPinned(id)
+      ? t("extensions.unpinFromAddressBar")
+      : t("extensions.pinToAddressBar");
   }
 
   $effect(() => {
@@ -119,14 +125,16 @@
   use:portal
   use:reportInteractiveZone={{ id: "extensions-popover" }}
 >
-  <div class="float-popover-head head">
+  <div class="float-popover-head">
     <span class="float-popover-title">{t("extensions.addressBarMenu")}</span>
-    <span class="float-popover-subtitle">
-      {t("extensions.pinnedCount", { pinned: getPinnedExtensionIds().length, max: MAX_PINNED_EXTENSIONS })}
-    </span>
   </div>
   <div class="rows">
-    {#each extensions as ext (ext.id)}
+    {#each listed as ext, index (ext.id)}
+      {#if index === 0 && overflowIds.length > 0}
+        <span class="section-label">{t("extensions.pinnedSection")}</span>
+      {:else if index > 0 && index === overflowIds.length}
+        <div class="section-separator" role="separator"></div>
+      {/if}
       <div class="extensions-popover-row">
         <button
           class="ext-item"
@@ -175,7 +183,6 @@
         <button
           class="row-pin"
           class:pinned={isExtensionPinned(ext.id)}
-          disabled={!isExtensionPinned(ext.id) && !canPinMoreExtensions()}
           use:tooltip={pinTooltip(ext.id)}
           aria-label={pinTooltip(ext.id)}
           aria-pressed={isExtensionPinned(ext.id)}
@@ -225,19 +232,27 @@
     transform-origin: calc(100% - 14px) 0;
   }
 
-  .head {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
   .rows {
     display: flex;
     flex-direction: column;
     gap: 2px;
     max-height: 360px;
     overflow-y: auto;
+  }
+
+  /* Like a macOS menu's section header: the pinned extensions the address bar has no room for. */
+  .section-label {
+    padding: 4px 8px 2px;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .section-separator {
+    flex-shrink: 0;
+    height: 1px;
+    margin: 3px 8px;
+    background: var(--separator);
   }
 
   .extensions-popover-row {
@@ -361,7 +376,7 @@
     color: var(--text-primary);
   }
 
-  .row-pin:hover:not(:disabled) {
+  .row-pin:hover {
     background: var(--bg-active);
     color: var(--text-primary);
   }
@@ -398,10 +413,5 @@
     outline: none;
     background: var(--bg-hover);
     color: var(--text-primary);
-  }
-
-  .row-pin:disabled {
-    color: color-mix(in srgb, var(--text-muted) 45%, transparent);
-    cursor: default;
   }
 </style>

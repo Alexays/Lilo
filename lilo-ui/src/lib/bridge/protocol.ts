@@ -772,7 +772,6 @@ export interface BridgeCommandPayloadMap {
 		width: number;
 		height: number;
 		pinned?: boolean;
-		canPin?: boolean;
 	};
 }
 

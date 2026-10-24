@@ -140,7 +140,7 @@ extension MainWindowController {
     // MARK: - Extension Context Menu
 
     /// `pinned` is nil where pinning does not apply (the settings list), else the address-bar pin state.
-    func showExtensionContextMenu(extensionId: String, anchorRect: NSRect?, pinned: Bool? = nil, canPin: Bool = true) {
+    func showExtensionContextMenu(extensionId: String, anchorRect: NSRect?, pinned: Bool? = nil) {
         let menu = NSMenu()
         let context = profileContext?.extensions.context(for: extensionId)
         // The extension's own action menu (contextMenus with the "action" context) leads, as in Chrome.
@@ -152,8 +152,7 @@ extension MainWindowController {
         }
         let send = { (action: String) in self.bridgeRouter?.send(event: "extensionMenuAction", data: ["id": extensionId, "action": action]) }
         if let pinned {
-            let pin = menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
-            if !pinned, !canPin { pin.action = nil }
+            menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
         }
         menu.addItem("Details".localized, icon: .details) { send("details") }
         if let url = context?.optionsPageURL {

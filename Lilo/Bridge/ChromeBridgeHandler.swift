@@ -156,8 +156,7 @@ final class ChromeBridgeHandler: BridgeHandler {
                 windowController?.showExtensionContextMenu(
                     extensionId: id,
                     anchorRect: anchorRect(from: message),
-                    pinned: message.payload["pinned"] as? Bool,
-                    canPin: message.bool("canPin", default: true)
+                    pinned: message.payload["pinned"] as? Bool
                 )
             }
 

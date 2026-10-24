@@ -148,3 +148,16 @@ export function badgeTextColor(background = "", text = ""): string | null {
   });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > LUMINANCE_MIDPOINT ? "#000" : "#fff";
 }
+
+// The address keeps this much of the bar's leading edge, room for the hover-revealed URL actions.
+const ADDRESS_ROOM_PX = 96;
+// The cluster sits 6px in from the bar's trailing edge and always holds the 20px menu button.
+const CLUSTER_FIXED_PX = 6 + 20;
+// A 20px pinned icon and the 4px gap after it.
+const PIN_SLOT_PX = 24;
+
+/** How many of `pins` pinned extensions an address bar `barWidth` wide shows; the rest, the last pinned, fold into the menu. */
+export function fitPinnedCount(barWidth: number, pins: number): number {
+  const slots = Math.floor((barWidth - ADDRESS_ROOM_PX - CLUSTER_FIXED_PX) / PIN_SLOT_PX);
+  return Math.max(0, Math.min(pins, slots));
+}
