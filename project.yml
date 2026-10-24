@@ -99,6 +99,10 @@ targets:
       - path: Lilo/Resources/shell-integration
         type: folder
         buildPhase: resources
+      # Images of the chrome UI, which ChromeUISchemeHandler serves from the bundle and Vite's dev server from public/.
+      - path: lilo-ui/public/password-managers
+        type: folder
+        buildPhase: resources
 
   LiloPowerHelper:
     type: tool

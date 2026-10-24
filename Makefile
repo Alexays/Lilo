@@ -44,7 +44,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-deploy emoji-data
+	logs logs-stream site-dev site-deploy emoji-data password-manager-icons
 
 ## List the targets
 help:
@@ -107,6 +107,10 @@ $(NATIVE_STRINGS): $(UI_DIR)/src/lib/i18n/locales/fr.json
 ## Regenerate the Space emoji picker's dataset from Unicode and CLDR (downloads them)
 emoji-data:
 	@python3 scripts/generate_emoji_data.py
+
+## Regenerate the setup's password manager icons from their Chrome Web Store packages (downloads them; needs Pillow)
+password-manager-icons:
+	@python3 scripts/generate_password_manager_icons.py
 
 ## Rebuild the UI bundle (build/chrome-ui) on change; use ui-dev for live reload in the app
 ui-watch: $(UI_DEPS)

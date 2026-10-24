@@ -96,6 +96,7 @@
 		2FB28F4CC7639348C050AC78 /* LiloMCPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186820FBE2CCE8284CCF0B71 /* LiloMCPTests.swift */; };
 		2FBB3B61A13C73C49B510236 /* EngineFreezerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C2473D269B2D836D39D22 /* EngineFreezerTests.swift */; };
 		2FFC247D82353835C6F12099 /* PowerHelperLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A55F8756E347FA1CD02ABA /* PowerHelperLink.swift */; };
+		3014BDAE6885561DD0059830 /* password-managers in Resources */ = {isa = PBXBuildFile; fileRef = 2142A3F2FD9FF647C3069FF7 /* password-managers */; };
 		30919A97BF66012B58014D98 /* FilterListConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759D738119077B180B51C5C8 /* FilterListConverter.swift */; };
 		30E79B4FA95607C15888C8A2 /* SchemaIndexesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C03A683B4F9DEBE08EE35F /* SchemaIndexesTests.swift */; };
 		30F4222373D8BA7C8DB3051F /* BuildIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FC4FD4EE6A9E10207D978B /* BuildIdentity.swift */; };
@@ -707,6 +708,7 @@
 		2069CBABD9B82BC563744EEC /* AgentDevToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentDevToolsTests.swift; sourceTree = "<group>"; };
 		20DCB51549B44043195601EB /* BrowserProcessSnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserProcessSnapshotBuilder.swift; sourceTree = "<group>"; };
 		20DD2266C3DA5546A856F717 /* TabBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBridgeHandlerTests.swift; sourceTree = "<group>"; };
+		2142A3F2FD9FF647C3069FF7 /* password-managers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "password-managers"; path = "lilo-ui/public/password-managers"; sourceTree = SOURCE_ROOT; };
 		21CBF2CECED5FF3B333E0F12 /* OnboardingBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingBridgeHandler.swift; sourceTree = "<group>"; };
 		220FD9F59B1775527D3AEB15 /* LittleWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LittleWindowController.swift; sourceTree = "<group>"; };
 		222E051DED9B5228D6260FE8 /* TabGroupsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabGroupsBridgeHandler.swift; sourceTree = "<group>"; };
@@ -1566,6 +1568,14 @@
 			path = LiloTests;
 			sourceTree = "<group>";
 		};
+		5D7A8743A049A9913E20961F /* lilo-ui */ = {
+			isa = PBXGroup;
+			children = (
+				F224F55ECA767DE7DDEE289E /* public */,
+			);
+			path = "lilo-ui";
+			sourceTree = "<group>";
+		};
 		61871DDD5ED8C0FEA391D98E /* Changes */ = {
 			isa = PBXGroup;
 			children = (
@@ -2228,10 +2238,19 @@
 			path = Terminal;
 			sourceTree = "<group>";
 		};
+		F224F55ECA767DE7DDEE289E /* public */ = {
+			isa = PBXGroup;
+			children = (
+				2142A3F2FD9FF647C3069FF7 /* password-managers */,
+			);
+			path = public;
+			sourceTree = "<group>";
+		};
 		F277CE87AC325D974E6FBF32 = {
 			isa = PBXGroup;
 			children = (
 				6F45E4E5C63AA13F2F79E931 /* Lilo */,
+				5D7A8743A049A9913E20961F /* lilo-ui */,
 				D301D9281A21AA10A470D41B /* LiloMCP */,
 				A1A486096BE3D8A33016206B /* LiloPowerHelper */,
 				5BEB258D9B483850E4D6D1CB /* LiloTests */,
@@ -2449,6 +2468,7 @@
 				2EE67E3DF384AFF54D8B80AD /* ReaderView.js in Resources */,
 				4A32E59C78B5B6C9B091D071 /* Scriptlets.js in Resources */,
 				EAE2D8439E5F00188A79A185 /* content-blocker-rules.json in Resources */,
+				3014BDAE6885561DD0059830 /* password-managers in Resources */,
 				80E69F9C86FA46A7EBB45114 /* public-suffix-list.dat in Resources */,
 				ECECE200138640A7DAAB9707 /* shell-integration in Resources */,
 			);

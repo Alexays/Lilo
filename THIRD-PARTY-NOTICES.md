@@ -69,6 +69,10 @@ Gruvbox, Nord, One Dark and GitHub's Primer colors.
 
 The app ships no font: its interface and terminal use the macOS system fonts.
 Its icons are Lilo's own SVGs and Apple's SF Symbols, which macOS provides.
+The setup's passwords step shows each password manager's own extension icon,
+taken from its Chrome Web Store package by `make password-manager-icons` into
+`lilo-ui/public/password-managers/`; each logo belongs to its owner and only
+names that product.
 
 The landing site (`site/`) serves **Nunito**
 (https://github.com/googlefonts/nunito), `site/public/fonts/nunito-latin-wght.woff2`,

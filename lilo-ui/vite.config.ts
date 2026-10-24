@@ -79,6 +79,8 @@ export default defineConfig({
 			mangle: true,
 		},
 		assetsInlineLimit: 0,
+		// public/ holds images the app bundle ships as resources (project.yml); the embed is text only.
+		copyPublicDir: false,
 		// WebKit supports <link rel="modulepreload"> natively.
 		modulePreload: { polyfill: false },
 		rollupOptions: {

@@ -445,6 +445,21 @@ test("the passwords step reads as one list: a manager per row, each description 
 	}
 });
 
+test("each password manager shows its own icon, and its initial when the icon fails to load", async ({ page }) => {
+	await page.route("**/password-managers/nngceckbapebfimnlniiiahkandclblb.png", (route) => route.abort());
+	await bootOnboarding(page, 3);
+	const rows = page.locator(".manager");
+	await expect(rows).toHaveCount(7);
+	const bitwarden = rows.filter({ hasText: "Bitwarden" });
+	await expect(bitwarden.locator(".glyph")).toHaveText("B");
+	await expect(bitwarden.locator("img")).toHaveCount(0);
+
+	const others = rows.filter({ hasNotText: "Bitwarden" });
+	await expect(others.locator(".glyph")).toHaveCount(0);
+	await expect.poll(() => others.locator("img.logo").evaluateAll((images) => images.map((image) => (image as HTMLImageElement).naturalWidth)))
+		.toEqual(Array(6).fill(60));
+});
+
 test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {
 	await bootOnboarding(page, 5);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });

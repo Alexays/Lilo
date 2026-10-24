@@ -6,6 +6,10 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The passwords step of the setup shows each password manager's own icon instead of its initial.
+
 ### Fixed
 
 - Importing no longer offers browsers that are not installed, whose folders password managers create for their helpers, and finds the icon of a Beta, Dev or Nightly browser or one installed outside LaunchServices.

@@ -7,6 +7,7 @@
   const onboarding = getOnboarding();
   const installed = $derived(new Map(getExtensions().map((ext) => [ext.id, ext])));
   const anyInstalled = $derived(PASSWORD_MANAGERS.some((manager) => installed.has(manager.id)));
+  let failedIcons = $state<Record<string, true>>({});
 </script>
 
 <h3>{t("onboarding.passwords.title")}</h3>
@@ -16,8 +17,10 @@
   {#each PASSWORD_MANAGERS as manager (manager.id)}
     {@const ext = installed.get(manager.id)}
     <div class="manager" class:soon={manager.soon} role="listitem">
-      {#if ext?.iconDataURL}
-        <img class="logo" src={ext.iconDataURL} alt="" width="30" height="30" />
+      {#if !failedIcons[manager.id]}
+        <!-- Each extension's own icon, shipped in the app bundle (scripts/generate_password_manager_icons.py). -->
+        <img class="logo" src="./password-managers/{manager.id}.png" alt="" width="30" height="30"
+          onerror={() => (failedIcons[manager.id] = true)} />
       {:else}
         <span class="glyph" aria-hidden="true">{manager.name[0]}</span>
       {/if}

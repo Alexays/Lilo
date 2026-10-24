@@ -13,6 +13,8 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     private static let fileIconPrefix = "file-icon/"
     private static let fileIconPointSize: CGFloat = 64
     private static let screenshotPrefix = "screenshot/"
+    /// Bundle resources rather than embedded assets: the embed is text only.
+    private static let passwordManagerPrefix = "password-managers/"
     /// Captures open in the screenshot editor, by id. Served from the chrome's own origin rather
     /// than as data URLs: a full-page PNG runs to tens of megabytes, and a same-origin image keeps
     /// the editor's export canvas untainted.
@@ -57,6 +59,20 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
                 return
             }
             urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+            return
+        }
+        if path.hasPrefix(Self.passwordManagerPrefix) {
+            let name = (path as NSString).lastPathComponent
+            guard let file = Bundle.main.url(forResource: name, withExtension: nil, subdirectory: "password-managers"),
+                  let data = try? Data(contentsOf: file) else {
+                urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+                return
+            }
+            urlSchemeTask.didReceive(URLResponse(
+                url: url, mimeType: "image/png", expectedContentLength: data.count, textEncodingName: nil
+            ))
             urlSchemeTask.didReceive(data)
             urlSchemeTask.didFinish()
             return
