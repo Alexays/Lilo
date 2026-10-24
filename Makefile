@@ -43,8 +43,10 @@ DMGBUILD_VERSION := 1.6.5
 DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
-# They wait out WebKit's own clocks (a worker's 30 s unload, a controller's first 5 s): about 90 s together.
+# They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
+# line counts): about 100 s together.
 SLOW_TESTS := GapRouterStoreProviderTests/testAnIdleWorkerUnloadsOnChromesScheduleAndHearsLaterEvents \
+	GitDiffTests/testTerminalLineCountsRunOncePerIntervalButFollowADirectoryChangeAtOnce \
 	ProfileExtensionRegistryTests/testReEnabledOrReloadedWorkerHearsNeitherOnInstalledNorOnStartup \
 	ProfileExtensionRegistryTests/testWorkersRestoredLateHearOnStartupOnly \
 	WebKitGapTests/testLifecycleEventsDependOnTheControllerAge \
@@ -243,7 +245,7 @@ swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
-## Run the Swift tests that wait out WebKit's clocks, which swift-test skips
+## Run the Swift tests that wait out real clocks, which swift-test skips
 swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
