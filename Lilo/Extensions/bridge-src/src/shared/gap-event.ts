@@ -82,8 +82,8 @@ export function resolvingEvent<Raw>(namespace: string, name: string, resolve: (r
   return event;
 }
 
-export function createGapEventsFromNames(namespace: string, eventNames: string[]): Record<string, ChromeEvent<any>> {
-  const events: Record<string, ChromeEvent<any>> = {};
+export function createGapEventsFromNames<Name extends string>(namespace: string, eventNames: Name[]): Record<Name, ChromeEvent<any>> {
+  const events = {} as Record<Name, ChromeEvent<any>>;
   for (const name of eventNames) events[name] = new GapChromeEvent(namespace, name);
   return events;
 }

@@ -10,12 +10,15 @@ function remove(options: RemovalOptions, dataToRemove: Record<string, boolean>, 
 }
 
 // Each remove* call clears one data type; appcache, pluginData and webSQL are gone from Chrome and clear nothing.
-const removers = Object.fromEntries(Object.entries({
+const removedTypes = {
   removeAppcache: 'appcache', removeCache: 'cache', removeCacheStorage: 'cacheStorage', removeCookies: 'cookies',
   removeDownloads: 'downloads', removeFileSystems: 'fileSystems', removeFormData: 'formData', removeHistory: 'history',
   removeIndexedDB: 'indexedDB', removeLocalStorage: 'localStorage', removePluginData: 'pluginData',
   removeServiceWorkers: 'serviceWorkers', removeWebSQL: 'webSQL',
-}).map(([name, type]) => [name, (options: RemovalOptions, callback?: () => void) => remove(options, { [type]: true }, callback)]));
+};
+const removers = Object.fromEntries(Object.entries(removedTypes).map(([name, type]) => [
+  name, (options: RemovalOptions, callback?: () => void) => remove(options, { [type]: true }, callback),
+])) as Record<keyof typeof removedTypes, (options: RemovalOptions, callback?: () => void) => ReturnType<typeof remove>>;
 
 const siteData = ['cookies', 'fileSystems', 'indexedDB', 'localStorage', 'serviceWorkers', 'cacheStorage'];
 const selectable = [...siteData, 'pluginData', 'history', 'downloads', 'cache', 'formData', 'passwords'];

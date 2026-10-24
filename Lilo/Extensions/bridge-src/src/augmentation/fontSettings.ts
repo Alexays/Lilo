@@ -36,13 +36,17 @@ function call(method: string, details: unknown, callback?: (result?: any) => voi
   }, callback);
 }
 
+const sizeNames = ['DefaultFontSize', 'DefaultFixedFontSize', 'MinimumFontSize'] as const;
+const sizeVerbs = ['get', 'set', 'clear'] as const;
+type SizeCall = (details?: unknown, callback?: (result?: any) => void) => ReturnType<typeof call>;
+
 // The size calls take an unused optional `details` first, so a lone function is the callback.
-const sizes = Object.fromEntries(['DefaultFontSize', 'DefaultFixedFontSize', 'MinimumFontSize'].flatMap((name) => ['get', 'set', 'clear'].map((verb) => [
+const sizes = Object.fromEntries(sizeNames.flatMap((name) => sizeVerbs.map((verb) => [
   `${verb}${name}`,
   (details?: unknown, callback?: (result?: any) => void) => typeof details === 'function'
     ? call(`${verb}${name}`, {}, details as (result?: any) => void, verb === 'get')
     : call(`${verb}${name}`, details, callback, verb === 'get'),
-])));
+]))) as Record<`${typeof sizeVerbs[number]}${typeof sizeNames[number]}`, SizeCall>;
 
 export const fontSettingsAugmentation = {
   ScriptCode: chromeEnum(scripts),
