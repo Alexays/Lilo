@@ -408,11 +408,11 @@ final class BrowserImporterTests: XCTestCase {
 
         let fresh = await pins(after: [])
         let alongside = await pins(after: [ids[4]])
-        let full = await pins(after: ["x", "y", "z"])
+        let settled = await pins(after: [ids[3], ids[0], ids[4], ids[2]])
 
-        XCTAssertEqual(fresh, [ids[3], ids[0], ids[4]], "Chrome's order, up to the address bar's three")
-        XCTAssertEqual(alongside, [ids[4], ids[3], ids[0]], "Lilo's own pins stay first")
-        XCTAssertNil(full, "no slot left")
+        XCTAssertEqual(fresh, [ids[3], ids[0], ids[4], ids[2]], "Chrome's order, the ones that installed")
+        XCTAssertEqual(alongside, [ids[4], ids[3], ids[0], ids[2]], "Lilo's own pins stay first")
+        XCTAssertNil(settled, "nothing new to pin")
     }
 
 }

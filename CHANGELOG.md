@@ -11,6 +11,7 @@ What changes in each Lilo release, for people using it. The format follows
 - Lilo offers to move itself to Applications when it runs from the disk image, then relaunches from there and ejects the disk image.
 - Pin any number of extensions: the ones that do not fit in the address bar fold into the extensions menu.
 - An extension's details link to its Chrome Web Store page.
+- Importing from Chrome pins the extensions Chrome had pinned, in its toolbar order.
 - Saving a capture asks where to save it when downloads do.
 - AI agents can mock requests by their body, such as one GraphQL operation, and replace text on a page to anonymize it, with a guard that refuses a screenshot while a forbidden name still shows.
 - AI agents can screenshot the whole page, lazy content and inner scrollers included, or one element with a margin, at the screen's full resolution, and save it to a file.
@@ -20,6 +21,9 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Fixed
 
+- Extensions such as Okta no longer ask for access on every page of the sites they declare, and a request never shows a page's full address.
+- The Claude extension signs in: claude.ai can hand it the sign-in code again.
+- Adblock Plus blocks again, Modjo Everywhere installs, and FireShot captures the page.
 - A crash when an extension scripts a tab at the moment Lilo puts it to sleep.
 - The site details card fits a narrow sidebar and shows while a permission request waits.
 - Full screen: no more white band at the top, and the sidebar shows whole or stays hidden, as its setting says.

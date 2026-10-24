@@ -54,9 +54,6 @@ final class BrowserImporter {
         var warmFavicons: ([FaviconStore.Entry]) -> Void
     }
 
-    /// MAX_PINNED_EXTENSIONS in extensionPins.svelte.ts.
-    static let maxPinnedExtensions = 3
-
     private let sink: Sink
     private let home: URL
 
@@ -166,10 +163,10 @@ final class BrowserImporter {
                     start(.extensions, done: index, total: wanted.count)
                     do { try await sink.installExtension(ext.id, lilo.profileId); installed.insert(ext.id) } catch { lastError = "\(ext.name): \(error)" }
                 }
-                // Lilo's own pins stay first; Chrome's fill the slots left, in toolbar order.
+                // Lilo's own pins stay first; Chrome's follow, in toolbar order.
                 let current = sink.pinnedExtensions()
-                let pins = (current + bundle.pinnedExtensionIds.filter { installed.contains($0) && !current.contains($0) }).prefix(Self.maxPinnedExtensions)
-                if pins.count > current.count { await sink.pinExtensions(Array(pins)) }
+                let pins = current + bundle.pinnedExtensionIds.filter { installed.contains($0) && !current.contains($0) }
+                if pins.count > current.count { await sink.pinExtensions(pins) }
                 item(.extensions, imported: installed.count, skipped: wanted.count - installed.count, error: lastError)
             }
         }
