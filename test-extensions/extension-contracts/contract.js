@@ -22,11 +22,12 @@ async function errorOf(run) {
   }
 }
 
-// The arguments of the first `event` firing during `run`, or 'timeout'.
-function nextEvent(event, run, timeoutMs = 3000) {
+// The arguments of the first `event` firing during `run` that `matches` takes, or 'timeout'.
+function nextEvent(event, run, timeoutMs = 3000, matches = () => true) {
   return new Promise((resolve) => {
     const timer = setTimeout(() => { event.removeListener(listener); resolve('timeout'); }, timeoutMs);
     function listener(...args) {
+      if (!matches(...args)) return;
       clearTimeout(timer);
       event.removeListener(listener);
       resolve(args);
@@ -63,9 +64,10 @@ const cases = {
   },
   'storage.local.get invalid keys': () => errorOf(() => chrome.storage.local.get(42)),
   'storage.onChanged payload': async () => {
-    // WebKit can deliver a write's event after the write resolves: the first one's is awaited, not left to land in the case.
-    await nextEvent(chrome.storage.onChanged, () => chrome.storage.local.set({ watched: 1 }));
-    return nextEvent(chrome.storage.onChanged, () => chrome.storage.local.set({ watched: 2 }));
+    // WebKit can deliver a write's event after the write resolves, an earlier case's included: each set waits for its own.
+    const own = (value) => (changes) => changes.watched?.newValue === value;
+    await nextEvent(chrome.storage.onChanged, () => chrome.storage.local.set({ watched: 1 }), 3000, own(1));
+    return nextEvent(chrome.storage.onChanged, () => chrome.storage.local.set({ watched: 2 }), 3000, own(2));
   },
   'indexedDB in a page': () => indexedDBRoundtrip('contract-page'),
   // Asked through storage.session: a worker onMessage listener would answer the sendMessage cases.
