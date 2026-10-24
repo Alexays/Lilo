@@ -215,7 +215,7 @@ final class WKWebViewTab: NSObject {
     private(set) var isFrozen = false
     /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
     /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
-    var lentToExtensionAt: ContinuousClock.Instant?
+    var lentToExtensionAt: Date?
     /// The content process died while the page was suspended or off screen: the engine is replaced when
     /// its tab is next shown (see TabManager.activateTabRuntime).
     private(set) var isPageLost = false
@@ -342,8 +342,9 @@ final class WKWebViewTab: NSObject {
     func restoreFromAutoPictureInPicture() { pip.restoreFromAuto() }
 
     /// Suspend this engine in place (cooperative Page-Visibility hide + media pause). Idempotent.
-    func freeze() {
-        guard !isFrozen, lentToExtensionAt.map({ ContinuousClock.now - $0 >= .seconds(2) }) ?? true else { return }
+    /// `now` is the idle sweep's clock, so a simulated time also expires an extension's page loan.
+    func freeze(now: Date = Date()) {
+        guard !isFrozen, lentToExtensionAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
     }
