@@ -717,7 +717,7 @@ extension MainWindowController: NSWindowDelegate {
         if let placeholderTabId, context.windows.displayingWindow(ofTab: placeholderTabId) == nil {
             reclaimDisplayedTab(placeholderTabId)
         }
-        if let profileContext { bindExtensionRegistry(profileContext.extensions) }
+        if let profileContext, let spaceId = tabManager.currentSpaceId { bindExtensionRegistry(profileContext.extensions, spaceId: spaceId) }
         profileContext?.extensions.notifyWindowFocused(true)
         bridgeRouter?.send(event: "windowFocusChanged", data: ["focused": true])
         // Handoff offers the page of the window the user is in.
@@ -762,14 +762,14 @@ extension MainWindowController: NSWindowDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
-    /// `windows.onBoundsChanged`, once the frame settles as Chrome commits it. WebKit owns window ids,
-    /// so it carries the window's place in `windows.getAll()`.
+    /// `windows.onBoundsChanged` for the space shown, once the frame settles as Chrome commits it. WebKit owns
+    /// window ids, so it carries the window's place in `windows.getAll()`.
     private func reportBoundsChanged() {
-        guard let window, let registry = profileContext?.extensions else { return }
+        guard let spaceWindow = tabManager.windowAdapter, let registry = profileContext?.extensions else { return }
         let ids = registry.listeningExtensionIds("windows", "onBoundsChanged")
         guard !ids.isEmpty else { return }
         registry.emitPositioned("windows", "onBoundsChanged", to: ids) { extensionId in
-            registry.windowPosition(of: window, extensionId: extensionId).map { ["windowPosition": $0] }
+            registry.windowPosition(of: spaceWindow, extensionId: extensionId).map { ["windowPosition": $0] }
         }
     }
 

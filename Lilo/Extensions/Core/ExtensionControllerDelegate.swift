@@ -108,24 +108,24 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionWindow)?, Error?) -> Void
     ) {
-        // A normal window is a browser window on the current space; popups and private windows stay panels.
+        // A normal window is a browser window on the current space, which is that space's window to extensions;
+        // popups and private windows stay panels.
         if configuration.windowType == .normal, !configuration.shouldBePrivate,
-           let windowController, let registry, let spaceId = windowController.tabManager.currentSpaceId {
-            if windowController.context.settingsStore.singleWindow, let nsWindow = windowController.window {
+           let windowController, let spaceWindow = windowController.tabManager.windowAdapter, let spaceId = spaceWindow.spaceId {
+            if windowController.context.settingsStore.singleWindow {
                 if configuration.tabURLs.isEmpty { windowController.newTab(nil) }
                 for (index, url) in configuration.tabURLs.enumerated() {
                     windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused)
                 }
-                completionHandler(registry.windowAdapter(for: nsWindow), nil)
+                completionHandler(spaceWindow, nil)
                 return
             }
-            let opened = windowController.context.openWindow(on: spaceId, opening: .urls(configuration.tabURLs))
-            guard let nsWindow = opened.window else {
+            guard windowController.context.openWindow(on: spaceId, opening: .urls(configuration.tabURLs)).window != nil else {
                 completionHandler(nil, Self.extensionError("The window could not open"))
                 return
             }
             if !configuration.shouldBeFocused { windowController.window?.makeKeyAndOrderFront(nil) }
-            completionHandler(registry.windowAdapter(for: nsWindow), nil)
+            completionHandler(spaceWindow, nil)
             return
         }
         let windowAdapter = presentExtensionPanel(

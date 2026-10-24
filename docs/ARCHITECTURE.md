@@ -195,6 +195,15 @@ An event wakes only a loaded extension whose worker is not running, and only if 
 
 `TabExtensionAdapter` and `WindowExtensionAdapter` wrap the app's tab and window models into the types WebKit expects (`WKWebExtensionTab`, `WKWebExtensionWindow`).
 
+**Each space is its own window to extensions.** The registry keeps one `WindowExtensionAdapter` per space a browser window of its profile has shown since launch, in opening order: that order is `windows.getAll()`, and a position the bridge sends is an index in it (private spaces, which WebKit hides from extensions without private access, left out for those). A space shown in two browser windows is one window; floating panels and page popups keep their own adapters. Spaces map to Chrome's window events:
+
+- **Show a space for the first time:** `windows.onCreated`, then `tabs.onCreated` for its tabs (`bindExtensionRegistry` binds the window before the space's runtime restores).
+- **Switch spaces:** a window focus change (`didFocusWindow`, `windows.onFocusChanged`). Window ids stay stable and the space left keeps its tabs, its active tab and their indexes, so `tabs.query({})` lists them; `currentWindow` and `lastFocusedWindow` resolve to the space shown. Showing a space again activates no tab: its active tab never changed.
+- **Move a tab to another space:** it keeps its id and moves to that space's window (`didMoveTab` from the source window, `tabs.onDetached` and `onAttached`) when the target shares the profile and privacy and is already a window; otherwise it closes and opens again once the target is shown.
+- **Delete a space, or move it to another profile:** `windows.onRemoved`. A closing browser window hands the spaces it showed last to another browser window; they close with the last one.
+
+A background space reports the frame of the browser window that showed it last and the `normal` state, as a Chrome window behind the focused one; focusing it shows it in that browser window, and it cannot be closed. Nothing runs per space at idle: an adapter is a list of tab adapters, its order rebuilt from the space's tree only when its shape, its tabs or its active tab change.
+
 ### Native WKWebExtension APIs
 
 WebKit provides native support for:

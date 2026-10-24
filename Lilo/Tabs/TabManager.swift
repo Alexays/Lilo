@@ -127,7 +127,12 @@ final class TabManager {
         }
     }
     func engineTab(forWebView webView: WKWebView) -> WKWebViewTab? { engineHost.engine(forWebView: webView) }
-    func tabAdapter(for id: UUID) -> TabExtensionAdapter? { engineHost.tabAdapter(for: id) }
+    /// A background space's tab of this window's profile too: it stays open to extensions in its space's window.
+    func tabAdapter(for id: UUID) -> TabExtensionAdapter? {
+        if let adapter = engineHost.tabAdapter(for: id) { return adapter }
+        guard let adapter = browserStateStore?.tabAdapter(forTab: id), adapter.profileId == extensionRegistry?.profileId else { return nil }
+        return adapter
+    }
     func runtimeSnapshot() -> TabRuntimeSnapshot {
         engineHost.snapshot(tabs: currentTabs, activeTabId: activeTabId)
     }
@@ -246,7 +251,8 @@ final class TabManager {
             let previousAdapter = windowAdapter?.activeTab
             windowAdapter?.activeAdapter = adapter
             guard registry.hasLoadedExtensions else { return }
-            registry.controller.didActivateTab(adapter, previousActiveTab: previousAdapter)
+            // A space shown again keeps its active tab, as a window focused again does in Chrome.
+            if previousAdapter !== adapter { registry.controller.didActivateTab(adapter, previousActiveTab: previousAdapter) }
             // The toolbar action icon/badge can be tab-specific; re-render for the new active tab.
             registry.refreshActionsForActiveTabChange()
         }
@@ -274,7 +280,7 @@ final class TabManager {
 
     /// Tells the extension controller which of the tab properties extensions see differ between the two states.
     private func notifyExtensionsOfChanges(from old: Tab, to new: Tab) {
-        guard let adapter = engineHost.tabAdapter(for: new.id), let registry = extensionRegistry, registry.hasLoadedExtensions else { return }
+        guard let adapter = tabAdapter(for: new.id), let registry = extensionRegistry, registry.hasLoadedExtensions else { return }
         var changed: WKWebExtension.TabChangedProperties = []
         // WebKit reads the url the page shows, which a navigation's start, redirect and commit may each change, or not.
         let url = adapter.engineTab?.currentURL ?? new.url

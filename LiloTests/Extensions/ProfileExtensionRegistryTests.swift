@@ -1065,27 +1065,27 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let registryA = try makeTestExtensionRegistry(in: tempDir)
         let registryB = try makeTestExtensionRegistry(in: tempDir)
 
-        let adapterA = registryA.windowAdapter(for: window)
-        let adapterB = registryB.windowAdapter(for: window)
+        let spaceId = UUID()
+        let adapterA = registryA.windowAdapter(for: window, spaceId: spaceId)
+        let adapterB = registryB.windowAdapter(for: window, spaceId: spaceId)
 
         XCTAssertFalse(adapterA === adapterB, "Distinct registries must not share a window adapter")
         XCTAssertTrue(registryA.delegate.windowAdapter === adapterA, "Registry must wire its delegate to its own adapter")
         XCTAssertTrue(registryB.delegate.windowAdapter === adapterB)
     }
 
-    /// Returning to a profile must reuse that registry's existing adapter, not mint a fresh one,
-    /// so the controller keeps the same WKWebExtensionWindow identity across a round trip.
-    func testWindowAdapterIsStableAcrossRepeatedCalls() throws {
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        let adapterFirst = registry.windowAdapter(for: window)
-        let adapterSecond = registry.windowAdapter(for: window)
+    /// Each space is one window to extensions, whichever browser window shows it: returning to a space reuses its
+    /// adapter, so the controller keeps the same WKWebExtensionWindow identity across a round trip.
+    func testEachSpaceKeepsOneWindowAdapter() throws {
+        let window = NSWindow(), otherWindow = NSWindow()
+        let spaceA = UUID(), spaceB = UUID()
+        let adapterA = registry.windowAdapter(for: window, spaceId: spaceA)
+        let adapterB = registry.windowAdapter(for: window, spaceId: spaceB)
 
-        XCTAssertTrue(adapterFirst === adapterSecond, "Repeated calls must return the same owned adapter")
+        XCTAssertFalse(adapterA === adapterB)
+        XCTAssertTrue(registry.windowAdapter(for: otherWindow, spaceId: spaceA) === adapterA, "Repeated calls must return the same owned adapter")
+        XCTAssertTrue(adapterA.nsWindow === otherWindow, "the space reports the browser window that shows it")
+        XCTAssertTrue(registry.extensionWindows.elementsEqual([adapterA, adapterB], by: ===))
     }
 
     // MARK: - Permission Request Tests

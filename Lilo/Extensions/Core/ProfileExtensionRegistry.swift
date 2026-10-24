@@ -14,9 +14,8 @@ final class ProfileExtensionRegistry {
     let profileId: UUID
     let controller: WKWebExtensionController
     let delegate: ExtensionControllerDelegate
-    /// One adapter per registry: sharing one across profiles corrupts the returning controller on a
-    /// cross-profile space switch. Held strongly; the delegate and tabManager keep only weak references.
-    /// One extension window per browser window showing this profile, in opening order.
+    /// One extension window per space of this profile a browser window showed, in opening order: a space
+    /// keeps its window id across switches. Held strongly; the delegate and tabManager keep weak references.
     private(set) var windowAdapters: [WindowExtensionAdapter] = []
     let extensionStorage: ExtensionStorage
     private var openedWindowAdapters: Set<ObjectIdentifier> = []
@@ -125,7 +124,7 @@ final class ProfileExtensionRegistry {
             guard let self else { return }
             self.extensionsChangedFlushPending = false
             guard self.onExtensionsChanged != nil else { return }
-            let versions = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.visibleActiveAdapter).map { $0["rowVersion"] as? Int ?? 0 }
+            let versions = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.activeAdapter).map { $0["rowVersion"] as? Int ?? 0 }
             guard self.updater.statusChanged || versions != self.lastNotifiedRowVersions else { return }
             self.updater.statusChanged = false
             self.lastNotifiedRowVersions = versions
@@ -341,16 +340,16 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Window Lifecycle
 
-    /// The extension window of `nsWindow` for its normal or its private spaces, created on first use.
-    /// It becomes the focused one: windows bind their registry when they show its profile or take focus.
+    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the
+    /// focused one: windows bind their registry when they show a space of its profile or take focus.
     @discardableResult
-    func windowAdapter(for nsWindow: NSWindow, isPrivate: Bool = false) -> WindowExtensionAdapter {
-        let adapter = windowAdapters.first { $0.nsWindow === nsWindow && $0.isPrivateWindow == isPrivate } ?? {
-            let adapter = WindowExtensionAdapter(nsWindow: nsWindow, isPrivate: isPrivate)
-            adapter.scopesToCurrentSpace = true
+    func windowAdapter(for nsWindow: NSWindow, spaceId: UUID, isPrivate: Bool = false) -> WindowExtensionAdapter {
+        let adapter = windowAdapters.first { $0.spaceId == spaceId } ?? {
+            let adapter = WindowExtensionAdapter(nsWindow: nsWindow, spaceId: spaceId, isPrivate: isPrivate)
             windowAdapters.append(adapter)
             return adapter
         }()
+        adapter.nsWindow = nsWindow
         delegate.windowAdapter = adapter
         return adapter
     }
@@ -366,15 +365,30 @@ final class ProfileExtensionRegistry {
         controller.didOpenWindow(window)
     }
 
-    /// Closes `nsWindow`'s extension windows, normal and private, or the focused one when no window is named.
+    /// A closing browser window hands the spaces it showed last to another browser window, where they stay
+    /// background windows; with none left, or no window named (teardown), they close.
     func notifyWindowClosed(for nsWindow: NSWindow? = nil) {
-        let closing = nsWindow.map { window in windowAdapters.filter { $0.nsWindow === window } } ?? [delegate.windowAdapter].compactMap { $0 }
-        for window in closing {
-            windowAdapters.removeAll { $0 === window }
-            if delegate.windowAdapter === window { delegate.windowAdapter = windowAdapters.last }
-            guard openedWindowAdapters.remove(ObjectIdentifier(window)) != nil else { continue }
-            controller.didCloseWindow(window)
+        let heir = nsWindow.flatMap { closing in delegate.windows?.windows.first { $0.window != nil && $0.window !== closing } }
+        for window in windowAdapters where nsWindow == nil || window.nsWindow === nsWindow {
+            if let heir {
+                window.nsWindow = heir.window
+                window.tabManager = heir.tabManager
+            } else {
+                closeWindow(window)
+            }
         }
+    }
+
+    /// Closes the window of a space deleted or moved to another profile.
+    func notifySpaceRemoved(_ spaceId: UUID) {
+        windowAdapters.first { $0.spaceId == spaceId }.map(closeWindow)
+    }
+
+    private func closeWindow(_ window: WindowExtensionAdapter) {
+        windowAdapters.removeAll { $0 === window }
+        if delegate.windowAdapter === window { delegate.windowAdapter = nil }
+        guard openedWindowAdapters.remove(ObjectIdentifier(window)) != nil else { return }
+        controller.didCloseWindow(window)
     }
 
     // MARK: - Tab positions
@@ -415,13 +429,13 @@ final class ProfileExtensionRegistry {
         guard let context = context(for: extensionId),
               let window = adapter.extensionWindow as? WindowExtensionAdapter,
               let position = extensionWindows(for: context).firstIndex(where: { $0 === window }) else { return nil }
-        let index = window.index(of: adapter, for: context)
+        let index = window.index(of: adapter)
         return index == NSNotFound ? nil : ["windowPosition": position, "index": index]
     }
 
-    /// The place of `nsWindow` in the extension's `windows.getAll()`.
-    func windowPosition(of nsWindow: NSWindow, extensionId: String) -> Int? {
-        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0.nsWindow === nsWindow } }
+    /// The place of `window` in the extension's `windows.getAll()`.
+    func windowPosition(of window: WindowExtensionAdapter, extensionId: String) -> Int? {
+        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0 === window } }
     }
 
     /// The window at `position` in the extension's `windows.getAll()`.
@@ -737,7 +751,7 @@ final class ProfileExtensionRegistry {
         updateRuntime(extensionId: extensionId) { $0.contextObserver = makeContextObserver(for: context, extensionId: extensionId) }
         disabledStoredExtensions.removeAll { $0.id == extensionId }
         failedRestores.removeAll { $0.stored.id == extensionId }
-        for adapter in windowAdapters { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
+        for adapter in windowAdapters where adapter.tabManager?.windowAdapter === adapter { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
         let record = ExtensionStorage.InstalledExtension(
             id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: installPath, isEnabled: true
         )

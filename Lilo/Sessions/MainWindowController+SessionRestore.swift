@@ -203,14 +203,17 @@ extension MainWindowController {
             ? context.profileManager?.ephemeralDataStore(for: space.id)
             : context.profileManager?.dataStore(for: space.profileId)
         guard self.profileContext !== profileContext else {
-            if let bound = tabManager.windowAdapter, bound.isPrivateWindow != space.isPrivate { bindExtensionRegistry(profileContext.extensions) }
+            if tabManager.windowAdapter?.spaceId != space.id { bindExtensionRegistry(profileContext.extensions, spaceId: space.id) }
             return profileContext
         }
 
         context.profileManager?.activateProfile(id: space.profileId)
-        // The previous profile's extensions stop seeing this window and stop acting through it.
-        if let previous = self.profileContext?.extensions, let window {
-            previous.notifyWindowClosed(for: window)
+        // The previous profile's extensions stop acting through this window; the spaces it showed stay their background windows.
+        if let previous = self.profileContext?.extensions {
+            if let focused = previous.delegate.windowAdapter, focused === tabManager.windowAdapter {
+                previous.notifyWindowFocused(false)
+                previous.delegate.windowAdapter = nil
+            }
             if previous.delegate.windowController === self {
                 previous.delegate.windowController = nil
                 previous.delegate.tabManager = nil
@@ -236,7 +239,7 @@ extension MainWindowController {
                 context.lastFaviconWarmProfileId = profileId
             }
         }
-        bindExtensionRegistry(profileContext.extensions)
+        bindExtensionRegistry(profileContext.extensions, spaceId: space.id)
         sendExtensionsChangedEvent()
         return profileContext
     }

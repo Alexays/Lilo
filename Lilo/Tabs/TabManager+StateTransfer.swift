@@ -70,7 +70,14 @@ extension TabManager {
             let engine = engineHost.engine(for: tab.id)
             if let adapter = engineHost.tabAdapter(for: tab.id) {
                 adapter.engineTab = engine
+                // A parked space's tabs may still name the closed window that parked them.
+                adapter.tabManager = self
                 window.add(tab: adapter)
+                // Its space's window closed (teardown) and opens again: WebKit closed the tab with it.
+                if adapter.extensionWindow !== window {
+                    adapter.extensionWindow = window
+                    extensionRegistry?.controller.didOpenTab(adapter)
+                }
             } else if tab.kind == .web, !tab.isClosed,
                       let adapter = installExtensionAdapter(tabId: tab.id, engine: engine, window: window) {
                 extensionRegistry?.controller.didOpenTab(adapter)

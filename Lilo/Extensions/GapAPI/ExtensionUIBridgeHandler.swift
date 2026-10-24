@@ -291,7 +291,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             return ["success": true]
         case "acceptExtensionHostAccessRequest":
             guard let id = message.string("id"), let registry = extensionRegistry else { return BridgeError("Missing extension id") }
-            await registry.access.acceptHostAccessRequest(extensionId: id, on: registry.delegate.windowAdapter?.visibleActiveAdapter)
+            await registry.access.acceptHostAccessRequest(extensionId: id, on: registry.delegate.windowAdapter?.activeAdapter)
             return ["success": true]
         case "setExtensionCommandShortcut":
             guard let id = message.string("id"), let command = message.string("command"), let registry = await targetRegistry(for: message) else {
