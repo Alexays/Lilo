@@ -1,4 +1,5 @@
 import Network
+import os
 import XCTest
 import GRDB
 import WebKit
@@ -612,7 +613,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         defer { database.tearDown() }
         let settings = SettingsStore(dbPool: database.pool)
         registry.settingsStore = settings
-        let key = "extensionUpdateLastCheck.\(registry.profileId.uuidString)"
+        let key = ExtensionUpdater.lastCheckKey
         let now = Date(timeIntervalSince1970: 1_000_000_000)
         let interval = ExtensionUpdater.checkInterval
         let cases: [(lastCheck: TimeInterval?, delay: Duration)] = [
@@ -642,12 +643,37 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         defer { database.tearDown() }
         let settings = SettingsStore(dbPool: database.pool)
         registry.settingsStore = settings
-        settings.set("extensionUpdateLastCheck.\(registry.profileId.uuidString)", value: "1234.5")
+        settings.set(ExtensionUpdater.lastCheckKey, value: "1234.5")
 
         registry.updater.start { _ in try? await Task.sleep(for: .seconds(3600)) }
 
         XCTAssertEqual(registry.updater.status["lastCheck"] as? TimeInterval, 1234.5)
         XCTAssertNil(registry.updater.status["checking"])
+        registry.teardown()
+        withExtendedLifetime(settings) {}
+    }
+
+    /// Profiles share the check: one whose wait ends right after another profile's check waits for the next one.
+    func testAnUpdateCheckAnotherProfileJustMadeIsNotRepeated() async throws {
+        let database = try TemporaryProfileDatabase(schema: .global)
+        defer { database.tearDown() }
+        let settings = SettingsStore(dbPool: database.pool)
+        registry.settingsStore = settings
+        settings.set(ExtensionUpdater.lastCheckKey, value: String(Date().timeIntervalSince1970 - 3600))
+        let delays = AsyncStream<Duration>.makeStream()
+        let slept = OSAllocatedUnfairLock(initialState: 0)
+
+        registry.updater.start(now: Date(timeIntervalSince1970: 0)) { duration in
+            delays.continuation.yield(duration)
+            if slept.withLock({ $0 += 1; return $0 }) > 1 { try? await Task.sleep(for: .seconds(3600)) }
+        }
+        var iterator = delays.stream.makeAsyncIterator()
+        _ = await iterator.next()
+        let next = await iterator.next()
+        let secondDelay = try XCTUnwrap(next)
+
+        let interval = ExtensionUpdater.checkInterval
+        XCTAssertTrue(secondDelay > .seconds(interval - 3700) && secondDelay < .seconds(interval - 3500), "waits for the rest of the interval, got \(secondDelay)")
         registry.teardown()
         withExtendedLifetime(settings) {}
     }
