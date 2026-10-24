@@ -3,7 +3,7 @@
 
 import { on } from "../lib/bridge";
 import { importActions, onboardingActions, settingsActions } from "../lib/bridge/actions";
-import type { ImportSourceInfo, ImportSummaryItem } from "../lib/bridge/protocol";
+import type { ImportProgress, ImportSourceInfo, ImportSummaryItem } from "../lib/bridge/protocol";
 import { setSetting } from "./settings.svelte";
 import { isCommandBarOpen, openCommandBar } from "./commandBar.svelte";
 import { getActiveTab, isBlankTab } from "./tabs.svelte";
@@ -11,9 +11,11 @@ import { hideDefaultBrowserInvite } from "./urlBarDrawer.svelte";
 import {
 	buildImportSelections,
 	defaultImportChoices,
+	importPlan,
 	onboardingSteps,
 	resumeStep,
 	type ImportChoices,
+	type ImportPhase,
 	type OnboardingUsage,
 } from "../components/onboarding/onboardingModel";
 
@@ -32,8 +34,9 @@ const importState = $state({
 	sources: null as ImportSourceInfo[] | null,
 	choices: { profiles: [], kinds: [], extensionIds: [] } as ImportChoices,
 	running: false,
-	/** `${sourceId}/${profileId}` to { done, total } of the latest progress event. */
-	progress: {} as Record<string, { done: number; total: number }>,
+	/** What the running import will do, and the latest step native reported. */
+	plan: [] as ImportPhase[],
+	progress: null as ImportProgress | null,
 	summary: null as ImportSummaryItem[] | null,
 });
 
@@ -54,14 +57,13 @@ export function initOnboardingStore(): void {
 	});
 	on("startOnboarding", () => startOnboarding("full"));
 	on("importSourcesLoaded", (data) => {
-		const first = importState.sources === null;
+		// A browser unlocked by Full Disk Access comes back preselected when nothing else was chosen.
+		const fresh = importState.sources === null || importState.choices.profiles.length === 0;
 		importState.sources = data.sources;
-		if (first) importState.choices = defaultImportChoices(data.sources);
+		if (fresh) importState.choices = defaultImportChoices(data.sources);
 	});
 	on("importProgress", (data) => {
-		const key = `${data.sourceId}/${data.profileId}`;
-		const previous = importState.progress[key] ?? { done: 0, total: 0 };
-		importState.progress[key] = { done: previous.done + data.done, total: previous.total + data.total };
+		if (importState.running) importState.progress = data;
 	});
 	on("importFinished", (data) => {
 		importState.running = false;
@@ -85,7 +87,7 @@ export function startOnboarding(mode: OnboardingMode = "full"): void {
 	state.step = mode === "full" ? 0 : onboardingSteps(state.usage).indexOf(mode);
 	// A fresh scan recomputes the default choices; a previous run's results must not linger.
 	importState.sources = null;
-	importState.progress = {};
+	importState.progress = null;
 	importState.summary = null;
 	importActions.scan();
 	settingsActions.loadDefaultBrowserStatus();
@@ -144,7 +146,8 @@ export function runSelectedImport(): void {
 	const selections = buildImportSelections(importState.sources, importState.choices);
 	if (selections.length === 0) return goNext();
 	importState.running = true;
-	importState.progress = {};
+	importState.plan = importPlan(selections);
+	importState.progress = null;
 	importState.summary = null;
 	importActions.run(selections);
 }

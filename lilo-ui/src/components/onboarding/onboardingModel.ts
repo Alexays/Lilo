@@ -1,4 +1,4 @@
-import type { ImportKind, ImportSelection, ImportSourceInfo } from "../../lib/bridge/protocol";
+import type { ImportKind, ImportProgress, ImportSelection, ImportSourceInfo } from "../../lib/bridge/protocol";
 
 export type OnboardingUsage = "browse" | "develop";
 type OnboardingStep = "intro" | "usage" | "import" | "passwords" | "appearance" | "essentials" | "agents" | "tips" | "arrival";
@@ -100,4 +100,51 @@ export function toggleSource(source: ImportSourceInfo, choices: ImportChoices): 
 		profiles: [...choices.profiles, keys[0]],
 		extensionIds: [...choices.extensionIds, ...first.extensions.map((ext) => ext.id)],
 	};
+}
+
+/** The order native imports the kinds of a profile in. */
+export const IMPORT_KINDS: readonly ImportKind[] = ["bookmarks", "tabs", "history", "cookies", "extensions"];
+
+/** Relative duration of each kind; extensions weigh per install, each one a store download. */
+const KIND_WEIGHT: Record<Exclude<ImportKind, "extensions">, number> = { bookmarks: 1, tabs: 1, history: 2, cookies: 1 };
+const EXTENSION_WEIGHT = 2;
+
+export interface ImportPhase {
+	sourceId: string;
+	profileId: string;
+	kind: ImportKind;
+	weight: number;
+}
+
+/** Every kind of every selection, in the order native runs them. */
+export function importPlan(selections: ImportSelection[]): ImportPhase[] {
+	return selections.flatMap((selection) =>
+		IMPORT_KINDS.filter((kind) => selection.kinds.includes(kind)).map((kind) => ({
+			sourceId: selection.sourceId,
+			profileId: selection.profileId,
+			kind,
+			weight: kind === "extensions" ? EXTENSION_WEIGHT * selection.extensionIds.length : KIND_WEIGHT[kind],
+		})),
+	).filter((phase) => phase.weight > 0);
+}
+
+export interface ImportStatus {
+	/** Below 1 until the import has finished: the running phase never counts as done. */
+	fraction: number;
+	/** The running phase has no known size. */
+	indeterminate: boolean;
+	phase: ImportPhase | null;
+}
+
+/** Where the import stands once `event` arrived: every phase before its own is done. */
+export function importStatus(plan: ImportPhase[], event: ImportProgress | null): ImportStatus {
+	const index = event
+		? plan.findIndex((phase) => phase.sourceId === event.sourceId && phase.profileId === event.profileId && phase.kind === event.kind)
+		: -1;
+	const phase = plan[Math.max(index, 0)] ?? null;
+	const total = plan.reduce((sum, item) => sum + item.weight, 0);
+	if (!event || !phase || index < 0) return { fraction: 0, indeterminate: true, phase };
+	const before = plan.slice(0, index).reduce((sum, item) => sum + item.weight, 0);
+	const within = event.total > 0 ? (phase.weight * Math.min(event.done, event.total - 1)) / event.total : 0;
+	return { fraction: (before + within) / total, indeterminate: event.total === 0, phase };
 }

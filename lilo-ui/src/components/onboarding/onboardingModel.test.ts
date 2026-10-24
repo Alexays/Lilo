@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { ImportSourceInfo } from "../../lib/bridge/protocol";
+import type { ImportKind, ImportSourceInfo } from "../../lib/bridge/protocol";
 import {
 	buildImportSelections,
 	defaultImportChoices,
+	importPlan,
+	importStatus,
 	onboardingSteps,
 	PASSWORD_MANAGERS,
 	resumeStep,
@@ -84,5 +86,30 @@ describe("import selections", () => {
 		const on = toggleSource(chrome, off);
 		assert.deepEqual(on.profiles, ["chrome/Default"]);
 		assert.deepEqual(on.extensionIds, ["e1"]);
+	});
+});
+
+describe("import progress", () => {
+	const plan = importPlan([
+		{ sourceId: "chrome", profileId: "Default", kinds: ["history", "bookmarks", "extensions"], extensionIds: ["e1", "e2", "e3"] },
+		{ sourceId: "chrome", profileId: "Profile 1", kinds: ["cookies", "extensions"], extensionIds: [] },
+	]);
+	const at = (profileId: string, kind: ImportKind, done = 0, total = 0) => importStatus(plan, { sourceId: "chrome", profileId, kind, done, total });
+
+	it("runs each profile's kinds in native order, extensions weighed per install, none when none is chosen", () => {
+		assert.deepEqual(plan.map((phase) => `${phase.profileId} ${phase.kind} ${phase.weight}`), [
+			"Default bookmarks 1", "Default history 2", "Default extensions 6", "Profile 1 cookies 1",
+		]);
+	});
+
+	it("counts the phases before the running one, and never reaches the end before the import finished", () => {
+		assert.deepEqual(importStatus(plan, null), { fraction: 0, indeterminate: true, phase: plan[0] });
+		assert.equal(at("Default", "history").fraction, 1 / 10);
+		assert.equal(at("Default", "extensions", 2, 3).fraction, (3 + 4) / 10);
+		assert.equal(at("Default", "extensions", 2, 3).indeterminate, false);
+		const last = at("Profile 1", "cookies");
+		assert.equal(last.fraction, 9 / 10);
+		assert.equal(last.indeterminate, true);
+		assert.ok(at("Default", "extensions", 3, 3).fraction < (3 + 6) / 10, "an install under way is not done");
 	});
 });

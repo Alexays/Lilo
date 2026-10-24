@@ -358,4 +358,18 @@ final class BrowserImporterTests: XCTestCase {
         XCTAssertEqual(summary.first { $0.kind == .extensions }?.skipped, 1)
     }
 
+    func testProgressNamesEachKindAsItStartsAndEachExtensionInstall() async throws {
+        let ids = ["a", "b"].map { String(repeating: $0, count: 32) }
+        for id in ids {
+            let ext = home.appendingPathComponent("Library/Application Support/Google/Chrome/Default/Extensions/\(id)/1.0")
+            try FileManager.default.createDirectory(at: ext, withIntermediateDirectories: true)
+            try Data(#"{"name": "Tool", "update_url": "https://clients2.google.com/service/update2/crx"}"#.utf8)
+                .write(to: ext.appendingPathComponent("manifest.json"))
+        }
+        var steps: [String] = []
+        _ = await importer().run([.init(sourceId: "chrome", profileId: "Default", kinds: [.extensions, .history, .bookmarks], extensionIds: ids)],
+                                 sources: BrowserImportScanner.scan(home: home)) { steps.append("\($0.kind.rawValue) \($0.done)/\($0.total)") }
+        XCTAssertEqual(steps, ["bookmarks 0/0", "history 0/0", "extensions 0/2", "extensions 1/2"])
+    }
+
 }

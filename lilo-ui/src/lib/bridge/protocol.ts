@@ -41,6 +41,15 @@ export interface ImportSelection {
 	extensionIds: string[];
 }
 
+/** `kind` of that profile has started, at `done` of `total` (0 when its size is unknown). */
+export interface ImportProgress {
+	sourceId: string;
+	profileId: string;
+	kind: ImportKind;
+	done: number;
+	total: number;
+}
+
 export interface ImportSummaryItem {
 	sourceId: string;
 	profileId: string;
@@ -814,7 +823,7 @@ export interface BridgeEventPayloadMap {
 	blockerAllowlistChanged: { allowlist: string[] };
 	defaultBrowserStatusLoaded: { isDefault: boolean; shouldInvite: boolean };
 	importSourcesLoaded: { sources: ImportSourceInfo[] };
-	importProgress: { sourceId: string; profileId: string; done: number; total: number };
+	importProgress: ImportProgress;
 	importFinished: { summary: ImportSummaryItem[] };
 	onboardingState: { show: boolean; step: number; usage: string };
 	appIconsLoaded: { icons: { id: string; dataURL: string }[] };

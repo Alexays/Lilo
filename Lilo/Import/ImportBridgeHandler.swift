@@ -7,14 +7,16 @@ final class ImportBridgeHandler: BridgeHandler {
 
     private weak var bridgeRouter: BridgeRouter?
     private let makeImporter: () -> BrowserImporter
+    private let home: URL
     private var sources: [ImportSource] = []
     private var isRunning = false
     /// Bumped when the page closes or finishes, so a scan still in flight never refills `sources`.
     private var scanGeneration = 0
     nonisolated(unsafe) private var activeObserver: Any?
 
-    init(bridgeRouter: BridgeRouter, makeImporter: @escaping () -> BrowserImporter) {
+    init(bridgeRouter: BridgeRouter, home: URL = FileManager.default.homeDirectoryForCurrentUser, makeImporter: @escaping () -> BrowserImporter) {
         self.bridgeRouter = bridgeRouter
+        self.home = home
         self.makeImporter = makeImporter
         // Granting Full Disk Access happens in System Settings: rescan when the user comes back.
         activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
@@ -31,7 +33,8 @@ final class ImportBridgeHandler: BridgeHandler {
 
     private func scan() async {
         let generation = scanGeneration
-        let found = await Task.detached { BrowserImportScanner.scan() }.value
+        let home = home
+        let found = await Task.detached { BrowserImportScanner.scan(home: home) }.value
         guard generation == scanGeneration else { return }
         // The browser that currently opens links is the one the user lives in: list it first.
         let current = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!)
@@ -56,7 +59,8 @@ final class ImportBridgeHandler: BridgeHandler {
             isRunning = true
             let summary = await makeImporter().run(selections, sources: sources) { [weak self] progress in
                 self?.bridgeRouter?.send(event: "importProgress", data: [
-                    "sourceId": progress.sourceId, "profileId": progress.profileId, "done": progress.done, "total": progress.total
+                    "sourceId": progress.sourceId, "profileId": progress.profileId, "kind": progress.kind.rawValue,
+                    "done": progress.done, "total": progress.total
                 ])
             }
             isRunning = false
@@ -73,7 +77,10 @@ final class ImportBridgeHandler: BridgeHandler {
             sources = []
             scanGeneration += 1
         case "openFullDiskAccessSettings":
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+            // The Settings app's own anchor first; systems that do not know it take the older pane URL.
+            if !NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles")!) {
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+            }
         default:
             break
         }

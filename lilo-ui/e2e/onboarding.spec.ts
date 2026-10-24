@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bootChrome, type FakeHostWorld } from "./fakeHost";
+import { bootChrome, sentCommands, type FakeHostWorld } from "./fakeHost";
 import { tab, treeItem } from "../src/stores/testFixtures";
 
 // A first launch: one space with one blank tab.
@@ -86,6 +86,87 @@ test.describe("in dark mode", () => {
 	});
 });
 
+const extensions = Array.from({ length: 18 }, (_, i) => ({ id: `ext-${i}`, name: `Extension ${i + 1}` }));
+const chromeSource = {
+	id: "chrome", name: "Chrome", family: "chromium", iconDataURL: "", needsFullDiskAccess: false,
+	profiles: [
+		{ id: "Profile 1", name: "Lilas perso", kinds: ["bookmarks", "history", "extensions"], extensions },
+		{ id: "Profile 2", name: "Travail", kinds: ["bookmarks"], extensions: [] },
+	],
+};
+
+test("a browser Lilo may not read is listed with the way to allow it", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [{ ...chromeSource, needsFullDiskAccess: true, profiles: [] }] });
+	const card = page.locator("section.card");
+	await expect(card.locator(".src.locked")).toContainText("Chrome");
+	await expect(card.locator(".note.access")).toContainText("Lilo needs Full Disk Access to read your Chrome data.");
+	await card.locator(".note.access button").click();
+	expect((await sentCommands(page)).map((command) => command.action)).toContain("openFullDiskAccessSettings");
+
+	// Back from System Settings, the rescan finds it readable and ready to import.
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	await expect(card.locator(".note.access")).toHaveCount(0);
+	await expect(card.locator(".src.on")).toContainText("Chrome");
+	await expect(card.locator(".ob-foot .ob-btn.primary")).toBeEnabled();
+});
+
+test("the progress stays short of the end while an extension installs, and names each step", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	await page.locator("section.card .ob-foot .ob-btn.primary").click();
+	const bar = page.getByRole("progressbar");
+	const step = page.locator(".progress .step");
+	const at = (kind: string, done = 0, total = 0) =>
+		receive(page, { event: "importProgress", sourceId: "chrome", profileId: "Profile 1", kind, done, total });
+
+	await at("history");
+	await expect(step).toHaveText("Importing history from Lilas perso");
+	await at("extensions", 17, 18);
+	await expect(step).toHaveText("Reinstalling extensions 18 of 18");
+	const now = Number(await bar.getAttribute("aria-valuenow"));
+	expect(now).toBeGreaterThan(50);
+	expect(now).toBeLessThan(100);
+
+	await receive(page, { event: "importFinished", summary: [
+		{ sourceId: "chrome", profileId: "Profile 1", kind: "bookmarks", imported: 1234 },
+		{ sourceId: "chrome", profileId: "Profile 1", kind: "extensions", imported: 18 },
+	] });
+	await expect(bar).toHaveCount(0);
+	await expect(page.locator(".note.done")).toHaveText("Done: 1,234 bookmarks and 18 extensions.");
+});
+
+for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640 }]) {
+	test.describe(`at ${viewport.width}x${viewport.height}`, () => {
+		test.use({ viewport });
+
+		test("the import options fit the card: tiles and buttons stay in view, the list scrolls", async ({ page }) => {
+			await bootOnboarding(page, 2);
+			await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+			const card = page.locator("section.card");
+			await card.locator(".more").click();
+			await card.getByRole("checkbox", { name: "Travail" }).check();
+			await expect(card.getByRole("checkbox", { name: "Extension 18" })).toBeAttached();
+
+			// No scroll: the card fits as soon as it grows.
+			await expect.poll(async () => {
+				const box = (await card.boundingBox())!;
+				return box.y >= 0 && box.y + box.height <= viewport.height;
+			}).toBe(true);
+			await expect(card.locator(".src").first()).toBeInViewport({ ratio: 1 });
+			await expect(card.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
+			const list = card.locator(".ob-scroll");
+			expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+			// The keyboard reaches the last extension, which scrolls into view under the fixed tiles and buttons.
+			const last = card.getByRole("checkbox", { name: "Extension 18" });
+			await last.focus();
+			await expect(last).toBeInViewport({ ratio: 1 });
+			await expect(card.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
+		});
+	});
+}
+
 test("finishing the onboarding leaves the default-browser invite closed", async ({ page }) => {
 	await bootOnboarding(page, 6);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: true });
@@ -140,7 +221,7 @@ test.describe("in French", () => {
 		await receive(page, { event: "importFinished", summary: [{ sourceId: "chrome", profileId: "Default", kind: "history", imported: 12345 }] });
 
 		const spaced = (text: string | null) => (text ?? "").replace(/\s/g, " ");
-		expect(spaced(await page.locator(".note.done").textContent())).toContain("12 345 éléments");
+		expect(spaced(await page.locator(".note.done").textContent())).toContain("12 345 pages d'historique");
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();

@@ -12,9 +12,11 @@ final class BrowserImporter {
         var extensionIds: [String]
     }
 
+    /// Sent as each kind of each profile starts, and as each extension install starts: `total` is 0 when the size is unknown.
     struct Progress: Sendable {
         var sourceId: String
         var profileId: String
+        var kind: ImportKind
         var done: Int
         var total: Int
     }
@@ -67,13 +69,17 @@ final class BrowserImporter {
             defer { isFirst = false }
             let home = self.home
             let kinds = selection.kinds
+            func start(_ kind: ImportKind, done: Int = 0, total: Int = 0) {
+                progress(Progress(sourceId: source.id, profileId: profile.id, kind: kind, done: done, total: total))
+            }
+            // Reading every file comes first and takes long on a big profile: it counts toward the first kind.
+            if let first = ImportKind.allCases.first(where: kinds.contains) { start(first) }
             let read = await Task.detached(priority: .userInitiated) {
                 Self.read(source: source, profile: profile, kinds: kinds, home: home)
             }.value
             func item(_ kind: ImportKind, imported: Int, skipped: Int = 0, error: String? = nil) {
                 summary.append(SummaryItem(sourceId: source.id, profileId: profile.id, kind: kind, imported: imported, skipped: skipped,
                                            error: error ?? read.errors[kind]))
-                progress(Progress(sourceId: source.id, profileId: profile.id, done: imported, total: imported + skipped))
             }
 
             let lilo: (profileId: UUID, spaceId: UUID)
@@ -127,6 +133,7 @@ final class BrowserImporter {
             }
 
             if kinds.contains(.history) {
+                start(.history)
                 do {
                     let store = try sink.historyStore(lilo.profileId)
                     let visits = bundle.history
@@ -138,6 +145,7 @@ final class BrowserImporter {
             }
 
             if kinds.contains(.cookies) {
+                start(.cookies)
                 let imported = bundle.cookies
                 let cookies = await Task.detached(priority: .userInitiated) { imported.compactMap(Self.httpCookie) }.value
                 await sink.setCookies(cookies, lilo.profileId)
@@ -153,7 +161,8 @@ final class BrowserImporter {
                 }
                 var installed = 0
                 var lastError: String?
-                for ext in wanted {
+                for (index, ext) in wanted.enumerated() {
+                    start(.extensions, done: index, total: wanted.count)
                     do { try await sink.installExtension(ext.id); installed += 1 } catch { lastError = "\(ext.name): \(error)" }
                 }
                 item(.extensions, imported: installed, skipped: wanted.count - installed, error: lastError)

@@ -1,18 +1,40 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { fade, slide } from "svelte/transition";
+  import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { importActions } from "../../lib/bridge/actions";
-  import type { ImportKind, ImportSourceInfo } from "../../lib/bridge/protocol";
-  import { profileKey, toggleSource } from "./onboardingModel";
+  import type { ImportSourceInfo } from "../../lib/bridge/protocol";
+  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { IMPORT_KINDS, importStatus, profileKey, toggleSource } from "./onboardingModel";
   import { getImportState, goNext, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
 
-  const KINDS: ImportKind[] = ["bookmarks", "tabs", "history", "cookies", "extensions"];
   const importState = getImportState();
   const choices = $derived(importState.choices);
   const sources = $derived(importState.sources ?? []);
+  const locked = $derived(sources.filter((source) => source.needsFullDiskAccess));
   const finished = $derived(importState.summary !== null);
-  const imported = $derived((importState.summary ?? []).reduce((sum, item) => sum + item.imported, 0));
+  const list = (items: string[]) => new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(items);
+  const importedList = $derived(list(IMPORT_KINDS
+    .map((kind) => ({ kind, count: (importState.summary ?? []).filter((item) => item.kind === kind).reduce((sum, item) => sum + item.imported, 0) }))
+    .filter(({ count }) => count > 0)
+    .map(({ kind, count }) => t(`onboarding.import.count.${kind}`, { count }))));
+  const doneText = $derived(importedList ? t("onboarding.import.done", { list: importedList }) : t("onboarding.import.nothing"));
+  const status = $derived(importStatus(importState.plan, importState.progress));
+  const stepKey = $derived(status.phase ? `${status.phase.sourceId}/${status.phase.profileId}/${status.phase.kind}` : "");
+  const stepLabel = $derived.by(() => {
+    const phase = status.phase;
+    if (!phase) return "";
+    const progress = importState.progress;
+    if (phase.kind === "extensions" && progress?.kind === "extensions" && progress.total > 0) {
+      return t("onboarding.import.step.extensionsCount", { current: progress.done + 1, total: progress.total });
+    }
+    const source = sources.find((candidate) => candidate.id === phase.sourceId);
+    const profile = source?.profiles.find((candidate) => candidate.id === phase.profileId);
+    const from = source && profile && source.profiles.length > 1 ? profile.name : (source?.name ?? phase.sourceId);
+    return t(`onboarding.import.step.${phase.kind}`, { from });
+  });
+  const motion = prefersReducedMotion() ? 0 : 220;
   const chosenSources = $derived(sources.filter((source) => source.profiles.some((profile) => choices.profiles.includes(profileKey(source.id, profile.id)))));
   const chosenExtensions = $derived(
     chosenSources.flatMap((source) => source.profiles
@@ -23,8 +45,9 @@
     (importState.summary ?? []).filter((item) => item.error)
       .map((item) => `${sources.find((source) => source.id === item.sourceId)?.name ?? item.sourceId} (${t(`onboarding.import.kind.${item.kind}`)})`),
   );
-  // Only Chromium cookies go through the Keychain prompt worth announcing.
-  const keychainPrompt = $derived(importState.running && choices.kinds.includes("cookies") && chosenSources.some((source) => source.family === "chromium"));
+  // Only Chromium cookies go through the Keychain prompt worth announcing, and only while they import.
+  const keychainPrompt = $derived(importState.running && status.phase?.kind === "cookies"
+    && sources.find((source) => source.id === status.phase?.sourceId)?.family === "chromium");
   let advanced = $state(false);
 
   // The import runs for a while with no focus change: its outcome is spoken once, as it lands.
@@ -33,21 +56,13 @@
     if (!finished || outcomeSpoken) return;
     outcomeSpoken = true;
     announce([
-      t("onboarding.import.done", { count: imported }),
+      doneText,
       failures.length > 0 ? t("onboarding.import.partial", { list: failures.join(", ") }) : "",
     ].filter(Boolean).join(" "));
   });
 
   function toggle<T>(list: T[], value: T): T[] {
     return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
-  }
-
-  function progressOf(sourceId: string): number | null {
-    const entries = Object.entries(importState.progress).filter(([key]) => key.startsWith(`${sourceId}/`));
-    if (entries.length === 0) return null;
-    const done = entries.reduce((sum, [, value]) => sum + value.done, 0);
-    const total = entries.reduce((sum, [, value]) => sum + value.total, 0);
-    return total ? done / total : 1;
   }
 </script>
 
@@ -70,7 +85,6 @@
   <div class="cards" role="group" aria-label={t("onboarding.import.title")}>
     {#each sources as source (source.id)}
       {@const on = chosenSources.includes(source)}
-      {@const progress = progressOf(source.id)}
       {#if source.needsFullDiskAccess}
         <button class="src locked" onclick={() => importActions.openFullDiskAccessSettings()}>
           {@render logo(source)}
@@ -82,51 +96,66 @@
           {@render logo(source)}
           <span class="name">{source.name}</span>
           <span class="check" aria-hidden="true">{#if on}<svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3 4.7-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>{/if}</span>
-          {#if progress !== null}<span class="bar"><i style:width="{progress * 100}%"></i></span>{/if}
         </button>
       {/if}
     {/each}
   </div>
 
-  {#if keychainPrompt}
-    <p class="note">{t("onboarding.import.keychainNote")}</p>
-  {:else if finished}
-    <p class="note done">{t("onboarding.import.done", { count: imported })}</p>
-    {#if failures.length > 0}<p class="note">{t("onboarding.import.partial", { list: failures.join(", ") })}</p>{/if}
-  {:else}
-    <button class="more" aria-expanded={advanced} onclick={() => (advanced = !advanced)}>
-      {advanced ? t("onboarding.import.lessOptions") : t("onboarding.import.moreOptions")}
-    </button>
+  {#if locked.length > 0 && !importState.running && !finished}
+    <p class="note access">
+      {t("onboarding.import.access", { browsers: list(locked.map((source) => source.name)) })}
+      <button class="more" onclick={() => importActions.openFullDiskAccessSettings()}>{t("onboarding.import.openSettings")}</button>
+    </p>
   {/if}
 
-  {#if advanced && !importState.running && !finished}
-    <div class="advanced">
-      {#each chosenSources as source (source.id)}
-        {#if source.profiles.length > 1}
-          <p class="lab">{t("onboarding.import.profiles", { browser: source.name })}</p>
-          {#each source.profiles as profile (profile.id)}
-            {@const key = profileKey(source.id, profile.id)}
-            <label><input type="checkbox" checked={choices.profiles.includes(key)}
-              onchange={() => setImportChoices({ ...choices, profiles: toggle(choices.profiles, key) })} /> {profile.name}</label>
+  <div class="ob-scroll">
+    {#if importState.running}
+      <div class="progress">
+        <p class="step">{#key stepKey}<span transition:fade={{ duration: motion }}>{stepLabel}</span>{/key}</p>
+        <span class="import-track" class:busy={status.indeterminate} role="progressbar" aria-label={t("onboarding.import.running")}
+          aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(status.fraction * 100)} aria-valuetext={stepLabel}>
+          <i style:transform="scaleX({status.fraction})"></i>
+        </span>
+      </div>
+      {#if keychainPrompt}<p class="note">{t("onboarding.import.keychainNote")}</p>{/if}
+    {:else if finished}
+      <p class="note done">{doneText}</p>
+      {#if failures.length > 0}<p class="note">{t("onboarding.import.partial", { list: failures.join(", ") })}</p>{/if}
+    {:else}
+      <button class="more" aria-expanded={advanced} onclick={() => (advanced = !advanced)}>
+        {advanced ? t("onboarding.import.lessOptions") : t("onboarding.import.moreOptions")}
+      </button>
+    {/if}
+
+    {#if advanced && !importState.running && !finished}
+      <div class="advanced" transition:slide={{ duration: motion }}>
+        {#each chosenSources as source (source.id)}
+          {#if source.profiles.length > 1}
+            <p class="lab">{t("onboarding.import.profiles", { browser: source.name })}</p>
+            {#each source.profiles as profile (profile.id)}
+              {@const key = profileKey(source.id, profile.id)}
+              <label><input type="checkbox" checked={choices.profiles.includes(key)}
+                onchange={() => setImportChoices({ ...choices, profiles: toggle(choices.profiles, key) })} /> {profile.name}</label>
+            {/each}
+          {/if}
+        {/each}
+        <p class="lab">{t("onboarding.import.kinds")}</p>
+        <div class="chips">
+          {#each IMPORT_KINDS as kind (kind)}
+            <button class="chip" class:off={!choices.kinds.includes(kind)} aria-pressed={choices.kinds.includes(kind)}
+              onclick={() => setImportChoices({ ...choices, kinds: toggle(choices.kinds, kind) })}>{t(`onboarding.import.kind.${kind}`)}</button>
+          {/each}
+        </div>
+        {#if choices.kinds.includes("extensions") && chosenExtensions.length > 0}
+          <p class="lab">{t("onboarding.import.extensions")}</p>
+          {#each chosenExtensions as ext (ext.id)}
+            <label><input type="checkbox" checked={choices.extensionIds.includes(ext.id)}
+              onchange={() => setImportChoices({ ...choices, extensionIds: toggle(choices.extensionIds, ext.id) })} /> {ext.name}</label>
           {/each}
         {/if}
-      {/each}
-      <p class="lab">{t("onboarding.import.kinds")}</p>
-      <div class="chips">
-        {#each KINDS as kind (kind)}
-          <button class="chip" class:off={!choices.kinds.includes(kind)} aria-pressed={choices.kinds.includes(kind)}
-            onclick={() => setImportChoices({ ...choices, kinds: toggle(choices.kinds, kind) })}>{t(`onboarding.import.kind.${kind}`)}</button>
-        {/each}
       </div>
-      {#if choices.kinds.includes("extensions") && chosenExtensions.length > 0}
-        <p class="lab">{t("onboarding.import.extensions")}</p>
-        {#each chosenExtensions as ext (ext.id)}
-          <label><input type="checkbox" checked={choices.extensionIds.includes(ext.id)}
-            onchange={() => setImportChoices({ ...choices, extensionIds: toggle(choices.extensionIds, ext.id) })} /> {ext.name}</label>
-        {/each}
-      {/if}
-    </div>
-  {/if}
+    {/if}
+  </div>
 {/if}
 
 <div class="ob-foot">
@@ -155,10 +184,18 @@
   .check { color: var(--accent); font-size: var(--font-size-lg); }
   .logo { width: 32px; height: 32px; flex: none; }
   .hint { display: block; margin-top: 2px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--accent-ink); }
-  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--bg-active); }
-  .bar i { display: block; height: 100%; background: var(--accent); transition: width .6s var(--motion-ease-standard); }
   .note { font-size: var(--font-size-sm); color: var(--text-secondary); margin: 12px 0 0; }
   .note.done { color: var(--success-text); font-weight: var(--font-weight-semibold); }
+  .access .more { margin: 0 0 0 4px; }
+  .progress { margin-top: 14px; }
+  /* Both labels share one cell while they crossfade. */
+  .step { display: grid; margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--text-secondary); }
+  .step span { grid-area: 1 / 1; }
+  .import-track { position: relative; display: block; height: 4px; border-radius: var(--radius-2xs); background: var(--bg-active); overflow: hidden; }
+  .import-track i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform .6s var(--motion-ease-standard); }
+  .import-track.busy::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 40%, transparent), transparent); animation: import-shimmer 1.6s ease-in-out infinite; }
+  @keyframes import-shimmer { to { transform: translateX(100%); } }
   .more { border: 0; background: none; padding: 0; margin-top: 12px; font-size: var(--font-size-sm); color: var(--accent-ink); cursor: pointer; }
   .advanced { margin-top: 10px; padding: 12px; border-radius: var(--radius-lg); background: var(--bg-hover); font-size: var(--font-size-sm); color: var(--text-primary); }
   .advanced label { display: block; padding: 4px 0; }
@@ -167,5 +204,8 @@
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { font-size: var(--font-size-sm); padding: 4px 10px; border-radius: var(--radius-chip); border: 0; cursor: pointer; background: var(--accent-tint-14); color: var(--accent-ink); }
   .chip.off { background: var(--bg-active); color: var(--text-muted); text-decoration: line-through; }
-  @media (prefers-reduced-motion: reduce) { .src, .bar i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .src, .import-track i { transition: none; }
+    .import-track.busy::after { display: none; }
+  }
 </style>

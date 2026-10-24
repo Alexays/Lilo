@@ -1394,9 +1394,39 @@
 			"none": "Aucun autre navigateur sur ce Mac. Vous pouvez passer cette étape.",
 			"allow": "Autoriser l'accès",
 			"keychainNote": "macOS va vous demander l'autorisation de garder vos connexions : cliquez sur Autoriser.",
-			"done": {
-				"one": "C'est fait : {count} élément importé.",
-				"other": "C'est fait : {count} éléments importés."
+			"access": "Lilo a besoin de l'accès complet au disque pour lire vos données {browsers}.",
+			"openSettings": "Ouvrir les Réglages Système",
+			"done": "C'est fait : {list}.",
+			"nothing": "C'est fait : rien de nouveau à importer.",
+			"count": {
+				"bookmarks": {
+					"one": "{count} favori",
+					"other": "{count} favoris"
+				},
+				"tabs": {
+					"one": "{count} onglet ouvert",
+					"other": "{count} onglets ouverts"
+				},
+				"history": {
+					"one": "{count} page d'historique",
+					"other": "{count} pages d'historique"
+				},
+				"cookies": {
+					"one": "{count} cookie",
+					"other": "{count} cookies"
+				},
+				"extensions": {
+					"one": "{count} extension",
+					"other": "{count} extensions"
+				}
+			},
+			"step": {
+				"bookmarks": "Import des favoris depuis {from}",
+				"tabs": "Import des onglets ouverts depuis {from}",
+				"history": "Import de l'historique depuis {from}",
+				"cookies": "Import de vos connexions depuis {from}",
+				"extensions": "Réinstallation des extensions depuis {from}",
+				"extensionsCount": "Réinstallation des extensions : {current} sur {total}"
 			},
 			"partial": "Certaines données n'ont pas pu être importées : {list}. Vous pourrez réessayer depuis les Réglages.",
 			"moreOptions": "Choisir quoi importer",

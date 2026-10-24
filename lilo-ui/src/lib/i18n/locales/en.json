@@ -1394,9 +1394,39 @@
 			"none": "No other browser found on this Mac. You can skip this step.",
 			"allow": "Allow access",
 			"keychainNote": "macOS will ask for permission to keep you signed in to your sites: click Allow.",
-			"done": {
-				"one": "Done: {count} item imported.",
-				"other": "Done: {count} items imported."
+			"access": "Lilo needs Full Disk Access to read your {browsers} data.",
+			"openSettings": "Open System Settings",
+			"done": "Done: {list}.",
+			"nothing": "Done: nothing new to import.",
+			"count": {
+				"bookmarks": {
+					"one": "{count} bookmark",
+					"other": "{count} bookmarks"
+				},
+				"tabs": {
+					"one": "{count} open tab",
+					"other": "{count} open tabs"
+				},
+				"history": {
+					"one": "{count} page of history",
+					"other": "{count} pages of history"
+				},
+				"cookies": {
+					"one": "{count} cookie",
+					"other": "{count} cookies"
+				},
+				"extensions": {
+					"one": "{count} extension",
+					"other": "{count} extensions"
+				}
+			},
+			"step": {
+				"bookmarks": "Importing bookmarks from {from}",
+				"tabs": "Importing open tabs from {from}",
+				"history": "Importing history from {from}",
+				"cookies": "Importing sign-ins from {from}",
+				"extensions": "Reinstalling extensions from {from}",
+				"extensionsCount": "Reinstalling extensions {current} of {total}"
 			},
 			"partial": "Some data could not be imported: {list}. You can retry later from Settings.",
 			"moreOptions": "Choose what to import",

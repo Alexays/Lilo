@@ -115,20 +115,28 @@
 <style>
   .full { position: fixed; inset: 0; z-index: 10050; pointer-events: auto; }
   /* Under the command bar (z 60) so Cmd+T taught on the gestures step stays visible. */
-  .card { position: fixed; z-index: 55; pointer-events: auto; top: 50%; width: min(540px, calc(100vw - var(--chrome-content-left-visible) - 48px));
-    left: calc(var(--chrome-content-left-visible) + (100vw - var(--chrome-content-left-visible) - var(--chrome-content-right)) / 2);
-    transform: translate(-50%, -50%); max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain;
+  /* Centered by its insets and auto margins, not a translate: WebKit keeps a finished animation's -50% resolved
+     against the height it started with, so a card that grows would hang off the window until something repaints it. */
+  .card { position: fixed; z-index: 55; pointer-events: auto; inset: 16px var(--chrome-content-right) 16px var(--chrome-content-left-visible); margin: auto;
+    width: min(540px, calc(100vw - var(--chrome-content-left-visible) - 48px)); height: fit-content; max-height: calc(100vh - 32px);
+    display: flex; flex-direction: column; overflow: hidden;
     border-radius: var(--radius-xl); padding: 22px 28px 22px; container-type: inline-size;
     background: var(--chrome-overlay-surface-strong); border: 1px solid var(--chrome-overlay-border); box-shadow: var(--chrome-overlay-shadow);
-    backdrop-filter: blur(var(--chrome-floating-blur)) saturate(1.3); animation: card-in .5s var(--motion-ease-spring) both; }
-  @keyframes card-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.97); } }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    backdrop-filter: blur(var(--chrome-floating-blur)) saturate(1.3); animation: card-in .5s var(--motion-ease-spring) backwards; }
+  @keyframes card-in { from { opacity: 0; transform: translateY(16px) scale(.97); } }
+  header { flex: none; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .dots { display: flex; gap: 4px; }
   .dots b { height: 5px; width: 5px; border-radius: var(--radius-xs); background: var(--bg-hover); transition: width .4s var(--motion-ease-bounce), background-color var(--motion-duration-slow); }
   .dots b.on { width: 20px; background: var(--accent); }
   .dots b.done { background: color-mix(in srgb, var(--accent) 45%, transparent); }
   .close { border: 0; background: transparent; color: var(--text-muted); font-size: var(--font-size-xl); cursor: pointer; }
-  .screen { animation: screen-in .45s var(--motion-ease-spring) both; }
+  /* The screen scrolls under the header; it spans the card's padding so focus rings at its edges are not clipped. */
+  .screen { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -28px -22px; padding: 0 28px 22px;
+    animation: screen-in .45s var(--motion-ease-spring) both; }
+  /* A screen with its own scrolling part keeps its title and buttons in view and scrolls only that part. */
+  .screen:has(> :global(.ob-scroll)) { display: flex; flex-direction: column; overflow: visible; }
+  .screen:has(> :global(.ob-scroll)) > :global(:not(.ob-scroll)) { flex: none; }
+  .card :global(.ob-scroll) { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 4px; }
   @keyframes screen-in { from { opacity: 0; transform: translateX(18px); } }
   .card :global(h3) { margin: 0; font-size: var(--font-size-3xl); letter-spacing: -0.4px; color: var(--text-primary); }
   .card :global(.ob-sub) { margin: 6px 0 18px; font-size: var(--font-size-md); line-height: 1.45; color: var(--text-secondary); }
@@ -141,7 +149,7 @@
   .card :global(.ob-icon) { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--accent-tint-14); color: var(--accent); }
   .card :global(.ob-done) { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--success-text); }
   .card :global(.ob-btn.small) { padding: 8px 14px; font-size: var(--font-size-sm); }
-  .card :global(.ob-foot) { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+  .card :global(.ob-foot) { flex: none; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
   .card :global(.ob-btn) { border: 0; border-radius: var(--radius-chip); padding: 8px 20px; white-space: nowrap; font: var(--font-weight-semibold) var(--font-size-md)/1 -apple-system, system-ui; cursor: pointer;
     background: var(--bg-hover); color: var(--text-primary); transition: transform .2s var(--motion-ease-spring), opacity var(--motion-duration-normal); }
   .card :global(.ob-btn:hover:not(:disabled)) { transform: translateY(-1px); }

@@ -359,11 +359,16 @@ for (const colorScheme of ["light", "dark"] as const) {
 				],
 			});
 			expect(await textContrast(page, ".src.locked .hint"), "Allow access").toBeGreaterThanOrEqual(4.5);
-			expect(await textContrast(page, "button.more"), "more options").toBeGreaterThanOrEqual(4.5);
-			await page.locator("button.more").click();
+			expect(await textContrast(page, ".note.access"), "access needed").toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, ".note.access button.more"), "open System Settings").toBeGreaterThanOrEqual(4.5);
+			expect(await textContrast(page, "button.more[aria-expanded]"), "more options").toBeGreaterThanOrEqual(4.5);
+			await page.locator("button.more[aria-expanded]").click();
 			expect(await textContrast(page, ".chip:not(.off)"), "kind chip").toBeGreaterThanOrEqual(4.5);
 
 			await page.locator("section.card .ob-foot .ob-btn.primary").click();
+			await receive({ event: "importProgress", sourceId: "chrome", profileId: "Default", kind: "history", done: 0, total: 0 });
+			// Polled: the label fades in.
+			await expect.poll(() => textContrast(page, ".progress .step span"), { message: "import step" }).toBeGreaterThanOrEqual(4.5);
 			await receive({ event: "importFinished", summary: [{ sourceId: "chrome", profileId: "Default", kind: "history", imported: 12 }] });
 			expect(await textContrast(page, ".note.done"), "import done").toBeGreaterThanOrEqual(4.5);
 

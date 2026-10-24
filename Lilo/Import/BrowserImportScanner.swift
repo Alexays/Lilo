@@ -22,6 +22,11 @@ enum BrowserImportScanner {
         var sources: [ImportSource] = []
         for (id, name, path, service, bundleId) in chromium {
             let root = support.appendingPathComponent(path)
+            if isDenied(root) || isDenied(root.appendingPathComponent("Local State")) {
+                sources.append(ImportSource(id: id, name: name, family: .chromium, bundleId: bundleId, rootURL: root, keychainService: service,
+                                            needsFullDiskAccess: true, profiles: []))
+                continue
+            }
             // Arc's open tabs are its sidebar, not its session.
             var profiles = chromiumProfiles(root: root, sessions: id != "arc")
             // Arc keeps a profile per space: each profile imports the spaces and favorites it owns.
@@ -34,19 +39,21 @@ enum BrowserImportScanner {
             }
         }
         let safari = home.appendingPathComponent("Library/Safari")
-        if FileManager.default.fileExists(atPath: safari.path) {
-            // Opening is enough to hit the privacy check; reading the whole file is not needed.
-            let handle = try? FileHandle(forReadingFrom: safari.appendingPathComponent("Bookmarks.plist"))
-            try? handle?.close()
-            let readable = handle != nil
+        let safariDenied = isDenied(safari)
+        if safariDenied || FileManager.default.fileExists(atPath: safari.path) {
             var kinds: [ImportKind] = [.bookmarks, .history, .cookies]
             if FileManager.default.fileExists(atPath: safari.appendingPathComponent("LastSession.plist").path) { kinds.insert(.tabs, at: 1) }
             sources.append(ImportSource(id: "safari", name: "Safari", family: .safari, bundleId: "com.apple.Safari", rootURL: safari, keychainService: nil,
-                                        needsFullDiskAccess: !readable,
+                                        needsFullDiskAccess: safariDenied || isDenied(safari.appendingPathComponent("Bookmarks.plist")),
                                         profiles: [ImportProfile(id: "safari", name: "Safari", url: safari, kinds: kinds, extensions: [])]))
         }
         for (id, name, path, bundleId) in firefox {
             let root = support.appendingPathComponent(path)
+            if isDenied(root) || isDenied(root.appendingPathComponent("profiles.ini")) {
+                sources.append(ImportSource(id: id, name: name, family: .firefox, bundleId: bundleId, rootURL: root, keychainService: nil,
+                                            needsFullDiskAccess: true, profiles: []))
+                continue
+            }
             let profiles = firefoxProfiles(root: root)
             if !profiles.isEmpty {
                 sources.append(ImportSource(id: id, name: name, family: .firefox, bundleId: bundleId, rootURL: root, keychainService: nil,
@@ -54,6 +61,14 @@ enum BrowserImportScanner {
             }
         }
         return sources
+    }
+
+    /// True when `url` exists but macOS refuses to open it: EPERM without Full Disk Access, EACCES from file permissions.
+    /// A missing file is ENOENT, never a denial.
+    private static func isDenied(_ url: URL) -> Bool {
+        let fd = open(url.path, O_RDONLY | O_NONBLOCK)
+        if fd >= 0 { close(fd); return false }
+        return errno == EPERM || errno == EACCES
     }
 
     static func arcSidebarURL(home: URL) -> URL {
@@ -73,8 +88,12 @@ enum BrowserImportScanner {
            let cache = (json["profile"] as? [String: Any])?["info_cache"] as? [String: [String: Any]] {
             names = cache.compactMapValues { $0["name"] as? String }
         }
-        // Opera keeps its single profile at the root.
-        let dirs = names.isEmpty ? (fm.fileExists(atPath: root.appendingPathComponent("Default").path) ? ["Default"] : [""]) : names.keys.sorted()
+        // Without a profile list, the folders Chromium names its profiles; Opera keeps its single profile at the root.
+        var dirs = names.keys.sorted()
+        if dirs.isEmpty {
+            dirs = ((try? fm.contentsOfDirectory(atPath: root.path)) ?? []).filter { $0 == "Default" || $0.hasPrefix("Profile ") }.sorted()
+            if dirs.isEmpty { dirs = [""] }
+        }
         return dirs.compactMap { dirName in
             let url = dirName.isEmpty ? root : root.appendingPathComponent(dirName)
             var kinds: [ImportKind] = []
