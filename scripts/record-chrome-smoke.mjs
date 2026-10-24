@@ -9,7 +9,8 @@ import { launchChrome, root, sleep, stableChromeForTesting } from './chrome-for-
 
 const listPath = join(root, 'LiloTests/Extensions/top-extensions.json');
 const out = join(root, 'LiloTests/Extensions/chrome-smoke.json');
-const top = JSON.parse(readFileSync(listPath, 'utf8')).extensions;
+const list = JSON.parse(readFileSync(listPath, 'utf8'));
+const top = [...list.extensions, ...list.extra ?? []];
 const only = process.argv[2] ? new Set(process.argv[2].split(',')) : null;
 const binary = await stableChromeForTesting();
 const chromeVersion = execFileSync(binary, ['--version'], { encoding: 'utf8' }).match(/[\d.]+/)[0];

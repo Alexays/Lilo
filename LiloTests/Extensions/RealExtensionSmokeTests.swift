@@ -48,6 +48,8 @@ final class RealExtensionSmokeTests: XCTestCase {
             let id: String
         }
         let extensions: [Entry]
+        /// Picked by hand outside the most used: `make ext-smoke` runs them every time.
+        let extra: [Entry]
     }
 
     /// Extensions of top-extensions.json that do not run cleanly yet, by id, with what breaks them. A
@@ -151,7 +153,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         }
         // `make ext-smoke` hands each of its parallel runs its share of the list; without it, the top 100.
         let only = ProcessInfo.processInfo.environment["LILO_SMOKE_IDS"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
-        let selected = only.map { only in top.extensions.filter { only.contains($0.id) } } ?? Array(top.extensions.prefix(100))
+        let selected = only.map { only in (top.extensions + top.extra).filter { only.contains($0.id) } } ?? Array(top.extensions.prefix(100))
         // One JSON line per extension as it ends, so a run that crashes still reports the ones before.
         let report = try ProcessInfo.processInfo.environment["LILO_SMOKE_REPORT"].map { path in
             FileManager.default.createFile(atPath: path, contents: nil)
@@ -239,7 +241,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         print("SMOKE summary:\n" + results.joined(separator: "\n"))
     }
 
-    /// A local page for what extensions do past their popup: a sign-in form and a text field.
+    /// A local page for what extensions do past their popup: a sign-in form and a text field. Every
+    /// other path answers an image.
     private static let featurePage = """
     <!doctype html><html><head><title>Sign in</title></head><body>
     <h1>Sign in to Example</h1>
@@ -255,13 +258,28 @@ final class RealExtensionSmokeTests: XCTestCase {
 
     /// An extension's part on the feature page, signed out: `check` (page world) holds once its content
     /// scripts did it; `menu` asks for a context menu entry, `command` for a shortcut and what holds after it.
+    /// `click` clicks its toolbar button first, and `shows` holds for what that opens outside the page.
     private struct Feature {
         let id: String
         let name: String
         let check: String
         var menu = false
         var command: (id: String, check: String)?
+        var click = false
+        var shows: ((MainWindowController) -> Bool)?
     }
+
+    /// Holds once the ad the page requests again at each evaluation fails: the page may load before
+    /// the extension's rules have compiled.
+    private static let adBlocked = """
+    (() => {
+      const last = window.adState, image = new Image();
+      image.onload = () => window.adState = 'loaded';
+      image.onerror = () => window.adState = 'blocked';
+      image.src = '/banner.cgi?ad=' + Math.random();
+      return last === 'blocked';
+    })()
+    """
 
     private static let features = [
         Feature(id: "eimadpbcbfnmbkopoojfekhnkhdbieeh", name: "Dark Reader", check: "document.querySelectorAll('style.darkreader').length > 0",
@@ -273,12 +291,23 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "ghmbeldphafepmbegfdlkpapadhbakde", name: "Proton Pass", check: "document.querySelector('[data-protonpass-role]') !== null"),
         Feature(id: "cofdbpoegempjloogbagkncekinflcnj", name: "DeepL", check: "document.querySelector('deepl-input-controller') !== null", menu: true),
         Feature(id: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", name: "Immersive Translate", check: "document.documentElement.hasAttribute('data-immersive-translate-page-theme')"),
-        Feature(id: "gighmmpiobklfepjocnamgkkbiglidom", name: "AdBlock", check: "true", menu: true)
+        Feature(id: "gighmmpiobklfepjocnamgkkbiglidom", name: "AdBlock", check: "true", menu: true),
+        Feature(id: "cfhdojbkjhnklbpkdaibdccddilifddb", name: "Adblock Plus", check: adBlocked),
+        Feature(id: "bfogiafebfohielmmehodmfbbebbbpei", name: "Keeper", check: "document.querySelector('#password[data-keeper-lock-id]') !== null"),
+        Feature(id: "jabopobgcpjmedljpbcaablpmlmfcogm", name: "WhatFont", check: "document.getElementById('what-font-ext-container') !== null", click: true),
+        Feature(id: "mhjhnkcfbdhnjickkkdbjoemdmbfginb", name: "SelectorGadget", check: "document.getElementById('selectorgadget_main') !== null", click: true),
+        Feature(id: "ljnaoennmbhflhmfbflmimhedlahlbna", name: "Zygon Copilot", check: "document.getElementById('zyg-copilot-root')?.shadowRoot != null", click: true),
+        Feature(id: "fcoeoabgfenejglbffodgkkbkcdhcgfn", name: "Claude", check: "true", click: true,
+                shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" })
     ]
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
-        let server = try await TinyHTTPServer(index: Self.featurePage)
+        let html = Data(Self.featurePage.utf8)
+        let image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
+        let server = try await TinyHTTPServer { request in
+            request.hasPrefix("GET / ") ? ("200 OK", ["Content-Type: text/html"], html) : ("200 OK", ["Content-Type: image/gif"], image)
+        }
         let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
         for feature in Self.features {
             do {
@@ -297,6 +326,18 @@ final class RealExtensionSmokeTests: XCTestCase {
             browserContext.context.agentControl.attach(engine, to: nil)
             let page = try XCTUnwrap(engine.view as? WKWebView)
             let holds = { (check: String) in await pollUntil(timeout: 20) { (try? await page.evaluateJavaScript(check)) as? Bool == true } }
+            if feature.click {
+                // As the toolbar button does; a welcome page the extension opened on install may be active.
+                window.activateTabStateFirst(id: tab.id)
+                _ = await pollUntil(timeout: 10) { !page.isLoading }
+                let button = NSMenuItem()
+                button.representedObject = feature.id
+                window.openExtensionFromMenu(button)
+            }
+            if let shows = feature.shows {
+                let shown = await pollUntil(timeout: 30) { shows(window) }
+                XCTAssertTrue(shown, "\(feature.name) opens what its toolbar button opens")
+            }
             let checked = await holds(feature.check)
             XCTAssertTrue(checked, "\(feature.name) does its part on the page")
             if feature.menu, let adapter = window.tabManager.tabAdapter(for: tab.id) {

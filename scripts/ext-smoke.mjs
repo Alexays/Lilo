@@ -7,9 +7,10 @@ import { parseArgs } from 'node:util';
 
 const root = join(import.meta.dirname, '..');
 const { values: options } = parseArgs({ options: { top: { type: 'string', default: '100' }, ids: { type: 'string', default: '' }, shards: { type: 'string', default: '6' } } });
-const list = JSON.parse(readFileSync(join(root, 'LiloTests/Extensions/top-extensions.json'), 'utf8')).extensions;
+const { extensions: list, extra = [] } = JSON.parse(readFileSync(join(root, 'LiloTests/Extensions/top-extensions.json'), 'utf8'));
 const only = options.ids ? new Set(options.ids.split(',')) : null;
-const selected = only ? list.filter(({ id }) => only.has(id)) : list.slice(0, Number(options.top));
+// The extra extensions, outside the most used, run every time.
+const selected = only ? [...list, ...extra].filter(({ id }) => only.has(id)) : [...list.slice(0, Number(options.top)), ...extra];
 const shardCount = Math.max(1, Math.min(Number(options.shards), selected.length));
 const out = join(root, '.derived.noindex/ext-smoke');
 rmSync(out, { recursive: true, force: true });

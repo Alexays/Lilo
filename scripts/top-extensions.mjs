@@ -46,7 +46,8 @@ for (const category of new Set(categories)) {
 // before add theirs, until the most used have all been read.
 const top = () => [...found.values()].sort((a, b) => b.users - a.users || (a.id < b.id ? -1 : 1)).slice(0, count);
 const read = new Set();
-let pending = JSON.parse(readFileSync(listPath, 'utf8')).extensions.map(({ id }) => id);
+const previous = JSON.parse(readFileSync(listPath, 'utf8'));
+let pending = previous.extensions.map(({ id }) => id);
 while (pending.length) {
   await Promise.all(Array.from({ length: 8 }, async () => {
     for (let id = pending.shift(); id; id = pending.shift()) {
@@ -60,9 +61,12 @@ while (pending.length) {
   pending = top().map(({ id }) => id).filter((id) => !read.has(id));
 }
 const extensions = top();
+// Extensions picked by hand, kept until they make the most used.
+const extra = (previous.extra ?? []).filter(({ id }) => !extensions.some((e) => e.id === id));
 writeFileSync(listPath, `${JSON.stringify({
   measured: new Date().toISOString().slice(0, 10),
   source: `Chrome Web Store user counts: the ${count} most used of every store category's first 1000 extensions and of those their store pages relate (make top-extensions)`,
   extensions,
+  extra,
 }, null, 1)}\n`);
 console.log(`${extensions.length} of ${found.size} extensions, down to ${extensions.at(-1)?.users} users`);
