@@ -1,10 +1,11 @@
 import WebKit
 
 /// `chrome.userScripts` for one profile: each loaded extension's registrations and world
-/// configurations, persisted, and the `WKUserScript`s they install into the profile's tabs.
+/// configurations, persisted, and the `WKUserScript`s they install into the profile's tabs, with the
+/// `chrome.runtime` of the pages an extension's `externally_connectable` names.
 @MainActor
 final class ExtensionUserScripts {
-    /// What `chrome.userScripts` injects for one extension into this profile's tabs.
+    /// What `chrome.userScripts` and `externally_connectable` inject for one extension into this profile's tabs.
     struct Install {
         let scripts: [WKUserScript]
         /// The USER_SCRIPT worlds of `scripts` configured with `messaging`.
@@ -31,6 +32,8 @@ final class ExtensionUserScripts {
     /// By loaded extension.
     private var registrations: [String: Registrations] = [:]
     private(set) var installs: [String: Install] = [:]
+    /// By loaded extension whose `externally_connectable` names pages.
+    private var connectableScripts: [String: WKUserScript] = [:]
     /// Removes `removed` from the profile's tabs, then adds `added` under `install`'s rules. Set by
     /// the engine factory, which owns the tabs' content controllers.
     var onChange: ((_ removed: [WKUserScript], _ added: [WKUserScript], _ install: Install?) -> Void)?
@@ -66,6 +69,7 @@ final class ExtensionUserScripts {
 
     func unloaded(_ extensionId: String) {
         registrations[extensionId] = nil
+        connectableScripts[extensionId] = nil
         reinstall(for: extensionId)
     }
 
@@ -99,7 +103,14 @@ final class ExtensionUserScripts {
     func reinstall(for extensionId: String) {
         pendingReinstalls.remove(extensionId)
         let previous = installs.removeValue(forKey: extensionId)
-        let current = runtime(extensionId).flatMap { makeInstall(extensionId, context: $0.context, sourcePath: $0.sourcePath) }
+        let loaded = runtime(extensionId)
+        var current = loaded.flatMap { makeInstall(extensionId, context: $0.context, sourcePath: $0.sourcePath) }
+        if let connectable = loaded.flatMap({ connectableScript(extensionId, context: $0.context) }) {
+            current = Install(
+                scripts: (current?.scripts ?? []) + [connectable], messagingWorlds: current?.messagingWorlds ?? [],
+                allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true
+            )
+        }
         installs[extensionId] = current
         let old = previous?.scripts ?? [], new = current?.scripts ?? []
         // The unchanged leading scripts stay; everything after the first change is swapped so the
@@ -135,10 +146,6 @@ final class ExtensionUserScripts {
             registrations[extensionId]?.built = [:]
             return nil
         }
-        // WebKit's patterns have no `<all_urls>`.
-        func webKitPattern(_ pattern: WKWebExtension.MatchPattern) -> String {
-            pattern.matchesAllURLs ? "*://*/*" : pattern.description
-        }
         func regexes(_ globs: [String]) -> String {
             let patterns = globs.map {
                 "^" + NSRegularExpression.escapedPattern(for: $0)
@@ -156,9 +163,9 @@ final class ExtensionUserScripts {
             for pattern in (script.matches ?? []).compactMap({ try? WKWebExtension.MatchPattern(string: $0) }) {
                 for grant in granted {
                     if grant.matches(pattern) {
-                        include.insert(webKitPattern(pattern))
+                        include.insert(Self.webKitPattern(pattern))
                     } else if pattern.matches(grant) {
-                        include.insert(webKitPattern(grant))
+                        include.insert(Self.webKitPattern(grant))
                     }
                 }
             }
@@ -172,7 +179,7 @@ final class ExtensionUserScripts {
                 scripts.append(cached.script)
                 continue
             }
-            let exclude = (script.excludeMatches ?? []).compactMap { try? WKWebExtension.MatchPattern(string: $0) }.map(webKitPattern)
+            let exclude = (script.excludeMatches ?? []).compactMap { try? WKWebExtension.MatchPattern(string: $0) }.map(Self.webKitPattern)
                 + ["*://chromewebstore.google.com/*", "*://chrome.google.com/webstore/*"]
 
             var source = Self.source(script.js ?? [], extensionDirectory: sourcePath)
@@ -198,6 +205,51 @@ final class ExtensionUserScripts {
         guard !scripts.isEmpty else { return nil }
         return Install(scripts: scripts, messagingWorlds: messagingWorlds, allowsPrivateAccess: access.states[extensionId]?.allowsPrivateAccess == true)
     }
+
+    // WebKit's patterns have no `<all_urls>`.
+    private static func webKitPattern(_ pattern: WKWebExtension.MatchPattern) -> String {
+        pattern.matchesAllURLs ? "*://*/*" : pattern.description
+    }
+
+    /// Chrome's `chrome.runtime` for the pages the extension's `externally_connectable` names; nil when it names none.
+    private func connectableScript(_ extensionId: String, context: WKWebExtensionContext) -> WKUserScript? {
+        if let cached = connectableScripts[extensionId] { return cached }
+        let connectable = context.webExtension.manifest["externally_connectable"] as? [String: Any]
+        let matches = (connectable?["matches"] as? [String] ?? []).compactMap { try? WKWebExtension.MatchPattern(string: $0) }
+        guard !matches.isEmpty else { return nil }
+        let source = Self.externallyConnectableRuntimeSource
+        // Without the SPI the script runs in every frame and stands down where WebKit gives no `browser.runtime`.
+        let script = Self.makeMatchingUserScript?(source, .atDocumentStart, false, matches.map(Self.webKitPattern), [], .page)
+            ?? WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page)
+        connectableScripts[extensionId] = script
+        return script
+    }
+
+    /// Chrome gives a page an extension's `externally_connectable` names `chrome.runtime`, WebKit only
+    /// `browser.runtime`: claude.ai's sign-in hands its code to the Claude extension this way. Other
+    /// pages keep no `window.chrome`, which sites read as Chrome.
+    static let externallyConnectableRuntimeSource = """
+    (() => {
+      const runtime = globalThis.browser?.runtime;
+      if (typeof runtime?.sendMessage !== 'function' || globalThis.chrome?.runtime) return;
+      let lastError;
+      const chromeRuntime = {
+        get lastError() { return lastError; },
+        // Chrome's callback form: the trailing function gets the answer, or nothing and lastError.
+        sendMessage(...args) {
+          const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
+          const sent = runtime.sendMessage(...args);
+          if (!callback) return sent;
+          sent.then((answer) => callback(answer), (error) => {
+            lastError = { message: String(error?.message ?? error) };
+            try { callback(); } finally { lastError = undefined; }
+          });
+        },
+        connect: (...args) => runtime.connect(...args),
+      };
+      globalThis.chrome = Object.assign(globalThis.chrome ?? {}, { runtime: chromeRuntime });
+    })();
+    """
 
     /// The world a user script runs in: the page's for MAIN, else the extension's world named by
     /// `worldId`, which takes the default world's configuration when it has none, as in Chrome.

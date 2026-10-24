@@ -732,6 +732,8 @@ final class ProfileExtensionRegistry {
         }
         if permissions.contains("userScripts") {
             await userScripts.loaded(extensionId)
+        } else if webExtension.manifest["externally_connectable"] != nil {
+            userScripts.reinstall(for: extensionId)
         }
         notifyExtensionsChanged()
         // Wakes lazy pollers (chrome.idle): a listener-only extension is invisible to the gap bridge.

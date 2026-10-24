@@ -67,7 +67,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 79. Pages an extension's `externally_connectable` names get `browser.runtime` only
 
 - **Gap:** WebKit gives those web pages `browser.runtime.sendMessage` and `connect`, and no `chrome`. Chrome gives them `chrome.runtime`, with callbacks and `lastError`.
-- **Lilo:** a page-world script defines `chrome.runtime` over `browser.runtime` where WebKit exposes it ([WKEngineFactory.swift] `externallyConnectableRuntimeSource`); other pages keep no `window.chrome`. User-visible side: COMPATIBILITY.md, "runtime".
+- **Lilo:** a page-world script, installed for the pages a loaded extension's `externally_connectable` names, defines `chrome.runtime` over `browser.runtime` where WebKit exposes it ([ExtensionUserScripts.swift] `externallyConnectableRuntimeSource`); other pages keep no `window.chrome`. User-visible side: COMPATIBILITY.md, "runtime".
 - **Impact:** claude.ai's OAuth page hands the Claude extension its code with `chrome.runtime.sendMessage(id, { type: 'oauth_redirect' })`, and showed "Authorization failed" without it.
 - **Check:** Manual: needs a page on an origin the extension names. Repro: an extension with `"externally_connectable": { "matches": ["https://example.com/*"] }`, then `typeof chrome` on that page. Expected: `object`. Actual: `undefined`.
 
@@ -499,6 +499,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
 [ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
+[ExtensionUserScripts.swift]: ../Lilo/Extensions/Core/ExtensionUserScripts.swift
 [ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
 [PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
 [WebSocketBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/WebSocketBridgeHandler.swift
