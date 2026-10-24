@@ -66,7 +66,16 @@ final class MediaCardRetentionTests: XCTestCase {
 
         XCTAssertNil(window.context.mediaTabs[engine.id], "a pause from the page takes the tab off the card")
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(10 * 60))
-        XCTAssertTrue(engine.isFrozen)
+        // Passes everywhere but sometimes on CI: the message says what kept the engine awake there.
+        let state = window.context.browserState
+        let tab = state.updateTab(id: engine.id) { _ in }?.new
+        XCTAssertTrue(engine.isFrozen, """
+            live: \(state.liveEngine(forTab: engine.id) === engine), displayed: \(state.displayedTabIds.contains(engine.id)), \
+            lent: \(engine.lentToExtensionAt.map { "\(ContinuousClock.now - $0) ago" } ?? "never"), \
+            inspector: \(engine.shouldRetainForWebInspector), audio: \(tab?.isAudioPlaying ?? false), \
+            paused from card: \(tab?.pausedFromCardAt?.description ?? "no"), audio stopped: \(tab?.lastAudioStoppedAt?.description ?? "no"), \
+            capture: \(tab.map { $0.isMicrophoneActive || $0.isCameraActive || $0.isScreenSharing } ?? false)
+            """)
         engine.resume()
     }
 }
