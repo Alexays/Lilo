@@ -29,7 +29,7 @@ final class BrowserImportScannerTests: XCTestCase {
     }
 
     private func writeChromeWithProfile1Only() throws {
-        try touch("\(chrome)/Local State", #"{"profile": {"info_cache": {"Profile 1": {"name": "Lilas perso"}}, "last_used": "Profile 1"}}"#)
+        try touch("\(chrome)/Local State", #"{"profile": {"info_cache": {"Profile 1": {"name": "Personal"}}, "last_used": "Profile 1"}}"#)
         try touch("\(chrome)/Profile 1/Bookmarks", #"{"roots": {"bookmark_bar": {"children": [], "type": "folder"}}, "version": 1}"#)
         try touch("\(chrome)/Profile 1/History")
     }
@@ -55,7 +55,7 @@ final class BrowserImportScannerTests: XCTestCase {
         let chrome = try XCTUnwrap(BrowserImportScanner.scan(home: home).first { $0.id == "chrome" })
         XCTAssertFalse(chrome.needsFullDiskAccess)
         XCTAssertEqual(chrome.profiles.map(\.id), ["Profile 1"])
-        XCTAssertEqual(chrome.profiles.map(\.name), ["Lilas perso"])
+        XCTAssertEqual(chrome.profiles.map(\.name), ["Personal"])
         XCTAssertEqual(chrome.profiles[0].kinds, [.bookmarks, .history])
     }
 
@@ -72,7 +72,7 @@ final class BrowserImportScannerTests: XCTestCase {
         try writeChromeWithProfile1Only()
         try deny(chrome)
 
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let chrome = try XCTUnwrap(sources.first { $0.id == "chrome" })
         XCTAssertTrue(chrome.needsFullDiskAccess)
         XCTAssertEqual(chrome.profiles, [])
@@ -82,7 +82,7 @@ final class BrowserImportScannerTests: XCTestCase {
         try writeChromeWithProfile1Only()
         try deny("\(chrome)/Local State")
 
-        XCTAssertEqual(BrowserImportScanner.scan(home: home).first { $0.id == "chrome" }?.needsFullDiskAccess, true)
+        XCTAssertEqual(BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "chrome" }?.needsFullDiskAccess, true)
     }
 
     func testAMissingBrowserIsNotADenial() throws {
@@ -94,7 +94,15 @@ final class BrowserImportScannerTests: XCTestCase {
         try touch("Library/Application Support/Firefox/profiles.ini", "[Profile0]\nPath=Profiles/a\n")
         try deny("Library/Application Support/Firefox")
 
-        XCTAssertEqual(BrowserImportScanner.scan(home: home).first { $0.id == "firefox" }?.needsFullDiskAccess, true)
+        XCTAssertEqual(BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "firefox" }?.needsFullDiskAccess, true)
+    }
+
+    /// Password managers make a folder per browser for their native helpers, which macOS may keep from Lilo.
+    func testAnUnreadableFolderOfABrowserNotInstalledIsLeftOut() throws {
+        try touch("Library/Application Support/Microsoft Edge/NativeMessagingHosts/helper.json", "{}")
+        try deny("Library/Application Support/Microsoft Edge")
+
+        XCTAssertNil(BrowserImportScanner.scan(home: home, isInstalled: { _ in false }).first { $0.id == "edge" })
     }
 
     func testUnreadableSafariNeedsFullDiskAccess() throws {

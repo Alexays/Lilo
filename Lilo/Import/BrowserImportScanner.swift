@@ -1,3 +1,4 @@
+import CoreServices
 import Foundation
 
 enum BrowserImportScanner {
@@ -17,12 +18,19 @@ enum BrowserImportScanner {
         ("firefox", "Firefox", "Firefox", "org.mozilla.firefox"), ("zen", "Zen", "zen", "app.zen-browser.zen")
     ]
 
-    static func scan(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> [ImportSource] {
+    /// `isInstalled` tells a browser macOS keeps from Lilo apart from a folder its app left behind or another app made.
+    static func scan(
+        home: URL = FileManager.default.homeDirectoryForCurrentUser,
+        isInstalled: (String) -> Bool = { LSCopyApplicationURLsForBundleIdentifier($0 as NSString as CFString, nil) != nil }
+    ) -> [ImportSource] {
         let support = home.appendingPathComponent("Library/Application Support")
         var sources: [ImportSource] = []
         for (id, name, path, service, bundleId) in chromium {
             let root = support.appendingPathComponent(path)
             if isDenied(root) || isDenied(root.appendingPathComponent("Local State")) {
+                // Password managers create these folders for their native helpers: one Lilo cannot read only counts
+                // when its browser is installed.
+                guard isInstalled(bundleId) else { continue }
                 sources.append(ImportSource(id: id, name: name, family: .chromium, bundleId: bundleId, rootURL: root, keychainService: service,
                                             needsFullDiskAccess: true, profiles: []))
                 continue
@@ -50,6 +58,7 @@ enum BrowserImportScanner {
         for (id, name, path, bundleId) in firefox {
             let root = support.appendingPathComponent(path)
             if isDenied(root) || isDenied(root.appendingPathComponent("profiles.ini")) {
+                guard isInstalled(bundleId) else { continue }
                 sources.append(ImportSource(id: id, name: name, family: .firefox, bundleId: bundleId, rootURL: root, keychainService: nil,
                                             needsFullDiskAccess: true, profiles: []))
                 continue

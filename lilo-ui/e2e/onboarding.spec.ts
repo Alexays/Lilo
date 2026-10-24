@@ -91,7 +91,7 @@ const extensions = Array.from({ length: 18 }, (_, i) => ({ id: `ext-${i}`, name:
 const chromeSource = {
 	id: "chrome", name: "Chrome", family: "chromium", iconDataURL: "", needsFullDiskAccess: false,
 	profiles: [
-		{ id: "Profile 1", name: "Lilas perso", kinds: ["bookmarks", "history", "extensions"], extensions },
+		{ id: "Profile 1", name: "Personal", kinds: ["bookmarks", "history", "extensions"], extensions },
 		{ id: "Profile 2", name: "Travail", kinds: ["bookmarks"], extensions: [] },
 	],
 };
@@ -130,7 +130,7 @@ test("the progress stays short of the end while an extension installs, and names
 		receive(page, { event: "importProgress", sourceId: "chrome", profileId: "Profile 1", kind, done, total });
 
 	await at("history");
-	await expect(step).toHaveText("Importing history from Lilas perso");
+	await expect(step).toHaveText("Importing history from Personal");
 	await at("extensions", 17, 18);
 	await expect(step).toHaveText("Reinstalling extensions 18 of 18");
 	const now = Number(await bar.getAttribute("aria-valuenow"));

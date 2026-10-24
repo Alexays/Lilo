@@ -96,9 +96,24 @@ final class ImportBridgeHandler: BridgeHandler {
     /// The installed browser's own Dock icon, as a 64 px PNG data URL (cached: rescans resend it).
     private static var icons: [String: String] = [:]
 
+    /// Where a browser LaunchServices never registered (unzipped, copied by hand) is looked for by name.
+    private static let appNames = [
+        "com.google.Chrome": "Google Chrome", "company.thebrowser.Browser": "Arc", "com.brave.Browser": "Brave Browser",
+        "com.microsoft.edgemac": "Microsoft Edge", "com.vivaldi.Vivaldi": "Vivaldi", "company.thebrowser.dia": "Dia",
+        "ai.perplexity.comet": "Comet", "com.operasoftware.Opera": "Opera", "org.chromium.Chromium": "Chromium",
+        "org.mozilla.firefox": "Firefox", "app.zen-browser.zen": "Zen"
+    ]
+
     private static func icon(bundleId: String) -> String? {
         if let cached = icons[bundleId] { return cached }
-        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
+        // Beta, Dev, Canary and Nightly builds have identifiers of their own.
+        let channel = ["", ".beta", ".Beta", ".dev", ".Dev", ".canary", ".Canary", ".nightly"].lazy
+            .compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId + $0) }.first
+        let named = appNames[bundleId].flatMap { name in
+            ["/Applications", NSHomeDirectory() + "/Applications"].map { URL(fileURLWithPath: "\($0)/\(name).app") }
+                .first { FileManager.default.fileExists(atPath: $0.path) }
+        }
+        guard let app = channel ?? named,
               let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
                                          hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
         NSGraphicsContext.saveGraphicsState()

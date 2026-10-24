@@ -10,7 +10,7 @@ final class ImportBridgeHandlerTests: XCTestCase {
         let home = fm.temporaryDirectory.appendingPathComponent("home-\(UUID().uuidString)")
         let chrome = home.appendingPathComponent("Library/Application Support/Google/Chrome")
         try fm.createDirectory(at: chrome.appendingPathComponent("Profile 1"), withIntermediateDirectories: true)
-        try Data(#"{"profile": {"info_cache": {"Profile 1": {"name": "Lilas perso"}}}}"#.utf8).write(to: chrome.appendingPathComponent("Local State"))
+        try Data(#"{"profile": {"info_cache": {"Profile 1": {"name": "Personal"}}}}"#.utf8).write(to: chrome.appendingPathComponent("Local State"))
         try Data("{}".utf8).write(to: chrome.appendingPathComponent("Profile 1/Bookmarks"))
         // EACCES stands in for the EPERM macOS returns until Full Disk Access is granted.
         try fm.setAttributes([.posixPermissions: 0], ofItemAtPath: chrome.path)
@@ -36,7 +36,7 @@ final class ImportBridgeHandlerTests: XCTestCase {
         let rescanned = await pollUntil(timeout: 5) { scans().count == 2 }
         XCTAssertTrue(rescanned)
         XCTAssertEqual(chromeSource(1)?["needsFullDiskAccess"] as? Bool, false)
-        XCTAssertEqual((chromeSource(1)?["profiles"] as? [[String: Any]])?.map { $0["name"] as? String }, ["Lilas perso"])
+        XCTAssertEqual((chromeSource(1)?["profiles"] as? [[String: Any]])?.map { $0["name"] as? String }, ["Personal"])
         // The handler holds the router weakly, and its activation observer holds the handler weakly.
         withExtendedLifetime((router, handler)) {}
     }

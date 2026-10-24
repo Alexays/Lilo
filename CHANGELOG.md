@@ -8,6 +8,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Fixed
 
+- Importing no longer offers browsers that are not installed, whose folders password managers create for their helpers, and finds the icon of a Beta, Dev or Nightly browser or one installed outside LaunchServices.
 - The Agents space no longer shows in Settings > Spaces, link rules, the external links setting or Move to Space, and no longer counts as a space of yours, so your last space cannot be deleted.
 
 ## [0.1.4] - 2026-10-24
