@@ -429,9 +429,13 @@ final class WKWebViewTab: NSObject {
         webView.load(URLRequest(url: url, cachePolicy: .returnCacheDataDontLoad))
     }
 
-    func restoreInteractionState(_ state: Any) {
+    /// False when the state holds no page, as for a tab whose first load never committed: WebKit then
+    /// loads nothing and reports no failure.
+    func restoreInteractionState(_ state: Any) -> Bool {
         webView.interactionState = state
+        guard webView.backForwardList.currentItem != nil else { return false }
         if !isPrivateBrowsing { Self.logger.info("load source=session-state-restore host=\(self.webView.url?.host ?? "nil", privacy: .private)") }
+        return true
     }
 
     /// Whether the page is currently playing audio (tracked via `_isPlayingAudio` KVO).

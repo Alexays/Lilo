@@ -437,10 +437,9 @@ final class TabManager {
         }
 
         // An extension tab reloads its page fresh: its saved history may name a stale extension host.
-        // A blank tab's saved state holds no page: WebKit loads nothing, and never reports a load end.
+        // A state with no page (a blank tab, or a page whose first load failed) loads the tab's URL instead.
         let savedState = engineHost.consumeSavedInteractionState(for: id)
-        if let savedState, requestedURL == nil, engine.extensionHost == nil {
-            engine.restoreInteractionState(savedState)
+        if let savedState, requestedURL == nil, engine.extensionHost == nil, engine.restoreInteractionState(savedState) {
             updateTab(id: id) { $0.isLoading = engine.isLoading }
         } else if let url = loadURL {
             engine.loadURL(url); updateTab(id: id) { $0.isLoading = true }
