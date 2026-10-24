@@ -105,6 +105,7 @@ final class TabBridgeHandler: BridgeHandler {
         "goBack",
         "goForward",
         "reload",
+        "showCachedCopy",
         "reportUnresponsivePage",
         "stopLoading",
         "screenshotPage",
@@ -264,6 +265,11 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "reload":
             tabManager.reloadActiveTab()
+
+        case "showCachedCopy":
+            if let s = tabManager.activeTab?.navigationErrorURL, let url = URL(string: s) {
+                tabManager.activeEngineTab?.loadCachedCopy(of: url)
+            }
 
         case "reportUnresponsivePage":
             windowController?.reportUnresponsivePage()

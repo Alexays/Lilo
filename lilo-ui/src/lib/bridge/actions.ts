@@ -86,6 +86,7 @@ export const tabActions = {
 	goBack: emitEmpty("goBack"),
 	goForward: emitEmpty("goForward"),
 	reload: emitEmpty("reload"),
+	showCachedCopy: emitEmpty("showCachedCopy"),
 	reportUnresponsivePage: emitEmpty("reportUnresponsivePage"),
 	stopLoading: emitEmpty("stopLoading"),
 	zoomIn: emitEmpty("zoomIn"),

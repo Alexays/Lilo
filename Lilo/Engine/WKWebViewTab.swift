@@ -208,6 +208,8 @@ final class WKWebViewTab: NSObject {
     private var pendingMainFrameURL: URL?
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
     private(set) var pendingMainFrameSendsBody = false
+    /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
+    private var isLoadingCachedCopy = false
     /// The failed page to reload on the next network change; set while that wait is registered.
     private var networkChangeRetryURL: URL?
     private var lastNavigationEmissionState = NavigationEmissionState()
@@ -413,6 +415,15 @@ final class WKWebViewTab: NSObject {
         webView.load(URLRequest(url: url))
     }
 
+    /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
+    /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
+    func loadCachedCopy(of url: URL) {
+        guard wake() else { return }
+        pendingMainFrameURL = url
+        didAutoRetryProvisionalLoad = false
+        webView.load(URLRequest(url: url, cachePolicy: .returnCacheDataDontLoad))
+    }
+
     func restoreInteractionState(_ state: Any) {
         webView.interactionState = state
         if !isPrivateBrowsing { Self.logger.info("load source=session-state-restore host=\(self.webView.url?.host ?? "nil", privacy: .private)") }
@@ -485,6 +496,7 @@ final class WKWebViewTab: NSObject {
     /// A suspended page has nothing loading.
     func stopLoading() {
         guard !isFrozen else { return }
+        isLoadingCachedCopy = false
         webView.stopLoading()
     }
 
@@ -1084,6 +1096,7 @@ extension WKWebViewTab: WKNavigationDelegate {
            !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: pendingMainFrameURL) {
             pendingMainFrameURL = url
             pendingMainFrameSendsBody = (navigationAction.request.httpMethod ?? "GET").uppercased() != "GET"
+            isLoadingCachedCopy = navigationAction.request.cachePolicy == .returnCacheDataDontLoad
         }
 
         // Set before the document's JS runs so `navigator.userAgent` reads Chrome. Per-tab by construction.
@@ -1172,6 +1185,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             // A hung process killed for a reload never says it answers again: the new one committing does.
             tab.isUnresponsive = false
             tab.didAutoRetryProvisionalLoad = false
+            tab.isLoadingCachedCopy = false
             tab.networkChangeRetryURL = nil
             tab.pendingMainFrameURL = tab.currentURL
             if !tab.isPrivateBrowsing {
@@ -1212,8 +1226,16 @@ extension WKWebViewTab: WKNavigationDelegate {
     }
 
     nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        guard !Self.shouldIgnoreNavigationFailure(error) else { return }
-        onMain { $0.handleProvisionalNavigationFailure(error) }
+        onMain { tab in
+            // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
+            if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
+                tab.isLoadingCachedCopy = false
+                tab.handleNavigationFailure(NSError(domain: NSURLErrorDomain, code: NSURLErrorResourceUnavailable), phase: "provisional")
+                return
+            }
+            guard !Self.shouldIgnoreNavigationFailure(error) else { return }
+            tab.handleProvisionalNavigationFailure(error)
+        }
     }
 
     // WebKit calls the reason-carrying variant below when it is implemented and this one otherwise,

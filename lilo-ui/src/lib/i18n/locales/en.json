@@ -1306,9 +1306,12 @@
 		"hintNotSecure": "The certificate for this site is invalid or expired.",
 		"hintServerNotFound": "Check the URL or your DNS settings.",
 		"hintTimedOut": "The server took too long to respond.",
+		"noSavedCopy": "No Saved Copy",
+		"hintNoSavedCopy": "This page is not in the cache. Try again once the connection is back.",
 		"genericDescription": "An error occurred",
 		"back": "Back",
 		"tryAgain": "Try Again",
+		"showSavedCopy": "Show Saved Copy",
 		"visitAnyway": "Visit Anyway"
 	},
 	"permissionPrompt": {
