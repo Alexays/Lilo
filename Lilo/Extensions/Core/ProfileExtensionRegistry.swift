@@ -103,6 +103,11 @@ final class ProfileExtensionRegistry {
 
     var hasLoadedExtensions: Bool { !loadedRuntimes.isEmpty }
 
+    /// The tab state last sent to the contexts with private access (true) and without, once one asked for it.
+    var sentTabStates: [Bool: ExtensionTabState] = [:]
+    /// Keeps `sentTabStates` true to the tabs WebKit reports.
+    weak var tabStateKeeper: TabGroupsBridgeHandler?
+
     private nonisolated static let logger = Logger(liloCategory: "profile-extension-registry")
 
     /// Called when extensions load/unload so the UI can refresh.
@@ -551,6 +556,13 @@ final class ProfileExtensionRegistry {
     func extensionId(forOmniboxKeyword keyword: String) -> String? {
         let needle = keyword.lowercased()
         return loadedRuntimes.first { $0.omniboxKeyword?.lowercased() == needle }?.id
+    }
+
+    /// Sends `message` at once over the open channels of the loaded extensions with private access or without, as `hasPrivateAccess`.
+    func sendToOpenChannels(_ message: [String: Any], hasPrivateAccess: Bool) {
+        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess {
+            gapEvents.send(message, toOpenChannelsOf: runtime.id)
+        }
     }
 
     /// Fire a gap event to every loaded extension holding `requiredPermission`.

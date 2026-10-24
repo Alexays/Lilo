@@ -9,8 +9,13 @@ const portListeners: Array<(message: unknown) => void> = [];
 
 /** Lilo pushes `envelope` on the channel, which a gap call or listener opened. */
 export function pushGapEvent(envelope: { namespace: string; event: string; args?: unknown[] }): void {
+  pushToChannel(envelope);
+}
+
+/** Lilo pushes `message` on the channel as it is, as it pushes a state. */
+export function pushToChannel(message: object): void {
   assert.ok(portListeners.length > 0, 'no channel is open');
-  portListeners.forEach((listener) => listener(envelope));
+  portListeners.forEach((listener) => listener(message));
 }
 
 export function mockGapAPI(respondWith: (call: Call) => unknown): void {

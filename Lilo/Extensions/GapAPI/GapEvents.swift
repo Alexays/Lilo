@@ -152,6 +152,12 @@ final class GapEvents {
         Task { @MainActor [weak self] in self?.flush() }
     }
 
+    /// Sends `message` now over the extension's open channels, its running worker's and its pages': a stopped worker misses it.
+    func send(_ message: [String: Any], toOpenChannelsOf extensionId: String) {
+        workers[extensionId]?.port?.sendMessage(message) { _ in }
+        pages[extensionId]?.forEach { $0.port.sendMessage(message) { _ in } }
+    }
+
     /// Events the extension's worker has not received yet.
     func undelivered(to extensionId: String) -> [GapEventEnvelope] {
         workers[extensionId]?.undelivered ?? []

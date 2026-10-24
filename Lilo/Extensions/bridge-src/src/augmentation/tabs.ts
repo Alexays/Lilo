@@ -1,10 +1,10 @@
 // WebKit owns the tab and window ids: calls send each tab's window position and index, and native events carry them
 // back to be resolved here from WebKit's chrome.windows/chrome.tabs. SW-safe: no window/document/webkit.
-import { gapCall } from '../shared/ipc.ts';
+import { bridgeEvents, channelClosed, gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { resolvingEvent } from '../shared/gap-event.ts';
 import { WrappedEvent } from '../shared/chrome-event.ts';
-import { TAB_GROUP_ID_NONE, tabPositions, toPositions, windowIdOrder } from './tabGroups.ts';
+import { TAB_GROUP_ID_NONE, tabPositions, windowIdOrder } from './tabGroups.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 export interface TabPosition {
@@ -131,7 +131,7 @@ function withoutWithheld(tab: any): any {
   return tab;
 }
 
-/** What WebKit's Tab objects lack, from Lilo; null for a tab Lilo does not hold. */
+/** What WebKit's Tab objects lack, from Lilo; null for a tab Lilo does not hold. `windowKey` names the tab's window. */
 interface TabDetails {
   groupId: number;
   discarded: boolean;
@@ -139,12 +139,68 @@ interface TabDetails {
   lastAccessed?: number;
   url?: string;
   title?: string;
+  windowKey?: string;
 }
 
+/** A tab's `[groupId, discarded, frozen, lastAccessed]`, null for a tab Lilo does not hold. */
+type TabFacts = [number, boolean, boolean, number | null] | null;
+
 /**
- * `tab` with Chrome's fields WebKit's lacks. Without `details` (a tab event, which Lilo cannot answer in step with WebKit's
- * delivery), each takes Chrome's value for a loaded tab outside any group.
+ * What Lilo tells this context of the tabs it sees: each window's key, in WebKit's window order, and its tabs' facts by index.
+ * Lilo sends it again ahead of any reply or event whose tabs it no longer describes, over the open channel only.
  */
+interface TabState {
+  windows: string[];
+  tabs: TabFacts[][];
+}
+
+interface DetailsAnswer {
+  tabs: Array<TabDetails | null>;
+  state?: TabState;
+}
+
+let tabState: TabState | undefined;
+/** Lilo's key of each WebKit window id, fixed for the window's life. */
+const windowKeys = new Map<number, string>();
+let askingState = false;
+
+/** Maps WebKit's window ids, in `windows.getAll` order, to the state's window keys, when both list as many windows. */
+function learnWindowKeys(ids: number[]): void {
+  const keys = tabState?.windows;
+  if (keys && ids.length === keys.length) ids.forEach((id, i) => windowKeys.set(id, keys[i]));
+}
+
+bridgeEvents.set('tabs.state', (state: TabState) => {
+  tabState = state;
+  // The events of a new window's tabs need its id.
+  const known = new Set(windowKeys.values());
+  if (state.windows.some((key) => !known.has(key))) windowIdOrder().then(learnWindowKeys);
+});
+channelClosed.push(() => { tabState = undefined; });
+
+/** Asks Lilo for the state tab events read; the events that arrive before its answer carry Chrome's defaults. */
+function askTabState(): void {
+  if (tabState || askingState) return;
+  askingState = true;
+  const order = windowIdOrder();
+  gapCall<DetailsAnswer>('tabs', 'details', { tabs: [], reveal: [], state: true })
+    .then((answer) => {
+      tabState = answer?.state ?? tabState;
+      return order;
+    })
+    .then(learnWindowKeys, () => {})
+    .finally(() => { askingState = false; });
+}
+
+/** The tab's details as the state holds them, undefined when it does not describe the tab. */
+function stateDetails(tab: any): TabDetails | null | undefined {
+  const key = windowKeys.get(tab?.windowId);
+  if (!tabState || key === undefined) return undefined;
+  const facts = tabState.tabs[tabState.windows.indexOf(key)]?.[tab.index];
+  return facts && { groupId: facts[0], discarded: facts[1], frozen: facts[2], lastAccessed: facts[3] ?? undefined };
+}
+
+/** `tab` with Chrome's fields WebKit's lacks; without `details`, each takes Chrome's value for a loaded tab outside any group. */
 function asChromeTab(tab: any, details?: TabDetails | null): any {
   if (tab === null || typeof tab !== 'object') return tab;
   tab.groupId = details?.groupId ?? TAB_GROUP_ID_NONE;
@@ -157,27 +213,44 @@ function asChromeTab(tab: any, details?: TabDetails | null): any {
 }
 
 /**
- * The tabs of a result made Chrome's in one call to Lilo. With `tabs`, Chrome shows every tab's url and title, where WebKit
- * shows only those of the hosts the extension may access: the same call reads the ones WebKit left empty, an empty tab
- * reading as Chrome's new tab page. Without it, the empty ones are left out, as in Chrome.
+ * The tabs of a result made Chrome's from the state, and in one call to Lilo for what it lacks. With `tabs`, Chrome shows
+ * every tab's url and title, where WebKit shows only those of the hosts the extension may access: that call reads the ones
+ * WebKit left empty, an empty tab reading as Chrome's new tab page. Without it, the empty ones are left out, as in Chrome.
  */
 async function completeTabs(tabs: any[], withheldURLs: boolean, windowIds?: Promise<number[]>): Promise<void> {
   const listed = tabs.filter((tab) => typeof tab?.index === 'number');
   if (listed.length === 0) return;
-  const reveal = withheldURLs ? [] : listed.flatMap((tab, i) => (tab.url === '' ? [i] : []));
-  const details = await gapCall<Array<TabDetails | null>>('tabs', 'details', { tabs: await toPositions(listed, windowIds), reveal }).catch(() => []);
+  const details = listed.map(stateDetails);
+  const asked = listed.flatMap((tab, i) => (details[i] === undefined || (!withheldURLs && tab.url === '') ? [i] : []));
+  if (asked.length > 0) {
+    // A window this context has no key for yet goes by its live position in WebKit's windows.
+    const order = asked.some((i) => !windowKeys.has(listed[i].windowId)) ? await (windowIds ?? windowIdOrder()) : [];
+    const answer = await gapCall<DetailsAnswer>('tabs', 'details', {
+      tabs: asked.map((i) => {
+        const key = windowKeys.get(listed[i].windowId);
+        return key === undefined ? { windowPosition: order.indexOf(listed[i].windowId), index: listed[i].index } : { windowKey: key, index: listed[i].index };
+      }),
+      reveal: withheldURLs ? [] : asked.flatMap((i, j) => (listed[i].url === '' ? [j] : [])),
+      state: tabState === undefined,
+    }).catch(() => undefined);
+    if (answer?.state) tabState = answer.state;
+    answer?.tabs?.forEach((found, j) => {
+      const tab = listed[asked[j]];
+      if (found?.windowKey !== undefined) windowKeys.set(tab.windowId, found.windowKey);
+      if (found?.url) Object.assign(tab, { url: found.url, title: found.title });
+      details[asked[j]] = found;
+    });
+  }
   listed.forEach((tab, i) => {
-    const found = details?.[i];
-    if (found?.url) Object.assign(tab, { url: found.url, title: found.title });
-    asChromeTab(tab, found);
+    asChromeTab(tab, details[i]);
     // A tab Lilo does not hold and WebKit shows no url of, such as the stand-in of a window showing no web page, has none.
-    if (withheldURLs || !found) withoutWithheld(tab);
+    if (withheldURLs || !details[i]) withoutWithheld(tab);
   });
 }
 
 /**
  * WebKit's method, its tabs completed. `filtersGroups`: `tabs.query`, whose `groupId` key WebKit ignores, so Lilo filters on it.
- * `returnsTabs`: a tabs method, whose window order is read alongside the call rather than after it.
+ * `returnsTabs`: a tabs method, whose window order a context that knows no window yet reads alongside the call.
  */
 const completing = (withheldURLs: boolean, returnsTabs: boolean, filtersGroups = false): Patch => (original, self) => function (this: unknown, ...args: any[]) {
   const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
@@ -187,7 +260,7 @@ const completing = (withheldURLs: boolean, returnsTabs: boolean, filtersGroups =
     args[0] = rest;
   }
   return callbackify(async () => {
-    const windowIds = returnsTabs ? windowIdOrder() : undefined;
+    const windowIds = returnsTabs && windowKeys.size === 0 ? windowIdOrder() : undefined;
     const result = await original.apply(self(this), args);
     // A window lists its tabs; anything else is a tab.
     await completeTabs((Array.isArray(result) ? result : [result]).flatMap((item) => item?.tabs ?? [item]), withheldURLs, windowIds);
@@ -206,21 +279,37 @@ export function windowPatches(withheldURLs: boolean): Record<string, Patch> {
   return Object.fromEntries(windowMethods.map((name) => [name, completing(withheldURLs, false)]));
 }
 
-/** Tab events with Chrome's tab, without what the extension may not see, as Chrome, which still reports an update of nothing else. */
+/** The tab's details as the state holds them; a tab it does not describe asks for the state again, for the next events. */
+function eventDetails(tab: any): TabDetails | null | undefined {
+  const details = stateDetails(tab);
+  if (details === undefined) askTabState();
+  return details;
+}
+
+/**
+ * Tab events with Chrome's tab, without what the extension may not see, as Chrome, which still reports an update of nothing
+ * else. Their first listener asks for the state, which Lilo then sends ahead of each event whose tab it no longer describes.
+ */
 export function tabStandIns(withheldURLs: boolean): Record<string, WrappedEvent<any>> {
   const shown = (tab: any) => (withheldURLs ? withoutWithheld(tab) : tab);
   return {
-    onCreated: new WrappedEvent<[any]>(() => bridgeChrome().tabs.onCreated, (listener) => (tab: any) => {
-      // A new tab was last accessed when it was made.
-      if (asChromeTab(tab) && tab.lastAccessed === undefined) tab.lastAccessed = Date.now();
-      return listener(shown(tab));
+    onCreated: new WrappedEvent<[any]>(() => bridgeChrome().tabs.onCreated, (listener) => {
+      askTabState();
+      return (tab: any) => {
+        // A new tab the state does not describe was last accessed when it was made.
+        if (asChromeTab(tab, eventDetails(tab)) && tab.lastAccessed === undefined) tab.lastAccessed = Date.now();
+        return listener(shown(tab));
+      };
     }),
-    onUpdated: new WrappedEvent<[number, any, any]>(() => bridgeChrome().tabs.onUpdated, (listener) => (tabId: number, changeInfo: any, tab: any) => {
-      if (withheldURLs && tab?.url === '' && changeInfo) {
-        delete changeInfo.url;
-        delete changeInfo.title;
-      }
-      return listener(tabId, changeInfo, shown(asChromeTab(tab)));
+    onUpdated: new WrappedEvent<[number, any, any]>(() => bridgeChrome().tabs.onUpdated, (listener) => {
+      askTabState();
+      return (tabId: number, changeInfo: any, tab: any) => {
+        if (withheldURLs && tab?.url === '' && changeInfo) {
+          delete changeInfo.url;
+          delete changeInfo.title;
+        }
+        return listener(tabId, changeInfo, shown(asChromeTab(tab, eventDetails(tab))));
+      };
     }),
   };
 }

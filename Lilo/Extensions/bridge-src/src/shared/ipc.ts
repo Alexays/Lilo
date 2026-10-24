@@ -43,6 +43,8 @@ let start: (() => void) | undefined;
 
 /** Events Lilo pushes to the bridge itself, outside Chrome's namespaces, by `namespace.event`. */
 export const bridgeEvents = new Map<string, (...args: any[]) => void>();
+/** Each runs when the channel closes: what Lilo pushed over it is no longer kept current. */
+export const channelClosed: Array<() => void> = [];
 
 function receive(envelope: unknown): void {
   if (isWorker && !ready) held.push(envelope);
@@ -80,6 +82,7 @@ function checkIdle(): void {
   // opens a new port.
   port?.postMessage({ idle: true });
   port = undefined;
+  channelClosed.forEach((listener) => listener());
 }
 
 if (isWorker) {
@@ -104,12 +107,18 @@ function connect(): Port | undefined {
       else call.resolve(message.result);
     } else if (Array.isArray(message?.events)) {
       message.events.forEach(receive);
+    } else if (typeof message?.push === 'string') {
+      // Lilo keeps a pushed state current over the open channel only: what reaches a closed one is already stale.
+      if (port === opened) bridgeEvents.get(message.push)?.(...(Array.isArray(message.args) ? message.args : []));
     } else {
       receive(message);
     }
   });
   opened.onDisconnect.addListener(() => {
-    if (port === opened) port = undefined;
+    if (port === opened) {
+      port = undefined;
+      channelClosed.forEach((listener) => listener());
+    }
     for (const [id, call] of pending) {
       if (call.port !== opened) continue;
       clearTimeout(call.timer);

@@ -179,7 +179,7 @@ final class WindowGapAPITests: XCTestCase {
         let empty = try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: emptyTab.id)), extensionId: extensionId))
         let revealing: [String: Any] = ["tabs": [page.position, empty], "reveal": [0, 1]]
         let withoutTabs = await call("tabs", "details", revealing)
-        let hidden = try XCTUnwrap(withoutTabs.result as? [[String: Any]])
+        let hidden = try XCTUnwrap((withoutTabs.result as? [String: Any])?["tabs"] as? [[String: Any]])
         XCTAssertEqual(hidden.count, 2)
         XCTAssertTrue(hidden.allSatisfy { $0["url"] == nil && $0["title"] == nil }, "without tabs, no url shows")
 
@@ -190,7 +190,7 @@ final class WindowGapAPITests: XCTestCase {
         try await registry.load(from: folder)
         let id = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
         let shown = await router.route(namespace: "tabs", method: "details", params: revealing, extensionId: id, fromWorker: true, registry: registry)
-        let details = try XCTUnwrap(shown.result as? [[String: Any]])
+        let details = try XCTUnwrap((shown.result as? [String: Any])?["tabs"] as? [[String: Any]])
         XCTAssertEqual(details.map { [$0["url"] as? String, $0["title"] as? String] }, [[url, "Page"], ["chrome://newtab/", "New Tab"]])
     }
 
@@ -213,7 +213,7 @@ final class WindowGapAPITests: XCTestCase {
         }
 
         let result = await call("tabs", "details", ["tabs": positions])
-        let details = try XCTUnwrap(result.result as? [[String: Any]])
+        let details = try XCTUnwrap((result.result as? [String: Any])?["tabs"] as? [[String: Any]])
 
         XCTAssertGreaterThan(try XCTUnwrap(details[0]["groupId"] as? Int), 0)
         XCTAssertEqual(details[0]["discarded"] as? Bool, false)
@@ -221,6 +221,33 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertEqual(details[1]["discarded"] as? Bool, true)
         XCTAssertEqual(details[1]["frozen"] as? Bool, false)
         XCTAssertNotNil(details[0]["lastAccessed"] as? Double)
+    }
+
+    /// A context that asked for the tab state holds it from then on: WebKit reads a tab's index to report it, in a reply or an
+    /// event, and a tab whose facts changed has the whole state sent before that read returns, so ahead of WebKit's message.
+    func testTheTabStateGoesOutBeforeWebKitReportsATabItNoLongerDescribes() async throws {
+        let tab = try openTab("https://allowed.test/unloaded")
+        _ = try openTab("https://allowed.test/active")
+        let context = try XCTUnwrap(registry.context(for: extensionId))
+        let adapter = try XCTUnwrap(window.tabManager.tabAdapter(for: tab.id))
+        let asked = await call("tabs", "details", ["tabs": [], "state": true])
+        let state = try XCTUnwrap((asked.result as? [String: Any])?["state"] as? [String: Any])
+        let keys = try XCTUnwrap(state["windows"] as? [String])
+        let position = try XCTUnwrap(tab.position["windowPosition"])
+        let index = try XCTUnwrap(tab.position["index"])
+        let held = { self.registry.sentTabStates[false]?.tabs[position][index] }
+        XCTAssertEqual(held()?.discarded, false)
+
+        window.tabManager.discardEngines([tab.id])
+        XCTAssertEqual(held()?.discarded, false, "nothing is sent until WebKit reports the tab")
+        XCTAssertEqual(adapter.indexInWindow(for: context), index)
+        XCTAssertEqual(held()?.discarded, true)
+
+        // A context names the window by its key once it learned it.
+        let byKey = await call("tabs", "details", ["tabs": [["windowKey": keys[position], "index": index]]])
+        let details = try XCTUnwrap((byKey.result as? [String: Any])?["tabs"] as? [[String: Any]])
+        XCTAssertEqual(details.first?["discarded"] as? Bool, true)
+        XCTAssertEqual(details.first?["windowKey"] as? String, keys[position])
     }
 
     // MARK: - cookies.getPartitionKey
