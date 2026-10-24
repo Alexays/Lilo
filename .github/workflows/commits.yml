@@ -41,3 +41,15 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | make lint-commit-message
+      - name: Check release notes
+        if: github.event_name == 'pull_request' && github.event.action != 'edited'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          COMMIT_HEAD: ${{ github.event.pull_request.head.sha }}
+        # A warning, not a failure: tests, documentation and build tooling need no note.
+        run: |
+          changed=$(git diff --name-only "$BASE...$COMMIT_HEAD")
+          if printf '%s\n' "$changed" | grep -qE '^(Lilo|lilo-ui/src)/' \
+            && ! printf '%s\n' "$changed" | grep -qE '^\.changes/unreleased/.+\.yaml$'; then
+            echo "::warning::This pull request changes the app without a release note: run make change if people using Lilo will notice it."
+          fi

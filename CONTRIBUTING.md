@@ -293,7 +293,8 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
    for a patch release, `Added` for a minor release, or `Breaking` for a major release. Write the
    summary for the person using the app and commit the generated `.changes/unreleased/*.yaml`
    file with your code. Documentation, tests and build tooling usually need no fragment.
-   `CHANGELOG.md` is updated when a maintainer prepares the release.
+   `CHANGELOG.md` is updated when a maintainer prepares the release. CI warns on a pull request that
+   changes `Lilo/` or `lilo-ui/src/` without a note.
 5. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
    recording of any UI change.
 
