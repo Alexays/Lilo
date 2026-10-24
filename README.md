@@ -8,6 +8,7 @@ Light on your Mac, quick on the web. Free and open source.
 
 [![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](LICENSE)
+[![Status: public beta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#install)
 
 [Website](https://getlilo.app) ·
 [Install](#install) ·
@@ -27,8 +28,9 @@ beside them: Spaces with their own sign-ins, the Chrome extensions you rely on, 
 your pages, a built-in MCP server, and a battery that lasts the day. If you are leaving Arc, it
 imports your Spaces, pinned tabs and folders in a few clicks.
 
-> **Status: v0.1.0, the first public release.** Daily-driven by its author; expect rough edges,
-> and the interface still moves. [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
+> **Status: public beta.** Lilo is usable every day, but it is still a beta: expect rough edges and
+> an interface that still moves, and please [report what breaks](https://github.com/Alexays/Lilo/issues).
+> [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
 
 ## For AI agents
 

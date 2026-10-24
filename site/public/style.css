@@ -66,6 +66,7 @@ a { color: inherit; }
 .hero-copy h1 { font-size: clamp(42px, 7.2vw, 88px); line-height: 0.98; }
 .hero-copy h1 span { background: var(--brand-text); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .move-in { font-size: 14px; color: var(--ink-2); }
+.beta { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .move-in a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .hero-copy .sub { font-size: clamp(17px, 2vw, 20px); color: var(--ink-2); max-width: 36em; }
 .hero-copy .cta { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
