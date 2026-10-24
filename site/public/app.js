@@ -24,7 +24,7 @@
   var plus = bar.querySelector(".plus");
   var buttons = spaces.map(function (s, i) {
     var b = document.createElement("button");
-    b.type = "button"; b.setAttribute("aria-label", fr ? "Space " + s.name : s.name + " space"); b.textContent = s.icon;
+    b.type = "button"; b.setAttribute("aria-label", fr ? "Espace " + s.name : s.name + " space"); b.textContent = s.icon;
     b.addEventListener("click", function () { show(i); stop(); });
     bar.insertBefore(b, plus);
     return b;
