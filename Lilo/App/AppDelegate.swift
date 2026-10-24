@@ -23,11 +23,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     static let developMenuTag = 7001
     /// Mirrors the `showDevelopMenu` setting: the menu bar is built before the settings store opens.
     static let showDevelopMenuKey = "showDevelopMenu"
-    /// Nil in builds without a Sparkle public key (local and debug builds), which never check for updates.
+    /// Nil in Debug and test builds, and in builds without a Sparkle public key: they never check for updates.
     private(set) lazy var updaterController: SPUStandardUpdaterController? = {
+        #if DEBUG
+        return nil
+        #else
         let key = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String ?? ""
-        guard !key.isEmpty else { return nil }
+        guard !key.isEmpty, !ProcessInfo.isRunningUnderXCTest else { return nil }
         return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
+        #endif
     }()
 
     static func main() {
