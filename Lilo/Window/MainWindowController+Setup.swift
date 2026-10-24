@@ -482,6 +482,16 @@ extension MainWindowController {
                     defer { try? FileManager.default.removeItem(at: dir.deletingLastPathComponent()) }
                     try await registry.load(from: dir)
                 },
+                // Ids of uninstalled extensions hold no slot, as in the address bar.
+                pinnedExtensions: { [weak self] in
+                    (settingsStore.get("pinnedExtensions") ?? "").split(separator: ",").map(String.init)
+                        .filter { self?.profileContext?.extensions.context(for: $0) != nil }
+                },
+                // As the address bar pins: its menu updates and the extensions hear of it.
+                pinExtensions: { ids in
+                    let message = BridgeMessage(dictionary: ["action": "setSetting", "payload": ["key": "pinnedExtensions", "value": ids.joined(separator: ",")]])
+                    if let message { _ = await settingsHandler.handle(message: message) }
+                },
                 otherBookmarksTitle: { String(format: "Other Bookmarks (%@)".localized, $0) },
                 warmFavicons: { [weak self] entries in
                     entries.forEach { self?.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }

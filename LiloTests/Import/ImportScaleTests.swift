@@ -269,6 +269,8 @@ final class ImportScaleTests: XCTestCase {
             faviconStore: { FaviconStore(dbPool: try context.dbManager.pool(for: $0)) },
             setCookies: { _, _ in },
             installExtension: { _, _ in },
+            pinnedExtensions: { [] },
+            pinExtensions: { _ in },
             otherBookmarksTitle: { "Other Bookmarks (\($0))" },
             warmFavicons: { entries in
                 entries.forEach { context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }

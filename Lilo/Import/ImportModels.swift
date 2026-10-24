@@ -66,6 +66,8 @@ struct ImportBundle: Sendable {
     var history: [ImportedVisit] = []
     var cookies: [ImportedCookie] = []
     var extensions: [ImportedExtension] = []
+    /// Extensions pinned to Chromium's toolbar, in toolbar order.
+    var pinnedExtensionIds: [String] = []
     var favicons: [FaviconStore.Entry] = []
 }
 

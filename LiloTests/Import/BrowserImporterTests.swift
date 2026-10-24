@@ -77,6 +77,8 @@ final class BrowserImporterTests: XCTestCase {
             faviconStore: { _ in throw ImportError.missingFile("favicons") },
             setCookies: { [unowned self] list, _ in cookies += list },
             installExtension: { _, _ in },
+            pinnedExtensions: { [] },
+            pinExtensions: { _ in },
             otherBookmarksTitle: { "Other Bookmarks (\($0))" },
             warmFavicons: { _ in }
         ), home: home)
@@ -350,7 +352,8 @@ final class BrowserImporterTests: XCTestCase {
             findSpace: { _, _ in nil }, createSpace: { _, _, _, _ in UUID() }, loadSpaceState: { _, _ in nil },
             saveSpaceStates: { _, _ in }, historyStore: { [unowned self] _ in history },
             faviconStore: { _ in throw ImportError.missingFile("favicons") }, setCookies: { _, _ in },
-            installExtension: { installed.append(($0, $1)) }, otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
+            installExtension: { installed.append(($0, $1)) }, pinnedExtensions: { [] }, pinExtensions: { _ in },
+            otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
         ), home: home).run([
             .init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: []),
             .init(sourceId: "chrome", profileId: "Profile 1", kinds: [.extensions], extensionIds: [id])
@@ -372,6 +375,44 @@ final class BrowserImporterTests: XCTestCase {
         _ = await importer().run([.init(sourceId: "chrome", profileId: "Default", kinds: [.extensions, .history, .bookmarks], extensionIds: ids)],
                                  sources: BrowserImportScanner.scan(home: home)) { steps.append("\($0.kind.rawValue) \($0.done)/\($0.total)") }
         XCTAssertEqual(steps, ["bookmarks 0/0", "history 0/0", "extensions 0/2", "extensions 1/2"])
+    }
+
+    func testChromeToolbarPinsCarryOverForTheExtensionsThatInstall() async throws {
+        let profile = home.appendingPathComponent("Library/Application Support/Google/Chrome/Default")
+        let ids = ["a", "b", "c", "d", "e"].map { String(repeating: $0, count: 32) }
+        for id in ids {
+            let ext = profile.appendingPathComponent("Extensions/\(id)/1.0")
+            try FileManager.default.createDirectory(at: ext, withIntermediateDirectories: true)
+            try Data(#"{"name": "\#(id.prefix(1))", "update_url": "https://clients2.google.com/service/update2/crx"}"#.utf8)
+                .write(to: ext.appendingPathComponent("manifest.json"))
+        }
+        // Toolbar order d, b, a, e, c, plus one Chrome no longer has; b fails to install.
+        let unknown = String(repeating: "f", count: 32)
+        try Data(#"{"extensions": {"pinned_extensions": ["\#(ids[3])", "\#(ids[1])", "\#(unknown)", "\#(ids[0])", "\#(ids[4])", "\#(ids[2])"]}}"#.utf8)
+            .write(to: profile.appendingPathComponent("Preferences"))
+        func pins(after current: [String]) async -> [String]? {
+            var pinned: [String]?
+            _ = await BrowserImporter(sink: .init(
+                activeProfileId: { [unowned self] in profileId }, activeSpaceId: { [unowned self] in spaceId },
+                tree: { _ in nil }, apply: { _ in }, findProfile: { _ in nil }, createProfile: { _ in UUID() },
+                findSpace: { _, _ in nil }, createSpace: { _, _, _, _ in UUID() }, loadSpaceState: { _, _ in nil },
+                saveSpaceStates: { _, _ in }, historyStore: { [unowned self] _ in history },
+                faviconStore: { _ in throw ImportError.missingFile("favicons") }, setCookies: { _, _ in },
+                installExtension: { id, _ in if id == ids[1] { throw ImportError.malformed("store") } },
+                pinnedExtensions: { current }, pinExtensions: { pinned = $0 },
+                otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
+            ), home: home).run([.init(sourceId: "chrome", profileId: "Default", kinds: [.extensions], extensionIds: ids)],
+                               sources: BrowserImportScanner.scan(home: home)) { _ in }
+            return pinned
+        }
+
+        let fresh = await pins(after: [])
+        let alongside = await pins(after: [ids[4]])
+        let full = await pins(after: ["x", "y", "z"])
+
+        XCTAssertEqual(fresh, [ids[3], ids[0], ids[4]], "Chrome's order, up to the address bar's three")
+        XCTAssertEqual(alongside, [ids[4], ids[3], ids[0]], "Lilo's own pins stay first")
+        XCTAssertNil(full, "no slot left")
     }
 
 }

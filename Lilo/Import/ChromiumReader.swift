@@ -76,7 +76,13 @@ enum ChromiumReader {
             }
         }
         if kinds.contains(.extensions) {
-            result.attempt(.extensions) { bundle in bundle.extensions = extensions(in: dir) }
+            result.attempt(.extensions) { bundle in
+                bundle.extensions = extensions(in: dir)
+                // Toolbar order; a profile that never pinned one has no Preferences entry.
+                let preferences = (try? Data(contentsOf: dir.appendingPathComponent("Preferences")))
+                    .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+                bundle.pinnedExtensionIds = (preferences?["extensions"] as? [String: Any])?["pinned_extensions"] as? [String] ?? []
+            }
         }
         let hosts = ImportFiles.hosts(in: result.bundle.bookmarksBar + result.bundle.otherBookmarks + result.bundle.pinnedTabs + result.bundle.openTabs)
         if !hosts.isEmpty {

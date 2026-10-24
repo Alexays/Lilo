@@ -46,10 +46,16 @@ final class BrowserImporter {
         var faviconStore: (UUID) throws -> FaviconStore
         var setCookies: (_ cookies: [HTTPCookie], _ profileId: UUID) async -> Void
         var installExtension: (_ id: String, _ profileId: UUID) async throws -> Void
+        /// The address bar's pins, and setting them.
+        var pinnedExtensions: () -> [String]
+        var pinExtensions: (_ ids: [String]) async -> Void
         var otherBookmarksTitle: (_ sourceName: String) -> String
         /// Puts imported favicons in the live cache so the sidebar shows them right away.
         var warmFavicons: ([FaviconStore.Entry]) -> Void
     }
+
+    /// MAX_PINNED_EXTENSIONS in extensionPins.svelte.ts.
+    static let maxPinnedExtensions = 3
 
     private let sink: Sink
     private let home: URL
@@ -154,13 +160,17 @@ final class BrowserImporter {
 
             if kinds.contains(.extensions) {
                 let wanted = bundle.extensions.filter { selection.extensionIds.contains($0.id) }
-                var installed = 0
+                var installed: Set<String> = []
                 var lastError: String?
                 for (index, ext) in wanted.enumerated() {
                     start(.extensions, done: index, total: wanted.count)
-                    do { try await sink.installExtension(ext.id, lilo.profileId); installed += 1 } catch { lastError = "\(ext.name): \(error)" }
+                    do { try await sink.installExtension(ext.id, lilo.profileId); installed.insert(ext.id) } catch { lastError = "\(ext.name): \(error)" }
                 }
-                item(.extensions, imported: installed, skipped: wanted.count - installed, error: lastError)
+                // Lilo's own pins stay first; Chrome's fill the slots left, in toolbar order.
+                let current = sink.pinnedExtensions()
+                let pins = (current + bundle.pinnedExtensionIds.filter { installed.contains($0) && !current.contains($0) }).prefix(Self.maxPinnedExtensions)
+                if pins.count > current.count { await sink.pinExtensions(Array(pins)) }
+                item(.extensions, imported: installed.count, skipped: wanted.count - installed.count, error: lastError)
             }
         }
         return summary
