@@ -28,6 +28,11 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
     /// The extension windows of those popups, which contexts loaded after them must know too.
     var popupWindowAdapters: [WindowExtensionAdapter] { windowPopups.map(\.windowAdapter) }
 
+    /// An import's extensions open welcome pages as they start: they must not take the window from the onboarding card.
+    private var opensTabsInBackground: Bool {
+        windows?.windows.contains(where: \.holdsExtensionTabsInBackground) == true
+    }
+
     private var sidePanelWebViews: [WKWebView] {
         windows?.windows.compactMap { $0.profileContext?.extensions === registry ? $0.sidePanel.webView : nil } ?? []
     }
@@ -231,7 +236,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
 
         guard let tab = target.createTabStateFirst(
             url: configuration.url,
-            activate: configuration.shouldBeActive,
+            activate: configuration.shouldBeActive && !opensTabsInBackground,
             sidebarParentFolderId: placement?.folderId,
             sidebarSection: placement?.section,
             sidebarIndex: placement?.index
@@ -254,7 +259,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
     func webExtensionController(_ controller: WKWebExtensionController, openOptionsPageFor context: WKWebExtensionContext, completionHandler: @escaping (Error?) -> Void) {
         guard let optionsURL = context.optionsPageURL,
               let window = windows?.window(showingProfileOf: registry),
-              window.createTabStateFirst(url: optionsURL, activate: true) != nil else {
+              window.createTabStateFirst(url: optionsURL, activate: !opensTabsInBackground) != nil else {
             completionHandler(Self.extensionError("The options page could not open")); return
         }
         completionHandler(nil)

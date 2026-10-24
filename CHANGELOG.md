@@ -14,6 +14,7 @@ What changes in each Lilo release, for people using it. The format follows
 - An AI agent whose app macOS will not let Lilo identify is asked about instead of refused without a word; its approval lasts until it disconnects.
 - Setting Lilo as the default browser no longer reports a failure after you accept macOS's prompt.
 - An app downloaded with Lilo no longer opens on "(null) downloaded this file": macOS names Lilo as where it came from.
+- Extensions an import reinstalls open their welcome pages in the background, instead of taking the window and the keyboard from the setup.
 
 ## [0.1.3] - 2026-10-24
 

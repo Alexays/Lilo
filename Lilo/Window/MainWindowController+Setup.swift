@@ -434,7 +434,9 @@ extension MainWindowController {
         bridgeRouter.register(handler: settingsHandler)
         bridgeRouter.register(handler: OnboardingBridgeHandler(settingsStore: settingsStore, bridgeRouter: bridgeRouter))
 
-        bridgeRouter.register(handler: ImportBridgeHandler(bridgeRouter: bridgeRouter) { [weak self] in
+        bridgeRouter.register(handler: ImportBridgeHandler(bridgeRouter: bridgeRouter, holdExtensionTabs: { [weak self] in
+            self?.holdsExtensionTabsInBackground = $0
+        }, makeImporter: { [weak self] in
             BrowserImporter(sink: .init(
                 activeProfileId: { [weak self] in self?.profileContext?.profileId },
                 activeSpaceId: { [weak self] in self?.tabManager.currentSpaceId },
@@ -505,7 +507,7 @@ extension MainWindowController {
                     entries.forEach { self?.context.faviconService.warmIfAbsent(host: $0.host, dataURL: $0.dataURL, dominantColor: $0.dominantColor) }
                 }
             ))
-        })
+        }))
         settingsHandler.onZoomLevelReset = { [weak self] host in
             guard let self, let engine = tabManager.activeEngineTab,
                   engine.currentURL?.host?.lowercased() == host.lowercased() else { return }

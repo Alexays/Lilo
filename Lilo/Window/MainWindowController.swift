@@ -128,6 +128,8 @@ final class MainWindowController: NSWindowController {
     let launch: Launch
     /// Context of the profile owning the displayed space; nil before the first space is shown.
     var profileContext: ProfileContext?
+    /// While its import runs and until its page closes, tabs extensions open on their own stay in the background.
+    var holdsExtensionTabsInBackground = false
     /// Tabs this window's content area shows (the active tab, or every pane of its split).
     var displayedTabIds: Set<UUID> = []
     /// Selected tab another window shows, offered back through the content placeholder.

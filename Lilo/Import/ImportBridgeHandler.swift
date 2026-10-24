@@ -7,6 +7,8 @@ final class ImportBridgeHandler: BridgeHandler {
 
     private weak var bridgeRouter: BridgeRouter?
     private let makeImporter: () -> BrowserImporter
+    /// Extensions an import reinstalls open their welcome pages once it has moved on: the hold lasts until the page closes.
+    private let holdExtensionTabs: (Bool) -> Void
     private let home: URL
     private var sources: [ImportSource] = []
     private var isRunning = false
@@ -14,9 +16,11 @@ final class ImportBridgeHandler: BridgeHandler {
     private var scanGeneration = 0
     nonisolated(unsafe) private var activeObserver: Any?
 
-    init(bridgeRouter: BridgeRouter, home: URL = FileManager.default.homeDirectoryForCurrentUser, makeImporter: @escaping () -> BrowserImporter) {
+    init(bridgeRouter: BridgeRouter, home: URL = FileManager.default.homeDirectoryForCurrentUser,
+         holdExtensionTabs: @escaping (Bool) -> Void, makeImporter: @escaping () -> BrowserImporter) {
         self.bridgeRouter = bridgeRouter
         self.home = home
+        self.holdExtensionTabs = holdExtensionTabs
         self.makeImporter = makeImporter
         // Granting Full Disk Access happens in System Settings: rescan when the user comes back.
         activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
@@ -57,6 +61,7 @@ final class ImportBridgeHandler: BridgeHandler {
                     extensionIds: raw["extensionIds"] as? [String] ?? [])
             }
             isRunning = true
+            holdExtensionTabs(true)
             let summary = await makeImporter().run(selections, sources: sources) { [weak self] progress in
                 self?.bridgeRouter?.send(event: "importProgress", data: [
                     "sourceId": progress.sourceId, "profileId": progress.profileId, "kind": progress.kind.rawValue,
@@ -74,6 +79,7 @@ final class ImportBridgeHandler: BridgeHandler {
                 return data
             }])
         case "closeImport":
+            holdExtensionTabs(false)
             sources = []
             scanGeneration += 1
         case "openFullDiskAccessSettings":
