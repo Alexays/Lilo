@@ -1214,10 +1214,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         context.setPermissionStatus(.grantedExplicitly, for: .tabs)
         context.setPermissionStatus(.grantedExplicitly, for: optionalHost)
-        for _ in 0..<200 {
-            if let state = try await storage.loadAccessStates().values.first, !state.optionalMatchPatterns.isEmpty { break }
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        let saved = await pollUntil { (try? await storage.loadAccessStates())?.values.first?.optionalMatchPatterns.isEmpty == false }
+        XCTAssertTrue(saved)
         first.teardown()
 
         let restored = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)

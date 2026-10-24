@@ -182,12 +182,15 @@ final class CaptureBridgeHandlerTests: XCTestCase {
         reply = await route("desktopCapture", "chooseDesktopMedia", ["requestId": 2, "sources": ["audio"]], extensionId: id)
         XCTAssertEqual(reply.error, "At least one source type must be specified.")
 
+        var picking = false
         capture.picker = { _, _ in
+            picking = true
             try? await Task.sleep(for: .seconds(30))
             return Task.isCancelled ? nil : .tab(pickedTab)
         }
         async let pending = route("desktopCapture", "chooseDesktopMedia", ["requestId": 3, "sources": ["screen"]], extensionId: id)
-        try await Task.sleep(for: .milliseconds(100))
+        let picked = await pollUntil { picking }
+        XCTAssertTrue(picked)
         _ = await route("desktopCapture", "cancelChooseDesktopMedia", ["requestId": 3], extensionId: id)
         let cancelled = await pending
         XCTAssertEqual((cancelled.result as? [String: Any])?["streamId"] as? String, "")

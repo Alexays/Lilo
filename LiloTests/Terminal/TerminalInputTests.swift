@@ -313,10 +313,8 @@ final class TerminalInputTests: XCTestCase {
         view.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
         window.contentView?.addSubview(view)
         try session.start()
-        let deadline = Date().addingTimeInterval(5)
-        while session.withLockedTerminal({ $0.line(row: 1)?.text })?.contains("two") != true, Date() < deadline {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        let printed = await pollUntil { session.withLockedTerminal({ $0.line(row: 1)?.text })?.contains("two") == true }
+        XCTAssertTrue(printed)
         let font = try XCTUnwrap(view.font)
         let scale = view.fontScale
         let cellHeight = CGFloat(font.cellHeight)
