@@ -743,6 +743,24 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(registry.extensionBridgePayloads(activeTab: nil).first?["badgeColor"] as? String, "#111111")
     }
 
+    /// Two windows of the profile ask for their own active tab's rows in turn; each keeps its own.
+    func testEachActiveTabKeepsItsRowWhileAnotherWindowAsksForItsOwn() async throws {
+        try await registry.load(from: try createMinimalExtension(named: "two_windows_extension", in: tempDir))
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let first = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        let second = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        registry.updateActionColor(for: id, tab: first.tabId) { $0.badgeColor = "#111111" }
+        registry.updateActionColor(for: id, tab: second.tabId) { $0.badgeColor = "#222222" }
+
+        for _ in 0..<2 {
+            XCTAssertEqual(registry.extensionBridgePayloads(activeTab: first).first?["badgeColor"] as? String, "#111111")
+            XCTAssertEqual(registry.extensionBridgePayloads(activeTab: second).first?["badgeColor"] as? String, "#222222")
+        }
+        registry.updateActionColor(for: id, tab: second.tabId) { $0.badgeColor = "#333333" }
+        XCTAssertEqual(registry.extensionBridgePayloads(activeTab: second).first?["badgeColor"] as? String, "#333333")
+        XCTAssertEqual(registry.extensionBridgePayloads(activeTab: first).first?["badgeColor"] as? String, "#111111")
+    }
+
     func testUpdatingLastActionNotifiesExtensionSnapshotObservers() async throws {
         let extDir = try createActionExtension(named: "action_snapshot_update_extension", displayName: "Action Snapshot Update")
 

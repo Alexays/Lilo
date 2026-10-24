@@ -44,10 +44,10 @@ final class ProfileExtensionRegistry {
         /// Error and permission-change notifications of this context.
         var contextObserver: NSObjectProtocol?
         var pageDiagnostics: [ExtensionPageDiagnostic] = []
-        var cachedBridgePayload: [String: Any]?
-        /// The tab `cachedBridgePayload` rendered the action for.
-        var cachedBridgePayloadTab: ObjectIdentifier?
-        var bridgePayloadIsDirty = true
+        /// The row's fields no tab changes; nil once one of them may have.
+        var staticBridgePayload: [String: Any]?
+        /// Whole rows by the active tab whose action they show: windows of the profile each show their own.
+        var bridgePayloads: [UUID?: [String: Any]] = [:]
     }
 
     struct ExtensionPageDiagnostic {
@@ -78,11 +78,12 @@ final class ProfileExtensionRegistry {
     /// Enabled records that failed to load at restore, listed with the error instead of vanishing.
     private var failedRestores: [(stored: ExtensionStorage.InstalledExtension, error: String)] = []
 
-    /// Rendered-icon cache keyed by the action's icon image and the appearance: WebKit hands back the
-    /// same image until the icon changes, so tabs sharing an icon share one tiff -> PNG -> base64 pass.
+    /// Rendered-icon cache keyed by the action's icon image, the appearance and the scale it is drawn at:
+    /// WebKit hands back the same image until the icon changes, so tabs sharing an icon share one PNG pass.
     private struct IconCacheKey: Hashable {
         let image: ObjectIdentifier
         let appearance: NSAppearance.Name
+        let scale: CGFloat
     }
     /// Holds each image strongly so its ObjectIdentifier cannot be reused by a different image.
     private var iconDataURLCache: [IconCacheKey: (image: NSImage, dataURL: String)] = [:]
@@ -128,7 +129,8 @@ final class ProfileExtensionRegistry {
     /// The extension's row, or every row when nil, shows something new.
     func extensionDidChange(_ extensionId: String?) {
         for index in loadedRuntimes.indices where extensionId == nil || loadedRuntimes[index].id == extensionId {
-            loadedRuntimes[index].bridgePayloadIsDirty = true
+            loadedRuntimes[index].staticBridgePayload = nil
+            loadedRuntimes[index].bridgePayloads = [:]
         }
         notifyExtensionsChanged()
     }
@@ -222,10 +224,11 @@ final class ProfileExtensionRegistry {
         guard updateRuntime(extensionId: extensionId, {
             if let tab {
                 update(&$0.tabActionColors[tab, default: ActionColors()])
+                $0.bridgePayloads[tab] = nil
             } else {
                 update(&$0.actionColors)
+                $0.bridgePayloads = [:]
             }
-            $0.bridgePayloadIsDirty = true
         }) else { return }
         notifyExtensionsChanged()
     }
@@ -233,15 +236,19 @@ final class ProfileExtensionRegistry {
     func actionDidChange(for extensionId: String) {
         guard updateRuntime(extensionId: extensionId, {
             $0.iconVersion += 1
-            $0.bridgePayloadIsDirty = true
+            $0.bridgePayloads = [:]
         }) else { return }
         notifyExtensionsChanged()
     }
 
-    /// The action icon and badge can be tab-specific, so every payload is re-rendered on tab change.
+    /// The action fields are re-rendered for the new active tab: what it shows (its host access request)
+    /// may have changed while it was not.
     func refreshActionsForActiveTabChange() {
         guard !loadedRuntimes.isEmpty else { return }
-        extensionDidChange(nil)
+        for index in loadedRuntimes.indices {
+            loadedRuntimes[index].bridgePayloads = [:]
+        }
+        notifyExtensionsChanged()
     }
 
     // MARK: - Persistence
@@ -904,19 +911,17 @@ final class ProfileExtensionRegistry {
     /// The action (icon, badge, enabled state) is the one `activeTab` shows: each window passes its own.
     func extensionBridgePayloads(activeTab: TabExtensionAdapter?) -> [[String: Any]] {
         var payloads: [[String: Any]] = []
-        let tabKey = activeTab.map(ObjectIdentifier.init)
+        payloads.reserveCapacity(loadedRuntimes.count + disabledStoredExtensions.count + failedRestores.count)
+        let tabId = activeTab?.tabId
         for index in loadedRuntimes.indices {
-            if let cached = loadedRuntimes[index].cachedBridgePayload,
-               !loadedRuntimes[index].bridgePayloadIsDirty,
-               loadedRuntimes[index].cachedBridgePayloadTab == tabKey {
+            if let cached = loadedRuntimes[index].bridgePayloads[tabId] {
                 payloads.append(cached)
                 continue
             }
-
-            let payload = buildExtensionBridgePayload(at: index, activeTab: activeTab)
-            loadedRuntimes[index].cachedBridgePayload = payload
-            loadedRuntimes[index].cachedBridgePayloadTab = tabKey
-            loadedRuntimes[index].bridgePayloadIsDirty = false
+            var payload = loadedRuntimes[index].staticBridgePayload ?? buildStaticBridgePayload(at: index)
+            loadedRuntimes[index].staticBridgePayload = payload
+            addActionFields(to: &payload, at: index, activeTab: activeTab)
+            loadedRuntimes[index].bridgePayloads[tabId] = payload
             payloads.append(payload)
         }
         // A disabled extension has no WKWebExtension to read from; the row carries what storage kept.
@@ -978,7 +983,6 @@ final class ProfileExtensionRegistry {
         backgrounds.clearErrorCounts()
         for index in loadedRuntimes.indices {
             loadedRuntimes[index].pageDiagnostics = []
-            loadedRuntimes[index].bridgePayloadIsDirty = true
         }
     }
 
@@ -1014,7 +1018,6 @@ final class ProfileExtensionRegistry {
             if $0.pageDiagnostics.count > 50 {
                 $0.pageDiagnostics.removeFirst($0.pageDiagnostics.count - 50)
             }
-            $0.bridgePayloadIsDirty = true
         }
         if level == "error" {
             Self.logger.error("Extension page diagnostic for \(extensionId, privacy: .public): \(diagnostic.source, privacy: .public) \(message, privacy: .public)")
@@ -1023,14 +1026,10 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    private func buildExtensionBridgePayload(at index: Int, activeTab: TabExtensionAdapter?) -> [String: Any] {
+    /// The row's fields that no tab changes.
+    private func buildStaticBridgePayload(at index: Int) -> [String: Any] {
         let runtime = loadedRuntimes[index]
         let ext = runtime.context.webExtension
-        // Show the effective action for the active tab; WebKit overlays per-tab properties on the default.
-        // Action updates only bump iconVersion; the rendered action is read here.
-        let action = runtime.context.action(for: activeTab)
-        let iconDataURL = cachedIconDataURL(for: action)
-        let tabColors = activeTab.flatMap { runtime.tabActionColors[$0.tabId] }
         let health = backgrounds.health(for: runtime.id)
         let accessState = access.states[runtime.id]
         return [
@@ -1039,17 +1038,9 @@ final class ProfileExtensionRegistry {
             "version": ext.displayVersion ?? "",
             "description": ext.displayDescription ?? "",
             "isEnabled": true,
-            "hasPopup": action?.presentsPopup ?? false,
-            "actionEnabled": action?.isEnabled ?? true,
-            "actionLabel": action?.label ?? "",
             "hasBackground": ext.hasBackgroundContent,
             "runtimeStatus": health?.bridgeStatus ?? "loaded",
             "hasContentScripts": runtime.hasContentScripts,
-            "iconDataURL": iconDataURL,
-            "iconVersion": runtime.iconVersion,
-            "badgeText": action?.badgeText ?? "",
-            "badgeColor": tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor,
-            "badgeTextColor": tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor,
             "permissions": ext.manifest["permissions"] as? [String] ?? [],
             "hostPermissions": ext.manifest["host_permissions"] as? [String] ?? [],
             "siteAccess": accessState?.hosts ?? [],
@@ -1061,7 +1052,6 @@ final class ProfileExtensionRegistry {
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
             "allowsUserScripts": accessState?.allowsUserScripts == true,
-            "hostAccessRequest": access.showsHostAccessRequest(extensionId: runtime.id, context: runtime.context, on: activeTab),
             "commands": runtime.declaresCommands ? runtime.context.commands.map { command in
                 [
                     "id": command.id,
@@ -1071,6 +1061,22 @@ final class ProfileExtensionRegistry {
                 ] as [String: Any]
             } : []
         ] as [String: Any]
+    }
+
+    /// Adds the row's fields the action `activeTab` shows sets: WebKit overlays per-tab properties on the default.
+    private func addActionFields(to payload: inout [String: Any], at index: Int, activeTab: TabExtensionAdapter?) {
+        let runtime = loadedRuntimes[index]
+        let action = runtime.context.action(for: activeTab)
+        let tabColors = activeTab.flatMap { runtime.tabActionColors[$0.tabId] }
+        payload["hasPopup"] = action?.presentsPopup ?? false
+        payload["actionEnabled"] = action?.isEnabled ?? true
+        payload["actionLabel"] = action?.label ?? ""
+        payload["iconDataURL"] = cachedIconDataURL(for: action)
+        payload["iconVersion"] = runtime.iconVersion
+        payload["badgeText"] = action?.badgeText ?? ""
+        payload["badgeColor"] = tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor
+        payload["badgeTextColor"] = tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor
+        payload["hostAccessRequest"] = access.showsHostAccessRequest(extensionId: runtime.id, context: runtime.context, on: activeTab)
     }
 
     /// The manifest's toolbar or extension icon nearest 32 px as a data URL, and the store page of a Web Store copy; each empty when absent.
@@ -1098,14 +1104,23 @@ final class ProfileExtensionRegistry {
     }
 
     private func cachedIconDataURL(for action: WKWebExtension.Action?) -> String {
-        guard let image = action?.icon(for: CGSize(width: 16, height: 16)) else { return "" }
-        let key = IconCacheKey(image: ObjectIdentifier(image), appearance: NSApp.effectiveAppearance.name)
+        let size = CGSize(width: 16, height: 16)
+        guard let image = action?.icon(for: size) else { return "" }
+        let appearance = NSApp.effectiveAppearance
+        let scale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
+        let key = IconCacheKey(image: ObjectIdentifier(image), appearance: appearance.name, scale: scale)
         if let cached = iconDataURLCache[key] { return cached.dataURL }
-        guard let tiff = image.tiffRepresentation,
-              let rep = NSBitmapImageRep(data: tiff),
-              let pngData = rep.representation(using: .png, properties: [:]) else {
-            return ""
-        }
+        // Drawn at the sharpest screen's scale: the image holds a representation per scale, and its TIFF all of them.
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ), let graphics = NSGraphicsContext(bitmapImageRep: rep) else { return "" }
+        rep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = graphics
+        appearance.performAsCurrentDrawingAppearance { image.draw(in: NSRect(origin: .zero, size: size)) }
+        NSGraphicsContext.restoreGraphicsState()
+        guard let pngData = rep.representation(using: .png, properties: [:]) else { return "" }
         let dataURL = "data:image/png;base64,\(pngData.base64EncodedString())"
         if iconDataURLCacheKeys.count >= 128 {
             for evicted in iconDataURLCacheKeys.prefix(64) { iconDataURLCache.removeValue(forKey: evicted) }
