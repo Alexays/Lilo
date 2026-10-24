@@ -49,7 +49,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
 	changie change release-status release-version release-test
 
 ## List the targets
@@ -58,9 +58,9 @@ help:
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI lint/tests/build, Swift lint/tests, the app build, bridge and release tooling checks
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(CHANGIE)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory ui-lint ui-test ext-bridge-test swiftlint release-status release-test > "$$log" 2>&1 & js=$$!; \
+## Run UI, website, Swift, bridge and release tooling checks, builds and tests
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(CHANGIE)
+	@log=$$(mktemp); $(MAKE) -k --no-print-directory ui-lint ui-test ext-bridge-test swiftlint release-status release-test site-check site-test > "$$log" 2>&1 & js=$$!; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \
@@ -94,7 +94,7 @@ $(UI_DEPS): $(UI_DIR)/package-lock.json
 $(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 	@npm --prefix $(BRIDGE_DIR) ci
 
-$(SITE_DEPS): site/package-lock.json
+$(SITE_DEPS): site/package.json site/package-lock.json
 	@npm --prefix site ci
 
 $(CHANGIE): scripts/changie-checksums.txt
@@ -327,14 +327,38 @@ logs:
 logs-stream:
 	@log stream --level debug --style compact --predicate 'subsystem == "fr.arouillard.lilo"'
 
-## Serve the getlilo.app landing page locally (wrangler dev)
+## Serve getlilo.app with Astro and live reload on localhost:8787
 site-dev: $(SITE_DEPS)
 	@npm --prefix site run dev
 
-## Regenerate the landing page's Markdown copies, llms-full.txt and JSON-LD from its HTML
-site-generate:
-	@python3 site/generate.py
+## Stop Astro when it has started its dev server in the background
+site-dev-stop: $(SITE_DEPS)
+	@npm --prefix site run dev -- stop
 
-## Deploy the landing page to Cloudflare (needs npx wrangler login once)
+## Preview the built website with Cloudflare's headers and redirects on localhost:8787
+site-preview: site-generate
+	@npm --prefix site run preview
+
+## Build getlilo.app with Astro, Markdown copies and FAQ metadata
+site-generate: $(SITE_DEPS)
+	@npm --prefix site run build
+
+## Check Astro templates and TypeScript
+site-check: $(SITE_DEPS)
+	@npm --prefix site run check
+
+## Build and test the website's release notes, routes and metadata
+site-test: site-generate
+	@npm --prefix site run test
+
+## Update the website's dependencies and lockfile after changing package.json
+site-lock:
+	@npm --prefix site update
+
+## Check the Cloudflare deployment without publishing
+site-deploy-check: site-generate
+	@npm --prefix site run deploy:check
+
+## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)
 	@npm --prefix site run deploy

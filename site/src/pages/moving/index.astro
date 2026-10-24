@@ -1,71 +1,38 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Switch to Lilo from Safari, Chrome, Arc or Firefox</title>
-<meta name="description" content="Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes.">
-<link rel="canonical" href="https://getlilo.app/moving/">
-<link rel="alternate" hreflang="en" href="https://getlilo.app/moving/">
-<link rel="alternate" hreflang="fr" href="https://getlilo.app/fr/moving/">
-<link rel="alternate" hreflang="x-default" href="https://getlilo.app/moving/">
-<link rel="alternate" type="text/markdown" href="/moving/index.md">
-<meta name="theme-color" media="(prefers-color-scheme: light)" content="#e3dafa">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#403a5b">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Lilo">
-<meta property="og:locale" content="en_US">
-<meta property="og:locale:alternate" content="fr_FR">
-<meta property="og:title" content="Switch to Lilo from Safari, Chrome, Arc or Firefox">
-<meta property="og:description" content="Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes.">
-<meta property="og:url" content="https://getlilo.app/moving/">
-<meta property="og:image" content="https://getlilo.app/og.png">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Lilo flower mark with the words: Lilo, your internet, in bloom.">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Switch to Lilo from Safari, Chrome, Arc or Firefox">
-<meta name="twitter:description" content="Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes.">
-<meta name="twitter:image" content="https://getlilo.app/og.png">
-<meta name="twitter:image:alt" content="The Lilo flower mark with the words: Lilo, your internet, in bloom.">
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Lilo","item":"https://getlilo.app/"},{"@type":"ListItem","position":2,"name":"Moving to Lilo","item":"https://getlilo.app/moving/"}]},{"@type":"FAQPage","@id":"https://getlilo.app/moving/#faq","url":"https://getlilo.app/moving/","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Will my other browser change?","acceptedAnswer":{"@type":"Answer","text":"No. Lilo only reads its files and writes nothing back. Its bookmarks, its sync and its passwords stay as they are, so you can keep it around as long as you like."}},{"@type":"Question","name":"Do I need to quit it first?","acceptedAnswer":{"@type":"Answer","text":"No. Lilo copies its databases before reading them, along with changes the running browser has not written out yet."}},{"@type":"Question","name":"Why does macOS ask about \"Safe Storage\"?","acceptedAnswer":{"@type":"Answer","text":"Chromium browsers encrypt their cookies with a key kept in your keychain. Lilo needs that key to keep you signed in. If you say no, everything else still imports."}},{"@type":"Question","name":"Why does Safari need Full Disk Access?","acceptedAnswer":{"@type":"Answer","text":"macOS protects Safari's folder. Lilo shows an \"Allow access\" button that opens the right page in System Settings, and finds Safari again when you come back."}},{"@type":"Question","name":"I have several profiles. What happens?","acceptedAnswer":{"@type":"Answer","text":"Each one is listed. The first you pick fills your current Space; each other one gets its own Lilo profile and Space, named after it. Importing the same profile again reuses them."}},{"@type":"Question","name":"Some of my extensions did not come.","acceptedAnswer":{"@type":"Answer","text":"Lilo reinstalls extensions from the Chrome Web Store only, and runs Manifest V3. Extensions installed by hand are left out, and Manifest V2 ones or the few that need Chrome-only features do not install. The compatibility notes list what differs."}},{"@type":"Question","name":"What about sync and my phone?","acceptedAnswer":{"@type":"Answer","text":"Lilo has no sync and no mobile app. Your other browser and your password manager keep syncing to your phone as before, since importing changes nothing in them."}}]}]}</script>
-</head>
-<body>
-
+---
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+const lang = "en";
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Lilo",
+        "item": "https://getlilo.app/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Moving to Lilo",
+        "item": "https://getlilo.app/moving/"
+      }
+    ]
+  },
+  {
+    "@type": "FAQPage",
+    "@id": "https://getlilo.app/moving/#faq",
+    "url": "https://getlilo.app/moving/",
+    "inLanguage": "en",
+    "mainEntity": []
+  }
+];
+---
+<Layout lang={lang} title="Switch to Lilo from Safari, Chrome, Arc or Firefox" description="Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes." schema={schema}>
 <div class="top">
-  <header class="wrap nav">
-    <a class="logo" href="/" aria-label="Lilo home">
-      <svg class="bloom" viewBox="112 112 800 800" aria-hidden="true">
-        <defs>
-          <linearGradient id="p1" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#E4D8FF"/><stop offset="1" stop-color="#B7A0FF"/></linearGradient>
-          <linearGradient id="p2" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#CDBAFF"/><stop offset="1" stop-color="#9C82F6"/></linearGradient>
-          <linearGradient id="p3" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#A88DF8"/><stop offset="1" stop-color="#795CEB"/></linearGradient>
-          <linearGradient id="p4" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#7C5DEE"/><stop offset="1" stop-color="#4A2FC8"/></linearGradient>
-
-        <path id="petal-4" transform="translate(512 512) rotate(135) scale(1.12)" d="M0,-12 C58,-28 114,-108 114,-202 C114,-286 64,-344 0,-344 C-64,-344 -114,-286 -114,-202 C-114,-108 -58,-28 0,-12Z" fill="url(#p4)"/>
-        <path id="petal-3" transform="translate(512 512) rotate(-135) scale(1.12)" d="M0,-12 C58,-28 114,-108 114,-202 C114,-286 64,-344 0,-344 C-64,-344 -114,-286 -114,-202 C-114,-108 -58,-28 0,-12Z" fill="url(#p3)"/>
-        <path id="petal-2" transform="translate(512 512) rotate(45) scale(1.12)" d="M0,-12 C58,-28 114,-108 114,-202 C114,-286 64,-344 0,-344 C-64,-344 -114,-286 -114,-202 C-114,-108 -58,-28 0,-12Z" fill="url(#p2)"/>
-        <path id="petal-1" transform="translate(512 512) rotate(-45) scale(1.12)" d="M0,-12 C58,-28 114,-108 114,-202 C114,-286 64,-344 0,-344 C-64,-344 -114,-286 -114,-202 C-114,-108 -58,-28 0,-12Z" fill="url(#p1)"/>
-        </defs>
-        <use href="#petal-4"/><use href="#petal-3"/><use href="#petal-2"/><use href="#petal-1"/>
-      </svg>
-      Lilo
-    </a>
-    <nav aria-label="Main">
-      <a class="hide" href="#what">What comes</a>
-      <a class="hide" href="#steps">Steps</a>
-      <a class="hide" href="#left">What stays</a>
-      <a class="hide" href="#tips">Tips</a>
-      <a class="hide" href="#faq">FAQ</a>
-      <a class="pill soft" href="https://github.com/Alexays/Lilo">GitHub</a>
-    </nav>
-  </header>
+  <Header lang={lang} />
 
   <div class="wrap">
     <div class="hero-copy">
@@ -82,7 +49,7 @@
   </div>
 </div>
 
-<main>
+<main id="main-content">
   <section class="band" id="what">
     <div class="wrap">
       <div class="head">
@@ -206,8 +173,6 @@
     </div>
   </section>
 
-  <footer class="wrap foot"><span>Lilo, made on a Mac for Macs. macOS 26 or later.</span><span class="foot-links"><a href="/moving/">Moving to Lilo</a><a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md">Privacy</a><a href="https://github.com/Alexays/Lilo">GitHub</a><a href="/fr/moving/" lang="fr" hreflang="fr">Français</a></span></footer>
+  <Footer lang={lang} />
 </main>
-
-</body>
-</html>
+</Layout>

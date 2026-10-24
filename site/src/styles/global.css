@@ -56,6 +56,11 @@ a { color: inherit; }
 .logo svg { width: 30px; height: 30px; }
 .nav nav { display: flex; gap: 20px; font-size: 15px; color: var(--ink-2); align-items: center; }
 .nav nav a { text-decoration: none; }
+.nav nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+.skip-link { position: fixed; top: 12px; left: 16px; z-index: 10; padding: 12px 18px; border-radius: 12px; background: var(--surface); transform: translateY(-200%); }
+.skip-link:focus { transform: none; }
+@media (max-width: 1100px) { .nav nav .section-link { display: none; } }
+@media (max-width: 400px) { .nav nav { gap: 12px; font-size: 14px; } .nav .pill { padding: 9px 12px; } }
 .pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font: 600 15px/1 var(--sys); text-decoration: none; border: 0; cursor: pointer; }
 .pill.dark { background: var(--brand); color: var(--on-brand); box-shadow: 0 8px 20px -8px rgba(74, 47, 200, 0.6); }
 .pill.soft { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }

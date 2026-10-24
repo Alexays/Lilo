@@ -21,9 +21,9 @@
 /og.png
   Cache-Control: public, max-age=2592000
 
-# Not fingerprinted, so kept short to follow the pages
-/style.css
-  Cache-Control: public, max-age=600
+# Astro fingerprints built stylesheets
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
 
 /app.js
   Cache-Control: public, max-age=600
@@ -59,3 +59,9 @@
 
 /fr/moving/index.md
   Link: <https://getlilo.app/fr/moving/>; rel="canonical"
+
+/changelog/index.md
+  Link: <https://getlilo.app/changelog/>; rel="canonical"
+
+/fr/changelog/index.md
+  Link: <https://getlilo.app/fr/changelog/>; rel="canonical"

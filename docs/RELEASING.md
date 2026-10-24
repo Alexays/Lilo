@@ -26,7 +26,8 @@ selects major. When notes request different bumps, the largest wins.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
-extension bridge package versions and their lockfiles, and the website's JSON-LD through `make site-generate`.
+extension bridge package versions and their lockfiles. `make site-generate` then builds the Astro website,
+including its changelog page and app metadata, in the git-ignored `site/dist/` directory.
 It increments `CURRENT_PROJECT_VERSION` once when the app version changes. Sparkle compares this
 build number, so every release needs a larger one. Running the command again without new fragments
 leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.

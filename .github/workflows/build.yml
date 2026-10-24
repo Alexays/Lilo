@@ -15,14 +15,17 @@ concurrency:
 
 jobs:
   release-tooling:
-    name: Release tooling
+    name: Release tooling and website
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - run: make release-status release-test site-generate
-      - name: Check website metadata matches the app version
-        run: git diff --exit-code site/public
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: site/package-lock.json
+      - run: make release-status release-test site-check site-test site-deploy-check
 
   ui:
     name: UI (lint, test, build, end-to-end)

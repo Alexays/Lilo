@@ -1,0 +1,19 @@
+---
+import { copy, localizedPath, type Locale } from '../lib/i18n';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const text = copy[lang];
+const otherLang = lang === 'fr' ? 'en' : 'fr';
+const page = Astro.url.pathname.replace(/^\/fr(?=\/)/, '').slice(1);
+---
+<footer class="wrap foot">
+  <span>{text.footer}</span>
+  <span class="foot-links">
+    <a href={localizedPath(lang, 'moving/')}>{text.movingTitle}</a>
+    <a href={localizedPath(lang, 'changelog/')}>{text.changelog}</a>
+    <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md">{text.privacy}</a>
+    <a href="https://github.com/Alexays/Lilo">GitHub</a>
+    <a href={localizedPath(otherLang, page)} lang={otherLang} hreflang={otherLang}>{otherLang === 'fr' ? 'Français' : 'English'}</a>
+  </span>
+</footer>
