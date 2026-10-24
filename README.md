@@ -11,6 +11,7 @@ Light on your Mac, quick on the web. Free and open source.
 [![Status: public beta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#install)
 
 [Website](https://getlilo.app) ·
+[Discord](https://discord.gg/NyJRAapk76) ·
 [Install](#install) ·
 [Build from source](#build-from-source) ·
 [Documentation](docs/README.md) ·
@@ -31,6 +32,8 @@ imports your Spaces, pinned tabs and folders in a few clicks.
 > **Status: public beta.** Lilo is usable every day, but it is still a beta: expect rough edges and
 > an interface that still moves, and please [report what breaks](https://github.com/Alexays/Lilo/issues).
 > [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
+
+Join the [Discord community](https://discord.gg/NyJRAapk76) to share feedback and get help with Lilo.
 
 ## Why Lilo
 
