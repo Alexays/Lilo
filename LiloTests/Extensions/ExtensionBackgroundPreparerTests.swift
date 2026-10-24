@@ -52,6 +52,20 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(prelude.contains(#"globalThis.__liloEmptyScripts = ["/lib/blank.js", "/test.js"];"#), prelude)
     }
 
+    func testPreludeCarriesOnlyTheGapModulesTheManifestMayUse() throws {
+        let extDir = tempDir.appendingPathComponent("gap-modules")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
+
+        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
+        let modules = prelude.matches(of: /__liloGapModules\?\?=\{\}\)\["(\w+)"\]/).map { String($0.1) }
+        XCTAssertEqual(modules, ["history", "omnibox", "system"])
+        XCTAssertTrue(prelude.hasSuffix("P"))
+    }
+
     /// Wappalyzer and Language Reactor keep `scripts` for Firefox; Chrome runs their service worker.
     func testPrepareRunsTheServiceWorkerOverFirefoxBackgroundScripts() throws {
         let extDir = tempDir.appendingPathComponent("both")

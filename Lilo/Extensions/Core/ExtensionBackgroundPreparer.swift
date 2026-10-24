@@ -23,6 +23,12 @@ enum ExtensionBackgroundPreparer {
         .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
         .map { (Data($0.utf8), "globalThis.__liloPublicSuffixList = \(javaScriptStringLiteral($0));\n") }
 
+    /// The prelude's gap modules, each with the manifest names (permissions or keys) whose namespaces it holds.
+    private static let gapModules: [(needs: Set<String>, source: String)] = Bundle.appResourceURL("ChromeAPIGapModules", extension: "json")
+        .flatMap { try? Data(contentsOf: $0) }
+        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] }?
+        .compactMap { module in (module["source"] as? String).map { (Set(module["needs"] as? [String] ?? []), $0) } } ?? []
+
     /// The list's rules, `*.` wildcards and `!` exceptions included.
     private static let publicSuffixRules = Set(
         (publicSuffixList.flatMap { String(bytes: $0.data, encoding: .utf8) } ?? "").split(whereSeparator: \.isNewline).filter { !$0.hasPrefix("//") }.map(String.init)
@@ -81,7 +87,9 @@ enum ExtensionBackgroundPreparer {
         let original = manifest as NSDictionary
         acceptAsChrome(&manifest, extensionURL: extensionURL)
         try prepareStaticRulesets(extensionURL: extensionURL, manifest: manifest)
-        var preludeSource = preludeSource
+        // A worker parses only the gap modules its manifest may use, optional permissions included.
+        let manifestNames = Set(manifest.keys).union(manifest["permissions"] as? [String] ?? []).union(manifest["optional_permissions"] as? [String] ?? [])
+        var preludeSource = gapModules.filter { !$0.needs.isDisjoint(with: manifestNames) }.map(\.source).joined() + preludeSource
         // chrome.publicSuffix is synchronous: its list is in the worker's prelude, and a file pages read.
         if (manifest["permissions"] as? [String])?.contains("publicSuffix") == true, let publicSuffixList {
             let metadataDir = extensionURL.appendingPathComponent(metadataDirectory, isDirectory: true)

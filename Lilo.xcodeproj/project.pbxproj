@@ -295,6 +295,7 @@
 		8995FD4F3170A33E155E98BA /* BrowserRuntimeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928C080C4829A483987A5E7A /* BrowserRuntimeCoordinator.swift */; };
 		8C3D14C0C3332DC5626DF0C5 /* BrowserImportScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E64EF16A83BCC08DBB41C1 /* BrowserImportScannerTests.swift */; };
 		8CE447C0D008DA6C1F9990EA /* SearchQueryBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA99A5E788DD3CE711BB0DEF /* SearchQueryBridgeHandler.swift */; };
+		8D352DFF977B3AACEE75D98B /* ChromeAPIGapModules.json in Resources */ = {isa = PBXBuildFile; fileRef = ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */; };
 		8D8C4F5A123A9A8DB53C12C2 /* GitDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAE3DC4D30D6BEB8EDBBC65 /* GitDiffTests.swift */; };
 		8DBF16847C1867008E1A305E /* SidebarNodeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D3EA8E6DB1A33852DB5F3CE /* SidebarNodeIndex.swift */; };
 		8F11135AB1781461D345AFA0 /* WebKitGapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1C1A77F1C3408FD1C89D61 /* WebKitGapTests.swift */; };
@@ -1169,6 +1170,7 @@
 		EAF27509D91B041BEFA51288 /* AgentPage.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = AgentPage.js; sourceTree = "<group>"; };
 		EB8F1E42E289763066BBD2A3 /* HTTPAuthChallengeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPAuthChallengeHandler.swift; sourceTree = "<group>"; };
 		EC69FC1191B1A8A54A2E9858 /* WebViewPrivateAccessors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewPrivateAccessors.swift; sourceTree = "<group>"; };
+		ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ChromeAPIGapModules.json; sourceTree = "<group>"; };
 		ECC95AEE12784246F56696F2 /* chrome-surface-gaps.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "chrome-surface-gaps.txt"; sourceTree = "<group>"; };
 		ECDEF131AD64DC195E56A2C9 /* ExtensionSettingsAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSettingsAPITests.swift; sourceTree = "<group>"; };
 		ED2AE93E1D8AA6911F61120A /* TopSitesBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopSitesBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -1471,6 +1473,7 @@
 			children = (
 				DA1AD9B409543FFF3B8614E5 /* ChromeAPIAugmentation.js */,
 				3BB8ACFFF948B01F3F7036FF /* ChromeAPIBackgroundPrelude.js */,
+				ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */,
 				B6967F93609CA6CFA4D08BB2 /* ChromeContentCompat.js */,
 				DDF98B2040C2CE587A054357 /* ChromeStaticRules.js */,
 				E2BB2B4A39CF22F206F58DC9 /* ChromeWebStoreShim.js */,
@@ -2461,6 +2464,7 @@
 				AEF97CD921931917ECD05C67 /* BlockerResources in Resources */,
 				B3DE2DCB3865837BCE6ADC3E /* ChromeAPIAugmentation.js in Resources */,
 				ADA84B1F561E87C606957FBF /* ChromeAPIBackgroundPrelude.js in Resources */,
+				8D352DFF977B3AACEE75D98B /* ChromeAPIGapModules.json in Resources */,
 				A1BEBB96E6A3182DF6F14057 /* ChromeContentCompat.js in Resources */,
 				FBA85C355F5CE58C11897363 /* ChromeStaticRules.js in Resources */,
 				D5718FA9F11909DC18838405 /* ChromeWebStoreShim.js in Resources */,

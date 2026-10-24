@@ -72,6 +72,13 @@ export async function tabPositions(tabIds: number[]): Promise<TabPosition[]> {
   return toPositions(found);
 }
 
+/** The `{windowPosition, index}` native resolves a tab id by. */
+export async function tabPosition(tabId: unknown) {
+  const [position] = typeof tabId === 'number' ? await tabPositions([tabId]) : [];
+  if (!position || position.windowPosition < 0) throw new Error('Invalid tab specified.');
+  return position;
+}
+
 /**
  * chrome.tabs.discard, which WebKit lacks: Lilo drops the tab's page and keeps the tab. A tab on screen
  * is never discarded, and Lilo always needs the tab named.

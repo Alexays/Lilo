@@ -1,0 +1,173 @@
+[
+ {
+  "needs": [
+   "bookmarks"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"bookmarks\"]=core=>{let gapExports;\n(()=>{var{gapCall:t}=core[\"shared/ipc\"];var{callbackify:n}=core[\"shared/callbackify\"];var{createGapEventsFromNames:m,gapMethod:o}=core[\"shared/gap-event\"];var{createChromeEventsFromNames:s}=core[\"shared/chrome-event\"];var k={get(e,r){let a=Array.isArray(e)?{ids:e}:{id:e};return n(()=>t(\"bookmarks\",\"get\",a),r)},getTree:o(\"bookmarks\",\"getTree\"),getChildren:o(\"bookmarks\",\"getChildren\",[\"id\"]),getSubTree:o(\"bookmarks\",\"getSubTree\",[\"id\"]),getRecent:o(\"bookmarks\",\"getRecent\",[\"numberOfItems\"]),search(e,r){let a=typeof e==\"string\"?{query:e}:e;return n(()=>t(\"bookmarks\",\"search\",a),r)},create:o(\"bookmarks\",\"create\"),move(e,r,a){return n(()=>t(\"bookmarks\",\"move\",{id:e,...r}),a)},update(e,r,a){return n(()=>t(\"bookmarks\",\"update\",{id:e,...r}),a)},remove:o(\"bookmarks\",\"remove\",[\"id\"]),removeTree:o(\"bookmarks\",\"removeTree\",[\"id\"]),...m(\"bookmarks\",[\"onCreated\",\"onRemoved\",\"onChanged\",\"onMoved\"]),...s([\"onChildrenReordered\",\"onImportBegan\",\"onImportEnded\"])};gapExports={bookmarksAugmentation:k};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "browsingData"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"browsingData\"]=core=>{let gapExports;\n(()=>{var{gapCall:a}=core[\"shared/ipc\"];var{callbackify:r}=core[\"shared/callbackify\"];function i(o,e,t){return r(async()=>{await a(\"browsingData\",\"remove\",{options:o,dataToRemove:e})},t)}var l={removeAppcache:\"appcache\",removeCache:\"cache\",removeCacheStorage:\"cacheStorage\",removeCookies:\"cookies\",removeDownloads:\"downloads\",removeFileSystems:\"fileSystems\",removeFormData:\"formData\",removeHistory:\"history\",removeIndexedDB:\"indexedDB\",removeLocalStorage:\"localStorage\",removePluginData:\"pluginData\",removeServiceWorkers:\"serviceWorkers\",removeWebSQL:\"webSQL\"},p=Object.fromEntries(Object.entries(l).map(([o,e])=>[o,(t,m)=>i(t,{[e]:!0},m)])),n=[\"cookies\",\"fileSystems\",\"indexedDB\",\"localStorage\",\"serviceWorkers\",\"cacheStorage\"],s=[...n,\"pluginData\",\"history\",\"downloads\",\"cache\",\"formData\",\"passwords\"],d=new Set([...n,\"history\",\"downloads\",\"cache\"]),c={settings(o){return r(async()=>({options:{originTypes:{unprotectedWeb:!0,protectedWeb:!1,extension:!1},since:0},dataToRemove:Object.fromEntries(s.map(e=>[e,d.has(e)])),dataRemovalPermitted:Object.fromEntries(s.map(e=>[e,!0]))}),o)},remove:i,removePasswords(o,e){return r(async()=>{throw new Error(\"Requested data type is deprecated.\")},e)},...p};gapExports={browsingDataAugmentation:c};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "contentSettings"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"contentSettings\"]=core=>{let gapExports;\n(()=>{var{gapCall:r}=core[\"shared/ipc\"];var{callbackify:a}=core[\"shared/callbackify\"];var{chromeEnum:t}=core[\"shared/chrome-enum\"];var u={autoVerify:[\"allow\",\"block\"],automaticDownloads:[\"allow\",\"block\",\"ask\"],camera:[\"allow\",\"block\",\"ask\"],clipboard:[\"allow\",\"block\",\"ask\"],cookies:[\"allow\",\"block\",\"session_only\"],images:[\"allow\",\"block\"],javascript:[\"allow\",\"block\"],location:[\"allow\",\"block\",\"ask\"],microphone:[\"allow\",\"block\",\"ask\"],notifications:[\"allow\",\"block\",\"ask\"],popups:[\"allow\",\"block\"]};function p(l,i){let e=(o,n)=>r(\"contentSettings\",o,{...n,type:l});return{get(o,n){return a(()=>e(\"get\",o),n)},set(o,n){if(!i.includes(o?.setting))throw new TypeError(`Invalid invocation: Error at property 'setting': Value must be one of ${[...i].sort().join(\", \")}.`);return a(async()=>{await e(\"set\",o)},n)},clear(o,n){return a(async()=>{await e(\"clear\",o)},n)},getResourceIdentifiers(o){return a(async()=>{},o)}}}function s(l,i){let e=o=>(...n)=>{console.warn(`contentSettings.${l} is deprecated.`);let c=[...n].reverse().find(k=>typeof k==\"function\");c&&(o===\"get\"?c({setting:i}):c())};return{get:e(\"get\"),set:e(\"set\"),clear:e(\"clear\"),getResourceIdentifiers:e(\"getResourceIdentifiers\")}}var g={Scope:t([\"regular\",\"incognito_session_only\"]),AutoVerifyContentSetting:t([\"allow\",\"block\"]),CameraContentSetting:t([\"allow\",\"block\",\"ask\"]),ClipboardContentSetting:t([\"allow\",\"block\",\"ask\"]),CookiesContentSetting:t([\"allow\",\"block\",\"session_only\"]),FullscreenContentSetting:t([\"allow\"]),ImagesContentSetting:t([\"allow\",\"block\"]),JavascriptContentSetting:t([\"allow\",\"block\"]),LocationContentSetting:t([\"allow\",\"block\",\"ask\"]),MicrophoneContentSetting:t([\"allow\",\"block\",\"ask\"]),MouselockContentSetting:t([\"allow\"]),MultipleAutomaticDownloadsContentSetting:t([\"allow\",\"block\",\"ask\"]),NotificationsContentSetting:t([\"allow\",\"block\",\"ask\"]),PluginsContentSetting:t([\"block\"]),PopupsContentSetting:t([\"allow\",\"block\"]),PpapiBrokerContentSetting:t([\"block\"]),SoundContentSetting:t([\"allow\",\"block\"]),...Object.fromEntries(Object.entries(u).map(([l,i])=>[l,p(l,i)])),fullscreen:s(\"fullscreen\",\"allow\"),mouselock:s(\"mouselock\",\"allow\"),plugins:s(\"plugins\",\"block\"),unsandboxedPlugins:s(\"ppapi-broker\",\"block\")};gapExports={contentSettingsAugmentation:g};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "debugger"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"debugger\"]=core=>{let gapExports;\n(()=>{var{gapCall:g}=core[\"shared/ipc\"];var{bridgeChrome:s,callbackify:i}=core[\"shared/callbackify\"];var{GapChromeEvent:c}=core[\"shared/gap-event\"];var{tabPositions:u}=core[\"augmentation/tabGroups\"];function b(t){let{tabId:e,extensionId:r,targetId:n}=t??{};if(typeof e==\"number\")return{tabId:e};if(typeof r==\"string\")return{extensionId:r};if(typeof n==\"string\")return{targetId:n};throw new Error(\"Either tab id or extension id must be specified.\")}async function l(t){try{return typeof(await s().tabs.get(t))?.id==\"number\"}catch{return!1}}async function f(t,e,r,n){try{return await g(\"debugger\",t,{target:e,...r},n)}catch(o){throw typeof e.tabId==\"number\"&&/^Debugger is not attached/.test(o?.message??\"\")&&!await l(e.tabId)?new Error(`No tab with given id ${e.tabId}.`):o}}function h(t,e,r){return i(async()=>{let n=b(t),[o]=typeof n.tabId==\"number\"?await u([n.tabId]):[];await g(\"debugger\",\"attach\",{target:n,tab:o,requiredVersion:e})},r)}function w(t,e){return i(async()=>{await f(\"detach\",b(t),{})},e)}function y(t,e,r,n){let[o,a]=typeof r==\"function\"?[void 0,r]:[r,n];return i(()=>f(\"sendCommand\",b(t),{method:String(e),params:o??{}},0),a)}function C(t){return i(async()=>{let[e,r]=await Promise.all([g(\"debugger\",\"getTargets\"),s().windows.getAll({populate:!0})]);return e.flatMap(({tab:n,...o})=>{let a=r?.[n.windowPosition]?.tabs?.find(p=>p.index===n.index);if(typeof a?.id!=\"number\")return[];let d={type:\"page\",...o,tabId:a.id};return a.favIconUrl&&(d.faviconUrl=a.favIconUrl),[d]})},t)}var m={attach:h,detach:w,sendCommand:y,getTargets:C,onEvent:new c(\"debugger\",\"onEvent\"),onDetach:new c(\"debugger\",\"onDetach\"),DetachReason:{CANCELED_BY_USER:\"canceled_by_user\",TARGET_CLOSED:\"target_closed\"},TargetInfoType:{BACKGROUND_PAGE:\"background_page\",OTHER:\"other\",PAGE:\"page\",WORKER:\"worker\"}};gapExports={debuggerAugmentation:m};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "declarativeContent"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"declarativeContent\"]=core=>{let gapExports;\n(()=>{var{callbackify:i}=core[\"shared/callbackify\"];var r=e=>function(n){Object.assign(this,n,{instanceType:`declarativeContent.${e}`})},s=new Map,u=0,a=e=>Array.isArray(e)?e.filter(n=>s.has(n)):[...s.keys()],c={PageStateMatcher:r(\"PageStateMatcher\"),ShowAction:r(\"ShowAction\"),ShowPageAction:r(\"ShowPageAction\"),SetIcon:r(\"SetIcon\"),RequestContentScript:r(\"RequestContentScript\"),onPageChanged:{addListener(){throw new Error(\"This event does not support listeners.\")},removeListener(){throw new Error(\"This event does not support listeners.\")},hasListener:()=>!1,hasListeners:()=>!1,addRules(e,n){return i(async()=>e.map(t=>{let o={...t,id:t.id??`_${++u}_`,priority:t.priority??100,tags:t.tags??[]};return s.set(o.id,o),o}),n)},removeRules(e,n){typeof e==\"function\"&&([e,n]=[void 0,e]);let t=a(e);return i(async()=>{for(let o of t)s.delete(o)},n)},getRules(e,n){typeof e==\"function\"&&([e,n]=[void 0,e]);let t=a(e).map(o=>s.get(o));return i(async()=>t,n)}}};gapExports={declarativeContentAugmentation:c};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "desktopCapture"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"desktopCapture\"]=core=>{let gapExports;\n(()=>{var{gapCall:r}=core[\"shared/ipc\"];var{callbackify:i}=core[\"shared/callbackify\"];var{chromeEnum:p}=core[\"shared/chrome-enum\"];var{tabPosition:u}=core[\"augmentation/tabGroups\"];var n=[\"screen\",\"window\",\"tab\",\"audio\"],d=\"desktopCapture.chooseDesktopMedia(array sources, optional tabs.Tab targetTab, function callback)\",k=Math.floor(Math.random()*1e6),m={DesktopCaptureSourceType:p(n),chooseDesktopMedia(e,t,l){let[s,a]=typeof t==\"function\"?[void 0,t]:[t,l];if(!Array.isArray(e)||e.some(o=>!n.includes(o)))throw new TypeError(`Error in invocation of ${d}: Error at parameter 'sources': Value must be one of ${n.join(\", \")}.`);if(typeof a!=\"function\")throw new TypeError(`Error in invocation of ${d}: No matching signature.`);let c=++k;return i(async()=>{let o={requestId:c,sources:e};return s&&(o.target=await u(s.id)),r(\"desktopCapture\",\"chooseDesktopMedia\",o)},o=>o?a(o.streamId,{canRequestAudioTrack:!!o.canRequestAudioTrack}):a(void 0)),c},cancelChooseDesktopMedia(e){r(\"desktopCapture\",\"cancelChooseDesktopMedia\",{requestId:e}).catch(()=>{})}};gapExports={desktopCaptureAugmentation:m};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "downloads"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"downloads\"]=core=>{let gapExports;\n(()=>{var{gapCall:d}=core[\"shared/ipc\"];var{callbackify:n}=core[\"shared/callbackify\"];var{createGapEventsFromNames:r,gapMethod:e}=core[\"shared/gap-event\"];var s={download(o,a){return n(()=>d(\"downloads\",\"download\",o,o?.saveAs?0:void 0),a)},search:e(\"downloads\",\"search\"),pause:e(\"downloads\",\"pause\",[\"downloadId\"]),resume:e(\"downloads\",\"resume\",[\"downloadId\"]),cancel:e(\"downloads\",\"cancel\",[\"downloadId\"]),open(o){d(\"downloads\",\"open\",{downloadId:o}).catch(()=>{})},show(o){d(\"downloads\",\"show\",{downloadId:o}).catch(()=>{})},erase:e(\"downloads\",\"erase\"),removeFile:e(\"downloads\",\"removeFile\",[\"downloadId\"]),getFileIcon(o,a,l){let[t,c]=typeof a==\"function\"?[{},a]:[a??{},l];return n(()=>d(\"downloads\",\"getFileIcon\",{downloadId:o,size:t?.size}),c)},acceptDanger:e(\"downloads\",\"acceptDanger\",[\"downloadId\"]),setUiOptions(o,a){return n(()=>d(\"downloads\",\"setUiOptions\",{enabled:o?.enabled}),a)},showDefaultFolder(){d(\"downloads\",\"showDefaultFolder\",{}).catch(()=>{})},...r(\"downloads\",[\"onCreated\",\"onChanged\",\"onErased\",\"onDeterminingFilename\"])};gapExports={downloadsAugmentation:s};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "fontSettings"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"fontSettings\"]=core=>{let gapExports;\n(()=>{var{gapCall:l}=core[\"shared/ipc\"];var{callbackify:c}=core[\"shared/callbackify\"];var{chromeEnum:i}=core[\"shared/chrome-enum\"];var{createGapEventsFromNames:u}=core[\"shared/gap-event\"];var m=`Afak Arab Aran Armi Armn Avst Bali Bamu Bass Batk Beng Blis Bopo Brah Brai Bugi Buhd Cakm Cans Cari\nCham Cher Cirt Copt Cprt Cyrl Cyrs Deva Dsrt Dupl Egyd Egyh Egyp Elba Ethi Geor Geok Glag Goth Gran Grek Gujr Guru\nHang Hani Hano Hans Hant Hebr Hluw Hmng Hung Inds Ital Java Jpan Jurc Kali Khar Khmr Khoj Knda Kpel Kthi Lana Laoo\nLatf Latg Latn Lepc Limb Lina Linb Lisu Loma Lyci Lydi Mand Mani Maya Mend Merc Mero Mlym Moon Mong Mroo Mtei Mymr\nNarb Nbat Nkgb Nkoo Nshu Ogam Olck Orkh Orya Osma Palm Perm Phag Phli Phlp Phlv Phnx Plrd Prti Rjng Roro Runr Samr\nSara Sarb Saur Sgnw Shaw Shrd Sind Sinh Sora Sund Sylo Syrc Syre Syrj Syrn Tagb Takr Tale Talu Taml Tang Tavt Telu\nTeng Tfng Tglg Thaa Thai Tibt Tirh Ugar Vaii Visp Wara Wole Xpeo Xsux Yiii Zmth Zsym Zyyy`.split(/\\s+/),g=[\"standard\",\"sansserif\",\"serif\",\"fixed\",\"cursive\",\"fantasy\",\"math\"];function s(n,t){for(let[e,o]of[[\"genericFamily\",g],[\"script\",m]]){let a=t?.[e];if(!(a===void 0&&e===\"script\")&&!o.includes(a))throw new TypeError(`Error in invocation of fontSettings.${n}(object details, optional function callback): Error at parameter 'details': Error at property '${e}': `+(a===void 0?\"Property is required.\":`Value must be one of ${o.join(\", \")}.`))}}function r(n,t,e,o=!1){return c(async()=>{let a=await l(\"fontSettings\",n,t??{});return o?a:void 0},e)}var f=[\"DefaultFontSize\",\"DefaultFixedFontSize\",\"MinimumFontSize\"],y=[\"get\",\"set\",\"clear\"],d=Object.fromEntries(f.flatMap(n=>y.map(t=>[`${t}${n}`,(e,o)=>typeof e==\"function\"?r(`${t}${n}`,{},e,t===\"get\"):r(`${t}${n}`,e,o,t===\"get\")]))),p={ScriptCode:i(m),GenericFamily:i(g),LevelOfControl:i([\"not_controllable\",\"controlled_by_other_extensions\",\"controllable_by_this_extension\",\"controlled_by_this_extension\"]),getFont(n,t){return s(\"getFont\",n),r(\"getFont\",n,t,!0)},setFont(n,t){return s(\"setFont\",n),r(\"setFont\",n,t)},clearFont(n,t){return s(\"clearFont\",n),r(\"clearFont\",n,t)},getFontList(n){return r(\"getFontList\",{},n,!0)},...d,...u(\"fontSettings\",[\"onFontChanged\",\"onDefaultFontSizeChanged\",\"onDefaultFixedFontSizeChanged\",\"onMinimumFontSizeChanged\"])};gapExports={fontSettingsAugmentation:p};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "gcm"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"gcm\"]=core=>{let gapExports;\n(()=>{var{callbackify:s}=core[\"shared/callbackify\"];var{createChromeEventsFromNames:o}=core[\"shared/chrome-event\"];var t=()=>Promise.reject(new Error(\"GCM is currently disabled.\")),n={register(r,e){return s(t,e&&(()=>e(\"\")))},unregister(r){return s(t,r)},send(r,e){return s(t,e&&(()=>e(r?.messageId)))},...o([\"onMessage\",\"onMessagesDeleted\",\"onSendError\"])};gapExports={gcmAugmentation:n};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "history"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"history\"]=core=>{let gapExports;\n(()=>{var{createGapEventsFromNames:t,gapMethod:e}=core[\"shared/gap-event\"];var o={search:e(\"history\",\"search\"),getVisits:e(\"history\",\"getVisits\"),addUrl:e(\"history\",\"addUrl\"),deleteUrl:e(\"history\",\"deleteUrl\"),deleteRange:e(\"history\",\"deleteRange\"),deleteAll:e(\"history\",\"deleteAll\"),...t(\"history\",[\"onVisited\",\"onVisitRemoved\"])};gapExports={historyAugmentation:o};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "identity"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"identity\"]=core=>{let gapExports;\n(()=>{var{createGapEventsFromNames:c,gapMethod:s}=core[\"shared/gap-event\"];var{bridgeChrome:d,callbackify:n}=core[\"shared/callbackify\"];var{gapCall:o}=core[\"shared/ipc\"];var u={getAuthToken(e,t){let[r,i]=typeof e==\"function\"?[{},e]:[e??{},t];return n(()=>o(\"identity\",\"getAuthToken\",r,r.interactive?0:void 0),i&&(a=>i(a?.token,a?.grantedScopes)))},clearAllCachedAuthTokens:s(\"identity\",\"clearAllCachedAuthTokens\"),removeCachedAuthToken(e,t){return n(()=>o(\"identity\",\"removeCachedAuthToken\",e),t)},getRedirectURL(e){let t=(e??\"\").replace(/^\\//,\"\");return`https://${d()?.runtime?.id??\"\"}.chromiumapp.org/${t}`},launchWebAuthFlow(e,t){return n(()=>o(\"identity\",\"launchWebAuthFlow\",e,0),t)},getProfileUserInfo(e,t){return n(async()=>({email:\"\",id:\"\"}),typeof e==\"function\"?e:t)},...c(\"identity\",[\"onSignInChanged\"])};gapExports={identityAugmentation:u};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "idle"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"idle\"]=core=>{let gapExports;\n(()=>{var{gapCall:t}=core[\"shared/ipc\"];var{callbackify:r}=core[\"shared/callbackify\"];var{createGapEventsFromNames:a}=core[\"shared/gap-event\"];var o={queryState(e,n){return r(()=>t(\"idle\",\"queryState\",{detectionIntervalInSeconds:e}),n)},setDetectionInterval(e){t(\"idle\",\"setDetectionInterval\",{intervalInSeconds:e}).catch(()=>{})},...a(\"idle\",[\"onStateChanged\"])};gapExports={idleAugmentation:o};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "gcm"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"instanceID\"]=core=>{let gapExports;\n(()=>{var{gapCall:t}=core[\"shared/ipc\"];var{callbackify:n}=core[\"shared/callbackify\"];var{ChromeEvent:o}=core[\"shared/chrome-event\"];var i=()=>Promise.reject(new Error(\"Instance ID is currently disabled.\")),a={getID(e){return n(()=>t(\"instanceID\",\"getID\",{}),e)},getCreationTime(e){return n(()=>t(\"instanceID\",\"getCreationTime\",{}),e)},deleteID(e){return n(()=>t(\"instanceID\",\"deleteID\",{}),e)},getToken(e,r){return n(i,r)},deleteToken(e,r){return n(i,r)},onTokenRefresh:new o};gapExports={instanceIDAugmentation:a};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "notifications"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"notifications\"]=core=>{let gapExports;\n(()=>{var{gapCall:o}=core[\"shared/ipc\"];var{callbackify:n}=core[\"shared/callbackify\"];var{createGapEventsFromNames:r}=core[\"shared/gap-event\"];var s={create(e,t,i){let[a,c,d]=typeof e==\"string\"?[e,t??{},i]:[\"\",e,t];return n(()=>o(\"notifications\",\"create\",{notificationId:a,...c},0).then(l=>l?.notificationId??a),d)},clear(e,t){return n(()=>o(\"notifications\",\"clear\",{notificationId:e}).then(i=>i?.wasCleared??!0),t)},getAll(e){return n(()=>o(\"notifications\",\"getAll\",{}),e)},update(e,t,i){return n(()=>o(\"notifications\",\"update\",{notificationId:e,...t}).then(a=>a?.wasUpdated??!0),i)},getPermissionLevel(e){return n(()=>o(\"notifications\",\"getPermissionLevel\",{}).then(t=>t?.level??\"denied\"),e)},...r(\"notifications\",[\"onClicked\",\"onClosed\",\"onButtonClicked\",\"onPermissionLevelChanged\"])};gapExports={notificationsAugmentation:s};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "omnibox"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"omnibox\"]=core=>{let gapExports;\n(()=>{var{gapCall:i}=core[\"shared/ipc\"];var{GapChromeEvent:t,gapMethod:r,reportGapListener:g}=core[\"shared/gap-event\"];var s=class{listeners=new Set;addListener(e){this.listeners.add(e),g(\"omnibox.onInputChanged\")}removeListener(e){this.listeners.delete(e)}hasListener(e){return this.listeners.has(e)}hasListeners(){return this.listeners.size>0}dispatch(e,p){let u=n=>{i(\"omnibox\",\"sendSuggestions\",{requestId:e,suggestions:n??[]}).catch(()=>{})};for(let n of[...this.listeners])try{n(p,u)}catch(o){console.error(\"[lilo:omnibox] onInputChanged listener threw:\",o instanceof Error?o.message:String(o))}}},a={setDefaultSuggestion:r(\"omnibox\",\"setDefaultSuggestion\",[\"suggestion\"]),onInputStarted:new t(\"omnibox\",\"onInputStarted\"),onInputChanged:new s,onInputEntered:new t(\"omnibox\",\"onInputEntered\"),onInputCancelled:new t(\"omnibox\",\"onInputCancelled\"),onDeleteSuggestion:new t(\"omnibox\",\"onDeleteSuggestion\")};gapExports={omniboxAugmentation:a};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "pageCapture"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"pageCapture\"]=core=>{let gapExports;\n(()=>{var{gapCall:a}=core[\"shared/ipc\"];var{callbackify:o}=core[\"shared/callbackify\"];var{tabPositions:r}=core[\"augmentation/tabGroups\"];var e={saveAsMHTML(i,n){return o(async()=>{let[t]=await r([i?.tabId]);if(!t||t.windowPosition<0)throw new Error(\"Cannot find the tab for this request.\");return new Blob([await a(\"pageCapture\",\"saveAsMHTML\",{tab:t})])},n)}};gapExports={pageCaptureAugmentation:e};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "power"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"power\"]=core=>{let gapExports;\n(()=>{var{gapCall:r}=core[\"shared/ipc\"];var o={requestKeepAwake(e){if(e!==\"system\"&&e!==\"display\")throw new TypeError(\"Error in invocation of power.requestKeepAwake(power.Level level): Error at parameter 'level': Value must be one of display, system.\");r(\"power\",\"requestKeepAwake\",{level:e}).catch(()=>{})},releaseKeepAwake(){r(\"power\",\"releaseKeepAwake\").catch(()=>{})}};gapExports={powerAugmentation:o};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "printerProvider"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"printerProvider\"]=core=>{let gapExports;\n(()=>{var{createChromeEventsFromNames:e}=core[\"shared/chrome-event\"];var r=e([\"onGetPrintersRequested\",\"onGetUsbPrinterInfoRequested\",\"onGetCapabilityRequested\",\"onPrintRequested\"]);gapExports={printerProviderAugmentation:r};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "privacy"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"privacy\"]=core=>{let gapExports;\n(()=>{var{callbackify:t}=core[\"shared/callbackify\"];var{ChromeEvent:a}=core[\"shared/chrome-event\"];function d(r){return{get(n,e){return t(async()=>({value:r,levelOfControl:\"not_controllable\"}),e)},set(n,e){return t(async()=>{},e)},clear(n,e){return t(async()=>{},e)},onChange:new a}}function o(r){let n={};for(let[e,i]of Object.entries(r))n[e]=d(i);return n}var l={IPHandlingPolicy:{DEFAULT:\"default\",DEFAULT_PUBLIC_AND_PRIVATE_INTERFACES:\"default_public_and_private_interfaces\",DEFAULT_PUBLIC_INTERFACE_ONLY:\"default_public_interface_only\",DISABLE_NON_PROXIED_UDP:\"disable_non_proxied_udp\"},network:o({networkPredictionEnabled:!0,webRTCIPHandlingPolicy:\"default\",webRTCMultipleRoutesEnabled:!0,webRTCNonProxiedUdpEnabled:!0}),services:o({alternateErrorPagesEnabled:!0,autofillAddressEnabled:!0,autofillCreditCardEnabled:!0,autofillEnabled:!0,passwordSavingEnabled:!0,safeBrowsingEnabled:!0,safeBrowsingExtendedReportingEnabled:!1,searchSuggestEnabled:!0,spellingServiceEnabled:!1,translationServiceEnabled:!0}),websites:o({adMeasurementEnabled:!0,doNotTrackEnabled:!1,fledgeEnabled:!0,hyperlinkAuditingEnabled:!0,referrersEnabled:!0,relatedWebsiteSetsEnabled:!0,thirdPartyCookiesAllowed:!0,topicsEnabled:!0})};gapExports={privacyAugmentation:l};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "proxy"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"proxy\"]=core=>{let gapExports;\n(()=>{var{gapCall:e}=core[\"shared/ipc\"];var{callbackify:t}=core[\"shared/callbackify\"];var{chromeEnum:n}=core[\"shared/chrome-enum\"];var{GapChromeEvent:a}=core[\"shared/gap-event\"];var c={Scheme:n([\"http\",\"https\",\"quic\",\"socks4\",\"socks5\"]),Mode:n([\"direct\",\"auto_detect\",\"pac_script\",\"fixed_servers\",\"system\"]),settings:{get(o,r){return t(()=>e(\"proxy\",\"get\",o??{}),r)},set(o,r){return t(async()=>{await e(\"proxy\",\"set\",o??{})},r)},clear(o,r){return t(async()=>{await e(\"proxy\",\"clear\",o??{})},r)},onChange:new a(\"proxy\",\"settings.onChange\")},onProxyError:new a(\"proxy\",\"onProxyError\")};gapExports={proxyAugmentation:c};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "publicSuffix"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"publicSuffix\"]=core=>{let gapExports;\n(()=>{var{bridgeChrome:k}=core[\"shared/callbackify\"];var d;function $(){if(d)return d;let i=globalThis.__liloPublicSuffixList;if(typeof i!=\"string\"){let n=new XMLHttpRequest;n.open(\"GET\",k().runtime.getURL(\"_lilo/public-suffix-list.dat\"),!1),n.send(),i=n.status===200||n.status===0?n.responseText:\"\"}return d=new Set(i.split(`\n`).filter(n=>n&&!n.startsWith(\"//\"))),d}function A(t,i){let n=t===\"getDomain\"?\"string hostname, optional publicSuffix.DomainOptions options\":\"string hostname\";throw new TypeError(`Error in invocation of publicSuffix.${t}(${n}): ${i}`)}function b(t,i){typeof t!=\"string\"&&A(i,\"No matching signature.\");let n=()=>A(i,\"Invalid hostname\");(!t||/[%/\\\\:@?#\\s]/.test(t.startsWith(\"[\")?t.replace(/^\\[[0-9a-fA-F:.]*\\]$/,\"\"):t))&&n();let e;try{e=new URL(`http://${t}`).hostname}catch{n()}if(e.startsWith(\"[\"))return{labels:[],trailingDot:\"\",ip:e};if(/^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(e))return{labels:[],trailingDot:\"\",ip:e};let r=e.endsWith(\".\")?\".\":\"\",s=(r?e.slice(0,-1):e).split(\".\");return(e.length>254||s.some(a=>!/^[a-z0-9_-]{1,63}$/.test(a))||!/^[a-z0-9]/.test(s[s.length-1]))&&n(),{labels:s,trailingDot:r}}function w(t){let i=$();for(let n=0;n<t.length;n++){let e=t.slice(n).join(\".\");if(i.has(`!${e}`))return n+1;if(i.has(e)||i.has(`*.${e}`)||n+1<t.length&&i.has(`*.${t.slice(n+1).join(\".\")}`))return n}return-1}function E(t){if(t.ip)return null;let i=w(t.labels);return i<0?null:t.labels.slice(i).join(\".\")+t.trailingDot}function I(t){let a=[],S=t.lastIndexOf(\"-\");for(let l=0;l<Math.max(S,0);l++)a.push(t.charCodeAt(l));let y=128,c=72,o=0;for(let l=S+1;l<t.length;){let h=o;for(let M=1,u=36;;u+=36){if(l>=t.length)throw new RangeError(\"punycode\");let g=t.charCodeAt(l++),m=g-48>>>0<10?g-22:g-97>>>0<26?g-97:36;if(m>=36)throw new RangeError(\"punycode\");o+=m*M;let L=u<=c?1:u>=c+26?26:u-c;if(m<L)break;M*=36-L}let p=a.length+1,f=h===0?Math.floor((o-h)/700):o-h>>1;f+=Math.floor(f/p);let D=0;for(;f>35*26>>1;D+=36)f=Math.floor(f/35);c=Math.floor(D+36*f/(f+38)),y+=Math.floor(o/p),o%=p,a.splice(o++,0,y)}return String.fromCodePoint(...a)}var C=[\"Latin\",\"Cyrillic\",\"Greek\",\"Armenian\",\"Georgian\",\"Hebrew\",\"Arabic\",\"Thai\",\"Devanagari\",\"Bengali\",\"Tamil\",\"Hangul\",\"Han\",\"Hiragana\",\"Katakana\"].map(t=>[t,new RegExp(`\\\\p{Script=${t}}`,\"u\")]),j=[new Set([\"Latin\",\"Han\",\"Hiragana\",\"Katakana\"]),new Set([\"Latin\",\"Han\",\"Hangul\"])],v=/^[асԁеһіјӏорԛѕԝхуъьҽпгѵѡ\\d-]+$/u;function K(t){if(!t.startsWith(\"xn--\"))return t;let i;try{i=I(t.slice(4))}catch{return t}let n=new Set;for(let r of i){if(/[\\d_-]/.test(r))continue;let s=C.find(([,a])=>a.test(r))?.[0];if(!s)return t;n.add(s)}return n.size>1&&!j.some(r=>[...n].every(s=>r.has(s)))||n.has(\"Cyrillic\")&&v.test(i)?t:i}function x(t,i){return i.encoding===\"display\"?t.split(\".\").map(K).join(\".\"):t}var H={isKnownSuffix(t){let i=b(t,\"isKnownSuffix\");return!i.ip&&w(i.labels)===0},getKnownSuffix(t){return E(b(t,\"getKnownSuffix\"))},getDomain(t,i={}){let n=b(t,\"getDomain\");if(i??={},n.ip)return i.allowIPAddress?n.ip:null;let e=n.labels.join(\".\")+n.trailingDot,r=w(n.labels);return r===0?i.allowPlainSuffix?x(e,i):null:r>0?x(n.labels.slice(r-1).join(\".\")+n.trailingDot,i):i.allowUnknownSuffix?x(n.labels.slice(-2).join(\".\")+n.trailingDot,i):null}};gapExports={publicSuffixAugmentation:H};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "search"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"search\"]=core=>{let gapExports;\n(()=>{var{gapCall:a}=core[\"shared/ipc\"];var{bridgeChrome:r,callbackify:o}=core[\"shared/callbackify\"];var s={Disposition:{CURRENT_TAB:\"CURRENT_TAB\",NEW_TAB:\"NEW_TAB\",NEW_WINDOW:\"NEW_WINDOW\"},query(t,n){return o(async()=>{if(typeof t?.text!=\"string\")throw new Error(\"search.query requires text\");if(t.tabId!==void 0&&t.disposition!==void 0)throw new Error(\"Cannot set both tabId and disposition\");let i=await a(\"search\",\"url\",{text:t.text}),e=r();t.disposition===\"NEW_TAB\"?await e.tabs.create({url:i}):t.disposition===\"NEW_WINDOW\"?await e.windows.create({url:i}):t.tabId!==void 0?await e.tabs.update(t.tabId,{url:i}):await e.tabs.update({url:i})},n)}};gapExports={searchAugmentation:s};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "sessions"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"sessions\"]=core=>{let gapExports;\n(()=>{var{gapCall:a}=core[\"shared/ipc\"];var{callbackify:n}=core[\"shared/callbackify\"];var{createGapEventsFromNames:r}=core[\"shared/gap-event\"];var c={MAX_SESSION_RESULTS:25,getRecentlyClosed(e,s){let[o,t]=typeof e==\"function\"?[{},e]:[e??{},s];return n(()=>a(\"sessions\",\"getRecentlyClosed\",{maxResults:o?.maxResults}),t)},getDevices(e,s){return n(async()=>[],typeof e==\"function\"?e:s)},restore(e,s){let[o,t]=typeof e==\"function\"?[void 0,e]:[e,s];return n(()=>a(\"sessions\",\"restore\",{sessionId:o}),t)},...r(\"sessions\",[\"onChanged\"])};gapExports={sessionsAugmentation:c};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "sidePanel"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"sidePanel\"]=core=>{let gapExports;\n(()=>{var{gapCall:s}=core[\"shared/ipc\"];var{bridgeChrome:l,callbackify:o}=core[\"shared/callbackify\"];var{tabPositions:u}=core[\"augmentation/tabGroups\"];var{resolvingEvent:c}=core[\"shared/gap-event\"];var{tabAt:p,windowAt:b}=core[\"augmentation/tabs\"];var f=-2;async function w({windowPosition:n,index:e,path:i}){let a=(await b(n).catch(()=>{}))?.id??-1,r={windowId:a};if(typeof e==\"number\"&&a!==-1){let t=(await p({windowPosition:n,index:e}).catch(()=>{}))?.id;typeof t==\"number\"&&(r.tabId=t)}return r.path=i,[r]}async function d(n){let e=l(),{tabId:i,windowId:a}=n??{},r={tabId:i,windowId:a};if(typeof i==\"number\"){let[t]=await u([i]);t&&t.windowPosition>=0&&(r.tab=t)}if(typeof a==\"number\"){let t=await e.windows.getAll().catch(()=>[])??[],P=a===f?(await e.windows.getCurrent().catch(()=>{}))?.id:a;r.windowPosition=t.findIndex(m=>m.id===P)}return r}var g={setOptions(n,e){return o(async()=>s(\"sidePanel\",\"setOptions\",{...n,...await d({tabId:n?.tabId})}),e)},getOptions(n={},e){return o(async()=>s(\"sidePanel\",\"getOptions\",await d({tabId:n?.tabId})),e)},open(n,e){let i=globalThis.navigator?.userActivation?.isActive===!0;return o(async()=>s(\"sidePanel\",\"open\",{...await d(n),userGesture:i}),e)},close(n,e){return o(async()=>s(\"sidePanel\",\"close\",await d(n)),e)},setPanelBehavior(n,e){return o(()=>s(\"sidePanel\",\"setPanelBehavior\",n),e)},getPanelBehavior(n){return o(()=>s(\"sidePanel\",\"getPanelBehavior\"),n)},getLayout(n){return o(async()=>({side:\"right\"}),n)},onOpened:c(\"sidePanel\",\"onOpened\",w),onClosed:c(\"sidePanel\",\"onClosed\",w)};gapExports={sidePanelAugmentation:g};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "system.cpu",
+   "system.memory",
+   "system.storage",
+   "system.display"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"system\"]=core=>{let gapExports;\n(()=>{var{gapCall:i}=core[\"shared/ipc\"];var{callbackify:s}=core[\"shared/callbackify\"];var{createGapEventsFromNames:r,gapMethod:n}=core[\"shared/gap-event\"];var c=\"Function available only on ChromeOS.\";function a(o){return s(()=>Promise.reject(new Error(c)),o)}function e(){console.error(`Unchecked runtime.lastError: ${c}`)}var m={getInfo:n(\"system.cpu\",\"getInfo\")},y={getInfo:n(\"system.memory\",\"getInfo\")},l={getInfo:n(\"system.storage\",\"getInfo\"),ejectDevice:n(\"system.storage\",\"ejectDevice\",[\"id\"]),...r(\"system.storage\",[\"onAttached\",\"onDetached\"])},p={getInfo(o,t){return s(()=>i(\"system.display\",\"getInfo\"),typeof o==\"function\"?o:t)},getDisplayLayout:o=>a(o),setDisplayProperties:(o,t,u)=>a(u),setDisplayLayout:(o,t)=>a(t),showNativeTouchCalibration:(o,t)=>a(t),setMirrorMode:(o,t)=>a(t),enableUnifiedDesktop:e,overscanCalibrationStart:e,overscanCalibrationAdjust:e,overscanCalibrationReset:e,overscanCalibrationComplete:e,startCustomTouchCalibration:e,completeCustomTouchCalibration:e,clearTouchCalibration:e,...r(\"system.display\",[\"onDisplayChanged\"])};gapExports={systemCpuAugmentation:m,systemDisplayAugmentation:p,systemMemoryAugmentation:y,systemStorageAugmentation:l};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "tabCapture"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"tabCapture\"]=core=>{let gapExports;\n(()=>{var{gapCall:s}=core[\"shared/ipc\"];var{bridgeChrome:u,callbackify:i}=core[\"shared/callbackify\"];var{GapChromeEvent:c,gapMethod:m}=core[\"shared/gap-event\"];var{tabPosition:d}=core[\"augmentation/tabGroups\"];async function f(){let[a]=await u().tabs.query({active:!0,lastFocusedWindow:!0});if(typeof a?.id!=\"number\")throw new Error(\"Invalid tab specified.\");return a.id}function b(a,n){let[t,r]=typeof a==\"function\"?[void 0,a]:[a,n];return i(async()=>{let o=t?.targetTabId??await f(),e={tabId:o,target:await d(o)};return t?.consumerTabId!==void 0&&(e.consumer=await d(t.consumerTabId)),s(\"tabCapture\",\"getMediaStreamId\",e)},r)}var p={onStatusChanged:new c(\"tabCapture\",\"onStatusChanged\"),getMediaStreamId:b,getCapturedTabs:m(\"tabCapture\",\"getCapturedTabs\")};function g(a,n){i(async()=>{if(!a?.audio&&!a?.video)throw new Error(\"Capture failed. No audio or video requested.\");let t=await b({}),r=(o,e)=>o?{...e,mandatory:{...e?.mandatory,chromeMediaSource:\"tab\",chromeMediaSourceId:t}}:!1;return globalThis.navigator.mediaDevices.getUserMedia({audio:r(a.audio,a.audioConstraints),video:r(a.video,a.videoConstraints)})},t=>n?.(t??null))}gapExports={captureTab:g,tabCaptureAugmentation:p};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "topSites"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"topSites\"]=core=>{let gapExports;\n(()=>{var{gapCall:t}=core[\"shared/ipc\"];var{callbackify:r}=core[\"shared/callbackify\"];var o={get(i){return r(()=>t(\"topSites\",\"get\",{}),i)}};gapExports={topSitesAugmentation:o};})();\nreturn gapExports};\n"
+ },
+ {
+  "needs": [
+   "tts"
+  ],
+  "source": "(globalThis.__liloGapModules??={})[\"tts\"]=core=>{let gapExports;\n(()=>{var{gapCall:o}=core[\"shared/ipc\"];var{callbackify:f}=core[\"shared/callbackify\"];var{GapChromeEvent:a,gapMethod:r}=core[\"shared/gap-event\"];var s=new Map,i=new a(\"tts\",\"onEvent\"),h=t=>{let e=s.get(t.srcId);e&&(t.isFinalEvent&&s.delete(t.srcId),e(t))},c={speak(t,e,d){typeof e==\"function\"&&(d=e,e=void 0);let{onEvent:p,...l}=e??{},n;if(typeof p==\"function\"){do n=Math.floor(Math.random()*2**31);while(s.has(n));s.set(n,p),i.hasListener(h)||i.addListener(h)}return f(()=>o(\"tts\",\"speak\",{utterance:t,options:l,srcId:n}).catch(m=>{throw n!==void 0&&s.delete(n),m}),d)},stop(){o(\"tts\",\"stop\").catch(()=>{})},pause(){o(\"tts\",\"pause\").catch(()=>{})},resume(){o(\"tts\",\"resume\").catch(()=>{})},isSpeaking:r(\"tts\",\"isSpeaking\"),getVoices:r(\"tts\",\"getVoices\"),onVoicesChanged:new a(\"tts\",\"onVoicesChanged\")};Object.defineProperty(c,\"onEvent\",{value:i,enumerable:!1});gapExports={ttsAugmentation:c};})();\nreturn gapExports};\n"
+ }
+]

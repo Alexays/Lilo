@@ -3,7 +3,7 @@ import { installCredentialedFetch } from './shared/credentialed-fetch.ts';
 import { installGapAPIs } from './shared/install-gap-apis.ts';
 import { closePage, installChromeCompat } from './shared/chrome-compat.ts';
 import { actionColorAugmentation } from './augmentation/action.ts';
-import { tabCaptureAugmentation, captureTab } from './augmentation/tabCapture.ts';
+import { gapModules } from './shared/gap-modules.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { recordErrorDiagnostics } from './shared/error-diagnostics.ts';
 import { installPageWorkerMessages } from './shared/worker-messages.ts';
@@ -20,7 +20,9 @@ if (isExtensionOrigin && !(globalThis as any).__liloAugmentationInstalled) {
   recordErrorDiagnostics(globalThis, 'page');
   installGapAPIs(c);
   // Chrome offers tabCapture.capture to extension pages only, never to the worker.
-  if (c.tabCapture === tabCaptureAugmentation) c.tabCapture = { ...tabCaptureAugmentation, capture: captureTab };
+  if (c.tabCapture && c.tabCapture === gapModules.tabCapture.tabCaptureAugmentation) {
+    c.tabCapture = { ...c.tabCapture, capture: gapModules.tabCapture.captureTab };
+  }
   installChromeCompat(actionColorAugmentation, true);
   // A window.close() WebKit accepts ends the page, as in Chrome; Lilo's own close of a detached
   // popup, which replaces window.close, calls __liloPageClosing.
