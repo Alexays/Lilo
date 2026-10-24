@@ -116,6 +116,23 @@ final class ExtensionPopupWebKitTests: XCTestCase {
         XCTAssertEqual(granted, [])
     }
 
+    /// Chrome never prompts for a host reached implicitly, so neither does Lilo, registry or not.
+    func testURLPermissionPromptIsRefusedWithoutAsking() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (_, registry) = try browserContext.makeExtensionWindow()
+        let context = try await makeExtensionContext()
+        let url = try XCTUnwrap(URL(string: "https://claude.ai/oauth/authorize?client_id=x"))
+
+        var granted: Set<URL>?
+        registry.delegate.webExtensionController(registry.controller, promptForPermissionToAccess: [url], in: nil, for: context) { urls, _ in
+            granted = urls
+        }
+
+        XCTAssertEqual(granted, [])
+        XCTAssertTrue(registry.pendingPermissionRequests.isEmpty, "no prompt is raised")
+    }
+
     func testURLPermissionPromptFailsClosedWhenRegistryIsMissing() async throws {
         let delegate = try XCTUnwrap(delegate)
         let context = try await makeExtensionContext()

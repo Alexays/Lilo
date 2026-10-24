@@ -316,8 +316,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
                                 in tab: (any WKWebExtensionTab)?,
                                 for context: WKWebExtensionContext,
                                 completionHandler: @escaping (Set<URL>, Date?) -> Void) {
-        guard let id = beginPermissionPrompt(urls, completionHandler: completionHandler) else { return }
-        postPermissionRequest(id, context: context, origins: urls.map(\.absoluteString), type: "urls")
+        // WebKit asks here for a page an extension reaches without its host granted (tabs, webNavigation,
+        // scripting, a failed CORS fetch). Chrome never asks for those, only for `permissions.request`.
+        completionHandler([], nil)
     }
 
     func webExtensionController(_ controller: WKWebExtensionController,
