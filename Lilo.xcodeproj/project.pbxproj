@@ -3165,6 +3165,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LILO_APP_NAME = "Lilo Debug";
 				LILO_BUNDLE_ID_SUFFIX = .debug;
 				OTHER_LDFLAGS = "$(inherited) -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
@@ -3226,6 +3227,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LILO_APP_NAME = Lilo;
 				OTHER_LDFLAGS = "$(inherited) -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = "fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = Lilo;

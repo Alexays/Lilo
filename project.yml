@@ -26,6 +26,7 @@ targets:
         # Empty in Release; .debug in Debug, and .tests for make's test host (see configs below).
         PRODUCT_BUNDLE_IDENTIFIER: fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)
         PRODUCT_NAME: Lilo
+        LILO_APP_NAME: Lilo
         # Icon Composer file: actool turns it into Assets.car (Liquid Glass appearances) plus AppIcon.icns.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # libghostty-vt bundles C++ (simdutf, highway).
@@ -37,6 +38,8 @@ targets:
           # Never the installed app's identity: its own defaults, WebKit data, keychain access and helper.
           # Matches BuildIdentity.appIdentifier; make's test targets override it with .tests.
           LILO_BUNDLE_ID_SUFFIX: .debug
+          # Named apart in Privacy & Security and the Dock, where it would sit beside the installed Lilo.
+          LILO_APP_NAME: Lilo Debug
           # Each build ships only the launch daemon its PowerHelperIdentity registers.
           EXCLUDED_SOURCE_FILE_NAMES: fr.arouillard.lilo.power.plist
         Release:

@@ -16,7 +16,9 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.utilities</string>
     <key>CFBundleName</key>
-    <string>Lilo</string>
+    <string>$(LILO_APP_NAME)</string>
+    <key>CFBundleDisplayName</key>
+    <string>$(LILO_APP_NAME)</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
