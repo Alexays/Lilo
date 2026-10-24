@@ -54,11 +54,11 @@
       Lilo
     </a>
     <nav aria-label="Principal">
-      <a class="hide" href="#agents">Agents</a>
       <a class="hide" href="#native">Natif</a>
       <a class="hide" href="#extensions">Extensions</a>
       <a class="hide" href="#privacy">Confidentialité</a>
       <a class="hide" href="#build">Terminal</a>
+      <a class="hide" href="#agents">Agents</a>
       <a class="hide" href="#faq">FAQ</a>
       <a class="hide" href="/fr/moving/">Migration</a>
       <a class="pill soft" href="https://github.com/Alexays/Lilo">GitHub</a>
@@ -100,41 +100,6 @@
 </div>
 
 <main>
-  <section class="band" id="agents">
-    <div class="wrap agents">
-      <div class="head" style="margin:0">
-        <span class="tag">Pour les agents IA</span>
-        <h2>Vos agents ont leur propre espace.</h2>
-        <p>Lilo intègre un serveur MCP. Claude Code, Codex, Cursor ou tout client MCP ouvrent des onglets, cliquent, tapent, lisent les pages, la console et le réseau, dans un vrai navigateur, à côté de vous.</p>
-        <div class="ag-list">
-          <div><span><b>Leur propre espace.</b> Les agents ouvrent leurs onglets dans un dossier de l'espace Agents, connectés nulle part par défaut. Votre clavier, votre souris et vos onglets restent à vous.</span></div>
-          <div><span><b>Rien sans votre accord.</b> Lilo vous demande avant qu'un agent envoie, paie, supprime ou publie. Chaque agent est autorisé une seule fois, et aucun ne voit jamais un espace privé.</span></div>
-          <div><span><b>Connexion en un clic.</b> Dans les réglages, Connecter ajoute Lilo à Claude Code, Claude Desktop, Codex ou Cursor. Tout autre client copie la configuration.</span></div>
-        </div>
-        <div class="ag-cta"><a class="pill dark" href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">Fonctionnement des agents</a><span>Aucune IA dans Lilo&nbsp;: utilisez l'agent que vous avez déjà.</span></div>
-      </div>
-      <div class="window agwin" role="img" aria-label="Lilo avec l'espace Agents ouvert. Claude Code travaille dans son propre dossier, sur une page de paiement, et la barre d'adresse demande : Claude Code veut cliquer sur « Payer » dans Paiement (shop.test). Refuser, Toujours autoriser sur shop.test, ou Autoriser une fois.">
-        <div class="sb">
-          <div class="chrome-row"><div class="lights"><i></i><i></i><i></i></div><div class="navs"><span>&#9707;</span><span>&#8249;</span><span>&#8250;</span><span>&#8635;</span></div></div>
-          <div class="addr ask"><span><b>shop.test</b>/paiement</span><div class="ask-msg"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 3.6 9.4 5.2-4 1.2 2.6 4.6-1.8 1-2.6-4.6-3 2.8Z"/></svg><span><b>Claude Code</b> veut cliquer sur «&nbsp;Payer&nbsp;» dans Paiement (shop.test).</span></div><div class="ask-acts"><span>Refuser</span><span>Toujours autoriser sur shop.test</span><span>Autoriser une fois</span></div></div>
-          <div class="shead">&#129302; Agents<em>&#9788;</em></div>
-          <div class="row-item"><span class="fi"></span><span class="tt">Bug du paiement</span></div>
-          <div class="row-item in on agent"><span class="fav" style="background:#d97757">S</span><span class="tt">Paiement</span><span class="who">agent</span></div>
-          <div class="row-item in"><span class="fav" style="background:#d97757">S</span><span class="tt">Mes commandes</span></div>
-          <div class="spacebar"><i>&#127968;</i><i>&#128188;</i><i class="on">&#129302;</i></div>
-        </div>
-        <div class="view"><div class="pay">
-          <small>shop.test</small>
-          <h4>Paiement</h4>
-          <div class="ln"><span>Sac en lin</span><span>48,00&nbsp;€</span></div>
-          <div class="card">Carte de test, 4242</div>
-          <div class="ln tot"><span>Total</span><span>48,00&nbsp;€</span></div>
-          <div class="go">Payer<span class="cur"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 2l12 6.6-5.2 1.5 3.2 5.6-2.3 1.3-3.2-5.6L3.6 15Z"/></svg><span>Claude Code</span></span></div>
-        </div></div>
-      </div>
-    </div>
-  </section>
-
   <section class="band" id="native">
     <div class="wrap native">
       <div>
@@ -232,6 +197,41 @@
           <div>xcodebuild test <span class="spin">en cours</span></div>
         </div>
         <div class="awake"><i></i><span><b>Éveillé, écran rabattu</b><small>Pendant make validate</small></span><button type="button">Autoriser la veille</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="agents">
+    <div class="wrap agents">
+      <div class="head" style="margin:0">
+        <span class="tag">Pour les agents IA</span>
+        <h2>Vos agents ont leur propre espace.</h2>
+        <p>Lilo intègre un serveur MCP. Claude Code, Codex, Cursor ou tout client MCP ouvrent des onglets, cliquent, tapent, lisent les pages, la console et le réseau, dans un vrai navigateur, à côté de vous.</p>
+        <div class="ag-list">
+          <div><span><b>Leur propre espace.</b> Les agents ouvrent leurs onglets dans un dossier de l'espace Agents, connectés nulle part par défaut. Votre clavier, votre souris et vos onglets restent à vous.</span></div>
+          <div><span><b>Rien sans votre accord.</b> Lilo vous demande avant qu'un agent envoie, paie, supprime ou publie. Chaque agent est autorisé une seule fois, et aucun ne voit jamais un espace privé.</span></div>
+          <div><span><b>Connexion en un clic.</b> Dans les réglages, Connecter ajoute Lilo à Claude Code, Claude Desktop, Codex ou Cursor. Tout autre client copie la configuration.</span></div>
+        </div>
+        <div class="ag-cta"><a class="pill dark" href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">Fonctionnement des agents</a><span>Aucune IA dans Lilo&nbsp;: utilisez l'agent que vous avez déjà.</span></div>
+      </div>
+      <div class="window agwin" role="img" aria-label="Lilo avec l'espace Agents ouvert. Claude Code travaille dans son propre dossier, sur une page de paiement, et la barre d'adresse demande : Claude Code veut cliquer sur « Payer » dans Paiement (shop.test). Refuser, Toujours autoriser sur shop.test, ou Autoriser une fois.">
+        <div class="sb">
+          <div class="chrome-row"><div class="lights"><i></i><i></i><i></i></div><div class="navs"><span>&#9707;</span><span>&#8249;</span><span>&#8250;</span><span>&#8635;</span></div></div>
+          <div class="addr ask"><span><b>shop.test</b>/paiement</span><div class="ask-msg"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 3.6 9.4 5.2-4 1.2 2.6 4.6-1.8 1-2.6-4.6-3 2.8Z"/></svg><span><b>Claude Code</b> veut cliquer sur «&nbsp;Payer&nbsp;» dans Paiement (shop.test).</span></div><div class="ask-acts"><span>Refuser</span><span>Toujours autoriser sur shop.test</span><span>Autoriser une fois</span></div></div>
+          <div class="shead">&#129302; Agents<em>&#9788;</em></div>
+          <div class="row-item"><span class="fi"></span><span class="tt">Bug du paiement</span></div>
+          <div class="row-item in on agent"><span class="fav" style="background:#d97757">S</span><span class="tt">Paiement</span><span class="who">agent</span></div>
+          <div class="row-item in"><span class="fav" style="background:#d97757">S</span><span class="tt">Mes commandes</span></div>
+          <div class="spacebar"><i>&#127968;</i><i>&#128188;</i><i class="on">&#129302;</i></div>
+        </div>
+        <div class="view"><div class="pay">
+          <small>shop.test</small>
+          <h4>Paiement</h4>
+          <div class="ln"><span>Sac en lin</span><span>48,00&nbsp;€</span></div>
+          <div class="card">Carte de test, 4242</div>
+          <div class="ln tot"><span>Total</span><span>48,00&nbsp;€</span></div>
+          <div class="go">Payer<span class="cur"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 2l12 6.6-5.2 1.5 3.2 5.6-2.3 1.3-3.2-5.6L3.6 15Z"/></svg><span>Claude Code</span></span></div>
+        </div></div>
       </div>
     </div>
   </section>
