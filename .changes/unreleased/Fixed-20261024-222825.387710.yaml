@@ -1,0 +1,3 @@
+kind: Fixed
+body: A tab whose page never loaded, such as a localhost server that was down, shows the error page after a relaunch instead of staying blank.
+time: 2026-10-24T22:28:25.38771+02:00

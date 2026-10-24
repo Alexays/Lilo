@@ -65,6 +65,21 @@ final class BlankTabLoadingTests: XCTestCase {
         XCTAssertTrue(try isLoading(window, tab.id))
     }
 
+    /// A page whose first load failed saves an empty history: woken from it, the tab loads its URL again.
+    func testAPageThatNeverLoadedWokenFromItsSavedStateLoadsItsURL() throws {
+        let window = try makeWindow()
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:9/")))
+        let deadline = Date().addingTimeInterval(10)
+        while try XCTUnwrap(window.tabManager.tab(for: tab.id)).hasNavigationError == false, Date() < deadline {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+
+        window.tabManager.discardEngine(tab.id)
+        window.tabManager.activateTabRuntime(id: tab.id)
+
+        XCTAssertTrue(try isLoading(window, tab.id))
+    }
+
     func testAFailedNavigationLeavesTheTabNotLoading() throws {
         let window = try makeWindow()
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
