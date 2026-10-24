@@ -215,6 +215,14 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         for _ in 0..<10 { await Task.yield() }   // drain the notification's main-actor hop
 
         XCTAssertTrue(handler.isPolling, "a runtime load holding the idle permission must wake the poller")
+
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        await registry.addGapListeners([], extensionId: id, fromWorker: true)
+        XCTAssertFalse(handler.isPolling, "a worker that does not listen to onStateChanged stops the poller")
+        await registry.addGapListeners(["idle.onStateChanged"], extensionId: id, fromWorker: true)
+        XCTAssertTrue(handler.isPolling)
+        registry.removeGapListeners(["idle.onStateChanged"], extensionId: id, fromWorker: true)
+        XCTAssertFalse(handler.isPolling, "its last listener gone, nothing hears the poller")
     }
 
     func testLoadingExtensionWithoutIdlePermissionLeavesPollerStopped() async throws {

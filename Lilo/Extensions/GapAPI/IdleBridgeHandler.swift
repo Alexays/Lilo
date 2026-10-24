@@ -4,14 +4,21 @@ import IOKit
 /// chrome.idle gap bridge using IOKit HID idle time.
 @MainActor
 final class IdleBridgeHandler: GapHandler {
-    private var detectionInterval: Double = 60
+    /// An extension of one profile: Chrome keeps a detection interval, and a state, per extension.
+    private struct Listener: Hashable {
+        let registry: ObjectIdentifier
+        let extensionId: String
+    }
+
+    private static let defaultInterval: Double = 60
+    private var detectionIntervals: [Listener: Double] = [:]
     /// Every loaded profile's registry: the idle state is the machine's, so each profile's
     /// extensions hear onStateChanged. `nil` leaves the poller dormant.
     private let registriesProvider: (() -> [ProfileExtensionRegistry])?
     nonisolated(unsafe) private var pollTimer: Timer?
-    nonisolated(unsafe) private var runtimeLoadObserver: Any?
-    /// Last state the poller emitted (or established as baseline); nil means no baseline yet.
-    private var lastPolledState: String?
+    nonisolated(unsafe) private var observers: [Any] = []
+    /// The state each listener was last told, or took as its baseline.
+    private var lastStates: [Listener: String] = [:]
 
     let gapActions: Set<String> = [
         "idle.queryState",
@@ -21,35 +28,35 @@ final class IdleBridgeHandler: GapHandler {
     init(registriesProvider: (() -> [ProfileExtensionRegistry])? = nil) {
         self.registriesProvider = registriesProvider
         guard registriesProvider != nil else { return }
-        // The poller runs only while some loaded extension holds the idle permission. A
-        // listener-only extension never issues a bridge call, so a runtime load is the only
-        // signal that polling may now have an audience.
-        runtimeLoadObserver = NotificationCenter.default.addObserver(
-            forName: .extensionRuntimeLoaded,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.startPollingIfInterested() }
+        // The poller runs only while an extension holding the idle permission listens to onStateChanged:
+        // a load or a listener change is when that may start or stop.
+        observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged].map { name in
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.schedulePolling(for: self.audience)
+                }
+            }
         }
     }
 
     deinit {
         pollTimer?.invalidate()
-        runtimeLoadObserver.map { NotificationCenter.default.removeObserver($0) }
+        observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     var isPolling: Bool { pollTimer != nil }
 
     func handle(_ call: GapCall) async -> Any? {
+        let listener = Listener(registry: ObjectIdentifier(call.registry), extensionId: call.extensionId)
         switch call.action {
         case "idle.queryState":
-            if pollTimer == nil { startPolling() }  // a live idle.* call is evidence of interest
-            let threshold = Self.clampInterval(call.double("detectionIntervalInSeconds") ?? detectionInterval)
-            return queryState(threshold: threshold)
+            let threshold = Self.clampInterval(call.double("detectionIntervalInSeconds") ?? detectionIntervals[listener] ?? Self.defaultInterval)
+            return idleSeconds() >= threshold ? "idle" : "active"
 
         case "idle.setDetectionInterval":
-            detectionInterval = Self.clampInterval(call.double("intervalInSeconds") ?? 60)
-            startPolling()  // reschedule at the new interval
+            detectionIntervals[listener] = Self.clampInterval(call.double("intervalInSeconds") ?? Self.defaultInterval)
+            schedulePolling(for: audience)
             return nil
 
         default:
@@ -59,22 +66,26 @@ final class IdleBridgeHandler: GapHandler {
 
     // MARK: - onStateChanged polling
 
-    /// The registries with an extension holding the idle permission.
-    private var audience: [ProfileExtensionRegistry] {
-        (registriesProvider?() ?? []).filter { !$0.extensionIds(withPermission: "idle").isEmpty }
+    /// The extensions holding the idle permission that listen to onStateChanged, in every profile.
+    private var audience: [(listener: Listener, registry: ProfileExtensionRegistry)] {
+        (registriesProvider?() ?? []).flatMap { registry in
+            registry.gapEvents.listeners(among: registry.extensionIds(withPermission: "idle"), namespace: "idle", event: "onStateChanged")
+                .map { (Listener(registry: ObjectIdentifier(registry), extensionId: $0), registry) }
+        }
     }
 
-    private func startPollingIfInterested() {
-        guard pollTimer == nil, !audience.isEmpty else { return }
-        startPolling()
-    }
-
-    private func startPolling() {
-        guard registriesProvider != nil else { return }
+    /// Polls at the shortest detection interval of `audience`, or stops while it is empty.
+    private func schedulePolling(for audience: [(listener: Listener, registry: ProfileExtensionRegistry)]) {
+        guard let interval = audience.map({ detectionIntervals[$0.listener] ?? Self.defaultInterval }).min() else {
+            pollTimer?.invalidate()
+            pollTimer = nil
+            lastStates = [:]
+            return
+        }
+        guard pollTimer?.timeInterval != interval else { return }
         pollTimer?.invalidate()
-        let interval = Self.clampInterval(detectionInterval)
         let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.poll() }
+            MainActor.assumeIsolated { self?.poll() }
         }
         timer.tolerance = interval * 0.5  // off the hot path; presence detection tolerates slack
         RunLoop.main.add(timer, forMode: .common)
@@ -83,22 +94,19 @@ final class IdleBridgeHandler: GapHandler {
 
     private func poll() {
         let audience = audience
-        guard !audience.isEmpty else {
-            // No audience: stop until the next idle.* call or extension load re-arms the poller,
-            // and drop the baseline so the next one re-establishes it.
-            pollTimer?.invalidate()
-            pollTimer = nil
-            lastPolledState = nil
-            return
+        schedulePolling(for: audience)
+        guard !audience.isEmpty else { return }
+        let idle = idleSeconds()
+        var states: [Listener: String] = [:]
+        for (listener, registry) in audience {
+            let state = idle >= detectionIntervals[listener] ?? Self.defaultInterval ? "idle" : "active"
+            states[listener] = state
+            // The first sample only sets the baseline.
+            if let previous = lastStates[listener], previous != state {
+                registry.gapEvents.emit("idle", "onStateChanged", args: [state], to: [listener.extensionId])
+            }
         }
-        let state = queryState(threshold: detectionInterval)
-        let previous = lastPolledState
-        lastPolledState = state
-        // The first sample only sets the baseline.
-        guard let previous, previous != state else { return }
-        for registry in audience {
-            registry.emitGapEvent("idle", "onStateChanged", args: [state], requiredPermission: "idle")
-        }
+        lastStates = states
     }
 
     /// Chrome rejects detection intervals below 15s; clamp so a 0/negative value can't make
@@ -108,10 +116,6 @@ final class IdleBridgeHandler: GapHandler {
     }
 
     // MARK: - State Detection
-
-    private func queryState(threshold: Double) -> String {
-        idleSeconds() >= threshold ? "idle" : "active"
-    }
 
     private func idleSeconds() -> Double {
         let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"))
