@@ -279,7 +279,8 @@ export function webKitRule(rule: any): any {
     result = { ...result, condition };
   }
   const redirect = rule.action?.redirect;
-  if (rule.action?.type === 'redirect' && typeof redirect?.url === 'string' && !/^(https?|javascript):/i.test(redirect.url) && URL.canParse(redirect.url)) {
+  // A scheme test, not URL.canParse: static rulesets are prepared in a bare JavaScriptCore context, which has no URL.
+  if (rule.action?.type === 'redirect' && typeof redirect?.url === 'string' && !/^(https?|javascript):/i.test(redirect.url) && /^[a-z][a-z\d+.-]*:/i.test(redirect.url)) {
     const origin = ownOrigins().find((base) => redirect.url.startsWith(base));
     if (!origin) return undefined;
     const { url: _url, ...rest } = redirect;

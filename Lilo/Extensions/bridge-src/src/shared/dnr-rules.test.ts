@@ -297,6 +297,13 @@ describe('static rulesets', () => {
     assert.deepEqual(webKitStaticRulesets([prepared!]), [prepared], 'preparing again changes nothing');
   });
 
+  it('prepares a data: redirect without URL, which the preparer bare JavaScriptCore context lacks', (t) => {
+    t.mock.property(globalThis, 'URL', undefined as any);
+    const rules = [{ id: 1, action: { type: 'redirect', redirect: { url: 'data:,x' } }, condition: { urlFilter: 'a' } }, block(2, { regexFilter: 'a\\d' })];
+    const applied = JSON.parse(webKitStaticRulesets([JSON.stringify(rules)])[0]!);
+    assert.deepEqual(applied.map((rule: any) => rule.condition.regexFilter), [INERT_FILTER, 'a[0-9]']);
+  });
+
   it('keeps every enabled set under WebKit cap, the rules WebKit expands most turning inert', () => {
     const domains = (count: number, name: string) => Array.from({ length: count }, (_, i) => `${name}${i}.example`);
     const [first, second] = webKitStaticRulesets([
