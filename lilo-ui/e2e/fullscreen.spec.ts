@@ -9,7 +9,8 @@ async function receive(page: Page, message: Record<string, unknown>): Promise<vo
 // Where the sidebar comes to rest, and the right edge it has when fully in view.
 function sidebarBox(page: Page) {
 	return page.locator(".sidebar").evaluate(async (el: HTMLElement) => {
-		await Promise.all(el.getAnimations().map((animation) => animation.finished));
+		// An animation replaced midway rejects its finished promise: settled is enough.
+		await Promise.allSettled(el.getAnimations().map((animation) => animation.finished));
 		const { left, right } = el.getBoundingClientRect();
 		return { left, right, fullRight: el.offsetWidth };
 	});
@@ -38,6 +39,8 @@ test("full screen keeps the sidebar fully in view at the left edge, with the set
 
 test("a sidebar hidden in full screen stays fully out of view until the left edge reveals it", async ({ page }) => {
 	await bootChrome(page, initialWorld());
+	// The pointer starts at (0, 0), on the very edge that reveals a hidden sidebar.
+	await page.mouse.move(600, 300);
 	await receive(page, { event: "sidebarVisibilityChanged", visible: false, width: 260 });
 	await receive(page, { event: "windowFullscreenChanged", isFullscreen: true });
 	await expect.poll(async () => (await sidebarBox(page)).right).toBeLessThanOrEqual(0);

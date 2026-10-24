@@ -30,7 +30,8 @@ test("Escape closes the command bar over a panel, not the panel", async ({ page 
 	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
 	await expect(page.getByRole("dialog", { name: "Downloads" })).toBeVisible();
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
-	await expect(page.locator(".command-bar")).toBeVisible();
+	// Escape reaches the command bar through its focused field.
+	await expect(page.locator(".command-bar-input")).toBeFocused();
 
 	await page.keyboard.press("Escape");
 
