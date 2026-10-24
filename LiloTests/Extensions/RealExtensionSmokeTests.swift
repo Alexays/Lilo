@@ -304,7 +304,15 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "iidnbdjijdkbmajdffnidomddglmieko", name: "Quillbot", check: "document.querySelector('[data-qb-installed]') !== null"),
         Feature(id: "hdokiejnpimakedhajhdlcegeplioahd", name: "LastPass", check: "document.querySelector('[data-lastpass-icon-root]') !== null"),
         Feature(id: "fdjamakpfbbddfjaooikfcpapjohcfmg", name: "Dashlane", check: "document.querySelector('[data-dashlane-rid]') !== null"),
+        // Its popup sizes itself as a page shown in a tab when it finds a current tab, which collapsed WebKit's popover.
         Feature(id: "ghmbeldphafepmbegfdlkpapadhbakde", name: "Proton Pass", check: "document.querySelector('[data-protonpass-role]') !== null"),
+        Feature(id: "ghmbeldphafepmbegfdlkpapadhbakde", name: "Proton Pass popup", check: "true", click: true,
+                shows: { window in
+                    let context = window.profileContext?.extensions.context(for: "ghmbeldphafepmbegfdlkpapadhbakde")
+                    return window.tabManager.openTabs.contains { tab in
+                        context?.action(for: window.tabManager.tabAdapter(for: tab.id))?.popupPopover?.contentSize == NSSize(width: 600, height: 430)
+                    }
+                }),
         Feature(id: "cofdbpoegempjloogbagkncekinflcnj", name: "DeepL", check: "document.querySelector('deepl-input-controller') !== null", menu: true),
         Feature(id: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", name: "Immersive Translate", check: "document.documentElement.hasAttribute('data-immersive-translate-page-theme')"),
         Feature(id: "gighmmpiobklfepjocnamgkkbiglidom", name: "AdBlock", check: "true", menu: true),
@@ -357,15 +365,26 @@ final class RealExtensionSmokeTests: XCTestCase {
             let context = try XCTUnwrap(registry.context(for: feature.id))
             _ = await registry.backgrounds.load(feature.id)
             _ = await pollUntil(timeout: 10) { registry.gapEvents.reportedListeners(of: feature.id) != nil }
+            // A welcome page the extension opens on install would take the toolbar button's click: once no tab has
+            // opened for 1.5 s, they close.
+            if feature.click {
+                var quiet = 0, count = window.tabManager.openTabs.count
+                for _ in 0..<12 where quiet < 3 {
+                    try await Task.sleep(for: .milliseconds(500))
+                    quiet = window.tabManager.openTabs.count == count ? quiet + 1 : 0
+                    count = window.tabManager.openTabs.count
+                }
+                for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
+            }
             let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
             let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
             browserContext.context.agentControl.attach(engine, to: nil)
             let page = try XCTUnwrap(engine.view as? WKWebView)
             let holds = { (check: String) in await pollUntil(timeout: 20) { (try? await page.evaluateJavaScript(check)) as? Bool == true } }
             if feature.click {
-                // As the toolbar button does; a welcome page the extension opens on install may come after the page.
-                _ = await pollUntil(timeout: 3) { window.tabManager.openTabs.count > 1 }
                 window.activateTabStateFirst(id: tab.id)
+                // A popover shows only from a window on screen.
+                window.window?.orderFront(nil)
                 _ = await pollUntil(timeout: 10) { !page.isLoading }
                 let button = NSMenuItem()
                 button.representedObject = feature.id
