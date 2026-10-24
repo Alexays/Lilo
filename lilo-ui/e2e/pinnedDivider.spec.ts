@@ -95,3 +95,15 @@ test("the divider line holds still when the last tab Clear could archive closes"
 	await expect(page.locator('.tab-list [data-tab-id="tab-alpha"]')).toHaveCount(0);
 	expect(new Set(tops).size, tops.join(" ")).toBe(1);
 });
+
+test("a Space without pins leaves no empty row between its name and its tabs", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].filter((tab) => !tab.isPinned && !tab.isBookmarked);
+	world.treeItemsBySpace[SPACE_1] = world.treeItemsBySpace[SPACE_1].filter((item) => item.section === "unpinned");
+	await bootChrome(page, world);
+	await page.locator('.tab-list [data-tab-id="tab-alpha"]').hover();
+
+	const shell = await box(page, ".pinned-tab-divider-shell");
+	expect(shell.height).toBeLessThanOrEqual(8);
+	await expect(page.locator(".clear-unpinned")).toHaveCount(0);
+});

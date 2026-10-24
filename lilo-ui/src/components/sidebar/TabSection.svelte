@@ -1107,6 +1107,7 @@
         <div
           class="pinned-tab-divider-shell"
           class:pinned-transfer-gate={pinnedTransferGateActive}
+          class:collapsed={pinnedDividerHidden}
         >
           <div
             class="pinned-tab-divider"
@@ -1115,7 +1116,7 @@
             class:hidden-line={pinnedDividerHidden}
             aria-hidden="true"
           ></div>
-          {#if canClear && !dragActive}
+          {#if canClear && !dragActive && !pinnedDividerHidden}
             <button
               class="clear-unpinned"
               disabled={!interactive}
@@ -1738,6 +1739,13 @@
     /* Holds Clear with 4px to spare on each side, with or without it, so the line never moves
        when Clear comes or goes. */
     min-height: 24px;
+  }
+
+  /* No pins and no drag: no line to show, and Clear stays on its shortcut and menu, so the row would
+     only read as an empty gap. A drag grows it back, animated. */
+  .pinned-tab-divider-shell.collapsed {
+    min-height: 0;
+    padding: calc(var(--sidebar-tab-row-gap) / 2) 0;
   }
 
   .pinned-tab-divider-shell.pinned-transfer-gate {
