@@ -4,7 +4,7 @@ import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { resolvingEvent } from '../shared/gap-event.ts';
 import { WrappedEvent } from '../shared/chrome-event.ts';
-import { TAB_GROUP_ID_NONE, tabPositions, toPositions } from './tabGroups.ts';
+import { TAB_GROUP_ID_NONE, tabPositions, toPositions, windowIdOrder } from './tabGroups.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 export interface TabPosition {
@@ -161,11 +161,11 @@ function asChromeTab(tab: any, details?: TabDetails | null): any {
  * shows only those of the hosts the extension may access: the same call reads the ones WebKit left empty, an empty tab
  * reading as Chrome's new tab page. Without it, the empty ones are left out, as in Chrome.
  */
-async function completeTabs(tabs: any[], withheldURLs: boolean): Promise<void> {
+async function completeTabs(tabs: any[], withheldURLs: boolean, windowIds?: Promise<number[]>): Promise<void> {
   const listed = tabs.filter((tab) => typeof tab?.index === 'number');
   if (listed.length === 0) return;
   const reveal = withheldURLs ? [] : listed.flatMap((tab, i) => (tab.url === '' ? [i] : []));
-  const details = await gapCall<Array<TabDetails | null>>('tabs', 'details', { tabs: await toPositions(listed), reveal }).catch(() => []);
+  const details = await gapCall<Array<TabDetails | null>>('tabs', 'details', { tabs: await toPositions(listed, windowIds), reveal }).catch(() => []);
   listed.forEach((tab, i) => {
     const found = details?.[i];
     if (found?.url) Object.assign(tab, { url: found.url, title: found.title });
@@ -174,8 +174,11 @@ async function completeTabs(tabs: any[], withheldURLs: boolean): Promise<void> {
   });
 }
 
-/** WebKit's method, its tabs completed. `filtersGroups`: `tabs.query`, whose `groupId` key WebKit ignores, so Lilo filters on it. */
-const completing = (withheldURLs: boolean, filtersGroups = false): Patch => (original, self) => function (this: unknown, ...args: any[]) {
+/**
+ * WebKit's method, its tabs completed. `filtersGroups`: `tabs.query`, whose `groupId` key WebKit ignores, so Lilo filters on it.
+ * `returnsTabs`: a tabs method, whose window order is read alongside the call rather than after it.
+ */
+const completing = (withheldURLs: boolean, returnsTabs: boolean, filtersGroups = false): Patch => (original, self) => function (this: unknown, ...args: any[]) {
   const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
   const groupId = filtersGroups ? args[0]?.groupId : undefined;
   if (groupId !== undefined) {
@@ -183,9 +186,10 @@ const completing = (withheldURLs: boolean, filtersGroups = false): Patch => (ori
     args[0] = rest;
   }
   return callbackify(async () => {
+    const windowIds = returnsTabs ? windowIdOrder() : undefined;
     const result = await original.apply(self(this), args);
     // A window lists its tabs; anything else is a tab.
-    await completeTabs((Array.isArray(result) ? result : [result]).flatMap((item) => item?.tabs ?? [item]), withheldURLs);
+    await completeTabs((Array.isArray(result) ? result : [result]).flatMap((item) => item?.tabs ?? [item]), withheldURLs, windowIds);
     return typeof groupId === 'number' ? result.filter((tab: any) => tab.groupId === groupId) : result;
   }, callback);
 };
@@ -194,11 +198,11 @@ const tabMethods = ['get', 'getCurrent', 'create', 'update', 'duplicate', 'move'
 const windowMethods = ['get', 'getAll', 'getCurrent', 'getLastFocused', 'create'];
 
 export function tabPatches(withheldURLs: boolean): Record<string, Patch> {
-  return { ...Object.fromEntries(tabMethods.map((name) => [name, completing(withheldURLs)])), query: completing(withheldURLs, true) };
+  return { ...Object.fromEntries(tabMethods.map((name) => [name, completing(withheldURLs, true)])), query: completing(withheldURLs, true, true) };
 }
 
 export function windowPatches(withheldURLs: boolean): Record<string, Patch> {
-  return Object.fromEntries(windowMethods.map((name) => [name, completing(withheldURLs)]));
+  return Object.fromEntries(windowMethods.map((name) => [name, completing(withheldURLs, false)]));
 }
 
 /** Tab events with Chrome's tab, without what the extension may not see, as Chrome, which still reports an update of nothing else. */

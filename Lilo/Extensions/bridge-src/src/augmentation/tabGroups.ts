@@ -46,7 +46,7 @@ interface TabPosition {
 }
 
 /** The ids of chrome.windows.getAll, in its order; empty when unknown. */
-async function windowIdOrder(): Promise<number[]> {
+export async function windowIdOrder(): Promise<number[]> {
   try {
     return ((await bridgeChrome()?.windows?.getAll?.()) ?? []).map((w: any) => w.id);
   } catch {
