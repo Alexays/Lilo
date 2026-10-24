@@ -2,6 +2,8 @@
 
 Lilo's website uses Astro to build static pages for Cloudflare Workers. It needs Node 22.23.4 or later and Python 3. All commands run from the repository root through Make.
 
+Coding agents must also follow the website's [Astro project rules](AGENTS.md).
+
 ## Development
 
 ```sh

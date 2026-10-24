@@ -28,4 +28,6 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 - **Release notes** - a change people using Lilo will notice gets a note from `make change`, committed with the code under `.changes/unreleased/`; without a prompt, run the Makefile's `$(CHANGIE)` as `new --interactive=false -k <Kind> -b <text>`. Never edit `CHANGELOG.md`: `make release-version` generates it from the notes. See [docs/RELEASING.md](docs/RELEASING.md).
 - **Generated files** (`ChromeAPIAugmentation.js`, `ChromeAPIBackgroundPrelude.js`, `ChromeAPIGapModules.json`, `ChromeWebStoreShim.js`, `ChromeContentCompat.js`, `ChromeStaticRules.js`, `*.gen.swift`, `tabProtocol.gen.ts`, plus the git-ignored `Lilo/Generated/NativeStrings.swift` and `Lilo/Generated/ChromeUIAssets.swift`) are build outputs - never hand-edit them; regenerate via `make ext-bridge-build` / `make bridge-gen` / `make ui-build`.
 
+For website changes, read [site/AGENTS.md](site/AGENTS.md) for Astro-specific rules.
+
 Architecture deep-dive: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Setup, tests and the pull request flow: [CONTRIBUTING.md](CONTRIBUTING.md).
