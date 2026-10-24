@@ -6,6 +6,7 @@ import * as browsingData from '../augmentation/browsingData.ts';
 import * as contentSettings from '../augmentation/contentSettings.ts';
 import * as debuggerModule from '../augmentation/debugger.ts';
 import * as declarativeContent from '../augmentation/declarativeContent.ts';
+import * as declarativeNetRequest from '../augmentation/declarativeNetRequest.ts';
 import * as desktopCapture from '../augmentation/desktopCapture.ts';
 import * as downloads from '../augmentation/downloads.ts';
 import * as fontSettings from '../augmentation/fontSettings.ts';
@@ -31,7 +32,7 @@ import * as topSites from '../augmentation/topSites.ts';
 import * as tts from '../augmentation/tts.ts';
 
 export const gapModules = {
-  bookmarks, browsingData, contentSettings, debugger: debuggerModule, declarativeContent, desktopCapture, downloads,
+  bookmarks, browsingData, contentSettings, debugger: debuggerModule, declarativeContent, declarativeNetRequest, desktopCapture, downloads,
   fontSettings, gcm, history, identity, idle, instanceID, notifications, omnibox, pageCapture, power, printerProvider,
   privacy, proxy, publicSuffix, search, sessions, sidePanel, system, tabCapture, topSites, tts,
 };

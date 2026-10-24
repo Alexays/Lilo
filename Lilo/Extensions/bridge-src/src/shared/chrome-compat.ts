@@ -3,7 +3,6 @@
 import { tabGroupsAugmentation, tabsWithGroups, manifestPermissions, discardTab } from '../augmentation/tabGroups.ts';
 import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns } from '../augmentation/webNavigation.ts';
 import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
-import { declarativeNetRequestPatches, staticRulesAdditions } from './dnr-rules.ts';
 import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
@@ -14,7 +13,7 @@ import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
 import { detectLanguage } from '../augmentation/detectLanguage.ts';
 import { onUserScriptMessage, onUserScriptConnect } from '../augmentation/userScripts.ts';
-import { testMatchOutcomeFor } from '../augmentation/dnrTestMatch.ts';
+import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { GapChromeEvent, reportGapListener } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
@@ -179,10 +178,8 @@ function view(namespace: any, members: Record<PropertyKey, unknown>): object {
 
 // Native fires it when the user pins the extension to the address bar or unpins it.
 const actionOnUserSettingsChanged = new GapChromeEvent<[{ isOnToolbar?: boolean }]>('action', 'onUserSettingsChanged');
-// Events Lilo never fires: it has no blocking webRequest, and WebKit does not say which
-// declarativeNetRequest rule matched a request.
+// Never fired: Lilo has no blocking webRequest.
 const webRequestOnActionIgnored = new ChromeEvent<[unknown]>();
-const onRuleMatchedDebug = new ChromeEvent<[unknown]>();
 
 /**
  * Makes `globalThis.chrome` Lilo's proxy over WebKit's, which applies each namespace's description.
@@ -241,11 +238,9 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     webNavigation: { add: webNavigationAugmentation, patch: webNavigationPatches, standIns: webNavigationStandIns },
     // WebKit has no tab groups: tabs.group/ungroup and each tab's groupId map onto Lilo folders.
     tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: tabStandIns(withheldURLs) },
-    declarativeNetRequest: {
-      patch: declarativeNetRequestPatches,
-      add: perms.has('declarativeNetRequestFeedback')
-        ? { ...staticRulesAdditions, testMatchOutcome: testMatchOutcomeFor(chrome.declarativeNetRequest), onRuleMatchedDebug }
-        : staticRulesAdditions,
+    // Read only once WebKit gives the namespace, which comes with the permissions its gap module needs.
+    get declarativeNetRequest() {
+      return gapModules.declarativeNetRequest.declarativeNetRequestCompat?.(chrome.declarativeNetRequest, perms.has('declarativeNetRequestFeedback'));
     },
     windows: { add: { onBoundsChanged }, patch: windowPatches(withheldURLs) },
     permissions: {

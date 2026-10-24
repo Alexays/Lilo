@@ -55,14 +55,14 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
     func testPreludeCarriesOnlyTheGapModulesTheManifestMayUse() throws {
         let extDir = tempDir.appendingPathComponent("gap-modules")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
-        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
+        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history","declarativeNetRequestWithHostAccess"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
             .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
         let modules = prelude.matches(of: /__liloGapModules\?\?=\{\}\)\["(\w+)"\]/).map { String($0.1) }
-        XCTAssertEqual(modules, ["history", "omnibox", "system"])
+        XCTAssertEqual(modules, ["declarativeNetRequest", "history", "omnibox", "system"])
         XCTAssertTrue(prelude.hasSuffix("P"))
     }
 
