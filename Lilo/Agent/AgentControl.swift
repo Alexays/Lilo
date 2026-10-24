@@ -248,26 +248,33 @@ final class AgentControl {
         }
         guard asking else { return false }
         let key = name + "\n" + session.identity
-        // Long enough to come back to the Mac: the client is told it waits, so nothing times out meanwhile.
-        let question = pendingConsents[key]?.question ?? Task { @MainActor in await self.askConsent(name, executable: session.executable, timeout: 600) }
+        let identity = session.identity
+        let question = pendingConsents[key]?.question ?? Task { @MainActor in
+            Self.logger.notice("Asking the user to allow \(name, privacy: .public)")
+            // Long enough to come back to the Mac: the client is told it waits, so nothing times out meanwhile.
+            let allowed = await self.askConsent(name, executable: session.executable, timeout: 600)
+            Self.logger.notice("\(name, privacy: .public) \(allowed ? "allowed" : "not allowed", privacy: .public)")
+            // Remembered here rather than by a waiting connection: a client that reconnects in between is let in.
+            if allowed, !identity.isEmpty, self.allowedClients[name]?.contains(identity) != true {
+                var clients = self.allowedClients
+                clients[name, default: []].append(identity)
+                self.saveAllowedClients(clients)
+                self.markSeen(name)
+            }
+            return allowed
+        }
         pendingConsents[key] = (question, (pendingConsents[key]?.waiting ?? 0) + 1)
-        // A connection that leaves stops waiting; the last one to leave withdraws the question, so a late
-        // answer approves no client that is gone.
+        // Clients such as an agent app's local mode open a connection per try and leave while the user is
+        // still on the way: the question stays up for the next one. Only an unidentified client's question
+        // goes with its last connection, as its approval could reach no one.
         let allowed = await withTaskCancellationHandler { await question.value } onCancel: {
             Task { @MainActor in
                 guard let pending = self.pendingConsents[key], pending.question == question else { return }
                 self.pendingConsents[key]?.waiting -= 1
-                if pending.waiting == 1 { question.cancel() }
+                if pending.waiting == 1, identity.isEmpty { question.cancel() }
             }
         }
         if pendingConsents[key]?.question == question { pendingConsents[key] = nil }
-        // A program Lilo could not identify is allowed for this connection only: nothing to bind a lasting approval to.
-        if allowed, !session.identity.isEmpty, allowedClients[name]?.contains(session.identity) != true {
-            var clients = allowedClients
-            clients[name, default: []].append(session.identity)
-            saveAllowedClients(clients)
-            markSeen(name)
-        }
         return allowed
     }
 

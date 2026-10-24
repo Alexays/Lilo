@@ -58,22 +58,25 @@ final class AgentConsentTests: AgentToolTestCase {
         XCTAssertTrue(both)
     }
 
-    func testLeavingWhileAskedWithdrawsTheQuestion() async throws {
+    /// An agent app's local mode connects, tries a tool and leaves while the user is still on the way.
+    func testAQuestionOutlivesItsConnectionsAndLetsTheNextOneIn() async throws {
         let first = try AgentTestClient(path: socketURL)
-        let second = try AgentTestClient(path: socketURL)
         _ = await first.initialize(name: "Newcomer")
-        _ = await second.initialize(name: "Newcomer")
         let asked = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.count == 1 }
         XCTAssertTrue(asked)
 
         first.close()
         try await Task.sleep(for: .milliseconds(300))
-        XCTAssertEqual(control.pendingConsentAnswers.count, 1, "the other connection still waits on it")
-        second.close()
+        XCTAssertEqual(control.pendingConsentAnswers.count, 1, "the question stays up once its client left")
+        try await answerConsent(true)
+        let remembered = await pollUntil(timeout: 5) { self.control.allowedClients["Newcomer"] != nil }
+        XCTAssertTrue(remembered)
 
-        let withdrawn = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
-        XCTAssertTrue(withdrawn, "nobody is left to approve")
-        XCTAssertFalse(control.allowedClients.keys.contains("Newcomer"))
+        let next = try AgentTestClient(path: socketURL)
+        _ = await next.initialize(name: "Newcomer")
+        let call = await next.callTool("tabs_context_mcp")
+        XCTAssertFalse(call.isError, call.text)
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "not asked again")
     }
 
     func testAnApprovedNameFromAnotherProgramIsAskedAgain() async throws {
