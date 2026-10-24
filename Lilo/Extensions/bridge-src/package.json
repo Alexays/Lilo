@@ -5,17 +5,18 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.6"
+    "node": ">=22.23.4"
   },
   "scripts": {
-    "build": "tsc --noEmit && node esbuild.mjs && node scripts/assert-background-prelude-safe.mjs",
-    "type-check": "tsc --noEmit",
+    "build": "npm run type-check && node esbuild.mjs && node scripts/assert-background-prelude-safe.ts",
+    "type-check": "node node_modules/typescript/bin/tsc --noEmit",
     "test": "node --test --experimental-strip-types 'src/**/*.test.ts'"
   },
   "devDependencies": {
-    "@types/node": "22.20.5",
-    "chrome-types": "0.1.457",
-    "esbuild": "0.24.2",
-    "typescript": "5.9.3"
+    "@types/node": "26.6.5",
+    "@typescript/typescript6": "6.0.2",
+    "chrome-types": "0.1.459",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
   }
 }

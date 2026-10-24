@@ -83,9 +83,11 @@ export default defineConfig({
 		copyPublicDir: false,
 		// WebKit supports <link rel="modulepreload"> natively.
 		modulePreload: { polyfill: false },
-		rollupOptions: {
+		rolldownOptions: {
 			output: {
 				entryFileNames: "index.js",
+				// Oxc before Terser keeps the embedded UI within its size budget.
+				minify: true,
 			},
 		},
 	},
