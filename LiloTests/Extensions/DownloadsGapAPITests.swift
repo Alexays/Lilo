@@ -185,6 +185,44 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertNotNil(try otherStore.fetch(id: item.id!))
     }
 
+    /// A download's events go to the extensions of the profile whose store holds it, never another profile's.
+    func testDownloadEventsGoToTheDownloadsOwnProfile() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileIds = try ["A", "B"].map { try context.profileManager.createProfile(name: $0).id }
+        context.profileContexts.pinnedProfileIds = Set(profileIds)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("download-events-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        var listeners: [(registry: ProfileExtensionRegistry, extensionId: String)] = []
+        for profileId in profileIds {
+            let registry = try context.profileContexts.context(for: profileId).extensions
+            let directory = folder.appendingPathComponent(profileId.uuidString, isDirectory: true)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let manifest: [String: Any] = ["manifest_version": 3, "name": "Downloads", "version": "1.0", "permissions": ["downloads"]]
+            try JSONSerialization.data(withJSONObject: manifest).write(to: directory.appendingPathComponent("manifest.json"))
+            try await registry.load(from: directory)
+            listeners.append((registry, try XCTUnwrap(registry.loadedExtensions.first?.id)))
+        }
+        func events(_ index: Int) -> [String] {
+            listeners[index].registry.gapEvents.undelivered(to: listeners[index].extensionId)
+                .filter { $0.namespace == "downloads" }.map(\.event)
+        }
+        let store = try context.profileContexts.context(for: profileIds[0]).downloads
+        context.downloadManager.setStore(store)
+        context.downloadManager.downloadsFolderProvider = { folder }
+
+        await context.downloadManager.saveData(
+            Data("x".utf8), suggestedFilename: "x.txt", mimeType: "text/plain", originatingURL: try XCTUnwrap(URL(string: "https://example.com/x"))
+        ).value
+        let id = try XCTUnwrap(try store.fetchAll().first?.id)
+        try context.downloadManager.erase(id: id)
+
+        XCTAssertEqual(events(0), ["onCreated", "onErased"])
+        XCTAssertEqual(events(1), [])
+    }
+
     // MARK: - Helpers
 
     private func makeBridgeMessage(action: String, payload: [String: Any]) -> BridgeMessage {

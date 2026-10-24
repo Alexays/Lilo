@@ -25,6 +25,8 @@ struct DownloadItem: Codable, FetchableRecord, MutablePersistableRecord {
     /// Set only by DownloadStore snapshot reads, which select `resumeData IS NOT NULL` in place of
     /// the blob; full-row reads leave it nil and `resumeData` itself answers.
     var hasResumeData: Bool?
+    /// The profile whose store holds the row, which its events go to. Set by the store, never persisted.
+    var profileId: UUID?
 
     var canResume: Bool { state == .paused || hasResumeData ?? (resumeData != nil) }
 

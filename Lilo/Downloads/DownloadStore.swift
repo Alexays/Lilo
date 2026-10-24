@@ -5,9 +5,12 @@ import GRDB
 @MainActor
 final class DownloadStore {
     let dbPool: DatabasePool
+    /// The profile whose database this is, stamped on the items it inserts and fetches.
+    let profileId: UUID?
 
-    init(dbPool: DatabasePool) {
+    init(dbPool: DatabasePool, profileId: UUID? = nil) {
         self.dbPool = dbPool
+        self.profileId = profileId
     }
 
     /// Rows kept by the launch prune; the panel lists the newest 500.
@@ -27,6 +30,7 @@ final class DownloadStore {
     }
 
     func insert(_ item: inout DownloadItem) throws {
+        item.profileId = profileId
         try dbPool.write { db in
             try item.insert(db)
         }
@@ -39,9 +43,11 @@ final class DownloadStore {
     }
 
     func fetch(id: Int64) throws -> DownloadItem? {
-        try dbPool.read { db in
+        var item = try dbPool.read { db in
             try DownloadItem.fetchOne(db, key: id)
         }
+        item?.profileId = profileId
+        return item
     }
 
     /// Snapshot columns for panel/search reads: everything except `resumeData`, whose blobs
