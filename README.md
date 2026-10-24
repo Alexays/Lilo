@@ -153,13 +153,18 @@ Lilo updates itself through signed Sparkle updates.
 
 ## Build from source
 
-With Xcode 27, Node.js 22.6+ and Zig 0.16 installed ([full prerequisites](CONTRIBUTING.md#requirements)):
+With Xcode 27 and Node.js 22.6+ installed ([full prerequisites](CONTRIBUTING.md#requirements)):
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo
+make bootstrap                  # checks the prerequisites and fetches or builds what the app needs
 make install                    # Release build into /Applications, replacing an installed copy
 open /Applications/Lilo.app
 ```
+
+`make bootstrap` names anything missing and how to install it. To work on the interface alone,
+Node.js is enough: `make ui-preview` opens it in your browser with hot reload
+([CONTRIBUTING.md](CONTRIBUTING.md#interface-only)).
 
 No Apple Developer account is needed. Source builds are ad-hoc signed by default;
 [CONTRIBUTING.md](CONTRIBUTING.md#signing) explains the trade-offs and how to sign with a free

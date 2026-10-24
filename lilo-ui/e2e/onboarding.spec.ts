@@ -168,7 +168,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640
 			await expect(card.locator(".src").first()).toBeInViewport({ ratio: 1 });
 			await expect(card.locator(".ob-foot .ob-btn.primary")).toBeInViewport({ ratio: 1 });
 			const list = card.locator(".ob-scroll");
-			expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+			await expect.poll(() => list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 
 			// The keyboard reaches the last extension, which scrolls into view under the fixed tiles and buttons.
 			const last = card.getByRole("checkbox", { name: "Extension 18" });

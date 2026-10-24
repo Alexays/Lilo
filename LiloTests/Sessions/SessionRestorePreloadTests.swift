@@ -172,7 +172,8 @@ final class SessionRestorePreloadTests: XCTestCase {
 
         window.finishSessionRestore()
 
-        await pollUntil(timeout: 10) { context.browserState.space(id: hidden.id) != nil }
+        // The preload waits 3 s, then reads at background priority, which a busy machine starves for seconds more.
+        await pollUntil(timeout: 30) { context.browserState.space(id: hidden.id) != nil }
         let snapshot = try XCTUnwrap(context.browserState.space(id: hidden.id), "the hidden space is preloaded once launch settles")
         XCTAssertEqual(snapshot.spaceTab.tab(id: tabId)?.url?.absoluteString, "https://hidden.example/")
         XCTAssertEqual(snapshot.spaceTab.state.activeTabId, tabId)

@@ -27,11 +27,13 @@ test("the new space card and the emoji popover fit the narrowest sidebar", async
 	await page.locator(".space-emoji-btn").click();
 	await expect(page.locator(".emoji-popover")).toBeVisible();
 
-	const sidebar = await rightEdge(page, ".sidebar");
-	const card = await rightEdge(page, ".preview-card");
-	expect(card).toBeLessThanOrEqual(sidebar);
-	expect(await rightEdge(page, ".identity-name-input")).toBeLessThanOrEqual(card);
-	expect(await rightEdge(page, ".emoji-popover")).toBeLessThanOrEqual(sidebar);
+	// Measured until the layout settles: the popover and the long name lay out a frame or more after they show.
+	await expect.poll(async () => {
+		const sidebar = await rightEdge(page, ".sidebar");
+		const card = await rightEdge(page, ".preview-card");
+		return card <= sidebar && (await rightEdge(page, ".identity-name-input")) <= card
+			&& (await rightEdge(page, ".emoji-popover")) <= sidebar;
+	}).toBe(true);
 });
 
 async function openFullPicker(page: Page, sidebarWidth = MIN_SIDEBAR_WIDTH): Promise<void> {

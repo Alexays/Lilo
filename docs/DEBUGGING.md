@@ -111,5 +111,5 @@ In Instruments, add the os_signpost instrument filtered on that subsystem to see
 | Chrome UI shows old changes | The embedded UI bundle is stale: run `make ui-build` before rebuilding the app |
 | Blank chrome UI under `make run-ui-dev` | The Vite dev server is not running: start `make ui-dev` first |
 | `xcodebuild` fails after adding a Swift file | The Xcode project is out of sync with the file system: run `make project-sync` |
-| Build stops with `make vt-build requires Zig 0.16.x` | Install Zig 0.16 (`brew install zig`): every app build compiles libghostty-vt once per pinned Ghostty commit |
+| Build stops with `Building libghostty-vt from source requires Zig 0.16.x` | The prebuilt libghostty-vt could not be used (offline, or not yet published for a new pin; the line above says which): retry online, or install Zig 0.16 (`brew install zig`) to compile it |
 | Keychain (or camera and microphone) prompt on every rebuild or test run | Debug builds and the test host (`fr.arouillard.lilo.tests`) are ad-hoc signed by default; set `LILO_DEBUG_TEAM_ID` in a git-ignored `Makefile.local` (see `Makefile.local.example`) |

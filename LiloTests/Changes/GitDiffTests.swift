@@ -177,22 +177,31 @@ final class GitDiffTests: XCTestCase {
         staged.assertForOverFulfill = false
         let watcher = try XCTUnwrap(RepositoryWatcher(root: worktree.path) { staged.fulfill() })
         try git("add", "old.txt", in: worktree)
-        wait(for: [staged], timeout: 5)
+        // The watcher runs git on a utility queue to list the ignored folders, at start and on a new folder, ahead of
+        // the events behind them: a busy machine holds that queue and its git back for seconds.
+        wait(for: [staged], timeout: 30)
         withExtendedLifetime(watcher) {}
     }
 
     func testWatcherStaysQuietForWritesInIgnoredFolders() throws {
         try write(".gitignore", "build/\n")
         try write("build/first.o", "x\n")
-        // fseventsd hears of a write late: the setup's own writes must not reach the watcher.
-        Thread.sleep(forTimeInterval: 1)
-
-        let quiet = expectation(description: "an ignored write reloads nothing")
-        quiet.isInverted = true
-        let watcher = try XCTUnwrap(RepositoryWatcher(root: repository.path) { quiet.fulfill() })
-        try write("build/second.o", "y\n")
-        wait(for: [quiet], timeout: 3)
-        withExtendedLifetime(watcher) {}
+        // fseventsd can hand a new stream writes made before it started, the setup's. A recorder started first hears
+        // all the watcher does: a reload while it heard more than the ignored write proves nothing, so try again.
+        for attempt in 1...5 {
+            let recorder = try FSEventRecorder(watching: repository)
+            let quiet = XCTestExpectation(description: "an ignored write reloads nothing")
+            quiet.isInverted = true
+            let watcher = try XCTUnwrap(RepositoryWatcher(root: repository.path) { quiet.fulfill() })
+            let ignored = "build/\(attempt).o"
+            try write(ignored, "y\n")
+            let result = XCTWaiter().wait(for: [quiet], timeout: 3)
+            withExtendedLifetime(watcher) {}
+            if result == .completed { return }
+            let others = recorder.paths().filter { !$0.hasSuffix("/" + ignored) }
+            if others.isEmpty { return XCTFail("the ignored write alone reloaded") }
+        }
+        XCTFail("the setup's writes still reached every watcher")
     }
 
     @MainActor
@@ -326,5 +335,46 @@ final class GitDiffTests: XCTestCase {
         try process.run()
         process.waitUntilExit()
         XCTAssertEqual(process.terminationStatus, 0, "git \(arguments.joined(separator: " "))")
+    }
+}
+
+/// Every path fseventsd reports under a folder from now on, file by file.
+private final class FSEventRecorder {
+    /// What the stream's queue appends to; the stream holds it unretained, so it lives as long as the recorder.
+    private final class Heard {
+        let lock = NSLock()
+        var paths: [String] = []
+    }
+
+    private let stream: FSEventStreamRef
+    private let heard = Heard()
+
+    init(watching folder: URL) throws {
+        var context = FSEventStreamContext(
+            version: 0, info: Unmanaged.passUnretained(heard).toOpaque(), retain: nil, release: nil, copyDescription: nil
+        )
+        stream = try XCTUnwrap(FSEventStreamCreate(
+            nil, { _, info, count, paths, _, _ in
+                guard let info, let paths = Unmanaged<CFArray>.fromOpaque(paths).takeUnretainedValue() as? [String] else { return }
+                let heard = Unmanaged<Heard>.fromOpaque(info).takeUnretainedValue()
+                heard.lock.withLock { heard.paths += paths.prefix(count) }
+            },
+            &context, [folder.resolvingSymlinksInPath().path] as CFArray, FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 0,
+            FSEventStreamCreateFlags(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagUseCFTypes)
+        ))
+        FSEventStreamSetDispatchQueue(stream, DispatchQueue(label: "fr.arouillard.lilo.tests.fsevents"))
+        FSEventStreamStart(stream)
+    }
+
+    /// What it heard so far, events fseventsd still holds for it included.
+    func paths() -> [String] {
+        FSEventStreamFlushSync(stream)
+        return heard.lock.withLock { heard.paths }
+    }
+
+    deinit {
+        FSEventStreamStop(stream)
+        FSEventStreamInvalidate(stream)
+        FSEventStreamRelease(stream)
     }
 }

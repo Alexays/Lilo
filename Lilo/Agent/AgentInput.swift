@@ -50,6 +50,7 @@ enum AgentInput {
             try? await Task.sleep(for: .milliseconds(16))
         }
         send(mouse(.leftMouseUp, webView, end), to: webView)
+        await afterPendingEvents(webView, "_doAfterProcessingAllPendingMouseEvents:")
     }
 
     /// Positive `deltaY` scrolls the page down, positive `deltaX` scrolls it right.
@@ -73,30 +74,14 @@ enum AgentInput {
     static func type(_ webView: WKWebView, text: String) async {
         await settleFocus()
         guard !text.isEmpty else { return }
-        // WebKit queues the keys: the call returns once the page has seen them all, so what reads it next sees the text.
-        await withCheckedContinuation { (typed: CheckedContinuation<Void, Never>) in
-            // Armed by a call that goes out before the keys: WebKit keeps that order.
-            webView.callAsyncJavaScript(typedListener, arguments: ["count": text.count], in: nil, in: world) { _ in typed.resume() }
-            for character in text {
-                let string = String(character)
-                pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),
-                         keyCode: keyCodes[string.lowercased()] ?? 0, modifiers: character.isUppercase ? [.shift] : [])
-            }
+        for character in text {
+            let string = String(character)
+            pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),
+                     keyCode: keyCodes[string.lowercased()] ?? 0, modifiers: character.isUppercase ? [.shift] : [])
         }
+        // WebKit queues the keys: the call returns once the page, or the frame holding the focus, has handled them all.
+        await afterPendingEvents(webView, "_doAfterProcessingAllPendingKeyEvents:")
     }
-
-    private static let typedListener = """
-        return await new Promise(resolve => {
-            let seen = 0, timer
-            const finish = () => { clearTimeout(timer); removeEventListener('keyup', note, true); resolve(seen) }
-            // Keys landing in a frame are not heard here: a quiet spell ends the wait instead, long enough
-            // for a busy page or machine to fall behind between two keys.
-            const wait = ms => { clearTimeout(timer); timer = setTimeout(finish, ms) }
-            const note = () => { if (++seen >= count) finish(); else wait(1000) }
-            addEventListener('keyup', note, true)
-            wait(1000)
-        })
-        """
 
     /// One mouse event, sent as is with no agent cursor: chrome.debugger's `Input.dispatchMouseEvent`.
     static func mouseEvent(
@@ -226,7 +211,7 @@ enum AgentInput {
             send(up, to: webView)
             // A slow page or a busy app holds the press in WebKit's mouse queue for any time: it is judged
             // only once the page handled it, never on a clock that races its delivery.
-            await afterPendingMouseEvents(webView)
+            await afterPendingEvents(webView, "_doAfterProcessingAllPendingMouseEvents:")
             let pressed = await withCheckedContinuation { (seen: CheckedContinuation<Bool, Never>) in
                 webView.callAsyncJavaScript(pressHeard, arguments: [:], in: nil, in: world) { result in
                     // No script to confirm with (a document going away, a page scripts cannot run in): it went once.
@@ -237,11 +222,11 @@ enum AgentInput {
         }
     }
 
-    /// Returns once the page has handled every mouse event sent to it so far.
-    private static func afterPendingMouseEvents(_ webView: WKWebView) async {
-        let selector = NSSelectorFromString("_doAfterProcessingAllPendingMouseEvents:")
+    /// Returns once the page has handled every event of the queue `selectorName` drains (mouse or key) sent so far.
+    private static func afterPendingEvents(_ webView: WKWebView, _ selectorName: String) async {
+        let selector = NSSelectorFromString(selectorName)
         guard webView.responds(to: selector) else {
-            // Without WebKit's word, a press not heard by then counts as dropped.
+            // Without WebKit's word, an event not handled by then counts as dropped.
             try? await Task.sleep(for: .milliseconds(300))
             return
         }

@@ -42,6 +42,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `lilo-ui/src/lib/` | Shared pure logic, the bridge client and its generated protocol, i18n catalogs |
 | `lilo-ui/src/styles/` | Global CSS and the design tokens |
 | `lilo-ui/e2e/` | Playwright end-to-end tests |
+| `lilo-ui/preview/` | `make ui-preview`: the interface in a browser against the e2e fake host, never embedded in the app |
 | `LiloTests/` | Swift unit tests, mirroring `Lilo/` and `LiloMCP/` (`Support/` holds shared helpers) |
 | `LiloMCP/` | `lilo-mcp`, the MCP server local agents launch to reach the running Lilo |
 | `LiloPowerHelper/` | The privileged helper that keeps the Mac awake with the lid closed |
@@ -52,7 +53,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `site/` | The getlilo.app landing page ([site/README.md](../site/README.md)) |
 | `.changie.yaml`, `.changes/` | Release-note configuration, pending fragments and prepared release history; release files track the app version |
 | `Xcode/Configs/` | Build settings, including the app and build versions synced by `make release-version` (see [RELEASING.md](RELEASING.md#version-bump)) |
-| `Vendor/` | Not committed: `GhosttyVt.xcframework`, built by `make vt-build` |
+| `Vendor/` | Not committed: `GhosttyVt.xcframework`, downloaded by `make vt-build` (or built by `make vt-build-source`) |
 
 ### Placement rule
 

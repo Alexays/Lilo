@@ -62,12 +62,8 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s \
             -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-      - name: Install Zig
-        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
-
-      - name: Build libghostty-vt
+      # The prebuilt published by ghostty-vt.yml, checked against VT_SHA256.
+      - name: Download libghostty-vt
         run: make vt-build
 
       - name: Build, sign, and notarize

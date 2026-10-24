@@ -22,27 +22,46 @@ extensions.
 | Tool | Version | Needed for |
 |------|---------|------------|
 | macOS | 26 or later | running Lilo |
-| Xcode | 27 | building the app (Swift 6, the macOS 27 SDK) |
-| Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge |
-| Zig | 0.16.x (`brew install zig`) | `make vt-build`, which compiles libghostty-vt for terminal tabs |
-| Python 3 | the one Xcode installs | embedding the interface bundle and the native strings |
+| Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
+| Node.js | 22.23.4+ (`.nvmrc` pins 22) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | latest (`brew install swiftlint xcodegen`) | `make validate` and `make project-sync` |
+| Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
 
-No Apple Developer account is needed.
+Python 3 comes with Xcode. No Apple Developer account is needed.
 
 ## Setup
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git
 cd Lilo
-make install-debug     # npm deps, libghostty-vt, interface bundle, then a Debug build into ~/Applications
-open ~/Applications/Lilo.app
+make hooks-install     # enable commit-message checks once per clone
+make bootstrap         # checks the tools above, then npm deps, libghostty-vt, interface bundle, extension bridge
+make app               # Debug build in build/debug/export/Lilo.app
+open build/debug/export/Lilo.app
 ```
 
-`make install` builds and installs a Release build instead; `make app` builds a Debug bundle in
-`build/debug/export/Lilo.app` without installing it. The first build compiles libghostty-vt from
-a pinned Ghostty commit; later builds skip it until the pin changes.
+`make bootstrap` says what is missing and how to install it, and is a no-op once everything is
+in place. It downloads libghostty-vt, the terminal library, prebuilt for the pinned Ghostty commit
+and checked against the sha256 in the `Makefile`; `make vt-build-source` (or `VT_FROM_SOURCE=1`)
+compiles it with Zig instead, which is also what happens, with a message, when the download is
+not available. `make install-debug` installs the Debug build into `~/Applications`, and
+`make install` a Release build into `/Applications`.
+
+### Interface only
+
+To work on the sidebar, the command bar, settings or onboarding, Node.js is enough:
+
+```bash
+make ui-preview        # opens http://localhost:5173/preview/ with hot reload
+```
+
+[`lilo-ui/preview/`](lilo-ui/preview/main.ts) runs the interface in any browser against the fake
+host the end-to-end tests use, seeded with sample Spaces, pinned tabs, folders, extensions and
+settings. Query parameters pick what it shows: `?world=default|empty|onboarding`,
+`&theme=light|dark` (the system's otherwise) and `&open=settings|commandbar`, for example
+`/preview/?world=onboarding&theme=dark`. Commands the interface sends are in
+`window.__sentCommands`. The preview never ships: the app embeds only the `index.html` build.
 
 ### Signing
 
@@ -82,6 +101,7 @@ you use daily:
 # Interface work, with hot module reload in the running app
 make ui-dev          # terminal 1: Vite dev server on localhost:5173
 make run-ui-dev      # terminal 2: builds the app and launches it against the dev server
+make ui-preview      # or the interface alone in a browser, without Xcode
 
 # Swift work
 make app             # Debug bundle in build/debug/export/Lilo.app
@@ -108,7 +128,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests; release-note and version sync checks.
+tests; SwiftLint; the Xcode build and the Swift tests; commit hook tests; website checks and tests;
+release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
@@ -119,6 +140,11 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make release-status` | pending release notes, changelog and app version consistency |
 | `make release-test` | release preparation and Sparkle build number synchronization tests |
+| `make site-check` | Astro templates and TypeScript |
+| `make site-test` | website build, release notes, routes, links and metadata |
+| `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
+| `make lint-commit-message` | checks a commit header or PR title read from stdin |
+| `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -142,6 +168,8 @@ Heavier checks, run when your change touches their area:
   `lilo-ui/e2e/`.
 - **Extension bridge**: `*.test.ts` beside the TypeScript source in
   `Lilo/Extensions/bridge-src/src/`.
+- **Commit hooks**: `scripts/commit_hooks.test.sh` exercises the shared validator and real Git
+  commits in temporary repositories, without Node dependencies.
 
 Test through the real entry point (the public method, the bridge message, the rendered component)
 rather than carving out a helper just to reach it.
@@ -150,15 +178,33 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling** (ubuntu): Changie fragments, version sync tests and website metadata consistency.
+- **Release tooling and website** (ubuntu): Changie fragments, version sync, Astro checks, website tests and a Cloudflare deployment dry run.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
 - **App** (the GitHub-hosted `xcode-27` macOS image, no signing secrets): a check that
   `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug and Release builds,
   `make swift-test` and `make swift-test-slow`.
+- **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
+  `main`): builds the xcframework `make vt-build` downloads and publishes it as the
+  `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.
 - **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
   `startup-bench-<sha>` artifact. It never fails the run.
+
+It needs no secrets and only reads the repository, so pull requests from forks run it as is. CI runs
+a failed Swift or Playwright test once more and lists the tests that passed only on that retry in
+the run's summary; `make validate` and `make e2e` never retry, so a flaky test fails locally.
+
+If your pull request fails on a test your change does not touch, say so in a comment with the failing
+test's name: a maintainer reruns the job, and an issue with the failure message (the
+`swift-test-results` and `playwright-traces` artifacts hold the details) gets the test fixed. Don't skip
+or loosen the test in your pull request.
+
+`.github/workflows/commits.yml` checks commit messages on pushes to `main` and pull requests,
+and PR titles when a pull request is opened, updated, reopened or edited. It uses the same shell
+validator as the local hook and checks the PR's own commits, excluding GitHub's generated merge
+commit. Title edits run only this lightweight workflow. Maintainers should require its
+`Conventional Commits` status check in the rules for `main`.
 
 ## Code style
 
@@ -243,6 +289,7 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 
 1. Fork the repository and branch from `main`.
 2. Make focused commits, each building on its own (`make check-commits` checks a branch).
+   Run `make lint-commits` to check their messages; `BASE=main` selects a different base.
 3. Run `make validate` and confirm it passes.
 4. For a change people using Lilo will notice, run `make change`. Choose `Fixed` or `Changed`
    for a patch release, `Added` for a minor release, or `Breaking` for a major release. Write the
@@ -254,11 +301,25 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 
 Commit messages and pull request titles follow
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
-`type(scope): description`, lowercase, imperative, no trailing period, with `!` before the colon
-for a breaking change. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`,
+`type(scope): description`, lowercase, imperative, no trailing period, with an optional scope
+and `!` before the colon for a breaking change. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`,
 `chore`, `style`. Common scopes: `sidebar`, `tabs`, `spaces`, `commandbar`, `urlbar`, `settings`,
-`extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`. CI does not enforce it;
-match it as best you can.
+`extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`.
+
+`make hooks-install` points this clone's Git `core.hooksPath` at the tracked `.githooks/`
+directory. It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
+would stop running. The native `commit-msg` hook and CI share a shell validator for the
+header's type, syntax, lowercase scope, lowercase nonempty description and absence of trailing
+whitespace or a final period. Git's `Revert "..."` and `Reapply "..."` headers are accepted.
+English wording and imperative style are reviewed by humans. Bodies and footers remain free-form. To check a title locally:
+
+```bash
+printf '%s\n' 'fix(sidebar): keep pinned tabs visible' | make lint-commit-message
+```
+
+Git-generated merge commits are exempt. Temporary `fixup!`, `squash!` and `amend!` commits are
+allowed locally; autosquash them before merging, since CI rejects them. Local hooks can be
+bypassed, so CI also checks every non-merge commit introduced by a PR and the PR title.
 
 Code, comments, commit messages and everything on GitHub are written in English. User-facing copy
 is translated, see [Add or change a user-facing string](#add-or-change-a-user-facing-string).
