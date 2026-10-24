@@ -225,7 +225,11 @@
     };
 
     colorSchemeQuery.addEventListener("change", handleColorSchemeChange);
-    const disposeContentInteraction = on("contentInteraction", blurChromeFocus);
+    // A press only: the pointer merely crossing into the page must not blur a chrome field, and a blur
+    // ends a color input's picker, eyedropper included.
+    const disposeContentInteraction = on("contentInteraction", ({ isMouseDown }) => {
+      if (isMouseDown) blurChromeFocus();
+    });
     const disposeWindowFocus = on("windowFocusChanged", ({ focused }) => {
       document.documentElement.classList.toggle("window-unfocused", !focused);
       if (!focused) clearAllHover();

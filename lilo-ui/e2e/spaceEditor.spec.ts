@@ -296,3 +296,18 @@ test("leaving for the profiles keeps the edits made to the space", async ({ page
 	const update = (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1);
 	expect(update?.payload).toMatchObject({ name: "Renamed" });
 });
+
+// WebKit ends a color input's picker, the color panel's eyedropper included, as soon as the input blurs.
+test("the pointer leaving for the page keeps the custom color picker connected", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
+	const picker = page.getByLabel("Custom color");
+	await picker.focus();
+	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: false }));
+	await expect(picker).toBeFocused();
+	await picker.fill("#123456");
+	await expect(page.locator(".color-swatch.custom")).toHaveClass(/selected/);
+	await expect(page.locator(".color-swatch.custom")).toHaveCSS("background-color", "rgb(18, 52, 86)");
+	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: true }));
+	await expect(picker).not.toBeFocused();
+});
