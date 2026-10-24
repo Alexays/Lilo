@@ -20,6 +20,12 @@ What changes in each Lilo release, for people using it. The format follows
 - Imported tabs, bookmarks and Arc spaces show their sites' icons right away, instead of an initial until each is opened.
 - Importing no longer offers browsers that are not installed, whose folders password managers create for their helpers, and finds the icon of a Beta, Dev or Nightly browser or one installed outside LaunchServices.
 - The Agents space no longer shows in Settings > Spaces, link rules, the external links setting or Move to Space, and no longer counts as a space of yours, so your last space cannot be deleted.
+- Proton Pass's popup opens at its full size again, instead of a thin strip that changed width as you typed.
+- Extensions that read your session on a site they work with, such as ChatGPT's side panel, see that you are signed in.
+- Extensions whose package carries unusual file permissions, such as ClickUp and Linkclump Plus, install from the Chrome Web Store.
+- Extensions with an empty description, icon list or page override in their manifest, such as BLACKBOX.AI, Genesys Cloud and Twitch Adblock, load without errors.
+- Dark Mode - Night Eye saves its settings again.
+- Extensions that look for new tab pages among your tabs, such as J2TEAM Security, find them.
 
 ## [0.1.4] - 2026-10-24
 
