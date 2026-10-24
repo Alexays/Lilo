@@ -1,5 +1,6 @@
 ---
 import config from "../../../Xcode/Configs/Base.xcconfig?raw";
+import Header from "../components/Header.astro";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 
@@ -56,6 +57,7 @@ const jsonLD = JSON.stringify({
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <script is:inline src="/header.js"></script>
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex ? (
@@ -117,6 +119,7 @@ const jsonLD = JSON.stringify({
     <a class="skip-link" href="#main-content">
       {copy[lang].skip}
     </a>
+    <Header lang={lang} />
     <slot />
   </body>
 </html>

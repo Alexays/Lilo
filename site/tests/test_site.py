@@ -96,12 +96,11 @@ class SiteTests(unittest.TestCase):
                     self.assertEqual(node["softwareVersion"], version)
                     self.assertIn("getlilo.app/", node["releaseNotes"])
 
-    def test_changelog_has_all_published_releases_and_no_client_scripts(self):
+    def test_changelog_has_all_published_releases_in_static_html(self):
         source = (DIST.parents[1] / "CHANGELOG.md").read_text()
         versions = re.findall(r"^## \[([^\]]+)\] - ", source, re.M)
         for page in ["changelog/index.html", "fr/changelog/index.html"]:
             parsed = tree(DIST / page)
-            self.assertFalse(any(node.tag == "script" and node.attrs.get("type") != "application/ld+json" for node in parsed))
             self.assertEqual([node.attrs["id"] for node in parsed if "release" in node.classes], ["v" + version for version in versions])
             self.assertIn("First public release", (DIST / page).with_suffix(".md").read_text())
             current = next(node for node in parsed if node.attrs.get("aria-current") == "page")
@@ -111,8 +110,20 @@ class SiteTests(unittest.TestCase):
     def test_typescript_demo_is_bundled_only_for_home_pages(self):
         for page in PAGES:
             with self.subTest(page=page):
-                scripts = [node for node in tree(DIST / page)
+                parsed = tree(DIST / page)
+                scripts = [node for node in parsed
                            if node.tag == "script" and "src" in node.attrs]
+                theme = [node for node in scripts if node.attrs["src"] == "/header.js"]
+                self.assertEqual(len(theme), 1)
+                self.assertIsNone(theme[0].attrs.get("type"))
+                self.assertNotIn("defer", theme[0].attrs)
+                self.assertNotIn("async", theme[0].attrs)
+                body = next(node for node in parsed if node.tag == "body")
+                self.assertLess(parsed.index(theme[0]), parsed.index(body))
+                self.assertFalse(any(node.tag == "script" and "src" not in node.attrs
+                                     and node.attrs.get("type") != "application/ld+json"
+                                     for node in parsed))
+                scripts = [node for node in scripts if node not in theme]
                 if page in ["index.html", "fr/index.html"]:
                     self.assertEqual(len(scripts), 1)
                     self.assertEqual(scripts[0].attrs.get("type"), "module")

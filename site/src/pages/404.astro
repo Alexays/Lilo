@@ -1,5 +1,4 @@
 ---
-import Header from "../components/Header.astro";
 import Layout from "../layouts/Layout.astro";
 
 const lang = "en";
@@ -11,8 +10,10 @@ const lang = "en";
   description="The link may be old, or mistyped."
   noindex
 >
-  <div class="top" style="min-height:100vh;min-height:100dvh;padding-bottom:0">
-    <Header lang={lang} />
+  <div
+    class="top"
+    style="min-height:calc(100vh - 65px);min-height:calc(100dvh - 65px);padding-bottom:0"
+  >
     <main
       id="main-content"
       class="wrap hero-copy"
