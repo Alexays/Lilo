@@ -12,6 +12,7 @@ What changes in each Lilo release, for people using it. The format follows
 - Pin any number of extensions: the ones that do not fit in the address bar fold into the extensions menu.
 - An extension's details link to its Chrome Web Store page.
 - Saving a capture asks where to save it when downloads do.
+- AI agents can mock requests by their body, such as one GraphQL operation, and replace text on a page to anonymize it, with a guard that refuses a screenshot while a forbidden name still shows.
 - Shift Command 2 captures a selected area of the page.
 - The emoji picker of a space searches and names emoji in the browser's language.
 - A French version of the website.
