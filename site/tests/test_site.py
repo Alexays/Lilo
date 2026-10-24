@@ -107,29 +107,27 @@ class SiteTests(unittest.TestCase):
             self.assertEqual(current.attrs["href"], "/" + page.removesuffix("index.html"))
         self.assertIn("First public release", (DIST / "llms-full.txt").read_text())
 
-    def test_typescript_demo_is_bundled_only_for_home_pages(self):
+    def test_astro_bundles_header_and_keeps_demo_on_home_pages(self):
+        shared = {node.attrs["src"] for node in tree(DIST / "changelog/index.html")
+                  if node.tag == "script" and "src" in node.attrs}
+        self.assertEqual(len(shared), 1)
         for page in PAGES:
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 scripts = [node for node in parsed
                            if node.tag == "script" and "src" in node.attrs]
-                theme = [node for node in scripts if node.attrs["src"] == "/header.js"]
-                self.assertEqual(len(theme), 1)
-                self.assertIsNone(theme[0].attrs.get("type"))
-                self.assertNotIn("defer", theme[0].attrs)
-                self.assertNotIn("async", theme[0].attrs)
-                body = next(node for node in parsed if node.tag == "body")
-                self.assertLess(parsed.index(theme[0]), parsed.index(body))
+                for script in scripts:
+                    self.assertEqual(script.attrs.get("type"), "module")
+                    self.assertTrue(script.attrs["src"].startswith("/_astro/"))
                 self.assertFalse(any(node.tag == "script" and "src" not in node.attrs
                                      and node.attrs.get("type") != "application/ld+json"
                                      for node in parsed))
-                scripts = [node for node in scripts if node not in theme]
+                sources = {node.attrs["src"] for node in scripts}
+                self.assertTrue(shared.issubset(sources))
                 if page in ["index.html", "fr/index.html"]:
-                    self.assertEqual(len(scripts), 1)
-                    self.assertEqual(scripts[0].attrs.get("type"), "module")
-                    self.assertTrue(scripts[0].attrs["src"].startswith("/_astro/"))
+                    self.assertEqual(len(scripts), 2)
                 else:
-                    self.assertEqual(scripts, [])
+                    self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
 
     def test_cloudflare_assets_and_redirects_ship_in_the_build(self):

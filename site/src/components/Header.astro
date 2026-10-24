@@ -113,3 +113,53 @@ const links = [
     </div>
   </div>
 </header>
+
+<script>
+  const root = document.documentElement;
+  const menu = document.querySelector<HTMLDetailsElement>(".mobile-nav");
+  const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
+
+  try {
+    const theme = localStorage.getItem("lilo-theme");
+
+    if (theme === "light" || theme === "dark") {
+      root.dataset.theme = theme;
+    }
+  } catch {
+    // Storage can be unavailable in private browsing.
+  }
+
+  root.dataset.themeReady = "";
+
+  toggle?.addEventListener("click", () => {
+    const dark = root.dataset.theme
+      ? root.dataset.theme === "dark"
+      : matchMedia("(prefers-color-scheme: dark)").matches;
+
+    const theme = dark ? "light" : "dark";
+    root.dataset.theme = theme;
+
+    try {
+      localStorage.setItem("lilo-theme", theme);
+    } catch {
+      // The toggle still works when the preference cannot be saved.
+    }
+  });
+
+  document.addEventListener("click", ({ target }) => {
+    if (
+      menu?.open &&
+      target instanceof Element &&
+      (!menu.contains(target) || target.closest("a"))
+    ) {
+      menu.open = false;
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu?.open) {
+      menu.open = false;
+      menu.querySelector<HTMLElement>("summary")?.focus();
+    }
+  });
+</script>
