@@ -1,6 +1,6 @@
 <script lang="ts">
   import { setThemeContext } from "./stores/theme.svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import Sidebar from "./components/sidebar/Sidebar.svelte";
   import SplitDropZone from "./components/page/SplitDropZone.svelte";
   import { chromeActions } from "./lib/bridge/actions";
@@ -11,6 +11,7 @@
   import { isBridgeReady, on } from "./lib/bridge";
   import { onChromeInitialStateReady } from "./stores/init";
   import { getOnboarding } from "./stores/onboarding.svelte";
+  import { getActiveUrlBarDrawer } from "./stores/urlBarDrawer.svelte";
   import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
   import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
@@ -157,6 +158,12 @@
     cancelSidebarOverlayHide();
     showSidebarOverlay();
   }
+
+  // A request lives under the address bar: a hidden sidebar slides out so it can be seen, and stays until the pointer leaves it.
+  $effect(() => {
+    const drawer = getActiveUrlBarDrawer();
+    if (drawer && "requestId" in drawer) untrack(openSidebarOverlay);
+  });
 
   function blurChromeFocus() {
     const active = document.activeElement;

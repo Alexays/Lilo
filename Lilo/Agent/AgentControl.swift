@@ -241,14 +241,15 @@ final class AgentControl {
             let peer = session.connection.peerPID
             (session.identity, session.executable) = await Task.detached { AgentControl.clientIdentity(peer: peer) }.value
         }
-        guard !session.identity.isEmpty else { return false }
-        if allowedClients[name]?.contains(session.identity) == true {
+        if session.identity.isEmpty { Self.logger.warning("Could not read the signature of \(name, privacy: .public): asking for this connection only") }
+        if !session.identity.isEmpty, allowedClients[name]?.contains(session.identity) == true {
             markSeen(name)
             return true
         }
         guard asking else { return false }
         let key = name + "\n" + session.identity
-        let question = pendingConsents[key]?.question ?? Task { @MainActor in await self.askConsent(name, executable: session.executable) }
+        // Long enough to come back to the Mac: the client is told it waits, so nothing times out meanwhile.
+        let question = pendingConsents[key]?.question ?? Task { @MainActor in await self.askConsent(name, executable: session.executable, timeout: 600) }
         pendingConsents[key] = (question, (pendingConsents[key]?.waiting ?? 0) + 1)
         // A connection that leaves stops waiting; the last one to leave withdraws the question, so a late
         // answer approves no client that is gone.
@@ -260,7 +261,8 @@ final class AgentControl {
             }
         }
         if pendingConsents[key]?.question == question { pendingConsents[key] = nil }
-        if allowed, allowedClients[name]?.contains(session.identity) != true {
+        // A program Lilo could not identify is allowed for this connection only: nothing to bind a lasting approval to.
+        if allowed, !session.identity.isEmpty, allowedClients[name]?.contains(session.identity) != true {
             var clients = allowedClients
             clients[name, default: []].append(session.identity)
             saveAllowedClients(clients)

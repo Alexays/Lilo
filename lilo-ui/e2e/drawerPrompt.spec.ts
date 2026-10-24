@@ -44,6 +44,20 @@ test("an agent asking to connect shows ahead of a waiting extension prompt, whic
 	await expect(drawer).toContainText("Okta Verify");
 });
 
+test("a request slides a hidden sidebar out so it can be answered", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.mouse.move(600, 300);
+	await page.evaluate(() => window.__lilo!.receive({ event: "sidebarVisibilityChanged", visible: false, width: 260 }));
+	await expect(page.locator(".sidebar")).toHaveClass(/sidebar-hidden/);
+
+	await page.evaluate(() =>
+		window.__lilo!.receive({ event: "agentControlRequested", requestId: "a1", clientName: "Claude", executable: "/usr/local/bin/claude", profileName: "" }),
+	);
+
+	await expect(page.locator(".sidebar")).not.toHaveClass(/sidebar-hidden/);
+	await expect(page.locator(".url-drawer-clip")).toContainText("Claude");
+});
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 

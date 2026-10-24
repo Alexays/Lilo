@@ -8,6 +8,8 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Fixed
 
+- A permission request, such as an AI agent asking to connect, slides a hidden sidebar out so it can be answered, and an agent's connection request waits ten minutes instead of two.
+- An AI agent whose app macOS will not let Lilo identify is asked about instead of refused without a word; its approval lasts until it disconnects.
 - Setting Lilo as the default browser no longer reports a failure after you accept macOS's prompt.
 - An app downloaded with Lilo no longer opens on "(null) downloaded this file": macOS names Lilo as where it came from.
 
