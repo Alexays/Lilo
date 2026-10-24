@@ -50,8 +50,8 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `scripts/` | Build, release, benchmark and extension smoke scripts the Makefile runs |
 | `test-extensions/` | Extensions loaded by tests and by hand: the MV3 probe and the Chrome contract cases |
 | `site/` | The getlilo.app landing page ([site/README.md](../site/README.md)) |
-| `.changeset/` | Pending release notes and Changesets configuration; the root `package.json` tracks the app version |
-| `Xcode/Configs/` | Build settings, including the app and build versions synced by `make changeset-version` (see [RELEASING.md](RELEASING.md#version-bump)) |
+| `.changie.yaml`, `.changes/` | Release-note configuration, pending fragments and prepared release history; release files track the app version |
+| `Xcode/Configs/` | Build settings, including the app and build versions synced by `make release-version` (see [RELEASING.md](RELEASING.md#version-bump)) |
 | `Vendor/` | Not committed: `GhosttyVt.xcframework`, built by `make vt-build` |
 
 ### Placement rule

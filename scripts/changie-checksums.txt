@@ -1,0 +1,4 @@
+9a1a4dc8a6901ccd9724b3b9b5ec1354e5038b1b1aa4dceef65976f6462ac7d2  changie_1.26.0_darwin_amd64.tar.gz
+ba1a14e0eb220fb9c7d4dc90af462e7f7178a313cdb1299a17aafbb37838a458  changie_1.26.0_darwin_arm64.tar.gz
+eab168c8287a6e91912e1c02e5260911232d945bfd3c89d8a0e1ace6bb7b6161  changie_1.26.0_linux_amd64.tar.gz
+ec1e542014b5134f1cf86b3a12e86d566ab5ec9bd3901bf66f42a09cd9865b6e  changie_1.26.0_linux_arm64.tar.gz

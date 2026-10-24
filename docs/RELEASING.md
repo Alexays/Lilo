@@ -9,24 +9,31 @@ How a Lilo release is cut, from version bump to published DMG. Maintainer-only; 
 
 ## Version bump
 
-Contributors record user-visible changes with `make changeset`. Lilo is one private Changesets
-package, `lilo`, whose version lives in the root `package.json`. To prepare a release:
+Contributors record user-visible changes with `make change`. Changie stores each note in
+`.changes/unreleased/` and each prepared release in `.changes/vX.Y.Z.md`. Make downloads a pinned
+native binary and verifies its SHA-256 checksum. Release tooling uses Python's standard library.
+To prepare a release:
 
 ```bash
-make changeset-status
-make changeset-version
+make release-status
+make release-version
 make validate
 ```
 
-`make changeset-version` consumes the pending `.changeset/*.md` files and adds their notes to
-`CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and extension
-bridge package versions, all three npm lockfiles, and the website's JSON-LD through `make site-generate`.
+`make release-status` previews the next release and checks the changelog and app versions without
+writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
+selects major. When notes request different bumps, the largest wins.
+
+`make release-version` collects the pending notes into a release file, consumes the fragments, and
+regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
+extension bridge package versions and their lockfiles, and the website's JSON-LD through `make site-generate`.
 It increments `CURRENT_PROJECT_VERSION` once when the app version changes. Sparkle compares this
-build number, so every release needs a larger one. Running the command again without new changesets
+build number, so every release needs a larger one. Running the command again without new fragments
 leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
 
-Review the generated notes and version changes, then commit them together. Published changelog
-entries from before Changesets keep their dates and compare links.
+Review the generated notes and version changes, then commit them together. The initial
+`.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
+Edit a prepared release's file and run `make release-version` to regenerate the changelog.
 
 ## Tag and push
 
