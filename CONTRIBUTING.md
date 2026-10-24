@@ -22,13 +22,12 @@ extensions.
 | Tool | Version | Needed for |
 |------|---------|------------|
 | macOS | 26 or later | running Lilo |
-| Xcode | 27 | building the app (Swift 6, the macOS 27 SDK) |
-| Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge |
-| Zig | 0.16.x (`brew install zig`) | `make vt-build`, which compiles libghostty-vt for terminal tabs |
-| Python 3 | the one Xcode installs | embedding the interface bundle and the native strings |
+| Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
+| Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge; all `make ui-preview` needs |
 | SwiftLint, XcodeGen | latest (`brew install swiftlint xcodegen`) | `make validate` and `make project-sync` |
+| Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
 
-No Apple Developer account is needed.
+Python 3 comes with Xcode. No Apple Developer account is needed.
 
 ## Setup
 
@@ -36,13 +35,32 @@ No Apple Developer account is needed.
 git clone https://github.com/Alexays/Lilo.git
 cd Lilo
 make hooks-install     # enable commit-message checks once per clone
-make install-debug     # npm deps, libghostty-vt, interface bundle, then a Debug build into ~/Applications
-open ~/Applications/Lilo.app
+make bootstrap         # checks the tools above, then npm deps, libghostty-vt, interface bundle, extension bridge
+make app               # Debug build in build/debug/export/Lilo.app
+open build/debug/export/Lilo.app
 ```
 
-`make install` builds and installs a Release build instead; `make app` builds a Debug bundle in
-`build/debug/export/Lilo.app` without installing it. The first build compiles libghostty-vt from
-a pinned Ghostty commit; later builds skip it until the pin changes.
+`make bootstrap` says what is missing and how to install it, and is a no-op once everything is
+in place. It downloads libghostty-vt, the terminal library, prebuilt for the pinned Ghostty commit
+and checked against the sha256 in the `Makefile`; `make vt-build-source` (or `VT_FROM_SOURCE=1`)
+compiles it with Zig instead, which is also what happens, with a message, when the download is
+not available. `make install-debug` installs the Debug build into `~/Applications`, and
+`make install` a Release build into `/Applications`.
+
+### Interface only
+
+To work on the sidebar, the command bar, settings or onboarding, Node.js is enough:
+
+```bash
+make ui-preview        # opens http://localhost:5173/preview/ with hot reload
+```
+
+[`lilo-ui/preview/`](lilo-ui/preview/main.ts) runs the interface in any browser against the fake
+host the end-to-end tests use, seeded with sample Spaces, pinned tabs, folders, extensions and
+settings. Query parameters pick what it shows: `?world=default|empty|onboarding`,
+`&theme=light|dark` (the system's otherwise) and `&open=settings|commandbar`, for example
+`/preview/?world=onboarding&theme=dark`. Commands the interface sends are in
+`window.__sentCommands`. The preview never ships: the app embeds only the `index.html` build.
 
 ### Signing
 
@@ -82,6 +100,7 @@ you use daily:
 # Interface work, with hot module reload in the running app
 make ui-dev          # terminal 1: Vite dev server on localhost:5173
 make run-ui-dev      # terminal 2: builds the app and launches it against the dev server
+make ui-preview      # or the interface alone in a browser, without Xcode
 
 # Swift work
 make app             # Debug bundle in build/debug/export/Lilo.app
@@ -159,6 +178,9 @@ rather than carving out a helper just to reach it.
 - **App** (the GitHub-hosted `xcode-27` macOS image, no signing secrets): a check that
   `Lilo.xcodeproj` matches `project.yml`, SwiftLint, the Debug and Release builds,
   `make swift-test` and `make swift-test-slow`.
+- **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
+  `main`): builds the xcframework `make vt-build` downloads and publishes it as the
+  `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.
 - **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
   `startup-bench-<sha>` artifact. It never fails the run.
 
