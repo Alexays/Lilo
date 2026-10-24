@@ -12,7 +12,11 @@ BRIDGE_DIR := Lilo/Extensions/bridge-src
 UI_DEPS := $(UI_DIR)/node_modules/.package-lock.json
 BRIDGE_DEPS := $(BRIDGE_DIR)/node_modules/.package-lock.json
 SITE_DEPS := site/node_modules/.package-lock.json
-CHANGESET_DEPS := node_modules/.package-lock.json
+CHANGIE_VERSION := 1.26.0
+CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
+CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+CHANGIE_ARCH := $(shell uname -m | sed -e 's/^x86_64$$/amd64/' -e 's/^aarch64$$/arm64/')
+CHANGIE_ARCHIVE := changie_$(CHANGIE_VERSION)_$(CHANGIE_OS)_$(CHANGIE_ARCH).tar.gz
 # What validate's UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	scripts/embed_chrome_ui.py scripts/generate_native_strings.py
@@ -53,7 +57,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changeset changeset-status changeset-version changeset-test changeset-lock
+	changie change release-status release-version release-test
 
 ## List the targets
 help:
@@ -67,8 +71,8 @@ bootstrap:
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
 ## Run UI lint/tests/build, Swift lint/tests, the app build, bridge, hook and release checks
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(CHANGESET_DEPS)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint changeset-status changeset-test > "$$log" 2>&1 & js=$$!; \
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(CHANGIE)
+	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint release-status release-test > "$$log" 2>&1 & js=$$!; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \
@@ -105,31 +109,35 @@ $(BRIDGE_DEPS): $(BRIDGE_DIR)/package-lock.json
 $(SITE_DEPS): site/package-lock.json
 	@npm --prefix site ci
 
-$(CHANGESET_DEPS): package.json package-lock.json
-	@npm ci
+$(CHANGIE): scripts/changie-checksums.txt
+	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
+	archive='$(CHANGIE_ARCHIVE)'; \
+	checksum=$$(awk -v file="$$archive" '$$2 == file { print $$1 }' scripts/changie-checksums.txt); \
+	[ -n "$$checksum" ] || { echo "Unsupported Changie archive: $$archive" >&2; exit 1; }; \
+	curl -fLsS --retry 3 "https://github.com/miniscruff/changie/releases/download/v$(CHANGIE_VERSION)/$$archive" -o "$$work/$$archive"; \
+	(cd "$$work" && printf '%s  %s\n' "$$checksum" "$$archive" | shasum -a 256 -c -); \
+	tar -xzf "$$work/$$archive" -C "$$work" changie; \
+	mkdir -p '$(@D)'; mv "$$work/changie" '$@'; touch '$@'
+
+## Download the pinned Changie release tool and verify its checksum
+changie: $(CHANGIE)
 
 ## Record a user-visible change for the next release
-changeset: $(CHANGESET_DEPS)
-	@node_modules/.bin/changeset
+change: $(CHANGIE)
+	@$(CHANGIE) new
 
 ## Show pending releases and check the app's versions agree
-changeset-status: $(CHANGESET_DEPS)
-	@node_modules/.bin/changeset status
-	@node scripts/sync-version.mjs --check
+release-status: $(CHANGIE)
+	@python3 scripts/release.py status --changie '$(CHANGIE)'
 
-## Consume changesets, bump the app and build versions, and refresh the website
-changeset-version: $(CHANGESET_DEPS)
-	@node_modules/.bin/changeset version
-	@node scripts/sync-version.mjs
+## Collect release notes, bump the app and build versions, and refresh the website
+release-version: $(CHANGIE)
+	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@$(MAKE) --no-print-directory site-generate
 
 ## Test app version and Sparkle build number synchronization
-changeset-test: $(CHANGESET_DEPS)
-	@node --test scripts/sync-version.test.mjs
-
-## Refresh the Changesets dependency lockfile after changing its version
-changeset-lock:
-	@npm install --package-lock-only --ignore-scripts
+release-test: $(CHANGIE)
+	@python3 scripts/release_test.py '$(CHANGIE)'
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)

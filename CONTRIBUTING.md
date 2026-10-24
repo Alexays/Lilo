@@ -24,6 +24,7 @@ extensions.
 | macOS | 26 or later | running Lilo |
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
 | Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge; all `make ui-preview` needs |
+| Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | latest (`brew install swiftlint xcodegen`) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
 
@@ -127,8 +128,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests; Changesets status
-and version sync tests.
+tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests; release-note and
+version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
@@ -140,8 +141,8 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
-| `make changeset-status` | pending release notes and app version consistency |
-| `make changeset-test` | app version and Sparkle build number synchronization tests |
+| `make release-status` | pending release notes, changelog and app version consistency |
+| `make release-test` | release preparation and Sparkle build number synchronization tests |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -175,7 +176,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling** (ubuntu): Changesets status, version sync tests and website metadata consistency.
+- **Release tooling** (ubuntu): Changie fragments, version sync tests and website metadata consistency.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
@@ -288,10 +289,11 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 2. Make focused commits, each building on its own (`make check-commits` checks a branch).
    Run `make lint-commits` to check their messages; `BASE=main` selects a different base.
 3. Run `make validate` and confirm it passes.
-4. For a change people using Lilo will notice, run `make changeset` and choose a `patch`, `minor`
-   or `major` bump for `lilo`. Write the summary for the person using the app and commit the
-   generated `.changeset/*.md` file with your code. Documentation, tests and build tooling usually
-   need no changeset. `CHANGELOG.md` is updated when a maintainer prepares the release.
+4. For a change people using Lilo will notice, run `make change`. Choose `Fixed` or `Changed`
+   for a patch release, `Added` for a minor release, or `Breaking` for a major release. Write the
+   summary for the person using the app and commit the generated `.changes/unreleased/*.yaml`
+   file with your code. Documentation, tests and build tooling usually need no fragment.
+   `CHANGELOG.md` is updated when a maintainer prepares the release.
 5. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
    recording of any UI change.
 

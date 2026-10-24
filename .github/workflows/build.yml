@@ -14,18 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changesets:
+  release-tooling:
     name: Release tooling
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
-      - run: make changeset-status changeset-test site-generate
+      - run: make release-status release-test site-generate
       - name: Check website metadata matches the app version
         run: git diff --exit-code site/public
 
