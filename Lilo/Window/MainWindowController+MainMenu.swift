@@ -141,6 +141,9 @@ extension MainWindowController {
             case .terminal(let closed):
                 title = closed.title.isEmpty ? URL(fileURLWithPath: closed.cwd).lastPathComponent : closed.title
                 symbol = "terminal"
+            case .savedTab(let tab):
+                title = tab.customTitle ?? tab.title
+                symbol = tab.isBookmarked ? "bookmark" : "pin"
             }
             let item = menu.addItem(title.count > 60 ? String(title.prefix(59)) + "\u{2026}" : title) { [weak self] in
                 guard let self else { return }

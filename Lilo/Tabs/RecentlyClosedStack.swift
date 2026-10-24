@@ -7,6 +7,8 @@ struct RecentlyClosedStack {
         enum Content: Sendable, Codable, Equatable {
             case page(URL)
             case terminal(ClosedTerminal)
+            /// A pinned or bookmarked tab removed from the sidebar, which comes back as it was.
+            case savedTab(StoredTab)
         }
 
         /// A terminal's shell dies with its tab: reopening it starts a new one in the same folder,

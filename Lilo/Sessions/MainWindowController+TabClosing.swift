@@ -125,6 +125,25 @@ extension MainWindowController {
                 ))
             }
             return tab
+        case .savedTab(let stored):
+            guard let spaceId = tabManager.currentSpaceId else { return nil }
+            let tab = Tab(stored, spaceId: spaceId, groupId: nil)
+            let section = entry.section ?? .forTab(isBookmarked: stored.isBookmarked, isPinned: stored.isPinned)
+            do {
+                try applyBrowserCommand(.createTab(spaceId: spaceId, tab: tab, activate: false))
+                if let index = entry.sortOrder {
+                    try applyBrowserCommand(section == .bookmarked
+                        ? .moveTabToBookmarked(spaceId: spaceId, tabId: tab.id, insert: .index(index))
+                        : .moveSidebarItem(
+                            spaceId: spaceId, kind: .tab, itemId: tab.id,
+                            parentFolderId: entry.parentFolderId, section: section, insert: .index(index)
+                        ))
+                }
+                return tab
+            } catch {
+                Self.logger.error("restore removed tab failed: \(error.localizedDescription, privacy: .public)")
+                return nil
+            }
         }
     }
 
@@ -187,10 +206,7 @@ extension MainWindowController {
             let changes = try applyBrowserCommand(.closeTab(spaceId: spaceId, tabId: id))
             tabManager.discardPreparedTabRuntime(for: id)
             readerModeTabs.remove(id)
-            if recorded {
-                let title = tabContext.tab.title.isEmpty ? (tabContext.tab.url?.host ?? "") : tabContext.tab.title
-                bridgeRouter.send(event: "tabClosedUndoable", data: ["title": title])
-            }
+            if recorded { announceUndoableClose(of: tabContext.tab) }
 
             if id == previousActiveTabId, !shouldOpenReplacementNewTab,
                let next = freeTab(preferring: changes.changedState?.state.activeTabId) {
@@ -206,7 +222,13 @@ extension MainWindowController {
         }
     }
 
-    /// Pinned, bookmarked and blank tabs are not restorable and return false; a terminal is, by its folder. `sidebarItemById`
+    func announceUndoableClose(of tab: Tab) {
+        let title = tab.customTitle ?? (tab.title.isEmpty ? (tab.url?.host ?? "") : tab.title)
+        bridgeRouter.send(event: "tabClosedUndoable", data: ["title": title])
+    }
+
+    /// An open pinned or bookmarked tab and a blank tab are not restorable and return false: closing the first keeps it in the
+    /// sidebar. A closed one about to be removed is, whole; a terminal is, by its folder. `sidebarItemById`
     /// is a precomputed tree lookup for batch closes; without it every call re-materializes the
     /// whole sidebar tree for one item. Tabs of a password-protected folder are not restorable either.
     @discardableResult
@@ -214,19 +236,24 @@ extension MainWindowController {
         guard let tabContext = tabManager.context(for: id) else { return false }
         let tab = tabContext.tab
         let spaceId = tabContext.spaceId
-        guard !tab.isPinned, !tab.isBookmarked, tabManager.protectingFolder(of: tab) == nil else { return false }
+        guard tabManager.protectingFolder(of: tab) == nil else { return false }
         let content: RecentlyClosedStack.Entry.Content
-        switch tab.kind {
-        case .web:
-            guard let url = tab.url else { return false }
-            content = .page(url)
-        case .terminal:
-            content = .terminal(.init(
-                cwd: tab.cwd ?? NSHomeDirectory(), title: tab.title, resumeCommand: tab.resumeCommand,
-                gitBranch: tab.gitBranch, screenId: tabManager.terminalHost.keepScreen(of: id) ? id : nil
-            ))
-        case .changes:
-            return false
+        if tab.isPinned || tab.isBookmarked {
+            guard tab.isClosed else { return false }
+            content = .savedTab(StoredTab(tab))
+        } else {
+            switch tab.kind {
+            case .web:
+                guard let url = tab.url else { return false }
+                content = .page(url)
+            case .terminal:
+                content = .terminal(.init(
+                    cwd: tab.cwd ?? NSHomeDirectory(), title: tab.title, resumeCommand: tab.resumeCommand,
+                    gitBranch: tab.gitBranch, screenId: tabManager.terminalHost.keepScreen(of: id) ? id : nil
+                ))
+            case .changes:
+                return false
+            }
         }
         let sidebarItem = sidebarItemById?[id]
             ?? tabManager.sidebarTreeItems(forSpace: spaceId).first { $0.kind == .tab && $0.itemId == id }

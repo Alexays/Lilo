@@ -493,6 +493,7 @@
 		DB692D4081B04969B02106B2 /* SystemBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC9EBCFF90134D8239518B9 /* SystemBridgeHandler.swift */; };
 		DB831A81D79B1EC1E2C28B87 /* ExtensionDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81AB35095009F1E4C0876C0F /* ExtensionDiagnostics.swift */; };
 		DBE942D7587C6CF9CF070F96 /* RecentTabsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679CBA4FBF82EC3604570BFB /* RecentTabsTests.swift */; };
+		DC19637BC56942E40FD9A8EC /* TabClosingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04401EEF80AB6F0D56B687F8 /* TabClosingTests.swift */; };
 		DC265FBFABB1F42A3AD073A4 /* DebuggerGapAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9C56F09119F923EA1F30B7 /* DebuggerGapAPITests.swift */; };
 		DCC5170792BC7CFAC1BA4246 /* AgentFoldersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F44BB422B4FC51B6DD6DEF2 /* AgentFoldersTests.swift */; };
 		DCEB40DC119C45419C91D4BA /* PowerKeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3CECF3A012D67D99F065F07 /* PowerKeeper.swift */; };
@@ -638,6 +639,7 @@
 		03896996B8F742A26C2FFDCC /* WKWebViewTab+Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKWebViewTab+Configuration.swift"; sourceTree = "<group>"; };
 		041D070362A134FB62C93574 /* ExternalLinkRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalLinkRoutingTests.swift; sourceTree = "<group>"; };
 		043A1D71DAA1B90B87A4A3B7 /* TerminalView+Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TerminalView+Input.swift"; sourceTree = "<group>"; };
+		04401EEF80AB6F0D56B687F8 /* TabClosingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabClosingTests.swift; sourceTree = "<group>"; };
 		0446E557B73B38C0A986B42F /* ChromeInputCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeInputCoordinator.swift; sourceTree = "<group>"; };
 		049F866B39EED80914C8F660 /* FolderLockKeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderLockKeychainTests.swift; sourceTree = "<group>"; };
 		04E0966448D618E19E820E08 /* NotificationsBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -1498,6 +1500,7 @@
 			children = (
 				947CC450B0D91201DCD69180 /* RestoredTabActivationTests.swift */,
 				57AEC88F04C1DC1D3BF3EBFC /* SessionRestorePreloadTests.swift */,
+				04401EEF80AB6F0D56B687F8 /* TabClosingTests.swift */,
 			);
 			path = Sessions;
 			sourceTree = "<group>";
@@ -2971,6 +2974,7 @@
 				A4DBCB00568014220103F4C2 /* SystemLidActionsTests.swift in Sources */,
 				3D16ADF977472CA519777960 /* TabArchiveTests.swift in Sources */,
 				743729CA39F3F4BF097F570B /* TabBridgeHandlerTests.swift in Sources */,
+				DC19637BC56942E40FD9A8EC /* TabClosingTests.swift in Sources */,
 				F2EB519F83CBEC6726DB69FC /* TabContextMenuActionsTests.swift in Sources */,
 				54E223905C49405FB8843B51 /* TabDockControllerTests.swift in Sources */,
 				BE52C56886B07B2CFB430778 /* TabExtensionAdapterTests.swift in Sources */,

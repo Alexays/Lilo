@@ -255,6 +255,16 @@ async function installFakeHost(
 				case "restoreClosedTab":
 					restoreClosedTab();
 					break;
+				// Removing a closed pinned tab, as the host does: it can be undone.
+				case "unpinTab": {
+					const spaceId = findTabSpace(id);
+					const removed = spaceId ? tabsOf(spaceId).find((t) => t.id === id) : undefined;
+					if (removed?.isClosed && removed.isPinned) {
+						closeTab(id);
+						setTimeout(() => window.__lilo?.receive({ event: "tabClosedUndoable", title: removed.customTitle || removed.title }), 0);
+					}
+					break;
+				}
 				case "renameTab": {
 					const spaceId = findTabSpace(id);
 					const renamed = spaceId ? tabsOf(spaceId).find((t) => t.id === id) : undefined;

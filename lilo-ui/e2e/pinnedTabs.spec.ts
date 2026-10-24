@@ -17,6 +17,43 @@ async function renameCommands(page: Page) {
 	return (await sentCommands(page)).filter((command) => command.action === "renameTab");
 }
 
+test("removing a pinned tab offers Undo, and Command Z outside a field takes it", async ({ page }) => {
+	await bootWithHome(page, { isClosed: true });
+
+	// Delete on the focused row, the keyboard twin of its close button.
+	await page.locator(HOME).focus();
+	await page.keyboard.press("Delete");
+
+	await expect(page.locator(HOME)).toHaveCount(0);
+	const toast = page.locator(".undo-toast");
+	await expect(toast).toHaveAttribute("aria-label", /Pinned Home/);
+
+	await page.locator("body").focus();
+	await page.keyboard.press("Meta+z");
+
+	await expect(page.locator(HOME)).toHaveCount(1);
+	await expect(toast).toHaveCount(0);
+	expect((await sentCommands(page)).some((command) => command.action === "restoreClosedTab")).toBe(true);
+});
+
+test("Command Z in a text field leaves the toast alone", async ({ page }) => {
+	await bootWithHome(page, { isClosed: true });
+	await page.locator(HOME).focus();
+	await page.keyboard.press("Backspace");
+	await expect(page.locator(".undo-toast")).toBeVisible();
+
+	await page.evaluate(() => {
+		const input = document.createElement("input");
+		input.id = "probe";
+		document.body.append(input);
+		input.focus();
+	});
+	await page.keyboard.press("Meta+z");
+
+	await expect(page.locator(".undo-toast")).toBeVisible();
+	expect((await sentCommands(page)).some((command) => command.action === "restoreClosedTab")).toBe(false);
+});
+
 test("double-clicking a pinned tab's title renames it, and Return confirms", async ({ page }) => {
 	await bootWithHome(page);
 

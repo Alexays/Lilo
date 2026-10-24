@@ -426,7 +426,14 @@ final class MainWindowController: NSWindowController {
         // A terminal closed for good takes its saved screen along, shown or not.
         var closingTerminal: UUID?
         if case let .closeTab(_, tabId) = command, tabManager.tab(for: tabId)?.kind == .terminal { closingTerminal = tabId }
+        // Unpinning a closed pinned tab, or unbookmarking a closed bookmark, takes it out of the sidebar: Undo and
+        // Reopen Closed Tab bring it back, whichever path removed it.
+        var removedTab: Tab?
+        if case let .setPinned(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isPinned { removedTab = tab }
+        if case let .setBookmarked(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isBookmarked { removedTab = tab }
+        let removalRecorded = removedTab.map { recordClosedTabForRestore(id: $0.id) } ?? false
         let changes = try browserRuntimeCoordinator.apply(command)
+        if removalRecorded, let removedTab { announceUndoableClose(of: removedTab) }
         if let closingTerminal, tabManager.tab(for: closingTerminal) == nil { tabManager.terminalHost.forget(closingTerminal) }
         if case let .activateTab(_, tabId) = command { activationAnnouncedByCommand = tabId }
         if case let .setPinned(_, tabId, _) = command, let adapter = tabManager.tabAdapter(for: tabId),

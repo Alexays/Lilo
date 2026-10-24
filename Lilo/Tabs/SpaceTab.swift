@@ -61,7 +61,8 @@ struct SpaceTab {
         if storedTab.isPinned {
             storedTab.isBookmarked = false
         }
-        if storedTab.isBookmarked || !storedTab.isClosed {
+        // A closed pinned or bookmarked tab is a sidebar placeholder, as one comes back from Undo.
+        if storedTab.isPinned || storedTab.isBookmarked || !storedTab.isClosed {
             let section = section(for: storedTab)
             insert(.tab(storedTab), toFolder: nil, section: section, index: rootNodes(in: section).count, in: &state.tree)
         }

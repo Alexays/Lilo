@@ -33,6 +33,20 @@ export function initUndoToastStore(): void {
 	});
 }
 
+// Cmd+Z takes the toast's offer only from the chrome outside a text field: a field keeps its own undo, and a focused page
+// never sends its keys here. Listening only while the toast shows lets an overlay's own Cmd+Z, attached earlier, go first.
+function undoOnCommandZ(e: KeyboardEvent): void {
+	if (e.defaultPrevented || !e.metaKey || e.shiftKey || e.altKey || e.ctrlKey || e.key.toLowerCase() !== "z") return;
+	if (e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]:not([contenteditable=false])")) return;
+	e.preventDefault();
+	undoTabClose();
+}
+
+function clearToast(): void {
+	_toast = null;
+	window.removeEventListener("keydown", undoOnCommandZ);
+}
+
 export function showUndoToast(label: string, undo: () => void): void {
 	if (timer !== null) clearTimeout(timer);
 	_toast = { title: label, count: 1, seq: ++seq, label, undo };
@@ -43,9 +57,10 @@ export function showUndoToast(label: string, undo: () => void): void {
 function startTimer(ms: number): void {
 	remainingMs = ms;
 	resumedAt = Date.now();
+	window.addEventListener("keydown", undoOnCommandZ);
 	timer = setTimeout(() => {
 		timer = null;
-		_toast = null;
+		clearToast();
 	}, ms);
 }
 
@@ -70,7 +85,7 @@ function dismissUndoToast(): void {
 		clearTimeout(timer);
 		timer = null;
 	}
-	_toast = null;
+	clearToast();
 }
 
 export function undoTabClose(): void {
