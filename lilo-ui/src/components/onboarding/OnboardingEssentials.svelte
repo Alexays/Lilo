@@ -26,7 +26,7 @@
   {#if isDefault}
     <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
   {:else}
-    <button class="ob-btn primary small" onclick={() => settingsActions.setDefaultBrowser()}>{t("onboarding.essentials.defaultSet")}</button>
+    <button class="ob-btn small" onclick={() => settingsActions.setDefaultBrowser()}>{t("onboarding.essentials.defaultSet")}</button>
   {/if}
 </div>
 

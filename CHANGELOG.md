@@ -6,6 +6,11 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The passwords step of the setup lists one password manager per row, so each description reads on one line.
+- In the setup, Use Lilo is a secondary button: Continue stays the one main action.
+
 ### Fixed
 
 - A permission request, such as an AI agent asking to connect, slides a hidden sidebar out so it can be answered, and an agent's connection request waits ten minutes instead of two.
@@ -15,6 +20,8 @@ What changes in each Lilo release, for people using it. The format follows
 - Setting Lilo as the default browser no longer reports a failure after you accept macOS's prompt.
 - An app downloaded with Lilo no longer opens on "(null) downloaded this file": macOS names Lilo as where it came from.
 - Extensions an import reinstalls open their welcome pages in the background, instead of taking the window and the keyboard from the setup.
+- The welcome after an import names what came over (bookmarks, open tabs, history and extensions), not only the pages of history.
+- The setup's welcome screen names the Return key, as on a Mac.
 
 ## [0.1.3] - 2026-10-24
 

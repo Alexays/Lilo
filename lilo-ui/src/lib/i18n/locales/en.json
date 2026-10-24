@@ -1391,7 +1391,7 @@
 			"headline": "Welcome home.",
 			"subline": "Let's bring your things over.",
 			"start": "Get started",
-			"hint": "Enter to start, Esc to skip"
+			"hint": "Press Return to start, Esc to skip"
 		},
 		"import": {
 			"title": "Bring your favorites",
@@ -1509,10 +1509,7 @@
 		},
 		"arrival": {
 			"title": "Welcome to Lilo.",
-			"imported": {
-				"one": "{count} page imported.",
-				"other": "{count} pages imported."
-			},
+			"imported": "Your things are here: {list}.",
 			"agents": "Your agents can connect to it.",
 			"done": "Done"
 		}

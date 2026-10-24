@@ -16,19 +16,19 @@
   import { getSetting } from "../../stores/settings.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import {
-    collapseOnboarding, expandOnboarding, finishOnboarding, getImportState, getOnboarding, noteExternalNavigation,
+    collapseOnboarding, expandOnboarding, finishOnboarding, getOnboarding, importedSummary, noteExternalNavigation,
   } from "../../stores/onboarding.svelte";
 
   const onboarding = getOnboarding();
-  const importState = getImportState();
   const steps = $derived(onboardingSteps(onboarding.usage));
   const step = $derived(steps[onboarding.step]);
   const cardSteps = $derived(steps.slice(1, -1));
   const agentsWelcome = $derived(onboarding.usage === "develop" && getSetting("agentControlEnabled", "false") === "true");
-  const importedPages = $derived((importState.summary ?? []).filter((item) => item.kind === "history").reduce((sum, item) => sum + item.imported, 0));
+  // Sign-ins are not something a person counts: the welcome names the rest.
+  const imported = $derived(importedSummary(["bookmarks", "tabs", "history", "extensions"]));
   const arrivalText = $derived([
     t("onboarding.arrival.title"),
-    importedPages > 0 ? t("onboarding.arrival.imported", { count: importedPages }) : "",
+    imported ? t("onboarding.arrival.imported", { list: imported }) : "",
     agentsWelcome ? t("onboarding.arrival.agents") : "",
   ].filter(Boolean).join(" "));
   const title = $derived(step === "tips" && onboarding.usage === "develop" ? t("onboarding.devTips.title") : t(`onboarding.${step}.title`));

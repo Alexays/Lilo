@@ -1391,7 +1391,7 @@
 			"headline": "Bienvenue chez vous.",
 			"subline": "On rapatrie vos affaires ?",
 			"start": "Commencer",
-			"hint": "Entrée pour commencer, Échap pour passer"
+			"hint": "Appuyez sur Retour pour commencer, Échap pour passer"
 		},
 		"import": {
 			"title": "Récupérez vos favoris",
@@ -1509,10 +1509,7 @@
 		},
 		"arrival": {
 			"title": "Bienvenue dans Lilo.",
-			"imported": {
-				"one": "{count} page importée.",
-				"other": "{count} pages importées."
-			},
+			"imported": "Vos affaires sont là : {list}.",
 			"agents": "Vos agents peuvent s'y connecter.",
 			"done": "OK"
 		}

@@ -12,7 +12,7 @@
 <h3>{t("onboarding.passwords.title")}</h3>
 <p class="ob-sub">{t("onboarding.passwords.subtitle")}</p>
 
-<div class="managers" role="list">
+<div class="managers ob-scroll" role="list">
   {#each PASSWORD_MANAGERS as manager (manager.id)}
     {@const ext = installed.get(manager.id)}
     <div class="manager" class:soon={manager.soon} role="listitem">
@@ -42,8 +42,8 @@
 </div>
 
 <style>
-  .managers { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-  .manager { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--bg-hover); font-size: var(--font-size-lg); color: var(--text-primary); }
+  .managers { display: flex; flex-direction: column; gap: 6px; }
+  .manager { display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-radius: var(--radius-lg); background: var(--bg-hover); font-size: var(--font-size-lg); color: var(--text-primary); }
   .manager.soon .glyph, .manager.soon .logo { opacity: .6; }
   .manager .ob-text { min-width: 0; }
   .logo { width: 30px; height: 30px; flex: none; }

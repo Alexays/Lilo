@@ -7,7 +7,7 @@
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { IMPORT_KINDS, importStatus, profileKey, toggleSource } from "./onboardingModel";
-  import { getImportState, getOnboarding, goBack, goNext, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
+  import { getImportState, getOnboarding, goBack, goNext, importedSummary, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
 
   const onboarding = getOnboarding();
   const importState = getImportState();
@@ -16,10 +16,7 @@
   const locked = $derived(sources.filter((source) => source.needsFullDiskAccess));
   const finished = $derived(importState.summary !== null);
   const list = (items: string[]) => new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(items);
-  const importedList = $derived(list(IMPORT_KINDS
-    .map((kind) => ({ kind, count: (importState.summary ?? []).filter((item) => item.kind === kind).reduce((sum, item) => sum + item.imported, 0) }))
-    .filter(({ count }) => count > 0)
-    .map(({ kind, count }) => t(`onboarding.import.count.${kind}`, { count }))));
+  const importedList = $derived(importedSummary(IMPORT_KINDS));
   const doneText = $derived(importedList ? t("onboarding.import.done", { list: importedList }) : t("onboarding.import.nothing"));
   const status = $derived(importStatus(importState.plan, importState.progress));
   const stepKey = $derived(status.phase ? `${status.phase.sourceId}/${status.phase.profileId}/${status.phase.kind}` : "");

@@ -22,10 +22,11 @@ async function bootOnboarding(page: Page, step: number, usage = "browse"): Promi
 	await receive(page, { event: "onboardingState", show: true, step, usage });
 }
 
-test("the intro keeps the keyboard: Tab stays on its button and Enter only starts the onboarding", async ({ page }) => {
+test("the intro keeps the keyboard: Tab stays on its button and Return only starts the onboarding", async ({ page }) => {
 	await bootOnboarding(page, 0);
 	const cta = page.locator(".intro .cta");
 	await expect(cta).toBeVisible();
+	await expect(page.locator(".intro .hint")).toHaveText("Press Return to start, Esc to skip");
 
 	await page.keyboard.press("Tab");
 	await page.keyboard.press("Tab");
@@ -94,6 +95,14 @@ const chromeSource = {
 		{ id: "Profile 2", name: "Travail", kinds: ["bookmarks"], extensions: [] },
 	],
 };
+
+const importedEverything = [
+	{ sourceId: "chrome", profileId: "Profile 1", kind: "bookmarks", imported: 1 },
+	{ sourceId: "chrome", profileId: "Profile 1", kind: "tabs", imported: 3 },
+	{ sourceId: "chrome", profileId: "Profile 1", kind: "history", imported: 2 },
+	{ sourceId: "chrome", profileId: "Profile 1", kind: "cookies", imported: 40 },
+	{ sourceId: "chrome", profileId: "Profile 1", kind: "extensions", imported: 1 },
+];
 
 test("a browser Lilo may not read is listed with the way to allow it", async ({ page }) => {
 	await bootOnboarding(page, 2);
@@ -226,6 +235,24 @@ test.describe("in French", () => {
 		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		expect(spaced(await page.locator(".toast span").textContent())).toContain("12 345 pages");
+	});
+
+	test("the arrival names what came over, each count in its own plural", async ({ page }) => {
+		await bootOnboarding(page, 2);
+		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+		await page.locator("section.card .ob-foot .ob-btn.primary").click();
+		await receive(page, { event: "importFinished", summary: importedEverything });
+		await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+		await page.locator("section.card .ob-foot .ob-btn.primary").click();
+
+		const text = "Bienvenue dans Lilo. Vos affaires sont là : 1 favori, 3 onglets ouverts, 2 pages d'historique et 1 extension.";
+		await expect(page.locator(".toast span")).toHaveText(text);
+		await expect(page.locator(".live-announcer")).toHaveText(text);
+	});
+
+	test("the intro names the Return key as a French Mac does", async ({ page }) => {
+		await bootOnboarding(page, 0);
+		await expect(page.locator(".intro .hint")).toHaveText("Appuyez sur Retour pour commencer, Échap pour passer");
 	});
 
 	test("the blank tab reads Nouvel onglet", async ({ page }) => {
@@ -369,6 +396,49 @@ test("a finished import hands the keyboard to Continue", async ({ page }) => {
 	await card.getByRole("button", { name: "Import", exact: true }).click();
 	await receive(page, { event: "importFinished", summary: [{ sourceId: "chrome", profileId: "Profile 1", kind: "bookmarks", imported: 3 }] });
 	await expect(card.getByRole("button", { name: "Continue" })).toBeFocused();
+});
+
+test("the arrival sums up the import, sign-ins aside, and speaks the same words", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	await page.locator("section.card .ob-foot .ob-btn.primary").click();
+	await receive(page, { event: "importFinished", summary: [
+		...importedEverything,
+		{ sourceId: "chrome", profileId: "Profile 2", kind: "bookmarks", imported: 1233 },
+		{ sourceId: "chrome", profileId: "Profile 2", kind: "extensions", imported: 0, error: "store" },
+	] });
+	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+	await page.locator("section.card .ob-foot .ob-btn.primary").click();
+
+	const text = "Welcome to Lilo. Your things are here: 1,234 bookmarks, 3 open tabs, 2 pages of history, and 1 extension.";
+	await expect(page.locator(".toast span")).toHaveText(text);
+	await expect(page.locator(".live-announcer")).toHaveText(text);
+});
+
+test("the passwords step reads as one list: a manager per row, each description on one line", async ({ page }) => {
+	await bootOnboarding(page, 3);
+	const managers = page.locator(".manager");
+	await expect(managers).toHaveCount(7);
+	const boxes = await managers.evaluateAll((rows) => rows.map((row) => {
+		const box = row.getBoundingClientRect();
+		const small = row.querySelector("small")!;
+		return { x: box.x, width: box.width, height: box.height, oneLine: small.getBoundingClientRect().height < parseFloat(getComputedStyle(small).fontSize) * 2 };
+	}));
+	for (const box of boxes) {
+		expect(box.x).toBeCloseTo(boxes[0].x, 1);
+		expect(box.width).toBeCloseTo(boxes[0].width, 1);
+		expect(box.height).toBeCloseTo(boxes[0].height, 1);
+		expect(box.oneLine).toBe(true);
+	}
+});
+
+test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {
+	await bootOnboarding(page, 5);
+	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });
+	const card = page.locator("section.card");
+	await expect(card.getByRole("button", { name: "Use Lilo" })).toBeVisible();
+	await expect(card.locator(".ob-btn.primary")).toHaveCount(1);
+	await expect(card.locator(".ob-btn.primary")).toHaveText("Continue");
 });
 
 test("the arrival is spoken, since the focus never reaches it", async ({ page }) => {
