@@ -94,10 +94,11 @@
   },
   "bgnkhhnnamicmpeenaelnjfhikgbkllg": {
    "name": "AdGuard AdBlocker",
-   "version": "5.5.3.24",
+   "version": "5.5.3.25",
    "popupText": true,
    "errors": [
-    "TypeError: Cannot read properties of undefined (reading 'listenerId')"
+    "TypeError: Cannot read properties of undefined (reading 'listenerId')",
+    "TypeError: Cannot destructure property 'areFilterLimitsExceeded' of 'options' as it is undefined."
    ]
   },
   "fjoaledfpmneenckfbpdfhkmimnjocfa": {
@@ -246,7 +247,7 @@
   },
   "liecbddmkiiihnedobmlmillhodjkdmb": {
    "name": "Loom – Screen Recorder & Screen Capture",
-   "version": "5.5.213",
+   "version": "5.5.214",
    "popupText": false,
    "errors": [
     "An error occurred during the HTTP request: TypeError: Failed to fetch",
@@ -268,7 +269,7 @@
   },
   "omghfjlpggmjjaagoclmmobgdodcjboh": {
    "name": "Browsec VPN - Free VPN for Chrome",
-   "version": "4.0.0",
+   "version": "4.1.0",
    "popupText": false,
    "errors": [
     "[DigestAdapter] Failed to send event jitsu_stats_early: TypeError: Failed to fetch"
@@ -1381,33 +1382,47 @@
   },
   "jaoafpkngncfpfggjefnekilbkcpjdgp": {
    "name": "Free VPN Proxy - VPN for Chrome uVPN",
-   "version": "8.0.10",
+   "version": "8.0.11",
    "popupText": true,
    "errors": [
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m32\u001b[m to url \u001b[31;1mhttps://analytics.uvpn.me/v2/store\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m44\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m45\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m46\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3i54rwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m47\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3ik4zwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m39\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m34\u001b[m to url \u001b[31;1mhttps://analytics.uvpn.me/v2/store\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
     "\u001b[31mERROR:\u001b[m [sw][Tabs] [passDomainToContentScript] An error occurred during transmission.",
     "Error: Could not establish connection. Receiving end does not exist.",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m35\u001b[m to url \u001b[31;1mhttps://www.googletagmanager.com/gtm.js?id=GTM-TDZGTK8\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m57\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m58\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m59\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3i54rwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m60\u001b[m to url \u001b[31;1mhttps://fonts.gstatic.com/s/sourcesanspro/v24/6xKydSBYKcSV-LCoeQqfX1RYOo3ik4zwlxdu3cOWxw.woff2\u001b[m ended with error: \u001b[31;1mnet::ERR_CACHE_MISS\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m49\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m52\u001b[m to url \u001b[31;1mhttps://www.google-analytics.com/analytics.js\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m82\u001b[m to url \u001b[31;1mhttps://stats.g.doubleclick.net/g/collect?v=2&tid=G-54KZ0CN0N8&cid=1233015290.1792434581&gtm=45je6af0v887312597za20ozb811363327zd811363327xf1&rcb=2&aip=1&dma=1&dma_cps=a&gcd=13l3l3l2l1l1&npa=1&frm=0&tag_exp=115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121246026~121246034\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m80\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/measurement/conversion?random=1792434581217&cv=11&tid=G-54KZ0CN0N8&fst=1792434581217&fmt=8&en=session_start&gtm=45je6af0v887312597za20ozb811363327zd811363327xecxf1&gcd=13l3l3l2l1l1&dma_cps=a&dma=1&tag_exp=115938465~115938468~118897920~118897930~120213116~120385422~120469145~120469153~121246026~121246034&u_w=800&u_h=600&url=https%3A%2F%2Fmanage.uvpn.me%2Forder-n",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m81\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6af0v887312597za20ozb811363327zd811363327xf1&_p=1792434580763&_gaz=1&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGAC&_prs=ok&cid=1233015290.1792434581&frm=0&pscdl=noapi&rcb=2&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B155.0.8059.84%7CNot(A%253ABrand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=1",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m91\u001b[m to url \u001b[31;1mhttps://csp.withgoogle.com/csp/IdpIFrameHttp/fine-allowlist\u001b[m ended with error: \u001b[31;1mnet::ERR_BLOCKED_BY_ORB\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m73\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-windows.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m72\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/windows-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m71\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-andorid.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m69\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-iphone.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m94\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6af0v887312597za20gzb811363327zd811363327xf1&_p=1792434580763&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGQC&cid=1233015290.1792434581&frm=0&pscdl=noapi&rcb=2&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B155.0.8059.84%7CNot(A%253ABrand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=2&tag_exp=115938",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m100\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6af0v887312597za20ozb811363327zd811363327xf1&_p=1792434585948&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGQC&cid=1233015290.1792434581&frm=0&pscdl=noapi&rcb=0&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B155.0.8059.84%7CNot(A%253ABrand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=1&tag_exp=11561",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m101\u001b[m to url \u001b[31;1mhttps://www.google-analytics.com/analytics.js\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m102\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m112\u001b[m to url \u001b[31;1mhttps://csp.withgoogle.com/csp/IdpIFrameHttp/fine-allowlist\u001b[m ended with error: \u001b[31;1mnet::ERR_BLOCKED_BY_ORB\u001b[m",
-    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m120\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6af0v887312597za20gzb811363327zd811363327xf1&_p=1792434585948&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AEAAAGQC&ae=a&cid=1233015290.1792434581&frm=0&pscdl=noapi&rcb=0&sr=800x600&uaa=arm&uab=64&uafvl=Chromium%3B155.0.8059.84%7CNot(A%253ABrand%3B24.0.0.0&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=2&tag_exp="
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m37\u001b[m to url \u001b[31;1mhttps://www.googletagmanager.com/gtm.js?id=GTM-TDZGTK8\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m61\u001b[m to url \u001b[31;1mhttps://api.uvpn.me/manage/v1/order_v2/get-prices\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m38\u001b[m to url \u001b[31;1mhttps://apis.google.com/js/api.js\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m51\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/mac-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m55\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/iphone-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m50\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-chrome.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m53\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-firefox.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m60\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-windows.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m49\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/chrome-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m57\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/android-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m59\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/windows-vpn.svg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m58\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-andorid.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m52\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-mac.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m56\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-iphone.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m54\u001b[m to url \u001b[31;1mhttps://uvpn.me/wp-content/uploads/2021/07/vpn-for-firefox.jpg\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m68\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m77\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m94\u001b[m to url \u001b[31;1mhttps://www.google-analytics.com/analytics.js\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m98\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/measurement/conversion?random=1792845310832&cv=11&tid=G-54KZ0CN0N8&fst=1792845310832&fmt=8&en=session_start&gtm=45je6al1v887312597za20ozb811363327zd811363327xecxf1&gcd=13l3l3l2l1l1&dma_cps=a&dma=1&tag_exp=115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034&u_w=800&u_h=600&url=https%3A%2F%2Fmanage.uvpn.me%2Forder-n",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m99\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6al1v887312597za20ozb811363327zd811363327xf1&_p=1792845308895&_gaz=1&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGAC&_prs=ok&cid=411133636.1792845311&frm=0&pscdl=noapi&rcb=5&sr=800x600&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=1&t",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m100\u001b[m to url \u001b[31;1mhttps://stats.g.doubleclick.net/g/collect?v=2&tid=G-54KZ0CN0N8&cid=411133636.1792845311&gtm=45je6al1v887312597za20ozb811363327zd811363327xf1&rcb=5&aip=1&dma=1&dma_cps=a&gcd=13l3l3l2l1l1&npa=1&frm=0&tag_exp=115938465~115938469~118897920~118897930~120213116~120385423~120469145~120469153~121246026~121246034\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m108\u001b[m to url \u001b[31;1mhttps://csp.withgoogle.com/csp/IdpIFrameHttp/fine-allowlist\u001b[m ended with error: \u001b[31;1mnet::ERR_BLOCKED_BY_ORB\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m116\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6al1v887312597za20gzb811363327zd811363327xf1&_p=1792845308895&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGQC&cid=411133636.1792845311&frm=0&pscdl=noapi&rcb=5&sr=800x600&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=2&tag_exp=1159384",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m113\u001b[m to url \u001b[31;1mhttps://m.stripe.network/inner.html#url=https%3A%2F%2Fmanage.uvpn.me%2Forder-new%3Fdevice%3Dchrome%26cid%3D1000_store%26sid5%3D&title=Subscribe%20to%20uVPN&referrer=&muid=NA&sid=NA&version=6&preview=false&__shared_params__[version]=dahlia\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m120\u001b[m to url \u001b[31;1mhttps://www.google-analytics.com/analytics.js\u001b[m ended with error: \u001b[31;1mnet::ERR_CONNECTION_REFUSED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m123\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6al1v887312597za20ozb811363327zd811363327xf1&_p=1792845314273&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AAAAAGQC&cid=411133636.1792845311&frm=0&pscdl=noapi&rcb=8&sr=800x600&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=1&tag_exp=1159384",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m117\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_ABORTED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m124\u001b[m to url \u001b[31;1mhttps://brianna.npvu.me/api/70/envelope/?sentry_key=96e47f89f20345c3919a7f33d1e86109&sentry_version=7&sentry_client=sentry.javascript.vue%2F8.35.0\u001b[m ended with error: \u001b[31;1mnet::ERR_FAILED\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m130\u001b[m to url \u001b[31;1mhttps://csp.withgoogle.com/csp/IdpIFrameHttp/fine-allowlist\u001b[m ended with error: \u001b[31;1mnet::ERR_BLOCKED_BY_ORB\u001b[m",
+    "\u001b[31mERROR:\u001b[m [sw][ProxyAuth] [handleWebRequestOnErrorOccurred] Request \u001b[31;1m136\u001b[m to url \u001b[31;1mhttps://region1.analytics.google.com/g/collect?v=2&tid=G-54KZ0CN0N8&gtm=45je6al1v887312597za20gzb811363327zd811363327xf1&_p=1792845314273&gcd=13l3l3l2l1l1&npa=1&dma_cps=a&dma=1&_eu=AEAAAGQC&ae=a&cid=411133636.1792845311&frm=0&pscdl=noapi&rcb=8&sr=800x600&uaa=arm&uab=64&uafvl=Not%253AA-Brand%3B8.0.0.0%7CChromium%3B156.0.8078.47&uam=&uamb=0&uap=macOS&uapv=27.0.1&uaw=0&ul=en-us&gaf=2&_s=2&tag_exp=11"
    ]
   },
   "jbojhlhhggfmmkpefknmbdhlaghehini": {
@@ -1578,7 +1593,7 @@
   },
   "njmehopjdpcckochcggncklnlmikcbnb": {
    "name": "Helium 10 for Amazon Sellers, Influencers, and Walmart Sellers",
-   "version": "8.43.6",
+   "version": "8.43.9",
    "popupText": true,
    "errors": [
     "Marketplace not found, using fallback njmehopjdpcckochcggncklnlmikcbnb",
@@ -1635,7 +1650,7 @@
   },
   "ohlencieiipommannpdfcmfdpjjmeolj": {
    "name": "PrintFriendly: Print, PDF Editor & Full Page Screenshot",
-   "version": "7.3.5",
+   "version": "7.3.6",
    "popupText": true,
    "errors": []
   },
@@ -1819,7 +1834,7 @@
   },
   "fihnjjcciajhdojfnbdddfaoknhalnja": {
    "name": "I don't care about cookies",
-   "version": "3.5.1",
+   "version": "3.6.1",
    "popupText": true,
    "errors": []
   },
@@ -2278,7 +2293,7 @@
   },
   "pnnfemgpilpdaojpnkjdgfgbnnjojfik": {
    "name": "Streak CRM for Gmail",
-   "version": "7.119",
+   "version": "7.120",
    "popupText": true,
    "errors": []
   },
@@ -3043,7 +3058,7 @@
   },
   "eanggfilgoajaocelnaflolkadkeghjp": {
    "name": "HARPA AI: Web Automation with ChatGPT, Claude, Gemini, Grok",
-   "version": "16.0.0",
+   "version": "16.1.0",
    "errors": [
     "\u001b[38;2;0;147;76m[$ai]\u001b[0m OpenaiSessionApi: Cloudflare check required"
    ]
@@ -3261,7 +3276,7 @@
   },
   "jlmpjdjjbgclbocgajdjefcidcncaied": {
    "name": "daily.dev | Where developers discover what's next",
-   "version": "3.47.11",
+   "version": "3.47.12",
    "errors": []
   },
   "jpcmhcelnjdmblfmjabdeclccemkghjk": {

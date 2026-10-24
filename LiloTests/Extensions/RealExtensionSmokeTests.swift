@@ -132,11 +132,12 @@ final class RealExtensionSmokeTests: XCTestCase {
                 .replacingOccurrences(of: #"^Uncaught \(in promise\)$"#, with: "undefined", options: .regularExpression)
                 // A logged "Error: " label stays: of console.error("Error: ", error), WebKit keeps only the label.
                 .replacingOccurrences(of: #"^(Error in event handler: |Error handling response: |Uncaught \(in promise\) )?((Type)?Error: (?! ))?"#, with: "", options: .regularExpression)
-                // V8's and JavaScriptCore's wording of a property read on undefined or null, of a missing variable and of one declared twice.
+                // V8's and JavaScriptCore's wording of a property read or destructured on undefined or null, of a missing variable and of one declared twice.
                 .replacingOccurrences(of: #"Cannot read properties of (undefined|null) \(reading '([^']+)'\)"#, with: "$1.$2", options: .regularExpression)
                 .replacingOccurrences(of: #"(undefined|null) is not an object \(evaluating '(?:[^']*\.)?([^'.]+)'\)"#, with: "$1.$2", options: .regularExpression)
                 .replacingOccurrences(of: #"Can't find variable: (\S+)"#, with: "$1 is not defined", options: .regularExpression)
                 .replacingOccurrences(of: #"Can't create duplicate variable: '([^']+)'"#, with: "Identifier '$1' has already been declared", options: .regularExpression)
+                .replacingOccurrences(of: #"Cannot destructure property '([^']+)' (from null or undefined value|of '.*' as it is (undefined|null)\.)"#, with: "Cannot destructure property '$1'", options: .regularExpression)
                 // JavaScriptCore quotes the call of something that is not a function.
                 .replacingOccurrences(of: #"\. \(In '.*?', '.*?' is [^)]*\)"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #" ?\([^()]*:\d+:\d+\)$"#, with: "", options: .regularExpression)
@@ -256,12 +257,27 @@ final class RealExtensionSmokeTests: XCTestCase {
     </body></html>
     """
 
-    /// An extension's part on the feature page, signed out: `check` (page world) holds once its content
-    /// scripts did it; `menu` asks for a context menu entry, `command` for a shortcut and what holds after it.
-    /// `click` clicks its toolbar button first, and `shows` holds for what that opens outside the page.
+    /// A JSON document, which viewers format, and a playing video, which video tools control.
+    private static let jsonDocument = #"{"name":"Example","items":[1,2,3],"nested":{"ok":true,"note":null}}"#
+    private static let videoPage = """
+    <!doctype html><html><head><title>Video</title></head><body>
+    <video id="video" width="640" height="360" autoplay muted playsinline></video>
+    <script>
+      const canvas = Object.assign(document.createElement('canvas'), { width: 640, height: 360 });
+      const context = canvas.getContext('2d');
+      setInterval(() => { context.fillStyle = `hsl(${Date.now() / 10 % 360} 60% 50%)`; context.fillRect(0, 0, 640, 360); }, 100);
+      document.getElementById('video').srcObject = canvas.captureStream(10);
+    </script>
+    </body></html>
+    """
+
+    /// An extension's part on the feature page (or on `path`), signed out: `check` (page world) holds once
+    /// its content scripts did it; `menu` asks for a context menu entry, `command` for a shortcut and what
+    /// holds after it. `click` clicks its toolbar button first, and `shows` holds for what that opens outside the page.
     private struct Feature {
         let id: String
         let name: String
+        var path = "/"
         let check: String
         var menu = false
         var command: (id: String, check: String)?
@@ -297,18 +313,39 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "jabopobgcpjmedljpbcaablpmlmfcogm", name: "WhatFont", check: "document.getElementById('what-font-ext-container') !== null", click: true),
         Feature(id: "mhjhnkcfbdhnjickkkdbjoemdmbfginb", name: "SelectorGadget", check: "document.getElementById('selectorgadget_main') !== null", click: true),
         Feature(id: "fcoeoabgfenejglbffodgkkbkcdhcgfn", name: "Claude", check: "true", click: true,
-                shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" })
+                shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
+        Feature(id: "difoiogjjojoaoomphldepapgpbgkhkb", name: "Sider", check: "true", click: true,
+                shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
+        Feature(id: "ddkjiahejlhfcafbddmgiahcphecmpfh", name: "uBlock Origin Lite", check: adBlocked),
+        Feature(id: "bgnkhhnnamicmpeenaelnjfhikgbkllg", name: "AdGuard AdBlocker", check: adBlocked),
+        Feature(id: "fmkadmapgofadopljbjfkapdkoienihi", name: "React Developer Tools", check: "typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
+        Feature(id: "nhdogjmejiglipccpnnnanhbledajbpd", name: "Vue.js devtools", check: "typeof window.__VUE_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
+        Feature(id: "lmhkpmbekcpmknklioeibfkpmmfibljd", name: "Redux DevTools", check: "typeof window.__REDUX_DEVTOOLS_EXTENSION__ === 'function'"),
+        Feature(id: "bcjindcccaagfpapjjmafapmmgkkhgoa", name: "JSON Formatter", path: "/data.json", check: "document.getElementById('jsonFormatterParsed') !== null"),
+        Feature(id: "chklaanhfefbnpoihckbnefhakgolnmc", name: "JSONVue", path: "/data.json", check: "document.querySelector('.collapser, #json') !== null"),
+        Feature(id: "nffaoalbilbmmfgbnbgppjihopabppdk", name: "Video Speed Controller", path: "/video", check: "document.querySelector('vsc-controller') !== null"),
+        Feature(id: "oldceeleldhonbafppcapldpdifcinji", name: "LanguageTool", check: "document.querySelector('[data-lt-installed], [data-lt-tmp-id]') !== null"),
+        Feature(id: "nllcnknpjnininklegdoijpljgdjkijc", name: "Wordtune", check: "window._wordtune_extension_installed === true"),
+        Feature(id: "edacconmaakjimmfgnblocblbcdcpbko", name: "Session Buddy", check: "true", click: true,
+                shows: { window in window.tabManager.openTabs.contains { $0.url?.host == "edacconmaakjimmfgnblocblbcdcpbko" } }),
+        Feature(id: "fdpohaocaechififmbbbbbknoalclacl", name: "GoFullPage", check: "true", click: true,
+                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } })
     ]
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
-        let html = Data(Self.featurePage.utf8)
+        let html = Data(Self.featurePage.utf8), json = Data(Self.jsonDocument.utf8), video = Data(Self.videoPage.utf8)
         let image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
         let server = try await TinyHTTPServer { request in
-            request.hasPrefix("GET / ") ? ("200 OK", ["Content-Type: text/html"], html) : ("200 OK", ["Content-Type: image/gif"], image)
+            if request.hasPrefix("GET / ") { return ("200 OK", ["Content-Type: text/html"], html) }
+            if request.hasPrefix("GET /data.json ") { return ("200 OK", ["Content-Type: application/json"], json) }
+            if request.hasPrefix("GET /video ") { return ("200 OK", ["Content-Type: text/html"], video) }
+            return ("200 OK", ["Content-Type: image/gif"], image)
         }
-        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
-        for feature in Self.features {
+        // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
+        let only = ProcessInfo.processInfo.environment["LILO_SMOKE_FEATURES"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
+        for feature in Self.features where only?.contains(feature.name) ?? true {
+            let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)\(feature.path)"))
             do {
                 let package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: feature.id)
                 defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) }
@@ -326,7 +363,8 @@ final class RealExtensionSmokeTests: XCTestCase {
             let page = try XCTUnwrap(engine.view as? WKWebView)
             let holds = { (check: String) in await pollUntil(timeout: 20) { (try? await page.evaluateJavaScript(check)) as? Bool == true } }
             if feature.click {
-                // As the toolbar button does; a welcome page the extension opened on install may be active.
+                // As the toolbar button does; a welcome page the extension opens on install may come after the page.
+                _ = await pollUntil(timeout: 3) { window.tabManager.openTabs.count > 1 }
                 window.activateTabStateFirst(id: tab.id)
                 _ = await pollUntil(timeout: 10) { !page.isLoading }
                 let button = NSMenuItem()
