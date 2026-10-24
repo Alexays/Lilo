@@ -359,8 +359,6 @@ for (const colorScheme of ["light", "dark"] as const) {
 				],
 			});
 			expect(await textContrast(page, ".src.locked .hint"), "Allow access").toBeGreaterThanOrEqual(4.5);
-			expect(await textContrast(page, ".note.access"), "access needed").toBeGreaterThanOrEqual(4.5);
-			expect(await textContrast(page, ".note.access button.more"), "open System Settings").toBeGreaterThanOrEqual(4.5);
 			expect(await textContrast(page, "button.more[aria-expanded]"), "more options").toBeGreaterThanOrEqual(4.5);
 			await page.locator("button.more[aria-expanded]").click();
 			expect(await textContrast(page, ".chip:not(.off)"), "kind chip").toBeGreaterThanOrEqual(4.5);

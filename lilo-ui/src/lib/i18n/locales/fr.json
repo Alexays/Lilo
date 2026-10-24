@@ -1404,8 +1404,6 @@
 			"none": "Aucun autre navigateur sur ce Mac. Vous pouvez passer cette étape.",
 			"allow": "Autoriser l'accès",
 			"keychainNote": "macOS va vous demander l'autorisation de garder vos connexions : cliquez sur Autoriser.",
-			"access": "Lilo a besoin de l'accès complet au disque pour lire vos données {browsers}.",
-			"openSettings": "Ouvrir les Réglages Système",
 			"done": "C'est fait : {list}.",
 			"nothing": "C'est fait : rien de nouveau à importer.",
 			"count": {
@@ -1519,6 +1517,8 @@
 		}
 	},
 	"native": {
+		"Turn Lilo on in the list, or drag this icon into it.": "Activez Lilo dans la liste, ou glissez-y cette icône.",
+		"Drag into the Full Disk Access list": "Glisser dans la liste Accès complet au disque",
 		"Move Lilo to Applications?": "Déplacer Lilo dans Applications ?",
 		"Lilo is running from the disk image. In Applications it gets its updates, and apps like Claude find it.": "Lilo est lancé depuis l'image disque. Dans Applications, il reçoit ses mises à jour et les apps comme Claude le trouvent.",
 		"Move to Applications": "Déplacer dans Applications",

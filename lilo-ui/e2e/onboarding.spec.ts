@@ -104,18 +104,21 @@ const importedEverything = [
 	{ sourceId: "chrome", profileId: "Profile 1", kind: "extensions", imported: 1 },
 ];
 
-test("a browser Lilo may not read is listed with the way to allow it", async ({ page }) => {
+test("a browser Lilo may not read is one button that opens Full Disk Access, with nothing else to read", async ({ page }) => {
 	await bootOnboarding(page, 2);
 	await receive(page, { event: "importSourcesLoaded", sources: [{ ...chromeSource, needsFullDiskAccess: true, profiles: [] }] });
 	const card = page.locator("section.card");
-	await expect(card.locator(".src.locked")).toContainText("Chrome");
-	await expect(card.locator(".note.access")).toContainText("Lilo needs Full Disk Access to read your Chrome data.");
-	await card.locator(".note.access button").click();
+	const tile = card.getByRole("button", { name: /Chrome.*Allow access/ });
+	await expect(tile).toBeVisible();
+	// The explanation lives in the panel beside System Settings, not in a note under the tiles.
+	await expect(card.locator(".note")).toHaveCount(0);
+	await expect(card).not.toContainText("Full Disk Access");
+	await tile.click();
 	expect((await sentCommands(page)).map((command) => command.action)).toContain("openFullDiskAccessSettings");
 
-	// Back from System Settings, the rescan finds it readable and ready to import.
+	// Once access is granted, the rescan unlocks the tile in place, ready to import.
 	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
-	await expect(card.locator(".note.access")).toHaveCount(0);
+	await expect(card.locator(".src.locked")).toHaveCount(0);
 	await expect(card.locator(".src.on")).toContainText("Chrome");
 	await expect(card.locator(".ob-foot .ob-btn.primary")).toBeEnabled();
 });
@@ -502,17 +505,13 @@ test("each agent's connect button names it", async ({ page }) => {
 test.describe("in French at the window's minimum size", () => {
 	test.use({ locale: "fr-FR", viewport: { width: 600, height: 400 } });
 
-	test("the import keeps its options link in view, and the settings link lines up when it wraps", async ({ page }) => {
+	test("the import keeps its options link in view beside a locked browser", async ({ page }) => {
 		await bootOnboarding(page, 2);
 		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource, lockedSafari] });
 		const card = page.locator("section.card");
 		const more = card.getByRole("button", { name: "Choisir quoi importer" });
 		await more.scrollIntoViewIfNeeded();
 		await expect(more).toBeInViewport({ ratio: 1 });
-
-		const note = (await card.locator(".note.access").boundingBox())!;
-		const link = (await card.locator(".note.access button").boundingBox())!;
-		expect(link.y).toBeGreaterThan(note.y + 4);
-		expect(Math.round(link.x)).toBe(Math.round(note.x));
+		await expect(card.getByRole("button", { name: /Safari.*Autoriser l'accès/ })).toBeVisible();
 	});
 });

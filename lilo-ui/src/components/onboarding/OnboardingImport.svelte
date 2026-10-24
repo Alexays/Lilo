@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { fade, slide } from "svelte/transition";
-  import { getLocale, t } from "../../lib/i18n/state.svelte";
+  import { t } from "../../lib/i18n/state.svelte";
   import { announce } from "../../lib/announce";
   import { importActions } from "../../lib/bridge/actions";
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
@@ -13,9 +13,7 @@
   const importState = getImportState();
   const choices = $derived(importState.choices);
   const sources = $derived(importState.sources ?? []);
-  const locked = $derived(sources.filter((source) => source.needsFullDiskAccess));
   const finished = $derived(importState.summary !== null);
-  const list = (items: string[]) => new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(items);
   const importedList = $derived(importedSummary(IMPORT_KINDS));
   const doneText = $derived(importedList ? t("onboarding.import.done", { list: importedList }) : t("onboarding.import.nothing"));
   const status = $derived(importStatus(importState.plan, importState.progress));
@@ -102,13 +100,6 @@
     {/each}
   </div>
 
-  {#if locked.length > 0 && !importState.running && !finished}
-    <p class="note access">
-      {t("onboarding.import.access", { browsers: list(locked.map((source) => source.name)) })}
-      <button class="more" onclick={() => importActions.openFullDiskAccessSettings()}>{t("onboarding.import.openSettings")}</button>
-    </p>
-  {/if}
-
   <div class="ob-scroll">
     {#if importState.running}
       <div class="progress">
@@ -192,7 +183,6 @@
   .hint { display: block; margin-top: 2px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--accent-ink); }
   .note { font-size: var(--font-size-sm); color: var(--text-secondary); margin: 12px 0 0; }
   .note.done { color: var(--success-text); font-weight: var(--font-weight-semibold); }
-  .access .more { margin: 0; }
   .progress { margin-top: 14px; }
   /* Both labels share one cell while they crossfade. */
   .step { display: grid; margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--text-secondary); }

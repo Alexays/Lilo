@@ -41,6 +41,41 @@ final class ImportBridgeHandlerTests: XCTestCase {
         withExtendedLifetime((router, handler)) {}
     }
 
+    func testAllowingAccessOpensFullDiskAccessAndClosesItsPanelOnceGranted() async throws {
+        let fm = FileManager.default
+        let home = fm.temporaryDirectory.appendingPathComponent("home-\(UUID().uuidString)")
+        let safari = home.appendingPathComponent("Library/Safari")
+        try fm.createDirectory(at: safari, withIntermediateDirectories: true)
+        try fm.setAttributes([.posixPermissions: 0], ofItemAtPath: safari.path)
+        defer {
+            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: safari.path)
+            try? fm.removeItem(at: home)
+        }
+        let router = BridgeRouter(chromeWebView: WKWebView())
+        let events = BridgeEventRecorder(router)
+        var opened: [URL] = []
+        let handler = ImportBridgeHandler(bridgeRouter: router, home: home, openURL: { opened.append($0); return true },
+                                          holdExtensionTabs: { _ in }, makeImporter: { fatalError("no import runs here") })
+        let safariSources = { events.events.filter { $0.name == "importSourcesLoaded" }
+            .compactMap { ($0.data["sources"] as? [[String: Any]])?.first { $0["id"] as? String == "safari" } } }
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "scanImportSources", "payload": [:]])))
+        let scanned = await pollUntil(timeout: 5) { safariSources().count == 1 }
+        XCTAssertTrue(scanned)
+        XCTAssertEqual(safariSources().first?["needsFullDiskAccess"] as? Bool, true)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "openFullDiskAccessSettings", "payload": [:]])))
+        XCTAssertEqual(opened.map(\.absoluteString), ["x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles"])
+        XCTAssertNotNil(handler.accessPanel)
+
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: safari.path)
+        let closed = await pollUntil(timeout: 5) { handler.accessPanel == nil }
+        XCTAssertTrue(closed, "the panel closes once the protected folder reads")
+        let rescanned = await pollUntil(timeout: 5) { safariSources().count == 2 }
+        XCTAssertTrue(rescanned)
+        XCTAssertEqual(safariSources().last?["needsFullDiskAccess"] as? Bool, false)
+        withExtendedLifetime((router, handler)) {}
+    }
+
     /// A browser profile listing one Web Store extension, and an unpacked extension that opens its welcome page on install.
     private func makeWelcomingExtension() throws -> (home: URL, storeId: String, unpacked: URL) {
         let fm = FileManager.default

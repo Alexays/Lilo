@@ -526,6 +526,7 @@
 		E57A8CBCFBD15F7309CDD213 /* TabExtensionAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1058F06F08D7D7F1BBF37CB /* TabExtensionAdapter.swift */; };
 		E59077FB3BA624F2F01CA948 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06769E44A8EE48C5694C00EC /* Database.swift */; };
 		E5C04D5823EFA41E332D165F /* PowerHelperListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1612E7CB0B3577AD79CB1BF8 /* PowerHelperListener.swift */; };
+		E5C560AA01DA2D60B73AD303 /* FullDiskAccessPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4066E4F3CD717A035E1262 /* FullDiskAccessPanel.swift */; };
 		E5F4BF58A37B471BD9AD79B4 /* ProfileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8430E7F783FE11B45FFB63F2 /* ProfileManagerTests.swift */; };
 		E6062DC0DD6D3A983CD4E74F /* DeviceSetupMemory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72AAFA48AA7D7B50E90A4C2B /* DeviceSetupMemory.swift */; };
 		E69063E046F883BAE8B0414F /* OnboardingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2A2A1513222EB74ED41E38 /* OnboardingSettingsTests.swift */; };
@@ -1070,6 +1071,7 @@
 		BBB23A4535CD96F049DB84BE /* BrowserStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserStateStoreTests.swift; sourceTree = "<group>"; };
 		BBD06A0A69230BDB140C509B /* WindowExtensionAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowExtensionAdapterTests.swift; sourceTree = "<group>"; };
 		BC75B45A1ECC4EB7438C3E34 /* GlyphAtlas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlas.swift; sourceTree = "<group>"; };
+		BD4066E4F3CD717A035E1262 /* FullDiskAccessPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccessPanel.swift; sourceTree = "<group>"; };
 		BD72EED90A74A2317DEDC69B /* ViewSourceSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewSourceSchemeHandler.swift; sourceTree = "<group>"; };
 		BE347F446FD2F4E9F6DEE14F /* WebInspectorRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebInspectorRecoveryTests.swift; sourceTree = "<group>"; };
 		BF1360B23CFB74B9AB68AB26 /* TabsQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabsQueryTests.swift; sourceTree = "<group>"; };
@@ -1289,6 +1291,7 @@
 				DEF6F9CA5924443C5AF9BCBC /* ChromiumReader.swift */,
 				4A068836022B5AC624E152C6 /* ChromiumSession.swift */,
 				C34A9B1610C9483B1D981342 /* FirefoxReader.swift */,
+				BD4066E4F3CD717A035E1262 /* FullDiskAccessPanel.swift */,
 				611AB17EA0AC8C0041A9D5A9 /* ImportBridgeHandler.swift */,
 				204901723B65B91075146379 /* ImportModels.swift */,
 				4C2C7FB29ECFFC8B0C74DFED /* SafariReader.swift */,
@@ -2609,6 +2612,7 @@
 				22F4FAC9A170763B208AEF49 /* FolderAutoLock.swift in Sources */,
 				560A671CE63F065379F6DB36 /* FolderLock.swift in Sources */,
 				C16F11445772195F3A52E510 /* FontSettingsBridgeHandler.swift in Sources */,
+				E5C560AA01DA2D60B73AD303 /* FullDiskAccessPanel.swift in Sources */,
 				61C9A55E16172E76E57FAB78 /* GapBridgeRouter.swift in Sources */,
 				34414D3C7093E9EEDBD716C8 /* GapEvents.swift in Sources */,
 				2829313333A86D7187B17E65 /* GeolocationBridge.swift in Sources */,

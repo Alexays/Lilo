@@ -1404,8 +1404,6 @@
 			"none": "No other browser found on this Mac. You can skip this step.",
 			"allow": "Allow access",
 			"keychainNote": "macOS will ask for permission to keep you signed in to your sites: click Allow.",
-			"access": "Lilo needs Full Disk Access to read your {browsers} data.",
-			"openSettings": "Open System Settings",
 			"done": "Done: {list}.",
 			"nothing": "Done: nothing new to import.",
 			"count": {
@@ -1519,6 +1517,8 @@
 		}
 	},
 	"native": {
+		"Turn Lilo on in the list, or drag this icon into it.": "Turn Lilo on in the list, or drag this icon into it.",
+		"Drag into the Full Disk Access list": "Drag into the Full Disk Access list",
 		"Move Lilo to Applications?": "Move Lilo to Applications?",
 		"Lilo is running from the disk image. In Applications it gets its updates, and apps like Claude find it.": "Lilo is running from the disk image. In Applications it gets its updates, and apps like Claude find it.",
 		"Move to Applications": "Move to Applications",

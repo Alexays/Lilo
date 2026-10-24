@@ -74,7 +74,7 @@ enum BrowserImportScanner {
 
     /// True when `url` exists but macOS refuses to open it: EPERM without Full Disk Access, EACCES from file permissions.
     /// A missing file is ENOENT, never a denial.
-    private static func isDenied(_ url: URL) -> Bool {
+    static func isDenied(_ url: URL) -> Bool {
         let fd = open(url.path, O_RDONLY | O_NONBLOCK)
         if fd >= 0 { close(fd); return false }
         return errno == EPERM || errno == EACCES

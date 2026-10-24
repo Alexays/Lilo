@@ -10,6 +10,9 @@ final class ImportBridgeHandler: BridgeHandler {
     /// Extensions an import reinstalls open their welcome pages once it has moved on: the hold lasts until the page closes.
     private let holdExtensionTabs: (Bool) -> Void
     private let home: URL
+    private let openURL: (URL) -> Bool
+    /// Up while the user is in System Settings turning Full Disk Access on.
+    private(set) var accessPanel: FullDiskAccessPanel?
     private var sources: [ImportSource] = []
     private var isRunning = false
     /// Bumped when the page closes or finishes, so a scan still in flight never refills `sources`.
@@ -17,14 +20,18 @@ final class ImportBridgeHandler: BridgeHandler {
     nonisolated(unsafe) private var activeObserver: Any?
 
     init(bridgeRouter: BridgeRouter, home: URL = FileManager.default.homeDirectoryForCurrentUser,
+         openURL: @escaping (URL) -> Bool = { NSWorkspace.shared.open($0) },
          holdExtensionTabs: @escaping (Bool) -> Void, makeImporter: @escaping () -> BrowserImporter) {
         self.bridgeRouter = bridgeRouter
         self.home = home
+        self.openURL = openURL
         self.holdExtensionTabs = holdExtensionTabs
         self.makeImporter = makeImporter
         // Granting Full Disk Access happens in System Settings: rescan when the user comes back.
         activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
+                // Back in Lilo, the user is done with System Settings: the rescan below tells whether access was granted.
+                self?.accessPanel?.close()
                 guard let self, !self.isRunning, self.sources.contains(where: \.needsFullDiskAccess) else { return }
                 Task { await self.scan() }
             }
@@ -61,6 +68,7 @@ final class ImportBridgeHandler: BridgeHandler {
                     extensionIds: raw["extensionIds"] as? [String] ?? [])
             }
             isRunning = true
+            accessPanel?.close()
             holdExtensionTabs(true)
             let summary = await makeImporter().run(selections, sources: sources) { [weak self] progress in
                 self?.bridgeRouter?.send(event: "importProgress", data: [
@@ -79,14 +87,27 @@ final class ImportBridgeHandler: BridgeHandler {
                 return data
             }])
         case "closeImport":
+            accessPanel?.close()
             holdExtensionTabs(false)
             sources = []
             scanGeneration += 1
         case "openFullDiskAccessSettings":
             // The Settings app's own anchor first; systems that do not know it take the older pane URL.
-            if !NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles")!) {
-                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+            if !openURL(URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles")!) {
+                _ = openURL(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
             }
+            let locked = sources.filter(\.needsFullDiskAccess).map(\.rootURL)
+            guard accessPanel == nil, !locked.isEmpty else { break }
+            accessPanel = FullDiskAccessPanel(isGranted: { !locked.contains(where: BrowserImportScanner.isDenied) }, onClose: { [weak self] granted in
+                guard let self else { return }
+                accessPanel = nil
+                guard granted else { return }
+                // Scanned before Lilo comes forward, so the activation observer finds nothing left to rescan.
+                Task {
+                    await self.scan()
+                    NSApp.activate()
+                }
+            })
         default:
             break
         }
