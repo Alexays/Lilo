@@ -11,48 +11,58 @@ final class AgentConsentTests: AgentToolTestCase {
         control.answerConsent(requestId, granted: granted)
     }
 
-    func testUnknownClientWaitsForConsent() async throws {
+    func testAnUnknownClientIsAnsweredAtOnceAndItsToolsWaitForConsent() async throws {
         let newcomer = try AgentTestClient(path: socketURL)
-        let reply = Task { await newcomer.initialize(name: "Newcomer") }
+
+        let result = await newcomer.initialize(name: "Newcomer")
+        XCTAssertEqual((result?["serverInfo"] as? [String: Any])?["name"] as? String, "lilo", "a client never times out on its handshake")
+        let waiting = await newcomer.callTool("tabs_context_mcp")
+        XCTAssertTrue(waiting.isError)
+        XCTAssertTrue(waiting.text.hasPrefix("[needs_user] Lilo is waiting for the user to allow Newcomer"), waiting.text)
 
         try await answerConsent(true)
-
-        let result = await reply.value
-        XCTAssertEqual((result?["serverInfo"] as? [String: Any])?["name"] as? String, "lilo")
+        let allowed = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "Newcomer" && $0.isAuthorized } }
+        XCTAssertTrue(allowed)
+        let call = await newcomer.callTool("tabs_context_mcp")
+        XCTAssertFalse(call.isError, call.text)
         XCTAssertEqual(control.allowedClients["Newcomer"], [AgentControl.clientIdentity(peer: getpid()).identity], "asked once, remembered")
     }
 
-    func testRefusedConsentClosesConnection() async throws {
+    func testARefusedClientIsToldAtEachToolCall() async throws {
         let newcomer = try AgentTestClient(path: socketURL)
-        let reply = Task { await newcomer.initialize(name: "Newcomer") }
+        _ = await newcomer.initialize(name: "Newcomer")
 
         try await answerConsent(false)
+        let refused = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "Newcomer" && $0.isRefused } }
+        XCTAssertTrue(refused)
 
-        let result = await reply.value
-        XCTAssertEqual((result?["error"] as? [String: Any])?["code"] as? Int, -32001)
-        let next = await newcomer.receive()
-        XCTAssertNil(next, "Lilo hung up")
+        let call = await newcomer.callTool("tabs_context_mcp")
+        XCTAssertTrue(call.text.hasPrefix("[needs_user] The user did not allow Newcomer"), call.text)
+        XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "a refusal is not asked again until the client reconnects")
         XCTAssertFalse(control.allowedClients.keys.contains("Newcomer"))
     }
 
     func testTwoConnectionsOfOneClientShareOneQuestion() async throws {
         let first = try AgentTestClient(path: socketURL)
         let second = try AgentTestClient(path: socketURL)
-        let replies = Task { (await first.initialize(name: "Newcomer"), await second.initialize(name: "Newcomer")) }
+        _ = await first.initialize(name: "Newcomer")
+        _ = await second.initialize(name: "Newcomer")
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked)
         try await Task.sleep(for: .milliseconds(200))
 
         XCTAssertEqual(control.pendingConsentAnswers.count, 1)
         try await answerConsent(true)
 
-        let (one, two) = await replies.value
-        XCTAssertNotNil(one?["serverInfo"])
-        XCTAssertNotNil(two?["serverInfo"])
+        let both = await pollUntil(timeout: 5) { self.control.sessions.filter { $0.clientName == "Newcomer" && $0.isAuthorized }.count == 2 }
+        XCTAssertTrue(both)
     }
 
     func testLeavingWhileAskedWithdrawsTheQuestion() async throws {
         let first = try AgentTestClient(path: socketURL)
         let second = try AgentTestClient(path: socketURL)
-        let replies = [Task { _ = await first.initialize(name: "Newcomer") }, Task { _ = await second.initialize(name: "Newcomer") }]
+        _ = await first.initialize(name: "Newcomer")
+        _ = await second.initialize(name: "Newcomer")
         let asked = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.count == 1 }
         XCTAssertTrue(asked)
 
@@ -64,18 +74,17 @@ final class AgentConsentTests: AgentToolTestCase {
         let withdrawn = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
         XCTAssertTrue(withdrawn, "nobody is left to approve")
         XCTAssertFalse(control.allowedClients.keys.contains("Newcomer"))
-        for reply in replies { await reply.value }
     }
 
     func testAnApprovedNameFromAnotherProgramIsAskedAgain() async throws {
         context.settingsStore.set("agentAllowedClients", value: #"{"claude-code": ["/usr/local/bin/claude"]}"#)
         let impostor = try AgentTestClient(path: socketURL)
-        let reply = Task { await impostor.initialize(name: "claude-code") }
+        _ = await impostor.initialize(name: "claude-code")
 
         try await answerConsent(false)
 
-        let result = await reply.value
-        XCTAssertEqual((result?["error"] as? [String: Any])?["code"] as? Int, -32001, "the name alone is no approval")
+        let refused = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "claude-code" && $0.isRefused } }
+        XCTAssertTrue(refused, "the name alone is no approval")
         XCTAssertEqual(control.allowedClients["claude-code"], ["/usr/local/bin/claude"])
     }
 

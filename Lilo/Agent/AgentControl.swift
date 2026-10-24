@@ -232,8 +232,9 @@ final class AgentControl {
     }
 
     /// Asks the user the first time a client name connects from an executable; concurrent connections of one
-    /// client share the question. The name alone is no credential: any program can claim it.
-    func authorize(_ session: AgentSession) async -> Bool {
+    /// client share the question. The name alone is no credential: any program can claim it. Without `asking`,
+    /// only an approval already given counts.
+    func authorize(_ session: AgentSession, asking: Bool = true) async -> Bool {
         let name = session.clientName
         // Reading code signatures touches the disk: off the main thread, before any approval is looked up.
         if session.identity.isEmpty {
@@ -245,6 +246,7 @@ final class AgentControl {
             markSeen(name)
             return true
         }
+        guard asking else { return false }
         let key = name + "\n" + session.identity
         let question = pendingConsents[key]?.question ?? Task { @MainActor in await self.askConsent(name, executable: session.executable) }
         pendingConsents[key] = (question, (pendingConsents[key]?.waiting ?? 0) + 1)
@@ -393,6 +395,7 @@ final class AgentControl {
             guard let self, let session else { return }
             // A cancelled request gets no reply, and stops what it was doing for a client that is gone.
             for request in session.requests.values { request.cancel() }
+            session.authorization?.cancel()
             // Lilo may drop a connection the bridge then makes again: its tabs, and what the agent set on them, wait.
             guard session.isAuthorized, session.folderId != nil || session.isolatedSpaceId != nil, Self.reconnectGrace > .zero else {
                 return end(session)
@@ -416,7 +419,6 @@ final class AgentControl {
                     guard let line = await Task.detached(operation: { AgentConnection.line(reply) }).value else { return }
                     session.connection.send(line)
                 }
-                if session.isRefused { session.connection.close() }
             }
             if let requestId { session.requests[requestId] = request }
         }
@@ -459,7 +461,10 @@ final class AgentSession {
     var nextRequestId = 1
     /// Set once the user allowed this client; tools answer nothing before.
     var isAuthorized = false
-    /// The user said no: the connection closes after the reply.
+    /// The question to the user, asked after the handshake replied: a client waits for its handshake less long
+    /// than the user may take to answer.
+    var authorization: Task<Void, Never>?
+    /// The user said no: its tool calls say so. The connection stays open, as lilo-mcp would reconnect and ask again.
     var isRefused = false
 
     init(connection: AgentConnection) {
