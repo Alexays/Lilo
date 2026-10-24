@@ -545,7 +545,14 @@ final class AgentDevToolsTests: AgentToolTestCase {
         let marks = try XCTUnwrap(summary["markers"] as? [[String: Any]], reply.text)
         XCTAssertEqual(marks.compactMap { $0["label"] as? String }, ["before", "after"])
         XCTAssertTrue("\(marks[0]["topFunctions"] ?? "")".contains("busy"), reply.text)
-        XCTAssertGreaterThan(summary["samples"] as? Int ?? 0, 50, "the samples WebKit sends without a time count too: \(reply.text)")
+        // WebKit samples less often on a busy machine: the summary is checked against the raw profile, not a rate.
+        let saved = try XCTUnwrap(reply.text.split(separator: "\n").first?.replacingOccurrences(of: "Saved the profile to ", with: ""))
+        let messages = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: saved))) as? [[String: Any]])
+        let sampled = messages.filter { $0["method"] as? String == "ScriptProfiler.trackingComplete" }.flatMap { message in
+            (((message["params"] as? [String: Any])?["samples"] as? [String: Any])?["stackTraces"] as? [[String: Any]] ?? [])
+                .filter { !($0["stackFrames"] as? [Any] ?? []).isEmpty }
+        }
+        XCTAssertEqual(summary["samples"] as? Int, sampled.count, "the samples WebKit sends without a time count too: \(reply.text)")
     }
 
     func testProfileSummaryNamesCallersAndFocusesOnAFunction() async throws {
