@@ -2395,8 +2395,8 @@
 			projectRoot = "";
 			targets = (
 				3704831F09142EA36DD1D242 /* Lilo */,
-				EA60A79EB5A918821F4B05F4 /* LiloMCP */,
 				0F0CF0000325E1681FCF419F /* LiloPowerHelper */,
+				EA60A79EB5A918821F4B05F4 /* LiloMCP */,
 				C3E8DF6541C35E95D3A4AF64 /* LiloTests */,
 			);
 		};
