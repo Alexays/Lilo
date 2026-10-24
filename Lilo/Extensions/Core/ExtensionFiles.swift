@@ -2,21 +2,73 @@ import CryptoKit
 import Foundation
 
 /// The profile's folder of extension copies Lilo installed: store packages and temporary installs.
-/// An unpacked extension loads in place from the developer's folder and is never touched. Writes hold
-/// a claim for as long as their folder has no installed record, so a sweep never meets one half-done.
+/// An unpacked extension loads from Lilo's clone of the developer's folder, which is never written. Writes
+/// hold a claim for as long as their folder has no installed record, so a sweep never meets one half-done.
 @MainActor
 final class ExtensionFiles {
     /// Nil when installs load in place (tests without a store).
     let directory: URL?
+    /// The clones unpacked extensions load from, beside `directory`: never taken for store copies.
+    private let unpackedDirectory: URL?
     private var writesInFlight = 0
 
     init(directory: URL?) {
         self.directory = directory
+        unpackedDirectory = directory?.deletingLastPathComponent().appendingPathComponent("UnpackedExtensions", isDirectory: true)
     }
 
     /// Whether `path` is a copy Lilo installed, which it may replace or delete.
-    func owns(_ path: String) -> Bool {
+    nonisolated func owns(_ path: String) -> Bool {
         directory.map { path.hasPrefix($0.path + "/") } ?? false
+    }
+
+    /// The folder WebKit loads the extension at `url` from, which preparation writes into: `url` itself for a copy Lilo
+    /// installed, else an APFS clone of it, cloned again once any of its files changed. Safe off the main thread.
+    nonisolated func workingCopy(of url: URL) throws -> URL {
+        guard let unpackedDirectory, !owns(url.path) else { return url }
+        let fm = FileManager.default
+        let folder = url.resolvingSymlinksInPath()
+        let clone = Self.unpackedClone(of: url, in: unpackedDirectory)
+        let stampURL = clone.appendingPathComponent("_lilo/unpacked-source.txt")
+        var hasher = SHA256()
+        if let files = fm.enumerator(at: folder, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey], options: [.skipsHiddenFiles]) {
+            for case let file as URL in files {
+                let values = try? file.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
+                hasher.update(data: Data("\(file.path) \(values?.fileSize ?? -1) \(values?.contentModificationDate?.timeIntervalSince1970 ?? 0)\n".utf8))
+            }
+        }
+        let stamp = Data(hasher.finalize().map { String(format: "%02x", $0) }.joined().utf8)
+        if (try? Data(contentsOf: stampURL)) == stamp { return clone }
+
+        try fm.createDirectory(at: unpackedDirectory, withIntermediateDirectories: true)
+        let staged = unpackedDirectory.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
+        try Self.clone(folder, to: staged)
+        do {
+            let stagedStamp = staged.appendingPathComponent("_lilo/unpacked-source.txt")
+            try fm.createDirectory(at: stagedStamp.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try stamp.write(to: stagedStamp)
+            if fm.fileExists(atPath: clone.path) {
+                _ = try fm.replaceItemAt(clone, withItemAt: staged)
+            } else {
+                try fm.moveItem(at: staged, to: clone)
+            }
+        } catch {
+            try? fm.removeItem(at: staged)
+            throw error
+        }
+        return clone
+    }
+
+    /// Named from the canonical path, as a path-derived extension id is.
+    private nonisolated static func unpackedClone(of url: URL, in unpackedDirectory: URL) -> URL {
+        let digest = SHA256.hash(data: Data(url.standardizedFileURL.resolvingSymlinksInPath().path.utf8))
+        return unpackedDirectory.appendingPathComponent(digest.prefix(8).map { String(format: "%02x", $0) }.joined(), isDirectory: true)
+    }
+
+    /// An APFS clone shares the source's blocks until either side writes; another volume gets a full copy.
+    nonisolated static func clone(_ source: URL, to destination: URL) throws {
+        if clonefile(source.path, destination.path, 0) == 0 { return }
+        try FileManager.default.copyItem(at: source, to: destination)
     }
 
     /// Runs an install or update: no sweep runs until it is done.
@@ -39,7 +91,7 @@ final class ExtensionFiles {
         if isInUse(destination.path) { return destination }
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
         let staged = directory.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
-        try fm.copyItem(at: url, to: staged)
+        try Self.clone(url, to: staged)
         do {
             if fm.fileExists(atPath: destination.path) {
                 _ = try fm.replaceItemAt(destination, withItemAt: staged)
@@ -67,7 +119,7 @@ final class ExtensionFiles {
         let installed = directory.appendingPathComponent(extensionId, isDirectory: true)
         let backup = directory.appendingPathComponent(".\(extensionId).update-bak", isDirectory: true)
         let staged = directory.appendingPathComponent(".staging-\(UUID().uuidString)", isDirectory: true)
-        try fm.copyItem(at: extracted, to: staged)
+        try Self.clone(extracted, to: staged)
         defer { try? fm.removeItem(at: staged) }
         await beforeSwap()
         try? fm.removeItem(at: backup)
@@ -84,30 +136,35 @@ final class ExtensionFiles {
         try? fm.removeItem(at: backup)
     }
 
-    /// Deletes a copy Lilo installed; a folder it does not own is left alone.
+    /// Deletes a copy Lilo installed, or the clone of an unpacked folder, which itself is left alone.
     func remove(_ path: String) {
-        guard owns(path) else { return }
-        try? FileManager.default.removeItem(atPath: path)
+        if owns(path) {
+            try? FileManager.default.removeItem(atPath: path)
+        } else if let unpackedDirectory {
+            try? FileManager.default.removeItem(at: Self.unpackedClone(of: URL(fileURLWithPath: path, isDirectory: true), in: unpackedDirectory))
+        }
     }
 
-    /// Removes folders an interrupted uninstall, install or update left (any `keeping` does not name), restoring an update backup
-    /// whose live copy is missing. Matched by folder name; skipped while a write is in flight, so the next restore sweeps.
+    /// Removes folders an interrupted uninstall, install or update left, and clones of unpacked extensions not loaded (any
+    /// `keeping` does not name), restoring an update backup whose live copy is missing. Matched by folder name; skipped
+    /// while a write is in flight, so the next restore sweeps.
     func sweep(keeping folderNames: Set<String>) {
         guard let directory, writesInFlight == 0 else { return }
         let fm = FileManager.default
-        guard let names = try? fm.contentsOfDirectory(atPath: directory.path) else { return }
         // Orphans are renamed away on the main actor, so an install starting later never loses files;
         // only the slow removal runs detached.
         var orphans: [URL] = []
-        for name in names where !folderNames.contains(name) {
-            let url = directory.appendingPathComponent(name, isDirectory: true)
-            if name.hasPrefix("."), name.hasSuffix(".update-bak") {
-                let liveName = String(name.dropFirst().dropLast(".update-bak".count))
-                let live = directory.appendingPathComponent(liveName, isDirectory: true)
-                if folderNames.contains(liveName), !fm.fileExists(atPath: live.path), (try? fm.moveItem(at: url, to: live)) != nil { continue }
+        for directory in [directory, unpackedDirectory].compactMap({ $0 }) {
+            for name in (try? fm.contentsOfDirectory(atPath: directory.path)) ?? [] where !folderNames.contains(name) {
+                let url = directory.appendingPathComponent(name, isDirectory: true)
+                if name.hasPrefix("."), name.hasSuffix(".update-bak") {
+                    let liveName = String(name.dropFirst().dropLast(".update-bak".count))
+                    let live = directory.appendingPathComponent(liveName, isDirectory: true)
+                    if folderNames.contains(liveName), !fm.fileExists(atPath: live.path), (try? fm.moveItem(at: url, to: live)) != nil { continue }
+                }
+                let doomed = directory.appendingPathComponent(".sweep-\(UUID().uuidString)", isDirectory: true)
+                if (try? fm.moveItem(at: url, to: doomed)) != nil { orphans.append(doomed) }
             }
-            let doomed = directory.appendingPathComponent(".sweep-\(UUID().uuidString)", isDirectory: true)
-            if (try? fm.moveItem(at: url, to: doomed)) != nil { orphans.append(doomed) }
         }
         guard !orphans.isEmpty else { return }
         Task.detached(priority: .utility) {

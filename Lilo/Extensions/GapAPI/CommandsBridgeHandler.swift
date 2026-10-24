@@ -6,7 +6,7 @@ final class CommandsBridgeHandler: GapHandler {
     let gapActions: Set<String> = ["commands.getAll"]
 
     func handle(_ call: GapCall) async -> Any? {
-        let commands = call.registry.context(for: call.extensionId)?.commands.map { command in
+        let commands = call.context?.commands.map { command in
             ["name": command.id, "description": command.title, "shortcut": command.activationKey ?? ""]
         } ?? []
         return ["commands": commands]

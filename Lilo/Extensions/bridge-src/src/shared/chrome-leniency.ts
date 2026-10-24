@@ -297,75 +297,168 @@ export async function registrationsSettled(): Promise<void> {
   while (registering.size) await Promise.allSettled(registering);
 }
 
-const registration: Patch = (original, self) => function (this: unknown, ...args: any[]) {
+/** The compat ExtensionBackgroundPreparer writes into every extension, which each isolated-world script runs first. */
+const contentCompat = '_lilo/lilo-content-compat.js';
+
+/** `js` led by the compat, except in the MAIN world, where it would leak into the page. */
+const withContentCompat = (js: string[], world: unknown) => {
+  const own = js.filter((file) => file !== contentCompat);
+  return world === 'MAIN' ? own : [contentCompat, ...own];
+};
+
+const withoutContentCompat = (script: any) => (Array.isArray(script?.js) && script.js.includes(contentCompat)
+  ? { ...script, js: script.js.filter((file: string) => file !== contentCompat) }
+  : script);
+
+/** Each registration's scripts get the compat, as the manifest's do; `prepare` may need the current registrations. */
+const registration = (prepare: (scripts: any, namespace: any) => unknown = (scripts) => scripts): Patch => (original, self) => function (this: unknown, ...args: any[]) {
   const last = args.length - 1;
   const callback = typeof args[last] === 'function' ? args.pop() : undefined;
-  const result: Promise<unknown> = original.apply(self(this), args);
+  const namespace = self(this);
+  const prepared = args.length ? prepare(args[0], namespace) : undefined;
+  const result: Promise<unknown> = prepared instanceof Promise
+    ? prepared.then((scripts) => original.call(namespace, scripts, ...args.slice(1)))
+    : original.apply(namespace, args.length ? [prepared, ...args.slice(1)] : args);
   registering.add(result);
   result.then(() => registering.delete(result), () => registering.delete(result));
   return callbackify(() => result, callback);
 };
 
+const registeredWithCompat = (scripts: any) => (Array.isArray(scripts)
+  ? scripts.map((script) => (Array.isArray(script?.js) && script.js.length ? { ...script, js: withContentCompat(script.js, script.world) } : script))
+  : scripts);
+
+/** An update changing `js` or `world` alone takes the other from the registration. */
+function updatedWithCompat(scripts: any, namespace: any): unknown {
+  if (!Array.isArray(scripts)) return scripts;
+  const update = (registered: any[]) => scripts.map((script) => {
+    const current = registered.find((r) => r?.id === script?.id);
+    const js = script?.js ?? current?.js;
+    return Array.isArray(js) && js.length ? { ...script, js: withContentCompat(js, script.world ?? current?.world) } : script;
+  });
+  const partial = scripts.filter((script) => (script?.js === undefined) !== (script?.world === undefined));
+  return partial.length
+    ? Promise.resolve(namespace.getRegisteredContentScripts({ ids: partial.map((script) => script.id) })).then(update, () => update([]))
+    : update([]);
+}
+
 const noMatches = /The 'matches' value is invalid, because it must specify at least one match pattern for script with ID '(.*)'\./;
 
+/** WebKit's own executeScript, for Lilo's injections. */
+function injected(namespace: any, injection: unknown): Promise<any[] | undefined> {
+  const executeScript = namespace.executeScript;
+  return (executeScript.__liloUnwrapped ?? executeScript).call(namespace, injection);
+}
+
 // WebKit scripts the extension's own pages, Chrome refuses them: a popup shown in a tab that scripts the
-// active tab (Jetwriter) reaches itself.
-async function refuseOwnPages(injection: any): Promise<void> {
+// active tab (Jetwriter) reaches itself. `results` hold each target document's URL.
+async function refuseOwnPages(results: any[] | undefined): Promise<void> {
   const chrome = bridgeChrome();
-  const tabId = injection?.target?.tabId;
-  const url: string | undefined = typeof tabId === 'number' ? (await chrome.tabs.get(tabId).catch(() => undefined))?.url : undefined;
-  if (!url?.startsWith(chrome.runtime.getURL(''))) return;
+  const own = chrome.runtime.getURL('');
+  const url: string | undefined = results?.map((result) => result?.result).find((href) => typeof href === 'string' && href.startsWith(own));
+  if (!url) return;
   // Chrome names the page only to an extension that may read tab urls.
   throw new Error(await chrome.permissions.contains({ permissions: ['tabs'] })
     ? `Cannot access contents of url "${url}". Extension manifest must request permission to access this host.`
     : 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.');
 }
 
-const ownPagesRefused: Patch = (original) => function (this: unknown, injection: any, callback?: (result: unknown) => void) {
+/**
+ * Each target document's URL, once it has loaded unless `immediately`: Chrome injects into a document once it has
+ * loaded unless asked to inject immediately, WebKit always at once. A target Lilo cannot reach answers nothing.
+ */
+const targetURLs = (namespace: any, target: unknown, immediately: boolean) => injected(namespace, {
+  target,
+  injectImmediately: true,
+  // Runs in the target document, named as an argument: the worker has none, which its prelude must never name.
+  func: (name: string, now: boolean) => {
+    const page = (globalThis as any)[name];
+    return now || page.readyState !== 'loading'
+      ? page.URL
+      : new Promise((resolve) => page.addEventListener('DOMContentLoaded', () => resolve(page.URL), { once: true }));
+  },
+  args: ['document', immediately],
+}).catch(() => undefined);
+
+/**
+ * Runs in each target frame, as a style sheet the document adopts, keyed by its text for removeCSS. The
+ * extension's own page is left alone and answers its URL.
+ */
+function styleFrame(name: string, ownPages: string, css: string, remove: boolean): string | undefined {
+  const page = (globalThis as any)[name];
+  if (page.URL.startsWith(ownPages)) return page.URL;
+  const key = Symbol.for('lilo.insertedCSS');
+  const inserted: Map<string, CSSStyleSheet[]> = (globalThis as any)[key] ??= new Map();
+  const sheets = inserted.get(css) ?? [];
+  if (remove) {
+    const sheet = sheets.pop();
+    if (sheet) page.adoptedStyleSheets = page.adoptedStyleSheets.filter((adopted: CSSStyleSheet) => adopted !== sheet);
+  } else {
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    page.adoptedStyleSheets = [...page.adoptedStyleSheets, sheet];
+    sheets.push(sheet);
+  }
+  inserted.set(css, sheets);
+  return undefined;
+}
+
+/** WebKit applies CSS given frame ids to the main frame only: Lilo styles those frames itself. */
+const styleSheet = (remove: boolean): Patch => (original, self) => function (this: unknown, injection: any, callback?: () => void) {
+  const namespace = self(this);
   return callbackify(async () => {
-    await refuseOwnPages(injection);
-    return original.call(this, injection);
+    const chrome = bridgeChrome();
+    if (!injection?.target?.frameIds?.some?.((id: unknown) => id !== 0)) {
+      await refuseOwnPages(injection?.target === undefined ? undefined : await targetURLs(namespace, injection.target, true));
+      return original.call(namespace, injection);
+    }
+    const css = typeof injection.css === 'string' ? injection.css : (await Promise.all((injection.files ?? []).map(async (file: string) => {
+      const response = await fetch(chrome.runtime.getURL(file)).catch(() => undefined);
+      if (!response?.ok) throw new Error(`Could not load file: '${file}'.`);
+      return response.text();
+    }))).join('\n');
+    await refuseOwnPages(await injected(namespace, {
+      target: injection.target, injectImmediately: true, func: styleFrame, args: ['document', chrome.runtime.getURL(''), css, remove],
+    }));
+    return undefined;
   }, callback);
 };
 
 export const scriptingPatches: Record<string, Patch> = {
-  // Chrome injects into a document once it has loaded unless asked to inject immediately; WebKit always
-  // injects at once, so Lilo first waits for the target documents in an injection of its own.
   executeScript: (original, self) => function (this: unknown, injection: any, callback?: (results: unknown) => void) {
     const namespace = self(this);
     return callbackify(async () => {
-      await refuseOwnPages(injection);
-      if (injection?.injectImmediately !== true && injection?.target !== undefined) {
-        await original.call(namespace, {
-          target: injection.target,
-          injectImmediately: true,
-          // Runs in the target document, named as an argument: the worker has none, which its prelude must never name.
-          func: (name: string) => {
-            const page = (globalThis as any)[name];
-            return page.readyState !== 'loading' || new Promise((resolve) => page.addEventListener('DOMContentLoaded', () => resolve(true), { once: true }));
-          },
-          args: ['document'],
-        }).catch(() => {});
-      }
-      return original.call(namespace, injection);
+      if (injection?.target !== undefined) await refuseOwnPages(await targetURLs(namespace, injection.target, injection.injectImmediately === true));
+      const files = Array.isArray(injection?.files) && injection.files.length > 0;
+      return original.call(namespace, files ? { ...injection, files: withContentCompat(injection.files, injection.world) } : injection);
     }, callback);
   },
-  insertCSS: ownPagesRefused,
-  removeCSS: ownPagesRefused,
-  registerContentScripts: (original, self) => function (this: unknown, scripts: any, ...rest: unknown[]) {
-    try {
-      return registration(original, self).call(this, scripts, ...rest);
-    } catch (error) {
-      const id = noMatches.exec(String((error as Error)?.message))?.[1];
-      const script = id === undefined ? undefined : scripts?.find?.((s: any) => s?.id === id);
-      if (!script) throw error;
-      // Chrome rejects the call where WebKit throws.
-      const message = script.matches === undefined ? `Script with ID '${id}' must specify 'matches'.` : `Script with ID '${id}' must specify at least one match.`;
-      return callbackify(() => Promise.reject(new Error(message)), rest[0] as (() => void) | undefined);
-    }
+  insertCSS: styleSheet(false),
+  removeCSS: styleSheet(true),
+  registerContentScripts: (original, self) => {
+    const register = registration(registeredWithCompat)(original, self);
+    return function (this: unknown, scripts: any, ...rest: unknown[]) {
+      try {
+        return register.call(this, scripts, ...rest);
+      } catch (error) {
+        const id = noMatches.exec(String((error as Error)?.message))?.[1];
+        const script = id === undefined ? undefined : scripts?.find?.((s: any) => s?.id === id);
+        if (!script) throw error;
+        // Chrome rejects the call where WebKit throws.
+        const message = script.matches === undefined ? `Script with ID '${id}' must specify 'matches'.` : `Script with ID '${id}' must specify at least one match.`;
+        return callbackify(() => Promise.reject(new Error(message)), rest[0] as (() => void) | undefined);
+      }
+    };
   },
-  updateContentScripts: registration,
-  unregisterContentScripts: registration,
+  updateContentScripts: registration(updatedWithCompat),
+  unregisterContentScripts: registration(),
+  getRegisteredContentScripts: (original, self) => function (this: unknown, ...args: any[]) {
+    const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
+    return callbackify(async () => {
+      const scripts = await original.apply(self(this), args);
+      return Array.isArray(scripts) ? scripts.map(withoutContentCompat) : scripts;
+    }, callback);
+  },
 };
 
 /**

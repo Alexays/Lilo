@@ -116,7 +116,7 @@ make validate
   `xcodebuild`, `make swift-test` and CI fail until it is in sync.
 - **Generated files are build outputs.** Never hand-edit the extension bundles in
   `Lilo/Extensions/` (`ChromeAPIAugmentation.js`, `ChromeAPIBackgroundPrelude.js`,
-  `ChromeWebStoreShim.js`, `ChromeContentCompat.js`, `ChromeStaticRules.js`), `*.gen.swift`,
+  `ChromeAPIGapModules.json`, `ChromeWebStoreShim.js`, `ChromeContentCompat.js`, `ChromeStaticRules.js`), `*.gen.swift`,
   `tabProtocol.gen.ts`, or the git-ignored `Lilo/Generated/NativeStrings.swift` and
   `Lilo/Generated/ChromeUIAssets.swift`. Regenerate them with `make ext-bridge-build`,
   `make bridge-gen` or `make ui-build`.
@@ -250,9 +250,10 @@ lacks a Chrome API and a real, user-visible extension flow needs it.
    from `call.registry`, so a call always reaches its own profile. A handler that needs
    window-level collaborators stays app-wide on the router and lets each window attach to it, as
    `OmniboxGapRelay` does.
-3. **JS surface** as a module under `Lilo/Extensions/bridge-src/src/augmentation/`, installed in
-   both `augmentation-entry.ts` (extension pages) and `background-entry.ts` (service workers).
-   Run `make ext-bridge-build` and commit the regenerated bundles.
+3. **JS surface** as a module under `Lilo/Extensions/bridge-src/src/augmentation/`, installed by
+   `shared/install-gap-apis.ts` in extension pages and service workers. A namespace that needs a
+   permission goes in `shared/gap-modules.ts`, so a context whose manifest does not use it never
+   evaluates it. Run `make ext-bridge-build` and commit the regenerated bundles.
 4. **Update [COMPATIBILITY.md](COMPATIBILITY.md)**, which lists only what differs from Chrome:
    add the API to the "Supported as in Chrome" line when it fully matches, or document its
    differences. `ChromeSurfaceTests` reads that file.

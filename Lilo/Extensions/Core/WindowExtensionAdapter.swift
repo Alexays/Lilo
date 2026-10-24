@@ -7,6 +7,7 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
     weak var nsWindow: NSWindow?
     weak var tabManager: TabManager?
     private(set) var extensionTabs: [any WKWebExtensionTab] = []
+    private var extensionTabIdentifiers: Set<ObjectIdentifier> = []
     weak var activeAdapter: TabExtensionAdapter?
 
     /// When true, the window exposes only the current space's tabs (each space is a separate window
@@ -30,16 +31,17 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
     }
 
     func add(tab: any WKWebExtensionTab) {
-        let identifier = ObjectIdentifier(tab as AnyObject)
-        guard !extensionTabs.contains(where: { ObjectIdentifier($0 as AnyObject) == identifier }) else { return }
+        guard extensionTabIdentifiers.insert(ObjectIdentifier(tab as AnyObject)).inserted else { return }
         extensionTabs.append(tab)
         membershipVersion &+= 1
     }
 
     func remove(tab: any WKWebExtensionTab) {
         let identifier = ObjectIdentifier(tab as AnyObject)
-        extensionTabs.removeAll { ObjectIdentifier($0 as AnyObject) == identifier }
-        membershipVersion &+= 1
+        if extensionTabIdentifiers.remove(identifier) != nil {
+            extensionTabs.removeAll { ObjectIdentifier($0 as AnyObject) == identifier }
+            membershipVersion &+= 1
+        }
         if let activeAdapter, ObjectIdentifier(activeAdapter) == identifier {
             self.activeAdapter = nil
         }

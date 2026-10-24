@@ -94,25 +94,46 @@ extension TabManager {
         browserStateStore?.allTabIds() ?? []
     }
 
-    /// Fires `tabs.onMoved` for current-space tabs whose visible index changed. Only emits when the
-    /// same set of tabs was reordered; set changes (space switch, open/close) are handled by
-    /// onCreated/onRemoved/onActivated, so they update the baseline silently without false moves.
+    /// Fires `tabs.onMoved` for the current-space tabs a reorder moved: as Chrome reports a drag, the tabs outside
+    /// the longest run that kept its order, so the tabs merely shifted by a move hear nothing. Tabs that came or went
+    /// (space switch, open/close) are left to onCreated/onRemoved/onActivated: the others keep their order then.
     func emitTabMovedEventsIfNeeded() {
         guard let registry = extensionRegistry, registry.hasLoadedExtensions,
               let windowAdapter, let spaceId = currentSpaceId else {
             lastExtensionTabMoveOrder = []
             return
         }
-        let newOrder = tabs(forSpace: spaceId).map(\.id).filter { tabAdapter(for: $0) != nil }
+        let newOrder = tabs(forSpace: spaceId).map(\.id)
         let oldOrder = lastExtensionTabMoveOrder
         lastExtensionTabMoveOrder = newOrder
+        guard newOrder != oldOrder else { return }
 
-        guard Set(newOrder) == Set(oldOrder), newOrder != oldOrder else { return }
-        let oldIndexById = Dictionary(uniqueKeysWithValues: oldOrder.enumerated().map { ($1, $0) })
-        for (newIndex, tabId) in newOrder.enumerated() {
-            guard let oldIndex = oldIndexById[tabId], oldIndex != newIndex,
-                  let adapter = tabAdapter(for: tabId) else { continue }
-            registry.controller.didMoveTab(adapter, from: oldIndex, in: windowAdapter)
+        // Indices count the tabs WebKit sees, those with an adapter, which a new tab gets after the command that placed it.
+        var oldIndexById: [UUID: Int] = [:]
+        for id in oldOrder where tabAdapter(for: id) != nil { oldIndexById[id] = oldIndexById.count }
+        let stayed = newOrder.compactMap { id in oldIndexById[id].map { (id: id, oldIndex: $0) } }
+
+        // Longest increasing run of old indices (patience sort): `tails[k]` ends the best run of length k + 1.
+        var tails: [Int] = []
+        var previous = [Int](repeating: -1, count: stayed.count)
+        for (position, tab) in stayed.enumerated() {
+            var low = 0, high = tails.count
+            while low < high {
+                let mid = (low + high) / 2
+                if stayed[tails[mid]].oldIndex < tab.oldIndex { low = mid + 1 } else { high = mid }
+            }
+            if low > 0 { previous[position] = tails[low - 1] }
+            if low == tails.count { tails.append(position) } else { tails[low] = position }
+        }
+        var kept = [Bool](repeating: false, count: stayed.count)
+        var position = tails.last ?? -1
+        while position >= 0 {
+            kept[position] = true
+            position = previous[position]
+        }
+        for (position, tab) in stayed.enumerated() where !kept[position] {
+            guard let adapter = tabAdapter(for: tab.id) else { continue }
+            registry.controller.didMoveTab(adapter, from: tab.oldIndex, in: windowAdapter)
         }
     }
 

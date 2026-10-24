@@ -3,18 +3,11 @@
 import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { GapChromeEvent, gapMethod } from '../shared/gap-event.ts';
-import { tabPositions } from './tabGroups.ts';
+import { tabPosition } from './tabGroups.ts';
 
 interface GetMediaStreamOptions {
   consumerTabId?: number;
   targetTabId?: number;
-}
-
-/** The `{windowPosition, index}` native resolves a tab id by. */
-export async function tabPosition(tabId: unknown) {
-  const [position] = typeof tabId === 'number' ? await tabPositions([tabId]) : [];
-  if (!position || position.windowPosition < 0) throw new Error('Invalid tab specified.');
-  return position;
 }
 
 async function activeTabId(): Promise<number> {

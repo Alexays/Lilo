@@ -17,8 +17,7 @@ extension MainWindowController {
                         throw NSError(domain: "Lilo.TabGroups", code: 0, userInfo: [NSLocalizedDescriptionKey: "Window gone"])
                     }
                     return try window.applyBrowserCommand(command)
-                },
-                registry: window.profileContext?.extensions
+                }
             )
         }
         // chrome.contentSettings reads the user's own choice for the types Lilo asks about.

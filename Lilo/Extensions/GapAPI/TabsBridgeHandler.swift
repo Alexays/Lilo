@@ -1,17 +1,13 @@
 import WebKit
 
-/// The `chrome.tabs` calls WebKit lacks besides grouping: zoom settings, split views, which are Lilo's
-/// split folders, and the urls `tabs` shows. Tabs arrive as `{windowPosition, index}` pairs (see
-/// `TabGroupsBridgeHandler`).
+/// The `chrome.tabs` calls WebKit lacks besides grouping: zoom settings and split views, which are Lilo's
+/// split folders. Tabs arrive as `{windowPosition, index}` pairs (see `TabGroupsBridgeHandler`).
 @MainActor
 final class TabsBridgeHandler: GapHandler {
-    let gapActions: Set<String> = ["tabs.getZoomSettings", "tabs.setZoomSettings", "tabs.createSplit", "tabs.unsplit", "tabs.urls"]
+    let gapActions: Set<String> = ["tabs.getZoomSettings", "tabs.setZoomSettings", "tabs.createSplit", "tabs.unsplit"]
 
     /// Chrome's `SPLIT_VIEW_ID_NONE`.
     private static let splitViewIdNone = -1
-    /// What Chrome reports for an empty tab, its new tab page.
-    private static let newTabURL = "chrome://newtab/"
-    private static let newTabTitle = "New Tab"
 
     /// A window showing the calling extension's profile, from its registry.
     private let contextProvider: (ProfileExtensionRegistry) -> TabGroupsContext?
@@ -27,17 +23,6 @@ final class TabsBridgeHandler: GapHandler {
 
     func handle(_ call: GapCall) async -> Any? {
         switch call.action {
-        case "tabs.urls":
-            // Chrome shows every tab's url and title with `tabs`; WebKit only those of hosts the extension may access.
-            guard let context = call.registry.context(for: call.extensionId), context.hasPermission(.tabs) else { return [Any]() }
-            let positions = call.payload["tabs"] as? [[String: Any]] ?? []
-            return call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).map { adapter -> Any in
-                guard let adapter else { return NSNull() }
-                let title = adapter.title(for: context) ?? ""
-                guard let url = adapter.url(for: context) else { return [Self.newTabURL, title.isEmpty ? Self.newTabTitle : title] }
-                return [url.absoluteString, title]
-            }
-
         case "tabs.getZoomSettings", "tabs.setZoomSettings":
             let position = call.payload["tab"] as? [String: Any] ?? [:]
             guard let adapter = call.registry.tabAdapters(atPositions: [position], extensionId: call.extensionId).first ?? nil else {

@@ -46,7 +46,7 @@ extension TabManager {
         runtimeOverlay.retainRuntimeStates(validTabIds: retainedRuntimeTabIds)
         let replaced = engineHost.replaceEngines(engines, validTabIds: tabIds)
         retireAdapters(replaced.adapters)
-        attachVisibleExtensionAdapters(for: tabIds, tabAdapters: tabAdapters)
+        attachVisibleExtensionAdapters(for: tabs, ids: tabIds, tabAdapters: tabAdapters)
         activeTabId = nil
         for engine in replaced.engines { engineHost.teardown(engine) }
     }
@@ -60,21 +60,19 @@ extension TabManager {
         }
     }
 
-    private func attachVisibleExtensionAdapters(for tabIds: Set<UUID>, tabAdapters: [UUID: TabExtensionAdapter]) {
+    /// Lists every open web tab, in sidebar order, loaded or not, as Chrome does: an unloaded tab's engine attaches to its adapter
+    /// later, with no second `onCreated`.
+    private func attachVisibleExtensionAdapters(for tabs: [Tab], ids tabIds: Set<UUID>, tabAdapters: [UUID: TabExtensionAdapter]) {
         guard let window = windowAdapter else { return }
 
         retireAdapters(engineHost.restoreTabAdapters(tabAdapters, validTabIds: tabIds))
-        for id in tabIds {
-            let engine = engineHost.engine(for: id)
-            if let adapter = engineHost.tabAdapter(for: id) {
-                // A discarded tab has no engine but stays listed, as in Chrome.
+        for tab in tabs {
+            let engine = engineHost.engine(for: tab.id)
+            if let adapter = engineHost.tabAdapter(for: tab.id) {
                 adapter.engineTab = engine
                 window.add(tab: adapter)
-            } else if let engine, engine.isPrivateBrowsing == window.isPrivateWindow {
-                let adapter = TabExtensionAdapter(engineTab: engine, extensionWindow: window, profileId: extensionRegistry?.profileId)
-                adapter.tabManager = self
-                engineHost.setTabAdapter(adapter, for: id)
-                window.add(tab: adapter)
+            } else if tab.kind == .web, !tab.isClosed,
+                      let adapter = installExtensionAdapter(tabId: tab.id, engine: engine, window: window) {
                 extensionRegistry?.controller.didOpenTab(adapter)
             }
         }

@@ -4,9 +4,10 @@ import WebKit
 
 /// chrome.proxy.settings, applied to the profile's data store through `proxyConfigurations`. Values
 /// are kept in Chrome's normalized form (default schemes and ports filled in), which `get` returns.
+/// Also asks `webRequest.onAuthRequired` for the credentials of a proxy that challenges a tab's load.
 @MainActor
 final class ProxyBridgeHandler: GapHandler {
-    let gapActions: Set<String> = ["proxy.get", "proxy.set", "proxy.clear"]
+    let gapActions: Set<String> = ["proxy.get", "proxy.set", "proxy.clear", "webRequest.answerAuth"]
 
     private static let key = "proxy.settings"
     private static let incognitoKey = "proxy.settings.incognito"
@@ -17,6 +18,21 @@ final class ProxyBridgeHandler: GapHandler {
     /// The effective value last applied per profile, so a load or unload that changes nothing stays quiet.
     private var applied: [UUID: NSDictionary] = [:]
     nonisolated(unsafe) private var observers: [Any] = []
+
+    /// A proxy challenge waiting on the extensions asked about it; a nil answer leaves it to Lilo's prompt.
+    private struct AuthRequest {
+        var awaiting: Set<String>
+        let completion: @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+        let registry: ProfileExtensionRegistry
+        let challenger: (host: String, port: Int)
+        let deadline: ContinuousClock.Instant
+    }
+    private var authRequests: [String: AuthRequest] = [:]
+    private var nextAuthRequest = 0
+    /// The request id of each tab's last proxy challenge, which a retry keeps as Chrome does.
+    private let lastAuthRequestIds = NSMapTable<TabExtensionAdapter, NSString>.weakToStrongObjects()
+    /// How long extensions get to answer before the challenge goes to Lilo's prompt.
+    private static let authAnswerTimeout: Duration = .seconds(30)
 
     init(settingsProvider: @escaping (ProfileExtensionRegistry) -> ExtensionSettingsStore?) {
         self.settingsProvider = settingsProvider
@@ -36,7 +52,7 @@ final class ProxyBridgeHandler: GapHandler {
     func handle(_ call: GapCall) async -> Any? {
         guard let settings = settingsProvider(call.registry) else { return BridgeError("Extension settings unavailable") }
         let loadedIds = call.registry.loadedExtensions.map(\.id)
-        let allowsPrivate = call.registry.context(for: call.extensionId)?.hasAccessToPrivateData == true
+        let allowsPrivate = call.context?.hasAccessToPrivateData == true
         switch call.action {
         case "proxy.get":
             let incognito = call.bool("incognito")
@@ -49,6 +65,21 @@ final class ProxyBridgeHandler: GapHandler {
             ]
             if incognito { result["incognitoSpecific"] = incognitoController != nil }
             return result
+
+        case "webRequest.answerAuth":
+            guard let id = call.string("requestId"), var request = authRequests[id], request.awaiting.contains(call.extensionId) else { return nil }
+            if call.bool("cancel") {
+                finishAuth(id, (.cancelAuthenticationChallenge, nil))
+            } else if let credentials = call.payload["credentials"] as? [String: Any],
+                      let user = credentials["username"] as? String, let password = credentials["password"] as? String {
+                applyCredential(user: user, password: password, for: request)
+                finishAuth(id, (.useCredential, URLCredential(user: user, password: password, persistence: .forSession)))
+            } else {
+                request.awaiting.remove(call.extensionId)
+                authRequests[id] = request
+                if request.awaiting.isEmpty { finishAuth(id, nil) }
+            }
+            return nil
 
         case "proxy.set", "proxy.clear":
             let scope = call.string("scope") ?? "regular"
@@ -108,6 +139,67 @@ final class ProxyBridgeHandler: GapHandler {
         }.first
         guard let name else { return }
         registry.emitGapEvent("proxy", "onProxyError", args: [["fatal": true, "error": name, "details": ""]], requiredPermission: "proxy")
+    }
+
+    // MARK: - Proxy authentication
+
+    /// Chrome's `webRequest.onAuthRequired` for a proxy's challenge to the load of `url` in `tab`: each listening
+    /// extension holding `webRequest` and `webRequestAuthProvider` may answer with credentials or cancel it.
+    /// `completion` gets nil when none does, for Lilo's prompt.
+    func authenticate(
+        _ challenge: URLAuthenticationChallenge, url: URL?, tab: TabExtensionAdapter?, registry: ProfileExtensionRegistry,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) {
+        let space = challenge.protectionSpace
+        let candidates = registry.extensionIds(withPermission: "webRequestAuthProvider").filter { id in
+            registry.heldPermissions(of: id).contains("webRequest") && url.map { registry.context(for: id)?.hasAccess(to: $0) == true } != false
+        }
+        let ids = registry.gapEvents.listeners(among: candidates, namespace: "webRequest", event: "onAuthRequired")
+        guard !ids.isEmpty else { return completion(nil) }
+        let requestId: String
+        if challenge.previousFailureCount > 0, let tab, let last = lastAuthRequestIds.object(forKey: tab) as String?, authRequests[last] == nil {
+            requestId = last
+        } else {
+            nextAuthRequest += 1
+            requestId = "lilo-auth-\(nextAuthRequest)"
+            if let tab { lastAuthRequestIds.setObject(requestId as NSString, forKey: tab) }
+        }
+        let deadline = ContinuousClock.now + Self.authAnswerTimeout
+        authRequests[requestId] = AuthRequest(
+            awaiting: Set(ids), completion: completion, registry: registry, challenger: (space.host, space.port), deadline: deadline
+        )
+        var details: [String: Any] = [
+            "requestId": requestId, "url": url?.absoluteString ?? "", "method": "GET", "frameId": 0, "parentFrameId": -1,
+            "type": "main_frame", "frameType": "outermost_frame", "documentLifecycle": "active",
+            "timeStamp": Date().timeIntervalSince1970 * 1000, "isProxy": true,
+            "scheme": space.authenticationMethod == NSURLAuthenticationMethodHTTPDigest ? "digest" : "basic",
+            "challenger": ["host": space.host, "port": space.port],
+            "statusCode": 407, "statusLine": "HTTP/1.1 407 Proxy Authentication Required"
+        ]
+        if let realm = space.realm { details["realm"] = realm }
+        for id in ids {
+            // The bridge turns the tab's position into the extension's tab id.
+            details["tab"] = tab.flatMap { registry.tabPosition(of: $0, extensionId: id) } ?? NSNull()
+            registry.gapEvents.emit("webRequest", "onAuthRequired", args: [details], to: [id])
+        }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(until: deadline)
+            // A retry may reuse the id: only this challenge times out here.
+            if self?.authRequests[requestId]?.deadline == deadline { self?.finishAuth(requestId, nil) }
+        }
+    }
+
+    private func finishAuth(_ requestId: String, _ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) {
+        authRequests.removeValue(forKey: requestId)?.completion(answer)
+    }
+
+    /// Credentials for the extension's own proxy go into its configuration, so its next connections need no challenge.
+    private func applyCredential(user: String, password: String, for request: AuthRequest) {
+        let registry = request.registry
+        guard let value = applied[registry.profileId] as? [String: Any],
+              var configuration = Self.configurations(for: value, at: request.challenger).first else { return }
+        configuration.applyCredential(username: user, password: password)
+        registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations = [configuration]
     }
 
     // MARK: - Chrome's ProxyConfig
@@ -173,10 +265,12 @@ final class ProxyBridgeHandler: GapHandler {
 
     /// One configuration for all traffic: WebKit cannot pick a proxy per URL scheme, run a PAC script,
     /// or speak SOCKS4 or QUIC to a proxy; those leave the system settings in charge.
-    static func configurations(for value: [String: Any]) -> [ProxyConfiguration] {
+    /// With `challenger`, only the configuration of that proxy host and port.
+    static func configurations(for value: [String: Any], at challenger: (host: String, port: Int)? = nil) -> [ProxyConfiguration] {
         guard value["mode"] as? String == "fixed_servers", let rules = value["rules"] as? [String: Any],
               let server = ["singleProxy", "proxyForHttps", "proxyForHttp", "fallbackProxy"].lazy.compactMap({ rules[$0] as? [String: Any] }).first,
-              let host = server["host"] as? String, let port = (server["port"] as? Int).flatMap({ NWEndpoint.Port(rawValue: UInt16(clamping: $0)) })
+              let host = server["host"] as? String, let port = (server["port"] as? Int).flatMap({ NWEndpoint.Port(rawValue: UInt16(clamping: $0)) }),
+              challenger.map({ $0.host.caseInsensitiveCompare(host) == .orderedSame && $0.port == Int(port.rawValue) }) != false
         else { return [] }
         let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: port)
         var configuration: ProxyConfiguration

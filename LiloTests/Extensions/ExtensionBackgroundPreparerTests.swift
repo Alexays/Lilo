@@ -52,6 +52,20 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(prelude.contains(#"globalThis.__liloEmptyScripts = ["/lib/blank.js", "/test.js"];"#), prelude)
     }
 
+    func testPreludeCarriesOnlyTheGapModulesTheManifestMayUse() throws {
+        let extDir = tempDir.appendingPathComponent("gap-modules")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
+
+        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
+        let modules = prelude.matches(of: /__liloGapModules\?\?=\{\}\)\["(\w+)"\]/).map { String($0.1) }
+        XCTAssertEqual(modules, ["history", "omnibox", "system"])
+        XCTAssertTrue(prelude.hasSuffix("P"))
+    }
+
     /// Wappalyzer and Language Reactor keep `scripts` for Firefox; Chrome runs their service worker.
     func testPrepareRunsTheServiceWorkerOverFirefoxBackgroundScripts() throws {
         let extDir = tempDir.appendingPathComponent("both")
@@ -180,6 +194,28 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "two")
 
         XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js")), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
+    }
+
+    func testPrepareLeavesAFolderWhoseStampMatchesUntilItsWorkerChanges() throws {
+        let extDir = tempDir.appendingPathComponent("stamped")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Stamped","version":"1","background":{"service_worker":"background.js"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "console.log('vendor');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        let preludeURL = extDir.appendingPathComponent("lilo-background-prelude.js")
+
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        XCTAssertEqual(try String(contentsOf: preludeURL), "edited", "a matching stamp skips the preparation")
+
+        try "console.log('vendor 2');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nP")
+
+        try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "Q")
+        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nQ", "a new prelude prepares again")
     }
 
     /// Metadata carries no `backgroundPreludeHash`, and `readMetadata` round-trips what `prepare` just

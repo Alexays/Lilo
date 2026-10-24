@@ -71,6 +71,19 @@ final class ExtensionPreparationTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: dir.appendingPathComponent("_lilo/lilo-content-compat.js").path))
     }
 
+    /// `chrome.scripting` injects it ahead of the scripts an extension registers or executes at run time.
+    func testWritesTheCompatWithoutManifestContentScripts() throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let original = #"{"description":"d","permissions":["scripting"]}"#
+        try writeManifest(original, to: dir)
+
+        try prepareCompat(dir)
+
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js")), "/* compat */")
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json")), original)
+    }
+
     func testContentCompatIsIdempotent() throws {
         let dir = makeTempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

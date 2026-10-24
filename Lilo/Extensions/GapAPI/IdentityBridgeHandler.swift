@@ -154,7 +154,7 @@ final class IdentityBridgeHandler: GapHandler {
     /// with `interactive` Google's OAuth consent in the sign-in panel. Chrome signs in with the browser's
     /// Google account; Lilo has none, so the user signs in there.
     private func getAuthToken(_ call: GapCall, dataStore: WKWebsiteDataStore) async throws -> [String: Any] {
-        let oauth2 = call.registry.context(for: call.extensionId)?.webExtension.manifest["oauth2"] as? [String: Any]
+        let oauth2 = call.context?.webExtension.manifest["oauth2"] as? [String: Any]
         let scopes = (call.payload["scopes"] as? [String]) ?? (oauth2?["scopes"] as? [String]) ?? []
         guard !scopes.isEmpty else { throw IdentityError.missingScopes }
         let account = Self.accountPrefix(of: call) + scopes.joined(separator: " ")

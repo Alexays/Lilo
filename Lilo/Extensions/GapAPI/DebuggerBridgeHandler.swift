@@ -137,7 +137,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
         }
         let (type, id) = Self.kind(of: debuggee)
         let registry = call.registry
-        guard let context = registry.context(for: call.extensionId) else { return BridgeError("No \(type) with given id \(id).") }
+        guard let context = call.context else { return BridgeError("No \(type) with given id \(id).") }
         let adapter: TabExtensionAdapter?
         if debuggee["tabId"] != nil, let position = call.payload["tab"] as? [String: Any] {
             adapter = registry.tabAdapters(atPositions: [position], extensionId: call.extensionId).first ?? nil
@@ -408,7 +408,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     // MARK: - getTargets
 
     private static func tabs(of registry: ProfileExtensionRegistry, context: WKWebExtensionContext) -> [(adapter: TabExtensionAdapter, position: [String: Int])] {
-        registry.extensionWindows.enumerated().flatMap { windowPosition, window in
+        registry.extensionWindows(for: context).enumerated().flatMap { windowPosition, window in
             window.tabs(for: context).enumerated().compactMap { index, tab in
                 (tab as? TabExtensionAdapter).map { ($0, ["windowPosition": windowPosition, "index": index]) }
             }
@@ -417,7 +417,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
 
     /// Every tab as a page target; the bridge turns each position into WebKit's tab id.
     private func targets(_ call: GapCall) -> Any? {
-        guard let context = call.registry.context(for: call.extensionId) else { return [] }
+        guard let context = call.context else { return [] }
         return Self.tabs(of: call.registry, context: context).map { tab -> [String: Any] in
             [
                 "tab": tab.position,

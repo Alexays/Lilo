@@ -13,7 +13,7 @@ final class DeclarativeNetRequestBridgeHandler: GapHandler {
 
     func handle(_ call: GapCall) async -> Any? {
         guard let rulesetId = call.string("rulesetId") else { return BridgeError("rulesetId must be a string") }
-        guard let context = call.registry.context(for: call.extensionId),
+        guard let context = call.context,
               let sourcePath = call.registry.loadedExtensions.first(where: { $0.id == call.extensionId })?.sourcePath else {
             return BridgeError("Extension not found")
         }

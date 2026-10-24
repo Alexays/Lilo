@@ -11,7 +11,7 @@ management.getSelf shape | Lilo's ExtensionInfo lacks homepageUrl, isApp, mayDis
 permissions.request outside a gesture | Lilo refuses a permission WebKit does not know and the manifest does not list (debugger) as not declared, without requiring a user gesture.
 scripting.executeScript on a missing tab | WebKit's error message differs from Chrome's.
 storage.local.get invalid keys | WebKit's error message differs from Chrome's.
-tabs.create and remove events | WebKit's Tab objects lack autoDiscardable, discarded, frozen, groupId, lastAccessed and splitViewId, and add isArticle and isInReaderMode.
+tabs.create and remove events | WebKit's Tab objects lack splitViewId, and add isArticle and isInReaderMode.
 tabs.get invalid id | WebKit's error message differs from Chrome's.
-tabs.query shape | WebKit's Tab objects lack autoDiscardable, discarded, frozen, groupId, lastAccessed and splitViewId, and add isArticle and isInReaderMode.
+tabs.query shape | WebKit's Tab objects lack splitViewId, and add isArticle and isInReaderMode.
 webNavigation on a tab before its first commit | WebKit lists the tab's initial empty document, with an empty URL, where Chrome lists no frame until the first navigation commits.

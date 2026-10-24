@@ -35,9 +35,9 @@ final class DownloadManager {
     /// Observers called on every DownloadItem state change, each with the token that removes it.
     private var observers: [(token: UUID, notify: (DownloadItem) -> Void)] = []
 
-    /// Called when a download record is erased (not routed through `observers`/onUpdated). Used to
+    /// Called with the id and the profile of a download record erased (not routed through `observers`/onUpdated). Used to
     /// fire `chrome.downloads.onErased`.
-    var onErased: ((Int64) -> Void)?
+    var onErased: ((Int64, UUID?) -> Void)?
 
     private(set) var quickLookItemURL: URL?
 
@@ -306,7 +306,7 @@ final class DownloadManager {
         stop(id: id)
         pendingAutoResumes.remove(id); autoResumes[id] = nil
         try store?.delete(id: id)
-        onErased?(id)
+        onErased?(id, store?.profileId)
     }
 
     /// As Chrome does, a download the network dropped resumes from its partial bytes a few times, each

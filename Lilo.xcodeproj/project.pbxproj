@@ -295,6 +295,7 @@
 		8995FD4F3170A33E155E98BA /* BrowserRuntimeCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928C080C4829A483987A5E7A /* BrowserRuntimeCoordinator.swift */; };
 		8C3D14C0C3332DC5626DF0C5 /* BrowserImportScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E64EF16A83BCC08DBB41C1 /* BrowserImportScannerTests.swift */; };
 		8CE447C0D008DA6C1F9990EA /* SearchQueryBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA99A5E788DD3CE711BB0DEF /* SearchQueryBridgeHandler.swift */; };
+		8D352DFF977B3AACEE75D98B /* ChromeAPIGapModules.json in Resources */ = {isa = PBXBuildFile; fileRef = ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */; };
 		8D8C4F5A123A9A8DB53C12C2 /* GitDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FAE3DC4D30D6BEB8EDBBC65 /* GitDiffTests.swift */; };
 		8DBF16847C1867008E1A305E /* SidebarNodeIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D3EA8E6DB1A33852DB5F3CE /* SidebarNodeIndex.swift */; };
 		8F11135AB1781461D345AFA0 /* WebKitGapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1C1A77F1C3408FD1C89D61 /* WebKitGapTests.swift */; };
@@ -520,6 +521,7 @@
 		E305C9F9252F84C8050AA2DD /* ProgressEmitGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2293413C64F43F32F33C8C /* ProgressEmitGateTests.swift */; };
 		E3D68CC883CFE9934755CAB0 /* CaptureBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2B09C4879799B25F4316ED /* CaptureBridgeHandlerTests.swift */; };
 		E3FCB3DD20185E64FB3652A3 /* WKWebViewTabSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6927B2D3B13F62F69A3A4523 /* WKWebViewTabSourceTests.swift */; };
+		E420FA5488310C0A9DFFB430 /* TabExtensionEventsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */; };
 		E4946CE59D787E9A51D8277E /* CaptureRetentionIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */; };
 		E4960068CD73F7F92562FE80 /* OmniboxBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA7B781D2407BC214A591CB /* OmniboxBridgeHandlerTests.swift */; };
 		E52DDF8BB5FFD1A894B9D906 /* ChangesHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D72B3E33445B63A003F70B0 /* ChangesHost.swift */; };
@@ -727,6 +729,7 @@
 		2848B352725E442709C3FDEB /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		292A55E3946115C3552E1B11 /* MainWindowController+SplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+SplitView.swift"; sourceTree = "<group>"; };
 		2B1C3FDFB052BFDCE12B8834 /* FeatureFlagsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsBridgeHandler.swift; sourceTree = "<group>"; };
+		2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabExtensionEventsTests.swift; sourceTree = "<group>"; };
 		2BF1B068EE38071BDC4C8801 /* MainWindowController+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Extensions.swift"; sourceTree = "<group>"; };
 		2BF2A6D8AA9663C63227724B /* TemporaryProfileDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryProfileDatabase.swift; sourceTree = "<group>"; };
 		2C5EAC944C4FA42F1A74E759 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
@@ -1169,6 +1172,7 @@
 		EAF27509D91B041BEFA51288 /* AgentPage.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = AgentPage.js; sourceTree = "<group>"; };
 		EB8F1E42E289763066BBD2A3 /* HTTPAuthChallengeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPAuthChallengeHandler.swift; sourceTree = "<group>"; };
 		EC69FC1191B1A8A54A2E9858 /* WebViewPrivateAccessors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewPrivateAccessors.swift; sourceTree = "<group>"; };
+		ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ChromeAPIGapModules.json; sourceTree = "<group>"; };
 		ECC95AEE12784246F56696F2 /* chrome-surface-gaps.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "chrome-surface-gaps.txt"; sourceTree = "<group>"; };
 		ECDEF131AD64DC195E56A2C9 /* ExtensionSettingsAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSettingsAPITests.swift; sourceTree = "<group>"; };
 		ED2AE93E1D8AA6911F61120A /* TopSitesBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopSitesBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -1275,6 +1279,7 @@
 				01D45E0B4C896809F3CA2B68 /* SpaceTabStateTests.swift */,
 				F0D2FAD7B4EEA4D41DE59E0D /* SplitLayoutTests.swift */,
 				AC73D41B9525B0E4BD1D4109 /* TabArchiveTests.swift */,
+				2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */,
 				051A95A4390A8B95F0E0D669 /* TabFoldersTests.swift */,
 				45CA6916762B455944115350 /* TabLifecycleCoordinatorTests.swift */,
 				A3E4311F0D20240330B8214D /* TabLifecycleIdleTests.swift */,
@@ -1471,6 +1476,7 @@
 			children = (
 				DA1AD9B409543FFF3B8614E5 /* ChromeAPIAugmentation.js */,
 				3BB8ACFFF948B01F3F7036FF /* ChromeAPIBackgroundPrelude.js */,
+				ECB0712C4E012A8524B1B6CD /* ChromeAPIGapModules.json */,
 				B6967F93609CA6CFA4D08BB2 /* ChromeContentCompat.js */,
 				DDF98B2040C2CE587A054357 /* ChromeStaticRules.js */,
 				E2BB2B4A39CF22F206F58DC9 /* ChromeWebStoreShim.js */,
@@ -2461,6 +2467,7 @@
 				AEF97CD921931917ECD05C67 /* BlockerResources in Resources */,
 				B3DE2DCB3865837BCE6ADC3E /* ChromeAPIAugmentation.js in Resources */,
 				ADA84B1F561E87C606957FBF /* ChromeAPIBackgroundPrelude.js in Resources */,
+				8D352DFF977B3AACEE75D98B /* ChromeAPIGapModules.json in Resources */,
 				A1BEBB96E6A3182DF6F14057 /* ChromeContentCompat.js in Resources */,
 				FBA85C355F5CE58C11897363 /* ChromeStaticRules.js in Resources */,
 				D5718FA9F11909DC18838405 /* ChromeWebStoreShim.js in Resources */,
@@ -3006,6 +3013,7 @@
 				F2EB519F83CBEC6726DB69FC /* TabContextMenuActionsTests.swift in Sources */,
 				54E223905C49405FB8843B51 /* TabDockControllerTests.swift in Sources */,
 				BE52C56886B07B2CFB430778 /* TabExtensionAdapterTests.swift in Sources */,
+				E420FA5488310C0A9DFFB430 /* TabExtensionEventsTests.swift in Sources */,
 				DE305FAB31A4EAA02599452A /* TabFoldersTests.swift in Sources */,
 				90F9C9A598468A52FD43C07E /* TabGroupsBridgeHandlerTests.swift in Sources */,
 				4C53B26F0FC0147D3C4E7CA6 /* TabLifecycleCoordinatorTests.swift in Sources */,

@@ -61,10 +61,6 @@ extension MainWindowController: WKWebViewTab.Delegate {
             let committedURL = eventURL ?? tab.currentURL
             tab.zoomSettings = WKWebViewTab.ZoomSettings()
             profileContext?.extensions.access.tabDidCommitNavigation(tab.id, url: committedURL)
-            // Chrome reports a tab's url change when it commits; the tab's own url changed when its navigation started.
-            if let registry = profileContext?.extensions, registry.hasLoadedExtensions, let adapter = tabManager.engineHost.tabAdapter(for: tab.id) {
-                registry.controller.didChangeTabProperties(.URL, for: adapter)
-            }
             // An agent tab stays at the zoom the agent measures with, whatever this window's profile keeps for the site.
             if !tab.isAgentControlled {
                 profileContext?.zoom.applyZoom(to: tab, forURL: committedURL, default: context.settingsStore.defaultZoom)
@@ -137,16 +133,6 @@ extension MainWindowController: WKWebViewTab.Delegate {
                         return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                     }
                 profileContext?.history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
-                // Fire chrome.history.onVisited to extensions (gap event; the store has no extension
-                // awareness, so we emit at this MainActor call site where the registry is in scope).
-                profileContext?.extensions.emitGapEvent("history", "onVisited", args: [[
-                    "id": url.absoluteString,
-                    "url": url.absoluteString,
-                    "title": tab.currentTitle ?? "",
-                    "lastVisitTime": Date().timeIntervalSince1970 * 1000,
-                    "visitCount": 1,
-                    "typedCount": 0
-                ]], requiredPermission: "history")
             }
         }
     }
@@ -192,6 +178,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 faviconCoordinator.applyCached(from: tab)
             }
         }
+    }
+
+    func tab(
+        _ tab: WKWebViewTab, authenticateProxy challenge: URLAuthenticationChallenge,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) {
+        guard let registry = profileContext?.extensions, registry.hasLoadedExtensions else { return completion(nil) }
+        context.engineFactory.authenticateProxy(
+            challenge, url: tab.currentURL, tab: tabManager.engineHost.tabAdapter(for: tab.id), registry: registry, completion: completion
+        )
     }
 
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool {
@@ -261,7 +257,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             openLittleWindow(url: url)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground), let url else { return }
+        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id), let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
     }
 
@@ -271,12 +267,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         let ids = registry.gapEvents.listeners(
             among: registry.extensionIds(withPermission: "webNavigation"), namespace: "webNavigation", event: "onCreatedNavigationTarget"
         )
-        guard let first = ids.first,
-              let source = tabManager.tabAdapter(for: sourceId).flatMap({ registry.tabPosition(of: $0, extensionId: first) }),
-              let target = tabManager.tabAdapter(for: tabId).flatMap({ registry.tabPosition(of: $0, extensionId: first) }) else { return }
-        registry.gapEvents.emit("webNavigation", "onCreatedNavigationTarget", args: [[
-            "source": source, "tab": target, "url": url.absoluteString, "timeStamp": Date().timeIntervalSince1970 * 1000
-        ]], to: ids)
+        guard !ids.isEmpty, let sourceAdapter = tabManager.tabAdapter(for: sourceId), let targetAdapter = tabManager.tabAdapter(for: tabId) else { return }
+        let timeStamp = Date().timeIntervalSince1970 * 1000
+        registry.emitPositioned("webNavigation", "onCreatedNavigationTarget", to: ids) { extensionId in
+            guard let source = registry.tabPosition(of: sourceAdapter, extensionId: extensionId),
+                  let target = registry.tabPosition(of: targetAdapter, extensionId: extensionId) else { return nil }
+            return ["source": source, "tab": target, "url": url.absoluteString, "timeStamp": timeStamp]
+        }
     }
 
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {

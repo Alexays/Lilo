@@ -274,20 +274,31 @@ describe('scripting.registerContentScripts without a match pattern', () => {
   });
 });
 
+// What WebKit's executeScript does with a function: runs it in each target document, here one per tab.
+function runIn(documents: Record<number, any>, injection: any) {
+  (globalThis as any).document = documents[injection.target.tabId];
+  try {
+    return Promise.resolve(injection.func(...(injection.args ?? []))).then((result) => [{ frameId: 0, result }]);
+  } finally {
+    delete (globalThis as any).document;
+  }
+}
+
+/** Lilo's injection that reads each target document's URL before the extension's own. */
+const checksURL = (injection: any) => injection.args?.[0] === 'document' && injection.args.length === 2;
+
 describe('scripting.executeScript, which WebKit always runs at once', () => {
   it('waits for the target documents to load unless asked to inject immediately, as Chrome', async () => {
     const injections: any[] = [];
     let readyState = 'loading';
     const loaded: Array<() => void> = [];
-    const page = { get readyState() { return readyState; }, addEventListener: (_type: string, listener: () => void) => loaded.push(listener) };
-    (globalThis as any).document = page;
+    const page = { URL: 'https://example.com/', get readyState() { return readyState; }, addEventListener: (_type: string, listener: () => void) => loaded.push(listener) };
     const { scripting } = install({
       runtime: { getURL: (path: string) => `chrome-extension://abc/${path}` },
-      tabs: { get: async (tabId: number) => ({ id: tabId, url: 'https://example.com/' }) },
       scripting: Object.create({
         async executeScript(injection: any) {
           injections.push(injection);
-          return [{ result: await injection.func(...(injection.args ?? [])) }];
+          return runIn({ 1: page }, injection);
         },
       }),
     });
@@ -297,17 +308,40 @@ describe('scripting.executeScript, which WebKit always runs at once', () => {
     assert.equal(injections.length, 1, 'only the wait for the document runs while it loads');
     readyState = 'interactive';
     loaded.forEach((listener) => listener());
-    assert.deepEqual(await results, [{ result: 'interactive' }]);
+    assert.deepEqual(await results, [{ frameId: 0, result: 'interactive' }]);
     assert.equal(injections[0].injectImmediately, true);
 
     injections.length = 0;
-    assert.deepEqual(await scripting.executeScript({ target: { tabId: 1 }, injectImmediately: true, func: () => 'now' }), [{ result: 'now' }]);
-    assert.equal(injections.length, 1);
-    delete (globalThis as any).document;
+    readyState = 'loading';
+    assert.deepEqual(await scripting.executeScript({ target: { tabId: 1 }, injectImmediately: true, func: () => 'now' }), [{ frameId: 0, result: 'now' }]);
+    assert.equal(injections.length, 2, 'the URL check does not wait');
+  });
+
+  it("runs Lilo's content compat ahead of isolated-world files only", async () => {
+    const injections: any[] = [];
+    const { scripting } = install({
+      runtime: { getURL: (path: string) => `chrome-extension://abc/${path}` },
+      scripting: Object.create({
+        async executeScript(injection: any) {
+          if (checksURL(injection)) return [{ frameId: 0, result: 'https://example.com/' }];
+          injections.push(injection);
+          return [{ frameId: 0, result: 'done' }];
+        },
+      }),
+    });
+    await scripting.executeScript({ target: { tabId: 1 }, files: ['a.js', 'b.js'] });
+    await scripting.executeScript({ target: { tabId: 1 }, files: ['a.js'], world: 'MAIN' });
+    await scripting.executeScript({ target: { tabId: 1 }, func: () => 1 });
+    assert.deepEqual(injections.map((injection) => injection.files), [['_lilo/lilo-content-compat.js', 'a.js', 'b.js'], ['a.js'], undefined]);
   });
 });
 
 describe('scripting on a tab', () => {
+  const documents = {
+    1: { URL: 'chrome-extension://abc/popup.html', readyState: 'complete', adoptedStyleSheets: [] },
+    2: { URL: 'https://example.com/', readyState: 'complete', adoptedStyleSheets: [] as any[] },
+  };
+
   it("refuses the extension's own pages, naming them to an extension holding tabs, as Chrome does", async () => {
     const injected: unknown[] = [];
     let tabsGranted = true;
@@ -315,9 +349,11 @@ describe('scripting on a tab', () => {
     const { scripting } = install({
       runtime: { getURL: (path: string) => `chrome-extension://abc/${path}` },
       permissions: Object.create({ contains: async ({ permissions }: { permissions: string[] }) => tabsGranted && permissions.includes('tabs') }),
-      tabs: { get: async (tabId: number) => ({ id: tabId, url: tabId === 1 ? 'chrome-extension://abc/popup.html' : 'https://example.com/' }) },
       scripting: Object.create({
-        executeScript(injection: any) { injected.push(injection.target.tabId); return Promise.resolve([{ result: 'done' }]); },
+        executeScript(injection: any) {
+          if (!checksURL(injection)) injected.push(injection.target.tabId);
+          return runIn(documents, checksURL(injection) ? injection : { ...injection, func: () => 'done' });
+        },
         insertCSS(injection: any) { injected.push(injection.target.tabId); return Promise.resolve(); },
       }),
     });
@@ -330,15 +366,44 @@ describe('scripting on a tab', () => {
     await assert.rejects(scripting.executeScript({ target: { tabId: 1 }, func: () => 1 }), {
       message: 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.',
     });
-    assert.deepEqual(await scripting.executeScript({ target: { tabId: 2 }, injectImmediately: true, func: () => 1 }), [{ result: 'done' }]);
+    assert.deepEqual(await scripting.executeScript({ target: { tabId: 2 }, injectImmediately: true, func: () => 1 }), [{ frameId: 0, result: 'done' }]);
     assert.deepEqual(injected, [2]);
+  });
+
+  it('inserts and removes CSS in the frames named, which WebKit styles only the main frame of', async () => {
+    const sheets: any[] = [];
+    (globalThis as any).CSSStyleSheet = class { css = ''; replaceSync(css: string) { this.css = css; sheets.push(this); } };
+    const insertedByWebKit: unknown[] = [];
+    const { scripting } = install({
+      runtime: { getURL: (path: string) => `chrome-extension://abc/${path}` },
+      permissions: Object.create({ contains: async () => false }),
+      scripting: Object.create({
+        executeScript: (injection: any) => runIn(documents, injection),
+        insertCSS(injection: any) { insertedByWebKit.push(injection); return Promise.resolve(); },
+        removeCSS: () => Promise.resolve(),
+      }),
+    });
+    try {
+      assert.equal(await scripting.insertCSS({ target: { tabId: 2, frameIds: [0] }, css: 'a{}' }), undefined);
+      assert.equal(insertedByWebKit.length, 1, 'the main frame alone is WebKit\'s');
+      assert.equal(await scripting.insertCSS({ target: { tabId: 2, frameIds: [3] }, css: 'b{}' }), undefined);
+      assert.deepEqual(documents[2].adoptedStyleSheets.map((sheet) => sheet.css), ['b{}']);
+      await scripting.removeCSS({ target: { tabId: 2, frameIds: [3] }, css: 'b{}' });
+      assert.deepEqual(documents[2].adoptedStyleSheets, []);
+      await assert.rejects(scripting.insertCSS({ target: { tabId: 1, frameIds: [3] }, css: 'c{}' }), {
+        message: 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.',
+      });
+      assert.deepEqual(documents[1].adoptedStyleSheets, [], "the extension's own page keeps no style");
+      assert.equal(insertedByWebKit.length, 1);
+    } finally {
+      delete (globalThis as any).CSSStyleSheet;
+    }
   });
 
   it('keeps working once the extension replaces chrome with its own wrapper, as Proton Pass does', async () => {
     const { scripting } = install({
       runtime: { getURL: (path: string) => `chrome-extension://abc/${path}` },
-      tabs: { get: async (tabId: number) => ({ id: tabId, url: 'https://example.com/' }) },
-      scripting: Object.create({ executeScript: async () => [{ result: 'done' }] }),
+      scripting: Object.create({ executeScript: async (injection: any) => [{ result: checksURL(injection) ? 'https://example.com/' : 'done' }] }),
     });
     const installed = (globalThis as any).chrome;
     (globalThis as any).chrome = new Proxy({}, { get: () => undefined });
@@ -347,6 +412,38 @@ describe('scripting on a tab', () => {
     } finally {
       (globalThis as any).chrome = installed;
     }
+  });
+});
+
+describe('content scripts registered at run time', () => {
+  it("run Lilo's content compat first outside the MAIN world, which the registrations never show", async () => {
+    let registered: any[] = [];
+    const { scripting } = install({
+      scripting: Object.create({
+        async registerContentScripts(scripts: any[]) { registered.push(...scripts.map((script) => ({ world: 'ISOLATED', ...script }))); },
+        async updateContentScripts(scripts: any[]) {
+          registered = registered.map((script) => ({ ...script, ...scripts.find((update) => update.id === script.id) }));
+        },
+        async getRegisteredContentScripts(filter?: { ids?: string[] }) {
+          return registered.filter((script) => !filter?.ids || filter.ids.includes(script.id));
+        },
+      }),
+    });
+    await scripting.registerContentScripts([
+      { id: 'a', js: ['a.js'], matches: ['*://*/*'] },
+      { id: 'b', js: ['b.js'], matches: ['*://*/*'], world: 'MAIN' },
+      { id: 'c', css: ['c.css'], matches: ['*://*/*'] },
+    ]);
+    const js = () => Object.fromEntries(registered.map((script) => [script.id, script.js]));
+    assert.deepEqual(js(), { a: ['_lilo/lilo-content-compat.js', 'a.js'], b: ['b.js'], c: undefined });
+    assert.deepEqual((await scripting.getRegisteredContentScripts()).map((script: any) => script.js), [['a.js'], ['b.js'], undefined]);
+
+    await scripting.updateContentScripts([{ id: 'a', world: 'MAIN' }, { id: 'b', js: ['b2.js'] }]);
+    assert.deepEqual(js(), { a: ['a.js'], b: ['b2.js'], c: undefined });
+    await scripting.updateContentScripts([{ id: 'a', world: 'ISOLATED' }, { id: 'c', js: ['c.js'], world: 'ISOLATED' }]);
+    assert.deepEqual(js(), { a: ['_lilo/lilo-content-compat.js', 'a.js'], b: ['b2.js'], c: ['_lilo/lilo-content-compat.js', 'c.js'] });
+    const ids = await new Promise((resolve) => scripting.getRegisteredContentScripts({ ids: ['c'] }, (scripts: any[]) => resolve(scripts.map((script) => script.js))));
+    assert.deepEqual(ids, [['c.js']]);
   });
 });
 

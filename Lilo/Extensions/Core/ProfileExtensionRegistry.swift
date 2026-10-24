@@ -24,10 +24,15 @@ final class ProfileExtensionRegistry {
     private struct LoadedExtensionRuntime {
         let context: WKWebExtensionContext
         let id: String
+        /// The folder WebKit loads, which preparation writes into.
         let sourcePath: String
+        /// The folder the installed record names: `sourcePath`, or the unpacked folder it is a clone of.
+        let installPath: String
         /// Manifest permissions plus the optional ones granted at Lilo's prompt, cached as a set so
         /// per-event permission scoping is a lookup.
         var permissions: Set<String>
+        /// The manifest's required and optional permissions WebKit knows, whose grants the context tracks.
+        let webKitPermissions: Set<String>
         /// Manifest facts read on every keyDown, omnibox keystroke or payload build, cached at load.
         let declaresCommands: Bool
         let omniboxKeyword: String?
@@ -39,10 +44,10 @@ final class ProfileExtensionRegistry {
         /// Error and permission-change notifications of this context.
         var contextObserver: NSObjectProtocol?
         var pageDiagnostics: [ExtensionPageDiagnostic] = []
-        var cachedBridgePayload: [String: Any]?
-        /// The tab `cachedBridgePayload` rendered the action for.
-        var cachedBridgePayloadTab: ObjectIdentifier?
-        var bridgePayloadIsDirty = true
+        /// The row's fields no tab changes; nil once one of them may have.
+        var staticBridgePayload: [String: Any]?
+        /// Whole rows by the active tab whose action they show: windows of the profile each show their own.
+        var bridgePayloads: [UUID?: [String: Any]] = [:]
     }
 
     struct ExtensionPageDiagnostic {
@@ -73,11 +78,12 @@ final class ProfileExtensionRegistry {
     /// Enabled records that failed to load at restore, listed with the error instead of vanishing.
     private var failedRestores: [(stored: ExtensionStorage.InstalledExtension, error: String)] = []
 
-    /// Rendered-icon cache keyed by the action's icon image and the appearance: WebKit hands back the
-    /// same image until the icon changes, so tabs sharing an icon share one tiff -> PNG -> base64 pass.
+    /// Rendered-icon cache keyed by the action's icon image, the appearance and the scale it is drawn at:
+    /// WebKit hands back the same image until the icon changes, so tabs sharing an icon share one PNG pass.
     private struct IconCacheKey: Hashable {
         let image: ObjectIdentifier
         let appearance: NSAppearance.Name
+        let scale: CGFloat
     }
     /// Holds each image strongly so its ObjectIdentifier cannot be reused by a different image.
     private var iconDataURLCache: [IconCacheKey: (image: NSImage, dataURL: String)] = [:]
@@ -123,7 +129,8 @@ final class ProfileExtensionRegistry {
     /// The extension's row, or every row when nil, shows something new.
     func extensionDidChange(_ extensionId: String?) {
         for index in loadedRuntimes.indices where extensionId == nil || loadedRuntimes[index].id == extensionId {
-            loadedRuntimes[index].bridgePayloadIsDirty = true
+            loadedRuntimes[index].staticBridgePayload = nil
+            loadedRuntimes[index].bridgePayloads = [:]
         }
         notifyExtensionsChanged()
     }
@@ -201,8 +208,8 @@ final class ProfileExtensionRegistry {
         runtimeIndex(for: extensionId) != nil
     }
 
-    private func containsRuntimeSourcePath(_ sourcePath: String) -> Bool {
-        loadedRuntimes.contains { $0.sourcePath == sourcePath }
+    private func containsRuntimeInstallPath(_ installPath: String) -> Bool {
+        loadedRuntimes.contains { $0.installPath == installPath }
     }
 
     @discardableResult
@@ -217,10 +224,11 @@ final class ProfileExtensionRegistry {
         guard updateRuntime(extensionId: extensionId, {
             if let tab {
                 update(&$0.tabActionColors[tab, default: ActionColors()])
+                $0.bridgePayloads[tab] = nil
             } else {
                 update(&$0.actionColors)
+                $0.bridgePayloads = [:]
             }
-            $0.bridgePayloadIsDirty = true
         }) else { return }
         notifyExtensionsChanged()
     }
@@ -228,15 +236,19 @@ final class ProfileExtensionRegistry {
     func actionDidChange(for extensionId: String) {
         guard updateRuntime(extensionId: extensionId, {
             $0.iconVersion += 1
-            $0.bridgePayloadIsDirty = true
+            $0.bridgePayloads = [:]
         }) else { return }
         notifyExtensionsChanged()
     }
 
-    /// The action icon and badge can be tab-specific, so every payload is re-rendered on tab change.
+    /// The action fields are re-rendered for the new active tab: what it shows (its host access request)
+    /// may have changed while it was not.
     func refreshActionsForActiveTabChange() {
         guard !loadedRuntimes.isEmpty else { return }
-        extensionDidChange(nil)
+        for index in loadedRuntimes.indices {
+            loadedRuntimes[index].bridgePayloads = [:]
+        }
+        notifyExtensionsChanged()
     }
 
     // MARK: - Persistence
@@ -368,7 +380,7 @@ final class ProfileExtensionRegistry {
 
     func tabAdapters(atPositions positions: [[String: Any]], extensionId: String) -> [TabExtensionAdapter?] {
         guard let context = context(for: extensionId) else { return positions.map { _ in nil } }
-        let windows = extensionWindows
+        let windows = extensionWindows(for: context)
         var tabsByWindow: [Int: [any WKWebExtensionTab]] = [:]
         return positions.map { position in
             guard let window = (position["windowPosition"] as? NSNumber)?.intValue,
@@ -383,7 +395,7 @@ final class ProfileExtensionRegistry {
     /// The `{windowPosition, index}` of the tab showing `webView`, the inverse of `tabIds(atPositions:)`.
     func tabPosition(of webView: WKWebView, extensionId: String) -> [String: Int]? {
         guard let context = context(for: extensionId) else { return nil }
-        for (position, window) in extensionWindows.enumerated() {
+        for (position, window) in extensionWindows(for: context).enumerated() {
             if let index = window.tabs(for: context).firstIndex(where: { ($0 as? TabExtensionAdapter)?.webView(for: context) === webView }) {
                 return ["windowPosition": position, "index": index]
             }
@@ -395,24 +407,49 @@ final class ProfileExtensionRegistry {
     func tabPosition(of adapter: TabExtensionAdapter, extensionId: String) -> [String: Int]? {
         guard let context = context(for: extensionId),
               let window = adapter.extensionWindow as? WindowExtensionAdapter,
-              let position = extensionWindows.firstIndex(where: { $0 === window }) else { return nil }
+              let position = extensionWindows(for: context).firstIndex(where: { $0 === window }) else { return nil }
         let index = window.index(of: adapter, for: context)
         return index == NSNotFound ? nil : ["windowPosition": position, "index": index]
     }
 
-    /// The place of `nsWindow` in WebKit's `windows.getAll()`.
-    func windowPosition(of nsWindow: NSWindow) -> Int? {
-        extensionWindows.firstIndex { $0.nsWindow === nsWindow }
+    /// The place of `nsWindow` in the extension's `windows.getAll()`.
+    func windowPosition(of nsWindow: NSWindow, extensionId: String) -> Int? {
+        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0.nsWindow === nsWindow } }
     }
 
-    /// The window at `position` in WebKit's `windows.getAll()`.
-    func extensionWindow(at position: Int) -> WindowExtensionAdapter? {
-        extensionWindows.indices.contains(position) ? extensionWindows[position] : nil
+    /// The window at `position` in the extension's `windows.getAll()`.
+    func extensionWindow(at position: Int, extensionId: String) -> WindowExtensionAdapter? {
+        guard let context = context(for: extensionId) else { return nil }
+        let windows = extensionWindows(for: context)
+        return windows.indices.contains(position) ? windows[position] : nil
     }
 
     /// WebKit's open windows: the registry's adapters, or the delegate's own window when none.
     var extensionWindows: [WindowExtensionAdapter] {
         (windowAdapters.isEmpty ? [delegate.windowAdapter].compactMap { $0 } : windowAdapters) + delegate.popupWindowAdapters
+    }
+
+    /// The windows `context` sees, the list its positions index: WebKit hides private windows from an extension without private access.
+    func extensionWindows(for context: WKWebExtensionContext) -> [WindowExtensionAdapter] {
+        context.hasAccessToPrivateData ? extensionWindows : extensionWindows.filter { !$0.isPrivateWindow }
+    }
+
+    /// Sends an event whose details hold window or tab positions to `ids`. The details are built once per
+    /// private-access class, the only thing positions depend on, for that class's first extension; a class
+    /// whose `details` is nil (the tab is hidden from it) gets nothing.
+    func emitPositioned(_ namespace: String, _ event: String, to ids: [String], details: (_ extensionId: String) -> [String: Any]?) {
+        var classes: [(hasPrivateAccess: Bool, details: [String: Any]?, ids: [String])] = []
+        for id in ids {
+            guard let hasPrivateAccess = context(for: id)?.hasAccessToPrivateData else { continue }
+            if let index = classes.firstIndex(where: { $0.hasPrivateAccess == hasPrivateAccess }) {
+                classes[index].ids.append(id)
+            } else {
+                classes.append((hasPrivateAccess, details(id), [id]))
+            }
+        }
+        for group in classes {
+            if let details = group.details { gapEvents.emit(namespace, event, args: [details], to: group.ids) }
+        }
     }
 
     // MARK: - Init
@@ -451,10 +488,14 @@ final class ProfileExtensionRegistry {
             unsafeBitCast(config.webViewConfiguration.method(for: delaysLaunch), to: SetBool.self)(config.webViewConfiguration, delaysLaunch, false)
         }
 
-        // Injected into every WebView the controller manages.
+        // Injected into every frame of the WebViews the controller manages but web pages', where it would only exit.
         if let url = Bundle.appResourceURL("ChromeAPIAugmentation", extension: "js"),
            let source = try? String(contentsOf: url, encoding: .utf8) {
-            userContentController.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+            let webPages = ["http://*/*", "https://*/*"]
+            userContentController.addUserScript(
+                ExtensionUserScripts.makeMatchingUserScript?(source, .atDocumentStart, false, [], webPages, .page)
+                    ?? WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page)
+            )
         } else {
             Self.logger.error("ChromeAPIAugmentation.js not found in bundle: Chrome API bridge will be absent")
         }
@@ -536,14 +577,26 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    /// Records gap events a page or worker of a loaded extension listens to; `fromWorker` marks the
-    /// worker's own report, sent once its script has run, which turns on filtering. A cookies.onChanged
-    /// listener hears of it once the cookies are read, so a change its context makes next is reported.
+    /// Gap events a page or the worker of a loaded extension listens to: `GapEvents` keeps a page's itself,
+    /// the worker's are kept across launches. A cookies.onChanged listener hears of it once the cookies
+    /// are read, so a change its context makes next is reported.
     func addGapListeners(_ events: [String], extensionId: String, fromWorker: Bool) async {
         guard let context = context(for: extensionId) else { return }
-        lifecycle.listen(events, extensionId: extensionId, fromWorker: fromWorker, version: context.webExtension.version)
-        syncCookieTracking()
+        if fromWorker { lifecycle.listen(events, extensionId: extensionId, version: context.webExtension.version) }
+        gapListenersChanged()
         if events.contains("cookies.onChanged") { await cookieTracker?.catchUp() }
+    }
+
+    /// Gap events a page or the worker no longer listens to: its last listener for each went.
+    func removeGapListeners(_ events: [String], extensionId: String, fromWorker: Bool) {
+        guard let context = context(for: extensionId) else { return }
+        if fromWorker { lifecycle.listen(events, extensionId: extensionId, removed: true, version: context.webExtension.version) }
+        gapListenersChanged()
+    }
+
+    private func gapListenersChanged() {
+        syncCookieTracking()
+        NotificationCenter.default.post(name: .extensionGapListenersChanged, object: self)
     }
 
     /// Returns once the cookie changes made so far are reported to the extensions that listen.
@@ -583,24 +636,26 @@ final class ProfileExtensionRegistry {
     /// `load`, a new id is an install and a known one a reload.
     func load(from url: URL, extensionId knownId: String? = nil, as load: ExtensionLifecycle.Load? = nil) async throws {
         try await files.whileWriting {
-            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeSourcePath)
+            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
             // Reinstalling a folder keeps the id it already had, so its storage follows it.
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }
             }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
-            let isPreparationDegraded = await Task.detached(priority: .userInitiated) {
-                Self.prepareForWebKit(at: permanentURL, allowsUserScripts: allowsUserScripts)
+            let files = files
+            let (sourceURL, isPreparationDegraded) = try await Task.detached(priority: .userInitiated) {
+                let sourceURL = try files.workingCopy(of: permanentURL)
+                return (sourceURL, Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowsUserScripts))
             }.value
-            let webExtension = try await WKWebExtension(resourceBaseURL: permanentURL)
+            let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
             let extensionId = knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
                 for: permanentURL,
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
             )
             try await activate(
-                webExtension, id: extensionId, sourcePath: permanentURL.path, isPreparationDegraded: isPreparationDegraded, stored: stored,
-                as: load ?? (knownId == nil ? .install : .reload)
+                webExtension, id: extensionId, sourcePath: sourceURL.path, installPath: permanentURL.path,
+                isPreparationDegraded: isPreparationDegraded, stored: stored, as: load ?? (knownId == nil ? .install : .reload)
             )
         }
     }
@@ -624,6 +679,7 @@ final class ProfileExtensionRegistry {
         _ webExtension: WKWebExtension,
         id extensionId: String,
         sourcePath: String,
+        installPath: String,
         isPreparationDegraded: Bool,
         stored: ExtensionStorage.InstalledExtension?,
         as load: ExtensionLifecycle.Load
@@ -652,7 +708,9 @@ final class ProfileExtensionRegistry {
             context: context,
             id: extensionId,
             sourcePath: sourcePath,
+            installPath: installPath,
             permissions: permissions,
+            webKitPermissions: Set(webExtension.requestedPermissions.union(webExtension.optionalPermissions).map(\.rawValue)),
             declaresCommands: !((webExtension.manifest["commands"] as? [String: Any])?.isEmpty ?? true),
             omniboxKeyword: (webExtension.manifest["omnibox"] as? [String: Any])?["keyword"] as? String,
             hasContentScripts: !((webExtension.manifest["content_scripts"] as? [[String: Any]])?.isEmpty ?? true)
@@ -667,13 +725,15 @@ final class ProfileExtensionRegistry {
         failedRestores.removeAll { $0.stored.id == extensionId }
         for adapter in windowAdapters { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
         let record = ExtensionStorage.InstalledExtension(
-            id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: sourcePath, isEnabled: true
+            id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: installPath, isEnabled: true
         )
         if record != stored {
             try? await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
         }
         if permissions.contains("userScripts") {
             await userScripts.loaded(extensionId)
+        } else if webExtension.manifest["externally_connectable"] != nil {
+            userScripts.reinstall(for: extensionId)
         }
         notifyExtensionsChanged()
         // Wakes lazy pollers (chrome.idle): a listener-only extension is invisible to the gap bridge.
@@ -721,9 +781,9 @@ final class ProfileExtensionRegistry {
         if removePersistedRecord {
             await removePersistedExtension(extensionId: extensionId)
             await removeExtensionData(extensionId: extensionId)
-            scheduleUninstallFileCleanup(extensionId: extensionId, sourcePath: runtime.sourcePath)
+            scheduleUninstallFileCleanup(extensionId: extensionId, installPath: runtime.installPath)
         } else {
-            await persistInstalledExtension(id: runtime.id, context: runtime.context, sourcePath: runtime.sourcePath, enabled: false)
+            await persistInstalledExtension(id: runtime.id, context: runtime.context, installPath: runtime.installPath, enabled: false)
             if let stored = try? await extensionStorage.load(id: runtime.id) { disabledStoredExtensions.append(stored) }
         }
         notifyExtensionsChanged()
@@ -765,6 +825,12 @@ final class ProfileExtensionRegistry {
 
     func context(for extensionId: String) -> WKWebExtensionContext? {
         runtimeIndex(for: extensionId).map { loadedRuntimes[$0].context }
+    }
+
+    /// What a gap call of the loaded extension is checked against: its context, the permissions WebKit
+    /// tracks the grants of, and `heldPermissions`.
+    func gapCaller(_ extensionId: String) -> (context: WKWebExtensionContext, webKitPermissions: Set<String>, held: Set<String>)? {
+        runtimeIndex(for: extensionId).map { (loadedRuntimes[$0].context, loadedRuntimes[$0].webKitPermissions, loadedRuntimes[$0].permissions) }
     }
 
     /// Tears the registry down for cache eviction, unloading every context but never the persisted list or on-disk state.
@@ -817,10 +883,10 @@ final class ProfileExtensionRegistry {
 
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
     private func reloadFromDisk(_ extensionId: String) async {
-        guard let sourcePath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].sourcePath }) else { return }
+        guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
         await unload(extensionId: extensionId, removePersistedRecord: false)
         do {
-            try await load(from: URL(fileURLWithPath: sourcePath), extensionId: extensionId)
+            try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
@@ -872,19 +938,17 @@ final class ProfileExtensionRegistry {
     /// The action (icon, badge, enabled state) is the one `activeTab` shows: each window passes its own.
     func extensionBridgePayloads(activeTab: TabExtensionAdapter?) -> [[String: Any]] {
         var payloads: [[String: Any]] = []
-        let tabKey = activeTab.map(ObjectIdentifier.init)
+        payloads.reserveCapacity(loadedRuntimes.count + disabledStoredExtensions.count + failedRestores.count)
+        let tabId = activeTab?.tabId
         for index in loadedRuntimes.indices {
-            if let cached = loadedRuntimes[index].cachedBridgePayload,
-               !loadedRuntimes[index].bridgePayloadIsDirty,
-               loadedRuntimes[index].cachedBridgePayloadTab == tabKey {
+            if let cached = loadedRuntimes[index].bridgePayloads[tabId] {
                 payloads.append(cached)
                 continue
             }
-
-            let payload = buildExtensionBridgePayload(at: index, activeTab: activeTab)
-            loadedRuntimes[index].cachedBridgePayload = payload
-            loadedRuntimes[index].cachedBridgePayloadTab = tabKey
-            loadedRuntimes[index].bridgePayloadIsDirty = false
+            var payload = loadedRuntimes[index].staticBridgePayload ?? buildStaticBridgePayload(at: index)
+            loadedRuntimes[index].staticBridgePayload = payload
+            addActionFields(to: &payload, at: index, activeTab: activeTab)
+            loadedRuntimes[index].bridgePayloads[tabId] = payload
             payloads.append(payload)
         }
         // A disabled extension has no WKWebExtension to read from; the row carries what storage kept.
@@ -946,7 +1010,6 @@ final class ProfileExtensionRegistry {
         backgrounds.clearErrorCounts()
         for index in loadedRuntimes.indices {
             loadedRuntimes[index].pageDiagnostics = []
-            loadedRuntimes[index].bridgePayloadIsDirty = true
         }
     }
 
@@ -982,7 +1045,6 @@ final class ProfileExtensionRegistry {
             if $0.pageDiagnostics.count > 50 {
                 $0.pageDiagnostics.removeFirst($0.pageDiagnostics.count - 50)
             }
-            $0.bridgePayloadIsDirty = true
         }
         if level == "error" {
             Self.logger.error("Extension page diagnostic for \(extensionId, privacy: .public): \(diagnostic.source, privacy: .public) \(message, privacy: .public)")
@@ -991,14 +1053,10 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    private func buildExtensionBridgePayload(at index: Int, activeTab: TabExtensionAdapter?) -> [String: Any] {
+    /// The row's fields that no tab changes.
+    private func buildStaticBridgePayload(at index: Int) -> [String: Any] {
         let runtime = loadedRuntimes[index]
         let ext = runtime.context.webExtension
-        // Show the effective action for the active tab; WebKit overlays per-tab properties on the default.
-        // Action updates only bump iconVersion; the rendered action is read here.
-        let action = runtime.context.action(for: activeTab)
-        let iconDataURL = cachedIconDataURL(for: action)
-        let tabColors = activeTab.flatMap { runtime.tabActionColors[$0.tabId] }
         let health = backgrounds.health(for: runtime.id)
         let accessState = access.states[runtime.id]
         return [
@@ -1007,29 +1065,20 @@ final class ProfileExtensionRegistry {
             "version": ext.displayVersion ?? "",
             "description": ext.displayDescription ?? "",
             "isEnabled": true,
-            "hasPopup": action?.presentsPopup ?? false,
-            "actionEnabled": action?.isEnabled ?? true,
-            "actionLabel": action?.label ?? "",
             "hasBackground": ext.hasBackgroundContent,
             "runtimeStatus": health?.bridgeStatus ?? "loaded",
             "hasContentScripts": runtime.hasContentScripts,
-            "iconDataURL": iconDataURL,
-            "iconVersion": runtime.iconVersion,
-            "badgeText": action?.badgeText ?? "",
-            "badgeColor": tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor,
-            "badgeTextColor": tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor,
             "permissions": ext.manifest["permissions"] as? [String] ?? [],
             "hostPermissions": ext.manifest["host_permissions"] as? [String] ?? [],
             "siteAccess": accessState?.hosts ?? [],
             "error": health.flatMap { $0.failed ? $0.failureReason ?? "" : nil } ?? "",
             "omniboxKeyword": runtime.omniboxKeyword ?? "",
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
-            "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.sourcePath, manifest: ext.manifest)
+            "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.installPath, manifest: ext.manifest)
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
             "allowsUserScripts": accessState?.allowsUserScripts == true,
-            "hostAccessRequest": access.showsHostAccessRequest(extensionId: runtime.id, context: runtime.context, on: activeTab),
             "commands": runtime.declaresCommands ? runtime.context.commands.map { command in
                 [
                     "id": command.id,
@@ -1039,6 +1088,22 @@ final class ProfileExtensionRegistry {
                 ] as [String: Any]
             } : []
         ] as [String: Any]
+    }
+
+    /// Adds the row's fields the action `activeTab` shows sets: WebKit overlays per-tab properties on the default.
+    private func addActionFields(to payload: inout [String: Any], at index: Int, activeTab: TabExtensionAdapter?) {
+        let runtime = loadedRuntimes[index]
+        let action = runtime.context.action(for: activeTab)
+        let tabColors = activeTab.flatMap { runtime.tabActionColors[$0.tabId] }
+        payload["hasPopup"] = action?.presentsPopup ?? false
+        payload["actionEnabled"] = action?.isEnabled ?? true
+        payload["actionLabel"] = action?.label ?? ""
+        payload["iconDataURL"] = cachedIconDataURL(for: action)
+        payload["iconVersion"] = runtime.iconVersion
+        payload["badgeText"] = action?.badgeText ?? ""
+        payload["badgeColor"] = tabColors.map(\.badgeColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeColor
+        payload["badgeTextColor"] = tabColors.map(\.badgeTextColor).flatMap { $0.isEmpty ? nil : $0 } ?? runtime.actionColors.badgeTextColor
+        payload["hostAccessRequest"] = access.showsHostAccessRequest(extensionId: runtime.id, context: runtime.context, on: activeTab)
     }
 
     /// The manifest's toolbar or extension icon nearest 32 px as a data URL, and the store page of a Web Store copy; each empty when absent.
@@ -1066,14 +1131,23 @@ final class ProfileExtensionRegistry {
     }
 
     private func cachedIconDataURL(for action: WKWebExtension.Action?) -> String {
-        guard let image = action?.icon(for: CGSize(width: 16, height: 16)) else { return "" }
-        let key = IconCacheKey(image: ObjectIdentifier(image), appearance: NSApp.effectiveAppearance.name)
+        let size = CGSize(width: 16, height: 16)
+        guard let image = action?.icon(for: size) else { return "" }
+        let appearance = NSApp.effectiveAppearance
+        let scale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
+        let key = IconCacheKey(image: ObjectIdentifier(image), appearance: appearance.name, scale: scale)
         if let cached = iconDataURLCache[key] { return cached.dataURL }
-        guard let tiff = image.tiffRepresentation,
-              let rep = NSBitmapImageRep(data: tiff),
-              let pngData = rep.representation(using: .png, properties: [:]) else {
-            return ""
-        }
+        // Drawn at the sharpest screen's scale: the image holds a representation per scale, and its TIFF all of them.
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ), let graphics = NSGraphicsContext(bitmapImageRep: rep) else { return "" }
+        rep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = graphics
+        appearance.performAsCurrentDrawingAppearance { image.draw(in: NSRect(origin: .zero, size: size)) }
+        NSGraphicsContext.restoreGraphicsState()
+        guard let pngData = rep.representation(using: .png, properties: [:]) else { return "" }
         let dataURL = "data:image/png;base64,\(pngData.base64EncodedString())"
         if iconDataURLCacheKeys.count >= 128 {
             for evicted in iconDataURLCacheKeys.prefix(64) { iconDataURLCache.removeValue(forKey: evicted) }
@@ -1138,8 +1212,8 @@ final class ProfileExtensionRegistry {
         await backgrounds.restartIfRunning(extensionId)
     }
 
-    /// Prepares every enabled extension at once off the main actor, then loads them back to back:
-    /// WebKit fires `runtime.onStartup` only for contexts loaded shortly after the controller exists.
+    /// Prepares and opens every enabled extension at once off the main actor, then loads them back to back in their stored
+    /// order: WebKit fires `runtime.onStartup` only for contexts loaded shortly after the controller exists.
     private func restoreStoredExtensions() async {
         await access.restore()
         guard let storedExtensions = try? await extensionStorage.loadAll() else { return }
@@ -1149,40 +1223,43 @@ final class ProfileExtensionRegistry {
         let allowsUserScripts = Set(access.states.compactMap { $0.value.allowsUserScripts == true ? $0.key : nil })
         userScripts.publishSwitches()
 
-        let degraded = await withTaskGroup(of: (Int, Bool?).self) { group in
+        let files = files
+        let opened = await withTaskGroup(of: (Int, Result<(WKWebExtension, String, Bool), Error>).self) { group in
             for (index, stored) in enabled.enumerated() {
                 let url = URL(fileURLWithPath: stored.path, isDirectory: true)
+                let allowed = allowsUserScripts.contains(stored.id)
                 group.addTask {
-                    guard FileManager.default.fileExists(atPath: url.appendingPathComponent("manifest.json").path) else { return (index, nil) }
-                    return (index, Self.prepareForWebKit(at: url, allowsUserScripts: allowsUserScripts.contains(stored.id)))
+                    do {
+                        guard FileManager.default.fileExists(atPath: url.appendingPathComponent("manifest.json").path) else {
+                            throw ExtensionError.manifestNotFound(stored.path)
+                        }
+                        let sourceURL = try files.workingCopy(of: url)
+                        let isDegraded = Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowed)
+                        return (index, .success((try await WKWebExtension(resourceBaseURL: sourceURL), sourceURL.path, isDegraded)))
+                    } catch {
+                        return (index, .failure(error))
+                    }
                 }
             }
-            var results = [Bool?](repeating: nil, count: enabled.count)
-            for await (index, isDegraded) in group { results[index] = isDegraded }
+            var results = [Result<(WKWebExtension, String, Bool), Error>?](repeating: nil, count: enabled.count)
+            for await (index, result) in group { results[index] = result }
             return results
         }
 
-        var prepared: [(stored: ExtensionStorage.InstalledExtension, webExtension: WKWebExtension, isDegraded: Bool)] = []
-        for (index, stored) in enabled.enumerated() {
+        for (stored, result) in zip(enabled, opened) {
             do {
-                guard let isDegraded = degraded[index] else { throw ExtensionError.manifestNotFound(stored.path) }
-                prepared.append((stored, try await WKWebExtension(resourceBaseURL: URL(fileURLWithPath: stored.path, isDirectory: true)), isDegraded))
+                guard let result else { continue }
+                let (webExtension, sourcePath, isDegraded) = try result.get()
+                try await activate(
+                    webExtension, id: stored.id, sourcePath: sourcePath, installPath: stored.path, isPreparationDegraded: isDegraded, stored: stored,
+                    as: .startup
+                )
             } catch {
                 recordFailedRestore(stored, error: error)
             }
         }
-        for entry in prepared {
-            do {
-                try await activate(
-                    entry.webExtension, id: entry.stored.id, sourcePath: entry.stored.path, isPreparationDegraded: entry.isDegraded, stored: entry.stored,
-                    as: .startup
-                )
-            } catch {
-                recordFailedRestore(entry.stored, error: error)
-            }
-        }
         // Runtimes cover an extension installed while this restore ran, after `storedExtensions` was read.
-        let keptPaths = storedExtensions.map(\.path) + loadedRuntimes.map(\.sourcePath)
+        let keptPaths = storedExtensions.map(\.path) + loadedRuntimes.flatMap { [$0.installPath, $0.sourcePath] }
         files.sweep(keeping: Set(keptPaths.map { ($0 as NSString).lastPathComponent }))
     }
 
@@ -1201,13 +1278,13 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    private func persistInstalledExtension(id: String, context: WKWebExtensionContext, sourcePath: String, enabled: Bool) async {
+    private func persistInstalledExtension(id: String, context: WKWebExtensionContext, installPath: String, enabled: Bool) async {
         let webExtension = context.webExtension
         try? await extensionStorage.store(
             id: id,
             name: webExtension.displayName ?? id,
             version: webExtension.version ?? "",
-            path: sourcePath,
+            path: installPath,
             enabled: enabled
         )
     }
@@ -1226,11 +1303,11 @@ final class ProfileExtensionRegistry {
 
     /// Deferred so the dying worker releases its files first. A quit before it runs leaves an
     /// unreferenced folder that the next restore sweeps.
-    private func scheduleUninstallFileCleanup(extensionId: String, sourcePath: String) {
+    private func scheduleUninstallFileCleanup(extensionId: String, installPath: String) {
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(500))
-            guard let self, !self.containsRuntime(extensionId: extensionId), !self.containsRuntimeSourcePath(sourcePath) else { return }
-            self.files.remove(sourcePath)
+            guard let self, !self.containsRuntime(extensionId: extensionId), !self.containsRuntimeInstallPath(installPath) else { return }
+            self.files.remove(installPath)
         }
     }
 

@@ -29,10 +29,12 @@ extension MainWindowController {
         )
     }
 
+    /// `opener` is the tab extensions see as the new tab's `openerTabId`.
     @discardableResult
     func createTabStateFirst(
         url: URL?,
         activate: Bool = true,
+        opener: UUID? = nil,
         nativeConfiguration: WKWebViewConfiguration? = nil,
         adopting adoptedEngine: WKWebViewTab? = nil,
         sidebarParentFolderId: UUID? = nil,
@@ -55,7 +57,7 @@ extension MainWindowController {
                     insert: .index(sidebarIndex)
                 ))
             }
-            tabManager.attachPreparedTabRuntime(for: tab)
+            tabManager.attachPreparedTabRuntime(for: tab, opener: opener)
             if let engine = tabManager.engineTab(for: tab.id) {
                 engine.delegate = self
                 configureEngineIfNeeded(engine)
@@ -139,6 +141,7 @@ extension MainWindowController {
                             parentFolderId: entry.parentFolderId, section: section, insert: .index(index)
                         ))
                 }
+                tabManager.attachPreparedTabRuntime(for: tab)
                 return tab
             } catch {
                 Self.logger.error("restore removed tab failed: \(error.localizedDescription, privacy: .public)")

@@ -7,6 +7,8 @@ struct GapCall: PayloadReading {
     /// `namespace.method`.
     let action: String
     let extensionId: String
+    /// The caller's context; nil only for a test's call from no loaded extension.
+    let context: WKWebExtensionContext?
     let registry: ProfileExtensionRegistry
     let payload: [String: Any]
 }
@@ -74,7 +76,7 @@ final class GapBridgeRouter {
         "tabs.setZoomSettings": [],
         "tabs.createSplit": [],
         "tabs.unsplit": [],
-        "tabs.urls": [],
+        "tabs.details": [],
         "cookies": ["cookies"],
         "topSites": ["topSites"],
         "tts": ["tts"],
@@ -109,34 +111,36 @@ final class GapBridgeRouter {
         }
         #endif
         let handler = handlers[action]
-        guard handler != nil || action == "events.listen" else {
+        guard handler != nil || namespace == "events" else {
             return (nil, "API not available: \(action)")
         }
-        guard let context = registry.context(for: extensionId) else {
+        guard let caller = registry.gapCaller(extensionId) else {
             return (nil, "Gap API not available in this context")
         }
         guard let handler else {
             // The gap events a context listens to: the registry only queues, and wakes the worker for, those.
-            await registry.addGapListeners(params["events"] as? [String] ?? [], extensionId: extensionId, fromWorker: fromWorker)
+            let events = params["events"] as? [String] ?? []
+            switch method {
+            case "listen": await registry.addGapListeners(events, extensionId: extensionId, fromWorker: fromWorker)
+            case "unlisten": registry.removeGapListeners(events, extensionId: extensionId, fromWorker: fromWorker)
+            default: return (nil, "API not available: \(action)")
+            }
             return (nil, nil)
         }
         let required = Self.requiredPermissions[action] ?? Self.requiredPermissions[namespace] ?? []
-        let webExtension = context.webExtension
         // WebKit tracks grants (optional ones, removals) only for the permissions it knows; the others are
         // held when the manifest requires them or the user granted them at Lilo's prompt.
         if let missing = required.first(where: { name in
-            let permission = WKWebExtension.Permission(rawValue: name)
-            if webExtension.requestedPermissions.contains(permission) || webExtension.optionalPermissions.contains(permission) {
-                return !context.hasPermission(permission)
-            }
-            return !registry.heldPermissions(of: extensionId).contains(name)
+            caller.webKitPermissions.contains(name)
+                ? !caller.context.hasPermission(WKWebExtension.Permission(rawValue: name))
+                : !caller.held.contains(name)
         }) {
             return (nil, "Permission '\(missing)' is required for \(action)")
         }
         var params = params
         // Identity is `GapCall.extensionId`; a caller-supplied one must never be read.
-        params["extensionId"] = nil
-        let call = GapCall(action: action, extensionId: extensionId, registry: registry, payload: params)
+        if params["extensionId"] != nil { params["extensionId"] = nil }
+        let call = GapCall(action: action, extensionId: extensionId, context: caller.context, registry: registry, payload: params)
         let result = await handler.handle(call)
         if let error = (result as? BridgeError)?.message {
             return (nil, error)

@@ -182,6 +182,29 @@ final class TabsQueryTests: XCTestCase {
         XCTAssertTrue(adapter.engineTab === revived)
     }
 
+    /// Chrome lists every tab, loaded or not: a restored tab has its extension tab before any engine, and its
+    /// engine joins that same tab later.
+    func testRestoredUnloadedTabIsListedToExtensions() throws {
+        let windowAdapter = WindowExtensionAdapter(nsWindow: NSWindow())
+        tabManager.windowAdapter = windowAdapter
+        let active = makeRuntimeTab(url: URL(string: "https://example.com"))
+        let unloaded = makeRuntimeTab(url: URL(string: "https://example.net"))
+        installRuntimeTabs([active, unloaded], activeTabId: active.id)
+        let snapshot = tabManager.parkCurrentSpaceRuntimeForSwitch()
+
+        tabManager.restoreVisibleRuntime(snapshot.tabs, activeTabId: active.id)
+
+        XCTAssertNil(tabManager.engineTab(for: unloaded.id))
+        let adapter = try XCTUnwrap(tabManager.tabAdapter(for: unloaded.id))
+        XCTAssertNil(adapter.engineTab)
+        XCTAssertTrue(windowAdapter.extensionTabs.contains { $0 as AnyObject === adapter })
+
+        tabManager.activateTabRuntime(id: unloaded.id)
+
+        XCTAssertTrue(tabManager.tabAdapter(for: unloaded.id) === adapter)
+        XCTAssertTrue(adapter.engineTab === tabManager.engineTab(for: unloaded.id))
+    }
+
     func testOffScreenTabWhoseProcessDiesIsRebuiltOnActivation() async throws {
         let background = makeRuntimeTab()
         let active = makeRuntimeTab()

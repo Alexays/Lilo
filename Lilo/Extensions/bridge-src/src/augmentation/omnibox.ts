@@ -3,15 +3,6 @@
 import { gapCall } from '../shared/ipc.ts';
 import { GapChromeEvent, gapMethod, reportGapListener } from '../shared/gap-event.ts';
 
-/** True when the extension declared a manifest omnibox keyword (Chrome only exposes the API then). */
-export function omniboxPermitted(chromeObj: any): boolean {
-  try {
-    return typeof chromeObj?.runtime?.getManifest?.()?.omnibox?.keyword === 'string';
-  } catch {
-    return false;
-  }
-}
-
 type OmniboxSuggestion = { content: string; description: string; deletable?: boolean };
 type SuggestFn = (suggestResults: OmniboxSuggestion[]) => void;
 type InputChangedListener = (text: string, suggest: SuggestFn) => void;

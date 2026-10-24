@@ -31,6 +31,7 @@ let package = Package(
                 .copy("Resources"),
                 .copy("Extensions/ChromeAPIAugmentation.js"),
                 .copy("Extensions/ChromeAPIBackgroundPrelude.js"),
+                .copy("Extensions/ChromeAPIGapModules.json"),
                 .copy("Extensions/ChromeContentCompat.js"),
                 .copy("Extensions/ChromeStaticRules.js"),
                 .copy("Extensions/ChromeWebStoreShim.js"),

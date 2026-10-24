@@ -129,6 +129,7 @@ final class BrowserContext {
         engineFactory.downloadManager = downloadManager
         faviconService.storeForProfile = { [profileContexts] in profileContexts.existingContext(for: $0)?.favicons }
         installDownloadGapEventObservers()
+        installTabGroupEventObserver()
         installTabShareRouting()
     }
 
@@ -686,24 +687,26 @@ extension BrowserContext {
 
 // Installed once, whatever the number of windows: each event goes to the window it concerns.
 extension BrowserContext {
-    /// Bridges DownloadManager activity to chrome.downloads.on{Created,Changed,Erased}. Every download
-    /// source converges on DownloadManager's observer chokepoint, so one observer covers user- and
+    /// Bridges DownloadManager activity to chrome.downloads.on{Created,Changed,Erased}, for the extensions of the download's
+    /// own profile. Every download source converges on DownloadManager's observer chokepoint, so one observer covers user- and
     /// extension-initiated downloads. onChanged diffs only `DownloadGapEventTracker.diffFields`.
     private func installDownloadGapEventObservers() {
         let tracker = DownloadGapEventTracker()
         downloadManager.addObserver { [weak self] item in
             guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id) else { return }
+            // Ids are per profile database.
+            let key = DownloadGapEventTracker.Key(profileId: item.profileId, id: id)
             // Bookkeeping runs for every download so an extension loaded later never sees a stale
             // onCreated; only the emit is gated on a listener being present.
-            let previous = tracker.lastItems.updateValue(item, forKey: id)
-            if previous == nil, tracker.lastItems.count > DownloadGapEventTracker.pruneThreshold { tracker.pruneFinished(keeping: id) }
+            let previous = tracker.lastItems.updateValue(item, forKey: key)
+            if previous == nil, tracker.lastItems.count > DownloadGapEventTracker.pruneThreshold { tracker.pruneFinished(keeping: key) }
             // Progress ticks only move bytes, which no diff field reports: skip them before building
             // any Chrome dictionary or resolving listeners.
             if let previous, previous.state == item.state, previous.destinationPath == item.destinationPath,
                previous.error == item.error, previous.fileMissing == item.fileMissing, previous.endedAt == item.endedAt {
                 return
             }
-            let registry = windows.activeWindow?.profileContext?.extensions
+            let registry = item.profileId.flatMap { self.profileContexts.existingContext(for: $0)?.extensions }
             let hasListener = registry.map { !$0.extensionIds(withPermission: "downloads").isEmpty } ?? false
             let current = DownloadsBridgeHandler.chromeDownloadItem(item)
             guard let previous else {
@@ -724,12 +727,24 @@ extension BrowserContext {
                 registry?.emitGapEvent("downloads", "onChanged", args: [delta], requiredPermission: "downloads")
             }
         }
-        downloadManager.onErased = { [weak self] id in
-            tracker.lastItems[id] = nil
+        downloadManager.onErased = { [weak self] id, profileId in
+            tracker.lastItems[DownloadGapEventTracker.Key(profileId: profileId, id: id)] = nil
             guard let self else { return }
             windows.windows.forEach { $0.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)]) }
-            guard !downloadManager.isPrivateDownload(id: id) else { return }
-            windows.activeWindow?.profileContext?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
+            guard !downloadManager.isPrivateDownload(id: id), let profileId else { return }
+            profileContexts.existingContext(for: profileId)?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
+        }
+    }
+}
+
+extension BrowserContext {
+    /// Bridges every folder change, from the sidebar or an extension, to chrome.tabGroups events for the extensions of the
+    /// space's profile; a private space's stay unseen.
+    private func installTabGroupEventObserver() {
+        browserState.onFoldersChanged = { [weak self] spaceId, old, new in
+            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate,
+                  let registry = profileContexts.existingContext(for: space.profileId)?.extensions else { return }
+            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, registry: registry)
         }
     }
 }
@@ -742,7 +757,13 @@ private final class DownloadGapEventTracker {
     /// for raw progress, and including them would emit several events per second per active download.
     static let diffFields = ["state", "paused", "filename", "danger", "error", "exists", "endTime"]
     static let pruneThreshold = 200
-    var lastItems: [Int64: DownloadItem] = [:]
+
+    struct Key: Hashable {
+        let profileId: UUID?
+        let id: Int64
+    }
+
+    var lastItems: [Key: DownloadItem] = [:]
     /// The latest start among pruned items; a new download always starts after it.
     private(set) var pruneHorizon = Date.distantPast
 
@@ -751,11 +772,11 @@ private final class DownloadGapEventTracker {
     static let interruptedRetention: TimeInterval = 86_400
 
     /// Drops finished items, which only a rare later change (file removed, resume) would diff against.
-    func pruneFinished(keeping id: Int64) {
+    func pruneFinished(keeping key: Key) {
         let interruptedCutoff = Date().addingTimeInterval(-Self.interruptedRetention)
-        for (key, item) in lastItems where key != id && (item.state == .complete
+        for (tracked, item) in lastItems where tracked != key && (item.state == .complete
             || (item.state == .interrupted && (item.endedAt ?? item.startedAt) < interruptedCutoff)) {
-            lastItems[key] = nil
+            lastItems[tracked] = nil
             if item.startedAt > pruneHorizon { pruneHorizon = item.startedAt }
         }
     }

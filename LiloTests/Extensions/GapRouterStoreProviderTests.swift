@@ -190,12 +190,23 @@ final class GapRouterStoreProviderTests: XCTestCase {
         )
         registry.gapEvents.emit("bookmarks", "onRemoved", args: [], to: [extensionId])
         registry.gapEvents.emit("history", "onVisited", args: [], to: [extensionId])
+        _ = await router.route(
+            namespace: "events", method: "listen", params: ["events": ["bookmarks.onMoved", "bookmarks.onRemoved"]],
+            extensionId: extensionId, fromWorker: true, registry: registry
+        )
+        _ = await router.route(
+            namespace: "events", method: "unlisten", params: ["events": ["bookmarks.onRemoved"]],
+            extensionId: extensionId, fromWorker: true, registry: registry
+        )
+        registry.gapEvents.emit("bookmarks", "onRemoved", args: [], to: [extensionId])
+        registry.gapEvents.emit("bookmarks", "onMoved", args: [], to: [extensionId])
 
         XCTAssertEqual(
             registry.gapEvents.undelivered(to: extensionId).map(\.event),
-            ["onExtensionLoaded", "onCreated", "onChanged", "onVisited"],
-            "a page's listeners count once the worker has reported its own (the install's event came before)"
+            ["onExtensionLoaded", "onCreated", "onChanged", "onMoved"],
+            "a page's listeners never wake the worker, which hears what it listens to until it stops (the install's event came before)"
         )
+        XCTAssertEqual(registry.gapEvents.reportedListeners(of: extensionId), ["bookmarks.onMoved"])
     }
 
     func testEventsForAStoppedWorkerKeepTheNewestInOrder() async throws {

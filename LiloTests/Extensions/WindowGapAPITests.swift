@@ -129,7 +129,45 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertFalse(registry.extensionWindows.contains { $0 === panel })
     }
 
-    // MARK: - tabs urls
+    // MARK: - tabGroups events
+
+    /// A folder the user makes, renames and deletes in the sidebar is a tab group to extensions, as an extension's own are,
+    /// and each change fires once.
+    func testSidebarFolderChangesFireTabGroupEvents() async throws {
+        let folderURL = directory.appendingPathComponent("groups", isDirectory: true)
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Groups", "version": "1.0", "permissions": ["tabGroups"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: folderURL.appendingPathComponent("manifest.json"))
+        try await registry.load(from: folderURL)
+        let groupsId = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let folder = TabFolder(spaceId: spaceId, name: "Work", color: "#1a73e8")
+
+        try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
+        try window.applyBrowserCommand(.updateFolder(spaceId: spaceId, folderId: folder.id, name: "Play", color: "#1a73e8", isCollapsed: false))
+        try window.applyBrowserCommand(.deleteFolder(spaceId: spaceId, folderId: folder.id))
+
+        let events = registry.gapEvents.undelivered(to: groupsId).filter { $0.namespace == "tabGroups" }
+        XCTAssertEqual(events.map(\.event), ["onCreated", "onUpdated", "onRemoved"])
+        XCTAssertEqual(events.map { ($0.args.first as? [String: Any])?["title"] as? String }, ["Work", "Play", "Play"])
+        XCTAssertTrue(queued("tabGroups.onCreated").isEmpty, "an extension without tabGroups hears nothing")
+    }
+
+    // MARK: - openerTabId
+
+    /// A tab a page opens (a `target=_blank` link, a Command-click) names that page's tab as its opener, as in Chrome.
+    func testATabAPageOpensHasThePageAsItsOpener() throws {
+        let opener = try openTab("https://allowed.test/")
+        let before = Set(window.tabManager.openTabs.map(\.id))
+
+        window.tab(try XCTUnwrap(window.tabManager.engineTab(for: opener.id)), didCreateNewTab: URL(string: "https://allowed.test/next"), inBackground: true)
+
+        let created = try XCTUnwrap(window.tabManager.openTabs.first { !before.contains($0.id) })
+        let openerAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: opener.id))
+        XCTAssertTrue(window.tabManager.tabAdapter(for: created.id)?.parent === openerAdapter)
+    }
+
+    // MARK: - tabs details
 
     func testTabsShowsEveryTabURLAndAnEmptyTabAsChromesNewTabPage() async throws {
         let server = try await TinyHTTPServer(index: "<title>Page</title><p>page</p>")
@@ -139,8 +177,11 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertTrue(loaded, "the page loads")
         let emptyTab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let empty = try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: emptyTab.id)), extensionId: extensionId))
-        let withoutTabs = await call("tabs", "urls", ["tabs": [page.position, empty]])
-        XCTAssertEqual((withoutTabs.result as? [Any])?.count, 0, "without tabs, nothing more shows")
+        let revealing: [String: Any] = ["tabs": [page.position, empty], "reveal": [0, 1]]
+        let withoutTabs = await call("tabs", "details", revealing)
+        let hidden = try XCTUnwrap(withoutTabs.result as? [[String: Any]])
+        XCTAssertEqual(hidden.count, 2)
+        XCTAssertTrue(hidden.allSatisfy { $0["url"] == nil && $0["title"] == nil }, "without tabs, no url shows")
 
         let folder = directory.appendingPathComponent("tabs", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -148,8 +189,38 @@ final class WindowGapAPITests: XCTestCase {
         try JSONSerialization.data(withJSONObject: manifest).write(to: folder.appendingPathComponent("manifest.json"))
         try await registry.load(from: folder)
         let id = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
-        let shown = await router.route(namespace: "tabs", method: "urls", params: ["tabs": [page.position, empty]], extensionId: id, fromWorker: true, registry: registry)
-        XCTAssertEqual(shown.result as? [[String]], [[url, "Page"], ["chrome://newtab/", "New Tab"]])
+        let shown = await router.route(namespace: "tabs", method: "details", params: revealing, extensionId: id, fromWorker: true, registry: registry)
+        let details = try XCTUnwrap(shown.result as? [[String: Any]])
+        XCTAssertEqual(details.map { [$0["url"] as? String, $0["title"] as? String] }, [[url, "Page"], ["chrome://newtab/", "New Tab"]])
+    }
+
+    /// Every tab carries what WebKit's `Tab` lacks: its group (-1 outside one), whether it is unloaded or frozen, and when it
+    /// was last active.
+    func testTabDetailsGiveTheGroupAndTheLoadState() async throws {
+        let grouped = try openTab("https://allowed.test/grouped")
+        let unloaded = try openTab("https://allowed.test/unloaded")
+        _ = try openTab("https://allowed.test/active")
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let folder = TabFolder(spaceId: spaceId, name: "Group", color: "#1a73e8")
+        try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
+        try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: spaceId, kind: .tab, itemId: grouped.id, parentFolderId: folder.id, section: .unpinned,
+            insert: .anchored(fallbackIndex: 0, insertBeforeId: nil, insertAfterId: nil)
+        ))
+        window.tabManager.discardEngines([unloaded.id])
+        let positions = try [grouped.id, unloaded.id].map { id in
+            try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: id)), extensionId: extensionId))
+        }
+
+        let result = await call("tabs", "details", ["tabs": positions])
+        let details = try XCTUnwrap(result.result as? [[String: Any]])
+
+        XCTAssertGreaterThan(try XCTUnwrap(details[0]["groupId"] as? Int), 0)
+        XCTAssertEqual(details[0]["discarded"] as? Bool, false)
+        XCTAssertEqual(details[1]["groupId"] as? Int, -1)
+        XCTAssertEqual(details[1]["discarded"] as? Bool, true)
+        XCTAssertEqual(details[1]["frozen"] as? Bool, false)
+        XCTAssertNotNil(details[0]["lastAccessed"] as? Double)
     }
 
     // MARK: - cookies.getPartitionKey
@@ -256,7 +327,7 @@ final class WindowGapAPITests: XCTestCase {
 
     func testSidePanelReportsItsOpenAndClose() async throws {
         let tab = try openTab("https://allowed.test/")
-        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0) })]
+        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) })]
 
         let opened = await call("sidePanel", "open", thisWindow.merging(["userGesture": true]) { $1 })
         XCTAssertNil(opened.error)
@@ -276,7 +347,7 @@ final class WindowGapAPITests: XCTestCase {
     func testSidePanelOpensItsPathWithQueryAndFragment() async throws {
         _ = try openTab("https://allowed.test/")
         let context = try XCTUnwrap(registry.context(for: extensionId))
-        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0) })]
+        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) })]
         _ = await call("sidePanel", "setOptions", ["path": "panel.html?view=side#top"])
 
         let opened = await call("sidePanel", "open", thisWindow.merging(["userGesture": true]) { $1 })
@@ -286,5 +357,50 @@ final class WindowGapAPITests: XCTestCase {
         let shown = await pollUntil { self.registry.delegate.extensionViews(of: context).contains { $0.url.absoluteString == expected } }
         XCTAssertTrue(shown, "the panel loads its path with the query and fragment, as in Chrome")
         _ = await call("sidePanel", "close", thisWindow)
+    }
+
+    // MARK: - private windows
+
+    /// WebKit lists [N1, P1, N2]: this window, its private window P1 showing one tab, and another window N2.
+    func testAnExtensionWithoutPrivateAccessNeverReachesAPrivateTab() async throws {
+        let privateTab = try openTab("https://allowed.test/private")
+        let otherTab = try openTab("https://allowed.test/other")
+        let thisWindow = try XCTUnwrap(registry.delegate.windowAdapter)
+        let privateWindow = registry.windowAdapter(for: try XCTUnwrap(window.window), isPrivate: true)
+        let otherNSWindow = NSWindow()
+        let otherWindow = registry.windowAdapter(for: otherNSWindow)
+        let privateAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: privateTab.id))
+        let otherAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: otherTab.id))
+        for (adapter, target) in [(privateAdapter, privateWindow), (otherAdapter, otherWindow)] {
+            thisWindow.remove(tab: adapter)
+            target.add(tab: adapter)
+            adapter.extensionWindow = target
+        }
+        XCTAssertTrue(registry.extensionWindows.elementsEqual([thisWindow, privateWindow, otherWindow], by: ===))
+        let context = try XCTUnwrap(registry.context(for: extensionId))
+        XCTAssertFalse(context.hasAccessToPrivateData)
+
+        for windowPosition in 0..<4 {
+            for index in 0..<4 {
+                let found = registry.tabAdapters(atPositions: [["windowPosition": windowPosition, "index": index]], extensionId: extensionId)
+                XCTAssertFalse(found.first ?? nil === privateAdapter, "position \(windowPosition), \(index)")
+            }
+        }
+        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === otherAdapter)
+        XCTAssertNil(registry.tabPosition(of: privateAdapter, extensionId: extensionId))
+        XCTAssertEqual(registry.tabPosition(of: otherAdapter, extensionId: extensionId), ["windowPosition": 1, "index": 0])
+        XCTAssertEqual(registry.windowPosition(of: otherNSWindow, extensionId: extensionId), 1)
+        XCTAssertTrue(registry.extensionWindow(at: 1, extensionId: extensionId) === otherWindow)
+
+        try XCTUnwrap(window.tabManager.engineTab(for: privateTab.id)).reportZoomChange(from: 1, to: 2)
+        XCTAssertTrue(queued("tabs.onZoomChange").isEmpty, "no event about a private tab")
+        try XCTUnwrap(window.tabManager.engineTab(for: otherTab.id)).reportZoomChange(from: 1, to: 2)
+        XCTAssertEqual(queued("tabs.onZoomChange").map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [[1, 0]])
+
+        context.hasAccessToPrivateData = true
+        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === privateAdapter)
+        try XCTUnwrap(window.tabManager.engineTab(for: privateTab.id)).reportZoomChange(from: 2, to: 1)
+        XCTAssertEqual(queued("tabs.onZoomChange").last.map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [1, 0])
+        registry.notifyWindowClosed(for: otherNSWindow)
     }
 }

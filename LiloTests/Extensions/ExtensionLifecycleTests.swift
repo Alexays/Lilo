@@ -113,12 +113,23 @@ final class ExtensionLifecycleTests: XCTestCase {
         load(.startup)
         XCTAssertEqual(heard, ["runtime.onStartup"], "a worker never heard from is not told it loaded")
 
-        lifecycle.listen(["runtime.onStartup", "runtime.onExtensionLoaded"], extensionId: id, fromWorker: true, version: "1.0")
+        lifecycle.listen(["runtime.onStartup", "runtime.onExtensionLoaded"], extensionId: id, version: "1.0")
         lifecycle.unloaded(id, disabled: false, purge: true)
         lifecycle = makeLifecycle()
         load(.startup)
 
         XCTAssertEqual(heard, ["runtime.onStartup", "runtime.onExtensionLoaded reason=startup"], "its reported listeners outlive the launch")
+    }
+
+    func testAListenerTheWorkerRemovedNoLongerWakesItOnTheNextLaunch() {
+        load(.startup)
+        lifecycle.listen(["runtime.onStartup", "runtime.onExtensionLoaded"], extensionId: id, version: "1.0")
+        lifecycle.listen(["runtime.onStartup"], extensionId: id, removed: true, version: "1.0")
+        lifecycle.unloaded(id, disabled: false, purge: true)
+        lifecycle = makeLifecycle()
+        load(.startup)
+
+        XCTAssertEqual(heard, ["runtime.onExtensionLoaded reason=startup"])
     }
 
     func testAnUpdateAppliedWhileDisabledIsReportedByTheNextLoadOnly() {
@@ -208,7 +219,7 @@ final class ExtensionLifecycleTests: XCTestCase {
 
     func testAnUninstallForgetsWhatTheLifecycleKept() {
         load(.reload)
-        lifecycle.listen(["runtime.onStartup"], extensionId: id, fromWorker: true, version: "1.0")
+        lifecycle.listen(["runtime.onStartup"], extensionId: id, version: "1.0")
         lifecycle.unloaded(id, disabled: true, purge: true)
         lifecycle.updatedWhileDisabled(id, from: "1.0")
 

@@ -179,7 +179,7 @@ final class SidePanelBridgeHandler: GapHandler {
         }
         var window: MainWindowController?
         if let windowId {
-            guard let adapter = call.int("windowPosition").flatMap(call.registry.extensionWindow(at:)) else {
+            guard let adapter = call.int("windowPosition").flatMap({ call.registry.extensionWindow(at: $0, extensionId: call.extensionId) }) else {
                 return BridgeError("No window with id: \(windowId).")
             }
             window = adapter.nsWindow?.windowController as? MainWindowController

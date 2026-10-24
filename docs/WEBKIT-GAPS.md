@@ -67,7 +67,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 79. Pages an extension's `externally_connectable` names get `browser.runtime` only
 
 - **Gap:** WebKit gives those web pages `browser.runtime.sendMessage` and `connect`, and no `chrome`. Chrome gives them `chrome.runtime`, with callbacks and `lastError`.
-- **Lilo:** a page-world script defines `chrome.runtime` over `browser.runtime` where WebKit exposes it ([WKEngineFactory.swift] `externallyConnectableRuntimeSource`); other pages keep no `window.chrome`. User-visible side: COMPATIBILITY.md, "runtime".
+- **Lilo:** a page-world script, installed for the pages a loaded extension's `externally_connectable` names, defines `chrome.runtime` over `browser.runtime` where WebKit exposes it ([ExtensionUserScripts.swift] `externallyConnectableRuntimeSource`); other pages keep no `window.chrome`. User-visible side: COMPATIBILITY.md, "runtime".
 - **Impact:** claude.ai's OAuth page hands the Claude extension its code with `chrome.runtime.sendMessage(id, { type: 'oauth_redirect' })`, and showed "Authorization failed" without it.
 - **Check:** Manual: needs a page on an origin the extension names. Repro: an extension with `"externally_connectable": { "matches": ["https://example.com/*"] }`, then `typeof chrome` on that page. Expected: `object`. Actual: `undefined`.
 
@@ -94,15 +94,15 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 22. `sendMessage` with no response sets no error
 
 - **Gap:** WebKit resolves `undefined` and gives callbacks no `lastError` whether no listener exists or none responds. Chrome rejects with `Could not establish connection. Receiving end does not exist.` without a listener, sets `The message port closed before a response was received.` when none responds, and delivers a valueless response as `null`.
-- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message and `tabs.sendMessage` always get "Receiving end does not exist". `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
+- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
 - **Impact:** Video Downloader Professional reads its response when `lastError` is unset and throws; AdGuard's popup reads the answer of a message its starting worker does not receive yet.
 - **Check:** `testSendMessageCallbackWithoutResponseSetsNoLastError`; the `runtime.sendMessage callback without listener` contract checks Lilo's answer. Repro: from an extension page with nothing listening, `await browser.runtime.sendMessage(1)`. Expected: rejects. Actual: resolves.
 
 ### 42. No cross-extension messaging
 
 - **Gap:** WebKit throws `cross-extension messaging is not supported` in pages, and records an extension error in a worker. Chrome reaches the other extension's `onConnectExternal` / `onMessageExternal`, or fails with "Receiving end does not exist" when it is not installed.
-- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id answer as Chrome with no such extension ([runtime.ts] `crossExtensionMessaging`). Lilo does not relay them: `browser.runtime` and `onMessageExternal` stay WebKit's (gap 2), and a relayed port would need a lifetime Lilo's channels do not give (a worker closes its channel after 20 s idle, [ipc.ts] `IDLE_MS`). User-visible side: COMPATIBILITY.md, "runtime".
-- **Impact:** an extension talking to a companion extension (Sider) logs an error at every start.
+- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id go to native ([runtime.ts] `crossExtensionMessaging`), which checks the target's `externally_connectable.ids` and reported listeners and relays them as gap events to its `onMessageExternal` and `onConnectExternal` stand-ins (`externalEvents`, which also keep WebKit's for web pages) and the port's messages (`RuntimeBridgeHandler`). `browser.runtime` stays WebKit's (gap 2), and content scripts have no channel to Lilo. User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** without Lilo, an extension talking to a companion extension (Sider) logs an error at every start.
 - **Check:** Manual. Repro: `browser.runtime.connect('abcdefghijklmnopabcdefghijklmnop')` from an extension page throws.
 
 ### 43. A port message sent before the port connects arrives twice
@@ -288,7 +288,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 45. `scripting` reaches the extension's own pages
 
 - **Gap:** WebKit injects into the extension's own pages. Chrome refuses: `Cannot access contents of the page. Extension manifest must request permission to access the respective host.` (the url instead, with `tabs`).
-- **Lilo:** `executeScript`, `insertCSS` and `removeCSS` refuse a tab showing one of the extension's pages ([chrome-leniency.ts] `refuseOwnPages`), at the cost of a `tabs.get` per call.
+- **Lilo:** `executeScript`, `insertCSS` and `removeCSS` refuse a tab showing one of the extension's pages ([chrome-leniency.ts] `refuseOwnPages`), from the URLs the target documents name in the injection gap 50 already runs (`targetURLs`).
 - **Impact:** Jetwriter's popup shown in a tab scripts the active tab, takes itself for a site and closes.
 - **Check:** `testExtensionPagesAreScriptedAndFollowedAsWebPages`. Repro: from an extension page in a tab, `scripting.executeScript` on that tab. Expected: rejects. Actual: runs.
 
@@ -302,7 +302,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 50. `scripting.executeScript` injects at once into a loading document
 
 - **Gap:** WebKit injects at once, `injectImmediately` or not. Chrome waits for `document_idle` unless asked.
-- **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call.
+- **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call, which also checks gap 45.
 - **Impact:** Cuponomia's script, injected as its install page starts loading, found no `document.body`.
 - **Check:** `testExecuteScriptInjectsIntoALoadingDocumentAtOnce`. Repro: a `document_start` content script messages the worker, which runs `executeScript({ target: { tabId }, func: () => document.readyState })`. Expected: `interactive`. Actual: `loading`.
 
@@ -499,6 +499,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
 [ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
+[ExtensionUserScripts.swift]: ../Lilo/Extensions/Core/ExtensionUserScripts.swift
 [ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
 [PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
 [WebSocketBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/WebSocketBridgeHandler.swift

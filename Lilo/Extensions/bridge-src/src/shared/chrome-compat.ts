@@ -5,10 +5,11 @@ import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns 
 import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { declarativeNetRequestPatches, staticRulesAdditions } from './dnr-rules.ts';
 import { storageAreaPatches } from './storage-area.ts';
-import { answerAsChrome, lastErrorWithoutAnswer } from './message-answers.ts';
+import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
-import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging } from '../augmentation/runtime.ts';
-import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabRevealedURLPatches, tabURLPatches, tabURLStandIns, windowRevealedURLPatches, windowURLPatches } from '../augmentation/tabs.ts';
+import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, externalEvents } from '../augmentation/runtime.ts';
+import { onAuthRequired } from '../augmentation/webRequest.ts';
+import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
 import { detectLanguage } from '../augmentation/detectLanguage.ts';
@@ -209,11 +210,25 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     (listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()),
     noReceiver,
   );
-  const tabsPatch: Record<string, Patch> = { ...withheldURLs ? tabURLPatches : tabRevealedURLPatches, sendMessage: (original) => lastErrorWithoutAnswer(original, noReceiver) };
-  for (const name in groups.patch) {
-    const [outer, inner] = [groups.patch[name], tabsPatch[name]];
-    tabsPatch[name] = inner ? (original, self) => outer(inner(original, self), self) : outer;
-  }
+  // Asked when nobody answered a tab's message: its content scripts answer the probe once one listens. Chrome also
+  // delivers it to the extension's own pages the tab shows, which the probe does not reach: those count as listening.
+  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => function (this: unknown, tabId: unknown, _message: unknown, options?: unknown) {
+    const tabs = self(this) as any;
+    const target = options !== null && typeof options === 'object' ? [options] : [];
+    const showsOwnPage = async () => {
+      const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+      const base = chrome.runtime?.getURL?.('');
+      return typeof tab?.url === 'string' && !!base && tab.url.startsWith(base);
+    };
+    return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
+      async (listens) => (listens === true || await showsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
+      noReceiver,
+    );
+  };
+  const tabsPatch: Record<string, Patch> = {
+    ...tabPatches(withheldURLs),
+    sendMessage: (original, self) => lastErrorWithoutAnswer(original, tabNoAnswer(original, self), true),
+  };
   const query = tabsPatch.query;
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
   const getCurrent = tabsPatch.getCurrent;
@@ -225,14 +240,14 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     scripting: { patch: scriptingPatches },
     webNavigation: { add: webNavigationAugmentation, patch: webNavigationPatches, standIns: webNavigationStandIns },
     // WebKit has no tab groups: tabs.group/ungroup and each tab's groupId map onto Lilo folders.
-    tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: withheldURLs ? tabURLStandIns : undefined },
+    tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: tabStandIns(withheldURLs) },
     declarativeNetRequest: {
       patch: declarativeNetRequestPatches,
       add: perms.has('declarativeNetRequestFeedback')
         ? { ...staticRulesAdditions, testMatchOutcome: testMatchOutcomeFor(chrome.declarativeNetRequest), onRuleMatchedDebug }
         : staticRulesAdditions,
     },
-    windows: { add: { onBoundsChanged }, patch: withheldURLs ? windowURLPatches : windowRevealedURLPatches },
+    windows: { add: { onBoundsChanged }, patch: windowPatches(withheldURLs) },
     permissions: {
       add: permissionsAdditions,
       patch: permissionsPatches(
@@ -257,11 +272,12 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         handlerBehaviorChanged: (callback?: () => void) => callbackify(async () => {}, callback),
         onActionIgnored: webRequestOnActionIgnored,
       },
+      standIns: { onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
-      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect) },
+      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
       add: {
         getContexts,
         ...runtimeAdditions,
@@ -269,14 +285,13 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         ...(userScripts ? { onUserScriptMessage, onUserScriptConnect } : {}),
       },
       serve: (runtime) => {
-        const messaging = crossExtensionMessaging(runtime);
+        // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
+        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : noReceiver, page);
         return {
           // WebKit's lastError is null without an error, Chrome's undefined (eJOY tests it with typeof).
           get lastError() { return liloLastError() ?? runtime.lastError ?? undefined; },
           ...(nativeMessaging ? nativeMessagingAsChrome(runtime) : {}),
-          ...messaging,
-          // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
-          sendMessage: lastErrorWithoutAnswer(messaging.sendMessage, page ? pageNoAnswer : noReceiver, page),
+          ...crossExtensionMessaging(runtime, sendLocal),
         };
       },
     },

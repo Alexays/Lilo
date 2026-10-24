@@ -48,27 +48,38 @@ final class IdleBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(activeResult as? String, "active")
     }
 
+    func test_setDetectionInterval_isPerExtension() async throws {
+        let handler = IdleBridgeHandler()
+        let setFor = { (extensionId: String, seconds: Double) in
+            try XCTUnwrap(BridgeMessage(dictionary: [
+                "action": "idle.setDetectionInterval",
+                "payload": ["intervalInSeconds": seconds, "extensionId": extensionId] as [String: Any]
+            ]))
+        }
+        _ = await handler.handle(try setFor("patient", .greatestFiniteMagnitude))
+        _ = await handler.handle(try setFor("eager", 15))
+
+        let query = try XCTUnwrap(BridgeMessage(dictionary: ["action": "idle.queryState", "payload": ["extensionId": "patient"]]))
+        let result = await handler.handle(query)
+        XCTAssertEqual(result as? String, "active", "another extension's shorter interval is not this one's")
+    }
+
     // MARK: - Lazy polling lifecycle
 
     func test_init_doesNotStartPolling() {
         XCTAssertFalse(IdleBridgeHandler(registriesProvider: { [] }).isPolling)
     }
 
-    func test_queryState_startsPolling() async throws {
+    func test_callsWithoutAListener_doNotStartPolling() async throws {
         let handler = IdleBridgeHandler(registriesProvider: { [] })
-        let msg = try XCTUnwrap(BridgeMessage(dictionary: ["action": "idle.queryState"]))
-        _ = await handler.handle(msg)
-        XCTAssertTrue(handler.isPolling)
-    }
-
-    func test_setDetectionInterval_startsPolling() async throws {
-        let handler = IdleBridgeHandler(registriesProvider: { [] })
-        let msg = try XCTUnwrap(BridgeMessage(dictionary: [
+        let query = try XCTUnwrap(BridgeMessage(dictionary: ["action": "idle.queryState"]))
+        let set = try XCTUnwrap(BridgeMessage(dictionary: [
             "action": "idle.setDetectionInterval",
             "payload": ["intervalInSeconds": 60.0] as [String: Any]
         ]))
-        _ = await handler.handle(msg)
-        XCTAssertTrue(handler.isPolling)
+        _ = await handler.handle(query)
+        _ = await handler.handle(set)
+        XCTAssertFalse(handler.isPolling)
     }
 
     func test_nilRegistryProvider_neverPolls() async throws {

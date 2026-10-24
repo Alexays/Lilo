@@ -27,7 +27,7 @@ final class ProfileContext {
         history = HistoryStore(dbPool: pool)
         bookmarks = BookmarkStore(dbPool: pool)
         bookmarkSpotlight = BookmarkSpotlightIndexer(dbPool: pool, profileId: profileId)
-        downloads = DownloadStore(dbPool: pool)
+        downloads = DownloadStore(dbPool: pool, profileId: profileId)
         favicons = FaviconStore(dbPool: pool)
         zoom.useDatabase(pool)
         extensionSettings = ExtensionSettingsStore(pool: pool, profileId: profileId)
@@ -38,6 +38,9 @@ final class ProfileContext {
             tabShare: tabShare,
             extensionsBaseDirectory: URL(fileURLWithPath: dbManager.appSupportDirectory)
         )
+        history.onChange = { [weak registry = extensions] change in
+            Task { @MainActor in if let registry { HistoryBridgeHandler.emit(change, to: registry) } }
+        }
     }
 }
 

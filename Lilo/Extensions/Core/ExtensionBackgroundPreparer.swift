@@ -1,8 +1,9 @@
+import CryptoKit
 import Foundation
 import JavaScriptCore
 
 enum ExtensionBackgroundPreparer {
-    enum PreparationResult: Equatable {
+    enum PreparationResult: String, Equatable {
         case notNeeded
         case prepared
         case skipped
@@ -22,19 +23,73 @@ enum ExtensionBackgroundPreparer {
         .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
         .map { (Data($0.utf8), "globalThis.__liloPublicSuffixList = \(javaScriptStringLiteral($0));\n") }
 
+    /// The prelude's gap modules, each with the manifest names (permissions or keys) whose namespaces it holds.
+    private static let gapModules: [(needs: Set<String>, source: String)] = Bundle.appResourceURL("ChromeAPIGapModules", extension: "json")
+        .flatMap { try? Data(contentsOf: $0) }
+        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] }?
+        .compactMap { module in (module["source"] as? String).map { (Set(module["needs"] as? [String] ?? []), $0) } } ?? []
+
     /// The list's rules, `*.` wildcards and `!` exceptions included.
     private static let publicSuffixRules = Set(
         (publicSuffixList.flatMap { String(bytes: $0.data, encoding: .utf8) } ?? "").split(whereSeparator: \.isNewline).filter { !$0.hasPrefix("//") }.map(String.init)
     )
 
     /// Both steps share one manifest parse; the content-script step sees the background patch in memory.
-    /// The manifest is written at most once, and only when a step changed it.
+    /// The manifest is written at most once, and only when a step changed it. A folder whose stamp still matches
+    /// Lilo's build, the sources given and the manifest, worker and ruleset files is left as it is.
     static func prepare(extensionURL: URL, preludeSource: String, compatSource: String? = nil) throws -> PreparationResult {
+        var hasher = SHA256()
+        hasher.update(data: Data(buildStamp.utf8))
+        hasher.update(data: Data(preludeSource.utf8))
+        hasher.update(data: Data((compatSource.map { "\0" + $0 } ?? "").utf8))
+        let inputs = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        let stampURL = extensionURL.appendingPathComponent(metadataDirectory, isDirectory: true).appendingPathComponent(preparedStampPath)
+        if let stamp = try? String(contentsOf: stampURL, encoding: .utf8) {
+            let lines = stamp.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+            let files = Array(lines.dropFirst(2))
+            if !files.isEmpty, lines[0] == inputs, let result = PreparationResult(rawValue: lines[1]),
+               files == fileStamps(extensionURL, files.map { String($0.split(separator: " ", maxSplits: 2).last ?? "") }) {
+                return result
+            }
+        }
+        let result = try prepareUnstamped(extensionURL: extensionURL, preludeSource: preludeSource, compatSource: compatSource)
+        // A skipped folder is left untouched, and one without a manifest is not an extension.
+        guard result != .skipped, FileManager.default.fileExists(atPath: extensionURL.appendingPathComponent("manifest.json").path) else { return result }
+        var stamped = ["manifest.json"]
+        if result == .prepared, let worker = try? readMetadata(from: stampURL.deletingLastPathComponent())?.originalServiceWorker {
+            stamped.append(worker)
+        }
+        if let manifest = try? readManifest(at: extensionURL) {
+            stamped += staticRulesets(extensionURL: extensionURL, manifest: manifest).map { String($0.url.path.dropFirst(extensionURL.path.count + 1)) }
+        }
+        try writeMetadataFile(extensionURL: extensionURL, preparedStampPath, Data(([inputs, result.rawValue] + fileStamps(extensionURL, stamped)).joined(separator: "\n").utf8))
+        return result
+    }
+
+    private static let preparedStampPath = "prepared.txt"
+
+    /// Changes with every build of Lilo, whose preparation code and bundled files the stamp covers.
+    private static let buildStamp: String = {
+        let attributes = Bundle.main.executablePath.flatMap { try? FileManager.default.attributesOfItem(atPath: $0) }
+        return "\((attributes?[.size] as? Int) ?? -1) \((attributes?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0)"
+    }()
+
+    /// "size mtime path" of each extension-relative path, -1 for a missing file.
+    private static func fileStamps(_ extensionURL: URL, _ paths: [String]) -> [String] {
+        paths.map { path in
+            let attributes = try? FileManager.default.attributesOfItem(atPath: extensionURL.appendingPathComponent(path).path)
+            return "\((attributes?[.size] as? Int) ?? -1) \((attributes?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0) \(path)"
+        }
+    }
+
+    private static func prepareUnstamped(extensionURL: URL, preludeSource: String, compatSource: String?) throws -> PreparationResult {
         guard var manifest = try readManifest(at: extensionURL) else { return .notNeeded }
         let original = manifest as NSDictionary
         acceptAsChrome(&manifest, extensionURL: extensionURL)
         try prepareStaticRulesets(extensionURL: extensionURL, manifest: manifest)
-        var preludeSource = preludeSource
+        // A worker parses only the gap modules its manifest may use, optional permissions included.
+        let manifestNames = Set(manifest.keys).union(manifest["permissions"] as? [String] ?? []).union(manifest["optional_permissions"] as? [String] ?? [])
+        var preludeSource = gapModules.filter { !$0.needs.isDisjoint(with: manifestNames) }.map(\.source).joined() + preludeSource
         // chrome.publicSuffix is synchronous: its list is in the worker's prelude, and a file pages read.
         if (manifest["permissions"] as? [String])?.contains("publicSuffix") == true, let publicSuffixList {
             let metadataDir = extensionURL.appendingPathComponent(metadataDirectory, isDirectory: true)
@@ -406,11 +461,10 @@ enum ExtensionBackgroundPreparer {
     private static let contentCompatPath = "_lilo/lilo-content-compat.js"
 
     /// Prepends a compat content script to every isolated-world JS entry so APIs WebKit omits there (`chrome.storage.managed`) exist
-    /// before the extension's scripts; never MAIN-world, where it would leak. Rewritten on every call so Lilo updates apply.
+    /// before the extension's scripts; never MAIN-world, where it would leak. Written for every extension, as the bridge also prepends it
+    /// to the scripts `chrome.scripting` injects, and rewritten on every call so Lilo updates apply.
     private static func prepareContentScriptCompat(extensionURL: URL, manifest: inout [String: Any], compatSource: String) throws {
-        guard var contentScripts = manifest["content_scripts"] as? [[String: Any]],
-              !contentScripts.isEmpty else { return }
-
+        var contentScripts = manifest["content_scripts"] as? [[String: Any]] ?? []
         var changed = false
         for index in contentScripts.indices {
             guard let js = contentScripts[index]["js"] as? [String], !js.isEmpty else { continue }

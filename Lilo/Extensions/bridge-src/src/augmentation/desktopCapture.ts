@@ -3,7 +3,7 @@
 import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { chromeEnum } from '../shared/chrome-enum.ts';
-import { tabPosition } from './tabCapture.ts';
+import { tabPosition } from './tabGroups.ts';
 
 const SOURCES = ['screen', 'window', 'tab', 'audio'];
 const SIGNATURE = 'desktopCapture.chooseDesktopMedia(array sources, optional tabs.Tab targetTab, function callback)';

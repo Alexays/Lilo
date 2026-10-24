@@ -16,7 +16,7 @@ final class PermissionsBridgeHandler: GapHandler {
         case "permissions.request":
             return await request(call)
         case "permissions.remove":
-            let required = registry.context(for: call.extensionId)?.webExtension.manifest["permissions"] as? [String] ?? []
+            let required = call.context?.webExtension.manifest["permissions"] as? [String] ?? []
             let names = Set(call.payload["permissions"] as? [String] ?? []).subtracting(required)
             await registry.setGapPermissions(names, granted: false, extensionId: call.extensionId)
             return true
@@ -38,7 +38,7 @@ final class PermissionsBridgeHandler: GapHandler {
     /// context (WebKit persists it through `ExtensionAccess`), the rest is kept by Lilo.
     private func request(_ call: GapCall) async -> Any? {
         let registry = call.registry
-        guard let context = registry.context(for: call.extensionId) else { return BridgeError("Extension not loaded.") }
+        guard let context = call.context else { return BridgeError("Extension not loaded.") }
         let webExtension = context.webExtension
         let names = call.payload["permissions"] as? [String] ?? []
         let origins = call.payload["origins"] as? [String] ?? []

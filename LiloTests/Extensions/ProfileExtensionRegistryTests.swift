@@ -1,4 +1,5 @@
 import Network
+import os
 import XCTest
 import GRDB
 import WebKit
@@ -214,6 +215,14 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         for _ in 0..<10 { await Task.yield() }   // drain the notification's main-actor hop
 
         XCTAssertTrue(handler.isPolling, "a runtime load holding the idle permission must wake the poller")
+
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        await registry.addGapListeners([], extensionId: id, fromWorker: true)
+        XCTAssertFalse(handler.isPolling, "a worker that does not listen to onStateChanged stops the poller")
+        await registry.addGapListeners(["idle.onStateChanged"], extensionId: id, fromWorker: true)
+        XCTAssertTrue(handler.isPolling)
+        registry.removeGapListeners(["idle.onStateChanged"], extensionId: id, fromWorker: true)
+        XCTAssertFalse(handler.isPolling, "its last listener gone, nothing hears the poller")
     }
 
     func testLoadingExtensionWithoutIdlePermissionLeavesPollerStopped() async throws {
@@ -612,7 +621,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         defer { database.tearDown() }
         let settings = SettingsStore(dbPool: database.pool)
         registry.settingsStore = settings
-        let key = "extensionUpdateLastCheck.\(registry.profileId.uuidString)"
+        let key = ExtensionUpdater.lastCheckKey
         let now = Date(timeIntervalSince1970: 1_000_000_000)
         let interval = ExtensionUpdater.checkInterval
         let cases: [(lastCheck: TimeInterval?, delay: Duration)] = [
@@ -642,7 +651,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         defer { database.tearDown() }
         let settings = SettingsStore(dbPool: database.pool)
         registry.settingsStore = settings
-        settings.set("extensionUpdateLastCheck.\(registry.profileId.uuidString)", value: "1234.5")
+        settings.set(ExtensionUpdater.lastCheckKey, value: "1234.5")
 
         registry.updater.start { _ in try? await Task.sleep(for: .seconds(3600)) }
 
@@ -650,6 +659,44 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertNil(registry.updater.status["checking"])
         registry.teardown()
         withExtendedLifetime(settings) {}
+    }
+
+    /// Profiles share the check: one whose wait ends right after another profile's check waits for the next one.
+    func testAnUpdateCheckAnotherProfileJustMadeIsNotRepeated() async throws {
+        let database = try TemporaryProfileDatabase(schema: .global)
+        defer { database.tearDown() }
+        let settings = SettingsStore(dbPool: database.pool)
+        registry.settingsStore = settings
+        settings.set(ExtensionUpdater.lastCheckKey, value: String(Date().timeIntervalSince1970 - 3600))
+        let delays = AsyncStream<Duration>.makeStream()
+        let slept = OSAllocatedUnfairLock(initialState: 0)
+
+        registry.updater.start(now: Date(timeIntervalSince1970: 0)) { duration in
+            delays.continuation.yield(duration)
+            if slept.withLock({ $0 += 1; return $0 }) > 1 { try? await Task.sleep(for: .seconds(3600)) }
+        }
+        var iterator = delays.stream.makeAsyncIterator()
+        _ = await iterator.next()
+        let next = await iterator.next()
+        let secondDelay = try XCTUnwrap(next)
+
+        let interval = ExtensionUpdater.checkInterval
+        XCTAssertTrue(secondDelay > .seconds(interval - 3700) && secondDelay < .seconds(interval - 3500), "waits for the rest of the interval, got \(secondDelay)")
+        registry.teardown()
+        withExtendedLifetime(settings) {}
+    }
+
+    func testRestoreLoadsExtensionsInTheirStoredOrder() async throws {
+        for index in 0..<4 {
+            try await registry.load(from: try createMinimalExtension(named: "ordered_\(index)", displayName: "Ordered \(index)", in: tempDir))
+        }
+        let stored = try await registry.extensionStorage.loadAll().map(\.id)
+
+        let restored = ProfileExtensionRegistry(profileId: registry.profileId, extensionStorage: registry.extensionStorage, extensionsBaseDirectory: tempDir)
+        await restored.restore()
+
+        XCTAssertEqual(restored.loadedExtensions.map(\.id), stored)
+        restored.teardown()
     }
 
     func testExtensionBridgePayloadDetectsContentScripts() async throws {
@@ -694,6 +741,24 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         XCTAssertEqual(registry.extensionBridgePayloads(activeTab: tab).first?["badgeColor"] as? String, "#222222")
         XCTAssertEqual(registry.extensionBridgePayloads(activeTab: nil).first?["badgeColor"] as? String, "#111111")
+    }
+
+    /// Two windows of the profile ask for their own active tab's rows in turn; each keeps its own.
+    func testEachActiveTabKeepsItsRowWhileAnotherWindowAsksForItsOwn() async throws {
+        try await registry.load(from: try createMinimalExtension(named: "two_windows_extension", in: tempDir))
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let first = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        let second = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        registry.updateActionColor(for: id, tab: first.tabId) { $0.badgeColor = "#111111" }
+        registry.updateActionColor(for: id, tab: second.tabId) { $0.badgeColor = "#222222" }
+
+        for _ in 0..<2 {
+            XCTAssertEqual(registry.extensionBridgePayloads(activeTab: first).first?["badgeColor"] as? String, "#111111")
+            XCTAssertEqual(registry.extensionBridgePayloads(activeTab: second).first?["badgeColor"] as? String, "#222222")
+        }
+        registry.updateActionColor(for: id, tab: second.tabId) { $0.badgeColor = "#333333" }
+        XCTAssertEqual(registry.extensionBridgePayloads(activeTab: second).first?["badgeColor"] as? String, "#333333")
+        XCTAssertEqual(registry.extensionBridgePayloads(activeTab: first).first?["badgeColor"] as? String, "#111111")
     }
 
     func testUpdatingLastActionNotifiesExtensionSnapshotObservers() async throws {

@@ -266,9 +266,14 @@ final class SidePanelController: NSObject {
     /// Native knows windows and tabs by their place in WebKit's lists; JS turns those into ids.
     private func emit(_ event: String, _ entry: Entry, url: URL) {
         guard let registry else { return }
-        var info: [String: Any] = ["windowPosition": window.window.flatMap { registry.windowPosition(of: $0) } ?? -1, "path": url.path]
-        if let tabId = entry.tabId, let adapter = window.tabManager.tabAdapter(for: tabId) {
-            info["index"] = registry.tabPosition(of: adapter, extensionId: entry.extensionId)?["index"]
+        var info: [String: Any] = ["path": url.path]
+        // A tab's own position names its window: a private tab's is not the window's first extension window.
+        if let tabId = entry.tabId, let adapter = window.tabManager.tabAdapter(for: tabId),
+           let position = registry.tabPosition(of: adapter, extensionId: entry.extensionId) {
+            info["windowPosition"] = position["windowPosition"]
+            info["index"] = position["index"]
+        } else {
+            info["windowPosition"] = window.window.flatMap { registry.windowPosition(of: $0, extensionId: entry.extensionId) } ?? -1
         }
         registry.gapEvents.emit("sidePanel", event, args: [info], to: [entry.extensionId])
     }

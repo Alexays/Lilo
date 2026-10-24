@@ -182,11 +182,20 @@ final class WKEngineFactory {
     }
 
     private(set) lazy var sidePanelHandler = SidePanelBridgeHandler()
+    private(set) lazy var tabGroupsHandler = TabGroupsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) })
     private lazy var proxyHandler = ProxyBridgeHandler(settingsProvider: { [weak self] in self?.profileContext(for: $0)?.extensionSettings })
 
     /// A page that could not reach the extension's proxy fires chrome.proxy.onProxyError.
     func reportProxyFailure(_ error: Error, registry: ProfileExtensionRegistry) {
         proxyHandler.reportNavigationFailure(error, registry: registry)
+    }
+
+    /// A proxy's challenge to a tab's load goes to webRequest.onAuthRequired; nil when no extension answers it.
+    func authenticateProxy(
+        _ challenge: URLAuthenticationChallenge, url: URL?, tab: TabExtensionAdapter?, registry: ProfileExtensionRegistry,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) {
+        proxyHandler.authenticate(challenge, url: url, tab: tab, registry: registry, completion: completion)
     }
 
     lazy var contentSettingsHandler = ContentSettingsBridgeHandler(settingsProvider: { [weak self] in self?.profileContext(for: $0)?.extensionSettings })
@@ -259,7 +268,7 @@ final class WKEngineFactory {
         router.register(handler: SearchQueryBridgeHandler())
         router.register(handler: DeclarativeNetRequestBridgeHandler())
         router.register(handler: I18nBridgeHandler())
-        router.register(handler: TabGroupsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) }))
+        router.register(handler: tabGroupsHandler)
         router.register(handler: BrowsingDataBridgeHandler(contextProvider: { [weak self] in self?.profileContext(for: $0) }, downloadManagerProvider: { [weak self] in self?.downloadManager }))
         router.register(handler: contentSettingsHandler)
         router.register(handler: fontSettingsHandler)
@@ -861,35 +870,8 @@ final class WKEngineFactory {
             source: "try{Object.defineProperty(navigator,Symbol(),{value:navigator.credentials})}catch(e){}",
             injectionTime: .atDocumentStart, forMainFrameOnly: false
         ))
-        contentController.addUserScript(WKUserScript(source: Self.externallyConnectableRuntimeSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         installedFilterUserScripts.forEach { contentController.addUserScript($0) }
     }
-
-    /// Chrome gives a page an extension's `externally_connectable` names `chrome.runtime`, WebKit only
-    /// `browser.runtime`: claude.ai's sign-in hands its code to the Claude extension this way. Other
-    /// pages keep no `window.chrome`, which sites read as Chrome.
-    private static let externallyConnectableRuntimeSource = """
-    (() => {
-      const runtime = globalThis.browser?.runtime;
-      if (typeof runtime?.sendMessage !== 'function' || globalThis.chrome?.runtime) return;
-      let lastError;
-      const chromeRuntime = {
-        get lastError() { return lastError; },
-        // Chrome's callback form: the trailing function gets the answer, or nothing and lastError.
-        sendMessage(...args) {
-          const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
-          const sent = runtime.sendMessage(...args);
-          if (!callback) return sent;
-          sent.then((answer) => callback(answer), (error) => {
-            lastError = { message: String(error?.message ?? error) };
-            try { callback(); } finally { lastError = undefined; }
-          });
-        },
-        connect: (...args) => runtime.connect(...args),
-      };
-      globalThis.chrome = Object.assign(globalThis.chrome ?? {}, { runtime: chromeRuntime });
-    })();
-    """
 
     /// Bundle JS templates are immutable; each resource is read once per factory lifetime.
     private func bundledTemplate(_ resource: String) -> String? {

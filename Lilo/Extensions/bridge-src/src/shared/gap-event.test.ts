@@ -32,3 +32,35 @@ test('the worker reports the listeners its top-level code adds in one call, even
   sendGapListeners();
   assert.deepEqual(calls.slice(1), [{ namespace: 'events', method: 'listen', params: { events: ['tabGroups.onCreated', 'tabGroups.onMoved'] } }]);
 });
+
+test('removing the last listener of an event reports it, and a listener added again is reported anew', async () => {
+  const calls: unknown[] = [];
+  mockGapAPI((msg) => { calls.push(msg); });
+  const changed = new GapChromeEvent('sessions', 'onChanged');
+  const first = () => {};
+  const second = () => {};
+  changed.addListener(first);
+  changed.addListener(second);
+  changed.removeListener(first);
+  changed.removeListener(second);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  changed.addListener(first);
+  assert.deepEqual(calls, [
+    { namespace: 'events', method: 'listen', params: { events: ['sessions.onChanged'] } },
+    { namespace: 'events', method: 'unlisten', params: { events: ['sessions.onChanged'] } },
+    { namespace: 'events', method: 'listen', params: { events: ['sessions.onChanged'] } },
+  ]);
+});
+
+test('a listener added and removed before its batch is sent is never reported', async () => {
+  const calls: unknown[] = [];
+  mockGapAPI((msg) => { calls.push(msg); });
+  const visitRemoved = new GapChromeEvent('history', 'onVisitRemoved');
+  const moved = new GapChromeEvent('bookmarks', 'onMoved');
+  const listener = () => {};
+  visitRemoved.addListener(listener);
+  moved.addListener(listener);
+  moved.removeListener(listener);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.deepEqual(calls, [{ namespace: 'events', method: 'listen', params: { events: ['history.onVisitRemoved'] } }]);
+});

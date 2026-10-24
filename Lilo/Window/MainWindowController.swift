@@ -431,6 +431,8 @@ final class MainWindowController: NSWindowController {
         // Unpinning a closed pinned tab, or unbookmarking a closed bookmark, takes it out of the sidebar: Undo and
         // Reopen Closed Tab bring it back, whichever path removed it.
         var removedTab: Tab?
+        var wasPinned: Bool?
+        if case let .setPinned(_, tabId, _) = command { wasPinned = tabManager.tab(for: tabId)?.isPinned }
         if case let .setPinned(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isPinned { removedTab = tab }
         if case let .setBookmarked(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isBookmarked { removedTab = tab }
         let removalRecorded = removedTab.map { recordClosedTabForRestore(id: $0.id) } ?? false
@@ -438,7 +440,7 @@ final class MainWindowController: NSWindowController {
         if removalRecorded, let removedTab { announceUndoableClose(of: removedTab) }
         if let closingTerminal, tabManager.tab(for: closingTerminal) == nil { tabManager.terminalHost.forget(closingTerminal) }
         if case let .activateTab(_, tabId) = command { activationAnnouncedByCommand = tabId }
-        if case let .setPinned(_, tabId, _) = command, let adapter = tabManager.tabAdapter(for: tabId),
+        if case let .setPinned(_, tabId, isPinned) = command, wasPinned != isPinned, let adapter = tabManager.tabAdapter(for: tabId),
            let registry = tabManager.extensionRegistry, registry.hasLoadedExtensions {
             registry.controller.didChangeTabProperties(.pinned, for: adapter)
         }
@@ -765,8 +767,10 @@ extension MainWindowController: NSWindowDelegate {
     private func reportBoundsChanged() {
         guard let window, let registry = profileContext?.extensions else { return }
         let ids = registry.listeningExtensionIds("windows", "onBoundsChanged")
-        guard !ids.isEmpty, let position = registry.windowPosition(of: window) else { return }
-        registry.gapEvents.emit("windows", "onBoundsChanged", args: [["windowPosition": position]], to: ids)
+        guard !ids.isEmpty else { return }
+        registry.emitPositioned("windows", "onBoundsChanged", to: ids) { extensionId in
+            registry.windowPosition(of: window, extensionId: extensionId).map { ["windowPosition": $0] }
+        }
     }
 
     func windowWillClose(_ notification: Notification) {

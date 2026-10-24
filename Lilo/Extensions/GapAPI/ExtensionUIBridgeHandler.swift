@@ -251,7 +251,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         guard call.action == "runtime.extensionViews" else {
             return await openPopup(extensionId: call.extensionId, anchorRect: nil, registry: call.registry)
         }
-        guard let context = call.registry.context(for: call.extensionId) else { return [] }
+        guard let context = call.context else { return [] }
         return call.registry.delegate.extensionViews(of: context).map { ["contextType": $0.contextType, "url": $0.url.absoluteString] }
     }
 

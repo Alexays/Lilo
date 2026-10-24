@@ -191,11 +191,11 @@ final class ExtensionLifecycle {
 
     // MARK: - Listeners
 
-    /// Records events a page or the worker listens to. The worker's own report, sent once its script
-    /// has run, turns on filtering and is kept across launches, as Chrome keeps a worker's listeners: a
-    /// stopped worker wakes only for what it listens to. A new version reports its own.
-    func listen(_ events: [String], extensionId: String, fromWorker: Bool, version: String?) {
-        guard gapEvents.listen(events, extensionId: extensionId, fromWorker: fromWorker),
+    /// Records events the worker listens to, or, `removed`, no longer listens to. Its first report, sent once
+    /// its script has run, turns on filtering; they are kept across launches, as Chrome keeps a worker's
+    /// listeners: a stopped worker wakes only for what it listens to. A new version reports its own.
+    func listen(_ events: [String], extensionId: String, removed: Bool = false, version: String?) {
+        guard gapEvents.listen(events, extensionId: extensionId, removed: removed),
               let reported = gapEvents.reportedListeners(of: extensionId) else { return }
         settings()?.set(listenersKey(extensionId), value: ([version ?? ""] + reported.sorted()).joined(separator: "\n"))
     }
@@ -204,7 +204,7 @@ final class ExtensionLifecycle {
     private func restoreReportedListeners(_ extensionId: String, version: String?) {
         guard let saved = settings()?.get(listenersKey(extensionId))?.components(separatedBy: "\n"),
               saved.first == version ?? "" else { return }
-        gapEvents.listen(Array(saved.dropFirst()), extensionId: extensionId, fromWorker: true)
+        gapEvents.listen(Array(saved.dropFirst()), extensionId: extensionId)
     }
 
     private func listenersKey(_ extensionId: String) -> String {

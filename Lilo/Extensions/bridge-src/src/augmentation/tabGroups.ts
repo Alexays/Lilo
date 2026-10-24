@@ -3,9 +3,9 @@
 import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { createGapEventsFromNames } from '../shared/gap-event.ts';
-import type { NamespaceCompat, Patch } from '../shared/chrome-compat.ts';
+import type { NamespaceCompat } from '../shared/chrome-compat.ts';
 
-const TAB_GROUP_ID_NONE = -1;
+export const TAB_GROUP_ID_NONE = -1;
 
 interface TabGroup {
   id: number;
@@ -45,31 +45,49 @@ interface TabPosition {
   index: number;
 }
 
-/** Each tab's window position (in chrome.windows.getAll order) and index, or -1 when unknown. */
-export async function toPositions(tabList: { index: number; windowId: number }[]): Promise<TabPosition[]> {
-  let windowIds: number[] = [];
+/** The ids of chrome.windows.getAll, in its order; empty when unknown. */
+export async function windowIdOrder(): Promise<number[]> {
   try {
-    windowIds = ((await bridgeChrome()?.windows?.getAll?.()) ?? []).map((w: any) => w.id);
+    return ((await bridgeChrome()?.windows?.getAll?.()) ?? []).map((w: any) => w.id);
   } catch {
-    /* positions stay unknown */
+    return [];
   }
-  return tabList.map((t) => ({ windowPosition: windowIds.indexOf(t.windowId), index: t.index }));
 }
 
-/** Resolve integer tab ids to positions, the bridge to Lilo's tab identity. Unknown ids drop. */
+/** Each tab's window position (in chrome.windows.getAll order) and index, or -1 when unknown. */
+export async function toPositions(
+  tabList: { index: number; windowId: number }[],
+  windowIds: Promise<number[]> = windowIdOrder(),
+): Promise<TabPosition[]> {
+  const order = await windowIds;
+  return tabList.map((t) => ({ windowPosition: order.indexOf(t.windowId), index: t.index }));
+}
+
+/**
+ * Resolve integer tab ids to positions, the bridge to Lilo's tab identity. Unknown ids drop. Every lookup runs at
+ * once: the tabs and the window order come back in one round trip whatever the number of ids.
+ */
 export async function tabPositions(tabIds: number[]): Promise<TabPosition[]> {
   const tabs = bridgeChrome()?.tabs;
-  if (!tabs?.get) return [];
-  const found: { index: number; windowId: number }[] = [];
-  for (const id of tabIds) {
+  if (!tabs?.get || tabIds.length === 0) return [];
+  // Skips the groupId lookup tabGroups adds to tabs.get.
+  const get = tabs.get.__liloUnwrapped ?? tabs.get;
+  const windowIds = windowIdOrder();
+  const found = await Promise.all(tabIds.map(async (id) => {
     try {
-      const t = await tabs.get(id);
-      if (typeof t?.index === 'number') found.push(t);
+      return await get.call(tabs, id);
     } catch {
-      /* unknown tab: skip */
+      return undefined;
     }
-  }
-  return toPositions(found);
+  }));
+  return toPositions(found.filter((t) => typeof t?.index === 'number'), windowIds);
+}
+
+/** The `{windowPosition, index}` native resolves a tab id by. */
+export async function tabPosition(tabId: unknown) {
+  const [position] = typeof tabId === 'number' ? await tabPositions([tabId]) : [];
+  if (!position || position.windowPosition < 0) throw new Error('Invalid tab specified.');
+  return position;
 }
 
 /**
@@ -156,44 +174,7 @@ function liloUngroup(rawIds: any, callback?: () => void) {
   }, callback);
 }
 
-/**
- * tabs.query / tabs.get with a `groupId` on every returned tab, in both forms. WebKit ignores the
- * `groupId` query key, so query filters on it here.
- */
-const withGroupIds = (method: 'query' | 'get'): Patch => (original, self) => function (this: unknown, ...args: any[]) {
-  const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
-  const groupId = method === 'query' ? args[0]?.groupId : undefined;
-  if (groupId !== undefined) {
-    const { groupId: _omitted, ...rest } = args[0];
-    args[0] = rest;
-  }
-  return callbackify(async () => {
-    const result = await original.apply(self(this), args);
-    await injectGroupIds(Array.isArray(result) ? result : [result]);
-    return typeof groupId === 'number' ? result.filter((t: any) => t?.groupId === groupId) : result;
-  }, callback);
-};
-
-/** chrome.tabs over Lilo folders: `group`/`ungroup`, absent in WebKit, and each tab's `groupId`. */
+/** chrome.tabs over Lilo folders: `group` and `ungroup`, absent in WebKit. */
 export const tabsWithGroups: NamespaceCompat = {
   replace: { group: liloGroup, ungroup: liloUngroup },
-  patch: { query: withGroupIds('query'), get: withGroupIds('get') },
 };
-
-async function injectGroupIds(tabList: any[]): Promise<void> {
-  const valid = tabList.filter((t) => t && typeof t.index === 'number');
-  if (valid.length === 0) return;
-  try {
-    const res = await gapCall<{ groupIds: number[] }>('tabs', 'resolveGroupIds', {
-      tabs: await toPositions(valid),
-    });
-    const ids = res?.groupIds ?? [];
-    valid.forEach((t, i) => {
-      t.groupId = typeof ids[i] === 'number' ? ids[i] : TAB_GROUP_ID_NONE;
-    });
-  } catch {
-    valid.forEach((t) => {
-      if (typeof t.groupId !== 'number') t.groupId = TAB_GROUP_ID_NONE;
-    });
-  }
-}

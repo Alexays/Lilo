@@ -1,7 +1,7 @@
 // Each GapChromeEvent tells Lilo it is listened to; ipc.ts fires it when its envelope arrives.
 // SW-safe: no window/document/webkit. (assert-background-prelude-safe.mjs)
 
-import { ChromeEvent } from './chrome-event.ts';
+import { ChromeEvent, WrappedEvent } from './chrome-event.ts';
 import { gapCall } from './ipc.ts';
 import { callbackify } from './callbackify.ts';
 
@@ -38,6 +38,14 @@ export function reportGapListener(name: string): void {
   setTimeout(() => sendBatch(false), 0);
 }
 
+/** The context's last listener of `name` went: native stops sending it, and a stopped worker stops waking for it. */
+function reportGapListenerRemoved(name: string): void {
+  if (!reports.delete(name)) return;
+  const batched = unreportedListeners?.indexOf(name) ?? -1;
+  if (batched >= 0) unreportedListeners!.splice(batched, 1);
+  else gapCall('events', 'unlisten', { events: [name] }).catch(() => {});
+}
+
 /** Settles once native has answered the report of the listener, undefined before any. */
 export function gapListenerReported(name: string): Promise<unknown> | undefined {
   return reports.get(name);
@@ -55,7 +63,7 @@ export function sendGapListeners(): void {
   sendBatch(true);
 }
 
-/** A ChromeEvent native pushes as `namespace.event`, reported on its first listener. */
+/** A ChromeEvent native pushes as `namespace.event`, reported on its first listener and after its last. */
 export class GapChromeEvent<T extends unknown[] = []> extends ChromeEvent<T> {
   private readonly gapName: string;
 
@@ -67,6 +75,57 @@ export class GapChromeEvent<T extends unknown[] = []> extends ChromeEvent<T> {
   override addListener(listener: (...args: T) => void): void {
     super.addListener(listener);
     reportGapListener(this.gapName);
+  }
+
+  override removeListener(listener: (...args: T) => void): void {
+    super.removeListener(listener);
+    if (!this.hasListeners()) reportGapListenerRemoved(this.gapName);
+  }
+}
+
+/**
+ * A WebKit event (a NamespaceCompat stand-in) native also pushes to as `namespace.event`: each listener hears WebKit's
+ * through `wrap`, and native's through `receive`, which gets every listener with the arguments it was added with.
+ */
+export class GapWrappedEvent<T extends unknown[]> extends WrappedEvent<T> {
+  private readonly added = new Map<(...args: T) => void, unknown[]>();
+  private readonly gapName: string;
+  private readonly receive: (listeners: [(...args: any[]) => unknown, unknown[]][], ...args: any[]) => void;
+
+  constructor(
+    gapName: string,
+    source: () => object,
+    wrap: (listener: (...args: T) => void) => (...args: any[]) => void,
+    receive: (listeners: [(...args: any[]) => unknown, unknown[]][], ...args: any[]) => void,
+  ) {
+    super(source, wrap);
+    this.gapName = gapName;
+    this.receive = receive;
+  }
+
+  override addListener(listener: (...args: T) => void, ...rest: unknown[]): void {
+    if (this.added.has(listener)) return;
+    // WebKit may refuse what Chrome takes (an `asyncBlocking` listener): native's events still reach it.
+    try { super.addListener(listener, ...rest); } catch { /* WebKit's event only */ }
+    this.added.set(listener, rest);
+    reportGapListener(this.gapName);
+  }
+
+  override removeListener(listener: (...args: T) => void): void {
+    super.removeListener(listener);
+    this.added.delete(listener);
+  }
+
+  override hasListener(listener: (...args: T) => void): boolean {
+    return this.added.has(listener);
+  }
+
+  override hasListeners(): boolean {
+    return this.added.size > 0;
+  }
+
+  override dispatch(...args: any[]): void {
+    this.receive([...this.added], ...args);
   }
 }
 

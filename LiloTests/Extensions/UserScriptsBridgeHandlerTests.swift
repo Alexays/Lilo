@@ -68,6 +68,28 @@ final class UserScriptsBridgeHandlerTests: XCTestCase {
         "runAt": "document_start", "includeGlobs": ["*example.com/*"]
     ]
 
+    func testOnlyTheExternallyConnectablePagesOfALoadedExtensionGetChromeRuntime() async throws {
+        let registry = try cache.context(for: profileId).extensions
+        func connectable() -> [WKUserScript] {
+            tabScripts().filter { $0.source == ExtensionUserScripts.externallyConnectableRuntimeSource }
+        }
+        XCTAssertEqual(connectable().count, 0, "no extension names a page")
+
+        let dir = tempDir.appendingPathComponent("connectable", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Connectable", "version": "1.0",
+            "externally_connectable": ["matches": ["https://app.example.org/*"]]
+        ]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: dir.appendingPathComponent("manifest.json"))
+        try await registry.load(from: dir)
+        XCTAssertEqual(connectable().count, 1)
+        XCTAssertFalse(try XCTUnwrap(connectable().first).isForMainFrameOnly)
+
+        await registry.unload(extensionId: try XCTUnwrap(registry.loadedExtensions.first?.id))
+        XCTAssertEqual(connectable().count, 0)
+    }
+
     func testCallsFailUntilTheUserAllowsUserScripts() async throws {
         let registry = try cache.context(for: profileId).extensions
         let extensionId = try await loadExtension(into: registry)

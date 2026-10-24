@@ -1,9 +1,9 @@
 // Chrome on a Mac never fires onSuspend/onSuspendCanceled on a worker, onRestartRequired/restart outside ChromeOS
 // kiosks, nor onConnectNative without a native host, which Lilo never starts. SW-safe: no window/document/webkit.
-import { gapCall } from '../shared/ipc.ts';
-import { callbackify, withLastError } from '../shared/callbackify.ts';
+import { bridgeEvents, gapCall } from '../shared/ipc.ts';
+import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
-import { GapChromeEvent } from '../shared/gap-event.ts';
+import { GapChromeEvent, GapWrappedEvent } from '../shared/gap-event.ts';
 
 interface UpdateCheckResult {
   status: 'throttled' | 'no_update' | 'update_available';
@@ -89,13 +89,83 @@ export const onConnect = (source: () => object) => new WrappedEvent<[any]>(sourc
   typeof port?.name === 'string' && port.name.endsWith(once) ? served.get(port) ?? messagesOnce(port, port.name.slice(0, -once.length)) : port,
 ));
 
-const otherExtension = (id: unknown, runtime: any) => typeof id === 'string' && /^[a-p]{32}$/.test(id) && id !== runtime.id;
+// Chrome's ids, and Lilo's for an unpacked extension without a manifest key.
+const otherExtension = (id: unknown, runtime: any) => typeof id === 'string' && /^([a-p]{32}|extension-[0-9a-f]{16})$/.test(id) && id !== runtime.id;
+const portClosed = 'The message port closed before a response was received.';
+const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
+
+/** What the other extension learns of this context as its sender: native checks the url and adds the id and origin. */
+async function senderInfo(): Promise<Record<string, unknown>> {
+  const info: Record<string, unknown> = {};
+  const url = (globalThis as any).location?.href;
+  if (url) info.url = url;
+  if (!isWorker) {
+    const tab = await Promise.resolve(bridgeChrome()?.tabs?.getCurrent?.()).catch(() => undefined);
+    if (tab) info.tab = tab;
+  }
+  return info;
+}
+
+/** This context's ends of the ports native relays between extensions, by port id: each takes a message, or undefined for a disconnect. */
+const externalPorts = new Map<string, (message?: { data: unknown }) => void>();
+bridgeEvents.set('runtime.portMessage', (portId: string, data: unknown) => externalPorts.get(portId)?.({ data }));
+bridgeEvents.set('runtime.portDisconnect', (portId: string) => externalPorts.get(portId)?.());
 
 /**
- * chrome.runtime's connect and sendMessage to another extension as Chrome's to one not installed:
- * WebKit has no cross-extension messaging and throws, or reports an extension error.
+ * A port native relays to another extension, by the id `opened` gives (a connecting extension's port, at once); a
+ * rejection disconnects it with that error.
  */
-export function crossExtensionMessaging(runtime: any) {
+function externalPort(name: string, sender: unknown, opened: Promise<string> | string): object {
+  let portId: string | undefined;
+  let closed = false;
+  let sending: Promise<unknown>;
+  const receive = (message?: { data: unknown }) => {
+    if (message) return port.onMessage.dispatch(message.data, port);
+    closed = true;
+    externalPorts.delete(portId!);
+    port.onDisconnect.dispatch(port);
+  };
+  const port = {
+    name,
+    sender,
+    onMessage: new ChromeEvent<[unknown, unknown]>(),
+    onDisconnect: new ChromeEvent<[unknown]>(),
+    postMessage(message: unknown) {
+      if (closed) throw new Error('Attempting to use a disconnected port object');
+      sending = sending.then(() => portId && gapCall('runtime', 'portPost', { portId, message })).catch(() => {});
+    },
+    disconnect() {
+      if (closed) return;
+      closed = true;
+      sending = sending.then(() => {
+        if (!portId) return undefined;
+        externalPorts.delete(portId);
+        return gapCall('runtime', 'portDisconnect', { portId });
+      }).catch(() => {});
+    },
+  };
+  if (typeof opened === 'string') {
+    // Its messages may follow in the same batch of events.
+    portId = opened;
+    externalPorts.set(opened, receive);
+    sending = Promise.resolve();
+    return port;
+  }
+  sending = opened.then((id) => {
+    portId = id;
+    if (!closed) externalPorts.set(id, receive);
+  }, (error) => {
+    closed = true;
+    withLastError(error?.message ?? noReceiver, () => port.onDisconnect.dispatch(port));
+  });
+  return port;
+}
+
+/**
+ * chrome.runtime's connect and sendMessage, which Lilo relays to another extension's onConnectExternal and
+ * onMessageExternal (WebKit has no cross-extension messaging); `sendLocal` sends the extension's own messages.
+ */
+export function crossExtensionMessaging(runtime: any, sendLocal: (...args: any[]) => any = (...args) => runtime.sendMessage(...args)) {
   return {
     connect(...args: any[]) {
       if (!otherExtension(args[0], runtime)) {
@@ -104,23 +174,67 @@ export function crossExtensionMessaging(runtime: any) {
         const marked = { ...info, name: name + once };
         return messagesOnce(id === undefined ? runtime.connect(marked) : runtime.connect(id, marked), name);
       }
-      const port = {
-        name: typeof args[1]?.name === 'string' ? args[1].name : '',
-        sender: undefined,
-        onMessage: new ChromeEvent<[unknown, unknown]>(),
-        onDisconnect: new ChromeEvent<[unknown]>(),
-        postMessage(_message: unknown) {},
-        disconnect() {},
-      };
-      setTimeout(() => withLastError(noReceiver, () => port.onDisconnect.dispatch(port)), 0);
-      return port;
+      const name = typeof args[1]?.name === 'string' ? args[1].name : '';
+      const opened = senderInfo().then((sender) => gapCall<string>('runtime', 'connectExternal', { id: args[0], name, ...sender }));
+      return externalPort(name, undefined, opened);
     },
     sendMessage(...args: any[]) {
-      if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return runtime.sendMessage(...args);
-      const callback = args.at(-1);
-      if (typeof callback !== 'function') return Promise.reject(new Error(noReceiver));
-      setTimeout(() => withLastError(noReceiver, () => callback()), 0);
+      if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendLocal(...args);
+      const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
+      // No timeout: the other extension may keep the channel open, as in Chrome.
+      const sent = senderInfo().then((sender) => gapCall<{ response?: unknown }>('runtime', 'sendExternal', { id: args[0], message: args[1], ...sender }, 0));
+      if (!callback) return sent.then((answer) => answer?.response);
+      sent.then(
+        (answer) => (answer && 'response' in answer ? callback(answer.response) : withLastError(portClosed, () => callback())),
+        (error) => withLastError(error?.message ?? noReceiver, () => callback()),
+      );
       return undefined;
     },
   };
 }
+
+/** Runs onMessageExternal's listeners on a message native relays from another extension, and sends their answer. */
+function receiveExternalMessage(listeners: [(...args: any[]) => unknown, unknown[]][], message: unknown, sender: unknown, messageId: string): void {
+  // The worker answers for the extension, a page only when it listens.
+  if (listeners.length === 0 && !isWorker) return;
+  let answered = false;
+  let open = false;
+  const respond = (response?: unknown) => {
+    if (answered) return;
+    answered = true;
+    gapCall('runtime', 'answerExternal', { messageId, response: response === undefined ? null : response }).catch(() => {});
+  };
+  for (const [listener] of listeners) {
+    try {
+      const result = listener(message, sender, respond);
+      if (result === true) {
+        open = true;
+      } else if (typeof (result as PromiseLike<unknown>)?.then === 'function') {
+        open = true;
+        Promise.resolve(result).then(respond, () => respond());
+      }
+    } catch (err) {
+      console.error(`Error in event handler: ${String(err)}`);
+    }
+  }
+  if (!answered && !open) gapCall('runtime', 'answerExternal', { messageId, worker: isWorker }).catch(() => {});
+}
+
+/** WebKit's onMessageExternal and onConnectExternal, which web pages reach, also hearing the extensions Lilo relays. */
+export const externalEvents = (runtime: () => any) => ({
+  onMessageExternal: new GapWrappedEvent<[unknown, unknown, unknown]>(
+    'runtime.onMessageExternal', () => runtime().onMessageExternal, (listener) => listener,
+    (listeners, message, sender, messageId) => receiveExternalMessage(listeners, message, sender, messageId),
+  ),
+  onConnectExternal: new GapWrappedEvent<[unknown]>(
+    'runtime.onConnectExternal', () => runtime().onConnectExternal, (listener) => listener,
+    (listeners, info: { portId: string; name: string; sender: unknown }) => {
+      if (listeners.length === 0) return;
+      const port = externalPort(info.name, info.sender, info.portId);
+      for (const [listener] of listeners) {
+        try { listener(port); } catch (err) { console.error(`Error in event handler: ${String(err)}`); }
+      }
+    },
+  ),
+});
+

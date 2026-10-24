@@ -1,5 +1,6 @@
 import XCTest
 import GRDB
+import os
 @testable import Lilo
 
 final class HistoryStoreTests: XCTestCase {
@@ -251,6 +252,33 @@ final class HistoryStoreTests: XCTestCase {
         let results = try store.search(query: "🎉🎉", limit: 10)
 
         XCTAssertTrue(results.isEmpty, "unicode61 does not tokenize emoji as searchable content, this pins that known limitation")
+    }
+
+    // MARK: - Change observer
+
+    /// Extensions hear of every visit, with the page's own id and visit count, and of every removal, whoever made it.
+    func testEveryWrittenVisitAndRemovalReachesTheObserver() throws {
+        let changes = OSAllocatedUnfairLock<[HistoryStore.Change]>(initialState: [])
+        store.onChange = { change in changes.withLock { $0.append(change) } }
+        let url = "https://example.com/seen"
+
+        store.scheduleRecordVisit(url: url, title: "Seen")
+        store.flushPendingWrites()
+        try store.recordVisit(url: url, title: "Seen")
+        try store.deleteURL("https://example.com/never-visited")
+        try store.deleteURL(url)
+        try store.clearAll()
+
+        let recorded = changes.withLock { $0 }
+        guard recorded.count == 4,
+              case let .visited(first) = recorded[0], case let .visited(second) = recorded[1],
+              case .removed(false, let removed) = recorded[2], case .removed(true, []) = recorded[3] else {
+            return XCTFail("unexpected changes: \(recorded)")
+        }
+        XCTAssertEqual(first.map(\.visitCount), [1])
+        XCTAssertEqual(second.map(\.visitCount), [2])
+        XCTAssertEqual(first.first?.id, second.first?.id, "a page keeps its id across visits")
+        XCTAssertEqual(removed, [url])
     }
 
     // MARK: - deleteEntries(from:to:) ("deleteRange")
