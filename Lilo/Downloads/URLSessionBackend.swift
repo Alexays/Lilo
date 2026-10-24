@@ -12,6 +12,8 @@ final class URLSessionBackend: NSObject {
         get { flight.onUpdated }
         set { flight.onUpdated = newValue }
     }
+    /// Called for a download that failed with resume data, with the failure, before it settles.
+    var onResumableFailure: ((Int64, Error) -> Void)?
 
     /// Keeps this backend as its delegate until the app quits: a URLSession retains its delegate.
     private var _session: URLSession?
@@ -230,6 +232,7 @@ extension URLSessionBackend: URLSessionDownloadDelegate {
         let taskId = task.taskIdentifier
         Task { @MainActor in
             guard let id = activeTasks[taskId]?.id else { return }
+            if (error as? URLError)?.userInfo[NSURLSessionDownloadTaskResumeData] is Data { onResumableFailure?(id, error) }
             let settled = flight.settle(id) { item in
                 // If we already marked complete in didFinishDownloadingTo, skip
                 guard item.state == .inProgress else { return false }

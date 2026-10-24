@@ -26,6 +26,8 @@ final class WKBackend: NSObject {
     var onTracked: ((WKDownload, Int64) -> Void)?
     /// Called for a download that never gets a row (save panel cancelled, insert failed): WebKit cancels it.
     var onDropped: ((WKDownload) -> Void)?
+    /// Called for a download that failed with resume data, with the failure, before it settles.
+    var onResumableFailure: ((Int64, Error) -> Void)?
 
     /// Maps WKDownload to DownloadItem.id (set once destination is decided).
     private var activeDownloads: [WKDownload: Int64] = [:]
@@ -200,6 +202,7 @@ extension WKBackend: WKDownloadDelegate {
     nonisolated func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
         Task { @MainActor in
             stopObservingProgress(for: download)
+            if let id = activeDownloads[download], resumeData != nil { onResumableFailure?(id, error) }
             let settled = activeDownloads[download].flatMap { id in
                 flight.settle(id) { item in
                     DownloadQuarantine.stamp(path: item.destinationPath, source: item.url)
