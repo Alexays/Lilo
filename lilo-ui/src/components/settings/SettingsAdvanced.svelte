@@ -4,6 +4,7 @@
   import { getFeatureFlags } from "../../stores/settings.svelte";
   import SettingsFlagRow from "./SettingsFlagRow.svelte";
   import SettingsGroups from "./SettingsGroups.svelte";
+  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiLinkRow from "../ui/UiLinkRow.svelte";
@@ -19,6 +20,7 @@
 <SettingsGroups section="advanced" />
 
 <UiInsetList title={t("featureFlags.title")}>
+  {#snippet icon()}<SettingsGroupIcon group="featureFlags.title" />{/snippet}
   <UiListRow title={t("featureFlags.resetTitle")} description={t("featureFlags.warning")}>
     {#snippet action()}
       <UiButton disabled={modifiedCount === 0} onclick={() => featureFlagsActions.resetAll()}>
@@ -30,6 +32,7 @@
 
 {#if experimental.length > 0}
   <UiInsetList title={t("featureFlags.sectionExperimental", { count: experimental.length })}>
+    {#snippet icon()}<SettingsGroupIcon group="featureFlags.sectionExperimental" />{/snippet}
     {#each experimental as flag (flag.key)}<SettingsFlagRow {flag} />{/each}
   </UiInsetList>
 {/if}

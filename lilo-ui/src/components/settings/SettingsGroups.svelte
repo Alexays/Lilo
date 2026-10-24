@@ -8,6 +8,7 @@
   import SettingsAgentRows from "./SettingsAgentRows.svelte";
   import SettingsProfiles from "./SettingsProfiles.svelte";
   import SettingsSpaceRow from "./SettingsSpaceRow.svelte";
+  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
 
   let { section }: { section: SettingsSectionId } = $props();
@@ -26,6 +27,7 @@
 
 {#each groups as group (group.groupKey)}
   <UiInsetList title={t(group.groupKey)}>
+    {#snippet icon()}<SettingsGroupIcon group={group.groupKey} />{/snippet}
     {#if group.groupKey === "settings.groups.spaces"}
       {#each getSpaces() as space (space.id)}<SettingsSpaceRow {space} />{/each}
     {:else if group.groupKey === "settings.groups.profiles"}

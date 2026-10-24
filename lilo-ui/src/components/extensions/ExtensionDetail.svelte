@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SettingsGroupIcon from "../settings/SettingsGroupIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -199,18 +200,21 @@
 
   {#if extension.description}
     <UiInsetList title={t("extensions.detailDescription")}>
+      {#snippet icon()}<SettingsGroupIcon group="extensions.detailDescription" />{/snippet}
       <p class="detail-text">{extension.description}</p>
     </UiInsetList>
   {/if}
 
   {#if capabilities.length > 0}
     <UiInsetList title={t("extensions.detailCapabilities")}>
+      {#snippet icon()}<SettingsGroupIcon group="extensions.detailCapabilities" />{/snippet}
       <p class="detail-text">{capabilities.map((capability) => t(DETAIL_LABEL_KEYS[capability])).join(" · ")}</p>
     </UiInsetList>
   {/if}
 
   {#if permissions.length > 0}
     <UiInsetList title={t("extensions.detailPermissions")}>
+      {#snippet icon()}<SettingsGroupIcon group="extensions.detailPermissions" />{/snippet}
       <p class="detail-text detail-chips">
         {#each permissions as permission (permission)}<span class="detail-chip">{permission}</span>{/each}
       </p>
@@ -219,6 +223,7 @@
 
   {#if extension.commands?.length}
     <UiInsetList title={t("extensions.detailShortcuts")}>
+      {#snippet icon()}<SettingsGroupIcon group="extensions.detailShortcuts" />{/snippet}
       {#each extension.commands as command (command.id)}
         <UiListRow title={commandTitle(command)}>
           {#snippet action()}
@@ -250,6 +255,7 @@
 
   {#if wantsHosts}
     <UiInsetList title={t("extensions.detailSiteAccess")}>
+      {#snippet icon()}<SettingsGroupIcon group="extensions.detailSiteAccess" />{/snippet}
       <UiListRow title={sites.length === 0 ? t("extensions.siteAccessAll") : t("extensions.siteAccessRestricted")}>
         {#if sites.length > 0}
           <span class="detail-chips">

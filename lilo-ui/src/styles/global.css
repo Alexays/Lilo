@@ -109,6 +109,17 @@
   --terminal-tile-text: #f4f2ff;
   --terminal-tile-accent: #cfc4ff;
   --terminal-tile-border: rgba(255, 255, 255, 0.12);
+  /* Settings group tiles: Apple's system colors under a white glyph, plus Lilo's violet. */
+  --tile-blue: #007aff;
+  --tile-indigo: #5856d6;
+  --tile-purple: #af52de;
+  --tile-orange: #ff9500;
+  --tile-pink: #ff2d55;
+  --tile-green: #34c759;
+  --tile-teal: #30b0c7;
+  --tile-gray: #8e8e93;
+  --tile-lilo: #7c5dee;
+  --tile-agents: var(--agents);
 
   --motion-duration-fast: 120ms;
   --transition-fast: var(--motion-duration-fast) ease;
@@ -188,6 +199,13 @@
 
     --sidebar-bg: var(--bg-secondary);
     --sidebar-contrast: #f7f8fc;
+    --tile-blue: #0a84ff;
+    --tile-indigo: #5e5ce6;
+    --tile-purple: #bf5af2;
+    --tile-orange: #ff9f0a;
+    --tile-pink: #ff375f;
+    --tile-green: #30d158;
+    --tile-teal: #40c8e0;
     --chrome-overlay-backdrop-tint: rgba(2, 6, 18, 0.16);
     --chrome-overlay-surface: color-mix(in srgb, var(--bg-elevated) 92%, rgba(30, 30, 46, 0.9));
     --chrome-overlay-surface-strong: color-mix(in srgb, var(--bg-elevated) 96%, rgba(30, 30, 46, 0.96));
@@ -520,6 +538,17 @@ html.reduced-transparency * {
     --text-secondary: #33334a;
     --text-muted: #3f3f55;
     --focus-outline: 2px solid var(--accent);
+    /* Apple's accessible variants in both themes: darker fills keep the white glyph legible. */
+    --tile-blue: #0040dd;
+    --tile-indigo: #3634a3;
+    --tile-purple: #8944ab;
+    --tile-orange: #c93400;
+    --tile-pink: #d30f45;
+    --tile-green: #248a3d;
+    --tile-teal: #008299;
+    --tile-gray: #6c6c70;
+    --tile-lilo: #4a2fc8;
+    --tile-agents: #a8502f;
   }
 }
 

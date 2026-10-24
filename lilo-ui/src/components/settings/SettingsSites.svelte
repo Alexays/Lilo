@@ -6,6 +6,7 @@
   import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
   import { buildSites } from "./settingsPanelModel";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
+  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
@@ -30,6 +31,7 @@
 {#if site}
   {#if site.permissions.length > 0}
     <UiInsetList title={t("settings.groups.permissions")}>
+      {#snippet icon()}<SettingsGroupIcon group="settings.groups.permissions" />{/snippet}
       {#each site.permissions as permission (permission.id)}
         <UiListRow
           title={t(`sitePermissions.${permission.type}`)}
@@ -47,6 +49,7 @@
   {/if}
   {#if site.zoomLevels.length > 0}
     <UiInsetList title={t("settings.groups.zoom")}>
+      {#snippet icon()}<SettingsGroupIcon group="settings.groups.zoom" />{/snippet}
       {#each site.zoomLevels as level (level.host)}
         <UiListRow title={level.host} description={percent.format(level.zoom)}>
           {#snippet action()}
@@ -59,6 +62,7 @@
   {#if site.dataName}
     {@const dataName = site.dataName}
     <UiInsetList title={t("settings.groups.siteData")}>
+      {#snippet icon()}<SettingsGroupIcon group="settings.groups.siteData" />{/snippet}
       <UiListRow
         title={t("settings.sites.dataSummary")}
         description={site.dataKinds.map((kind) => t(`settings.websiteDataKinds.${kind}`)).join(", ")}
@@ -76,6 +80,7 @@
   </div>
 {:else}
   <UiInsetList title={t("settings.groups.sites", { count: sites.length })}>
+    {#snippet icon()}<SettingsGroupIcon group="settings.groups.sites" />{/snippet}
     {#each sites.slice(0, ROW_LIMIT) as entry (entry.key)}
       <SettingsSiteRow site={entry} />
     {/each}

@@ -9,6 +9,7 @@
     getShortcuts,
     recordShortcut,
   } from "../../stores/settings.svelte";
+  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -80,6 +81,7 @@
 
 {#each groups as group (group.title)}
   <UiInsetList title={group.title}>
+    {#snippet icon()}<SettingsGroupIcon group="settings.shortcuts" />{/snippet}
     {#each group.items as item (item.id)}
       {@const conflict = getShortcutConflict()?.id === item.id ? getShortcutConflict() : null}
       {@const recording = getRecordingShortcut() === item.id}

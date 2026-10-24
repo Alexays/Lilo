@@ -296,3 +296,21 @@ test("connecting an agent app shows it working until Lilo answers", async ({ pag
 	await page.evaluate(() => window.__lilo!.receive({ event: "settingsActionCompleted", action: "connectAgentClient", message: "Connected", level: "info" }));
 	await expect(connect).toHaveAttribute("aria-busy", "false");
 });
+
+test("a settings group's heading shows a decorative tile and keeps its height", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+
+	const browser = page.locator(".ui-shell-frame").getByRole("region", { name: "Browser", exact: true });
+	const icon = browser.locator(".ui-inset-list-title > .ui-inset-list-icon");
+	await expect(icon).toHaveAttribute("aria-hidden", "true");
+	await expect(icon.locator(".settings-group-icon svg")).toBeVisible();
+	await expect(browser.getByRole("heading", { name: "Browser", exact: true })).toBeVisible();
+	const titleHeight = () => page.locator(".ui-shell-frame .ui-inset-list-title").first().evaluate((el) => getComputedStyle(el).height);
+	const withIcon = await titleHeight();
+
+	// Search results are titled by section, without a tile.
+	await page.getByRole("searchbox", { name: "Search settings" }).fill("download");
+	await expect(page.locator(".ui-shell-frame .ui-inset-list-icon")).toHaveCount(0);
+	expect(await titleHeight()).toBe(withIcon);
+});

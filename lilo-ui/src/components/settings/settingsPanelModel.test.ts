@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -10,6 +11,7 @@ import {
   parseLinkRules,
   searchSettings,
   SETTINGS,
+  SETTINGS_GROUP_ICONS,
   SETTINGS_SECTIONS,
   sectionGroups,
 } from "./settingsPanelModel";
@@ -30,6 +32,23 @@ test("sections follow the navigation order with advanced last", () => {
 test("every setting belongs to a known section", () => {
   const sectionIds = new Set(SETTINGS_SECTIONS.map((section) => section.id));
   for (const setting of SETTINGS) assert.ok(sectionIds.has(setting.section), setting.id);
+});
+
+test("every settings group has a heading icon", () => {
+  for (const setting of SETTINGS) assert.ok(Object.hasOwn(SETTINGS_GROUP_ICONS, setting.groupKey), setting.groupKey);
+});
+
+test("every titled list in Settings shows its group icon", () => {
+  const sources = [
+    // Search results are titled by section, not by group.
+    ...readdirSync(new URL(".", import.meta.url)).filter((name) => name.endsWith(".svelte") && name !== "SettingsSearchResults.svelte"),
+    "../extensions/ExtensionDetail.svelte",
+  ].map((name) => [name, readFileSync(new URL(name, import.meta.url), "utf8")]);
+  for (const [name, source] of sources) {
+    for (const [list] of source.matchAll(/<UiInsetList title=.*\n.*/g)) {
+      assert.match(list, /\{#snippet icon\(\)\}<SettingsGroupIcon group=/, `${name}: ${list.trim()}`);
+    }
+  }
 });
 
 test("groups a section's settings in display order", () => {

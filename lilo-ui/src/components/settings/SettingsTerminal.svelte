@@ -2,6 +2,7 @@
   import { keepAwakeActions, settingsActions } from "../../lib/bridge/actions";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, getTerminalOptions, setSetting } from "../../stores/settings.svelte";
+  import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -66,6 +67,7 @@
 
 {#if enabled}
   <UiInsetList title={t("settings.terminalAppearanceGroup")}>
+    {#snippet icon()}<SettingsGroupIcon group="settings.terminalAppearanceGroup" />{/snippet}
     <UiListRow title={t("settings.terminalTheme")} description={t("settings.terminalThemeDescription")}>
       {#snippet action()}
         <UiSelect
@@ -124,6 +126,7 @@
   </UiInsetList>
 
   <UiInsetList title={t("settings.terminalBehaviorGroup")}>
+    {#snippet icon()}<SettingsGroupIcon group="settings.terminalBehaviorGroup" />{/snippet}
     <UiListRow title={t("settings.terminalScrollback")} description={t("settings.terminalScrollbackDescription")}>
       {#snippet action()}
         <UiSelect
@@ -156,6 +159,7 @@
   </UiInsetList>
 
   <UiInsetList title={t("settings.terminalSleepGroup")}>
+    {#snippet icon()}<SettingsGroupIcon group="settings.terminalSleepGroup" />{/snippet}
     <UiListRow title={t("settings.terminalPreventSleep")} description={t("settings.terminalPreventSleepDescription")}>
       {#snippet action()}
         <UiToggle
