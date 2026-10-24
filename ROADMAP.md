@@ -11,11 +11,11 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - A profiles page in Settings and a New Space panel (name, icon, color, profile)
 - Peek (a link from a pinned tab, or a Shift-click, opens over the page) and page popups in a window of their own
 - Little window with a global shortcut, and link rules that send links from other apps to a Space or a Little window
-- Import from Chromium browsers, Firefox, Zen and Safari: bookmarks, tabs and Spaces, history, cookies, extensions
+- Import from Arc, Chromium browsers, Firefox, Zen and Safari: bookmarks, tabs and Spaces, history, cookies, extensions
 - Fully custom keyboard shortcuts, with the Lilo and Arc presets, and a `Ctrl+Tab` switcher in recent order
 - Onboarding with browser import and password manager install
-- Chrome MV3 extensions (WKWebExtension + Gap APIs) with native Web Store install, and an Extensions popover to pin, manage and add them
-- Content blocking (EasyList/EasyPrivacy/uBO lists, cosmetic and procedural filtering, scriptlets)
+- Chrome MV3 extensions (WKWebExtension + Gap APIs) with native Web Store install, optional permissions granted at Lilo's prompt, and an Extensions popover to pin, manage and add them
+- Content blocking (EasyList/EasyPrivacy/uBO lists, cosmetic and procedural filtering, scriptlets), paused per site on every layer
 - Command palette with ranking and ghost completion
 - Reader mode, screenshots (a floating capture card and a markup editor), Picture-in-Picture, media controls in the sidebar
 - Tab lifecycle and memory management, process manager and diagnostics
@@ -24,15 +24,18 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Terminal tabs (libghostty-vt core, native Metal renderer, zsh shell integration), a Changes view of the working tree's diff, and keep-awake while a command runs
 - Split view, page translation, tab sharing in screen-share calls (`getDisplayMedia`)
 - Multiple windows over shared Spaces, with per-window selection and windows restored on relaunch
+- Accessibility: VoiceOver across the sidebar tree, panels, Changes view and terminal, full keyboard reach, Reduce motion and Increase contrast
 - Localization (English, French)
-- Signed updates through Sparkle
+- Signed, notarized DMG, a Homebrew cask, and signed updates through Sparkle
 - AppleScript dictionary, Shortcuts actions and a Focus filter, bookmarks in Spotlight, Screen Time
 - Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, and an approval gate for consequential actions
 - Web Serial API (`navigator.serial`) and EyeDropper API
 
 ## Next
 
-- First signed, notarized release (DMG) and the Homebrew cask
+- A launch that feels instant: the sidebar on screen in under 300 ms (about 410 ms today)
+- Published energy and memory measurements against Safari, Chrome and Arc, with the method
+- Releases built by CI from a tag, instead of on the maintainer's Mac
 - Terminal tabs: shell integration beyond zsh
 - Password managers: the iCloud Passwords helper needs an entitlement from Apple (see [COMPATIBILITY.md](COMPATIBILITY.md#icloud-passwords-extension))
 - More locales

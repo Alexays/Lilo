@@ -26,8 +26,8 @@ Lilo is a macOS browser for people who live in a sidebar: Spaces with their own 
 Chrome extensions you rely on, terminal tabs beside your pages, and a battery that lasts the day.
 If you are leaving Arc, it imports your Spaces, pinned tabs and folders in a few clicks.
 
-> **Status: early (v0.1.0).** Daily-driven by its author; the interface and internals still move.
-> [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
+> **Status: v0.1.0, the first public release.** Daily-driven by its author; expect rough edges,
+> and the interface still moves. [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
 
 ## Why Lilo
 
