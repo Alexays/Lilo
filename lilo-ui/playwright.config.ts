@@ -20,6 +20,7 @@ export default defineConfig({
 	webServer: {
 		command: "npm run dev",
 		port: 5173,
-		reuseExistingServer: !process.env.CI,
+		// The port is fixed, so a server already on it may be another checkout's.
+		reuseExistingServer: false,
 	},
 });
