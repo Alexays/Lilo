@@ -5,8 +5,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASE="${1:-origin/main}"
-# A fixed path keeps the SwiftPM cache under .build/check-commits valid across runs.
-WT="${TMPDIR:-/tmp}/lilo-check-commits"
+# A fixed path per checkout keeps the SwiftPM cache under .build/check-commits valid across runs, and two
+# checkouts checking at once never remove each other's worktree.
+WT="${TMPDIR:-/tmp}/lilo-check-commits-$(printf '%s' "$ROOT" | shasum | cut -c1-8)"
 cd "$ROOT"
 
 COMMITS="$(git rev-list --reverse "$BASE..HEAD")"
