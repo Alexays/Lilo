@@ -25,4 +25,11 @@ final class BuildIdentityTests: XCTestCase {
         throw XCTSkip("a Release build keeps the installed app's identity")
         #endif
     }
+
+    /// Sparkle's updater refuses to start, so no build would ever check for updates, when a signed feed lacks this pair.
+    func testASignedUpdateFeedAlsoVerifiesUpdatesBeforeExtraction() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        XCTAssertEqual(info["SURequireSignedFeed"] as? Bool, true)
+        XCTAssertEqual(info["SUVerifyUpdateBeforeExtraction"] as? Bool, true)
+    }
 }

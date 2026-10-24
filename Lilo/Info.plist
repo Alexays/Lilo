@@ -88,6 +88,9 @@
     <string>$(SPARKLE_PUBLIC_ED_KEY)</string>
     <key>SURequireSignedFeed</key>
     <true/>
+    <!-- Sparkle refuses to start a signed-feed updater without it. -->
+    <key>SUVerifyUpdateBeforeExtraction</key>
+    <true/>
     <key>LSMinimumSystemVersion</key>
     <string>26.0</string>
     <key>NSAppleScriptEnabled</key>
