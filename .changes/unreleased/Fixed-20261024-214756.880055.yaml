@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension without access to private spaces can no longer reach a private tab.
+time: 2026-10-24T21:47:56.880055+02:00

@@ -1,0 +1,3 @@
+kind: Changed
+body: An unpacked extension loads from a copy that follows its folder, so Lilo no longer writes into the developer's files.
+time: 2026-10-24T21:47:56.8734+02:00
