@@ -297,6 +297,25 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
     }
 
     @MainActor
+    func testADescriptionTheDefaultLocaleLeavesEmptyReadsBlank() async throws {
+        let prepared = try await prepareAsChrome(#"{"description": "__MSG_appDesc__", "default_locale": "en"}"#, files: [
+            "_locales/en/messages.json": #"{"AppDesc": {"message": "", "description": "Shown in the store"}}"#
+        ])
+
+        XCTAssertEqual(prepared.errors, [])
+        XCTAssertEqual(prepared.webExtension.manifest["description"] as? String, " ")
+    }
+
+    @MainActor
+    func testAnEmptyActionIconSetAndEmptyOverridesAreDropped() async throws {
+        let prepared = try await prepareAsChrome(#"{"action": {"default_icon": {}, "default_title": "Block"}, "chrome_url_overrides": {}}"#)
+
+        XCTAssertEqual(prepared.errors, [])
+        XCTAssertEqual(prepared.webExtension.manifest["action"] as? [String: String], ["default_title": "Block"])
+        XCTAssertNil(prepared.webExtension.manifest["chrome_url_overrides"])
+    }
+
+    @MainActor
     func testShortcutKeysAreTrimmedAsChromeTrimsThem() async throws {
         let prepared = try await prepareAsChrome(#"""
         {"action": {}, "commands": {"_execute_action": {"suggested_key": {"default": "Ctrl + Shift + Y", "mac": "Command + Shift + Y"}}}}
@@ -442,9 +461,14 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
 
     /// Prepares an MV3 manifest made of `entries`, then returns the errors WebKit reports loading it.
     @MainActor
-    private func prepareAsChrome(_ entries: String) async throws -> (webExtension: WKWebExtension, errors: [String]) {
+    private func prepareAsChrome(_ entries: String, files: [String: String] = [:]) async throws -> (webExtension: WKWebExtension, errors: [String]) {
         let extDir = tempDir.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (path, contents) in files {
+            let url = extDir.appendingPathComponent(path)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try contents.write(to: url, atomically: true, encoding: .utf8)
+        }
         var manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(entries.utf8)) as? [String: Any])
         manifest.merge(["manifest_version": 3, "name": "Chrome", "version": "1"]) { $1 }
         try JSONSerialization.data(withJSONObject: manifest).write(to: extDir.appendingPathComponent("manifest.json"))

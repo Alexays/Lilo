@@ -32,7 +32,7 @@ enum ExtensionBackgroundPreparer {
     static func prepare(extensionURL: URL, preludeSource: String, compatSource: String? = nil) throws -> PreparationResult {
         guard var manifest = try readManifest(at: extensionURL) else { return .notNeeded }
         let original = manifest as NSDictionary
-        acceptAsChrome(&manifest)
+        acceptAsChrome(&manifest, extensionURL: extensionURL)
         try prepareStaticRulesets(extensionURL: extensionURL, manifest: manifest)
         var preludeSource = preludeSource
         // chrome.publicSuffix is synchronous: its list is in the worker's prelude, and a file pages read.
@@ -153,10 +153,28 @@ enum ExtensionBackgroundPreparer {
     private static let webAccessibleSchemes: Set<String> = ["*", "http", "https", "file", "webkit-extension", "chrome-extension"]
 
     /// Rewrites the manifest entries Chrome accepts and WebKit rejects into their WebKit equivalent.
-    private static func acceptAsChrome(_ manifest: inout [String: Any]) {
-        // WebKit requires a description, Chrome shows none when there is none: a blank one stands in.
-        if ((manifest["description"] as? String) ?? "").isEmpty {
+    private static func acceptAsChrome(_ manifest: inout [String: Any], extensionURL: URL) {
+        // WebKit requires a description, Chrome shows none when there is none: a blank one stands in, also
+        // for a message the default locale leaves empty.
+        let description = (manifest["description"] as? String) ?? ""
+        var message: String?
+        if description.hasPrefix("__MSG_"), description.hasSuffix("__"), let locale = manifest["default_locale"] as? String,
+           !locale.contains("/"), !locale.contains(".."),
+           let data = try? Data(contentsOf: extensionURL.appendingPathComponent("_locales/\(locale)/messages.json")),
+           let messages = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
+            let key = description.dropFirst(6).dropLast(2).lowercased()
+            message = messages.first { $0.key.lowercased() == key }.flatMap { ($0.value as? [String: Any])?["message"] as? String }
+        }
+        if description.isEmpty || message?.isEmpty == true {
             manifest["description"] = " "
+        }
+        // WebKit rejects an empty icon set or overrides object, which declare nothing in Chrome.
+        if var action = manifest["action"] as? [String: Any], (action["default_icon"] as? [String: Any])?.isEmpty == true {
+            action["default_icon"] = nil
+            manifest["action"] = action
+        }
+        if (manifest["chrome_url_overrides"] as? [String: Any])?.isEmpty == true {
+            manifest["chrome_url_overrides"] = nil
         }
         // Chrome ignores a host permission's path (`https://*/` reaches every page of every host); WebKit matches it.
         for key in ["host_permissions", "optional_host_permissions"] {
