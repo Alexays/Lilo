@@ -24,7 +24,7 @@ for name in os.listdir(output_dir):
 
 total = 0
 for extension_id in ids:
-    with urllib.request.urlopen(STORE_URL.format(id=extension_id)) as response:
+    with urllib.request.urlopen(STORE_URL.format(id=extension_id), timeout=60) as response:
         crx = response.read()
     if crx[:4] != b"Cr24" or struct.unpack("<I", crx[4:8])[0] != 3:
         sys.exit(f"error: {extension_id}: not a CRX3 package")
