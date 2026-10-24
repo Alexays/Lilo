@@ -61,10 +61,6 @@ extension MainWindowController: WKWebViewTab.Delegate {
             let committedURL = eventURL ?? tab.currentURL
             tab.zoomSettings = WKWebViewTab.ZoomSettings()
             profileContext?.extensions.access.tabDidCommitNavigation(tab.id, url: committedURL)
-            // Chrome reports a tab's url change when it commits; the tab's own url changed when its navigation started.
-            if let registry = profileContext?.extensions, registry.hasLoadedExtensions, let adapter = tabManager.engineHost.tabAdapter(for: tab.id) {
-                registry.controller.didChangeTabProperties(.URL, for: adapter)
-            }
             // An agent tab stays at the zoom the agent measures with, whatever this window's profile keeps for the site.
             if !tab.isAgentControlled {
                 profileContext?.zoom.applyZoom(to: tab, forURL: committedURL, default: context.settingsStore.defaultZoom)

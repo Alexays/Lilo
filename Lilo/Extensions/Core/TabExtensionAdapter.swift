@@ -15,6 +15,8 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     weak var tabManager: TabManager?
     /// Profile this tab belongs to: its extension registry may not be the displayed profile's.
     let profileId: UUID?
+    /// The url last reported to WebKit as changed, so a navigation reports each new url once.
+    var reportedURL: URL?
 
     private static let discardedError = NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "The tab is discarded"])
     private static let windowUnavailableError = NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "The tab's window is unavailable"])

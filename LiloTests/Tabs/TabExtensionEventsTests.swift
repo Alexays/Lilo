@@ -86,4 +86,30 @@ final class TabExtensionEventsTests: XCTestCase {
         try await settle()
         XCTAssertEqual(heard?.moves, [[order.count - 1, 0]], "only the dragged tab moved, not the tabs it shifted")
     }
+
+    func testANavigationReportsItsURLOnce() async throws {
+        let server = try await TinyHTTPServer(respond: { _ in ("200 OK", ["Content-Type: text/html"], Data("<title>T</title>".utf8)) })
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+
+        window.tabManager.load(try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/target")), inTab: tab.id)
+
+        let loaded = await pollUntil(timeout: 10) { self.heard?.loaded == true }
+        XCTAssertTrue(loaded, "the page loads")
+        try await settle()
+        XCTAssertEqual(heard?.urls, 1, "one url change for one navigation")
+    }
+
+    func testPinningAPinnedTabReportsNothing() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+
+        _ = try window.applyBrowserCommand(.setPinned(spaceId: spaceId, tabId: tab.id, isPinned: true))
+        try await settle()
+        _ = try window.applyBrowserCommand(.setPinned(spaceId: spaceId, tabId: tab.id, isPinned: true))
+
+        let pinned = await pollUntil(timeout: 5) { (self.heard?.pins ?? 0) > 0 }
+        XCTAssertTrue(pinned, "the pin is reported")
+        try await settle()
+        XCTAssertEqual(heard?.pins, 1)
+    }
 }
