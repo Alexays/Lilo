@@ -4,6 +4,9 @@ import { installStaticChromeCompat } from './shared/static-compat.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { answerAsChrome } from './shared/message-answers.ts';
 
+// The build's banner skips the whole script in a world where it ran already.
+Object.defineProperty(globalThis, '__liloContentCompat', { value: true });
+
 installStaticChromeCompat(globalThis as any);
 
 // WebKit finds the world's listeners through its own `browser`, else `chrome`: Proton Pass hides both behind proxies
@@ -12,7 +15,7 @@ const browser = (globalThis as any).browser;
 if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, set() {}, configurable: true });
 
 const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
-if (onMessage && !Object.hasOwn(globalThis, '__liloOnMessage')) {
+if (onMessage) {
   answerAsChrome(onMessage);
   // WebKit recreates a collected event object without the members answerAsChrome adds.
   Object.defineProperty(globalThis, '__liloOnMessage', { value: onMessage });

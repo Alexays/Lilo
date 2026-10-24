@@ -183,6 +183,10 @@ await esbuild.build({
   outfile: '../ChromeContentCompat.js',
   format: 'iife',
   globalName: 'LiloContentCompat',
+  // Each of an extension's content_scripts entries matching a frame runs it in the same world: only the first does
+  // anything, the entry setting the flag.
+  banner: { js: '"use strict";if(!globalThis.__liloContentCompat){' },
+  footer: { js: '}' },
 });
 
 await esbuild.build({

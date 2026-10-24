@@ -1,5 +1,7 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import { installStaticChromeCompat } from './static-compat.ts';
 
 describe('installStaticChromeCompat', () => {
@@ -42,5 +44,21 @@ describe('installStaticChromeCompat runtime and DNR constants', () => {
     assert.equal(c.declarativeNetRequest.DYNAMIC_RULESET_ID, '_dynamic');
     assert.equal(c.declarativeNetRequest.MAX_NUMBER_OF_REGEX_RULES, 7);
     assert.equal(await c.declarativeNetRequest.getAvailableStaticRuleCount(), 30000);
+  });
+});
+
+describe('the content compat bundle', () => {
+  it('does its work once per world, however many content scripts entries run it', () => {
+    const bundle = readFileSync(new URL('../../../ChromeContentCompat.js', import.meta.url), 'utf8');
+    let reads = 0;
+    const chrome = { storage: {} };
+    const context = vm.createContext({ navigator: {}, get chrome() { reads++; return chrome; } });
+    vm.runInContext(bundle, context);
+    const first = reads;
+    vm.runInContext(bundle, context);
+
+    assert.ok(first > 0);
+    assert.equal(reads, first, 'the second run reads nothing');
+    assert.equal(typeof (chrome.storage as any).managed.get, 'function');
   });
 });
