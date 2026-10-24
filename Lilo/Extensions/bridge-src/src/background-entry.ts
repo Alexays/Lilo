@@ -5,6 +5,7 @@ import { collectGapListeners, sendGapListeners } from './shared/gap-event.ts';
 import { workerReady } from './shared/ipc.ts';
 import { recordErrorDiagnostics } from './shared/error-diagnostics.ts';
 import { installWorkerWebSocket } from './shared/web-socket.ts';
+import { installCredentialedFetch } from './shared/credentialed-fetch.ts';
 import { registrationsSettled } from './shared/chrome-leniency.ts';
 import { installWasmMimeCompat } from './shared/wasm-mime.ts';
 import { skipEmptyImports } from './shared/empty-imports.ts';
@@ -66,6 +67,10 @@ if (!(globalThis as any).__liloBackgroundPreludeInstalled) {
 
   preludeStage('web-socket', () => {
     installWorkerWebSocket(globalThis);
+  });
+
+  preludeStage('credentialed-fetch', () => {
+    installCredentialedFetch(globalThis);
   });
 
   preludeStage('empty-imports', () => {

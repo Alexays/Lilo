@@ -253,6 +253,7 @@ final class WKEngineFactory {
         router.register(handler: sidePanelHandler)
         router.register(handler: OffscreenBridgeHandler())
         router.register(handler: WebSocketBridgeHandler())
+        router.register(handler: CredentialedFetchBridgeHandler())
         router.register(handler: captureHandler)
         router.register(handler: userScriptsHandler)
         router.register(handler: SearchQueryBridgeHandler())

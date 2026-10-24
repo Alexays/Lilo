@@ -96,18 +96,8 @@ final class DownloadsBridgeHandler: GapHandler {
                 request.setValue(value, forHTTPHeaderField: name)
             }
             // The session's own jar is not the profile's: send the profile's cookies for the URL.
-            if scheme != "data", request.value(forHTTPHeaderField: "Cookie") == nil, let host = url.host?.lowercased() {
-                let path = url.path.isEmpty ? "/" : url.path
-                let now = Date()
-                let cookies = await WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore.allCookies().filter { cookie in
-                    let domain = cookie.domain.lowercased()
-                    let domainMatches = domain.hasPrefix(".")
-                        ? host == domain.dropFirst() || host.hasSuffix(domain)
-                        : host == domain
-                    return domainMatches && path.hasPrefix(cookie.path)
-                        && (!cookie.isSecure || scheme == "https")
-                        && (cookie.expiresDate.map { $0 > now } ?? true)
-                }
+            if scheme != "data", request.value(forHTTPHeaderField: "Cookie") == nil {
+                let cookies = await WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore.cookies(for: url)
                 request.httpShouldHandleCookies = false
                 for (name, value) in HTTPCookie.requestHeaderFields(with: cookies) {
                     request.setValue(value, forHTTPHeaderField: name)

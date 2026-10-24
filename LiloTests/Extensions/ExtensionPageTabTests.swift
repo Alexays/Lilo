@@ -284,6 +284,46 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertTrue(read, "the popup's page in a tab reads that tab")
     }
 
+    /// A credentialed fetch to a host the extension may access carries the site's SameSite=Lax and Strict cookies, as
+    /// in Chrome, where WebKit leaves them out of an extension's request (ChatGPT's side panel read signed out).
+    func testCredentialedFetchesCarryTheSiteCookiesAsInChrome() async throws {
+        let server = try await TinyHTTPServer { request in
+            if request.hasPrefix("GET /set ") {
+                return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; Path=/; SameSite=Lax", "Set-Cookie: strict=1; Path=/; SameSite=Strict"], Data("<title>set</title>".utf8))
+            }
+            let cookie = request.split(separator: "\r\n").first { $0.lowercased().hasPrefix("cookie:") }.map(String.init) ?? "no cookie"
+            return ("200 OK", ["Content-Type: text/plain"], Data(cookie.utf8))
+        }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("cookies")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Cookies", "version": "1.0", "description": "d", "action": {}, "host_permissions": ["http://127.0.0.1/*"], "background": {"service_worker": "worker.js"}}"#,
+            "worker.js": "chrome.runtime.onMessage.addListener((url, _, reply) => { fetch(url, { credentials: 'include', cache: 'no-store' }).then((r) => r.text()).then(reply, (e) => reply('fails ' + e)); return true; });",
+            "page.html": "<title>page</title>"
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        let site = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/set")))
+        _ = await pollUntil { window.tabManager.engineTab(for: site.id)?.currentTitle == "set" }
+        let pageTab = try XCTUnwrap(window.createTabStateFirst(url: context.baseURL.appendingPathComponent("page.html")))
+        _ = await pollUntil { window.tabManager.engineTab(for: pageTab.id)?.currentTitle == "page" }
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: pageTab.id)?.view as? WKWebView)
+        let echo = "http://127.0.0.1:\(server.port)/echo"
+        let fromPage = try await page.callAsyncJavaScript("return await fetch(url, { credentials: 'include', cache: 'no-store' }).then((r) => r.text(), (e) => 'fails ' + e)", arguments: ["url": echo], in: nil, contentWorld: .page)
+        let fromWorker = try await page.callAsyncJavaScript("return await chrome.runtime.sendMessage(url)", arguments: ["url": echo], in: nil, contentWorld: .page)
+        let siteTab = try XCTUnwrap(window.tabManager.engineTab(for: site.id)?.view as? WKWebView)
+        let fromSite = try await siteTab.callAsyncJavaScript("return await fetch('/echo', { cache: 'no-store' }).then((r) => r.text())", arguments: [:], in: nil, contentWorld: .page)
+        let cookies = { (echoed: Any?) in Set(((echoed as? String) ?? "").replacingOccurrences(of: "Cookie: ", with: "").components(separatedBy: "; ")) }
+        XCTAssertEqual(cookies(fromSite), ["lax=1", "plain=1", "strict=1"])
+        XCTAssertEqual(cookies(fromPage), ["lax=1", "plain=1", "strict=1"], "an extension page's fetch")
+        XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
+    }
+
     /// Chrome runs nothing of a page after its window.close(): neither an API callback or promise it
     /// asked for next (Google Dictionary) nor the port disconnect the close itself causes (DuckDuckGo).
     func testAnExtensionPageRunsNothingAfterItsWindowClose() async throws {

@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44 and 46. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46 and 81 (`XMLHttpRequest`). Every other gap is fully worked around.
 
 ---
 
@@ -384,6 +384,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Lilo:** diffs the cookie store and fires Chrome's `changeInfo` on an event that takes the listeners of WebKit's, through `chrome` and `browser` ([cookies.ts], [CookieChangeTracker.swift]). User-visible side: COMPATIBILITY.md, "cookies.onChanged".
 - **Check:** Manual.
 
+### 81. An extension's requests leave out `SameSite` cookies
+
+- **Gap:** WebKit takes an extension page or worker for another site than the hosts it requests, so a `fetch` with `credentials: "include"` to a host the extension may access carries the cookies without `SameSite` only, never the `Lax` or `Strict` ones. Chrome sends an extension's request to a host it may access every cookie, as a first party.
+- **Lilo:** such a `fetch` from an extension page or worker goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
+- **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
+- **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
+
 ## declarativeNetRequest and content blockers
 
 ### 21. Content blocker regexes are a subset, ASCII only
@@ -500,3 +507,5 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 [EngineFreezer.swift]: ../Lilo/Engine/EngineFreezer.swift
 [WKEngineFactory.swift]: ../Lilo/Engine/WKEngineFactory.swift
 [WKWebViewTab.swift]: ../Lilo/Engine/WKWebViewTab.swift
+[credentialed-fetch.ts]: ../Lilo/Extensions/bridge-src/src/shared/credentialed-fetch.ts
+[CredentialedFetchBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/CredentialedFetchBridgeHandler.swift

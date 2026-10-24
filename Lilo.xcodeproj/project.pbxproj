@@ -379,6 +379,7 @@
 		A7F78CF632AB095240952A42 /* ExtensionControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99125D1239CB69A1C1CF265E /* ExtensionControllerDelegate.swift */; };
 		A87A301DC8739DDB6C4FAA7C /* MainWindowController+Downloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC0BA8B1233291906B027737 /* MainWindowController+Downloads.swift */; };
 		A9275B36429ACD7E20A937A6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34C98C02AE45BCCC353A4BE4 /* AppDelegate.swift */; };
+		A92AFF601428E968CE9E8B0B /* CredentialedFetchBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817E5393D553DFBB493AFFB2 /* CredentialedFetchBridgeHandler.swift */; };
 		AA3A3578AC5689268E862067 /* WindowChromeColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97C395055212534811683918 /* WindowChromeColorTests.swift */; };
 		AA5BEF2E035E8E2916D9AB8C /* ExtensionNativeMessaging.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC431FF6C7CE8C14541FAF7B /* ExtensionNativeMessaging.swift */; };
 		AAE89A53D43B8BA4E8E7E2C3 /* TabFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3D97C68ECC17D5A7E28123 /* TabFolder.swift */; };
@@ -929,6 +930,7 @@
 		803C40E6CC8D03E15990CD33 /* ContextMenuBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextMenuBuilder.swift; sourceTree = "<group>"; };
 		80EED497CE2A72BE4910CD9A /* ChromeDragRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeDragRoutingTests.swift; sourceTree = "<group>"; };
 		814C5A051F6E9B567B28A26F /* PublicSuffixTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicSuffixTests.swift; sourceTree = "<group>"; };
+		817E5393D553DFBB493AFFB2 /* CredentialedFetchBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialedFetchBridgeHandler.swift; sourceTree = "<group>"; };
 		81AB35095009F1E4C0876C0F /* ExtensionDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDiagnostics.swift; sourceTree = "<group>"; };
 		821356C64400352E495C9091 /* ProxyBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyBridgeHandler.swift; sourceTree = "<group>"; };
 		838BAD15BCCF8242CA383725 /* NSColor+CSSHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+CSSHex.swift"; sourceTree = "<group>"; };
@@ -1684,6 +1686,7 @@
 				40099ED7203812C7AC6D9955 /* CommandsBridgeHandler.swift */,
 				3ABC27298577426623E704DC /* ContentSettingsBridgeHandler.swift */,
 				08C3E625BBD1D105CB1EC87B /* CookiesBridgeHandler.swift */,
+				817E5393D553DFBB493AFFB2 /* CredentialedFetchBridgeHandler.swift */,
 				9B1BD2C68BF3CDCF19C4F6B2 /* DebuggerBridgeHandler.swift */,
 				C3329D370080C742FB09D280 /* DeclarativeNetRequestBridgeHandler.swift */,
 				5BF04244505A20441EEAE7C5 /* DownloadsBridgeHandler.swift */,
@@ -2570,6 +2573,7 @@
 				688B48F12408C3E2CAD24A61 /* ContextMenuBuilder.swift in Sources */,
 				A437754DB93A57013CF56697 /* CookieChangeTracker.swift in Sources */,
 				BFF602BC40EFF06E0F888682 /* CookiesBridgeHandler.swift in Sources */,
+				A92AFF601428E968CE9E8B0B /* CredentialedFetchBridgeHandler.swift in Sources */,
 				E59077FB3BA624F2F01CA948 /* Database.swift in Sources */,
 				7989A1D317C95F1C3D365CF1 /* DebuggerBridgeHandler.swift in Sources */,
 				C1382419D14894DC7DABD390 /* DeclarativeNetRequestBridgeHandler.swift in Sources */,

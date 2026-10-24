@@ -1,4 +1,5 @@
 import { installWasmMimeCompat } from './shared/wasm-mime.ts';
+import { installCredentialedFetch } from './shared/credentialed-fetch.ts';
 import { installGapAPIs } from './shared/install-gap-apis.ts';
 import { closePage, installChromeCompat } from './shared/chrome-compat.ts';
 import { actionColorAugmentation } from './augmentation/action.ts';
@@ -33,6 +34,7 @@ if (isExtensionOrigin && !(globalThis as any).__liloAugmentationInstalled) {
   }
   Object.defineProperty(g, '__liloPageClosing', { value: closePage, configurable: true });
   installWasmMimeCompat(globalThis as any);
+  installCredentialedFetch(globalThis);
   installPageWorkerMessages(globalThis);
   // A page shown in a tab gets the tabs' user agent; extension code reads Chrome's, as in a popup.
   try {
