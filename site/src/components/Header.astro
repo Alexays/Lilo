@@ -52,7 +52,7 @@ const links = [
         </svg>
       </button>
       <a class="logo" href={home} aria-label={text.home}>
-        <Flower />
+        <Flower id="header-flower" class="bloom" />
         Lilo
       </a>
     </div>
@@ -67,7 +67,8 @@ const links = [
       <button
         class="icon-button theme-toggle"
         type="button"
-        aria-label={text.toggleTheme}
+        aria-label={text.darkMode}
+        aria-pressed="false"
         title={text.toggleTheme}
       >
         <svg
@@ -116,6 +117,21 @@ const links = [
   const header = document.querySelector<HTMLElement>(".site-header");
   const menu = document.querySelector<HTMLButtonElement>(".menu-toggle");
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
+  const systemTheme = matchMedia("(prefers-color-scheme: dark)");
+
+  const getTheme = () =>
+    root.dataset.theme ?? (systemTheme.matches ? "dark" : "light");
+
+  const syncTheme = () => {
+    const theme = getTheme();
+    toggle?.setAttribute("aria-pressed", String(theme === "dark"));
+
+    for (const meta of document.querySelectorAll<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    )) {
+      meta.media = meta.dataset.theme === theme ? "all" : "not all";
+    }
+  };
 
   try {
     const theme = localStorage.getItem("lilo-theme");
@@ -128,12 +144,9 @@ const links = [
   }
 
   toggle?.addEventListener("click", () => {
-    const dark = root.dataset.theme
-      ? root.dataset.theme === "dark"
-      : matchMedia("(prefers-color-scheme: dark)").matches;
-
-    const theme = dark ? "light" : "dark";
+    const theme = getTheme() === "dark" ? "light" : "dark";
     root.dataset.theme = theme;
+    syncTheme();
 
     try {
       localStorage.setItem("lilo-theme", theme);
@@ -168,6 +181,16 @@ const links = [
       menu.focus();
     }
   });
+
+  header?.addEventListener("focusout", ({ relatedTarget }) => {
+    if (!(relatedTarget instanceof Node) || !header.contains(relatedTarget)) {
+      menu?.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  systemTheme.addEventListener("change", syncTheme);
+
+  syncTheme();
 
   if (header) {
     header.dataset.ready = "";

@@ -28,9 +28,10 @@ The Undici override patches Miniflare's pinned HTTP client. Remove it when Minif
 - `src/pages/` holds the English and French home, moving and changelog routes, the 404 page and the sitemap endpoint.
 - `src/layouts/Layout.astro` shares page metadata, language alternates, icons, the header and footer. It reads the app version from `Xcode/Configs/Base.xcconfig` at build time.
 - `src/components/` holds navigation, the footer and the changelog. New shared website copy lives in `src/lib/i18n.ts`.
-- `src/styles/global.css` holds the site's existing design. Astro fingerprints the built stylesheets.
-- `src/scripts/demo.ts` holds the home page’s interactive demo, bundled by Astro through `components/Demo.astro`. JavaScript/TypeScript modules, including tests and tool configs, use `.ts`.
-- `src/components/Header.astro` contains one responsive navigation list, the theme toggle, scoped styles and TypeScript bundled by Astro. The home page demo changes Spaces when a visitor selects one.
+- `src/styles/global.css` holds shared tokens and page layout styles. Component styles stay with their Astro components. Astro fingerprints the built stylesheets.
+- `src/components/Demo.astro` renders the home page's Space previews at build time. Native radio controls and CSS switch the active Space, including without JavaScript. Its bundled TypeScript uses GSAP to rotate Spaces every 3.2 seconds, with staggered transitions. Selecting a Space stops playback; the pause button can restart it. Playback pauses outside the viewport, in hidden tabs and with Reduce Motion.
+- `src/components/Header.astro` contains one responsive navigation list, the theme toggle, scoped styles and TypeScript bundled by Astro. Authored browser modules, tests and tool configs use TypeScript.
+- `src/components/ExtensionStore.astro` links to the real Chrome Web Store listings. Its logos live in `src/assets/extensions/`; Astro generates WebP images at 1x and 2x density.
 - `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.

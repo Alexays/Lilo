@@ -185,8 +185,7 @@ def sync_json_ld(path):
     for node in data["@graph"]:
         if node["@type"] == "FAQPage":
             node["mainEntity"] = faq
-    ld = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    assert "</" not in ld
+    ld = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
     file.write_text(src[: match.start(1)] + ld + src[match.end(1) :])
 
 

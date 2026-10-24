@@ -1,3 +1,3 @@
 kind: Changed
-body: The website has simpler navigation, a theme toggle and a new footer with GitHub and Discord icons. The Spaces demo now changes only when you select a Space.
+body: The website has simpler navigation, a theme toggle and a new footer with GitHub and Discord icons. Space transitions are animated and the preview also works without JavaScript. Extension links open the Chrome Web Store. Text contrast and keyboard access are improved.
 time: 2026-10-24T23:43:33.441897+03:00

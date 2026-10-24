@@ -1,4 +1,5 @@
 ---
+import Flower from "../../../components/Flower.astro";
 import Layout from "../../../layouts/Layout.astro";
 
 const lang = "fr";
@@ -41,17 +42,7 @@ const schema = [
     <div class="top">
       <div class="wrap">
         <div class="hero-copy">
-          <svg
-            class="mark bloom"
-            viewBox="112 112 800 800"
-            role="img"
-            aria-label="Logo de Lilo"
-          >
-            <use href="#petal-4" />
-            <use href="#petal-3" />
-            <use href="#petal-2" />
-            <use href="#petal-1" />
-          </svg>
+          <Flower id="hero-flower" class="mark bloom" />
           <h1>
             Passer
             <br />
@@ -81,13 +72,18 @@ const schema = [
       <div class="wrap">
         <div class="head">
           <span class="tag">Ce que vous emportez</span>
-          <h2>Douze navigateurs, lus sur votre Mac.</h2>
+          <h2 id="browser-support">Douze navigateurs, lus sur votre Mac.</h2>
           <p>
             Lilo trouve chaque navigateur et chaque profil de ce Mac, et affiche
             en premier celui qui ouvre vos liens aujourd'hui.
           </p>
         </div>
-        <div class="matrix">
+        <div
+          class="matrix"
+          role="region"
+          aria-labelledby="browser-support"
+          tabindex="0"
+        >
           <table>
             <thead>
               <tr>
@@ -108,6 +104,8 @@ const schema = [
                 <td class="y">Oui</td>
                 <td class="n">Non</td>
               </tr>
+            </tbody>
+            <tbody>
               <tr class="grp">
                 <th scope="rowgroup" colspan="6">
                   Navigateurs Chromium
@@ -185,6 +183,8 @@ const schema = [
                 <td class="y">Oui</td>
                 <td class="y">Oui</td>
               </tr>
+            </tbody>
+            <tbody>
               <tr class="grp">
                 <th scope="rowgroup" colspan="6">
                   Navigateurs Firefox
@@ -647,17 +647,7 @@ const schema = [
     <section class="band">
       <div class="wrap end">
         <span class="tag">Gratuit et open source</span>
-        <svg
-          class="mark"
-          viewBox="112 112 800 800"
-          aria-hidden="true"
-          style="width:72px"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
+        <Flower id="end-flower" class="mark small-mark" />
         <h2>Prêt à emménager&nbsp;?</h2>
         <p>
           Téléchargez Lilo, choisissez votre navigateur, et vos affaires sont là

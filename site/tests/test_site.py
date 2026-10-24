@@ -3,12 +3,14 @@ import json
 from pathlib import Path
 import re
 import sys
+from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 from urllib.parse import unquote, urlparse
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from generate import DIST, Node, Tree, plain
+from generate import DIST, Node, Tree, plain, sync_json_ld
 
 PAGES = ["index.html", "moving/index.html", "changelog/index.html",
          "fr/index.html", "fr/moving/index.html", "fr/changelog/index.html"]
@@ -25,6 +27,12 @@ def tree(path):
     parsed = Tree()
     parsed.feed(path.read_text())
     return list(nodes(parsed.root))
+
+
+def inline_text(node):
+    if isinstance(node, str):
+        return node
+    return "".join(inline_text(child) for child in node.children)
 
 
 class SiteTests(unittest.TestCase):
@@ -75,9 +83,14 @@ class SiteTests(unittest.TestCase):
     def test_local_links_fragments_and_assets_resolve(self):
         for page in PAGES + ["404.html"]:
             source = DIST / page
-            for node in tree(source):
-                for attribute in ["href", "src"]:
-                    target = node.attrs.get(attribute, "")
+            parsed = tree(source)
+            ids = [node.attrs["id"] for node in parsed if "id" in node.attrs]
+            self.assertEqual(len(ids), len(set(ids)), f"Duplicate IDs in {page}")
+            for node in parsed:
+                targets = [(attribute, node.attrs.get(attribute, "")) for attribute in ["href", "src"]]
+                targets += [("srcset", item.strip().split()[0])
+                            for item in node.attrs.get("srcset", "").split(",") if item.strip()]
+                for attribute, target in targets:
                     url = urlparse(target)
                     if not target or url.scheme or url.netloc:
                         continue
@@ -151,6 +164,52 @@ class SiteTests(unittest.TestCase):
                 else:
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
+
+    def test_home_previews_are_static_and_extensions_link_to_the_store(self):
+        extension_ids = {"neebplgakaahbhdphmkckjjcegoiijjo", "eimadpbcbfnmbkopoojfekhnkhdbieeh",
+                         "fmkadmapgofadopljbjfkapdkoienihi"}
+        for page in ["index.html", "fr/index.html"]:
+            with self.subTest(page=page):
+                parsed = tree(DIST / page)
+                demo = next(node for node in parsed if node.attrs.get("id") == "browser-demo")
+                controls = [node for node in nodes(demo) if node.tag == "input"]
+                self.assertEqual(len(controls), 3)
+                self.assertTrue(all(node.attrs.get("type") == "radio" and node.attrs.get("aria-label") for node in controls))
+                self.assertEqual(sum("checked" in node.attrs for node in controls), 1)
+                self.assertTrue(all(any(label.tag == "label" and label.attrs.get("for") == control.attrs["id"]
+                                        for label in nodes(demo)) for control in controls))
+                self.assertIn("Lisbonne" if page.startswith("fr/") else "Lisbon", inline_text(demo))
+                links = [node for node in parsed if "store-link" in node.classes]
+                self.assertEqual({urlparse(node.attrs["href"]).path.split("/")[-1] for node in links}, extension_ids)
+                self.assertTrue(all(urlparse(node.attrs["href"]).netloc == "chromewebstore.google.com" for node in links))
+                self.assertTrue(all(inline_text(node).strip() in node.attrs["aria-label"] for node in links))
+                self.assertFalse(any(node.tag == "button" and "add" in node.classes for node in parsed))
+
+    def test_import_tables_can_be_scrolled_by_keyboard_and_have_row_groups(self):
+        for page in ["moving/index.html", "fr/moving/index.html"]:
+            with self.subTest(page=page):
+                parsed = tree(DIST / page)
+                region = next(node for node in parsed if "matrix" in node.classes)
+                self.assertEqual(region.attrs.get("tabindex"), "0")
+                self.assertTrue(any(node.attrs.get("id") == region.attrs.get("aria-labelledby") for node in parsed))
+                groups = [node for node in nodes(region) if node.tag == "tbody"]
+                self.assertEqual(len(groups), 3)
+                for group in groups[1:]:
+                    headers = [node for node in nodes(group) if node.attrs.get("scope") == "rowgroup"]
+                    self.assertEqual(len(headers), 1)
+
+    def test_faq_json_ld_preserves_html_examples_without_closing_the_script(self):
+        source = r'''<script type="application/ld+json">{"@graph":[{"@type":"FAQPage","description":"Use \u003c/script> literally","mainEntity":[]}]}</script>
+<details><summary>Can I show HTML?</summary><p>Yes: &lt;/script&gt; and &lt;b&gt;.</p></details>'''
+        with TemporaryDirectory() as directory, patch("generate.DIST", Path(directory)):
+            file = Path(directory) / "index.html"
+            file.write_text(source)
+            sync_json_ld("index.html")
+            output = file.read_text()
+        self.assertEqual(output.count("</script>"), 1)
+        graph = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', output, re.S)[1])["@graph"]
+        self.assertEqual(graph[0]["description"], "Use </script> literally")
+        self.assertEqual(graph[0]["mainEntity"][0]["acceptedAnswer"]["text"], "Yes: </script> and <b>.")
 
     def test_cloudflare_assets_and_redirects_ship_in_the_build(self):
         redirects = (DIST / "_redirects").read_text()
