@@ -412,7 +412,7 @@
     class:dragging={space.id === draggedSpaceId}
     class:recent-drop={isSpaceRecentlyDropped(space.id)}
     use:tooltip={{
-      text: profile ? t("bottomBar.signedInAs", { space: space.name, profile: profile.name }) : space.name,
+      text: profile && profile.name !== space.name ? t("bottomBar.signedInAs", { space: space.name, profile: profile.name }) : space.name,
       iconText: space.icon || "🌐",
       // The menu bar's Spaces shortcuts count the same Spaces, in the same order.
       shortcut: index < 9 ? shortcutKeys(`space.select${index + 1}`) : undefined,
