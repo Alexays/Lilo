@@ -9,11 +9,17 @@ const listPath = join(root, 'LiloTests/Extensions/top-extensions.json');
 
 // The RPC behind the store's pages: CWFOxc lists the categories, zTyKYc a category's extensions.
 async function rpc(id, request) {
-  const response = await fetch(`https://chromewebstore.google.com/_/ChromeWebStoreConsumerFeUi/data/batchexecute?rpcids=${id}&hl=en&rt=c`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-    body: new URLSearchParams({ 'f.req': JSON.stringify([[[id, JSON.stringify(request), null, 'generic']]]) }),
-  });
+  // The store answers a long crawl with the odd 502: a few tries get past it.
+  let response;
+  for (let attempt = 1; ; attempt++) {
+    response = await fetch(`https://chromewebstore.google.com/_/ChromeWebStoreConsumerFeUi/data/batchexecute?rpcids=${id}&hl=en&rt=c`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: new URLSearchParams({ 'f.req': JSON.stringify([[[id, JSON.stringify(request), null, 'generic']]]) }),
+    });
+    if (response.status < 500 || attempt === 4) break;
+    await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+  }
   if (!response.ok) throw new Error(`${id}: HTTP ${response.status}`);
   // Chunks of `length\njson`; the answer is the wrb.fr entry for the RPC.
   for (const line of (await response.text()).split('\n')) {
