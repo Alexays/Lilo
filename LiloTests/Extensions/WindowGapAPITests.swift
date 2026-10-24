@@ -129,6 +129,30 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertFalse(registry.extensionWindows.contains { $0 === panel })
     }
 
+    // MARK: - tabGroups events
+
+    /// A folder the user makes, renames and deletes in the sidebar is a tab group to extensions, as an extension's own are,
+    /// and each change fires once.
+    func testSidebarFolderChangesFireTabGroupEvents() async throws {
+        let folderURL = directory.appendingPathComponent("groups", isDirectory: true)
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Groups", "version": "1.0", "permissions": ["tabGroups"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: folderURL.appendingPathComponent("manifest.json"))
+        try await registry.load(from: folderURL)
+        let groupsId = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let folder = TabFolder(spaceId: spaceId, name: "Work", color: "#1a73e8")
+
+        try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
+        try window.applyBrowserCommand(.updateFolder(spaceId: spaceId, folderId: folder.id, name: "Play", color: "#1a73e8", isCollapsed: false))
+        try window.applyBrowserCommand(.deleteFolder(spaceId: spaceId, folderId: folder.id))
+
+        let events = registry.gapEvents.undelivered(to: groupsId).filter { $0.namespace == "tabGroups" }
+        XCTAssertEqual(events.map(\.event), ["onCreated", "onUpdated", "onRemoved"])
+        XCTAssertEqual(events.map { ($0.args.first as? [String: Any])?["title"] as? String }, ["Work", "Play", "Play"])
+        XCTAssertTrue(queued("tabGroups.onCreated").isEmpty, "an extension without tabGroups hears nothing")
+    }
+
     // MARK: - openerTabId
 
     /// A tab a page opens (a `target=_blank` link, a Command-click) names that page's tab as its opener, as in Chrome.

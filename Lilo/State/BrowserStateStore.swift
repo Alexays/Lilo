@@ -40,6 +40,8 @@ final class BrowserStateStore {
     }
 
     private var spaces: [UUID: SpaceSnapshot] = [:]
+    /// Told of every change to a space's folders, whichever command made it, with the folders before and after.
+    var onFoldersChanged: ((_ spaceId: UUID, _ old: [TabFolder], _ new: [TabFolder]) -> Void)?
     /// Spaces some window shows. Their runtime is live, so hidden-space trims never touch them.
     private(set) var visibleSpaceIds: Set<UUID> = []
     /// Tabs on screen in some window, maintained by the window registry: never frozen or discarded.
@@ -376,6 +378,9 @@ final class BrowserStateStore {
         )
         snapshot.lastAccessedAt = Date()
         spaces[spaceId] = snapshot
+        if let onFoldersChanged, updatedState.projection.folders != previousProjection.folders {
+            onFoldersChanged(spaceId, previousProjection.folders, updatedState.projection.folders)
+        }
 
         return BrowserChangeSet(
             spaceId: spaceId,

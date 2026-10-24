@@ -182,6 +182,7 @@ final class WKEngineFactory {
     }
 
     private(set) lazy var sidePanelHandler = SidePanelBridgeHandler()
+    private(set) lazy var tabGroupsHandler = TabGroupsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) })
     private lazy var proxyHandler = ProxyBridgeHandler(settingsProvider: { [weak self] in self?.profileContext(for: $0)?.extensionSettings })
 
     /// A page that could not reach the extension's proxy fires chrome.proxy.onProxyError.
@@ -259,7 +260,7 @@ final class WKEngineFactory {
         router.register(handler: SearchQueryBridgeHandler())
         router.register(handler: DeclarativeNetRequestBridgeHandler())
         router.register(handler: I18nBridgeHandler())
-        router.register(handler: TabGroupsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) }))
+        router.register(handler: tabGroupsHandler)
         router.register(handler: BrowsingDataBridgeHandler(contextProvider: { [weak self] in self?.profileContext(for: $0) }, downloadManagerProvider: { [weak self] in self?.downloadManager }))
         router.register(handler: contentSettingsHandler)
         router.register(handler: fontSettingsHandler)

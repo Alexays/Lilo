@@ -6,8 +6,6 @@ import WebKit
 struct TabGroupsContext {
     let tabManager: TabManager
     let applyCommand: (BrowserCommand) throws -> BrowserChangeSet
-    /// The active profile's registry, for firing `chrome.tabGroups.on*` events to extensions.
-    let registry: ProfileExtensionRegistry?
 }
 
 /// `chrome.tabGroups`, `tabs.group`/`ungroup` and `tabs.discard` onto Lilo folders: group ids map to folder UUIDs per session, colors
@@ -129,9 +127,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             .updateFolder(spaceId: folder.spaceId, folderId: folder.id, name: newName, color: newColor, isCollapsed: newCollapsed),
             context: context
         )?.foldersById[folder.id] {
-            let dict = groupDict(updated)
-            emitGroupEvent("onUpdated", group: dict, context: context)
-            return ["group": dict]
+            return ["group": groupDict(updated)]
         }
         return BridgeError("Failed to update tab group")
     }
@@ -146,7 +142,6 @@ final class TabGroupsBridgeHandler: GapHandler {
 
         // Resolve the destination folder: an existing group, or a freshly minted one.
         let folderId: UUID
-        var createdFolder: TabFolder?
         if let groupId = call.int("groupId"), groupId != Self.tabGroupIdNone {
             guard let resolved = folder(forGroup: groupId, tabManager: tabManager)?.id else {
                 return BridgeError("No tab group with id \(groupId)")
@@ -154,22 +149,16 @@ final class TabGroupsBridgeHandler: GapHandler {
             folderId = resolved
         } else {
             let folder = TabFolder(spaceId: spaceId, name: "", color: Self.hex(forChromeColor: "grey") ?? "#9aa0a6")
-            guard let created = applied(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned), context: context)?
-                .foldersById[folder.id] else {
+            guard applied(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned), context: context)?
+                .foldersById[folder.id] != nil else {
                 return BridgeError("Failed to create tab group")
             }
             folderId = folder.id
-            createdFolder = created
         }
 
         moveTabs(uuids, toFolder: folderId, spaceId: spaceId, context: context)
         // Chrome auto-removes a group once its last tab leaves it.
         deleteEmptyFolders(sourceFolderIds.subtracting([folderId]), spaceId: spaceId, context: context)
-        if let createdFolder {
-            // Report the new group with its post-grouping state (name/color may be defaults).
-            let latest = tabManager.folder(id: folderId) ?? createdFolder
-            emitGroupEvent("onCreated", group: groupDict(latest), context: context)
-        }
         return ["groupId": groupId(forFolder: folderId)]
     }
 
@@ -210,11 +199,7 @@ final class TabGroupsBridgeHandler: GapHandler {
         guard !folderIds.isEmpty else { return }
         let remaining = context.tabManager.tabs(forSpace: spaceId)
         for folderId in folderIds where !remaining.contains(where: { $0.groupId == folderId }) {
-            // Build the removed-group payload before the folder is gone, then fire onRemoved.
-            let removed = context.tabManager.folder(id: folderId).map { groupDict($0) }
-            if applied(.deleteFolder(spaceId: spaceId, folderId: folderId), context: context) != nil, let removed {
-                emitGroupEvent("onRemoved", group: removed, context: context)
-            }
+            _ = applied(.deleteFolder(spaceId: spaceId, folderId: folderId), context: context)
         }
     }
 
@@ -256,11 +241,24 @@ final class TabGroupsBridgeHandler: GapHandler {
         }
     }
 
-    /// Fire a `chrome.tabGroups.*` event to every extension holding the `tabGroups` permission. Note:
-    /// the payload's `windowId` is `-1` for pushed events (WebKit's window id isn't known natively and
-    /// can't be JS-stamped on a push the way `query`/`get` results are).
-    private func emitGroupEvent(_ event: String, group: [String: Any], context: TabGroupsContext) {
-        context.registry?.emitGapEvent("tabGroups", event, args: [group], requiredPermission: "tabGroups")
+    // MARK: - Events
+
+    /// Fires `chrome.tabGroups.onCreated`, `onUpdated` and `onRemoved` for a space's folder change, whichever made it, to the
+    /// extensions of `registry` holding `tabGroups`. A pushed group's `windowId` is -1: only WebKit knows the window's id.
+    func foldersChanged(from old: [TabFolder], to new: [TabFolder], registry: ProfileExtensionRegistry) {
+        guard !registry.extensionIds(withPermission: "tabGroups").isEmpty else { return }
+        let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let newIds = Set(new.map(\.id))
+        let emit = { (event: String, folder: TabFolder) in
+            registry.emitGapEvent("tabGroups", event, args: [self.groupDict(folder)], requiredPermission: "tabGroups")
+        }
+        for folder in old where !newIds.contains(folder.id) { emit("onRemoved", folder) }
+        for folder in new {
+            guard let previous = oldById[folder.id] else { emit("onCreated", folder); continue }
+            if previous.name != folder.name || previous.color != folder.color || previous.isCollapsed != folder.isCollapsed {
+                emit("onUpdated", folder)
+            }
+        }
     }
 
     // MARK: - Identity translation

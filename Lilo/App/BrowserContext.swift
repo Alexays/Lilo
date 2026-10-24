@@ -129,6 +129,7 @@ final class BrowserContext {
         engineFactory.downloadManager = downloadManager
         faviconService.storeForProfile = { [profileContexts] in profileContexts.existingContext(for: $0)?.favicons }
         installDownloadGapEventObservers()
+        installTabGroupEventObserver()
         installTabShareRouting()
     }
 
@@ -730,6 +731,18 @@ extension BrowserContext {
             windows.windows.forEach { $0.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)]) }
             guard !downloadManager.isPrivateDownload(id: id) else { return }
             windows.activeWindow?.profileContext?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
+        }
+    }
+}
+
+extension BrowserContext {
+    /// Bridges every folder change, from the sidebar or an extension, to chrome.tabGroups events for the extensions of the
+    /// space's profile; a private space's stay unseen.
+    private func installTabGroupEventObserver() {
+        browserState.onFoldersChanged = { [weak self] spaceId, old, new in
+            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate,
+                  let registry = profileContexts.existingContext(for: space.profileId)?.extensions else { return }
+            engineFactory.tabGroupsHandler.foldersChanged(from: old, to: new, registry: registry)
         }
     }
 }
