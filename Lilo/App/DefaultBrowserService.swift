@@ -10,14 +10,17 @@ enum DefaultBrowserService {
               let handler = NSWorkspace.shared.urlForApplication(toOpen: probe) else {
             return false
         }
-        return handler.standardizedFileURL.path == Bundle.main.bundleURL.standardizedFileURL.path
+        // By identity, not path: a copy still on the disk image, or LaunchServices' pick among two copies, is still Lilo.
+        return Bundle(url: handler)?.bundleIdentifier == Bundle.main.bundleIdentifier
     }
 
     static func requestDefault(completion: @escaping @MainActor (Bool) -> Void) {
         let app = Bundle.main.bundleURL
-        NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "http") { _ in
-            NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "https") { _ in
-                Task { @MainActor in completion(isDefault()) }
+        // The user's answer to macOS's prompt comes back as these errors.
+        NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "http") { httpError in
+            NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "https") { httpsError in
+                let accepted = httpError == nil && httpsError == nil
+                Task { @MainActor in completion(accepted || isDefault()) }
             }
         }
     }

@@ -8,6 +8,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Fixed
 
+- Setting Lilo as the default browser no longer reports a failure after you accept macOS's prompt.
 - An app downloaded with Lilo no longer opens on "(null) downloaded this file": macOS names Lilo as where it came from.
 
 ## [0.1.3] - 2026-10-24
