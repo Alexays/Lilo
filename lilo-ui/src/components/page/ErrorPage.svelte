@@ -71,13 +71,6 @@
     tabActions.reload();
   }
 
-  // Offline page reloads by itself once the network is back.
-  $effect(() => {
-    if (error?.code !== -1009) return;
-    window.addEventListener("online", retry);
-    return () => window.removeEventListener("online", retry);
-  });
-
   const isCertError = $derived(error != null && CERT_ERROR_CODES.has(error.code));
   const errorHost = $derived.by(() => {
     try {

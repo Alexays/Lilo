@@ -176,58 +176,52 @@ final class NavigationFailureTests: XCTestCase {
         XCTAssertNil(request.mainDocumentURL)
     }
 
-    func testRetriesSilentlyWhenConnectionRefusedWithNetworkUp() {
-        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotConnectToHost)
-
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: false, isNetworkPathSatisfied: true),
-            .retrySilently
-        )
+    private func recovery(
+        _ error: NSError, sendsBody: Bool = false, alreadyRetried: Bool = false, online: Bool = true
+    ) -> WKWebViewTab.NavigationFailureRecovery {
+        WKWebViewTab.recoveryForNavigationFailure(error, sendsBody: sendsBody, alreadyRetried: alreadyRetried, isNetworkPathSatisfied: online)
     }
 
-    func testRetriesSilentlyWhenConnectionLostWithNetworkUp() {
+    func testRetriesSilentlyWhenConnectionRefusedLostOrTimedOutWithNetworkUp() {
+        for code in [NSURLErrorCannotConnectToHost, NSURLErrorNetworkConnectionLost, NSURLErrorTimedOut] {
+            XCTAssertEqual(recovery(NSError(domain: NSURLErrorDomain, code: code)), .retrySilently, "code \(code)")
+        }
+    }
+
+    func testSurfacesAndWaitsForANetworkChangeWhenNetworkDown() {
+        XCTAssertEqual(recovery(NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet), online: false), .surfaceAndRetryOnNetworkChange)
+    }
+
+    func testSurfacesAndWaitsForANetworkChangeAfterOneAutomaticRetry() {
+        XCTAssertEqual(recovery(NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut), alreadyRetried: true), .surfaceAndRetryOnNetworkChange)
+    }
+
+    func testRetriesADNSLookupThatGotNoAnswer() {
+        let timedOut = NSError(domain: "kNWErrorDomainDNS", code: -65568)
+        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotFindHost, userInfo: [NSUnderlyingErrorKey: timedOut])
+
+        XCTAssertEqual(recovery(error), .retrySilently)
+    }
+
+    func testSurfacesAHostTheDNSSaysDoesNotExistWithoutRetry() {
+        let noSuchRecord = NSError(domain: "kNWErrorDomainDNS", code: -65554)
+        let fromNetwork = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotFindHost, userInfo: [NSUnderlyingErrorKey: noSuchRecord])
+        let fromCFNetwork = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotFindHost,
+                                    userInfo: ["_kCFStreamErrorDomainKey": 12, "_kCFStreamErrorCodeKey": 8])
+
+        XCTAssertEqual(recovery(fromNetwork), .surface)
+        XCTAssertEqual(recovery(fromCFNetwork, online: false), .surface)
+    }
+
+    func testNeverReplaysALoadWithABody() {
         let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorNetworkConnectionLost)
 
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: false, isNetworkPathSatisfied: true),
-            .retrySilently
-        )
-    }
-
-    func testSurfacesAndWaitsForConnectivityWhenNetworkDown() {
-        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet)
-
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: false, isNetworkPathSatisfied: false),
-            .surfaceAndRetryWhenOnline
-        )
-    }
-
-    func testSurfacesTransientFailureAfterOneAutomaticRetry() {
-        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotConnectToHost)
-
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: true, isNetworkPathSatisfied: true),
-            .surface
-        )
-    }
-
-    func testSurfacesUnknownHostFailureWithoutRetry() {
-        let error = NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotFindHost)
-
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: false, isNetworkPathSatisfied: true),
-            .surface
-        )
+        XCTAssertEqual(recovery(error, sendsBody: true), .surface)
+        XCTAssertEqual(recovery(error, sendsBody: true, online: false), .surface)
     }
 
     func testSurfacesNonNetworkFailureWithoutRetry() {
-        let error = NSError(domain: "WebKitErrorDomain", code: 999)
-
-        XCTAssertEqual(
-            WKWebViewTab.recoveryForProvisionalFailure(error, alreadyRetried: false, isNetworkPathSatisfied: true),
-            .surface
-        )
+        XCTAssertEqual(recovery(NSError(domain: "WebKitErrorDomain", code: 999)), .surface)
     }
 
     func testHTTPAuthCredentialStorageAccountSeparatesRealmsAndMethods() {
