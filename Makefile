@@ -38,6 +38,8 @@ DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SI
 # The test host is its own app: its camera, microphone and keychain grants and its background
 # permission never touch the installed Lilo's, and a stable signature keeps them across builds.
 TEST := $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
+# CI (which sets CI) runs a failed test once more and lists it in the job summary; locally a flake fails.
+TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
@@ -167,11 +169,12 @@ e2e-energy:
 swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) -only-testing:LiloTests -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
-		$(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
+		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
 ## Run the Swift tests that wait out WebKit's clocks, which swift-test skips
 swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES
+	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES \
+		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
 ## Report what the converter keeps of the default filter lists, by kind and skip reason (network; OUT=build/blocker-coverage.txt)
 blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)

@@ -29,8 +29,12 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: lilo-ui
       - run: make e2e
+      - name: List tests that passed only on a retry
+        if: always()
+        run: python3 scripts/retried_tests.py lilo-ui/test-results/report.json >> "$GITHUB_STEP_SUMMARY"
+      # A retried test leaves its trace there too, failing the run or not.
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: always()
         with:
           name: playwright-traces
           path: lilo-ui/test-results/
@@ -95,12 +99,15 @@ jobs:
             || (echo "::error::Lilo.xcodeproj is out of sync with project.yml - run 'make project-sync' and commit." && exit 1)
       - run: make swiftlint xcode-build xcode-build-release
       - run: make swift-test RESULT_BUNDLE=build/swift-test.xcresult
-      - run: make swift-test-slow
+      - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult
+      - name: List tests that passed only on a retry
+        if: always()
+        run: python3 scripts/retried_tests.py build/swift-test.xcresult build/swift-test-slow.xcresult >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: swift-test-results
-          path: build/swift-test.xcresult
+          path: build/*.xcresult
           if-no-files-found: ignore
 
   startup-bench:

@@ -162,6 +162,15 @@ rather than carving out a helper just to reach it.
 - **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
   `startup-bench-<sha>` artifact. It never fails the run.
 
+It needs no secrets and only reads the repository, so pull requests from forks run it as is. CI runs
+a failed Swift or Playwright test once more and lists the tests that passed only on that retry in
+the run's summary; `make validate` and `make e2e` never retry, so a flaky test fails locally.
+
+If your pull request fails on a test your change does not touch, say so in a comment with the failing
+test's name: a maintainer reruns the job, and an issue with the failure message (the
+`swift-test-results` and `playwright-traces` artifacts hold the details) gets the test fixed. Don't skip
+or loosen the test in your pull request.
+
 `.github/workflows/commits.yml` checks commit messages on pushes to `main` and pull requests,
 and PR titles when a pull request is opened, updated, reopened or edited. It uses the same shell
 validator as the local hook and checks the PR's own commits, excluding GitHub's generated merge
