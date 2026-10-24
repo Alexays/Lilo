@@ -271,12 +271,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         let ids = registry.gapEvents.listeners(
             among: registry.extensionIds(withPermission: "webNavigation"), namespace: "webNavigation", event: "onCreatedNavigationTarget"
         )
-        guard let first = ids.first,
-              let source = tabManager.tabAdapter(for: sourceId).flatMap({ registry.tabPosition(of: $0, extensionId: first) }),
-              let target = tabManager.tabAdapter(for: tabId).flatMap({ registry.tabPosition(of: $0, extensionId: first) }) else { return }
-        registry.gapEvents.emit("webNavigation", "onCreatedNavigationTarget", args: [[
-            "source": source, "tab": target, "url": url.absoluteString, "timeStamp": Date().timeIntervalSince1970 * 1000
-        ]], to: ids)
+        guard !ids.isEmpty, let sourceAdapter = tabManager.tabAdapter(for: sourceId), let targetAdapter = tabManager.tabAdapter(for: tabId) else { return }
+        let timeStamp = Date().timeIntervalSince1970 * 1000
+        registry.emitPositioned("webNavigation", "onCreatedNavigationTarget", to: ids) { extensionId in
+            guard let source = registry.tabPosition(of: sourceAdapter, extensionId: extensionId),
+                  let target = registry.tabPosition(of: targetAdapter, extensionId: extensionId) else { return nil }
+            return ["source": source, "tab": target, "url": url.absoluteString, "timeStamp": timeStamp]
+        }
     }
 
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {

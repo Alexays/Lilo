@@ -765,8 +765,10 @@ extension MainWindowController: NSWindowDelegate {
     private func reportBoundsChanged() {
         guard let window, let registry = profileContext?.extensions else { return }
         let ids = registry.listeningExtensionIds("windows", "onBoundsChanged")
-        guard !ids.isEmpty, let position = registry.windowPosition(of: window) else { return }
-        registry.gapEvents.emit("windows", "onBoundsChanged", args: [["windowPosition": position]], to: ids)
+        guard !ids.isEmpty else { return }
+        registry.emitPositioned("windows", "onBoundsChanged", to: ids) { extensionId in
+            registry.windowPosition(of: window, extensionId: extensionId).map { ["windowPosition": $0] }
+        }
     }
 
     func windowWillClose(_ notification: Notification) {

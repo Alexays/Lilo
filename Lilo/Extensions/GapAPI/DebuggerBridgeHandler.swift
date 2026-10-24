@@ -408,7 +408,7 @@ final class DebuggerBridgeHandler: NSObject, GapHandler, BridgeHandler, WKScript
     // MARK: - getTargets
 
     private static func tabs(of registry: ProfileExtensionRegistry, context: WKWebExtensionContext) -> [(adapter: TabExtensionAdapter, position: [String: Int])] {
-        registry.extensionWindows.enumerated().flatMap { windowPosition, window in
+        registry.extensionWindows(for: context).enumerated().flatMap { windowPosition, window in
             window.tabs(for: context).enumerated().compactMap { index, tab in
                 (tab as? TabExtensionAdapter).map { ($0, ["windowPosition": windowPosition, "index": index]) }
             }

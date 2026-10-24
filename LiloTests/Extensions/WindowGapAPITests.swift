@@ -256,7 +256,7 @@ final class WindowGapAPITests: XCTestCase {
 
     func testSidePanelReportsItsOpenAndClose() async throws {
         let tab = try openTab("https://allowed.test/")
-        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0) })]
+        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) })]
 
         let opened = await call("sidePanel", "open", thisWindow.merging(["userGesture": true]) { $1 })
         XCTAssertNil(opened.error)
@@ -276,7 +276,7 @@ final class WindowGapAPITests: XCTestCase {
     func testSidePanelOpensItsPathWithQueryAndFragment() async throws {
         _ = try openTab("https://allowed.test/")
         let context = try XCTUnwrap(registry.context(for: extensionId))
-        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0) })]
+        let thisWindow: [String: Any] = ["windowId": 1, "windowPosition": try XCTUnwrap(window.window.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) })]
         _ = await call("sidePanel", "setOptions", ["path": "panel.html?view=side#top"])
 
         let opened = await call("sidePanel", "open", thisWindow.merging(["userGesture": true]) { $1 })
@@ -286,5 +286,50 @@ final class WindowGapAPITests: XCTestCase {
         let shown = await pollUntil { self.registry.delegate.extensionViews(of: context).contains { $0.url.absoluteString == expected } }
         XCTAssertTrue(shown, "the panel loads its path with the query and fragment, as in Chrome")
         _ = await call("sidePanel", "close", thisWindow)
+    }
+
+    // MARK: - private windows
+
+    /// WebKit lists [N1, P1, N2]: this window, its private window P1 showing one tab, and another window N2.
+    func testAnExtensionWithoutPrivateAccessNeverReachesAPrivateTab() async throws {
+        let privateTab = try openTab("https://allowed.test/private")
+        let otherTab = try openTab("https://allowed.test/other")
+        let thisWindow = try XCTUnwrap(registry.delegate.windowAdapter)
+        let privateWindow = registry.windowAdapter(for: try XCTUnwrap(window.window), isPrivate: true)
+        let otherNSWindow = NSWindow()
+        let otherWindow = registry.windowAdapter(for: otherNSWindow)
+        let privateAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: privateTab.id))
+        let otherAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: otherTab.id))
+        for (adapter, target) in [(privateAdapter, privateWindow), (otherAdapter, otherWindow)] {
+            thisWindow.remove(tab: adapter)
+            target.add(tab: adapter)
+            adapter.extensionWindow = target
+        }
+        XCTAssertTrue(registry.extensionWindows.elementsEqual([thisWindow, privateWindow, otherWindow], by: ===))
+        let context = try XCTUnwrap(registry.context(for: extensionId))
+        XCTAssertFalse(context.hasAccessToPrivateData)
+
+        for windowPosition in 0..<4 {
+            for index in 0..<4 {
+                let found = registry.tabAdapters(atPositions: [["windowPosition": windowPosition, "index": index]], extensionId: extensionId)
+                XCTAssertFalse(found.first ?? nil === privateAdapter, "position \(windowPosition), \(index)")
+            }
+        }
+        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === otherAdapter)
+        XCTAssertNil(registry.tabPosition(of: privateAdapter, extensionId: extensionId))
+        XCTAssertEqual(registry.tabPosition(of: otherAdapter, extensionId: extensionId), ["windowPosition": 1, "index": 0])
+        XCTAssertEqual(registry.windowPosition(of: otherNSWindow, extensionId: extensionId), 1)
+        XCTAssertTrue(registry.extensionWindow(at: 1, extensionId: extensionId) === otherWindow)
+
+        try XCTUnwrap(window.tabManager.engineTab(for: privateTab.id)).reportZoomChange(from: 1, to: 2)
+        XCTAssertTrue(queued("tabs.onZoomChange").isEmpty, "no event about a private tab")
+        try XCTUnwrap(window.tabManager.engineTab(for: otherTab.id)).reportZoomChange(from: 1, to: 2)
+        XCTAssertEqual(queued("tabs.onZoomChange").map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [[1, 0]])
+
+        context.hasAccessToPrivateData = true
+        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === privateAdapter)
+        try XCTUnwrap(window.tabManager.engineTab(for: privateTab.id)).reportZoomChange(from: 2, to: 1)
+        XCTAssertEqual(queued("tabs.onZoomChange").last.map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [1, 0])
+        registry.notifyWindowClosed(for: otherNSWindow)
     }
 }

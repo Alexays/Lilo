@@ -567,13 +567,15 @@ final class WKWebViewTab: NSObject {
     func reportZoomChange(from old: Double, to new: Double) {
         guard let registry = tabManager?.extensionRegistry, registry.hasLoadedExtensions else { return }
         let ids = registry.listeningExtensionIds("tabs", "onZoomChange")
-        guard let first = ids.first,
-              let position = tabManager?.tabAdapter(for: id).flatMap({ registry.tabPosition(of: $0, extensionId: first) }) else { return }
-        var change: [String: Any] = position
-        change["oldZoomFactor"] = old
-        change["newZoomFactor"] = new
-        change["zoomSettings"] = ["mode": zoomSettings.mode, "scope": zoomSettings.scope]
-        registry.gapEvents.emit("tabs", "onZoomChange", args: [change], to: ids)
+        guard !ids.isEmpty, let adapter = tabManager?.tabAdapter(for: id) else { return }
+        let settings = ["mode": zoomSettings.mode, "scope": zoomSettings.scope]
+        registry.emitPositioned("tabs", "onZoomChange", to: ids) { extensionId in
+            guard var change: [String: Any] = registry.tabPosition(of: adapter, extensionId: extensionId) else { return nil }
+            change["oldZoomFactor"] = old
+            change["newZoomFactor"] = new
+            change["zoomSettings"] = settings
+            return change
+        }
     }
 
     /// `completion` resumes a page-initiated `window.print()`: the page's `afterprint` fires there,
@@ -1322,23 +1324,15 @@ extension WKWebViewTab: WKNavigationDelegate {
         // The window and index lookups below are skipped when no extension listens.
         let ids = registry.gapEvents.listeners(among: registry.extensionIds(withPermission: "webNavigation"), namespace: "webNavigation", event: event)
         PerfSignposts.energy.emitEvent("sameDocNav", "\(ids.isEmpty ? "dropped" : "delivered", privacy: .public)")
-        guard let firstId = ids.first,
-              let context = registry.context(for: firstId),
-              let url = webView.url,
-              let adapter = tabManager?.tabAdapter(for: id) else { return }
-        // WebKit's chrome.windows order: the registry's adapters, or the delegate's window when none.
-        let windows = registry.windowAdapters.isEmpty ? [registry.delegate.windowAdapter].compactMap { $0 } : registry.windowAdapters
-        guard let windowPosition = windows.firstIndex(where: { $0 === adapter.extensionWindow }) else { return }
-        let index = windows[windowPosition].index(of: adapter, for: context)
-        guard index != NSNotFound else { return }
-        let details: [String: Any] = [
-            "windowPosition": windowPosition,
-            "index": index,
-            "url": url.absoluteString,
-            "timeStamp": Date().timeIntervalSince1970 * 1000,
-            "transitionQualifiers": type == 3 ? ["forward_back"] : []
-        ]
-        registry.gapEvents.emit("webNavigation", event, args: [details], to: ids)
+        guard !ids.isEmpty, let url = webView.url, let adapter = tabManager?.tabAdapter(for: id) else { return }
+        let timeStamp = Date().timeIntervalSince1970 * 1000
+        registry.emitPositioned("webNavigation", event, to: ids) { extensionId in
+            guard var details: [String: Any] = registry.tabPosition(of: adapter, extensionId: extensionId) else { return nil }
+            details["url"] = url.absoluteString
+            details["timeStamp"] = timeStamp
+            details["transitionQualifiers"] = type == 3 ? ["forward_back"] : []
+            return details
+        }
     }
 
     // Hung-tab detection (WKNavigationDelegatePrivate): surfaces the "page isn't responding" card.

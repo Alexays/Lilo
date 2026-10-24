@@ -380,7 +380,7 @@ final class ProfileExtensionRegistry {
 
     func tabAdapters(atPositions positions: [[String: Any]], extensionId: String) -> [TabExtensionAdapter?] {
         guard let context = context(for: extensionId) else { return positions.map { _ in nil } }
-        let windows = extensionWindows
+        let windows = extensionWindows(for: context)
         var tabsByWindow: [Int: [any WKWebExtensionTab]] = [:]
         return positions.map { position in
             guard let window = (position["windowPosition"] as? NSNumber)?.intValue,
@@ -395,7 +395,7 @@ final class ProfileExtensionRegistry {
     /// The `{windowPosition, index}` of the tab showing `webView`, the inverse of `tabIds(atPositions:)`.
     func tabPosition(of webView: WKWebView, extensionId: String) -> [String: Int]? {
         guard let context = context(for: extensionId) else { return nil }
-        for (position, window) in extensionWindows.enumerated() {
+        for (position, window) in extensionWindows(for: context).enumerated() {
             if let index = window.tabs(for: context).firstIndex(where: { ($0 as? TabExtensionAdapter)?.webView(for: context) === webView }) {
                 return ["windowPosition": position, "index": index]
             }
@@ -407,24 +407,49 @@ final class ProfileExtensionRegistry {
     func tabPosition(of adapter: TabExtensionAdapter, extensionId: String) -> [String: Int]? {
         guard let context = context(for: extensionId),
               let window = adapter.extensionWindow as? WindowExtensionAdapter,
-              let position = extensionWindows.firstIndex(where: { $0 === window }) else { return nil }
+              let position = extensionWindows(for: context).firstIndex(where: { $0 === window }) else { return nil }
         let index = window.index(of: adapter, for: context)
         return index == NSNotFound ? nil : ["windowPosition": position, "index": index]
     }
 
-    /// The place of `nsWindow` in WebKit's `windows.getAll()`.
-    func windowPosition(of nsWindow: NSWindow) -> Int? {
-        extensionWindows.firstIndex { $0.nsWindow === nsWindow }
+    /// The place of `nsWindow` in the extension's `windows.getAll()`.
+    func windowPosition(of nsWindow: NSWindow, extensionId: String) -> Int? {
+        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0.nsWindow === nsWindow } }
     }
 
-    /// The window at `position` in WebKit's `windows.getAll()`.
-    func extensionWindow(at position: Int) -> WindowExtensionAdapter? {
-        extensionWindows.indices.contains(position) ? extensionWindows[position] : nil
+    /// The window at `position` in the extension's `windows.getAll()`.
+    func extensionWindow(at position: Int, extensionId: String) -> WindowExtensionAdapter? {
+        guard let context = context(for: extensionId) else { return nil }
+        let windows = extensionWindows(for: context)
+        return windows.indices.contains(position) ? windows[position] : nil
     }
 
     /// WebKit's open windows: the registry's adapters, or the delegate's own window when none.
     var extensionWindows: [WindowExtensionAdapter] {
         (windowAdapters.isEmpty ? [delegate.windowAdapter].compactMap { $0 } : windowAdapters) + delegate.popupWindowAdapters
+    }
+
+    /// The windows `context` sees, the list its positions index: WebKit hides private windows from an extension without private access.
+    func extensionWindows(for context: WKWebExtensionContext) -> [WindowExtensionAdapter] {
+        context.hasAccessToPrivateData ? extensionWindows : extensionWindows.filter { !$0.isPrivateWindow }
+    }
+
+    /// Sends an event whose details hold window or tab positions to `ids`. The details are built once per
+    /// private-access class, the only thing positions depend on, for that class's first extension; a class
+    /// whose `details` is nil (the tab is hidden from it) gets nothing.
+    func emitPositioned(_ namespace: String, _ event: String, to ids: [String], details: (_ extensionId: String) -> [String: Any]?) {
+        var classes: [(hasPrivateAccess: Bool, details: [String: Any]?, ids: [String])] = []
+        for id in ids {
+            guard let hasPrivateAccess = context(for: id)?.hasAccessToPrivateData else { continue }
+            if let index = classes.firstIndex(where: { $0.hasPrivateAccess == hasPrivateAccess }) {
+                classes[index].ids.append(id)
+            } else {
+                classes.append((hasPrivateAccess, details(id), [id]))
+            }
+        }
+        for group in classes {
+            if let details = group.details { gapEvents.emit(namespace, event, args: [details], to: group.ids) }
+        }
     }
 
     // MARK: - Init
