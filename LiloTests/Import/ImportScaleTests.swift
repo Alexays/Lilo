@@ -52,7 +52,7 @@ final class ImportScaleTests: XCTestCase {
     func testABigArcSidebarKeepsItsShapeAndARerunAddsNothing() async throws {
         let arc = try writeArc(spaces: 10, chains: 4, unpinned: 84)
         let selections = Self.arcProfiles.map { BrowserImporter.Selection(sourceId: "arc", profileId: $0, kinds: [.tabs], extensionIds: []) }
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
 
         let first = await measure("arc 2,000 tabs", selections, sources)
         XCTAssertLessThan(first.longestMainBlock, 1, "no main-thread block of a second")
@@ -108,12 +108,12 @@ final class ImportScaleTests: XCTestCase {
     func testArcImportWorkStaysFlatWhenTheSidebarDoubles() async throws {
         let selections = Self.arcProfiles.map { BrowserImporter.Selection(sourceId: "arc", profileId: $0, kinds: [.tabs], extensionIds: []) }
         _ = try writeArc(spaces: 10, chains: 2, unpinned: 40)
-        let small = await measure("arc 1x", selections, BrowserImportScanner.scan(home: home))
+        let small = await measure("arc 1x", selections, BrowserImportScanner.scan(home: home, isInstalled: { _ in true }))
         // A fresh browser, so the second import creates the same profiles and spaces as the first.
         try await tearDown()
         try await setUp()
         _ = try writeArc(spaces: 10, chains: 4, unpinned: 80)
-        let big = await measure("arc 2x", selections, BrowserImportScanner.scan(home: home))
+        let big = await measure("arc 2x", selections, BrowserImportScanner.scan(home: home, isInstalled: { _ in true }))
         XCTAssertEqual(big.commits, small.commits, "whatever the tab count")
         // A row per created profile and space, one tree write per profile, and the live Space's session save.
         XCTAssertLessThanOrEqual(big.commits, 10 + 2 + 2 + 3 + 1)
@@ -128,7 +128,7 @@ final class ImportScaleTests: XCTestCase {
         try writeChrome(bookmarks: 4000, history: 20_000)
         try writeFirefox(bookmarks: 4000, history: 20_000, cookies: 4000)
         try writeSafari(bookmarks: 4000, history: 20_000)
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         // Chrome hides one row in 50, Firefox never visited its bookmarked places, Safari keeps four visits per item.
         for (source, profile, kinds, visited) in [("chrome", "Default", Set<ImportKind>([.bookmarks, .history]), 19_600),
                                                   ("firefox", "p", [.bookmarks, .history, .cookies], 16_000),
@@ -155,7 +155,7 @@ final class ImportScaleTests: XCTestCase {
     func testALargeChromiumSessionKeepsItsPinsGroupsAndOrder() async throws {
         let expected = try writeChromeSession(windows: 3, tabsPerWindow: 1000)
         let selection = BrowserImporter.Selection(sourceId: "chrome", profileId: "Default", kinds: [.tabs], extensionIds: [])
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
 
         let run = await measure("chrome session 3,000 tabs", [selection], sources)
 

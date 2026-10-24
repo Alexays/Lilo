@@ -42,7 +42,7 @@ final class BrowserImportScannerTests: XCTestCase {
         try touch("\(firefox)/profiles.ini", "[General]\nStartWithLastProfile=1\n\n[Profile0]\nName=default-release\nIsRelative=1\nPath=Profiles/abc.default-release\n")
         try touch("\(firefox)/Profiles/abc.default-release/places.sqlite")
 
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         XCTAssertEqual(sources.map(\.id), ["chrome", "firefox"])
         XCTAssertEqual(sources[0].profiles.map(\.name), ["Perso", "Travail"])
         XCTAssertEqual(sources[0].profiles[0].kinds, [.bookmarks])
@@ -52,7 +52,7 @@ final class BrowserImportScannerTests: XCTestCase {
     func testChromeWithOnlyAProfile1IsFound() throws {
         try writeChromeWithProfile1Only()
 
-        let chrome = try XCTUnwrap(BrowserImportScanner.scan(home: home).first { $0.id == "chrome" })
+        let chrome = try XCTUnwrap(BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "chrome" })
         XCTAssertFalse(chrome.needsFullDiskAccess)
         XCTAssertEqual(chrome.profiles.map(\.id), ["Profile 1"])
         XCTAssertEqual(chrome.profiles.map(\.name), ["Personal"])
@@ -64,7 +64,7 @@ final class BrowserImportScannerTests: XCTestCase {
         try touch("\(chrome)/Profile 2/History")
         try touch("\(chrome)/System Profile/History")
 
-        let chrome = try XCTUnwrap(BrowserImportScanner.scan(home: home).first { $0.id == "chrome" })
+        let chrome = try XCTUnwrap(BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "chrome" })
         XCTAssertEqual(chrome.profiles.map(\.id), ["Profile 1", "Profile 2"])
     }
 
@@ -87,7 +87,7 @@ final class BrowserImportScannerTests: XCTestCase {
 
     func testAMissingBrowserIsNotADenial() throws {
         try FileManager.default.createDirectory(at: home.appendingPathComponent("Library/Application Support"), withIntermediateDirectories: true)
-        XCTAssertEqual(BrowserImportScanner.scan(home: home).map(\.id), [])
+        XCTAssertEqual(BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).map(\.id), [])
     }
 
     func testAnUnreadableFirefoxIsListedAsNeedingAccess() throws {
@@ -105,16 +105,22 @@ final class BrowserImportScannerTests: XCTestCase {
         XCTAssertNil(BrowserImportScanner.scan(home: home, isInstalled: { _ in false }).first { $0.id == "edge" })
     }
 
+    func testTheReadableProfilesOfAnUninstalledBrowserAreLeftOut() throws {
+        try writeChromeWithProfile1Only()
+
+        XCTAssertNil(BrowserImportScanner.scan(home: home, isInstalled: { _ in false }).first { $0.id == "chrome" })
+    }
+
     func testUnreadableSafariNeedsFullDiskAccess() throws {
         try touch("Library/Safari/Bookmarks.plist")
         try deny("Library/Safari")
-        let safari = BrowserImportScanner.scan(home: home).first { $0.id == "safari" }
+        let safari = BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "safari" }
         XCTAssertEqual(safari?.needsFullDiskAccess, true)
     }
 
     func testReadableSafariWithoutBookmarksNeedsNoAccess() throws {
         try FileManager.default.createDirectory(at: home.appendingPathComponent("Library/Safari"), withIntermediateDirectories: true)
-        let safari = BrowserImportScanner.scan(home: home).first { $0.id == "safari" }
+        let safari = BrowserImportScanner.scan(home: home, isInstalled: { _ in true }).first { $0.id == "safari" }
         XCTAssertEqual(safari?.needsFullDiskAccess, false)
     }
 }

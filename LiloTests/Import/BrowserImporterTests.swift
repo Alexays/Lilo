@@ -85,7 +85,7 @@ final class BrowserImporterTests: XCTestCase {
     }
 
     func testImportsBarAndOtherBookmarksIntoTheActiveSpaceOnce() async {
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let selection = BrowserImporter.Selection(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: [])
         let summary = await importer().run([selection], sources: sources) { _ in }
         XCTAssertEqual(summary.first?.imported, 3, "Mail, Docs inside Work, Recipe inside Other Bookmarks")
@@ -108,7 +108,7 @@ final class BrowserImporterTests: XCTestCase {
         try Data(#"{"roots": {"bookmark_bar": {"children": [\#(level(1))]}}}"#.utf8).write(to: bookmarks)
         let selection = BrowserImporter.Selection(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: [])
 
-        _ = await importer().run([selection], sources: BrowserImportScanner.scan(home: home)) { _ in }
+        _ = await importer().run([selection], sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
 
         var folder = try XCTUnwrap(tree.pinned.first.flatMap { if case let .folder(folder) = $0 { folder } else { nil } })
         for depth in 1..<5 {
@@ -120,7 +120,7 @@ final class BrowserImporterTests: XCTestCase {
     }
 
     func testAVanishedFirstSelectionLeavesTheActiveSpaceToTheNext() async {
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let summary = await importer().run([
             .init(sourceId: "chrome", profileId: "Gone", kinds: [.bookmarks], extensionIds: []),
             .init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: [])
@@ -137,7 +137,7 @@ final class BrowserImporterTests: XCTestCase {
             .write(to: chrome.appendingPathComponent("Local State"))
         try FileManager.default.createDirectory(at: chrome.appendingPathComponent("Profile 1"), withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: chrome.appendingPathComponent("Default/Bookmarks"), to: chrome.appendingPathComponent("Profile 1/Bookmarks"))
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let summary = await importer().run([
             .init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks, .history], extensionIds: []),
             .init(sourceId: "chrome", profileId: "Profile 1", kinds: [.bookmarks], extensionIds: [])
@@ -160,7 +160,7 @@ final class BrowserImporterTests: XCTestCase {
             try db.execute(sql: "INSERT INTO moz_cookies VALUES ('.a.example', 'new', '2', '/', 4102444800, 1, 1, 1)")
         }
         let summary = await importer().run([.init(sourceId: "firefox", profileId: "p", kinds: [.cookies], extensionIds: [])],
-                                           sources: BrowserImportScanner.scan(home: home)) { _ in }
+                                           sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
         XCTAssertEqual(cookies.map(\.name), ["new"])
         XCTAssertEqual(summary.first?.skipped, 1)
     }
@@ -183,7 +183,7 @@ final class BrowserImporterTests: XCTestCase {
             "u1", {"id": "u1", "childrenIds": [], "data": {"itemContainer": {}}}
           ]}]}}
         """.utf8).write(to: arcRoot.appendingPathComponent("StorableSidebar.json"))
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let selection = BrowserImporter.Selection(sourceId: "arc", profileId: "Default", kinds: [.tabs], extensionIds: [])
 
         _ = await importer().run([selection], sources: sources) { _ in }
@@ -227,7 +227,7 @@ final class BrowserImporterTests: XCTestCase {
         """.utf8).write(to: arcRoot.appendingPathComponent("StorableSidebar.json"))
 
         _ = await importer().run([.init(sourceId: "arc", profileId: "Default", kinds: [.tabs], extensionIds: [])],
-                                 sources: BrowserImportScanner.scan(home: home)) { _ in }
+                                 sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
 
         let work = try XCTUnwrap(spaceIds["Work"].flatMap { savedStates[$0] })
         guard case let .tab(board)? = work.tree.pinned.first else { return XCTFail("the pinned tab is imported") }
@@ -246,7 +246,7 @@ final class BrowserImporterTests: XCTestCase {
             .write(to: userData.appendingPathComponent("Local State"))
         try FileManager.default.copyItem(at: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("arc-storable-sidebar.json"),
                                          to: arcRoot.appendingPathComponent("StorableSidebar.json"))
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         let selections: [BrowserImporter.Selection] = [
             .init(sourceId: "arc", profileId: "Default", kinds: [.tabs], extensionIds: []),
             .init(sourceId: "arc", profileId: "Profile 1", kinds: [.tabs], extensionIds: [])
@@ -316,7 +316,7 @@ final class BrowserImporterTests: XCTestCase {
         let sessions = home.appendingPathComponent("Library/Application Support/Google/Chrome/Default/Sessions")
         try FileManager.default.createDirectory(at: sessions, withIntermediateDirectories: true)
         try session.data.write(to: sessions.appendingPathComponent("Session_13300000000000000"))
-        let sources = BrowserImportScanner.scan(home: home)
+        let sources = BrowserImportScanner.scan(home: home, isInstalled: { _ in true })
         XCTAssertEqual(sources.first?.profiles.first?.kinds, [.bookmarks, .tabs])
         let selection = BrowserImporter.Selection(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks, .tabs], extensionIds: [])
 
@@ -362,7 +362,7 @@ final class BrowserImporterTests: XCTestCase {
         loadedTrees[workId] = .empty
 
         _ = await importer().run([.init(sourceId: "arc", profileId: "Default", kinds: [.tabs], extensionIds: [])],
-                                 sources: BrowserImportScanner.scan(home: home)) { _ in }
+                                 sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
         XCTAssertNil(savedStates[workId], "a loaded space's live state would overwrite a direct save")
         XCTAssertEqual(loadedTrees[workId]?.pinned.count, 1)
     }
@@ -389,7 +389,7 @@ final class BrowserImporterTests: XCTestCase {
         ), home: home).run([
             .init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: []),
             .init(sourceId: "chrome", profileId: "Profile 1", kinds: [.extensions], extensionIds: [id])
-        ], sources: BrowserImportScanner.scan(home: home)) { _ in }
+        ], sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
         XCTAssertEqual(installed.map(\.0), [id])
         XCTAssertEqual(installed.map(\.1), [travailId], "a second profile's extensions land in its own Lilo profile, not the active one")
         XCTAssertEqual(summary.first { $0.kind == .extensions }?.imported, 1)
@@ -405,7 +405,7 @@ final class BrowserImporterTests: XCTestCase {
         }
         var steps: [String] = []
         _ = await importer().run([.init(sourceId: "chrome", profileId: "Default", kinds: [.extensions, .history, .bookmarks], extensionIds: ids)],
-                                 sources: BrowserImportScanner.scan(home: home)) { steps.append("\($0.kind.rawValue) \($0.done)/\($0.total)") }
+                                 sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { steps.append("\($0.kind.rawValue) \($0.done)/\($0.total)") }
         XCTAssertEqual(steps, ["bookmarks 0/0", "history 0/0", "extensions 0/2", "extensions 1/2"])
     }
 
@@ -434,7 +434,7 @@ final class BrowserImporterTests: XCTestCase {
                 pinnedExtensions: { current }, pinExtensions: { pinned = $0 },
                 otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
             ), home: home).run([.init(sourceId: "chrome", profileId: "Default", kinds: [.extensions], extensionIds: ids)],
-                               sources: BrowserImportScanner.scan(home: home)) { _ in }
+                               sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
             return pinned
         }
 

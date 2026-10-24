@@ -1,5 +1,4 @@
-import CoreServices
-import Foundation
+import AppKit
 
 enum BrowserImportScanner {
     /// (id, display name, user data dir under Application Support, Keychain service, bundle id).
@@ -18,19 +17,35 @@ enum BrowserImportScanner {
         ("firefox", "Firefox", "Firefox", "org.mozilla.firefox"), ("zen", "Zen", "zen", "app.zen-browser.zen")
     ]
 
-    /// `isInstalled` tells a browser macOS keeps from Lilo apart from a folder its app left behind or another app made.
+    /// Where a browser LaunchServices never registered (unzipped, copied by hand) is looked for by name.
+    private static let appNames = [
+        "com.google.Chrome": "Google Chrome", "company.thebrowser.Browser": "Arc", "com.brave.Browser": "Brave Browser",
+        "com.microsoft.edgemac": "Microsoft Edge", "com.vivaldi.Vivaldi": "Vivaldi", "company.thebrowser.dia": "Dia",
+        "ai.perplexity.comet": "Comet", "com.operasoftware.Opera": "Opera", "org.chromium.Chromium": "Chromium",
+        "org.mozilla.firefox": "Firefox", "app.zen-browser.zen": "Zen"
+    ]
+
+    static func appURL(bundleId: String) -> URL? {
+        // Beta, Dev, Canary and Nightly builds have identifiers of their own.
+        let channel = ["", ".beta", ".Beta", ".dev", ".Dev", ".canary", ".Canary", ".nightly"].lazy
+            .compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId + $0) }.first
+        return channel ?? appNames[bundleId].flatMap { name in
+            ["/Applications", NSHomeDirectory() + "/Applications"].map { URL(fileURLWithPath: "\($0)/\(name).app") }
+                .first { FileManager.default.fileExists(atPath: $0.path) }
+        }
+    }
+
+    /// Only installed browsers are offered: the folder an uninstalled one left behind, or one a password manager made
+    /// for its native helpers, is not a browser in use.
     static func scan(
         home: URL = FileManager.default.homeDirectoryForCurrentUser,
-        isInstalled: (String) -> Bool = { LSCopyApplicationURLsForBundleIdentifier($0 as NSString as CFString, nil) != nil }
+        isInstalled: (String) -> Bool = { appURL(bundleId: $0) != nil }
     ) -> [ImportSource] {
         let support = home.appendingPathComponent("Library/Application Support")
         var sources: [ImportSource] = []
-        for (id, name, path, service, bundleId) in chromium {
+        for (id, name, path, service, bundleId) in chromium where isInstalled(bundleId) {
             let root = support.appendingPathComponent(path)
             if isDenied(root) || isDenied(root.appendingPathComponent("Local State")) {
-                // Password managers create these folders for their native helpers: one Lilo cannot read only counts
-                // when its browser is installed.
-                guard isInstalled(bundleId) else { continue }
                 sources.append(ImportSource(id: id, name: name, family: .chromium, bundleId: bundleId, rootURL: root, keychainService: service,
                                             needsFullDiskAccess: true, profiles: []))
                 continue
@@ -55,10 +70,9 @@ enum BrowserImportScanner {
                                         needsFullDiskAccess: safariDenied || isDenied(safari.appendingPathComponent("Bookmarks.plist")),
                                         profiles: [ImportProfile(id: "safari", name: "Safari", url: safari, kinds: kinds, extensions: [])]))
         }
-        for (id, name, path, bundleId) in firefox {
+        for (id, name, path, bundleId) in firefox where isInstalled(bundleId) {
             let root = support.appendingPathComponent(path)
             if isDenied(root) || isDenied(root.appendingPathComponent("profiles.ini")) {
-                guard isInstalled(bundleId) else { continue }
                 sources.append(ImportSource(id: id, name: name, family: .firefox, bundleId: bundleId, rootURL: root, keychainService: nil,
                                             needsFullDiskAccess: true, profiles: []))
                 continue
