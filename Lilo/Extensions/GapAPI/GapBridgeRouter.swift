@@ -76,7 +76,7 @@ final class GapBridgeRouter {
         "tabs.setZoomSettings": [],
         "tabs.createSplit": [],
         "tabs.unsplit": [],
-        "tabs.urls": [],
+        "tabs.details": [],
         "cookies": ["cookies"],
         "topSites": ["topSites"],
         "tts": ["tts"],

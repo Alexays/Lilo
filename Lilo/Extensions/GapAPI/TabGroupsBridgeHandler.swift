@@ -11,7 +11,8 @@ struct TabGroupsContext {
 }
 
 /// `chrome.tabGroups`, `tabs.group`/`ungroup` and `tabs.discard` onto Lilo folders: group ids map to folder UUIDs per session, colors
-/// by nearest RGB; a tab arrives as its window position and index in WebKit's ordered lists, which round-trip to its UUID.
+/// by nearest RGB; a tab arrives as its window position and index in WebKit's ordered lists, which round-trip to its UUID. Also
+/// `tabs.details`, the `Tab` fields WebKit lacks, which every tab result asks for.
 @MainActor
 final class TabGroupsBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
@@ -22,7 +23,7 @@ final class TabGroupsBridgeHandler: GapHandler {
         "tabs.group",
         "tabs.ungroup",
         "tabs.discard",
-        "tabs.resolveGroupIds"
+        "tabs.details"
     ]
 
     /// A window showing the calling extension's profile, from its registry.
@@ -30,6 +31,9 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     /// Chrome's `TAB_GROUP_ID_NONE`. Reported for ungrouped tabs.
     private static let tabGroupIdNone = -1
+    /// What Chrome reports for an empty tab, its new tab page.
+    private static let newTabURL = "chrome://newtab/"
+    private static let newTabTitle = "New Tab"
 
     // Stable per-session bijection between Chrome integer group ids and Lilo folder UUIDs.
     private var folderIdByGroupId: [Int: UUID] = [:]
@@ -44,6 +48,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     func handle(_ call: GapCall) async -> Any? {
         let registry = call.registry
+        if call.action == "tabs.details" { return tabDetails(call) }
         guard let context = contextProvider(registry) else {
             return BridgeError("No active window for tabGroups")
         }
@@ -84,9 +89,6 @@ final class TabGroupsBridgeHandler: GapHandler {
             }
             tabManager.discardEngines([id])
             return tabManager.engineTab(for: id) == nil ? nil : BridgeError("Cannot discard a tab on screen")
-
-        case "tabs.resolveGroupIds":
-            return resolveGroupIds(uuids: tabUUIDs(call, registry: registry), tabManager: tabManager)
 
         default:
             return BridgeError("Unhandled tabGroups action \(call.action)")
@@ -216,18 +218,32 @@ final class TabGroupsBridgeHandler: GapHandler {
         }
     }
 
-    // MARK: - tabs.resolveGroupIds (powers tab.groupId injection in the JS query wrapper)
+    // MARK: - tabs.details
 
-    private func resolveGroupIds(uuids: [UUID?], tabManager: TabManager) -> [String: Any] {
-        guard let spaceId = tabManager.currentSpaceId else {
-            return ["groupIds": uuids.map { _ in Self.tabGroupIdNone }]
+    /// For each `{windowPosition, index}` of `tabs`: its `groupId`, `discarded`, `frozen` and `lastAccessed`, null for a tab Lilo
+    /// does not hold, and with `tabs`, the url and title of the tabs `reveal` lists, which WebKit leaves empty for hosts the
+    /// extension may not access. An empty tab reads as Chrome's new tab page.
+    private func tabDetails(_ call: GapCall) -> [Any] {
+        let positions = call.payload["tabs"] as? [[String: Any]] ?? []
+        let reveal = Set(call.payload["reveal"] as? [Int] ?? [])
+        let context = reveal.isEmpty ? nil : call.context.flatMap { $0.hasPermission(.tabs) ? $0 : nil }
+        return call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).enumerated().map { index, adapter -> Any in
+            guard let adapter, let tab = adapter.tabManager?.tab(for: adapter.tabId) else { return NSNull() }
+            let engine = adapter.engineTab
+            var details: [String: Any] = [
+                "groupId": tab.groupId.map(groupId(forFolder:)) ?? Self.tabGroupIdNone,
+                "discarded": engine == nil,
+                "frozen": engine?.isFrozen ?? false
+            ]
+            if let accessed = tab.lastActiveAt ?? engine?.createdAt { details["lastAccessed"] = accessed.timeIntervalSince1970 * 1000 }
+            if let context, reveal.contains(index) {
+                let title = adapter.title(for: context) ?? ""
+                let url = adapter.url(for: context)
+                details["url"] = url?.absoluteString ?? Self.newTabURL
+                details["title"] = url == nil && title.isEmpty ? Self.newTabTitle : title
+            }
+            return details
         }
-        let folderIdByTab = Dictionary(tabManager.tabs(forSpace: spaceId).map { ($0.id, $0.groupId) }, uniquingKeysWith: { first, _ in first })
-        let groupIds = uuids.map { uuid -> Int in
-            guard let uuid, let folderId = folderIdByTab[uuid] ?? nil else { return Self.tabGroupIdNone }
-            return groupId(forFolder: folderId)
-        }
-        return ["groupIds": groupIds]
     }
 
     // MARK: - State command plumbing

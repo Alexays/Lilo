@@ -3,9 +3,9 @@
 import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { createGapEventsFromNames } from '../shared/gap-event.ts';
-import type { NamespaceCompat, Patch } from '../shared/chrome-compat.ts';
+import type { NamespaceCompat } from '../shared/chrome-compat.ts';
 
-const TAB_GROUP_ID_NONE = -1;
+export const TAB_GROUP_ID_NONE = -1;
 
 interface TabGroup {
   id: number;
@@ -174,44 +174,7 @@ function liloUngroup(rawIds: any, callback?: () => void) {
   }, callback);
 }
 
-/**
- * tabs.query / tabs.get with a `groupId` on every returned tab, in both forms. WebKit ignores the
- * `groupId` query key, so query filters on it here.
- */
-const withGroupIds = (method: 'query' | 'get'): Patch => (original, self) => function (this: unknown, ...args: any[]) {
-  const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
-  const groupId = method === 'query' ? args[0]?.groupId : undefined;
-  if (groupId !== undefined) {
-    const { groupId: _omitted, ...rest } = args[0];
-    args[0] = rest;
-  }
-  return callbackify(async () => {
-    const result = await original.apply(self(this), args);
-    await injectGroupIds(Array.isArray(result) ? result : [result]);
-    return typeof groupId === 'number' ? result.filter((t: any) => t?.groupId === groupId) : result;
-  }, callback);
-};
-
-/** chrome.tabs over Lilo folders: `group`/`ungroup`, absent in WebKit, and each tab's `groupId`. */
+/** chrome.tabs over Lilo folders: `group` and `ungroup`, absent in WebKit. */
 export const tabsWithGroups: NamespaceCompat = {
   replace: { group: liloGroup, ungroup: liloUngroup },
-  patch: { query: withGroupIds('query'), get: withGroupIds('get') },
 };
-
-async function injectGroupIds(tabList: any[]): Promise<void> {
-  const valid = tabList.filter((t) => t && typeof t.index === 'number');
-  if (valid.length === 0) return;
-  try {
-    const res = await gapCall<{ groupIds: number[] }>('tabs', 'resolveGroupIds', {
-      tabs: await toPositions(valid),
-    });
-    const ids = res?.groupIds ?? [];
-    valid.forEach((t, i) => {
-      t.groupId = typeof ids[i] === 'number' ? ids[i] : TAB_GROUP_ID_NONE;
-    });
-  } catch {
-    valid.forEach((t) => {
-      if (typeof t.groupId !== 'number') t.groupId = TAB_GROUP_ID_NONE;
-    });
-  }
-}

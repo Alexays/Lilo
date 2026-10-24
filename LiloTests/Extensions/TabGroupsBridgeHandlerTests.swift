@@ -11,7 +11,7 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         let handler = TabGroupsBridgeHandler(contextProvider: { _ in nil })
         XCTAssertEqual(handler.gapActions, [
             "tabGroups.query", "tabGroups.get", "tabGroups.update", "tabGroups.move",
-            "tabs.group", "tabs.ungroup", "tabs.discard", "tabs.resolveGroupIds"
+            "tabs.group", "tabs.ungroup", "tabs.discard", "tabs.details"
         ])
     }
 

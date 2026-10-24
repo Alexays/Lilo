@@ -4,7 +4,7 @@ import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { resolvingEvent } from '../shared/gap-event.ts';
 import { WrappedEvent } from '../shared/chrome-event.ts';
-import { tabPositions, toPositions } from './tabGroups.ts';
+import { TAB_GROUP_ID_NONE, tabPositions, toPositions } from './tabGroups.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 export interface TabPosition {
@@ -131,35 +131,94 @@ function withoutWithheld(tab: any): any {
   return tab;
 }
 
+/** What WebKit's Tab objects lack, from Lilo; null for a tab Lilo does not hold. */
+interface TabDetails {
+  groupId: number;
+  discarded: boolean;
+  frozen: boolean;
+  lastAccessed?: number;
+  url?: string;
+  title?: string;
+}
+
 /**
- * With `tabs`, Chrome shows every tab's url and title, where WebKit shows only those of the hosts the extension may
- * access: Lilo reads the ones WebKit left empty, an empty tab reading as Chrome's new tab page.
+ * `tab` with Chrome's fields WebKit's lacks. Without `details` (a tab event, which Lilo cannot answer in step with WebKit's
+ * delivery), each takes Chrome's value for a loaded tab outside any group.
  */
-async function withRevealed(tabs: any[]): Promise<void> {
-  const hidden = tabs.filter((tab) => tab?.url === '' && typeof tab.index === 'number');
-  if (hidden.length === 0) return;
-  const revealed = await gapCall<Array<[string, string] | null>>('tabs', 'urls', { tabs: await toPositions(hidden) }).catch(() => []);
-  hidden.forEach((tab, i) => {
-    const [url, title] = revealed[i] ?? [];
-    if (url) Object.assign(tab, { url, title });
+function asChromeTab(tab: any, details?: TabDetails | null): any {
+  if (tab === null || typeof tab !== 'object') return tab;
+  tab.groupId = details?.groupId ?? TAB_GROUP_ID_NONE;
+  tab.discarded = details?.discarded ?? false;
+  tab.frozen = details?.frozen ?? false;
+  tab.autoDiscardable = true;
+  if (details?.lastAccessed !== undefined) tab.lastAccessed = details.lastAccessed;
+  if (tab.discarded) tab.status = 'unloaded';
+  return tab;
+}
+
+/**
+ * The tabs of a result made Chrome's in one call to Lilo. With `tabs`, Chrome shows every tab's url and title, where WebKit
+ * shows only those of the hosts the extension may access: the same call reads the ones WebKit left empty, an empty tab
+ * reading as Chrome's new tab page. Without it, the empty ones are left out, as in Chrome.
+ */
+async function completeTabs(tabs: any[], withheldURLs: boolean): Promise<void> {
+  const listed = tabs.filter((tab) => typeof tab?.index === 'number');
+  if (listed.length === 0) return;
+  const reveal = withheldURLs ? [] : listed.flatMap((tab, i) => (tab.url === '' ? [i] : []));
+  const details = await gapCall<Array<TabDetails | null>>('tabs', 'details', { tabs: await toPositions(listed), reveal }).catch(() => []);
+  listed.forEach((tab, i) => {
+    const found = details?.[i];
+    if (found?.url) Object.assign(tab, { url: found.url, title: found.title });
+    asChromeTab(tab, found);
+    if (withheldURLs) withoutWithheld(tab);
   });
 }
 
-const fixingTabs = (fix: (tabs: any[]) => unknown): Patch => (original, self) => function (this: unknown, ...args: any[]) {
+/** WebKit's method, its tabs completed. `filtersGroups`: `tabs.query`, whose `groupId` key WebKit ignores, so Lilo filters on it. */
+const completing = (withheldURLs: boolean, filtersGroups = false): Patch => (original, self) => function (this: unknown, ...args: any[]) {
   const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
+  const groupId = filtersGroups ? args[0]?.groupId : undefined;
+  if (groupId !== undefined) {
+    const { groupId: _omitted, ...rest } = args[0];
+    args[0] = rest;
+  }
   return callbackify(async () => {
     const result = await original.apply(self(this), args);
     // A window lists its tabs; anything else is a tab.
-    await fix((Array.isArray(result) ? result : [result]).flatMap((item) => item?.tabs ?? [item]));
-    return result;
+    await completeTabs((Array.isArray(result) ? result : [result]).flatMap((item) => item?.tabs ?? [item]), withheldURLs);
+    return typeof groupId === 'number' ? result.filter((tab: any) => tab.groupId === groupId) : result;
   }, callback);
 };
 
-const tabMethods = ['query', 'get', 'getCurrent', 'create', 'update', 'duplicate', 'move'];
+const tabMethods = ['get', 'getCurrent', 'create', 'update', 'duplicate', 'move'];
 const windowMethods = ['get', 'getAll', 'getCurrent', 'getLastFocused', 'create'];
-const patching = (names: string[], patch: Patch): Record<string, Patch> => Object.fromEntries(names.map((name) => [name, patch]));
-const withheld = fixingTabs((tabs) => tabs.forEach(withoutWithheld));
-const revealed = fixingTabs(withRevealed);
+
+export function tabPatches(withheldURLs: boolean): Record<string, Patch> {
+  return { ...Object.fromEntries(tabMethods.map((name) => [name, completing(withheldURLs)])), query: completing(withheldURLs, true) };
+}
+
+export function windowPatches(withheldURLs: boolean): Record<string, Patch> {
+  return Object.fromEntries(windowMethods.map((name) => [name, completing(withheldURLs)]));
+}
+
+/** Tab events with Chrome's tab, without what the extension may not see, as Chrome, which still reports an update of nothing else. */
+export function tabStandIns(withheldURLs: boolean): Record<string, WrappedEvent<any>> {
+  const shown = (tab: any) => (withheldURLs ? withoutWithheld(tab) : tab);
+  return {
+    onCreated: new WrappedEvent<[any]>(() => bridgeChrome().tabs.onCreated, (listener) => (tab: any) => {
+      // A new tab was last accessed when it was made.
+      if (asChromeTab(tab) && tab.lastAccessed === undefined) tab.lastAccessed = Date.now();
+      return listener(shown(tab));
+    }),
+    onUpdated: new WrappedEvent<[number, any, any]>(() => bridgeChrome().tabs.onUpdated, (listener) => (tabId: number, changeInfo: any, tab: any) => {
+      if (withheldURLs && tab?.url === '' && changeInfo) {
+        delete changeInfo.url;
+        delete changeInfo.title;
+      }
+      return listener(tabId, changeInfo, shown(asChromeTab(tab)));
+    }),
+  };
+}
 
 /**
  * WebKit answers `tabs.getCurrent` in an action popup with the window's active tab, where Chrome answers undefined:
@@ -191,20 +250,4 @@ export const chromePageQuery: Patch = (original, self) => function (this: unknow
     const matchers = chromePages.map((pattern) => new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
     return (await original.call(target, rest)).filter((tab: any) => matched.has(tab.id) || matchers.some((matcher) => matcher.test(tab.url ?? '')));
   }, callback);
-};
-export const tabURLPatches = patching(tabMethods, withheld);
-export const windowURLPatches = patching(windowMethods, withheld);
-export const tabRevealedURLPatches = patching(tabMethods, revealed);
-export const windowRevealedURLPatches = patching(windowMethods, revealed);
-
-/** Tab events without what the extension may not see, as Chrome, which still reports an update of nothing else. */
-export const tabURLStandIns = {
-  onCreated: new WrappedEvent<[any]>(() => bridgeChrome().tabs.onCreated, (listener) => (tab: any) => listener(withoutWithheld(tab))),
-  onUpdated: new WrappedEvent<[number, any, any]>(() => bridgeChrome().tabs.onUpdated, (listener) => (tabId: number, changeInfo: any, tab: any) => {
-    if (tab?.url === '' && changeInfo) {
-      delete changeInfo.url;
-      delete changeInfo.title;
-    }
-    return listener(tabId, changeInfo, withoutWithheld(tab));
-  }),
 };

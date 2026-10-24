@@ -143,7 +143,7 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertTrue(window.tabManager.tabAdapter(for: created.id)?.parent === openerAdapter)
     }
 
-    // MARK: - tabs urls
+    // MARK: - tabs details
 
     func testTabsShowsEveryTabURLAndAnEmptyTabAsChromesNewTabPage() async throws {
         let server = try await TinyHTTPServer(index: "<title>Page</title><p>page</p>")
@@ -153,8 +153,11 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertTrue(loaded, "the page loads")
         let emptyTab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let empty = try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: emptyTab.id)), extensionId: extensionId))
-        let withoutTabs = await call("tabs", "urls", ["tabs": [page.position, empty]])
-        XCTAssertEqual((withoutTabs.result as? [Any])?.count, 0, "without tabs, nothing more shows")
+        let revealing: [String: Any] = ["tabs": [page.position, empty], "reveal": [0, 1]]
+        let withoutTabs = await call("tabs", "details", revealing)
+        let hidden = try XCTUnwrap(withoutTabs.result as? [[String: Any]])
+        XCTAssertEqual(hidden.count, 2)
+        XCTAssertTrue(hidden.allSatisfy { $0["url"] == nil && $0["title"] == nil }, "without tabs, no url shows")
 
         let folder = directory.appendingPathComponent("tabs", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -162,8 +165,38 @@ final class WindowGapAPITests: XCTestCase {
         try JSONSerialization.data(withJSONObject: manifest).write(to: folder.appendingPathComponent("manifest.json"))
         try await registry.load(from: folder)
         let id = try XCTUnwrap(registry.loadedExtensions.first { $0.id != extensionId }?.id)
-        let shown = await router.route(namespace: "tabs", method: "urls", params: ["tabs": [page.position, empty]], extensionId: id, fromWorker: true, registry: registry)
-        XCTAssertEqual(shown.result as? [[String]], [[url, "Page"], ["chrome://newtab/", "New Tab"]])
+        let shown = await router.route(namespace: "tabs", method: "details", params: revealing, extensionId: id, fromWorker: true, registry: registry)
+        let details = try XCTUnwrap(shown.result as? [[String: Any]])
+        XCTAssertEqual(details.map { [$0["url"] as? String, $0["title"] as? String] }, [[url, "Page"], ["chrome://newtab/", "New Tab"]])
+    }
+
+    /// Every tab carries what WebKit's `Tab` lacks: its group (-1 outside one), whether it is unloaded or frozen, and when it
+    /// was last active.
+    func testTabDetailsGiveTheGroupAndTheLoadState() async throws {
+        let grouped = try openTab("https://allowed.test/grouped")
+        let unloaded = try openTab("https://allowed.test/unloaded")
+        _ = try openTab("https://allowed.test/active")
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let folder = TabFolder(spaceId: spaceId, name: "Group", color: "#1a73e8")
+        try window.applyBrowserCommand(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned))
+        try window.applyBrowserCommand(.moveSidebarItem(
+            spaceId: spaceId, kind: .tab, itemId: grouped.id, parentFolderId: folder.id, section: .unpinned,
+            insert: .anchored(fallbackIndex: 0, insertBeforeId: nil, insertAfterId: nil)
+        ))
+        window.tabManager.discardEngines([unloaded.id])
+        let positions = try [grouped.id, unloaded.id].map { id in
+            try XCTUnwrap(registry.tabPosition(of: try XCTUnwrap(window.tabManager.tabAdapter(for: id)), extensionId: extensionId))
+        }
+
+        let result = await call("tabs", "details", ["tabs": positions])
+        let details = try XCTUnwrap(result.result as? [[String: Any]])
+
+        XCTAssertGreaterThan(try XCTUnwrap(details[0]["groupId"] as? Int), 0)
+        XCTAssertEqual(details[0]["discarded"] as? Bool, false)
+        XCTAssertEqual(details[1]["groupId"] as? Int, -1)
+        XCTAssertEqual(details[1]["discarded"] as? Bool, true)
+        XCTAssertEqual(details[1]["frozen"] as? Bool, false)
+        XCTAssertNotNil(details[0]["lastAccessed"] as? Double)
     }
 
     // MARK: - cookies.getPartitionKey

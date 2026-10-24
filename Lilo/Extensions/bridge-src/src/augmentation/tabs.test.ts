@@ -7,7 +7,7 @@ let nextResult: unknown;
 
 mockGapAPI((msg: any) => {
   gapCalls.push({ namespace: msg.namespace, method: msg.method, params: msg.params });
-  return Promise.resolve(nextResult);
+  return Promise.resolve(typeof nextResult === 'function' ? nextResult(msg.params) : nextResult);
 });
 
 const tabs = [
@@ -144,7 +144,7 @@ describe('windows.onBoundsChanged', () => {
   });
 });
 
-describe('the tab url and title WebKit withholds as ""', () => {
+describe("Chrome's Tab objects", () => {
   class NativeEvent {
     listeners = new Set<(...args: any[]) => void>();
     addListener(listener: (...args: any[]) => void) { this.listeners.add(listener); }
@@ -153,40 +153,74 @@ describe('the tab url and title WebKit withholds as ""', () => {
     fire(...args: any[]) { for (const listener of this.listeners) listener(...args); }
   }
 
-  function install(permissions: string[]) {
-    const withheld = () => ({ id: 11, index: 0, windowId: 1, url: '', title: '', status: 'loading' });
-    class Tabs { query() { return Promise.resolve([withheld()]); } }
+  /** Lilo's answer for a loaded tab outside any group; with `reveal`, the url and title of the revealed tabs. */
+  const details = (extra: object = {}) => (params: any) => params.tabs.map((_: unknown, i: number) => ({
+    groupId: -1, discarded: false, frozen: false, lastAccessed: 5,
+    ...(params.reveal.includes(i) ? { url: 'chrome://newtab/', title: 'New Tab' } : {}),
+    ...extra,
+  }));
+  const chromeFields = { groupId: -1, discarded: false, frozen: false, autoDiscardable: true };
+
+  function install(permissions: string[], tabs: () => any[] = () => [{ id: 11, index: 0, windowId: 1, url: '', title: '', status: 'loading' }]) {
+    const asked: unknown[] = [];
+    class Tabs { query(info: unknown) { asked.push(info); return Promise.resolve(tabs()); } }
     const webKit = Object.assign(new Tabs(), { onCreated: new NativeEvent(), onUpdated: new NativeEvent() });
     (globalThis as any).chrome = { runtime: { getManifest: () => ({ permissions }) }, tabs: webKit };
     installChromeCompat({});
-    return { chrome: (globalThis as any).chrome, webKit, withheld };
+    return { chrome: (globalThis as any).chrome, webKit, withheld: () => tabs()[0], asked };
   }
 
-  it('are left out of tabs and tab events for an extension that may not hold tabs, as Chrome', async () => {
+  it('leave out the url and title WebKit withholds as "" for an extension that may not hold tabs, as Chrome', async () => {
+    nextResult = details();
     const { chrome, webKit, withheld } = install([]);
-    assert.deepEqual(await chrome.tabs.query({}), [{ id: 11, index: 0, windowId: 1, status: 'loading' }]);
+    const left = { id: 11, index: 0, windowId: 1, status: 'loading', ...chromeFields };
+    assert.deepEqual(await chrome.tabs.query({}), [{ ...left, lastAccessed: 5 }]);
+    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [] } }]);
     const heard: unknown[] = [];
     const onUpdated = (...args: unknown[]) => heard.push(args);
-    chrome.tabs.onCreated.addListener((tab: unknown) => heard.push(tab));
     chrome.tabs.onUpdated.addListener(onUpdated);
-    webKit.onCreated.fire(withheld());
     webKit.onUpdated.fire(11, { title: '' }, withheld());
     webKit.onUpdated.fire(11, { status: 'complete', url: '' }, withheld());
-    const left = { id: 11, index: 0, windowId: 1, status: 'loading' };
-    assert.deepEqual(heard, [left, [11, {}, left], [11, { status: 'complete' }, left]]);
+    assert.deepEqual(heard, [[11, {}, left], [11, { status: 'complete' }, left]]);
     chrome.tabs.onUpdated.removeListener(onUpdated);
     assert.equal(webKit.onUpdated.listeners.size, 0);
   });
 
-  it("are read from Lilo for an extension that holds tabs, an empty tab as Chrome's new tab page, and stay in events", async () => {
+  it("read the withheld url and title from Lilo for an extension that holds tabs, an empty tab as Chrome's new tab page", async () => {
+    nextResult = details();
     const { chrome, webKit, withheld } = install(['tabs']);
-    nextResult = [['chrome://newtab/', 'New Tab']];
-    assert.deepEqual(await chrome.tabs.query({}), [{ ...withheld(), url: 'chrome://newtab/', title: 'New Tab' }]);
-    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'urls', params: { tabs: [{ windowPosition: -1, index: 0 }] } }]);
+    assert.deepEqual(await chrome.tabs.query({}), [{ ...withheld(), url: 'chrome://newtab/', title: 'New Tab', ...chromeFields, lastAccessed: 5 }]);
+    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [0] } }]);
     const heard: unknown[] = [];
+    chrome.tabs.onUpdated.addListener((...args: unknown[]) => heard.push(args));
+    webKit.onUpdated.fire(11, { title: '' }, withheld());
+    assert.deepEqual(heard, [[11, { title: '' }, { ...withheld(), ...chromeFields }]]);
+  });
+
+  it('report an unloaded tab as discarded, its status unloaded, as Chrome', async () => {
+    nextResult = details({ discarded: true });
+    const { chrome } = install([], () => [{ id: 11, index: 0, windowId: 1, status: 'complete' }]);
+    const [tab] = await chrome.tabs.query({});
+    assert.equal(tab.discarded, true);
+    assert.equal(tab.status, 'unloaded');
+  });
+
+  it('filter tabs.query on groupId, which WebKit ignores', async () => {
+    nextResult = () => [{ groupId: 4 }, { groupId: -1 }];
+    const { chrome, asked } = install([], () => [{ id: 11, index: 0, windowId: 1 }, { id: 12, index: 1, windowId: 1 }]);
+    assert.deepEqual((await chrome.tabs.query({ groupId: 4, active: true })).map((tab: any) => tab.id), [11]);
+    assert.deepEqual(asked, [{ active: true }]);
+  });
+
+  it('give a new tab Chrome\'s fields in tabs.onCreated, last accessed when made', () => {
+    const { chrome, webKit } = install([]);
+    const heard: any[] = [];
     chrome.tabs.onCreated.addListener((tab: unknown) => heard.push(tab));
-    webKit.onCreated.fire(withheld());
-    assert.deepEqual(heard, [withheld()]);
+    const before = Date.now();
+    webKit.onCreated.fire({ id: 13, index: 1, windowId: 1, url: 'https://example.com/', title: 'Example', status: 'loading' });
+    const { lastAccessed, ...rest } = heard[0];
+    assert.deepEqual(rest, { id: 13, index: 1, windowId: 1, url: 'https://example.com/', title: 'Example', status: 'loading', ...chromeFields });
+    assert.ok(lastAccessed >= before && lastAccessed <= Date.now());
   });
 
   it("match chrome:// url patterns, which WebKit rejects, against Chrome's new tab page", async () => {
@@ -201,7 +235,7 @@ describe('the tab url and title WebKit withholds as ""', () => {
     (globalThis as any).chrome = { runtime: { getManifest: () => ({ permissions: ['tabs'] }) }, tabs: Object.assign(new Tabs(), { onCreated: new NativeEvent(), onUpdated: new NativeEvent() }) };
     installChromeCompat({});
     const chrome = (globalThis as any).chrome;
-    nextResult = [['chrome://newtab/', 'New Tab']];
+    nextResult = details();
 
     assert.deepEqual((await chrome.tabs.query({ url: 'chrome://newtab/*' })).map((tab: any) => tab.id), [11]);
     assert.deepEqual((await chrome.tabs.query({ url: ['https://example.com/*', 'chrome://newtab/*'] })).map((tab: any) => tab.id), [11, 12]);

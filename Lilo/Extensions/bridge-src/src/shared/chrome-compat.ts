@@ -8,7 +8,7 @@ import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging } from '../augmentation/runtime.ts';
-import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabRevealedURLPatches, tabURLPatches, tabURLStandIns, windowRevealedURLPatches, windowURLPatches } from '../augmentation/tabs.ts';
+import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
 import { detectLanguage } from '../augmentation/detectLanguage.ts';
@@ -209,11 +209,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     (listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()),
     noReceiver,
   );
-  const tabsPatch: Record<string, Patch> = { ...withheldURLs ? tabURLPatches : tabRevealedURLPatches, sendMessage: (original) => lastErrorWithoutAnswer(original, noReceiver) };
-  for (const name in groups.patch) {
-    const [outer, inner] = [groups.patch[name], tabsPatch[name]];
-    tabsPatch[name] = inner ? (original, self) => outer(inner(original, self), self) : outer;
-  }
+  const tabsPatch: Record<string, Patch> = { ...tabPatches(withheldURLs), sendMessage: (original) => lastErrorWithoutAnswer(original, noReceiver) };
   const query = tabsPatch.query;
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
   const getCurrent = tabsPatch.getCurrent;
@@ -225,14 +221,14 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     scripting: { patch: scriptingPatches },
     webNavigation: { add: webNavigationAugmentation, patch: webNavigationPatches, standIns: webNavigationStandIns },
     // WebKit has no tab groups: tabs.group/ungroup and each tab's groupId map onto Lilo folders.
-    tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: withheldURLs ? tabURLStandIns : undefined },
+    tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: tabStandIns(withheldURLs) },
     declarativeNetRequest: {
       patch: declarativeNetRequestPatches,
       add: perms.has('declarativeNetRequestFeedback')
         ? { ...staticRulesAdditions, testMatchOutcome: testMatchOutcomeFor(chrome.declarativeNetRequest), onRuleMatchedDebug }
         : staticRulesAdditions,
     },
-    windows: { add: { onBoundsChanged }, patch: withheldURLs ? windowURLPatches : windowRevealedURLPatches },
+    windows: { add: { onBoundsChanged }, patch: windowPatches(withheldURLs) },
     permissions: {
       add: permissionsAdditions,
       patch: permissionsPatches(
