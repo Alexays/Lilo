@@ -521,6 +521,7 @@
 		E305C9F9252F84C8050AA2DD /* ProgressEmitGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2293413C64F43F32F33C8C /* ProgressEmitGateTests.swift */; };
 		E3D68CC883CFE9934755CAB0 /* CaptureBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2B09C4879799B25F4316ED /* CaptureBridgeHandlerTests.swift */; };
 		E3FCB3DD20185E64FB3652A3 /* WKWebViewTabSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6927B2D3B13F62F69A3A4523 /* WKWebViewTabSourceTests.swift */; };
+		E420FA5488310C0A9DFFB430 /* TabExtensionEventsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */; };
 		E4946CE59D787E9A51D8277E /* CaptureRetentionIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */; };
 		E4960068CD73F7F92562FE80 /* OmniboxBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA7B781D2407BC214A591CB /* OmniboxBridgeHandlerTests.swift */; };
 		E52DDF8BB5FFD1A894B9D906 /* ChangesHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D72B3E33445B63A003F70B0 /* ChangesHost.swift */; };
@@ -728,6 +729,7 @@
 		2848B352725E442709C3FDEB /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		292A55E3946115C3552E1B11 /* MainWindowController+SplitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+SplitView.swift"; sourceTree = "<group>"; };
 		2B1C3FDFB052BFDCE12B8834 /* FeatureFlagsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsBridgeHandler.swift; sourceTree = "<group>"; };
+		2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabExtensionEventsTests.swift; sourceTree = "<group>"; };
 		2BF1B068EE38071BDC4C8801 /* MainWindowController+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Extensions.swift"; sourceTree = "<group>"; };
 		2BF2A6D8AA9663C63227724B /* TemporaryProfileDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryProfileDatabase.swift; sourceTree = "<group>"; };
 		2C5EAC944C4FA42F1A74E759 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
@@ -1277,6 +1279,7 @@
 				01D45E0B4C896809F3CA2B68 /* SpaceTabStateTests.swift */,
 				F0D2FAD7B4EEA4D41DE59E0D /* SplitLayoutTests.swift */,
 				AC73D41B9525B0E4BD1D4109 /* TabArchiveTests.swift */,
+				2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */,
 				051A95A4390A8B95F0E0D669 /* TabFoldersTests.swift */,
 				45CA6916762B455944115350 /* TabLifecycleCoordinatorTests.swift */,
 				A3E4311F0D20240330B8214D /* TabLifecycleIdleTests.swift */,
@@ -3010,6 +3013,7 @@
 				F2EB519F83CBEC6726DB69FC /* TabContextMenuActionsTests.swift in Sources */,
 				54E223905C49405FB8843B51 /* TabDockControllerTests.swift in Sources */,
 				BE52C56886B07B2CFB430778 /* TabExtensionAdapterTests.swift in Sources */,
+				E420FA5488310C0A9DFFB430 /* TabExtensionEventsTests.swift in Sources */,
 				DE305FAB31A4EAA02599452A /* TabFoldersTests.swift in Sources */,
 				90F9C9A598468A52FD43C07E /* TabGroupsBridgeHandlerTests.swift in Sources */,
 				4C53B26F0FC0147D3C4E7CA6 /* TabLifecycleCoordinatorTests.swift in Sources */,

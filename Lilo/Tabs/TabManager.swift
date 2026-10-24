@@ -58,7 +58,7 @@ final class TabManager {
     /// racing the extensions' restore): the page stays blank until the engine is rebuilt.
     var tabsAwaitingTheirExtension: Set<UUID> = []
 
-    /// Visible order of current-space tabs (with live adapters) as last reported to extensions,
+    /// Visible order of current-space tabs as last reported to extensions,
     /// used to detect reorders and fire `tabs.onMoved`. Maintained only by `emitTabMovedEventsIfNeeded`.
     var lastExtensionTabMoveOrder: [UUID] = []
 
