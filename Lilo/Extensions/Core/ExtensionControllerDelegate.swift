@@ -237,6 +237,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         guard let tab = target.createTabStateFirst(
             url: configuration.url,
             activate: configuration.shouldBeActive && !opensTabsInBackground,
+            opener: (configuration.parentTab as? TabExtensionAdapter)?.tabId,
             sidebarParentFolderId: placement?.folderId,
             sidebarSection: placement?.section,
             sidebarIndex: placement?.index

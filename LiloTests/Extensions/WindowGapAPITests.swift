@@ -129,6 +129,20 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertFalse(registry.extensionWindows.contains { $0 === panel })
     }
 
+    // MARK: - openerTabId
+
+    /// A tab a page opens (a `target=_blank` link, a Command-click) names that page's tab as its opener, as in Chrome.
+    func testATabAPageOpensHasThePageAsItsOpener() throws {
+        let opener = try openTab("https://allowed.test/")
+        let before = Set(window.tabManager.openTabs.map(\.id))
+
+        window.tab(try XCTUnwrap(window.tabManager.engineTab(for: opener.id)), didCreateNewTab: URL(string: "https://allowed.test/next"), inBackground: true)
+
+        let created = try XCTUnwrap(window.tabManager.openTabs.first { !before.contains($0.id) })
+        let openerAdapter = try XCTUnwrap(window.tabManager.tabAdapter(for: opener.id))
+        XCTAssertTrue(window.tabManager.tabAdapter(for: created.id)?.parent === openerAdapter)
+    }
+
     // MARK: - tabs urls
 
     func testTabsShowsEveryTabURLAndAnEmptyTabAsChromesNewTabPage() async throws {

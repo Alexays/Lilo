@@ -178,7 +178,7 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
             completionHandler(nil, Self.windowUnavailableError); return
         }
         guard let url = url(for: context),
-              let tab = window.createTabStateFirst(url: nil, activate: configuration.shouldBeActive) else {
+              let tab = window.createTabStateFirst(url: nil, activate: configuration.shouldBeActive, opener: tabId) else {
             completionHandler(nil, NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "The tab could not be duplicated"]))
             return
         }

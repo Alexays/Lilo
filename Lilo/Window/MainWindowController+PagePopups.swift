@@ -125,6 +125,7 @@ extension MainWindowController {
         guard let tab = createTabStateFirst(
             url: nil,
             activate: !split,
+            opener: popup.openerTabId,
             adopting: popup.engine,
             sidebarParentFolderId: besideOpener?.parentFolderId,
             sidebarSection: besideOpener?.section,
