@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+# Git generates merge subjects; CI checks the non-merge commits being merged.
+if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
+    exit 0
+fi
+
+subject=$(sed -n '1p' "$1")
+case "$subject" in
+    fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
+esac
+
+exec sh scripts/lint_commit_message.sh "$1"
