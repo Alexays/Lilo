@@ -860,8 +860,35 @@ final class WKEngineFactory {
             source: "try{Object.defineProperty(navigator,Symbol(),{value:navigator.credentials})}catch(e){}",
             injectionTime: .atDocumentStart, forMainFrameOnly: false
         ))
+        contentController.addUserScript(WKUserScript(source: Self.externallyConnectableRuntimeSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         installedFilterUserScripts.forEach { contentController.addUserScript($0) }
     }
+
+    /// Chrome gives a page an extension's `externally_connectable` names `chrome.runtime`, WebKit only
+    /// `browser.runtime`: claude.ai's sign-in hands its code to the Claude extension this way. Other
+    /// pages keep no `window.chrome`, which sites read as Chrome.
+    private static let externallyConnectableRuntimeSource = """
+    (() => {
+      const runtime = globalThis.browser?.runtime;
+      if (typeof runtime?.sendMessage !== 'function' || globalThis.chrome?.runtime) return;
+      let lastError;
+      const chromeRuntime = {
+        get lastError() { return lastError; },
+        // Chrome's callback form: the trailing function gets the answer, or nothing and lastError.
+        sendMessage(...args) {
+          const callback = typeof args[args.length - 1] === 'function' ? args.pop() : undefined;
+          const sent = runtime.sendMessage(...args);
+          if (!callback) return sent;
+          sent.then((answer) => callback(answer), (error) => {
+            lastError = { message: String(error?.message ?? error) };
+            try { callback(); } finally { lastError = undefined; }
+          });
+        },
+        connect: (...args) => runtime.connect(...args),
+      };
+      globalThis.chrome = Object.assign(globalThis.chrome ?? {}, { runtime: chromeRuntime });
+    })();
+    """
 
     /// Bundle JS templates are immutable; each resource is read once per factory lifetime.
     private func bundledTemplate(_ resource: String) -> String? {
