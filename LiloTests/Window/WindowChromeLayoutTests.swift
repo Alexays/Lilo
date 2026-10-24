@@ -2,7 +2,7 @@ import AppKit
 import XCTest
 @testable import Lilo
 
-/// The sidebar gives way before the content gets too narrow to use.
+/// The sidebar gives way before the content gets too narrow to use, and full screen leaves the chrome uncovered.
 @MainActor
 final class WindowChromeLayoutTests: XCTestCase {
     private var browserContext: TemporaryBrowserContext!
@@ -37,5 +37,24 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
         nsWindow.setContentSize(NSSize(width: 1200, height: 800))
         XCTAssertEqual(window.sidebarWidth, 480, "its width once there is room")
+    }
+
+    func testFullScreenLeavesTheTopOfTheChromeUncovered() throws {
+        let controller = MainWindowController(context: browserContext.context)
+        let nsWindow = try XCTUnwrap(controller.window)
+        let proposed: NSApplication.PresentationOptions = [.fullScreen, .autoHideMenuBar, .autoHideDock]
+
+        let options = controller.window(nsWindow, willUseFullScreenPresentationOptions: proposed)
+
+        XCTAssertTrue(options.isSuperset(of: proposed))
+        XCTAssertTrue(options.contains(.autoHideToolbar), "the toolbar comes down with the menu bar, over the sidebar header otherwise")
+
+        // AppKit hands the revealed title bar's height to the web view under it; WebKit would paint a pocket that tall.
+        let overlay = controller.chromeWebView
+        overlay.setFullScreenTitlebarOverlayHeight(66)
+        let key = "fullScreenTitlebarOverlayHeight"
+        if overlay.responds(to: NSSelectorFromString(key)) {
+            XCTAssertEqual(overlay.value(forKey: key) as? CGFloat, 0)
+        }
     }
 }

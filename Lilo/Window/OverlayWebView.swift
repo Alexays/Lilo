@@ -68,6 +68,11 @@ final class OverlayWebView: WKWebView {
         layer?.isOpaque = false
     }
 
+    /// AppKit hands the revealed full-screen title bar's height to the web view under it, and WebKit paints an
+    /// opaque scroll edge pocket that tall over the sidebar. The chrome does not scroll, so it takes none.
+    @objc(setFullScreenTitlebarOverlayHeight:)
+    func setFullScreenTitlebarOverlayHeight(_ height: CGFloat) {}
+
     func setMouseTrackingEnabled(_ enabled: Bool) {
         guard enabled != mouseTrackingEnabled else { return }
         mouseTrackingEnabled = enabled

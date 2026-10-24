@@ -795,6 +795,12 @@ extension MainWindowController: NSWindowDelegate {
         chromeInput.stop()
     }
 
+    /// The empty toolbar only sizes the windowed title bar: shown for good in full screen, it would cover the
+    /// sidebar's header. It comes down with the menu bar instead.
+    func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
+        proposedOptions.union(.autoHideToolbar)
+    }
+
     func windowDidEnterFullScreen(_ notification: Notification) {
         syncTrafficLights(animated: false)
         bridgeRouter.send(event: "windowFullscreenChanged", data: ["isFullscreen": true])
