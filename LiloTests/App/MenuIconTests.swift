@@ -78,9 +78,9 @@ final class MenuIconTests: XCTestCase {
         }
     }
 
-    /// macOS gives the standard items a symbol, so every other menu bar item has one too, made when its menu
-    /// opens rather than when the menu bar is built at launch.
-    func testEveryMainMenuItemHasAnIcon() throws {
+    /// Lilo's menu bar items get their symbols when the menu opens. AppKit also inserts its own items,
+    /// such as Writing Tools, whose appearance it controls.
+    func testEveryLiloMainMenuItemHasAnIcon() throws {
         let saved = NSApp.mainMenu
         defer { NSApp.mainMenu = saved }
         let delegate = AppDelegate()
@@ -97,7 +97,7 @@ final class MenuIconTests: XCTestCase {
             // What AppKit calls as the menu opens; a dynamic menu repopulates first, then shows its images the same way.
             if menu.delegate is MenuBarImageLoader { menu.delegate?.menuNeedsUpdate?(menu) } else { menu.showItemImages() }
             for item in menu.items where !item.isSeparatorItem && !item.isHidden {
-                if item.image == nil || !isShown(item) { missing.append(item.title) }
+                if item is SymbolMenuItem, item.image == nil || !isShown(item) { missing.append(item.title) }
                 item.submenu.map(visit)
             }
         }
