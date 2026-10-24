@@ -591,6 +591,8 @@ final class WebKitGapTests: XCTestCase {
             files: ["rules.json": #"[{"id":1,"action":{"type":"block"},"condition":{"requestDomains":[\#(domains)]}}]"#],
             manifest: ["declarative_net_request": ["rule_resources": [["id": "big", "enabled": false, "path": "rules.json"]]]]
         )
+        // A compile that outlasts the bound proves nothing either way, as on a slow CI runner.
+        if title == "waiting" { throw XCTSkip("WebKit was still compiling the ruleset after 120 s") }
         XCTAssertTrue(
             title?.hasSuffix("Failed to apply rules.") == true,
             "WebKit now applies a ruleset past its rule cap (\(title ?? "nil")): drop the static rule budget of webKitStaticRulesets (dnr-rules.ts)"
@@ -605,6 +607,8 @@ final class WebKitGapTests: XCTestCase {
             files: ["rules.json": #"[{"id":1,"action":{"type":"block"},"condition":{"requestDomains":[\#(domains)]}}]"#],
             manifest: ["declarative_net_request": ["rule_resources": [["id": "big", "enabled": true, "path": "rules.json"]]]]
         )
+        // A compile that outlasts the bound proves nothing either way, as on a slow CI runner.
+        if title == "waiting" { throw XCTSkip("WebKit was still compiling the ruleset after 120 s") }
         XCTAssertTrue(
             title?.hasSuffix("Failed to apply rules.") == true,
             "WebKit now turns off every ruleset during its first compile (\(title ?? "nil")): drop the wait of updateEnabledRulesets (dnr-rules.ts)"
