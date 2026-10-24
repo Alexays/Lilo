@@ -195,7 +195,12 @@ final class CaptureBridgeHandlerTests: XCTestCase {
 
     func testOffscreenDocumentReceivesFramesOfACapturedTab() async throws {
         let offscreenScript = """
+        let stop;
         chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+          if (message.stop) {
+            stop().then(sendResponse);
+            return true;
+          }
           (async () => {
             const stream = await navigator.mediaDevices.getUserMedia({
               audio: false,
@@ -207,10 +212,12 @@ final class CaptureBridgeHandlerTests: XCTestCase {
             const settings = track.getSettings();
             const recorder = new MediaRecorder(stream);
             recorder.start(250);
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            recorder.stop();
-            await new Promise((resolve) => { recorder.onstop = resolve; });
-            track.stop();
+            stop = async () => {
+              recorder.stop();
+              await new Promise((resolve) => { recorder.onstop = resolve; });
+              track.stop();
+              return true;
+            };
             return { width: settings.width, height: settings.height, surface: settings.displaySurface };
           })().then(sendResponse, (error) => sendResponse({ error: String(error) }));
           return true;
@@ -268,7 +275,11 @@ final class CaptureBridgeHandlerTests: XCTestCase {
         XCTAssertNil(result?["error"], "\(result ?? [:])")
         XCTAssertEqual(result?["surface"] as? String, "browser")
         XCTAssertGreaterThan(result?["width"] as? Int ?? 0, 0)
-        XCTAssertGreaterThanOrEqual(storedFrames, 3, "the offscreen document pulled frames of the tab")
+        // The offscreen document records until the frames are in, however slowly a busy machine snapshots and encodes them.
+        let pulled = await pollUntil(timeout: 20) { storedFrames >= 3 }
+        XCTAssertTrue(pulled, "the offscreen document pulled frames of the tab")
+        let ended = try await page.callAsyncJavaScript("return await chrome.runtime.sendMessage({ stop: true })", contentWorld: .page) as? Bool
+        XCTAssertEqual(ended, true)
         let stopped = await pollUntil(timeout: 5) { self.window.tabShareSessions.sharedEngines.isEmpty }
         XCTAssertTrue(stopped, "stopping the tracks ends the ferry")
     }
