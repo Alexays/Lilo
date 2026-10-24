@@ -204,6 +204,8 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
             completionHandler(nil, NSError(domain: "LiloExtension", code: 0, userInfo: [NSLocalizedDescriptionKey: "No WKWebView"]))
             return
         }
+        // tabs.captureVisibleTab hands an empty rect (WEBKIT-GAPS.md): it means the visible page.
+        if configuration.rect.isEmpty { configuration.rect = wv.bounds }
         Task {
             do { completionHandler(try await wv.takeSnapshot(configuration: configuration), nil) } catch { completionHandler(nil, error) }
         }

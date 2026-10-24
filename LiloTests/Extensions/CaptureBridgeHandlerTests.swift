@@ -86,6 +86,21 @@ final class CaptureBridgeHandlerTests: XCTestCase {
         await router.route(namespace: namespace, method: method, params: params, extensionId: extensionId, fromWorker: true, registry: registry)
     }
 
+    /// FireShot: WebKit asks the tab for tabs.captureVisibleTab's snapshot with an empty rect.
+    func testCaptureVisibleTabSnapshotsTheVisiblePage() async throws {
+        let (id, extensionContext) = try await loadExtension(permissions: ["activeTab"])
+        let (_, webView) = try await openTab(try XCTUnwrap(URL(string: "data:text/html,<body style='background:red'>page")), extensionId: id)
+        let adapter = try XCTUnwrap(registry.tabAdapters(atPositions: [position(of: webView, extensionId: id)], extensionId: id).first ?? nil)
+
+        let configuration = WKSnapshotConfiguration()
+        configuration.rect = .zero
+        let image: NSImage? = await withCheckedContinuation { done in
+            adapter.takeSnapshot(using: configuration, for: extensionContext) { image, _ in done.resume(returning: image) }
+        }
+
+        XCTAssertEqual(image?.size, webView.bounds.size)
+    }
+
     func testTabCaptureNeedsItsPermission() async throws {
         let (id, _) = try await loadExtension(permissions: ["tabs"])
         let (_, error) = await route("tabCapture", "getMediaStreamId", [:], extensionId: id)
