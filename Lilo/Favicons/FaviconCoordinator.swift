@@ -41,8 +41,10 @@ final class FaviconCoordinator {
     }
 
     /// Resolves the favicon from the link icons WebKit offers for the loaded page: the cached one
-    /// first, else the best icon that loads (largest declared size, then touch icons, then document
-    /// order). Concurrent loads for one host are coalesced; the dominant color is computed once.
+    /// first, else the first icon that loads, smallest first among those declared big enough for the
+    /// stored size, then undeclared ones (touch icons first), then smaller ones, largest first: a 512px
+    /// icon costs tens of KB for a 32px thumbnail. Concurrent loads for one host are coalesced; the
+    /// dominant color is computed once.
     func extract(from tab: WKWebViewTab, icons: [WKWebViewTab.LinkIcon]) {
         let shown = applyCached(from: tab)
         guard let pageHost = tab.currentURL?.host?.lowercased(), shown?.isExpired ?? true,
@@ -60,13 +62,18 @@ final class FaviconCoordinator {
             icons.forEach { $0.decide(nil) }
             fetch = existing
         } else {
+            let wanted = FaviconService.maxFaviconPixels
             let ranked = icons.enumerated().sorted { a, b in
-                if a.element.size != b.element.size { return a.element.size > b.element.size }
+                let (sa, sb) = (a.element.size, b.element.size)
+                let (tierA, tierB) = (sa >= wanted ? 0 : sa == 0 ? 1 : 2, sb >= wanted ? 0 : sb == 0 ? 1 : 2)
+                if tierA != tierB { return tierA < tierB }
+                if sa != sb { return tierA == 0 ? sa < sb : sa > sb }
                 if a.element.isTouchIcon != b.element.isTouchIcon { return a.element.isTouchIcon }
                 return a.offset < b.offset
             }.map(\.element)
             fetch = Task { @MainActor [weak self] in
                 var resolved: (dataURL: String, color: String?)?
+                var timedOut = false
                 // WebKit may drop a load's callback: past this, the host stops waiting and moves on.
                 let deadline = ContinuousClock.now + .seconds(10)
                 for icon in ranked {
@@ -77,13 +84,14 @@ final class FaviconCoordinator {
                     var received = stream.makeAsyncIterator()
                     let data = await received.next() ?? nil
                     timeout.cancel()
+                    if data == nil, ContinuousClock.now >= deadline { timedOut = true }
                     if let data, !data.isEmpty { resolved = await Self.resolve(data) }
                 }
                 guard let self else { return nil }
                 self.inFlight[pageHost] = nil
                 guard let resolved else {
-                    // Offline is no verdict on the host: retry as soon as the network is back.
-                    guard NetworkPathStatus.shared.isSatisfied else { return nil }
+                    // Offline or a slow link is no verdict on the host: retry on its next page load.
+                    guard NetworkPathStatus.shared.isSatisfied, !timedOut else { return nil }
                     let now = Date()
                     self.failedAt = self.failedAt.filter { now.timeIntervalSince($0.value) < Self.failureRetryInterval }
                     self.failedAt[pageHost] = now
