@@ -11,6 +11,8 @@ How a Lilo release is cut, from version bump to published DMG. Maintainer-only; 
 
 The app version lives in `Xcode/Configs/Base.xcconfig`: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. Sparkle compares the build number, so `CURRENT_PROJECT_VERSION` must grow with every release or installed copies never see the update. `Lilo/Info.plist` and the About panel read them at build time. Keep `version` in `lilo-ui/package.json` and `Lilo/Extensions/bridge-src/package.json` in step, in the same commit.
 
+In the same commit, rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, open a new empty `## [Unreleased]` above it, and update the compare links at the bottom.
+
 ## Tag and push
 
 ```bash
@@ -72,7 +74,7 @@ Once Apple grants it:
    spctl -a -vvv /Volumes/Lilo/Lilo.app
    xcrun stapler validate /Volumes/Lilo/Lilo.app
    ```
-2. Edit the generated release notes into a short list of user-visible changes.
+2. Replace the generated release notes with the version's section of `CHANGELOG.md`.
 3. Publish the draft release.
 4. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
    sha256 (`shasum -a 256 Lilo.dmg`), so `brew install --cask alexays/tap/lilo` and

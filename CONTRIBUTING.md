@@ -240,7 +240,9 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 1. Fork the repository and branch from `main`.
 2. Make focused commits, each building on its own (`make check-commits` checks a branch).
 3. Run `make validate` and confirm it passes.
-4. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
+4. For a change people using Lilo will notice, add a line under `Unreleased` in
+   [CHANGELOG.md](CHANGELOG.md), written for them, not for developers.
+5. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
    recording of any UI change.
 
 Commit messages and pull request titles follow
