@@ -1040,6 +1040,22 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertNil(ExtensionUIBridgeHandler.anchorRect(from: message))
     }
 
+    /// Okta Browser Plugin declares `https://*/`: Chrome grants every page of every host at install.
+    func testHostPermissionsReachEveryPathOfTheirHosts() async throws {
+        let extDir = tempDir.appendingPathComponent("host_paths")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try """
+        {"manifest_version":3,"name":"Hosts","version":"1","permissions":["webNavigation"],"host_permissions":["https://*/","https://app.example.org/home"]}
+        """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+
+        try await registry.load(from: extDir)
+
+        let context = try XCTUnwrap(registry.context(for: try XCTUnwrap(registry.loadedExtensions.first?.id)))
+        XCTAssertTrue(context.hasAccess(to: try XCTUnwrap(URL(string: "https://claude.ai/oauth/authorize?client_id=x&state=y"))))
+        XCTAssertTrue(context.hasAccess(to: try XCTUnwrap(URL(string: "https://app.example.org/settings"))))
+        XCTAssertFalse(context.hasAccess(to: try XCTUnwrap(URL(string: "http://claude.ai/"))))
+    }
+
     func testExtensionInstallReviewSummarizesManifestPermissions() throws {
         let extDir = tempDir.appendingPathComponent("review_extension")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)

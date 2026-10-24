@@ -329,6 +329,14 @@ final class WebKitGapTests: XCTestCase {
         }
     }
 
+    func testHostPermissionsMatchTheirPath() throws {
+        let pattern = try WKWebExtension.MatchPattern(string: "https://*/")
+        XCTAssertFalse(
+            pattern.matches(try XCTUnwrap(URL(string: "https://example.com/a"))),
+            "WebKit now ignores a host permission's path: drop the host_permissions rewrite in ExtensionBackgroundPreparer.acceptAsChrome"
+        )
+    }
+
     func testLifecycleEventsDependOnTheControllerAge() async throws {
         let worker = """
         const heard = [];

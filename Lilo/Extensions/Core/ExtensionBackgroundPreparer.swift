@@ -153,6 +153,15 @@ enum ExtensionBackgroundPreparer {
         if ((manifest["description"] as? String) ?? "").isEmpty {
             manifest["description"] = " "
         }
+        // Chrome ignores a host permission's path (`https://*/` reaches every page of every host); WebKit matches it.
+        for key in ["host_permissions", "optional_host_permissions"] {
+            guard let patterns = manifest[key] as? [Any] else { continue }
+            manifest[key] = patterns.map { entry -> Any in
+                guard let pattern = entry as? String, let hostStart = pattern.range(of: "://")?.upperBound,
+                      let pathStart = pattern[hostStart...].firstIndex(of: "/") else { return entry }
+                return String(pattern[..<pathStart]) + "/*"
+            }
+        }
         if var commands = manifest["commands"] as? [String: Any] {
             // WebKit rejects an empty `_execute_action`, and adds that command itself for the action.
             if (commands["_execute_action"] as? [String: Any])?.isEmpty == true {
