@@ -8,8 +8,9 @@ Usage: scripts/build-app.sh [debug|release] [install] [notarize]
 
 Arguments:
   debug|release   Select the Xcode configuration to archive. Defaults to debug.
-  install         Copy the exported app to ~/Applications/Lilo.app. Builds this Mac's
-                  architecture only, unless notarizing.
+  install         Copy the exported app into place: a release replaces /Applications/Lilo.app,
+                  where the DMG installs it; a debug build goes to ~/Applications/Lilo.app.
+                  Builds this Mac's architecture only, unless notarizing.
   notarize        Submit the exported release app to notarytool, wait, and staple.
 
 Signing (ad-hoc when no team ID is set):
@@ -184,9 +185,19 @@ fi
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 
 if [ "$INSTALL" = true ]; then
-    INSTALLED="$HOME/Applications/Lilo.app"
+    # A release shares its identity and data with the DMG's copy: one copy, in its place, so macOS never
+    # opens links or Spotlight results with the other.
+    if [ "$CONFIG" = "release" ]; then
+        INSTALLED="/Applications/Lilo.app"
+        STRAY="$HOME/Applications/Lilo.app"
+        if [ "$(defaults read "$STRAY/Contents/Info" CFBundleIdentifier 2>/dev/null)" = "fr.arouillard.lilo" ]; then
+            echo "warning: $STRAY is another release copy of Lilo; remove it so macOS only opens $INSTALLED" >&2
+        fi
+    else
+        INSTALLED="$HOME/Applications/Lilo.app"
+    fi
     rm -rf "$INSTALLED"
-    mkdir -p "$HOME/Applications"
+    mkdir -p "$(dirname "$INSTALLED")"
     ditto "$APP" "$INSTALLED"
     "$LSREGISTER" -f "$INSTALLED" >/dev/null 2>&1 || true
     # The export copy under build/ is a throwaway artifact: unregistered so it never competes as an

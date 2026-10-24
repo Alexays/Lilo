@@ -157,8 +157,8 @@ With Xcode 27, Node.js 22.6+ and Zig 0.16 installed ([full prerequisites](CONTRI
 
 ```bash
 git clone https://github.com/Alexays/Lilo.git && cd Lilo
-make install                    # Release build into ~/Applications
-open ~/Applications/Lilo.app
+make install                    # Release build into /Applications, replacing an installed copy
+open /Applications/Lilo.app
 ```
 
 No Apple Developer account is needed. Source builds are ad-hoc signed by default;

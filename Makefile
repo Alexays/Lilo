@@ -194,7 +194,7 @@ public-suffix-list:
 app: vt-build ui-build ext-bridge-build
 	@scripts/build-app.sh debug
 
-## Install the release app to ~/Applications/Lilo.app
+## Install the release app to /Applications/Lilo.app, replacing the DMG's copy
 install: vt-build ui-build ext-bridge-build
 	@scripts/build-app.sh release install
 
