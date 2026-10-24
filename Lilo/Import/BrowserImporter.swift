@@ -45,7 +45,7 @@ final class BrowserImporter {
         var historyStore: (UUID) throws -> HistoryStore
         var faviconStore: (UUID) throws -> FaviconStore
         var setCookies: (_ cookies: [HTTPCookie], _ profileId: UUID) async -> Void
-        var installExtension: (_ id: String) async throws -> Void
+        var installExtension: (_ id: String, _ profileId: UUID) async throws -> Void
         var otherBookmarksTitle: (_ sourceName: String) -> String
         /// Puts imported favicons in the live cache so the sidebar shows them right away.
         var warmFavicons: ([FaviconStore.Entry]) -> Void
@@ -154,16 +154,11 @@ final class BrowserImporter {
 
             if kinds.contains(.extensions) {
                 let wanted = bundle.extensions.filter { selection.extensionIds.contains($0.id) }
-                // Only the active profile has a loaded extension registry to install into.
-                guard lilo.profileId == sink.activeProfileId() else {
-                    item(.extensions, imported: 0, skipped: wanted.count, error: "extensions install into the active profile only")
-                    continue
-                }
                 var installed = 0
                 var lastError: String?
                 for (index, ext) in wanted.enumerated() {
                     start(.extensions, done: index, total: wanted.count)
-                    do { try await sink.installExtension(ext.id); installed += 1 } catch { lastError = "\(ext.name): \(error)" }
+                    do { try await sink.installExtension(ext.id, lilo.profileId); installed += 1 } catch { lastError = "\(ext.name): \(error)" }
                 }
                 item(.extensions, imported: installed, skipped: wanted.count - installed, error: lastError)
             }

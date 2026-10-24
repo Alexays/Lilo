@@ -76,7 +76,7 @@ final class BrowserImporterTests: XCTestCase {
             historyStore: { [unowned self] _ in history },
             faviconStore: { _ in throw ImportError.missingFile("favicons") },
             setCookies: { [unowned self] list, _ in cookies += list },
-            installExtension: { _ in },
+            installExtension: { _, _ in },
             otherBookmarksTitle: { "Other Bookmarks (\($0))" },
             warmFavicons: { _ in }
         ), home: home)
@@ -333,7 +333,7 @@ final class BrowserImporterTests: XCTestCase {
         XCTAssertEqual(loadedTrees[workId]?.pinned.count, 1)
     }
 
-    func testExtensionsOfASecondProfileAreSkippedNotMisplaced() async throws {
+    func testExtensionsOfASecondProfileInstallIntoItsOwnLiloProfile() async throws {
         let chrome = home.appendingPathComponent("Library/Application Support/Google/Chrome")
         try Data(#"{"profile": {"info_cache": {"Default": {"name": "Perso"}, "Profile 1": {"name": "Travail"}}}}"#.utf8)
             .write(to: chrome.appendingPathComponent("Local State"))
@@ -342,20 +342,22 @@ final class BrowserImporterTests: XCTestCase {
         try FileManager.default.createDirectory(at: ext, withIntermediateDirectories: true)
         try Data(#"{"name": "Work tool", "update_url": "https://clients2.google.com/service/update2/crx"}"#.utf8)
             .write(to: ext.appendingPathComponent("manifest.json"))
-        var installed: [String] = []
+        var installed: [(String, UUID)] = []
+        let travailId = UUID()
         let summary = await BrowserImporter(sink: .init(
             activeProfileId: { [unowned self] in profileId }, activeSpaceId: { [unowned self] in spaceId },
-            tree: { _ in nil }, apply: { _ in }, findProfile: { _ in nil }, createProfile: { _ in UUID() },
+            tree: { _ in nil }, apply: { _ in }, findProfile: { _ in nil }, createProfile: { name in name.hasSuffix(" Travail") ? travailId : UUID() },
             findSpace: { _, _ in nil }, createSpace: { _, _, _, _ in UUID() }, loadSpaceState: { _, _ in nil },
             saveSpaceStates: { _, _ in }, historyStore: { [unowned self] _ in history },
             faviconStore: { _ in throw ImportError.missingFile("favicons") }, setCookies: { _, _ in },
-            installExtension: { installed.append($0) }, otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
+            installExtension: { installed.append(($0, $1)) }, otherBookmarksTitle: { $0 }, warmFavicons: { _ in }
         ), home: home).run([
             .init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: []),
             .init(sourceId: "chrome", profileId: "Profile 1", kinds: [.extensions], extensionIds: [id])
         ], sources: BrowserImportScanner.scan(home: home)) { _ in }
-        XCTAssertEqual(installed, [], "a second profile's extensions must not land in the active one")
-        XCTAssertEqual(summary.first { $0.kind == .extensions }?.skipped, 1)
+        XCTAssertEqual(installed.map(\.0), [id])
+        XCTAssertEqual(installed.map(\.1), [travailId], "a second profile's extensions land in its own Lilo profile, not the active one")
+        XCTAssertEqual(summary.first { $0.kind == .extensions }?.imported, 1)
     }
 
     func testProgressNamesEachKindAsItStartsAndEachExtensionInstall() async throws {

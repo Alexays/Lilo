@@ -27,6 +27,7 @@ What changes in each Lilo release, for people using it. The format follows
 - The Chrome Web Store no longer asks you to switch to Chrome.
 - A disabled extension keeps its logo, and logos no longer sit on a colored tile in Settings.
 - The space editor's color picker and eyedropper work on the first try.
+- Importing a browser's second profile installs its extensions into that profile, not only the profile on screen.
 - Opening profile management from the space editor keeps the space's unsaved edits, and its footer wraps in a narrow window.
 - Light accent colors keep white labels readable.
 - The import lists browsers macOS does not let Lilo read, with how to grant access.

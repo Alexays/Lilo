@@ -473,8 +473,11 @@ extension MainWindowController {
                         group.notify(queue: .main) { done.resume() }
                     }
                 },
-                installExtension: { [weak self] id in
-                    guard let registry = self?.profileContext?.extensions else { throw ImportError.malformed("no extension registry") }
+                installExtension: { [weak self] id, profileId in
+                    // A profile no window shows gets its registry built; showing it later restores the rest beside this one.
+                    guard let registry = try self?.context.profileContexts.context(for: profileId).extensions else {
+                        throw ImportError.malformed("window closed")
+                    }
                     let dir = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
                     defer { try? FileManager.default.removeItem(at: dir.deletingLastPathComponent()) }
                     try await registry.load(from: dir)
