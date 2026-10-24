@@ -55,7 +55,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
 	changie change release-status release-version release-test \
 	hooks-install hooks-test lint-commit-message lint-commits
 
@@ -384,9 +384,13 @@ site-preview: site-generate
 site-generate: $(SITE_DEPS)
 	@npm --prefix site run build
 
-## Check Astro templates and TypeScript
+## Check website lint, formatting, Astro templates and TypeScript
 site-check: $(SITE_DEPS)
 	@npm --prefix site run check
+
+## Fix website lint and formatting with Ultracite
+site-fix: $(SITE_DEPS)
+	@npm --prefix site run fix
 
 ## Build and test the website's release notes, routes and metadata
 site-test: site-generate

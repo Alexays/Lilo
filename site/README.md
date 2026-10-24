@@ -9,12 +9,15 @@ make site-dev           # Astro with live reload at http://localhost:8787
 make site-dev-stop      # Stop Astro if it started a background dev server
 make site-generate      # Build the complete website in site/dist/
 make site-preview       # Preview the build with Cloudflare headers and redirects
-make site-check         # Check Astro templates and TypeScript
+make site-check         # Check lint, formatting, Astro templates and TypeScript
+make site-fix           # Fix lint and formatting with Ultracite
 make site-test          # Build, then test release notes, routes, links and metadata
 make site-deploy-check  # Check Cloudflare deployment without publishing
 ```
 
 `make validate` includes the website checks and tests. After changing dependencies in `site/package.json`, run `make site-lock` to update its lockfile.
+
+The site uses [Ultracite](https://www.ultracite.ai/providers/oxlint) with Oxlint’s core, Astro and anti-slop presets and Oxfmt’s formatting preset. `oxfmt.config.ts` enables Astro formatting with `@astrojs/compiler-rs`. Oxlint checks scripts in Astro files; `astro check` checks the templates and TypeScript. Both run through `make site-check`, including in CI. Generated output and dependencies are ignored.
 
 The Undici override patches Miniflare's pinned HTTP client. Remove it when Miniflare updates that dependency.
 
@@ -24,7 +27,8 @@ The Undici override patches Miniflare's pinned HTTP client. Remove it when Minif
 - `src/layouts/Layout.astro` shares page metadata, language alternates, icons and styles. It reads the app version from `Xcode/Configs/Base.xcconfig` at build time.
 - `src/components/` holds navigation, the footer and the changelog. New shared website copy lives in `src/lib/i18n.ts`.
 - `src/styles/global.css` holds the site's existing design. Astro fingerprints the built stylesheets.
-- `public/` holds static assets, the home page's interactive demo, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
+- `src/scripts/demo.ts` holds the home page’s interactive demo, bundled by Astro through `components/Demo.astro`. JavaScript/TypeScript modules, including tests and tool configs, use `.ts`.
+- `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Edit the Astro sources, then rebuild.
 

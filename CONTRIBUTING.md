@@ -140,7 +140,8 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make release-status` | pending release notes, changelog and app version consistency |
 | `make release-test` | release preparation and Sparkle build number synchronization tests |
-| `make site-check` | Astro templates and TypeScript |
+| `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
+| `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
@@ -178,7 +179,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling and website** (ubuntu): Changie fragments, version sync, Astro checks, website tests and a Cloudflare deployment dry run.
+- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website tests and a Cloudflare deployment dry run.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.

@@ -98,6 +98,19 @@ class SiteTests(unittest.TestCase):
             self.assertEqual(current.attrs["href"], "/" + page.removesuffix("index.html"))
         self.assertIn("First public release", (DIST / "llms-full.txt").read_text())
 
+    def test_typescript_demo_is_bundled_only_for_home_pages(self):
+        for page in PAGES:
+            with self.subTest(page=page):
+                scripts = [node for node in tree(DIST / page)
+                           if node.tag == "script" and "src" in node.attrs]
+                if page in ["index.html", "fr/index.html"]:
+                    self.assertEqual(len(scripts), 1)
+                    self.assertEqual(scripts[0].attrs.get("type"), "module")
+                    self.assertTrue(scripts[0].attrs["src"].startswith("/_astro/"))
+                else:
+                    self.assertEqual(scripts, [])
+        self.assertFalse((DIST / "app.js").exists())
+
     def test_cloudflare_assets_and_redirects_ship_in_the_build(self):
         redirects = (DIST / "_redirects").read_text()
         headers = (DIST / "_headers").read_text()

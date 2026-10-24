@@ -1,28 +1,55 @@
 ---
-import changelog from '../../../CHANGELOG.md?raw';
-import Layout from '../layouts/Layout.astro';
-import Header from './Header.astro';
-import Footer from './Footer.astro';
-import { parseChangelog } from '../lib/changelog.mjs';
-import { copy, type Locale } from '../lib/i18n';
+import changelog from "../../../CHANGELOG.md?raw";
+import Layout from "../layouts/Layout.astro";
+import { parseChangelog } from "../lib/changelog.ts";
+import { copy } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+import Footer from "./Footer.astro";
+import Header from "./Header.astro";
 
-interface Props { lang: Locale }
+interface Props {
+  lang: Locale;
+}
+
 const { lang } = Astro.props;
 const text = copy[lang];
 const releases = parseChangelog(changelog);
-if (releases.length === 0) throw new Error('No published Changie releases found in CHANGELOG.md');
-const dateFormat = new Intl.DateTimeFormat(lang, { dateStyle: 'long', timeZone: 'UTC' });
+
+if (releases.length === 0) {
+  throw new Error("No published Changie releases found in CHANGELOG.md");
+}
+
+const dateFormat = new Intl.DateTimeFormat(lang, {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
 ---
-<Layout lang={lang} title={text.changelogTitle} description={text.changelogDescription}>
+
+<Layout
+  lang={lang}
+  title={text.changelogTitle}
+  description={text.changelogDescription}
+>
   <div class="top changelog-top">
     <Header lang={lang} />
     <div class="wrap hero-copy changelog-hero">
       <span class="beta">{text.releases}</span>
-      <h1>{text.heading}<br /><span>{text.headingAccent}</span></h1>
+      <h1>
+        {text.heading}
+        <br />
+        <span>{text.headingAccent}</span>
+      </h1>
       <p class="sub">{text.introduction}</p>
       <div class="cta">
-        <a class="pill dark" href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg">{text.download}</a>
-        <a class="pill soft" href="https://github.com/Alexays/Lilo/releases">{text.github}</a>
+        <a
+          class="pill dark"
+          href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+        >
+          {text.download}
+        </a>
+        <a class="pill soft" href="https://github.com/Alexays/Lilo/releases">
+          {text.github}
+        </a>
       </div>
     </div>
   </div>
@@ -30,12 +57,31 @@ const dateFormat = new Intl.DateTimeFormat(lang, { dateStyle: 'long', timeZone: 
     <div class="wrap release-list">
       {text.languageNote && <p class="language-note">{text.languageNote}</p>}
       {releases.map((release, index) => (
-        <article class="release" id={`v${release.version}`} aria-labelledby={`title-v${release.version}`}>
+        <article
+          class="release"
+          id={`v${release.version}`}
+          aria-labelledby={`title-v${release.version}`}
+        >
           <header class="release-meta">
             {index === 0 && <span class="beta">{text.latest}</span>}
-            <h2 id={`title-v${release.version}`}><a href={`#v${release.version}`} aria-label={`${text.version} ${release.version}`}>{release.version}</a></h2>
-            <time datetime={release.date}>{dateFormat.format(new Date(`${release.date}T00:00:00Z`))}</time>
-            <a class="release-link" href={`https://github.com/Alexays/Lilo/releases/tag/v${release.version}`}>{text.releaseLink}<span aria-hidden="true"> ↗</span></a>
+            <h2 id={`title-v${release.version}`}>
+              <a
+                href={`#v${release.version}`}
+                aria-label={`${text.version} ${release.version}`}
+              >
+                {release.version}
+              </a>
+            </h2>
+            <time datetime={release.date}>
+              {dateFormat.format(new Date(`${release.date}T00:00:00Z`))}
+            </time>
+            <a
+              class="release-link"
+              href={`https://github.com/Alexays/Lilo/releases/tag/v${release.version}`}
+            >
+              {text.releaseLink}
+              <span aria-hidden="true"> ↗</span>
+            </a>
           </header>
           <div class="release-body" lang="en" set:html={release.html} />
         </article>
@@ -46,31 +92,105 @@ const dateFormat = new Intl.DateTimeFormat(lang, { dateStyle: 'long', timeZone: 
 </Layout>
 
 <style>
-  .changelog-top { padding-bottom: 40px; }
-  .changelog-hero { padding-block: 44px 32px; }
-  .changelog-hero h1 { font-size: clamp(42px, 6.5vw, 76px); }
-  .release-list { max-width: 1000px; padding-block: 24px 72px; }
-  .release { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 48px; padding-block: 48px; border-bottom: 1px solid var(--line); scroll-margin-top: 24px; }
-  .release:last-child { border-bottom: 0; }
-  .release-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-  .release-meta h2 { font-size: 32px; line-height: 1.2; }
-  .release-meta h2 a { text-decoration: none; }
-  .release-meta time, .release-link, .language-note { font-size: 14px; color: var(--ink-2); }
-  .release-link { text-decoration: none; text-underline-offset: 4px; }
-  .release-link:hover { color: var(--accent); text-decoration: underline; }
-  .language-note { margin-top: 24px; }
-  .release-body { font-size: 16px; overflow-wrap: anywhere; }
-  .release-body :global(h3) { margin-block: 28px 12px; font-size: 20px; }
-  .release-body :global(h3:first-child) { margin-top: 0; }
-  .release-body :global(ul), .release-body :global(ol) { padding-left: 22px; margin-block: 12px 0; }
-  .release-body :global(li) { padding-left: 4px; margin-block: 10px; }
-  .release-body :global(li::marker) { color: var(--accent); }
-  .release-body :global(p + p) { margin-top: 12px; }
-  .release-body :global(a) { color: var(--accent); text-underline-offset: 3px; }
-  .release-body :global(code) { font-family: var(--mono); font-size: .875em; }
+  .changelog-top {
+    padding-bottom: 40px;
+  }
+  .changelog-hero {
+    padding-block: 44px 32px;
+  }
+  .changelog-hero h1 {
+    font-size: clamp(42px, 6.5vw, 76px);
+  }
+  .release-list {
+    max-width: 1000px;
+    padding-block: 24px 72px;
+  }
+  .release {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 48px;
+    padding-block: 48px;
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 24px;
+  }
+  .release:last-child {
+    border-bottom: 0;
+  }
+  .release-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .release-meta h2 {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+  .release-meta h2 a {
+    text-decoration: none;
+  }
+  .release-meta time,
+  .release-link,
+  .language-note {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .release-link {
+    text-decoration: none;
+    text-underline-offset: 4px;
+  }
+  .release-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  .language-note {
+    margin-top: 24px;
+  }
+  .release-body {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+  .release-body :global(h3) {
+    margin-block: 28px 12px;
+    font-size: 20px;
+  }
+  .release-body :global(h3:first-child) {
+    margin-top: 0;
+  }
+  .release-body :global(ul),
+  .release-body :global(ol) {
+    padding-left: 22px;
+    margin-block: 12px 0;
+  }
+  .release-body :global(li) {
+    padding-left: 4px;
+    margin-block: 10px;
+  }
+  .release-body :global(li::marker) {
+    color: var(--accent);
+  }
+  .release-body :global(p + p) {
+    margin-top: 12px;
+  }
+  .release-body :global(a) {
+    color: var(--accent);
+    text-underline-offset: 3px;
+  }
+  .release-body :global(code) {
+    font-family: var(--mono);
+    font-size: 0.875em;
+  }
   @media (max-width: 700px) {
-    .release { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 32px; }
-    .release-list { padding-bottom: 32px; }
-    .changelog-hero { padding-block: 24px; }
+    .release {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+      padding-block: 32px;
+    }
+    .release-list {
+      padding-bottom: 32px;
+    }
+    .changelog-hero {
+      padding-block: 24px;
+    }
   }
 </style>

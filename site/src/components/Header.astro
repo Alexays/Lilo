@@ -1,27 +1,53 @@
 ---
-import Flower from './Flower.astro';
-import { copy, localizedPath, type Locale } from '../lib/i18n';
+import { copy, localizedPath } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+import Flower from "./Flower.astro";
 
-interface Props { lang: Locale }
+interface Props {
+  lang: Locale;
+}
+
 const { lang } = Astro.props;
 const text = copy[lang];
 const home = localizedPath(lang);
 const path = Astro.url.pathname;
+
 const sections = [
-  ['native', 'WebKit'],
-  ['extensions', 'Extensions'],
-  ['privacy', text.privacy],
-  ['build', 'Terminal'],
-  ['agents', 'Agents'],
-  ['faq', 'FAQ'],
+  ["native", "WebKit"],
+  ["extensions", "Extensions"],
+  ["privacy", text.privacy],
+  ["build", "Terminal"],
+  ["agents", "Agents"],
+  ["faq", "FAQ"],
 ];
 ---
+
 <header class="wrap nav">
-  <a class="logo" href={home} aria-label={text.home}><Flower />Lilo</a>
+  <a class="logo" href={home} aria-label={text.home}>
+    <Flower />
+    Lilo
+  </a>
   <nav aria-label={text.navigation}>
-    {sections.map(([id, label]) => <a class="hide section-link" href={`${home}#${id}`}>{label}</a>)}
-    <a class="hide" href={`${home}moving/`} aria-current={path === `${home}moving/` ? 'page' : undefined}>{text.moving}</a>
-    <a href={`${home}changelog/`} aria-current={path === `${home}changelog/` ? 'page' : undefined}>{text.changelog}</a>
-    <a class="pill soft" href="https://github.com/Alexays/Lilo">GitHub</a>
+    {sections.map(([id, label]) => (
+      <a class="hide section-link" href={`${home}#${id}`}>
+        {label}
+      </a>
+    ))}
+    <a
+      class="hide"
+      href={`${home}moving/`}
+      aria-current={path === `${home}moving/` ? "page" : undefined}
+    >
+      {text.moving}
+    </a>
+    <a
+      href={`${home}changelog/`}
+      aria-current={path === `${home}changelog/` ? "page" : undefined}
+    >
+      {text.changelog}
+    </a>
+    <a class="pill soft" href="https://github.com/Alexays/Lilo">
+      GitHub
+    </a>
   </nav>
 </header>
