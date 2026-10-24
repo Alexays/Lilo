@@ -11,6 +11,7 @@ What changes in each Lilo release, for people using it. The format follows
 - Lilo offers to move itself to Applications when it runs from the disk image, then relaunches from there and ejects the disk image.
 - Pin any number of extensions: the ones that do not fit in the address bar fold into the extensions menu.
 - An extension's details link to its Chrome Web Store page.
+- Saving a capture asks where to save it when downloads do.
 - Shift Command 2 captures a selected area of the page.
 - The emoji picker of a space searches and names emoji in the browser's language.
 - A French version of the website.
@@ -18,6 +19,7 @@ What changes in each Lilo release, for people using it. The format follows
 ### Fixed
 
 - A crash when an extension scripts a tab at the moment Lilo puts it to sleep.
+- The site details card fits a narrow sidebar and shows while a permission request waits.
 - Full screen: no more white band at the top, and the sidebar shows whole or stays hidden, as its setting says.
 - AI agents no longer time out while Lilo waits for you to allow them: they are told to ask you.
 - An agent asking to connect is no longer hidden behind an extension's permission request.

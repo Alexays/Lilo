@@ -46,6 +46,24 @@ final class ScreenshotBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(savedPath, "/tmp/dl/shot.png")
     }
 
+    func test_saveDefault_asksWhereToSaveWhenDownloadsDo() async {
+        var presented: (String, Data)?
+        var wrote = false
+        let handler = ScreenshotBridgeHandler(
+            downloadsFolderProvider: { URL(fileURLWithPath: "/tmp/dl") },
+            asksWhereToSave: { true },
+            writeFile: { _, _ in }, presentSaveAs: { presented = ($0, $1) }, copyToPasteboard: { _ in },
+            onSaved: { _ in wrote = true }, onError: { _ in }, capture: { _ in nil }, discardCapture: { _ in }
+        )
+        _ = await handler.handle(message: makeMessage(
+            action: "screenshot.saveDefault",
+            payload: ["dataURL": validDataURL, "filename": "shot.png"]
+        ))
+        XCTAssertEqual(presented?.0, "shot.png")
+        XCTAssertEqual(presented.map { String(decoding: $0.1, as: UTF8.self) }, "PNG")
+        XCTAssertFalse(wrote, "nothing lands in Downloads before the user picks a place")
+    }
+
     func test_saveDefault_backToBackSameFilename_writesTwoDifferentFiles() async {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let written = OSAllocatedUnfairLock<[URL]>(initialState: [])

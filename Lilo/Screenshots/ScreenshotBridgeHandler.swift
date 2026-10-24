@@ -14,6 +14,8 @@ final class ScreenshotBridgeHandler: BridgeHandler {
     ]
 
     private let downloadsFolderProvider: () -> URL
+    /// The "Ask where to save each file" download setting, which a plain Save follows too.
+    private let asksWhereToSave: () -> Bool
     /// Runs off the main thread.
     private let writeFile: @Sendable (Data, URL) throws -> Void
     /// Names picked by saves still writing, so two quick saves never pick the same file.
@@ -30,6 +32,7 @@ final class ScreenshotBridgeHandler: BridgeHandler {
 
     init(
         downloadsFolderProvider: @escaping () -> URL,
+        asksWhereToSave: @escaping () -> Bool = { false },
         writeFile: @escaping @Sendable (Data, URL) throws -> Void,
         presentSaveAs: @escaping (_ suggestedName: String, _ data: Data) -> Void,
         copyToPasteboard: @escaping (Data) -> Void,
@@ -39,6 +42,7 @@ final class ScreenshotBridgeHandler: BridgeHandler {
         discardCapture: @escaping (String) -> Void
     ) {
         self.downloadsFolderProvider = downloadsFolderProvider
+        self.asksWhereToSave = asksWhereToSave
         self.writeFile = writeFile
         self.presentSaveAs = presentSaveAs
         self.copyToPasteboard = copyToPasteboard
@@ -63,6 +67,11 @@ final class ScreenshotBridgeHandler: BridgeHandler {
         case "screenshot.saveDefault":
             guard let data = await exported(message) else { return nil }
             let filename = message.string("filename", default: "screenshot.png")
+            // As Save As: the panel holds the bytes, and the capture card releases its copy after the save.
+            if asksWhereToSave() {
+                presentSaveAs(filename, data)
+                return nil
+            }
             let folder = downloadsFolderProvider()
             let url = ScreenshotImageCodec.uniqueURL(in: folder, filename: filename) {
                 reservedURLs.contains($0) || FileManager.default.fileExists(atPath: $0.path)

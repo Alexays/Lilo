@@ -559,6 +559,7 @@ extension MainWindowController {
         // A plain NSSavePanel: the "Copy" action lives in the Svelte editor overlay.
         let screenshotHandler = ScreenshotBridgeHandler(
             downloadsFolderProvider: { settingsStore.downloadsFolder },
+            asksWhereToSave: { settingsStore.askDownloadLocation },
             writeFile: { data, url in try data.write(to: url) },
             presentSaveAs: { [weak self] suggestedName, data in
                 // Next main-loop turn, with begin(completionHandler:) rather than runModal(): neither presents reliably from inside the
