@@ -131,17 +131,20 @@ enum ChromeWebStoreInstaller {
         }
     }
 
-    /// Rejects any symlink that slipped through and drops group/other write bits from every item.
+    /// Rejects any symlink that slipped through and gives every item 0755 (folders) or 0644, ignoring the
+    /// archive's modes as Chrome does: some store packages carry unreadable ones, which stopped the install.
+    /// A folder is fixed when the walk reaches it, before the walk reads it.
     private static func sanitizeExtractedTree(at root: URL) throws {
         let fm = FileManager.default
-        guard let walker = fm.enumerator(at: root, includingPropertiesForKeys: [.isSymbolicLinkKey]) else { return }
+        guard let walker = fm.enumerator(at: root, includingPropertiesForKeys: [.isSymbolicLinkKey, .isDirectoryKey]) else { return }
         for case let url as URL in walker {
-            if (try url.resourceValues(forKeys: [.isSymbolicLinkKey])).isSymbolicLink == true {
+            let values = try url.resourceValues(forKeys: [.isSymbolicLinkKey, .isDirectoryKey])
+            if values.isSymbolicLink == true {
                 throw ExtensionError.invalidExtensionArchive("Archive contains symbolic links")
             }
-            let permissions = (try fm.attributesOfItem(atPath: url.path)[.posixPermissions] as? NSNumber)?.uint16Value ?? 0o644
-            if permissions & 0o022 != 0 {
-                try fm.setAttributes([.posixPermissions: NSNumber(value: permissions & ~0o022)], ofItemAtPath: url.path)
+            let mode: UInt16 = values.isDirectory == true ? 0o755 : 0o644
+            if (try fm.attributesOfItem(atPath: url.path)[.posixPermissions] as? NSNumber)?.uint16Value != mode {
+                try fm.setAttributes([.posixPermissions: NSNumber(value: mode)], ofItemAtPath: url.path)
             }
         }
     }

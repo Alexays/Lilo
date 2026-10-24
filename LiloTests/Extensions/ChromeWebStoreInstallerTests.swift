@@ -82,6 +82,35 @@ final class ChromeWebStoreInstallerTests: XCTestCase {
         XCTAssertEqual((permissions?.uint16Value ?? 0) & 0o022, 0)
     }
 
+    /// Some store packages (ClickUp, Linkclump Plus) store modes their owner cannot read: Chrome ignores them.
+    func testUnzipIgnoresTheArchiveModes() async throws {
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: base.appendingPathComponent("dest"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let zip = Process()
+        zip.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        zip.arguments = ["-I", "-c", """
+            import zipfile, sys
+            with zipfile.ZipFile(sys.argv[1], 'w') as z:
+                for name, mode in [('assets/', 0o40300), ('assets/a.js', 0o100200), ('manifest.json', 0o100200)]:
+                    info = zipfile.ZipInfo(name)
+                    info.create_system = 3
+                    info.external_attr = mode << 16
+                    z.writestr(info, '' if name.endswith('/') else '{}')
+            """, base.appendingPathComponent("pkg.zip").path]
+        try zip.run()
+        zip.waitUntilExit()
+        XCTAssertEqual(zip.terminationStatus, 0)
+        let dest = base.appendingPathComponent("dest")
+
+        try await ChromeWebStoreInstaller.unzip(at: base.appendingPathComponent("pkg.zip"), to: dest)
+
+        let mode = { (path: String) in (try FileManager.default.attributesOfItem(atPath: dest.appendingPathComponent(path).path)[.posixPermissions] as? NSNumber)?.uint16Value }
+        XCTAssertEqual(try mode("assets"), 0o755)
+        XCTAssertEqual(try mode("assets/a.js"), 0o644)
+        XCTAssertEqual(try mode("manifest.json"), 0o644)
+    }
+
     /// Zips the `src` folder `populate` fills (symlinks stored as links) into `<base>/pkg.zip`.
     private func makeZipSource(_ populate: (URL) throws -> Void) throws -> URL {
         let fm = FileManager.default
