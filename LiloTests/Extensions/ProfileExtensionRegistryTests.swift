@@ -652,6 +652,19 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         withExtendedLifetime(settings) {}
     }
 
+    func testRestoreLoadsExtensionsInTheirStoredOrder() async throws {
+        for index in 0..<4 {
+            try await registry.load(from: try createMinimalExtension(named: "ordered_\(index)", displayName: "Ordered \(index)", in: tempDir))
+        }
+        let stored = try await registry.extensionStorage.loadAll().map(\.id)
+
+        let restored = ProfileExtensionRegistry(profileId: registry.profileId, extensionStorage: registry.extensionStorage, extensionsBaseDirectory: tempDir)
+        await restored.restore()
+
+        XCTAssertEqual(restored.loadedExtensions.map(\.id), stored)
+        restored.teardown()
+    }
+
     func testExtensionBridgePayloadDetectsContentScripts() async throws {
         let extDir = try createContentScriptExtension(named: "content_script_payload_extension", displayName: "Content Script Payload")
 

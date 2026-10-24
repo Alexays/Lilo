@@ -24,7 +24,10 @@ final class ProfileExtensionRegistry {
     private struct LoadedExtensionRuntime {
         let context: WKWebExtensionContext
         let id: String
+        /// The folder WebKit loads, which preparation writes into.
         let sourcePath: String
+        /// The folder the installed record names: `sourcePath`, or the unpacked folder it is a clone of.
+        let installPath: String
         /// Manifest permissions plus the optional ones granted at Lilo's prompt, cached as a set so
         /// per-event permission scoping is a lookup.
         var permissions: Set<String>
@@ -201,8 +204,8 @@ final class ProfileExtensionRegistry {
         runtimeIndex(for: extensionId) != nil
     }
 
-    private func containsRuntimeSourcePath(_ sourcePath: String) -> Bool {
-        loadedRuntimes.contains { $0.sourcePath == sourcePath }
+    private func containsRuntimeInstallPath(_ installPath: String) -> Bool {
+        loadedRuntimes.contains { $0.installPath == installPath }
     }
 
     @discardableResult
@@ -583,24 +586,26 @@ final class ProfileExtensionRegistry {
     /// `load`, a new id is an install and a known one a reload.
     func load(from url: URL, extensionId knownId: String? = nil, as load: ExtensionLifecycle.Load? = nil) async throws {
         try await files.whileWriting {
-            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeSourcePath)
+            let permanentURL = try files.permanentCopy(of: url, isInUse: containsRuntimeInstallPath)
             // Reinstalling a folder keeps the id it already had, so its storage follows it.
             let stored = if let knownId { try? await extensionStorage.load(id: knownId) } else {
                 (try? await extensionStorage.loadAll())?.first { $0.path == permanentURL.path }
             }
             let allowsUserScripts = (knownId ?? stored?.id).map { access.states[$0]?.allowsUserScripts == true } ?? false
-            let isPreparationDegraded = await Task.detached(priority: .userInitiated) {
-                Self.prepareForWebKit(at: permanentURL, allowsUserScripts: allowsUserScripts)
+            let files = files
+            let (sourceURL, isPreparationDegraded) = try await Task.detached(priority: .userInitiated) {
+                let sourceURL = try files.workingCopy(of: permanentURL)
+                return (sourceURL, Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowsUserScripts))
             }.value
-            let webExtension = try await WKWebExtension(resourceBaseURL: permanentURL)
+            let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
             let extensionId = knownId ?? stored?.id ?? ExtensionFiles.makeExtensionId(
                 for: permanentURL,
                 managedDirectory: files.directory,
                 manifestKey: webExtension.manifest["key"] as? String
             )
             try await activate(
-                webExtension, id: extensionId, sourcePath: permanentURL.path, isPreparationDegraded: isPreparationDegraded, stored: stored,
-                as: load ?? (knownId == nil ? .install : .reload)
+                webExtension, id: extensionId, sourcePath: sourceURL.path, installPath: permanentURL.path,
+                isPreparationDegraded: isPreparationDegraded, stored: stored, as: load ?? (knownId == nil ? .install : .reload)
             )
         }
     }
@@ -624,6 +629,7 @@ final class ProfileExtensionRegistry {
         _ webExtension: WKWebExtension,
         id extensionId: String,
         sourcePath: String,
+        installPath: String,
         isPreparationDegraded: Bool,
         stored: ExtensionStorage.InstalledExtension?,
         as load: ExtensionLifecycle.Load
@@ -652,6 +658,7 @@ final class ProfileExtensionRegistry {
             context: context,
             id: extensionId,
             sourcePath: sourcePath,
+            installPath: installPath,
             permissions: permissions,
             declaresCommands: !((webExtension.manifest["commands"] as? [String: Any])?.isEmpty ?? true),
             omniboxKeyword: (webExtension.manifest["omnibox"] as? [String: Any])?["keyword"] as? String,
@@ -667,7 +674,7 @@ final class ProfileExtensionRegistry {
         failedRestores.removeAll { $0.stored.id == extensionId }
         for adapter in windowAdapters { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
         let record = ExtensionStorage.InstalledExtension(
-            id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: sourcePath, isEnabled: true
+            id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: installPath, isEnabled: true
         )
         if record != stored {
             try? await extensionStorage.store(id: record.id, name: record.name, version: record.version, path: record.path, enabled: true)
@@ -721,9 +728,9 @@ final class ProfileExtensionRegistry {
         if removePersistedRecord {
             await removePersistedExtension(extensionId: extensionId)
             await removeExtensionData(extensionId: extensionId)
-            scheduleUninstallFileCleanup(extensionId: extensionId, sourcePath: runtime.sourcePath)
+            scheduleUninstallFileCleanup(extensionId: extensionId, installPath: runtime.installPath)
         } else {
-            await persistInstalledExtension(id: runtime.id, context: runtime.context, sourcePath: runtime.sourcePath, enabled: false)
+            await persistInstalledExtension(id: runtime.id, context: runtime.context, installPath: runtime.installPath, enabled: false)
             if let stored = try? await extensionStorage.load(id: runtime.id) { disabledStoredExtensions.append(stored) }
         }
         notifyExtensionsChanged()
@@ -817,10 +824,10 @@ final class ProfileExtensionRegistry {
 
     /// Unloads and reloads the extension from its on-disk source, for a worker nothing else revives.
     private func reloadFromDisk(_ extensionId: String) async {
-        guard let sourcePath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].sourcePath }) else { return }
+        guard let installPath = runtimeIndex(for: extensionId).map({ loadedRuntimes[$0].installPath }) else { return }
         await unload(extensionId: extensionId, removePersistedRecord: false)
         do {
-            try await load(from: URL(fileURLWithPath: sourcePath), extensionId: extensionId)
+            try await load(from: URL(fileURLWithPath: installPath), extensionId: extensionId)
         } catch {
             Self.logger.error("background reload failed for \(extensionId, privacy: .public): \(ExtensionDiagnostics.diagnosticDescription(for: error), privacy: .public)")
             // `unload` flipped the persisted record to disabled; a failed internal restart must not leave the
@@ -1024,7 +1031,7 @@ final class ProfileExtensionRegistry {
             "error": health.flatMap { $0.failed ? $0.failureReason ?? "" : nil } ?? "",
             "omniboxKeyword": runtime.omniboxKeyword ?? "",
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
-            "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.sourcePath, manifest: ext.manifest)
+            "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.installPath, manifest: ext.manifest)
                 ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
@@ -1138,8 +1145,8 @@ final class ProfileExtensionRegistry {
         await backgrounds.restartIfRunning(extensionId)
     }
 
-    /// Prepares every enabled extension at once off the main actor, then loads them back to back:
-    /// WebKit fires `runtime.onStartup` only for contexts loaded shortly after the controller exists.
+    /// Prepares and opens every enabled extension at once off the main actor, then loads them back to back in their stored
+    /// order: WebKit fires `runtime.onStartup` only for contexts loaded shortly after the controller exists.
     private func restoreStoredExtensions() async {
         await access.restore()
         guard let storedExtensions = try? await extensionStorage.loadAll() else { return }
@@ -1149,40 +1156,43 @@ final class ProfileExtensionRegistry {
         let allowsUserScripts = Set(access.states.compactMap { $0.value.allowsUserScripts == true ? $0.key : nil })
         userScripts.publishSwitches()
 
-        let degraded = await withTaskGroup(of: (Int, Bool?).self) { group in
+        let files = files
+        let opened = await withTaskGroup(of: (Int, Result<(WKWebExtension, String, Bool), Error>).self) { group in
             for (index, stored) in enabled.enumerated() {
                 let url = URL(fileURLWithPath: stored.path, isDirectory: true)
+                let allowed = allowsUserScripts.contains(stored.id)
                 group.addTask {
-                    guard FileManager.default.fileExists(atPath: url.appendingPathComponent("manifest.json").path) else { return (index, nil) }
-                    return (index, Self.prepareForWebKit(at: url, allowsUserScripts: allowsUserScripts.contains(stored.id)))
+                    do {
+                        guard FileManager.default.fileExists(atPath: url.appendingPathComponent("manifest.json").path) else {
+                            throw ExtensionError.manifestNotFound(stored.path)
+                        }
+                        let sourceURL = try files.workingCopy(of: url)
+                        let isDegraded = Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowed)
+                        return (index, .success((try await WKWebExtension(resourceBaseURL: sourceURL), sourceURL.path, isDegraded)))
+                    } catch {
+                        return (index, .failure(error))
+                    }
                 }
             }
-            var results = [Bool?](repeating: nil, count: enabled.count)
-            for await (index, isDegraded) in group { results[index] = isDegraded }
+            var results = [Result<(WKWebExtension, String, Bool), Error>?](repeating: nil, count: enabled.count)
+            for await (index, result) in group { results[index] = result }
             return results
         }
 
-        var prepared: [(stored: ExtensionStorage.InstalledExtension, webExtension: WKWebExtension, isDegraded: Bool)] = []
-        for (index, stored) in enabled.enumerated() {
+        for (stored, result) in zip(enabled, opened) {
             do {
-                guard let isDegraded = degraded[index] else { throw ExtensionError.manifestNotFound(stored.path) }
-                prepared.append((stored, try await WKWebExtension(resourceBaseURL: URL(fileURLWithPath: stored.path, isDirectory: true)), isDegraded))
+                guard let result else { continue }
+                let (webExtension, sourcePath, isDegraded) = try result.get()
+                try await activate(
+                    webExtension, id: stored.id, sourcePath: sourcePath, installPath: stored.path, isPreparationDegraded: isDegraded, stored: stored,
+                    as: .startup
+                )
             } catch {
                 recordFailedRestore(stored, error: error)
             }
         }
-        for entry in prepared {
-            do {
-                try await activate(
-                    entry.webExtension, id: entry.stored.id, sourcePath: entry.stored.path, isPreparationDegraded: entry.isDegraded, stored: entry.stored,
-                    as: .startup
-                )
-            } catch {
-                recordFailedRestore(entry.stored, error: error)
-            }
-        }
         // Runtimes cover an extension installed while this restore ran, after `storedExtensions` was read.
-        let keptPaths = storedExtensions.map(\.path) + loadedRuntimes.map(\.sourcePath)
+        let keptPaths = storedExtensions.map(\.path) + loadedRuntimes.flatMap { [$0.installPath, $0.sourcePath] }
         files.sweep(keeping: Set(keptPaths.map { ($0 as NSString).lastPathComponent }))
     }
 
@@ -1201,13 +1211,13 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    private func persistInstalledExtension(id: String, context: WKWebExtensionContext, sourcePath: String, enabled: Bool) async {
+    private func persistInstalledExtension(id: String, context: WKWebExtensionContext, installPath: String, enabled: Bool) async {
         let webExtension = context.webExtension
         try? await extensionStorage.store(
             id: id,
             name: webExtension.displayName ?? id,
             version: webExtension.version ?? "",
-            path: sourcePath,
+            path: installPath,
             enabled: enabled
         )
     }
@@ -1226,11 +1236,11 @@ final class ProfileExtensionRegistry {
 
     /// Deferred so the dying worker releases its files first. A quit before it runs leaves an
     /// unreferenced folder that the next restore sweeps.
-    private func scheduleUninstallFileCleanup(extensionId: String, sourcePath: String) {
+    private func scheduleUninstallFileCleanup(extensionId: String, installPath: String) {
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(500))
-            guard let self, !self.containsRuntime(extensionId: extensionId), !self.containsRuntimeSourcePath(sourcePath) else { return }
-            self.files.remove(sourcePath)
+            guard let self, !self.containsRuntime(extensionId: extensionId), !self.containsRuntimeInstallPath(installPath) else { return }
+            self.files.remove(installPath)
         }
     }
 

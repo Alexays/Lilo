@@ -64,4 +64,28 @@ final class ExtensionFilesTests: XCTestCase {
 
         XCTAssertEqual(try installedVersion(), "old")
     }
+
+    /// An unpacked folder loads from a clone Lilo may write into, kept until a file of the folder changes.
+    func testAnUnpackedFolderLoadsFromAClonePreparedApartFromIt() throws {
+        let folder = try package("1")
+        let copy = try files.workingCopy(of: folder)
+        XCTAssertNotEqual(copy.path, folder.path)
+        XCTAssertFalse(files.owns(copy.path), "a clone is never taken for a store copy")
+        XCTAssertEqual(try String(contentsOf: copy.appendingPathComponent("version.txt"), encoding: .utf8), "1")
+
+        try "prepared".write(to: copy.appendingPathComponent("lilo.txt"), atomically: true, encoding: .utf8)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("lilo.txt").path), "the developer's folder is never written")
+        XCTAssertEqual(try files.workingCopy(of: folder), copy)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: copy.appendingPathComponent("lilo.txt").path), "an unchanged folder keeps its prepared clone")
+
+        try "10".write(to: folder.appendingPathComponent("version.txt"), atomically: true, encoding: .utf8)
+        XCTAssertEqual(try files.workingCopy(of: folder), copy)
+        XCTAssertEqual(try String(contentsOf: copy.appendingPathComponent("version.txt"), encoding: .utf8), "10")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: copy.appendingPathComponent("lilo.txt").path), "a changed folder is cloned again")
+
+        files.remove(folder.path)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: copy.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("version.txt").path))
+        XCTAssertEqual(try files.workingCopy(of: files.directory!.appendingPathComponent(extensionId)), files.directory!.appendingPathComponent(extensionId))
+    }
 }
