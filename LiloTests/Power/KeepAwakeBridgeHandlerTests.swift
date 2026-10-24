@@ -12,11 +12,14 @@ final class KeepAwakeBridgeHandlerTests: XCTestCase {
         let window = makeTestWindow(context, showing: space.id)
         let events = BridgeEventRecorder(window.bridgeRouter)
         context.terminalActivityChanged()
-        let sent = await pollUntil(timeout: 2) { events.events.contains { $0.name == "terminalActivity" } }
+        let sent = await pollUntil { events.events.contains { $0.name == "terminalActivity" } }
         XCTAssertTrue(sent)
 
         context.powerKeeper.republish()
-        await pollUntil(timeout: 0.3) { false }
+        // Queued a turn later, a raw event drains and ships after any terminal list the republish queued.
+        DispatchQueue.main.async { window.bridgeRouter.send(event: "witness") }
+        let flushed = await pollUntil { events.events.contains { $0.name == "witness" } }
+        XCTAssertTrue(flushed)
 
         XCTAssertEqual(events.events.count { $0.name == "terminalActivity" }, 1)
     }

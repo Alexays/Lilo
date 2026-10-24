@@ -117,7 +117,11 @@ final class AgentSocketTests: XCTestCase {
         let connection = AgentConnection(fd: pair[0])
         // Far more than the socket buffer, and the peer never reads: the write blocks.
         connection.send(try XCTUnwrap(AgentConnection.line(["data": String(repeating: "x", count: 8 * 1024 * 1024)])))
-        try await Task.sleep(for: .milliseconds(200))
+        let writing = await pollUntil {
+            var byte: UInt8 = 0
+            return recv(pair[1], &byte, 1, MSG_PEEK | MSG_DONTWAIT) == 1
+        }
+        XCTAssertTrue(writing)
 
         connection.close()
 

@@ -811,7 +811,8 @@ final class AgentNetworkToolsTests: AgentToolTestCase {
         let (tab, server) = try await served("<p>index</p>")
         _ = await mock(tab, ["urlPattern": "/held$", "delayMs": 10000])
         _ = try await js("window.done = null; fetch('/held').then(r => { window.done = r.status }); 0", tab: tab)
-        try await Task.sleep(for: .milliseconds(300))
+        let held = await pollUntil { await self.client.callTool("network_mock", ["tabId": tab, "action": "list"]).text.contains(#""hits":1"#) }
+        XCTAssertTrue(held)
 
         try await release(tab)
         // Well under the mock's 10 s delay: only the release answers this soon.

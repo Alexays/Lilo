@@ -144,7 +144,7 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make release-status` | pending release notes, changelog and app version consistency |
 | `make release-test` | release preparation and Sparkle build number synchronization tests (CI runs them; `make validate` does not) |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
-| `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
+| `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
 
 Heavier checks, run when your change touches their area:

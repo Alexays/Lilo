@@ -83,7 +83,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         let cursor = try XCTUnwrap(webView.subviews.first { $0 is AgentCursorView } as? AgentCursorView)
         let arrow = try XCTUnwrap(cursor.subviews.first { $0 is NSImageView }).frame
         control.stopAll()
-        await pollUntil(timeout: 2) { !webView.subviews.contains { $0 is AgentCursorView } }
+        await pollUntil { !webView.subviews.contains { $0 is AgentCursorView } }
 
         XCTAssertEqual(arrow.minX + AgentCursorView.hotSpot.x, 120, accuracy: 0.5)
         XCTAssertEqual(arrow.minY + AgentCursorView.hotSpot.y, 50, accuracy: 0.5)
@@ -101,7 +101,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertTrue(badge?.stringValue.contains(frame.agentName) == true)
 
         control.stopAll()
-        await pollUntil(timeout: 2) { !webView.subviews.contains { $0 is AgentFrameView } }
+        await pollUntil { !webView.subviews.contains { $0 is AgentFrameView } }
         XCTAssertFalse(webView.subviews.contains { $0 is AgentFrameView }, "the frame goes with the agent")
     }
 

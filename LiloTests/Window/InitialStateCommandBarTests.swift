@@ -43,6 +43,7 @@ final class InitialStateCommandBarTests: XCTestCase {
     func testTheOnboardingHoldsTheCommandBar() throws {
         let events = try launchOnABlankTab(onboarding: true)
 
-        XCTAssertTrue(events.data("openCommandBar").isEmpty)
+        // Sent in the same turn as the initial state, the command bar would have shipped with it.
+        XCTAssertFalse(events.events.contains { $0.name == "openCommandBar" })
     }
 }

@@ -199,7 +199,7 @@ final class KeyboardShortcutsTests: XCTestCase {
         window.sendInitialState()
 
         // The bridge ships at the end of the main-queue turn, which an async test reaches only by suspending.
-        await pollUntil(timeout: 2) { events.events.contains { $0.name == "shortcutKeys" } }
+        await pollUntil { events.events.contains { $0.name == "shortcutKeys" } }
         let keys = try XCTUnwrap(events.data("shortcutKeys").last?["keys"] as? [String: String])
         XCTAssertEqual(keys["sidebar.toggle"], "⌘S")
         XCTAssertEqual(keys["page.save"], "⇧⌘S")

@@ -853,9 +853,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         await restoring.value
         let manifestPath = try XCTUnwrap(registry.loadedExtensions.first?.sourcePath) + "/manifest.json"
 
-        let swept = await pollUntil(timeout: 1) { !FileManager.default.fileExists(atPath: manifestPath) }
-
-        XCTAssertFalse(swept, "the restore's sweep leaves a folder installed while it ran")
+        // The sweep moves its orphans away before the restore returns.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: manifestPath), "the restore's sweep leaves a folder installed while it ran")
     }
 
     func testRestoreSkipsDisabledExtensionsFromDatabase() async throws {
@@ -1215,10 +1214,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         context.setPermissionStatus(.grantedExplicitly, for: .tabs)
         context.setPermissionStatus(.grantedExplicitly, for: optionalHost)
-        for _ in 0..<200 {
-            if let state = try await storage.loadAccessStates().values.first, !state.optionalMatchPatterns.isEmpty { break }
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        let saved = await pollUntil { (try? await storage.loadAccessStates())?.values.first?.optionalMatchPatterns.isEmpty == false }
+        XCTAssertTrue(saved)
         first.teardown()
 
         let restored = ProfileExtensionRegistry(profileId: profileId, extensionStorage: storage, extensionsBaseDirectory: tempDir)

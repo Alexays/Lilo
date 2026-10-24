@@ -67,6 +67,8 @@ final class BrowserContext {
     var archiveSweepTimer: DispatchSourceTimer?
     /// The closed terminals last handed to the disk, so a change that leaves them alone writes nothing.
     var savedClosedTerminals: [RecentlyClosedStack.Entry]?
+    /// Profiles whose hidden spaces a window preloaded, so another window does not repeat it.
+    var hiddenSpacePreloadProfileIds: Set<UUID> = []
     let profileContexts: ProfileContextCache
     let windows: WindowRegistry
     /// Created on first use: no folder can be unlocked before then, so nothing needs relocking.

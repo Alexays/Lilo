@@ -11,15 +11,15 @@ final class WKEngineFactoryWarmHistoryTests: XCTestCase {
         let factory = WKEngineFactory()
         let store = factory.defaultDataStore()
         factory.rearmWarmPool(dataStore: store, profileId: nil)
-        _ = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        _ = await pollUntil { factory.test_warmPoolCount == 1 }
 
         let tab = factory.createTab(configuration: .init(dataStore: store))
         defer { tab.teardown() }
 
-        // Wait for any prewarm navigation to COMMIT before the first real load: a committed
-        // about:blank is the failure precondition. A correct prewarm commits nothing, so a timeout
-        // here is expected and deliberately not a failure.
-        await pollUntil(timeout: 2) { tab.wkWebView.backForwardList.currentItem != nil }
+        // Wait for any prewarm navigation to finish before the first real load: a committed
+        // about:blank is the failure precondition. A correct prewarm loads nothing, so this returns at once.
+        let settled = await pollUntil { !tab.wkWebView.isLoading }
+        XCTAssertTrue(settled)
 
         // First real navigation in this tab. Wait for it to COMMIT (currentItem becomes the data URL),
         // not merely for `url` to change: `url` flips during the provisional phase, before the new
@@ -44,7 +44,7 @@ final class WKEngineFactoryWarmHistoryTests: XCTestCase {
         let factory = WKEngineFactory()
         let store = factory.defaultDataStore()
         factory.rearmWarmPool(dataStore: store, profileId: nil)
-        _ = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        _ = await pollUntil { factory.test_warmPoolCount == 1 }
 
         let tab = factory.createTab(configuration: .init(dataStore: store))
         defer { tab.teardown() }
