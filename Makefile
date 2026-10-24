@@ -251,7 +251,8 @@ swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 ## Report what the converter keeps of the default filter lists, by kind and skip reason (network; OUT=build/blocker-coverage.txt)
 blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@out="$(abspath $(or $(OUT),build/blocker-coverage.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
-	TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > /dev/null; cat "$$out"
+	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Run the terminal throughput and lock-fairness benchmarks
 terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
