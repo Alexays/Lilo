@@ -71,7 +71,7 @@ final class MediaCardRetentionTests: XCTestCase {
         let tab = state.updateTab(id: engine.id) { _ in }?.new
         XCTAssertTrue(engine.isFrozen, """
             live: \(state.liveEngine(forTab: engine.id) === engine), displayed: \(state.displayedTabIds.contains(engine.id)), \
-            lent: \(engine.lentToExtensionAt.map { "\(ContinuousClock.now - $0) ago" } ?? "never"), \
+            lent: \(engine.lentToExtensionAt.map { "\(Date().timeIntervalSince($0))s ago" } ?? "never"), \
             inspector: \(engine.shouldRetainForWebInspector), audio: \(tab?.isAudioPlaying ?? false), \
             paused from card: \(tab?.pausedFromCardAt?.description ?? "no"), audio stopped: \(tab?.lastAudioStoppedAt?.description ?? "no"), \
             capture: \(tab.map { $0.isMicrophoneActive || $0.isCameraActive || $0.isScreenSharing } ?? false)
