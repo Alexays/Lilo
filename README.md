@@ -22,12 +22,54 @@ Light on your Mac, quick on the web. Free and open source.
 
 </div>
 
-Lilo is a macOS browser for people who live in a sidebar: Spaces with their own sign-ins, the
-Chrome extensions you rely on, terminal tabs beside your pages, and a battery that lasts the day.
-If you are leaving Arc, it imports your Spaces, pinned tabs and folders in a few clicks.
+Lilo is a native macOS browser for people who live in a sidebar, and for the AI agents that work
+beside them: Spaces with their own sign-ins, the Chrome extensions you rely on, terminal tabs beside
+your pages, a built-in MCP server, and a battery that lasts the day. If you are leaving Arc, it
+imports your Spaces, pinned tabs and folders in a few clicks.
 
 > **Status: v0.1.0, the first public release.** Daily-driven by its author; expect rough edges,
 > and the interface still moves. [ROADMAP.md](ROADMAP.md) lists priorities and non-goals.
+
+## For AI agents
+
+Lilo has a built-in MCP server. Turn it on, and the agents you already run (Claude Code, Claude
+Desktop, Codex, Cursor or any MCP client) drive a real WebKit browser beside you. Lilo ships no AI
+of its own.
+
+- **Their own Space.** Agents open their tabs in a folder of the Agents Space, in a throwaway
+  profile wiped after each session. They never take your keyboard, your mouse or your tabs, and
+  never see a private Space. An agent can borrow one of your profiles once you allow it.
+- **You say yes first.** Lilo asks before an agent sends, pays, deletes or publishes (Allow Once,
+  Always Allow on the site, or Deny), and before it hands a page one of your files. Each client is
+  approved once, tied to the program behind it rather than the name it gives.
+- **One click to connect.** In Settings > AI agents, turn on "Let AI agents use Lilo", then press
+  Connect next to Claude Code, Claude Desktop, Codex or Cursor: Lilo adds itself to that client's
+  MCP servers. Any other client copies the configuration from "Other agents".
+
+Then ask your agent something like:
+
+```text
+Open localhost:3000/checkout in Lilo, pay with the test card and find out why the order fails.
+Check the console and the network.
+```
+
+The tools cover:
+
+- **Tabs and navigation** in the agent's folder, and isolated tabs that share no cookie or sign-in.
+- **Input**: click, type, keys, scroll, drag, form filling, file and image uploads.
+- **Page reading**: the accessibility tree with element refs, text search, the page text.
+- **Screenshots** of a full page or one element, and GIF recordings.
+- **Console and network**: messages, requests with their full responses, HAR export, cookies.
+- **Network mocks and emulation**: mocked, failed or delayed requests; user agent, color scheme,
+  reduced motion, print media, extra headers, init scripts; viewport size.
+- **Performance**: load and paint metrics, memory, and timeline profiles.
+- **Web Inspector**: WebKit's own inspector protocol, commands and events.
+- **Scripting**: JavaScript in the page, `fetch` from a tab with its cookies, and `run` or
+  `browser_batch` to chain many calls in one round trip.
+- **Profiles**: list them, borrow one after you allow it, or reset the throwaway one.
+
+[docs/AI-AGENTS.md](docs/AI-AGENTS.md) has the details: what is asked, what is not, and the errors
+that need you.
 
 ## Why Lilo
 
@@ -88,10 +130,7 @@ If you are leaving Arc, it imports your Spaces, pinned tabs and folders in a few
 - **Changes view**: every diff of the repository, images included.
 - **Stays awake while it works**: a long command keeps the Mac awake, even with the lid closed,
   then lets it sleep.
-- **Agents over MCP**: opt in, and your local agents (Claude Code, Codex, Cursor or any MCP client)
-  work in their own Space without taking your keyboard. Lilo asks before an agent sends, pays,
-  deletes or publishes, never lets one see a private Space, and ships no AI of its own. See
-  [docs/AI-AGENTS.md](docs/AI-AGENTS.md).
+- **Agents over MCP**: the built-in MCP server, see [For AI agents](#for-ai-agents).
 
 ## Install
 
