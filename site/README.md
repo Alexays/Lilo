@@ -21,6 +21,8 @@ Then open http://localhost:8787. Unknown paths serve `public/404.html`.
 
 ## Deploy
 
+A push to `main` that changes `site/` (or the app version in `Xcode/Configs/Base.xcconfig`) deploys it: `.github/workflows/site.yml`, with the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. Deploying by hand:
+
 `getlilo.app` must be a zone in the owner's Cloudflare account: the custom domain route in `wrangler.toml` creates its DNS record and certificate on the first deploy.
 
 ```sh
