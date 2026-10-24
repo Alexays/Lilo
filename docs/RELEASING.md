@@ -26,10 +26,11 @@ selects major. When notes request different bumps, the largest wins.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
-extension bridge package versions and their lockfiles, and the website's JSON-LD through `make site-generate`.
-It increments `CURRENT_PROJECT_VERSION` once when the app version changes. Sparkle compares this
-build number, so every release needs a larger one. Running the command again without new fragments
-leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
+extension bridge package versions and their lockfiles, and the `softwareVersion` of the website's JSON-LD.
+It increments `CURRENT_PROJECT_VERSION` once for each release it collects, or when the app version
+differs from Changie's latest release. Sparkle compares this build number, so every release needs a
+larger one. It reads and checks every file before consuming the fragments, and running it again
+without new fragments leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
 
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.

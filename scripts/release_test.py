@@ -1,5 +1,6 @@
 """Exercise release preparation with the pinned Changie binary and temporary app files."""
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -8,11 +9,18 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
-CHANGIE = str(Path(sys.argv.pop(1)).resolve())
+CHANGIE = os.environ.get("CHANGIE", "")
 CONFIG = Path("Xcode/Configs/Base.xcconfig")
 DIRECTORIES = [Path("lilo-ui"), Path("Lilo/Extensions/bridge-src")]
 BASE = "SWIFT_VERSION = 6.0\nCURRENT_PROJECT_VERSION = 5\nMARKETING_VERSION = 0.1.4\n"
 HISTORY = "## [0.1.4] - 2026-10-24\n\n- Existing release.\n"
+SITE_PAGES = [Path("site/public/index.html"), Path("site/public/fr/index.html")]
+PAGE = '<script type="application/ld+json">{"@type":"SoftwareApplication","softwareVersion":"0.1.4"}</script>\n'
+
+
+def setUpModule():
+    if not CHANGIE:
+        raise RuntimeError("Set CHANGIE to the Changie binary, as make release-test does")
 
 
 class ReleaseTests(unittest.TestCase):
@@ -26,6 +34,8 @@ class ReleaseTests(unittest.TestCase):
         self.write(".changes/unreleased/.gitkeep", "")
         self.write("CHANGELOG.md", "# Changelog\n\n" + HISTORY)
         self.write(CONFIG, BASE)
+        for page in SITE_PAGES:
+            self.write(page, PAGE)
         for directory in DIRECTORIES:
             package = {"name": directory.name, "private": True, "version": "0.1.4"}
             self.write(directory / "package.json", json.dumps(package, indent=2) + "\n")
@@ -72,6 +82,8 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(lock["version"], version)
             self.assertEqual(lock["packages"][""]["version"], version)
             self.assertEqual(lock["packages"]["node_modules/example"]["version"], "1.2.3")
+        for page in SITE_PAGES:
+            self.assertEqual(self.read(page), PAGE.replace("0.1.4", version))
         self.assertFalse((self.root / "package.json").exists())
         self.assertFalse((self.root / "package-lock.json").exists())
         self.assertFalse((self.root / "node_modules").exists())
@@ -124,6 +136,28 @@ class ReleaseTests(unittest.TestCase):
                 self.run_release("status", success=False)
                 self.run_release("version", success=False)
                 self.assertEqual(self.snapshot(), before)
+
+    def test_unreadable_app_files_keep_the_notes(self):
+        self.note("Fixed")
+        self.write(DIRECTORIES[0] / "package.json", "{}\n")
+        before = self.snapshot()
+        self.run_release("version", success=False)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_a_release_bumps_the_build_even_when_the_app_version_was_set_by_hand(self):
+        self.write(CONFIG, BASE.replace("0.1.4", "0.1.5"))
+        self.note("Fixed")
+        self.run_release("version")
+        self.assertEqual(self.read(CONFIG), BASE.replace("= 5", "= 6").replace("0.1.4", "0.1.5"))
+
+    def test_status_ignores_package_formatting(self):
+        for directory in DIRECTORIES:
+            path = directory / "package.json"
+            self.write(path, json.dumps(json.loads(self.read(path)), indent="\t"))
+        before = self.snapshot()
+        self.run_release("status")
+        self.run_release("version")
+        self.assertEqual(self.snapshot(), before)
 
     def test_stale_versions_are_checked_without_writing_and_repaired_once(self):
         self.write(".changes/v0.1.5.md", "## [0.1.5]\n\n- New release.\n")

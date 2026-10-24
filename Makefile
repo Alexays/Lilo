@@ -70,9 +70,9 @@ bootstrap:
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI lint/tests/build, Swift lint/tests, the app build, bridge, hook and release checks
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(CHANGIE)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint release-status release-test > "$$log" 2>&1 & js=$$!; \
+## Run UI lint/tests/build, Swift lint/tests, the app build, bridge and hook checks and the release version check
+validate: $(UI_DEPS) $(BRIDGE_DEPS)
+	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint release-status > "$$log" 2>&1 & js=$$!; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \
@@ -130,14 +130,13 @@ change: $(CHANGIE)
 release-status: $(CHANGIE)
 	@python3 scripts/release.py status --changie '$(CHANGIE)'
 
-## Collect release notes, bump the app and build versions, and refresh the website
+## Collect release notes, bump the app and build versions, and the website's version
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
-	@$(MAKE) --no-print-directory site-generate
 
 ## Test app version and Sparkle build number synchronization
 release-test: $(CHANGIE)
-	@python3 scripts/release_test.py '$(CHANGIE)'
+	@CHANGIE='$(CHANGIE)' python3 scripts/release_test.py
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)

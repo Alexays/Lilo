@@ -8,14 +8,14 @@ kindFormat: '### {{.Kind}}'
 changeFormat: '- {{.Body}}'
 footerFormat: '[{{.VersionNoPrefix}}]: https://github.com/Alexays/Lilo/compare/{{.PreviousVersion}}...{{.Version}}'
 kinds:
-  - label: Fixed
-    auto: patch
-  - label: Changed
-    auto: patch
-  - label: Added
-    auto: minor
   - label: Breaking
     auto: major
+  - label: Added
+    auto: minor
+  - label: Changed
+    auto: patch
+  - label: Fixed
+    auto: patch
 newlines:
   afterChangelogHeader: 1
   beforeKind: 1
