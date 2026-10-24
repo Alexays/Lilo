@@ -37,6 +37,23 @@ test("the details card gives way to the command bar opened over a resting pointe
 	await expect(page.locator(".url-details")).toHaveCount(0);
 });
 
+test("the details card is wider than a narrow sidebar and shows while a request waits", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), sidebarWidth: 220 });
+	await page.evaluate(() =>
+		window.__lilo!.receive({
+			event: "extensionPermissionRequested", requestId: "e1", extensionName: "Okta Verify", permissions: [], origins: ["https://example.okta.com"], type: "urls",
+		}),
+	);
+	await expect(page.locator(".url-drawer-clip")).toContainText("Okta Verify");
+
+	await page.locator(".url-trigger").hover();
+	await page.mouse.move(60, 72);
+	const card = page.locator(".url-details");
+	await expect(card).toBeVisible();
+	expect((await card.boundingBox())!.width).toBeGreaterThanOrEqual(300);
+	await expect(card.locator("dd").first()).not.toHaveText(/\n/);
+});
+
 test("the bar's and find bar's buttons take the theme's focus ring", async ({ page }) => {
 	const world = initialWorld();
 	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.isCameraActive = true;

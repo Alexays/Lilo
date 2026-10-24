@@ -431,9 +431,10 @@
 
   const urlVisual = $derived.by(() => buildURLVisual(activeTabURL));
 
-  // The command bar edits this address: a card about it would only cover the tab list.
+  // The command bar edits this address: a card about it would only cover the tab list. The Site drawer
+  // already shows what it would; a waiting request does not stop the user looking at the site.
   const detailsAvailable = $derived(
-    !drawerActive && !isCommandBarOpen() && (showsLocation || (activeKind === "web" && !urlVisual.isPlaceholder)),
+    getActiveUrlBarDrawer()?.kind !== "site" && !isCommandBarOpen() && (showsLocation || (activeKind === "web" && !urlVisual.isPlaceholder)),
   );
   // A terminal's folder is already the bar's bold part, so its card has no title.
   const detailsTitle = $derived(showsLocation ? "" : getActiveTab()?.title || urlVisual.displayHost);

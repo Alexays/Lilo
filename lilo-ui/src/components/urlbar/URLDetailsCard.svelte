@@ -32,6 +32,7 @@
 </script>
 
 <script lang="ts">
+  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
@@ -51,6 +52,7 @@
 
 <div
   class="url-details float-surface"
+  use:reportInteractiveZone={{ id: "url-details" }}
   role="group"
   aria-label={title || location.before + location.strong + location.after}
   transition:fly={{ y: -4, duration: prefersReducedMotion() ? 0 : 160, easing: cubicOut }}
@@ -109,12 +111,14 @@
 </div>
 
 <style>
-  /* Under the bar and as wide as it; a child of the bar's container, so tabbing reaches it. */
+  /* Under the bar and as wide as it, or wider over the page when the sidebar is narrow; a child of the
+     bar's container, so tabbing reaches it. */
   .url-details {
     position: absolute;
     top: calc(100% + 2px);
     left: 10px;
     right: var(--sidebar-right-pad, 10px);
+    min-width: 300px;
     z-index: 30;
     box-sizing: border-box;
     display: flex;
