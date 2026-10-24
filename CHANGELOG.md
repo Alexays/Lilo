@@ -14,6 +14,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Fixed
 
+- Command bar results no longer show a site's initial through its favicon's transparent parts.
 - Switching spaces no longer crops the start of the address while it fades in.
 - Imported tabs, bookmarks and Arc spaces show their sites' icons right away, instead of an initial until each is opened.
 - Importing no longer offers browsers that are not installed, whose folders password managers create for their helpers, and finds the icon of a Beta, Dev or Nightly browser or one installed outside LaunchServices.

@@ -316,3 +316,17 @@ for (const [how, click] of [
 		expect((await sentCommands(page)).some((c) => c.action === "navigate")).toBe(false);
 	});
 }
+
+test("a result's favicon hides its initial, which comes back when the favicon fails", async ({ page }) => {
+	const world = initialWorld();
+	const transparent = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
+		tab.id === "tab-alpha" ? { ...tab, faviconDataURL: transparent } : tab.id === "tab-beta" ? { ...tab, faviconDataURL: "data:image/png;base64,broken" } : tab,
+	);
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const alpha = page.locator(".result-icon-favicon", { has: page.locator(`img[src^="data:image/png;base64,iVBOR"]`) }).first();
+	await expect(alpha.locator(".result-favicon-fallback")).toBeHidden();
+	const beta = page.locator(".result-icon-favicon", { has: page.locator('img[src="data:image/png;base64,broken"]') }).first();
+	await expect(beta.locator(".result-favicon-fallback")).toBeVisible();
+});

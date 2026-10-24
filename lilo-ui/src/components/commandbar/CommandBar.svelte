@@ -972,6 +972,11 @@
     place-items: center;
   }
 
+  /* A favicon with transparent parts would show the initial through it: the initial waits for a failed load. */
+  .result-icon-favicon:has(> img:not([hidden])) .result-favicon-fallback {
+    visibility: hidden;
+  }
+
   .result-favicon-image {
     position: absolute;
     inset: 3px;
