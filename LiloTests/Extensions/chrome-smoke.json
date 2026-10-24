@@ -33,6 +33,16 @@
    "version": "2.1",
    "errors": []
   },
+  "cfhdojbkjhnklbpkdaibdccddilifddb": {
+   "name": "Adblock Plus - free ad blocker",
+   "version": "4.48.0",
+   "popupText": true,
+   "errors": [
+    "TypeError: Cannot read properties of undefined (reading 'toLocaleString')",
+    "Error: Failed to initialize Premium",
+    "Unchecked runtime.lastError: No tab with id: 1526397822."
+   ]
+  },
   "kbfnbcaeplbcioakkpcpgfkobkghlhen": {
    "name": "Grammarly: AI Writing Assistant and Grammar Checker App",
    "version": "14.1341.0",
@@ -48,16 +58,6 @@
     "grm ERROR [knowledgeHub.bgService] ░░ User institution id is not defined"
    ]
   },
-  "cfhdojbkjhnklbpkdaibdccddilifddb": {
-   "name": "Adblock Plus - free ad blocker",
-   "version": "4.48.0",
-   "popupText": true,
-   "errors": [
-    "TypeError: Cannot read properties of undefined (reading 'toLocaleString')",
-    "Error: Failed to initialize Premium",
-    "Unchecked runtime.lastError: No tab with id: 1526397822."
-   ]
-  },
   "aapbdbdomjkkjkaonfhkkikfgjllcleb": {
    "name": "Google Translate",
    "version": "2.0.18",
@@ -71,15 +71,15 @@
    "version": "1.0.11",
    "errors": []
   },
-  "jlhmfgmfgeifomenelglieieghnjghma": {
-   "name": "Cisco Webex Extension",
-   "version": "2.0.4",
-   "errors": []
-  },
   "ddkjiahejlhfcafbddmgiahcphecmpfh": {
    "name": "uBlock Origin Lite",
    "version": "2026.1021.1354",
    "popupText": true,
+   "errors": []
+  },
+  "jlhmfgmfgeifomenelglieieghnjghma": {
+   "name": "Cisco Webex Extension",
+   "version": "2.0.4",
    "errors": []
   },
   "glcimepnljoholdmjchkloafkggfoijh": {
@@ -92,6 +92,16 @@
    "version": "1.0.102",
    "errors": []
   },
+  "inoeonmfapjbbkmdafoankkfajkcphgd": {
+   "name": "Read&Write for Google Chrome™",
+   "version": "2.1.1080",
+   "errors": []
+  },
+  "ecnphlgnajanjnkcmbpancdjoidceilk": {
+   "name": "Kami for Google Chrome™",
+   "version": "2.0.25773",
+   "errors": []
+  },
   "bgnkhhnnamicmpeenaelnjfhikgbkllg": {
    "name": "AdGuard AdBlocker",
    "version": "5.5.3.25",
@@ -100,6 +110,11 @@
     "TypeError: Cannot read properties of undefined (reading 'listenerId')",
     "TypeError: Cannot destructure property 'areFilterLimitsExceeded' of 'options' as it is undefined."
    ]
+  },
+  "jgfbgkjjlonelmpenhpfeeljjlcgnkpe": {
+   "name": "ClassLink OneClick Extension",
+   "version": "12.7",
+   "errors": []
   },
   "fjoaledfpmneenckfbpdfhkmimnjocfa": {
    "name": "VPN for Chrome: NordVPN proxy protection",
@@ -158,6 +173,24 @@
    "version": "7.6.0",
    "errors": []
   },
+  "ndakideadaglgpbblmppfonobpdgggin": {
+   "name": "Mobility Print",
+   "version": "1.4.5",
+   "popupText": true,
+   "errors": []
+  },
+  "pfhgbfnnjiafkhfdkmpiflachepdcjod": {
+   "name": "Extension for CAdES Browser Plugin",
+   "version": "1.3.17",
+   "popupText": true,
+   "errors": []
+  },
+  "bhghoamapcdpbohphigoooaddinpkbai": {
+   "name": "Authenticator",
+   "version": "8.0.1",
+   "popupText": true,
+   "errors": []
+  },
   "callobklhcbilhphinckomhgkigmfocg": {
    "name": "Endpoint Verification",
    "version": "1.140.0",
@@ -171,12 +204,6 @@
    "errors": [
     "TypeError: Failed to fetch"
    ]
-  },
-  "bhghoamapcdpbohphigoooaddinpkbai": {
-   "name": "Authenticator",
-   "version": "8.0.1",
-   "popupText": true,
-   "errors": []
   },
   "cifnddnffldieaamihfkhkdgnbhfmaci": {
    "name": "Foxit PDF Creator",
@@ -225,6 +252,12 @@
   "dncepekefegjiljlfbihljgogephdhph": {
    "name": "touchenex 확장",
    "version": "1.0.2.5",
+   "errors": []
+  },
+  "fjgncogppolhfdpijihbpfmeohpaadpc": {
+   "name": "EndNote Click",
+   "version": "3.5.0",
+   "popupText": true,
    "errors": []
   },
   "flliilndjeohchalpbbcdekjklbdgfkk": {
@@ -289,6 +322,11 @@
     "Unrecognized Content-Security-Policy directive 'navigate-to'."
    ]
   },
+  "enfolipbjmnmleonhhebhalojdpcpdoo": {
+   "name": "Screenshot reader™",
+   "version": "2.0.14",
+   "errors": []
+  },
   "eppiocemhmnlbhjplcgkofciiegomcon": {
    "name": "Urban VPN Proxy",
    "version": "5.14.4",
@@ -297,12 +335,6 @@
     "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
     "TypeError: Failed to fetch"
    ]
-  },
-  "fjgncogppolhfdpijihbpfmeohpaadpc": {
-   "name": "EndNote Click",
-   "version": "3.5.0",
-   "popupText": true,
-   "errors": []
   },
   "fkepacicchenbjecpbpbclokcabebhah": {
    "name": "iCloud Bookmarks",
@@ -341,6 +373,15 @@
     "Failed to load resource: net::ERR_CONNECTION_REFUSED"
    ]
   },
+  "njdniclgegijdcdliklgieicanpmcngj": {
+   "name": "Lightspeed Insight Agent",
+   "version": "3.11.0",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:6542/websocket' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "Error: EntitlementKey not found in managed settings"
+   ]
+  },
   "pejdijmoenmkgeppbflobdenhhabjlaj": {
    "name": "iCloud Passwords",
    "version": "3.4.0",
@@ -369,15 +410,20 @@
     "Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
    ]
   },
-  "fmkadmapgofadopljbjfkapdkoienihi": {
-   "name": "React Developer Tools",
-   "version": "8.0.0",
-   "popupText": true,
+  "feepmdlmhplaojabeoecaobfmibooaid": {
+   "name": "OrbitNote",
+   "version": "7.1.0",
    "errors": []
   },
   "gpdjojdkbbmdfjfahjcgigfpmkopogic": {
    "name": "Save to Pinterest",
    "version": "6.16.2",
+   "errors": []
+  },
+  "hdhinadidafjejdhmfkjgnolgimiaplp": {
+   "name": "Read Aloud: A Text to Speech Voice Reader",
+   "version": "2.27.0",
+   "popupText": true,
    "errors": []
   },
   "iidnbdjijdkbmajdffnidomddglmieko": {
@@ -434,6 +480,12 @@
    "popupText": true,
    "errors": []
   },
+  "fmkadmapgofadopljbjfkapdkoienihi": {
+   "name": "React Developer Tools",
+   "version": "8.0.0",
+   "popupText": true,
+   "errors": []
+  },
   "gebbhagfogifgggkldgodflihgfeippi": {
    "name": "Return YouTube Dislike",
    "version": "4.0.5",
@@ -455,11 +507,18 @@
     "TypeError: Failed to fetch"
    ]
   },
-  "hdhinadidafjejdhmfkjgnolgimiaplp": {
-   "name": "Read Aloud: A Text to Speech Voice Reader",
-   "version": "2.27.0",
-   "popupText": true,
+  "hjngolefdpdnooamgdldlkjgmdcmcjnc": {
+   "name": "Equatio - Math made digital",
+   "version": "69.0.0",
    "errors": []
+  },
+  "jabjbhgjaidecageckilhonbggakppme": {
+   "name": "Госплагин",
+   "version": "1.3.43.0",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://localhost:9001/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
   },
   "mpnlkmlkncncpgnnkmkgoobfpnjmblnk": {
    "name": "Norton Safe Search",
@@ -555,6 +614,11 @@
     "Unchecked runtime.lastError: Specified native messaging host not found."
    ]
   },
+  "hkgfoiooedgoejojocmhlaklaeopbecg": {
+   "name": "Picture-in-Picture Extension (by Google)",
+   "version": "1.14",
+   "errors": []
+  },
   "jjkchpdmjjdmalgembblgafllbpcjlei": {
    "name": "Trellix Endpoint Security Web Control",
    "version": "10.7.0.5780",
@@ -589,6 +653,20 @@
    "popupText": true,
    "errors": []
   },
+  "mgijmajocgfcbeboacabfgobmjgjcoja": {
+   "name": "Google Dictionary (by Google)",
+   "version": "4.2.6",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "momffihklfhkoakghidmkdocdkbfmoac": {
+   "name": "Контур.Расширение",
+   "version": "3.2.13",
+   "errors": []
+  },
   "nlipoenfbbikpbjkfpfillcgkoblgpmj": {
    "name": "Awesome Screen Recorder & Screenshot",
    "version": "4.4.44",
@@ -610,6 +688,12 @@
     "Failed to load resource: the server responded with a status of 401 ()"
    ]
   },
+  "pbcgcpeifkdjijdjambaakmhhpkfgoec": {
+   "name": "SYTools",
+   "version": "26.5111.3",
+   "popupText": true,
+   "errors": []
+  },
   "adbacgifemdbhdkfppmeilbgppmhaobf": {
    "name": "RoPro - Enhance Your Roblox Experience",
    "version": "1.7.2",
@@ -629,14 +713,6 @@
    "name": "BetterTTV",
    "version": "7.7.28",
    "errors": []
-  },
-  "ammjkodgmmoknidbanneddgankgfejfh": {
-   "name": "7TV",
-   "version": "3.1.26",
-   "popupText": true,
-   "errors": [
-    "Error: Could not establish connection. Receiving end does not exist."
-   ]
   },
   "bihmplhobchoageeokmgbdihknkjbknd": {
    "name": "Touch VPN - Secure and unlimited VPN proxy",
@@ -703,6 +779,12 @@
    "version": "26.279.2.45",
    "errors": []
   },
+  "kkepemkdiboiecpjlmdmighjkmfokbpm": {
+   "name": "Promethean® Screen Share",
+   "version": "4.5.0",
+   "popupText": true,
+   "errors": []
+  },
   "ldipcbpaocekfooobnbcddclnhejkcpn": {
    "name": "Google Scholar Button",
    "version": "3.6",
@@ -725,15 +807,6 @@
     "Error: No Listener: tabs:outgoing.message.ready"
    ]
   },
-  "mgijmajocgfcbeboacabfgobmjgjcoja": {
-   "name": "Google Dictionary (by Google)",
-   "version": "4.2.6",
-   "popupText": true,
-   "errors": [
-    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
-    "TypeError: Failed to fetch"
-   ]
-  },
   "ndnaehgpjlnokgebbaldlmgkapkpjkkb": {
    "name": "Mailtrack® – Email Tracker for Gmail",
    "version": "12.99.1",
@@ -745,15 +818,6 @@
    "version": "0.11.1",
    "popupText": true,
    "errors": []
-  },
-  "nmigaijibiabddkkmjhlehchpmgbokfj": {
-   "name": "Sound Booster - increase volume up",
-   "version": "1.0.15",
-   "popupText": false,
-   "errors": [
-    "Unchecked runtime.lastError: Extension has not been invoked for the current page (see activeTab permission). Chrome pages cannot be captured.",
-    "AbortError: Error starting tab capture"
-   ]
   },
   "ofpnmcalabcbjgholdjcjblkibolbppb": {
    "name": "Monica: All-In-One AI Assist & Smartest  AI Agent",
@@ -783,9 +847,27 @@
    "popupText": true,
    "errors": []
   },
+  "acbchkahfmndkenefkcklofjmipghjjp": {
+   "name": "Адаптер Рутокен Коннект",
+   "version": "6.2.5",
+   "errors": [
+    "Unchecked runtime.lastError: Specified native messaging host not found."
+   ]
+  },
   "agionbommeaifngbhincahgmoflcikhm": {
    "name": "Image downloader - Imageye",
    "version": "7.4.6",
+   "errors": []
+  },
+  "ailoabdmgclmfmhdagmlohpjlbpffblp": {
+   "name": "Surfshark Chrome VPN extension — fast, private, and free to start",
+   "version": "5.4.0",
+   "popupText": true,
+   "errors": []
+  },
+  "ajphlblkfpppdpkgokiejbjfohfohhmk": {
+   "name": "Mote for Google Chrome™",
+   "version": "3.3.10",
    "errors": []
   },
   "akcocjjpkmlniicdeemdceeajlmoabhg": {
@@ -793,6 +875,14 @@
    "version": "4.1.6",
    "popupText": true,
    "errors": []
+  },
+  "ammjkodgmmoknidbanneddgankgfejfh": {
+   "name": "7TV",
+   "version": "3.1.26",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
   },
   "bbafmabaelnnkondpfpjmdklbmfnbmol": {
    "name": "Web Signer",
@@ -984,6 +1074,21 @@
    "version": "4.0.1.15",
    "errors": []
   },
+  "nkkighcdodpjcdenompholalclpaobff": {
+   "name": "MasteryConnect LockDown Browser",
+   "version": "0.4.91",
+   "popupText": true,
+   "errors": []
+  },
+  "nmigaijibiabddkkmjhlehchpmgbokfj": {
+   "name": "Sound Booster - increase volume up",
+   "version": "1.0.15",
+   "popupText": false,
+   "errors": [
+    "Unchecked runtime.lastError: Extension has not been invoked for the current page (see activeTab permission). Chrome pages cannot be captured.",
+    "AbortError: Error starting tab capture"
+   ]
+  },
   "nmmicjeknamkfloonkhhcjmomieiodli": {
    "name": "YouTube Summary with ChatGPT & Claude",
    "version": "2.4.1",
@@ -995,6 +1100,21 @@
    "popupText": true,
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "ohedcglhbbfdgaogjhcclacoccbagkjg": {
+   "name": "Адаптер Рутокен Плагин",
+   "version": "1.1.0.0",
+   "errors": []
+  },
+  "oijdcdmnjjgnnhgljmhkjlablaejfeeb": {
+   "name": "The QR Code Generator",
+   "version": "2.2.1",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "[GA] Error sending event: TypeError: Failed to fetch",
+    "Failed to initialize API data: Error: Failed to obtain Firebase auth token after maximum retries"
    ]
   },
   "okfkdaglfjjjfefdcppliegebpoegaii": {
@@ -1049,12 +1169,6 @@
   "acnonhmkejidodnppipkffhfjbfiogha": {
    "name": "My Doodle",
    "version": "1.1.7",
-   "popupText": true,
-   "errors": []
-  },
-  "ailoabdmgclmfmhdagmlohpjlbpffblp": {
-   "name": "Surfshark Chrome VPN extension — fast, private, and free to start",
-   "version": "5.4.0",
    "popupText": true,
    "errors": []
   },
@@ -1130,11 +1244,6 @@
    "popupText": true,
    "errors": []
   },
-  "cbapcdnkcgiajboppakkhjmdolbkinge": {
-   "name": "ChatbotsPlace: All-in-One AI Sidebar (ChatGPT, Claude & Gemini)",
-   "version": "2.9.6",
-   "errors": []
-  },
   "cclelndahbckbenkjhflpdbgdldlbecc": {
    "name": "Get cookies.txt LOCALLY",
    "version": "0.7.2",
@@ -1208,6 +1317,12 @@
    "name": "User-Agent Switcher for Chrome",
    "version": "2.0.2",
    "popupText": false,
+   "errors": []
+  },
+  "donbcfbmhbcapadipfkeojnmajbakjdc": {
+   "name": "Ruffle - Flash Emulator",
+   "version": "0.7.1.65535",
+   "popupText": true,
    "errors": []
   },
   "dpacanjfikmhoddligfbehkpomnbgblf": {
@@ -1287,6 +1402,14 @@
     "Failed to load resource: net::ERR_FILE_NOT_FOUND"
    ]
   },
+  "fldmhceldgbpfpkbgopacenieobmligc": {
+   "name": "Kimi",
+   "version": "2.0.24",
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:10086/ws?client=20f4bbbc-f838-47d8-a9f9-fb5c2ab1abf1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "[ws] error: Event"
+   ]
+  },
   "fllaojicojecljbmefodhfapmkghcbnh": {
    "name": "Google Analytics Opt-out Add-on (by Google)",
    "version": "5",
@@ -1341,6 +1464,11 @@
    "popupText": true,
    "errors": []
   },
+  "hnhppcgejeffnbnioloohhmndpmclaga": {
+   "name": "Контур.Плагин",
+   "version": "3.1.11",
+   "errors": []
+  },
   "hodiladlefdpcbemnbbcpclbmknkiaem": {
    "name": "Google Meet Enhanced Experience",
    "version": "4.0.0",
@@ -1352,6 +1480,13 @@
    "version": "6.12.26",
    "errors": []
   },
+  "honjcnefekfnompampcpmcdadibmjhlk": {
+   "name": "LanSchool Web Helper",
+   "version": "9.2.0.2",
+   "errors": [
+    "10/24/2026 14:59:28: Script not executed: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host."
+   ]
+  },
   "iginnfkhmmfhlkagcmpgofnjhanpmklb": {
    "name": "Boxel Rebound",
    "version": "1.8.0.8",
@@ -1362,6 +1497,11 @@
    "name": "Screen Recorder & Screenshot App for Chrome | Scrnli",
    "version": "4.3.9",
    "popupText": true,
+   "errors": []
+  },
+  "inlmamahcfioibldbpbaechbpeeaelin": {
+   "name": "Помощник диагностики",
+   "version": "3.0.30",
    "errors": []
   },
   "iogidnfllpdhagebkblkgbfijkbkjdmm": {
@@ -1431,6 +1571,17 @@
    "popupText": true,
    "errors": []
   },
+  "jfiihjeimjpkpoaekpdpllpaeichkiod": {
+   "name": "Page Marker - Draw on Web",
+   "version": "5.7",
+   "errors": []
+  },
+  "jhhclmfgfllimlhabjkgkeebkbiadflb": {
+   "name": "EPUBReader",
+   "version": "2.1.1",
+   "popupText": false,
+   "errors": []
+  },
   "jhikancdgcieieaapcjmbpjflikjgkpn": {
    "name": "MSN + Bing for Chrome",
    "version": "1.0.0.57",
@@ -1495,6 +1646,11 @@
   "kohfgcgbkjodfcfkcackpagifgbcmimk": {
    "name": "NaturalReader - AI Text to Speech",
    "version": "8.0.3",
+   "errors": []
+  },
+  "laddjijkcfpakbbnnedbhnnciecidncp": {
+   "name": "Yandex Search",
+   "version": "9.0.8",
    "errors": []
   },
   "ljflmlehinmoeknoonhibbjpldiijjmm": {
@@ -1571,10 +1727,31 @@
    "popupText": true,
    "errors": []
   },
+  "mkhjobnjhllkhekbbedlkmgcglgaeidc": {
+   "name": "iboss Cloud Connector",
+   "version": "1.0.200",
+   "popupText": true,
+   "errors": [
+    "Chromebook not detected. Will disable extension.",
+    "Disabling extension..."
+   ]
+  },
+  "mmhppocgfdombmapajfeafhecobfcjpk": {
+   "name": "xFanatical Safe Doc",
+   "version": "1.64.9",
+   "errors": [
+    "You do not have permission to use blocking webRequest listeners. Be sure to declare the webRequestBlocking permission in your manifest. Note that webRequestBlocking is only allowed for extensions that are installed using ExtensionInstallForcelist."
+   ]
+  },
   "mokknliiomknodkdmpcellamkopbdmao": {
    "name": "Repeek (formerly FACEIT Enhancer)",
    "version": "5.6.16",
    "popupText": true,
+   "errors": []
+  },
+  "ndaciljfdnekbnmcpjidoebejglcjidc": {
+   "name": "Cyber-Ark Clipboard Extension",
+   "version": "2.2",
    "errors": []
   },
   "nhdogjmejiglipccpnnnanhbledajbpd": {
@@ -1648,6 +1825,15 @@
     "Mixpanel user profile update failed TypeError: Failed to fetch"
    ]
   },
+  "ohcpnigalekghcmgcdcenkpelffpdolg": {
+   "name": "ColorPick Eyedropper",
+   "version": "0.0.3.4",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Either the '<all_urls>' or 'activeTab' permission is required.",
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
   "ohlencieiipommannpdfcmfdpjjmeolj": {
    "name": "PrintFriendly: Print, PDF Editor & Full Page Screenshot",
    "version": "7.3.6",
@@ -1662,16 +1848,6 @@
     "[background] ERROR - 07:49:42.878: Fetch extension alarms failed with error: Error: CHIRP RPC failed for getAlarms",
     "[background] ERROR - 09:50:25.321: Fetch extension alarms failed with error: Error: CHIRP RPC failed for getAlarms",
     "[background] ERROR - 18:32:53.791: Fetch extension alarms failed with error: Error: CHIRP RPC failed for getAlarms"
-   ]
-  },
-  "oijdcdmnjjgnnhgljmhkjlablaejfeeb": {
-   "name": "The QR Code Generator",
-   "version": "2.2.1",
-   "popupText": true,
-   "errors": [
-    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-    "[GA] Error sending event: TypeError: Failed to fetch",
-    "Failed to initialize API data: Error: Failed to obtain Firebase auth token after maximum retries"
    ]
   },
   "ojnbohmppadfgpejeebfnmnknjdlckgj": {
@@ -1750,6 +1926,12 @@
    "popupText": true,
    "errors": []
   },
+  "pohmgobdeajemcifpoldnnhffjnnkhgf": {
+   "name": "WeVideo Screen & Webcam Recorder",
+   "version": "5.0.1",
+   "popupText": false,
+   "errors": []
+  },
   "achogidmbhmofkmpgamphmlebdhgkdhc": {
    "name": "Soda PDF Viewer: Edit, Convert, Compress PDF files",
    "version": "1.0.2.92",
@@ -1772,16 +1954,6 @@
    "version": "4.1.6",
    "popupText": true,
    "errors": []
-  },
-  "bnlofglpdlboacepdieejiecfbfpmhlb": {
-   "name": "Turbo VPN - Secure Free VPN Proxy",
-   "version": "2.0.4",
-   "popupText": true,
-   "errors": [
-    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
-    "FetchError: [GET] \"http://www.geoplugin.net/json.gp\": <no response> Failed to fetch",
-    "TypeError: Failed to fetch"
-   ]
   },
   "camppjleccjaphfdbohjdohecfnoikec": {
    "name": "Merlin AI",
@@ -1807,6 +1979,17 @@
    "popupText": true,
    "errors": []
   },
+  "dfffkbbackkpgmddopaeohbdgfckogdn": {
+   "name": "Audio Master mini",
+   "version": "1.2.3",
+   "popupText": true,
+   "errors": []
+  },
+  "digojkgonhgmnohbapdfjllpnmjmdhpg": {
+   "name": "ProctorExam Activity Sharing",
+   "version": "1.8.1",
+   "errors": []
+  },
   "eakacpaijcpapndcfffdgphdiccmpknp": {
    "name": "MozBar",
    "version": "5.0.17",
@@ -1823,14 +2006,6 @@
    "name": "Fonts Ninja",
    "version": "9.0.4",
    "errors": []
-  },
-  "ffbkglfijbcbgblgflchnbphjdllaogb": {
-   "name": "CyberGhost VPN – Proxy for Chrome",
-   "version": "10.0.0",
-   "popupText": true,
-   "errors": [
-    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
-   ]
   },
   "fihnjjcciajhdojfnbdddfaoknhalnja": {
    "name": "I don't care about cookies",
@@ -1849,6 +2024,19 @@
     "TypeError: e.json is not a function"
    ]
   },
+  "hmffdimoneaieldiddcmajhbjijmnggi": {
+   "name": "EasyBib Toolbar",
+   "version": "1.0.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 403 ()"
+   ]
+  },
+  "idcfmfbkmhjnnkfdhcckcoopllbmhnmg": {
+   "name": "Block File Types",
+   "version": "0.0.3",
+   "errors": []
+  },
   "inehghpkjjjdgpnagcbogckbonilnidc": {
    "name": "Degreed Extension",
    "version": "8.0.8",
@@ -1866,11 +2054,6 @@
    "name": "Secure Shell",
    "version": "0.82",
    "popupText": false,
-   "errors": []
-  },
-  "jfiihjeimjpkpoaekpdpllpaeichkiod": {
-   "name": "Page Marker - Draw on Web",
-   "version": "5.7",
    "errors": []
   },
   "jnhgnonknehpejjnehehllkliplmbmhn": {
@@ -1905,6 +2088,11 @@
     "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
    ]
   },
+  "ndhkcelnoeacagmhbidalbidnkjeokma": {
+   "name": "ESEP Crypto Extension",
+   "version": "1.1.0",
+   "errors": []
+  },
   "nfmmmhanepmpifddlkkmihkalkoekpfd": {
    "name": "FetchV - Video Downloader for m3u8 & hls",
    "version": "3.2",
@@ -1919,13 +2107,12 @@
     "Failed to load resource: net::ERR_FILE_NOT_FOUND"
    ]
   },
-  "ohcpnigalekghcmgcdcenkpelffpdolg": {
-   "name": "ColorPick Eyedropper",
-   "version": "0.0.3.4",
+  "oboonakemofpalcgghocfoadofidjkkk": {
+   "name": "KeePassXC-Browser",
+   "version": "1.10.4.1",
    "popupText": true,
    "errors": [
-    "Unchecked runtime.lastError: Either the '<all_urls>' or 'activeTab' permission is required.",
-    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+    "Error: Could not establish connection. Receiving end does not exist."
    ]
   },
   "pfnededegaaopdmhkdmcofjmoldfiped": {
@@ -1943,6 +2130,26 @@
    "name": "eID Chrome Extension",
    "version": "1.0.3",
    "errors": []
+  },
+  "bnlofglpdlboacepdieejiecfbfpmhlb": {
+   "name": "Turbo VPN - Secure Free VPN Proxy",
+   "version": "2.0.4",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "FetchError: [GET] \"http://www.geoplugin.net/json.gp\": <no response> Failed to fetch",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "cdjkkeofanojcdolaakkckkmfcjejlij": {
+   "name": "Плагин ГИС НР",
+   "version": "2.22",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Failed to load resource: net::ERR_INVALID_URL"
+   ]
   },
   "cfpdompphcacgpjfbonkdokgjhgabpij": {
    "name": "Glean",
@@ -1980,12 +2187,12 @@
     "Uncaught (in promise)"
    ]
   },
-  "fldmhceldgbpfpkbgopacenieobmligc": {
-   "name": "Kimi",
-   "version": "2.0.24",
+  "ffbkglfijbcbgblgflchnbphjdllaogb": {
+   "name": "CyberGhost VPN – Proxy for Chrome",
+   "version": "10.0.0",
+   "popupText": true,
    "errors": [
-    "WebSocket connection to 'ws://127.0.0.1:10086/ws?client=20f4bbbc-f838-47d8-a9f9-fb5c2ab1abf1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
-    "[ws] error: Event"
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
    ]
   },
   "ghnomdcacenbmilgjigehppbamfndblo": {
@@ -2079,19 +2286,31 @@
    "popupText": true,
    "errors": []
   },
-  "oboonakemofpalcgghocfoadofidjkkk": {
-   "name": "KeePassXC-Browser",
-   "version": "1.10.4.1",
+  "mpbjkejclgfgadiemmefgebjfooflfhl": {
+   "name": "Buster: Captcha Solver for Humans",
+   "version": "3.4.0",
+   "errors": []
+  },
+  "nlkaejimjacpillmajjnopmpbkbnocid": {
+   "name": "YouTube NonStop",
+   "version": "0.9.2",
    "popupText": true,
-   "errors": [
-    "Error: Could not establish connection. Receiving end does not exist."
-   ]
+   "errors": []
   },
   "oifijhaokejakekmnjmphonojcfkpbbh": {
    "name": "Open Multiple URLs",
    "version": "1.7.5",
    "popupText": true,
    "errors": []
+  },
+  "paijmjmfnjcbjlimjeminlepannmimbi": {
+   "name": "Pear Deck Power-Up",
+   "version": "2025.05.08.00885",
+   "popupText": true,
+   "errors": [
+    "Loading the script 'https://www.youtube.com/iframe_api' violates the following Content Security Policy directive: \"script-src 'self'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked.",
+    "Loading the script 'https://www.youtube.com/iframe_api' violates the following Content Security Policy directive: \"script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked."
+   ]
   },
   "pgmbeccjfkdbpdjfoldaahpfamjjafma": {
    "name": "買い物ポケット",
@@ -2100,6 +2319,11 @@
    "errors": [
     "Failed to load resource: net::ERR_CONNECTION_REFUSED"
    ]
+  },
+  "pgpjajcmfbfdmcgjlbiengidaknopaok": {
+   "name": "Pix Companion",
+   "version": "1.4.0",
+   "errors": []
   },
   "phfkifnjcmdcmljnnablahicoabkokbg": {
    "name": "Custom Cursors for Chrome",
@@ -2166,6 +2390,12 @@
     "Failed to load resource: net::ERR_CONNECTION_REFUSED"
    ]
   },
+  "cdnapgfjopgaggbmfgbiinmmbdcglnam": {
+   "name": "OpenDyslexic for Chrome",
+   "version": "2026.7.29",
+   "popupText": true,
+   "errors": []
+  },
   "cpcifbdmkopohnnofedkjghjiclmhdah": {
    "name": "NeatDownloadManager Extension",
    "version": "1.9.92",
@@ -2178,9 +2408,19 @@
    "version": "4.12.16",
    "errors": []
   },
+  "dehajjkfchegiinhcmoclkfbnmpgcahj": {
+   "name": "InsertLearning",
+   "version": "2.2.0",
+   "errors": []
+  },
   "eclbecdgdoahkliaijlpkigldlkojjdn": {
    "name": "Screen Recorder for Google Chrome™",
    "version": "4.3.11",
+   "errors": []
+  },
+  "efggnkbeomjjanjmghbadggegjemogee": {
+   "name": "You Shall Not Pass by TeacherMagic.org",
+   "version": "3.3.0",
    "errors": []
   },
   "fbeffbjdlemaoicjdapfpikkikjoneco": {
@@ -2193,6 +2433,11 @@
    "name": "Tampermonkey BETA",
    "version": "5.6.6242",
    "popupText": true,
+   "errors": []
+  },
+  "gcoekeoenehjmndhkdnoomdjeaclkhbe": {
+   "name": "Nearpod for Classroom",
+   "version": "0.0.11",
    "errors": []
   },
   "gidejehfgombmkfflghejpncblgfkagj": {
@@ -2227,6 +2472,17 @@
    "name": "WAVE Evaluation Tool",
    "version": "3.3.1.0",
    "errors": []
+  },
+  "jifcoadedkediabkmjbflemiblmnbjfk": {
+   "name": "Idira Identity Browser Extension",
+   "version": "26.16.1",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "Error: Cannot access contents of url \"chrome-extension://jifcoadedkediabkmjbflemiblmnbjfk/popover/popover.html\". Extension manifest must request permission to access this host."
+   ]
   },
   "jpbjcnkcffbooppibceonlgknpkniiff": {
    "name": "Global Speed - Video Speed Control",
@@ -2263,6 +2519,11 @@
    "name": "Hoxx VPN Proxy",
    "version": "3.50.6",
    "popupText": true,
+   "errors": []
+  },
+  "neibhohkbmfjninidnaoacabkjonbahn": {
+   "name": "Hide Google AI Overviews",
+   "version": "1.6.6",
    "errors": []
   },
   "nemmanchfojaehgkbgcfmdiidbopakpp": {
@@ -2324,9 +2585,19 @@
    "popupText": true,
    "errors": []
   },
+  "bcocdbombenodlegijagbhdjbifpiijp": {
+   "name": "INSSIST | Web Client for Instagram",
+   "version": "39.9.2",
+   "errors": []
+  },
   "bhloflhklmhfpedakmangadcdofhnnoh": {
    "name": "Earth View from Google Earth",
    "version": "3.1.1",
+   "errors": []
+  },
+  "cbapcdnkcgiajboppakkhjmdolbkinge": {
+   "name": "ChatbotsPlace: All-in-One AI Sidebar (ChatGPT, Claude & Gemini)",
+   "version": "2.9.6",
    "errors": []
   },
   "cgakmbkklpmijhckpolanjijghgfpeoa": {
@@ -2383,16 +2654,10 @@
    "version": "2.0.8",
    "errors": []
   },
-  "elpmkbbdldhoiggkjfpgibmjioncklbn": {
-   "name": "Translate for Chrome -Translator, Dictionary",
-   "version": "1.0.4",
-   "popupText": true,
-   "errors": [
-    "Error: <path> attribute d: Expected number, \"…               tc0.2,0,0.4-0.2,0…\".",
-    "Error handling response: TypeError: Cannot read properties of undefined (reading 'split')",
-    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
-    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
-   ]
+  "emnoomldgleagdjapdeckpmebokijail": {
+   "name": "wanteeed",
+   "version": "2.711.0",
+   "errors": []
   },
   "fedoeoceggohfajbhbadkfhgckjkieop": {
    "name": "Music Equalizer & Bass Booster – Sound Enhancer for Chrome",
@@ -2424,6 +2689,11 @@
   "gjfpmkejnolcfklaaddjnckanhhgegla": {
    "name": "Guardio Protection for Chrome",
    "version": "26.8.2.4049",
+   "errors": []
+  },
+  "hdgegmlancchhhlkkddoiedlklgocffm": {
+   "name": "Read The Web",
+   "version": "4.1.7",
    "errors": []
   },
   "hpijlohoihegkfehhibggnkbjhoemldh": {
@@ -2458,15 +2728,16 @@
    "popupText": false,
    "errors": []
   },
+  "lhgiigkiddoalobhmmcpdhddlccindjj": {
+   "name": "Reflect in Seesaw Extension",
+   "version": "1.3.1",
+   "popupText": true,
+   "errors": []
+  },
   "naciaagbkifhpnoodlkhbejjldaiffcm": {
    "name": "Get Token Cookie",
    "version": "1.6.9",
    "popupText": true,
-   "errors": []
-  },
-  "neibhohkbmfjninidnaoacabkjonbahn": {
-   "name": "Hide Google AI Overviews",
-   "version": "1.6.6",
    "errors": []
   },
   "nlmmgnhgdeffjkdckmikfpnddkbbfkkk": {
@@ -2498,10 +2769,20 @@
     "Error in API request: GET /profile ze"
    ]
   },
+  "ocjpjclikikflkiojiodbhpnlnknlaml": {
+   "name": "Sicoob Internet Banking",
+   "version": "1.0.1",
+   "errors": []
+  },
   "oligonmocnihangdjlloenpndnniikol": {
    "name": "edpuzzle",
    "version": "5.1.0",
    "popupText": true,
+   "errors": []
+  },
+  "pbanhockgagggenencehbnadejlgchfc": {
+   "name": "Simplify Copilot - Autofill job applications, job tracker & AI resumes",
+   "version": "3.1.11",
    "errors": []
   },
   "pfjdepjjfjjahkjfpkcgfmfhmnakjfba": {
@@ -2528,6 +2809,20 @@
     "TypeError: Failed to fetch",
     "Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received",
     "TypeError: Cannot read properties of undefined (reading 'day')"
+   ]
+  },
+  "ahmapmilbkfamljbpgphfndeemhnajme": {
+   "name": "Helperbird: Dyslexia & Accessibility Tools",
+   "version": "2026.10.11",
+   "popupText": true,
+   "errors": []
+  },
+  "bldgenmjegcnjebiongilahhcjldgmlm": {
+   "name": "Google Docs Quick Create",
+   "version": "0.2.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
    ]
   },
   "blillmbchncajnhkjfdnincfndboieik": {
@@ -2578,17 +2873,28 @@
    "popupText": true,
    "errors": []
   },
+  "dogkpdfcklifaemcdfbildhcofnopogp": {
+   "name": "Axure RP Extension for Chrome",
+   "version": "0.7.0",
+   "errors": []
+  },
+  "elpmkbbdldhoiggkjfpgibmjioncklbn": {
+   "name": "Translate for Chrome -Translator, Dictionary",
+   "version": "1.0.4",
+   "popupText": true,
+   "errors": [
+    "Error: <path> attribute d: Expected number, \"…               tc0.2,0,0.4-0.2,0…\".",
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'split')",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
   "emalgedpdlghbkikiaeocoblajamonoh": {
    "name": "Karma | Online shopping, but better",
    "version": "10.98.3.22019",
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
    ]
-  },
-  "emnoomldgleagdjapdeckpmebokijail": {
-   "name": "wanteeed",
-   "version": "2.711.0",
-   "errors": []
   },
   "fgimllnamdeacpaddbdafchhcmapebgj": {
    "name": "VKSaver - скачать музыку ВК",
@@ -2630,6 +2936,15 @@
    "version": "3.0.0",
    "errors": []
   },
+  "gkncegdiihdghhkfpnnodppcbjeeimkc": {
+   "name": "Senso Extension",
+   "version": "3.0.8.1",
+   "popupText": true,
+   "errors": [
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "%c[ ApplicationService ]%c  %c[2026-10-24T13:02:19.157Z]%cCRITICAL ERROR: A configuration issue has occurred which is preventing this device from connecting to Senso. Please check your managed configuration JSON in Google Admin and ensure that the license key and site key are present and correct. color: #1a1a1a; background: hsl(338 65% 88%); border: 1px solid rgba(0,0,0,0.15); font-weight: 700; padding: 0 6px; border-radius: 4px background: transparent; color: inherit; background: transparent; c"
+   ]
+  },
   "gnblbpbepfbfmoobegdogkglpbhcjofh": {
    "name": "Beyond 20",
    "version": "2.21.0",
@@ -2642,12 +2957,29 @@
    "popupText": true,
    "errors": []
   },
+  "hljakogpibfgelmoegmajaeefcnefngd": {
+   "name": "MyLOFT",
+   "version": "3.2.58",
+   "popupText": false,
+   "errors": []
+  },
   "iabeihobmhlgpkcgjiloemdbofjbdcic": {
    "name": "Bitly | Short links and QR Codes",
    "version": "4.5.3",
    "popupText": true,
    "errors": [
     "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "iaigceaehdihlnolehbapjfbbfpnlngg": {
+   "name": "Mirroring360 Sender for Chrome",
+   "version": "1.1.0.6",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:7683/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "Unchecked runtime.lastError: Specified native messaging host not found.",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Unchecked runtime.lastError: The message port closed before a response was received."
    ]
   },
   "ijgkbcbalaekboipcmaefchfjpognmog": {
@@ -2668,6 +3000,12 @@
    "popupText": true,
    "errors": []
   },
+  "injdgfhiepghpnihhgmkejcjnoohaibm": {
+   "name": "Shopify Scraper & Parser - Shopify Spy",
+   "version": "2.3.2",
+   "popupText": true,
+   "errors": []
+  },
   "ipdjnhgkpapgippgcgkfcbpdpcgifncb": {
    "name": "Emoji Keyboard by JoyPixels®",
    "version": "11.0.2",
@@ -2676,6 +3014,11 @@
   "jcbmcnpepaddcedmjdcmhbekjhbfnlff": {
    "name": "Page Ruler",
    "version": "0.1.8",
+   "errors": []
+  },
+  "jkncabbipkgbconhaajbapbhokpbgkdc": {
+   "name": "Cegid Peoplenet ClickOnce launcher",
+   "version": "2.0",
    "errors": []
   },
   "jkompbllimaoekaogchhkmkdogpkhojg": {
@@ -2742,6 +3085,19 @@
    "popupText": true,
    "errors": []
   },
+  "ldomopmamhliggalnecdlinphjjkalhp": {
+   "name": "iboss Classroom Management for Students",
+   "version": "1.0.35",
+   "popupText": true,
+   "errors": [
+    "AxiosError: Network Error"
+   ]
+  },
+  "leneiifcmnfminekdbgbofkdddlkhcep": {
+   "name": "PSI In-application Extension",
+   "version": "1.0.0.12",
+   "errors": []
+  },
   "lgomjifbpjfhpodjhihemafahhmegbek": {
    "name": "NCapture",
    "version": "1.1.315.0",
@@ -2760,6 +3116,11 @@
    "errors": [
     "TypeError: Failed to fetch"
    ]
+  },
+  "lknmjhcajhfbbglglccadlfdjbaiifig": {
+   "name": "Record, Transcribe & ChatGPT/Claude for Google Meet",
+   "version": "2.28.1911",
+   "errors": []
   },
   "llaficoajjainaijghjlofdfmbjpebpa": {
    "name": "Speed Dial [FVD] - New Tab Page, 3D, Sync...",
@@ -2894,6 +3255,12 @@
     "TypeError: Failed to fetch"
    ]
   },
+  "abpdnfjocnmdomablahdcfnoggeeiedb": {
+   "name": "Save All Resources",
+   "version": "2.0.6",
+   "popupText": true,
+   "errors": []
+  },
   "aeidadjdhppdffggfgjpanbafaedankd": {
    "name": "SignalHire - find email or phone number",
    "version": "5.14.0",
@@ -2953,14 +3320,6 @@
    "name": "Font Finder",
    "version": "0.6.5",
    "errors": []
-  },
-  "bldgenmjegcnjebiongilahhcjldgmlm": {
-   "name": "Google Docs Quick Create",
-   "version": "0.2.0",
-   "popupText": true,
-   "errors": [
-    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
-   ]
   },
   "blgcbajigpdfohpgcmbbfnphcgifjopc": {
    "name": "ExpressKeys: Password Manager",
@@ -3151,6 +3510,14 @@
     "Failed to load resource: net::ERR_CONNECTION_REFUSED"
    ]
   },
+  "glmmdlecbjphkipedcepebngalkmcnkl": {
+   "name": "AdScrubber - Adblocker for Google Chrome",
+   "version": "1.0.312",
+   "popupText": false,
+   "errors": [
+    "Failed to update TrackerDB engine: Error: TrackerDB config fetch failed: 404"
+   ]
+  },
   "gmehookibnphigonphocphhcepbijeen": {
    "name": "Picture in Picture - floating video player",
    "version": "1.0.6",
@@ -3169,12 +3536,6 @@
     "Error handling response: TypeError: Cannot read properties of undefined (reading 'TAG')",
     "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
    ]
-  },
-  "hljakogpibfgelmoegmajaeefcnefngd": {
-   "name": "MyLOFT",
-   "version": "3.2.58",
-   "popupText": false,
-   "errors": []
   },
   "hnafhkjheookmokbkpnfpmemlppjdgoi": {
    "name": "Allow Right-Click",
@@ -3285,15 +3646,6 @@
    "popupText": true,
    "errors": []
   },
-  "kaibcgikagnkfgjnibflebpldakfhfih": {
-   "name": "CS2 Trader - Steam Trading Enhancer",
-   "version": "3.7",
-   "popupText": true,
-   "errors": [
-    "Error: Only a single offscreen document may be created.",
-    "Error: Could not establish connection. Receiving end does not exist."
-   ]
-  },
   "khhnfdoljialnlomkdkphhdhngfppabl": {
    "name": "Speed Test for Chrome - WiFi speedtest",
    "version": "1.0.7",
@@ -3305,6 +3657,17 @@
   "kkkbiiikppgjdiebcabomlbidfodipjg": {
    "name": "Substital: Add subtitles to videos and movies",
    "version": "2.10.7",
+   "popupText": true,
+   "errors": []
+  },
+  "kogfdlbehkaeoafmgaecphlnhohpabig": {
+   "name": "Google Meet Breakout by Robert Hudek",
+   "version": "20.9",
+   "errors": []
+  },
+  "kpmbpdpbjjadabknommjfphilmecebab": {
+   "name": "OP Auto Clicker",
+   "version": "0.1.4",
    "popupText": true,
    "errors": []
   },
@@ -3324,6 +3687,14 @@
    "version": "8.9.21",
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "lgknkdljklhkafjfekjjbldfcdnmdpkh": {
+   "name": "VideoMirror",
+   "version": "3.2.0",
+   "popupText": true,
+   "errors": [
+    "Error: Cannot access contents of the page. Extension manifest must request permission to access the respective host."
    ]
   },
   "lhannfkhjdhmibllojbbdjdbpegidojj": {
@@ -3349,10 +3720,15 @@
     "TypeError: Cannot read properties of undefined (reading 'showEagleNotOpenedDialog')"
    ]
   },
-  "lknmjhcajhfbbglglccadlfdjbaiifig": {
-   "name": "Record, Transcribe & ChatGPT/Claude for Google Meet",
-   "version": "2.28.1911",
-   "errors": []
+  "lokadhdaghfjbmailhhenifjejpokche": {
+   "name": "AppWriter Cloud",
+   "version": "4.3.0",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:28676/appwriter_cloud' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:32384/appwriter_cloud' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:44354/appwriter_cloud' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
   },
   "looepbdllpjgdmkpdcdffhdbmpbcfekj": {
    "name": "Live Stream Downloader",
@@ -3368,6 +3744,17 @@
    "name": "Lusha - Easily find B2B contact information",
    "version": "11.1.1",
    "errors": []
+  },
+  "mhmphnocemakkjdampibehejoaleebpo": {
+   "name": "SuperNova SWF Enabler",
+   "version": "0.93",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Specified native messaging host not found.",
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "TypeError: Failed to fetch"
+   ]
   },
   "migomhggnppjdijnfkiimcpjgnhmnale": {
    "name": "CrossPilot",
@@ -3390,6 +3777,12 @@
    "errors": [
     "TypeError: Failed to fetch"
    ]
+  },
+  "mmanaflgaempokjfbeeabkadnkoidjam": {
+   "name": "DSers-Dropshipping+AliExpress Importer",
+   "version": "3.5.40",
+   "popupText": true,
+   "errors": []
   },
   "mmcblfncjaclajmegihojiekebofjcen": {
    "name": "Plugins",
@@ -3426,6 +3819,14 @@
    "version": "5.8.6",
    "popupText": true,
    "errors": []
+  },
+  "nfmlkliedggdodlbgghmmchhgckjoaml": {
+   "name": "Blockify: Ad Blocker for Spotify, YouTube, & more!",
+   "version": "1.9.9.2",
+   "popupText": true,
+   "errors": [
+    "Registration failed Error: Duplicate script ID 'yt_blocking_script'"
+   ]
   },
   "njcickgebhnpgmoodjdgohkclfplejli": {
    "name": "RoValra - Roblox Improved",
@@ -3476,6 +3877,2816 @@
    "version": "3.0.5",
    "popupText": true,
    "errors": []
+  },
+  "omebobahbkampglebglkoagddjnjbhle": {
+   "name": "Gimp online - image editor and paint tool",
+   "version": "3.0.5",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Access to XMLHttpRequest at 'https://www.offidocs.com/media/system/app/checkdownloadgimp_b_h_2_nav.php?u=jiofsisn44' from origin 'chrome-extension://omebobahbkampglebglkoagddjnjbhle' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "Failed to load resource: net::ERR_FAILED"
+   ]
+  },
+  "onablhclbgaihanifkenpggjkkgdpnkk": {
+   "name": "Wallsflow New Tab: Live Wallpapers, Widgets & Focus Music",
+   "version": "13.0",
+   "popupText": true,
+   "errors": []
+  },
+  "opmeopcambhfimffbomjgemehjkbbmji": {
+   "name": "VideoPlayer MPD/M3U8/IPTV/EPG",
+   "version": "26.1.6.8388",
+   "popupText": true,
+   "errors": []
+  },
+  "pbeheebcldakpkohnellphloljkaanfa": {
+   "name": "MarketApp P2P",
+   "version": "1.9.1",
+   "popupText": true,
+   "errors": []
+  },
+  "pdabfienifkbhoihedcgeogidfmibmhp": {
+   "name": "Privacy Test",
+   "version": "10.7",
+   "popupText": true,
+   "errors": []
+  },
+  "pnedebpjhiaidlbbhmogocmffpdolnek": {
+   "name": "CouponBirds: Coupons & Deals",
+   "version": "4.7.2",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "TypeError: Error in invocation of cookies.set(object details, optional function callback): Error at parameter 'details': Error at property 'value': Invalid type: expected string, found object.",
+    "Uncaught (in promise) SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON",
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "ppfadpgpccljindldolejmgkhgaficka": {
+   "name": "Ad Block Ninja",
+   "version": "2.2",
+   "popupText": true,
+   "errors": []
+  },
+  "pphgdbgldlmicfdkhondlafkiomnelnk": {
+   "name": "1ClickVPN Proxy for Chrome",
+   "version": "1.17.15",
+   "popupText": true,
+   "errors": []
+  },
+  "aaengkeeajpfabihmmmnkjpogmfkahjo": {
+   "name": "TxtAnalyser",
+   "version": "2.3.8",
+   "popupText": true,
+   "errors": []
+  },
+  "aefkmifgmaafnojlojpnekbpbmjiiogg": {
+   "name": "Popup Blocker (strict)",
+   "version": "0.9.4",
+   "popupText": true,
+   "errors": []
+  },
+  "aikflfpejipbpjdlfabpgclhblkpaafo": {
+   "name": "WeTab 新标签页",
+   "version": "2.2.50",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "almalgbpmcfpdaopimbdchdliminoign": {
+   "name": "Urban Browser Guard",
+   "version": "8.3.0",
+   "popupText": true,
+   "errors": [
+    "SyntaxError: Unexpected end of JSON input"
+   ]
+  },
+  "alncdjedloppbablonallfbkeiknmkdi": {
+   "name": "Dark Mode - Night Eye",
+   "version": "6.1.1",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Error handling response: TypeError: Invalid URL"
+   ]
+  },
+  "amgpfdpibiacligkkkbeonfhmonkgjhg": {
+   "name": "TikTok All Reposted Videos Remover",
+   "version": "2.2.3",
+   "popupText": true,
+   "errors": []
+  },
+  "aomidfkchockcldhbkggjokdkkebmdll": {
+   "name": "Redirect Path",
+   "version": "4.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "bbobopahenonfdgjgaleledndnnfhooj": {
+   "name": "AB Download Manager Browser Integration",
+   "version": "1.5.1",
+   "popupText": true,
+   "errors": []
+  },
+  "bckjlihkmgolmgkchbpiponapgjenaoa": {
+   "name": "Jungle Scout",
+   "version": "9.2.9",
+   "errors": []
+  },
+  "bfidboloedlamgdmenmlbipfnccokknp": {
+   "name": "PureVPN Proxy - Best VPN for Chrome",
+   "version": "4.37.12",
+   "popupText": true,
+   "errors": []
+  },
+  "bjfhmglciegochdpefhhlphglcehbmek": {
+   "name": "Hypothesis - Web & PDF Annotation",
+   "version": "1.1769.0.0",
+   "errors": []
+  },
+  "blkboeaihdlecgdjjgkcabbacndbjibc": {
+   "name": "Docusign eSignature for Chrome",
+   "version": "4.4.27",
+   "popupText": false,
+   "errors": []
+  },
+  "bmhcbmnbenmcecpmpepghooflbehcack": {
+   "name": "Liner: AI Copilot - Summarize YouTube, PDF & Web with ChatGPT, Claude",
+   "version": "7.18.51",
+   "errors": [
+    "An unknown error occurred when fetching the script.",
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+   ]
+  },
+  "bnmojkbbkkonlmlfgejehefjldooiedp": {
+   "name": "Otter.ai: Record & Transcribe Meetings - Google Meet & Web Audio",
+   "version": "3.11.0",
+   "errors": []
+  },
+  "bnompdfnhdbgdaoanapncknhmckenfog": {
+   "name": "Email Tracker + Email Tracking Detector & Blocker",
+   "version": "5.0.64",
+   "popupText": true,
+   "errors": [
+    "Google Analytics request failed with an exception TypeError: Failed to fetch",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "caeeihoelgmdmafbmlgoebfjnmgpfend": {
+   "name": "Stop Ads Now",
+   "version": "1.7",
+   "popupText": true,
+   "errors": []
+  },
+  "caodelkhipncidmoebgbbeemedohcdma": {
+   "name": "Link Grabber",
+   "version": "0.6.1",
+   "errors": []
+  },
+  "cbghhgpcnddeihccjmnadmkaejncjndb": {
+   "name": "Vencord Web",
+   "version": "1.15.13",
+   "errors": []
+  },
+  "ccfeeinmndbnfdodejnonelofajfnakm": {
+   "name": "Assinatura Digital no Navegador - SyngularID",
+   "version": "2.1.8",
+   "popupText": true,
+   "errors": [
+    "sendNativeMessage failed for 'com.syngular.extension' (action: syngular_is_installed_test): Specified native messaging host not found.",
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'split')"
+   ]
+  },
+  "cfidkbgamfhdgmedldkagjopnbobdmdn": {
+   "name": "Social Blade",
+   "version": "3.0.0",
+   "errors": []
+  },
+  "chnccghejnflbccphgkncbmllhfljdfa": {
+   "name": "Super Video Speed Controller",
+   "version": "1.3.2.3",
+   "popupText": true,
+   "errors": []
+  },
+  "cipccbpjpemcnijhjcdjmkjhmhniiick": {
+   "name": "SciSpace: Do hours of research in minutes",
+   "version": "1.5.9",
+   "errors": []
+  },
+  "cjmjgijhapgicbhmniemjkjeaedanank": {
+   "name": "Set password for your browser ( chrome lock )",
+   "version": "9.1",
+   "errors": []
+  },
+  "cpedeojecpbkcomgcolphimkjdnikbck": {
+   "name": "Auto Clicker",
+   "version": "3.9.1",
+   "popupText": true,
+   "errors": []
+  },
+  "cpofhfeclnhnhodbcabgcihloffdpgpd": {
+   "name": "Custom Cursor Trails",
+   "version": "1.1.0",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Cannot access contents of the page. Extension manifest must request permission to access the respective host.",
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin"
+   ]
+  },
+  "daeljdgmllhgmbdkpgnaojldjkdgkbjg": {
+   "name": "Image Downloader - Save pictures",
+   "version": "1.2.9",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Cannot access contents of the page. Extension manifest must request permission to access the respective host."
+   ]
+  },
+  "dapjbgnjinbpoindlpdmhochffioedbn": {
+   "name": "BuiltWith Technology Profiler",
+   "version": "3.6",
+   "popupText": true,
+   "errors": []
+  },
+  "ddlbpiadoechcolndfeaonajmngmhblj": {
+   "name": "Compose AI: AI-powered Writing Tool",
+   "version": "2.2.2",
+   "popupText": true,
+   "errors": []
+  },
+  "dfnhijmficoiilogkjlnkionfjlgecdi": {
+   "name": "Online PDF Editor (pdf2go.com)",
+   "version": "7.14.3",
+   "errors": []
+  },
+  "dhhclfjehmpacimcdknijodpjpmppkii": {
+   "name": "Slido",
+   "version": "86.50.0",
+   "popupText": true,
+   "errors": []
+  },
+  "dhopldobnfjeckokfjimfcdagmlhjdce": {
+   "name": "Screen Recorder",
+   "version": "0.2.3",
+   "errors": []
+  },
+  "dicgkflojhbopmagcacdklcpdfdcnhko": {
+   "name": "File Converter - By Online-Convert.com",
+   "version": "7.14.3",
+   "errors": []
+  },
+  "djbgadolfboockbofalipohdncimebic": {
+   "name": "Animalese Typing",
+   "version": "1.45.3",
+   "popupText": true,
+   "errors": []
+  },
+  "djcfdncoelnlbldjfhinnjlhdjlikmph": {
+   "name": "High Contrast",
+   "version": "1.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "dkaagdgjmgdmbnecmcefdhjekcoceebi": {
+   "name": "PerfectPixel by WellDoneCode (pixel perfect)",
+   "version": "3.2.0.8",
+   "errors": []
+  },
+  "dlepebghjlnddgihakmnpoiifjjpmomh": {
+   "name": "Revision History: Writing Process Visibility for Google Docs & Slides",
+   "version": "1.13.3",
+   "popupText": true,
+   "errors": []
+  },
+  "dnollkdkikklpdganoecjcmmlddbennb": {
+   "name": "Split Screen for Google Chrome",
+   "version": "3.2.0",
+   "popupText": true,
+   "errors": []
+  },
+  "ecabifbgmdmgdllomnfinbmaellmclnh": {
+   "name": "Reader View",
+   "version": "0.8.8",
+   "errors": []
+  },
+  "ecmeogcbcoalojmkfkmancobmiahaigg": {
+   "name": "아이템스카우트",
+   "version": "5.4.6",
+   "popupText": true,
+   "errors": [
+    "Error: Cannot access contents of url \"chrome-extension://ecmeogcbcoalojmkfkmancobmiahaigg/popup/popup.html\". Extension manifest must request permission to access this host.",
+    "Failed to load resource: the server responded with a status of 400 ()"
+   ]
+  },
+  "edibdbjcniadpccecjdfdjjppcpchdlm": {
+   "name": "I still don't care about cookies",
+   "version": "1.1.9",
+   "popupText": true,
+   "errors": []
+  },
+  "eekailopagacbcdloonjhbiecobagjci": {
+   "name": "Go Back With Backspace",
+   "version": "3.0",
+   "popupText": true,
+   "errors": [
+    "Error handling response: Uncaught Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host."
+   ]
+  },
+  "ehllkhjndgnlokhomdlhgbineffifcbj": {
+   "name": "Always active Window - Always Visible",
+   "version": "0.4.8",
+   "errors": []
+  },
+  "eifflpmocdbdmepbjaopkkhbfmdgijcc": {
+   "name": "JSON Viewer Pro",
+   "version": "1.0.7",
+   "errors": []
+  },
+  "elbikiflgfhjdjmficnigpeegjbhdidh": {
+   "name": "Cat Gatekeeper",
+   "version": "1.3.5",
+   "popupText": true,
+   "errors": []
+  },
+  "eojdckfcadamkapabechhbnkleligand": {
+   "name": "L.O.C",
+   "version": "40.5",
+   "errors": []
+  },
+  "fefnkplkicihcoenmljhbihhaaagjhpp": {
+   "name": "Mino: Automatic Coupons & Cash Back",
+   "version": "5.5.0",
+   "errors": []
+  },
+  "felcpnemckonbbmnoakbjgjkgokkbaeo": {
+   "name": "Trusted Shops extension for Google Chrome",
+   "version": "7.6.2",
+   "popupText": true,
+   "errors": []
+  },
+  "fhamhppabjaafimidmelnmpfangjdnhj": {
+   "name": "Reclame AQUI",
+   "version": "2.59.5",
+   "popupText": true,
+   "errors": [
+    "Error when clear cache:  ReferenceError: localStorage is not defined",
+    "Error",
+    "Got error processing in onActivated TypeError: Cannot read properties of null (reading 'data')",
+    "Got error processing in onUpdated TypeError: Cannot read properties of null (reading 'data')",
+    "Failed to load resource: the server responded with a status of 403 ()",
+    "GET Survey:  ",
+    "DiscountsSummaryService Unexpected Error:  Error: DiscountsSummaryService response is invalid: null"
+   ]
+  },
+  "fjkmabmdepjfammlpliljpnbhleegehm": {
+   "name": "WebRTC Control",
+   "version": "0.3.5",
+   "errors": []
+  },
+  "flainkeonkoanoijnkojmiiihnfdhipd": {
+   "name": "Audio Downloader Prime",
+   "version": "0.3.1",
+   "popupText": true,
+   "errors": []
+  },
+  "fngbdhimbgbonhlibfmiemipheabfdmj": {
+   "name": "D.Bridge 2",
+   "version": "2.0.7.0",
+   "errors": []
+  },
+  "fnplkbhndemgbopkkpmpnfklkhphpneg": {
+   "name": "ePub Reader for Google Chrome™",
+   "version": "4.0.1",
+   "errors": []
+  },
+  "fofjcndophjadilglgimelemjkjblgpf": {
+   "name": "ZoomInfo",
+   "version": "12.22.4",
+   "errors": []
+  },
+  "fpjppnhnpnknbenelmbnidjbolhandnf": {
+   "name": "Enable Copy Paste - E.C.P",
+   "version": "2.0.0.3",
+   "popupText": true,
+   "errors": []
+  },
+  "fpkbnjejghdcncegfglnapabnljcimdc": {
+   "name": "Ad Block Wonder",
+   "version": "6.0",
+   "popupText": true,
+   "errors": [
+    "Error in event handler: TypeError: Error in invocation of declarativeNetRequest.updateSessionRules(declarativeNetRequest.UpdateRuleOptions options, optional function callback): Error at parameter 'options': Error at property 'removeRuleIds': Error at index 0: Invalid type: expected integer, found number."
+   ]
+  },
+  "gaabmdjigfcnkgeommfpnoinpdmpfhaj": {
+   "name": "Twitch VOD Downloader",
+   "version": "3.26",
+   "errors": []
+  },
+  "gaidoampbkcknofoejhnhbhbhhifgdop": {
+   "name": "Censor Tracker – Proxy for Privacy & Security",
+   "version": "19.0.0",
+   "popupText": true,
+   "errors": [
+    "TypeError: Cannot read properties of undefined (reading 'addListener')"
+   ]
+  },
+  "gcjpefhffmcgplgklffgbebganmhffje": {
+   "name": "NetSupport School Student",
+   "version": "15.0.3.0",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+   ]
+  },
+  "gejiddohjgogedgjnonbofjigllpkmbf": {
+   "name": "1Password Nightly – Password Manager",
+   "version": "8.12.46.16",
+   "popupText": true,
+   "errors": [
+    "Error: WASM is not initialized, unable to make core call."
+   ]
+  },
+  "ggaabchcecdbomdcnbahdfddfikjmphe": {
+   "name": "Chrome Capture - Screenshot & GIF",
+   "version": "3.3.8",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "gkeojjjcdcopjkbelgbcpckplegclfeg": {
+   "name": "AdGuard Extra",
+   "version": "1.1.38",
+   "popupText": true,
+   "errors": []
+  },
+  "gmloihcgbhbonllenincdakeijmikcne": {
+   "name": "QR Code Reader for Google Chrome™",
+   "version": "3.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "gngocbkfmikdgphklgmmehbjjlfgdemm": {
+   "name": "SwagButton",
+   "version": "400.12.6.3848",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "hdannnflhlmdablckfkjpleikpphncik": {
+   "name": "Youtube Playback Speed Control",
+   "version": "0.0.15",
+   "errors": []
+  },
+  "hddnkoipeenegfoeaoibdmnaalmgkpip": {
+   "name": "Toby: Tab Manager & Session Saver",
+   "version": "2.0.0.15",
+   "popupText": true,
+   "errors": []
+  },
+  "hfglcknhngdnhbkccblidlkljgflofgh": {
+   "name": "Lightning Extension",
+   "version": "3.1.0",
+   "popupText": true,
+   "errors": []
+  },
+  "hfjngafpndganmdggnapblamgbfjhnof": {
+   "name": "RoSeal - Augmented Roblox Experience",
+   "version": "2.1.66.0",
+   "errors": []
+  },
+  "hgenngnjgfkdggambccohomebieocekm": {
+   "name": "Bulk URL Opener Extension",
+   "version": "2.7.0.1",
+   "popupText": true,
+   "errors": []
+  },
+  "hhlhjgianpocpoppaiihmlpgcoehlhio": {
+   "name": "Super Simple Highlighter",
+   "version": "29",
+   "errors": []
+  },
+  "hkhggnncdpfibdhinjiegagmopldibha": {
+   "name": "Checker Plus for Google Calendar™",
+   "version": "47.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Problem getting instance token:  Error: instanceID not responding",
+    "Retrying in 500ms... (Attempt 1 of 3)",
+    "Retrying in 1000ms... (Attempt 2 of 3)",
+    "Asynchronous operation is pending.",
+    "Problem getting instance token:  Asynchronous operation is pending.",
+    "isGCMSupported error Asynchronous operation is pending."
+   ]
+  },
+  "hldjnlbobkdkghfidgoecgmklcemanhm": {
+   "name": "Web Highlights: PDF & Web Highlighter + Notes & AI Summary",
+   "version": "13.0.52",
+   "errors": []
+  },
+  "hmaahgcbijnfogbgmnnjmlbfjoncneff": {
+   "name": "Twitch Adblock",
+   "version": "2.2",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Uncaught (in promise)"
+   ]
+  },
+  "hmlcjjclebjnfohgmgikjfnbmfkigocc": {
+   "name": "J2TEAM Security",
+   "version": "2.4.2",
+   "popupText": true,
+   "errors": []
+  },
+  "hmlpiahhoampfgiodhahfofmeppmkaeo": {
+   "name": "帮您淘优惠",
+   "version": "3.0.3",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+    "Object",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "ibdfeimkglcmdejppabkaidpippniiob": {
+   "name": "AIX Downloader(Picture/Video/Music)",
+   "version": "9.0.58",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "icpklikeghomkemdellmmkoifgfbakio": {
+   "name": "anonymoX",
+   "version": "1.8.9",
+   "popupText": true,
+   "errors": []
+  },
+  "idefohglmnkliiadgfofeokcpjobdeik": {
+   "name": "Ramp for Chrome",
+   "version": "1.0.60",
+   "popupText": true,
+   "errors": []
+  },
+  "ienfalfjdbdpebioblfackkekamfmbnh": {
+   "name": "Angular DevTools",
+   "version": "1.22.0",
+   "popupText": true,
+   "errors": []
+  },
+  "ihpiinojhnfhpdmmacgmpoonphhimkaj": {
+   "name": "Open in VLC™ media player",
+   "version": "0.4.5",
+   "errors": []
+  },
+  "iifmmpcbkkjplbamhfohikljoogdbadp": {
+   "name": "ID.me Shop: Discover Community Discounts",
+   "version": "3.20.1",
+   "errors": []
+  },
+  "iihkglbebihpaflfihhkfmpabjgdpnol": {
+   "name": "楽天ウェブ検索",
+   "version": "4.707",
+   "popupText": true,
+   "errors": []
+  },
+  "ijdefdijdmghafocfmmdojfghnpelnfn": {
+   "name": "NotebookLM Web Importer",
+   "version": "3.37.0",
+   "popupText": true,
+   "errors": []
+  },
+  "ikhdkkncnoglghljlkmcimlnlhkeamad": {
+   "name": "划词翻译",
+   "version": "11.9.1",
+   "popupText": true,
+   "errors": [
+    "检查 URL 类型失败： Error: Cannot access contents of the page. Extension manifest must request permission to access the respective host.",
+    "获取标签页 URL 失败，可能是当前标签页不是划词翻译内部的页面，或者是划词翻译内置页面但没有 installUrlMessage。错误对象： Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "iklnnbgdcppplombffihcijanngoeifm": {
+   "name": "Google Vids Screen Recorder",
+   "version": "1.68.1",
+   "errors": []
+  },
+  "inojafojbhdpnehkhhfjalgjjobnhomj": {
+   "name": "Temp Mail - Disposable Temporary Email",
+   "version": "0.1.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 403 ()"
+   ]
+  },
+  "iobjoojnnfjhlfmihckakpcgljgpmnih": {
+   "name": "МАЯК - бесплатная аналитика маркетплейсов Wildberries и OZON",
+   "version": "8.4.4",
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "iohjgamcilhbgmhbnllfolmkmmekfmci": {
+   "name": "Jam",
+   "version": "5.92.1",
+   "popupText": true,
+   "errors": []
+  },
+  "jcmljanephecacpljcpiogonhhadfpda": {
+   "name": "Add to Babylist Button",
+   "version": "3.1.13",
+   "errors": []
+  },
+  "jdbnofccmhefkmjbkkdkfiicjkgofkdh": {
+   "name": "Bookmark Sidebar",
+   "version": "2.5.7",
+   "errors": []
+  },
+  "jfgfiigpkhlkbnfnbobbkinehhfdhndo": {
+   "name": "Page Assist - A Web UI for Local AI Models",
+   "version": "1.5.88",
+   "errors": []
+  },
+  "jigflhhckdjdefdjmodlkomnmdonfbbn": {
+   "name": "Joko: Cash back & automatic coupons",
+   "version": "2.2.3",
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received",
+    "Error: No tab with id: 594573862."
+   ]
+  },
+  "jiihcciniecimeajcniapbngjjbonjan": {
+   "name": "Vidyard - Screen Recorder & Screen Capture",
+   "version": "5.1.5",
+   "errors": []
+  },
+  "jjmflmamggggndanpgfnpelongoepncg": {
+   "name": "Extensity",
+   "version": "1.14.0",
+   "popupText": true,
+   "errors": []
+  },
+  "jpefmbpcbebpjpmelobfakahfdcgcmkl": {
+   "name": "Adblock for YouTube™",
+   "version": "2.9",
+   "errors": []
+  },
+  "jpfpebmajhhopeonhlcgidhclcccjcik": {
+   "name": "Speed Dial 2 New tab",
+   "version": "4.2.1",
+   "popupText": true,
+   "errors": []
+  },
+  "kaibcgikagnkfgjnibflebpldakfhfih": {
+   "name": "CS2 Trader - Steam Trading Enhancer",
+   "version": "3.7",
+   "popupText": true,
+   "errors": [
+    "Error: Only a single offscreen document may be created.",
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "kbbdabhdfibnancpjfhlkhafgdilcnji": {
+   "name": "Screenity - Screen Recorder & Annotation Tool",
+   "version": "4.7.1",
+   "errors": [
+    "Invalid tab URL",
+    "Could not establish connection. Receiving end does not exist.",
+    "Failed to load resource: net::ERR_FAILED"
+   ]
+  },
+  "kcgloaobfaiejoiahlhnfaolfcifjjho": {
+   "name": "Speech to Text (Voice Recognition)",
+   "version": "0.1.7",
+   "errors": []
+  },
+  "kdmnjgijlmjgmimahnillepgcgeemffb": {
+   "name": "PocketTube: Youtube Subscription Manager",
+   "version": "18.10.8",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "kfgepjmmgamniaefbjlbacahkjjnjoaa": {
+   "name": "Gmail reverse conversation",
+   "version": "0.0.16",
+   "errors": []
+  },
+  "kiodaajmphnkcajieajajinghpejdjai": {
+   "name": "Popup Blocker Pro",
+   "version": "3.0.6",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "kpdjmbiefanbdgnkcikhllpmjnnllbbc": {
+   "name": "Save as PDF",
+   "version": "2.2",
+   "popupText": true,
+   "errors": []
+  },
+  "kpkcennohgffjdgaelocingbmkjnpjgc": {
+   "name": "Sample",
+   "version": "3.3.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "kpmjjdhbcfebfjgdnpjagcndoelnidfj": {
+   "name": "Control Panel for Twitter",
+   "version": "4.25.1",
+   "popupText": true,
+   "errors": []
+  },
+  "lajondecmobodlejlcjllhojikagldgd": {
+   "name": "Zoom for Google Chrome",
+   "version": "2.8.28",
+   "errors": []
+  },
+  "ldjkgaaoikpmhmkelcgkgacicjfbofhh": {
+   "name": "Instapaper",
+   "version": "3.1.2",
+   "errors": []
+  },
+  "lhkgpdljnlplgbkonflbhifackjhjmdj": {
+   "name": "Prompt Genie: ChatGPT automatic translator",
+   "version": "3.0.15",
+   "popupText": true,
+   "errors": []
+  },
+  "lijhjhlnfifgoabbihoobnfapogkcjgk": {
+   "name": "Scrible Extension",
+   "version": "2.0.8",
+   "popupText": true,
+   "errors": []
+  },
+  "lkffbjbdklhachngaoeelmcgijmlicph": {
+   "name": "Sophos Chrome Security",
+   "version": "2.0.2218",
+   "popupText": true,
+   "errors": []
+  },
+  "mbcghjiodcjankhkllfohcgnckhdbkmi": {
+   "name": "Privacy Extension For WhatsApp Web - WABULK",
+   "version": "3.3.19",
+   "popupText": true,
+   "errors": []
+  },
+  "mcgbeeipkmelnpldkobichboakdfaeon": {
+   "name": "BLACKBOX.AI",
+   "version": "3.1.92",
+   "errors": []
+  },
+  "mdnleldcmiljblolnjhpnblkcekpdkpa": {
+   "name": "Requestly: Intercept & Modify HTTP Requests",
+   "version": "26.9.29",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:59763/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:59764/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:59765/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:59766/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:59767/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "mgngbgbhliflggkamjnpdmegbkidiapm": {
+   "name": "Remove YouTube Shorts",
+   "version": "2.1.7",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "mhloojimgilafopcmlcikiidgbbnelip": {
+   "name": "iTab New Tab",
+   "version": "2.3.31",
+   "popupText": true,
+   "errors": [
+    "M"
+   ]
+  },
+  "mjdbhokoopacimoekfgkcoogikbfgngb": {
+   "name": "Trancy - AI Translator & Dual Subtitles",
+   "version": "7.9.5",
+   "errors": [
+    "GA tracking error: TypeError: Failed to fetch"
+   ]
+  },
+  "necpbmbhhdiplmfhmjicabdeighkndkn": {
+   "name": "Similar Sites - Discover Related Websites",
+   "version": "7.3.19",
+   "errors": []
+  },
+  "nfadicbbecgbdbgbibgflooojfbolpgk": {
+   "name": "Pie Shopping: AI Cash Back and Coupons",
+   "version": "1.33.6",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "[Sleek] Initialization failed: Error: Sleek SDK is not enabled"
+   ]
+  },
+  "njgedjcccpcfmjecccaajkjiphpddfji": {
+   "name": "easyScholar",
+   "version": "15.5",
+   "popupText": true,
+   "errors": []
+  },
+  "nljkibfhlpcnanjgbnlnbjecgicbjkge": {
+   "name": "DownThemAll!",
+   "version": "4.16.1",
+   "popupText": true,
+   "errors": []
+  },
+  "nndknepjnldbdbepjfgmncbggmopgden": {
+   "name": "Data Scraper - Easy Web Scraping",
+   "version": "5.8.103",
+   "popupText": true,
+   "errors": []
+  },
+  "nnnkddnnlpamobajfibfdgfnbcnkgngh": {
+   "name": "Infinity New Tab (Pro)",
+   "version": "11.0.41",
+   "popupText": false,
+   "errors": [
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'length')"
+   ]
+  },
+  "npeicpdbkakmehahjeeohfdhnlpdklia": {
+   "name": "WebRTC Network Limiter",
+   "version": "0.2.1.4",
+   "errors": []
+  },
+  "oaobmlmjmhedmlphfdmdjpppjmcljnkp": {
+   "name": "Add to Google Classroom",
+   "version": "1.7",
+   "errors": []
+  },
+  "ocfjjghignicohbjammlhhoeimpfnlhc": {
+   "name": "Flash Player Enable - flash emulator swf",
+   "version": "1.3",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Unchecked runtime.lastError: The message port closed before a response was received."
+   ]
+  },
+  "odcnpipkhjegpefkfplmedhmkmmhmoko": {
+   "name": "Jobright Autofill – Instant Job Applications, Job Match, AI Tailor Resume",
+   "version": "1.24.1",
+   "errors": []
+  },
+  "oiaejidbmkiecgbjeifoejpgmdaleoha": {
+   "name": "Stylebot",
+   "version": "4.0.5",
+   "popupText": true,
+   "errors": []
+  },
+  "oibcaeeplepnjfjhokfcabnaafodppik": {
+   "name": "GMB Everywhere - GBP Audit for Local SEO",
+   "version": "5.10.0",
+   "errors": []
+  },
+  "oiecklaabeielolbliiddlbokpfnmhba": {
+   "name": "RocketReach Chrome Extension",
+   "version": "4.0.15",
+   "errors": []
+  },
+  "oodfdmglhbbkkcngodjjagblikmoegpa": {
+   "name": "Url Shortener",
+   "version": "2.1.101",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 422 ()"
+   ]
+  },
+  "pccckmaobkjjboncdfnnofkonhgpceea": {
+   "name": "Hover Zoom+",
+   "version": "1.1.18",
+   "popupText": true,
+   "errors": []
+  },
+  "pfpolingmjapeepkjhnimfaofmlhhfbf": {
+   "name": "VRubel - VPN for YouTube from 1₽ per day",
+   "version": "7.8.3",
+   "popupText": true,
+   "errors": [
+    "Error sending GA event: TypeError: Failed to fetch"
+   ]
+  },
+  "pjbepnginjokklnhdgladnmlghcchbeb": {
+   "name": "MPSTATS - аналитика Wildberries и OZON",
+   "version": "4.272",
+   "popupText": true,
+   "errors": [
+    "backgroundRequest error Error: Request failed with status 401"
+   ]
+  },
+  "pkafmmmfdgphkffldekomeaofhgickcg": {
+   "name": "Follower Export Tool",
+   "version": "3.3.23",
+   "popupText": true,
+   "errors": []
+  },
+  "pkbhdojajlnigelihhbclnikhidgnbeo": {
+   "name": "Hide Google AI Overviews and Mode",
+   "version": "1.1.2",
+   "popupText": true,
+   "errors": []
+  },
+  "pmjeegjhjdlccodhacdgbgfagbpmccpe": {
+   "name": "Clockify Time Tracker",
+   "version": "2.12.12",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "aacgdipdhmilcpcpbdcloifondogabco": {
+   "name": "Url Shortener for Google Chrome™",
+   "version": "3.0.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+   ]
+  },
+  "abjopieldicnknjgiplcjgepeijbealm": {
+   "name": "Single Sign-on Assistant",
+   "version": "3.5.1",
+   "errors": []
+  },
+  "acjecbgflnhmeldadcbblhfdimhifpki": {
+   "name": "Custom Calendar Background",
+   "version": "2.0.16",
+   "errors": []
+  },
+  "adnielbhikcbmegcfampbclagcacboff": {
+   "name": "Picture in Picture - Floating player",
+   "version": "1.0.6",
+   "errors": []
+  },
+  "adpjimagbfpknkodpofjphpbdlfkeiho": {
+   "name": "Zoom to Fill - Ultrawide Video",
+   "version": "3.0.13",
+   "popupText": true,
+   "errors": []
+  },
+  "ailcmbgekjpnablpdkmaaccecekgdhlh": {
+   "name": "Tab Manager by Workona",
+   "version": "3.1.35",
+   "errors": []
+  },
+  "akegecpdcdbkjioddaingaedacjgfjhm": {
+   "name": "Knowt: Quizlet Import, AI Notes & Flashcards",
+   "version": "4.5.2",
+   "errors": []
+  },
+  "akgpcdalpfphjmfifkmfbpdmgdmeeaeo": {
+   "name": "Webpage Screenshot - Entire page screenshot!",
+   "version": "60.0.0",
+   "errors": []
+  },
+  "akimgimeeoiognljlfchpbkpfbmeapkh": {
+   "name": "Google Arts & Culture",
+   "version": "3.1.0",
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "akmglodbcihkcgojpdmbocmlpkfjhfof": {
+   "name": "Mirror Mode for Google Meet™",
+   "version": "3.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "alcgpfgkdjbabelklflpfkooadcfgoao": {
+   "name": "Fabasoft Client",
+   "version": "25.11.0.74",
+   "errors": []
+  },
+  "aolbomhlimkdakklifkocohcgpmojdia": {
+   "name": "ExCITATION – Journal Ranking & Impact Factor for Google Scholar™",
+   "version": "1.4.1",
+   "errors": []
+  },
+  "aoognjkkhapcjkfnakpddcciddcfbjcd": {
+   "name": "Omega Ad Blocker",
+   "version": "2.0.3",
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "apdihfpnlkpbmpkehgdkcmknklmbilal": {
+   "name": "Free Time Games",
+   "version": "4.1.7",
+   "popupText": true,
+   "errors": []
+  },
+  "baipgmmeifmofkcilhccccoipmjccehn": {
+   "name": "3CX Click2Call",
+   "version": "5.0.0.171",
+   "popupText": true,
+   "errors": []
+  },
+  "bakpbgckdnepkmkeaiomhmfcnejndkbi": {
+   "name": "Pesticide",
+   "version": "2.0.0",
+   "errors": []
+  },
+  "bamdkjfjhhnjcgcjmmjdnncpglihepoi": {
+   "name": "Tiny Tycoon",
+   "version": "1.0.8",
+   "popupText": true,
+   "errors": []
+  },
+  "bcellnicpceplkigjnldelfglfmomhon": {
+   "name": "FEPWeb CMS Digital Signature Extension",
+   "version": "1.3.7",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
+  },
+  "behjakjklighlhiefaoogbalmenhbjid": {
+   "name": "YuJa Verity Chrome Extension",
+   "version": "2.8.9",
+   "popupText": true,
+   "errors": [
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "Error: Cannot access contents of url \"chrome-extension://behjakjklighlhiefaoogbalmenhbjid/src/popup/popup.html\". Extension manifest must request permission to access this host.",
+    "ApiClientError: SyntaxError: API Client Error: Unexpected token 'F', \"Forbidden\" is not valid JSON",
+    "Error fetching user info: f: SendMessageFunctionError: {\"name\":\"ApiClientError: SyntaxError\",\"message\":\"API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\",\"stack\":\"ApiClientError: SyntaxError: API Client Error: Unexpected token 'F', \\\"Forbidden\\\" is not valid JSON\\n    at getUserInfo (chrome-extension://behjakjklighlhiefaoogbalmenhbjid/assets/dist.js:109:137660)\",\"cause\":{},\"errorClass\":\"Z\"}"
+   ]
+  },
+  "bfegaehidkkcfaikpaijcdahnpikhobf": {
+   "name": "Gismeteo",
+   "version": "4.0.1",
+   "popupText": true,
+   "errors": []
+  },
+  "bhbhjjkcoghibhibegcmbomkbakkpdbo": {
+   "name": "OCR - Image Reader",
+   "version": "0.5.3",
+   "popupText": true,
+   "errors": []
+  },
+  "bjkfigedpppnggdamgeclieeekhbgjpc": {
+   "name": "Stop Motion Animator",
+   "version": "3.4.0",
+   "errors": []
+  },
+  "bkhaagjahfmjljalopjnoealnfndnagc": {
+   "name": "Octotree - GitHub code tree",
+   "version": "9.3.2",
+   "errors": []
+  },
+  "bknpehncffejahipecakbfkomebjmokl": {
+   "name": "Omnibug",
+   "version": "2.1.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "blablbabaofdahfdlgblgopmmmhmipif": {
+   "name": "Delayed Close About:Blank",
+   "version": "1.1",
+   "errors": []
+  },
+  "bmebokbfolangbgkdodkfcblkdcdkpgo": {
+   "name": "Culture Cloud",
+   "version": "1.6",
+   "popupText": false,
+   "errors": []
+  },
+  "bmjmipppabdlpjccanalncobmbacckjn": {
+   "name": "Cursor Style – Custom Mouse Cursors & Trails for Chrome™",
+   "version": "5.5.13",
+   "errors": []
+  },
+  "bomfdkbfpdhijjbeoicnfhjbdhncfhig": {
+   "name": "Paperpile Extension",
+   "version": "1.5.1201",
+   "errors": []
+  },
+  "bpaoeijjlplfjbagceilcgbkcdjbomjd": {
+   "name": "TTV LOL PRO",
+   "version": "2.6.2",
+   "popupText": true,
+   "errors": []
+  },
+  "bpnefockcbbpkbahgkkacjmebfheacjb": {
+   "name": "AutoDraw for skribbl.io",
+   "version": "0.3.3",
+   "errors": []
+  },
+  "bppamachkoflopbagkdoflbgfjflfnfl": {
+   "name": "WebRTC Leak Shield",
+   "version": "2.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "cbnaodkpfinfiipjblikofhlhlcickei": {
+   "name": "Weava Highlighter - PDF & Web",
+   "version": "2.0.44",
+   "errors": [
+    "Uncaught (in promise) Error: Cannot find menu item with id context-menu-highlight-toggle",
+    "Uncaught (in promise) Error: Cannot find menu item with id context-menu-highlight"
+   ]
+  },
+  "cbnhnlbagkabdnaoedjdfpbfmkcofbcl": {
+   "name": "Image Downloader - picture and photos saver",
+   "version": "1.0.6",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Cannot access contents of the page. Extension manifest must request permission to access the respective host."
+   ]
+  },
+  "cdcpabkolgalpgeingbdcebojebfelgb": {
+   "name": "Eightify: AI YouTube Summarizer",
+   "version": "1.643",
+   "popupText": true,
+   "errors": [
+    "ytd-app not found",
+    "Failed to load resource: the server responded with a status of 401 ()"
+   ]
+  },
+  "cdockenadnadldjbbgcallicgledbeoc": {
+   "name": "VisBug",
+   "version": "0.4.10",
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "cdonnmffkdaoajfknoeeecmchibpmkmg": {
+   "name": "Saladict - Pop-up Dictionary",
+   "version": "7.22.11",
+   "popupText": true,
+   "errors": [
+    "Error: Network Error"
+   ]
+  },
+  "cgipcgghboamefelooajpiabilddemlh": {
+   "name": "WA Sender - Bulk Messages & Automation",
+   "version": "2.1.9",
+   "errors": [
+    "Uncaught (in promise) Error: Failed to set icon 'images/statusOff.png': Failed to fetch",
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "cidlcjdalomndpeagkjpnefhljffbnlo": {
+   "name": "Toggle JavaScript",
+   "version": "2.0",
+   "errors": []
+  },
+  "cmllgdnjnkbapbchnebiedipojhmnjej": {
+   "name": "Adaware AdBlock",
+   "version": "4.2.1",
+   "popupText": true,
+   "errors": [
+    "ReferenceError: Element is not defined"
+   ]
+  },
+  "cnkdjjdmfiffagllbiiilooaoofcoeff": {
+   "name": "Tab Manager Plus for Chrome",
+   "version": "7.0.0",
+   "errors": []
+  },
+  "cnofkjmkojconhdimlkamdckmidfmoio": {
+   "name": "Add to MyRegistry.com Button",
+   "version": "2.0.22",
+   "errors": []
+  },
+  "coplmfnphahpcknbchcehdikbdieognn": {
+   "name": "TripChipper (TravelArrow) - Travel Better",
+   "version": "10.2.2",
+   "popupText": true,
+   "errors": []
+  },
+  "cpeaihkccbeemkfefcapijechkbfjlhb": {
+   "name": "AMZ Suggestion Expander",
+   "version": "2.1.53",
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "dcjichoefijpinlfnjghokpkojhlhkgl": {
+   "name": "Notifier for Gmail™",
+   "version": "1.2.5",
+   "errors": []
+  },
+  "dcnidakmkbkbohdaelljpgdhmbbpbdbg": {
+   "name": "Glider Proctoring",
+   "version": "4.0.1",
+   "errors": []
+  },
+  "defekohaofmambflfpfoojkmfdpcbgko": {
+   "name": "YouTube DJ effects / EQ / Volume Booster / Bass Booster",
+   "version": "121",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: The message port closed before a response was received."
+   ]
+  },
+  "dfbnddndcmilnhdfmmaolepiaefacnpo": {
+   "name": "DeepSider™:AI Sidebar | DeepSeek, Gemini, Claude, GPT",
+   "version": "3.2.16",
+   "errors": []
+  },
+  "dgmanlpmmkibanfdgjocnabmcaclkmod": {
+   "name": "Just Read",
+   "version": "7.1.4",
+   "errors": []
+  },
+  "dgplfgkebdggnnkfgljfcfeighbdgmnk": {
+   "name": "Vivi",
+   "version": "1.0.7",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://localhost:12804/extension' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "dhhpefjklgkmgeafimnjhojgjamoafof": {
+   "name": "Save Page WE",
+   "version": "33.9",
+   "errors": []
+  },
+  "diankknpkndanachmlckaikddgcehkod": {
+   "name": "TickTick - Todo & Task List",
+   "version": "1.2.1.2",
+   "errors": []
+  },
+  "djnhkfljnimcpelfndpcjcgngmefaobl": {
+   "name": "Talk & Comment: Voice Feedback & Audio Comments for Teachers",
+   "version": "4.7.1",
+   "popupText": true,
+   "errors": []
+  },
+  "dkagmnnkfinalebballociekdnlaniem": {
+   "name": "Ad Block Genius - stop invasive ads",
+   "version": "1.7.2",
+   "popupText": true,
+   "errors": []
+  },
+  "dkfhfaphfkopdgpbfkebjfcblcafcmpi": {
+   "name": "MightyText - SMS from PC & Text from Computer",
+   "version": "25.9.4",
+   "popupText": true,
+   "errors": [
+    "App starting...",
+    "Error: Stopping JS to restart the CRX before any new jstorage values are set.",
+    "returning value Object"
+   ]
+  },
+  "donodhjdnkockalocpljpfahelbfoacc": {
+   "name": "Ad Block Ghost - Light and agile protection",
+   "version": "2.1",
+   "popupText": true,
+   "errors": []
+  },
+  "doojmbjmlfjjnbmnoijecmcbfeoakpjm": {
+   "name": "NoScript",
+   "version": "13.6.34",
+   "errors": []
+  },
+  "dpfofggmkhdbfcciajfdphofclabnogo": {
+   "name": "Block Site: Site Blocker & Focus Mode",
+   "version": "1.0.13",
+   "popupText": true,
+   "errors": []
+  },
+  "eaicplkoeceoelookkiaeekhodehdhde": {
+   "name": "Easy Video Downloader",
+   "version": "0.2.1",
+   "errors": []
+  },
+  "ebgmlfdcgihhfheckfdmhnmedjigogmm": {
+   "name": "Open incognito tab",
+   "version": "2.8.3",
+   "popupText": true,
+   "errors": []
+  },
+  "ebhcbenbgjmaebpgbldimndmfomjmphd": {
+   "name": "2FA Authenticator",
+   "version": "1.15.1",
+   "popupText": true,
+   "errors": []
+  },
+  "ecbnojockcgfohpopbphhgefkfbigcej": {
+   "name": "Flash Player Emulator 2026",
+   "version": "1.9.3",
+   "errors": []
+  },
+  "edllcgchknhokighleffpipdedmpgiln": {
+   "name": "Google Search Maps Button",
+   "version": "1.2.7",
+   "errors": []
+  },
+  "eefedolmcildfckjamddopaplfiiankl": {
+   "name": "ScreenPal - Screen Recorder & Video Editor",
+   "version": "3.1.8",
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "eignhdfgaldabilaaegmdfbajngjmoke": {
+   "name": "Black Menu for Google™",
+   "version": "32.0.7",
+   "popupText": true,
+   "errors": []
+  },
+  "ejbjamhkdedinncaeiackcdehpccoejm": {
+   "name": "Speed Dial",
+   "version": "1.1.9",
+   "errors": [
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'show_context_btn')",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
+  },
+  "elfaihghhjjoknimpccccmkioofjjfkf": {
+   "name": "StayFree - Website Blocker, Web Usage Stats, Shorts Blocker",
+   "version": "2.10.10",
+   "popupText": true,
+   "errors": []
+  },
+  "emffkefkbkpkgpdeeooapgaicgmcbolj": {
+   "name": "Wikiwand - Wikipedia Modernized",
+   "version": "11.0.0",
+   "errors": []
+  },
+  "emnphkkblegpebimobpbekeedfgemhof": {
+   "name": "Native HLS Playback",
+   "version": "1.6.10",
+   "popupText": true,
+   "errors": []
+  },
+  "epdmngmgidehpmhjamdjcaecpligmcfh": {
+   "name": "Better Search",
+   "version": "1.26.604",
+   "errors": []
+  },
+  "faalglbfgpcdpnngnnbhlcahgfnhoieb": {
+   "name": "Скачать ВК Видео",
+   "version": "1.1.7",
+   "popupText": true,
+   "errors": []
+  },
+  "fakegmdomhmegokfomgmkbopjibonfcp": {
+   "name": "Metastream Remote",
+   "version": "2.4.0",
+   "errors": []
+  },
+  "fbfppoaockpecjpbdmldojdehdpepfef": {
+   "name": "Schoology Plus",
+   "version": "10.1.0",
+   "errors": [
+    "Uncaught (in promise) SyntaxError: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
+   ]
+  },
+  "fcphghnknhkimeagdglkljinmpbagone": {
+   "name": "YouTube Auto HD + FPS",
+   "version": "1.19.0",
+   "popupText": true,
+   "errors": [
+    "[YTHD][analytics] Google Analytics request failed TypeError: Failed to fetch"
+   ]
+  },
+  "fddhonoimfhgiopglkiokmofecgdiedb": {
+   "name": "RingCentral for Google",
+   "version": "26.3.20",
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "fdffijlhedcdiblbingmagmdnokokgbi": {
+   "name": "Selection Reader (Text to Speech)",
+   "version": "2.0.10",
+   "errors": []
+  },
+  "ffbhefmlcoihbjcmibbfkocmnaiacinp": {
+   "name": "Notepad",
+   "version": "7.0.0",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Error handling response: ReferenceError: _gaq is not defined",
+    "ReferenceError: _gaq is not defined"
+   ]
+  },
+  "fgmbnmjmbjenlhbefngfibmjkpbcljaj": {
+   "name": "Highlight This: finds and marks words",
+   "version": "6.3.13",
+   "popupText": true,
+   "errors": [
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'license')",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
+  },
+  "fgmjlmbojbkmdpofahffgcpkhkngfpef": {
+   "name": "Startpage — Private Search Engine",
+   "version": "3.0.8",
+   "errors": []
+  },
+  "fhggeljlcambnphlgjbgnenndddhldkg": {
+   "name": "VPN USA - Planet VPN lite Proxy",
+   "version": "2.1.0",
+   "popupText": true,
+   "errors": []
+  },
+  "fhkimgpddcmnleeaicdjggpedegolbkb": {
+   "name": "WA Bulk Message Sender",
+   "version": "1.3.32",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch",
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'data')",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "fjcldmjmjhkklehbacihaiopjklihlgg": {
+   "name": "News Feed Eradicator",
+   "version": "3.0.5",
+   "errors": []
+  },
+  "fkiljfkkceaopbpfgfmjdnkiejaifkgd": {
+   "name": "Jobalytics - Resume Keyword Analyzer",
+   "version": "6.6.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "[Jobalytics Analytics] Fetch error: TypeError: Failed to fetch",
+    "SyntaxError: Unexpected token 'export'"
+   ]
+  },
+  "fooenmopnfaejehogdbmegaleanpdcea": {
+   "name": "RoEarn: Custom Avatar Creator & Cashback",
+   "version": "3.10.1",
+   "errors": []
+  },
+  "fphegifdehlodcepfkgofelcenelpedj": {
+   "name": "7TV Nightly",
+   "version": "3.1.26.1000",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "gbefmodhlophhakmoecijeppjblibmie": {
+   "name": "Linguist - web page translator",
+   "version": "7.1.0",
+   "popupText": true,
+   "errors": [
+    " Note that 'script-src' was not explicitly set, so 'default-src' is used as a fallback.",
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "Error: Cannot access contents of url \"chrome-extension://gbefmodhlophhakmoecijeppjblibmie/pages/popup/popup.html\". Extension manifest must request permission to access this host."
+   ]
+  },
+  "gcbalfbdmfieckjlnblleoemohcganoc": {
+   "name": "Ui.Vision",
+   "version": "10.0.303",
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:50888/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "gdfeccaioepgmgjcecjpiabelmbbpijf": {
+   "name": "Cool Ad Popup Blocker",
+   "version": "2.0.0.26",
+   "errors": []
+  },
+  "gdiknemhndplpgnnnjjjhphhembfojec": {
+   "name": "Adblock Bear - stop invasive ads",
+   "version": "2026.5.9.15",
+   "popupText": true,
+   "errors": []
+  },
+  "gdojjgflncpbcfmenbkndfhoamlhajmf": {
+   "name": "Annotate: Web Annotations with Screen Sharing",
+   "version": "8.66",
+   "popupText": true,
+   "errors": []
+  },
+  "geddoclleiomckbhadiaipdggiiccfje": {
+   "name": "Quick Javascript Switcher",
+   "version": "2.2.0",
+   "errors": [
+    "Error: Invalid URL: about:blank"
+   ]
+  },
+  "geplbbbmdpmdodfmohpikfacgkfpkhec": {
+   "name": "Email Finder by Skrapp.io",
+   "version": "2.6.1",
+   "errors": []
+  },
+  "ggacghlcchiiejclfdajbpkbjfgjhfol": {
+   "name": "FullPage Capture - Full Page Screenshot",
+   "version": "1.19.76",
+   "popupText": true,
+   "errors": []
+  },
+  "ggdmdoodcfamjggeigifpjfnnjfbland": {
+   "name": "OrangeMonkey Pro",
+   "version": "2.0.15",
+   "popupText": true,
+   "errors": [
+    "TypeError: Cannot read properties of undefined (reading 'configureWorld')",
+    "Error: Cannot access contents of url \"about:blank\". Extension manifest must request permission to access this host.",
+    "Google Analytics request failed with an exception TypeError: Failed to fetch",
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "ggdpplfehdighdpleoegjefnpefgpgfh": {
+   "name": "AdBlock Max - ad blocker",
+   "version": "1.0.14",
+   "popupText": true,
+   "errors": []
+  },
+  "giihipjfimkajhlcilipnjeohabimjhi": {
+   "name": "SEO Minion",
+   "version": "3.20",
+   "errors": []
+  },
+  "gjldcdngmdknpinoemndlidpcabkggco": {
+   "name": "Extension Manager",
+   "version": "9.6.1",
+   "popupText": true,
+   "errors": []
+  },
+  "gkkdmjjodidppndkbkhhknakbeflbomf": {
+   "name": "Selectext: Copy Text from Videos",
+   "version": "3.1.35",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 401 ()"
+   ]
+  },
+  "gljjiokipgajokbgfmoekcdmfceoijjh": {
+   "name": "LINE Share",
+   "version": "1.0.9",
+   "errors": []
+  },
+  "gnldpbnocfnlkkicnaplmkaphfdnlplb": {
+   "name": "Test & Feedback",
+   "version": "1.0.279.4",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error: [$parse:syntax] http://errors.angularjs.org/1.8.2/$parse/syntax?p0=%3B&p1=is%20unexpected%2C%20expecting%20%5B)%5D&p2=108&p3=!(!vm.toolbarItemService.isFunctionalityEnabled(vm.selectedScreenshotItem))%20%26%26%20(vm.notShowExtendedToolbar()%3B%20vm.selectedScreenshotItem.execute())&p4=%3B%20vm.selectedScreenshotItem.execute()) <a ng-href=\"{{vm.selectedScreenshotItem.url}}\" ng-click=\"vm.notShowExtendedToolbar(); vm.selectedScreenshotItem.execute()\" aria-labelledby=\"capture-screenshot\" a-di"
+   ]
+  },
+  "goficmpcgcnombioohjcgdhbaloknabb": {
+   "name": "Note Board - Sticky Notes App",
+   "version": "10.1.4",
+   "errors": []
+  },
+  "gphandlahdpffmccakmbngmbjnjiiahp": {
+   "name": "PDF Editor for Chrome:Edit, Fill, Sign, Print",
+   "version": "0.5.8",
+   "errors": []
+  },
+  "gplcmncpklkdjiccbknjjkoidpgkcakd": {
+   "name": "AI Content Detector - Copyleaks",
+   "version": "5.0.1",
+   "popupText": true,
+   "errors": [
+    "Error: Cannot access contents of url \"chrome-extension://gplcmncpklkdjiccbknjjkoidpgkcakd/\". Extension manifest must request permission to access this host."
+   ]
+  },
+  "hagjjmpgfabjpcoklghamlpdamjljoeh": {
+   "name": "Color Picker HEX | Eyedropper | Pick color from image",
+   "version": "1.0.6",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "hbdkkfheckcdppiaiabobmennhijkknn": {
+   "name": "Open SEO Stats(Formerly: PageRank Status)",
+   "version": "13.1.0",
+   "popupText": true,
+   "errors": []
+  },
+  "hchlgfaicmddilenlflajnmomalehbom": {
+   "name": "Color Tab",
+   "version": "3.2",
+   "errors": []
+  },
+  "hdjihnnclpjhfdbbinmgoiehhoehhlgf": {
+   "name": "Pasty",
+   "version": "1.8",
+   "popupText": true,
+   "errors": []
+  },
+  "heogilejknffekkbjdjmoamaehdblmnc": {
+   "name": "WASender Free Bulk Messaging Plugin - WA Sender",
+   "version": "1.0.79",
+   "errors": []
+  },
+  "hgccfdagfbilbdbkgmfdmmdfmjjoakfo": {
+   "name": "Internet Connection Monitor",
+   "version": "6.2.1",
+   "popupText": true,
+   "errors": [
+    "Google Analytics request failed with an exception TypeError: Failed to fetch",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "hghakoefmnkhamdhenpbogkeopjlkpoa": {
+   "name": "Lean Library",
+   "version": "2026.12.1",
+   "popupText": true,
+   "errors": []
+  },
+  "hhinaapppaileiechjoiifaancjggfjm": {
+   "name": "Web Scrobbler",
+   "version": "3.23.1",
+   "popupText": true,
+   "errors": [
+    "ListenBrainz: no data",
+    "No data in storage"
+   ]
+  },
+  "hiiekpdmbjbfhdneebgpnbbmcnlelacp": {
+   "name": "Ad Blocker Unlimited",
+   "version": "2.0.2",
+   "errors": []
+  },
+  "hjbfbllnfhppnhjdhhbmjabikmkfekgf": {
+   "name": "Shopify Spy Tool & Sales Tracker for Dropshipping - Koala Inspector",
+   "version": "4.25",
+   "errors": []
+  },
+  "hkbdddpiemdeibjoknnofflfgbgnebcm": {
+   "name": "YouTube™ Dual Subtitles",
+   "version": "3.7.3",
+   "popupText": true,
+   "errors": []
+  },
+  "hkojjajclkgeijhcmfjcjkddfjpaimek": {
+   "name": "QR Code (Generator and Reader)",
+   "version": "2.0",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+   ]
+  },
+  "hlnclfeomhfnihcloaaakodcbbkgkkoc": {
+   "name": "HirePro Assessment",
+   "version": "1.4",
+   "errors": []
+  },
+  "hlngmmdolgbdnnimbmblfhhndibdipaf": {
+   "name": "SEO Analysis & Website Review by WooRank",
+   "version": "2.2.3",
+   "popupText": false,
+   "errors": []
+  },
+  "hmbnhhcgiecenbbkgdoaoafjpeaboine": {
+   "name": "Ad & Intro Skip for YT, Netflix",
+   "version": "4.0.5",
+   "popupText": true,
+   "errors": []
+  },
+  "hmdmhilocobgohohpdpolmibjklfgkbi": {
+   "name": "Odoo Debug",
+   "version": "5.1",
+   "errors": []
+  },
+  "hmigninkgibhdckiaphhmbgcghochdjc": {
+   "name": "Mouse Tooltip Translator - PDF & Netflix Youtube dual subs",
+   "version": "0.1.248",
+   "popupText": true,
+   "errors": []
+  },
+  "hnlkiofnhhoahaiimdicppgemmmomijo": {
+   "name": "Qwant - Search engine and tracker blocker",
+   "version": "8.1.4",
+   "popupText": true,
+   "errors": []
+  },
+  "hpcgabhdlnapolkkjpejieegfpehfdok": {
+   "name": "Media Harvest : X (twitter) Media Downloader",
+   "version": "4.5.7",
+   "popupText": true,
+   "errors": []
+  },
+  "iaakpnchhognanibcahlpcplchdfmgma": {
+   "name": "ChatHub - ChatGPT, Gemini, Claude side by side",
+   "version": "4.2.3",
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "iadokddofjgcgjpjlfhngclhpmaelnli": {
+   "name": "Careerflow AI Job Application Tracker, ATS Resume Checker, Autofill & more",
+   "version": "2.20.9",
+   "errors": []
+  },
+  "iapifmceeokikomajpccajhjpacjmibe": {
+   "name": "Auto Clicker - AutoFill",
+   "version": "5.4.1",
+   "errors": []
+  },
+  "ibkclpciafdglkjkcibmohobjkcfkaef": {
+   "name": "META SEO inspector",
+   "version": "3.11.4",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Unchecked runtime.lastError: The message port closed before a response was received.",
+    "Failed to load resource: the server responded with a status of 404 ()"
+   ]
+  },
+  "ibplnjkanclpjokhdolnendpplpjiace": {
+   "name": "Simple Translate",
+   "version": "3.1.0",
+   "popupText": true,
+   "errors": []
+  },
+  "icallnadddjmdinamnolclfjanhfoafe": {
+   "name": "FastForward",
+   "version": "0.2383",
+   "popupText": true,
+   "errors": []
+  },
+  "iebpjdmgckacbodjpijphcplhebcmeop": {
+   "name": "Table Capture",
+   "version": "11.0.46",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "igkpcodhieompeloncfnbekccinhapdb": {
+   "name": "Zoho Vault - Password Manager",
+   "version": "6.10.1",
+   "popupText": true,
+   "errors": []
+  },
+  "ihdobppgelceaoeojmhpmbnaljhhmhlc": {
+   "name": "Spoof Geolocation",
+   "version": "0.3.2",
+   "popupText": true,
+   "errors": []
+  },
+  "ihhkmalpkhkoedlmcnilbbhhbhnicjga": {
+   "name": "Bardeen: Automate Browser Apps with AI",
+   "version": "5.0.0",
+   "errors": [
+    "TypeError: Cannot redefine property: __s@3s'\"A213D+3"
+   ]
+  },
+  "iibninhmiggehlcdolcilmhacighjamp": {
+   "name": "Magical: Text Expander & Autofill",
+   "version": "3.119.1",
+   "errors": []
+  },
+  "ilmdofdhpnhffldihboadndccenlnfll": {
+   "name": "ChatGPT Exporter - ChatGPT to PDF, MD, and more",
+   "version": "6.13.2",
+   "popupText": true,
+   "errors": []
+  },
+  "infppggnoaenmfagbfknfkancpbljcca": {
+   "name": "Automa",
+   "version": "1.30.02",
+   "popupText": true,
+   "errors": []
+  },
+  "inhcgfpbfdjbjogdfjbclgolkmhnooop": {
+   "name": "AI Sidebar for DeepSeek",
+   "version": "1.7.7",
+   "errors": []
+  },
+  "ioadaikpljilagoddljnamloiebcoopb": {
+   "name": "店小秘助手",
+   "version": "2.8.91",
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
+  },
+  "iohcojnlgnfbmjfjfkbhahhmppcggdog": {
+   "name": "EverSync - Sync bookmarks, backup favorites",
+   "version": "23.3.7",
+   "popupText": true,
+   "errors": []
+  },
+  "iphblfpnippelmibidfaejanmnhcjdee": {
+   "name": "GNTD: Glass New Tab Dashboard",
+   "version": "1.2.13",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Only permissions specified in the manifest may be requested."
+   ]
+  },
+  "ipikiaejjblmdopojhpejjmbedhlibno": {
+   "name": "SwiftRead - read faster, learn more",
+   "version": "6.11.1",
+   "errors": []
+  },
+  "iplfdepgkbpdpgglchledcflbdnmppnj": {
+   "name": "Adblock Advanced - AdBlocker for Chrome & YouTube Ads Blocker",
+   "version": "1.9.14",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Error: This function must be called during a user gesture"
+   ]
+  },
+  "jajilbjjinjmgcibalaakngmkilboobh": {
+   "name": "Astar VPN - Free and fast VPN for everyone",
+   "version": "1.3.8",
+   "popupText": true,
+   "errors": []
+  },
+  "jdkknkkbebbapilgoeccciglkfbmbnfm": {
+   "name": "Apollo Client Devtools",
+   "version": "4.26.5",
+   "errors": []
+  },
+  "jdlkkmamiaikhfampledjnhhkbeifokk": {
+   "name": "PDF Viewer",
+   "version": "1.0.13",
+   "errors": [
+    "You do not have permission to use blocking webRequest listeners. Be sure to declare the webRequestBlocking permission in your manifest. Note that webRequestBlocking is only allowed for extensions that are installed using ExtensionInstallForcelist."
+   ]
+  },
+  "jdpblpklojajpopllbckephjndibljbc": {
+   "name": "Twitch Channel Points Auto Clicker",
+   "version": "1.0.1",
+   "errors": []
+  },
+  "jeehnidbmlhpkncbplipfalpjkhlokaa": {
+   "name": "Poll Everywhere for Google Slides",
+   "version": "1.20.7",
+   "errors": []
+  },
+  "jgocjgkdladclacgmkkiklmdcmngjcba": {
+   "name": "GPT Workspace",
+   "version": "4.21.3",
+   "errors": []
+  },
+  "jhegmncopobmnnmcdaobcepcamekoomb": {
+   "name": "Helix Fruit Jump Arcade Game",
+   "version": "3.1",
+   "errors": []
+  },
+  "jhnleheckmknfcgijgkadoemagpecfol": {
+   "name": "Auto Tab Discard",
+   "version": "0.7.7",
+   "popupText": true,
+   "errors": []
+  },
+  "jilechdbojlnkjfimmbijgcfmblddejk": {
+   "name": "Make Money",
+   "version": "2.0.23",
+   "popupText": true,
+   "errors": []
+  },
+  "jipdnfibhldikgcjhfnomkfpcebammhp": {
+   "name": "rikaikun",
+   "version": "3.2.42",
+   "errors": []
+  },
+  "jjpokbgpiljgndebfoljdeihhkpcpfgl": {
+   "name": "MYNT: Material You New Tab",
+   "version": "3.3.802",
+   "errors": []
+  },
+  "jkmakgpojigahjdalffbkimpnpabelio": {
+   "name": "Netflix Picture in Picture now for Prime & D+ [QVI]",
+   "version": "0.2.95",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "jlihldkpooaidnkjckkkehahkbhbmign": {
+   "name": "Assinador Digital Qcertifica",
+   "version": "0.5.0",
+   "errors": [
+    "Erro ao buscar versão da app nativa:"
+   ]
+  },
+  "jlleokkdhkflpmghiioglgmnminbekdi": {
+   "name": "GIPHY for Chrome",
+   "version": "3.13",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "jpgljfpmoofbmlieejglhonfofmahini": {
+   "name": "Residential VPN | Tuxler",
+   "version": "3.1.26",
+   "popupText": true,
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:1701/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:10702/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:19703/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:28704/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:37705/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:46706/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:55707/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "WebSocket connection to 'ws://127.0.0.1:64708/tuxler' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "jplnlifepflhkbkgonidnobkakhmpnmh": {
+   "name": "Private Internet Access – Proxy for Chrome",
+   "version": "5.0.4.1810",
+   "popupText": true,
+   "errors": []
+  },
+  "kagjkiiecagemklhmhkabbalfpbianbe": {
+   "name": "AI Exporter - Save ChatGPT, Claude and Gemini chats to PDF, MD and more",
+   "version": "4.6.0",
+   "popupText": true,
+   "errors": [
+    "TypeError: Cannot read properties of undefined (reading 'fingerprint')"
+   ]
+  },
+  "kajibbejlbohfaggdiogboambcijhkke": {
+   "name": "Mailvelope - Secure your email with PGP",
+   "version": "6.3.0",
+   "popupText": true,
+   "errors": []
+  },
+  "kcljbbiddpoeaknnjaminoceoojdbikp": {
+   "name": "Padlet Mini",
+   "version": "5.2.0",
+   "errors": []
+  },
+  "kekahkplibinaibelipdcikofmedafmb": {
+   "name": "ClickOnce for Google Chrome",
+   "version": "3.1",
+   "errors": []
+  },
+  "knemcdpkggnbhpoaaagmjiigenifejfo": {
+   "name": "Claude Usage Tracker",
+   "version": "6.1.4",
+   "popupText": true,
+   "errors": []
+  },
+  "kpbnombpnpcffllnianjibmpadjolanh": {
+   "name": "ACG Helper",
+   "version": "2.8.31",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+   ]
+  },
+  "kphldkppgfpjadpabfkghmjbhpcmgpdg": {
+   "name": "1688 Purchasing Assistant Plugin",
+   "version": "1.2.1",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "lahhiofdgnbcgmemekkmjnpifojdaelb": {
+   "name": "Vercel",
+   "version": "1.6.2",
+   "errors": []
+  },
+  "lbfjgknkjfjmnjdgdhbbmmbkoddgpdoc": {
+   "name": "Meet Plus for Google Meet",
+   "version": "11.5.7",
+   "errors": []
+  },
+  "ldpochfccmkkmhdbclfhpagapcfdljkj": {
+   "name": "Decentraleyes",
+   "version": "3.0.2",
+   "popupText": true,
+   "errors": []
+  },
+  "lenipkahddombkldhfmcnnjakmcepdlk": {
+   "name": "AiPrice(AliPrice) Sourcing Tool",
+   "version": "4.1.9",
+   "popupText": true,
+   "errors": []
+  },
+  "lfhmikememgdcahcdlaciloancbhjino": {
+   "name": "CORS Unblock",
+   "version": "0.5.2",
+   "errors": []
+  },
+  "lgbjhdkjmpgjgcbcdlhkokkckpjmedgc": {
+   "name": "DualSafe Password Manager & Digital Vault",
+   "version": "1.4.37",
+   "errors": [
+    "WebSocket connection to 'ws://127.0.0.1:3157/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+    "Object"
+   ]
+  },
+  "likadllkkidlligfcdhfnnbkjigdkmci": {
+   "name": "QR Code Reader",
+   "version": "2.0.3",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "lokjgaehpcnlmkebpmjiofccpklbmoci": {
+   "name": "Toucan by Babbel - Language Learning",
+   "version": "2.19.8",
+   "popupText": true,
+   "errors": []
+  },
+  "mafcolokinicfdmlidhaebadidhdehpk": {
+   "name": "Story Saver",
+   "version": "3.0.8",
+   "errors": []
+  },
+  "mbflpfaamifmmmkdjkcmpofpccfmlmap": {
+   "name": "Video Downloader - MPMux",
+   "version": "1.2",
+   "popupText": true,
+   "errors": []
+  },
+  "mbindhfolmpijhodmgkloeeppmkhpmhc": {
+   "name": "Email Hunter",
+   "version": "1.48",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "Google Analytics request failed with an exception TypeError: Failed to fetch"
+   ]
+  },
+  "mdjildafknihdffpkfmmpnpoiajfjnjd": {
+   "name": "Consent-O-Matic",
+   "version": "1.1.3",
+   "popupText": true,
+   "errors": []
+  },
+  "mdlnjfcpdiaclglfbdkbleiamdafilil": {
+   "name": "PhantomBuster",
+   "version": "1.3.10",
+   "errors": []
+  },
+  "meajfmicibjppdgbjfkpdikfjcflabpk": {
+   "name": "LinkedIn Extension",
+   "version": "2.3",
+   "errors": []
+  },
+  "medapdbncneneejhbgcjceippjlfkmkg": {
+   "name": "Markdown Reader",
+   "version": "3.6.31",
+   "popupText": true,
+   "errors": []
+  },
+  "meimoidfecamngeoanhnpdjjdcefoldn": {
+   "name": "Fireflies: AI meeting notes",
+   "version": "6.7.3",
+   "popupText": true,
+   "errors": []
+  },
+  "mfkbhgdamgfcifnhcdebfahkgnbkagmo": {
+   "name": "Rapid Journal Quality Check",
+   "version": "4.1.4",
+   "popupText": true,
+   "errors": []
+  },
+  "mfpddejbpnbjkjoaicfedaljnfeollkh": {
+   "name": "Delinea Web Password Filler",
+   "version": "3.11.9",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: Specified native messaging host not found."
+   ]
+  },
+  "mkjknmlmebnimmkonggecjlccealonel": {
+   "name": "CS.MONEY",
+   "version": "5.0.2",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+    "Amplitude Logger [Error]: Failed to fetch",
+    "Amplitude Logger [Error]: Failed to fetch (api2.amplitude.com)",
+    "Amplitude Logger [Error]: Event rejected due to exceeded retry count"
+   ]
+  },
+  "mmgjkfjlmdkmoipndaeombfnomjfgeff": {
+   "name": "Boxel Golf",
+   "version": "1.3.8",
+   "popupText": true,
+   "errors": []
+  },
+  "mmpljcghnbpkokhbkmfdmoagllopfmlm": {
+   "name": "Allow Copy - Select & Enable Right Click",
+   "version": "1.1.12",
+   "popupText": true,
+   "errors": []
+  },
+  "mnpdbmgpebfihcndnpgdaihnkmloclkd": {
+   "name": "智谱清言：ChatGLM & AutoGLM, AI Assistant for Work and Study",
+   "version": "1.1.5",
+   "errors": [
+    "Unchecked runtime.lastError: Specified native messaging host not found."
+   ]
+  },
+  "moffahdcgnjnglbepimcggkjacdmpojc": {
+   "name": "IEability - Open in IE",
+   "version": "2.26.21.0",
+   "errors": [
+    "Unchecked runtime.lastError: Specified native messaging host not found."
+   ]
+  },
+  "mpkdoimpgkhjcicmhmlmgboelebflpla": {
+   "name": "classroom.cloud Student",
+   "version": "3.10.0.0",
+   "popupText": false,
+   "errors": []
+  },
+  "mpkkcddegpblmobincjkbpgfcbejjbcp": {
+   "name": "FACEIT FORECAST",
+   "version": "2.0.2",
+   "popupText": true,
+   "errors": []
+  },
+  "naeaaedieihlkmdajjefioajbbdbdjgp": {
+   "name": "SVG Export",
+   "version": "3.1.0",
+   "errors": []
+  },
+  "nalkmonnmldhpfcpdlbdpljlaajlaphh": {
+   "name": "Picture in Picture - PiP Floating Video",
+   "version": "1.6.10",
+   "errors": []
+  },
+  "nbhcbdghjpllgmfilhnhkllmkecfmpld": {
+   "name": "User JavaScript and CSS",
+   "version": "4.3.0",
+   "popupText": true,
+   "errors": []
+  },
+  "nbkomboflhdlliegkaiepilnfmophgfg": {
+   "name": "Custom Progress Bar for YouTube™",
+   "version": "4.0.25",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+   ]
+  },
+  "ncldcbhpeplkfijdhnoepdgdnmjkckij": {
+   "name": "iGuge Helper",
+   "version": "2.3.9",
+   "popupText": true,
+   "errors": []
+  },
+  "ndpmhjnlfkgfalaieeneneenijondgag": {
+   "name": "YouTube Anti Translate",
+   "version": "1.20.5",
+   "popupText": true,
+   "errors": []
+  },
+  "nemdidpklkencjpfniclgheahkiionlp": {
+   "name": "Advanced Ad Blocker",
+   "version": "2.0.2",
+   "errors": []
+  },
+  "nigoagcimgiifniljaedijgilbfdplbb": {
+   "name": "Ad Blocker Pro - block ads ad blocker",
+   "version": "2.4",
+   "errors": []
+  },
+  "nldijlfmoepgjkjhmdiiainkjgmpdnmj": {
+   "name": "Browser Lock | Lock Your Browser",
+   "version": "2.0.4",
+   "popupText": true,
+   "errors": []
+  },
+  "nlhjgcligpbnjphflfdbmabbmjidnmek": {
+   "name": "Desktopify",
+   "version": "3.0.1",
+   "errors": []
+  },
+  "nljcdkjpjnhlilgepggmmagnmebhadnk": {
+   "name": "Website SEO Checker",
+   "version": "4.4.1",
+   "popupText": true,
+   "errors": []
+  },
+  "nnffbdeachhbpfapjklmpnmjcgamcdmm": {
+   "name": "Download All Images",
+   "version": "1.0.9",
+   "errors": []
+  },
+  "nonmafimegllfoonjgplbabhmgfanaka": {
+   "name": "Ghelper",
+   "version": "2.9.3",
+   "popupText": true,
+   "errors": []
+  },
+  "noojglkidnpfjbincgijbaiedldjfbhh": {
+   "name": "Buffer",
+   "version": "6.0.27",
+   "errors": []
+  },
+  "nopjifljihndhkfeogabcclpgpceapln": {
+   "name": "IntoWords Cloud",
+   "version": "3.11.1",
+   "popupText": true,
+   "errors": []
+  },
+  "npnbdojkgkbcdfdjlfdmplppdphlhhcf": {
+   "name": "ProWritingAid: Grammar Checker & Paraphrasing Tool",
+   "version": "2.9.43974",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "HttpError: Authorization has been denied for this request.",
+    "Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received"
+   ]
+  },
+  "ocggccaacacpienfcgmgcihoombokbbj": {
+   "name": "Live Start Page - Living Wallpapers",
+   "version": "40.5.10",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
+  },
+  "ocmndficndmcfopgmekhmojikebnaggm": {
+   "name": "Fiverr Quick View",
+   "version": "1.4.2",
+   "popupText": true,
+   "errors": []
+  },
+  "odgomjlphohbhdniakcbaapgacpadaao": {
+   "name": "Epson iProjection Extension",
+   "version": "1.1.0",
+   "errors": []
+  },
+  "oglffgiaiekgeicdgkdlnlkhliajdlja": {
+   "name": "YouTube Dubbing – Translate & Dub",
+   "version": "4.5.7",
+   "popupText": true,
+   "errors": []
+  },
+  "ohjocgmpmlfahafbipehkhbaacoemojp": {
+   "name": "hide.me Proxy",
+   "version": "2.0.1",
+   "popupText": true,
+   "errors": []
+  },
+  "oimfnddepdafdfmammggkfmdepfmipai": {
+   "name": "Go Incognito",
+   "version": "0.0.9",
+   "errors": []
+  },
+  "ojjjflcdgjegkdcojbahlbgeiinpbfgf": {
+   "name": "Ad Remover - Ad Blocker for Chrome",
+   "version": "8.7.2",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "okockappikfndbdfphjklenhfpdlgkgi": {
+   "name": "All-In-One Adblocker : blocks ads everywhere",
+   "version": "1.1.87",
+   "popupText": true,
+   "errors": []
+  },
+  "okpidcojinmlaakglciglbpcpajaibco": {
+   "name": "J2TEAM Cookies",
+   "version": "1.0.5",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "olimcenppncifgiahopimblidefpdffi": {
+   "name": "Custom profile picture for Netflix™ [QVI]",
+   "version": "1.2.9.82",
+   "popupText": true,
+   "errors": []
+  },
+  "omkfmpieigblcllmkgbflkikinpkodlk": {
+   "name": "enhanced-h264ify",
+   "version": "2.2.1",
+   "popupText": true,
+   "errors": []
+  },
+  "onbcflemjnkemjpjcpkkpcnephnpjkcb": {
+   "name": "Genesys Cloud for Chrome",
+   "version": "1.0.19",
+   "errors": []
+  },
+  "oncbjlgldmiagjophlhobkogeladjijl": {
+   "name": "Bookmarks clean up",
+   "version": "0.2.0",
+   "errors": []
+  },
+  "onhiacboedfinnofagfgoaanfedhmfab": {
+   "name": "Reverso – Translation, dictionary",
+   "version": "3.14.417",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist.",
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'activation_mode')",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
+    "Object",
+    "http.ts -> Http -> post() : TypeError: Failed to fetch"
+   ]
+  },
+  "ookdjilphngeeeghgngjabigmpepanpl": {
+   "name": "Cookie Editor",
+   "version": "1.1.0.0",
+   "errors": []
+  },
+  "oomoeacogjkolheacgdkkkhbjipaomkn": {
+   "name": "Tab Auto Refresh",
+   "version": "3.0.1",
+   "popupText": true,
+   "errors": [
+    "Error: [object Object]"
+   ]
+  },
+  "opafjjlpbiaicbbgifbejoochmmeikep": {
+   "name": "Teal - Job Search Companion",
+   "version": "4.0.8",
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "pamnlaoeobcmhkliljfaofekeddpmfoh": {
+   "name": "Web to PDF",
+   "version": "3.4.9",
+   "popupText": true,
+   "errors": []
+  },
+  "pgakpjflombjmehnebnbpnalhegaanag": {
+   "name": "rhwp - HWP Document Viewer & Editor",
+   "version": "0.8.7",
+   "errors": []
+  },
+  "pgbdljpkijehgoacbjpolaomhkoffhnl": {
+   "name": "MailTracker: Email tracker for Gmail",
+   "version": "2.5.4",
+   "popupText": true,
+   "errors": []
+  },
+  "pggchepbleikpkhffahfabfeodghbafd": {
+   "name": "Premium Sender",
+   "version": "1.0.91",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "pidkjcapccmhpdokcjnkngcflobhopdl": {
+   "name": "Flappy Bird Offline",
+   "version": "2.0.0",
+   "popupText": true,
+   "errors": [
+    "Error: <path> attribute d: Expected number, \"…4-.6-.5-.5-.5-.5z\".",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
+  },
+  "pihphjfnfjmdbhakhjifipfdgbpenobg": {
+   "name": "DocsAfterDark",
+   "version": "2.0.2",
+   "popupText": true,
+   "errors": []
+  },
+  "piiljfhidimfponnkjlkecnpjhdijfde": {
+   "name": "G-calize",
+   "version": "2.3.3",
+   "errors": []
+  },
+  "pjbgfifennfhnbkhoidkdchbflppjncb": {
+   "name": "Dark Mode - Dark Reader for Сhrome",
+   "version": "1.4.15",
+   "errors": []
+  },
+  "pkgccpejnmalmdinmhkkfafefagiiiad": {
+   "name": "FeHelper - JSON格式化、编解码、二维码、开发者工具箱",
+   "version": "2026.10.19",
+   "popupText": true,
+   "errors": []
+  },
+  "plhdclenpaecffbcefjmpkkbdpkmhhbj": {
+   "name": "Discrub - Discord Message Manager",
+   "version": "2.2.6",
+   "errors": []
+  },
+  "pncfbmialoiaghdehhbnbhkkgmjanfhe": {
+   "name": "uBlacklist",
+   "version": "10.1.2",
+   "popupText": true,
+   "errors": []
+  },
+  "pnhplgjpclknigjpccbcnmicgcieojbh": {
+   "name": "Diigo Web Collector - Capture and Annotate",
+   "version": "3.5.0",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "aadbahhifnekkkcbapdfandpimaoacmj": {
+   "name": "AiPrice(AliPrice) Search by Image for China Import",
+   "version": "4.1.9",
+   "popupText": true,
+   "errors": []
+  },
+  "aadiiicebnjmjmibjengdohedcfeekeg": {
+   "name": "Sorftime Save",
+   "version": "1.4.9.1",
+   "popupText": true,
+   "errors": []
+  },
+  "aaeebnpadcfccmajghdpojkjobbpjmfj": {
+   "name": "Giant ad blocker",
+   "version": "2.0.3",
+   "errors": []
+  },
+  "aaekanoannlhnajolbijaoflfhikcgng": {
+   "name": "Charcoal: Dark Mode for Messenger",
+   "version": "1.5.0",
+   "popupText": true,
+   "errors": []
+  },
+  "aajjgdpofhhcjmjoombjdfepplndhgcp": {
+   "name": "Prompt Optimizer - SecondBrain",
+   "version": "2.3.12",
+   "errors": []
+  },
+  "abdkkegmcbiomijcbdaodaflgehfffed": {
+   "name": "Simple mass downloader",
+   "version": "0.906",
+   "popupText": true,
+   "errors": []
+  },
+  "abmkkackbbimmdbfjdilpnfaegaeagge": {
+   "name": "Old Layout for Facebook",
+   "version": "7.3",
+   "popupText": true,
+   "errors": []
+  },
+  "abnmgemfnjndaolfflfpjcckiamamein": {
+   "name": "VPN Browser",
+   "version": "1.2.1",
+   "popupText": true,
+   "errors": []
+  },
+  "accllpimnoffllpeblphooameaofhnah": {
+   "name": "楽天リーベイツ ポイントアシスト",
+   "version": "0.1.20",
+   "errors": []
+  },
+  "acehchockcmgigjilbjhecnepiohkfld": {
+   "name": "Microsoft Solitaire Collection with Search",
+   "version": "0.0.0.28",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "acglggcafiilnibeknihgglelgfafifo": {
+   "name": "Volume Control",
+   "version": "3.6.0",
+   "popupText": true,
+   "errors": []
+  },
+  "adikhbfjdbjkhelbdnffogkobkekkkej": {
+   "name": "Flipshope: Price Tracker and much more",
+   "version": "4.3.6",
+   "errors": [
+    "something wrong !"
+   ]
+  },
+  "aedglnfjjccpifohekdeoogffomjcikm": {
+   "name": "SolvelyAI - AI Homework Tutor &  Study Helper",
+   "version": "0.8.6",
+   "errors": []
+  },
+  "aeindiojndlokkemcgakgpgbcmgonifn": {
+   "name": "Secure Browser - Online Proctoring Extension",
+   "version": "3.7.3.1",
+   "errors": []
+  },
+  "afchokljnhhggkhedfbmkcmdagjmjchj": {
+   "name": "NotebookLM Ultra Exporter: Markdown & PDF & More",
+   "version": "1.1.7",
+   "popupText": true,
+   "errors": []
+  },
+  "aggiiclaiamajehmlfpkjmlbadmkledi": {
+   "name": "TransOver",
+   "version": "1.74",
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "ahhljopojjgelppalenjmaaigdepjifj": {
+   "name": "Doodle Jump",
+   "version": "1.0.2",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND"
+   ]
+  },
+  "aiimboljphncldaakcnapfolgnjonlea": {
+   "name": "The FFZ Add-On Pack",
+   "version": "3.1.2",
+   "errors": []
+  },
+  "aimiinbnnkboelefkjlenlgimcabobli": {
+   "name": "JSON Viewer",
+   "version": "1.0.3",
+   "errors": []
+  },
+  "ajiejmhbejpdgkkigpddefnjmgcbkenk": {
+   "name": "Clipboard Manager and Text Expander - Clipboard History Pro",
+   "version": "3627",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: the server responded with a status of 403 ()"
+   ]
+  },
+  "ajlcnbbeidbackfknkgknjefhmbngdnj": {
+   "name": "Pixiv Toolkit Next",
+   "version": "6.4.2",
+   "popupText": true,
+   "errors": []
+  },
+  "akahnknmcbmgodngfjcflnaljdbhnlfo": {
+   "name": "Vertical Tabs in Side Panel",
+   "version": "1.0.8",
+   "errors": []
+  },
+  "akiljllkbielkidmammnifcnibaigelm": {
+   "name": "WebToEpub",
+   "version": "1.0.14.0",
+   "popupText": false,
+   "errors": [
+    "Error: No tab with id: 971141165"
+   ]
+  },
+  "akjpkhfbhcikhabnieacjihhhhdlnfpa": {
+   "name": "AdBlocker Expert",
+   "version": "1.0.0",
+   "popupText": true,
+   "errors": []
+  },
+  "alchldmijhnnapijdmchpkdeikibjgoi": {
+   "name": "Videochat Extension - IP Locator for Omegle",
+   "version": "4.1.7",
+   "popupText": true,
+   "errors": []
+  },
+  "alhmbbnlcggfcjjfihglopfopcbigmil": {
+   "name": "WAIncognito - Incognito for WhatsApp™",
+   "version": "2.5.9",
+   "errors": []
+  },
+  "alohidaplccaiiikgiofjbckepinhpin": {
+   "name": "로그인플러스/휴대폰간편로그인",
+   "version": "1.7.5",
+   "errors": []
+  },
+  "amembkpfochonfalpaelodhiaangjpih": {
+   "name": "AliAssist: shopping assistant",
+   "version": "0.0.0.80",
+   "errors": []
+  },
+  "amhmeenmapldpjdedekalnfifgnpfnkc": {
+   "name": "Superpower for ChatGPT",
+   "version": "8.5.2",
+   "popupText": true,
+   "errors": []
+  },
+  "amigcgbheognjmfkaieeeadojiibgbdp": {
+   "name": "TooManyTabs for Chrome",
+   "version": "2.4.1",
+   "popupText": true,
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Failed to load resource: net::ERR_FAILED"
+   ]
+  },
+  "amjmjholfoknokffkiolahocokcaecnc": {
+   "name": "Send Anywhere For Gmail",
+   "version": "24.1.0",
+   "popupText": false,
+   "errors": [
+    "Google Analytics request failed with an exception TypeError: Failed to fetch"
+   ]
+  },
+  "andgibkjiikabclfdkecpmdkfanpdapf": {
+   "name": "GIPHY for Gmail",
+   "version": "3.15",
+   "errors": []
+  },
+  "aoggjnmghgmcllfenalipjhmooomfdce": {
+   "name": "SAML SSO for Chrome Apps",
+   "version": "1.6",
+   "errors": []
+  },
+  "apjcbfpjihpedihablmalmbbhjpklbdf": {
+   "name": "AdGuard AdBlocker (Beta)",
+   "version": "5.5.3.25",
+   "popupText": true,
+   "errors": []
+  },
+  "apldhonppojnaadpeoghllcjealkkmem": {
+   "name": "Color Picker & Eyedropper – GoPickColors",
+   "version": "2.4",
+   "popupText": true,
+   "errors": []
+  },
+  "apmbfchnaiociljffgngpjkhplkengck": {
+   "name": "Youtube Unblocked",
+   "version": "5.9",
+   "popupText": true,
+   "errors": [
+    "enableProxy: Error setting proxy: Proxy mode 'pac_script' requires a 'pacScript' field with either a 'url' field or a 'data' field.",
+    "Error handling response: TypeError: Cannot read properties of null (reading 'style')",
+    "Error in event handler: TypeError: Cannot read properties of null (reading 'style')"
+   ]
+  },
+  "apmicgkbejflkgeljipcebaoeigmangd": {
+   "name": "Keep Awake (Display | System)",
+   "version": "0.1.8",
+   "errors": []
+  },
+  "appojfilknpkghkebigcdkmopdfcjhim": {
+   "name": "Passwordstate",
+   "version": "10.0.0.86",
+   "popupText": true,
+   "errors": []
+  },
+  "baocaagndhipibgklemoalmkljaimfdj": {
+   "name": "Dimensions",
+   "version": "3.0.1",
+   "errors": []
+  },
+  "baohinapilmkigilbbbcccncoljkdpnd": {
+   "name": "Shortcuts for Google™",
+   "version": "32.0.6",
+   "popupText": true,
+   "errors": []
+  },
+  "bbeaicapbccfllodepmimpkgecanonai": {
+   "name": "BlockTube",
+   "version": "0.4.8",
+   "popupText": true,
+   "errors": []
+  },
+  "bbejljcbaibhhacdpndojhkhckgdooff": {
+   "name": "Aircall Dialer",
+   "version": "5.2.58",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "bbgdiknflgonlhdgjcnckcpopcdcmden": {
+   "name": "History Shortcut - Fast History Button",
+   "version": "1.3.24",
+   "errors": []
+  },
+  "bbiclfnbhommljbjcoelobnnnibemabl": {
+   "name": "ShowPassword",
+   "version": "1.2.1",
+   "errors": []
+  },
+  "bbmolahhldcbngedljfadjlognfaaein": {
+   "name": "CheerpJ Applet Runner",
+   "version": "2026.9",
+   "popupText": true,
+   "errors": []
+  },
+  "bcapjlfjbmaijdinncieppinamjgljog": {
+   "name": "Inkscape editor for draws and graphics",
+   "version": "3.0.8",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_FILE_NOT_FOUND",
+    "Access to XMLHttpRequest at 'https://www.offidocs.com/media/system/app/checkdownloadinkscaper_2_nav.php?u=uq4bwixxvr' from origin 'chrome-extension://bcapjlfjbmaijdinncieppinamjgljog' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+    "Failed to load resource: net::ERR_FAILED"
+   ]
+  },
+  "bchkdkhfodkkpohjhabdgfhpgjkkgfhg": {
+   "name": "AnswerAI - Homework AI Tutor & Study Helper",
+   "version": "1.5.4",
+   "popupText": true,
+   "errors": [
+    "Unchecked runtime.lastError: The color specification could not be parsed."
+   ]
+  },
+  "bcjiagkgnilmcngacjlfhmpdmbhbjcah": {
+   "name": "Adjust Page Brightness",
+   "version": "0.3.9",
+   "popupText": true,
+   "errors": []
+  },
+  "bclkldcgifcioppjcncibkjdfaghldoe": {
+   "name": "Flickcall: Netflix Party with Video Call",
+   "version": "12.1.13",
+   "popupText": true,
+   "errors": []
+  },
+  "bdiifdefkgmcblbcghdlonllpjhhjgof": {
+   "name": "KISS Translator",
+   "version": "2.1.1",
+   "popupText": true,
+   "errors": []
+  },
+  "bdlcnpceagnkjnjlbbbcepohejbheilk": {
+   "name": "Malus VPN - The only official version",
+   "version": "9.0.0",
+   "popupText": true,
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "bebmphofpgkhclocdbgomhnjcpelbenh": {
+   "name": "Translator, Dictionary - Accurate Translate",
+   "version": "1.9",
+   "popupText": true,
+   "errors": [
+    "Error handling response: TypeError: Cannot read properties of undefined (reading 'length')"
+   ]
+  },
+  "bekopgepchoeepdmokgkpkfhegkeohbl": {
+   "name": "Language Learning with Netflix & YouTube-AFL",
+   "version": "4.26.09.14",
+   "popupText": true,
+   "errors": [
+    "Google Analytics request failed with an exception $",
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "bfelalhndlhoohbhiddkmkjhcaipclcn": {
+   "name": "Ad Blocker Elite",
+   "version": "1.1.1.1",
+   "errors": [
+    "TypeError: Failed to fetch"
+   ]
+  },
+  "bgngjfgpahnnncnimlhjgjhdajmaeeoa": {
+   "name": "Pearltrees Extension",
+   "version": "9.0.1",
+   "popupText": false,
+   "errors": []
+  },
+  "bhbcbkonalnjkflmdkdodieehnmmeknp": {
+   "name": "Email Finder - GetProspect",
+   "version": "7.2.7",
+   "errors": []
+  },
+  "bhmibpbadaengbikmoglphhlhioajdjn": {
+   "name": "Sphere Lite",
+   "version": "2.3.1015.0",
+   "popupText": true,
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
+  },
+  "bincmiainjofjnhchmcalkanjebghoen": {
+   "name": "Zent Translate",
+   "version": "5.3.6",
+   "popupText": true,
+   "errors": [
+    "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+   ]
   },
   "dbfoemgnkgieejfkaddieamagdfepnff": {
    "name": "2FAS Auth - Two Factor Authentication",
