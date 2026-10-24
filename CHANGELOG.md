@@ -8,6 +8,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Changed
 
+- Settings for AI agents, the terminal's sleep and content blocking are clearer: no indented rows, one choice for when the Mac stays awake, statuses as badges, and always-allowed sites as chips you remove in one click.
 - Settings name the password manager you already use, with a Change button, instead of always offering to add one.
 - The passwords step of the setup shows each password manager's own icon instead of its initial.
 - Allow access on a browser macOS protects, such as Safari, opens Full Disk Access with a small Lilo panel beside it: turn Lilo on, or drag its icon into the list. Once access is granted, Lilo comes back and the browser is ready to import.
