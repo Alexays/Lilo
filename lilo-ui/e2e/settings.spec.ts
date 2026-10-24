@@ -406,7 +406,7 @@ test("each agent app shows its status as a badge and at most one action", async 
 	await expectRow("Claude Code", "Connected", ["Remove"]);
 	await expectRow("Cursor", "Not installed", []);
 	await expectRow("Codex", null, ["Connect"]);
-	await expectRow("Claude Desktop", "Set up", []);
+	await expectRow("Claude Desktop", "Configured", []);
 	await expectRow("Other agents", null, ["Copy configuration"]);
 	await expect(row("Claude Code").locator(".ui-badge")).toHaveClass(/success/);
 
