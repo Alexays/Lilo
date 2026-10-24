@@ -51,7 +51,9 @@
   .insp { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 20px; border-radius: var(--radius-sm); background: #1a1a2e; animation: insp 3s infinite var(--motion-ease-spring); }
   .insp::after { content: ""; position: absolute; left: 7px; top: 7px; width: 45%; height: 5px; border-radius: var(--radius-xs); background: #9b80f6; }
   @keyframes insp { 0%, 15% { transform: translateY(130%); } 35%, 85% { transform: none; } 100% { transform: translateY(130%); } }
-  .a-localhost .r::after { content: "localhost"; position: absolute; inset: 0; display: grid; place-items: center; font: var(--font-weight-semibold) 7px/1 ui-monospace, monospace; color: #993c1d; }
+  /* A local server's port: "localhost" would not fit the half pane, at WebKit's minimum font size either. */
+  .a-localhost .r { overflow: hidden; }
+  .a-localhost .r::after { content: ":3000"; position: absolute; inset: 0; display: grid; place-items: center; font: var(--font-weight-semibold) 7px/1 ui-monospace, monospace; color: #993c1d; }
   .term { position: absolute; inset: 8px; border-radius: var(--radius-sm); background: #1a1a2e; }
   .term::before { content: "$"; position: absolute; left: 7px; top: 6px; font: var(--font-weight-semibold) var(--font-size-3xs)/1 ui-monospace, monospace; color: #5dcaa5; }
   .term::after { content: ""; position: absolute; left: 17px; top: 7px; height: 7px; border-radius: var(--radius-2xs); background: #9fe1cb; animation: type 3s infinite steps(8); }
