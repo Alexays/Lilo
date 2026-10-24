@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Generate what derives from the HTML pages: their Markdown copies (public/**/index.md), public/llms-full.txt,
-and the FAQPage and softwareVersion of their JSON-LD."""
+"""Derive Markdown copies, llms-full.txt and FAQ metadata from Astro's built HTML."""
 import html
 import json
 import re
@@ -8,17 +7,14 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 SITE = "https://getlilo.app"
-PUBLIC = Path(__file__).resolve().parent / "public"
-XCCONFIG = PUBLIC.parent.parent / "Xcode/Configs/Base.xcconfig"
-PAGES = ["index.html", "moving/index.html", "fr/index.html", "fr/moving/index.html"]
-FULL = ["index.html", "moving/index.html"]
+DIST = Path(__file__).resolve().parent / "dist"
 
 VOID = {"meta", "link", "br", "img", "input", "hr", "source"}
-BLOCK = {"main", "section", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li"}
+BLOCK = {"main", "section", "article", "header", "div", "p", "h1", "h2", "h3", "h4", "details", "summary", "table", "footer", "ul", "ol", "li", "time"}
 # Interactive mockups and decoration: their text is illustration, not page content.
-SKIP_TAGS = {"script", "style", "svg", "header", "button", "head", "nav"}
-SKIP_CLASSES = {"window", "store", "termcard", "tag", "mark"}
-LIST_PARENTS = {"cta", "foot-links", "cats", "feat-list", "ag-list"}
+SKIP_TAGS = {"script", "style", "svg", "button", "head", "nav"}
+SKIP_CLASSES = {"window", "store", "termcard", "tag", "mark", "nav", "skip-link"}
+LIST_PARENTS = {"cta", "foot-links", "cats", "feat-list", "ag-list", "release-meta"}
 
 
 class Node:
@@ -117,6 +113,8 @@ def blocks(n, page_url):
         return ["#" * int(n.tag[1]) + " " + inline(n, page_url).strip()]
     if n.tag == "summary":
         return ["### " + inline(n, page_url).strip()]
+    if n.tag == "li":
+        return ["- " + inline(n, page_url).strip()]
     if n.tag == "table":
         return [table(n, page_url)]
     if "brew" in n.classes:
@@ -150,7 +148,7 @@ def join(parts):
 
 
 def convert(path):
-    src = (PUBLIC / path).read_text()
+    src = (DIST / path).read_text()
     page_url = SITE + "/" + path.removesuffix("index.html")
     tree = Tree()
     tree.feed(src)
@@ -169,35 +167,40 @@ def convert(path):
 
 
 def plain(fragment):
-    return html.unescape(re.sub(r"<[^>]+>", "", fragment)).strip()
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", fragment))).strip()
 
 
-def sync_json_ld(path, version):
-    """Keeps the FAQPage equal to the visible FAQ and softwareVersion equal to the app's MARKETING_VERSION."""
-    file = PUBLIC / path
+def sync_json_ld(path):
+    """Keep FAQPage equal to the visible FAQ, including Astro's rendered whitespace."""
+    file = DIST / path
     src = file.read_text()
     faq = [
         {"@type": "Question", "name": plain(q), "acceptedAnswer": {"@type": "Answer", "text": plain(a)}}
-        for q, a in re.findall(r"<details><summary>(.*?)</summary><p>(.*?)</p></details>", src)
+        for q, a in re.findall(r"<details>\s*<summary>(.*?)</summary>\s*<p>(.*?)</p>\s*</details>", src, re.S)
     ]
     match = re.search(r'<script type="application/ld\+json">(.*?)</script>', src, re.S)
+    if not match:
+        return
     data = json.loads(match.group(1))
     for node in data["@graph"]:
         if node["@type"] == "FAQPage":
             node["mainEntity"] = faq
-        if node["@type"] == "SoftwareApplication":
-            node["softwareVersion"] = version
     ld = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     assert "</" not in ld
     file.write_text(src[: match.start(1)] + ld + src[match.end(1) :])
 
 
-version = re.search(r"^MARKETING_VERSION = (\S+)", XCCONFIG.read_text(), re.M).group(1)
-full = []
-for path in PAGES:
-    sync_json_ld(path, version)
-    md = convert(path)
-    (PUBLIC / path).with_suffix(".md").write_text(md)
-    if path in FULL:
-        full.append(md)
-(PUBLIC / "llms-full.txt").write_text("\n".join(full))
+def main():
+    pages = sorted(path.relative_to(DIST).as_posix() for path in DIST.rglob("index.html"))
+    full = []
+    for path in sorted(pages, key=lambda path: (path != "index.html", path)):
+        sync_json_ld(path)
+        md = convert(path)
+        (DIST / path).with_suffix(".md").write_text(md)
+        if not path.startswith("fr/"):
+            full.append(md)
+    (DIST / "llms-full.txt").write_text("\n".join(full))
+
+
+if __name__ == "__main__":
+    main()

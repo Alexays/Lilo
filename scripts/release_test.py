@@ -14,8 +14,6 @@ CONFIG = Path("Xcode/Configs/Base.xcconfig")
 DIRECTORIES = [Path("lilo-ui"), Path("Lilo/Extensions/bridge-src")]
 BASE = "SWIFT_VERSION = 6.0\nCURRENT_PROJECT_VERSION = 5\nMARKETING_VERSION = 0.1.4\n"
 HISTORY = "## [0.1.4] - 2026-10-24\n\n- Existing release.\n"
-SITE_PAGES = [Path("site/public/index.html"), Path("site/public/fr/index.html")]
-PAGE = '<script type="application/ld+json">{"@type":"SoftwareApplication","softwareVersion":"0.1.4"}</script>\n'
 
 
 def setUpModule():
@@ -34,8 +32,6 @@ class ReleaseTests(unittest.TestCase):
         self.write(".changes/unreleased/.gitkeep", "")
         self.write("CHANGELOG.md", "# Changelog\n\n" + HISTORY)
         self.write(CONFIG, BASE)
-        for page in SITE_PAGES:
-            self.write(page, PAGE)
         for directory in DIRECTORIES:
             package = {"name": directory.name, "private": True, "version": "0.1.4"}
             self.write(directory / "package.json", json.dumps(package, indent=2) + "\n")
@@ -82,8 +78,6 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(lock["version"], version)
             self.assertEqual(lock["packages"][""]["version"], version)
             self.assertEqual(lock["packages"]["node_modules/example"]["version"], "1.2.3")
-        for page in SITE_PAGES:
-            self.assertEqual(self.read(page), PAGE.replace("0.1.4", version))
         self.assertFalse((self.root / "package.json").exists())
         self.assertFalse((self.root / "package-lock.json").exists())
         self.assertFalse((self.root / "node_modules").exists())

@@ -23,6 +23,8 @@ Vendor/
 # Node / Svelte
 node_modules/
 site/.wrangler/
+site/.astro/
+site/dist/
 
 # Playwright (make e2e)
 lilo-ui/test-results/

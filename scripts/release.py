@@ -6,8 +6,6 @@ import re
 import subprocess
 import sys
 
-SITE_PAGES = [Path("site/public/index.html"), Path("site/public/fr/index.html")]
-
 
 def version_updates(version, released):
     """The files whose content changes to carry `version`; `released` means a new release is being cut."""
@@ -33,13 +31,6 @@ def version_updates(version, released):
             if data["version"] != version or root["version"] != version:
                 data["version"] = root["version"] = version
                 updates[path] = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-    for path in SITE_PAGES:
-        page = path.read_text()
-        if '"softwareVersion":' not in page:
-            raise ValueError(f"Missing softwareVersion in {path}")
-        synced = re.sub(r'"softwareVersion":"[^"]*"', f'"softwareVersion":"{version}"', page)
-        if synced != page:
-            updates[path] = synced
     return updates
 
 

@@ -23,7 +23,7 @@ extensions.
 |------|---------|------------|
 | macOS | 26 or later | running Lilo |
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
-| Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge; all `make ui-preview` needs |
+| Node.js | 22.23.4+ (`.nvmrc` pins 22) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
@@ -128,8 +128,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests; release-note and
-version sync checks.
+tests; SwiftLint; the Xcode build and the Swift tests; commit hook tests; website checks and tests;
+release-note and version sync checks.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
@@ -143,6 +143,9 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make release-status` | pending release notes, changelog and app version consistency |
 | `make release-test` | release preparation and Sparkle build number synchronization tests (CI runs them; `make validate` does not) |
+| `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
+| `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
+| `make site-test` | website build, release notes, routes, links and metadata |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -176,7 +179,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
-- **Release tooling** (ubuntu): Changie fragments, version sync tests and website metadata consistency.
+- **Release tooling and website** (ubuntu): Changie fragments, version sync, Ultracite and Astro checks, website tests and a Cloudflare deployment dry run.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
