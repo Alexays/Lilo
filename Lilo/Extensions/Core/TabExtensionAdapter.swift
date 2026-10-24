@@ -32,8 +32,11 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
         extensionWindow
     }
 
+    /// None for a frozen tab: WebKit's `scripting.executeScript` would evaluate in it and raise, crashing the app,
+    /// where without a web view the extension gets an error, as Chrome gives for a tab put to sleep.
     func webView(for context: WKWebExtensionContext) -> WKWebView? {
-        engineTab?.view as? WKWebView
+        guard let webView = engineTab?.view as? WKWebView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return nil }
+        return webView
     }
 
     /// A new tab has no url until its first navigation starts, as Chrome reports none before it.

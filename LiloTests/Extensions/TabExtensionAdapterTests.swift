@@ -13,6 +13,29 @@ final class TabExtensionAdapterTests: XCTestCase {
         XCTAssertEqual(adapter.engineTab?.isPrivateBrowsing, false)
     }
 
+    /// An extension scripting a frozen tab must get an error, not reach a suspended web view that raises.
+    func testAFrozenTabLendsExtensionsNoWebView() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("tab-frozen-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try JSONSerialization.data(withJSONObject: ["manifest_version": 3, "name": "Tab", "version": "1.0"])
+            .write(to: folder.appendingPathComponent("manifest.json"))
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        let engineTab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        engineTab.wkWebView.loadHTMLString("<p>page</p>", baseURL: nil as URL?)
+        let loaded = await pollUntil { (try? await engineTab.wkWebView.evaluateJavaScript("document.body.textContent")) as? String == "page" }
+        XCTAssertTrue(loaded)
+        let adapter = TabExtensionAdapter(engineTab: engineTab)
+        XCTAssertIdentical(adapter.webView(for: context), engineTab.wkWebView)
+
+        engineTab.freeze()
+        XCTAssertNil(adapter.webView(for: context))
+
+        engineTab.reload()
+        XCTAssertIdentical(adapter.webView(for: context), engineTab.wkWebView, "a woken tab lends its web view again")
+        engineTab.teardown()
+    }
+
     func testANewTabHasNoURLUntilItsFirstNavigationStarts() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("tab-url-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
