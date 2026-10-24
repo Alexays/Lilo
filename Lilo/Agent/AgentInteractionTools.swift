@@ -504,7 +504,7 @@ enum AgentInteractionTools {
     }
 
     nonisolated private static func exportGIF(_ frames: [CGImage], filename: String?) throws -> URL {
-        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+        let downloads = BuildIdentity.defaultDownloadsDirectory
         var name = filename ?? "lilo-recording-\(Int(Date().timeIntervalSince1970)).gif"
         if !name.lowercased().hasSuffix(".gif") { name += ".gif" }
         let url = downloads.appending(path: (name as NSString).lastPathComponent)

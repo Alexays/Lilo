@@ -3,7 +3,7 @@ import Foundation
 /// The user-chosen downloads folder, or the system Downloads directory as fallback.
 @MainActor
 func resolvedDownloadsFolder(_ settingsFolder: URL?) -> URL {
-    settingsFolder ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+    settingsFolder ?? BuildIdentity.defaultDownloadsDirectory
 }
 
 /// Shared bookkeeping the download backends compose: in-flight items kept in memory so progress

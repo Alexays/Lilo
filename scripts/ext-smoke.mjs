@@ -36,9 +36,10 @@ const shards = await Promise.all(Array.from({ length: shardCount }, (_, shard) =
     ...shard === 0 ? ['-only-testing:LiloTests/RealExtensionSmokeTests/testProbeReportsEveryDeclaredNamespaceComplete',
       '-only-testing:LiloTests/RealExtensionSmokeTests/testStoreExtensionFeaturesWorkOnALocalPage'] : []];
   const log = join(out, `shard-${shard}.log`);
-  // An isolated data folder keeps the extensions off the native hosts installed on this Mac. In the
-  // temporary folder, as the agent socket inside it must fit a socket path.
+  // An isolated data folder keeps the extensions off the native hosts installed on this Mac and their
+  // downloads out of ~/Downloads. In the temporary folder, as the agent socket inside it must fit a socket path.
   const support = mkdtempSync(join(tmpdir(), 'lilo-smoke-'));
+  mkdirSync(join(support, 'Downloads'));
   const child = spawn('xcodebuild', ['test-without-building', ...xcodebuild, ...tests, '-resultBundlePath', join(out, `shard-${shard}.xcresult`)], {
     cwd: root,
     env: { ...process.env, TEST_RUNNER_LILO_SMOKE_IDS: ids.join(','), TEST_RUNNER_LILO_SMOKE_REPORT: report, TEST_RUNNER_LILO_APP_SUPPORT_DIR: support },

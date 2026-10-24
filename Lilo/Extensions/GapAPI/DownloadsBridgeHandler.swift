@@ -141,9 +141,7 @@ final class DownloadsBridgeHandler: GapHandler {
             }
 
         case "downloads.showDefaultFolder":
-            let folder = downloadManager.settingsFolder
-                ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-            if let folder { NSWorkspace.shared.open(folder) }
+            NSWorkspace.shared.open(downloadManager.settingsFolder ?? BuildIdentity.defaultDownloadsDirectory)
             return nil
 
         default:

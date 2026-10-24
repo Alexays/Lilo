@@ -19,4 +19,12 @@ enum BuildIdentity {
         }
         return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent(dataFolderName).path
     }
+
+    /// ~/Downloads, or Downloads inside LILO_APP_SUPPORT_DIR: an isolated run never writes to the user's folders.
+    static var defaultDownloadsDirectory: URL {
+        if let override = ProcessInfo.processInfo.environment["LILO_APP_SUPPORT_DIR"], !override.isEmpty {
+            return URL(fileURLWithPath: override, isDirectory: true).appendingPathComponent("Downloads", isDirectory: true)
+        }
+        return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+    }
 }

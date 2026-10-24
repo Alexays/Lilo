@@ -96,7 +96,7 @@ final class SettingsStore {
     var downloadsFolder: URL {
         get {
             get("downloadsFolder").map { URL(fileURLWithPath: $0) }
-                ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+                ?? BuildIdentity.defaultDownloadsDirectory
         }
         set { set("downloadsFolder", value: newValue.path) }
     }
