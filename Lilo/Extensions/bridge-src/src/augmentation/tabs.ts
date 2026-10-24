@@ -160,6 +160,24 @@ const windowMethods = ['get', 'getAll', 'getCurrent', 'getLastFocused', 'create'
 const patching = (names: string[], patch: Patch): Record<string, Patch> => Object.fromEntries(names.map((name) => [name, patch]));
 const withheld = fixingTabs((tabs) => tabs.forEach(withoutWithheld));
 const revealed = fixingTabs(withRevealed);
+
+/**
+ * WebKit rejects `chrome://` url patterns in `tabs.query`, which Chrome matches against its own pages: Lilo's one is
+ * the new tab page, which `query` reports as `chrome://newtab/`. Lilo matches those patterns, WebKit the others.
+ */
+export const chromePageQuery: Patch = (original, self) => function (this: unknown, queryInfo: any, callback?: (tabs: any[]) => void) {
+  const patterns: unknown[] = typeof queryInfo?.url === 'string' ? [queryInfo.url] : Array.isArray(queryInfo?.url) ? queryInfo.url : [];
+  const chromePages = patterns.filter((pattern): pattern is string => typeof pattern === 'string' && pattern.startsWith('chrome://'));
+  if (chromePages.length === 0) return original.apply(self(this), callback ? [queryInfo, callback] : [queryInfo]);
+  return callbackify(async () => {
+    const target = self(this);
+    const others = patterns.filter((pattern) => !chromePages.includes(pattern as string));
+    const { url: _url, ...rest } = queryInfo;
+    const matched = new Set(others.length ? (await original.call(target, { ...rest, url: others })).map((tab: any) => tab.id) : []);
+    const matchers = chromePages.map((pattern) => new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
+    return (await original.call(target, rest)).filter((tab: any) => matched.has(tab.id) || matchers.some((matcher) => matcher.test(tab.url ?? '')));
+  }, callback);
+};
 export const tabURLPatches = patching(tabMethods, withheld);
 export const windowURLPatches = patching(windowMethods, withheld);
 export const tabRevealedURLPatches = patching(tabMethods, revealed);

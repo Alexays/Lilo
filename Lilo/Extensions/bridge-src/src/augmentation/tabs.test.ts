@@ -168,4 +168,23 @@ describe('the tab url and title WebKit withholds as ""', () => {
     webKit.onCreated.fire(withheld());
     assert.deepEqual(heard, [withheld()]);
   });
+
+  it("match chrome:// url patterns, which WebKit rejects, against Chrome's new tab page", async () => {
+    const pages = [{ id: 11, index: 0, windowId: 1, url: '', title: '' }, { id: 12, index: 1, windowId: 1, url: 'https://example.com/', title: 'Example' }];
+    class Tabs {
+      query(info: any) {
+        const patterns = [info?.url ?? []].flat();
+        if (patterns.some((pattern: string) => pattern.startsWith('chrome://'))) return Promise.reject(new Error(`'${patterns[0]}' is not a valid pattern.`));
+        return Promise.resolve(structuredClone(patterns.length ? pages.filter((tab) => tab.url.startsWith('https://example.com/')) : pages));
+      }
+    }
+    (globalThis as any).chrome = { runtime: { getManifest: () => ({ permissions: ['tabs'] }) }, tabs: Object.assign(new Tabs(), { onCreated: new NativeEvent(), onUpdated: new NativeEvent() }) };
+    installChromeCompat({});
+    const chrome = (globalThis as any).chrome;
+    nextResult = [['chrome://newtab/', 'New Tab']];
+
+    assert.deepEqual((await chrome.tabs.query({ url: 'chrome://newtab/*' })).map((tab: any) => tab.id), [11]);
+    assert.deepEqual((await chrome.tabs.query({ url: ['https://example.com/*', 'chrome://newtab/*'] })).map((tab: any) => tab.id), [11, 12]);
+    assert.deepEqual(await new Promise((resolve) => chrome.tabs.query({ url: 'chrome://extensions/*' }, resolve)), []);
+  });
 });
