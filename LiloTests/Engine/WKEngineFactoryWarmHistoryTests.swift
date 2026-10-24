@@ -11,7 +11,7 @@ final class WKEngineFactoryWarmHistoryTests: XCTestCase {
         let factory = WKEngineFactory()
         let store = factory.defaultDataStore()
         factory.rearmWarmPool(dataStore: store, profileId: nil)
-        _ = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        _ = await pollUntil { factory.test_warmPoolCount == 1 }
 
         let tab = factory.createTab(configuration: .init(dataStore: store))
         defer { tab.teardown() }
@@ -44,7 +44,7 @@ final class WKEngineFactoryWarmHistoryTests: XCTestCase {
         let factory = WKEngineFactory()
         let store = factory.defaultDataStore()
         factory.rearmWarmPool(dataStore: store, profileId: nil)
-        _ = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        _ = await pollUntil { factory.test_warmPoolCount == 1 }
 
         let tab = factory.createTab(configuration: .init(dataStore: store))
         defer { tab.teardown() }

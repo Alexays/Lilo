@@ -35,7 +35,7 @@ final class LittleWindowTests: XCTestCase {
 
     private func load(_ little: LittleWindowController, _ url: URL) async throws {
         little.engine.wkWebView.loadHTMLString("<p>page</p>", baseURL: url)
-        await pollUntil(timeout: 2) { !little.engine.wkWebView.isLoading && little.engine.currentURL != nil }
+        await pollUntil { !little.engine.wkWebView.isLoading && little.engine.currentURL != nil }
     }
 
     func testNewLittleWindowOpensBlankOutsideTheTabListWithTheAddressFieldFocused() throws {

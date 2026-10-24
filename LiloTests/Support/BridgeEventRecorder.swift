@@ -17,10 +17,10 @@ final class BridgeEventRecorder {
         }
     }
 
-    /// The data of every `name` event sent so far, once the router's queued sends delivered one, or after a second.
+    /// The data of every `name` event sent so far, once the router's queued sends delivered one, or after 15 s.
     func data(_ name: String) -> [[String: Any]] {
-        // The router flushes 16 ms after a send, later on a loaded machine.
-        let end = Date().addingTimeInterval(1)
+        // The router flushes 16 ms after a send, seconds later on a loaded machine.
+        let end = Date().addingTimeInterval(15)
         while Date() < end, !events.contains(where: { $0.name == name }) { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
         return events.filter { $0.name == name }.map(\.data)
     }

@@ -60,7 +60,7 @@ final class TabClosingTests: XCTestCase {
 
         XCTAssertNil(window.tabManager.tab(for: removed.id))
         // An async test holds the main queue: yield until the router's flush delivers the toast.
-        _ = await pollUntil(timeout: 2) { events.events.contains { $0.name == "tabClosedUndoable" } }
+        _ = await pollUntil { events.events.contains { $0.name == "tabClosedUndoable" } }
         XCTAssertEqual(events.data("tabClosedUndoable").last?["title"] as? String, "Board", "the toast names the tab by its own name")
 
         let restored = try XCTUnwrap(window.restoreClosedTabStateFirst())

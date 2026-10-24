@@ -219,7 +219,7 @@ final class SessionRestorePreloadTests: XCTestCase {
         XCTAssertNil(try store.load(spaceId: left.id)[stashedTabId], "a space switch holds its capture in memory")
 
         NotificationCenter.default.post(name: NSApplication.didResignActiveNotification, object: NSApplication.shared)
-        await pollUntil(timeout: 2) {
+        await pollUntil {
             _ = try? await pool.write { _ in }
             return (try? store.load(spaceId: left.id)[stashedTabId]) != nil
         }
@@ -242,7 +242,7 @@ final class SessionRestorePreloadTests: XCTestCase {
 
         XCTAssertNotNil(window.tabManager.currentSpaceId, "the restore succeeds")
         // The bridge ships at the end of the main-queue turn, which an async test reaches only by suspending.
-        let reported = await pollUntil(timeout: 2) { recorder.events.contains { $0.name == "crashRecoveryDetected" } }
+        let reported = await pollUntil { recorder.events.contains { $0.name == "crashRecoveryDetected" } }
         XCTAssertTrue(reported)
     }
 

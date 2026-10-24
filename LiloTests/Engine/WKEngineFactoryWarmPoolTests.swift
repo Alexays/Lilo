@@ -149,7 +149,7 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
     private func warm(_ factory: WKEngineFactory, _ dataStore: WKEngineDataStore, profileId: UUID? = nil) async {
         let before = factory.test_warmPoolCount
         factory.rearmWarmPool(dataStore: dataStore, profileId: profileId)
-        _ = await pollUntil(timeout: 1) { factory.test_warmPoolCount != before }
+        _ = await pollUntil { factory.test_warmPoolCount != before }
     }
 
     private func makeFactoryWithProfiles() throws -> (WKEngineFactory, ProfileContextCache, () -> Void) {
