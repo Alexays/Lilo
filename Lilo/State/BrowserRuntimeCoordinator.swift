@@ -51,6 +51,7 @@ final class BrowserRuntimeCoordinator {
         switch command {
         case .activateTab,
              .setTabHomeURL,
+             .renameTab,
              .createFolder,
              .updateFolder,
              .setFolderCollapsed,
@@ -80,6 +81,7 @@ final class BrowserRuntimeCoordinator {
     private func shouldSyncActiveBrowserState(before command: BrowserCommand) -> Bool {
         switch command {
         case .activateTab,
+             .renameTab,
              .updateFolder,
              .setFolderCollapsed,
              .setFolderLock,

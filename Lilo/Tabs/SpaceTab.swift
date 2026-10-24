@@ -145,6 +145,14 @@ struct SpaceTab {
         finishMutation()
     }
 
+    mutating func renameTab(_ tabId: UUID, title: String?) {
+        let trimmed = title?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let customTitle = trimmed?.isEmpty == false ? trimmed : nil
+        guard storedTab(tabId)?.customTitle != customTitle,
+              updateTab(tabId, in: &state.tree, mutate: { $0.customTitle = customTitle }) else { return }
+        finishContentMutation()
+    }
+
     /// A folder created inside another lands first among its children, in the parent's section; a root one lands last.
     mutating func createFolder(_ folder: TabFolder, section: TabTreeItem.Section, parentFolderId: UUID? = nil) {
         guard section != .bookmarked, canNestFolder(height: 1, in: parentFolderId) else { return }

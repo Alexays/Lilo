@@ -201,7 +201,7 @@ function tabHaystack(tab: TabState): string {
 	}
 	let haystack = tabHaystacks.get(tab);
 	if (haystack === undefined) {
-		haystack = `${tabDisplayTitle(tab.title)} ${tab.url}`.toLowerCase();
+		haystack = `${tab.customTitle || tabDisplayTitle(tab.title)} ${tab.url}`.toLowerCase();
 		tabHaystacks.set(tab, haystack);
 	}
 	return haystack;
@@ -239,7 +239,7 @@ function createResult(
 }
 
 function toTabResult(tab: TabState, highlights?: number[]): CommandResult {
-	const title = tabDisplayTitle(tab.title);
+	const title = tab.customTitle || tabDisplayTitle(tab.title);
 	const { titleHighlights, subtitleHighlights } = highlights
 		? splitHighlights(highlights, title.length)
 		: { titleHighlights: undefined, subtitleHighlights: undefined };
@@ -253,7 +253,7 @@ function toTabResult(tab: TabState, highlights?: number[]): CommandResult {
 }
 
 function toBookmarkResult(tab: TabState, highlights?: number[]): CommandResult {
-	const title = tabDisplayTitle(tab.title);
+	const title = tab.customTitle || tabDisplayTitle(tab.title);
 	const { titleHighlights, subtitleHighlights } = highlights
 		? splitHighlights(highlights, title.length)
 		: { titleHighlights: undefined, subtitleHighlights: undefined };
@@ -418,7 +418,7 @@ function fuzzyTabResults(
 		limit,
 		minScore,
 		activeTabFirstSort(),
-		(tab) => tabDisplayTitle(tab.title).length,
+		(tab) => (tab.customTitle || tabDisplayTitle(tab.title)).length,
 		tabFrecency,
 	);
 	return {

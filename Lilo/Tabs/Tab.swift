@@ -25,6 +25,9 @@ struct Tab: Sendable, Equatable {
     var homeTitle: String?
     var homeFaviconDataURL: String?
     var homeFaviconDominantColor: String?
+    /// Pinned and bookmarked tabs: the user's name for the tab, shown in the sidebar and previews; the window title, history and
+    /// extensions keep `title`.
+    var customTitle: String?
     var isAudioPlaying: Bool = false
     var lastAudioStoppedAt: Date?
     /// Runtime only: paused from the sidebar media card, which keeps it there ready to play again.
@@ -79,7 +82,7 @@ struct Tab: Sendable, Equatable {
         homeURL: URL? = nil, homeTitle: String? = nil,
         homeFaviconDataURL: String? = nil, homeFaviconDominantColor: String? = nil,
         groupId: UUID? = nil, spaceId: UUID? = nil, windowId: UUID? = nil,
-        kind: Kind = .web, cwd: String? = nil, resumeCommand: String? = nil
+        kind: Kind = .web, cwd: String? = nil, resumeCommand: String? = nil, customTitle: String? = nil
     ) {
         self.id = id; self.url = url; self.title = title
         self.faviconDataURL = faviconDataURL; self.faviconDominantColor = faviconDominantColor
@@ -91,6 +94,7 @@ struct Tab: Sendable, Equatable {
         self.groupId = groupId
         self.spaceId = spaceId; self.windowId = windowId
         self.kind = kind; self.cwd = cwd; self.resumeCommand = resumeCommand
+        self.customTitle = customTitle
     }
 
     static func fallbackTitle(for url: URL?) -> String {
@@ -169,6 +173,14 @@ struct Tab: Sendable, Equatable {
                 data[field.rawValue] = url?.absoluteString ?? ""
             case .title:
                 data[field.rawValue] = title
+            case .customTitle:
+                put(field, customTitle ?? "")
+            case .homeTitle:
+                if isPinned || isBookmarked, let homeURL, url != nil, !matchesHomeURL(url) {
+                    put(field, homeTitle.flatMap { $0.isEmpty ? nil : $0 } ?? Tab.fallbackTitle(for: homeURL))
+                } else {
+                    put(field, "")
+                }
             case .isLoading:
                 put(field, isLoading)
             case .progress:

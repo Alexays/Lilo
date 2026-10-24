@@ -29,6 +29,7 @@
   } from "../../stores/tabPreview.svelte";
   import { subscribeHoverClear } from "../../lib/hoverClear";
   import { getSelectionTravelTarget } from "../../stores/selectionTravel.svelte";
+  import { getRenamingTabId, setRenamingTabId } from "../../stores/tabRename.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { getActingAgentTabIds } from "../../stores/agents.svelte";
   import { getHangSeconds, getPageHang } from "../../stores/pageHang.svelte";
@@ -188,11 +189,14 @@
 
   const isTerminal = $derived(tab.kind === "terminal");
   const isChanges = $derived(tab.kind === "changes");
-  const displayTitle = $derived.by((): string => {
+  const pageTitle = $derived.by((): string => {
     if (tab.title && tab.title !== DEFAULT_TAB_TITLE) return tab.title;
     if (tab.url && tab.url !== "") return fallbackTabTitle(tab.url);
     return t(isTerminal ? "tabItem.terminal" : "tabItem.newTab");
   });
+  // Away from its home page, a saved tab keeps the name of its home (or its own), and the page it is on follows.
+  const awayTitle = $derived(tab.homeTitle ? pageTitle : "");
+  const displayTitle = $derived(tab.customTitle || tab.homeTitle || pageTitle);
   const isEmptyNewTab = $derived(
     !isTerminal && !isChanges && !tab.url && (!tab.title || tab.title === "" || tab.title === DEFAULT_TAB_TITLE),
   );
@@ -241,7 +245,7 @@
   });
 
   // One line like web tabs: what runs, else the folder, which then joins on the right.
-  const terminalLabel = $derived(isTerminal ? terminalTitle(tab) : "");
+  const terminalLabel = $derived(isTerminal && !tab.customTitle ? terminalTitle(tab) : "");
   const terminalHint = $derived.by((): string => {
     if (isChanges) return terminalFolder(tab.cwd ?? "");
     if (!terminalLabel) return "";
@@ -303,8 +307,10 @@
   // two rows that actually flip rebuild their tooltip params.
   const isPreviewedTab = $derived(getTabPreviewTabId() === tab.id);
 
+  const isRenaming = $derived(interactive && getRenamingTabId() === tab.id);
+
   const tooltipContent = $derived({
-    text: displayTitle,
+    text: awayTitle ? `${displayTitle} / ${awayTitle}` : displayTitle,
     subtitle: isTerminal
       ? terminalStatusDetail || [tab.cwd, tab.gitBranch].filter(Boolean).join(" · ")
       : tooltipURL,
@@ -316,8 +322,47 @@
     anchor: tooltipAnchor,
     // The floating preview card already names the tab; both at once would stack
     // to the right of the row.
-    disabled: disableTooltip || isPreviewedTab,
+    disabled: disableTooltip || isPreviewedTab || isRenaming,
   });
+
+  let renameInput: HTMLInputElement | undefined = $state();
+  let draftTitle = $state("");
+
+  $effect(() => {
+    if (!isRenaming) return;
+    draftTitle = untrack(() => displayTitle);
+    clearTabPreview();
+    queueMicrotask(() => {
+      renameInput?.focus();
+      renameInput?.select();
+    });
+  });
+
+  function commitRename() {
+    if (!isRenaming) return;
+    setRenamingTabId(null);
+    const name = draftTitle.trim();
+    // Confirming the name the row already shows keeps an unnamed tab following its page.
+    if (name !== displayTitle) tabActions.rename(tab.id, name);
+  }
+
+  function handleRenameKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitRename();
+      tabItemEl?.focus();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      setRenamingTabId(null);
+      tabItemEl?.focus();
+    }
+  }
+
+  // Arc's cue: the favicon of a saved tab away from home takes it back there.
+  function returnHome() {
+    if (interactive && tab.homeTitle) tabActions.returnHome(tab.id);
+  }
 
   function handleContextMenu(e: MouseEvent) {
     e.preventDefault();
@@ -410,7 +455,9 @@
     leaveTabPreview();
   }}
 >
-  <div class="tab-icon">
+  <!-- A pointer shortcut: the keyboard reaches the home page through the row's menu. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="tab-icon" class:returns-home={!!tab.homeTitle && interactive} onclick={returnHome}>
     <!-- Transitions live on each branch root so an isLoading flip swaps content without
          destroying and rebuilding the whole keyed subtree (favicon img included) -->
     {#if isTerminal}
@@ -482,7 +529,26 @@
     {/if}
   </div>
 
-  <span class="tab-title">{terminalLabel || displayTitle}</span>
+  {#if isRenaming}
+    <input
+      bind:this={renameInput}
+      bind:value={draftTitle}
+      class="tab-title-input"
+      type="text"
+      spellcheck="false"
+      aria-label={t("tabItem.tabName")}
+      onclick={(e) => e.stopPropagation()}
+      ondblclick={(e) => e.stopPropagation()}
+      onkeydown={handleRenameKeydown}
+      onblur={commitRename}
+    />
+  {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <span
+      class="tab-title"
+      ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
+    >{terminalLabel || displayTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
+  {/if}
   {#if terminalHint}
     <span class="terminal-hint">{terminalHint}</span>
   {/if}
@@ -712,6 +778,37 @@
     font-size: var(--font-size-md);
     line-height: 1.3;
     color: var(--text-primary);
+  }
+
+  .away-title {
+    color: var(--text-secondary);
+  }
+
+  .away-slash {
+    margin: 0 5px;
+    opacity: 0.6;
+  }
+
+  .tab-icon.returns-home:hover {
+    opacity: 0.7;
+  }
+
+  .tab-title-input {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    box-sizing: border-box;
+    margin: 0 -7px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--bg-hover) 88%, transparent);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--font-size-md);
+    line-height: 1.3;
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
   }
 
   .tab-actions {

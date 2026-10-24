@@ -74,6 +74,8 @@ export const tabActions = {
 	unpin: emitId("unpinTab"),
 	setBookmarked: (id: string, bookmarked: boolean): void =>
 		emit(bookmarked ? "bookmarkTab" : "unbookmarkTab", { id }),
+	rename: (id: string, title: string): void => emit("renameTab", { id, title }),
+	returnHome: emitId("returnTabHome"),
 	setMuted: (id: string, muted: boolean): void =>
 		emit(muted ? "muteTab" : "unmuteTab", { id }),
 	setMicrophoneMuted: (id: string, muted: boolean): void =>

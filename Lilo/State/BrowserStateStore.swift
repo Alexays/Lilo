@@ -242,6 +242,12 @@ final class BrowserStateStore {
                 guard !tab.isClosed else { throw BrowserMutationError.closedTab(tabId) }
                 session.setTabHomeURL(tabId, url: url)
             }
+        case let .renameTab(spaceId, tabId, title):
+            return try mutateSpaceTab(spaceId: spaceId) { session in
+                guard let tab = session.tab(id: tabId) else { throw BrowserMutationError.missingTab(tabId) }
+                guard tab.isPinned || tab.isBookmarked else { return }
+                session.renameTab(tabId, title: title)
+            }
         case let .createFolder(spaceId, folder, section, parentFolderId):
             guard section != .bookmarked else { return try unchanged(spaceId: spaceId) }
             if let parentFolderId {

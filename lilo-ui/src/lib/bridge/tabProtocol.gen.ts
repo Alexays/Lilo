@@ -9,6 +9,8 @@ export interface BridgeTabSnapshot {
 	id: string;
 	url: string;
 	title: string;
+	customTitle?: string;
+	homeTitle?: string;
 	isLoading: boolean;
 	progress: number;
 	canGoBack: boolean;
@@ -54,6 +56,8 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		id: data.id,
 		url,
 		title: normalizeTabTitle(data.title, url),
+		customTitle: data.customTitle ?? "",
+		homeTitle: data.homeTitle ?? "",
 		isLoading: data.isLoading ?? false,
 		progress: data.progress ?? 0,
 		canGoBack: data.canGoBack ?? false,
@@ -101,6 +105,8 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	const out: Partial<BridgeTabSnapshot> = {};
 	if (data.url !== undefined) out.url = data.url;
 	if (data.title !== undefined) out.title = normalizeTabTitle(data.title, data.url);
+	if (data.customTitle !== undefined) out.customTitle = data.customTitle;
+	if (data.homeTitle !== undefined) out.homeTitle = data.homeTitle;
 	if (data.isLoading !== undefined) out.isLoading = data.isLoading;
 	if (data.progress !== undefined) out.progress = data.progress;
 	if (data.canGoBack !== undefined) out.canGoBack = data.canGoBack;

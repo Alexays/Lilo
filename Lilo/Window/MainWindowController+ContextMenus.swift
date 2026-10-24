@@ -92,6 +92,9 @@ extension MainWindowController {
         }
 
         let menu = NSMenu()
+        if tab.isPinned || tab.isBookmarked {
+            menu.addItem("Rename...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabRename", data: ["id": tabId]) }
+        }
         let actions = TabContextMenuActions.forTab(tab)
         if actions.contains(.createFolderFromTab) {
             menu.addItem("Create Folder from Tab".localized, icon: .newFolder) { self.createFolder(from: tab, spaceId: spaceId) }
@@ -127,7 +130,7 @@ extension MainWindowController {
             menu.addItem((tab.isPinned ? "Unpin Tab" : "Pin Tab").localized, icon: tab.isPinned ? .unpin : .pin, handler: togglePin)
         }
         if tab.isPinned || tab.isBookmarked, tab.homeURL != nil, let url = tab.url, url != tab.homeURL {
-            menu.addItem("Replace URL with Current".localized, icon: .replaceURL) {
+            menu.addItem((tab.isPinned ? "Set as Pinned Page" : "Replace URL with Current").localized, icon: .replaceURL) {
                 self.applyContextMenuStateCommands([.setTabHomeURL(spaceId: spaceId, tabId: uuid, url: url)])
             }
         }

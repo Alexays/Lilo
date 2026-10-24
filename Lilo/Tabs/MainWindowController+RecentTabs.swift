@@ -35,7 +35,7 @@ extension MainWindowController {
                   space.id == currentSpaceId || (!inPrivateSpace && !space.isPrivate && space.id != agentsSpaceId) else { return }
             let tab = context.browserState.runtimeOverlay.applied(to: stored.tab)
             rows.append([
-                "id": id.uuidString, "title": tab.title, "url": tab.url?.absoluteString ?? "",
+                "id": id.uuidString, "title": tab.customTitle ?? tab.title, "url": tab.url?.absoluteString ?? "",
                 "faviconDataURL": tab.faviconDataURL ?? "", "kind": tab.kind.rawValue,
                 "cwd": tab.cwd ?? "", "terminalState": tab.terminalState, "terminalCommand": tab.terminalCommand,
                 "spaceName": space.name, "leftAt": (leftAt?.timeIntervalSince1970 ?? 0) * 1000

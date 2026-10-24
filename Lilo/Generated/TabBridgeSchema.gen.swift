@@ -8,6 +8,8 @@ enum TabBridgeField: String, CaseIterable {
 	case id = "id"
 	case url = "url"
 	case title = "title"
+	case customTitle = "customTitle"
+	case homeTitle = "homeTitle"
 	case isLoading = "isLoading"
 	case progress = "progress"
 	case canGoBack = "canGoBack"
@@ -48,6 +50,7 @@ enum TabBridgeField: String, CaseIterable {
 	/// Fields excluded from runtime patches (progress/loading/nav-flag ticks).
 	/// Full snapshots and sidebarChanged upserts still carry these.
 	static let runtimeExcluded: Set<TabBridgeField> = [
+			.customTitle,
 			.faviconDataURL,
 			.faviconDominantColor
 	]

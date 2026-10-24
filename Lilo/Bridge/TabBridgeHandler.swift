@@ -88,6 +88,8 @@ final class TabBridgeHandler: BridgeHandler {
         "unpinTab",
         "bookmarkTab",
         "unbookmarkTab",
+        "renameTab",
+        "returnTabHome",
         "muteTab",
         "unmuteTab",
         "muteTabMicrophone",
@@ -204,6 +206,17 @@ final class TabBridgeHandler: BridgeHandler {
         case "bookmarkTab", "unbookmarkTab":
             withTabContext(message) { tab, spaceId in
                 _ = tryApplyStateCommand(.setBookmarked(spaceId: spaceId, tabId: tab.id, isBookmarked: message.action == "bookmarkTab"))
+            }
+
+        case "renameTab":
+            withTabContext(message) { tab, spaceId in
+                _ = tryApplyStateCommand(.renameTab(spaceId: spaceId, tabId: tab.id, title: message.string("title", default: "")))
+            }
+
+        case "returnTabHome":
+            withTabContext(message) { tab, _ in
+                guard tab.isPinned || tab.isBookmarked, let home = tab.homeURL else { return }
+                tabManager.load(home, inTab: tab.id)
             }
 
         case "muteTab", "unmuteTab":

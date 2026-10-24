@@ -255,6 +255,15 @@ async function installFakeHost(
 				case "restoreClosedTab":
 					restoreClosedTab();
 					break;
+				case "renameTab": {
+					const spaceId = findTabSpace(id);
+					const renamed = spaceId ? tabsOf(spaceId).find((t) => t.id === id) : undefined;
+					if (spaceId && renamed) {
+						renamed.customTitle = ((message.payload as { title: string }).title ?? "").trim();
+						echo(spaceId, [spaceId]);
+					}
+					break;
+				}
 				case "moveTabToSpace":
 					moveTabToSpace(payload.tabId ?? "", payload.spaceId ?? "");
 					break;

@@ -534,6 +534,10 @@ export interface BridgeCommandPayloadMap {
 	unpinTab: { id: string };
 	bookmarkTab: { id: string };
 	unbookmarkTab: { id: string };
+	// A blank title gives the tab its page title back.
+	renameTab: { id: string; title: string };
+	// Load a pinned or bookmarked tab's home page again.
+	returnTabHome: { id: string };
 	muteTab: { id: string };
 	unmuteTab: { id: string };
 	muteTabMicrophone: { id: string };
@@ -984,6 +988,7 @@ export interface BridgeEventPayloadMap {
 	tabSwitcherClosed: { commit: boolean };
 	crashRecoveryDetected: EmptyPayload;
 	editTabFolder: { id: string };
+	beginTabRename: { id: string };
 	openSpaceEditor: { id: string };
 	openAddSpaceEditor: EmptyPayload;
 	urlCopied: EmptyPayload;

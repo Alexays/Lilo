@@ -26,6 +26,7 @@ import { initSettingsStore } from "./settings.svelte";
 import { initShortcutKeysStore } from "./shortcutKeys.svelte";
 import { applySpaceInitialState, initSpaceStore } from "./spaces.svelte";
 import { initTabMemoryStore } from "./tabMemory.svelte";
+import { initTabRenameStore } from "./tabRename.svelte";
 import { initTabShareStore } from "./tabShare.svelte";
 import { initTabSwitcherStore } from "./tabSwitcher.svelte";
 import { initUndoToastStore } from "./undoToast.svelte";
@@ -73,6 +74,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initSearchEngineStore,
 	initSettingsStore,
 	initTabMemoryStore,
+	initTabRenameStore,
 	initTabShareStore,
 	initTabSwitcherStore,
 	initUndoToastStore,

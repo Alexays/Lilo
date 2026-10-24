@@ -149,8 +149,8 @@
     return cachedURLString(bookmarkSubtitleCache, url, tooltipTabURL);
   }
 
-  function bookmarkLabel(bookmark: { title?: string; url?: string }): string {
-    return bookmark.title?.trim() || bookmarkHost(bookmark);
+  function bookmarkLabel(bookmark: { title?: string; customTitle?: string; url?: string }): string {
+    return bookmark.customTitle || bookmark.title?.trim() || bookmarkHost(bookmark);
   }
 
   // Only the hovered tile reads the memory estimate, so a process snapshot doesn't rebuild

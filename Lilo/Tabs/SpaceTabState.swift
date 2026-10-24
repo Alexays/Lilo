@@ -16,6 +16,8 @@ struct StoredTab: Codable, Sendable, Equatable, Identifiable {
     var kind = Tab.Kind.web
     var cwd: String?
     var resumeCommand: String?
+    /// The name the user gave a pinned or bookmarked tab, shown in the sidebar instead of the page title.
+    var customTitle: String?
 }
 
 extension StoredTab {
@@ -23,7 +25,7 @@ extension StoredTab {
         case id, url, title, faviconDominantColor
         case isPinned, isBookmarked, isClosed
         case homeURL, homeTitle, homeFaviconDominantColor
-        case kind, cwd, resumeCommand
+        case kind, cwd, resumeCommand, customTitle
     }
 
     init(from decoder: Decoder) throws {
@@ -42,6 +44,7 @@ extension StoredTab {
         kind = try container.decodeIfPresent(String.self, forKey: .kind).flatMap(Tab.Kind.init(rawValue:)) ?? .web
         cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
         resumeCommand = try container.decodeIfPresent(String.self, forKey: .resumeCommand)
+        customTitle = try container.decodeIfPresent(String.self, forKey: .customTitle)
     }
 
     /// Favicon data URLs (~800 B of base64 each) are deliberately not encoded: they persist in
@@ -62,6 +65,7 @@ extension StoredTab {
         if kind != .web { try container.encode(kind.rawValue, forKey: .kind) }
         try container.encodeIfPresent(cwd, forKey: .cwd)
         try container.encodeIfPresent(resumeCommand, forKey: .resumeCommand)
+        try container.encodeIfPresent(customTitle, forKey: .customTitle)
     }
 }
 
@@ -101,6 +105,8 @@ extension StoredTab {
             if homeURL == nil { captureHomeSnapshot() }
         } else {
             clearHomeSnapshot()
+            // A regular tab has no rename entry to change it back.
+            customTitle = nil
         }
     }
 }
@@ -446,7 +452,8 @@ extension StoredTab {
             homeFaviconDominantColor: tab.homeFaviconDominantColor,
             kind: tab.kind,
             cwd: tab.cwd,
-            resumeCommand: tab.resumeCommand
+            resumeCommand: tab.resumeCommand,
+            customTitle: tab.customTitle
         )
     }
 }
@@ -485,7 +492,8 @@ extension Tab {
             spaceId: spaceId,
             kind: storedTab.kind,
             cwd: storedTab.cwd,
-            resumeCommand: storedTab.resumeCommand
+            resumeCommand: storedTab.resumeCommand,
+            customTitle: storedTab.customTitle
         )
     }
 }

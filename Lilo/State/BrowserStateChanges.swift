@@ -199,6 +199,8 @@ enum BrowserCommand: Sendable {
     case setPinned(spaceId: UUID, tabId: UUID, isPinned: Bool)
     case setBookmarked(spaceId: UUID, tabId: UUID, isBookmarked: Bool)
     case setTabHomeURL(spaceId: UUID, tabId: UUID, url: URL?)
+    /// A pinned or bookmarked tab's own name; nil or blank goes back to the page title.
+    case renameTab(spaceId: UUID, tabId: UUID, title: String?)
     /// With a parent, the folder lands first in it, in the parent's section.
     case createFolder(spaceId: UUID, folder: TabFolder, section: TabTreeItem.Section, parentFolderId: UUID? = nil)
     case updateFolder(spaceId: UUID, folderId: UUID, name: String, color: String, isCollapsed: Bool)

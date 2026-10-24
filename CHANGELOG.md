@@ -19,6 +19,8 @@ What changes in each Lilo release, for people using it. The format follows
 - Shift Command 2 captures a selected area of the page.
 - The emoji picker of a space searches and names emoji in the browser's language.
 - A French version of the website.
+- Rename a pinned tab from its menu or by double-clicking its title: the name stays across page title changes, navigations and relaunches, and an empty name brings the page title back.
+- A pinned tab away from its page shows a slash and the page it is on after its name; clicking its icon takes it back, and Set as Pinned Page makes the current page its new one.
 
 ### Fixed
 
