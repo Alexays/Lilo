@@ -30,7 +30,7 @@ The Undici override patches Miniflare's pinned HTTP client. Remove it when Minif
 - `src/scripts/demo.ts` holds the home page’s interactive demo, bundled by Astro through `components/Demo.astro`. JavaScript/TypeScript modules, including tests and tool configs, use `.ts`.
 - `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
-The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Edit the Astro sources, then rebuild.
+The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.
 
 ## Changelog
 

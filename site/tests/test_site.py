@@ -70,6 +70,16 @@ class SiteTests(unittest.TestCase):
                             ids = {item.attrs.get("id") for item in tree(path)}
                             self.assertIn(unquote(url.fragment), ids)
 
+    def test_llms_index_and_full_content_ship_in_the_build(self):
+        index = (DIST / "llms.txt").read_text()
+        full = (DIST / "llms-full.txt").read_text()
+        self.assertIn("https://getlilo.app/llms-full.txt", index)
+        for page in PAGES:
+            if not page.startswith("fr/"):
+                with self.subTest(page=page):
+                    markdown = (DIST / page).with_suffix(".md").read_text()
+                    self.assertIn(markdown.strip(), full)
+
     def test_app_version_and_faq_metadata_match_the_page(self):
         config = (DIST.parents[1] / "Xcode/Configs/Base.xcconfig").read_text()
         version = re.search(r"^MARKETING_VERSION = (\S+)$", config, re.M)[1]
