@@ -321,11 +321,11 @@ run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
 ## Build the UI bundle and create release artifacts
-release: vt-build ui-build ext-bridge-build
+release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build ui-build ext-bridge-build
+release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.
