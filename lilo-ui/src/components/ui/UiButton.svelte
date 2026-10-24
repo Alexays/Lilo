@@ -4,6 +4,8 @@
   interface Props {
     variant?: "primary" | "secondary" | "ghost" | "danger";
     disabled?: boolean;
+    /** Waiting on what the click started: a spinner, and no second click. */
+    busy?: boolean;
     onclick?: (event: MouseEvent) => void;
     children?: Snippet;
   }
@@ -11,6 +13,7 @@
   let {
     variant = "secondary",
     disabled = false,
+    busy = false,
     onclick,
     children,
   }: Props = $props();
@@ -21,10 +24,13 @@
   class:primary={variant === "primary"}
   class:ghost={variant === "ghost"}
   class:danger={variant === "danger"}
+  class:busy
   type="button"
-  {disabled}
+  disabled={disabled || busy}
+  aria-busy={busy}
   {onclick}
 >
+  {#if busy}<span class="ui-button-spinner" aria-hidden="true"></span>{/if}
   {@render children?.()}
 </button>
 
@@ -88,8 +94,32 @@
     outline-offset: 1px;
   }
 
-  .ui-button:disabled {
+  .ui-button:disabled:not(.busy) {
     opacity: var(--disabled-opacity);
+  }
+
+  .ui-button:disabled {
     cursor: default;
+  }
+
+  .ui-button.busy {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .ui-button-spinner {
+    width: 0.8em;
+    height: 0.8em;
+    border: 0.15em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: ui-button-spin 0.8s linear infinite;
+  }
+
+  @keyframes ui-button-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>

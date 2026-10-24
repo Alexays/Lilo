@@ -24,6 +24,8 @@ let _defaultBrowser = $state({ isDefault: false, shouldInvite: false });
 let _sitePermissions = $state.raw<BridgeSitePermissionSnapshot[]>([]);
 let _websiteData = $state.raw<BridgeWebsiteDataSnapshot[]>([]);
 let _zoomLevels = $state.raw<BridgeZoomLevelSnapshot[]>([]);
+// Agent apps whose connect is still writing their configuration.
+let _connectingAgentClients = $state.raw<string[]>([]);
 let _featureFlags = $state.raw<BridgeFeatureFlagSnapshot[]>([]);
 let _deviceSetup = $state.raw<BridgeDeviceSetupSnapshot>({ label: "" });
 let _blockerStatus = $state.raw<BridgeContentBlockerStatus | null>(null);
@@ -89,6 +91,7 @@ export function initSettingsStore(): void {
 		_shortcutConflict = data;
 	});
 	on("settingsActionCompleted", (data) => {
+		if (data.action === "connectAgentClient") _connectingAgentClients = [];
 		_status = data;
 		if (statusTimer) clearTimeout(statusTimer);
 		statusTimer = setTimeout(() => {
@@ -171,6 +174,16 @@ export function setClearDataSheetOpen(open: boolean): void {
 
 export function getAppIcons(): { id: string; dataURL: string }[] {
 	return _appIcons;
+}
+
+export function connectAgentClient(client: string): void {
+	if (_connectingAgentClients.includes(client)) return;
+	_connectingAgentClients = [..._connectingAgentClients, client];
+	settingsActions.connectAgentClient(client);
+}
+
+export function isConnectingAgentClient(client: string): boolean {
+	return _connectingAgentClients.includes(client);
 }
 
 export function getAgentClientsSnapshot(): BridgeAgentClientsSnapshot {

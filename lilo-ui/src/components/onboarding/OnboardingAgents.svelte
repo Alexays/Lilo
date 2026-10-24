@@ -3,7 +3,7 @@
   import UiToggle from "../ui/UiToggle.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { settingsActions } from "../../lib/bridge/actions";
-  import { getAgentClientsSnapshot, getSetting, setSetting } from "../../stores/settings.svelte";
+  import { connectAgentClient, getAgentClientsSnapshot, getSetting, isConnectingAgentClient, setSetting } from "../../stores/settings.svelte";
   import { goBack, goNext } from "../../stores/onboarding.svelte";
 
   settingsActions.loadAgentClients();
@@ -31,7 +31,10 @@
       {#if client.configured}
         <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
       {:else}
-        <button class="ob-btn primary small" onclick={() => settingsActions.connectAgentClient(client.id)}>{t("settings.agents.connect")}</button>
+        {@const busy = isConnectingAgentClient(client.id)}
+        <button class="ob-btn primary small" class:busy disabled={busy} aria-busy={busy} onclick={() => connectAgentClient(client.id)}>
+          {#if busy}<span class="spinner" aria-hidden="true"></span>{/if}{t("settings.agents.connect")}
+        </button>
       {/if}
     </div>
   {/each}
@@ -43,5 +46,8 @@
 </div>
 
 <style>
+  .ob-btn.busy:disabled { opacity: 1; display: inline-flex; align-items: center; gap: var(--space-6); }
+  .spinner { width: 0.8em; height: 0.8em; border: 0.15em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .app { width: 30px; height: 30px; flex: none; }
 </style>

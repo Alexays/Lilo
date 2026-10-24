@@ -2,7 +2,7 @@
   import { settingsActions } from "../../lib/bridge/actions";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getAgentClients } from "../../stores/agents.svelte";
-  import { getAgentClientsSnapshot } from "../../stores/settings.svelte";
+  import { connectAgentClient, getAgentClientsSnapshot, isConnectingAgentClient } from "../../stores/settings.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
@@ -55,7 +55,7 @@
           <UiBadge tone="success">{t("settings.agents.connectedBadge")}</UiBadge>
         {/if}
         {#if row.client && !row.client.configured}
-          <UiButton variant="primary" onclick={() => settingsActions.connectAgentClient(row.client?.id ?? "")}>
+          <UiButton variant="primary" busy={isConnectingAgentClient(row.client.id)} onclick={() => connectAgentClient(row.client?.id ?? "")}>
             {t("settings.agents.connect")}
           </UiButton>
         {/if}

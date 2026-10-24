@@ -274,3 +274,25 @@ test("a search result's highlight clears with Reduce motion on", async ({ page }
 	await expect(row).toHaveClass(/setting-flash/);
 	await expect(row).not.toHaveClass(/setting-flash/, { timeout: 4000 });
 });
+
+test("connecting an agent app shows it working until Lilo answers", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { agentControlEnabled: "true" } }));
+	await page.evaluate(() => window.__lilo!.receive({
+		event: "agentClientsLoaded",
+		clients: [{ id: "claudeCode", configured: false, icon: null }],
+		allowed: [],
+	}));
+	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
+
+	const connect = page.locator(".agent-row .ui-button.primary");
+	await connect.click();
+	await expect(connect).toHaveAttribute("aria-busy", "true");
+	await expect(connect).toBeDisabled();
+	await connect.click({ force: true });
+	expect((await sentCommands(page)).filter((command) => command.action === "connectAgentClient")).toHaveLength(1);
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "settingsActionCompleted", action: "connectAgentClient", message: "Connected", level: "info" }));
+	await expect(connect).toHaveAttribute("aria-busy", "false");
+});
