@@ -21,6 +21,10 @@ BRIDGE_STAMP := build/.ext-bridge-build.stamp
 CHROME_UI_ASSETS := Lilo/Generated/ChromeUIAssets.swift
 NATIVE_STRINGS := Lilo/Generated/NativeStrings.swift
 GHOSTTY_SHA := 83edd491e3024ae5e50393d62877b8897da1cccd
+# GhosttyVt.xcframework built from GHOSTTY_SHA by .github/workflows/ghostty-vt.yml, whose release
+# notes give the sha256 for VT_SHA256. Deferred, so the $(shell) runs only when vt-build does.
+VT_URL = https://github.com/Alexays/Lilo/releases/download/ghostty-vt-$(shell printf %.12s $(GHOSTTY_SHA))/GhosttyVt.xcframework.zip
+VT_SHA256 := 33b7d83fcdc8ada0ab3a377bd9f0cb0880ad40401cf12acb9bbde99d7ba606f2
 GHOSTTY_DIR := build/ghostty
 VT_STAMP := Vendor/.ghostty-sha
 DMGBUILD_VERSION := 1.6.5
@@ -45,7 +49,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build check-commits startup-bench energy-sample energy-compare \
+	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip check-commits startup-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits
 
@@ -272,12 +276,28 @@ dmg-background:
 bridge-gen:
 	@node scripts/generate_bridge_protocol.mjs
 
-# A no-op once the stamp matches GHOSTTY_SHA.
-## Build libghostty-vt (Vendor/GhosttyVt.xcframework) from the pinned Ghostty commit
+# A no-op once the stamp matches GHOSTTY_SHA. It builds from source when VT_FROM_SOURCE=1, and when
+# the download fails (release not published yet, no network) or does not match VT_SHA256.
+## Download the prebuilt libghostty-vt (Vendor/GhosttyVt.xcframework) for the pinned Ghostty commit
 vt-build:
-	@if [ "$$(cat $(VT_STAMP) 2>/dev/null)" = "$(GHOSTTY_SHA)" ]; then exit 0; fi; \
-	if ! zig version 2>/dev/null | grep -q '^0\.16\.'; then \
-		echo "make vt-build requires Zig 0.16.x (found: $$(zig version 2>/dev/null || echo none)). Install it with: brew install zig" >&2; exit 1; \
+	@[ "$$(cat $(VT_STAMP) 2>/dev/null)" = "$(GHOSTTY_SHA)" ] && exit 0; \
+	[ "$(VT_FROM_SOURCE)" = 1 ] && exec $(MAKE) --no-print-directory vt-build-source; \
+	zip=build/GhosttyVt-$(GHOSTTY_SHA).zip; mkdir -p build Vendor; \
+	if ! curl -fsSL --retry 2 -o "$$zip" "$(VT_URL)"; then \
+		/bin/rm -f "$$zip"; \
+		echo "make vt-build: no prebuilt libghostty-vt at $(VT_URL), building it from source instead." >&2; \
+		exec $(MAKE) --no-print-directory vt-build-source; \
+	fi; \
+	if ! echo "$(VT_SHA256)  $$zip" | shasum -a 256 -c --status; then \
+		echo "make vt-build: $(VT_URL) has sha256 $$(shasum -a 256 "$$zip" | cut -d' ' -f1), not VT_SHA256, building it from source instead." >&2; \
+		/bin/rm -f "$$zip"; exec $(MAKE) --no-print-directory vt-build-source; \
+	fi; \
+	/bin/rm -rf Vendor/GhosttyVt.xcframework && unzip -q "$$zip" -d Vendor && /bin/rm -f "$$zip" && echo $(GHOSTTY_SHA) > $(VT_STAMP)
+
+## Build libghostty-vt from the pinned Ghostty commit with Zig 0.16, instead of downloading it
+vt-build-source:
+	@if ! zig version 2>/dev/null | grep -q '^0\.16\.'; then \
+		echo "Building libghostty-vt from source requires Zig 0.16.x (found: $$(zig version 2>/dev/null || echo none)). Install it with: brew install zig" >&2; exit 1; \
 	fi; \
 	set -e; \
 	mkdir -p $(GHOSTTY_DIR) Vendor; \
@@ -289,6 +309,14 @@ vt-build:
 	/bin/rm -rf Vendor/GhosttyVt.xcframework; \
 	/bin/cp -R $(GHOSTTY_DIR)/zig-out/lib/ghostty-vt.xcframework Vendor/GhosttyVt.xcframework; \
 	echo $(GHOSTTY_SHA) > $(VT_STAMP)
+
+# Fixed timestamps and file order, so one build always zips to the same bytes.
+## Build libghostty-vt from source and zip it to build/GhosttyVt.xcframework.zip, the asset vt-build downloads
+vt-zip: vt-build-source
+	@/bin/rm -f build/GhosttyVt.xcframework.zip; \
+	/usr/bin/find Vendor/GhosttyVt.xcframework -exec touch -h -t 200001010000 {} +; \
+	(cd Vendor && /usr/bin/find GhosttyVt.xcframework | LC_ALL=C sort | zip -qX -y ../build/GhosttyVt.xcframework.zip -@); \
+	shasum -a 256 build/GhosttyVt.xcframework.zip
 
 ## Build every commit of BASE..HEAD with SwiftPM in a throwaway worktree (BASE=origin/main)
 check-commits:

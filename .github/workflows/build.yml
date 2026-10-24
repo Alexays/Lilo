@@ -77,17 +77,6 @@ jobs:
           cache-dependency-path: lilo-ui/package-lock.json
       - run: xcodebuild -downloadComponent MetalToolchain
       - run: brew install swiftlint xcodegen
-      - id: ghostty
-        run: echo "sha=$(sed -n 's/^GHOSTTY_SHA := //p' Makefile)" >> "$GITHUB_OUTPUT"
-      - id: vt
-        uses: actions/cache@v6
-        with:
-          path: Vendor
-          key: ghostty-vt-${{ steps.ghostty.outputs.sha }}
-      - if: steps.vt.outputs.cache-hit != 'true'
-        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
       - uses: actions/cache@v6
         with:
           path: .derived.noindex/xcode/SourcePackages
@@ -125,17 +114,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
       - run: xcodebuild -downloadComponent MetalToolchain
-      - id: ghostty
-        run: echo "sha=$(sed -n 's/^GHOSTTY_SHA := //p' Makefile)" >> "$GITHUB_OUTPUT"
-      - id: vt
-        uses: actions/cache@v6
-        with:
-          path: Vendor
-          key: ghostty-vt-${{ steps.ghostty.outputs.sha }}
-      - if: steps.vt.outputs.cache-hit != 'true'
-        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
-        with:
-          version: 0.16.0
       - name: Run startup benchmark
         shell: bash
         run: |

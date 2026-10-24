@@ -22,7 +22,7 @@ Declared in `project.yml` and `Package.swift`, pinned in `Package.resolved`.
 
 ## libghostty-vt (Ghostty)
 
-- Built by `make vt-build` from the Ghostty commit pinned in the `Makefile`
+- Built from the Ghostty commit pinned in the `Makefile` (`make vt-build` downloads that build, `make vt-build-source` compiles it)
   (https://github.com/ghostty-org/ghostty) and linked statically into Lilo
 - License: MIT - Copyright (c) 2024 Mitchell Hashimoto, Ghostty contributors
 - Bundles simdutf (Apache License 2.0 or MIT), Highway (Apache License 2.0 or

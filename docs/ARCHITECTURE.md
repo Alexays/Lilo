@@ -51,7 +51,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `test-extensions/` | Extensions loaded by tests and by hand: the MV3 probe and the Chrome contract cases |
 | `site/` | The getlilo.app landing page ([site/README.md](../site/README.md)) |
 | `Xcode/Configs/` | Build settings, including the app version (see [RELEASING.md](RELEASING.md#version-bump)) |
-| `Vendor/` | Not committed: `GhosttyVt.xcframework`, built by `make vt-build` |
+| `Vendor/` | Not committed: `GhosttyVt.xcframework`, downloaded by `make vt-build` (or built by `make vt-build-source`) |
 
 ### Placement rule
 

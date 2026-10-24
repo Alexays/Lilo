@@ -1,0 +1,72 @@
+# Builds libghostty-vt from the Makefile's GHOSTTY_SHA and publishes the zip `make vt-build` downloads,
+# as a release tagged ghostty-vt-<first 12 characters of the sha>. Prerelease, so it never becomes
+# releases/latest, which the app's updater and the site's download buttons read. A build is not
+# byte-reproducible: after a new release, copy the sha256 from its notes into VT_SHA256.
+
+name: libghostty-vt
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [Makefile]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the release exists
+    if: github.repository == 'Alexays/Lilo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.tag.outputs.sha }}
+      tag: ${{ steps.tag.outputs.tag }}
+      exists: ${{ steps.tag.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(sed -n 's/^GHOSTTY_SHA := //p' Makefile)
+          tag="ghostty-vt-${sha:0:12}"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$tag is already published." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  publish:
+    name: Build and publish
+    needs: check
+    if: needs.check.outputs.exists != 'true'
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - run: make vt-zip
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.check.outputs.sha }}
+          TAG: ${{ needs.check.outputs.tag }}
+        run: |
+          sum=$(shasum -a 256 build/GhosttyVt.xcframework.zip | cut -d' ' -f1)
+          gh release create "$TAG" build/GhosttyVt.xcframework.zip \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "libghostty-vt ${SHA:0:12}" \
+            --notes "GhosttyVt.xcframework built from ghostty-org/ghostty@$SHA with Zig 0.16 for \`make vt-build\`. Not a Lilo release.
+
+          VT_SHA256 := $sum"
+          echo "Published $TAG. VT_SHA256 := $sum" >> "$GITHUB_STEP_SUMMARY"

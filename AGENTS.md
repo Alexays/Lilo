@@ -18,7 +18,7 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 - **Efficiency first.** Do the least work possible: no polling, no redundant renders or recomputation, no resending unchanged data, nothing at idle. A feature that costs CPU, memory or battery when unused is a bug.
 - **Comments** only for what the code cannot say: a constraint, a non-obvious why, a deliberate oddity. Never restate the next line or record history. Code, comments and commit messages are in English; user-facing copy is translated.
 - **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (`fix(sidebar): ...`), one logical change each.
-- One web engine (WebKit), direct dependencies only. Terminal tabs use libghostty-vt, built from a pinned Ghostty commit by `make vt-build`.
+- One web engine (WebKit), direct dependencies only. Terminal tabs use libghostty-vt from a pinned Ghostty commit: `make vt-build` downloads it prebuilt and checksum-pinned, `make vt-build-source` compiles it with Zig.
 
 ## Gotchas
 
