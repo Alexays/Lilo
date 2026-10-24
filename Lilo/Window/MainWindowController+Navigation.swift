@@ -133,16 +133,6 @@ extension MainWindowController: WKWebViewTab.Delegate {
                         return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
                     }
                 profileContext?.history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
-                // Fire chrome.history.onVisited to extensions (gap event; the store has no extension
-                // awareness, so we emit at this MainActor call site where the registry is in scope).
-                profileContext?.extensions.emitGapEvent("history", "onVisited", args: [[
-                    "id": url.absoluteString,
-                    "url": url.absoluteString,
-                    "title": tab.currentTitle ?? "",
-                    "lastVisitTime": Date().timeIntervalSince1970 * 1000,
-                    "visitCount": 1,
-                    "typedCount": 0
-                ]], requiredPermission: "history")
             }
         }
     }

@@ -277,24 +277,15 @@ final class SettingsBridgeHandler: BridgeHandler {
             }
 
         case "clearHistory":
-            // Fire chrome.history.onVisitRemoved for the user's "Clear browsing data" action, only on
-            // a successful delete. A full clear reports allHistory:true (empty urls); a range clear
-            // reports the removed URLs.
             guard let historyStore = historyStoreProvider() else {
                 bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "clearHistory", message: "No history store available".localized, level: "error")
                 break
             }
             do {
                 if let since = Self.historyCutoff(for: message.string("range") ?? "all") {
-                    let removed = try await Task.detached { try historyStore.deleteEntries(since: since) }.value
-                    extensionRegistryProvider()?.emitGapEvent(
-                        "history", "onVisitRemoved",
-                        args: [["allHistory": false, "urls": removed]], requiredPermission: "history")
+                    _ = try await Task.detached { try historyStore.deleteEntries(since: since) }.value
                 } else {
                     try await Task.detached { try historyStore.clearAll() }.value
-                    extensionRegistryProvider()?.emitGapEvent(
-                        "history", "onVisitRemoved",
-                        args: [["allHistory": true, "urls": [String]()]], requiredPermission: "history")
                 }
                 bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "clearHistory", message: "Browsing history cleared".localized)
             } catch {

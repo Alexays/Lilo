@@ -22,6 +22,15 @@ struct HistoryEntry: Sendable, Identifiable, Codable, FetchableRecord, Persistab
 /// Manages browsing history with GRDB and FTS5 full-text search.
 final class HistoryStore: @unchecked Sendable {
 
+    enum Change: Sendable {
+        /// Each page's row once its visits are written.
+        case visited([HistoryEntry])
+        case removed(allHistory: Bool, urls: [String])
+    }
+
+    /// Told of every visit written and every removal, whoever made it, on the thread that wrote it. Set once, before any use.
+    var onChange: (@Sendable (Change) -> Void)?
+
     private struct PendingVisit {
         let url: String
         var title: String
@@ -233,16 +242,18 @@ final class HistoryStore: @unchecked Sendable {
 
     func deleteURL(_ url: String) throws {
         flushPendingWrites()
-        _ = try dbPool.write { db in try HistoryEntry.filter(HistoryEntry.Columns.url == url).deleteAll(db) }
+        let deleted = try dbPool.write { db in try HistoryEntry.filter(HistoryEntry.Columns.url == url).deleteAll(db) }
+        if deleted > 0 { onChange?(.removed(allHistory: false, urls: [url])) }
     }
 
     func clearAll() throws {
         flushPendingWrites()
         _ = try dbPool.write { db in try HistoryEntry.deleteAll(db) }
+        onChange?(.removed(allHistory: true, urls: []))
     }
 
     /// Deletes history entries last visited on or after `date` (for "clear last hour/day/week").
-    /// Returns the removed URLs so callers can populate `chrome.history.onVisitRemoved`.
+    /// Returns the removed URLs.
     @discardableResult
     func deleteEntries(since date: Date) throws -> [String] {
         try deleteEntries(from: date, to: .distantFuture)
@@ -254,12 +265,14 @@ final class HistoryStore: @unchecked Sendable {
     func deleteEntries(from startDate: Date, to endDate: Date) throws -> [String] {
         flushPendingWrites()
         guard startDate <= endDate else { return [] }
-        return try dbPool.write { db in
+        let urls = try dbPool.write { db in
             let predicate = HistoryEntry.Columns.lastVisitedAt >= startDate && HistoryEntry.Columns.lastVisitedAt <= endDate
             let urls = try String.fetchAll(db, HistoryEntry.filter(predicate).select(HistoryEntry.Columns.url))
             try HistoryEntry.filter(predicate).deleteAll(db)
             return urls
         }
+        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
+        return urls
     }
 
     func flushPendingWrites() {
@@ -318,7 +331,7 @@ final class HistoryStore: @unchecked Sendable {
         """
 
     private func writeVisits(_ visits: [PendingVisit]) throws {
-        try dbPool.write { db in
+        let written = try dbPool.write { db in
             let statement = try db.cachedStatement(sql: """
                 INSERT INTO history (id, url, title, visitCount, lastVisitedAt, openedFrom) VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(url) DO UPDATE SET
@@ -326,18 +339,25 @@ final class HistoryStore: @unchecked Sendable {
                     lastVisitedAt = max(lastVisitedAt, excluded.lastVisitedAt),
                     title = CASE WHEN excluded.title = '' THEN title ELSE excluded.title END,
                     openedFrom = coalesce(excluded.openedFrom, openedFrom)
-                RETURNING visitCount
+                RETURNING id, url, title, visitCount, lastVisitedAt, openedFrom
                 """)
+            var written: [HistoryEntry] = []
+            written.reserveCapacity(visits.count)
             for visit in visits {
-                let total = try Int.fetchOne(statement, arguments: [UUID(), visit.url, visit.title, visit.visitCount, visit.lastVisitedAt, visit.openedFrom])
+                guard let entry = try HistoryEntry.fetchOne(
+                    statement, arguments: [UUID(), visit.url, visit.title, visit.visitCount, visit.lastVisitedAt, visit.openedFrom]
+                ) else { continue }
                 // An existing row ends above the visit's own count, so an equal total means a new row.
-                if total == visit.visitCount { insertedSinceLastPrune += 1 }
+                if entry.visitCount == visit.visitCount { insertedSinceLastPrune += 1 }
+                written.append(entry)
             }
 
-            guard insertedSinceLastPrune >= Defaults.pruneEveryInserts else { return }
+            guard insertedSinceLastPrune >= Defaults.pruneEveryInserts else { return written }
             try db.execute(sql: Self.pruneSQL, arguments: [Self.maxRows - 1])
             insertedSinceLastPrune = 0
+            return written
         }
+        onChange?(.visited(written))
     }
 
     /// Each term becomes a quoted prefix phrase, so FTS5 syntax characters in a query match literally.

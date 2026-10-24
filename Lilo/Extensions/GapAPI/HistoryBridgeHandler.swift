@@ -52,7 +52,7 @@ final class HistoryBridgeHandler: GapHandler {
                 }
                 return [[
                     "visitId": "1",
-                    "id": entry.url,
+                    "id": entry.id.uuidString,
                     "visitTime": entry.lastVisitedAt.timeIntervalSince1970 * 1000,
                     "referringVisitId": "0",
                     "transition": "link"
@@ -71,7 +71,6 @@ final class HistoryBridgeHandler: GapHandler {
             let deleted = await Task.detached { try store.deleteURL(url) }.result
             return bridged { () throws -> Any? in
                 try deleted.get()
-                emitVisitRemoved(allHistory: false, urls: [url], registry: registry)
                 return nil
             }
 
@@ -83,8 +82,7 @@ final class HistoryBridgeHandler: GapHandler {
                 try store.deleteEntries(from: Date(timeIntervalSince1970: startMs / 1000), to: Date(timeIntervalSince1970: endMs / 1000))
             }.result
             return bridged { () throws -> Any? in
-                let removed = try deleted.get()
-                emitVisitRemoved(allHistory: false, urls: removed, registry: registry)
+                _ = try deleted.get()
                 return nil
             }
 
@@ -92,7 +90,6 @@ final class HistoryBridgeHandler: GapHandler {
             let cleared = await Task.detached { try store.clearAll() }.result
             return bridged { () throws -> Any? in
                 try cleared.get()
-                emitVisitRemoved(allHistory: true, urls: [], registry: registry)
                 return nil
             }
 
@@ -101,14 +98,17 @@ final class HistoryBridgeHandler: GapHandler {
         }
     }
 
-    /// Fire chrome.history.onVisitRemoved. Chrome's RemovedResult is `{allHistory, urls}`: a full
-    /// clear sets `allHistory:true` with empty urls; partial removals list the removed URLs.
-    private func emitVisitRemoved(allHistory: Bool, urls: [String], registry: ProfileExtensionRegistry) {
-        registry.emitGapEvent(
-            "history", "onVisitRemoved",
-            args: [["allHistory": allHistory, "urls": urls]],
-            requiredPermission: "history"
-        )
+    /// Fires `chrome.history.onVisited` for each written page, and `onVisitRemoved`, whose `RemovedResult` lists the removed
+    /// urls, none for a full clear.
+    static func emit(_ change: HistoryStore.Change, to registry: ProfileExtensionRegistry) {
+        switch change {
+        case .visited(let entries):
+            for entry in entries {
+                registry.emitGapEvent("history", "onVisited", args: [entry.chromeBridgeDict], requiredPermission: "history")
+            }
+        case let .removed(allHistory, urls):
+            registry.emitGapEvent("history", "onVisitRemoved", args: [["allHistory": allHistory, "urls": urls]], requiredPermission: "history")
+        }
     }
 }
 
@@ -117,7 +117,7 @@ final class HistoryBridgeHandler: GapHandler {
 private extension HistoryEntry {
     var chromeBridgeDict: [String: Any] {
         [
-            "id": url,
+            "id": id.uuidString,
             "url": url,
             "title": title,
             "lastVisitTime": lastVisitedAt.timeIntervalSince1970 * 1000,

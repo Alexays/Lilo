@@ -80,19 +80,10 @@ final class BrowsingDataBridgeHandler: GapHandler {
 
         if selected.contains("history") {
             let history = profile.history
-            let removed = await Task.detached { () throws -> [String]? in
-                if sinceMs <= 0 { try history.clearAll(); return nil }
-                return try history.deleteEntries(since: since)
+            let removed = await Task.detached { () throws in
+                if sinceMs <= 0 { try history.clearAll() } else { try history.deleteEntries(since: since) }
             }.result
-            switch removed {
-            case .failure(let error): return BridgeError(error.localizedDescription)
-            case .success(let urls):
-                call.registry.emitGapEvent(
-                    "history", "onVisitRemoved",
-                    args: [["allHistory": urls == nil, "urls": urls ?? []]],
-                    requiredPermission: "history"
-                )
-            }
+            if case .failure(let error) = removed { return BridgeError(error.localizedDescription) }
         }
 
         if selected.contains("downloads"), let manager = downloadManagerProvider() {
