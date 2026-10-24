@@ -1,0 +1,3 @@
+kind: Changed
+body: Favicons load the smallest icon that looks sharp instead of the largest one, so a site's icon costs less on a slow connection.
+time: 2026-10-24T19:38:35.733831+02:00
