@@ -37,7 +37,7 @@ fi
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/lilo-energy-idle.XXXXXX")"
 SERVER_PID=""
 APP_PID=""
-trap '[ -z "$APP_PID" ] || kill "$APP_PID" 2>/dev/null; [ -z "$SERVER_PID" ] || kill "$SERVER_PID"; /bin/rm -rf "$WORK"' EXIT
+trap '[ -z "$APP_PID" ] || kill "$APP_PID" 2>/dev/null || true; [ -z "$SERVER_PID" ] || kill "$SERVER_PID" 2>/dev/null || true; /bin/rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/home" "$WORK/site"
 # CFFIXED_USER_HOME moves preferences, caches and WebKit data under the throwaway home, and
 # LILO_APP_SUPPORT_DIR the database: the real profile is never read or written.
