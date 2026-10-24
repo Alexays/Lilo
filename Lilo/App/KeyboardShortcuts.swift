@@ -45,7 +45,7 @@ enum KeyboardShortcuts {
         Action("page.save", "Save Page As…", "File", ["⌘s"]),
         Action("page.share", "Share…", "File"),
         Action("page.qrCode", "Create QR Code…", "File"),
-        Action("capture.area", "Capture Selected Area", "File"),
+        Action("capture.area", "Capture Selected Area", "File", ["⇧⌘2"]),
         Action("capture.visible", "Capture Visible Area", "File"),
         Action("capture.fullPage", "Capture Full Page", "File"),
         Action("page.print", "Print…", "File", ["⌘p"]),
@@ -127,7 +127,6 @@ enum KeyboardShortcuts {
             "space.next": ["⌥⌘right", "⌃⌘right"],
             "split.new": ["⌃⇧="],
             "split.close": ["⌃⇧-"],
-            "capture.area": ["⇧⌘2"],
             "downloads.show": ["⇧⌘j"]
         ]
     ]
