@@ -230,7 +230,7 @@ For Chrome APIs not natively supported by WebKit, Lilo implements a **Gap API** 
 | `DownloadsBridgeHandler` | `chrome.downloads.*` |
 | `CommandsBridgeHandler` | `chrome.commands.*` |
 | `SidePanelBridgeHandler` | `chrome.sidePanel.*` (options and behavior; each window's `SidePanelController` shows the panel) |
-| `RuntimeBridgeHandler` | `chrome.runtime.requestUpdateCheck`; whether the worker listens to `runtime.onMessage`, for the error of a page's unanswered message |
+| `RuntimeBridgeHandler` | `chrome.runtime.requestUpdateCheck`; whether the worker listens to `runtime.onMessage`, for the error of a page's unanswered message; messages and ports to another extension, relayed to its `onMessageExternal` and `onConnectExternal` |
 | `TabsBridgeHandler` | `chrome.tabs` zoom settings and split views (Lilo split folders) |
 | `PermissionsBridgeHandler` | `chrome.permissions` host access requests |
 | `CookiesBridgeHandler` | `chrome.cookies.getPartitionKey` |

@@ -101,8 +101,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 42. No cross-extension messaging
 
 - **Gap:** WebKit throws `cross-extension messaging is not supported` in pages, and records an extension error in a worker. Chrome reaches the other extension's `onConnectExternal` / `onMessageExternal`, or fails with "Receiving end does not exist" when it is not installed.
-- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id answer as Chrome with no such extension ([runtime.ts] `crossExtensionMessaging`). Lilo does not relay them: `browser.runtime` and `onMessageExternal` stay WebKit's (gap 2), and a relayed port would need a lifetime Lilo's channels do not give (a worker closes its channel after 20 s idle, [ipc.ts] `IDLE_MS`). User-visible side: COMPATIBILITY.md, "runtime".
-- **Impact:** an extension talking to a companion extension (Sider) logs an error at every start.
+- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id go to native ([runtime.ts] `crossExtensionMessaging`), which checks the target's `externally_connectable.ids` and reported listeners and relays them as gap events to its `onMessageExternal` and `onConnectExternal` stand-ins (`externalEvents`, which also keep WebKit's for web pages) and the port's messages (`RuntimeBridgeHandler`). `browser.runtime` stays WebKit's (gap 2), and content scripts have no channel to Lilo. User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** without Lilo, an extension talking to a companion extension (Sider) logs an error at every start.
 - **Check:** Manual. Repro: `browser.runtime.connect('abcdefghijklmnopabcdefghijklmnop')` from an extension page throws.
 
 ### 43. A port message sent before the port connects arrives twice
