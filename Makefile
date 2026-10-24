@@ -17,6 +17,13 @@ CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 CHANGIE_ARCH := $(shell uname -m | sed -e 's/^x86_64$$/amd64/' -e 's/^aarch64$$/arm64/')
 CHANGIE_ARCHIVE := changie_$(CHANGIE_VERSION)_$(CHANGIE_OS)_$(CHANGIE_ARCH).tar.gz
+# Pinned so a new release's rules or project output never break validate or the xcodeproj sync check.
+SWIFTLINT_VERSION := 0.65.0
+SWIFTLINT_SHA256 := d6cb0aa7a2f5f1ef306fc9e37bcb54dc9a26facc8f7784ac0c3dd3eccf5c6ba6
+SWIFTLINT := $(CURDIR)/build/swiftlint-$(SWIFTLINT_VERSION)/swiftlint
+XCODEGEN_VERSION := 2.46.0
+XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What validate's UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	scripts/embed_chrome_ui.py scripts/generate_native_strings.py
@@ -88,7 +95,7 @@ hooks-test:
 
 ## Check the prerequisites, then fetch and build what a fresh clone needs (npm deps, libghostty-vt, UI bundle, bridge)
 bootstrap:
-	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP)"
+	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(SWIFTLINT) $(XCODEGEN)"
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
@@ -113,14 +120,28 @@ $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 validate-ui: ui-lint ui-test ui-build
 
 ## Run Swift lint only
-swiftlint:
-	@command -v swiftlint >/dev/null || { echo 'Install swiftlint with: brew install swiftlint' >&2; exit 1; }
-	@swiftlint lint --config .swiftlint.yml --strict
+swiftlint: $(SWIFTLINT)
+	@'$(SWIFTLINT)' lint --config .swiftlint.yml --strict
 
 ## Regenerate Lilo.xcodeproj from project.yml
-project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@command -v xcodegen >/dev/null || { echo 'Install xcodegen with: brew install xcodegen' >&2; exit 1; }
-	@xcodegen generate --spec project.yml
+project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(XCODEGEN)
+	@'$(XCODEGEN)' generate --spec project.yml
+
+$(SWIFTLINT):
+	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
+	curl -fLsS --retry 3 'https://github.com/realm/SwiftLint/releases/download/$(SWIFTLINT_VERSION)/portable_swiftlint.zip' -o "$$work/swiftlint.zip"; \
+	echo '$(SWIFTLINT_SHA256)  '"$$work/swiftlint.zip" | shasum -a 256 -c - >/dev/null; \
+	unzip -q "$$work/swiftlint.zip" swiftlint -d "$$work"; \
+	mkdir -p '$(@D)'; mv "$$work/swiftlint" '$@'; touch '$@'
+
+# The binary reads its setting presets from ../share beside it.
+$(XCODEGEN):
+	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
+	curl -fLsS --retry 3 'https://github.com/yonaskolb/XcodeGen/releases/download/$(XCODEGEN_VERSION)/xcodegen.zip' -o "$$work/xcodegen.zip"; \
+	echo '$(XCODEGEN_SHA256)  '"$$work/xcodegen.zip" | shasum -a 256 -c - >/dev/null; \
+	unzip -q "$$work/xcodegen.zip" -d "$$work"; \
+	rm -rf '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; mkdir -p build; \
+	mv "$$work/xcodegen" '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; touch '$@'
 
 $(UI_DEPS): $(UI_DIR)/package-lock.json
 	@npm --prefix $(UI_DIR) ci

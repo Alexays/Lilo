@@ -4,7 +4,6 @@
 echo "Checking the prerequisites"
 
 missing=()
-warnings=()
 
 macos=$(sw_vers -productVersion 2>/dev/null || echo none)
 if [ "${macos%%.*}" -ge 26 ] 2>/dev/null; then
@@ -38,21 +37,13 @@ else
     exit 1
 fi
 
-for tool in swiftlint xcodegen; do
-    if command -v "$tool" >/dev/null; then
-        echo "  ok  $tool"
-    else
-        warnings+=("$tool, which make validate and make project-sync use: brew install $tool")
-    fi
-done
-
 # shellcheck disable=SC2086 # each argument is a list of make targets
 make -s --no-print-directory $1 || exit 1
 
 if [ ${#missing[@]} -gt 0 ]; then
     echo >&2
     echo "The npm dependencies are installed: make ui-preview already works. Building the app needs:" >&2
-    printf '  - %s\n' "${missing[@]}" "${warnings[@]}" >&2
+    printf '  - %s\n' "${missing[@]}" >&2
     echo "Install them, then rerun make bootstrap." >&2
     exit 1
 fi
@@ -61,11 +52,6 @@ fi
 make -s --no-print-directory $2 || exit 1
 
 echo
-if [ ${#warnings[@]} -gt 0 ]; then
-    echo "Also install:"
-    printf '  - %s\n' "${warnings[@]}"
-    echo
-fi
 cat <<'EOF'
 Ready. Next:
   make app          Debug build in build/debug/export/Lilo.app

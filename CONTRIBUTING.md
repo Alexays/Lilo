@@ -25,7 +25,7 @@ extensions.
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
 | Node.js | 22.6+ (`.nvmrc` pins 22) | the Svelte interface and the extension bridge; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
-| SwiftLint, XcodeGen | latest (`brew install swiftlint xcodegen`) | `make validate` and `make project-sync` |
+| SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
 
 Python 3 comes with Xcode. No Apple Developer account is needed.
