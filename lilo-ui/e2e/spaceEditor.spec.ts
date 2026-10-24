@@ -241,3 +241,35 @@ for (const sidebarWidth of [MIN_SIDEBAR_WIDTH, 260, 320]) {
 		}
 	});
 }
+
+test.describe("in French", () => {
+	test.use({ locale: "fr-FR" });
+
+	test.use({ reducedMotion: "reduce" });
+
+	test("the edit footer keeps Delete, Cancel and Save inside the narrowest sidebar", async ({ page }) => {
+		const world = initialWorld();
+		world.sidebarWidth = MIN_SIDEBAR_WIDTH;
+		await bootChrome(page, world);
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
+		await expect(page.locator(".editor-footer .ui-button")).toHaveCount(3);
+		const outside = await page.locator(".editor-footer").evaluate((footer) => {
+			const frame = footer.getBoundingClientRect();
+			return [...footer.querySelectorAll(".ui-button")]
+				.map((button) => button.getBoundingClientRect())
+				.filter((box) => box.left < frame.left - 0.5 || box.right > frame.right + 0.5)
+				.map((box) => [Math.round(box.left), Math.round(box.right), Math.round(frame.left), Math.round(frame.right)]);
+		});
+		expect(outside).toEqual([]);
+	});
+});
+
+test("leaving for the profiles keeps the edits made to the space", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
+	const name = page.locator(".editor-panel input").first();
+	await name.fill("Renamed");
+	await page.locator(".manage-link").click();
+	const update = (await sentCommands(page)).filter((command) => command.action === "updateSpace").at(-1);
+	expect(update?.payload).toMatchObject({ name: "Renamed" });
+});

@@ -158,7 +158,10 @@
     closeEditor();
   }
 
+  // Leaving for the profiles keeps the edits made so far, as if saved first.
   function manageProfiles() {
+    const s = editorState();
+    if (canSave(s.name, choice, newProfileName)) save();
     openSettings("tabs");
     revealSetting("tabs", "newProfile");
   }
@@ -909,8 +912,10 @@
     cursor: pointer;
   }
 
+  /* Wraps rather than clips when a translation is longer than the sidebar is wide. */
   .editor-footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
@@ -923,6 +928,7 @@
   .footer-actions {
     display: flex;
     gap: 6px;
+    margin-left: auto;
   }
 
   .submit-shortcut {
