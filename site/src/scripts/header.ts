@@ -32,7 +32,7 @@ document.addEventListener("click", (event) => {
     }
   }
 
-  const menu = document.querySelector(".mobile-nav");
+  const menu = document.querySelector<HTMLDetailsElement>(".mobile-nav");
 
   if (
     menu?.open &&
@@ -43,10 +43,10 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  const menu = document.querySelector(".mobile-nav");
+  const menu = document.querySelector<HTMLDetailsElement>(".mobile-nav");
 
   if (event.key === "Escape" && menu?.open) {
     menu.open = false;
-    menu.querySelector("summary").focus();
+    menu.querySelector<HTMLElement>("summary")?.focus();
   }
 });

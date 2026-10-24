@@ -4,7 +4,7 @@ import test from "node:test";
 import { runInNewContext } from "node:vm";
 
 const source = readFileSync(
-  new URL("../public/header.js", import.meta.url),
+  new URL("../dist/header.js", import.meta.url),
   "utf-8"
 );
 

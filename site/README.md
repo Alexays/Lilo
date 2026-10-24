@@ -28,7 +28,7 @@ The Undici override patches Miniflare's pinned HTTP client. Remove it when Minif
 - `src/components/` holds navigation, the footer and the changelog. New shared website copy lives in `src/lib/i18n.ts`.
 - `src/styles/global.css` holds the site's existing design. Astro fingerprints the built stylesheets.
 - `src/scripts/demo.ts` holds the home page’s interactive demo, bundled by Astro through `components/Demo.astro`. JavaScript/TypeScript modules, including tests and tool configs, use `.ts`.
-- `public/header.js` is a classic script loaded before paint to restore the saved theme under the site's self-only script policy. It also handles the theme toggle and mobile menu dismissal.
+- `src/scripts/header.ts` restores the saved theme and handles the theme toggle and mobile menu dismissal. `src/pages/header.js.ts` compiles it at build time to a classic script loaded before paint under the site's self-only script policy.
 - `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.
