@@ -1,6 +1,12 @@
 # getlilo.app
 
-The Lilo landing page: plain static files in `public/`, served by a Cloudflare Worker with static assets (no Worker script). `wrangler.toml` holds the config, `public/_headers` the security headers.
+The Lilo landing page: plain static files in `public/`, served by a Cloudflare Worker with static assets (no Worker script). `wrangler.toml` holds the config, `public/_headers` the security and cache headers, `public/_redirects` the permanent redirects to the trailing-slash URLs.
+
+## Generated files
+
+The HTML pages are the source. `generate.py` (no dependencies) keeps their JSON-LD in step with them: the `FAQPage` must match the visible FAQ word for word, and `softwareVersion` is read from `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`.
+
+After editing a page, run `make site-generate` (or `python3 site/generate.py`) and commit the result. `npm run deploy` runs it too. A new page also needs its entry in `generate.py`, `sitemap.xml` and `_redirects`.
 
 ## Preview locally
 

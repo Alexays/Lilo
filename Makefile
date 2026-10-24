@@ -44,7 +44,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-deploy emoji-data password-manager-icons
+	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons
 
 ## List the targets
 help:
@@ -294,6 +294,10 @@ logs-stream:
 ## Serve the getlilo.app landing page locally (wrangler dev)
 site-dev: $(SITE_DEPS)
 	@npm --prefix site run dev
+
+## Regenerate the landing page's JSON-LD from its HTML
+site-generate:
+	@python3 site/generate.py
 
 ## Deploy the landing page to Cloudflare (needs npx wrangler login once)
 site-deploy: $(SITE_DEPS)

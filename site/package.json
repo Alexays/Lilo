@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "python3 generate.py && wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "4.148.0"

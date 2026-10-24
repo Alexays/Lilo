@@ -4,3 +4,34 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Cached for a year: a changed font must ship under a new file name
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/img/*
+  Cache-Control: public, max-age=2592000
+
+/favicon.*
+  Cache-Control: public, max-age=2592000
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=2592000
+
+/og.png
+  Cache-Control: public, max-age=2592000
+
+# Not fingerprinted, so kept short to follow the pages
+/style.css
+  Cache-Control: public, max-age=600
+
+/app.js
+  Cache-Control: public, max-age=600
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Content-Type: application/xml; charset=utf-8
+  Cache-Control: public, max-age=3600
+

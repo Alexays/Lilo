@@ -120,7 +120,7 @@ a { color: inherit; }
 /* Work: issue list split with a terminal */
 .split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 6px; background: var(--frame); }
 .issues { background: #fff; padding: 18px 20px; display: grid; gap: 4px; align-content: start; border-radius: 10px 0 0 10px; }
-.issues h4 { margin: 0 0 8px; font: 700 16px/1.2 var(--sys); }
+.issues .ttl { display: block; margin: 0 0 8px; font: 700 16px/1.2 var(--sys); }
 .issue { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid #eeecf3; font-size: 13px; }
 .issue i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #c3c1d0; }
 .issue i.prog { border-color: #f4bb8c; background: conic-gradient(#f4bb8c 50%, transparent 0); }
@@ -266,7 +266,7 @@ a { color: inherit; }
 .agwin .spacebar i.on { background: rgba(255,255,255,0.2); filter: none; opacity: 1; }
 .pay { padding: 22px 22px 26px; display: grid; gap: 12px; align-content: start; font-size: 13px; color: #3b3b4f; }
 .pay small { font-size: 11px; color: #6b6b80; text-transform: uppercase; letter-spacing: 0.08em; }
-.pay h4 { margin: 0; font: 800 22px/1.1 var(--round); color: #1f2328; }
+.pay .ttl { display: block; margin: 0; font: 800 22px/1.1 var(--round); color: #1f2328; }
 .pay .ln { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid #eeecf3; }
 .pay .card { border: 1px solid #e2dfeb; border-radius: 8px; padding: 9px 10px; color: #6b6b80; font-family: var(--mono); font-size: 12px; }
 .pay .ln.tot { border: 0; color: #1f2328; font-weight: 700; }
