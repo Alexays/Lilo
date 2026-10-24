@@ -506,6 +506,8 @@ private final class ExtensionPopupWindow: NSObject, NSWindowDelegate {
 
 extension Notification.Name {
     static let extensionRuntimeLoaded = Notification.Name("fr.arouillard.lilo.extensionRuntimeLoaded")
+    /// Object: the registry, one of whose extensions' pages or worker added or removed gap event listeners.
+    static let extensionGapListenersChanged = Notification.Name("fr.arouillard.lilo.extensionGapListenersChanged")
     /// Object: the registry. userInfo: "extensionId", "profileId" (UUID) and "uninstalled" (Bool).
     static let extensionDidUnload = Notification.Name("fr.arouillard.lilo.extensionDidUnload")
 }

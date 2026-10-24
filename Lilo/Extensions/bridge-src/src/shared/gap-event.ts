@@ -38,6 +38,14 @@ export function reportGapListener(name: string): void {
   setTimeout(() => sendBatch(false), 0);
 }
 
+/** The context's last listener of `name` went: native stops sending it, and a stopped worker stops waking for it. */
+function reportGapListenerRemoved(name: string): void {
+  if (!reports.delete(name)) return;
+  const batched = unreportedListeners?.indexOf(name) ?? -1;
+  if (batched >= 0) unreportedListeners!.splice(batched, 1);
+  else gapCall('events', 'unlisten', { events: [name] }).catch(() => {});
+}
+
 /** Settles once native has answered the report of the listener, undefined before any. */
 export function gapListenerReported(name: string): Promise<unknown> | undefined {
   return reports.get(name);
@@ -55,7 +63,7 @@ export function sendGapListeners(): void {
   sendBatch(true);
 }
 
-/** A ChromeEvent native pushes as `namespace.event`, reported on its first listener. */
+/** A ChromeEvent native pushes as `namespace.event`, reported on its first listener and after its last. */
 export class GapChromeEvent<T extends unknown[] = []> extends ChromeEvent<T> {
   private readonly gapName: string;
 
@@ -67,6 +75,11 @@ export class GapChromeEvent<T extends unknown[] = []> extends ChromeEvent<T> {
   override addListener(listener: (...args: T) => void): void {
     super.addListener(listener);
     reportGapListener(this.gapName);
+  }
+
+  override removeListener(listener: (...args: T) => void): void {
+    super.removeListener(listener);
+    if (!this.hasListeners()) reportGapListenerRemoved(this.gapName);
   }
 }
 

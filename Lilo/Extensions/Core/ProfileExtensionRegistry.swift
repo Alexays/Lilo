@@ -543,14 +543,26 @@ final class ProfileExtensionRegistry {
         }
     }
 
-    /// Records gap events a page or worker of a loaded extension listens to; `fromWorker` marks the
-    /// worker's own report, sent once its script has run, which turns on filtering. A cookies.onChanged
-    /// listener hears of it once the cookies are read, so a change its context makes next is reported.
+    /// Gap events a page or the worker of a loaded extension listens to: `GapEvents` keeps a page's itself,
+    /// the worker's are kept across launches. A cookies.onChanged listener hears of it once the cookies
+    /// are read, so a change its context makes next is reported.
     func addGapListeners(_ events: [String], extensionId: String, fromWorker: Bool) async {
         guard let context = context(for: extensionId) else { return }
-        lifecycle.listen(events, extensionId: extensionId, fromWorker: fromWorker, version: context.webExtension.version)
-        syncCookieTracking()
+        if fromWorker { lifecycle.listen(events, extensionId: extensionId, version: context.webExtension.version) }
+        gapListenersChanged()
         if events.contains("cookies.onChanged") { await cookieTracker?.catchUp() }
+    }
+
+    /// Gap events a page or the worker no longer listens to: its last listener for each went.
+    func removeGapListeners(_ events: [String], extensionId: String, fromWorker: Bool) {
+        guard let context = context(for: extensionId) else { return }
+        if fromWorker { lifecycle.listen(events, extensionId: extensionId, removed: true, version: context.webExtension.version) }
+        gapListenersChanged()
+    }
+
+    private func gapListenersChanged() {
+        syncCookieTracking()
+        NotificationCenter.default.post(name: .extensionGapListenersChanged, object: self)
     }
 
     /// Returns once the cookie changes made so far are reported to the extensions that listen.

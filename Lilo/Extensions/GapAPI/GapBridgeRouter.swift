@@ -109,7 +109,7 @@ final class GapBridgeRouter {
         }
         #endif
         let handler = handlers[action]
-        guard handler != nil || action == "events.listen" else {
+        guard handler != nil || namespace == "events" else {
             return (nil, "API not available: \(action)")
         }
         guard let context = registry.context(for: extensionId) else {
@@ -117,7 +117,12 @@ final class GapBridgeRouter {
         }
         guard let handler else {
             // The gap events a context listens to: the registry only queues, and wakes the worker for, those.
-            await registry.addGapListeners(params["events"] as? [String] ?? [], extensionId: extensionId, fromWorker: fromWorker)
+            let events = params["events"] as? [String] ?? []
+            switch method {
+            case "listen": await registry.addGapListeners(events, extensionId: extensionId, fromWorker: fromWorker)
+            case "unlisten": registry.removeGapListeners(events, extensionId: extensionId, fromWorker: fromWorker)
+            default: return (nil, "API not available: \(action)")
+            }
             return (nil, nil)
         }
         let required = Self.requiredPermissions[action] ?? Self.requiredPermissions[namespace] ?? []

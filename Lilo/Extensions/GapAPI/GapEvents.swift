@@ -16,7 +16,7 @@ struct GapEventEnvelope: @unchecked Sendable {
 }
 
 /// Lilo's one native port per extension page or worker, carrying gap calls and pushed events; events for a worker without a channel
-/// wait here and wake it. An idle worker asks to close its channel so WebKit can unload it; page pushes batch per main-actor turn.
+/// wait here and wake it. An idle worker asks to close its channel so WebKit can unload it; pushes batch per main-actor turn.
 @MainActor
 final class GapEvents {
     enum WorkerChannel {
@@ -38,16 +38,25 @@ final class GapEvents {
         var sentThrough = 0
         var nextSeq = 0
 
-        /// Queues the event under the next sequence number, dropping the oldest past `undeliveredCap`.
-        mutating func enqueue(_ namespace: String, _ event: String, args: [Any]) -> GapEventEnvelope {
+        mutating func envelope(_ namespace: String, _ event: String, args: [Any]) -> GapEventEnvelope {
             nextSeq += 1
-            let envelope = GapEventEnvelope(seq: nextSeq, namespace: namespace, event: event, args: args)
+            return GapEventEnvelope(seq: nextSeq, namespace: namespace, event: event, args: args)
+        }
+
+        /// Queues the event, dropping the oldest past `undeliveredCap`.
+        mutating func enqueue(_ envelope: GapEventEnvelope) {
             undelivered.append(envelope)
             if undelivered.count > GapEvents.undeliveredCap {
                 undelivered.removeFirst(undelivered.count - GapEvents.undeliveredCap)
             }
-            return envelope
         }
+    }
+
+    private struct Page {
+        let port: WKWebExtension.MessagePort
+        /// "namespace.event" names the page listens to: it hears only those.
+        var listeners: Set<String> = []
+        var pending: [[String: Any]] = []
     }
 
     /// Past this many undelivered events the oldest go, so a chatty producer under a long-dead worker
@@ -55,16 +64,17 @@ final class GapEvents {
     private nonisolated static let undeliveredCap = 256
 
     private var workers: [String: Worker] = [:]
-    /// "namespace.event" names each extension's pages and worker listen to, kept across idle unloads
-    /// so a stopped worker still wakes for them.
-    private var listeners: [String: Set<String>] = [:]
-    /// Extensions whose worker reported its listeners, this launch or, restored, an earlier one. Until then the extension hears
-    /// every event: its worker has not said what it listens to.
+    /// "namespace.event" names each extension's worker listens to, kept across idle unloads so a
+    /// stopped worker still wakes for them.
+    private var workerListeners: [String: Set<String>] = [:]
+    /// Extensions whose worker reported its listeners, this launch or, restored, an earlier one. Until then the worker hears
+    /// every event: it has not said what it listens to.
     private var workerReported: Set<String> = []
     /// The channels of the extension's open pages.
-    private var pagePorts: [String: [WKWebExtension.MessagePort]] = [:]
-    private var pendingPagePushes: [String: [[String: Any]]] = [:]
-    private var pagePushScheduled = false
+    private var pages: [String: [Page]] = [:]
+    /// Extensions with events for their connected worker or their pages, sent at the end of the turn.
+    private var unflushed: Set<String> = []
+    private var flushScheduled = false
 
     private let wake: (String) -> Void
     private let workerChannel: (String, WorkerChannel) -> Void
@@ -83,41 +93,61 @@ final class GapEvents {
 
     // MARK: - Listeners
 
-    /// Records events a page or the worker of the extension listens to; the worker's own report
-    /// turns on filtering for it. True when that changed what the extension is woken for.
+    /// Records events the extension's worker listens to, or, `removed`, no longer listens to; its first
+    /// report turns on filtering. True when that changed what the worker is woken for.
     @discardableResult
-    func listen(_ events: [String], extensionId: String, fromWorker: Bool) -> Bool {
-        let count = listeners[extensionId]?.count ?? 0
-        listeners[extensionId, default: []].formUnion(events)
-        let reported = fromWorker && workerReported.insert(extensionId).inserted
-        return reported || listeners[extensionId]?.count != count
+    func listen(_ events: [String], extensionId: String, removed: Bool = false) -> Bool {
+        let count = workerListeners[extensionId]?.count ?? 0
+        if removed {
+            workerListeners[extensionId]?.subtract(events)
+        } else {
+            workerListeners[extensionId, default: []].formUnion(events)
+        }
+        let reported = !removed && workerReported.insert(extensionId).inserted
+        return reported || workerListeners[extensionId]?.count ?? 0 != count
     }
 
     /// The events the extension's worker reported listening to, nil until it reported.
     func reportedListeners(of extensionId: String) -> Set<String>? {
-        workerReported.contains(extensionId) ? listeners[extensionId] ?? [] : nil
+        workerReported.contains(extensionId) ? workerListeners[extensionId] ?? [] : nil
     }
 
-    /// The extensions of `ids` that may hear the event.
+    /// The extensions of `ids` whose worker or an open page may hear the event.
     func listeners(among ids: [String], namespace: String, event: String) -> [String] {
         let name = "\(namespace).\(event)"
-        return ids.filter { !workerReported.contains($0) || listeners[$0]?.contains(name) == true }
+        return ids.filter { id in
+            !workerReported.contains(id) || workerListeners[id]?.contains(name) == true
+                || pages[id]?.contains { $0.listeners.contains(name) } == true
+        }
     }
 
     // MARK: - Events
 
-    /// Sends the event to each listening extension's worker, waking it if stopped unless `wakes` is
-    /// false, and pushes it to the extension's open pages at the end of the turn.
+    /// Sends the event to each extension's worker that listens, waking it if stopped unless `wakes` is
+    /// false, and to its open pages that listen, at the end of the turn.
     func emit(_ namespace: String, _ event: String, args: [Any], to ids: [String], wakes: Bool = true) {
-        for id in listeners(among: ids, namespace: namespace, event: event) {
+        let name = "\(namespace).\(event)"
+        for id in ids {
+            let toWorker = !workerReported.contains(id) || workerListeners[id]?.contains(name) == true
+            let toPages = pages[id]?.contains { $0.listeners.contains(name) } == true
+            guard toWorker || toPages else { continue }
             // Mutated in place: a copy of the worker would copy its whole undelivered queue.
-            let envelope = workers[id, default: Worker()].enqueue(namespace, event, args: args)
-            if workers[id]?.port != nil { deliver(to: id) } else if wakes { wake(id) }
-            if pagePorts[id]?.isEmpty == false { pendingPagePushes[id, default: []].append(envelope.dictionary) }
+            let envelope = workers[id, default: Worker()].envelope(namespace, event, args: args)
+            if toWorker {
+                workers[id]?.enqueue(envelope)
+                if workers[id]?.port != nil { unflushed.insert(id) } else if wakes { wake(id) }
+            }
+            if toPages, let indices = pages[id]?.indices {
+                let message = envelope.dictionary
+                for index in indices where pages[id]?[index].listeners.contains(name) == true {
+                    pages[id]?[index].pending.append(message)
+                }
+                unflushed.insert(id)
+            }
         }
-        guard !pagePushScheduled, !pendingPagePushes.isEmpty else { return }
-        pagePushScheduled = true
-        Task { @MainActor [weak self] in self?.pushToPages() }
+        guard !flushScheduled, !unflushed.isEmpty else { return }
+        flushScheduled = true
+        Task { @MainActor [weak self] in self?.flush() }
     }
 
     /// Events the extension's worker has not received yet.
@@ -129,20 +159,22 @@ final class GapEvents {
     func forget(_ extensionId: String, purge: Bool) {
         // The unloaded worker is gone: what comes next waits for the worker of the next load.
         detach(extensionId, .unloaded)
-        listeners[extensionId] = nil
+        workerListeners[extensionId] = nil
         workerReported.remove(extensionId)
-        pagePorts[extensionId] = nil
-        pendingPagePushes[extensionId] = nil
+        pages[extensionId] = nil
         if purge { workers[extensionId] = nil }
     }
 
-    private func pushToPages() {
-        pagePushScheduled = false
-        let pushes = pendingPagePushes
-        pendingPagePushes = [:]
-        for (id, envelopes) in pushes {
-            for port in pagePorts[id] ?? [] {
-                port.sendMessage(["events": envelopes]) { _ in }
+    private func flush() {
+        flushScheduled = false
+        let ids = unflushed
+        unflushed = []
+        for id in ids {
+            deliver(to: id)
+            for index in pages[id]?.indices ?? 0..<0 {
+                guard let page = pages[id]?[index], !page.pending.isEmpty else { continue }
+                pages[id]?[index].pending = []
+                page.port.sendMessage(["events": page.pending]) { _ in }
             }
         }
     }
@@ -156,15 +188,27 @@ final class GapEvents {
     func attach(_ port: WKWebExtension.MessagePort, extensionId: String) {
         port.messageHandler = { [weak self, weak port] message, _ in
             guard let port, let message = message as? [String: Any] else { return }
+            // A hop, not assumeIsolated: a handler WebKit calls off the main thread would trap.
             Task { @MainActor in
                 guard let self else { return }
                 if let role = message["role"] as? String {
                     self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String, extensionId: extensionId)
-                } else if message["idle"] != nil {
-                    self.close(port, extensionId: extensionId)
-                } else {
-                    await self.answer(message, on: port, extensionId: extensionId)
+                    return
                 }
+                if message["idle"] != nil {
+                    self.close(port, extensionId: extensionId)
+                    return
+                }
+                // A page's listeners are its own: recorded before any later message on its port is answered.
+                if message["namespace"] as? String == "events", let index = self.pages[extensionId]?.firstIndex(where: { $0.port === port }) {
+                    let events = (message["params"] as? [String: Any])?["events"] as? [String] ?? []
+                    switch message["method"] as? String {
+                    case "listen": self.pages[extensionId]?[index].listeners.formUnion(events)
+                    case "unlisten": self.pages[extensionId]?[index].listeners.subtract(events)
+                    default: break
+                    }
+                }
+                await self.answer(message, on: port, extensionId: extensionId)
             }
         }
         port.disconnectHandler = { [weak self, weak port] _ in
@@ -173,7 +217,7 @@ final class GapEvents {
                 if self.workers[extensionId]?.port === port {
                     self.detach(extensionId, .lost)
                 } else {
-                    self.pagePorts[extensionId]?.removeAll { $0 === port }
+                    self.pages[extensionId]?.removeAll { $0.port === port }
                 }
             }
         }
@@ -181,7 +225,7 @@ final class GapEvents {
 
     private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, extensionId: String) {
         guard asWorker else {
-            pagePorts[extensionId, default: []].append(port)
+            pages[extensionId, default: []].append(Page(port: port))
             return
         }
         workers[extensionId, default: Worker()].port = port
@@ -217,21 +261,20 @@ final class GapEvents {
         workerChannel(extensionId, channel)
     }
 
+    /// Sends what the worker has not been sent in one message; its delivery confirms all of it.
     private func deliver(to extensionId: String) {
-        guard let worker = workers[extensionId], let port = worker.port else { return }
-        let unsent = worker.undelivered.filter { $0.seq > worker.sentThrough }
-        guard let last = unsent.last else { return }
-        workers[extensionId]?.sentThrough = last.seq
-        for envelope in unsent {
-            port.sendMessage(envelope.dictionary) { [weak self] error in
-                Task { @MainActor in
-                    guard let self else { return }
-                    if error == nil {
-                        self.workers[extensionId]?.undelivered.removeAll { $0.seq == envelope.seq }
-                    } else if self.workers[extensionId]?.port === port {
-                        // The worker is gone: everything not received waits for its next start.
-                        self.detach(extensionId, .lost)
-                    }
+        guard let worker = workers[extensionId], let port = worker.port,
+              let first = worker.undelivered.firstIndex(where: { $0.seq > worker.sentThrough }),
+              let last = worker.undelivered.last?.seq else { return }
+        workers[extensionId]?.sentThrough = last
+        port.sendMessage(["events": worker.undelivered[first...].map(\.dictionary)]) { [weak self] error in
+            Task { @MainActor in
+                guard let self else { return }
+                if error == nil {
+                    self.workers[extensionId]?.undelivered.removeAll { $0.seq <= last }
+                } else if self.workers[extensionId]?.port === port {
+                    // The worker is gone: everything not received waits for its next start.
+                    self.detach(extensionId, .lost)
                 }
             }
         }
