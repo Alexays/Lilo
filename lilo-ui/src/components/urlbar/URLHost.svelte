@@ -193,6 +193,12 @@
        line inside is absolutely positioned and would resolve against the padding box. It slides
        so a pinned icon appearing never snaps the address sideways. */
     margin-right: calc(var(--url-cluster-width, 0px) + 4px);
+    /* A mask hides all that leaves its box: room around the address, given back by the margins, lets an
+       address arriving from the left, blurred, show whole. */
+    padding: 8px 0 8px 10px;
+    margin-top: -8px;
+    margin-bottom: -8px;
+    margin-left: -10px;
     /* Under the URL bar's revealed buttons (URLToast sets --url-reveal-mask to 0) the address fades
        out on the buttons' own opacity curve. */
     mask-image: linear-gradient(
