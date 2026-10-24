@@ -358,5 +358,70 @@
     return consequentialWords.test(words) ? label || clip(action) : null
   }
 
-  window.__liloAgent = { prefix: () => prefix, readPage, find, text, setValue, rect, scrollState, scrollBy, dropFile, act, request, consequential }
+  // Screenshots. A requestAnimationFrame never fires in a page that is not painted: the timeout keeps it from hanging.
+  const painted = () => new Promise(resolve => {
+    const done = () => resolve()
+    requestAnimationFrame(() => requestAnimationFrame(done))
+    setTimeout(done, 100)
+  })
+  const target = ({ ref: id, selector }) => {
+    if (id) return element(id)
+    const el = document.querySelector(selector)
+    if (!el) throw new Error(`No element matches ${selector}`)
+    return el
+  }
+  const instantScroll = (x, y) => scrollTo({ left: x, top: y, behavior: 'instant' })
+  // Readies the page for a capture: lazy content loads as the range scrolls by, then images and fonts finish.
+  // Returns the scroll position to put back, or null when the page stays scrolled to the element, as a click leaves it.
+  const captureScroll = async ({ ref: id, selector, fullPage, maxHeight }) => {
+    const el = fullPage ? null : target({ ref: id, selector })
+    const start = { x: scrollX, y: scrollY }
+    const box = el?.getBoundingClientRect()
+    if (box && (!box.width || !box.height || !el.checkVisibility())) throw new Error(`${id ?? selector} is hidden: read the page again`)
+    const fits = box && box.width <= innerWidth && box.height <= innerHeight
+    if (fits) {
+      if (box.top < 0 || box.left < 0 || box.bottom > innerHeight || box.right > innerWidth) {
+        el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' })
+        await painted()
+      }
+    } else {
+      const from = el ? box.top + scrollY : 0
+      const height = () => el ? el.getBoundingClientRect().height : document.documentElement.scrollHeight
+      // Bounded in time too: an endless feed keeps growing as it scrolls.
+      const deadline = Date.now() + 10000
+      for (let y = from; y < from + Math.min(height(), maxHeight) && Date.now() < deadline; y += innerHeight) {
+        instantScroll(scrollX, y)
+        await painted()
+      }
+      instantScroll(0, 0)
+      await painted()
+    }
+    const root = el ?? document
+    // Shown ones only, above the cut: an image the scroll never reached does not load, and would hold the wait.
+    const images = [...root.querySelectorAll('img')].filter(img => {
+      const r = img.getBoundingClientRect()
+      return r.width && r.height && (el || r.top < maxHeight)
+    })
+    await Promise.race([
+      Promise.all([document.fonts.ready, ...images.map(img => img.decode().catch(() => {}))]),
+      new Promise(resolve => setTimeout(resolve, 5000))
+    ])
+    return fits ? null : start
+  }
+  // The capture's box in document CSS pixels, and where the viewport is.
+  const captureBox = ({ ref: id, selector, fullPage }) => {
+    const root = document.documentElement
+    const page = { width: Math.max(root.scrollWidth, innerWidth), height: Math.max(root.scrollHeight, document.body?.scrollHeight ?? 0) }
+    const viewport = { scrollX, scrollY, innerWidth, innerHeight, pageWidth: page.width, pageHeight: page.height }
+    // The client width leaves out a scrollbar, which a full-page capture does not draw.
+    if (fullPage) return { x: 0, y: 0, width: root.clientWidth || innerWidth, height: page.height, ...viewport }
+    const box = target({ ref: id, selector }).getBoundingClientRect()
+    return { x: box.left + scrollX, y: box.top + scrollY, width: box.width, height: box.height, ...viewport }
+  }
+  const captureRestore = ({ x, y }) => instantScroll(x, y)
+
+  window.__liloAgent = {
+    prefix: () => prefix, readPage, find, text, setValue, rect, scrollState, scrollBy, dropFile, act, request, consequential,
+    captureScroll, captureBox, captureRestore
+  }
 })()

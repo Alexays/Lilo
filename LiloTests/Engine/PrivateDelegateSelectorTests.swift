@@ -88,6 +88,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("_WKFeature", ["key", "name", "details", "isHidden", "defaultValue"]),
             ("_WKContentRuleListAction", ["blockedLoad"]),
             ("WKWindowFeatures", ["_wantsPopup"]),
+            ("WKSnapshotConfiguration", ["_setUsesContentsRect:"]),
             ("WKWebpagePreferences", ["_networkConnectionIntegrityPolicy", "_setNetworkConnectionIntegrityPolicy:"]),
             ("WKFrameInfo", ["_handle"]),
             ("_WKFrameHandle", ["frameID"]),

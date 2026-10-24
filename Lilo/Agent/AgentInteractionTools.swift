@@ -8,8 +8,10 @@ import WebKit
 enum AgentInteractionTools {
     static let definitions: [[String: Any]] = [
         AgentTools.tool("computer", """
-            Mouse and keyboard in a tab, plus screenshots. Coordinates are pixels of the latest screenshot, origin \
-            top left. Click on an element's center: take a screenshot first to find it, or pass `ref` instead.
+            Mouse and keyboard in a tab, plus screenshots. Coordinates are pixels of a plain screenshot, the viewport \
+            at one pixel per point, origin top left; a fullPage, fullResolution or element screenshot keeps that frame \
+            and says how its own pixels map to it. Click on an element's center: take a screenshot first to find it, \
+            or pass `ref` instead. Lilo's agent cursor never shows in screenshots.
             Actions: left_click, right_click, double_click, triple_click, type, key, screenshot, wait, scroll, \
             left_click_drag, zoom, scroll_to, hover.
             A click or Enter on a control that sends, pays, buys, orders, deletes, transfers, publishes or signs up \
@@ -19,7 +21,12 @@ enum AgentInteractionTools {
                 "action": ["type": "string", "enum": ["left_click", "right_click", "double_click", "triple_click", "type", "key",
                                                       "screenshot", "wait", "scroll", "left_click_drag", "zoom", "scroll_to", "hover"]],
                 "coordinate": ["type": "array", "items": ["type": "number"], "description": "(x, y) for clicks, scroll, hover, and the end of a drag."],
-                "ref": AgentTools.prop("string", "An element ref from read_page or find, instead of coordinate."),
+                "ref": AgentTools.prop("string", "An element ref from read_page or find, instead of coordinate; for screenshot, the element to capture."),
+                "selector": AgentTools.prop("string", "screenshot: a CSS selector of the element to capture, instead of ref."),
+                "margin": AgentTools.prop("number", "screenshot of an element: CSS pixels kept around it, 0 by default."),
+                "fullPage": AgentTools.prop("boolean", "screenshot: the whole page, lazy content loaded, without resizing the viewport."),
+                "fullResolution": AgentTools.prop("boolean", "screenshot: at the page's device pixel ratio instead of one pixel per point."),
+                "savePath": AgentTools.prop("string", "screenshot: an absolute .png path to write it to, folders created; the reply gives the path, not the image."),
                 "text": AgentTools.prop("string", "The text to type, or for key the keys: space separated, modifiers joined by + (cmd+a, Return)."),
                 "modifiers": AgentTools.prop("string", "Modifier keys held during a click, joined by + (cmd, shift, alt, ctrl)."),
                 "scroll_direction": ["type": "string", "enum": ["up", "down", "left", "right"]],
@@ -322,20 +329,7 @@ enum AgentInteractionTools {
             _ = try await point(of: arguments, engine: engine)
             reply = "Scrolled \(arguments["ref"] as? String ?? "") into view"
         case "screenshot":
-            let size = webView.bounds.size
-            // At one pixel per point, so its pixels are the coordinates clicks take.
-            guard let image = await engine.takeSnapshot()?.cgImage(forProposedRect: nil, context: nil, hints: nil),
-                  let shot = await Task.detached(operation: { () -> (png: Data, base64: String)? in
-                      guard let scaled = scaled(image, width: Int(size.width), height: Int(size.height)), let png = png(scaled) else { return nil }
-                      return (png, png.base64EncodedString())
-                  }).value else {
-                throw AgentToolError("The tab could not be captured")
-            }
-            let id = "screenshot_\(control.nextScreenshotNumber)"
-            control.nextScreenshotNumber += 1
-            control.screenshots.append((id, shot.png))
-            if control.screenshots.count > 20 { control.screenshots.removeFirst() }
-            return [.image(shot.base64), .text("Screenshot \(id), \(Int(size.width))x\(Int(size.height))" + zoomNote(engine))]
+            return try await AgentScreenshot.take(arguments, engine: engine, tabId: tab.id, control: control)
         case "zoom":
             guard let region = arguments["region"] as? [NSNumber], region.count == 4 else { throw AgentToolError("region is (x0, y0, x1, y1)") }
             let values = region.map { CGFloat($0.doubleValue) }
@@ -525,14 +519,14 @@ enum AgentInteractionTools {
     }
 
     /// A zoomed page lays out wider or narrower than its pixels: innerWidth is not the screenshot's width.
-    private static func zoomNote(_ engine: WKWebViewTab) -> String {
+    static func zoomNote(_ engine: WKWebViewTab) -> String {
         let zoom = engine.pageZoom
         guard zoom != 1 else { return "" }
         let size = engine.view.bounds.size
         return " (page zoom \(Int((zoom * 100).rounded()))%: the page lays out at \(Int(size.width / zoom))x\(Int(size.height / zoom)) CSS px)"
     }
 
-    nonisolated private static func scaled(_ image: CGImage, width: Int, height: Int) -> CGImage? {
+    nonisolated static func scaled(_ image: CGImage, width: Int, height: Int) -> CGImage? {
         guard width >= 1, height >= 1 else { return nil }
         if image.width == width, image.height == height { return image }
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),
@@ -543,7 +537,7 @@ enum AgentInteractionTools {
         return context.makeImage()
     }
 
-    nonisolated private static func png(_ image: CGImage) -> Data? {
+    nonisolated static func png(_ image: CGImage) -> Data? {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(data as CFMutableData, UTType.png.identifier as CFString, 1, nil) else { return nil }
         CGImageDestinationAddImage(destination, image, nil)
