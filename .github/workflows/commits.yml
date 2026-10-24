@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Each push run checks only its own range, so a push run must never be cancelled.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   commits:
@@ -22,13 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0
-      - run: make hooks-test
+          # A title or body edit only needs the validator, not the history.
+          fetch-depth: ${{ github.event.action == 'edited' && !github.event.changes.base && 1 || 0 }}
+      - if: github.event.action != 'edited'
+        run: make hooks-test
       - name: Check commit messages
+        if: github.event.action != 'edited' || github.event.changes.base
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: make lint-commits
+        # A force-push leaves the previous tip out of the clone: check the whole history then.
+        run: |
+          git cat-file -e "$BASE^{commit}" 2>/dev/null || BASE=0000000000000000000000000000000000000000
+          BASE=$BASE make lint-commits
       - name: Check pull request title
         if: github.event_name == 'pull_request'
         env:

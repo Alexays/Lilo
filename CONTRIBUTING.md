@@ -266,10 +266,11 @@ and `!` before the colon for a breaking change. Types: `feat`, `fix`, `perf`, `r
 `extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`.
 
 `make hooks-install` points this clone's Git `core.hooksPath` at the tracked `.githooks/`
-directory. The native `commit-msg` hook and CI share a shell validator for the header's type,
-syntax, lowercase scope, nonempty description and absence of trailing whitespace or a final
-period. English wording and imperative style are reviewed by humans. Bodies and footers remain
-free-form. To check a title locally:
+directory. It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
+would stop running. The native `commit-msg` hook and CI share a shell validator for the
+header's type, syntax, lowercase scope, lowercase nonempty description and absence of trailing
+whitespace or a final period. Git's `Revert "..."` and `Reapply "..."` headers are accepted.
+English wording and imperative style are reviewed by humans. Bodies and footers remain free-form. To check a title locally:
 
 ```bash
 printf '%s\n' 'fix(sidebar): keep pinned tabs visible' | make lint-commit-message

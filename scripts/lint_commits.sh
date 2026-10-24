@@ -14,7 +14,7 @@ fi
 
 status=0
 for commit in $commits; do
-    if ! git show -s --format=%B "$commit" | sh "$VALIDATOR"; then
+    if ! git show -s --format=%B "$commit" | "$VALIDATOR"; then
         printf 'Invalid commit: %s\n' "$commit" >&2
         status=1
     fi
