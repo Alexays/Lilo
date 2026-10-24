@@ -109,9 +109,10 @@ extension MainWindowController {
         if menu.items.isEmpty { menu.addItem(withTitle: "No Other Spaces".localized, action: nil, keyEquivalent: "") }
     }
 
-    /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space.
+    /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never the
+    /// Agents space: its tabs are the agents'.
     func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
-        for space in switchableSpaces where space.id != tabManager.currentSpaceId {
+        for space in switchableSpaces where space.id != tabManager.currentSpaceId && space.id != context.settingsStore.agentsSpaceId {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
                 do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {

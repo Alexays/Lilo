@@ -69,8 +69,8 @@
     ].map(([value, key]) => ({ value, label: t(key) })),
   );
   const saveEnabled = $derived(canSave(editorState().name, choice, newProfileName));
-  // Deleting the only space would leave the window empty.
-  const isLastSpace = $derived(getSpaces().length <= 1);
+  // Deleting the only space would leave the window empty; the Agents space is no space of the user's.
+  const isLastSpace = $derived(getSpaces().filter((space) => space.id !== getAgentsSpaceId()).length <= 1);
   const customColor = $derived(!PASTEL_COLORS.includes(editorState().color));
 
   const hint = $derived.by(() => {

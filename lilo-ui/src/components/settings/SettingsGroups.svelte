@@ -2,6 +2,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import type { SettingsSectionId } from "../../stores/panels.svelte";
   import { getSetting } from "../../stores/settings.svelte";
+  import { getAgentsSpaceId } from "../../stores/agents.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import SettingRow from "./SettingRow.svelte";
   import { isToggleOn, parseBlockerSites, SETTINGS, sectionGroups } from "./settingsPanelModel";
@@ -29,7 +30,8 @@
   <UiInsetList title={t(group.groupKey)}>
     {#snippet icon()}<SettingsGroupIcon group={group.groupKey} />{/snippet}
     {#if group.groupKey === "settings.groups.spaces"}
-      {#each getSpaces() as space (space.id)}<SettingsSpaceRow {space} />{/each}
+      <!-- The Agents space is Lilo's, for agents: like the profiles page, the list leaves it out. -->
+      {#each getSpaces().filter((space) => space.id !== getAgentsSpaceId()) as space (space.id)}<SettingsSpaceRow {space} />{/each}
     {:else if group.groupKey === "settings.groups.profiles"}
       <SettingsProfiles />
     {:else if group.groupKey === "settings.groups.agentClients"}

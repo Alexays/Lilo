@@ -6,6 +6,10 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The Agents space no longer shows in Settings > Spaces, link rules, the external links setting or Move to Space, and no longer counts as a space of yours, so your last space cannot be deleted.
+
 ## [0.1.4] - 2026-10-24
 
 ### Changed
