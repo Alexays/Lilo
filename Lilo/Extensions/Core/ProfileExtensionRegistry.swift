@@ -31,6 +31,8 @@ final class ProfileExtensionRegistry {
         /// Manifest permissions plus the optional ones granted at Lilo's prompt, cached as a set so
         /// per-event permission scoping is a lookup.
         var permissions: Set<String>
+        /// The manifest's required and optional permissions WebKit knows, whose grants the context tracks.
+        let webKitPermissions: Set<String>
         /// Manifest facts read on every keyDown, omnibox keystroke or payload build, cached at load.
         let declaresCommands: Bool
         let omniboxKeyword: String?
@@ -676,6 +678,7 @@ final class ProfileExtensionRegistry {
             sourcePath: sourcePath,
             installPath: installPath,
             permissions: permissions,
+            webKitPermissions: Set(webExtension.requestedPermissions.union(webExtension.optionalPermissions).map(\.rawValue)),
             declaresCommands: !((webExtension.manifest["commands"] as? [String: Any])?.isEmpty ?? true),
             omniboxKeyword: (webExtension.manifest["omnibox"] as? [String: Any])?["keyword"] as? String,
             hasContentScripts: !((webExtension.manifest["content_scripts"] as? [[String: Any]])?.isEmpty ?? true)
@@ -788,6 +791,12 @@ final class ProfileExtensionRegistry {
 
     func context(for extensionId: String) -> WKWebExtensionContext? {
         runtimeIndex(for: extensionId).map { loadedRuntimes[$0].context }
+    }
+
+    /// What a gap call of the loaded extension is checked against: its context, the permissions WebKit
+    /// tracks the grants of, and `heldPermissions`.
+    func gapCaller(_ extensionId: String) -> (context: WKWebExtensionContext, webKitPermissions: Set<String>, held: Set<String>)? {
+        runtimeIndex(for: extensionId).map { (loadedRuntimes[$0].context, loadedRuntimes[$0].webKitPermissions, loadedRuntimes[$0].permissions) }
     }
 
     /// Tears the registry down for cache eviction, unloading every context but never the persisted list or on-disk state.

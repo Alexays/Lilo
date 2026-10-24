@@ -12,7 +12,7 @@ final class CookiesBridgeHandler: GapHandler {
             await call.registry.cookieChangesReported()
             return nil
         }
-        guard let context = call.registry.context(for: call.extensionId),
+        guard let context = call.context,
               let tab = call.registry.tabAdapters(atPositions: [call.payload["tab"] as? [String: Any] ?? [:]], extensionId: call.extensionId).first ?? nil,
               let url = tab.url(for: context) else { return BridgeError("Invalid `tabId`.") }
         guard let site = Self.site(of: url), let siteURL = URL(string: "\(site)/") else {

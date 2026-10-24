@@ -37,7 +37,7 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
     func handle(_ call: GapCall) async -> Any? {
         switch call.action {
         case "webSocket.connect":
-            guard let context = call.registry.context(for: call.extensionId),
+            guard let context = call.context,
                   let url = call.string("url").flatMap(URL.init(string:)), ["ws", "wss"].contains(url.scheme) else {
                 return BridgeError("Invalid WebSocket url")
             }

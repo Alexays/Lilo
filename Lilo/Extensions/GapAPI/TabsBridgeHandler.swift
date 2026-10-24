@@ -29,7 +29,7 @@ final class TabsBridgeHandler: GapHandler {
         switch call.action {
         case "tabs.urls":
             // Chrome shows every tab's url and title with `tabs`; WebKit only those of hosts the extension may access.
-            guard let context = call.registry.context(for: call.extensionId), context.hasPermission(.tabs) else { return [Any]() }
+            guard let context = call.context, context.hasPermission(.tabs) else { return [Any]() }
             let positions = call.payload["tabs"] as? [[String: Any]] ?? []
             return call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).map { adapter -> Any in
                 guard let adapter else { return NSNull() }

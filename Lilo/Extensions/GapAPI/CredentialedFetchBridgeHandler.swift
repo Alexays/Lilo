@@ -18,7 +18,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
     }()
 
     func handle(_ call: GapCall) async -> Any? {
-        guard let context = call.registry.context(for: call.extensionId),
+        guard let context = call.context,
               var url = call.string("url").flatMap(URL.init(string:)), ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
               context.hasAccess(to: url) else { return nil }
         let store = WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore

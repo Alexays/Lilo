@@ -36,7 +36,7 @@ final class ProxyBridgeHandler: GapHandler {
     func handle(_ call: GapCall) async -> Any? {
         guard let settings = settingsProvider(call.registry) else { return BridgeError("Extension settings unavailable") }
         let loadedIds = call.registry.loadedExtensions.map(\.id)
-        let allowsPrivate = call.registry.context(for: call.extensionId)?.hasAccessToPrivateData == true
+        let allowsPrivate = call.context?.hasAccessToPrivateData == true
         switch call.action {
         case "proxy.get":
             let incognito = call.bool("incognito")

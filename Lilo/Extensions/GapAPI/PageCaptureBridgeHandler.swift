@@ -8,7 +8,7 @@ final class PageCaptureBridgeHandler: GapHandler {
 
     func handle(_ call: GapCall) async -> Any? {
         let registry = call.registry
-        guard let context = registry.context(for: call.extensionId),
+        guard let context = call.context,
               let position = call.payload["tab"] as? [String: Any],
               let adapter = registry.tabAdapters(atPositions: [position], extensionId: call.extensionId).first ?? nil else {
             return BridgeError("Cannot find the tab for this request.")

@@ -40,7 +40,7 @@ final class ContentSettingsBridgeHandler: GapHandler {
         guard let settings = settingsProvider(call.registry) else { return BridgeError("Extension settings unavailable") }
         let name = call.string("type") ?? ""
         guard let type = Self.types[name] else { return BridgeError("Invalid content setting type.") }
-        let allowsPrivate = call.registry.context(for: call.extensionId)?.hasAccessToPrivateData == true
+        let allowsPrivate = call.context?.hasAccessToPrivateData == true
         switch call.action {
         case "contentSettings.get":
             let primaryURLString = call.string("primaryUrl") ?? ""
