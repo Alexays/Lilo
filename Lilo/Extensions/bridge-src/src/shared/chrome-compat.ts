@@ -8,6 +8,7 @@ import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, externalEvents } from '../augmentation/runtime.ts';
+import { onAuthRequired } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
@@ -271,6 +272,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         handlerBehaviorChanged: (callback?: () => void) => callbackify(async () => {}, callback),
         onActionIgnored: webRequestOnActionIgnored,
       },
+      standIns: { onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {

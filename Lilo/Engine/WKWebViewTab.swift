@@ -37,6 +37,11 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateTitle title: String?)
         func tab(_ tab: WKWebViewTab, didUpdateURL url: URL?)
         func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool
+        /// Extensions' answer to a proxy's sign-in challenge, nil to prompt the user.
+        func tab(
+            _ tab: WKWebViewTab, authenticateProxy challenge: URLAuthenticationChallenge,
+            completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+        )
         func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoBack canGoBack: Bool)
@@ -995,6 +1000,10 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
     var prefersSingleWindow: Bool { false }
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool { false }
+    func tab(
+        _ tab: WKWebViewTab, authenticateProxy challenge: URLAuthenticationChallenge,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) { completion(nil) }
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
@@ -1446,13 +1455,20 @@ extension WKWebViewTab: WKNavigationDelegate {
                         return completionHandler(.performDefaultHandling, nil)
                     }
                 }
-                DispatchQueue.main.async { [weak self] in
-                    MainActor.assumeIsolated {
-                        HTTPAuthChallengeHandler().resolve(
-                            challenge, in: self?.webView.window, usesKeychain: self?.isPrivateBrowsing == false,
-                            completion: completionHandler
-                        )
+                let prompt = { [weak self] in
+                    DispatchQueue.main.async { [weak self] in
+                        MainActor.assumeIsolated {
+                            HTTPAuthChallengeHandler().resolve(
+                                challenge, in: self?.webView.window, usesKeychain: self?.isPrivateBrowsing == false,
+                                completion: completionHandler
+                            )
+                        }
                     }
+                }
+                // Private spaces never use an extension's proxy.
+                guard space.isProxy(), !isPrivateBrowsing, let delegate else { return prompt() }
+                delegate.tab(self, authenticateProxy: challenge) { answer in
+                    if let answer { completionHandler(answer.0, answer.1) } else { prompt() }
                 }
             } else {
                 completionHandler(.performDefaultHandling, nil)

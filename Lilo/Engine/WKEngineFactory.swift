@@ -190,6 +190,14 @@ final class WKEngineFactory {
         proxyHandler.reportNavigationFailure(error, registry: registry)
     }
 
+    /// A proxy's challenge to a tab's load goes to webRequest.onAuthRequired; nil when no extension answers it.
+    func authenticateProxy(
+        _ challenge: URLAuthenticationChallenge, url: URL?, tab: TabExtensionAdapter?, registry: ProfileExtensionRegistry,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) {
+        proxyHandler.authenticate(challenge, url: url, tab: tab, registry: registry, completion: completion)
+    }
+
     lazy var contentSettingsHandler = ContentSettingsBridgeHandler(settingsProvider: { [weak self] in self?.profileContext(for: $0)?.extensionSettings })
     private lazy var fontSettingsHandler: FontSettingsBridgeHandler = {
         let handler = FontSettingsBridgeHandler(settingsProvider: { [weak self] in self?.profileContext(for: $0)?.extensionSettings })

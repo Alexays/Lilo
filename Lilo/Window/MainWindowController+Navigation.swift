@@ -180,6 +180,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
     }
 
+    func tab(
+        _ tab: WKWebViewTab, authenticateProxy challenge: URLAuthenticationChallenge,
+        completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
+    ) {
+        guard let registry = profileContext?.extensions, registry.hasLoadedExtensions else { return completion(nil) }
+        context.engineFactory.authenticateProxy(
+            challenge, url: tab.currentURL, tab: tabManager.engineHost.tabAdapter(for: tab.id), registry: registry, completion: completion
+        )
+    }
+
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool {
         let key = "\(host.lowercased()):\(port)"
         guard let expected = insecureTrustExceptions[key], let fingerprint = Self.leafCertificateFingerprint(trust) else { return false }

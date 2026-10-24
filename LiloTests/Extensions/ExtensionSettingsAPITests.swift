@@ -38,10 +38,14 @@ final class ExtensionSettingsAPITests: XCTestCase {
         super.tearDown()
     }
 
-    private func loadExtension(permissions: [String] = ["browsingData", "contentSettings", "fontSettings", "proxy", "history"]) async throws -> String {
+    private func loadExtension(
+        permissions: [String] = ["browsingData", "contentSettings", "fontSettings", "proxy", "history"], hostPermissions: [String] = []
+    ) async throws -> String {
         let dir = tempDir.appendingPathComponent("ext-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let manifest: [String: Any] = ["manifest_version": 3, "name": "Settings", "version": "1.0", "permissions": permissions]
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Settings", "version": "1.0", "permissions": permissions, "host_permissions": hostPermissions
+        ]
         try JSONSerialization.data(withJSONObject: manifest).write(to: dir.appendingPathComponent("manifest.json"))
         let before = Set(profile.extensions.loadedExtensions.map(\.id))
         try await profile.extensions.load(from: dir)
@@ -128,6 +132,75 @@ final class ExtensionSettingsAPITests: XCTestCase {
         factory.reportProxyFailure(failure, registry: profile.extensions)
 
         XCTAssertEqual(events("proxy.onProxyError", to: id) as NSArray, [["fatal": true, "error": "net::ERR_PROXY_CONNECTION_FAILED", "details": ""]] as NSArray)
+    }
+
+    private final class ChallengeSender: NSObject, URLAuthenticationChallengeSender {
+        func use(_ credential: URLCredential, for challenge: URLAuthenticationChallenge) {}
+        func continueWithoutCredential(for challenge: URLAuthenticationChallenge) {}
+        func cancel(_ challenge: URLAuthenticationChallenge) {}
+    }
+
+    /// Asks the extensions about a challenge from proxy.test:3128, lets `respond` answer the request `id` heard, and
+    /// returns what the tab got: nil for its own prompt.
+    private func proxyChallenge(
+        heardBy id: String, respond: (String) async -> Void
+    ) async throws -> (URLSession.AuthChallengeDisposition, URLCredential?)? {
+        let space = URLProtectionSpace(
+            proxyHost: "proxy.test", port: 3128, type: NSURLProtectionSpaceHTTPSProxy, realm: "vpn", authenticationMethod: NSURLAuthenticationMethodHTTPBasic
+        )
+        let challenge = URLAuthenticationChallenge(
+            protectionSpace: space, proposedCredential: nil, previousFailureCount: 0, failureResponse: nil, error: nil, sender: ChallengeSender()
+        )
+        var answers: [(URLSession.AuthChallengeDisposition, URLCredential?)?] = []
+        factory.authenticateProxy(challenge, url: URL(string: "https://example.com/"), tab: nil, registry: profile.extensions) { answers.append($0) }
+        if answers.isEmpty, let requestId = events("webRequest.onAuthRequired", to: id).last?["requestId"] as? String {
+            await respond(requestId)
+        }
+        XCTAssertEqual(answers.count, 1)
+        return try XCTUnwrap(answers.first)
+    }
+
+    func testProxyChallengeTakesTheCredentialsOfAnAuthProvider() async throws {
+        let id = try await loadExtension(permissions: ["proxy", "webRequest", "webRequestAuthProvider"], hostPermissions: ["<all_urls>"])
+        _ = await call("proxy", "set", ["value": ["mode": "fixed_servers", "rules": ["singleProxy": ["host": "proxy.test", "port": 3128]]]], from: id)
+
+        let answer = try await proxyChallenge(heardBy: id) { requestId in
+            _ = await call("webRequest", "answerAuth", ["requestId": requestId, "credentials": ["username": "u", "password": "p"]], from: id)
+        }
+
+        let details = try XCTUnwrap(events("webRequest.onAuthRequired", to: id).first)
+        XCTAssertEqual(details["isProxy"] as? Bool, true)
+        XCTAssertEqual(details["challenger"] as? [String: AnyHashable], ["host": "proxy.test", "port": 3128])
+        XCTAssertEqual(details["scheme"] as? String, "basic")
+        XCTAssertEqual(details["url"] as? String, "https://example.com/")
+        XCTAssertEqual(details["statusCode"] as? Int, 407)
+        XCTAssertEqual(answer?.0, .useCredential)
+        XCTAssertEqual(answer?.1?.user, "u")
+        XCTAssertEqual(answer?.1?.password, "p")
+        XCTAssertEqual(profile.extensions.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations.count, 1)
+    }
+
+    func testProxyChallengeCancelsOrFallsBackToThePrompt() async throws {
+        let id = try await loadExtension(permissions: ["proxy", "webRequest", "webRequestAuthProvider"], hostPermissions: ["<all_urls>"])
+
+        let cancelled = try await proxyChallenge(heardBy: id) { requestId in
+            _ = await call("webRequest", "answerAuth", ["requestId": requestId, "cancel": true], from: id)
+        }
+        let unanswered = try await proxyChallenge(heardBy: id) { requestId in
+            _ = await call("webRequest", "answerAuth", ["requestId": requestId], from: id)
+        }
+
+        XCTAssertEqual(cancelled?.0, .cancelAuthenticationChallenge)
+        XCTAssertNil(unanswered)
+    }
+
+    func testProxyChallengeSkipsExtensionsWithoutAuthProvider() async throws {
+        let id = try await loadExtension(permissions: ["proxy", "webRequest"], hostPermissions: ["<all_urls>"])
+
+        let answer = try await proxyChallenge(heardBy: id) { _ in XCTFail("no extension may answer") }
+
+        XCTAssertNil(answer)
+        XCTAssertTrue(events("webRequest.onAuthRequired", to: id).isEmpty)
     }
 
     // MARK: - fontSettings
