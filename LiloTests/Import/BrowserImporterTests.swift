@@ -203,6 +203,38 @@ final class BrowserImporterTests: XCTestCase {
         XCTAssertEqual(work.tree.pinned.count, 1, "and adds nothing twice to it")
     }
 
+    /// The tabs come in closed: with no icon of their own they would show an initial until first opened.
+    func testImportedTabsCarryTheirSitesIconFromTheBrowser() async throws {
+        let arcRoot = home.appendingPathComponent("Library/Application Support/Arc")
+        let profile = arcRoot.appendingPathComponent("User Data/Default")
+        try FileManager.default.createDirectory(at: profile, withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: profile.appendingPathComponent("Bookmarks"))
+        let favicons = try DatabaseQueue(path: profile.appendingPathComponent("Favicons").path)
+        try await favicons.write { db in
+            try db.execute(sql: "CREATE TABLE icon_mapping (page_url TEXT, icon_id INTEGER)")
+            try db.execute(sql: "CREATE TABLE favicon_bitmaps (icon_id INTEGER, image_data BLOB, width INTEGER)")
+            try db.execute(sql: "INSERT INTO icon_mapping VALUES ('https://board.example/home', 1)")
+            try db.execute(sql: "INSERT INTO favicon_bitmaps VALUES (1, ?, 32)", arguments: [Data("PNG".utf8)])
+        }
+        try Data("""
+        {"sidebar": {"containers": [{"global": {}}, {
+          "spaces": ["s1", {"id": "s1", "title": "Work", "containerIDs": ["pinned", "p1", "unpinned", "u1"]}],
+          "items": [
+            "p1", {"id": "p1", "childrenIds": ["t1"], "data": {"itemContainer": {}}},
+            "t1", {"id": "t1", "title": "Board", "data": {"tab": {"savedURL": "https://board.example/"}}},
+            "u1", {"id": "u1", "childrenIds": [], "data": {"itemContainer": {}}}
+          ]}]}}
+        """.utf8).write(to: arcRoot.appendingPathComponent("StorableSidebar.json"))
+
+        _ = await importer().run([.init(sourceId: "arc", profileId: "Default", kinds: [.tabs], extensionIds: [])],
+                                 sources: BrowserImportScanner.scan(home: home)) { _ in }
+
+        let work = try XCTUnwrap(spaceIds["Work"].flatMap { savedStates[$0] })
+        guard case let .tab(board)? = work.tree.pinned.first else { return XCTFail("the pinned tab is imported") }
+        XCTAssertEqual(board.faviconDataURL, "data:image/png;base64," + Data("PNG".utf8).base64EncodedString())
+        XCTAssertEqual(board.homeFaviconDataURL, board.faviconDataURL, "closing it keeps the icon")
+    }
+
     func testArcImportKeepsProfilesFoldersSplitsAndColorsAndRerunsAddNothing() async throws {
         let arcRoot = home.appendingPathComponent("Library/Application Support/Arc")
         let userData = arcRoot.appendingPathComponent("User Data")

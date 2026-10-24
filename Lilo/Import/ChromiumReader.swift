@@ -84,7 +84,8 @@ enum ChromiumReader {
                 bundle.pinnedExtensionIds = (preferences?["extensions"] as? [String: Any])?["pinned_extensions"] as? [String] ?? []
             }
         }
-        let hosts = ImportFiles.hosts(in: result.bundle.bookmarksBar + result.bundle.otherBookmarks + result.bundle.pinnedTabs + result.bundle.openTabs)
+        let hosts = ImportFiles.hosts(in: result.bundle.bookmarksBar + result.bundle.otherBookmarks + result.bundle.pinnedTabs + result.bundle.openTabs
+            + result.bundle.favorites + result.bundle.spaces.flatMap { $0.pinned + $0.unpinned })
         if !hosts.isEmpty {
             result.bundle.favicons = (try? favicons(dir: dir, hosts: hosts)) ?? []
         }

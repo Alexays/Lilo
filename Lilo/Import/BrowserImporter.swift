@@ -105,12 +105,13 @@ final class BrowserImporter {
                 do {
                     let others = ImportedBookmark(title: sink.otherBookmarksTitle(source.name), url: nil, children: bundle.otherBookmarks)
                     // The bookmarked section holds tabs only: favorite folders are flattened.
+                    let icons = Dictionary(bundle.favicons.map { ($0.host, $0.dataURL) }, uniquingKeysWith: { first, _ in first })
                     var targets = [Target(spaceId: lilo.spaceId, bookmarks: bundle.bookmarksBar + [others], pinned: bundle.pinnedTabs,
-                                          unpinned: bundle.openTabs, bookmarked: Self.flattened(bundle.favorites))]
+                                          unpinned: bundle.openTabs, bookmarked: Self.flattened(bundle.favorites), icons: icons)]
                     for space in bundle.spaces {
                         let spaceId = try sink.findSpace(space.name, lilo.profileId)
                             ?? sink.createSpace(space.name, space.icon ?? "🌐", space.color, lilo.profileId)
-                        targets.append(Target(spaceId: spaceId, bookmarks: [], pinned: space.pinned, unpinned: space.unpinned, bookmarked: []))
+                        targets.append(Target(spaceId: spaceId, bookmarks: [], pinned: space.pinned, unpinned: space.unpinned, bookmarked: [], icons: icons))
                     }
                     for index in targets.indices {
                         targets[index].tree = sink.tree(targets[index].spaceId) ?? sink.loadSpaceState(targets[index].spaceId, lilo.profileId)?.tree
@@ -197,6 +198,8 @@ final class BrowserImporter {
         var pinned: [ImportedBookmark]
         var unpinned: [ImportedBookmark]
         var bookmarked: [ImportedBookmark]
+        /// The source's favicons by host: an imported tab shows its site's icon before it ever loads.
+        var icons: [String: String] = [:]
         var tree: StoredSidebarTree?
     }
 
@@ -205,10 +208,10 @@ final class BrowserImporter {
 
     nonisolated private static func build(_ target: Target) -> BuiltNodes {
         var known = urls(in: target.tree)
-        let bookmarks = nodes(target.bookmarks, known: &known, open: false, bookmarked: false)
-        let pinned = nodes(target.pinned, known: &known, open: false, bookmarked: false)
-        let bookmarked = nodes(target.bookmarked, known: &known, open: false, bookmarked: true)
-        return (bookmarks, pinned, nodes(target.unpinned, known: &known, open: true, bookmarked: false), bookmarked)
+        let bookmarks = nodes(target.bookmarks, known: &known, open: false, bookmarked: false, icons: target.icons)
+        let pinned = nodes(target.pinned, known: &known, open: false, bookmarked: false, icons: target.icons)
+        let bookmarked = nodes(target.bookmarked, known: &known, open: false, bookmarked: true, icons: target.icons)
+        return (bookmarks, pinned, nodes(target.unpinned, known: &known, open: true, bookmarked: false, icons: target.icons), bookmarked)
     }
 
     nonisolated private static func read(source: ImportSource, profile: ImportProfile, kinds: Set<ImportKind>, home: URL) -> ImportReadResult {
@@ -229,13 +232,14 @@ final class BrowserImporter {
     /// re-import adds nothing twice, nor a folder left empty. Folders keep their nesting down to `SpaceTab.maxFolderDepth`, deeper
     /// content joining the deepest folder; a split inside a folder becomes plain tabs. `depth` counts the enclosing folders.
     nonisolated private static func nodes(_ bookmarks: [ImportedBookmark], known: inout Set<String>, open: Bool, bookmarked: Bool,
-                                          depth: Int = 0) -> [StoredSidebarNode] {
+                                          icons: [String: String], depth: Int = 0) -> [StoredSidebarNode] {
         func tab(_ url: String, _ title: String, closed: Bool) -> StoredSidebarNode {
             let title = title.isEmpty ? url : title
-            return .tab(StoredTab(id: UUID(), url: url, title: title, faviconDataURL: nil, faviconDominantColor: nil,
+            let icon = (URL(string: url)?.host?.lowercased()).flatMap { icons[$0] }
+            return .tab(StoredTab(id: UUID(), url: url, title: title, faviconDataURL: icon, faviconDominantColor: nil,
                                   isPinned: false, isBookmarked: bookmarked, isClosed: closed,
                                   homeURL: open ? nil : url, homeTitle: open ? nil : title,
-                                  homeFaviconDataURL: nil, homeFaviconDominantColor: nil))
+                                  homeFaviconDataURL: open ? nil : icon, homeFaviconDominantColor: nil))
         }
         var result: [StoredSidebarNode] = []
         for bookmark in bookmarks {
@@ -243,7 +247,7 @@ final class BrowserImporter {
                 if known.insert(url).inserted { result.append(tab(url, bookmark.title, closed: !open)) }
             } else if let vertical = bookmark.splitVertical {
                 guard depth == 0 else {
-                    result += nodes(bookmark.children, known: &known, open: open, bookmarked: bookmarked, depth: depth)
+                    result += nodes(bookmark.children, known: &known, open: open, bookmarked: bookmarked, icons: icons, depth: depth)
                     continue
                 }
                 let panes = flattened(bookmark.children).compactMap { pane in
@@ -258,7 +262,7 @@ final class BrowserImporter {
                                                    children: Array(panes.prefix(ids.count)), splitLayout: layout)))
                 result += panes.dropFirst(ids.count)
             } else {
-                let inner = nodes(bookmark.children, known: &known, open: open, bookmarked: bookmarked, depth: depth + 1)
+                let inner = nodes(bookmark.children, known: &known, open: open, bookmarked: bookmarked, icons: icons, depth: depth + 1)
                 if depth >= SpaceTab.maxFolderDepth {
                     result += inner
                 } else if !inner.isEmpty {
