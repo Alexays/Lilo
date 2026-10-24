@@ -373,15 +373,12 @@ extension MainWindowController {
         return preloaded
     }
 
-    /// Profiles whose hidden spaces this process preloaded, so another window does not repeat it.
-    private static var hiddenSpacePreloadProfileIds: Set<UUID> = []
-
     /// Once launch settles, decodes the active profile's hidden spaces (tab tree, repair, archived
     /// interaction blobs) off the main actor into the snapshot cache, so the first switch into each
     /// is a cache hit. A space the cache gained meanwhile keeps its own snapshot.
     func scheduleHiddenSpacePreload() {
         guard let profileId = profileContext?.profileId,
-              Self.hiddenSpacePreloadProfileIds.insert(profileId).inserted else { return }
+              context.hiddenSpacePreloadProfileIds.insert(profileId).inserted else { return }
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(3))
             guard let self, let pool = try? context.dbManager?.pool(for: profileId) else { return }

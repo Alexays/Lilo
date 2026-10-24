@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Lists the tests that failed and then passed on a retry, as Markdown for a CI job summary.
 
-Takes Xcode result bundles (.xcresult) and Playwright JSON reports, skipping those a failed build never wrote;
-prints nothing when no test needed a retry.
+Takes Xcode result bundles (.xcresult) and Playwright JSON reports, skipping those a failed build never wrote
+or left unreadable; prints nothing when no test needed a retry. Each one is also a warning annotation on
+stderr, which the run's checks list shows.
 """
 import json
 import os
@@ -12,10 +13,14 @@ import sys
 
 
 def xcode_retried(bundle):
-    tree = json.loads(subprocess.run(
+    result = subprocess.run(
         ["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", bundle],
-        check=True, capture_output=True, text=True,
-    ).stdout)
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"::notice::{bundle} holds no test results: {result.stderr.strip()[:300]}", file=sys.stderr)
+        return []
+    tree = json.loads(result.stdout)
     retried = []
 
     def walk(node):
@@ -67,6 +72,7 @@ def main(paths):
         # The first line of the failure, without ANSI colors or backticks that would break the Markdown.
         first = re.sub(r"\x1b\[[0-9;]*m", "", failure).split("\n", 1)[0].replace("`", "'")
         print(f"- `{name}`" + (f": {first[:300]}" if first else ""))
+        print(f"::warning title=Flaky test::{name} passed only on a retry", file=sys.stderr)
 
 
 if __name__ == "__main__":

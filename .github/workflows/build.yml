@@ -9,18 +9,44 @@ on:
 permissions:
   contents: read
 
+# A push to main keeps its own run, so every merged commit gets a result; a pull request's newer push
+# cancels its older run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # Documentation and release notes alone skip the builds, which then count as passed. COMPATIBILITY.md
+      # is a test input; a range git cannot read (a force-push) runs everything.
+      - id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          code=true
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+            printf '%s\n' "$files" | grep -qvE '^(docs/|\.changes/)|\.md$' \
+              || printf '%s\n' "$files" | grep -qx COMPATIBILITY.md || code=false
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   release-tooling:
     name: Release tooling and website
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -29,16 +55,22 @@ jobs:
 
   ui:
     name: UI (lint, test, build, end-to-end)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
       - run: make validate-ui
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('lilo-ui/package-lock.json') }}
       - run: npx playwright install --with-deps chromium
         working-directory: lilo-ui
       - run: make e2e
@@ -46,7 +78,7 @@ jobs:
         if: always()
         run: python3 scripts/retried_tests.py lilo-ui/test-results/report.json >> "$GITHUB_STEP_SUMMARY"
       # A retried test leaves its trace there too, failing the run or not.
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-traces
@@ -55,73 +87,81 @@ jobs:
 
   bridge:
     name: Extension Bridge Tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: Lilo/Extensions/bridge-src/package-lock.json
       - run: make ext-bridge-test
+      # Untracked files count too: a new bundle never committed is out of sync as well.
       - name: Check generated bridge bundles match bridge-src
         run: |
           make ext-bridge-build
-          git diff --exit-code \
-            Lilo/Extensions/ChromeAPIAugmentation.js \
-            Lilo/Extensions/ChromeAPIBackgroundPrelude.js \
-            Lilo/Extensions/ChromeContentCompat.js \
-            Lilo/Extensions/ChromeStaticRules.js \
-            Lilo/Extensions/ChromeWebStoreShim.js \
-            || (echo "::error::Extension bridge bundles are out of sync with bridge-src: run 'make ext-bridge-build' and commit." && exit 1)
+          test -z "$(git status --porcelain --untracked-files=all Lilo/Extensions)" \
+            || { git status --short Lilo/Extensions; echo "::error::Extension bridge bundles are out of sync with bridge-src: run 'make ext-bridge-build' and commit."; exit 1; }
 
   app:
     name: App Validate + Swift Tests (macOS)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against); macos-26 only has Xcode 26.
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
       - run: xcodebuild -downloadComponent MetalToolchain
-      - run: brew install swiftlint xcodegen
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .derived.noindex/xcode/SourcePackages
           key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
       - name: Check Lilo.xcodeproj matches project.yml
         run: |
           make project-sync
-          git diff --exit-code Lilo.xcodeproj \
-            || (echo "::error::Lilo.xcodeproj is out of sync with project.yml - run 'make project-sync' and commit." && exit 1)
-      - run: make swiftlint xcode-build xcode-build-release
+          test -z "$(git status --porcelain --untracked-files=all Lilo.xcodeproj)" \
+            || { git status --short Lilo.xcodeproj; echo "::error::Lilo.xcodeproj is out of sync with project.yml: run 'make project-sync' and commit."; exit 1; }
+      # swift-test builds Debug itself.
+      - run: make swiftlint xcode-build-release
       - run: make swift-test RESULT_BUNDLE=build/swift-test.xcresult
       - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult
       - name: List tests that passed only on a retry
+        id: retried
         if: always()
-        run: python3 scripts/retried_tests.py build/swift-test.xcresult build/swift-test-slow.xcresult >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v7
-        if: failure()
+        run: |
+          mkdir -p build
+          python3 scripts/retried_tests.py build/swift-test.xcresult build/swift-test-slow.xcresult > build/retried.md
+          cat build/retried.md >> "$GITHUB_STEP_SUMMARY"
+          if [ -s build/retried.md ]; then echo "any=true" >> "$GITHUB_OUTPUT"; fi
+      # Also kept for a test that passed on its retry, so its first failure can be looked into.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure() || steps.retried.outputs.any == 'true'
         with:
           name: swift-test-results
           path: build/*.xcresult
           if-no-files-found: ignore
 
+  # Numbers are kept per merged commit: a pull request would only spend a second Release build on them.
   startup-bench:
     name: Startup Benchmark (macOS, informational)
     needs: app
+    if: github.event_name == 'push' && needs.app.result == 'success'
     runs-on: xcode-27
     timeout-minutes: 45
     # Launch times drift with the runner: the numbers are kept per commit, never gate a merge.
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -132,7 +172,7 @@ jobs:
         run: |
           mkdir -p build/startup-bench
           make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench | tee build/startup-bench/summary.txt
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: startup-bench-${{ github.sha }}

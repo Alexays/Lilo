@@ -2,7 +2,7 @@
 // longer loads unpacked extensions from the command line.
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, renameSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -10,21 +10,31 @@ export const root = join(import.meta.dirname, '..');
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function fetchOK(url, timeoutMs) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+  return response;
+}
+
 // The current stable build from Google's catalog, downloaded into .derived.noindex/ once; ditto keeps the
-// app's framework symlinks intact.
+// app's framework symlinks intact. It unpacks beside the version folder, so a cut download never passes for one.
 export async function stableChromeForTesting() {
   const platform = process.arch === 'arm64' ? 'mac-arm64' : 'mac-x64';
-  const catalog = await (await fetch('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json')).json();
+  const catalog = await (await fetchOK('https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json', 30_000)).json();
   const { version, downloads } = catalog.channels.Stable;
   const dir = join(root, '.derived.noindex/chrome-for-testing', version);
   const binary = join(dir, `chrome-${platform}`, 'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing');
   if (existsSync(binary)) return binary;
   const { url } = downloads.chrome.find((d) => d.platform === platform);
-  mkdirSync(dir, { recursive: true });
-  const zip = join(dir, 'chrome.zip');
-  writeFileSync(zip, Buffer.from(await (await fetch(url)).arrayBuffer()));
-  execFileSync('ditto', ['-x', '-k', zip, dir]);
+  const partial = `${dir}.partial`;
+  rmSync(partial, { recursive: true, force: true });
+  mkdirSync(partial, { recursive: true });
+  const zip = join(partial, 'chrome.zip');
+  writeFileSync(zip, Buffer.from(await (await fetchOK(url, 10 * 60_000)).arrayBuffer()));
+  execFileSync('ditto', ['-x', '-k', zip, partial]);
   rmSync(zip);
+  rmSync(dir, { recursive: true, force: true });
+  renameSync(partial, dir);
   return binary;
 }
 

@@ -24,7 +24,7 @@ final class PagePopupTests: XCTestCase {
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         webView.loadHTMLString("<p>opener</p>", baseURL: URL(string: "https://example.com/"))
-        await pollUntil(timeout: 2) { !webView.isLoading && webView.url != nil }
+        await pollUntil { !webView.isLoading && webView.url != nil }
     }
 
     override func tearDown() {
@@ -239,7 +239,7 @@ final class PagePopupTests: XCTestCase {
             link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             true
             """)
-        await pollUntil(timeout: 2) { !self.controller.pagePopups.isEmpty || engine.currentURL?.host != "example.com" }
+        await pollUntil { !self.controller.pagePopups.isEmpty || engine.currentURL?.host != "example.com" }
     }
 
     func testALinkToAnotherSiteFromAPinnedTabOpensInAPeek() async throws {

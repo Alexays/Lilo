@@ -36,7 +36,7 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     /// where without a web view the extension gets an error, as Chrome gives for a tab put to sleep.
     func webView(for context: WKWebExtensionContext) -> WKWebView? {
         guard let engineTab, let webView = engineTab.view as? WKWebView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return nil }
-        engineTab.lentToExtensionAt = .now
+        engineTab.lentToExtensionAt = Date()
         return webView
     }
 

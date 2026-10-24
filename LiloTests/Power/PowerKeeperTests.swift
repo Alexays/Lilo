@@ -131,9 +131,9 @@ final class PowerKeeperTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(120))
         XCTAssertEqual(keeper.state.working, [agent], "each call restarts the quiet limit")
 
-        try await Task.sleep(for: .milliseconds(200))
+        let expired = await pollUntil { keeper.state.working.isEmpty }
 
-        XCTAssertTrue(keeper.state.working.isEmpty)
+        XCTAssertTrue(expired)
     }
 
     func testAQuietInteractivePromptStopsCountingAtOnceUnlessKeptAwake() {

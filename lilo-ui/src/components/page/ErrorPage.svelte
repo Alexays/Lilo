@@ -41,6 +41,7 @@
     if (code === -1009) return t("errorPage.noInternet");
     if (CERT_ERROR_CODES.has(code)) return t("errorPage.notSecure");
     if (code === -1004 || code === -1005) return t("errorPage.connectionFailed");
+    if (code === -1008) return t("errorPage.noSavedCopy");
     if (code === -999) return ""; // Cancelled: nothing to show
     return t("errorPage.couldNotLoad");
   });
@@ -63,6 +64,7 @@
     if (CERT_ERROR_CODES.has(code)) return t("errorPage.hintNotSecure");
     if (code === -1003 || code === -1006) return t("errorPage.hintServerNotFound");
     if (code === -1001) return t("errorPage.hintTimedOut");
+    if (code === -1008) return t("errorPage.hintNoSavedCopy");
     return error.description;
   });
 
@@ -71,12 +73,9 @@
     tabActions.reload();
   }
 
-  // Offline page reloads by itself once the network is back.
-  $effect(() => {
-    if (error?.code !== -1009) return;
-    window.addEventListener("online", retry);
-    return () => window.removeEventListener("online", retry);
-  });
+  // Network failures where the page's last cached copy beats nothing; -1008 is that copy missing.
+  const SAVED_COPY_CODES = new Set([-1001, -1004, -1005, -1009]);
+  const canShowSavedCopy = $derived(error != null && SAVED_COPY_CODES.has(error.code));
 
   const isCertError = $derived(error != null && CERT_ERROR_CODES.has(error.code));
   const errorHost = $derived.by(() => {
@@ -112,6 +111,9 @@
       <div class="error-actions">
         <UiButton disabled={!canGoBack} onclick={() => tabActions.goBack()}>{t("errorPage.back")}</UiButton>
         <UiButton variant="primary" onclick={retry}>{t("errorPage.tryAgain")}</UiButton>
+        {#if canShowSavedCopy}
+          <UiButton onclick={() => tabActions.showCachedCopy()}>{t("errorPage.showSavedCopy")}</UiButton>
+        {/if}
         {#if isCertError && errorHost}
           <!-- Deliberately understated: proceeding past a cert error is the unsafe choice. -->
           <UiButton variant="ghost" onclick={visitAnyway}>{t("errorPage.visitAnyway")}</UiButton>

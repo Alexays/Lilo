@@ -14,7 +14,7 @@
     "test": "tsx --test $(find src -name '*.test.ts')",
     "test:e2e": "playwright test",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "lint": "eslint . && npm run check"
+    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ . & eslint=$!; npm run check; check=$?; wait $eslint && [ $check -eq 0 ]"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

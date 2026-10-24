@@ -310,7 +310,7 @@ final class GapRouterStoreProviderTests: XCTestCase {
                 .compactMap { $0.args.first as? [String: Any] }
         }
         // The tracker's first read only takes the baseline.
-        try await Task.sleep(for: .milliseconds(600))
+        await registry.cookieChangesReported()
 
         await store.setCookie(try cookie(".a.test", "1"))
         await store.setCookie(try cookie("b.test", "1"))

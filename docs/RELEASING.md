@@ -28,9 +28,10 @@ selects major. When notes request different bumps, the largest wins.
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
 extension bridge package versions and their lockfiles. `make site-generate` then builds the Astro website,
 including its changelog page and app metadata, in the git-ignored `site/dist/` directory.
-It increments `CURRENT_PROJECT_VERSION` once when the app version changes. Sparkle compares this
-build number, so every release needs a larger one. Running the command again without new fragments
-leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
+It increments `CURRENT_PROJECT_VERSION` once for each release it collects, or when the app version
+differs from Changie's latest release. Sparkle compares this build number, so every release needs a
+larger one. It reads and checks every file before consuming the fragments, and running it again
+without new fragments leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
 
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
@@ -49,11 +50,13 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
-1. Imports the Developer ID certificate into a temporary keychain.
-2. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-notarize` (UI bundle + extension bridge + archive, export, notarize, staple).
-3. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs, notarizes and staples the DMG itself.
-4. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
-5. Creates a **draft** GitHub release with the DMG and the appcast attached and auto-generated notes. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
+1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
+2. Builds the UI bundle and the extension bridge with `npm ci --ignore-scripts`, before any secret is in reach. The checkout keeps no token.
+3. Imports the Developer ID certificate into a temporary keychain.
+4. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-notarize` (archive, export, notarize, staple).
+5. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs, notarizes and staples the DMG itself.
+6. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
+7. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
 ## Secrets
 
@@ -97,8 +100,7 @@ Once Apple grants it:
    spctl -a -vvv /Volumes/Lilo/Lilo.app
    xcrun stapler validate /Volumes/Lilo/Lilo.app
    ```
-2. Replace the generated release notes with the version's section of `CHANGELOG.md`.
-3. Publish the draft release.
-4. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
+2. Publish the draft release.
+3. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
    sha256 (`shasum -a 256 Lilo.dmg`), so `brew install --cask alexays/tap/lilo` and
    `brew upgrade` pick it up.

@@ -25,7 +25,7 @@ extensions.
 | Xcode | 27, selected with `xcode-select`, and its Metal toolchain | building the app (Swift 6, the macOS 27 SDK) |
 | Node.js | 22.23.4+ (`.nvmrc` pins 22) | the Svelte interface, extension bridge and Astro website; all `make ui-preview` needs |
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
-| SwiftLint, XcodeGen | latest (`brew install swiftlint xcodegen`) | `make validate` and `make project-sync` |
+| SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
 
 Python 3 comes with Xcode. No Apple Developer account is needed.
@@ -138,16 +138,16 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make ui-test` | UI unit tests, including the en/fr catalog parity check |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
-| `make release-status` | pending release notes, changelog and app version consistency |
-| `make release-test` | release preparation and Sparkle build number synchronization tests |
-| `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
-| `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
-| `make site-test` | website build, release notes, routes, links and metadata |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
+| `make release-status` | pending release notes, changelog and app version consistency |
+| `make release-test` | release preparation and Sparkle build number synchronization tests (CI runs them; `make validate` does not) |
+| `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
+| `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
+| `make site-test` | website build, release notes, routes, links and metadata |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
-| `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
+| `make swift-test-slow` | the few Swift tests that wait out real clocks, WebKit's or Lilo's (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
 
 Heavier checks, run when your change touches their area:
@@ -296,7 +296,8 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
    for a patch release, `Added` for a minor release, or `Breaking` for a major release. Write the
    summary for the person using the app and commit the generated `.changes/unreleased/*.yaml`
    file with your code. Documentation, tests and build tooling usually need no fragment.
-   `CHANGELOG.md` is updated when a maintainer prepares the release.
+   `CHANGELOG.md` is updated when a maintainer prepares the release. CI warns on a pull request that
+   changes `Lilo/` or `lilo-ui/src/` without a note.
 5. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
    recording of any UI change.
 

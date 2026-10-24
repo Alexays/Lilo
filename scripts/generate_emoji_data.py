@@ -30,7 +30,7 @@ output_dir = os.path.join(root, "lilo-ui", "src", "components", "spaces")
 
 
 def fetch(url):
-    with urllib.request.urlopen(url) as response:
+    with urllib.request.urlopen(url, timeout=60) as response:
         return response.read().decode("utf-8")
 
 

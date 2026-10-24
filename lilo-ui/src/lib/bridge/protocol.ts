@@ -554,6 +554,7 @@ export interface BridgeCommandPayloadMap {
 	goBack: EmptyPayload;
 	goForward: EmptyPayload;
 	reload: EmptyPayload;
+	showCachedCopy: EmptyPayload;
 	reportUnresponsivePage: EmptyPayload;
 	stopLoading: EmptyPayload;
 	zoomIn: EmptyPayload;

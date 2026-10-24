@@ -27,9 +27,13 @@ final class SearchBridgeHandler: BridgeHandler {
     private let preconnect: (URL) -> Void
     private var lastEnginePreconnect: (engine: String, at: Date)?
     private weak var bridgeRouter: BridgeRouter?
-    /// Newest query wins: an older fetch/search still in flight is cancelled so its stale reply
-    /// neither parses nor emits over the newer one.
+    /// One suggestion fetch at a time, then the newest query typed meanwhile: on a slow link, cancelling
+    /// at each keystroke would leave nothing to show until typing stops. The command bar keeps a
+    /// reply to a prefix of what is typed.
     private var inFlightSuggestionsTask: Task<Void, Never>?
+    private var queuedSuggestionQuery: (query: String, engine: String)?
+    /// Newest query wins: an older search still in flight is cancelled so its stale reply
+    /// neither parses nor emits over the newer one.
     private var inFlightHistoryTask: Task<Void, Never>?
 
     init(
@@ -82,11 +86,15 @@ final class SearchBridgeHandler: BridgeHandler {
                 lastEnginePreconnect = (engine, Date())
                 preconnect(url)
             }
-            inFlightSuggestionsTask?.cancel()
+            queuedSuggestionQuery = (query, engine)
+            guard inFlightSuggestionsTask == nil else { break }
             inFlightSuggestionsTask = Task { [weak self] in
-                await self?.sendSearchSuggestions(query: query, engine: engine)
+                while let self, let next = self.queuedSuggestionQuery {
+                    self.queuedSuggestionQuery = nil
+                    await self.sendSearchSuggestions(query: next.query, engine: next.engine)
+                }
+                self?.inFlightSuggestionsTask = nil
             }
-            await inFlightSuggestionsTask?.value
 
         case "deleteHistoryEntry":
             guard let url = message.string("url"), let store = historyStoreProvider() else { break }
@@ -128,15 +136,10 @@ final class SearchBridgeHandler: BridgeHandler {
             var request = URLRequest(url: url)
             request.timeoutInterval = 4
             let (data, _) = try await Self.suggestionSession.data(for: request)
-            try Task.checkCancellation()
             bridgeRouter?.send(event: "searchSuggestions", data: [
                 "query": query,
                 "suggestions": Self.parseSuggestionPayload(data)
             ])
-        } catch is CancellationError {
-            return  // superseded by a newer query; that one's reply will land instead
-        } catch let error as URLError where error.code == .cancelled {
-            return
         } catch {
             bridgeRouter?.send(event: "searchSuggestions", data: ["query": query, "suggestions": []])
         }

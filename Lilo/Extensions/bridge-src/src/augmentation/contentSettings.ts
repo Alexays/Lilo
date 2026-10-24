@@ -5,7 +5,7 @@ import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { chromeEnum } from '../shared/chrome-enum.ts';
 
-const settings: Record<string, string[]> = {
+const settings = {
   autoVerify: ['allow', 'block'],
   automaticDownloads: ['allow', 'block', 'ask'],
   camera: ['allow', 'block', 'ask'],
@@ -25,7 +25,7 @@ function contentSetting(type: string, values: string[]) {
     get(details: unknown, callback?: (result: { setting: string }) => void) {
       return callbackify(() => request('get', details), callback);
     },
-    set(details: { setting?: unknown }, callback?: () => void) {
+    set(details: Record<string, unknown>, callback?: () => void) {
       // Chrome checks the value against this type's own enum before sending, and throws.
       if (!values.includes(details?.setting as string)) {
         throw new TypeError(`Invalid invocation: Error at property 'setting': Value must be one of ${[...values].sort().join(', ')}.`);
@@ -73,7 +73,8 @@ export const contentSettingsAugmentation = {
   PopupsContentSetting: chromeEnum(['allow', 'block']),
   PpapiBrokerContentSetting: chromeEnum(['block']),
   SoundContentSetting: chromeEnum(['allow', 'block']),
-  ...Object.fromEntries(Object.entries(settings).map(([type, values]) => [type, contentSetting(type, values)])),
+  ...Object.fromEntries(Object.entries(settings).map(([type, values]) => [type, contentSetting(type, values)])) as
+    Record<keyof typeof settings, ReturnType<typeof contentSetting>>,
   fullscreen: deprecatedSetting('fullscreen', 'allow'),
   mouselock: deprecatedSetting('mouselock', 'allow'),
   plugins: deprecatedSetting('plugins', 'block'),

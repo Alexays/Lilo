@@ -31,11 +31,23 @@ jobs:
       contents: write
 
     steps:
+      # No token left in .git/config for the build's tools and dependencies to read; the upload step gets its own.
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Fails in seconds what would otherwise fail after an hour of notarization, or ship a build Sparkle never offers.
+      - name: Check the tag is a prepared release
+        run: |
+          test -f ".changes/$GITHUB_REF_NAME.md" \
+            || { echo "::error::.changes/$GITHUB_REF_NAME.md is missing: run make release-version and commit it before tagging."; exit 1; }
+          grep -qx "MARKETING_VERSION = ${GITHUB_REF_NAME#v}" Xcode/Configs/Base.xcconfig \
+            || { echo "::error::Xcode/Configs/Base.xcconfig is not at ${GITHUB_REF_NAME#v}."; exit 1; }
+          make release-status
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
 
@@ -44,6 +56,13 @@ jobs:
 
       - name: Install Metal Toolchain
         run: xcodebuild -downloadComponent MetalToolchain
+
+      # Before any secret is in reach: no install script runs, and the build steps after it find the stamps current.
+      - name: Build the UI and the extension bridge
+        run: |
+          npm --prefix lilo-ui ci --ignore-scripts
+          npm --prefix Lilo/Extensions/bridge-src ci --ignore-scripts
+          make build/.ui-build.stamp build/.ext-bridge-build.stamp
 
       - name: Import certificate
         env:
@@ -99,13 +118,13 @@ jobs:
           echo "c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
           mkdir -p "$RUNNER_TEMP/sparkle" build/appcast
           tar -xf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
+          trap 'rm -f "$RUNNER_TEMP/sparkle.key"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle.key"
           /bin/cp -f build/Lilo.dmg build/appcast/
           "$RUNNER_TEMP/sparkle/bin/generate_appcast" \
             --ed-key-file "$RUNNER_TEMP/sparkle.key" \
-            --download-url-prefix "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/" \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             build/appcast
-          rm -f "$RUNNER_TEMP/sparkle.key"
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -114,7 +133,8 @@ jobs:
           files: |
             build/Lilo.dmg
             build/appcast/appcast.xml
-          generate_release_notes: true
+          # The version's notes, as make release-version wrote them for this tag.
+          body_path: .changes/${{ github.ref_name }}.md
 
       - name: Delete temporary keychain
         if: always()

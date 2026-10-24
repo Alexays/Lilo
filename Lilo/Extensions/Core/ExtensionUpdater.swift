@@ -11,6 +11,8 @@ final class ExtensionUpdater {
 
     /// Chrome checks about every five hours.
     static let checkInterval: TimeInterval = 5 * 60 * 60
+    /// The next periodic check after one that never reached the service.
+    static let retryInterval: TimeInterval = 30 * 60
     /// Extensions per update-check request, keeping the GET URL well under server limits.
     private static let batchSize = 25
 
@@ -54,10 +56,11 @@ final class ExtensionUpdater {
             while !Task.isCancelled {
                 guard self != nil else { break }
                 // Under constrained power the network pass is skipped; the next tick retries.
+                var reachedService = true
                 if !HiddenSpaceLifecycleController.systemIsPowerConstrained() {
-                    await self?.checkForUpdates()
+                    reachedService = await self?.checkForUpdates(inBackground: true) ?? true
                 }
-                await sleep(.seconds(Self.checkInterval))
+                await sleep(.seconds(reachedService ? Self.checkInterval : Self.retryInterval))
             }
         }
     }
@@ -69,12 +72,16 @@ final class ExtensionUpdater {
 
     /// Checks every Web Store extension, enabled or not, with Google's update service in batches, applying or only listing newer
     /// versions per the auto-update setting. Only copies under Lilo's extensions directory qualify: unpacked folders are never replaced.
-    func checkForUpdates() async {
-        guard let registry, registry.files.directory != nil, status["checking"] as? Bool != true else { return }
+    /// A background check is background traffic and skips Low Data Mode networks. False when no request reached the service:
+    /// that check is not recorded, so the next one comes sooner.
+    @discardableResult
+    func checkForUpdates(inBackground: Bool = false) async -> Bool {
+        guard let registry, registry.files.directory != nil, status["checking"] as? Bool != true else { return true }
+        let previousCheck = status["lastCheck"] ?? 0
         let applies = registry.settingsStore?.get("autoUpdateExtensions") != "false"
         var updated = 0
         var failed = 0
-        publishStatus(["checking": true, "lastCheck": status["lastCheck"] ?? 0])
+        publishStatus(["checking": true, "lastCheck": previousCheck])
         var candidates: [(id: String, version: String)] = registry.loadedExtensions.compactMap { loaded in
             let webExtension = loaded.context.webExtension
             guard isStoreCopy(id: loaded.id, path: loaded.sourcePath, manifest: webExtension.manifest) else { return nil }
@@ -87,6 +94,7 @@ final class ExtensionUpdater {
             candidates.append((stored.id, manifest["version"] as? String ?? stored.version))
         }
 
+        var reachedService = candidates.isEmpty
         var start = 0
         while start < candidates.count {
             let batch = Array(candidates[start..<min(start + Self.batchSize, candidates.count)])
@@ -94,8 +102,16 @@ final class ExtensionUpdater {
             guard let url = ExtensionUpdateChecker.updateCheckURL(extensions: batch) else { continue }
             var request = URLRequest(url: url)
             request.setValue(ChromeMasquerade.chromeUserAgent, forHTTPHeaderField: "User-Agent")
-            guard let (data, response) = try? await URLSession.shared.data(for: request),
-                  (response as? HTTPURLResponse)?.statusCode == 200 else {
+            if inBackground {
+                request.networkServiceType = .background
+                request.allowsConstrainedNetworkAccess = false
+            }
+            guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+                failed += batch.count
+                continue
+            }
+            reachedService = true
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
                 failed += batch.count
                 continue
             }
@@ -120,14 +136,15 @@ final class ExtensionUpdater {
             }
         }
         let now = Date().timeIntervalSince1970
-        registry.settingsStore?.set(lastCheckKey, value: String(now))
+        if reachedService { registry.settingsStore?.set(lastCheckKey, value: String(now)) }
         publishStatus([
             "checking": false,
-            "lastCheck": now,
+            "lastCheck": reachedService ? now : previousCheck,
             "updated": updated,
             "available": availableUpdates.count,
             "failed": failed
         ])
+        return reachedService
     }
 
     func isStoreCopy(id: String, path: String, manifest: [String: Any]?) -> Bool {

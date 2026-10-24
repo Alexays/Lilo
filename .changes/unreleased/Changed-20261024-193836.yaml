@@ -1,0 +1,3 @@
+kind: Changed
+body: Viewing a page's source shows what the tab loaded, instead of downloading the page again.
+time: 2026-10-24T19:38:36.858113+02:00

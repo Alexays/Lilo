@@ -90,7 +90,7 @@ describe('the declarativeNetRequest namespace', () => {
         stored.push(...(options.addRules ?? []));
       },
       async getDynamicRules() { return JSON.parse(JSON.stringify(stored)); },
-      isRegexSupported(this: unknown, options: { regex: string }) {
+      isRegexSupported(this: object, options: { regex: string }) {
         if (!prototype.isPrototypeOf(this)) return undefined;
         return Promise.resolve(/\\w|\|/.test(options.regex) ? { isSupported: false, reason: 'syntaxError' } : { isSupported: true });
       },

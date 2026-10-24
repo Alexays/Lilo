@@ -33,7 +33,7 @@ final class NotificationPolyfillTests: XCTestCase {
             n.addEventListener('click', () => log.push('listener'));
             0
             """)
-        _ = await pollUntil(timeout: 2) { recorder.messages.contains { $0["type"] as? String == "show" } }
+        _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
         let show = try XCTUnwrap(recorder.messages.first { $0["type"] as? String == "show" })
         let id = try XCTUnwrap(show["id"] as? Int)
 
@@ -42,7 +42,7 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertEqual(log, "onclick,listener")
 
         _ = try await webView.evaluateJavaScript("window.m = new Notification('Bye'); m.close(); 0")
-        _ = await pollUntil(timeout: 2) { recorder.messages.contains { $0["type"] as? String == "close" } }
+        _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "close" } }
         XCTAssertTrue(recorder.messages.contains { $0["type"] as? String == "close" })
     }
 }

@@ -43,7 +43,7 @@ fi
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/lilo-bench.XXXXXX")"
 SERVER_PID=""
-trap '[ -z "$SERVER_PID" ] || kill "$SERVER_PID"; [ -z "$KEEP" ] || { mkdir -p "$KEEP" && /bin/cp -f "$WORK"/out/*.json "$KEEP"/ 2>/dev/null || true; }; /bin/rm -rf "$WORK"' EXIT
+trap '[ -z "$SERVER_PID" ] || kill "$SERVER_PID" 2>/dev/null || true; [ -z "$KEEP" ] || { mkdir -p "$KEEP" && /bin/cp -f "$WORK"/out/*.json "$KEEP"/ 2>/dev/null || true; }; /bin/rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/home" "$WORK/out" "$WORK/site"
 
 # CFFIXED_USER_HOME moves preferences, caches and WebKit data under the throwaway home, and

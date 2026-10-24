@@ -23,6 +23,13 @@ final class WebViewPrivateAccessorsTests: XCTestCase {
         accessors.setUInt("_definitelyNotARealSetter:", 1)
     }
 
+    func testMainResourceDataAnswersEvenWithNothingLoaded() async {
+        let webView = WKWebView(frame: .zero)
+        let answered = expectation(description: "main resource data")
+        XCTAssertTrue(WebViewPrivateAccessors(webView).mainResourceData { _ in answered.fulfill() })
+        await fulfillment(of: [answered], timeout: 5)
+    }
+
     func testInvokeReturnsFalseForAbsentSelector() {
         let webView = WKWebView(frame: .zero)
         let accessors = WebViewPrivateAccessors(webView)

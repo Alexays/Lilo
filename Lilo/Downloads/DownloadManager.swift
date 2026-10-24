@@ -47,6 +47,15 @@ final class DownloadManager {
         var smoothedSpeed: Int64  // exponential moving average, bytes/sec
     }
     private var speedSamples: [Int64: SpeedSample] = [:]
+    /// Automatic resumes spent per download; a drop past the last delay waits for the user's Retry.
+    private var autoResumes: [Int64: Int] = [:]
+    /// Interrupted downloads with an automatic resume ahead: their failure is not notified.
+    private var pendingAutoResumes: Set<Int64> = []
+    private static let autoResumeDelays: [Duration] = [.seconds(2), .seconds(10), .seconds(30)]
+    private static let resumableNetworkErrorCodes: Set<Int> = [
+        NSURLErrorNetworkConnectionLost, NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut,
+        NSURLErrorCannotConnectToHost, NSURLErrorCannotFindHost, NSURLErrorDNSLookupFailed
+    ]
     private let dockController: DownloadDockProgressController?
 
     /// Private-space downloads awaiting their row, and the rows they got. The rows are erased when
@@ -60,6 +69,8 @@ final class DownloadManager {
         self.dockController = dockController
         wkBackend.onUpdated = { [weak self] item in self?.notifyObservers(item) }
         urlSessionBackend.onUpdated = { [weak self] item in self?.notifyObservers(item) }
+        wkBackend.onResumableFailure = { [weak self] id, error in self?.resumeAfterNetworkDrop(id: id, error: error) }
+        urlSessionBackend.onResumableFailure = { [weak self] id, error in self?.resumeAfterNetworkDrop(id: id, error: error) }
         wkBackend.onTracked = { [weak self] download, id in
             guard let self else { return }
             if let spaceId = pendingPrivateSpaceIds.removeValue(forKey: download) {
@@ -293,14 +304,36 @@ final class DownloadManager {
     /// ticking or badging the Dock for a row that is gone.
     func erase(id: Int64) throws {
         stop(id: id)
+        pendingAutoResumes.remove(id); autoResumes[id] = nil
         try store?.delete(id: id)
         onErased?(id)
+    }
+
+    /// As Chrome does, a download the network dropped resumes from its partial bytes a few times, each
+    /// after a longer pause and once the network is up.
+    private func resumeAfterNetworkDrop(id: Int64, error: Error) {
+        let e = error as NSError
+        let attempt = autoResumes[id, default: 0]
+        guard e.domain == NSURLErrorDomain, Self.resumableNetworkErrorCodes.contains(e.code),
+              attempt < Self.autoResumeDelays.count else { return }
+        autoResumes[id] = attempt + 1
+        pendingAutoResumes.insert(id)
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.autoResumeDelays[attempt])
+            NetworkPathStatus.shared.runWhenSatisfied {
+                Task { @MainActor [weak self] in
+                    guard let self, self.pendingAutoResumes.remove(id) != nil else { return }
+                    try? await self.retryDownload(id: id)
+                }
+            }
+        }
     }
 
     /// Retries an interrupted download. When the row still carries resumeData the download is
     /// resumed from the partial bytes into its original destination; otherwise it restarts
     /// fresh (a wk-source retry without a webView also falls back to a fresh start).
     func retryDownload(id: Int64) async throws {
+        pendingAutoResumes.remove(id)
         guard let item = try? store?.fetch(id: id),
               item.state == .interrupted else { return }
         if item.resumeData != nil {
@@ -377,7 +410,8 @@ final class DownloadManager {
     }
 
     private func sendDownloadNotification(for item: DownloadItem) {
-        guard item.state == .complete || item.state == .interrupted, !item.fileMissing else { return }
+        guard item.state == .complete || item.state == .interrupted, !item.fileMissing,
+              !pendingAutoResumes.contains(item.id ?? 0) else { return }
         // UNUserNotificationCenter.current() raises NSInternalInconsistencyException outside a
         // real .app bundle (swift test runs in xctest), which kills the whole test run.
         guard Bundle.main.bundleURL.pathExtension == "app" else { return }

@@ -1,0 +1,3 @@
+kind: Added
+body: Downloads cut off by the network resume on their own from where they stopped, up to three times, instead of waiting for Retry.
+time: 2026-10-24T19:38:33.503777+02:00

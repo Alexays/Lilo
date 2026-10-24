@@ -17,6 +17,13 @@ CHANGIE := $(CURDIR)/build/changie-$(CHANGIE_VERSION)/changie
 CHANGIE_OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 CHANGIE_ARCH := $(shell uname -m | sed -e 's/^x86_64$$/amd64/' -e 's/^aarch64$$/arm64/')
 CHANGIE_ARCHIVE := changie_$(CHANGIE_VERSION)_$(CHANGIE_OS)_$(CHANGIE_ARCH).tar.gz
+# Pinned so a new release's rules or project output never break validate or the xcodeproj sync check.
+SWIFTLINT_VERSION := 0.65.0
+SWIFTLINT_SHA256 := d6cb0aa7a2f5f1ef306fc9e37bcb54dc9a26facc8f7784ac0c3dd3eccf5c6ba6
+SWIFTLINT := $(CURDIR)/build/swiftlint-$(SWIFTLINT_VERSION)/swiftlint
+XCODEGEN_VERSION := 2.46.0
+XCODEGEN_SHA256 := 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What validate's UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	scripts/embed_chrome_ui.py scripts/generate_native_strings.py
@@ -36,8 +43,10 @@ DMGBUILD_VERSION := 1.6.5
 DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
-# They wait out WebKit's own clocks (a worker's 30 s unload, a controller's first 5 s): about 90 s together.
+# They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
+# line counts): about 100 s together.
 SLOW_TESTS := GapRouterStoreProviderTests/testAnIdleWorkerUnloadsOnChromesScheduleAndHearsLaterEvents \
+	GitDiffTests/testTerminalLineCountsRunOncePerIntervalButFollowADirectoryChangeAtOnce \
 	ProfileExtensionRegistryTests/testReEnabledOrReloadedWorkerHearsNeitherOnInstalledNorOnStartup \
 	ProfileExtensionRegistryTests/testWorkersRestoredLateHearOnStartupOnly \
 	WebKitGapTests/testLifecycleEventsDependOnTheControllerAge \
@@ -56,28 +65,53 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
-	changie change release-status release-version release-test \
-	hooks-install hooks-test lint-commit-message lint-commits
+	hooks-install hooks-test lint-commit-message lint-commits \
+	changie change release-status release-version release-test
 
 ## List the targets
 help:
 	@awk '/^## /{d=substr($$0,4);next} d&&/^[a-z0-9-]+:/{sub(/:.*/,"");printf "  make %-20s %s\n",$$0,d} {d=""}' Makefile
 
+## Enable the tracked Git hooks for this clone
+hooks-install:
+	@current=$$(git config core.hooksPath || true); \
+	[ "$$current" = .githooks ] && exit 0; \
+	if [ -n "$$current" ]; then echo "core.hooksPath is already $$current; chain .githooks/commit-msg from it instead" >&2; exit 1; fi; \
+	for hook in "$$(git rev-parse --git-path hooks)"/*; do \
+		case "$$hook" in *.sample) continue ;; esac; \
+		if [ -f "$$hook" ]; then echo "$$hook would stop running; move it into .githooks first" >&2; exit 1; fi; \
+	done; \
+	git config --local core.hooksPath .githooks
+
+## Validate a Conventional Commit header from stdin
+lint-commit-message:
+	@scripts/lint_commit_message.sh
+
+## Validate non-merge commit headers in BASE..COMMIT_HEAD (origin/main..HEAD by default)
+lint-commits:
+	@scripts/lint_commits.sh "$(or $(BASE),origin/main)" "$(or $(COMMIT_HEAD),HEAD)"
+
+## Test commit-message validation and the native Git hook
+hooks-test:
+	@scripts/commit_hooks.test.sh
+
 ## Check the prerequisites, then fetch and build what a fresh clone needs (npm deps, libghostty-vt, UI bundle, bridge)
 bootstrap:
-	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP)" \
-	hooks-install hooks-test lint-commit-message lint-commits
+	@scripts/bootstrap.sh "$(UI_DEPS) $(BRIDGE_DEPS)" "vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(SWIFTLINT) $(XCODEGEN)"
 
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI, website, Swift, bridge, release tooling and hook checks, builds and tests
-validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(CHANGIE)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint release-status release-test site-check site-test > "$$log" 2>&1 & js=$$!; \
+## Run UI and website checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
+validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(SWIFTLINT) $(CHANGIE)
+	@logs=$$(mktemp -d); checks=; \
+	for group in ui-lint ui-test "site-check site-test" "hooks-test ext-bridge-test swiftlint release-status"; do \
+		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
+	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \
-	wait $$js; js=$$?; [ $$js -eq 0 ] || cat "$$log"; /bin/rm -f "$$log"; \
-	[ $$swift -eq 0 ] && [ $$js -eq 0 ]
+	failed=0; for check in $$checks; do wait $${check%%:*} || { failed=1; cat "$$logs/$${check#*:}.log"; }; done; \
+	/bin/rm -rf "$$logs"; [ $$swift -eq 0 ] && [ $$failed -eq 0 ]
 
 $(UI_STAMP): $(UI_DEPS) $(UI_SOURCES)
 	@$(MAKE) --no-print-directory ui-build
@@ -91,14 +125,28 @@ $(BRIDGE_STAMP): $(BRIDGE_DEPS) $(BRIDGE_SOURCES)
 validate-ui: ui-lint ui-test ui-build
 
 ## Run Swift lint only
-swiftlint:
-	@command -v swiftlint >/dev/null || { echo 'Install swiftlint with: brew install swiftlint' >&2; exit 1; }
-	@swiftlint lint --config .swiftlint.yml --strict
+swiftlint: $(SWIFTLINT)
+	@'$(SWIFTLINT)' lint --config .swiftlint.yml --strict
 
 ## Regenerate Lilo.xcodeproj from project.yml
-project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@command -v xcodegen >/dev/null || { echo 'Install xcodegen with: brew install xcodegen' >&2; exit 1; }
-	@xcodegen generate --spec project.yml
+project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(XCODEGEN)
+	@'$(XCODEGEN)' generate --spec project.yml
+
+$(SWIFTLINT):
+	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
+	curl -fLsS --retry 3 'https://github.com/realm/SwiftLint/releases/download/$(SWIFTLINT_VERSION)/portable_swiftlint.zip' -o "$$work/swiftlint.zip"; \
+	echo '$(SWIFTLINT_SHA256)  '"$$work/swiftlint.zip" | shasum -a 256 -c - >/dev/null; \
+	unzip -q "$$work/swiftlint.zip" swiftlint -d "$$work"; \
+	mkdir -p '$(@D)'; mv "$$work/swiftlint" '$@'; touch '$@'
+
+# The binary reads its setting presets from ../share beside it.
+$(XCODEGEN):
+	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
+	curl -fLsS --retry 3 'https://github.com/yonaskolb/XcodeGen/releases/download/$(XCODEGEN_VERSION)/xcodegen.zip' -o "$$work/xcodegen.zip"; \
+	echo '$(XCODEGEN_SHA256)  '"$$work/xcodegen.zip" | shasum -a 256 -c - >/dev/null; \
+	unzip -q "$$work/xcodegen.zip" -d "$$work"; \
+	rm -rf '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; mkdir -p build; \
+	mv "$$work/xcodegen" '$(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)'; touch '$@'
 
 $(UI_DEPS): $(UI_DIR)/package-lock.json
 	@npm --prefix $(UI_DIR) ci
@@ -137,7 +185,7 @@ release-version: $(CHANGIE)
 
 ## Test app version and Sparkle build number synchronization
 release-test: $(CHANGIE)
-	@python3 scripts/release_test.py '$(CHANGIE)'
+	@CHANGIE='$(CHANGIE)' python3 scripts/release_test.py
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)
@@ -145,11 +193,12 @@ ui-build: $(UI_DEPS)
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
 
-# Built once when missing so a fresh clone compiles; make ui-build refreshes it.
+# Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
+# UI source change, refreshes both.
 $(CHROME_UI_ASSETS):
 	@$(MAKE) --no-print-directory ui-build
 
-$(NATIVE_STRINGS): $(UI_DIR)/src/lib/i18n/locales/fr.json
+$(NATIVE_STRINGS):
 	@python3 scripts/generate_native_strings.py
 
 ## Regenerate the Space emoji picker's dataset from Unicode and CLDR (downloads them)
@@ -197,7 +246,7 @@ swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
-## Run the Swift tests that wait out WebKit's clocks, which swift-test skips
+## Run the Swift tests that wait out real clocks, which swift-test skips
 swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
@@ -205,7 +254,8 @@ swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 ## Report what the converter keeps of the default filter lists, by kind and skip reason (network; OUT=build/blocker-coverage.txt)
 blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@out="$(abspath $(or $(OUT),build/blocker-coverage.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
-	TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > /dev/null; cat "$$out"
+	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Run the terminal throughput and lock-fairness benchmarks
 terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
@@ -274,11 +324,11 @@ run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
 ## Build the UI bundle and create release artifacts
-release: vt-build ui-build ext-bridge-build
+release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build ui-build ext-bridge-build
+release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.

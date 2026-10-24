@@ -145,7 +145,7 @@ describe('members', () => {
   it('include the events and objects WebKit keeps out of a copy, as in Chrome', () => {
     // As WebKit's, its events are own properties that are not enumerable and cannot be redefined.
     class Alarms { get() { return this; } }
-    const webKit = Object.defineProperty(new Alarms(), 'onAlarm', { value: { addListener() {} } });
+    const webKit: Alarms & { onAlarm?: unknown } = Object.defineProperty(new Alarms(), 'onAlarm', { value: { addListener() {} } });
     const chrome = install({ alarms: webKit });
     const copy = { ...chrome.alarms };
     assert.deepEqual(Object.keys(copy).sort(), ['get', 'onAlarm']);

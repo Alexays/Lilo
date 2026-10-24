@@ -44,11 +44,16 @@ test("the card stays 6 s, hover pauses with the remaining time, and its capture 
 
 test("a copied capture replaced by another is released", async () => {
 	const { store, posted } = await setup();
-	copied("c1");
-	copied("c2");
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		copied("c1");
+		copied("c2");
 
-	assert.equal(store.getCaptureCard()?.captureId, "c2");
-	assert.deepEqual(posted.filter((m) => m.action === "releaseCapture").map((m) => m.payload.captureId), ["c1"]);
+		assert.equal(store.getCaptureCard()?.captureId, "c2");
+		assert.deepEqual(posted.filter((m) => m.action === "releaseCapture").map((m) => m.payload.captureId), ["c1"]);
+	} finally {
+		mock.timers.reset();
+	}
 });
 
 test("Edit hands the capture to the editor and the card goes without releasing it", async () => {

@@ -566,8 +566,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         tab.isLoading = true
         await emit(shipping: 2)
         window.emitVisibleTabUpdate(tab, spaceId: spaceS.id)
-        // Nothing to wait for: the unchanged tab sends no patch, so only a flush's worth of time shows it.
-        _ = await pollUntil(timeout: 0.1) { patches.count > 2 }
+        // The new tab's structural patch ships whatever the unchanged one queued apart, before the next diff.
         _ = window.createTabStateFirst(url: URL(string: "https://b.example"))
         tab.isLoading = false
         await emit(shipping: 3)

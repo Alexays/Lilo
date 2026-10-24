@@ -29,7 +29,7 @@ final class WKEngineFactoryContentControllerReleaseTests: XCTestCase {
         let factory = WKEngineFactory()
         let ephemeral = factory.createDataStore(persistent: false, identifier: UUID().uuidString)
         factory.rearmWarmPool(dataStore: ephemeral, profileId: nil)
-        _ = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        _ = await pollUntil { factory.test_warmPoolCount == 1 }
         XCTAssertEqual(factory.test_warmPoolCount, 1)
 
         factory.releaseContentController(for: ephemeral)

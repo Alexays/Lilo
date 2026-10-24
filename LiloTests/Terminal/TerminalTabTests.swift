@@ -416,8 +416,11 @@ final class TerminalReopenTests: XCTestCase {
 
         try FileManager.default.removeItem(at: file)
         context.recentlyClosed.push(.page(URL(string: "https://example.com")!), spaceId: space.id, parentFolderId: nil, section: nil, sortOrder: nil)
-        let rewrittenForAPage = await pollUntil(timeout: 1) { FileManager.default.fileExists(atPath: file.path) }
-        XCTAssertFalse(rewrittenForAPage, "a closed page leaves the saved terminals alone")
+        // Quitting, the save waits for the disk: a write the page caused would have landed.
+        context.isTerminating = true
+        context.writeClosedTerminals()
+        context.isTerminating = false
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path), "a closed page leaves the saved terminals alone")
 
         for cwd in ["/a", "/b", "/c"] {
             context.recentlyClosed.push(.terminal(.init(cwd: cwd)), spaceId: space.id, parentFolderId: nil, section: nil, sortOrder: nil)

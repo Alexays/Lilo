@@ -28,7 +28,7 @@ describe('browsingDataAugmentation', () => {
   });
 
   it('removePasswords fails as Chrome\'s retired type', async () => {
-    await assert.rejects(browsingData.removePasswords({}), { message: 'Requested data type is deprecated.' });
+    await assert.rejects(browsingData.removePasswords({})!, { message: 'Requested data type is deprecated.' });
     assert.equal(gapCalls.length, 0);
   });
 

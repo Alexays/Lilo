@@ -49,7 +49,7 @@ const { storageAreaPatches } = await import('./storage-area.ts');
 describe('worker channel', () => {
   it('holds the events that arrive while the top-level code runs, then dispatches them in order, before storage answers', async () => {
     const call = gapCall('bookmarks', 'get', {}, 0);
-    const read = storageAreaPatches.get(async () => 'stored', (area) => area).call({}).then((value: unknown) => dispatched.push([value]));
+    const read = storageAreaPatches.get(async () => 'stored', (area) => area as object).call({}).then((value: unknown) => dispatched.push([value]));
     const first = ports[0];
     assert.deepEqual(first.sent[0], { role: 'worker', instance: (first.sent[0] as any).instance });
     first.receive({ seq: 1, namespace: 'bookmarks', event: 'onCreated', args: [1] });

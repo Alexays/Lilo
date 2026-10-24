@@ -132,8 +132,9 @@ final class TabManager {
         engineHost.snapshot(tabs: currentTabs, activeTabId: activeTabId)
     }
 
+    /// A failed form submission reloads the page it was sent from: a load of its URL would be a GET without the form.
     func reloadActiveTab(fromOrigin: Bool = false) {
-        if let s = activeTab?.navigationErrorURL, !s.isEmpty, let url = URL(string: s) {
+        if let s = activeTab?.navigationErrorURL, !s.isEmpty, let url = URL(string: s), activeEngineTab?.pendingMainFrameSendsBody != true {
             activeEngineTab?.loadURL(url)
         } else if fromOrigin {
             activeEngineTab?.reloadFromOrigin()

@@ -94,7 +94,7 @@ final class ProfileManagerTests: XCTestCase {
         let controllerBeforeRelease = engineFactory.createTab(configuration: .init(dataStore: store)).wkWebView.configuration.userContentController
         // A warm view carries the controller it was built with; release must drop it along with the cache.
         engineFactory.rearmWarmPool(dataStore: store, profileId: nil)
-        _ = await pollUntil(timeout: 2) { engineFactory.test_warmPoolCount == 1 }
+        _ = await pollUntil { engineFactory.test_warmPoolCount == 1 }
 
         scopedManager.releaseEphemeralDataStore(for: spaceId)
 
@@ -111,7 +111,7 @@ final class ProfileManagerTests: XCTestCase {
         try scopedManager.loadProfiles(try await dbManager.globalPool.read { try Profile.fetchAll($0) }, lastActiveProfileId: nil)
         let doomed = try scopedManager.createProfile(name: "Doomed")
         engineFactory.rearmWarmPool(dataStore: scopedManager.dataStore(for: doomed.id), profileId: nil)
-        _ = await pollUntil(timeout: 2) { engineFactory.test_warmPoolCount == 1 }
+        _ = await pollUntil { engineFactory.test_warmPoolCount == 1 }
         XCTAssertEqual(engineFactory.test_warmPoolCount, 1)
 
         try scopedManager.deleteProfile(id: doomed.id)

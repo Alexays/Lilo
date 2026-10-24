@@ -1,0 +1,3 @@
+kind: Fixed
+body: A page that times out or whose server name gets no answer is tried again once on its own, and a page left on an error reloads when you switch networks, such as from Wi-Fi to your phone's connection, not only when you come back online. A mistyped address still shows its error right away.
+time: 2026-10-24T19:38:37.982574+02:00

@@ -1,11 +1,18 @@
 import WebKit
 
-/// Serves `view-source:<url>`: re-fetches the page with the tab's cookies and renders the raw markup.
+/// Serves `view-source:<url>`: renders the raw markup the tab already loaded when it was handed over,
+/// else re-fetches the page with the tab's cookies.
 @MainActor
 final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
     nonisolated static let scheme = "view-source"
 
     private var running: [ObjectIdentifier: Task<Void, Never>] = [:]
+    /// The markup of the page whose source is about to open, used once.
+    private var handedOver: (url: URL, data: Data)?
+
+    func handOver(_ data: Data, of url: URL) {
+        handedOver = (url, data)
+    }
 
     nonisolated func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
         nonisolated(unsafe) let urlSchemeTask = urlSchemeTask
@@ -27,6 +34,11 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
               let target = URL(string: String(url.absoluteString.dropFirst(Self.scheme.count + 1))),
               target.scheme == "http" || target.scheme == "https" else {
             respond(to: task, url: task.request.url, html: Self.page(title: "view-source", body: "Unsupported URL"))
+            return
+        }
+        if let handedOver, handedOver.url == target {
+            self.handedOver = nil
+            respond(to: task, url: url, html: Self.page(title: url.absoluteString, body: Self.decode(handedOver.data, encodingName: nil)))
             return
         }
         let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
@@ -63,7 +75,11 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
         var request = URLRequest(url: url)
         if let userAgent, !userAgent.isEmpty { request.setValue(userAgent, forHTTPHeaderField: "User-Agent") }
         let (data, response) = try await session.data(for: request)
-        let encoding = (response as? HTTPURLResponse)?.textEncodingName
+        return decode(data, encodingName: (response as? HTTPURLResponse)?.textEncodingName)
+    }
+
+    private nonisolated static func decode(_ data: Data, encodingName: String?) -> String {
+        let encoding = encodingName
             .map { CFStringConvertEncodingToNSStringEncoding(CFStringConvertIANACharSetNameToEncoding($0 as CFString)) }
         if let encoding, encoding != UInt(kCFStringEncodingInvalidId), let text = String(data: data, encoding: String.Encoding(rawValue: encoding)) {
             return text

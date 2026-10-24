@@ -206,6 +206,12 @@ final class WKWebViewTab: NSObject {
     private var navigationStateObservations: [NSKeyValueObservation] = []
     private var isAudioPlayingObserverRegistered = false
     private var pendingMainFrameURL: URL?
+    /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
+    private(set) var pendingMainFrameSendsBody = false
+    /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
+    private var isLoadingCachedCopy = false
+    /// The failed page to reload on the next network change; set while that wait is registered.
+    private var networkChangeRetryURL: URL?
     private var lastNavigationEmissionState = NavigationEmissionState()
     /// True once any main-frame navigation has committed. Stays false for a tab whose only navigation
     /// became a download (e.g. a target="_blank" download link), so that blank tab can auto-close.
@@ -215,7 +221,7 @@ final class WKWebViewTab: NSObject {
     private(set) var isFrozen = false
     /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
     /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
-    var lentToExtensionAt: ContinuousClock.Instant?
+    var lentToExtensionAt: Date?
     /// The content process died while the page was suspended or off screen: the engine is replaced when
     /// its tab is next shown (see TabManager.activateTabRuntime).
     private(set) var isPageLost = false
@@ -342,8 +348,9 @@ final class WKWebViewTab: NSObject {
     func restoreFromAutoPictureInPicture() { pip.restoreFromAuto() }
 
     /// Suspend this engine in place (cooperative Page-Visibility hide + media pause). Idempotent.
-    func freeze() {
-        guard !isFrozen, lentToExtensionAt.map({ ContinuousClock.now - $0 >= .seconds(2) }) ?? true else { return }
+    /// `now` is the idle sweep's clock, so a simulated time also expires an extension's page loan.
+    func freeze(now: Date = Date()) {
+        guard !isFrozen, lentToExtensionAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
     }
@@ -394,6 +401,7 @@ final class WKWebViewTab: NSObject {
         guard wake() else { return }
         if !isPrivateBrowsing { Self.logger.info("load source=app host=\(url.host ?? "nil", privacy: .private)") }
         pendingMainFrameURL = url
+        pendingMainFrameSendsBody = false
         didAutoRetryProvisionalLoad = false
         didReloadEmptyCommit = false
         StartupMetrics.markOnce("firstContentLoadRequested")
@@ -405,6 +413,15 @@ final class WKWebViewTab: NSObject {
             return
         }
         webView.load(URLRequest(url: url))
+    }
+
+    /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
+    /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
+    func loadCachedCopy(of url: URL) {
+        guard wake() else { return }
+        pendingMainFrameURL = url
+        didAutoRetryProvisionalLoad = false
+        webView.load(URLRequest(url: url, cachePolicy: .returnCacheDataDontLoad))
     }
 
     func restoreInteractionState(_ state: Any) {
@@ -479,6 +496,7 @@ final class WKWebViewTab: NSObject {
     /// A suspended page has nothing loading.
     func stopLoading() {
         guard !isFrozen else { return }
+        isLoadingCachedCopy = false
         webView.stopLoading()
     }
 
@@ -754,32 +772,47 @@ final class WKWebViewTab: NSObject {
         return isFrameLoadInterrupted(e)
     }
 
-    enum ProvisionalFailureRecovery: Equatable {
+    enum NavigationFailureRecovery: Equatable {
         case retrySilently
-        case surfaceAndRetryWhenOnline
+        case surfaceAndRetryOnNetworkChange
         case surface
     }
 
-    /// One silent reattempt: a refused or lost connection on a healthy network is usually a stale route
-    /// or a broken HTTP/3 attempt. DNS failures are excluded, an unknown host is almost always a typo.
-    nonisolated static func recoveryForProvisionalFailure(
+    /// One silent reattempt: a refused, lost or timed-out connection, or a DNS lookup that got no answer,
+    /// is usually a stale route, a broken HTTP/3 attempt or a lossy link. Past it, or offline, the page
+    /// waits for the network to change. A host the DNS says does not exist is almost always a typo, and
+    /// a load with a body is never replayed: a load by URL would drop it.
+    nonisolated static func recoveryForNavigationFailure(
         _ error: Error,
+        sendsBody: Bool,
         alreadyRetried: Bool,
         isNetworkPathSatisfied: Bool
-    ) -> ProvisionalFailureRecovery {
+    ) -> NavigationFailureRecovery {
         let e = error as NSError
-        guard e.domain == NSURLErrorDomain,
+        guard !sendsBody,
+              e.domain == NSURLErrorDomain,
               Self.transientNetworkErrorCodes.contains(e.code),
-              !alreadyRetried
+              !isNonexistentHost(e)
         else { return .surface }
-        return isNetworkPathSatisfied ? .retrySilently : .surfaceAndRetryWhenOnline
+        return isNetworkPathSatisfied && !alreadyRetried ? .retrySilently : .surfaceAndRetryOnNetworkChange
     }
 
     nonisolated private static let transientNetworkErrorCodes: Set<Int> = [
         NSURLErrorCannotConnectToHost,
         NSURLErrorNetworkConnectionLost,
-        NSURLErrorNotConnectedToInternet
+        NSURLErrorNotConnectedToInternet,
+        NSURLErrorTimedOut,
+        NSURLErrorCannotFindHost,
+        NSURLErrorDNSLookupFailed
     ]
+
+    /// The DNS answered that the name does not exist, as opposed to a lookup that timed out or failed on
+    /// the way: kDNSServiceErr_NoSuchRecord or NoSuchName from Network, EAI_NONAME from CFNetwork.
+    nonisolated private static func isNonexistentHost(_ error: NSError) -> Bool {
+        if error.userInfo["_kCFStreamErrorDomainKey"] as? Int == 12, error.userInfo["_kCFStreamErrorCodeKey"] as? Int == 8 { return true }
+        guard let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError else { return false }
+        return underlying.domain == "kNWErrorDomainDNS" && [-65554, -65538].contains(underlying.code)
+    }
 
     nonisolated private static func isFrameLoadInterrupted(_ error: NSError) -> Bool {
         guard error.code == 102 else { return false }
@@ -825,8 +858,9 @@ final class WKWebViewTab: NSObject {
     }
 
     private func handleProvisionalNavigationFailure(_ error: Error) {
-        let recovery = Self.recoveryForProvisionalFailure(
+        let recovery = Self.recoveryForNavigationFailure(
             error,
+            sendsBody: pendingMainFrameSendsBody,
             alreadyRetried: didAutoRetryProvisionalLoad,
             isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied
         )
@@ -841,21 +875,42 @@ final class WKWebViewTab: NSObject {
             Self.logger.info("""
                 auto-retrying provisional failure code=\(nsError.code, privacy: .public) \
                 host=\(failedURL.host ?? "nil", privacy: .private) \
-                waitingForConnectivity=\(recovery == .surfaceAndRetryWhenOnline, privacy: .public)
+                waitingForNetworkChange=\(recovery == .surfaceAndRetryOnNetworkChange, privacy: .public)
                 """)
         }
 
         switch recovery {
         case .retrySilently:
             scheduleAutomaticRetry(of: failedURL, afterDelay: 0.5)
-        case .surfaceAndRetryWhenOnline:
+        case .surfaceAndRetryOnNetworkChange:
             handleNavigationFailure(error, phase: "provisional")
-            NetworkPathStatus.shared.runWhenSatisfied { [weak self] in
-                // Extra second lets DNS/DHCP settle on a freshly joined network.
-                self?.scheduleAutomaticRetry(of: failedURL, afterDelay: 1.0)
-            }
+            retryOnNetworkChange(failedURL)
         case .surface:
             break
+        }
+    }
+
+    /// A committed page that lost its connection is not reloaded at once, which would drop what it shows,
+    /// but on the next network change.
+    private func handleCommittedNavigationFailure(_ error: Error) {
+        handleNavigationFailure(error)
+        guard let url = pendingMainFrameURL ?? currentURL,
+              Self.recoveryForNavigationFailure(error, sendsBody: pendingMainFrameSendsBody, alreadyRetried: true,
+                                                isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied) != .surface
+        else { return }
+        retryOnNetworkChange(url)
+    }
+
+    /// One wait per tab, for its latest failed page: failures piling up before the change must not each reload it.
+    private func retryOnNetworkChange(_ url: URL) {
+        let isWaiting = networkChangeRetryURL != nil
+        networkChangeRetryURL = url
+        guard !isWaiting else { return }
+        NetworkPathStatus.shared.runOnNextChange { [weak self] in
+            guard let self, let url = self.networkChangeRetryURL else { return }
+            self.networkChangeRetryURL = nil
+            // Extra second lets DNS/DHCP settle on a freshly joined network.
+            self.scheduleAutomaticRetry(of: url, afterDelay: 1.0)
         }
     }
 
@@ -1040,6 +1095,8 @@ extension WKWebViewTab: WKNavigationDelegate {
         if navigationAction.targetFrame?.isMainFrame == true,
            !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: pendingMainFrameURL) {
             pendingMainFrameURL = url
+            pendingMainFrameSendsBody = (navigationAction.request.httpMethod ?? "GET").uppercased() != "GET"
+            isLoadingCachedCopy = navigationAction.request.cachePolicy == .returnCacheDataDontLoad
         }
 
         // Set before the document's JS runs so `navigator.userAgent` reads Chrome. Per-tab by construction.
@@ -1128,6 +1185,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             // A hung process killed for a reload never says it answers again: the new one committing does.
             tab.isUnresponsive = false
             tab.didAutoRetryProvisionalLoad = false
+            tab.isLoadingCachedCopy = false
+            tab.networkChangeRetryURL = nil
             tab.pendingMainFrameURL = tab.currentURL
             if !tab.isPrivateBrowsing {
                 Self.logger.info("""
@@ -1163,12 +1222,20 @@ extension WKWebViewTab: WKNavigationDelegate {
 
     nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         guard !Self.shouldIgnoreNavigationFailure(error) else { return }
-        onMain { $0.handleNavigationFailure(error) }
+        onMain { $0.handleCommittedNavigationFailure(error) }
     }
 
     nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        guard !Self.shouldIgnoreNavigationFailure(error) else { return }
-        onMain { $0.handleProvisionalNavigationFailure(error) }
+        onMain { tab in
+            // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
+            if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
+                tab.isLoadingCachedCopy = false
+                tab.handleNavigationFailure(NSError(domain: NSURLErrorDomain, code: NSURLErrorResourceUnavailable), phase: "provisional")
+                return
+            }
+            guard !Self.shouldIgnoreNavigationFailure(error) else { return }
+            tab.handleProvisionalNavigationFailure(error)
+        }
     }
 
     // WebKit calls the reason-carrying variant below when it is implemented and this one otherwise,
