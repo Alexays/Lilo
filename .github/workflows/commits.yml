@@ -10,9 +10,10 @@ on:
 permissions:
   contents: read
 
+# Each push run checks only its own range: one group per pushed commit, so a newer push never
+# replaces a pending one. A pull request keeps one group, its newest run being the one that counts.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # Each push run checks only its own range, so a push run must never be cancelled.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -21,14 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # Every event checks the commits too: an edit's run is the PR's latest result, and the one that
+      # cancels an earlier run still going.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # A title or body edit only needs the validator, not the history.
-          fetch-depth: ${{ github.event.action == 'edited' && !github.event.changes.base && 1 || 0 }}
-      - if: github.event.action != 'edited'
-        run: make hooks-test
+          fetch-depth: 0
+      - run: make hooks-test
       - name: Check commit messages
-        if: github.event.action != 'edited' || github.event.changes.base
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           COMMIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -42,7 +42,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | make lint-commit-message
       - name: Check release notes
-        if: github.event_name == 'pull_request' && github.event.action != 'edited'
+        if: github.event_name == 'pull_request'
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           COMMIT_HEAD: ${{ github.event.pull_request.head.sha }}
