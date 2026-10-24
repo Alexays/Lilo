@@ -218,6 +218,42 @@ final class ChromeAPIShimTests: XCTestCase {
         try controller.unload(context)
     }
 
+    /// A background WebKit runs as a page (`scripts` or `page` with no service worker) gets the page augmentation, as the
+    /// extension's other pages do, instead of the worker's prelude.
+    func testABackgroundPageGetsThePageAugmentation() async throws {
+        let report = """
+        chrome.action.setTitle({ title: JSON.stringify({
+          augmented: globalThis.__liloAugmentationInstalled === true, privacy: typeof chrome.privacy?.services?.passwordSavingEnabled?.get,
+        }) });
+        """
+        let scripts = try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Scripts", "version": "1.0", "background": {"scripts": ["bg.js"]}, "action": {"default_title": "waiting"}, "permissions": ["privacy"]}"#,
+            "bg.js": report
+        ])
+        let page = try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Page", "version": "1.0", "background": {"page": "bg.html"}, "action": {"default_title": "waiting"}, "permissions": ["privacy"]}"#,
+            "bg.html": "<script src=\"bg.js\"></script>",
+            "bg.js": report
+        ])
+        let configuration = WKWebExtensionController.Configuration.nonPersistent()
+        let augmentation = try String(contentsOf: XCTUnwrap(Bundle.appResourceURL("ChromeAPIAugmentation", extension: "js")), encoding: .utf8)
+        configuration.webViewConfiguration.userContentController.addUserScript(
+            WKUserScript(source: augmentation, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page)
+        )
+        let controller = WKWebExtensionController(configuration: configuration)
+        for url in [scripts, page] {
+            XCTAssertEqual(try ProfileExtensionRegistry.prepareBackgroundServiceWorkerForWKIfNeeded(at: url, allowsUserScripts: false), .notNeeded)
+            let webExtension = try await WKWebExtension(resourceBaseURL: url)
+            let context = WKWebExtensionContext(for: webExtension)
+            webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
+            try controller.load(context)
+            try await context.loadBackgroundContent()
+            await pollUntil(timeout: 5) { context.action(for: nil)?.label != "waiting" }
+            XCTAssertEqual(context.action(for: nil)?.label, #"{"augmented":true,"privacy":"function"}"#, url.lastPathComponent)
+            try controller.unload(context)
+        }
+    }
+
     /// A prepared worker reads back what it has just stored, as in Chrome.
     func testPreparedWorkerReadsWhatItHasJustStored() async throws {
         let url = try writeExtension([
