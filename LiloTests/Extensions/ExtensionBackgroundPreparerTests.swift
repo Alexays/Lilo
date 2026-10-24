@@ -327,16 +327,16 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertEqual(connectable["matches"] as? [String], ["*://*/*", "https://*.aiprm.com/*", "http://local.axepro.com/*", "http://[::2]/*", "http://[::1]/*"])
     }
 
-    /// Modjo Everywhere: WebKit rejects the whole entry for `*.netlify.app`, a suffix of the private section.
+    /// WebKit rejects the whole entry for `*.netlify.app`, a suffix of the private section.
     @MainActor
     func testExternallyConnectableWildcardsOnAPublicSuffixAreDropped() async throws {
         let prepared = try await prepareAsChrome(#"""
-        {"externally_connectable": {"matches": ["*://localhost/*", "*://*.netlify.app/*", "https://*.foo.ck/*", "https://*.www.ck/*", "*://*.modjo.ai/*"]}}
+        {"externally_connectable": {"matches": ["*://localhost/*", "*://*.netlify.app/*", "https://*.foo.ck/*", "https://*.www.ck/*", "*://*.example.com/*"]}}
         """#)
 
         XCTAssertEqual(prepared.errors, [])
         let connectable = try XCTUnwrap(prepared.webExtension.manifest["externally_connectable"] as? [String: Any])
-        XCTAssertEqual(connectable["matches"] as? [String], ["*://localhost/*", "https://*.www.ck/*", "*://*.modjo.ai/*"])
+        XCTAssertEqual(connectable["matches"] as? [String], ["*://localhost/*", "https://*.www.ck/*", "*://*.example.com/*"])
     }
 
     @MainActor

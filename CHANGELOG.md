@@ -23,7 +23,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 - Extensions such as Okta no longer ask for access on every page of the sites they declare, and a request never shows a page's full address.
 - The Claude extension signs in: claude.ai can hand it the sign-in code again.
-- Adblock Plus blocks again, Modjo Everywhere installs, and FireShot captures the page.
+- Adblock Plus blocks again, extensions whose messaging rules name a hosting domain install, and FireShot captures the page.
 - A crash when an extension scripts a tab at the moment Lilo puts it to sleep.
 - The site details card fits a narrow sidebar and shows while a permission request waits.
 - Full screen: no more white band at the top, and the sidebar shows whole or stays hidden, as its setting says.

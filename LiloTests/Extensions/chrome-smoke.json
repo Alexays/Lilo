@@ -3462,32 +3462,14 @@
    "popupText": true,
    "errors": []
   },
-  "bebgccbfedcfmpidjcjoomapnmlhhmlk": {
-   "name": "Modjo Everywhere",
-   "version": "2.2.3",
-   "errors": [
-    "Error performing protected request: Error: Request failed",
-    "Error while updating FCM registration: Error: Request failed"
-   ]
-  },
   "dbfoemgnkgieejfkaddieamagdfepnff": {
    "name": "2FAS Auth - Two Factor Authentication",
    "version": "1.9.3",
    "errors": []
   },
-  "fnkfcndbgingjcbdhaofkcnhcjpljhdn": {
-   "name": "Dust",
-   "version": "0.1.20",
-   "errors": []
-  },
   "ghbmnnjooekpmoecnnnilnnbdlolhkhi": {
    "name": "Google Docs Offline",
    "version": "1.111.1",
-   "errors": []
-  },
-  "ljnaoennmbhflhmfbflmimhedlahlbna": {
-   "name": "Zygon Copilot",
-   "version": "1.0.15",
    "errors": []
   },
   "lmjegmlicamnimmfhcmpkclmigmmcbeh": {

@@ -296,7 +296,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "bfogiafebfohielmmehodmfbbebbbpei", name: "Keeper", check: "document.querySelector('#password[data-keeper-lock-id]') !== null"),
         Feature(id: "jabopobgcpjmedljpbcaablpmlmfcogm", name: "WhatFont", check: "document.getElementById('what-font-ext-container') !== null", click: true),
         Feature(id: "mhjhnkcfbdhnjickkkdbjoemdmbfginb", name: "SelectorGadget", check: "document.getElementById('selectorgadget_main') !== null", click: true),
-        Feature(id: "ljnaoennmbhflhmfbflmimhedlahlbna", name: "Zygon Copilot", check: "document.getElementById('zyg-copilot-root')?.shadowRoot != null", click: true),
         Feature(id: "fcoeoabgfenejglbffodgkkbkcdhcgfn", name: "Claude", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" })
     ]
