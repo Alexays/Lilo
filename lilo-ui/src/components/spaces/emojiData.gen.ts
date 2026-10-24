@@ -601,7 +601,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 🐐	goat	animal capricorn farm milk zodiac
 🐪	camel	animal desert dromedary hump one
 🐫	two-hump camel	animal bactrian desert
-🦙	llama	alpaca animal guanaco vicun wool
+🦙	llama	alpaca animal guanaco vicuna wool
 🦒	giraffe	animal spots
 🐘	elephant	animal
 🦣	mammoth	animal extinction large tusk wooly
@@ -740,7 +740,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 🥝	kiwi fruit	food
 🍅	tomato	food fruit vegetable
 🫒	olive	food
-🥥	coconut	colada palm pin
+🥥	coconut	colada palm pina
 🥑	avocado	food fruit
 🍆	eggplant	aubergine vegetable
 🥔	potato	food vegetable
@@ -766,7 +766,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 🫓	flatbread	arepa bread food gordita lavash naan pita
 🥨	pretzel	convoluted twisted
 🥯	bagel	bakery bread breakfast schmear
-🥞	pancakes	breakfast cre pe food hotcake pancake
+🥞	pancakes	breakfast crepe food hotcake pancake
 🧇	waffle	breakfast indecisive iron
 🧀	cheese wedge
 🍖	meat on bone
@@ -806,9 +806,9 @@ export const EMOJI_GROUPS: readonly string[] = [
 🍣	sushi	food
 🍤	fried shrimp	prawn tempura
 🍥	fish cake with swirl	food pastry restaurant
-🥮	moon cake	autumn festival yue bi ng
+🥮	moon cake	autumn festival yuebing
 🍡	dango	dessert japanese skewer stick sweet
-🥟	dumpling	empanada gyo za jiaozi pierogi potsticker
+🥟	dumpling	empanada gyoza jiaozi pierogi potsticker
 🥠	fortune cookie	prophecy
 🥡	takeout box	chopsticks delivery food oyster pail
 🍦	soft ice cream	dessert food icecream restaurant serve sweet
@@ -867,7 +867,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 🎏	carp streamer	celebration
 🎐	wind chime	bell celebration
 🎑	moon viewing ceremony	celebration
-🧧	red envelope	gift good ho ngba o lai luck money see
+🧧	red envelope	gift good hongbao lai luck money see
 🎀	ribbon	celebration
 🎁	wrapped gift	birthday bow box celebration christmas present surprise
 🎗️	reminder ribbon	celebration
@@ -919,7 +919,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 🎲	game die	dice entertainment
 🧩	puzzle piece	clue interlocking jigsaw
 🧸	teddy bear	plaything plush stuffed toy
-🪅	piñata	candy celebrate celebration cinco de festive mayo party pinada pinata
+🪅	piñata	candy celebrate celebration cinco de festive mayo party pinada
 🪩	mirror ball	dance disco glitter party
 🪆	nesting dolls	babooshka baboushka babushka doll matryoshka russia
 ♠️	spade suit	card game
@@ -1182,7 +1182,7 @@ export const EMOJI_GROUPS: readonly string[] = [
 👝	clutch bag	clothes clothing dress handbag pouch purse
 🛍️	shopping bags	bag hotel
 🎒	backpack	backpacking bag bookbag education rucksack satchel school
-🩴	thong sandal	beach flip flop sandals shoe thongs zo ri
+🩴	thong sandal	beach flip flop sandals shoe thongs zori
 👞	man’s shoe	brown clothes clothing feet foot kick shoes shopping
 👟	running shoe	athletic clothes clothing fast kick shoes shopping sneaker tennis
 🥾	hiking boot	backpacking brown camping outdoors shoe

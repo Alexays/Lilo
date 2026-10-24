@@ -76,7 +76,16 @@ test("the full picker fits the narrowest sidebar and draws emoji at a legible si
 	await expect(cells(page).first()).toHaveCSS("font-size", "22px");
 });
 
+const frenchNames = (page: Page) => {
+	const urls: string[] = [];
+	page.on("request", (request) => {
+		if (request.url().includes("emojiData.fr")) urls.push(request.url());
+	});
+	return urls;
+};
+
 test("searching narrows the grid by name or keyword, and says when nothing matches", async ({ page }) => {
+	const french = frenchNames(page);
 	await openFullPicker(page);
 	await search(page).fill("dog");
 	await expect(cells(page).first()).toHaveText("🐶");
@@ -89,6 +98,7 @@ test("searching narrows the grid by name or keyword, and says when nothing match
 
 	await search(page).fill("zzzz");
 	await expect(page.getByText("No emoji found")).toBeVisible();
+	expect(french).toEqual([]);
 });
 
 test("a category tab scrolls the grid to its section and stays selected", async ({ page }) => {
@@ -261,6 +271,19 @@ test.describe("in French", () => {
 				.map((box) => [Math.round(box.left), Math.round(box.right), Math.round(frame.left), Math.round(frame.right)]);
 		});
 		expect(outside).toEqual([]);
+	});
+
+	test("the picker searches, names and labels emoji in French, English keywords still matching", async ({ page }) => {
+		const french = frenchNames(page);
+		await openFullPicker(page);
+		const field = page.getByRole("searchbox", { name: "Rechercher un emoji" });
+		await field.fill("fusée");
+		await expect(cells(page).first()).toHaveText("🚀");
+		await expect(cells(page).first()).toHaveAttribute("aria-label", "fusée");
+		await expect(cells(page).first()).toHaveAttribute("title", "fusée");
+		await field.fill("dog");
+		await expect(cells(page).filter({ hasText: "🐶" })).toHaveAttribute("aria-label", "tête de chien");
+		expect(french).toHaveLength(1);
 	});
 });
 

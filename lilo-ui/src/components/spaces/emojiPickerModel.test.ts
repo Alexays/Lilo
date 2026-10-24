@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { EMOJI_CATEGORIES, SKIN_TONES, emojiName, searchEmoji, withTone } from "./emojiPickerModel";
+import { ENGLISH_EMOJI, SKIN_TONES, emojiName, loadEmojiCatalog, searchEmoji, withTone } from "./emojiPickerModel";
 
+const EMOJI_CATEGORIES = ENGLISH_EMOJI.categories;
 const entry = (emoji: string) => EMOJI_CATEGORIES.flat().find((candidate) => candidate.emoji === emoji)!;
+const found = (query: string) => searchEmoji(ENGLISH_EMOJI, query);
 
 test("the catalog holds the nine categories, without skin tone variants or components", () => {
   assert.equal(EMOJI_CATEGORIES.length, 9);
@@ -16,14 +18,14 @@ test("the catalog holds the nine categories, without skin tone variants or compo
 });
 
 test("search matches word starts in names first, then keywords, ignoring case and accents", () => {
-  assert.deepEqual(searchEmoji("Dog").slice(0, 2).map((found) => found.emoji), ["🐶", "🐕"]);
-  assert.ok(searchEmoji("home").some((found) => found.emoji === "🏠"));
-  assert.ok(searchEmoji("pinata").some((found) => found.emoji === "🪅"));
-  assert.ok(searchEmoji("france").some((found) => found.emoji === "🇫🇷"));
-  assert.ok(!searchEmoji("og").some((found) => found.emoji === "🐶"));
-  assert.deepEqual(searchEmoji("  "), []);
-  assert.equal(searchEmoji("red heart")[0].emoji, "❤️");
-  assert.ok(searchEmoji("heart")[0].terms.includes(" heart "));
+  assert.deepEqual(found("Dog").slice(0, 2).map((match) => match.emoji), ["🐶", "🐕"]);
+  assert.ok(found("home").some((match) => match.emoji === "🏠"));
+  assert.ok(found("pinata").some((match) => match.emoji === "🪅"));
+  assert.ok(found("france").some((match) => match.emoji === "🇫🇷"));
+  assert.ok(!found("og").some((match) => match.emoji === "🐶"));
+  assert.deepEqual(found("  "), []);
+  assert.equal(found("red heart")[0].emoji, "❤️");
+  assert.ok(found("heart")[0].terms.includes(" heart "));
 });
 
 test("a skin tone follows the person's first code point, in place of its variation selector", () => {
@@ -35,8 +37,25 @@ test("a skin tone follows the person's first code point, in place of its variati
 });
 
 test("a remembered pick finds its name, toned or not", () => {
-  assert.equal(emojiName("🦊"), "fox");
-  assert.equal(emojiName("☝🏻"), "index pointing up");
-  assert.equal(emojiName("✈️"), "airplane");
-  assert.equal(emojiName("x"), "x");
+  assert.equal(emojiName(ENGLISH_EMOJI, "🦊"), "fox");
+  assert.equal(emojiName(ENGLISH_EMOJI, "☝🏻"), "index pointing up");
+  assert.equal(emojiName(ENGLISH_EMOJI, "✈️"), "airplane");
+  assert.equal(emojiName(ENGLISH_EMOJI, "x"), "x");
+});
+
+test("under French, search and names follow the French annotations, English keywords still matching", async () => {
+  const french = await loadEmojiCatalog("fr");
+  const search = (query: string) => searchEmoji(french, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("fr"), french);
+  // The nine cat smileys come first, in catalog order.
+  assert.deepEqual(search("chat").slice(9, 12), ["🐱", "🐈", "🐈‍⬛"]);
+  assert.ok(search("cœur").includes("❤️"));
+  assert.deepEqual(search("coeur rouge").slice(0, 1), ["❤️"]);
+  assert.equal(search("fusée")[0], "🚀");
+  assert.equal(search("FUSEE")[0], "🚀");
+  assert.ok(search("cat").includes("🐱"));
+  assert.equal(emojiName(french, "🐱"), "tête de chat");
+  assert.equal(emojiName(french, "☝🏻"), "index pointant vers le haut");
+  assert.equal(french.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+  assert.equal(await loadEmojiCatalog("en"), ENGLISH_EMOJI);
 });

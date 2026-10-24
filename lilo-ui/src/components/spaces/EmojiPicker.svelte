@@ -1,9 +1,9 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { t } from "../../lib/i18n/state.svelte";
+  import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
-  import { EMOJI_CATEGORIES, SKIN_TONES, emojiName, searchEmoji, withTone } from "./emojiPickerModel";
+  import { ENGLISH_EMOJI, SKIN_TONES, emojiName, loadEmojiCatalog, searchEmoji, withTone } from "./emojiPickerModel";
 
   interface Props {
     selected: string;
@@ -48,6 +48,19 @@
   let tonesOpen = $state(false);
   let gridEl: HTMLDivElement | undefined = $state();
   let root: HTMLDivElement | undefined = $state();
+  // Raw: nothing mutates the entries, and a deep proxy over 1,900 of them would cost every read.
+  let catalog = $state.raw(ENGLISH_EMOJI);
+
+  // English until the locale's names load, which only changes labels: the glyphs stay where they are.
+  $effect(() => {
+    const locale = getLocale();
+    loadEmojiCatalog(locale).then(
+      (loaded) => {
+        if (getLocale() === locale) catalog = loaded;
+      },
+      (error) => console.error(`Could not load the ${locale} emoji names`, error),
+    );
+  });
 
   const toneIndex = $derived(Number(getSetting("emojiSkinTone", "0")) || 0);
   const tone = $derived(SKIN_TONES[toneIndex] ?? "");
@@ -69,10 +82,10 @@
       items.push(...emoji);
     };
     if (query.trim()) {
-      add("results", searchEmoji(query).map((entry) => withTone(entry, tone)));
+      add("results", searchEmoji(catalog, query).map((entry) => withTone(entry, tone)));
     } else {
       add("emojiRecent", recent);
-      EMOJI_CATEGORIES.forEach((category, index) => add(CATEGORY_KEYS[index], category.map((entry) => withTone(entry, tone))));
+      catalog.categories.forEach((category, index) => add(CATEGORY_KEYS[index], category.map((entry) => withTone(entry, tone))));
     }
     const rowOf = new Int32Array(items.length);
     sections.forEach((section, index) => {
@@ -317,7 +330,7 @@
           {:else}
             {#each layout.items.slice(row.start, row.end) as emoji, offset (offset)}
               {@const item = row.start + offset}
-              {@const name = emojiName(emoji)}
+              {@const name = emojiName(catalog, emoji)}
               <div
                 class="picker-cell"
                 class:active={item === active}
