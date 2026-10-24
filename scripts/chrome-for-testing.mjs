@@ -32,6 +32,11 @@ export async function stableChromeForTesting() {
 // Chrome quits with this process however it ends. Messages without an id (events) go to `onEvent`.
 export async function launchChrome(binary, extension) {
   const profile = mkdtempSync(join(tmpdir(), 'chrome-for-testing-'));
+  // An extension may download a file on install: it lands in the throwaway profile, never the user's Downloads.
+  mkdirSync(join(profile, 'Default'), { recursive: true });
+  writeFileSync(join(profile, 'Default', 'Preferences'), JSON.stringify({
+    download: { default_directory: join(profile, 'Downloads'), prompt_for_download: false },
+  }));
   const chrome = spawn(binary, [
     '--headless=new', `--user-data-dir=${profile}`, '--remote-debugging-pipe', '--no-first-run',
     '--no-default-browser-check', `--load-extension=${extension}`, `--disable-extensions-except=${extension}`,
@@ -79,6 +84,7 @@ export async function launchChrome(binary, extension) {
   });
   try {
     await browser.send('Browser.getVersion');
+    await browser.send('Browser.setDownloadBehavior', { behavior: 'allowAndName', downloadPath: join(profile, 'Downloads') });
   } catch (error) {
     await browser.close();
     throw error;
