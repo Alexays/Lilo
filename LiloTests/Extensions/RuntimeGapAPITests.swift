@@ -31,10 +31,10 @@ final class RuntimeGapAPITests: XCTestCase {
     }
 
     /// Loads an unpacked extension declaring `permissions` and returns its id.
-    private func loadExtension(_ name: String, permissions: [String] = []) async throws -> String {
+    private func loadExtension(_ name: String, permissions: [String] = [], manifest extra: [String: Any] = [:]) async throws -> String {
         let folder = directory.appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let manifest: [String: Any] = ["manifest_version": 3, "name": name, "version": "1.0", "permissions": permissions]
+        let manifest = extra.merging(["manifest_version": 3, "name": name, "version": "1.0", "permissions": permissions]) { $1 }
         try JSONSerialization.data(withJSONObject: manifest).write(to: folder.appendingPathComponent("manifest.json"))
         let before = Set(registry.loadedExtensions.map(\.id))
         try await registry.load(from: folder)
@@ -117,6 +117,82 @@ final class RuntimeGapAPITests: XCTestCase {
         let second = await call("runtime", "requestUpdateCheck", from: id)
         XCTAssertEqual(first.result as? [String: String], ["status": "no_update", "version": ""])
         XCTAssertEqual(second.result as? [String: String], ["status": "throttled", "version": ""])
+    }
+
+    // MARK: - cross-extension messaging
+
+    private static let noReceiver = "Could not establish connection. Receiving end does not exist."
+
+    func testAMessageToAnotherExtensionGetsItsAnswer() async throws {
+        let sender = try await loadExtension("sender")
+        let target = try await loadExtension("target")
+        let sent = Task { await call("runtime", "sendExternal", ["id": target, "message": ["ping": 1], "url": "chrome-extension://\(sender)/popup.html"], from: sender) }
+        for _ in 0..<100 where queued("runtime.onMessageExternal", for: target).isEmpty { await Task.yield() }
+        let args = try XCTUnwrap(queued("runtime.onMessageExternal", for: target).first?.args)
+        let messageId = try XCTUnwrap(args[2] as? String)
+
+        _ = await call("runtime", "answerExternal", ["messageId": messageId, "response": "pong"], from: sender)
+        _ = await call("runtime", "answerExternal", ["messageId": messageId, "response": "pong"], from: target)
+        let answer = await sent.value
+
+        XCTAssertEqual(args[0] as? [String: Int], ["ping": 1])
+        let from = try XCTUnwrap(args[1] as? [String: String])
+        XCTAssertEqual(from["id"], sender)
+        XCTAssertEqual(from["url"], "chrome-extension://\(sender)/popup.html")
+        XCTAssertEqual(from["origin"], "chrome-extension://\(sender)")
+        XCTAssertEqual(answer.result as? [String: String], ["response": "pong"])
+    }
+
+    func testAMessageTheWorkerLeavesUnansweredClosesItsPort() async throws {
+        let sender = try await loadExtension("sender")
+        let target = try await loadExtension("target")
+        let sent = Task { await call("runtime", "sendExternal", ["id": target, "message": 1], from: sender) }
+        for _ in 0..<100 where queued("runtime.onMessageExternal", for: target).isEmpty { await Task.yield() }
+        let messageId = try XCTUnwrap(queued("runtime.onMessageExternal", for: target).first?.args[2] as? String)
+
+        _ = await call("runtime", "answerExternal", ["messageId": messageId, "worker": true], from: target)
+
+        let answer = await sent.value
+        XCTAssertEqual(answer.result as? [String: Bool], ["closed": true])
+    }
+
+    func testOnlyAReachableListeningExtensionReceivesMessages() async throws {
+        let sender = try await loadExtension("sender")
+        let closed = try await loadExtension("closed", manifest: ["externally_connectable": ["ids": ["abcdefghijklmnopabcdefghijklmnop"]]])
+        let open = try await loadExtension("open", manifest: ["externally_connectable": ["ids": ["*"]]])
+        let deaf = try await loadExtension("deaf")
+        _ = await router.route(namespace: "events", method: "listen", params: ["events": ["runtime.onInstalled"]], extensionId: deaf, fromWorker: true, registry: registry)
+
+        let missing = await call("runtime", "sendExternal", ["id": "ponmlkjihgfedcbaponmlkjihgfedcba", "message": 1], from: sender)
+        let refused = await call("runtime", "sendExternal", ["id": closed, "message": 1], from: sender)
+        let unheard = await call("runtime", "connectExternal", ["id": deaf], from: sender)
+        let connected = await call("runtime", "connectExternal", ["id": open, "name": "n"], from: sender)
+
+        XCTAssertEqual(missing.error, Self.noReceiver)
+        XCTAssertEqual(refused.error, Self.noReceiver)
+        XCTAssertEqual(unheard.error, Self.noReceiver)
+        XCTAssertNotNil(connected.result as? String)
+    }
+
+    func testAPortRelaysBetweenItsTwoExtensionsOnly() async throws {
+        let opener = try await loadExtension("opener")
+        let target = try await loadExtension("target")
+        let stranger = try await loadExtension("stranger")
+        let connected = await call("runtime", "connectExternal", ["id": target, "name": "vpn"], from: opener)
+        let portId = try XCTUnwrap(connected.result as? String)
+
+        _ = await call("runtime", "portPost", ["portId": portId, "message": "on"], from: target)
+        let fromStranger = await call("runtime", "portPost", ["portId": portId, "message": "x"], from: stranger)
+        _ = await call("runtime", "portDisconnect", ["portId": portId], from: opener)
+        let afterDisconnect = await call("runtime", "portPost", ["portId": portId, "message": "late"], from: target)
+
+        let connect = try XCTUnwrap(queued("runtime.onConnectExternal", for: target).first?.args.first as? [String: Any])
+        XCTAssertEqual(connect["name"] as? String, "vpn")
+        XCTAssertEqual((connect["sender"] as? [String: Any])?["id"] as? String, opener)
+        XCTAssertEqual(queued("runtime.portMessage", for: opener).map { $0.args.last as? String }, ["on"])
+        XCTAssertEqual(queued("runtime.portDisconnect", for: target).map { $0.args.first as? String }, [portId])
+        XCTAssertEqual(fromStranger.error, "Attempting to use a disconnected port object")
+        XCTAssertEqual(afterDisconnect.error, "Attempting to use a disconnected port object")
     }
 
     // MARK: - action.onUserSettingsChanged

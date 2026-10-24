@@ -1,17 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mockGapAPI } from '../shared/ipc.testkit.ts';
+import { mockGapAPI, pushGapEvent } from '../shared/ipc.testkit.ts';
 
-const gapCalls: Array<{ namespace: string; method: string }> = [];
+const gapCalls: Array<{ namespace: string; method: string; params?: any }> = [];
 let nextResult: unknown;
+/** Native's answer to the next calls; nextResult when unset. */
+let answer: ((msg: any) => unknown) | undefined;
 
 mockGapAPI((msg: any) => {
-  gapCalls.push({ namespace: msg.namespace, method: msg.method });
-  return Promise.resolve(nextResult);
+  gapCalls.push({ namespace: msg.namespace, method: msg.method, params: msg.params });
+  return answer ? answer(msg) : Promise.resolve(nextResult);
 });
 (globalThis as any).chrome = { runtime: {} };
 
-const { runtimeAdditions, crossExtensionMessaging, onConnect } = await import('./runtime.ts');
+const { runtimeAdditions, crossExtensionMessaging, externalEvents, onConnect } = await import('./runtime.ts');
 const { liloLastError } = await import('../shared/callbackify.ts');
 
 describe('runtime.requestUpdateCheck', () => {
@@ -19,7 +21,7 @@ describe('runtime.requestUpdateCheck', () => {
     nextResult = { status: 'update_available', version: '2.0' };
 
     assert.deepEqual(await runtimeAdditions.requestUpdateCheck(), { status: 'update_available', version: '2.0' });
-    assert.deepEqual(gapCalls.at(-1), { namespace: 'runtime', method: 'requestUpdateCheck' });
+    assert.deepEqual(gapCalls.at(-1), { namespace: 'runtime', method: 'requestUpdateCheck', params: {} });
   });
 
   it('splits the result into (status, details) for a callback, as Chrome does', async () => {
@@ -71,19 +73,65 @@ describe('runtime messaging to another extension', () => {
     sendMessage: (...args: unknown[]) => { webKitCalls.push(['sendMessage', ...args]); return 'webkit'; },
   };
   const runtime: any = crossExtensionMessaging(webKit);
+  const unreachable = () => Promise.reject(new Error(noReceiver));
 
-  it('rejects a promise and gives a callback lastError, as Chrome with no such extension', async () => {
+  it('rejects a promise and gives a callback lastError when native reaches no listener', async () => {
+    answer = unreachable;
     await assert.rejects(runtime.sendMessage(other, { a: 1 }), { message: noReceiver });
     const lastError = await new Promise((resolve) => runtime.sendMessage(other, 1, {}, () => resolve(liloLastError())));
+    answer = undefined;
     assert.deepEqual(lastError, { message: noReceiver });
     assert.equal(liloLastError(), undefined);
   });
 
+  it("sends the message to native and hands back the other extension's answer", async () => {
+    answer = () => ({ response: 'pong' });
+    const response = await runtime.sendMessage(other, { ping: 1 });
+    const viaCallback = await new Promise((resolve) => runtime.sendMessage(other, 'again', resolve));
+    answer = undefined;
+
+    assert.equal(response, 'pong');
+    assert.equal(viaCallback, 'pong');
+    assert.deepEqual(gapCalls.at(-2), { namespace: 'runtime', method: 'sendExternal', params: { id: other, message: { ping: 1 } } });
+  });
+
+  it('resolves undefined, or gives a callback lastError, when the other extension does not answer', async () => {
+    answer = () => ({ closed: true });
+    const response = await runtime.sendMessage(other, 1);
+    const lastError = await new Promise((resolve) => runtime.sendMessage(other, 1, () => resolve(liloLastError())));
+    answer = undefined;
+
+    assert.equal(response, undefined);
+    assert.deepEqual(lastError, { message: 'The message port closed before a response was received.' });
+  });
+
   it('disconnects a port with lastError set while onDisconnect listeners run', async () => {
+    answer = unreachable;
     const port = runtime.connect(other, { name: 'proxy' });
     assert.equal(port.name, 'proxy');
     const lastError = await new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
+    answer = undefined;
     assert.deepEqual(lastError, { message: noReceiver });
+  });
+
+  it('relays a port: messages in order once it connects, and the other end disconnecting', async () => {
+    answer = (msg) => (msg.method === 'connectExternal' ? '9' : null);
+    const port = runtime.connect(other, { name: 'vpn' });
+    port.postMessage('first');
+    port.postMessage('second');
+    const heard: unknown[] = [];
+    port.onMessage.addListener((message: unknown, from: unknown) => { assert.equal(from, port); heard.push(message); });
+    const disconnected = new Promise((resolve) => port.onDisconnect.addListener(resolve));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    pushGapEvent({ namespace: 'runtime', event: 'portMessage', args: ['9', { state: 'on' }] });
+    pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: ['9'] });
+    answer = undefined;
+
+    assert.deepEqual(gapCalls.filter((c) => c.method === 'portPost').map((c) => c.params), [{ portId: '9', message: 'first' }, { portId: '9', message: 'second' }]);
+    assert.deepEqual(heard, [{ state: 'on' }]);
+    assert.equal(await disconnected, port);
+    assert.throws(() => port.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
   });
 
   it("leaves the extension's own messages to WebKit", () => {
@@ -92,6 +140,51 @@ describe('runtime messaging to another extension', () => {
     assert.equal(runtime.sendMessage(other, () => {}), 'webkit');
     assert.equal(runtime.sendMessage(webKit.id, 1), 'webkit');
     assert.equal(webKitCalls.length, 3);
+  });
+});
+
+describe('runtime messages and ports from another extension', () => {
+  /** WebKit's onMessageExternal or onConnectExternal, which web pages reach. */
+  const webKitEvent = () => Object.create({ addListener(this: any, listener: any) { this.listener = listener; }, removeListener() {} });
+  const webKit = { onMessageExternal: webKitEvent(), onConnectExternal: webKitEvent() };
+  const events = externalEvents(() => webKit);
+  const sender = { id: 'abcdefghijklmnopabcdefghijklmnop', url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/popup.html' };
+
+  it("answers native with a listener's response, and the web page's messages stay WebKit's", async () => {
+    const listener = (message: unknown, from: unknown, sendResponse: unknown) => {
+      assert.deepEqual(from, sender);
+      (sendResponse as (response: unknown) => void)({ echo: message });
+    };
+    events.onMessageExternal.addListener(listener);
+    events.onMessageExternal.dispatch('hi', sender, '4');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepEqual(gapCalls.filter((c) => c.method === 'answerExternal').at(-1)?.params, { messageId: '4', response: { echo: 'hi' } });
+    assert.equal(webKit.onMessageExternal.listener, listener);
+    events.onMessageExternal.removeListener(listener);
+  });
+
+  it('tells native when a page listener does not answer', async () => {
+    const listener = () => undefined;
+    events.onMessageExternal.addListener(listener);
+    events.onMessageExternal.dispatch('hi', sender, '5');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    events.onMessageExternal.removeListener(listener);
+
+    assert.deepEqual(gapCalls.filter((c) => c.method === 'answerExternal').at(-1)?.params, { messageId: '5', worker: false });
+  });
+
+  it('hands a connecting extension a port that posts and disconnects through native', async () => {
+    let received: any;
+    events.onConnectExternal.addListener((port: any) => { received = port; });
+    events.onConnectExternal.dispatch({ portId: '12', name: 'tunnel', sender });
+    received.postMessage('ready');
+    received.disconnect();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(received.name, 'tunnel');
+    assert.deepEqual(received.sender, sender);
+    assert.deepEqual(gapCalls.slice(-2).map((c) => [c.method, c.params]), [['portPost', { portId: '12', message: 'ready' }], ['portDisconnect', { portId: '12' }]]);
   });
 });
 

@@ -7,7 +7,7 @@ import { declarativeNetRequestPatches, staticRulesAdditions } from './dnr-rules.
 import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
-import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging } from '../augmentation/runtime.ts';
+import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, externalEvents } from '../augmentation/runtime.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
@@ -275,7 +275,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
-      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect) },
+      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
       add: {
         getContexts,
         ...runtimeAdditions,
@@ -283,14 +283,13 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         ...(userScripts ? { onUserScriptMessage, onUserScriptConnect } : {}),
       },
       serve: (runtime) => {
-        const messaging = crossExtensionMessaging(runtime);
+        // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
+        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : noReceiver, page);
         return {
           // WebKit's lastError is null without an error, Chrome's undefined (eJOY tests it with typeof).
           get lastError() { return liloLastError() ?? runtime.lastError ?? undefined; },
           ...(nativeMessaging ? nativeMessagingAsChrome(runtime) : {}),
-          ...messaging,
-          // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
-          sendMessage: lastErrorWithoutAnswer(messaging.sendMessage, page ? pageNoAnswer : noReceiver, page),
+          ...crossExtensionMessaging(runtime, sendLocal),
         };
       },
     },
