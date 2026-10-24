@@ -64,7 +64,7 @@ final class RuntimeBridgeHandler: GapHandler {
             return events.reportedListeners(of: call.extensionId)?.contains("runtime.onMessage") ?? true
 
         case "runtime.sendExternal":
-            guard let target = call.string("id"), let sender = sender(of: call, reaching: target, listener: "runtime.onMessageExternal") else {
+            guard let target = call.string("id"), let sender = sender(of: call, reaching: target, event: "onMessageExternal") else {
                 return BridgeError(Self.noReceiver)
             }
             nextId += 1
@@ -91,7 +91,7 @@ final class RuntimeBridgeHandler: GapHandler {
             return nil
 
         case "runtime.connectExternal":
-            guard let target = call.string("id"), let sender = sender(of: call, reaching: target, listener: "runtime.onConnectExternal") else {
+            guard let target = call.string("id"), let sender = sender(of: call, reaching: target, event: "onConnectExternal") else {
                 return BridgeError(Self.noReceiver)
             }
             nextId += 1
@@ -123,16 +123,16 @@ final class RuntimeBridgeHandler: GapHandler {
     }
 
     /// Chrome's `MessageSender` of the caller, nil when `target` is not loaded in the caller's profile, its
-    /// `externally_connectable.ids` leaves the caller out (absent, every extension may connect), or its contexts
-    /// reported no `listener`.
-    private func sender(of call: GapCall, reaching target: String, listener: String) -> [String: Any]? {
+    /// `externally_connectable.ids` leaves the caller out (absent, every extension may connect), or neither its worker
+    /// nor an open page listens to `event`.
+    private func sender(of call: GapCall, reaching target: String, event: String) -> [String: Any]? {
         let registry = call.registry
-        guard target != call.extensionId, let context = registry.context(for: target), let source = registry.context(for: call.extensionId) else { return nil }
+        guard target != call.extensionId, let context = registry.context(for: target), let source = call.context else { return nil }
         if let connectable = context.webExtension.manifest["externally_connectable"] as? [String: Any] {
             let ids = connectable["ids"] as? [String] ?? []
             guard ids.contains("*") || ids.contains(call.extensionId) else { return nil }
         }
-        guard registry.gapEvents.reportedListeners(of: target)?.contains(listener) != false else { return nil }
+        guard !registry.gapEvents.listeners(among: [target], namespace: "runtime", event: event).isEmpty else { return nil }
         let base = source.baseURL.absoluteString
         // The url is the caller's word: only one of its own extension's is taken.
         var sender: [String: Any] = [
