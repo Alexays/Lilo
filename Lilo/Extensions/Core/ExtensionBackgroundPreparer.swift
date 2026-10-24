@@ -22,6 +22,11 @@ enum ExtensionBackgroundPreparer {
         .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
         .map { (Data($0.utf8), "globalThis.__liloPublicSuffixList = \(javaScriptStringLiteral($0));\n") }
 
+    /// The list's rules, `*.` wildcards and `!` exceptions included.
+    private static let publicSuffixRules = Set(
+        (publicSuffixList.flatMap { String(bytes: $0.data, encoding: .utf8) } ?? "").split(whereSeparator: \.isNewline).filter { !$0.hasPrefix("//") }.map(String.init)
+    )
+
     /// Both steps share one manifest parse; the content-script step sees the background patch in memory.
     /// The manifest is written at most once, and only when a step changed it.
     static func prepare(extensionURL: URL, preludeSource: String, compatSource: String? = nil) throws -> PreparationResult {
@@ -200,6 +205,14 @@ enum ExtensionBackgroundPreparer {
                 let port = pattern[pattern.index(after: colon)..<hostEnd]
                 guard port == "*" || UInt16(port) != nil else { return pattern }
                 return String(pattern[..<colon] + pattern[hostEnd...])
+            }
+            // WebKit refuses a wildcard on a public suffix of the list's private section (`*.netlify.app`),
+            // which Chrome accepts: the pattern is dropped so the others still apply.
+            .filter { pattern in
+                guard let wildcard = pattern.range(of: "://*.") else { return true }
+                let host = pattern[wildcard.upperBound...].prefix { $0 != "/" }.lowercased()
+                let parent = host.firstIndex(of: ".").map { "*" + host[$0...] } ?? ""
+                return !publicSuffixRules.contains(host) && !(publicSuffixRules.contains(parent) && !publicSuffixRules.contains("!" + host))
             }
             connectable["matches"] = matches.isEmpty ? nil : matches
             // With no matches and no ids, Chrome lets nothing connect, and WebKit rejects the entry.

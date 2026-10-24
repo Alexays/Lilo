@@ -317,7 +317,11 @@ final class WebKitGapTests: XCTestCase {
             ),
             ("externally_connectable <all_urls>", ["externally_connectable": ["matches": ["<all_urls>"]]], "Empty or invalid `externally_connectable` manifest entry."),
             ("an externally_connectable port", ["externally_connectable": ["matches": ["https://example.com:*/*"]]], "Empty or invalid `externally_connectable` manifest entry."),
-            ("an empty externally_connectable", ["externally_connectable": [String: Any]()], "Empty or invalid `externally_connectable` manifest entry.")
+            ("an empty externally_connectable", ["externally_connectable": [String: Any]()], "Empty or invalid `externally_connectable` manifest entry."),
+            (
+                "an externally_connectable wildcard on a public suffix",
+                ["externally_connectable": ["matches": ["*://*.netlify.app/*"]]], "Empty or invalid `externally_connectable` manifest entry."
+            )
         ]
         for (name, entry, error) in entries {
             let manifest = entry.merging(["manifest_version": 3, "name": "Gap", "version": "1.0", "description": "Gap"]) { entry, _ in entry }
