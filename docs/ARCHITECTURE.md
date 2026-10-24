@@ -224,7 +224,7 @@ For Chrome APIs not natively supported by WebKit, Lilo implements a **Gap API** 
 | `IdleBridgeHandler` | `chrome.idle.*` |
 | `NotificationsBridgeHandler` | `chrome.notifications.*` |
 | `ManagementBridgeHandler` | `chrome.management.*` |
-| `ActionColorBridgeHandler` | `chrome.action` badge colors |
+| `ActionColorBridgeHandler` | `chrome.action` badge colors and `getUserSettings` |
 | `DownloadsBridgeHandler` | `chrome.downloads.*` |
 | `CommandsBridgeHandler` | `chrome.commands.*` |
 | `SidePanelBridgeHandler` | `chrome.sidePanel.*` (options and behavior; each window's `SidePanelController` shows the panel) |

@@ -96,9 +96,9 @@ export const actionColorAugmentation = {
     );
   },
 
-  // The toolbar action is always shown in Lilo; report it as pinned. No native call needed.
+  // On the toolbar means pinned to the address bar.
   getUserSettings(callback?: (settings: { isOnToolbar: boolean }) => void) {
-    return callbackify(async () => ({ isOnToolbar: true }), callback);
+    return callbackify(() => gapCall<{ isOnToolbar: boolean }>('action', 'getUserSettings'), callback);
   },
 
   // Opens this extension's popup, reusing the same native path as the toolbar button.

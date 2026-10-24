@@ -3,14 +3,16 @@ import WebKit
 
 /// Handles the chrome.action badge color methods. WebKit does not expose badgeBackgroundColor to
 /// Swift, so these go through the gap bridge. A tab-specific color is kept for that tab's getters, and
-/// the toolbar shows it while that tab is active.
+/// the toolbar shows it while that tab is active. It also answers `action.getUserSettings` from the
+/// address bar's pins, which `action.onUserSettingsChanged` reports changes of.
 @MainActor
 final class ActionColorBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
         "action.setBadgeBackgroundColor",
         "action.getBadgeBackgroundColor",
         "action.setBadgeTextColor",
-        "action.getBadgeTextColor"
+        "action.getBadgeTextColor",
+        "action.getUserSettings"
     ]
 
     /// Tab-specific colors by "profileId/extensionId", then WebKit tab id.
@@ -38,6 +40,9 @@ final class ActionColorBridgeHandler: GapHandler {
             return handleSet(call, keyPath: \.badgeTextColor)
         case "action.getBadgeTextColor":
             return handleGet(call, keyPath: \.badgeTextColor)
+        case "action.getUserSettings":
+            let pinned = call.registry.settingsStore?.get("pinnedExtensions") ?? ""
+            return ["isOnToolbar": pinned.split(separator: ",").contains { $0 == call.extensionId }]
         default:
             return nil
         }

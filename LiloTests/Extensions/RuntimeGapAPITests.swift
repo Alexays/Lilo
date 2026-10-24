@@ -132,6 +132,17 @@ final class RuntimeGapAPITests: XCTestCase {
         XCTAssertEqual(queued("action.onUserSettingsChanged", for: other).map { $0.args.first as? [String: Bool] }, [["isOnToolbar": false]])
     }
 
+    func testGetUserSettingsReportsWhetherTheExtensionIsPinned() async throws {
+        let pinned = try await loadExtension("pinned")
+        let other = try await loadExtension("other")
+        try XCTUnwrap(registry.settingsStore).set("pinnedExtensions", value: pinned)
+
+        let pinnedSettings = await call("action", "getUserSettings", from: pinned)
+        let otherSettings = await call("action", "getUserSettings", from: other)
+        XCTAssertEqual(pinnedSettings.result as? [String: Bool], ["isOnToolbar": true])
+        XCTAssertEqual(otherSettings.result as? [String: Bool], ["isOnToolbar": false])
+    }
+
     // MARK: - downloads.setUiOptions
 
     func testDownloadUiStaysHiddenWhileAnyExtensionHidesIt() async throws {
