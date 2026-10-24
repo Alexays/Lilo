@@ -24,7 +24,7 @@ test("the pip dock slot mounts on the bridge event and registers its zone", asyn
 			(await sentCommands(page)).some(
 				(c) =>
 					c.action === "registerInteractiveZones" &&
-					c.payload?.zones?.some((zone: { id: string }) => zone.id === "pip-dock"),
+					(c.payload.zones as { id: string }[] | undefined)?.some((zone) => zone.id === "pip-dock"),
 			),
 		)
 		.toBe(true);

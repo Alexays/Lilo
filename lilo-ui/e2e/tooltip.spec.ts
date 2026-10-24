@@ -6,7 +6,9 @@ test("a tooltip that would start just inside the left edge lands on the window m
 	await bootChrome(page, initialWorld());
 
 	const left = await page.evaluate(async () => {
-		const { tooltip } = await import("/src/lib/tooltip.ts");
+		// A URL the dev server serves to the page, not a path TypeScript resolves.
+		const url = "/src/lib/tooltip.ts";
+		const { tooltip }: typeof import("../src/lib/tooltip") = await import(url);
 		const text = "A tooltip wide enough to need clamping";
 		const anchor = document.createElement("button");
 		anchor.style.cssText = "position: fixed; top: 300px; width: 2px; height: 2px; padding: 0; border: 0;";

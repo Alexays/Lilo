@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, SPACE_1 } from "./fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
@@ -302,7 +302,7 @@ test("the command bar opens the downloads list, its row naming the Downloads key
 for (const [how, click] of [
 	["a Command-click", { modifiers: ["Meta"] }],
 	["a middle click", { button: "middle" }],
-] as const) {
+] satisfies [string, Parameters<Locator["click"]>[0]][]) {
 	test(`${how} on a row opens it in a new tab, as Command-Return does`, async ({ page }) => {
 		await bootChrome(page, initialWorld());
 		await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
