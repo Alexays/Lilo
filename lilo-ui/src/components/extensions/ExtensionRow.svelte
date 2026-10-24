@@ -194,6 +194,12 @@
     overflow: hidden;
   }
 
+  /* The accent tile backs only the initial: a loaded logo sits on the row as it is. */
+  .row-icon:has(> img:not([hidden])) {
+    background: transparent;
+    color: transparent;
+  }
+
   .row-icon-image {
     position: absolute;
     inset: 0;

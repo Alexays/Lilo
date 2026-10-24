@@ -892,7 +892,10 @@
 		"shortcutRecording": "Tapez un raccourci",
 		"executeAction": "Activer l'extension",
 		"shortcutNone": "Aucun",
-		"removeTitle": "Supprimer cette extension"
+		"removeTitle": "Supprimer cette extension",
+		"webStoreTitle": "Chrome Web Store",
+		"webStoreHint": "Avis, détails et page du développeur",
+		"webStoreOpen": "Ouvrir"
 	},
 	"commandBar": {
 		"hintPeek": "Aperçu",

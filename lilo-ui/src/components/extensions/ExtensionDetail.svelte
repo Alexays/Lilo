@@ -6,7 +6,8 @@
   import UiTextField from "../ui/UiTextField.svelte";
   import UiToggle from "../ui/UiToggle.svelte";
   import ExtensionSpinner from "./ExtensionSpinner.svelte";
-  import { extensionActions } from "../../lib/bridge/actions";
+  import { extensionActions, tabActions } from "../../lib/bridge/actions";
+  import { closeSettingsShell } from "../../stores/panels.svelte";
   import {
     clearExtensionError,
     disableExtension,
@@ -292,6 +293,18 @@
   {/if}
 
   <UiInsetList>
+    {#if extension.webStoreURL}
+      <UiListRow title={t("extensions.webStoreTitle")} description={t("extensions.webStoreHint")}>
+        {#snippet action()}
+          <UiButton
+            onclick={() => {
+              tabActions.create(extension.webStoreURL);
+              closeSettingsShell();
+            }}>{t("extensions.webStoreOpen")}</UiButton
+          >
+        {/snippet}
+      </UiListRow>
+    {/if}
     <UiListRow title={t("extensions.removeTitle")} description={t("extensions.removeConfirmMessage")}>
       {#snippet action()}
         <UiButton variant="danger" disabled={pending} onclick={onremove}>{t("common.remove")}</UiButton>
@@ -318,6 +331,12 @@
     color: var(--accent-text);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-bold);
+  }
+
+  /* The accent tile backs only the initial: a loaded logo sits on the row as it is. */
+  .detail-icon:has(> img:not([hidden])) {
+    background: transparent;
+    color: transparent;
   }
 
   .detail-icon img {

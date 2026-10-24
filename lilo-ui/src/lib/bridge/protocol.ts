@@ -233,6 +233,8 @@ export interface BridgeExtensionSnapshot {
 	availableUpdate?: string;
 	/** A newer version whose added permissions the user declined. */
 	declinedUpdate?: string;
+	/** The extension's store page, set only for a copy installed from the Chrome Web Store. */
+	webStoreURL?: string;
 	allowsPrivateAccess?: boolean;
 	/** The "Allow user scripts" switch, shown for extensions declaring `userScripts`. */
 	allowsUserScripts?: boolean;

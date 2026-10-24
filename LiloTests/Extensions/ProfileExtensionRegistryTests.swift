@@ -1267,6 +1267,22 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertFalse(registry.extensionBridgePayloads(activeTab: nil).contains { $0["id"] as? String == id })
     }
 
+    func testADisabledExtensionKeepsItsManifestIcon() async throws {
+        let extDir = tempDir.appendingPathComponent("disabled_icon")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try JSONSerialization.data(withJSONObject: ["manifest_version": 3, "name": "Icon", "version": "1.0", "icons": ["16": "small.png", "32": "middle.png", "128": "large.png"]])
+            .write(to: extDir.appendingPathComponent("manifest.json"))
+        try Data("small".utf8).write(to: extDir.appendingPathComponent("small.png"))
+        try Data("middle".utf8).write(to: extDir.appendingPathComponent("middle.png"))
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+
+        await registry.disable(extensionId: id)
+
+        let payload = try XCTUnwrap(registry.extensionBridgePayloads(activeTab: nil).first { $0["id"] as? String == id })
+        XCTAssertEqual(payload["iconDataURL"] as? String, "data:image/png;base64,\(Data("middle".utf8).base64EncodedString())")
+    }
+
     func testManagementSetEnabledDisablesAndReenablesThroughRegistry() async throws {
         let extDir = try createMinimalExtension(named: "toggle_extension", displayName: "Toggle", in: tempDir)
         try await registry.load(from: extDir)

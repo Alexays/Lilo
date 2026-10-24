@@ -130,7 +130,7 @@ final class ExtensionUpdater {
         ])
     }
 
-    private func isStoreCopy(id: String, path: String, manifest: [String: Any]?) -> Bool {
+    func isStoreCopy(id: String, path: String, manifest: [String: Any]?) -> Bool {
         ExtensionFiles.isChromeExtensionId(id) && registry?.files.owns(path) == true
             && ExtensionUpdateChecker.usesGoogleUpdateService(manifest?["update_url"] as? String)
     }

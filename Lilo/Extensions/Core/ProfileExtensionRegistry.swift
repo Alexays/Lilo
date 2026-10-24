@@ -83,6 +83,8 @@ final class ProfileExtensionRegistry {
     private var iconDataURLCache: [IconCacheKey: (image: NSImage, dataURL: String)] = [:]
     /// Insertion order of `iconDataURLCache` keys, so overflow evicts the oldest half, not everything.
     private var iconDataURLCacheKeys: [IconCacheKey] = []
+    /// A disabled extension's manifest icon and store page, by `id@version`: read from disk once, as it has no WKWebExtension.
+    private var storedManifestFacts: [String: (iconDataURL: String, webStoreURL: String)] = [:]
     /// Holds the "Update extensions automatically" setting and what the lifecycle keeps across
     /// launches; set when the profile context is built.
     weak var settingsStore: SettingsStore?
@@ -886,12 +888,15 @@ final class ProfileExtensionRegistry {
         }
         // A disabled extension has no WKWebExtension to read from; the row carries what storage kept.
         for stored in disabledStoredExtensions {
+            let facts = storedManifestFacts(for: stored)
             payloads.append([
                 "id": stored.id,
                 "name": stored.name,
                 "version": stored.version,
                 "isEnabled": false,
                 "runtimeStatus": "loaded",
+                "iconDataURL": facts.iconDataURL,
+                "webStoreURL": facts.webStoreURL,
                 "availableUpdate": updater.availableUpdates[stored.id]?.latest ?? "",
                 "declinedUpdate": access.states[stored.id]?.declinedUpdateVersion ?? "",
                 "allowsPrivateAccess": access.states[stored.id]?.allowsPrivateAccess == true,
@@ -1018,6 +1023,8 @@ final class ProfileExtensionRegistry {
             "error": health.flatMap { $0.failed ? $0.failureReason ?? "" : nil } ?? "",
             "omniboxKeyword": runtime.omniboxKeyword ?? "",
             "availableUpdate": updater.availableUpdates[runtime.id]?.latest ?? "",
+            "webStoreURL": updater.isStoreCopy(id: runtime.id, path: runtime.sourcePath, manifest: ext.manifest)
+                ? "https://chromewebstore.google.com/detail/\(runtime.id)" : "",
             "declinedUpdate": accessState?.declinedUpdateVersion ?? "",
             "allowsPrivateAccess": runtime.context.hasAccessToPrivateData,
             "allowsUserScripts": accessState?.allowsUserScripts == true,
@@ -1031,6 +1038,30 @@ final class ProfileExtensionRegistry {
                 ] as [String: Any]
             } : []
         ] as [String: Any]
+    }
+
+    /// The manifest's toolbar or extension icon nearest 32 px as a data URL, and the store page of a Web Store copy; each empty when absent.
+    private func storedManifestFacts(for stored: ExtensionStorage.InstalledExtension) -> (iconDataURL: String, webStoreURL: String) {
+        let key = "\(stored.id)@\(stored.version)"
+        if let cached = storedManifestFacts[key] { return cached }
+        let folder = URL(fileURLWithPath: stored.path)
+        var dataURL = ""
+        var webStoreURL = ""
+        if let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")),
+           let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let action = (manifest["action"] ?? manifest["browser_action"]) as? [String: Any]
+            let icons = (action?["default_icon"] as? [String: String]) ?? (manifest["icons"] as? [String: String]) ?? [:]
+            let sized = icons.compactMap { size, file in Int(size).map { ($0, file) } }
+            let file = sized.min { abs($0.0 - 32) < abs($1.0 - 32) }?.1 ?? (action?["default_icon"] as? String)
+            if let file, let png = try? Data(contentsOf: folder.appendingPathComponent(file)) {
+                dataURL = "data:image/png;base64,\(png.base64EncodedString())"
+            }
+            if updater.isStoreCopy(id: stored.id, path: stored.path, manifest: manifest) {
+                webStoreURL = "https://chromewebstore.google.com/detail/\(stored.id)"
+            }
+        }
+        storedManifestFacts[key] = (dataURL, webStoreURL)
+        return (dataURL, webStoreURL)
     }
 
     private func cachedIconDataURL(for action: WKWebExtension.Action?) -> String {
