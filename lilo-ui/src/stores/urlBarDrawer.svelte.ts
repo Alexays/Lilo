@@ -123,16 +123,17 @@ export function initUrlBarDrawerStore(): void {
 }
 
 /**
- * Priority: a site prompt from the active tab, an extension prompt from the active space, an agent asking to
- * control Lilo whatever is shown, the default-browser invite, then the Site drawer the user opened.
+ * Priority: a site prompt from the active tab, an agent asking to control Lilo whatever is shown, an extension
+ * prompt from the active space, the default-browser invite, then the Site drawer the user opened. The agent goes
+ * before extensions: its question times out as a refusal, theirs waits.
  */
 export function getActiveUrlBarDrawer(): UrlBarDrawer | null {
 	const tabId = getActiveTabId();
 	const spaceId = getActiveSpaceId();
 	return (
 		_queue.find((request) => request.kind === "sitePermission" && request.tabId === tabId) ??
-		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
 		_queue.find((request) => request.kind === "agentControl") ??
+		_queue.find((request) => request.kind === "extensionPermission" && request.spaceId === spaceId) ??
 		// The onboarding has its own default-browser step.
 		(_defaultBrowserInvite && !getOnboarding().visible ? DEFAULT_BROWSER_DRAWER : null) ??
 		(_siteOpen ? SITE_DRAWER : null)

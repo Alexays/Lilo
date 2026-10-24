@@ -28,6 +28,22 @@ test("an agent's three answers fit the drawer, a long site included", async ({ p
 	await expectActionsInside(page);
 });
 
+test("an agent asking to connect shows ahead of a waiting extension prompt, which comes back after", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => {
+		window.__lilo!.receive({
+			event: "extensionPermissionRequested", requestId: "e1", extensionName: "Okta Verify", permissions: [], origins: ["https://example.okta.com"], type: "urls",
+		});
+		window.__lilo!.receive({ event: "agentControlRequested", requestId: "a1", clientName: "Claude Code", executable: "/usr/local/bin/claude", profileName: "" });
+	});
+	const drawer = page.locator(".url-drawer-clip");
+	await expect(drawer).toContainText("Claude Code");
+	await expect(drawer).not.toContainText("Okta Verify");
+
+	await drawer.locator(".prompt-actions button").last().click();
+	await expect(drawer).toContainText("Okta Verify");
+});
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 
