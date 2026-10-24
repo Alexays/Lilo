@@ -285,6 +285,7 @@ enum AgentInteractionTools {
                 try await control.approveConsequentialAction("click", target: css, frame: nil, engine: engine, session: session)
             }
         }
+        if action == "screenshot" || action == "zoom" { try await AgentDevTools.refuseTextLeaks(tabId: tab.id, control: control) }
         switch action {
         case let refAction where frame != nil && ["left_click", "right_click", "double_click", "triple_click", "hover", "scroll_to"].contains(refAction):
             let parameters: [String: Any] = ["ref": arguments["ref"] ?? "", "action": action, "modifiers": arguments["modifiers"] ?? ""]

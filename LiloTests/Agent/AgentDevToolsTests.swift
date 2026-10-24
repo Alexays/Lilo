@@ -424,6 +424,108 @@ final class AgentDevToolsTests: AgentToolTestCase {
         _ = server
     }
 
+    private static let namedPage = """
+        <title>Jane Doe - Admin</title>
+        <p id=name>Jane Doe</p><p id=other>Janet Doerr</p>
+        <input id=field value="Jane Doe" placeholder="Search Jane Doe"><img id=pic alt="Photo of Jane Doe" title="jane doe">
+        <div id=open></div><div id=closed></div>
+        <iframe id=frame srcdoc="<p>Jane Doe</p>"></iframe>
+        <script>
+          document.getElementById('open').attachShadow({ mode: 'open' }).innerHTML = '<b>Jane Doe</b>'
+          window.closedRoot = document.getElementById('closed').attachShadow({ mode: 'closed' })
+          window.closedRoot.innerHTML = '<b>Jane Doe</b>'
+        </script>
+        """
+
+    private static let shownNames = """
+        const frame = document.getElementById('frame').contentDocument?.body?.textContent ?? ''
+        const field = document.getElementById('field')
+        const pic = document.getElementById('pic')
+        return [
+          document.title, document.getElementById('name').textContent, document.getElementById('other').textContent, field.value,
+          field.placeholder, pic.alt, pic.title, document.getElementById('open').shadowRoot.textContent, frame
+        ].join('|')
+        """
+
+    func testTextReplaceKeepsUpWithThePageAndEachLoad() async throws {
+        let (tab, server) = try await served(Self.namedPage)
+        let set = await client.callTool("emulate", ["tabId": tab, "textReplace": [["Jane Doe", "Alex Smith"]]])
+        XCTAssertFalse(set.isError, set.text)
+        let expected = "Alex Smith - Admin|Alex Smith|Janet Doerr|Alex Smith|Search Alex Smith|Photo of Alex Smith|Alex Smith|Alex Smith|Alex Smith"
+        let replaced = await pollUntil { (try? await self.page(Self.shownNames, tab: tab)) as? String == expected }
+        let shown = try await page(Self.shownNames, tab: tab)
+        XCTAssertTrue(replaced, "\(shown ?? "")")
+
+        let field = try await page("""
+            document.getElementById('name').textContent = 'Hello Jane Doe'
+            document.body.append(Object.assign(document.createElement('p'), { id: 'late', textContent: 'JANE DOE' }))
+            const field = document.getElementById('field')
+            field.value = 'Jane Doe again'
+            return field.value
+            """, tab: tab)
+        let rendered = await pollUntil {
+            (try? await self.page("return document.getElementById('name').textContent + '|' + document.getElementById('late').textContent", tab: tab))
+                as? String == "Hello Alex Smith|Alex Smith"
+        }
+        _ = await client.callTool("navigate", ["tabId": tab, "url": "reload"])
+        let reloaded = await pollUntil {
+            (try? await self.page("return document.getElementById('name').textContent + '|' + window.closedRoot.textContent", tab: tab))
+                as? String == "Alex Smith|Alex Smith"
+        }
+
+        XCTAssertEqual(field as? String, "Alex Smith again", "a value the page sets is replaced at once")
+        XCTAssertTrue(rendered, "a node the page rewrites or adds is replaced too")
+        XCTAssertTrue(reloaded, "the next load is replaced, its closed shadow root included")
+        _ = server
+    }
+
+    func testTextReplaceResetPutsThePageTextBack() async throws {
+        let (tab, server) = try await served(Self.namedPage)
+        _ = await client.callTool("emulate", ["tabId": tab, "textReplace": [["/jane\\s+(doe)/i", "Alex $1"]]])
+        let replaced = await pollUntil { (try? await self.page("return document.getElementById('name').textContent", tab: tab)) as? String == "Alex Doe" }
+
+        let reply = await client.callTool("emulate", ["tabId": tab, "reset": true])
+        let restored = try await page(Self.shownNames, tab: tab)
+        _ = try await page("document.getElementById('name').textContent = 'Jane Doe again'", tab: tab)
+        try await Task.sleep(for: .milliseconds(300))
+        let rendered = try await page("return document.getElementById('name').textContent", tab: tab)
+
+        XCTAssertTrue(replaced)
+        XCTAssertEqual(reply.text, "No emulation")
+        XCTAssertEqual(restored as? String, "Jane Doe - Admin|Jane Doe|Janet Doerr|Jane Doe|Search Jane Doe|Photo of Jane Doe|jane doe|Jane Doe|Jane Doe")
+        XCTAssertEqual(rendered as? String, "Jane Doe again", "nothing replaces the page's text any more")
+        _ = server
+    }
+
+    func testTextReplaceRejectsAReplacementItsPatternMatches() async throws {
+        let (tab, server) = try await served("<p>Ann</p>")
+
+        let reply = await client.callTool("emulate", ["tabId": tab, "textReplace": [["/Ann/", "Anna"]]])
+
+        XCTAssertTrue(reply.isError, reply.text)
+        _ = server
+    }
+
+    func testTextReplaceGuardRefusesAScreenshotWhileANameShows() async throws {
+        let (tab, server) = try await served("<p>Jane <b>Doe</b></p><input value=Doe>")
+        _ = await client.callTool("emulate", ["tabId": tab, "textReplaceGuard": ["Jane Doe", "Doe"]])
+
+        let refused = await client.callTool("computer", ["tabId": tab, "action": "screenshot"])
+        _ = await client.callTool("emulate", ["tabId": tab, "textReplace": [["Jane", "Alex"], ["Doe", "Smith"]]])
+        let taken = await client.callTool("computer", ["tabId": tab, "action": "screenshot"])
+        _ = await client.callTool("emulate", ["tabId": tab, "textReplaceGuard": NSNull()])
+        let unguarded = await client.callTool("computer", ["tabId": tab, "action": "screenshot"])
+
+        XCTAssertTrue(refused.isError)
+        XCTAssertTrue(refused.images.isEmpty)
+        XCTAssertTrue(refused.text.contains(#"Jane Doe in the text "Jane Doe""#), "a name split by markup counts: \(refused.text)")
+        XCTAssertTrue(refused.text.contains("Doe in a field value"), refused.text)
+        XCTAssertFalse(taken.isError, taken.text)
+        XCTAssertEqual(taken.images.count, 1)
+        XCTAssertFalse(unguarded.isError, unguarded.text)
+        _ = server
+    }
+
     func testProfileListsLongTasksAndTheSectionsBetweenMarks() async throws {
         let tab = try await agentTab(showing: """
             <script>function busy() { const t = performance.now(); while (performance.now() - t < 150) {} }</script>
@@ -592,6 +694,81 @@ final class AgentNetworkToolsTests: AgentToolTestCase {
         XCTAssertEqual("\(read ?? "")", "404", "a GET reaches the server")
         XCTAssertEqual(write as? String, "blocked")
         XCTAssertEqual("\(allowed ?? "")", "404", "the rule before lets this POST through")
+        _ = server
+    }
+
+    func testBodyJsonMocksOneGraphQLOperation() async throws {
+        let (tab, server) = try await served("<p>index</p>")
+        let added = await mock(tab, [
+            "urlPattern": "/graphql$", "bodyJson": ["operationName": "^GetUser$"], "response": ["body": #"{"data":{"user":"mock"}}"#, "mimeType": "application/json"]
+        ])
+        XCTAssertFalse(added.isError, added.text)
+        let post = "return await (await fetch('/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })).text()"
+        let run = { (body: String) in
+            try await self.engine(forTab: tab).wkWebView.callAsyncJavaScript(post, arguments: ["body": body], contentWorld: .page)
+        }
+
+        let mocked = try await run(#"{"operationName":"GetUser","query":"query GetUser { user { name } }"}"#)
+        let other = try await run(#"{"operationName":"GetUsers","query":"query GetUsers { users { name } }"}"#)
+        let batch = try await run(#"[{"operationName":"GetTeam"},{"operationName":"GetUser"}]"#)
+
+        XCTAssertEqual(mocked as? String, #"{"data":{"user":"mock"}}"#)
+        XCTAssertEqual(other as? String, "missing", "another operation reaches the server")
+        XCTAssertEqual(batch as? String, #"{"data":{"user":"mock"}}"#, "a batch matches by any of its operations")
+        _ = server
+    }
+
+    func testBodyJsonBlocksMutationsWhileQueriesPassOverFetchAndXHR() async throws {
+        let (tab, server) = try await served("<p>index</p>")
+        _ = await mock(tab, ["urlPattern": "/graphql$", "bodyJson": ["query": #"^\s*mutation\b"#], "error": "AccessControl"])
+
+        let result = try await page("""
+            const send = (via, query) => via === 'fetch'
+              ? fetch('/graphql', { method: 'POST', body: JSON.stringify({ query }) }).then(r => r.status, () => 'blocked')
+              : new Promise(done => {
+                  const xhr = new XMLHttpRequest()
+                  xhr.open('POST', '/graphql')
+                  xhr.onload = () => done(xhr.status)
+                  xhr.onerror = () => done('blocked')
+                  xhr.send(JSON.stringify({ query }))
+                })
+            return [
+              await send('fetch', '  mutation Rename { rename(name: "x") }'), await send('fetch', 'query Me { me }'),
+              await send('xhr', 'mutation Delete { delete }'), await send('xhr', '{ me }')
+            ].join(' ')
+            """, tab: tab)
+
+        XCTAssertEqual(result as? String, "blocked 404 blocked 404")
+        _ = server
+    }
+
+    func testBodyPatternMatchesXHRBeaconsAndFormPosts() async throws {
+        let (tab, server) = try await served("<iframe name=target></iframe>")
+        _ = await mock(tab, ["urlPattern": "/track$", "bodyPattern": #"event\W{1,3}signup"#, "response": ["body": "seen"]])
+
+        let result = try await page("""
+            const xhr = body => new Promise(done => {
+              const request = new XMLHttpRequest()
+              request.open('POST', '/track')
+              request.onload = () => done(request.responseText)
+              request.send(body)
+            })
+            const signup = await xhr('{"event":"signup"}')
+            const view = await xhr('{"event":"view"}')
+            navigator.sendBeacon('/track', '{"event":"signup"}')
+            const form = Object.assign(document.createElement('form'), { method: 'post', action: '/track', target: 'target' })
+            form.append(Object.assign(document.createElement('input'), { name: 'event', value: 'signup' }))
+            document.body.append(form)
+            const frame = document.querySelector('iframe')
+            await new Promise(done => { frame.onload = done; form.submit() })
+            return [signup, view, frame.contentDocument.body.textContent].join(' ')
+            """, tab: tab)
+        let counted = await pollUntil {
+            await self.client.callTool("network_mock", ["tabId": tab, "action": "list"]).text.contains(#""hits":3"#)
+        }
+
+        XCTAssertEqual(result as? String, "seen missing seen")
+        XCTAssertTrue(counted, "the XHR, the beacon and the form post each hit the rule")
         _ = server
     }
 

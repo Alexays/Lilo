@@ -34,12 +34,20 @@ enum AgentDevTools {
             {urlPattern: "/api/search", methods: ["POST"]}, then fail the rest of the writes with \
             {urlPattern: "^https://api\\.example\\.com/", methods: ["POST", "PUT", "PATCH", "DELETE"], error: "AccessControl"}. \
             WebKit intercepts by URL only: methods filters after, so a GET the pattern matches is intercepted too, and an \
-            intercepted <link rel=preload> fires error. Keep urlPattern to the API, never the page's own files.
+            intercepted <link rel=preload> fires error. Keep urlPattern to the API, never the page's own files. bodyPattern \
+            and bodyJson filter after too, on the body as WebKit shows it: text from fetch, XHR, sendBeacon and form posts \
+            (strings, JSON, URLSearchParams, FormData's text fields). A Blob or File body, or a file part, is not in it.
             """, [
                 "action": ["type": "string", "enum": ["add", "remove", "list", "clear"]],
                 "id": AgentTools.prop("number", "The rule to remove."),
                 "urlPattern": AgentTools.prop("string", "A JavaScript regex tested against the full URL."),
                 "methods": ["type": "array", "items": ["type": "string"], "description": "Only requests of these HTTP methods, like [\"POST\"]."],
+                "bodyPattern": AgentTools.prop("string", "Only requests whose body, as text, matches this JavaScript regex."),
+                "bodyJson": ["type": "object", "description": """
+                    Only requests whose JSON body has all these top-level fields. A string is a regex over the field's value: \
+                    {operationName: "^GetUser$"} for one GraphQL operation, {query: "^\\s*mutation\\b"} for every mutation. \
+                    Other values must be equal. A batch (a JSON array) matches when one of its items does.
+                    """],
                 "stage": ["type": "string", "enum": ["request", "response"],
                           "description": "request (default): before it is sent. response: replace the real response."],
                 "response": ["type": "object", "description": """
@@ -112,6 +120,16 @@ enum AgentDevTools {
                     (navigate reload; a single-page app's route change is no load): performance observers, timing \
                     marks, API stubs.
                     """],
+                "textReplace": ["type": ["array", "null"], "items": ["type": "array", "items": ["type": "string"]], "description": """
+                    [[pattern, replacement], ...] kept applied as the page renders, for anonymized captures: text, field \
+                    values, placeholder, title, alt and aria-label, shadow DOM, every frame and the tab title, now and at each \
+                    load. A pattern is literal text matched as whole words in any case, or /a regex/flags ($1 in the \
+                    replacement). Text split across elements, canvas and images are not reached. null puts the page's text back.
+                    """],
+                "textReplaceGuard": ["type": ["boolean", "array", "null"], "items": ["type": "string"], "description": """
+                    true, or more patterns that must not show, like the first name alone: computer screenshot and zoom fail \
+                    while a textReplace or guard pattern matches the rendered text, a name split by markup included, or a field.
+                    """],
                 "reset": AgentTools.prop("boolean", "Undo every emulation of the tab."),
                 "tabId": AgentTools.prop("number", "The tab.")
             ], required: ["tabId"]),
@@ -162,7 +180,9 @@ enum AgentDevTools {
             let inspector = try await inspector(arguments, session: session, control: control)
             switch arguments["action"] as? String {
             case "add":
-                var rule = arguments.filter { ["urlPattern", "methods", "stage", "response", "error", "modify", "delayMs"].contains($0.key) }
+                var rule = arguments.filter {
+                    ["urlPattern", "methods", "bodyPattern", "bodyJson", "stage", "response", "error", "modify", "delayMs"].contains($0.key)
+                }
                 if var response = rule["response"] as? [String: Any], let path = response["path"] as? String {
                     let template = (path as NSString).expandingTildeInPath
                     guard template.hasPrefix("/") else { throw AgentToolError("path must be absolute: \(path)") }
@@ -217,7 +237,10 @@ enum AgentDevTools {
         case "emulate":
             let (tab, engine) = try control.agentTab(arguments["tabId"], session: session)
             let inspector = try await control.inspector(for: tab.id, engine: engine)
-            let fields = ["userAgent", "colorScheme", "reducedMotion", "contrast", "media", "javascript", "images", "cache", "extraHeaders", "initScript"]
+            let fields = [
+                "userAgent", "colorScheme", "reducedMotion", "contrast", "media", "javascript", "images", "cache", "extraHeaders", "initScript",
+                "textReplace", "textReplaceGuard"
+            ]
             var changes = arguments.filter { fields.contains($0.key) }
             var scale = (arguments["deviceScaleFactor"] as? NSNumber).map { CGFloat($0.doubleValue) }
             if arguments.keys.contains("deviceScaleFactor"), scale == nil { scale = 0 }
@@ -228,6 +251,7 @@ enum AgentDevTools {
             if let scale, !(0...10).contains(scale) { throw AgentToolError("deviceScaleFactor goes from 0 (the screen's) to 10") }
             // The page fields go first: they are all validated before any applies, the scale is set only after.
             var state = try await inspector.script("emulate", changes) as? [String: Any] ?? [:]
+            inspector.guardsText = state["textReplaceGuard"] as? Bool ?? (state["textReplaceGuard"] is [Any])
             if let scale {
                 guard engine.isAgentControlled else { throw AgentToolError("The tab left your tab group") }
                 inspector.deviceScaleFactor = scale
@@ -425,6 +449,12 @@ enum AgentDevTools {
         default:
             throw AgentToolError("action must be get, set, delete or clear")
         }
+    }
+
+    /// Throws while emulate's textReplaceGuard finds a textReplace pattern still on the tab's page.
+    static func refuseTextLeaks(tabId: UUID, control: AgentControl) async throws {
+        guard let inspector = control.inspectors[tabId], inspector.guardsText else { return }
+        if let leak = try await inspector.script("textLeaks") as? String { throw AgentToolError(leak) }
     }
 
     private static func inspector(_ arguments: [String: Any], session: AgentSession, control: AgentControl) async throws -> AgentInspector {

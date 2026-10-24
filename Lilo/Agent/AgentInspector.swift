@@ -10,6 +10,8 @@ final class AgentInspector {
     private weak var webView: WKWebView?
     let frontend: WKWebView
     private let files = FileServer()
+    /// emulate's textReplaceGuard: screenshots wait for the page to show none of textReplace's patterns.
+    var guardsText = false
 
     private static let script = ["AgentInspector", "InspectorCDP"]
         .compactMap { Bundle.appResourceURL($0, extension: "js").flatMap { try? String(contentsOf: $0, encoding: .utf8) } }

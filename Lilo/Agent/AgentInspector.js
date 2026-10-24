@@ -184,9 +184,16 @@
   for (const [name, stage] of [['requestIntercepted', 'request'], ['responseIntercepted', 'response']]) {
     const original = observer[name]
     observer[name] = function (requestId, payload) {
-      // An intercepted response carries no method: its request, seen first, does.
-      const method = payload.method ?? requests.get(requestId)?.request.method
-      const rule = rules.find(r => r.stage === stage && r.regex.test(payload.url) && (!r.methods || r.methods.includes(method)))
+      // An intercepted response carries no method nor body: its request, seen first, does.
+      const request = requests.get(requestId)?.request
+      const method = payload.method ?? request?.method
+      const body = stage === 'request' ? payload.postData : request?.postData
+      // Parsed once, only for a rule with bodyJson whose URL matches; a batch (an array) matches by any item.
+      let items
+      const parsed = () => items ??= (() => { try { return [JSON.parse(body)].flat() } catch { return [] } })()
+      const rule = rules.find(r => r.stage === stage && r.regex.test(payload.url) && (!r.methods || r.methods.includes(method)) &&
+        (!r.bodyRegex || r.bodyRegex.test(body ?? '')) &&
+        (!r.bodyFields || parsed().some(item => r.bodyFields.every(([field, test]) => test(item?.[field])))))
       if (!rule) return original.call(this, requestId, payload)
       settle(this._target.NetworkAgent, requestId, rule, stage, payload.url)
     }
@@ -395,6 +402,233 @@
     await WI.mainTarget.NetworkAgent.removeInterception.invoke(interception(rule)).catch(() => {})
   }
 
+  // textReplace's [pattern, replacement] pairs: a pattern is literal text, matched as whole words in any
+  // case, or /a regex/flags. Stringified into the page, so it uses nothing of the frontend.
+  function textRules(pairs) {
+    if (!Array.isArray(pairs) || !pairs.length) throw new Error('textReplace is a list of [pattern, replacement] pairs, or null')
+    return pairs.map(pair => {
+      const [pattern, replacement] = Array.isArray(pair) ? pair : []
+      if (pair?.length !== 2 || typeof pattern !== 'string' || !pattern || typeof replacement !== 'string') {
+        throw new Error(`textReplace: ${JSON.stringify(pair)} is not a [pattern, replacement] pair of strings`)
+      }
+      const slash = pattern.lastIndexOf('/')
+      const flags = pattern.slice(slash + 1)
+      const isRegex = pattern.startsWith('/') && slash > 1 && /^[dgimsuv]*$/.test(flags)
+      const regex = isRegex
+        ? new RegExp(pattern.slice(1, slash), flags.replace('g', '') + 'g')
+        : new RegExp(`(?<![\\p{L}\\p{N}_])${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}_])`, 'giu')
+      // It would match again each time the page touches the node, and grow.
+      if (regex.test(replacement)) throw new Error(`textReplace: "${replacement}" matches its own pattern ${pattern}`)
+      regex.lastIndex = 0
+      return { pattern, regex, replacement: isRegex ? replacement : () => replacement }
+    })
+  }
+
+  // Runs in the page world of one frame, stringified: replaces text as the page renders it, batched per
+  // frame. Called again with other rules it starts over; with null it stops and puts the page's text back.
+  function replaceText(rules, json) {
+    const key = Symbol.for('lilo.textReplace')
+    const running = window[key]
+    if (running?.json === json) return running
+    running?.stop()
+    if (!rules) return null
+    const replace = text => rules.reduce((result, { regex, replacement }) => result.replace(regex, replacement), text)
+    const skipped = new Set(['script', 'style', 'noscript', 'template'])
+    const attributes = ['title', 'alt', 'aria-label', 'placeholder']
+    const fields = new Map([HTMLInputElement, HTMLTextAreaElement].map(type => [type.prototype, Object.getOwnPropertyDescriptor(type.prototype, 'value')]))
+    const field = node => fields.get(node instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype)
+    const isField = node => (node.localName === 'input' && node.type !== 'hidden') || node.localName === 'textarea'
+    // What each node showed before, put back on stop where the page has not changed it since.
+    const originals = new WeakMap()
+    const changed = new Set()
+    // Closed shadow roots are reachable only from attachShadow.
+    const shadows = new WeakMap()
+    const watched = new WeakSet()
+    const pending = new Set()
+    const attributeTargets = new Set()
+    let frame = 0
+    let timer = 0
+
+    const read = (node, name) => name === 'data' ? node.data : name === 'value' ? field(node).get.call(node) : node.getAttribute(name)
+    const write = (node, name, value) => {
+      if (name === 'data') node.data = value
+      else if (name === 'value') field(node).set.call(node, value)
+      else node.setAttribute(name, value)
+    }
+    function fix(node, name) {
+      const value = read(node, name)
+      if (!value) return
+      const next = replace(value)
+      if (next === value) return
+      let saved = originals.get(node)
+      if (!saved) {
+        originals.set(node, saved = new Map())
+        changed.add(new WeakRef(node))
+      }
+      saved.set(name, [value, next])
+      write(node, name, next)
+    }
+    function fixElement(element) {
+      for (const name of attributes) fix(element, name)
+      if (isField(element)) fix(element, 'value')
+    }
+    function walk(root, onElement, onText) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+        acceptNode: node => skipped.has(node.localName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+      })
+      for (let node = root; node; node = walker.nextNode()) {
+        if (node.nodeType === Node.TEXT_NODE) onText(node)
+        if (node.nodeType !== Node.ELEMENT_NODE) continue
+        onElement(node)
+        const shadow = node.shadowRoot ?? shadows.get(node)
+        if (shadow) {
+          watch(shadow)
+          walk(shadow, onElement, onText)
+        }
+      }
+    }
+    function visit(node) {
+      if (skipped.has(node.localName) || skipped.has(node.parentNode?.localName)) return
+      walk(node, fixElement, text => fix(text, 'data'))
+    }
+
+    const options = { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: [...attributes, 'value'] }
+    function note(records) {
+      for (const record of records) {
+        if (record.type === 'attributes') attributeTargets.add(record.target)
+        else if (record.type === 'characterData') pending.add(record.target)
+        else for (const node of record.addedNodes) pending.add(node)
+      }
+    }
+    function flush() {
+      note(observer.takeRecords())
+      cancelAnimationFrame(frame)
+      clearTimeout(timer)
+      frame = 0
+      for (const element of attributeTargets) if (element.isConnected) fixElement(element)
+      for (const node of pending) if (node.isConnected) visit(node)
+      attributeTargets.clear()
+      pending.clear()
+      // The records of the replacements themselves.
+      observer.takeRecords()
+    }
+    const observer = new MutationObserver(records => {
+      note(records)
+      if (frame || !(pending.size || attributeTargets.size)) return
+      // Before the frame paints; the timer covers a page that renders no frames.
+      frame = requestAnimationFrame(flush)
+      timer = setTimeout(flush, 250)
+    })
+    function watch(root) {
+      if (watched.has(root)) return
+      watched.add(root)
+      observer.observe(root, options)
+    }
+
+    // A value the page sets never shows in a mutation.
+    const patched = new Map()
+    for (const [prototype, descriptor] of fields) {
+      const replacing = { ...descriptor, set(value) { descriptor.set.call(this, value); if (isField(this)) fix(this, 'value') } }
+      Object.defineProperty(prototype, 'value', replacing)
+      patched.set(prototype, replacing)
+    }
+    const attachShadow = Element.prototype.attachShadow
+    const attaching = function (...args) {
+      const shadow = attachShadow.apply(this, args)
+      shadows.set(this, shadow)
+      watch(shadow)
+      return shadow
+    }
+    Element.prototype.attachShadow = attaching
+    const typed = event => {
+      const target = event.composedPath()[0]
+      if (target?.localName && isField(target)) fix(target, 'value')
+    }
+    window.addEventListener('input', typed, true)
+
+    function stop() {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+      clearTimeout(timer)
+      window.removeEventListener('input', typed, true)
+      for (const [prototype, descriptor] of fields) {
+        if (Object.getOwnPropertyDescriptor(prototype, 'value')?.set === patched.get(prototype).set) Object.defineProperty(prototype, 'value', descriptor)
+      }
+      if (Element.prototype.attachShadow === attaching) Element.prototype.attachShadow = attachShadow
+      for (const ref of changed) {
+        const node = ref.deref()
+        for (const [name, [original, replaced]] of (node && originals.get(node)) ?? []) {
+          if (read(node, name) === replaced) write(node, name, original)
+        }
+      }
+      delete window[key]
+    }
+    const instance = {
+      json, stop, flush,
+      // A setter the page took before this script ran skips the patched one.
+      fixField: element => fix(element, 'value'),
+      shadowOf: element => element.shadowRoot ?? shadows.get(element)
+    }
+    Object.defineProperty(window, key, { value: instance, configurable: true })
+    watch(document)
+    visit(document)
+    observer.takeRecords()
+    return instance
+  }
+
+  // Runs in the page world of one frame, stringified: where `rules` still match what a capture would show,
+  // the rendered text (across elements, so a name split by markup counts too) and the fields.
+  function findText(rules) {
+    const running = window[Symbol.for('lilo.textReplace')]
+    running?.flush()
+    const found = []
+    const check = (text, what) => {
+      for (const { pattern, regex } of rules) {
+        regex.lastIndex = 0
+        const match = text && regex.exec(text)
+        if (match) found.push(`${pattern} in ${what} "${text.slice(Math.max(0, match.index - 20), match.index + match[0].length + 20).trim()}"`)
+      }
+    }
+    check(document.body?.innerText, 'the text')
+    const visit = root => {
+      for (const element of root.querySelectorAll('*')) {
+        if ((element.localName === 'input' && element.type !== 'hidden') || element.localName === 'textarea') {
+          running?.fixField(element)
+          if (element.checkVisibility?.({ visibilityProperty: true, opacityProperty: true }) !== false) {
+            check(element.value, 'a field value')
+            if (!element.value) check(element.placeholder, 'a placeholder')
+          }
+        }
+        const shadow = running?.shadowOf(element) ?? element.shadowRoot
+        if (!shadow) continue
+        for (const child of shadow.children) check(child.innerText, 'shadow DOM text')
+        visit(shadow)
+      }
+    }
+    visit(document)
+    return found
+  }
+
+  const guardedPairs = guard => Array.isArray(guard) ? guard.map(pattern => [pattern, '']) : []
+
+  const replacer = pairs => `(${replaceText})(${pairs ? `(${textRules})(${JSON.stringify(pairs)})` : 'null'}, ${JSON.stringify(JSON.stringify(pairs ?? null))})`
+
+  // The page has one bootstrap script: textReplace and initScript share it.
+  function bootstrap(page, { textReplace, initScript }) {
+    const source = [textReplace && replacer(textReplace), initScript != null && String(initScript)].filter(Boolean).join(';\n')
+    return page.setBootstrapScript.invoke(source ? { source } : {})
+  }
+
+  // Runs `expression` in the page world of every frame the inspector knows; a frame gone meanwhile gives null.
+  function inFrames(expression) {
+    return Promise.all(WI.networkManager.frames.map(frame => {
+      const context = frame.pageExecutionContext
+      return context?.target.RuntimeAgent.evaluate.invoke({
+        expression, contextId: context.id, returnByValue: true, doNotPauseOnExceptionsAndMuteConsole: true
+      }).then(response => ({ frame, response }), () => null) ?? null
+    }))
+  }
+
   const emulationChoices = {
     colorScheme: ['light', 'dark'], reducedMotion: ['reduce', 'no-preference'], contrast: ['more', 'no-preference'], media: ['print', 'screen']
   }
@@ -418,7 +652,12 @@
       images: setting('ImagesEnabled'),
       cache: value => network.setResourceCachingDisabled.invoke({ disabled: value === false }),
       extraHeaders: value => network.setExtraHTTPHeaders.invoke({ headers: value ?? {} }),
-      initScript: value => page.setBootstrapScript.invoke(value == null ? {} : { source: String(value) })
+      initScript: value => bootstrap(page, { ...emulation, initScript: value }),
+      textReplace: async value => {
+        await bootstrap(page, { ...emulation, textReplace: value })
+        await inFrames(replacer(value))
+      },
+      textReplaceGuard: async () => {}
     }
   }
 
@@ -442,6 +681,19 @@
     WI.Target.prototype._resumeIfPaused = function () {
       prepare(this)
       return resumeIfPaused.call(this)
+    }
+  }
+  // Each new document of a frame gets textReplace as its page world starts: the bootstrap script only
+  // reaches the main frame's.
+  const contextCreated = WI.RuntimeObserver.prototype.executionContextCreated
+  if (typeof contextCreated === 'function') {
+    WI.RuntimeObserver.prototype.executionContextCreated = function (payload) {
+      if (emulation.textReplace && WI.ExecutionContext.typeFromPayload(payload) === WI.ExecutionContext.Type.Normal) {
+        this._target.RuntimeAgent.evaluate.invoke({
+          expression: replacer(emulation.textReplace), contextId: payload.id, returnByValue: true, doNotPauseOnExceptionsAndMuteConsole: true
+        }).catch(() => {})
+      }
+      return contextCreated.call(this, payload)
     }
   }
   WI.targetManager.addEventListener(WI.TargetManager.Event.TargetAdded, event => {
@@ -769,7 +1021,18 @@
       const regex = new RegExp(rule.urlPattern)
       if (rule.methods != null && (!Array.isArray(rule.methods) || !rule.methods.length)) throw new Error('methods is a list, like ["POST", "PUT"]')
       const methods = rule.methods?.map(method => String(method).toUpperCase())
-      const added = { ...rule, methods, stage, regex, id: nextRuleId++, hits: 0 }
+      const bodyRegex = rule.bodyPattern != null ? new RegExp(rule.bodyPattern) : null
+      const bodyJson = rule.bodyJson
+      if (bodyJson != null && (typeof bodyJson !== 'object' || Array.isArray(bodyJson) || !Object.keys(bodyJson).length)) {
+        throw new Error('bodyJson is an object of top-level fields, like {"operationName": "^GetUser$"}')
+      }
+      // A string is a regex over the field's value (its JSON when not a string); any other value must equal it.
+      const bodyFields = bodyJson && Object.entries(bodyJson).map(([field, expected]) => {
+        if (typeof expected !== 'string') return [field, value => JSON.stringify(value) === JSON.stringify(expected)]
+        const regex = new RegExp(expected)
+        return [field, value => value !== undefined && regex.test(typeof value === 'string' ? value : JSON.stringify(value))]
+      })
+      const added = { ...rule, methods, stage, regex, bodyRegex, bodyFields, id: nextRuleId++, hits: 0 }
       if (!rules.some(r => sameInterception(r, added))) await intercept(WI.mainTarget, added)
       rules.push(added)
       return added.id
@@ -781,7 +1044,7 @@
       await removeInterception(rule)
     },
     rules() {
-      return rules.map(({ regex, response, ...rule }) => ({
+      return rules.map(({ regex, bodyRegex, bodyFields, response, ...rule }) => ({
         ...rule, response: response && { ...response, body: undefined, bodyBase64: undefined }
       }))
     },
@@ -847,6 +1110,13 @@
         if (value != null && emulationChoices[key] && !emulationChoices[key].includes(value)) {
           throw new Error(`${key}: ${emulationChoices[key].join(' or ')}`)
         }
+        if (key === 'textReplace' && value != null) textRules(value)
+        if (key === 'textReplaceGuard' && value != null) {
+          if (typeof value !== 'boolean' && (!Array.isArray(value) || !value.length || value.some(pattern => typeof pattern !== 'string'))) {
+            throw new Error('textReplaceGuard: true, or a list of patterns')
+          }
+          if (Array.isArray(value)) textRules(guardedPairs(value))
+        }
       }
       for (const [key, value] of Object.entries(changes)) {
         await apply[key](value)
@@ -856,6 +1126,20 @@
       const state = { ...emulation }
       if (state.initScript != null) state.initScript = `(${String(state.initScript).length} characters)`
       return state
+    },
+    // What textReplaceGuard refuses a capture for, null when nothing matches.
+    async textLeaks() {
+      const pairs = [...emulation.textReplace ?? [], ...guardedPairs(emulation.textReplaceGuard)]
+      if (!emulation.textReplaceGuard || !pairs.length) return null
+      const found = []
+      for (const result of await inFrames(`(${findText})((${textRules})(${JSON.stringify(pairs)}))`)) {
+        if (!result) continue
+        const { frame, response } = result
+        if (response.wasThrown) found.push(`the check failed in ${frame.url}`)
+        else found.push(...(response.result?.value ?? []).map(leak => `${leak} (${frame.url})`))
+      }
+      if (!found.length) return null
+      return `textReplaceGuard: a guarded pattern is still visible, no capture taken. ${found.slice(0, 3).join('; ')}`
     },
     async startProfile({ screenshots = false }) {
       if (profile) throw new Error('A profile is already running: call performance stop')
