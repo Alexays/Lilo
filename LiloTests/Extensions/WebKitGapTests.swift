@@ -516,7 +516,27 @@ final class WebKitGapTests: XCTestCase {
         """, permissions: ["storage"])
         XCTAssertEqual(
             title, "null string",
-            "WebKit now stores values as Chrome does (no non-finite number, a Date as {}): drop withoutNonFiniteNumbers (storage-area.ts) and update COMPATIBILITY.md"
+            "WebKit now stores values as Chrome does (no non-finite number, a Date as {}): drop the non-finite numbers case of asChromeStores (storage-area.ts) and update COMPATIBILITY.md"
+        )
+    }
+
+    func testStorageRejectsAFunctionOfItemsAndStoresInheritedKeys() async throws {
+        let title = try await bareWorkerTitle("""
+        // WebKit throws an invalid call where it would reject.
+        const outcome = async (call) => { try { await call(); return 'stored'; } catch (error) { return `rejected ${error.message}`; } };
+        (async () => {
+          const top = await outcome(() => chrome.storage.session.set({ f() {}, kept: 1 }));
+          const nested = await outcome(() => chrome.storage.session.set({ entry: { f() {}, kept: 1 } }));
+          Object.prototype.inherited = 1;
+          const plain = await outcome(() => chrome.storage.session.set({ own: 1 }));
+          delete Object.prototype.inherited;
+          const items = await chrome.storage.session.get(null);
+          chrome.action.setTitle({ title: [top.split('.')[0], nested, plain, Object.hasOwn(items, 'inherited')].join(' ') });
+        })();
+        """, permissions: ["storage"])
+        XCTAssertEqual(
+            title, "rejected Invalid call to storageArea stored stored true",
+            "WebKit now stores items as Chrome does (a function of items left out, inherited keys ignored): drop ownKeysOnly and the function case of asChromeStores (storage-area.ts)"
         )
     }
 

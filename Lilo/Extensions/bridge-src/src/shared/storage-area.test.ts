@@ -11,14 +11,23 @@ describe('chrome.storage areas', () => {
     const bytes = (text: string) => (/[^\x00-\xff]/.test(text) ? 2 : 1) * text.length;
     const prototype = {
       QUOTA_BYTES,
-      async set(items: Record<string, unknown>) {
+      // As WebKit: it reads the keys `items` inherits too, and rejects a function at once.
+      set(items: Record<string, unknown>) {
+        const entries: Array<[string, unknown]> = [];
+        for (const key in items) {
+          if (typeof items[key] === 'function') throw new Error(`Invalid call to storageArea.set(). The 'items[\`${key}\`]' value is invalid, because it is not JSON-serializable.`);
+          entries.push([key, items[key]]);
+        }
+        return this.store(entries);
+      },
+      async store(entries: Array<[string, unknown]>) {
         let size = BigInt(characters());
-        for (const [key, value] of Object.entries(items)) {
+        for (const [key, value] of entries) {
           const old = stored.get(key);
           size += BigInt(bytes(key) + bytes(JSON.stringify(value))) - BigInt(old === undefined ? 0 : bytes(key) + bytes(old));
         }
         if (BigInt.asUintN(64, size) > QUOTA_BYTES) throw new Error('Invalid call to browser.storage.local.set(). Exceeded storage quota.');
-        for (const [key, value] of Object.entries(items)) stored.set(key, JSON.stringify(value));
+        for (const [key, value] of entries) stored.set(key, JSON.stringify(value));
       },
       async get(keys: string[]) { return Object.fromEntries(keys.filter((key) => stored.has(key)).map((key) => [key, JSON.parse(stored.get(key)!)])); },
       async remove(keys: string[]) { keys.forEach((key) => stored.delete(key)); },
@@ -34,6 +43,19 @@ describe('chrome.storage areas', () => {
     await local.set({ entry: { expires: Infinity, n: NaN, kept: 1, list: [-Infinity, 2] }, top: Infinity });
     assert.equal(stored.get('entry'), '{"kept":1,"list":[null,2]}');
     assert.equal(stored.has('top'), false);
+  });
+
+  it('stores own keys without functions, as Chrome does, where WebKit reads inherited ones and rejects functions', async () => {
+    const { local, stored } = area();
+    (Object.prototype as any).clear = function () {};
+    try {
+      await local.set({ kept: 1, method() {}, nested: { f() {}, list: [() => 1, 2] } });
+    } finally {
+      delete (Object.prototype as any).clear;
+    }
+    assert.deepEqual([...stored.keys()], ['kept', 'nested']);
+    assert.equal(stored.get('nested'), '{"list":[null,2]}');
+    assert.equal(Object.getOwnPropertyDescriptor(Object.prototype, 'clear'), undefined);
   });
 
   it('leaves a cyclic value for WebKit to reject', async () => {

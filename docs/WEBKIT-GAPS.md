@@ -444,10 +444,10 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 
 ### 34. `storage` stores values as JSON
 
-- **Gap:** WebKit stores `Infinity` and `NaN` as `null` and a `Date` as its ISO string; Chrome drops the number and stores `{}`.
-- **Lilo:** leaves out an object's non-finite numbers before WebKit gets the value, in one pass that copies only the objects it changes ([storage-area.ts] `withoutNonFiniteNumbers`); a `Date` stays its ISO string (COMPATIBILITY.md, "storage").
-- **Impact:** LetyShops' cache entry with `expired: Infinity` read back expired.
-- **Check:** `testStorageStoresNonFiniteNumbersAsNull`.
+- **Gap:** WebKit stores `Infinity` and `NaN` as `null` and a `Date` as its ISO string; Chrome drops the number and stores `{}`. WebKit also reads the enumerable keys `items` inherits and throws over a function among `items`' keys; Chrome reads the own keys only and leaves functions out.
+- **Lilo:** leaves out an object's non-finite numbers and functions before WebKit gets the value, in one pass that copies only the objects it changes ([storage-area.ts] `asChromeStores`), and makes inherited keys non-enumerable while WebKit reads `items` (`ownKeysOnly`); a `Date` stays its ISO string (COMPATIBILITY.md, "storage").
+- **Impact:** LetyShops' cache entry with `expired: Infinity` read back expired; Dark Mode - Night Eye, which adds its storage methods to `Object.prototype`, failed every `set`.
+- **Check:** `testStorageStoresNonFiniteNumbersAsNull`, `testStorageRejectsAFunctionOfItemsAndStoresInheritedKeys`. Repro: in a worker, `Object.prototype.x = () => 1; chrome.storage.local.set({ a: 1 })` throws `The 'items[`x`]' value is invalid`.
 
 ### 41. `storage` sizes a replaced value outside Latin-1 twice
 

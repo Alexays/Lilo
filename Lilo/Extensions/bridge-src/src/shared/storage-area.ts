@@ -1,6 +1,6 @@
 // WebKit answers a read before writes in flight, so calls wait for them. It also sizes a replaced non-Latin-1 value in
 // UTF-16 bytes but the total in characters, failing the quota, so a set that fits is reapplied after removing its keys.
-// It stores values as JSON, where Chrome leaves out non-finite numbers. A starting worker's reads answer once the
+// It stores values as JSON, where Chrome leaves out non-finite numbers and functions. A starting worker's reads answer once the
 // events that woke it are dispatched, as Chrome's slower storage answers them (Custom Cursors' onInstalled sets
 // the defaults its startup read finds missing).
 import { callbackify } from './callbackify.ts';
@@ -48,10 +48,35 @@ function ordered(write: boolean): Patch {
 const read = ordered(false);
 const write = ordered(true);
 
+/**
+ * WebKit stores the enumerable keys `items` inherits too, which Chrome ignores, and rejects the call over an inherited
+ * function (Night Eye adds its storage methods to Object.prototype): they are not enumerable while WebKit reads `items`.
+ */
+function ownKeysOnly<T>(items: any, store: () => T): T {
+  const hidden: Array<[object, string, PropertyDescriptor]> = [];
+  for (const key in items) {
+    if (Object.hasOwn(items, key)) continue;
+    for (let owner = Object.getPrototypeOf(items); owner; owner = Object.getPrototypeOf(owner)) {
+      const descriptor = Object.getOwnPropertyDescriptor(owner, key);
+      if (!descriptor) continue;
+      if (descriptor.configurable) {
+        Object.defineProperty(owner, key, { enumerable: false });
+        hidden.push([owner, key, descriptor]);
+      }
+      break;
+    }
+  }
+  try {
+    return store();
+  } finally {
+    for (const [owner, key, descriptor] of hidden) Object.defineProperty(owner, key, descriptor);
+  }
+}
+
 const setWithinQuota: Patch = (original, self) => function (this: unknown, items: any, callback?: () => void) {
   const area: any = self(this);
   // Called at once, so arguments WebKit rejects still throw.
-  const first = original.call(area, items);
+  const first = ownKeysOnly(items, () => original.call(area, items));
   return callbackify(async () => {
     try {
       return await first;
@@ -66,7 +91,7 @@ const setWithinQuota: Patch = (original, self) => function (this: unknown, items
       if (used - size(old, 1) + size(items, 2) > area.QUOTA_BYTES) throw error;
       await area.remove.__liloUnwrapped.call(area, keys);
       try {
-        return await original.call(area, items);
+        return await ownKeysOnly(items, () => original.call(area, items));
       } catch {
         await original.call(area, old);
         throw error;
@@ -76,27 +101,28 @@ const setWithinQuota: Patch = (original, self) => function (this: unknown, items
 };
 
 /**
- * `value` without the non-finite numbers of its objects, which Chrome leaves out and WebKit's JSON stores as null
- * (an array's stay: null in both). Copies only what changes; a cycle is left for WebKit to reject.
+ * `value` as Chrome stores it: its objects without their non-finite numbers and functions, which Chrome leaves out
+ * where WebKit stores the numbers as null and rejects the call over a function of `items` itself; an array's become
+ * null in both. Copies only what changes; a cycle is left for WebKit to reject.
  */
-function withoutNonFiniteNumbers(value: any, seen = new Set<object>()): any {
+function asChromeStores(value: any, seen = new Set<object>()): any {
   if (typeof value !== 'object' || value === null || seen.has(value)) return value;
   seen.add(value);
   let copy: any;
   if (Array.isArray(value)) {
     for (let i = 0; i < value.length; i++) {
-      const next = withoutNonFiniteNumbers(value[i], seen);
+      const next = typeof value[i] === 'function' ? null : asChromeStores(value[i], seen);
       if (next !== value[i]) (copy ??= [...value])[i] = next;
     }
   } else {
     for (const key of Object.keys(value)) {
       const item = value[key];
-      if (typeof item === 'number' && !Number.isFinite(item)) {
+      if (typeof item === 'function' || (typeof item === 'number' && !Number.isFinite(item))) {
         copy ??= { ...value };
         delete copy[key];
         continue;
       }
-      const next = withoutNonFiniteNumbers(item, seen);
+      const next = asChromeStores(item, seen);
       if (next !== item) (copy ??= { ...value })[key] = next;
     }
   }
@@ -109,7 +135,7 @@ export const storageAreaPatches: Record<string, Patch> = {
   set: (original, self) => {
     const set = write(setWithinQuota(original, self), self);
     return function (this: unknown, items: any, ...rest: unknown[]) {
-      return set.call(this, withoutNonFiniteNumbers(items), ...rest);
+      return set.call(this, asChromeStores(items), ...rest);
     };
   },
 };
