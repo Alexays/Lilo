@@ -247,7 +247,8 @@
     transition: width 220ms var(--motion-ease-spring);
   }
 
+  /* Full screen: the toggle lines up with the URL field below it. */
   .sidebar-header.no-traffic-lights .header-spacer {
-    width: 0;
+    width: 10px;
   }
 </style>

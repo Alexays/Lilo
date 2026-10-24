@@ -36,7 +36,7 @@ export function isSidebarOverlay(): boolean {
 }
 
 export function isSidebarShown(): boolean {
-	return !_isFullscreen && _sidebarMode !== "hidden";
+	return _sidebarMode !== "hidden";
 }
 
 export function areTrafficLightsVisible(): boolean {
@@ -44,7 +44,7 @@ export function areTrafficLightsVisible(): boolean {
 }
 
 export function showSidebarOverlay(): void {
-	if (!_isFullscreen && _sidebarMode === "hidden") {
+	if (_sidebarMode === "hidden") {
 		_sidebarMode = "overlay";
 		chromeActions.sidebarOverlayChanged(true);
 	}
