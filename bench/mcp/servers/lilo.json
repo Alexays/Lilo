@@ -1,0 +1,1 @@
+{"mcpServers": {"browser": {"command": "${LILO_MCP:-/Applications/Lilo.app/Contents/MacOS/lilo-mcp}", "args": []}}}

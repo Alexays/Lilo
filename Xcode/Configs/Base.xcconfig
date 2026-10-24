@@ -1,0 +1,10 @@
+SWIFT_VERSION = 6.0
+CURRENT_PROJECT_VERSION = 1
+MARKETING_VERSION = 0.1.0
+// Sparkle EdDSA public key (base64). Empty disables update checks, as in local builds.
+SPARKLE_PUBLIC_ED_KEY = YvWz9GUSPSl6HzwXHJ3+bNmenKa1y+luUBeT36dmjTI=
+
+// Ad-hoc by default; make and scripts/build-app.sh pass a team and identity when one is configured.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+AD_HOC_CODE_SIGNING_ALLOWED = YES

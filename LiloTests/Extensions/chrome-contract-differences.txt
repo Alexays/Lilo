@@ -1,0 +1,17 @@
+# Contract cases where Lilo knowingly answers differently from Chrome, one per line: case name | why.
+# ChromeContractTests fails on any other difference, and on a listed one that now matches.
+alarms.create and get | WebKit's Alarm objects lack persistAcrossSessions.
+alarms.get missing | WebKit resolves a missing alarm with null, Chrome with undefined.
+bookmarks.create and onCreated | Lilo's bookmark nodes lack syncing.
+bookmarks.get missing | Lilo's error message differs from Chrome's.
+bookmarks.getTree root shape | Lilo's folders lack dateAdded, folderType and syncing.
+contextMenus duplicate id | WebKit's error message differs from Chrome's.
+declarativeNetRequest invalid rule | WebKit's error message differs from Chrome's.
+management.getSelf shape | Lilo's ExtensionInfo lacks homepageUrl, isApp, mayDisable, optionsUrl and versionName, and adds disableReasons and icons.
+permissions.request outside a gesture | Lilo refuses a permission WebKit does not know and the manifest does not list (debugger) as not declared, without requiring a user gesture.
+scripting.executeScript on a missing tab | WebKit's error message differs from Chrome's.
+storage.local.get invalid keys | WebKit's error message differs from Chrome's.
+tabs.create and remove events | WebKit's Tab objects lack autoDiscardable, discarded, frozen, groupId, lastAccessed and splitViewId, and add isArticle and isInReaderMode.
+tabs.get invalid id | WebKit's error message differs from Chrome's.
+tabs.query shape | WebKit's Tab objects lack autoDiscardable, discarded, frozen, groupId, lastAccessed and splitViewId, and add isArticle and isInReaderMode.
+webNavigation on a tab before its first commit | WebKit lists the tab's initial empty document, with an empty URL, where Chrome lists no frame until the first navigation commits.

@@ -1,0 +1,35 @@
+included:
+  - Lilo
+
+excluded:
+  - .build
+  - .derived.noindex
+  - .swiftpm
+  - Lilo.xcodeproj
+  - Lilo/Resources
+
+reporter: xcode
+
+disabled_rules:
+  - cyclomatic_complexity
+  - file_length
+  - force_cast
+  - for_where
+  - function_body_length
+  - function_parameter_count
+  - identifier_name
+  - large_tuple
+  - line_length
+  - nesting
+  - todo
+  - type_body_length
+  - type_name
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - operator_usage_whitespace
+  - vertical_whitespace_closing_braces
+
+trailing_whitespace:
+  ignores_empty_lines: true

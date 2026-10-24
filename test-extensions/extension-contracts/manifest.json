@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Lilo contract probe",
+  "version": "1.0",
+  "description": "Runs the same chrome.* calls in Chrome and in Lilo so their results can be compared.",
+  "background": { "service_worker": "worker.js" },
+  "permissions": [
+    "alarms", "bookmarks", "contextMenus", "cookies", "declarativeNetRequest", "downloads", "gcm", "history",
+    "idle", "management", "notifications", "pageCapture", "power", "scripting", "sessions", "storage", "system.cpu",
+    "system.memory", "tabs", "topSites", "webNavigation"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "action": {}
+}

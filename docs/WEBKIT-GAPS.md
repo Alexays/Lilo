@@ -1,0 +1,467 @@
+# WebKit extension gaps
+
+The `WKWebExtension` limitations Lilo works around or cannot fix, so each workaround can go once a macOS or WebKit update fixes the limitation under it. [COMPATIBILITY.md](../COMPATIBILITY.md) says what extensions see; this register says why, where the workaround lives, and what to remove when WebKit changes.
+
+Missing namespaces and members (`tabGroups`, `offscreen`, `sidePanel` and so on) are not listed here: `ChromeSurfaceTests` tracks them against Chrome's schemas (`chrome-surface-gaps.txt`), and Lilo's Gap APIs fill them ([ARCHITECTURE.md](ARCHITECTURE.md#extension-architecture)).
+
+Status of each gap:
+
+- **Checked**: a test of [WebKitGapTests.swift] reproduces the gap and asserts WebKit's current behavior, mostly in a bare `WKWebExtensionController` without any of Lilo. When it fails, WebKit changed: its message names the workaround to remove. They run with `make swift-test`, except the two that wait out WebKit's clocks (gaps 7 and 33), which run with `make swift-test-slow`.
+- **Contract**: `ChromeContractTests` covers it (`LiloTests/Extensions/chrome-contract-differences.txt` lists the differences Lilo keeps and fails once one matches Chrome).
+- **Manual**: no automated check (it would crash the test host, it is timing dependent, or it is not reduced to a minimal case). Its repro reproduces it by hand.
+
+Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or Feedback Assistant. Only gap 19 is filed upstream (webkit.org/b/267514). Observed on macOS 27.0.1 (26A434). Gap numbers are stable, since code and tests cite them; a number that goes is not reused.
+
+Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
+
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44 and 46. Every other gap is fully worked around.
+
+---
+
+## Namespace objects and events
+
+### 2. Events reach a context only through its own `browser` or `chrome`
+
+- **Gap:** WebKit finds a context's listeners through the global `browser`, else `chrome`, and skips the context when neither is its own namespace object: no `runtime.onMessage`, `onConnect`, port message or `storage.onChanged`. With `chrome` being Lilo's proxy, an extension assigning `browser` (`var browser = chrome`, webextension-polyfill) would lose every event. Chrome lets extensions wrap or replace either.
+- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor).
+- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers).
+- **Check:** `testEventsSkipAContextWhoseBrowserAndChromeAreReplaced`, `testEventsStopOnceNeitherGlobalIsTheNamespace`. Repro: in an MV3 worker, keep `chrome.storage` and `chrome.action`, listen to `storage.onChanged`, set `globalThis.browser = {}` and `globalThis.chrome = {}`, then set a key. Expected: the listener runs. Actual: never.
+
+### 3. `runtime.connectNative`, `lastError` and `onInstalled` are own, fixed properties
+
+- **Gap:** they are own properties of each WebKit `runtime` object; `Object.defineProperty` on them does not throw and changes nothing. Chrome lets a polyfill redefine them.
+- **Lilo:** `chrome.runtime` is a view whose `lastError`, `connectNative`, `connect` and `sendMessage` are Lilo's ([chrome-compat.ts] `serve`, `view`). `lastError` is the error of the Lilo callback running ([callbackify.ts] `liloLastError`), and `Unchecked runtime.lastError` is logged when it goes unread. Lilo's events take the listeners of WebKit's `onInstalled`, `onStartup` and `onConnect` (`standIns`, [chrome-event.ts] `eventStandIns`).
+- **Impact:** through `browser.runtime` (webextension-polyfill), the `lastError` of refused native ports and of Lilo's callbacks is missing.
+- **Check:** `testRuntimeMembersAreOwnPropertiesNothingRedefines`. Repro: `Object.defineProperty(browser.runtime, 'connectNative', { value: 1, configurable: true })`, then read it. Expected: redefined, or a `TypeError`. Actual: no error, original kept.
+
+### 13. Events lack `hasListeners`
+
+- **Gap:** WebKit events have `addListener`, `removeListener` and `hasListener` only.
+- **Lilo:** tracks listeners on each WebKit event prototype and adds `hasListeners` ([chrome-leniency.ts] `chromeEvent`).
+- **Impact:** extensions calling it threw (Brisk Teaching).
+- **Check:** `testEventsLackHasListeners`. Repro: `typeof browser.runtime.onMessage.hasListeners` is `"undefined"`, `"function"` in Chrome.
+
+### 17. Namespace objects recreated once collected
+
+- **Gap:** WebKit holds its namespace, member (`storage.local`) and event objects weakly: once collected, the next read gets a new object with a new prototype, without Lilo's additions. Chrome's stay the same objects.
+- **Lilo:** the `chrome` proxy keeps every object it handed out alive with its events and members, and reads every namespace of `browser` at startup ([chrome-compat.ts] `kept`, `handedOut`); the content script compat keeps the namespaces it fills ([static-compat.ts]).
+- **Impact:** without it, gap 31's ordering vanished with `storage.local` (CS2 Trader read its defaults before they were written), and Lilo's members (`hasListeners`, `i18n.detectLanguage`, `action.setBadgeTextColor`) vanished.
+- **Check:** Manual: a collection cannot be forced in an extension context. Repro: set `Object.getPrototypeOf(browser.i18n).x = 1`, drop every reference, allocate a few million objects, read `browser.i18n.x`. Expected: `1`. Actual: `undefined`.
+
+### 32. Namespace members differ from Chrome's in shape
+
+- **Gap:** WebKit methods sit on the prototype and return `undefined` when called detached; events and sub-namespaces are own but not enumerable, so `{ ...chrome.alarms }` lacks them; namespaces are read-only properties of `browser`; `runtime.lastError` is `null` without an error. Chrome's are own, enumerable, work detached, are writable, and `lastError` is `undefined`.
+- **Lilo:** `chrome` gives each namespace and sub-namespace own bound members ([chrome-compat.ts] `ownMembers`), hands out a view where every member is own and enumerable (`view`), hands back a namespace an extension assigns (the proxy's `set`), and serves `lastError` as `undefined` without an error (`serve`).
+- **Impact:** chrome-promise finds no `storage.local.get` (Steam Inventory Helper), a detached `getMessage` or `getManifest` returns nothing (Chrono Download Manager), a copy of `chrome.alarms` has no `onAlarm` (Online Security), replacing `chrome.storage` throws (Distill), `lastError` reads as an error (eJOY). Through `browser`, WebKit's shape stays.
+- **Check:** `testNamespacesDifferFromChromeInShape`. Repro: `const { getManifest } = browser.runtime; getManifest()` returns `undefined`; `Object.keys(browser.storage.local)` is empty; `Object.getOwnPropertyDescriptor(browser, 'alarms').writable` is false.
+
+### 52. Event listener methods throw on a listener that is not a function
+
+- **Gap:** WebKit throws "The 'listener' value is invalid, because a function is expected."; Chrome ignores the call and `hasListener` answers `false`.
+- **Lilo:** ignores it in the patches of every event prototype ([chrome-leniency.ts] `chromeEvent`).
+- **Impact:** IE Tab's worker removes a listener it never set, and threw.
+- **Check:** `testEventListenerMethodsThrowOnANonFunction`. Repro: `browser.storage.onChanged.removeListener(undefined)` throws.
+
+## runtime and messaging
+
+### 4. A refused native connection sets no `runtime.lastError`
+
+- **Gap:** when the app refuses a native connection (`connectUsing` completes with an error), WebKit disconnects the port with no `lastError` and records an extension error in the context's `errors`. Chrome sets `lastError` (`Specified native messaging host not found.`) during `onDisconnect`.
+- **Lilo:** accepts every native connection, even to a missing host ([ExtensionNativeMessaging.swift]). `chrome.runtime.connectNative` marks its ports (`?lilo` suffix) and posts a first message; Lilo answers a marked port with Chrome's error, which the wrapper raises as `lastError` ([chrome-leniency.ts] `nativeMessagingAsChrome`). A `browser.runtime.connectNative` port, which Lilo cannot wrap (gaps 2 and 3), disconnects on its first message without `lastError`.
+- **Impact:** without it, an extension telling an absent host from a broken one (Claude) logs an error at every start, and every extension trying a missing host (Xunlei, Free Download Manager, 1Password) records an extension error. Through `browser.runtime`, a port to a missing host that never sends never disconnects.
+- **Check:** `testRefusedNativeConnectionSetsNoLastError`. Repro: refuse in `webExtensionController(_:connectUsing:for:completionHandler:)`; in the worker, log `browser.runtime.lastError` in `connectNative('x').onDisconnect`. Expected: the error. Actual: `undefined`.
+
+### 7. `runtime.onInstalled` and `onStartup` depend on the controller's age
+
+- **Gap:** WebKit takes any context loaded in its controller's first 5 seconds for a launch restore (`onStartup`, no `onInstalled`), and a later one for an install, even a re-enable or reload. About one update in five gets no `onInstalled update`. Chrome: `install` for a new extension, `update` for a new version, nothing on re-enable or restart, `onStartup` on profile start.
+- **Lilo:** its own events take the listeners of WebKit's ([runtime.ts] `runtimeLifecycle`), and the extension lifecycle sends them on the loads Chrome fires them for ([ExtensionLifecycle.swift] `loaded`).
+- **Impact:** without it, a re-enabled extension reopens its welcome page, and an update can miss its migration.
+- **Check:** `testLifecycleEventsDependOnTheControllerAge` (slow, 6 s) for the 5 s window; Manual for the dropped update (intermittent). Repro: load an extension in a new controller at once and another 6 s later. Expected: both hear `onInstalled install`. Actual: the first hears only `onStartup`.
+
+### 18. Messages sent on a port before it is connected are dropped
+
+- **Gap:** WebKit drops what the app sends on a `WKWebExtension.MessagePort` before the port's first message arrives, and what a worker sends on a port still connecting. Chrome queues them.
+- **Lilo:** holds a native port's error until its first message ([ExtensionNativeMessaging.swift]), and Lilo sends a worker its events once the worker's first message on its port arrived ([GapEvents.swift] `adopt`).
+- **Check:** Manual. Repro: call `port.sendMessage` at once in `connectUsing`. Expected: delivered. Actual: never delivered.
+
+### 22. `sendMessage` with no response sets no error
+
+- **Gap:** WebKit resolves `undefined` and gives callbacks no `lastError` whether no listener exists or none responds. Chrome rejects with `Could not establish connection. Receiving end does not exist.` without a listener, sets `The message port closed before a response was received.` when none responds, and delivers a valueless response as `null`.
+- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message and `tabs.sendMessage` always get "Receiving end does not exist". `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
+- **Impact:** Video Downloader Professional reads its response when `lastError` is unset and throws; AdGuard's popup reads the answer of a message its starting worker does not receive yet.
+- **Check:** `testSendMessageCallbackWithoutResponseSetsNoLastError`; the `runtime.sendMessage callback without listener` contract checks Lilo's answer. Repro: from an extension page with nothing listening, `await browser.runtime.sendMessage(1)`. Expected: rejects. Actual: resolves.
+
+### 42. No cross-extension messaging
+
+- **Gap:** WebKit throws `cross-extension messaging is not supported` in pages, and records an extension error in a worker. Chrome reaches the other extension's `onConnectExternal` / `onMessageExternal`, or fails with "Receiving end does not exist" when it is not installed.
+- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id answer as Chrome with no such extension ([runtime.ts] `crossExtensionMessaging`). Lilo does not relay them: `browser.runtime` and `onMessageExternal` stay WebKit's (gap 2), and a relayed port would need a lifetime Lilo's channels do not give (a worker closes its channel after 20 s idle, [ipc.ts] `IDLE_MS`). User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** an extension talking to a companion extension (Sider) logs an error at every start.
+- **Check:** Manual. Repro: `browser.runtime.connect('abcdefghijklmnopabcdefghijklmnop')` from an extension page throws.
+
+### 43. A port message sent before the port connects arrives twice
+
+- **Gap:** WebKit queues messages per channel and target world, and on connect fires the target world's queue, then the source world's (`WebExtensionContext::runtimeConnect`, `fireQueuedPortMessageEventsIfNeeded`). Between extension pages and the worker, both the main world, every queued message arrives twice. Chrome delivers each once.
+- **Lilo:** a `chrome.runtime.connect` port is Lilo's at both ends: its name carries a mark the `onConnect` stand-in removes, each message its sender and number, and a repeat is dropped ([runtime.ts] `messagesOnce`, `onConnect`). A `browser.runtime.connect` port stays WebKit's.
+- **Impact:** popups that post at once got two answers (Web PKI, Web Signer and Certisign WebSigner threw) or their state twice (uVPN's popup stayed empty).
+- **Check:** `testPortMessagesSentBeforeTheConnectionArriveTwice`. Repro: the worker counts the messages of each `onConnect` port; a page runs `runtime.connect().postMessage('once')`. Expected: 1. Actual: 2.
+
+### 44. Extension pages are not clients of the extension's worker
+
+- **Gap:** WebKit registers the worker with its own directory as scope and counts no extension page as a client: `navigator.serviceWorker.ready` never resolves outside that directory, `clients.matchAll()` finds none, and a page's `postMessage` to the worker is lost. Chrome registers it for the whole extension.
+- **Lilo:** on extension pages, `ready` resolves with the extension's registration and `postMessage` to the worker goes over a `BroadcastChannel`; the worker gets a `message` event whose source is a `WindowClient` answering that page ([worker-messages.ts]). `clients.matchAll()` still finds no page (COMPATIBILITY.md, "Background worker").
+- **Impact:** without it, MultiPassword's offscreen document never reaches its worker, which never starts.
+- **Check:** `testExtensionPagesAreNotClientsOfTheWorker`. Repro: worker at `worker/background.js`; a root page posts to the active registration's worker. Expected: scope is the root, the page is a client, the message arrives. Actual: scope `worker/`, no client, no message.
+
+### 60. A port nobody received yet disconnects when the first process answers
+
+- **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
+- **Lilo:** no workaround. Its tabs enable element fullscreen, so an extension page in a tab runs in a process of its own. Enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
+- **Impact:** Postman Interceptor's worker answers its popup on a port it opens back, which fails when the popup is in a tab ([RealExtensionSmokeTests.swift] lists it).
+- **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects`. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
+
+### 70. A port message can reach a worker before earlier calls' answers
+
+- **Gap:** a message the app sends on a native port can reach the worker before the answer to a call the worker made earlier and WebKit answered at once. Chrome dispatches the waking event after those answers.
+- **Lilo:** once the worker's top-level code has run, the prelude waits for the content script registrations in flight and one more call's answer (`permissions.getAll`) before it dispatches the events Lilo sent meanwhile ([background-entry.ts] `__liloWorkerReady`, [chrome-leniency.ts] `registrationsSettled`, [ipc.ts] `workerReady`). Storage reads the worker made meanwhile answer after those events, as Chrome's storage, slower than its other answers, does ([storage-area.ts] `ordered`).
+- **Impact:** Glasp's early `onInstalled` overlapped its top-level menu rebuild and `menus.create` found its id used (4 runs in 10); Tactiq's `onInstalled` unregistered scripts its startup was still registering; Custom Cursors' startup read its cursors before its `onInstalled` set their defaults.
+- **Check:** Manual: timing dependent, not reduced to a minimal case. Repro: a module worker calls `browser.contextMenus.removeAll().then(...)` at top level, then posts on a native port the app answers at once. Expected: `removeAll` settles first. Actual: `onMessage` sometimes runs first.
+
+## Pages and web views
+
+### 5. A suspended web view crashes WebKit's in-flight `scripting.executeScript`
+
+- **Gap:** if the app suspends a page (`_suspendPage:`) while an extension's `executeScript` on it runs, WebKit raises `The WKWebView is suspended` inside its own call and the app crashes; the app cannot cancel WebKit's in-flight calls. Chrome ends such a call with an error.
+- **Lilo:** never suspends a page that closed itself: `_close` only for a page not frozen ([WKWebViewTab.swift], the `_close` call), and code holding a raw web view skips suspended ones ([EngineFreezer.swift] `CompositeFreezer.suspendedWebViews`).
+- **Impact:** gap 6 cannot be fixed by suspending the page; any freeze of a page an extension scripts is a crash risk.
+- **Check:** Manual: reproducing it crashes the test host. Repro: an extension loops `scripting.executeScript` on a tab; the page calls `window.close()` and the app calls `_suspendPage:` in `webViewDidClose`. Expected: the call rejects. Actual: `NSInternalInconsistencyException`.
+
+### 6. A page that called `window.close()` still runs answers for a run loop turn
+
+- **Gap:** WebKit delivers `webViewDidClose` a run loop turn after the API answers and port disconnects it already sent the page, so a closing page still runs a `storage` callback or an `onDisconnect`. Chrome runs nothing more.
+- **Lilo:** once WebKit accepts `window.close()` (or Lilo's popup close calls `__liloPageClosing`), WebKit's API callbacks and promises settle no more and every WebKit event listener is removed ([augmentation-entry.ts], [chrome-compat.ts] `closePage`, `closingGuard`).
+- **Impact:** without it, intermittent work in closing pages (Google Dictionary's storage callback, DuckDuckGo's `onDisconnect`).
+- **Check:** Manual: timing dependent. Repro: `chrome.storage.local.get(null, () => console.log('ran')); window.close();` with the app closing the web view in `webViewDidClose`. Expected: no callback. Actual: it runs first.
+
+### 23. A worker in a deferred-launch web view dies 5 s after load
+
+- **Gap:** with `_setDelaysWebProcessLaunchUntilFirstLoad:` on, the background web view takes the keep-awake activity on the placeholder process, which drops it once the real process starts; WebKit then terminates the worker about 5 s after load while still reporting it loaded.
+- **Lilo:** turns deferred launch off for the controller's configuration ([ProfileExtensionRegistry.swift]).
+- **Check:** Manual. Repro: set the SPI to `YES` on the controller's web view configuration, load an extension, wait 10 s, message its worker. Expected: an answer. Actual: none, while the context reports the background loaded.
+
+### 24. `removeAllUserScripts` drops extension content scripts for good
+
+- **Gap:** `WKUserContentController.removeAllUserScripts()` also removes the content scripts WebKit installed for extensions, and WebKit never adds them back to a controller it already knows.
+- **Lilo:** removes its own scripts one by one with `_removeUserScript:` ([WKEngineFactory.swift] `reinstallFilterUserScripts`, `prepareExtensionRegistry`); `removeAllUserScripts` is only the fallback without the SPI.
+- **Check:** Manual. Repro: load an extension with a content script, call `removeAllUserScripts()`, add an app script back, reload. Expected: the content script runs. Actual: never again in that web view.
+
+### 72. `navigator.credentials` forgets what a page set on it
+
+- **Gap:** nothing keeps `navigator.credentials` once the page drops it; after a collection `navigator` hands out a new one without the page's properties. Chrome keeps one object for the page's life.
+- **Lilo:** a document-start script keeps it on the navigator under a symbol ([WKEngineFactory.swift] `installUserScripts`).
+- **Impact:** password managers hook passkeys by setting `navigator.credentials.get` and `create` from a `MAIN` world content script (1Password, Proton Pass, Keeper, NordPass); the hook went at the first collection.
+- **Check:** `testNavigatorCredentialsForgetsWhatAPageSetOnIt`. Repro: `navigator.credentials.get = function hooked() {}`; allocate until a collection; read `navigator.credentials.get.name`. Expected: `hooked`. Actual: `get`.
+
+### 75. An action popover that finishes closing after its context unloaded crashes
+
+- **Gap:** WebKit's action popover calls back into its action when it finishes closing (`-[_WKWebExtensionActionPopover popoverDidClose:]`, then `WebExtensionAction::closePopup`), which dereferences the unloaded context: an extension unloaded while its popup shows or closes crashes the app once the popover goes. Chrome closes the popup with the extension.
+- **Lilo:** closes the extension's popups without animation before it unloads the context ([ExtensionControllerDelegate.swift] `closeActionPopups`, [ProfileExtensionRegistry.swift] `unload`).
+- **Impact:** a popup calling `runtime.reload()` or `management.uninstallSelf()`, or an extension disabled, updated or removed while its popup closes, crashed Lilo.
+- **Check:** Manual: reproducing it crashes the test host (`testUnloadClosesTheExtensionsPopupFirst` covers the workaround). Repro: show an extension's action popover, close it, and unload its context before the close animation ends. Expected: nothing. Actual: a crash in `WebExtensionAction::closePopup`.
+
+## Worker and JavaScript engine
+
+### 14. `importScripts` runs pending promise callbacks
+
+- **Gap:** WebKit runs promise callbacks while `importScripts` loads a script not loaded yet. Chrome runs them once the worker's top-level code is done.
+- **Lilo:** the prelude skips the import of a script holding only whitespace, which runs nothing either way (`shared/empty-imports.ts`; the preparer lists them). Otherwise documented (COMPATIBILITY.md, "Background worker"). Lilo's wrapper imports the vendor worker before any of its code runs, so it adds no checkpoint; the worker's own imports cannot be loaded ahead without running them early.
+- **Impact:** Tampermonkey clears its startup flag in `(async () => { await null; ... })()` and imports its empty `/test.js` before registering its listeners, which it would then refuse.
+- **Check:** `testImportScriptsRunsPendingPromiseCallbacks`. Repro: `Promise.resolve().then(() => log('callback')); importScripts('a.js'); log('after');`. Expected: `imported, after, callback`. Actual: `callback, imported, after`.
+
+### 15. Packaged `.wasm` is not served as `application/wasm`
+
+- **Gap:** WebKit types resources through the system type registry, which gives `application/octet-stream`, so `WebAssembly.instantiateStreaming` rejects the extension's own modules.
+- **Lilo:** `instantiateStreaming` and `compileStreaming` compile the extension's own responses from their bytes ([wasm-mime.ts]).
+- **Impact:** without it, extensions fell back to slower compiles on every worker start (Dashlane).
+- **Check:** `testPackagedWasmHasNoWasmMIMEType`. Repro: `fetch('module.wasm')` from a worker. Expected: `application/wasm`. Actual: `application/octet-stream`.
+
+### 33. A WebSocket freezes the worker
+
+- **Gap:** the worker runs on its process's main thread, where WebKit's WebSocket constructor waits for that same thread and never returns: the worker runs nothing more, and `loadBackgroundContent` never completes for one that opens a socket at startup.
+- **Lilo:** the worker's `WebSocket` runs over URLSession ([web-socket.ts], [WebSocketBridgeHandler.swift]); differences in COMPATIBILITY.md, "Background worker".
+- **Impact:** NeatDownloadManager never loaded; Keeper's worker stopped answering its content scripts.
+- **Check:** `testWebSocketStallsTheWorkerLoad` (slow). Repro: a worker runs `new WebSocket('ws://127.0.0.1:10007/')` with nothing listening; call `loadBackgroundContent`. Expected: completion, then `error`. Actual: neither.
+
+### 35. `in` rejected in an arrow function body inside a `for` initializer
+
+- **Gap:** JavaScriptCore keeps the initializer's no-`in` rule inside an arrow function's body: `for (var f = (e) => { return 1 in e; }, i = 0; i < 1; i++);` throws `SyntaxError: Unexpected keyword 'in'`. V8 parses it, as the spec's [~In] restriction ends at the body.
+- **Lilo:** none: the extension's own code does not parse.
+- **Impact:** PreMiD's module worker, whose bundler emits such a loop, fails to load.
+- **Check:** `testArrowFunctionInForInitializerRejectsIn` (JavaScriptCore alone).
+
+### 36. No `SharedArrayBuffer` in extension contexts
+
+- **Gap:** `SharedArrayBuffer` exists only in cross-origin isolated contexts, which extension contexts are not. Chrome gives extension pages and workers `SharedArrayBuffer` and `Atomics.wait` anyway.
+- **Lilo:** none: the engine decides which globals exist.
+- **Impact:** SQLite's OPFS database needs it: Distill Web Monitor's offscreen document cannot open its store.
+- **Check:** `testExtensionContextsLackSharedArrayBuffer`.
+
+### 74. An assignment across an `await` checks its binding before the `await`
+
+- **Gap:** JavaScriptCore checks that a `let` or `const` binding is initialized when it starts an assignment, so `x = await f()` in a function called before `let x` runs throws `ReferenceError: Cannot access 'x' before initialization.` even though `let x` has run once the `await` is done. V8 checks when it stores the value, as the spec's PutValue does.
+- **Lilo:** none: the extension's own code throws.
+- **Impact:** Buyhatke's content script modules call such a function at their top level (`ot()` assigns `de`, declared further down), and fail.
+- **Check:** `testAssignmentAcrossAnAwaitChecksItsBindingFirst` (JavaScriptCore alone). Repro: `(function () { (async () => { v = await 1; })().catch(console.log); let v; })()` logs the error; V8 logs nothing.
+
+## Manifest and permissions
+
+### 11. Permission names WebKit does not know reject; `privacy` is dropped
+
+- **Gap:** `permissions.contains`, `request` and `remove` reject the whole call over one unknown name (`'tabGroups' is not a valid permission`), so an optional permission WebKit does not know can never be granted; `requestedPermissions` leaves out `privacy` though the manifest names it.
+- **Lilo:** retries without unknown names and origins and answers for them from the manifest and the grants Lilo keeps ([chrome-leniency.ts] `permissionsPatches`). A `request` naming one goes to Lilo, which prompts once for the whole request, grants on the context what WebKit knows and keeps the rest per profile until uninstall ([PermissionsBridgeHandler.swift], `ExtensionStorage.AccessState.gapPermissions`). Lilo's `privacy` stub is installed when the manifest names it ([install-gap-apis.ts]).
+- **Impact:** extensions checking optional features threw at startup (OneTab, Speechify, Stylus); Figma's code capture could not get its optional `pageCapture`.
+- **Check:** `testPermissionsRejectNamesWebKitDoesNotKnow`, `testRequestedPermissionsDropPrivacy`. Repro: `browser.permissions.contains({ permissions: ['tabGroups'] })` rejects instead of resolving `false`.
+
+### 16. Manifest entries Chrome accepts are rejected
+
+- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>` or only patterns with a port (its patterns have no port).
+- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries dropped, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt and others).
+- **Check:** `testManifestEntriesChromeAcceptsAreRejected`. Repro: load a manifest with `"commands": { "_execute_action": {} }` (or each other entry) and read `WKWebExtension.errors`. Expected: none. Actual: one error each.
+
+## tabs, scripting and webNavigation
+
+### 1. Manifest content scripts run in pages already open
+
+- **Gap:** WebKit injects an extension's manifest content scripts at once into every matching page already open when it is installed or enabled. Chrome waits for their next load.
+- **Lilo:** none (COMPATIBILITY.md, "scripting and tabs").
+- **Impact:** a content script asking its worker about its page can find no record of it (Avira Browser Safety).
+- **Check:** `testContentScriptsRunInPagesAlreadyOpen`. Repro: open `https://example.com/`, then load an extension whose content script matches it and sets a `data-` attribute. Expected: an option to wait for the next load. Actual: the script runs at once.
+
+### 8. `webNavigation.getAllFrames` and `getFrame` reject where Chrome resolves
+
+- **Gap:** WebKit rejects with `Tab not found.`, `Frame not found.` or `Main frame not found.`, and lists the initial empty document with an empty URL before the first commit. Chrome resolves `null` (or `[]`), with no frame before the first commit.
+- **Lilo:** both answer as Chrome, a discarded tab reporting its main frame ([webNavigation.ts] `webNavigationPatches`). The initial empty document stays.
+- **Impact:** extensions probing tabs this way (ad blockers, page tools) threw at startup.
+- **Check:** `testWebNavigationRejectsAMissingTab`; Contract `webNavigation on a tab before its first commit`. Repro: `browser.webNavigation.getAllFrames({ tabId: 987654 })` rejects with `Tab not found.`
+
+### 9. Withheld tab `url` and `title` are empty strings
+
+- **Gap:** WebKit reports them as `""` in returned tabs and tab events, and ignores the `tabs` permission (only host access reveals them). Chrome leaves them out, and reveals them with `tabs`.
+- **Lilo:** for an extension that may not hold `tabs`, drops the empty `url` and `title` from tabs and windows methods and from `tabs.onCreated` and `onUpdated` ([tabs.ts] `tabURLPatches`, `windowURLPatches`, `tabURLStandIns`). With `tabs`, tabs and windows methods read them from Lilo, an empty tab as `chrome://newtab/` ([tabs.ts] `tabRevealedURLPatches`, `windowRevealedURLPatches`): one more call per result holding such a tab. Tab events keep WebKit's `""`.
+- **Impact:** `new URL(tab.url)` throws where Chrome code checks for a missing url (Eye Dropper), or on Lilo's empty new tab (Easy Auto Refresh's worker).
+- **Check:** `testTabsWithoutHostAccessReportEmptyURLAndTitle`. Repro: with no host permissions, `browser.tabs.query({})`. Expected: no `url` or `title`. Actual: `""`.
+
+### 29. `scripting.registerContentScripts` throws without match patterns
+
+- **Gap:** WebKit throws, so a `.catch()` on the call misses it. Chrome rejects (`Script with ID 'a' must specify at least one match.`).
+- **Lilo:** rejects with Chrome's error ([chrome-leniency.ts] `scriptingPatches`).
+- **Impact:** DotVPN threw registering a script for an empty domain list.
+- **Check:** `testRegisterContentScriptsThrowsWithoutMatches`. Repro: `browser.scripting.registerContentScripts([{ id: 'a', js: ['a.js'], matches: [] }])` throws.
+
+### 45. `scripting` reaches the extension's own pages
+
+- **Gap:** WebKit injects into the extension's own pages. Chrome refuses: `Cannot access contents of the page. Extension manifest must request permission to access the respective host.` (the url instead, with `tabs`).
+- **Lilo:** `executeScript`, `insertCSS` and `removeCSS` refuse a tab showing one of the extension's pages ([chrome-leniency.ts] `refuseOwnPages`), at the cost of a `tabs.get` per call.
+- **Impact:** Jetwriter's popup shown in a tab scripts the active tab, takes itself for a site and closes.
+- **Check:** `testExtensionPagesAreScriptedAndFollowedAsWebPages`. Repro: from an extension page in a tab, `scripting.executeScript` on that tab. Expected: rejects. Actual: runs.
+
+### 47. `webNavigation` follows an extension page's whole load
+
+- **Gap:** WebKit reports every event of an extension page in a tab. Chrome reports only its `onCommitted`.
+- **Lilo:** `onBeforeNavigate`, `onDOMContentLoaded`, `onCompleted` and `onErrorOccurred` skip extension pages ([webNavigation.ts] `webNavigationStandIns`).
+- **Impact:** TikTok Pixel Helper scripted each loading page, its own included (gap 45).
+- **Check:** `testExtensionPagesAreScriptedAndFollowedAsWebPages`. Repro: listen to `onDOMContentLoaded`, open an extension page in a tab. Expected: no event. Actual: one.
+
+### 50. `scripting.executeScript` injects at once into a loading document
+
+- **Gap:** WebKit injects at once, `injectImmediately` or not. Chrome waits for `document_idle` unless asked.
+- **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call.
+- **Impact:** Cuponomia's script, injected as its install page starts loading, found no `document.body`.
+- **Check:** `testExecuteScriptInjectsIntoALoadingDocumentAtOnce`. Repro: a `document_start` content script messages the worker, which runs `executeScript({ target: { tabId }, func: () => document.readyState })`. Expected: `interactive`. Actual: `loading`.
+
+## contextMenus, alarms, action, i18n
+
+### 10. `contextMenus` rejects the MV2 action contexts
+
+- **Gap:** WebKit rejects an item with `browser_action` or `page_action` in `contexts`; Chrome takes them as `action`.
+- **Lilo:** maps them to `action` ([chrome-leniency.ts] `withActionContexts`).
+- **Impact:** Stylish created no menu.
+- **Check:** `testContextMenusRejectMV2ActionContexts`.
+
+### 25. `contextMenus` rejects URL patterns Chrome accepts
+
+- **Gap:** WebKit's `create` and `update` throw on `documentUrlPatterns` and `targetUrlPatterns` with other schemes (`ftp:`, `urn:`, `data:`, `about:`, `blob:`, `javascript:`, `mailto:`, `ws:`, `chrome:`) or explicit ports (`ftp:` target patterns pass), and on a null `parentId`.
+- **Lilo:** retries without each rejected pattern (a list left empty matches nothing) and leaves a null `parentId` out ([chrome-leniency.ts] `withChromeMenuProperties`). User-visible side: COMPATIBILITY.md, "contextMenus".
+- **Impact:** BlockSite, ZeroOmega, Wayback Machine and BTRoblox threw at startup.
+- **Check:** `testContextMenusRejectURLPatternsChromeAccepts`. Repro: `contextMenus.create({ id: 'a', title: 'A', documentUrlPatterns: ['ftp://*/*'] })` throws.
+
+### 26. `contextMenus.create` throws without a title
+
+- **Gap:** WebKit throws (`missing required keys: 'title'`). Chrome returns the id, creates nothing and sets `All menu items except for separators must have a title` as `lastError`.
+- **Lilo:** answers as Chrome, logging an unchecked `lastError` without a callback ([chrome-leniency.ts] `contextMenusPatches.create`).
+- **Check:** `testContextMenusRejectAMissingTitle`.
+
+### 46. `menus.update` refuses an ancestor as the new parent
+
+- **Gap:** WebKit checks the new parent against the item's ancestors (`isAncestorOrSelf` walks up instead of down), so it refuses the current parent: `Parent menu item cannot be itself or another ancestor.` Chrome refuses only a cycle.
+- **Lilo:** retries without `parentId` ([chrome-leniency.ts] `contextMenusPatches.update`): a move up to a further ancestor is not applied.
+- **Impact:** Stands logs an error for every child item when it refreshes its menu.
+- **Check:** `testMenusUpdateRefusesTheCurrentParent`. Repro: create `parent` and `child` under it, then `menus.update('child', { parentId: 'parent' })` rejects.
+
+### 27. `alarms.create` takes no callback and returns nothing
+
+- **Gap:** WebKit takes a trailing callback for the alarm info and throws, and returns `undefined`. Chrome calls the callback, or returns a promise.
+- **Lilo:** calls WebKit's without the callback, then the callback or a promise ([chrome-leniency.ts] `alarmsPatches`).
+- **Impact:** Ace Script threw at startup.
+- **Check:** `testAlarmsCreateTakesNoCallback`.
+
+### 28. `action` methods reject a null `tabId`
+
+- **Gap:** WebKit throws (`'tabId' is expected to be a number, but null was provided`); Chrome reads it as no tab.
+- **Lilo:** passes no `tabId` instead ([chrome-leniency.ts] `actionPatches`).
+- **Impact:** MyLOFT threw setting its global icon.
+- **Check:** `testActionRejectsANullTabId`.
+
+### 20. Badge colors are not exposed to the app
+
+- **Gap:** `WKWebExtension.Action` exposes `badgeText` but no background or text color.
+- **Lilo:** the color calls go through a Gap API ([ActionColorBridgeHandler.swift], `action` replaced in [chrome-compat.ts] with [action.ts]).
+- **Check:** `testActionHasNoBadgeBackgroundColor`.
+
+### 30. `i18n.getMessage` returns `undefined` off its namespace
+
+- **Gap:** WebKit returns `undefined` unless called on `browser.i18n`. Chrome answers whatever its `this`.
+- **Lilo:** calls it on its namespace ([chrome-leniency.ts] `i18nPatches`).
+- **Impact:** Mate Translate got no text for its menus and pages.
+- **Check:** `testGetMessageOffItsNamespaceReturnsUndefined`. Repro: `browser.i18n.getMessage.call(browser, '@@extension_id')` returns `undefined`.
+
+## webRequest and cookies
+
+### 12. `webRequest` filters with unknown types or schemes throw
+
+- **Gap:** `addListener` throws on types like `webbundle` and patterns like `ws://*/*`. Chrome accepts them.
+- **Lilo:** retries without the rejected type or pattern, and skips a filter left empty ([chrome-leniency.ts] `chromeEvent.addListener`).
+- **Impact:** AdBlock, Adblock Plus and Privacy Badger threw at startup.
+- **Check:** `testWebRequestFiltersRejectUnknownTypesAndSchemes`.
+
+### 19. `cookies.onChanged` fires without its details
+
+- **Gap:** WebKit fires it without `changeInfo` (`cookie`, `removed`, `cause`). Filed: webkit.org/b/267514.
+- **Lilo:** diffs the cookie store and fires Chrome's `changeInfo` on an event that takes the listeners of WebKit's, through `chrome` and `browser` ([cookies.ts], [CookieChangeTracker.swift]). User-visible side: COMPATIBILITY.md, "cookies.onChanged".
+- **Check:** Manual.
+
+## declarativeNetRequest and content blockers
+
+### 21. Content blocker regexes are a subset, ASCII only
+
+- **Gap:** WebKit compiles each rule into one content blocker regex without alternation, `\w`, `{n}` or an inner `$`, rejects a whole list over one non-ASCII `url-filter` or domain, and cannot turn off one static rule. Chrome takes RE2 and IDN domains.
+- **Lilo:** rewrites a `regexFilter` into that subset where it means the same, and keeps a rule it cannot express inert under its id, the original stored beside it for `get*Rules` ([dnr-rules.ts] `webKitRegex`, `webKitRule`, `toWebKit`). `webKitRule` also maps a redirect to an extension URL onto `extensionPath` and drops modified headers WebKit does not know. Filter lists skip non-ASCII domains and filters ([FilterListConverter.swift] `applyDomainOption`).
+- **Check:** `testContentRuleListsRejectAlternationAndNonASCII`. Repro: compile `[{"trigger":{"url-filter":"a|b"},"action":{"type":"block"}}]`, or `"url-filter":"exämple"`. Expected: compiles. Actual: fails.
+
+### 37. `updateEnabledRulesets` counts rulesets that do not change
+
+- **Gap:** WebKit checks enabled count, minus ids to disable, plus ids to enable, in unsigned arithmetic: disabling a disabled ruleset with none enabled wraps around ("exceeds the limit"), as does enabling an enabled one among 50.
+- **Lilo:** sends only the ids that change the enabled set ([dnr-rules.ts] `updateEnabledRulesets`).
+- **Impact:** Google Analytics Debugger's ruleset toggles failed.
+- **Check:** `testUpdateEnabledRulesetsCountsRulesetsThatDoNotChange`.
+
+### 38. Concurrent rule updates remove from stale rule ids
+
+- **Gap:** WebKit drops `removeRuleIds` it does not find among the last rules it loaded, which a pending update has not changed yet, so a second call removing and re-adding rule 1 fails ("Rule 1 does not have a unique ID"); concurrent updates also compile over each other.
+- **Lilo:** runs a context's updates one after the other, merging calls made while one runs into a single update, since WebKit recompiles every rule on each ([dnr-rules.ts] `queued`, `updateRules`).
+- **Impact:** I don't care about cookies' rule updates failed.
+- **Check:** `testConcurrentDynamicRuleUpdatesRemoveFromStaleRuleIds`.
+
+### 39. Content blockers cap an extension at 150000 rules, one per request domain
+
+- **Gap:** WebKit compiles all of an extension's rules into one content rule list of at most 150000 rules, expanding a rule into one per request domain and excluded request domain. Past the cap nothing applies and `updateEnabledRulesets` fails with "Failed to apply rules.". Chrome counts a rule once.
+- **Lilo:** at preparation, keeps all static rulesets under 120000 WebKit rules (room for 30000 dynamic ones) by turning the most expanded rules inert, largest first ([dnr-rules.ts] `webKitStaticRulesets`, run by [ExtensionBackgroundPreparer.swift] `prepareStaticRulesets`). User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Impact:** SBlock (313000 domains in two rules), Adblock Ad Blocker Pro (299000 expanded rules).
+- **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply`.
+
+### 40. Turning every ruleset off fails during the first compile
+
+- **Gap:** with no rule left, WebKit deletes the compiled rule list file and fails when it does not exist yet, so disabling the last ruleset while its first compile runs fails with "Failed to apply rules.".
+- **Lilo:** retries such an update every 250 ms for up to a minute while no dynamic or session rule exists ([dnr-rules.ts] `updateEnabledRulesets`).
+- **Check:** `testTurningOffEveryRulesetFailsDuringTheFirstCompile`.
+
+### 51. `declarativeNetRequest` rejects resource types Chrome knows
+
+- **Gap:** WebKit rejects a rule naming `object`, `csp_report`, `webtransport` or `webbundle`, and the whole update with it.
+- **Lilo:** drops them from the rule, which stays inert when none is left ([dnr-rules.ts] `NON_WEBKIT_TYPES`); WebKit never loads such requests anyway.
+- **Impact:** AdGuard's session rules failed and its engine did not start.
+- **Check:** `testDeclarativeNetRequestRejectsResourceTypesChromeKnows`.
+
+### 73. `declarativeNetRequest` rejects empty exclusion lists
+
+- **Gap:** a rule with an empty `excludedInitiatorDomains` or `excludedDomains` passes WebKit's validation and then fails the compile of every rule ("Unable to load declarativeNetRequest rules."); an empty `excludedRequestMethods` is rejected outright. Chrome takes all three empty, excluding nothing.
+- **Lilo:** drops the empty lists from the rule WebKit gets, the original stored beside it for `get*Rules` ([dnr-rules.ts] `EXCLUSIONS`, `webKitRule`).
+- **Impact:** I don't care about cookies' dynamic rules (`excludedInitiatorDomains: []` in most of its 1625 rules) all failed.
+- **Check:** `testDeclarativeNetRequestRejectsEmptyExclusions`. Repro: in an MV3 worker, `chrome.declarativeNetRequest.updateSessionRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', excludedInitiatorDomains: [] } }] })`. Expected: resolves. Actual: rejects.
+
+## storage
+
+### 31. A storage read misses the writes still in flight
+
+- **Gap:** a `get` issued before an earlier `set` completes does not see it. Chrome orders them.
+- **Lilo:** while an area has writes in flight, its calls wait for them ([storage-area.ts] `ordered`). Content scripts and other contexts are not ordered (COMPATIBILITY.md, "storage").
+- **Impact:** CS2 Trader read no defaults and created an alarm with a NaN period.
+- **Check:** `testStorageReadsMissWritesInFlight`. Repro: `storage.local.set({ key: 1 }); storage.local.get('key')` gives `{}`.
+
+### 34. `storage` stores values as JSON
+
+- **Gap:** WebKit stores `Infinity` and `NaN` as `null` and a `Date` as its ISO string; Chrome drops the number and stores `{}`.
+- **Lilo:** leaves out an object's non-finite numbers before WebKit gets the value, in one pass that copies only the objects it changes ([storage-area.ts] `withoutNonFiniteNumbers`); a `Date` stays its ISO string (COMPATIBILITY.md, "storage").
+- **Impact:** LetyShops' cache entry with `expired: Infinity` read back expired.
+- **Check:** `testStorageStoresNonFiniteNumbersAsNull`.
+
+### 41. `storage` sizes a replaced value outside Latin-1 twice
+
+- **Gap:** WebKit sizes the stored total in characters but a replaced value holding a non-Latin-1 character in UTF-16 bytes, in unsigned arithmetic: replacing it with a smaller one can wrap around ("Exceeded storage quota").
+- **Lilo:** a `set` failing so that would fit removes its keys and sets them again, restoring them on failure ([storage-area.ts] `setWithinQuota`): `onChanged` fires twice (COMPATIBILITY.md, "storage").
+- **Impact:** Cuponomia's `set` calls failed the quota.
+- **Check:** `testStorageSetMiscountsAValueOutsideLatin1`. Repro: `set({ key: '\u2019'.repeat(1000) })`, then `set({ key: 'x' })` rejects.
+
+### 71. Deleting an extension's storage anywhere drops its writes in flight
+
+- **Gap:** `WKWebExtensionController.removeData` posts a distributed notification naming the extension's unique identifier; every controller of every process holding a context with that identifier drops its storage store, and its `set` calls in flight fail (`Failed to calculate storage size`).
+- **Lilo:** none. Lilo identifies an extension by its Chrome id, so an uninstall in one profile or another Lilo process (a test host) reaches the same extension in the others.
+- **Impact:** lost writes in rare overlaps; parallel smoke runs of one extension can fail each other.
+- **Check:** Manual: needs a second process or profile.
+
+[WebKitGapTests.swift]: ../LiloTests/Extensions/WebKitGapTests.swift
+[RealExtensionSmokeTests.swift]: ../LiloTests/Extensions/RealExtensionSmokeTests.swift
+[action.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/action.ts
+[cookies.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/cookies.ts
+[runtime.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/runtime.ts
+[tabs.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/tabs.ts
+[webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
+[augmentation-entry.ts]: ../Lilo/Extensions/bridge-src/src/augmentation-entry.ts
+[background-entry.ts]: ../Lilo/Extensions/bridge-src/src/background-entry.ts
+[callbackify.ts]: ../Lilo/Extensions/bridge-src/src/shared/callbackify.ts
+[chrome-compat.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-compat.ts
+[chrome-event.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-event.ts
+[chrome-leniency.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-leniency.ts
+[dnr-rules.ts]: ../Lilo/Extensions/bridge-src/src/shared/dnr-rules.ts
+[install-gap-apis.ts]: ../Lilo/Extensions/bridge-src/src/shared/install-gap-apis.ts
+[ipc.ts]: ../Lilo/Extensions/bridge-src/src/shared/ipc.ts
+[message-answers.ts]: ../Lilo/Extensions/bridge-src/src/shared/message-answers.ts
+[static-compat.ts]: ../Lilo/Extensions/bridge-src/src/shared/static-compat.ts
+[storage-area.ts]: ../Lilo/Extensions/bridge-src/src/shared/storage-area.ts
+[wasm-mime.ts]: ../Lilo/Extensions/bridge-src/src/shared/wasm-mime.ts
+[web-socket.ts]: ../Lilo/Extensions/bridge-src/src/shared/web-socket.ts
+[worker-messages.ts]: ../Lilo/Extensions/bridge-src/src/shared/worker-messages.ts
+[ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
+[ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
+[CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
+[ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
+[ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
+[ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
+[ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
+[PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
+[WebSocketBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/WebSocketBridgeHandler.swift
+[GapEvents.swift]: ../Lilo/Extensions/GapAPI/GapEvents.swift
+[FilterListConverter.swift]: ../Lilo/ContentBlocker/FilterListConverter.swift
+[EngineFreezer.swift]: ../Lilo/Engine/EngineFreezer.swift
+[WKEngineFactory.swift]: ../Lilo/Engine/WKEngineFactory.swift
+[WKWebViewTab.swift]: ../Lilo/Engine/WKWebViewTab.swift

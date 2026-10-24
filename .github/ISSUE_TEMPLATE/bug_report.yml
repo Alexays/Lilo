@@ -1,0 +1,103 @@
+name: Bug report
+description: Report a bug or unexpected behavior in Lilo
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Security vulnerabilities must NOT be filed here: see [SECURITY.md](https://github.com/Alexays/Lilo/blob/master/SECURITY.md) for private reporting. Questions and ideas belong in [Discussions](https://github.com/Alexays/Lilo/discussions).
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before filing
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I am on macOS 26 or later
+          required: true
+  - type: input
+    id: lilo-version
+    attributes:
+      label: Lilo version
+      description: Shown in the About panel (Lilo > About Lilo), or the commit hash for source builds.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: build-source
+    attributes:
+      label: Build source
+      options:
+        - Release DMG
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "27.0"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Tabs and Spaces
+        - Sidebar and chrome UI
+        - Extensions
+        - Content blocking
+        - Downloads
+        - Screenshots
+        - Reader
+        - Bookmarks and history
+        - Import from another browser
+        - Terminal tabs
+        - AI agents (MCP)
+        - Settings
+        - Build and tooling
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Diagnostics and logs
+      description: |
+        In Lilo, open Help > Diagnostics and click "Copy report" (the copy button in the panel's header), then paste the report here.
+        For a crash, attach the newest `Lilo-*.ips` from `~/Library/Logs/DiagnosticReports`.
+        For source builds, `make logs SINCE=15m` also dumps the recent app log to lilo-log.txt.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: extension
+    attributes:
+      label: Extension involved (if any)
+      description: For extension-specific breakage prefer the "Extension compatibility" template.
+    validations:
+      required: false

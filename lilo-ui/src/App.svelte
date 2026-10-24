@@ -1,0 +1,484 @@
+<script lang="ts">
+  import { setThemeContext } from "./stores/theme.svelte";
+  import { onMount } from "svelte";
+  import Sidebar from "./components/sidebar/Sidebar.svelte";
+  import SplitDropZone from "./components/page/SplitDropZone.svelte";
+  import { chromeActions } from "./lib/bridge/actions";
+  import {
+    deriveSidebarThemeVariables,
+    interpolateHexColors,
+  } from "./lib/sidebarTheme";
+  import { isBridgeReady, on } from "./lib/bridge";
+  import { onChromeInitialStateReady } from "./stores/init";
+  import { getOnboarding } from "./stores/onboarding.svelte";
+  import { editorState } from "./stores/panels.svelte";
+  import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
+  import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
+  import {
+    hideSidebarOverlay,
+    isFullscreen,
+    isSidebarOverlay,
+    isSidebarShown,
+    isSidebarVisible,
+    showSidebarOverlay,
+  } from "./stores/ui.svelte";
+  import { reportInteractiveZone } from "./lib/actions/interactiveZone";
+  import { createFrameScheduler } from "./lib/motion/frameScheduler";
+  import { clearAllHover } from "./lib/hoverClear";
+
+  const SIDEBAR_OVERLAY_HIDE_DELAY_MS = 70;
+  // One query object for the lifetime of the app: applySidebarTheme and the swipe background read it.
+  const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  // What the native host has actually received. Starts empty even though the bootstrap seeds
+  // --sidebar-bg: that seed is the cached color, and the frame bands are painted from the space
+  // accent re-derived natively, so the two can differ until the UI's own value gets through.
+  let lastReportedSidebarBackground = "";
+  let showDeferredChrome = $state(false);
+  // The two Spaces a swipe is between, and how far it is: null outside a swipe.
+  const swipe = $derived.by(() => {
+    // The pager's index counts only the spaces it pages through (the hidden Agents space is out).
+    const spaces = getPagedSpaces();
+    if (spaces.length === 0) return null;
+    const index = Math.max(0, Math.min(spaces.length - 1, getSpacePagerVirtualIndex()));
+    const leading = Math.floor(index);
+    const progress = index - leading;
+    if (progress === 0) return null;
+    const leadingColor = spaces[leading]?.color ?? "";
+    return { leadingColor, trailingColor: spaces[leading + 1]?.color ?? leadingColor, progress };
+  });
+  // The whole theme switches once, at the swipe's midpoint: each change rewrites ~20 root custom properties
+  // and restyles the whole chrome document. Only the sidebar background follows the finger (swipeBackground).
+  const themeSidebarColor = $derived.by(() => {
+    // The open Space editor previews its color on the whole chrome, the window frame included.
+    const currentEditor = editorState();
+    if (currentEditor.open && currentEditor.color) return currentEditor.color;
+    if (swipe) return swipe.progress < 0.5 ? swipe.leadingColor : swipe.trailingColor;
+    return getSpaceById(getFocusedSpaceId())?.color ?? "";
+  });
+  // Set on the sidebar element alone, so a swipe frame restyles that one element instead of the document.
+  const swipeBackground = $derived.by(() => {
+    if (!swipe || swipe.leadingColor === swipe.trailingColor || editorState().open) return null;
+    const dark = colorSchemeQuery.matches;
+    return interpolateHexColors(
+      sidebarBackground(swipe.leadingColor, dark),
+      sidebarBackground(swipe.trailingColor, dark),
+      swipe.progress,
+    );
+  });
+  // A swipe asks for the same two Spaces on every frame: their derived backgrounds are kept.
+  let sidebarBackgrounds: Record<string, string> = {};
+  function sidebarBackground(color: string, dark: boolean): string {
+    const key = `${dark}${color}`;
+    let background = sidebarBackgrounds[key];
+    if (background === undefined) {
+      if (Object.keys(sidebarBackgrounds).length > 16) sidebarBackgrounds = {};
+      background = deriveSidebarThemeVariables(color, dark)["--sidebar-bg"];
+      sidebarBackgrounds[key] = background;
+    }
+    return background;
+  }
+  let pendingBgReportTimeout: ReturnType<typeof setTimeout> | null = null;
+  let lastThemeVars: Record<string, string> = {};
+  let sidebarOverlayHideTimeout: ReturnType<typeof setTimeout> | null = null;
+  const sidebarResizeFrame = createFrameScheduler();
+  let pendingSidebarWidth = 260;
+  let isSidebarResizing = $state(false);
+
+  function applySidebarTheme() {
+    const root = document.documentElement;
+    const variables = deriveSidebarThemeVariables(
+      themeSidebarColor,
+      colorSchemeQuery.matches,
+    );
+
+    for (const [name, value] of Object.entries(variables)) {
+      if (lastThemeVars[name] !== value) {
+        root.style.setProperty(name, value);
+        lastThemeVars[name] = value;
+      }
+    }
+    setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches);
+  }
+
+  function reportSidebarBg() {
+    // Derive the bg from the already-computed theme vars: no getComputedStyle.
+    // Fall back to the inline-style value (set by applySidebarTheme via setProperty) during
+    // the bootstrap window before the first theme apply.
+    const bg =
+      lastThemeVars["--sidebar-bg"] ||
+      document.documentElement.style.getPropertyValue("--sidebar-bg").trim();
+    if (!bg || bg === lastReportedSidebarBackground) {
+      return;
+    }
+    // Dropping the report here rather than latching it: the next theme change retries, and the
+    // initial state always brings one because it carries the real active space.
+    if (!isBridgeReady()) {
+      return;
+    }
+
+    lastReportedSidebarBackground = bg;
+    chromeActions.updateWindowBackground(bg);
+  }
+
+  function scheduleSidebarBackgroundReport() {
+    if (pendingBgReportTimeout !== null) {
+      return; // trailing-edge: let the existing timeout fire
+    }
+
+    pendingBgReportTimeout = setTimeout(() => {
+      pendingBgReportTimeout = null;
+      reportSidebarBg();
+    }, 100);
+  }
+
+  function cancelSidebarOverlayHide() {
+    if (sidebarOverlayHideTimeout === null) {
+      return;
+    }
+
+    clearTimeout(sidebarOverlayHideTimeout);
+    sidebarOverlayHideTimeout = null;
+  }
+
+  function scheduleSidebarOverlayHide() {
+    if (!isSidebarOverlay()) {
+      return;
+    }
+
+    cancelSidebarOverlayHide();
+    sidebarOverlayHideTimeout = setTimeout(() => {
+      sidebarOverlayHideTimeout = null;
+      hideSidebarOverlay();
+    }, SIDEBAR_OVERLAY_HIDE_DELAY_MS);
+  }
+
+  function openSidebarOverlay() {
+    cancelSidebarOverlayHide();
+    showSidebarOverlay();
+  }
+
+  function blurChromeFocus() {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest("#chrome-root")) {
+      active.blur();
+    }
+  }
+
+  function startResize(e: MouseEvent) {
+    e.preventDefault();
+    cancelSidebarOverlayHide();
+    isSidebarResizing = true;
+
+    const root = document.documentElement;
+    const startX = e.clientX;
+    const startWidth =
+      parseInt(getComputedStyle(root).getPropertyValue("--sidebar-width")) ||
+      260;
+
+    pendingSidebarWidth = startWidth;
+
+    function applyPendingSidebarWidth() {
+      root.style.setProperty("--sidebar-width", `${pendingSidebarWidth}px`);
+      chromeActions.sidebarResized(pendingSidebarWidth);
+    }
+
+    function scheduleSidebarWidth(width: number) {
+      pendingSidebarWidth = width;
+      sidebarResizeFrame.schedule(applyPendingSidebarWidth);
+    }
+
+    function onMove(ev: MouseEvent) {
+      const newWidth = Math.max(
+        200,
+        Math.min(480, startWidth + ev.clientX - startX),
+      );
+      scheduleSidebarWidth(newWidth);
+    }
+
+    function onUp() {
+      // Flush the coalesced width now so the final size is committed on release.
+      if (sidebarResizeFrame.cancel()) {
+        applyPendingSidebarWidth();
+      }
+
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      isSidebarResizing = false;
+    }
+
+    document.body.style.cursor = "col-resize";
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  $effect(() => {
+    applySidebarTheme();
+    scheduleSidebarBackgroundReport();
+  });
+
+  onMount(() => {
+    const handleColorSchemeChange = () => {
+      applySidebarTheme();
+      scheduleSidebarBackgroundReport();
+    };
+
+    colorSchemeQuery.addEventListener("change", handleColorSchemeChange);
+    const disposeContentInteraction = on("contentInteraction", blurChromeFocus);
+    const disposeWindowFocus = on("windowFocusChanged", ({ focused }) => {
+      document.documentElement.classList.toggle("window-unfocused", !focused);
+      if (!focused) clearAllHover();
+    });
+
+    const disposeInitialStateReady = onChromeInitialStateReady(() => {
+      chromeActions.startupMark("chromeVisualReadyScheduled");
+      // Dated at the frame that paints the revealed chrome, the moment the interface is actually visible.
+      requestAnimationFrame(() => {
+        // Revealed in the frame itself, after the onboarding state sent with the initial state: under
+        // the intro, the onboarding shell reveals the chrome once the intro is mounted.
+        const onboarding = getOnboarding();
+        if (!onboarding.visible || onboarding.step !== 0) document.documentElement.removeAttribute("data-booting");
+        chromeActions.markVisualReady(performance.timeOrigin + performance.now());
+      });
+      // Reveal deferred chrome (overlays/modals) in the same turn the skeleton becomes visible:
+      // the Svelte tree is already mounted by onMount, so waiting a frame gains no DOM stability.
+      showDeferredChrome = true;
+    });
+
+    return () => {
+      if (pendingBgReportTimeout !== null) {
+        clearTimeout(pendingBgReportTimeout);
+      }
+      sidebarResizeFrame.cancel();
+      cancelSidebarOverlayHide();
+      disposeInitialStateReady();
+      disposeContentInteraction();
+      disposeWindowFocus();
+      colorSchemeQuery.removeEventListener("change", handleColorSchemeChange);
+    };
+  });
+</script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  id="chrome-root"
+  class:sidebar-resizing={isSidebarResizing}
+  class:fullscreen={isFullscreen()}
+  oncontextmenu={(e) => e.preventDefault()}
+>
+  <!-- The frame around the content area (sidebar band, inset ring, rounded corners)
+       is painted natively by WindowFrameView, so nothing full-viewport here. -->
+
+  <!-- Double-click inset padding to maximize -->
+  <div
+    class="content-inset-zone"
+    class:sidebar-hidden={!isSidebarVisible()}
+    use:reportInteractiveZone={{ id: "content-inset-zone" }}
+  ></div>
+
+  <SplitDropZone />
+
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="sidebar"
+    class:sidebar-hidden={!isSidebarShown()}
+    class:sidebar-overlay={isSidebarOverlay()}
+    class:swiping={swipeBackground !== null}
+    style:background-color={swipeBackground}
+    use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
+    onmouseenter={cancelSidebarOverlayHide}
+    onmouseleave={scheduleSidebarOverlayHide}
+  >
+    <Sidebar />
+    {#if isSidebarVisible()}
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <div
+        class="sidebar-resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        onmousedown={startResize}
+      ></div>
+    {/if}
+  </div>
+
+  <!-- Always mounted; active prop + CSS visibility controlled by sidebar mode -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="sidebar-overlay-tolerance"
+    class:zone-inactive={!isSidebarOverlay()}
+    use:reportInteractiveZone={{
+      id: "sidebar-overlay-tolerance",
+      active: isSidebarOverlay(),
+    }}
+    onmouseenter={cancelSidebarOverlayHide}
+    onmouseleave={scheduleSidebarOverlayHide}
+  ></div>
+
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="sidebar-hover-trigger"
+    class:zone-inactive={isSidebarShown()}
+    use:reportInteractiveZone={{
+      id: "sidebar-hover-trigger",
+      active: !isSidebarShown(),
+    }}
+    onmouseenter={openSidebarOverlay}
+    onmouseleave={scheduleSidebarOverlayHide}
+  ></div>
+
+  {#if showDeferredChrome}
+    {#await import("./components/DeferredChrome.svelte") then deferred}
+      <deferred.default />
+    {/await}
+  {/if}
+</div>
+
+<style>
+  #chrome-root {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity var(--motion-duration-normal) var(--motion-ease-organic);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #chrome-root {
+      transition: none;
+    }
+  }
+
+  #chrome-root.sidebar-resizing .sidebar {
+    transition: none;
+  }
+
+  /* Invisible hit zone: snaps to its final position on sidebar toggle (no transition)
+     so the toggle stays compositor-only; the zone re-reports via ResizeObserver. */
+  .content-inset-zone {
+    position: fixed;
+    top: 0;
+    left: var(--chrome-content-left-visible);
+    right: 0;
+    height: var(--chrome-content-top);
+    pointer-events: auto;
+    z-index: 5;
+  }
+
+  .content-inset-zone.sidebar-hidden {
+    left: 0;
+  }
+
+  .sidebar-hover-trigger {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 100vh;
+    pointer-events: auto;
+    z-index: 100;
+  }
+
+  .sidebar-overlay-tolerance {
+    position: fixed;
+    top: 0;
+    left: var(--chrome-content-left-visible);
+    width: calc(var(--chrome-overlay-edge-gap) + 4px);
+    height: 100vh;
+    pointer-events: auto;
+    z-index: 49;
+  }
+
+  .zone-inactive {
+    display: none;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--chrome-content-left-visible);
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-contrast);
+    --text-primary: var(--sidebar-contrast);
+    --text-secondary: var(--sidebar-secondary);
+    --text-muted: var(--sidebar-muted);
+    --bg-primary: var(--sidebar-panel);
+    --bg-secondary: var(--sidebar-subtle);
+    --bg-tertiary: var(--sidebar-elevated);
+    --bg-hover: var(--sidebar-hover);
+    --bg-active: var(--sidebar-active);
+    --bg-selected: var(--sidebar-selected);
+    --bg-elevated: var(--sidebar-elevated);
+    --border: var(--sidebar-border);
+    --separator: var(--sidebar-separator);
+    --accent: var(--sidebar-accent);
+    --accent-hover: var(--sidebar-accent-hover);
+    --accent-text: var(--sidebar-accent-text);
+    --danger: var(--sidebar-danger);
+    --sidebar-right-pad: 10px;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    contain: layout style;
+    transition:
+      transform var(--motion-duration-slow) var(--motion-ease-standard),
+      box-shadow var(--motion-duration-slow) ease,
+      background-color var(--motion-duration-slow) var(--motion-ease-spring);
+    z-index: 10;
+  }
+
+  /* The background follows the finger frame by frame: easing it would make it lag behind. */
+  .sidebar.swiping {
+    transition:
+      transform var(--motion-duration-slow) var(--motion-ease-standard),
+      box-shadow var(--motion-duration-slow) ease;
+  }
+
+  /* Painted with --sidebar-bg, which switches only at the midpoint: see-through while the background slides. */
+  .sidebar.swiping :global(.pinned-tab-divider-shell),
+  .sidebar.swiping :global(.clear-unpinned) {
+    background: transparent;
+  }
+
+  .sidebar.sidebar-hidden {
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  /* Off-screen, not removed: looping spinners and pips would keep the compositor busy.
+     Same list as html.window-unfocused in global.css. */
+  .sidebar.sidebar-hidden :global(.tab-loader span),
+  .sidebar.sidebar-hidden :global(.url-progress-fill),
+  .sidebar.sidebar-hidden :global(.url-progress-fill::after),
+  .sidebar.sidebar-hidden :global(.skeleton-shimmer),
+  .sidebar.sidebar-hidden :global(.extension-spinner svg),
+  .sidebar.sidebar-hidden :global(.sidebar-dnd-placeholder),
+  .sidebar.sidebar-hidden :global(.space-dnd-placeholder),
+  .sidebar.sidebar-hidden :global(.bookmark-placeholder),
+  .sidebar.sidebar-hidden :global(.pinned-list),
+  .sidebar.sidebar-hidden :global(.bookmarked-list) {
+    animation-play-state: paused !important;
+  }
+
+  .sidebar.sidebar-overlay {
+    box-shadow: 4px 0 24px var(--sidebar-shadow);
+    z-index: 50;
+  }
+
+  .sidebar-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+  }
+
+  .sidebar-resize-handle:hover,
+  .sidebar-resize-handle:active {
+    background: var(--accent-tint-12);
+  }
+</style>

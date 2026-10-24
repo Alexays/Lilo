@@ -1,0 +1,22 @@
+<script lang="ts">
+  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
+  import { isPipDockActive, getPipDockTitle } from "../../stores/pipDock.svelte";
+</script>
+
+{#if isPipDockActive()}
+  <div
+    class="pip-dock"
+    title={getPipDockTitle()}
+    use:reportInteractiveZone={{ id: "pip-dock" }}
+  ></div>
+{/if}
+
+<style>
+  /* Space reservation only: the native scaled web view paints over this slot, so it stays transparent. The side
+     margins match the sidebar rows and are mirrored by TabDockController.horizontalInset. */
+  .pip-dock {
+    flex-shrink: 0;
+    margin: 0 var(--sidebar-right-pad, 10px) 8px 10px;
+    aspect-ratio: 16 / 10;
+  }
+</style>

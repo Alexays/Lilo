@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "sidebarSyncState": {"spaceModels": [], "items": [], "container": {"value": {"orderedSpaceIDs": []}}},
+  "sidebar": {
+    "containers": [
+      {"global": {}},
+      {
+        "topAppsContainerIDs": [
+          {"default": true}, "FAV-DEFAULT",
+          {"custom": {"_0": {"machineID": "C0FFEE00-0000-4000-8000-000000000001", "directoryBasename": "Profile 1"}}}, "FAV-P1"
+        ],
+        "spaces": [
+          "SPACE-WORK", {
+            "id": "SPACE-WORK",
+            "title": "Work",
+            "containerIDs": ["unpinned", "WORK-UNPINNED", "pinned", "WORK-PINNED"],
+            "newContainerIDs": [{"unpinned": {}}, "WORK-UNPINNED", {"pinned": {}}, "WORK-PINNED"],
+            "profile": {"default": true},
+            "customInfo": {
+              "iconType": {"emoji_v2": "💼", "emoji": 128188},
+              "windowTheme": {
+                "backgroundType": {"single": {}},
+                "background": {"single": {"_0": {"style": {"color": {"_0": {"blendedSingleColor": {"_0": {
+                  "color": {"red": 0.36, "green": 0.42, "blue": 0.95, "alpha": 1, "colorSpace": "extendedSRGB"},
+                  "intensityFactor": 0.5}}}}}, "contentOverBackgroundAppearance": "light"}}},
+                "primaryColorPalette": {
+                  "midTone": {"red": 0.36, "green": 0.42, "blue": 0.95, "alpha": 1, "colorSpace": "extendedSRGB"},
+                  "shadedBase": {"red": 0.2, "green": 0.24, "blue": 0.6, "alpha": 1, "colorSpace": "extendedSRGB"},
+                  "tintedLight": {"red": 0.86, "green": 0.88, "blue": 1.02, "alpha": 1, "colorSpace": "extendedSRGB"}
+                },
+                "semanticColorPalette": {"appearanceBased": {}}
+              }
+            }
+          },
+          "SPACE-HOME", {
+            "id": "SPACE-HOME",
+            "title": "Home",
+            "containerIDs": ["unpinned", "HOME-UNPINNED", "pinned", "HOME-PINNED"],
+            "profile": {"default": true},
+            "customInfo": {"iconType": {"emoji_v2": "🏡", "emoji": 127969}}
+          },
+          "SPACE-ACME", {
+            "id": "SPACE-ACME",
+            "title": "Acme",
+            "containerIDs": ["unpinned", "ACME-UNPINNED", "pinned", "ACME-PINNED"],
+            "profile": {"custom": {"_0": {"machineID": "C0FFEE00-0000-4000-8000-000000000001", "directoryBasename": "Profile 1"}}},
+            "customInfo": {
+              "iconType": {"icon": "briefcase"},
+              "windowTheme": {"primaryColorPalette": {"midTone": {"red": 1.08, "green": 0.5, "blue": -0.02, "alpha": 1, "colorSpace": "extendedSRGB"}}}
+            }
+          },
+          "SPACE-LAB", {
+            "id": "SPACE-LAB",
+            "title": "Lab",
+            "containerIDs": ["unpinned", "LAB-UNPINNED", "pinned", "LAB-PINNED"],
+            "profile": {"custom": {"_0": {"machineID": "C0FFEE00-0000-4000-8000-000000000001", "directoryBasename": "Profile 9"}}},
+            "customInfo": {"iconType": {"emoji_v2": "🧪", "emoji": 129514}}
+          }
+        ],
+        "items": [
+          "FAV-DEFAULT", {"id": "FAV-DEFAULT", "parentID": null, "childrenIds": ["FAV-MAIL", "FAV-CHAT"], "title": null, "createdAt": 720000000,
+            "data": {"itemContainer": {"containerType": {"topApps": {"_0": {"default": true}}}}}},
+          "FAV-MAIL", {"id": "FAV-MAIL", "parentID": "FAV-DEFAULT", "childrenIds": [], "title": null, "createdAt": 720000001, "isUnread": false,
+            "data": {"tab": {"savedURL": "https://mail.example.com/", "savedTitle": "Inbox", "savedMuteStatus": "allowAudio", "timeLastActiveAt": 730000000}}},
+          "FAV-CHAT", {"id": "FAV-CHAT", "parentID": "FAV-DEFAULT", "childrenIds": [], "title": "Chat", "createdAt": 720000002, "isUnread": false,
+            "data": {"tab": {"savedURL": "https://chat.example.com/", "savedTitle": "Chat - Example", "savedMuteStatus": "allowAudio"}}},
+          "FAV-P1", {"id": "FAV-P1", "parentID": null, "childrenIds": ["FAV-ACME-MAIL"], "title": null, "createdAt": 720000003,
+            "data": {"itemContainer": {"containerType": {"topApps": {"_0": {"custom": {"_0": {"directoryBasename": "Profile 1"}}}}}}}},
+          "FAV-ACME-MAIL", {"id": "FAV-ACME-MAIL", "parentID": "FAV-P1", "childrenIds": [], "title": null, "createdAt": 720000004,
+            "data": {"tab": {"savedURL": "https://mail.acme.example/", "savedTitle": "Acme Mail"}}},
+
+          "WORK-PINNED", {"id": "WORK-PINNED", "parentID": null, "childrenIds": ["W-PROJECTS", "W-SPLIT", "W-CAL"], "title": null, "createdAt": 720000010,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-WORK"}}}}},
+          "W-PROJECTS", {"id": "W-PROJECTS", "parentID": "WORK-PINNED", "childrenIds": ["W-ROADMAP", "W-SPECS"], "title": "Projects", "createdAt": 720000011,
+            "data": {"list": {}}},
+          "W-ROADMAP", {"id": "W-ROADMAP", "parentID": "W-PROJECTS", "childrenIds": [], "title": null, "createdAt": 720000012,
+            "data": {"tab": {"savedURL": "https://roadmap.example.com/", "savedTitle": "Roadmap"}}},
+          "W-SPECS", {"id": "W-SPECS", "parentID": "W-PROJECTS", "childrenIds": ["W-API", "W-ARCHIVE"], "title": "Specs", "createdAt": 720000013,
+            "data": {"list": {}}},
+          "W-API", {"id": "W-API", "parentID": "W-SPECS", "childrenIds": [], "title": "API spec", "createdAt": 720000014,
+            "data": {"tab": {"savedURL": "https://docs.example.com/api", "savedTitle": "API reference"}}},
+          "W-ARCHIVE", {"id": "W-ARCHIVE", "parentID": "W-SPECS", "childrenIds": ["W-OLD"], "title": "Archive", "createdAt": 720000015,
+            "data": {"list": {}}},
+          "W-OLD", {"id": "W-OLD", "parentID": "W-ARCHIVE", "childrenIds": [], "title": null, "createdAt": 720000016,
+            "data": {"tab": {"savedURL": "https://docs.example.com/v1", "savedTitle": "API v1"}}},
+          "W-SPLIT", {"id": "W-SPLIT", "parentID": "WORK-PINNED", "childrenIds": ["W-DESIGN", "W-ISSUES"], "title": null, "createdAt": 720000017,
+            "data": {"splitView": {"layoutOrientation": "horizontal", "customInfo": {"itemWidthFactors": [0.5, 0.5]}}}},
+          "W-DESIGN", {"id": "W-DESIGN", "parentID": "W-SPLIT", "childrenIds": [], "title": null, "createdAt": 720000018,
+            "data": {"tab": {"savedURL": "https://design.example.com/file/1", "savedTitle": "Design"}}},
+          "W-ISSUES", {"id": "W-ISSUES", "parentID": "W-SPLIT", "childrenIds": [], "title": null, "createdAt": 720000019,
+            "data": {"tab": {"savedURL": "https://issues.example.com/board", "savedTitle": "Issues"}}},
+          "W-CAL", {"id": "W-CAL", "parentID": "WORK-PINNED", "childrenIds": [], "title": null, "createdAt": 720000020,
+            "data": {"tab": {"savedURL": "https://calendar.example.com/", "savedTitle": "Calendar"}}},
+
+          "WORK-UNPINNED", {"id": "WORK-UNPINNED", "parentID": null, "childrenIds": ["W-SEARCH", "W-EASEL", "W-STACK", "W-INTERNAL"], "title": null, "createdAt": 720000030,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-WORK"}}}}},
+          "W-SEARCH", {"id": "W-SEARCH", "parentID": "WORK-UNPINNED", "childrenIds": [], "title": null, "createdAt": 720000031,
+            "data": {"tab": {"savedURL": "https://search.example.com/?q=lilo", "savedTitle": "lilo - Search"}}},
+          "W-EASEL", {"id": "W-EASEL", "parentID": "WORK-UNPINNED", "childrenIds": [], "title": "Sketch", "createdAt": 720000032,
+            "data": {"easel": {"easelID": "E1", "creatorID": "U1", "title": "Sketch"}}},
+          "W-STACK", {"id": "W-STACK", "parentID": "WORK-UNPINNED", "childrenIds": ["W-A", "W-B", "W-C"], "title": null, "createdAt": 720000033,
+            "data": {"splitView": {"layoutOrientation": "vertical", "customInfo": {"itemWidthFactors": [0.34, 0.33, 0.33]}}}},
+          "W-A", {"id": "W-A", "parentID": "W-STACK", "childrenIds": [], "title": null, "createdAt": 720000034,
+            "data": {"tab": {"savedURL": "https://a.example.com/", "savedTitle": "A"}}},
+          "W-B", {"id": "W-B", "parentID": "W-STACK", "childrenIds": [], "title": null, "createdAt": 720000035,
+            "data": {"tab": {"savedURL": "https://b.example.com/", "savedTitle": "B"}}},
+          "W-C", {"id": "W-C", "parentID": "W-STACK", "childrenIds": [], "title": null, "createdAt": 720000036,
+            "data": {"tab": {"savedURL": "https://c.example.com/", "savedTitle": "C"}}},
+          "W-INTERNAL", {"id": "W-INTERNAL", "parentID": "WORK-UNPINNED", "childrenIds": [], "title": null, "createdAt": 720000037,
+            "data": {"tab": {"savedURL": "arc://extensions", "savedTitle": "Extensions"}}},
+
+          "HOME-PINNED", {"id": "HOME-PINNED", "parentID": null, "childrenIds": ["H-CAL"], "title": null, "createdAt": 720000040,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-HOME"}}}}},
+          "H-CAL", {"id": "H-CAL", "parentID": "HOME-PINNED", "childrenIds": [], "title": null, "createdAt": 720000041,
+            "data": {"tab": {"savedURL": "https://calendar.example.com/", "savedTitle": "Calendar"}}},
+          "HOME-UNPINNED", {"id": "HOME-UNPINNED", "parentID": null, "childrenIds": [], "title": null, "createdAt": 720000042,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-HOME"}}}}},
+
+          "ACME-PINNED", {"id": "ACME-PINNED", "parentID": null, "childrenIds": ["A-PORTAL", "A-BILLING"], "title": null, "createdAt": 720000050,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-ACME"}}}}},
+          "A-PORTAL", {"id": "A-PORTAL", "parentID": "ACME-PINNED", "childrenIds": [], "title": "Portal", "createdAt": 720000051,
+            "data": {"tab": {"savedURL": "https://portal.acme.example/", "savedTitle": "Acme Portal"}}},
+          "A-BILLING", {"id": "A-BILLING", "parentID": "ACME-PINNED", "childrenIds": ["A-SPLIT"], "title": "Billing", "createdAt": 720000052,
+            "data": {"list": {}}},
+          "A-SPLIT", {"id": "A-SPLIT", "parentID": "A-BILLING", "childrenIds": ["A-INVOICES", "A-LEDGER"], "title": null, "createdAt": 720000053,
+            "data": {"splitView": {"layoutOrientation": "horizontal"}}},
+          "A-INVOICES", {"id": "A-INVOICES", "parentID": "A-SPLIT", "childrenIds": [], "title": null, "createdAt": 720000054,
+            "data": {"tab": {"savedURL": "https://billing.acme.example/invoices", "savedTitle": "Invoices"}}},
+          "A-LEDGER", {"id": "A-LEDGER", "parentID": "A-SPLIT", "childrenIds": [], "title": null, "createdAt": 720000055,
+            "data": {"tab": {"savedURL": "https://billing.acme.example/ledger", "savedTitle": "Ledger"}}},
+          "ACME-UNPINNED", {"id": "ACME-UNPINNED", "parentID": null, "childrenIds": [], "title": null, "createdAt": 720000056,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-ACME"}}}}},
+
+          "LAB-PINNED", {"id": "LAB-PINNED", "parentID": null, "childrenIds": ["L-NOTEBOOK"], "title": null, "createdAt": 720000060,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-LAB"}}}}},
+          "L-NOTEBOOK", {"id": "L-NOTEBOOK", "parentID": "LAB-PINNED", "childrenIds": [], "title": null, "createdAt": 720000061,
+            "data": {"tab": {"savedURL": "https://notebook.example.com/", "savedTitle": "Notebook"}}},
+          "LAB-UNPINNED", {"id": "LAB-UNPINNED", "parentID": null, "childrenIds": [], "title": null, "createdAt": 720000062,
+            "data": {"itemContainer": {"containerType": {"spaceItems": {"_0": "SPACE-LAB"}}}}}
+        ]
+      }
+    ]
+  }
+}

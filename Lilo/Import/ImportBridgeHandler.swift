@@ -1,0 +1,114 @@
+import AppKit
+import Foundation
+
+@MainActor
+final class ImportBridgeHandler: BridgeHandler {
+    let handledActions: Set<String> = ["scanImportSources", "runImport", "openFullDiskAccessSettings", "closeImport"]
+
+    private weak var bridgeRouter: BridgeRouter?
+    private let makeImporter: () -> BrowserImporter
+    private var sources: [ImportSource] = []
+    private var isRunning = false
+    /// Bumped when the page closes or finishes, so a scan still in flight never refills `sources`.
+    private var scanGeneration = 0
+    nonisolated(unsafe) private var activeObserver: Any?
+
+    init(bridgeRouter: BridgeRouter, makeImporter: @escaping () -> BrowserImporter) {
+        self.bridgeRouter = bridgeRouter
+        self.makeImporter = makeImporter
+        // Granting Full Disk Access happens in System Settings: rescan when the user comes back.
+        activeObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !self.isRunning, self.sources.contains(where: \.needsFullDiskAccess) else { return }
+                Task { await self.scan() }
+            }
+        }
+    }
+
+    deinit {
+        if let activeObserver { NotificationCenter.default.removeObserver(activeObserver) }
+    }
+
+    private func scan() async {
+        let generation = scanGeneration
+        let found = await Task.detached { BrowserImportScanner.scan() }.value
+        guard generation == scanGeneration else { return }
+        // The browser that currently opens links is the one the user lives in: list it first.
+        let current = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://example.com")!)
+            .flatMap { Bundle(url: $0)?.bundleIdentifier }
+        sources = found.filter { $0.bundleId == current } + found.filter { $0.bundleId != current }
+        bridgeRouter?.send(event: "importSourcesLoaded", data: ["sources": sources.map(Self.payload)])
+    }
+
+    func handle(message: BridgeMessage) async -> Any? {
+        switch message.action {
+        case "scanImportSources":
+            await scan()
+        case "runImport":
+            guard !isRunning else { return BridgeError("Import already running") }
+            let selections = (message.payload["selections"] as? [[String: Any]] ?? []).compactMap { raw -> BrowserImporter.Selection? in
+                guard let sourceId = raw["sourceId"] as? String, let profileId = raw["profileId"] as? String else { return nil }
+                return BrowserImporter.Selection(
+                    sourceId: sourceId, profileId: profileId,
+                    kinds: Set((raw["kinds"] as? [String] ?? []).compactMap(ImportKind.init(rawValue:))),
+                    extensionIds: raw["extensionIds"] as? [String] ?? [])
+            }
+            isRunning = true
+            let summary = await makeImporter().run(selections, sources: sources) { [weak self] progress in
+                self?.bridgeRouter?.send(event: "importProgress", data: [
+                    "sourceId": progress.sourceId, "profileId": progress.profileId, "done": progress.done, "total": progress.total
+                ])
+            }
+            isRunning = false
+            // The finished page can no longer import, so a later Full Disk Access grant needs no rescan.
+            sources = []
+            scanGeneration += 1
+            bridgeRouter?.send(event: "importFinished", data: ["summary": summary.map { item in
+                var data: [String: Any] = ["sourceId": item.sourceId, "profileId": item.profileId, "kind": item.kind.rawValue,
+                                           "imported": item.imported]
+                if let error = item.error { data["error"] = error }
+                return data
+            }])
+        case "closeImport":
+            sources = []
+            scanGeneration += 1
+        case "openFullDiskAccessSettings":
+            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
+        default:
+            break
+        }
+        return nil
+    }
+
+    /// The installed browser's own Dock icon, as a 64 px PNG data URL (cached: rescans resend it).
+    private static var icons: [String: String] = [:]
+
+    private static func icon(bundleId: String) -> String? {
+        if let cached = icons[bundleId] { return cached }
+        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId),
+              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
+                                         hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSWorkspace.shared.icon(forFile: app.path).draw(in: NSRect(x: 0, y: 0, width: 64, height: 64))
+        NSGraphicsContext.restoreGraphicsState()
+        guard let png = rep.representation(using: .png, properties: [:]) else { return nil }
+        let dataURL = "data:image/png;base64," + png.base64EncodedString()
+        icons[bundleId] = dataURL
+        return dataURL
+    }
+
+    private static func payload(_ source: ImportSource) -> [String: Any] {
+        [
+            "id": source.id, "name": source.name, "family": source.family.rawValue,
+            "iconDataURL": icon(bundleId: source.bundleId) ?? "",
+            "needsFullDiskAccess": source.needsFullDiskAccess,
+            "profiles": source.profiles.map { profile in
+                [
+                    "id": profile.id, "name": profile.name, "kinds": profile.kinds.map(\.rawValue),
+                    "extensions": profile.extensions.map { ["id": $0.id, "name": $0.name] }
+                ] as [String: Any]
+            }
+        ]
+    }
+}

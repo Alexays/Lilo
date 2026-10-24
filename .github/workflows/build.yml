@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui:
+    name: UI (lint, test, build, end-to-end)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: make validate-ui
+      - run: npx playwright install --with-deps chromium
+        working-directory: lilo-ui
+      - run: make e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: lilo-ui/test-results/
+          if-no-files-found: ignore
+
+  bridge:
+    name: Extension Bridge Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: Lilo/Extensions/bridge-src/package-lock.json
+      - run: make ext-bridge-test
+      - name: Check generated bridge bundles match bridge-src
+        run: |
+          make ext-bridge-build
+          git diff --exit-code \
+            Lilo/Extensions/ChromeAPIAugmentation.js \
+            Lilo/Extensions/ChromeAPIBackgroundPrelude.js \
+            Lilo/Extensions/ChromeContentCompat.js \
+            Lilo/Extensions/ChromeStaticRules.js \
+            Lilo/Extensions/ChromeWebStoreShim.js \
+            || (echo "::error::Extension bridge bundles are out of sync with bridge-src: run 'make ext-bridge-build' and commit." && exit 1)
+
+  app:
+    name: App Validate + Swift Tests (macOS)
+    # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against); macos-26 only has Xcode 26.
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - run: brew install swiftlint xcodegen
+      - id: ghostty
+        run: echo "sha=$(sed -n 's/^GHOSTTY_SHA := //p' Makefile)" >> "$GITHUB_OUTPUT"
+      - id: vt
+        uses: actions/cache@v6
+        with:
+          path: Vendor
+          key: ghostty-vt-${{ steps.ghostty.outputs.sha }}
+      - if: steps.vt.outputs.cache-hit != 'true'
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - uses: actions/cache@v6
+        with:
+          path: .derived.noindex/xcode/SourcePackages
+          key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      - name: Check Lilo.xcodeproj matches project.yml
+        run: |
+          make project-sync
+          git diff --exit-code Lilo.xcodeproj \
+            || (echo "::error::Lilo.xcodeproj is out of sync with project.yml - run 'make project-sync' and commit." && exit 1)
+      - run: make swiftlint xcode-build xcode-build-release
+      - run: make swift-test RESULT_BUNDLE=build/swift-test.xcresult
+      - run: make swift-test-slow
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: swift-test-results
+          path: build/swift-test.xcresult
+          if-no-files-found: ignore
+
+  startup-bench:
+    name: Startup Benchmark (macOS, informational)
+    needs: app
+    runs-on: xcode-27
+    timeout-minutes: 45
+    # Launch times drift with the runner: the numbers are kept per commit, never gate a merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - id: ghostty
+        run: echo "sha=$(sed -n 's/^GHOSTTY_SHA := //p' Makefile)" >> "$GITHUB_OUTPUT"
+      - id: vt
+        uses: actions/cache@v6
+        with:
+          path: Vendor
+          key: ghostty-vt-${{ steps.ghostty.outputs.sha }}
+      - if: steps.vt.outputs.cache-hit != 'true'
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: 0.16.0
+      - name: Run startup benchmark
+        shell: bash
+        run: |
+          mkdir -p build/startup-bench
+          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench | tee build/startup-bench/summary.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: startup-bench-${{ github.sha }}
+          path: build/startup-bench/
+          if-no-files-found: ignore

@@ -1,0 +1,144 @@
+/* Shared CSS utilities: reusable color-mix tokens and layout helpers */
+
+/* A custom property resolves its var() where it is declared: the sidebar repaints --accent,
+   --text-primary and --danger for its Space, so it declares the tints again to mix its own. */
+:root,
+.sidebar,
+.float-surface,
+.chrome-floating-surface,
+.chrome-content-overlay-root {
+  /* Accent tints (most repeated color-mix patterns) */
+  --accent-tint-8: color-mix(in srgb, var(--accent) 8%, transparent);
+  --accent-tint-10: color-mix(in srgb, var(--accent) 10%, transparent);
+  --accent-tint-12: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-tint-14: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-tint-18: color-mix(in srgb, var(--accent) 18%, transparent);
+  --accent-tint-22: color-mix(in srgb, var(--accent) 22%, transparent);
+
+  /* Text-primary tints */
+  --text-primary-tint-10: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --text-primary-tint-12: color-mix(in srgb, var(--text-primary) 12%, transparent);
+
+  /* Semantic status colors */
+  --success-vivid: color-mix(in srgb, var(--success) 82%, white 18%);
+  --danger-vivid: color-mix(in srgb, var(--danger) 82%, white 18%);
+}
+
+/* Overlay panel root: full-height column. Each panel keeps its extras locally. */
+.panel-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Tab/folder row action button, shared by TabItem and TabFolderItem. Global on purpose:
+   the dnd-preview clone renders outside the owning component (cf global.css preview rules). */
+.action-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--text-primary-tint-10);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.02);
+}
+
+/* Icon control in an overlay panel's header, shared by the diagnostics, process, downloads and
+   screenshot panels; each sets only what differs. */
+.hdr-ctl {
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.hdr-ctl:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.hdr-ctl:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+/* Compact button in a panel body, shared by the diagnostics and process panels. */
+.small-button {
+  height: var(--control-height-sm);
+  padding: 0 var(--space-8);
+  border: 1px solid var(--sidebar-border);
+  border-radius: var(--radius-sm);
+  background: var(--sidebar-elevated);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.small-button:hover {
+  background: var(--bg-hover);
+}
+
+/* Sidebar drop-zone animations, shared by the pinned and bookmarked empty states. */
+@keyframes sidebar-dz-breathe {
+  0%, 100% {
+    opacity: 0.94;
+    transform: scaleY(0.985);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes sidebar-dz-placeholder-breathe {
+  0%, 100% {
+    opacity: 0.94;
+    transform: scale(0.992);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes sidebar-dz-placeholder-absorb {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  42% {
+    transform: scale(1.018);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.992);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,376 @@
+import AppKit
+import WebKit
+import XCTest
+@testable import Lilo
+
+/// Real Chrome Web Store extensions through Lilo's own install pipeline, plus the in-repo MV3 probe.
+/// Needs the network and the live store, so `make swift-test` skips it; `make ext-smoke` runs it.
+@MainActor
+final class RealExtensionSmokeTests: XCTestCase {
+    private var browserContext: TemporaryBrowserContext!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        browserContext = try await TemporaryBrowserContext()
+    }
+
+    override func tearDown() {
+        browserContext.tearDown()
+        browserContext = nil
+        super.tearDown()
+    }
+
+    /// Opens `url` in a tab and returns its text once `isReady` holds, or after `timeout`. A page showing a
+    /// form control and no text reads as "[form control]": a search box is no blank popup.
+    private func pageText(_ window: MainWindowController, _ url: URL, timeout: TimeInterval, isReady: @escaping (String) -> Bool = { !$0.isEmpty }) async throws -> String {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
+        var text = ""
+        _ = await pollUntil(timeout: timeout) {
+            let engine = window.tabManager.engineTab(for: tab.id)
+            // On screen, as a popup: WebKit runs no animation frame for a page no window shows. Unattended,
+            // as the agent's tabs: a dialog's sheet would hold the page.
+            if let engine {
+                self.browserContext.context.agentControl.attach(engine, to: nil)
+                engine.agentDialogHandler = { _ in true }
+            }
+            let page = engine?.view as? WKWebView
+            text = (try? await page?.evaluateJavaScript(
+                "document.body?.innerText || (document.body?.querySelector('input, button, select, textarea') ? '[form control]' : '')"
+            ) as? String) ?? ""
+            return isReady(text)
+        }
+        return text
+    }
+
+    private struct TopExtensions: Decodable {
+        struct Entry: Decodable {
+            let name: String
+            let id: String
+        }
+        let extensions: [Entry]
+    }
+
+    /// Extensions of top-extensions.json that do not run cleanly yet, by id, with what breaks them. A
+    /// newly broken extension fails the test, and so does a listed one that now runs cleanly.
+    static let knownFailures: [String: String] = [
+        "fdjamakpfbbddfjaooikfcpapjohcfmg": "Chrome too fails its carbon commands (a is not a function); WebKit reports the ApplicationRequestError its framework rethrows, which Chrome only logs", // Dashlane
+        "gjjbmfigjpgnehjioicaalopaikcnheo": "Chrome too: its worker reads settings its backend did not send", // Dark Theme
+        "adlpodnneegcnbophopdmhedicjbcgco": "Chrome too: its worker reads settings its backend did not send", // Troywell VPN
+        "lieogkinebikhdchceieedcigeafdkid": "Chrome too: its worker fails at startup without the Eagle app (with another error)", // Eagle
+        "hfapbcheiepjppjbnkphkmegjlipojba": "Chrome too: its worker reads window, which no service worker has", // Klarna
+        "ojplmecpdpgccookcobabopnaifgidhf": "JavaScriptCore checks a binding an assignment across an await targets before the await, so its content scripts' modules throw where V8 waits for the await (WEBKIT-GAPS.md, gap 74)", // Buyhatke
+        "agjnjboanicjcpenljmaaigopkgdnihi": "JavaScriptCore rejects `in` in an arrow function body inside a for initializer, so its module worker fails to parse", // PreMiD
+        "ckkdlimhmcjmikdlpkmbgfkaikojcbjk": "Chrome too: it removes a required permission (WebKit words the error differently)", // Markdown Viewer
+        "mfpiaehgjbbfednooihadalhehabhcjo": "Chrome too: it scripts a tab it has no access to (WebKit words the error differently)", // Scrolling screenshot tool
+        "oeopbcgkkoapgobdbedcemjljbihmemj": "Lilo has no push backend: it logs the error instanceID.getToken fails with, Chrome's with Instance ID disabled, where Chrome gets a token", // Checker Plus for Gmail
+        "inlikjemeeknofckkjolnjbpehgadgge": "WebKit gives extensions no SharedArrayBuffer, so its offscreen document cannot open its SQLite store", // Distill Web Monitor
+    ]
+
+    /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
+    /// them but passes either way, until the cause is fixed and they move out.
+    static let intermittent: [String: String] = [
+        "cnlhokffphohmfcddnibpohmkdfafdli": "some runs its popup still renders nothing, after other extensions in the same shard; the cause is not yet known", // MultiPassword
+        "eppiocemhmnlbhjplcgkofciiegomcon": "its welcome page can message its worker before the worker's ad blocker has fetched its identity, a race Chrome runs too and mostly wins by milliseconds", // Urban VPN Proxy
+        "bkdgflcldnnnapblkhphbgpggdiikppg": "its popup closes itself on a tab activation while its worker still answers it on the popup's port, a race Chrome runs too: posting on a disconnected port throws in both", // DuckDuckGo
+        "aicmkgpgakddgnaphhhpliifpcfhicfo": "its worker posts on the port it opens back to its popup, which WebKit disconnects when the popup runs in a tab of another process (WEBKIT-GAPS.md, gap 60)", // Postman Interceptor
+        "aeblfdkhhhdcdjpifhhbdiojplfjncoa": "the popup's tab activates while its WebAssembly core starts: its icon update skips a tab with no url, which Chrome reports until the tab commits, where Lilo reports the url from the navigation start (WebKit's own access checks on a loading tab need it)", // 1Password
+        "hgmoccdbjhknikckedaaebbpdeebhiei": "its popup can read its stored state before the worker has written it", // Ahrefs SEO Toolbar
+        "bgnkhhnnamicmpeenaelnjfhikgbkllg": "its popup can message its worker once the worker listens but before its handler is set up, which then answers nothing; when the worker does not listen yet, the popup's promise rejects as in Chrome", // AdGuard AdBlocker
+        "gkojfkhlekighikafcpjkiklfbnlmeio": "a tab event can reach its worker before its asynchronous startup has set up what its tab listeners use", // Hola VPN
+        "gidejehfgombmkfflghejpncblgfkagj": "its worker's handler fails on a request to its server, which Chrome fails too, before it answers: its content scripts then read the answer as null (e.mode, r.length)", // Cuponomia
+        "oiiaigjnkhngdbnoookogelabohpglmd": "some runs fail a request to its API, or WebKit fails to size storage.sync for its set", // HubSpot Sales
+        "admmjipmmciaobhojoghlmleefbicajg": "some runs fail Firebase Messaging's support check in its worker; the cause is not yet known", // Norton Password Manager
+        "caljgklbbfbcjjanaijlacgncafpegll": "some runs fail Firebase Messaging's support check in its worker, as Norton Password Manager's; the cause is not yet known", // Avira Password Manager
+        "jddgbeighonaipjikdnfdpiefhoomlae": "some runs read its store before it is set up (this.store.hasLanguageSomeTranslations); the cause is not yet known", // YouBoost
+        "kdfieneakcjfaiglcfcgkidlkmlijjnh": "its popup can read its session before its worker answers the request for it, then renders nothing (session[property] on undefined)", // AI Grammar and Spell Checker by Ginger
+        "pfjdepjjfjjahkjfpkcgfmfhmnakjfba": "some runs log runtime.lastError 'Could not establish connection' for a message no context receives yet; the cause is not yet known", // Detailed SEO Extension
+        "callobklhcbilhphinckomhgkigmfocg": "its worker reads chrome.enterprise.reportingPrivate, which Chrome gives this extension only and Lilo lacks; some runs never reach that read", // Endpoint Verification
+        "amfojhdiedpdnlijjbhjnhokbnohfdfb": "its welcome page's content script can ask its worker to check a context menu entry before the worker's storage answer, which creates that entry, has come back", // eJOY AI Dictionary
+        "blgcbajigpdfohpgcmbbfnphcgifjopc": "its Flutter build needs Chrome's ImageDecoder and Intl.v8BreakIterator, which WebKit lacks: it asks for a skwasm_heavy build its package does not ship" // ExpressKeys: Password Manager
+    ]
+
+    /// What Chrome does with each of them, recorded by `make chrome-smoke`.
+    private struct ChromeSmoke: Decodable {
+        struct Recording: Decodable {
+            let version: String
+            let popupText: Bool?
+            let errors: [String]
+        }
+        let extensions: [String: Recording]
+    }
+
+    func testStoreExtensionsInstallStartAndShowTheirPopup() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        // A camera or microphone request is refused as a user would: WebKit asks macOS before Lilo's
+        // permission handler, so even a denied request would prompt for the test host. Tab and desktop
+        // streams still go through the tab-share shim.
+        registry.pageScripts.addUserScript(WKUserScript(source: """
+        (() => {
+          const shared = navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices);
+          if (!shared) return;
+          navigator.mediaDevices.getUserMedia = (constraints) =>
+            [constraints?.video, constraints?.audio].some((c) => c?.mandatory?.chromeMediaSource)
+              ? shared(constraints)
+              : Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+        })();
+        """, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+        let top = try JSONDecoder().decode(
+            TopExtensions.self,
+            from: Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("top-extensions.json"))
+        )
+        let chromeSmoke = try JSONDecoder().decode(
+            ChromeSmoke.self,
+            from: Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("chrome-smoke.json"))
+        )
+        // WebKit and Chrome word the same errors differently; ids and times differ from run to run.
+        let normalized = { (message: String) -> String in
+            message
+                .replacingOccurrences(of: #"Invalid call to \S+\(\)\. "#, with: "", options: .regularExpression)
+                // A promise rejected with undefined: V8 reports the bare text, JavaScriptCore the value.
+                .replacingOccurrences(of: #"^Uncaught \(in promise\)$"#, with: "undefined", options: .regularExpression)
+                // A logged "Error: " label stays: of console.error("Error: ", error), WebKit keeps only the label.
+                .replacingOccurrences(of: #"^(Error in event handler: |Error handling response: |Uncaught \(in promise\) )?((Type)?Error: (?! ))?"#, with: "", options: .regularExpression)
+                // V8's and JavaScriptCore's wording of a property read on undefined or null, of a missing variable and of one declared twice.
+                .replacingOccurrences(of: #"Cannot read properties of (undefined|null) \(reading '([^']+)'\)"#, with: "$1.$2", options: .regularExpression)
+                .replacingOccurrences(of: #"(undefined|null) is not an object \(evaluating '(?:[^']*\.)?([^'.]+)'\)"#, with: "$1.$2", options: .regularExpression)
+                .replacingOccurrences(of: #"Can't find variable: (\S+)"#, with: "$1 is not defined", options: .regularExpression)
+                .replacingOccurrences(of: #"Can't create duplicate variable: '([^']+)'"#, with: "Identifier '$1' has already been declared", options: .regularExpression)
+                // JavaScriptCore quotes the call of something that is not a function.
+                .replacingOccurrences(of: #"\. \(In '.*?', '.*?' is [^)]*\)"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: #" ?\([^()]*:\d+:\d+\)$"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: "Load failed", with: "Failed to fetch")
+                // A plain object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
+                .replacingOccurrences(of: "[object Object]", with: "Object")
+                .replacingOccurrences(of: "No runtime.onConnect listeners found.", with: "Could not establish connection. Receiving end does not exist.")
+                .replacingOccurrences(of: #"Cannot find menu item with id \S+"#, with: "Menu item not found.", options: .regularExpression)
+                // A worker scripting the active tab at startup meets Chrome's about:blank, Lilo's popup tab
+                // or a tab still loading, which WebKit refuses in its own words.
+                .replacingOccurrences(of: #"Cannot access contents of url "[^"]*""#, with: "Cannot access contents of url", options: .regularExpression)
+                .replacingOccurrences(of: "This extension does not have access to this tab.", with: "Cannot access contents of url")
+                .replacingOccurrences(of: #"\d+"#, with: "#", options: .regularExpression)
+        }
+        // `make ext-smoke` hands each of its parallel runs its share of the list; without it, the top 100.
+        let only = ProcessInfo.processInfo.environment["LILO_SMOKE_IDS"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
+        let selected = only.map { only in top.extensions.filter { only.contains($0.id) } } ?? Array(top.extensions.prefix(100))
+        // One JSON line per extension as it ends, so a run that crashes still reports the ones before.
+        let report = try ProcessInfo.processInfo.environment["LILO_SMOKE_REPORT"].map { path in
+            FileManager.default.createFile(atPath: path, contents: nil)
+            return try FileHandle(forWritingTo: URL(fileURLWithPath: path))
+        }
+        defer { try? report?.close() }
+        var results: [String] = []
+        for (name, id) in selected.map({ ($0.name, $0.id) }) {
+            var problems: [String] = []
+            var version = "?"
+            var staleChrome: String?
+            // The full text of the errors WebKit cuts to their first argument, to debug a failure by.
+            var details: [String] = []
+            defer {
+                results.append(problems.isEmpty ? "ok   \(id) \(name) \(version)" : "FAIL \(id) \(name) \(version): \(problems.joined(separator: "; "))")
+                let line: [String: Any?] = [
+                    "id": id, "name": name, "version": version, "problems": problems, "details": details, "staleChrome": staleChrome,
+                    "known": Self.knownFailures[id], "intermittent": Self.intermittent[id]
+                ]
+                if let data = try? JSONSerialization.data(withJSONObject: line.compactMapValues { $0 }) {
+                    try? report?.write(contentsOf: data + Data("\n".utf8))
+                }
+            }
+            do {
+                let package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) }
+                try await registry.load(from: package)
+            } catch {
+                problems.append("install: \(error)")
+                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) installs: \(error)") }
+                continue
+            }
+            guard let context = registry.context(for: id) else {
+                problems.append("does not load")
+                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) loads") }
+                continue
+            }
+            version = context.webExtension.version ?? "?"
+            let recorded = chromeSmoke.extensions[id]
+            // Chrome's behavior with another version says nothing about this one: all its errors count.
+            let chrome = recorded?.version == version ? recorded : nil
+            if chrome == nil { staleChrome = recorded?.version ?? "nothing" }
+            if context.webExtension.hasBackgroundContent {
+                let loaded = await registry.backgrounds.load(id)
+                let connected = await pollUntil(timeout: 10) { registry.lifecycle.worker(of: id) == .running }
+                // Chrome's recording opens the popup once the worker's top-level code has run, which its listener report follows.
+                _ = await pollUntil(timeout: 2) { registry.gapEvents.reportedListeners(of: id) != nil }
+                if !loaded { problems.append("the service worker does not load") }
+                if !connected { problems.append("the worker never connects to Lilo") }
+                if registry.backgrounds.health(for: id)?.bridgeStatus != "loaded" { problems.append("degraded") }
+            }
+            if let popup = (context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String, !popup.isEmpty {
+                // Resolved as WebKit and Chrome open it: a query or fragment stays one.
+                // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
+                let text = try await pageText(window, try XCTUnwrap(URL(string: popup, relativeTo: context.baseURL)), timeout: 40)
+                if text.isEmpty && chrome?.popupText != false { problems.append("the popup renders nothing") }
+            }
+            let chromeErrors = (chrome?.errors ?? []).map(normalized)
+            // A request for a file the package lacks fails in Chrome too, which reports no extension error for it.
+            problems += context.errors
+                .filter { ($0 as NSError).domain != WKWebExtension.errorDomain || ($0 as NSError).code != WKWebExtension.Error.resourceNotFound.rawValue }
+                .map(\.localizedDescription)
+                // WebKit keeps only the leading text of a console.error, so a Chrome error starting with it is the same.
+                .filter { error in
+                    let error = normalized(error)
+                    return error.isEmpty || !chromeErrors.contains { $0.hasPrefix(error) }
+                }
+                .map { "error: \($0)" }
+            if let known = Self.knownFailures[id] {
+                XCTAssertFalse(problems.isEmpty, "\(name) now runs cleanly: drop it from knownFailures (\(known))")
+            } else if Self.intermittent[id] == nil {
+                XCTAssertEqual(problems, [], "\(name)")
+            }
+            if !problems.isEmpty {
+                let diagnostics = registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == id }?["pageDiagnostics"] as? [[String: Any]] ?? []
+                var seen: Set<String> = []
+                details = Array(diagnostics.compactMap { $0["level"] as? String == "error" ? $0["message"] as? String : nil }
+                    .map { String($0.prefix(500)) }.filter { seen.insert($0).inserted }.suffix(10))
+            }
+            await registry.unload(extensionId: id)
+            // Each extension starts with no page open, as in a new Chrome profile: WebKit injects content
+            // scripts into the pages already open when an extension loads, which Chrome never does.
+            for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
+        }
+        print("SMOKE summary:\n" + results.joined(separator: "\n"))
+    }
+
+    /// A local page for what extensions do past their popup: a sign-in form and a text field.
+    private static let featurePage = """
+    <!doctype html><html><head><title>Sign in</title></head><body>
+    <h1>Sign in to Example</h1>
+    <form action="/login" method="post">
+      <label>Email <input type="email" name="email" id="email" autocomplete="username"></label>
+      <label>Password <input type="password" name="password" id="password" autocomplete="current-password"></label>
+      <button type="submit">Sign in</button>
+    </form>
+    <textarea id="text" rows="4" cols="60">Ths sentense has sum erors in it.</textarea>
+    <p>The quick brown fox jumps over the lazy dog.</p>
+    </body></html>
+    """
+
+    /// An extension's part on the feature page, signed out: `check` (page world) holds once its content
+    /// scripts did it; `menu` asks for a context menu entry, `command` for a shortcut and what holds after it.
+    private struct Feature {
+        let id: String
+        let name: String
+        let check: String
+        var menu = false
+        var command: (id: String, check: String)?
+    }
+
+    private static let features = [
+        Feature(id: "eimadpbcbfnmbkopoojfekhnkhdbieeh", name: "Dark Reader", check: "document.querySelectorAll('style.darkreader').length > 0",
+                command: ("addSite", "document.querySelectorAll('style.darkreader').length === 0")),
+        Feature(id: "kbfnbcaeplbcioakkpcpgfkobkghlhen", name: "Grammarly", check: "document.body.hasAttribute('data-gr-ext-installed')"),
+        Feature(id: "iidnbdjijdkbmajdffnidomddglmieko", name: "Quillbot", check: "document.querySelector('[data-qb-installed]') !== null"),
+        Feature(id: "hdokiejnpimakedhajhdlcegeplioahd", name: "LastPass", check: "document.querySelector('[data-lastpass-icon-root]') !== null"),
+        Feature(id: "fdjamakpfbbddfjaooikfcpapjohcfmg", name: "Dashlane", check: "document.querySelector('[data-dashlane-rid]') !== null"),
+        Feature(id: "ghmbeldphafepmbegfdlkpapadhbakde", name: "Proton Pass", check: "document.querySelector('[data-protonpass-role]') !== null"),
+        Feature(id: "cofdbpoegempjloogbagkncekinflcnj", name: "DeepL", check: "document.querySelector('deepl-input-controller') !== null", menu: true),
+        Feature(id: "bpoadfkcbjbfhfodiogcnhhhpibjhbnh", name: "Immersive Translate", check: "document.documentElement.hasAttribute('data-immersive-translate-page-theme')"),
+        Feature(id: "gighmmpiobklfepjocnamgkkbiglidom", name: "AdBlock", check: "true", menu: true)
+    ]
+
+    func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let server = try await TinyHTTPServer(index: Self.featurePage)
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
+        for feature in Self.features {
+            do {
+                let package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: feature.id)
+                defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) }
+                try await registry.load(from: package)
+            } catch {
+                XCTFail("\(feature.name) installs: \(error)")
+                continue
+            }
+            let context = try XCTUnwrap(registry.context(for: feature.id))
+            _ = await registry.backgrounds.load(feature.id)
+            _ = await pollUntil(timeout: 10) { registry.gapEvents.reportedListeners(of: feature.id) != nil }
+            let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
+            let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+            browserContext.context.agentControl.attach(engine, to: nil)
+            let page = try XCTUnwrap(engine.view as? WKWebView)
+            let holds = { (check: String) in await pollUntil(timeout: 20) { (try? await page.evaluateJavaScript(check)) as? Bool == true } }
+            let checked = await holds(feature.check)
+            XCTAssertTrue(checked, "\(feature.name) does its part on the page")
+            if feature.menu, let adapter = window.tabManager.tabAdapter(for: tab.id) {
+                let added = await pollUntil(timeout: 10) { !context.menuItems(for: adapter).isEmpty }
+                XCTAssertTrue(added, "\(feature.name) adds its context menu entry")
+            }
+            if let (commandId, after) = feature.command {
+                let command = try XCTUnwrap(context.commands.first { $0.id == commandId })
+                // A command acts on the active tab, which a welcome page the extension opened on install may be.
+                window.activateTabStateFirst(id: tab.id)
+                let key = command.activationKey ?? ""
+                let event = try XCTUnwrap(NSEvent.keyEvent(
+                    with: .keyDown, location: .zero, modifierFlags: command.modifierFlags, timestamp: 0, windowNumber: window.window?.windowNumber ?? 0,
+                    context: nil, characters: key, charactersIgnoringModifiers: key, isARepeat: false, keyCode: 0
+                ))
+                XCTAssertTrue(registry.handleExtensionKeyDown(event), "\(feature.name)'s \(commandId) shortcut is dispatched")
+                let applied = await holds(after)
+                XCTAssertTrue(applied, "\(feature.name)'s \(commandId) command acts on the page")
+            }
+            await registry.unload(extensionId: feature.id)
+            for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
+        }
+    }
+
+    func testProbeReportsEveryDeclaredNamespaceComplete() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        // Loading rewrites the manifest in place: the probe runs from a copy.
+        let source = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../test-extensions/extension-probe").standardizedFileURL
+        let copy = FileManager.default.temporaryDirectory.appendingPathComponent("extension-probe-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: copy) }
+        try FileManager.default.copyItem(at: source, to: copy)
+        try await registry.load(from: copy)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let loaded = await registry.backgrounds.load(id)
+        XCTAssertTrue(loaded)
+        // A visited page feeds the probe's history, webNavigation and content-script checks.
+        _ = try await pageText(window, try XCTUnwrap(URL(string: "https://example.com/")), timeout: 10)
+
+        let report = try await pageText(window, try XCTUnwrap(context.optionsPageURL), timeout: 30) { $0.contains("NAMESPACES") }
+        print("SMOKE probe report:\n\(report)")
+
+        XCTAssertTrue(report.contains("NAMESPACES"), "the probe's report renders")
+        // `tabs.discard` and the rest of WebKit's tabs surface; namespaces the probe does not declare read absent.
+        for namespace in ["runtime", "storage", "tabs", "tabGroups", "scripting", "declarativeNetRequest", "alarms", "cookies",
+                          "contextMenus", "i18n", "permissions", "windows", "action", "commands", "webNavigation", "omnibox",
+                          "notifications", "idle", "history", "bookmarks", "downloads", "management"] {
+            XCTAssertTrue(report.contains("\(namespace)\tfull"), "\(namespace) is complete in the service worker")
+        }
+        XCTAssertEqual(context.errors.map(\.localizedDescription), [], "the probe reports no errors")
+
+        // Past the moment WebKit replaces a page's chrome.* objects, Lilo's additions are still there.
+        let options = try XCTUnwrap(window.tabManager.engineTab(for: try XCTUnwrap(window.tabManager.activeTabId))?.view as? WKWebView)
+        try await Task.sleep(for: .seconds(3))
+        let badgeColors = try await options.evaluateJavaScript("typeof chrome.action.getBadgeTextColor + '/' + typeof chrome.runtime.getContexts") as? String
+        XCTAssertEqual(badgeColors, "function/function")
+        // testMatchOutcome re-evaluates the rules WebKit applies: the probe's static block rule.
+        let outcome = try await options.callAsyncJavaScript(
+            "return await chrome.declarativeNetRequest.testMatchOutcome({ url: 'https://example.com/lilo-dnr-block-probe', type: 'xmlhttprequest' })",
+            arguments: [:], in: nil, contentWorld: .page
+        ) as? [String: Any]
+        let matched = outcome?["matchedRules"] as? [[String: Any]]
+        XCTAssertEqual(matched?.first?["ruleId"] as? Int, 1)
+        XCTAssertEqual(matched?.first?["rulesetId"] as? String, "probe_ruleset")
+        // A disabled static rule turns inert in its file, which WebKit compiles again; enabled, it is back.
+        let disabled = try await options.callAsyncJavaScript("""
+            const dnr = chrome.declarativeNetRequest;
+            const request = { url: 'https://example.com/lilo-dnr-block-probe', type: 'xmlhttprequest' };
+            await dnr.updateStaticRules({ rulesetId: 'probe_ruleset', disableRuleIds: [1] });
+            const off = [JSON.stringify(await dnr.getDisabledRuleIds({ rulesetId: 'probe_ruleset' })), (await dnr.testMatchOutcome(request)).matchedRules.length];
+            await dnr.updateStaticRules({ rulesetId: 'probe_ruleset', enableRuleIds: [1] });
+            const on = [JSON.stringify(await dnr.getDisabledRuleIds({ rulesetId: 'probe_ruleset' })), (await dnr.testMatchOutcome(request)).matchedRules.length];
+            return [...off, ...on, JSON.stringify(await dnr.getEnabledRulesets())].join(' ');
+            """, arguments: [:], in: nil, contentWorld: .page) as? String
+        XCTAssertEqual(disabled, #"[1] 0 [] 1 ["probe_ruleset"]"#)
+    }
+}

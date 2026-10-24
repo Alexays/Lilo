@@ -1,0 +1,433 @@
+{
+ "chrome": "Chrome/156.0.8078.47",
+ "results": {
+  "storage.local roundtrip": {
+   "result": {
+    "a": 1,
+    "b": {
+     "c": [
+      true,
+      null,
+      "x"
+     ]
+    }
+   }
+  },
+  "storage.local.get invalid keys": {
+   "result": "Error in invocation of storage.get(optional [string|array|object] keys, optional function callback): No matching signature."
+  },
+  "storage.onChanged payload": {
+   "result": [
+    {
+     "watched": {
+      "newValue": 2,
+      "oldValue": 1
+     }
+    },
+    "local"
+   ]
+  },
+  "indexedDB in a page": {
+   "result": {
+    "n": 1
+   }
+  },
+  "indexedDB in the worker": {
+   "result": {
+    "n": 1
+   }
+  },
+  "storage.session quota constant": {
+   "result": 10485760
+  },
+  "runtime.getPlatformInfo": {
+   "result": "mac"
+  },
+  "runtime.getManifest name": {
+   "result": "Lilo contract probe"
+  },
+  "runtime.sendMessage without listener": {
+   "result": "Could not establish connection. Receiving end does not exist."
+  },
+  "runtime.sendMessage callback without listener": {
+   "result": "undefined Could not establish connection. Receiving end does not exist."
+  },
+  "runtime enums": {
+   "result": [
+    "update",
+    "mac"
+   ]
+  },
+  "alarms.create and get": {
+   "result": {
+    "name": "string",
+    "persistAcrossSessions": "boolean",
+    "scheduledTime": "number"
+   }
+  },
+  "alarms.get missing": {
+   "result": "undefined"
+  },
+  "tabs.query shape": {
+   "result": {
+    "active": "boolean",
+    "audible": "boolean",
+    "autoDiscardable": "boolean",
+    "discarded": "boolean",
+    "frozen": "boolean",
+    "groupId": "number",
+    "height": "number",
+    "highlighted": "boolean",
+    "id": "number",
+    "incognito": "boolean",
+    "index": "number",
+    "lastAccessed": "number",
+    "mutedInfo": {
+     "muted": "boolean"
+    },
+    "pinned": "boolean",
+    "selected": "boolean",
+    "splitViewId": "number",
+    "status": "string",
+    "title": "string",
+    "url": "string",
+    "width": "number",
+    "windowId": "number"
+   }
+  },
+  "tabs.get invalid id": {
+   "result": "Error in invocation of tabs.get(integer tabId, optional function callback): Error at parameter 'tabId': Value must be at least 0."
+  },
+  "tabs.create and remove events": {
+   "result": {
+    "created": [
+     {
+      "active": "boolean",
+      "audible": "boolean",
+      "autoDiscardable": "boolean",
+      "discarded": "boolean",
+      "frozen": "boolean",
+      "groupId": "number",
+      "height": "number",
+      "highlighted": "boolean",
+      "id": "number",
+      "incognito": "boolean",
+      "index": "number",
+      "lastAccessed": "number",
+      "mutedInfo": {
+       "muted": "boolean"
+      },
+      "pendingUrl": "string",
+      "pinned": "boolean",
+      "selected": "boolean",
+      "splitViewId": "number",
+      "status": "string",
+      "title": "string",
+      "url": "string",
+      "width": "number",
+      "windowId": "number"
+     }
+    ],
+    "removed": [
+     "number",
+     {
+      "isWindowClosing": "boolean",
+      "windowId": "number"
+     }
+    ]
+   }
+  },
+  "tabs.TAB_ID_NONE": {
+   "result": -1
+  },
+  "windows.getAll shape": {
+   "result": {
+    "alwaysOnTop": "boolean",
+    "focused": "boolean",
+    "height": "number",
+    "id": "number",
+    "incognito": "boolean",
+    "left": "number",
+    "state": "string",
+    "top": "number",
+    "type": "string",
+    "width": "number"
+   }
+  },
+  "windows.WINDOW_ID_CURRENT": {
+   "result": -2
+  },
+  "cookies.onChanged sequence": {
+   "result": [
+    [
+     false,
+     "explicit",
+     "1"
+    ],
+    [
+     true,
+     "overwrite",
+     "1"
+    ],
+    [
+     false,
+     "explicit",
+     "2"
+    ],
+    [
+     true,
+     "explicit",
+     "2"
+    ]
+   ]
+  },
+  "cookies.get shape": {
+   "result": {
+    "domain": "string",
+    "hostOnly": "boolean",
+    "httpOnly": "boolean",
+    "name": "string",
+    "path": "string",
+    "sameSite": "string",
+    "secure": "boolean",
+    "session": "boolean",
+    "storeId": "string",
+    "value": "string"
+   }
+  },
+  "bookmarks.create and onCreated": {
+   "result": [
+    "string",
+    {
+     "dateAdded": "number",
+     "id": "string",
+     "index": "number",
+     "parentId": "string",
+     "syncing": "boolean",
+     "title": "string",
+     "url": "string"
+    }
+   ]
+  },
+  "bookmarks.get missing": {
+   "result": "Can't find bookmark for id."
+  },
+  "bookmarks.getTree root shape": {
+   "result": {
+    "children": [
+     {
+      "children": [],
+      "dateAdded": "number",
+      "dateGroupModified": "number",
+      "folderType": "string",
+      "id": "string",
+      "index": "number",
+      "parentId": "string",
+      "syncing": "boolean",
+      "title": "string"
+     }
+    ],
+    "dateAdded": "number",
+    "id": "string",
+    "syncing": "boolean",
+    "title": "string"
+   }
+  },
+  "history.addUrl and search": {
+   "result": {
+    "id": "string",
+    "lastVisitTime": "number",
+    "title": "string",
+    "typedCount": "number",
+    "url": "string",
+    "visitCount": "number"
+   }
+  },
+  "contextMenus duplicate id": {
+   "result": "Cannot create item with duplicate id dup"
+  },
+  "declarativeNetRequest invalid rule": {
+   "result": "Rule with id 0 has an invalid value for id key. This should be greater than or equal to 1."
+  },
+  "declarativeNetRequest dynamic rules": {
+   "result": [
+    {
+     "action": {
+      "type": "block"
+     },
+     "condition": {
+      "urlFilter": "contract-block"
+     },
+     "id": 5,
+     "priority": 1
+    }
+   ]
+  },
+  "downloads.search empty": {
+   "result": []
+  },
+  "management.getSelf shape": {
+   "result": {
+    "description": "string",
+    "enabled": "boolean",
+    "homepageUrl": "string",
+    "hostPermissions": [
+     "string"
+    ],
+    "id": "string",
+    "installType": "string",
+    "isApp": "boolean",
+    "mayDisable": "boolean",
+    "name": "string",
+    "offlineEnabled": "boolean",
+    "optionsUrl": "string",
+    "permissions": [
+     "string"
+    ],
+    "shortName": "string",
+    "type": "string",
+    "version": "string",
+    "versionName": "string"
+   }
+  },
+  "permissions.contains": {
+   "result": [
+    true,
+    false
+   ]
+  },
+  "permissions.request outside a gesture": {
+   "result": "This function must be called during a user gesture"
+  },
+  "idle.queryState": {
+   "result": "string"
+  },
+  "i18n.getUILanguage type": {
+   "result": "string"
+  },
+  "i18n.getMessage extension id": {
+   "result": true
+  },
+  "topSites.get shape": {
+   "result": true
+  },
+  "sessions.MAX_SESSION_RESULTS": {
+   "result": 25
+  },
+  "system.cpu.getInfo shape": {
+   "result": {
+    "archName": "string",
+    "features": [],
+    "modelName": "string",
+    "numOfProcessors": "number",
+    "processors": [
+     {
+      "usage": {
+       "idle": "number",
+       "kernel": "number",
+       "total": "number",
+       "user": "number"
+      }
+     }
+    ],
+    "temperatures": []
+   }
+  },
+  "system.memory.getInfo shape": {
+   "result": {
+    "availableCapacity": "number",
+    "capacity": "number"
+   }
+  },
+  "notifications.create missing fields": {
+   "result": "no error"
+  },
+  "action.setBadgeText and get": {
+   "result": "12"
+  },
+  "webNavigation on a missing tab": {
+   "result": [
+    null,
+    null
+   ]
+  },
+  "webNavigation on a tab before its first commit": {
+   "result": [
+    [],
+    null
+   ]
+  },
+  "webNavigation on a new tab": {
+   "result": [
+    [],
+    null
+   ]
+  },
+  "webNavigation on a discarded tab": {
+   "result": [
+    [
+     [
+      0,
+      -1,
+      "https://contract.example/discarded"
+     ]
+    ],
+    [
+     -1,
+     "https://contract.example/discarded"
+    ]
+   ]
+  },
+  "scripting.executeScript on a missing tab": {
+   "result": "No tab with id: 999999"
+  },
+  "storage.local non-finite numbers": {
+   "result": {
+    "nonFinite": {
+     "kept": 1,
+     "list": [
+      null,
+      2
+     ]
+    }
+   }
+  },
+  "instanceID.getID": {
+   "result": [
+    true,
+    true,
+    true,
+    "number",
+    true
+   ]
+  },
+  "instanceID.deleteID": {
+   "result": [
+    0,
+    true
+   ]
+  },
+  "pageCapture.saveAsMHTML on a missing tab": {
+   "result": "Cannot find the tab for this request."
+  },
+  "pageCapture.saveAsMHTML on about:blank": {
+   "result": "Don't have permissions required to capture this page."
+  },
+  "pageCapture.saveAsMHTML on an extension page": {
+   "result": {
+    "blob": true,
+    "type": "",
+    "headers": [
+     "From",
+     "Snapshot-Content-Location",
+     "Subject",
+     "Date",
+     "MIME-Version",
+     "Content-Type"
+    ],
+    "location": true,
+    "captured": true
+   }
+  }
+ }
+}

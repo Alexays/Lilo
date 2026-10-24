@@ -1,0 +1,161 @@
+name: Lilo
+
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "26.0"
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    from: 7.10.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.10.0
+
+targets:
+  Lilo:
+    type: application
+    platform: macOS
+    configFiles: &configFiles
+      Debug: Xcode/Configs/Base.xcconfig
+      Release: Xcode/Configs/Release.xcconfig
+    settings:
+      base:
+        INFOPLIST_FILE: Lilo/Info.plist
+        # Empty in Release; .debug in Debug, and .tests for make's test host (see configs below).
+        PRODUCT_BUNDLE_IDENTIFIER: fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)
+        PRODUCT_NAME: Lilo
+        # Icon Composer file: actool turns it into Assets.car (Liquid Glass appearances) plus AppIcon.icns.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # libghostty-vt bundles C++ (simdutf, highway).
+        OTHER_LDFLAGS: $(inherited) -lc++
+
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: Lilo/Lilo.Debug.entitlements
+          # Never the installed app's identity: its own defaults, WebKit data, keychain access and helper.
+          # Matches BuildIdentity.appIdentifier; make's test targets override it with .tests.
+          LILO_BUNDLE_ID_SUFFIX: .debug
+          # Each build ships only the launch daemon its PowerHelperIdentity registers.
+          EXCLUDED_SOURCE_FILE_NAMES: fr.arouillard.lilo.power.plist
+        Release:
+          CODE_SIGN_ENTITLEMENTS: Lilo/Lilo.entitlements
+          EXCLUDED_SOURCE_FILE_NAMES: fr.arouillard.lilo.debug.power.plist
+    dependencies:
+      - package: GRDB
+        product: GRDB
+      - package: Sparkle
+        product: Sparkle
+      - framework: Vendor/GhosttyVt.xcframework
+        embed: false
+      - target: LiloPowerHelper
+        embed: true
+        copy:
+          destination: executables
+      - target: LiloMCP
+        embed: true
+        copy:
+          destination: executables
+    sources:
+      # Every folder under Lilo/ is a source group; the entries below cover what needs other handling.
+      - path: Lilo
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+          - Extensions/bridge-src
+          - ContentBlocker/BlockerResources
+          - Generated
+          - Resources
+      # Copied whole into the content blocker's built-in extension: kept as one folder.
+      - path: Lilo/ContentBlocker/BlockerResources
+        type: folder
+      # Build products of make ui-build / bridge-gen; gitignored, so a fresh checkout may lack them.
+      - path: Lilo/Generated
+        optional: true
+      - path: LiloPowerHelper/fr.arouillard.lilo.power.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchDaemons
+      - path: LiloPowerHelper/fr.arouillard.lilo.debug.power.plist
+        buildPhase:
+          copyFiles:
+            destination: wrapper
+            subpath: Contents/Library/LaunchDaemons
+      - path: Lilo/Lilo.Debug.entitlements
+        buildPhase: none
+      - path: Lilo/Lilo.entitlements
+        buildPhase: none
+      - path: Lilo/Resources
+        buildPhase: resources
+        includes:
+          - "AppIcon.icon"
+          - "Lilo.sdef"
+          - "fr.lproj"
+      - path: Lilo/Resources/AppIcons
+        type: folder
+        buildPhase: resources
+      - path: Lilo/Resources/shell-integration
+        type: folder
+        buildPhase: resources
+
+  LiloPowerHelper:
+    type: tool
+    platform: macOS
+    configFiles: *configFiles
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.arouillard.lilo.power-helper
+        PRODUCT_NAME: LiloPowerHelper
+        GENERATE_INFOPLIST_FILE: YES
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+        SKIP_INSTALL: YES
+    sources:
+      - path: LiloPowerHelper/main.swift
+      - path: Lilo/App/BuildIdentity.swift
+      - path: Lilo/Power/PowerHelperListener.swift
+      - path: Lilo/Power/PowerHelperProtocol.swift
+      - path: Lilo/Power/PowerHelperService.swift
+      - path: Lilo/Power/SystemPowerBackend.swift
+
+  # What an agent launches as its MCP server: a pipe to the running Lilo's agent socket.
+  LiloMCP:
+    type: tool
+    platform: macOS
+    configFiles: *configFiles
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.arouillard.lilo.mcp
+        PRODUCT_NAME: lilo-mcp
+        GENERATE_INFOPLIST_FILE: YES
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+        SKIP_INSTALL: YES
+    sources:
+      - path: LiloMCP/main.swift
+      - path: Lilo/App/BuildIdentity.swift
+
+  LiloTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: LiloTests
+    dependencies:
+      - target: Lilo
+    settings:
+      base:
+        # Not on the shared xcconfig's Swift 6: the tests are not yet clean under strict concurrency.
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        # Registers the observer that removes the WebKit stores tests leave behind.
+        INFOPLIST_KEY_NSPrincipalClass: LiloTestRunCleanup
+
+schemes:
+  Lilo:
+    build:
+      targets:
+        Lilo: all
+        LiloTests: [test]
+    test:
+      targets:
+        - LiloTests

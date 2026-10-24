@@ -1,0 +1,7 @@
+# Artifacts Lilo's extension preparer writes into the folder when this probe is loaded unpacked.
+# They are regenerated on every load; ignoring them keeps a load from dirtying the repo.
+# manifest.json is also rewritten in place on load: `git restore manifest.json` after loading,
+# or load from a copy outside the repo to leave the source untouched.
+_lilo/
+lilo-background-wrapper.js
+lilo-background-prelude.js
