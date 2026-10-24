@@ -82,6 +82,7 @@
 		},
 		"importBrowsersAction": "Importer",
 		"passwordManagerAction": "Choisir",
+		"passwordManagerChange": "Changer",
 		"replayOnboardingAction": "Revoir",
 		"defaultBrowserSet": "Définir par défaut",
 		"defaultBrowserLater": "Plus tard",
@@ -194,6 +195,7 @@
 			},
 			"passwordManager": {
 				"title": "Ajouter un gestionnaire de mots de passe",
+				"installedTitle": "Gestionnaire de mots de passe",
 				"description": "Lilo ne garde aucun mot de passe."
 			},
 			"importBrowsers": {

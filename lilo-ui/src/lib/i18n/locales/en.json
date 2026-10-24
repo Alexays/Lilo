@@ -82,6 +82,7 @@
 		},
 		"importBrowsersAction": "Import",
 		"passwordManagerAction": "Choose",
+		"passwordManagerChange": "Change",
 		"replayOnboardingAction": "Replay",
 		"defaultBrowserSet": "Set as default",
 		"defaultBrowserLater": "Later",
@@ -194,6 +195,7 @@
 			},
 			"passwordManager": {
 				"title": "Add a password manager",
+				"installedTitle": "Password manager",
 				"description": "Lilo keeps no passwords itself."
 			},
 			"importBrowsers": {

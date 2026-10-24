@@ -8,6 +8,8 @@
     checkExtensionUpdates,
     getExtensionUpdateCheck,
   } from "../../stores/extensions.svelte";
+  import { PASSWORD_MANAGERS } from "../onboarding/onboardingModel";
+  import { getExtensions } from "../../stores/extensions.svelte";
   import { startOnboarding } from "../../stores/onboarding.svelte";
   import {
     closeSettingsShell,
@@ -96,15 +98,24 @@
   const alwaysAllowed = $derived(id === "agentAlwaysAllowed" ? parseBlockerSites(getSetting("agentAlwaysAllowedSites", "")) : []);
   const count = $derived(id === "sites" ? siteCount : id === "blockerSites" ? blockerSites.length : 0);
 
+  // The passwords row names the manager the user already has, by its own short name rather than its store title.
+  const passwordManagers = $derived(
+    id === "passwordManager"
+      ? PASSWORD_MANAGERS.filter((manager) => getExtensions().some((extension) => extension.id === manager.id && extension.isEnabled)).map((manager) => manager.name)
+      : [],
+  );
+
   // The memory row describes the preset in effect, the device row the displays connected now and
   // what is remembered for them, and the version row the build running.
   const title = $derived.by(() => {
     if (id === "deviceSetup") return deviceSetup.label || t("settings.devices.builtinOnly");
     if (id === "appUpdates") return t("settings.items.appUpdates.title", { version: updater?.version ?? "" });
+    if (passwordManagers.length > 0) return t("settings.items.passwordManager.installedTitle");
     return t(settingTitleKey(id));
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
+    if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "blockerSites") return blockerSites.length > 0 ? blockerSites.join(", ") : t(settingDescriptionKey(id));
     if (id === "agentAlwaysAllowed") return alwaysAllowed.join(", ");
     if (id === "appUpdates") {
@@ -211,7 +222,7 @@
     {:else if id === "importBrowsers"}
       <UiButton onclick={() => { closeSettingsShell(); startOnboarding("import"); }}>{t("settings.importBrowsersAction")}</UiButton>
     {:else if id === "passwordManager"}
-      <UiButton onclick={() => { closeSettingsShell(); startOnboarding("passwords"); }}>{t("settings.passwordManagerAction")}</UiButton>
+      <UiButton onclick={() => { closeSettingsShell(); startOnboarding("passwords"); }}>{t(passwordManagers.length > 0 ? "settings.passwordManagerChange" : "settings.passwordManagerAction")}</UiButton>
     {:else if id === "replayOnboarding"}
       <UiButton onclick={() => { closeSettingsShell(); startOnboarding("full"); }}>{t("settings.replayOnboardingAction")}</UiButton>
     {:else if id === "language"}

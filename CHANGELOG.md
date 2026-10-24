@@ -8,6 +8,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Changed
 
+- Settings name the password manager you already use, with a Change button, instead of always offering to add one.
 - The passwords step of the setup shows each password manager's own icon instead of its initial.
 
 ### Fixed

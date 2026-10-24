@@ -16,3 +16,19 @@ test("the Agents space stays out of the spaces settings list and its search", as
 	await page.locator(".section-nav-toolbar .ui-search-field input").fill("Pla");
 	await expect(page.locator(".settings-section-content").getByText("Play", { exact: true })).toHaveCount(0);
 });
+
+test("the passwords row names the password manager already installed", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => {
+		const extension = {
+			id: "ghmbeldphafepmbegfdlkpapadhbakde", name: "Proton Pass: Free Password Manager", version: "1.42.0", description: "", isEnabled: true,
+			hasPopup: true, hasBackground: true, hasContentScripts: true, badgeText: "", badgeColor: "#5b5bd6",
+		};
+		window.__lilo!.receive({ event: "extensionsChanged", ids: [extension.id], extensions: [extension] });
+		window.__lilo!.receive({ event: "openSettings" });
+	});
+	await page.locator(".section-nav-button", { hasText: "Extensions" }).click();
+	const row = page.locator(".ui-list-row", { hasText: "Password manager" });
+	await expect(row).toContainText("Proton Pass");
+	await expect(row.getByRole("button", { name: "Change" })).toBeVisible();
+});
