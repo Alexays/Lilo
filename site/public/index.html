@@ -54,12 +54,12 @@
       Lilo
     </a>
     <nav aria-label="Main">
+      <a class="hide" href="#agents">Agents</a>
       <a class="hide" href="#native">Native</a>
       <a class="hide" href="#extensions">Extensions</a>
       <a class="hide" href="#privacy">Privacy</a>
       <a class="hide" href="#build">Terminal</a>
       <a class="hide" href="#faq">FAQ</a>
-      <a class="hide" href="#agents">Agents</a>
       <a class="hide" href="/moving/">Moving</a>
       <a class="pill soft" href="https://github.com/Alexays/Lilo">GitHub</a>
     </nav>
@@ -71,7 +71,7 @@
         <use href="#petal-4"/><use href="#petal-3"/><use href="#petal-2"/><use href="#petal-1"/>
       </svg>
       <h1>Your internet,<br><span>in bloom.</span></h1>
-      <p class="sub">Light on your Mac, quick on the web. Free and open source.<br>Spaces with their own sign-ins, the Chrome extensions you rely on, and a battery that lasts the day.</p>
+      <p class="sub">Light on your Mac, quick on the web. Free and open source.<br>Spaces with their own sign-ins, the Chrome extensions you rely on, room for your AI agents, and a battery that lasts the day.</p>
       <div class="cta">
         <a class="pill dark" href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg">Download for Mac</a>
         <a class="pill soft" href="https://github.com/Alexays/Lilo">Star on GitHub</a>
@@ -98,6 +98,41 @@
 </div>
 
 <main>
+  <section class="band" id="agents">
+    <div class="wrap agents">
+      <div class="head" style="margin:0">
+        <span class="tag">For AI agents</span>
+        <h2>Your agents get their own Space.</h2>
+        <p>Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any MCP client open tabs, click, type, and read pages, the console and the network, in a real browser beside you.</p>
+        <div class="ag-list">
+          <div><span><b>Their own Space.</b> Agents open tabs in a folder of the Agents Space, signed in nowhere by default. Your keyboard, your mouse and your tabs stay yours.</span></div>
+          <div><span><b>You say yes first.</b> Lilo asks before an agent sends, pays, deletes or publishes. Each agent is approved once, and none ever sees a private Space.</span></div>
+          <div><span><b>One click to connect.</b> In Settings, Connect adds Lilo to Claude Code, Claude Desktop, Codex or Cursor. Any other client copies the configuration.</span></div>
+        </div>
+        <div class="ag-cta"><a class="pill dark" href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">How agents work</a><span>No AI inside Lilo: bring the agent you already use.</span></div>
+      </div>
+      <div class="window agwin" role="img" aria-label="Lilo with the Agents Space open. Claude Code works in its own folder, on a checkout page, and the address bar asks: Claude Code wants to click &quot;Pay now&quot; in Checkout (shop.test). Deny, Always Allow on shop.test, or Allow Once.">
+        <div class="sb">
+          <div class="chrome-row"><div class="lights"><i></i><i></i><i></i></div><div class="navs"><span>&#9707;</span><span>&#8249;</span><span>&#8250;</span><span>&#8635;</span></div></div>
+          <div class="addr ask"><span><b>shop.test</b>/checkout</span><div class="ask-msg"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 3.6 9.4 5.2-4 1.2 2.6 4.6-1.8 1-2.6-4.6-3 2.8Z"/></svg><span><b>Claude Code</b> wants to click "Pay now" in Checkout (shop.test).</span></div><div class="ask-acts"><span>Deny</span><span>Always Allow on shop.test</span><span>Allow Once</span></div></div>
+          <div class="shead">&#129302; Agents<em>&#9788;</em></div>
+          <div class="row-item"><span class="fi"></span><span class="tt">Checkout bug</span></div>
+          <div class="row-item in on agent"><span class="fav" style="background:#d97757">S</span><span class="tt">Checkout</span><span class="who">agent</span></div>
+          <div class="row-item in"><span class="fav" style="background:#d97757">S</span><span class="tt">Order history</span></div>
+          <div class="spacebar"><i>&#127968;</i><i>&#128188;</i><i class="on">&#129302;</i></div>
+        </div>
+        <div class="view"><div class="pay">
+          <small>shop.test</small>
+          <h4>Checkout</h4>
+          <div class="ln"><span>Linen tote</span><span>$48.00</span></div>
+          <div class="card">Test card, 4242</div>
+          <div class="ln tot"><span>Total</span><span>$48.00</span></div>
+          <div class="go">Pay now<span class="cur"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 2l12 6.6-5.2 1.5 3.2 5.6-2.3 1.3-3.2-5.6L3.6 15Z"/></svg><span>Claude Code</span></span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="native">
     <div class="wrap native">
       <div>
@@ -195,31 +230,6 @@
           <div>xcodebuild test <span class="spin">running</span></div>
         </div>
         <div class="awake"><i></i><span><b>Awake, lid closed</b><small>While make validate works</small></span><button type="button">Let sleep</button></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="agents">
-    <div class="wrap agents">
-      <div class="head" style="margin:0">
-        <span class="tag">For your agents</span>
-        <h2>Your agents get their own Space.</h2>
-        <p>Claude Code, Codex or Cursor drive Lilo over MCP: open tabs, click, type, read the console and the network. They work in the Agents Space, so your keyboard and your tabs stay yours.</p>
-        <div class="ag-list">
-          <div><span><b>One click to connect.</b> Lilo writes the MCP config for the agents it finds.</span></div>
-          <div><span><b>Real browser, real sessions.</b> An agent can borrow one of your profiles after you allow it.</span></div>
-          <div><span><b>No AI inside Lilo.</b> Bring the agent you already pay for. Lilo sends nothing anywhere.</span></div>
-        </div>
-      </div>
-      <div class="bench2" aria-label="Benchmark table">
-        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>Browser Use Bench v2.1, 100 tasks, Claude Code</span></div>
-        <div class="scroll">
-          <table>
-            <thead><tr><th>Browser tool</th><th>Success</th><th>Tokens</th><th>Cost</th><th>Time</th></tr></thead>
-          </table>
-        </div>
-        <div class="soon"><b>Benchmarks coming soon</b><span>Lilo MCP, Playwright MCP and Chrome DevTools MCP, side by side.</span></div>
-        <span class="wait">Same model, same tasks, 3 runs each. The harness ships with the results.</span>
       </div>
     </div>
   </section>
