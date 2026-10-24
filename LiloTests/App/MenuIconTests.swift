@@ -78,8 +78,7 @@ final class MenuIconTests: XCTestCase {
         }
     }
 
-    /// Lilo's menu bar items get their symbols when the menu opens. AppKit also inserts its own items,
-    /// such as Writing Tools, whose appearance it controls.
+    /// Lilo's menu bar items get their symbols when the menu opens, those it builds plainly included.
     func testEveryLiloMainMenuItemHasAnIcon() throws {
         let saved = NSApp.mainMenu
         defer { NSApp.mainMenu = saved }
@@ -97,7 +96,8 @@ final class MenuIconTests: XCTestCase {
             // What AppKit calls as the menu opens; a dynamic menu repopulates first, then shows its images the same way.
             if menu.delegate is MenuBarImageLoader { menu.delegate?.menuNeedsUpdate?(menu) } else { menu.showItemImages() }
             for item in menu.items where !item.isSeparatorItem && !item.isHidden {
-                if item is SymbolMenuItem, item.image == nil || !isShown(item) { missing.append(item.title) }
+                // AppKit names the items it inserts (Dictation, AutoFill, Emoji & Symbols), whose appearance it controls; Lilo names none.
+                if item.identifier == nil, item.image == nil || !isShown(item) { missing.append(item.title) }
                 item.submenu.map(visit)
             }
         }
