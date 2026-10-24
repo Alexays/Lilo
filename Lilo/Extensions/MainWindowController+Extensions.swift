@@ -120,7 +120,7 @@ extension MainWindowController {
                 changed.append(row)
                 continue
             }
-            guard !(previous as NSDictionary).isEqual(to: row) else { continue }
+            guard previous["rowVersion"] as? Int != row["rowVersion"] as? Int else { continue }
             var delta = row
             if let icon = row["iconDataURL"] as? String, icon == previous["iconDataURL"] as? String {
                 delta["iconDataURL"] = nil

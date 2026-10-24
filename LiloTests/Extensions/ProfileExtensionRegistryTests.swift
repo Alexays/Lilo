@@ -774,6 +774,21 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         await fulfillment(of: [changed], timeout: 2)
     }
 
+    func testARebuiltRowKeepsItsVersionUntilOneOfItsFieldsChanges() async throws {
+        try await registry.load(from: try createMinimalExtension(named: "row_version_extension", in: tempDir))
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let version = { self.registry.extensionBridgePayloads(activeTab: nil).first?["rowVersion"] as? Int }
+        let first = try XCTUnwrap(version())
+
+        registry.refreshActionsForActiveTabChange()
+        XCTAssertEqual(version(), first, "the row is rebuilt as it was")
+
+        registry.updateActionColor(for: id) { $0.badgeColor = "#123456" }
+        let second = try XCTUnwrap(version())
+        XCTAssertNotEqual(second, first)
+        XCTAssertEqual(version(), second, "a cached row keeps its version")
+    }
+
     func testActionChangeBumpsIconVersionInExtensionSnapshot() async throws {
         let extDir = try createActionExtension(named: "action_icon_version_extension", displayName: "Action Icon Version")
 

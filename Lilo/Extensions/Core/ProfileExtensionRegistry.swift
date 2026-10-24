@@ -48,6 +48,8 @@ final class ProfileExtensionRegistry {
         var staticBridgePayload: [String: Any]?
         /// Whole rows by the active tab whose action they show: windows of the profile each show their own.
         var bridgePayloads: [UUID?: [String: Any]] = [:]
+        /// The row last built, whose `rowVersion` a rebuilt identical row keeps.
+        var lastBridgePayload: [String: Any]?
     }
 
     struct ExtensionPageDiagnostic {
@@ -106,8 +108,8 @@ final class ProfileExtensionRegistry {
     /// Called when extensions load/unload so the UI can refresh.
     var onExtensionsChanged: (() -> Void)?
     private var extensionsChangedFlushPending = false
-    /// Payloads as of the last `onExtensionsChanged`; a flush that rebuilds identical ones stays silent.
-    private var lastNotifiedBridgePayloads: [[String: Any]] = []
+    /// Row versions as of the last `onExtensionsChanged`; a flush whose rows keep theirs stays silent.
+    private var lastNotifiedRowVersions: [Int] = []
 
     /// Coalesces to one `onExtensionsChanged` per main-actor turn: badge updates and tab activations
     /// arrive in bursts, and each callback rebuilds and pushes every bridge payload to the chrome UI.
@@ -118,10 +120,10 @@ final class ProfileExtensionRegistry {
             guard let self else { return }
             self.extensionsChangedFlushPending = false
             guard self.onExtensionsChanged != nil else { return }
-            let payloads = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.visibleActiveAdapter)
-            guard self.updater.statusChanged || !(payloads as NSArray).isEqual(to: self.lastNotifiedBridgePayloads) else { return }
+            let versions = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.visibleActiveAdapter).map { $0["rowVersion"] as? Int ?? 0 }
+            guard self.updater.statusChanged || versions != self.lastNotifiedRowVersions else { return }
             self.updater.statusChanged = false
-            self.lastNotifiedBridgePayloads = payloads
+            self.lastNotifiedRowVersions = versions
             self.onExtensionsChanged?()
         }
     }
@@ -934,8 +936,23 @@ final class ProfileExtensionRegistry {
         return ExtensionNavigationTarget(url: url, webViewConfiguration: webViewConfiguration)
     }
 
-    /// Returns fully-populated bridge payloads for each extension, reading real values from WebKit.
-    /// The action (icon, badge, enabled state) is the one `activeTab` shows: each window passes its own.
+    /// Shared by every registry: a window showing another profile's row of the same id must not find its version.
+    private static var lastRowVersion = 0
+
+    /// Gives `row` the `rowVersion` of `last` when they are equal, else a new one: rows compare by version alone.
+    private static func setRowVersion(_ row: inout [String: Any], after last: [String: Any]?) {
+        row["rowVersion"] = last?["rowVersion"]
+        if let last, (row as NSDictionary).isEqual(to: last) { return }
+        lastRowVersion += 1
+        row["rowVersion"] = lastRowVersion
+    }
+
+    /// The disabled and failed rows as last built, by id: built on every call, they keep their version while equal.
+    private var storedBridgePayloads: [String: [String: Any]] = [:]
+
+    /// Returns fully-populated bridge payloads for each extension, reading real values from WebKit, each with a
+    /// `rowVersion` that changes with its fields. The action (icon, badge, enabled state) is the one `activeTab`
+    /// shows: each window passes its own.
     func extensionBridgePayloads(activeTab: TabExtensionAdapter?) -> [[String: Any]] {
         var payloads: [[String: Any]] = []
         payloads.reserveCapacity(loadedRuntimes.count + disabledStoredExtensions.count + failedRestores.count)
@@ -948,9 +965,12 @@ final class ProfileExtensionRegistry {
             var payload = loadedRuntimes[index].staticBridgePayload ?? buildStaticBridgePayload(at: index)
             loadedRuntimes[index].staticBridgePayload = payload
             addActionFields(to: &payload, at: index, activeTab: activeTab)
+            Self.setRowVersion(&payload, after: loadedRuntimes[index].lastBridgePayload)
+            loadedRuntimes[index].lastBridgePayload = payload
             loadedRuntimes[index].bridgePayloads[tabId] = payload
             payloads.append(payload)
         }
+        let loadedCount = payloads.count
         // A disabled extension has no WKWebExtension to read from; the row carries what storage kept.
         for stored in disabledStoredExtensions {
             let facts = storedManifestFacts(for: stored)
@@ -979,6 +999,13 @@ final class ProfileExtensionRegistry {
                 "error": error
             ] as [String: Any])
         }
+        var stored: [String: [String: Any]] = [:]
+        for index in payloads.indices.dropFirst(loadedCount) {
+            guard let id = payloads[index]["id"] as? String else { continue }
+            Self.setRowVersion(&payloads[index], after: storedBridgePayloads[id])
+            stored[id] = payloads[index]
+        }
+        storedBridgePayloads = stored
         return payloads
     }
 
