@@ -295,7 +295,7 @@ logs-stream:
 site-dev: $(SITE_DEPS)
 	@npm --prefix site run dev
 
-## Regenerate the landing page's JSON-LD from its HTML
+## Regenerate the landing page's Markdown copies, llms-full.txt and JSON-LD from its HTML
 site-generate:
 	@python3 site/generate.py
 

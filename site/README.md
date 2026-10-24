@@ -4,9 +4,12 @@ The Lilo landing page: plain static files in `public/`, served by a Cloudflare W
 
 ## Generated files
 
-The HTML pages are the source. `generate.py` (no dependencies) keeps their JSON-LD in step with them: the `FAQPage` must match the visible FAQ word for word, and `softwareVersion` is read from `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`.
+The HTML pages are the source. `generate.py` (no dependencies) derives from them:
 
-After editing a page, run `make site-generate` (or `python3 site/generate.py`) and commit the result. `npm run deploy` runs it too. A new page also needs its entry in `generate.py`, `sitemap.xml` and `_redirects`.
+- the Markdown copy of each page (`index.md` beside each `index.html`) and `llms-full.txt`, the English pages in one file, for AI agents ([llms.txt](https://llmstxt.org); `llms.txt` itself is written by hand);
+- in each page's JSON-LD, the `FAQPage`, which must match the visible FAQ word for word, and the `softwareVersion`, read from `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`.
+
+After editing a page, run `make site-generate` (or `python3 site/generate.py`) and commit the result. `npm run deploy` runs it too. A new page also needs its entry in `generate.py`, `sitemap.xml`, `llms.txt` and `_redirects`.
 
 ## Preview locally
 

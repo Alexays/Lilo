@@ -1,0 +1,32 @@
+# Lilo
+
+> Lilo is a free, open-source (MIT) native browser for macOS, built in Swift on WebKit, the engine Safari uses, with no bundled Chromium and no Electron. It has a sidebar with Spaces that each keep their own sign-ins, runs Manifest V3 extensions from the Chrome Web Store, has terminal tabs beside your pages, and includes a local MCP server so AI agents can drive a real browser in their own Space. Lilo is in public beta.
+
+Lilo is for Mac users who live in a sidebar, people leaving Arc or looking for a lighter alternative to Chrome or Safari, developers who want a terminal and localhost next to their docs, and anyone who wants their AI agents (Claude Code, Codex, Cursor or any MCP client) to browse beside them.
+
+- Requirements: macOS 26 or later. It is a Mac app only, with no sync and no mobile app.
+- Price: free. No account, no telemetry, no analytics, and the project runs no server.
+- Install: download the DMG from https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg, or run `brew install --cask alexays/tap/lilo`.
+- Moving in: Lilo imports bookmarks, open tabs, history, sign-ins (cookies) and Chrome Web Store extensions from Safari, Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium, Firefox and Zen, read on your Mac. It never reads passwords.
+- AI agents: there is no AI inside Lilo. When you turn it on in Settings, agents connect to its built-in MCP server over a local socket, work in a separate Agents Space signed in nowhere by default, never see private Spaces, and Lilo asks before an agent sends, pays, deletes or publishes anything.
+
+## Pages
+
+- [Home](https://getlilo.app/index.md): what Lilo is, its features and the FAQ
+- [Moving to Lilo](https://getlilo.app/moving/index.md): what comes with you from each browser, the steps, what stays behind, and the switching FAQ
+- [Accueil (français)](https://getlilo.app/fr/index.md): the home page in French
+- [Passer à Lilo (français)](https://getlilo.app/fr/moving/index.md): the moving page in French
+
+## Docs
+
+- [README](https://github.com/Alexays/Lilo/blob/main/README.md): features, install and building from source
+- [AI agents](https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md): connecting an MCP client, the tools agents get, and the approval rules
+- [Chrome extension compatibility](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md): what still differs from Chrome
+- [Privacy](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md): what stays on your Mac and what agents can read
+- [Changelog](https://github.com/Alexays/Lilo/blob/main/CHANGELOG.md): releases
+
+## Optional
+
+- [Full English content](https://getlilo.app/llms-full.txt): the home and moving pages in one file
+- [Contributing](https://github.com/Alexays/Lilo/blob/main/CONTRIBUTING.md): setup, tests and the pull request flow
+- [License](https://github.com/Alexays/Lilo/blob/main/LICENSE): MIT

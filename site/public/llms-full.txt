@@ -1,0 +1,374 @@
+# Lilo: a native Mac browser with Spaces and Chrome extensions
+
+> A free, open-source Arc alternative for Mac, built on WebKit: Spaces with their own sign-ins, Chrome extensions, a terminal and an MCP server for AI agents.
+
+Web page: https://getlilo.app/
+
+**Your internet, in bloom.**
+
+Light on your Mac, quick on the web. Free and open source. Spaces with their own sign-ins, the Chrome extensions you rely on, room for your AI agents, and a battery that lasts the day.
+
+- [Download for Mac](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+- [Star on GitHub](https://github.com/Alexays/Lilo)
+
+```sh
+brew install --cask alexays/tap/lilo
+```
+
+Moving in takes five minutes. [See the moving guide](https://getlilo.app/moving/)
+
+Lilo is in beta: expect rough edges, and [tell us what breaks](https://github.com/Alexays/Lilo/issues).
+
+## Built on WebKit. Not on a second Chrome.
+
+Lilo uses the engine already inside macOS, written in Swift. No Chromium bundled, no Electron. Your Mac spends its energy on your pages.
+
+### The engine Safari uses
+
+Apple tunes WebKit for Apple silicon, video decoding and sandboxing. Lilo gets every macOS update for free.
+
+### Easy on the battery
+
+Idle tabs freeze, then sleep. Background Spaces stop working when you are not looking at them.
+
+### Light on memory
+
+Tab memory follows how much RAM your Mac really has, and gives it back under pressure.
+
+### Energy and memory
+
+**Measurements coming soon**
+
+Lilo, Safari and Chrome with the same 20 tabs for 30 minutes on the same Mac. The method ships with the numbers.
+
+## The Chrome Web Store, with an "Add to Lilo" button.
+
+Browse the store you know and install in one click. Lilo runs Manifest V3 extensions on WebKit, keeps them updated, and gives each profile its own set.
+
+- Password managers
+- Ad blockers
+- Dark mode
+- Dev tools
+- Writing helpers
+- Price trackers
+
+## What you do in Lilo stays on your Mac.
+
+No account, no telemetry, no analytics. The project runs no server, so there is nowhere for your browsing to go. And every line is open for you to check.
+
+One switch away in Settings: HTTPS-Only mode and Global Privacy Control.
+
+### Trackers blocked out of the box
+
+Ads, trackers and cookie banners are filtered with community lists kept up to date. Nothing to install.
+
+### Sign-ins kept apart
+
+Each Space can have its own profile, with its own cookies and storage. Private Spaces forget everything when they close.
+
+### Agents on a short leash
+
+Agents never see your private tabs, and Lilo asks you before one sends, pays, deletes or publishes anything.
+
+### Apple's engine and sandbox
+
+Pages run in WebKit's sandboxed processes and get Apple's security fixes with every macOS update.
+
+## Everything in its Space.
+
+The sidebar you know, with the details that make it yours. Move in from Safari, Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium, Firefox or Zen in five minutes, straight from your Mac. [How moving works](https://getlilo.app/moving/)
+
+### Spaces with their own sign-ins
+
+Work and Perso side by side in one window, each with its cookies and extensions. Swipe between them.
+
+`⌃1` `⌃2`
+
+### Peek
+
+Links from your pinned tabs open over the page. Keep reading, expand it to a tab, or put it in a split.
+
+`⇧ click`
+
+### Little window
+
+A quick window from any app, for one link or one search. Send it to a Space when it turns into something.
+
+`⌘⌥N`
+
+### Tabs that tidy themselves
+
+Unpinned tabs you stopped using are archived after 12 hours, or when you choose. Find them again in a keystroke.
+
+`⌘⇧K`
+
+### Command bar
+
+Tabs, history, bookmarks and every action in one field, ranked by what you use. Open a result in a split or a Peek.
+
+`⌘T` `⌥↩`
+
+### Your shortcuts
+
+Every shortcut can be remapped. Start from a preset, conflicts are flagged as you type.
+
+### Links land in the right Space
+
+Links opened from Mail or Slack follow your rules: this domain to Work, the rest to the Little window.
+
+### Split view
+
+Up to four tabs side by side, a terminal next to your docs, restored exactly as you left them.
+
+## Your terminal lives in the sidebar.
+
+Terminal tabs sit next to your docs and your localhost, on a native Metal renderer built on libghostty. Split one beside a page, and the sidebar shows its branch and pending changes at a glance.
+
+- **Stays awake while it works.** A long build or an agent run keeps your Mac awake, even with the lid closed, then lets it sleep when the command ends.
+- **Tells you when it's done.** A finished or waiting command lights up its Space, so you can browse while it runs.
+- **Review before you commit.** The changes view shows every diff of the repo, images included.
+- **Talks to your tools.** AppleScript, Shortcuts and Focus filters, plus Web Serial for boards like Arduino and ESP.
+
+## Your agents get their own Space.
+
+Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any MCP client open tabs, click, type, and read pages, the console and the network, in a real browser beside you.
+
+- **Their own Space.** Agents open tabs in a folder of the Agents Space, signed in nowhere by default. Your keyboard, your mouse and your tabs stay yours.
+- **You say yes first.** Lilo asks before an agent sends, pays, deletes or publishes. Each agent is approved once, and none ever sees a private Space.
+- **One click to connect.** In Settings, Connect adds Lilo to Claude Code, Claude Desktop, Codex or Cursor. Any other client copies the configuration.
+- [How agents work](https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md)
+
+No AI inside Lilo: bring the agent you already use.
+
+## Good to know.
+
+### Is Lilo free?
+
+Yes. Lilo is free and open source under the [MIT license](https://github.com/Alexays/Lilo/blob/main/LICENSE). There is no paid tier and no account to create.
+
+### What is Lilo built on?
+
+WebKit, the engine Safari uses, with a native app written in Swift. No Chromium is bundled. On top of it, Lilo runs Chrome extensions from the Chrome Web Store.
+
+### Which extensions work?
+
+Manifest V3 extensions from the Chrome Web Store install with one click and keep updating. Manifest V2 extensions and blocking `webRequest` are not supported, and a few extensions rely on other features only Chrome has. The [compatibility notes](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md) list exactly what differs.
+
+### Do Netflix, Spotify and other streaming services work?
+
+Lilo plays protected video and music through Apple's FairPlay, the same system Safari uses, so services that support Safari, like Netflix, Prime Video, Disney+, Apple TV+ and Spotify, should play as they do there. YouTube streams in 4K HDR. Widevine is not available in WebKit, so a service that requires it plays at lower quality or not at all, and offline downloads in the browser are not supported.
+
+### Can I bring my stuff from another browser?
+
+Yes. Lilo imports bookmarks, history and sign-ins from Safari, Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium, Firefox and Zen, open tabs where the browser keeps them, and offers to reinstall your Chrome Web Store extensions. [See what comes with you](https://getlilo.app/moving/).
+
+### What about my passwords?
+
+Lilo keeps no passwords itself and never reads them from other browsers. Setup offers the manager you already use, such as NordPass, Bitwarden, 1Password, Proton Pass, Dashlane or KeePassXC. iCloud Passwords comes as soon as Apple approves it.
+
+### Is there sync, or a mobile app?
+
+No, by design: Lilo has no account and no server, so there is nothing to sync through. It is a Mac app only. Your password manager keeps syncing your passwords everywhere, and importing changes nothing in your other browser, so its own sync to your phone keeps working.
+
+### Does Lilo have AI built in?
+
+No. If you turn it on, the agents you already use, like Claude Code, Codex or Cursor, can drive Lilo over a local MCP server, in their own Space. Each agent is approved once, never sees your private Spaces, and Lilo asks you before it sends, pays or deletes anything. [How agents work](https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md).
+
+### Where is my data?
+
+On your Mac, kept apart per profile. No account, no telemetry, and the project runs no server, so nothing you do is sent to us. [Read the privacy notes](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md).
+
+### Why only on Mac?
+
+Lilo is built on the WebKit engine that ships with macOS and written in Swift. That is what keeps it light and easy on the battery. It needs macOS 26 or later.
+
+### How can I help?
+
+Star the repo, report what breaks, or send a pull request. The whole interface is a Svelte layer you can change and rebuild in seconds.
+
+## Open source, for good.
+
+Read it, fork it, change the sidebar in Svelte and rebuild in seconds. Your browser stays yours.
+
+- [Download for Mac](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+- [Star on GitHub](https://github.com/Alexays/Lilo)
+
+Lilo, made on a Mac for Macs. macOS 26 or later.
+
+- [Moving to Lilo](https://getlilo.app/moving/)
+- [Privacy](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md)
+- [GitHub](https://github.com/Alexays/Lilo)
+- [Français](https://getlilo.app/fr/)
+
+# Switch to Lilo from Safari, Chrome, Arc or Firefox
+
+> Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes.
+
+Web page: https://getlilo.app/moving/
+
+**Moving to Lilo.**
+
+Lilo reads your bookmarks, tabs, history, sign-ins and extensions straight from the browsers on your Mac. Nothing leaves your Mac, and your other browser stays exactly as it was.
+
+- [Download for Mac](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+- [See what comes with you](https://getlilo.app/moving/#what)
+
+## Twelve browsers, read on your Mac.
+
+Lilo finds every browser and every profile on this Mac, and lists first the one that opens your links today.
+
+| Browser | Bookmarks | Open tabs | History | Sign-ins | Extensions |
+|---|---|---|---|---|---|
+| Safari | Yes | Last session | Yes | Yes | No |
+| **Chromium browsers** |  |  |  |  |  |
+| Chrome | Yes | Last session | Yes | Yes | Yes |
+| Brave | Yes | Last session | Yes | Yes | Yes |
+| Edge | Yes | Last session | Yes | Yes | Yes |
+| Vivaldi | Yes | Last session | Yes | Yes | Yes |
+| Opera | Yes | Last session | Yes | Yes | Yes |
+| Arc | Yes | Spaces and tabs | Yes | Yes | Yes |
+| Dia | Yes | Last session | Yes | Yes | Yes |
+| Comet | Yes | Last session | Yes | Yes | Yes |
+| Chromium | Yes | Last session | Yes | Yes | Yes |
+| **Firefox browsers** |  |  |  |  |  |
+| Firefox | Yes | Last session | Yes | Yes | No |
+| Zen | Yes | Last session | Yes | Yes | No |
+
+- **Bookmarks.** The bookmarks bar becomes pinned tabs in your Space. Every other bookmark goes into one folder, and a folder inside a folder becomes its own folder, named by its path.
+- **Open tabs.** The tabs of your last Safari, Firefox, Zen or Chromium browser session open in your Space, one window after the other. From Chrome and the other Chromium browsers, pinned tabs stay pinned and each tab group becomes a folder with its name and color. From Arc, each space comes in as a Lilo Space with its icon and color, its pinned and open tabs, folders and splits of up to four tabs. Arc favorites become bookmarked tabs.
+- **History.** Up to your 50,000 most recent pages, so the command bar knows the sites you visit.
+- **Sign-ins.** Cookies are copied, so you stay signed in to your sites. Expired ones are left out.
+- **Extensions.** The ones from the Chrome Web Store are installed again from the store, up to date. You pick which.
+- **Profiles.** The first profile you pick lands in your current Space. Each other one gets its own Lilo profile and Space, so its sign-ins stay apart. Extensions go to the first one.
+
+## A few clicks, then you are home.
+
+Import is part of the welcome tour. Skip it and come back whenever you like.
+
+### 1. Pick your browser
+
+On first launch, "Bring your favorites" lists the browsers on your Mac. Pick one, or open "Choose what to import" to select profiles, data and extensions.
+
+### 2. Say yes to macOS
+
+For a Chromium browser, macOS asks to let Lilo use its "Safe Storage" key, to read your sign-ins: click Allow. Safari needs Full Disk Access, one switch in System Settings.
+
+### 3. Import again anytime
+
+Settings, General, Import from another browser. Running it again adds only what is new: links already in a Space and pages already in your history are not doubled.
+
+## Some things are better left where they are.
+
+Lilo only reads what it needs and changes nothing in your other browser.
+
+### Passwords and cards
+
+Lilo never reads them and keeps no passwords itself. They stay in your password manager or iCloud Keychain, and setup offers to add your manager's extension.
+
+### Extension data
+
+Extensions arrive fresh from the store, so sign in to them or set them up again. Safari and Firefox extensions are not Chrome extensions and do not come along.
+
+### Closed and private tabs
+
+Only the tabs still open in your last session come in, each at the page it shows. Closed tabs, back history, private windows and the browser's own pages are left out.
+
+### Site data beyond cookies
+
+Site permissions, local storage and form data are not copied. A site that keeps you signed in with more than a cookie may ask you to sign in once.
+
+### Reading List and other extras
+
+Safari's Reading List, and anything in Arc's sidebar that is not a tab, a folder or a split, are skipped. Only web links (http and https) come in, and local files from a Chromium session.
+
+### Settings
+
+Search engine, downloads, themes and other preferences are not read. Set them once in Lilo's Settings.
+
+## Your first week in Lilo.
+
+A few things worth setting up once you have moved in.
+
+### Keep your shortcuts
+
+Settings, General, Shortcuts. Start from the Lilo or the Arc preset, then remap anything. Conflicts are flagged as you type.
+
+### A profile per Space
+
+Give Work and Perso their own profile, with their own cookies and extensions, side by side in one window.
+
+`⌃1` `⌃2`
+
+### Little window
+
+A quick window from any app, for one link or one search. Send it to a Space when it turns into something.
+
+`⌘⌥N`
+
+### Peek
+
+Links from pinned tabs open over the page. Shift-click any link to peek at it.
+
+`⇧ click`
+
+### Link rules
+
+Settings, General, Links from other apps. Send this domain to Work, the rest to the Little window.
+
+### Command bar
+
+Your imported history and bookmarks are one search away, with tabs and every action.
+
+`⌘T`
+
+### Your password manager
+
+Setup offers the one you use, such as Bitwarden, 1Password, Proton Pass, Dashlane, NordPass or KeePassXC.
+
+### Open links in Lilo
+
+Make Lilo your default browser in Settings, so links from Mail and Slack land here.
+
+## About switching.
+
+### Will my other browser change?
+
+No. Lilo only reads its files and writes nothing back. Its bookmarks, its sync and its passwords stay as they are, so you can keep it around as long as you like.
+
+### Do I need to quit it first?
+
+No. Lilo copies its databases before reading them, along with changes the running browser has not written out yet.
+
+### Why does macOS ask about "Safe Storage"?
+
+Chromium browsers encrypt their cookies with a key kept in your keychain. Lilo needs that key to keep you signed in. If you say no, everything else still imports.
+
+### Why does Safari need Full Disk Access?
+
+macOS protects Safari's folder. Lilo shows an "Allow access" button that opens the right page in System Settings, and finds Safari again when you come back.
+
+### I have several profiles. What happens?
+
+Each one is listed. The first you pick fills your current Space; each other one gets its own Lilo profile and Space, named after it. Importing the same profile again reuses them.
+
+### Some of my extensions did not come.
+
+Lilo reinstalls extensions from the Chrome Web Store only, and runs Manifest V3. Extensions installed by hand are left out, and Manifest V2 ones or the few that need Chrome-only features do not install. The [compatibility notes](https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md) list what differs.
+
+### What about sync and my phone?
+
+Lilo has no sync and no mobile app. Your other browser and your password manager keep syncing to your phone as before, since importing changes nothing in them.
+
+## Ready to move in?
+
+Download Lilo, pick your browser, and your things are there in a few minutes.
+
+- [Download for Mac](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+- [Back to Lilo](https://getlilo.app/)
+
+Lilo, made on a Mac for Macs. macOS 26 or later.
+
+- [Moving to Lilo](https://getlilo.app/moving/)
+- [Privacy](https://github.com/Alexays/Lilo/blob/main/PRIVACY.md)
+- [GitHub](https://github.com/Alexays/Lilo)
+- [Français](https://getlilo.app/fr/moving/)

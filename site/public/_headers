@@ -35,3 +35,27 @@
   Content-Type: application/xml; charset=utf-8
   Cache-Control: public, max-age=3600
 
+/llms.txt
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+/llms-full.txt
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=3600
+
+# Markdown copies of the pages for AI agents; search engines credit the HTML page
+/*.md
+  Content-Type: text/markdown; charset=utf-8
+  Cache-Control: public, max-age=600
+
+/index.md
+  Link: <https://getlilo.app/>; rel="canonical"
+
+/fr/index.md
+  Link: <https://getlilo.app/fr/>; rel="canonical"
+
+/moving/index.md
+  Link: <https://getlilo.app/moving/>; rel="canonical"
+
+/fr/moving/index.md
+  Link: <https://getlilo.app/fr/moving/>; rel="canonical"
