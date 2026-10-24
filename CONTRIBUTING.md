@@ -127,7 +127,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests.
+tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests; Changesets status
+and version sync tests.
 Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
@@ -139,6 +140,8 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
+| `make changeset-status` | pending release notes and app version consistency |
+| `make changeset-test` | app version and Sparkle build number synchronization tests |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -172,6 +175,7 @@ rather than carving out a helper just to reach it.
 
 `.github/workflows/build.yml` runs on every push to `main` and every pull request:
 
+- **Release tooling** (ubuntu): Changesets status, version sync tests and website metadata consistency.
 - **UI** (ubuntu): `make validate-ui` and `make e2e`.
 - **Extension bridge** (ubuntu): `make ext-bridge-test`, and a check that the generated bundles
   match `bridge-src`.
@@ -284,8 +288,10 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 2. Make focused commits, each building on its own (`make check-commits` checks a branch).
    Run `make lint-commits` to check their messages; `BASE=main` selects a different base.
 3. Run `make validate` and confirm it passes.
-4. For a change people using Lilo will notice, add a line under `Unreleased` in
-   [CHANGELOG.md](CHANGELOG.md), written for them, not for developers.
+4. For a change people using Lilo will notice, run `make changeset` and choose a `patch`, `minor`
+   or `major` bump for `lilo`. Write the summary for the person using the app and commit the
+   generated `.changeset/*.md` file with your code. Documentation, tests and build tooling usually
+   need no changeset. `CHANGELOG.md` is updated when a maintainer prepares the release.
 5. Open the pull request. The template asks what it does, how to test it, and for a screenshot or
    recording of any UI change.
 

@@ -9,9 +9,24 @@ How a Lilo release is cut, from version bump to published DMG. Maintainer-only; 
 
 ## Version bump
 
-The app version lives in `Xcode/Configs/Base.xcconfig`: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. Sparkle compares the build number, so `CURRENT_PROJECT_VERSION` must grow with every release or installed copies never see the update. `Lilo/Info.plist` and the About panel read them at build time. Keep `version` in `lilo-ui/package.json` and `Lilo/Extensions/bridge-src/package.json` in step, and run `make site-generate` so the website's JSON-LD carries the new version, in the same commit.
+Contributors record user-visible changes with `make changeset`. Lilo is one private Changesets
+package, `lilo`, whose version lives in the root `package.json`. To prepare a release:
 
-In the same commit, rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, open a new empty `## [Unreleased]` above it, and update the compare links at the bottom.
+```bash
+make changeset-status
+make changeset-version
+make validate
+```
+
+`make changeset-version` consumes the pending `.changeset/*.md` files and adds their notes to
+`CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and extension
+bridge package versions, all three npm lockfiles, and the website's JSON-LD through `make site-generate`.
+It increments `CURRENT_PROJECT_VERSION` once when the app version changes. Sparkle compares this
+build number, so every release needs a larger one. Running the command again without new changesets
+leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
+
+Review the generated notes and version changes, then commit them together. Published changelog
+entries from before Changesets keep their dates and compare links.
 
 ## Tag and push
 
