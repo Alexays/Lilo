@@ -23,6 +23,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
     }
 
     override func tearDown() {
+        registry?.teardown()
         registry = nil
         try? FileManager.default.removeItem(at: tempDir)
         super.tearDown()

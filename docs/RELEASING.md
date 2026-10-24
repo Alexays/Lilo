@@ -9,9 +9,32 @@ How a Lilo release is cut, from version bump to published DMG. Maintainer-only; 
 
 ## Version bump
 
-The app version lives in `Xcode/Configs/Base.xcconfig`: bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. Sparkle compares the build number, so `CURRENT_PROJECT_VERSION` must grow with every release or installed copies never see the update. `Lilo/Info.plist` and the About panel read them at build time. Keep `version` in `lilo-ui/package.json` and `Lilo/Extensions/bridge-src/package.json` in step, and run `make site-generate` so the website's JSON-LD carries the new version, in the same commit.
+Contributors record user-visible changes with `make change`. Changie stores each note in
+`.changes/unreleased/` and each prepared release in `.changes/vX.Y.Z.md`. Make downloads a pinned
+native binary and verifies its SHA-256 checksum. Release tooling uses Python's standard library.
+To prepare a release:
 
-In the same commit, rename `## [Unreleased]` in `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD`, open a new empty `## [Unreleased]` above it, and update the compare links at the bottom.
+```bash
+make release-status
+make release-version
+make validate
+```
+
+`make release-status` previews the next release and checks the changelog and app versions without
+writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
+selects major. When notes request different bumps, the largest wins.
+
+`make release-version` collects the pending notes into a release file, consumes the fragments, and
+regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
+extension bridge package versions and their lockfiles, and the `softwareVersion` of the website's JSON-LD.
+It increments `CURRENT_PROJECT_VERSION` once for each release it collects, or when the app version
+differs from Changie's latest release. Sparkle compares this build number, so every release needs a
+larger one. It reads and checks every file before consuming the fragments, and running it again
+without new fragments leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
+
+Review the generated notes and version changes, then commit them together. The initial
+`.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
+Edit a prepared release's file and run `make release-version` to regenerate the changelog.
 
 ## Tag and push
 

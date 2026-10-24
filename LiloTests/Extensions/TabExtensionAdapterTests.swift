@@ -34,7 +34,7 @@ final class TabExtensionAdapterTests: XCTestCase {
         XCTAssertIdentical(adapter.webView(for: context), engineTab.wkWebView, "a woken tab lends its web view again")
         engineTab.freeze()
         XCTAssertFalse(engineTab.isFrozen, "a tab an extension is scripting stays live until its script has run")
-        engineTab.lentToExtensionAt = .now - .seconds(3)
+        engineTab.lentToExtensionAt = Date().addingTimeInterval(-3)
         engineTab.freeze()
         XCTAssertTrue(engineTab.isFrozen)
         engineTab.teardown()

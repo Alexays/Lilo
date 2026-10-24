@@ -15,7 +15,7 @@
 - [ ] The title follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (`fix(sidebar): ...`)
 - [ ] `make validate` passes locally
 - [ ] Tests added or updated for the change
-- [ ] A user-visible change has its line under `Unreleased` in `CHANGELOG.md`
+- [ ] A user-visible change has a release-note fragment (`make change`)
 - [ ] New user-facing strings are in both `en.json` and `fr.json`
 - [ ] `COMPATIBILITY.md` updated if extension behavior changed
 - [ ] No unrelated changes

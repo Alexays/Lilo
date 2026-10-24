@@ -728,7 +728,7 @@ final class BrowserStateStore {
             for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen {
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard now.timeIntervalSince(last) > freezeThreshold else { continue }
-                engine.freeze()
+                engine.freeze(now: now)
             }
         }
     }

@@ -14,6 +14,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-tooling:
+    name: Release tooling
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: make release-status release-test site-generate
+      - name: Check website metadata matches the app version
+        run: git diff --exit-code site/public
+
   ui:
     name: UI (lint, test, build, end-to-end)
     runs-on: ubuntu-latest
