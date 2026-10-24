@@ -35,6 +35,7 @@ No Apple Developer account is needed.
 ```bash
 git clone https://github.com/Alexays/Lilo.git
 cd Lilo
+make hooks-install     # enable commit-message checks once per clone
 make install-debug     # npm deps, libghostty-vt, interface bundle, then a Debug build into ~/Applications
 open ~/Applications/Lilo.app
 ```
@@ -107,8 +108,8 @@ make validate
 ## Tests and validation
 
 `make validate` is the gate: UI lint, type checks, tests and build; the extension bridge build and
-tests; SwiftLint; the Xcode build and the Swift tests. Run it once your change is done, and confirm
-it passes before you open a pull request.
+tests; SwiftLint; the Xcode build and the Swift tests; the commit hook tests.
+Run it once your change is done, and confirm it passes before you open a pull request.
 
 | Command | Runs |
 |---------|------|
@@ -116,6 +117,9 @@ it passes before you open a pull request.
 | `make ui-test` | UI unit tests, including the en/fr catalog parity check |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
+| `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
+| `make lint-commit-message` | checks a commit header or PR title read from stdin |
+| `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make swift-test` | Swift tests in parallel app instances, the slow ones aside |
 | `make swift-test-slow` | the few Swift tests that wait out WebKit's own clocks (`SLOW_TESTS` in the Makefile) |
 | `make check-commits` | builds every commit of `BASE..HEAD` (default `origin/main`) in a throwaway worktree |
@@ -139,6 +143,8 @@ Heavier checks, run when your change touches their area:
   `lilo-ui/e2e/`.
 - **Extension bridge**: `*.test.ts` beside the TypeScript source in
   `Lilo/Extensions/bridge-src/src/`.
+- **Commit hooks**: `scripts/commit_hooks.test.sh` exercises the shared validator and real Git
+  commits in temporary repositories, without Node dependencies.
 
 Test through the real entry point (the public method, the bridge message, the rendered component)
 rather than carving out a helper just to reach it.
@@ -155,6 +161,12 @@ rather than carving out a helper just to reach it.
   `make swift-test` and `make swift-test-slow`.
 - **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
   `startup-bench-<sha>` artifact. It never fails the run.
+
+`.github/workflows/commits.yml` checks commit messages on pushes to `main` and pull requests,
+and PR titles when a pull request is opened, updated, reopened or edited. It uses the same shell
+validator as the local hook and checks the PR's own commits, excluding GitHub's generated merge
+commit. Title edits run only this lightweight workflow. Maintainers should require its
+`Conventional Commits` status check in the rules for `main`.
 
 ## Code style
 
@@ -239,6 +251,7 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 
 1. Fork the repository and branch from `main`.
 2. Make focused commits, each building on its own (`make check-commits` checks a branch).
+   Run `make lint-commits` to check their messages; `BASE=main` selects a different base.
 3. Run `make validate` and confirm it passes.
 4. For a change people using Lilo will notice, add a line under `Unreleased` in
    [CHANGELOG.md](CHANGELOG.md), written for them, not for developers.
@@ -247,11 +260,25 @@ Edit `bridge-schema/tab.json`, then run `make bridge-gen` to regenerate
 
 Commit messages and pull request titles follow
 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
-`type(scope): description`, lowercase, imperative, no trailing period, with `!` before the colon
-for a breaking change. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`,
+`type(scope): description`, lowercase, imperative, no trailing period, with an optional scope
+and `!` before the colon for a breaking change. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`,
 `chore`, `style`. Common scopes: `sidebar`, `tabs`, `spaces`, `commandbar`, `urlbar`, `settings`,
-`extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`. CI does not enforce it;
-match it as best you can.
+`extensions`, `agent`, `terminal`, `window`, `bridge`, `import`, `ui`.
+
+`make hooks-install` points this clone's Git `core.hooksPath` at the tracked `.githooks/`
+directory. It refuses when `core.hooksPath` is already set or `.git/hooks` holds a hook that
+would stop running. The native `commit-msg` hook and CI share a shell validator for the
+header's type, syntax, lowercase scope, lowercase nonempty description and absence of trailing
+whitespace or a final period. Git's `Revert "..."` and `Reapply "..."` headers are accepted.
+English wording and imperative style are reviewed by humans. Bodies and footers remain free-form. To check a title locally:
+
+```bash
+printf '%s\n' 'fix(sidebar): keep pinned tabs visible' | make lint-commit-message
+```
+
+Git-generated merge commits are exempt. Temporary `fixup!`, `squash!` and `amend!` commits are
+allowed locally; autosquash them before merging, since CI rejects them. Local hooks can be
+bypassed, so CI also checks every non-merge commit introduced by a PR and the PR title.
 
 Code, comments, commit messages and everything on GitHub are written in English. User-facing copy
 is translated, see [Add or change a user-facing string](#add-or-change-a-user-facing-string).

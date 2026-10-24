@@ -44,17 +44,41 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build check-commits startup-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons
+	logs logs-stream site-dev site-generate site-deploy emoji-data password-manager-icons \
+	hooks-install hooks-test lint-commit-message lint-commits
 
 ## List the targets
 help:
 	@awk '/^## /{d=substr($$0,4);next} d&&/^[a-z0-9-]+:/{sub(/:.*/,"");printf "  make %-20s %s\n",$$0,d} {d=""}' Makefile
 
+## Enable the tracked Git hooks for this clone
+hooks-install:
+	@current=$$(git config core.hooksPath || true); \
+	[ "$$current" = .githooks ] && exit 0; \
+	if [ -n "$$current" ]; then echo "core.hooksPath is already $$current; chain .githooks/commit-msg from it instead" >&2; exit 1; fi; \
+	for hook in "$$(git rev-parse --git-path hooks)"/*; do \
+		case "$$hook" in *.sample) continue ;; esac; \
+		if [ -f "$$hook" ]; then echo "$$hook would stop running; move it into .githooks first" >&2; exit 1; fi; \
+	done; \
+	git config --local core.hooksPath .githooks
+
+## Validate a Conventional Commit header from stdin
+lint-commit-message:
+	@scripts/lint_commit_message.sh
+
+## Validate non-merge commit headers in BASE..COMMIT_HEAD (origin/main..HEAD by default)
+lint-commits:
+	@scripts/lint_commits.sh "$(or $(BASE),origin/main)" "$(or $(COMMIT_HEAD),HEAD)"
+
+## Test commit-message validation and the native Git hook
+hooks-test:
+	@scripts/commit_hooks.test.sh
+
 # The app embeds the UI and bridge builds, rebuilt only when their sources changed; swift-test builds the app.
 # The lint and the JS tests run beside the other steps, their output shown on failure.
-## Run UI lint/tests/build, Swift lint/tests, the app build and the bridge tests
+## Run UI lint/tests/build, Swift lint/tests, the app build, bridge and hook checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS)
-	@log=$$(mktemp); $(MAKE) -k --no-print-directory ui-lint ui-test ext-bridge-test swiftlint > "$$log" 2>&1 & js=$$!; \
+	@log=$$(mktemp); $(MAKE) -k --no-print-directory hooks-test ui-lint ui-test ext-bridge-test swiftlint > "$$log" 2>&1 & js=$$!; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
 	$(MAKE) --no-print-directory $(UI_STAMP); ui=$$?; wait $$bridge; bridge=$$?; \
 	[ $$ui -eq 0 ] && [ $$bridge -eq 0 ] && $(MAKE) --no-print-directory swift-test; swift=$$?; \

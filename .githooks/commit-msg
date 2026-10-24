@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+# Git generates merge subjects; CI checks the non-merge commits being merged.
+if [ -f "$(git rev-parse --git-path MERGE_HEAD)" ]; then
+    exit 0
+fi
+
+# Git strips comments and leading blank lines only after this hook runs.
+comment_char=$(git config core.commentChar || true)
+case "$comment_char" in
+    '' | auto) comment_char='#' ;;
+esac
+subject=$(awk -v c="$comment_char" 'index($0, c) != 1 && NF { print; exit }' "$1")
+case "$subject" in
+    fixup!\ *|squash!\ *|amend!\ *) exit 0 ;;
+esac
+
+printf '%s\n' "$subject" | scripts/lint_commit_message.sh
