@@ -59,7 +59,7 @@ a { color: inherit; }
 .pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; font: 600 15px/1 var(--sys); text-decoration: none; border: 0; cursor: pointer; }
 .pill.dark { background: var(--brand); color: var(--on-brand); box-shadow: 0 8px 20px -8px rgba(74, 47, 200, 0.6); }
 .pill.soft { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--ink); }
-@media (max-width: 680px) { .nav nav .hide { display: none; } }
+@media (max-width: 780px) { .nav nav .hide { display: none; } }
 
 .hero-copy { text-align: center; padding-block: 36px 40px; display: grid; justify-items: center; gap: 18px; }
 .mark { width: clamp(88px, 11vw, 128px); height: auto; filter: drop-shadow(0 18px 30px rgba(74, 47, 200, 0.35)); }
@@ -283,6 +283,9 @@ a { color: inherit; }
 @media (max-width: 640px) {
   .window { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 8px; }
   .view { display: none; }
+  .store { padding: 16px; }
+  .store-row { gap: 10px; }
+  .add { padding: 9px 12px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .top, .window, .faq-list summary::after { transition: none; }
