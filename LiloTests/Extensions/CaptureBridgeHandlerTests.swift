@@ -201,18 +201,17 @@ final class CaptureBridgeHandlerTests: XCTestCase {
               audio: false,
               video: { mandatory: { chromeMediaSource: 'tab', chromeMediaSourceId: message.streamId } }
             });
-            // Recorders consume the stream with MediaRecorder; a window-less offscreen page plays no <video>.
+            // Recorders consume the stream with MediaRecorder; a window-less offscreen page plays no <video>. What it
+            // encodes is WebKit's affair (CI's virtual machines encode nothing): the frames it pulls are Lilo's.
             const [track] = stream.getVideoTracks();
             const settings = track.getSettings();
             const recorder = new MediaRecorder(stream);
-            let bytes = 0;
-            recorder.ondataavailable = (event) => { bytes += event.data.size; };
             recorder.start(250);
             await new Promise((resolve) => setTimeout(resolve, 1500));
             recorder.stop();
             await new Promise((resolve) => { recorder.onstop = resolve; });
             track.stop();
-            return { width: settings.width, height: settings.height, surface: settings.displaySurface, bytes };
+            return { width: settings.width, height: settings.height, surface: settings.displaySurface };
           })().then(sendResponse, (error) => sendResponse({ error: String(error) }));
           return true;
         });
@@ -269,7 +268,6 @@ final class CaptureBridgeHandlerTests: XCTestCase {
         XCTAssertNil(result?["error"], "\(result ?? [:])")
         XCTAssertEqual(result?["surface"] as? String, "browser")
         XCTAssertGreaterThan(result?["width"] as? Int ?? 0, 0)
-        XCTAssertGreaterThan(result?["bytes"] as? Int ?? 0, 0, "the recorder encoded the stream")
         XCTAssertGreaterThanOrEqual(storedFrames, 3, "the offscreen document pulled frames of the tab")
         let stopped = await pollUntil(timeout: 5) { self.window.tabShareSessions.sharedEngines.isEmpty }
         XCTAssertTrue(stopped, "stopping the tracks ends the ferry")

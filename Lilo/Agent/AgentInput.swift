@@ -89,9 +89,10 @@ enum AgentInput {
         return await new Promise(resolve => {
             let seen = 0, timer
             const finish = () => { clearTimeout(timer); removeEventListener('keyup', note, true); resolve(seen) }
-            // Keys landing in a frame are not heard here: a quiet spell ends the wait instead.
+            // Keys landing in a frame are not heard here: a quiet spell ends the wait instead, long enough
+            // for a busy page or machine to fall behind between two keys.
             const wait = ms => { clearTimeout(timer); timer = setTimeout(finish, ms) }
-            const note = () => { if (++seen >= count) finish(); else wait(300) }
+            const note = () => { if (++seen >= count) finish(); else wait(1000) }
             addEventListener('keyup', note, true)
             wait(1000)
         })
