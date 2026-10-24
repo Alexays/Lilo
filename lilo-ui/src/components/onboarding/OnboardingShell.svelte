@@ -23,7 +23,7 @@
   const steps = $derived(onboardingSteps(onboarding.usage));
   const step = $derived(steps[onboarding.step]);
   const cardSteps = $derived(steps.slice(1, -1));
-  const agentsWelcome = $derived(onboarding.usage === "develop" && getSetting("agentControlEnabled", "false") === "true");
+  const agentsWelcome = $derived(onboarding.usage !== "browse" && getSetting("agentControlEnabled", "false") === "true");
   // Sign-ins are not something a person counts: the welcome names the rest.
   const imported = $derived(importedSummary(["bookmarks", "tabs", "history", "extensions"]));
   const arrivalText = $derived([

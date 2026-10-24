@@ -1384,8 +1384,10 @@
 			"subtitle": "L'accueil s'adapte à votre réponse. Tout reste modifiable dans les Réglages.",
 			"browse": "Pour naviguer",
 			"browseDesc": "Vos favoris, votre style, l'essentiel",
+			"agents": "Avec mes agents IA",
+			"agentsDesc": "Claude, Codex ou Cursor à vos côtés",
 			"develop": "Pour développer",
-			"developDesc": "Le tout, plus le terminal et vos agents IA"
+			"developDesc": "Le tout, plus le terminal"
 		},
 		"intro": {
 			"headline": "Bienvenue chez vous.",

@@ -8,6 +8,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 ### Changed
 
+- The setup asks how you will use Lilo with a third choice between browsing and developing: with your AI agents, which turns them on and walks you through connecting them, without the terminal.
 - The passwords step of the setup lists one password manager per row, so each description reads on one line.
 - In the setup, Use Lilo is a secondary button: Continue stays the one main action.
 

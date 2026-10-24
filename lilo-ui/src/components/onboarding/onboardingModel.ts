@@ -1,14 +1,14 @@
 import type { ImportKind, ImportProgress, ImportSelection, ImportSourceInfo } from "../../lib/bridge/protocol";
 
-export type OnboardingUsage = "browse" | "develop";
+export type OnboardingUsage = "browse" | "agents" | "develop";
 type OnboardingStep = "intro" | "usage" | "import" | "passwords" | "appearance" | "essentials" | "agents" | "tips" | "arrival";
 
 // Both paths share their steps up to the essentials, so a saved index means the same screen in either.
 const BROWSE_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "passwords", "appearance", "essentials", "tips", "arrival"];
-const DEVELOP_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "passwords", "appearance", "essentials", "agents", "tips", "arrival"];
+const AGENT_STEPS: readonly OnboardingStep[] = ["intro", "usage", "import", "passwords", "appearance", "essentials", "agents", "tips", "arrival"];
 
 export function onboardingSteps(usage: OnboardingUsage): readonly OnboardingStep[] {
-	return usage === "develop" ? DEVELOP_STEPS : BROWSE_STEPS;
+	return usage === "browse" ? BROWSE_STEPS : AGENT_STEPS;
 }
 
 /** A relaunch resumes inside the card: never the intro again, never straight to the arrival. */

@@ -51,7 +51,7 @@ export function initOnboardingStore(): void {
 		if (!data.show) return;
 		state.visible = true;
 		state.mode = "full";
-		state.usage = data.usage === "develop" ? "develop" : "browse";
+		state.usage = data.usage === "develop" || data.usage === "agents" ? data.usage : "browse";
 		state.step = resumeStep(data.step, state.usage);
 		importActions.scan();
 		settingsActions.loadDefaultBrowserStatus();
@@ -109,13 +109,12 @@ export function goNext(): void {
 	setStep(Math.min(state.step + 1, onboardingSteps(state.usage).length - 1));
 }
 
-/** The usage also decides whether the terminal and AI agents are on. */
+/** The usage also decides whether AI agents are on, and the terminal for developers only. */
 export function setUsage(usage: OnboardingUsage): void {
 	state.usage = usage;
 	settingsActions.set("onboardingUsage", usage);
-	const develop = usage === "develop" ? "true" : "false";
-	setSetting("terminalEnabled", develop);
-	setSetting("agentControlEnabled", develop);
+	setSetting("terminalEnabled", usage === "develop" ? "true" : "false");
+	setSetting("agentControlEnabled", usage === "browse" ? "false" : "true");
 }
 
 export function goBack(): void {

@@ -1384,8 +1384,10 @@
 			"subtitle": "Setup adapts to your answer. Everything stays adjustable in Settings.",
 			"browse": "For browsing",
 			"browseDesc": "Your bookmarks, your style, the essentials",
+			"agents": "With my AI agents",
+			"agentsDesc": "Claude, Codex or Cursor work beside you",
 			"develop": "For developing",
-			"developDesc": "All of that, plus the terminal and your AI agents"
+			"developDesc": "All of that, plus the terminal"
 		},
 		"intro": {
 			"headline": "Welcome home.",

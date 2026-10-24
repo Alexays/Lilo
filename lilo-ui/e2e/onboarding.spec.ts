@@ -353,12 +353,12 @@ test("the arrow keys move the choice in the usage and theme pickers, which take 
 	await bootOnboarding(page, 1);
 	const card = page.locator("section.card");
 	const browse = card.getByRole("radio", { name: /For browsing/ });
-	const develop = card.getByRole("radio", { name: /For developing/ });
-	await expect(develop).toHaveAttribute("tabindex", "-1");
+	const agents = card.getByRole("radio", { name: /With my AI agents/ });
+	await expect(agents).toHaveAttribute("tabindex", "-1");
 	await browse.focus();
 	await page.keyboard.press("ArrowRight");
-	await expect(develop).toBeFocused();
-	await expect(develop).toHaveAttribute("aria-checked", "true");
+	await expect(agents).toBeFocused();
+	await expect(agents).toHaveAttribute("aria-checked", "true");
 	await expect(browse).toHaveAttribute("tabindex", "-1");
 
 	await receive(page, { event: "onboardingState", show: true, step: 4, usage: "browse" });
@@ -366,6 +366,19 @@ test("the arrow keys move the choice in the usage and theme pickers, which take 
 	await page.keyboard.press("ArrowLeft");
 	await expect(card.getByRole("radio", { name: "Dark" })).toBeFocused();
 	await expect(card.getByRole("radio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
+});
+
+test("the agents choice turns AI agents on without the terminal, and asks to connect them", async ({ page }) => {
+	await bootOnboarding(page, 1);
+	const card = page.locator("section.card");
+	await card.getByRole("radio", { name: /With my AI agents/ }).click();
+	await card.getByRole("button", { name: "Continue" }).click();
+
+	const settings = Object.fromEntries((await sentCommands(page)).filter((c) => c.action === "setSetting").map((c) => [c.payload.key, c.payload.value]));
+	expect(settings).toMatchObject({ onboardingUsage: "agents", agentControlEnabled: "true", terminalEnabled: "false" });
+	for (let step = 2; step < 6; step++) await receive(page, { event: "onboardingState", show: true, step, usage: "agents" });
+	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "agents" });
+	await expect(card.locator("h3")).toHaveText(/agent/i);
 });
 
 test("the developer tips card is named after its own title", async ({ page }) => {
