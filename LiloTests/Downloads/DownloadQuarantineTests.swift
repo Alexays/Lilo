@@ -92,6 +92,18 @@ final class DownloadQuarantineTests: XCTestCase {
         XCTAssertEqual(firstRaw, secondRaw, "re-stamping an already-quarantined file must not rewrite its quarantine record")
     }
 
+    /// WebKit quarantines a download with no agent, which Gatekeeper shows as "(null) downloaded this file".
+    func testStampNamesLiloOnARecordWithoutAnAgent() throws {
+        let file = makeFile(named: "Lilo.dmg")
+        let record = "0183;6adca330;;"
+        XCTAssertEqual(setxattr(file.path, "com.apple.quarantine", record, record.utf8.count, 0, 0), 0)
+
+        DownloadQuarantine.stamp(path: file.path, source: "https://example.com/Lilo.dmg")
+
+        let properties = try XCTUnwrap(file.resourceValues(forKeys: [.quarantinePropertiesKey]).quarantineProperties)
+        XCTAssertEqual(properties[kLSQuarantineAgentNameKey as String] as? String, "Lilo")
+    }
+
     func testStampOnMissingFileIsNoOp() {
         let missing = tempDir.appendingPathComponent("does-not-exist.bin")
         DownloadQuarantine.stamp(path: missing.path, source: "https://example.com/x.bin")

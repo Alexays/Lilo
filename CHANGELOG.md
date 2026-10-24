@@ -6,6 +6,10 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- An app downloaded with Lilo no longer opens on "(null) downloaded this file": macOS names Lilo as where it came from.
+
 ## [0.1.3] - 2026-10-24
 
 ### Added
