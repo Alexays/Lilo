@@ -461,11 +461,10 @@ enum ExtensionBackgroundPreparer {
     private static let contentCompatPath = "_lilo/lilo-content-compat.js"
 
     /// Prepends a compat content script to every isolated-world JS entry so APIs WebKit omits there (`chrome.storage.managed`) exist
-    /// before the extension's scripts; never MAIN-world, where it would leak. Rewritten on every call so Lilo updates apply.
+    /// before the extension's scripts; never MAIN-world, where it would leak. Written for every extension, as the bridge also prepends it
+    /// to the scripts `chrome.scripting` injects, and rewritten on every call so Lilo updates apply.
     private static func prepareContentScriptCompat(extensionURL: URL, manifest: inout [String: Any], compatSource: String) throws {
-        guard var contentScripts = manifest["content_scripts"] as? [[String: Any]],
-              !contentScripts.isEmpty else { return }
-
+        var contentScripts = manifest["content_scripts"] as? [[String: Any]] ?? []
         var changed = false
         for index in contentScripts.indices {
             guard let js = contentScripts[index]["js"] as? [String], !js.isEmpty else { continue }

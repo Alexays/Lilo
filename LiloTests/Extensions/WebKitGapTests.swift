@@ -733,7 +733,7 @@ final class WebKitGapTests: XCTestCase {
         return `${scripted} ${await chrome.runtime.sendMessage('loaded?')}`;
         """, arguments: [:], in: nil, contentWorld: .page) as? String
         let parts = result?.components(separatedBy: " ") ?? []
-        XCTAssertEqual(parts.first, "ran", "WebKit now refuses to script the extension's own pages, as Chrome: drop ownPagesRefused (chrome-leniency.ts)")
+        XCTAssertEqual(parts.first, "ran", "WebKit now refuses to script the extension's own pages, as Chrome: drop refuseOwnPages (chrome-leniency.ts)")
         XCTAssertEqual(parts.last, "loaded", "WebKit now stops following an extension page at its commit, as Chrome: drop skippingExtensionPages (augmentation/webNavigation.ts)")
     }
 

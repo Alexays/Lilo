@@ -288,7 +288,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 45. `scripting` reaches the extension's own pages
 
 - **Gap:** WebKit injects into the extension's own pages. Chrome refuses: `Cannot access contents of the page. Extension manifest must request permission to access the respective host.` (the url instead, with `tabs`).
-- **Lilo:** `executeScript`, `insertCSS` and `removeCSS` refuse a tab showing one of the extension's pages ([chrome-leniency.ts] `refuseOwnPages`), at the cost of a `tabs.get` per call.
+- **Lilo:** `executeScript`, `insertCSS` and `removeCSS` refuse a tab showing one of the extension's pages ([chrome-leniency.ts] `refuseOwnPages`), from the URLs the target documents name in the injection gap 50 already runs (`targetURLs`).
 - **Impact:** Jetwriter's popup shown in a tab scripts the active tab, takes itself for a site and closes.
 - **Check:** `testExtensionPagesAreScriptedAndFollowedAsWebPages`. Repro: from an extension page in a tab, `scripting.executeScript` on that tab. Expected: rejects. Actual: runs.
 
@@ -302,7 +302,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 50. `scripting.executeScript` injects at once into a loading document
 
 - **Gap:** WebKit injects at once, `injectImmediately` or not. Chrome waits for `document_idle` unless asked.
-- **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call.
+- **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call, which also checks gap 45.
 - **Impact:** Cuponomia's script, injected as its install page starts loading, found no `document.body`.
 - **Check:** `testExecuteScriptInjectsIntoALoadingDocumentAtOnce`. Repro: a `document_start` content script messages the worker, which runs `executeScript({ target: { tabId }, func: () => document.readyState })`. Expected: `interactive`. Actual: `loading`.
 
