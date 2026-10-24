@@ -15,12 +15,12 @@ test("dark theme keeps primary text at AA contrast for a light accent", () => {
 	}
 });
 
-test("accent text picks the candidate with the higher measured contrast", () => {
-	const vars = deriveSidebarThemeVariables("#ff6a00", false);
-	const accent = rgb(vars["--sidebar-accent"]);
-	const chosen = contrastRatio(accent, rgb(vars["--sidebar-accent-text"]));
-	assert.ok(chosen >= contrastRatio(accent, rgb("#f8f9fd")));
-	assert.ok(chosen >= contrastRatio(accent, rgb("#1d1d1f")));
+test("a light theme's accent carries a white label at AA, as macOS buttons do", () => {
+	for (const input of ["#ff6a00", "#f4b183", "#e8d97a", "#9ad6ff", "#a8e6c4", "#b18cff"]) {
+		const vars = deriveSidebarThemeVariables(input, false);
+		assert.equal(vars["--sidebar-accent-text"], "#ffffff", input);
+		assert.ok(contrastRatio(rgb(vars["--sidebar-accent"]), rgb("#ffffff")) >= TEXT_CONTRAST, input);
+	}
 });
 
 test("ensureContrast leaves a passing color unchanged", () => {

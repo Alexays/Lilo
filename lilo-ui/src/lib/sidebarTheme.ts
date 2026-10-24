@@ -226,7 +226,11 @@ export function deriveSidebarThemeVariables(
 		parseHexColor(sidebarContrast) ??
 		parseHexColor(prefersDark ? DARK_CONTRAST : LIGHT_CONTRAST) ??
 		LIGHT_CANVAS;
-	const accent = prefersDark ? parseHexColor(darkAccent) ?? accentSource : mix(accentSource, contrastColor, 0.08);
+	let accent = prefersDark ? parseHexColor(darkAccent) ?? accentSource : mix(accentSource, contrastColor, 0.08);
+	// Light accents carry white labels, as macOS buttons do: darkened just enough for white to read on them.
+	for (let step = 1; !prefersDark && step <= 20 && contrastRatio(WHITE, accent) < TEXT_CONTRAST; step += 1) {
+		accent = mix(accent, BLACK, 0.05);
+	}
 	const accentHex = ensureContrast(toHex(accent), sidebarHex, ICON_CONTRAST, sidebarContrast);
 	const accentHover = ensureContrast(
 		toHex(mix(parseHexColor(accentHex) ?? accent, contrastColor, prefersDark ? 0.1 : 0.16)),
@@ -234,7 +238,9 @@ export function deriveSidebarThemeVariables(
 		ICON_CONTRAST,
 		sidebarContrast,
 	);
-	const accentText = ensureContrast(pickContrast(parseHexColor(accentHex) ?? accent), accentHex, TEXT_CONTRAST, sidebarContrast);
+	const accentText = prefersDark
+		? ensureContrast(pickContrast(parseHexColor(accentHex) ?? accent), accentHex, TEXT_CONTRAST, sidebarContrast)
+		: "#ffffff";
 	const dangerSource =
 		parseHexColor(prefersDark ? DARK_DANGER : LIGHT_DANGER) ?? contrastColor;
 	const danger = toHex(
