@@ -30,8 +30,13 @@ final class MainWindowControllerPowerModeTests: XCTestCase {
         factory.suppressWarmPool = false
         factory.dropWarmPool()
         lifecycle.onForegrounded?()
-        let filledUnasked = await pollUntil(timeout: 0.6) { factory.test_warmPoolCount > 0 }
-        XCTAssertFalse(filledUnasked, "nothing was released, so nothing is rebuilt")
+        // Scheduled after any rebuild the activation could have asked for, so it lands after it too.
+        let witness = factory.createDataStore(persistent: false, identifier: nil)
+        factory.rearmWarmPool(dataStore: witness, profileId: nil)
+        let witnessed = await pollUntil { factory.test_warmPoolCount > 0 }
+        XCTAssertTrue(witnessed)
+        _ = factory.createTab(configuration: .init(dataStore: witness, refillsWarmPool: false))
+        XCTAssertEqual(factory.test_warmPoolCount, 0, "nothing was released, so nothing is rebuilt")
 
         factory.rearmWarmPool(dataStore: factory.defaultDataStore(), profileId: nil)
         let filled = await pollUntil { factory.test_warmPoolCount == 1 }

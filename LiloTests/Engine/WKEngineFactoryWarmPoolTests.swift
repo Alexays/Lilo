@@ -32,22 +32,33 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
     /// Only a tab the user opens predicts another: a restored tab coming back, as at launch, builds no warm view.
     func testOnlyAnOpenedTabRefillsThePool() async {
         let factory = WKEngineFactory()
+        let opened = factory.createDataStore(persistent: false, identifier: nil)
         _ = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore(), refillsWarmPool: false))
-        let refilledByRestore = await pollUntil(timeout: 0.6) { factory.test_warmPoolCount > 0 }
-        XCTAssertFalse(refilledByRestore)
-
-        _ = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
-        let refilled = await pollUntil(timeout: 2) { factory.test_warmPoolCount == 1 }
+        // Scheduled after any refill the restored tab could have asked for, so it lands after it too.
+        _ = factory.createTab(configuration: .init(dataStore: opened))
+        let refilled = await pollUntil { factory.test_warmPoolCount > 0 }
         XCTAssertTrue(refilled)
+
+        _ = factory.createTab(configuration: .init(dataStore: opened, refillsWarmPool: false))
+        XCTAssertEqual(factory.test_warmPoolCount, 0, "the opened tab's view was the only one built")
     }
 
     func testWarmPoolEvictsOldestBeyondCapacity() async {
         let factory = WKEngineFactory()
-        await warm(factory, factory.defaultDataStore())
+        let oldest = factory.defaultDataStore()
+        let newest = factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)
+        await warm(factory, oldest)
         await warm(factory, factory.createDataStore(persistent: false, identifier: nil))
-        await warm(factory, factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString))
+        factory.rearmWarmPool(dataStore: newest, profileId: nil)
 
-        XCTAssertEqual(factory.test_warmPoolCount, 2, "the pool is capped at two slots; the oldest is evicted")
+        // The count holds at capacity: only a tab taking the newest view shows it landed.
+        let landed = await pollUntil {
+            _ = factory.createTab(configuration: .init(dataStore: newest, refillsWarmPool: false))
+            return factory.test_warmPoolCount == 1
+        }
+        XCTAssertTrue(landed, "the pool is capped at two slots")
+        _ = factory.createTab(configuration: .init(dataStore: oldest, refillsWarmPool: false))
+        XCTAssertEqual(factory.test_warmPoolCount, 1, "the oldest is evicted")
     }
 
     /// Boot re-applies the persisted override dict, which usually matches what the factory already
