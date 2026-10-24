@@ -25,14 +25,13 @@ else
     missing+=("Xcode 27 selected (found: ${xcode:-none at $(xcode-select -p 2>/dev/null || echo '?')}): install it from https://developer.apple.com/xcode/, open it once, then: sudo xcode-select -s /Applications/Xcode.app")
 fi
 
-wanted_node=$(cat .nvmrc)
+# The packages' engines field, not .nvmrc's major: the bridge tests need --experimental-strip-types.
+wanted_node=$(sed -n 's/.*"node": *">=\([0-9.]*\)".*/\1/p' lilo-ui/package.json)
 node_version=$(node -v 2>/dev/null)
-node_major=${node_version#v}
-node_major=${node_major%%.*}
-if [ -n "$node_version" ] && [ "$node_major" -ge "$wanted_node" ]; then
+if [ -n "$node_version" ] && [ "$(printf '%s\n' "$wanted_node" "${node_version#v}" | sort -V | head -1)" = "$wanted_node" ]; then
     echo "  ok  Node.js $node_version"
 else
-    echo "Missing: Node.js $wanted_node or later, as .nvmrc pins (found: ${node_version:-none})." >&2
+    echo "Missing: Node.js $wanted_node or later, as the packages require (found: ${node_version:-none})." >&2
     echo "Install it with nvm (nvm install, which reads .nvmrc), fnm, or from https://nodejs.org, then rerun make bootstrap." >&2
     exit 1
 fi
