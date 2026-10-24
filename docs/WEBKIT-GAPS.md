@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44 and 46. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44 and 46. Every other gap is fully worked around.
 
 ---
 
@@ -63,6 +63,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Worka
 - **Check:** `testEventListenerMethodsThrowOnANonFunction`. Repro: `browser.storage.onChanged.removeListener(undefined)` throws.
 
 ## runtime and messaging
+
+### 79. Pages an extension's `externally_connectable` names get `browser.runtime` only
+
+- **Gap:** WebKit gives those web pages `browser.runtime.sendMessage` and `connect`, and no `chrome`. Chrome gives them `chrome.runtime`, with callbacks and `lastError`.
+- **Lilo:** a page-world script defines `chrome.runtime` over `browser.runtime` where WebKit exposes it ([WKEngineFactory.swift] `externallyConnectableRuntimeSource`); other pages keep no `window.chrome`. User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** claude.ai's OAuth page hands the Claude extension its code with `chrome.runtime.sendMessage(id, { type: 'oauth_redirect' })`, and showed "Authorization failed" without it.
+- **Check:** Manual: needs a page on an origin the extension names. Repro: an extension with `"externally_connectable": { "matches": ["https://example.com/*"] }`, then `typeof chrome` on that page. Expected: `object`. Actual: `undefined`.
 
 ### 4. A refused native connection sets no `runtime.lastError`
 
@@ -212,6 +219,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Worka
 - **Impact:** Buyhatke's content script modules call such a function at their top level (`ot()` assigns `de`, declared further down), and fail.
 - **Check:** `testAssignmentAcrossAnAwaitChecksItsBindingFirst` (JavaScriptCore alone). Repro: `(function () { (async () => { v = await 1; })().catch(console.log); let v; })()` logs the error; V8 logs nothing.
 
+### 80. Storing a `CryptoKey` in IndexedDB stalls the service worker
+
+- **Gap:** an MV3 worker that puts a `CryptoKey` in IndexedDB never sees the transaction complete, and nothing in the worker runs again (not even its timers). An extension page stores the same key at once, as Chrome's worker does.
+- **Lilo:** none.
+- **Impact:** 2FAS Auth stores its signing keys this way: its worker stops during its first setup, so its pairing page shows no QR code and its toolbar button does nothing.
+- **Check:** Manual: it would stall the test host's worker for good. Repro: in an MV3 worker, `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])`, then `put` its `privateKey` in an object store and set the action title in `oncomplete` and in a 3 s `setTimeout`. Expected: a title. Actual: neither ever runs.
+
 ## Manifest and permissions
 
 ### 11. Permission names WebKit does not know reject; `privacy` is dropped
@@ -223,10 +237,23 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Worka
 
 ### 16. Manifest entries Chrome accepts are rejected
 
-- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>` or only patterns with a port (its patterns have no port).
-- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries dropped, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
-- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt and others).
+- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>`, a pattern with a port (its patterns have no port) or a wildcard on a public suffix of the list's private section (`*://*.netlify.app/*`), which Chrome accepts.
+- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries dropped, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), `externally_connectable` wildcards on a public suffix of the bundled list are dropped, and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt and others); Modjo Everywhere reported a manifest error.
 - **Check:** `testManifestEntriesChromeAcceptsAreRejected`. Repro: load a manifest with `"commands": { "_execute_action": {} }` (or each other entry) and read `WKWebExtension.errors`. Expected: none. Actual: one error each.
+
+### 76. Host permissions match their path
+
+- **Gap:** WebKit matches a `host_permissions` pattern's path, so `https://*/` grants the root page of each host only. Chrome ignores a host permission's path: `https://*/` reaches every page. WebKit then asks the app for each other page the extension reaches (gap 77).
+- **Lilo:** rewrites the path of `host_permissions` and `optional_host_permissions` to `/*` at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`). User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** Okta Browser Plugin (`https://*/`) reached no page but the root, and Lilo asked for access to each page it touched, an OAuth URL with its query included.
+- **Check:** `testHostPermissionsMatchTheirPath`. Repro: `WKWebExtension.MatchPattern(string: "https://*/").matches(URL(string: "https://example.com/a")!)`. Expected: true, as a host permission. Actual: false.
+
+### 77. WebKit asks the app for pages an extension reaches without access
+
+- **Gap:** when an extension reaches a page its grants do not cover but its manifest could (a `tabs` or `webNavigation` permission is enough), WebKit asks the controller delegate for the page's full URL (`promptForPermissionToAccess`), from `tabs`, `scripting`, `cookies` and a failed CORS fetch. Chrome never asks: the call fails, and only `permissions.request` prompts.
+- **Lilo:** refuses without asking ([ExtensionControllerDelegate.swift] `promptForPermissionToAccess`). User-visible side: COMPATIBILITY.md, "permissions".
+- **Check:** `testURLPermissionPromptIsRefusedWithoutAsking` (Lilo's side).
 
 ## tabs, scripting and webNavigation
 
@@ -278,6 +305,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Worka
 - **Lilo:** first runs an injection of its own that waits for `DOMContentLoaded`, then the extension's ([chrome-leniency.ts] `scriptingPatches.executeScript`): one more injection per call.
 - **Impact:** Cuponomia's script, injected as its install page starts loading, found no `document.body`.
 - **Check:** `testExecuteScriptInjectsIntoALoadingDocumentAtOnce`. Repro: a `document_start` content script messages the worker, which runs `executeScript({ target: { tabId }, func: () => document.readyState })`. Expected: `interactive`. Actual: `loading`.
+
+### 78. `tabs.captureVisibleTab` asks the tab for an empty snapshot
+
+- **Gap:** when the tab takes its own snapshots (`takeSnapshot(using:for:)`), WebKit hands it a configuration whose rect is empty: it reads the bounds of no web view. The snapshot is empty and `captureVisibleTab` resolves `data:,`.
+- **Lilo:** snapshots the web view's bounds for an empty rect ([TabExtensionAdapter.swift] `takeSnapshot`).
+- **Impact:** FireShot's full-page capture failed (`Cannot create an ImageBitmap from an empty buffer`).
+- **Check:** `testCaptureVisibleTabSnapshotsTheVisiblePage` (Lilo's side). Repro: implement `takeSnapshot(using:for:completionHandler:)` on a `WKWebExtensionTab` and call `chrome.tabs.captureVisibleTab()`. Expected: the configuration's rect is the page's. Actual: `CGRectZero`.
 
 ## contextMenus, alarms, action, i18n
 
@@ -453,6 +487,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71 and 74. Worka
 [worker-messages.ts]: ../Lilo/Extensions/bridge-src/src/shared/worker-messages.ts
 [ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
 [ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
+[TabExtensionAdapter.swift]: ../Lilo/Extensions/Core/TabExtensionAdapter.swift
 [CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
