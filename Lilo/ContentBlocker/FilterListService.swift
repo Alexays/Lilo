@@ -143,8 +143,11 @@ final class FilterListService {
     }
 
     /// Conditional requests against an on-disk HTTP cache: a list unchanged since the last fetch costs a 304.
+    /// Background traffic, kept off Low Data Mode networks: the cached rules keep blocking meanwhile.
     private nonisolated static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
+        configuration.networkServiceType = .background
+        configuration.allowsConstrainedNetworkAccess = false
         configuration.urlCache = URLCache(memoryCapacity: 0, diskCapacity: 120 << 20,
                                           directory: cacheDirectory.appendingPathComponent("filter-lists-http", isDirectory: true))
         return URLSession(configuration: configuration)
