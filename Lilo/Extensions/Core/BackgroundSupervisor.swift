@@ -94,6 +94,7 @@ final class BackgroundSupervisor {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
         loadStartedAt[extensionId] = Date()
         defer { loadStartedAt[extensionId] = nil }
+        var timeout: Task<Void, Never>?
         let failure: String? = await withCheckedContinuation { continuation in
             let resumed = OSAllocatedUnfairLock(initialState: false)
             let finish: @Sendable (String?) -> Void = { failure in
@@ -103,11 +104,12 @@ final class BackgroundSupervisor {
             context.loadBackgroundContent { error in
                 finish(error.map { ExtensionDiagnostics.diagnosticDescription(for: $0) })
             }
-            Task {
-                try? await Task.sleep(for: .seconds(Self.loadTimeout))
+            timeout = Task {
+                guard (try? await Task.sleep(for: .seconds(Self.loadTimeout))) != nil else { return }
                 finish("no answer after \(Int(Self.loadTimeout))s")
             }
         }
+        timeout?.cancel()
         if let failure {
             Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
             health[extensionId]?.failureReason = failure
