@@ -1,5 +1,7 @@
 changesDir: .changes
 unreleasedDir: unreleased
+# Microseconds: notes of one kind written within a second would otherwise overwrite each other.
+fragmentFileFormat: '{{.Kind}}-{{.Time.Format "20060102-150405.000000"}}'
 changelogPath: CHANGELOG.md
 headerPath: header.md
 versionExt: md

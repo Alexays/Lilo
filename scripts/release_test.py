@@ -128,6 +128,11 @@ class ReleaseTests(unittest.TestCase):
         self.assert_versions("1.0.0")
         self.assertEqual(self.read("CHANGELOG.md").count("Fix tab switching."), 3)
 
+    def test_notes_of_one_kind_written_within_a_second_are_all_kept(self):
+        for _ in range(3):
+            self.note("Fixed")
+        self.assertEqual(len(list((self.root / ".changes/unreleased").glob("*.yaml"))), 3)
+
     def test_invalid_notes_leave_release_files_alone(self):
         for content in ["kind: Unknown\nbody: Invalid note\n", "kind: [\n"]:
             with self.subTest(content=content):
