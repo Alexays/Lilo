@@ -182,6 +182,28 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js")), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
     }
 
+    func testPrepareLeavesAFolderWhoseStampMatchesUntilItsWorkerChanges() throws {
+        let extDir = tempDir.appendingPathComponent("stamped")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Stamped","version":"1","background":{"service_worker":"background.js"}}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "console.log('vendor');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        let preludeURL = extDir.appendingPathComponent("lilo-background-prelude.js")
+
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        XCTAssertEqual(try String(contentsOf: preludeURL), "edited", "a matching stamp skips the preparation")
+
+        try "console.log('vendor 2');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
+        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nP")
+
+        try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "Q")
+        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nQ", "a new prelude prepares again")
+    }
+
     /// Metadata carries no `backgroundPreludeHash`, and `readMetadata` round-trips what `prepare` just
     /// wrote (the second `prepare` call below re-reads the metadata written by the first).
     func testMetadataOmitsDeadPreludeHashFieldAndStillRoundTripsThroughReadMetadata() throws {
