@@ -26,13 +26,17 @@ final class TabExtensionAdapterTests: XCTestCase {
         let loaded = await pollUntil { (try? await engineTab.wkWebView.evaluateJavaScript("document.body.textContent")) as? String == "page" }
         XCTAssertTrue(loaded)
         let adapter = TabExtensionAdapter(engineTab: engineTab)
-        XCTAssertIdentical(adapter.webView(for: context), engineTab.wkWebView)
 
         engineTab.freeze()
         XCTAssertNil(adapter.webView(for: context))
 
         engineTab.reload()
         XCTAssertIdentical(adapter.webView(for: context), engineTab.wkWebView, "a woken tab lends its web view again")
+        engineTab.freeze()
+        XCTAssertFalse(engineTab.isFrozen, "a tab an extension is scripting stays live until its script has run")
+        engineTab.lentToExtensionAt = .now - .seconds(3)
+        engineTab.freeze()
+        XCTAssertTrue(engineTab.isFrozen)
         engineTab.teardown()
     }
 

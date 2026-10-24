@@ -213,6 +213,9 @@ final class WKWebViewTab: NSObject {
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
     /// it is set, and the exception unwinding through Swift corrupts the concurrency runtime.
     private(set) var isFrozen = false
+    /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
+    /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
+    var lentToExtensionAt: ContinuousClock.Instant?
     /// The content process died while the page was suspended or off screen: the engine is replaced when
     /// its tab is next shown (see TabManager.activateTabRuntime).
     private(set) var isPageLost = false
@@ -340,7 +343,7 @@ final class WKWebViewTab: NSObject {
 
     /// Suspend this engine in place (cooperative Page-Visibility hide + media pause). Idempotent.
     func freeze() {
-        guard !isFrozen else { return }
+        guard !isFrozen, lentToExtensionAt.map({ ContinuousClock.now - $0 >= .seconds(2) }) ?? true else { return }
         isFrozen = true
         freezer.freeze(webView)
     }

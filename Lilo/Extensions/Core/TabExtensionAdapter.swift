@@ -35,7 +35,8 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     /// None for a frozen tab: WebKit's `scripting.executeScript` would evaluate in it and raise, crashing the app,
     /// where without a web view the extension gets an error, as Chrome gives for a tab put to sleep.
     func webView(for context: WKWebExtensionContext) -> WKWebView? {
-        guard let webView = engineTab?.view as? WKWebView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return nil }
+        guard let engineTab, let webView = engineTab.view as? WKWebView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return nil }
+        engineTab.lentToExtensionAt = .now
         return webView
     }
 
