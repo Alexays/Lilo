@@ -17,12 +17,10 @@ interface PanelEvent {
 
 /** Chrome's `{windowId, tabId?, path}`; a window or tab gone by then reads as -1 or no tabId. */
 async function panelInfo({ windowPosition, index, path }: PanelEvent): Promise<unknown[]> {
-  const windowId = (await windowAt(windowPosition).catch(() => undefined))?.id ?? -1;
+  const tab = typeof index === 'number' ? await tabAt({ windowPosition, index }).catch(() => undefined) : undefined;
+  const windowId = tab?.windowId ?? (await windowAt(windowPosition).catch(() => undefined))?.id ?? -1;
   const info: Record<string, unknown> = { windowId };
-  if (typeof index === 'number' && windowId !== -1) {
-    const tabId = (await tabAt({ windowPosition, index }).catch(() => undefined))?.id;
-    if (typeof tabId === 'number') info.tabId = tabId;
-  }
+  if (typeof tab?.id === 'number') info.tabId = tab.id;
   info.path = path;
   return [info];
 }

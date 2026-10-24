@@ -93,7 +93,7 @@ function setZoomSettings(tabId: number | ZoomSettings | undefined, settings?: Zo
 function createSplit(tabIds: [number, number], callback?: (splitViewId: number) => void) {
   return callbackify(async () => {
     if (tabIds?.[0] === tabIds?.[1]) throw new Error('Cannot create a split view with duplicate tab IDs.');
-    const tabs = [await positionOf(tabIds[0]), await positionOf(tabIds[1])];
+    const tabs = await Promise.all([positionOf(tabIds[0]), positionOf(tabIds[1])]);
     return gapCall<number>('tabs', 'createSplit', { tabs, tabIds });
   }, callback);
 }

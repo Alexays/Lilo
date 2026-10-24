@@ -72,7 +72,7 @@ async function sameDocumentDetails(raw: SameDocumentNavigation): Promise<any> {
 }
 
 async function createdNavigationTargetDetails(raw: CreatedNavigationTarget): Promise<any> {
-  const [source, tab] = [await tabAt(raw.source), await tabAt(raw.tab)];
+  const [source, tab] = await Promise.all([tabAt(raw.source), tabAt(raw.tab)]);
   if (typeof source?.id !== 'number' || typeof tab?.id !== 'number') return null;
   return { sourceTabId: source.id, sourceProcessId: -1, sourceFrameId: 0, url: raw.url, tabId: tab.id, timeStamp: raw.timeStamp };
 }

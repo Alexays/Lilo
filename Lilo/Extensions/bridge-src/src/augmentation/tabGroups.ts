@@ -45,31 +45,42 @@ interface TabPosition {
   index: number;
 }
 
-/** Each tab's window position (in chrome.windows.getAll order) and index, or -1 when unknown. */
-export async function toPositions(tabList: { index: number; windowId: number }[]): Promise<TabPosition[]> {
-  let windowIds: number[] = [];
+/** The ids of chrome.windows.getAll, in its order; empty when unknown. */
+async function windowIdOrder(): Promise<number[]> {
   try {
-    windowIds = ((await bridgeChrome()?.windows?.getAll?.()) ?? []).map((w: any) => w.id);
+    return ((await bridgeChrome()?.windows?.getAll?.()) ?? []).map((w: any) => w.id);
   } catch {
-    /* positions stay unknown */
+    return [];
   }
-  return tabList.map((t) => ({ windowPosition: windowIds.indexOf(t.windowId), index: t.index }));
 }
 
-/** Resolve integer tab ids to positions, the bridge to Lilo's tab identity. Unknown ids drop. */
+/** Each tab's window position (in chrome.windows.getAll order) and index, or -1 when unknown. */
+export async function toPositions(
+  tabList: { index: number; windowId: number }[],
+  windowIds: Promise<number[]> = windowIdOrder(),
+): Promise<TabPosition[]> {
+  const order = await windowIds;
+  return tabList.map((t) => ({ windowPosition: order.indexOf(t.windowId), index: t.index }));
+}
+
+/**
+ * Resolve integer tab ids to positions, the bridge to Lilo's tab identity. Unknown ids drop. Every lookup runs at
+ * once: the tabs and the window order come back in one round trip whatever the number of ids.
+ */
 export async function tabPositions(tabIds: number[]): Promise<TabPosition[]> {
   const tabs = bridgeChrome()?.tabs;
-  if (!tabs?.get) return [];
-  const found: { index: number; windowId: number }[] = [];
-  for (const id of tabIds) {
+  if (!tabs?.get || tabIds.length === 0) return [];
+  // Skips the groupId lookup tabGroups adds to tabs.get.
+  const get = tabs.get.__liloUnwrapped ?? tabs.get;
+  const windowIds = windowIdOrder();
+  const found = await Promise.all(tabIds.map(async (id) => {
     try {
-      const t = await tabs.get(id);
-      if (typeof t?.index === 'number') found.push(t);
+      return await get.call(tabs, id);
     } catch {
-      /* unknown tab: skip */
+      return undefined;
     }
-  }
-  return toPositions(found);
+  }));
+  return toPositions(found.filter((t) => typeof t?.index === 'number'), windowIds);
 }
 
 /** The `{windowPosition, index}` native resolves a tab id by. */

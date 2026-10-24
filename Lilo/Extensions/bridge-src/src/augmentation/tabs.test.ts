@@ -114,6 +114,26 @@ describe('tabs split views', () => {
   });
 });
 
+describe('tab positions', () => {
+  it('looks every tab and the window order up at once, dropping unknown ids', async () => {
+    const chrome = (globalThis as any).chrome;
+    const { get } = chrome.tabs;
+    const { getAll } = chrome.windows;
+    const started: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    chrome.tabs.get = async (id: number) => { started.push(`tab ${id}`); await gate; return get(id); };
+    chrome.windows.getAll = async () => { started.push('windows'); await gate; return getAll(); };
+    const { tabPositions } = await import('./tabGroups.ts');
+
+    const positions = tabPositions([12, 99, 11]);
+
+    assert.deepEqual(started.sort(), ['tab 11', 'tab 12', 'tab 99', 'windows']);
+    release();
+    assert.deepEqual(await positions, [{ windowPosition: 0, index: 1 }, { windowPosition: 0, index: 0 }]);
+  });
+});
+
 describe('windows.onBoundsChanged', () => {
   it('resolves the window from its position', async () => {
     const heard = new Promise<any>((resolve) => onBoundsChanged.addListener(resolve));
