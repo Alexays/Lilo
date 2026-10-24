@@ -161,7 +161,7 @@
   .card :global(.ob-row > :last-child:not(.ob-text)) { margin-left: auto; }
   .card :global(.ob-text small) { display: block; margin-top: 2px; font-size: var(--font-size-sm); font-weight: var(--font-weight-regular); color: var(--text-secondary); }
   /* A Settings section icon, scaled to the row. */
-  .card :global(.ob-icon) { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--accent-tint-14); color: var(--accent); }
+  .card :global(.ob-icon) { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--accent-tint-22); color: var(--accent-ink); }
   .card :global(.ob-done) { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--success-text); }
   .card :global(.ob-btn.small) { padding: 8px 14px; font-size: var(--font-size-sm); }
   .card :global(.ob-foot) { flex: none; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
