@@ -6,6 +6,8 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-24
+
 ### Changed
 
 - The setup asks how you will use Lilo with a third choice between browsing and developing: with your AI agents, which turns them on and walks you through connecting them, without the terminal.
@@ -86,7 +88,8 @@ What changes in each Lilo release, for people using it. The format follows
 
 First public release: a native macOS browser for people who live in a sidebar, with Spaces that keep their own sign-ins, Chrome Web Store extensions, terminal tabs, and an Arc import. Requires macOS 26 or later.
 
-[Unreleased]: https://github.com/Alexays/Lilo/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/Alexays/Lilo/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/Alexays/Lilo/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Alexays/Lilo/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Alexays/Lilo/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Alexays/Lilo/compare/v0.1.0...v0.1.1
