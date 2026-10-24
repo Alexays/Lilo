@@ -1,0 +1,3 @@
+kind: Fixed
+body: A Space's tooltip no longer repeats its name when its profile has the same one.
+time: 2026-10-24T23:12:41.327904+02:00
