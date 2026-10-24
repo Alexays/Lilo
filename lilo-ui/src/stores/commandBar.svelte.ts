@@ -404,8 +404,15 @@ function setHistoryResults(query: string, items: SearchableEntry[]): void {
 }
 
 function setSearchSuggestions(query: string, items: string[]): void {
-	if (query !== _pendingSuggestionQuery) return;
-	_searchSuggestions = normalizeSearchSuggestions(query, items);
+	const pending = _pendingSuggestionQuery;
+	// Replies arrive in query order, so on a slow link the one for a prefix of what is typed, kept to
+	// what still matches, beats none until the exact one lands.
+	if (query !== pending) {
+		if (!query || !pending.startsWith(query)) return;
+		const typed = pending.toLowerCase();
+		items = items.filter((item) => item.toLowerCase().startsWith(typed));
+	}
+	_searchSuggestions = normalizeSearchSuggestions(pending, items);
 	computeResults({ pinSelection: true });
 }
 

@@ -197,6 +197,21 @@ test("a search suggestion never puts ghost text over a top row that does somethi
 	assert.equal(bar.getAutocompleteSuggestion(), "");
 });
 
+test("on a slow link, the suggestions for a prefix of the query show what still matches until the exact ones land", async () => {
+	const { bar, receive } = await withBar();
+	bar.openCommandBar("zebra c");
+	const suggestions = () => bar.getResults().filter((result: { id: string }) => result.id.startsWith("search-suggestion-")).map((result: { title: string }) => result.title);
+
+	receive({ event: "searchSuggestions", query: "zebr", suggestions: ["zebra crossing", "zebra fish"] });
+	assert.deepEqual(suggestions(), ["zebra crossing"]);
+
+	receive({ event: "searchSuggestions", query: "zebra c", suggestions: ["zebra cake"] });
+	assert.deepEqual(suggestions(), ["zebra cake"]);
+
+	receive({ event: "searchSuggestions", query: "lion", suggestions: ["lion king"] });
+	assert.deepEqual(suggestions(), ["zebra cake"], "a reply to another query is dropped");
+});
+
 test("a site the query starts leads, and its ghost text and Enter both go there", async () => {
 	const { bar, receive, last } = await withBar();
 	bar.openCommandBar("wiki");
