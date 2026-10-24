@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private(set) lazy var updaterController: SPUStandardUpdaterController? = {
         let key = Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String ?? ""
         guard !key.isEmpty else { return nil }
-        return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
     }()
 
     static func main() {
@@ -316,6 +316,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let urls = pendingExternalURLs
         pendingExternalURLs.removeAll()
         urls.forEach { mainWindowController.openExternalURL($0) }
+    }
+}
+
+extension AppDelegate: SPUUpdaterDelegate {
+    /// The feed's `releases/latest` redirect is cached by URLSession, so a check could keep reading the
+    /// previous release's appcast: a fresh query string makes every check reach GitHub.
+    nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
+        guard let feed = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String else { return nil }
+        return "\(feed)?check=\(Int(Date().timeIntervalSince1970))"
     }
 }
 
