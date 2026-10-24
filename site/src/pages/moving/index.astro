@@ -1,5 +1,4 @@
 ---
-import Footer from "../../components/Footer.astro";
 import Layout from "../../layouts/Layout.astro";
 
 const lang = "en";
@@ -38,46 +37,46 @@ const schema = [
   description="Bring your bookmarks, open tabs, history, sign-ins and extensions to Lilo from Safari, Chrome, Arc, Firefox and eight more Mac browsers, in five minutes."
   schema={schema}
 >
-  <div class="top">
-    <div class="wrap">
-      <div class="hero-copy">
-        <svg
-          class="mark bloom"
-          viewBox="112 112 800 800"
-          role="img"
-          aria-label="Lilo logo"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
-        <h1>
-          Moving
-          <br />
-          <span>to Lilo.</span>
-        </h1>
-        <p class="sub">
-          Lilo reads your bookmarks, tabs, history, sign-ins and extensions
-          straight from the browsers on your Mac. Nothing leaves your Mac, and
-          your other browser stays exactly as it was.
-        </p>
-        <div class="cta">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap">
+        <div class="hero-copy">
+          <svg
+            class="mark bloom"
+            viewBox="112 112 800 800"
+            role="img"
+            aria-label="Lilo logo"
           >
-            Download for Mac
-          </a>
-          <a class="pill soft" href="#what">
-            See what comes with you
-          </a>
+            <use href="#petal-4" />
+            <use href="#petal-3" />
+            <use href="#petal-2" />
+            <use href="#petal-1" />
+          </svg>
+          <h1>
+            Moving
+            <br />
+            <span>to Lilo.</span>
+          </h1>
+          <p class="sub">
+            Lilo reads your bookmarks, tabs, history, sign-ins and extensions
+            straight from the browsers on your Mac. Nothing leaves your Mac, and
+            your other browser stays exactly as it was.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Download for Mac
+            </a>
+            <a class="pill soft" href="#what">
+              See what comes with you
+            </a>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <main id="main-content">
     <section class="band" id="what">
       <div class="wrap">
         <div class="head">
@@ -657,7 +656,5 @@ const schema = [
         </div>
       </div>
     </section>
-
-    <Footer lang={lang} />
   </main>
 </Layout>

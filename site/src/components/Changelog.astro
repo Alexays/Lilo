@@ -4,7 +4,6 @@ import Layout from "../layouts/Layout.astro";
 import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
-import Footer from "./Footer.astro";
 
 interface Props {
   lang: Locale;
@@ -29,29 +28,29 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
   title={text.changelogTitle}
   description={text.changelogDescription}
 >
-  <div class="top changelog-top">
-    <div class="wrap hero-copy changelog-hero">
-      <span class="beta">{text.releases}</span>
-      <h1>
-        {text.heading}
-        <br />
-        <span>{text.headingAccent}</span>
-      </h1>
-      <p class="sub">{text.introduction}</p>
-      <div class="cta">
-        <a
-          class="pill dark"
-          href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-        >
-          {text.download}
-        </a>
-        <a class="pill soft" href="https://github.com/Alexays/Lilo/releases">
-          {text.github}
-        </a>
+  <main id="main-content">
+    <div class="top changelog-top">
+      <div class="wrap hero-copy changelog-hero">
+        <span class="beta">{text.releases}</span>
+        <h1>
+          {text.heading}
+          <br />
+          <span>{text.headingAccent}</span>
+        </h1>
+        <p class="sub">{text.introduction}</p>
+        <div class="cta">
+          <a
+            class="pill dark"
+            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+          >
+            {text.download}
+          </a>
+          <a class="pill soft" href="https://github.com/Alexays/Lilo/releases">
+            {text.github}
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-  <main id="main-content">
     <div class="wrap release-list">
       {text.languageNote && <p class="language-note">{text.languageNote}</p>}
       {releases.map((release, index) => (
@@ -85,7 +84,6 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
         </article>
       ))}
     </div>
-    <Footer lang={lang} />
   </main>
 </Layout>
 

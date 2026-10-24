@@ -31,35 +31,32 @@ const links = [
 <header class="site-header">
   <div class="wrap nav">
     <div class="nav-brand">
-      <details class="mobile-nav">
-        <summary class="icon-button" aria-label={text.toggleNavigation}>
-          <svg
-            aria-hidden="true"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-          >
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </summary>
-        <nav aria-label={text.navigation}>
-          {links.map(([href, label]) => (
-            <a href={href} aria-current={path === href ? "page" : undefined}>
-              {label}
-            </a>
-          ))}
-        </nav>
-      </details>
+      <button
+        class="icon-button menu-toggle"
+        type="button"
+        aria-label={text.toggleNavigation}
+        aria-controls="site-navigation"
+        aria-expanded="false"
+      >
+        <svg
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
       <a class="logo" href={home} aria-label={text.home}>
         <Flower />
         Lilo
       </a>
     </div>
-    <nav class="desktop-nav" aria-label={text.navigation}>
+    <nav id="site-navigation" aria-label={text.navigation}>
       {links.map(([href, label]) => (
         <a href={href} aria-current={path === href ? "page" : undefined}>
           {label}
@@ -116,7 +113,8 @@ const links = [
 
 <script>
   const root = document.documentElement;
-  const menu = document.querySelector<HTMLDetailsElement>(".mobile-nav");
+  const header = document.querySelector<HTMLElement>(".site-header");
+  const menu = document.querySelector<HTMLButtonElement>(".menu-toggle");
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
 
   try {
@@ -128,8 +126,6 @@ const links = [
   } catch {
     // Storage can be unavailable in private browsing.
   }
-
-  root.dataset.themeReady = "";
 
   toggle?.addEventListener("click", () => {
     const dark = root.dataset.theme
@@ -146,20 +142,162 @@ const links = [
     }
   });
 
+  menu?.addEventListener("click", () => {
+    menu.setAttribute(
+      "aria-expanded",
+      String(menu.getAttribute("aria-expanded") !== "true")
+    );
+  });
+
   document.addEventListener("click", ({ target }) => {
     if (
-      menu?.open &&
+      menu?.getAttribute("aria-expanded") === "true" &&
       target instanceof Element &&
-      (!menu.contains(target) || target.closest("a"))
+      (!header?.contains(target) || target.closest("a"))
     ) {
-      menu.open = false;
+      menu.setAttribute("aria-expanded", "false");
     }
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && menu?.open) {
-      menu.open = false;
-      menu.querySelector<HTMLElement>("summary")?.focus();
+    if (
+      event.key === "Escape" &&
+      menu?.getAttribute("aria-expanded") === "true"
+    ) {
+      menu.setAttribute("aria-expanded", "false");
+      menu.focus();
     }
   });
+
+  if (header) {
+    header.dataset.ready = "";
+  }
 </script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr);
+    align-items: center;
+    min-height: 64px;
+    padding-block: 8px;
+    gap: 20px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo {
+    font-size: 20px;
+  }
+  .logo :global(svg) {
+    width: 26px;
+    height: 26px;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  nav a[aria-current="page"] {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-tools {
+    display: flex;
+    justify-self: end;
+    gap: 4px;
+  }
+  .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .icon-button:hover,
+  nav a:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  .menu-toggle,
+  .theme-toggle {
+    display: none;
+  }
+  [data-ready] .theme-toggle {
+    display: inline-flex;
+  }
+  .theme-sun {
+    display: var(--theme-sun);
+  }
+  .theme-moon {
+    display: var(--theme-moon);
+  }
+  @media (max-width: 1100px) {
+    .site-header:not([data-ready]) {
+      position: static;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    nav {
+      display: grid;
+      order: 1;
+      width: 100%;
+    }
+    [data-ready] .menu-toggle {
+      display: inline-flex;
+    }
+    [data-ready] nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: max(16px, env(safe-area-inset-left, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      width: auto;
+      max-height: calc(100vh - 80px);
+      max-height: calc(100dvh - 80px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.25);
+    }
+    :has(.menu-toggle[aria-expanded="true"]) nav {
+      display: grid;
+    }
+    .menu-toggle[aria-expanded="true"] {
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+  }
+</style>

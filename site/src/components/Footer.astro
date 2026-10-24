@@ -10,7 +10,11 @@ interface Props {
 const { lang } = Astro.props;
 const text = copy[lang];
 const otherLang = lang === "fr" ? "en" : "fr";
-const page = Astro.url.pathname.replace(/^\/fr(?=\/)/u, "").slice(1);
+
+const page =
+  Astro.url.pathname === "/404/"
+    ? ""
+    : Astro.url.pathname.replace(/^\/fr(?=\/)/u, "").slice(1);
 ---
 
 <footer class="foot">

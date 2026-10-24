@@ -1,5 +1,6 @@
 ---
 import config from "../../../Xcode/Configs/Base.xcconfig?raw";
+import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
@@ -120,5 +121,6 @@ const jsonLD = JSON.stringify({
     </a>
     <Header lang={lang} />
     <slot />
+    <Footer lang={lang} />
   </body>
 </html>

@@ -28,6 +28,28 @@ def tree(path):
 
 
 class SiteTests(unittest.TestCase):
+    def test_page_landmarks_and_navigation(self):
+        for page in PAGES + ["404.html"]:
+            with self.subTest(page=page):
+                parsed = tree(DIST / page)
+                mains = [node for node in parsed if node.tag == "main"]
+                self.assertEqual(len(mains), 1)
+                main = mains[0]
+                self.assertEqual(main.attrs.get("id"), "main-content")
+                self.assertEqual(sum(node.tag == "h1" for node in nodes(main)), 1)
+                footers = [node for node in parsed if node.tag == "footer"]
+                self.assertEqual(len(footers), 1)
+                self.assertEqual(footers[0].parent.tag, "body")
+                header = next(node for node in parsed if "site-header" in node.classes)
+                navigation = [node for node in nodes(header) if node.tag == "nav"]
+                self.assertEqual(len(navigation), 1)
+                links = [node.attrs["href"] for node in nodes(navigation[0]) if node.tag == "a"]
+                home = "/fr/" if page.startswith("fr/") else "/"
+                self.assertEqual(links, [home + "#" + section for section in
+                                        ["native", "extensions", "privacy", "build", "agents"]]
+                                 + [home + "moving/", "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
+                                    home + "changelog/"])
+
     def test_routes_language_alternates_and_markdown_copies(self):
         sitemap = ET.parse(DIST / "sitemap.xml")
         locations = {node.text for node in sitemap.findall(".//{*}loc")}

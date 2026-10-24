@@ -1,5 +1,4 @@
 ---
-import Footer from "../../../components/Footer.astro";
 import Layout from "../../../layouts/Layout.astro";
 
 const lang = "fr";
@@ -38,46 +37,46 @@ const schema = [
   description="Importez favoris, onglets ouverts, historique, connexions et extensions dans Lilo depuis Safari, Chrome, Arc, Firefox et huit autres navigateurs Mac."
   schema={schema}
 >
-  <div class="top">
-    <div class="wrap">
-      <div class="hero-copy">
-        <svg
-          class="mark bloom"
-          viewBox="112 112 800 800"
-          role="img"
-          aria-label="Logo de Lilo"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
-        <h1>
-          Passer
-          <br />
-          <span>à Lilo.</span>
-        </h1>
-        <p class="sub">
-          Lilo lit vos favoris, onglets, historique, connexions et extensions
-          directement dans les navigateurs de votre Mac. Rien ne quitte votre
-          Mac, et votre autre navigateur reste exactement tel qu'il était.
-        </p>
-        <div class="cta">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap">
+        <div class="hero-copy">
+          <svg
+            class="mark bloom"
+            viewBox="112 112 800 800"
+            role="img"
+            aria-label="Logo de Lilo"
           >
-            Télécharger pour Mac
-          </a>
-          <a class="pill soft" href="#what">
-            Voir ce que vous emportez
-          </a>
+            <use href="#petal-4" />
+            <use href="#petal-3" />
+            <use href="#petal-2" />
+            <use href="#petal-1" />
+          </svg>
+          <h1>
+            Passer
+            <br />
+            <span>à Lilo.</span>
+          </h1>
+          <p class="sub">
+            Lilo lit vos favoris, onglets, historique, connexions et extensions
+            directement dans les navigateurs de votre Mac. Rien ne quitte votre
+            Mac, et votre autre navigateur reste exactement tel qu'il était.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Télécharger pour Mac
+            </a>
+            <a class="pill soft" href="#what">
+              Voir ce que vous emportez
+            </a>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <main id="main-content">
     <section class="band" id="what">
       <div class="wrap">
         <div class="head">
@@ -682,7 +681,5 @@ const schema = [
         </div>
       </div>
     </section>
-
-    <Footer lang={lang} />
   </main>
 </Layout>

@@ -24,11 +24,11 @@ The Undici override patches Miniflare's pinned HTTP client. Remove it when Minif
 ## Sources
 
 - `src/pages/` holds the English and French home, moving and changelog routes, the 404 page and the sitemap endpoint.
-- `src/layouts/Layout.astro` shares page metadata, language alternates, icons and styles. It reads the app version from `Xcode/Configs/Base.xcconfig` at build time.
+- `src/layouts/Layout.astro` shares page metadata, language alternates, icons, the header and footer. It reads the app version from `Xcode/Configs/Base.xcconfig` at build time.
 - `src/components/` holds navigation, the footer and the changelog. New shared website copy lives in `src/lib/i18n.ts`.
 - `src/styles/global.css` holds the site's existing design. Astro fingerprints the built stylesheets.
 - `src/scripts/demo.ts` holds the home page’s interactive demo, bundled by Astro through `components/Demo.astro`. JavaScript/TypeScript modules, including tests and tool configs, use `.ts`.
-- `src/components/Header.astro` contains the shared navigation, theme toggle and mobile menu, with TypeScript bundled by Astro.
+- `src/components/Header.astro` contains one responsive navigation list, the theme toggle, scoped styles and TypeScript bundled by Astro. The home page demo changes Spaces when a visitor selects one.
 - `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.

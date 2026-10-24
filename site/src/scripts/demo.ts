@@ -119,12 +119,9 @@ if (!plus) {
   throw new Error("Missing demo Space button");
 }
 
-const reducedMotion = window.matchMedia(
-  "(prefers-reduced-motion: reduce)"
-).matches;
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 let current = 0;
-let timer: number | undefined;
 
 const escapeHTML = (text: string): string =>
   text
@@ -134,7 +131,7 @@ const escapeHTML = (text: string): string =>
     .replaceAll('"', "&quot;");
 
 const slideIn = (from: number, to: number) => {
-  if (from === to || reducedMotion) {
+  if (from === to || reducedMotion.matches) {
     return;
   }
 
@@ -218,23 +215,13 @@ const show = (index: number) => {
   current = index;
 };
 
-const stop = () => {
-  window.clearInterval(timer);
-  timer = undefined;
-};
-
 for (const [index, button] of buttons.entries()) {
   button.addEventListener("click", () => {
     show(index);
-    stop();
   });
 }
 
 show(0);
-
-if (!reducedMotion) {
-  timer = window.setInterval(() => show((current + 1) % spaces.length), 3200);
-}
 
 const toast = element("toast");
 
