@@ -265,6 +265,7 @@
 		7B6D92F69613247428C331D4 /* MainWindowController+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F14093D648D0F3628ECB11 /* MainWindowController+Lifecycle.swift */; };
 		7CD2EF821FB392625D386646 /* WindowFrameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F642480C82D8687332852C /* WindowFrameView.swift */; };
 		7CF9E3B84F1ED7C28806A2B7 /* Tab.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E2669E85F8991E1669BFE2 /* Tab.swift */; };
+		7CFDD10FDF3D9453CA3FA3EB /* ApplicationsMover.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7179F5D93FCC4DC7B23730D /* ApplicationsMover.swift */; };
 		7D231EC4F13A3D05E6F82338 /* ExtensionStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0FE61C579C717BBAF16C33 /* ExtensionStorageTests.swift */; };
 		7D7988BEE1D150754F30CDF8 /* PermissionRequestQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5A63DD73D3B6D7E5BB7E77 /* PermissionRequestQueueTests.swift */; };
 		7D81D60A5B7DA9670FABD089 /* ScreenCaptureStream.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35EC083831FA1D9DD747B556 /* ScreenCaptureStream.swift */; };
@@ -1046,6 +1047,7 @@
 		B5F14093D648D0F3628ECB11 /* MainWindowController+Lifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Lifecycle.swift"; sourceTree = "<group>"; };
 		B6967F93609CA6CFA4D08BB2 /* ChromeContentCompat.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ChromeContentCompat.js; sourceTree = "<group>"; };
 		B6CF8BC122165D6C530F812A /* ChromeMasquerade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeMasquerade.swift; sourceTree = "<group>"; };
+		B7179F5D93FCC4DC7B23730D /* ApplicationsMover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsMover.swift; sourceTree = "<group>"; };
 		B7D0D72D3B4482E29CD68F32 /* BridgeEventCoalescerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeEventCoalescerTests.swift; sourceTree = "<group>"; };
 		B88ACB1E8D3A57A3ED0F5B0D /* OffscreenBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffscreenBridgeHandler.swift; sourceTree = "<group>"; };
 		B9F909EF3668D9F6FE65691B /* VTTerminalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VTTerminalTests.swift; sourceTree = "<group>"; };
@@ -1564,6 +1566,7 @@
 			children = (
 				34C98C02AE45BCCC353A4BE4 /* AppDelegate.swift */,
 				FE33F1BC16095EB5A431DA4D /* AppIconPreference.swift */,
+				B7179F5D93FCC4DC7B23730D /* ApplicationsMover.swift */,
 				502A94CAA975A5A19D0F37A7 /* BrowserContext.swift */,
 				C2FC4FD4EE6A9E10207D978B /* BuildIdentity.swift */,
 				92DDC306E1A3CF2A46451DC1 /* BundleResources.swift */,
@@ -2487,6 +2490,7 @@
 				A9275B36429ACD7E20A937A6 /* AppDelegate.swift in Sources */,
 				F14DC0CB8ACD457C481D32BE /* AppIconPreference.swift in Sources */,
 				7379D653347D408D4DA830D2 /* AppleScriptSupport.swift in Sources */,
+				7CFDD10FDF3D9453CA3FA3EB /* ApplicationsMover.swift in Sources */,
 				6D2760EEAB4C0AE879F77390 /* BackgroundSupervisor.swift in Sources */,
 				4AFC6C43B9A8221A438046A5 /* BookmarkSpotlightIndexer.swift in Sources */,
 				6075EF594DAC7007C3E0C38F /* BookmarkStore.swift in Sources */,

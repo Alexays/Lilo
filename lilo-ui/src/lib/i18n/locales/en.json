@@ -1513,6 +1513,12 @@
 		}
 	},
 	"native": {
+		"Move Lilo to Applications?": "Move Lilo to Applications?",
+		"Lilo is running from the disk image. In Applications it gets its updates, and apps like Claude find it.": "Lilo is running from the disk image. In Applications it gets its updates, and apps like Claude find it.",
+		"Move to Applications": "Move to Applications",
+		"Not Now": "Not Now",
+		"Lilo couldn't move itself to Applications": "Lilo couldn't move itself to Applications",
+		"Drag Lilo to the Applications folder in the Finder, then open it from there.": "Drag Lilo to the Applications folder in the Finder, then open it from there.",
 		"Toggle Sidebar": "Toggle Sidebar",
 		"Capture Selected Area": "Capture Selected Area",
 		"Capture Visible Area": "Capture Visible Area",

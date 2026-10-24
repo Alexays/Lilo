@@ -76,6 +76,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         StartupMetrics.mark("appDidFinishLaunching")
+        #if !DEBUG
+        // Before any window: the copy that relaunches from Applications owns the profiles.
+        if ApplicationsMover.offerMoveIfNeeded() { return }
+        #endif
         // Launch benchmark seed (scripts/bench_startup.sh): pages opened as if handed over by another app.
         ProcessInfo.processInfo.environment["LILO_BENCH_SEED_URLS"]?.split(separator: "\n")
             .compactMap { URL(string: String($0)) }.forEach(routeExternalURL)
