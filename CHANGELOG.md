@@ -41,6 +41,10 @@ What changes in each Lilo release, for people using it. The format follows
 - Light accent colors keep white labels readable.
 - The import lists browsers macOS does not let Lilo read, with how to grant access.
 - Update checks always fetch the latest release.
+- Onboarding: a double click no longer skips a step, the import step has a Back button, and each step puts the keyboard on its main button rather than on an extension to install or a setting to toggle.
+- Onboarding: the arrow keys move between the usage and theme choices, the welcome screen keeps VoiceOver out of the window behind it, the welcome toast is spoken, and each Connect button names its app.
+- Onboarding: the welcome screen's petals turn into your first space's icon.
+- Onboarding: the import keeps "Choose what to import" in view in a small window, and the Full Disk Access link lines up when it wraps.
 
 ## [0.1.2] - 2026-10-24
 

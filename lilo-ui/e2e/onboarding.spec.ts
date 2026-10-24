@@ -286,3 +286,135 @@ test.describe("at the window's minimum size", () => {
 		expect(box.x + box.width).toBeLessThanOrEqual(600);
 	});
 });
+
+const lockedSafari = { id: "safari", name: "Safari", family: "safari", iconDataURL: "", needsFullDiskAccess: true, profiles: [] };
+
+test("a double click on a step's button moves on one step, not two", async ({ page }) => {
+	await bootOnboarding(page, 4);
+	const card = page.locator("section.card");
+	await expect(card.getByRole("heading", { name: "Your style" })).toBeVisible();
+	const box = (await card.locator(".ob-foot .ob-btn.primary").boundingBox())!;
+
+	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 2 });
+	await expect(card.getByRole("heading", { name: "The essentials" })).toBeVisible();
+	const steps = (await sentCommands(page)).filter((command) => command.action === "setOnboardingStep");
+	expect(steps.map((command) => command.payload.step)).toEqual([5]);
+});
+
+test("the import step goes back to the usage choice", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	const card = page.locator("section.card");
+	await card.getByRole("button", { name: "Back" }).click();
+	await expect(card.getByRole("heading", { name: "How will you use Lilo?" })).toBeVisible();
+});
+
+test("each step hands the keyboard to its main button, never to an action it would trigger by surprise", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	const card = page.locator("section.card");
+	await card.getByRole("button", { name: "Skip" }).click();
+	await expect(card.getByRole("heading", { name: "Your passwords" })).toBeVisible();
+	await expect(card.locator(".ob-foot .ob-btn.primary")).toBeFocused();
+
+	await receive(page, { event: "onboardingState", show: true, step: 5, usage: "browse" });
+	await card.getByRole("button", { name: "Continue" }).click();
+	await expect(card.getByRole("button", { name: "Let's go" })).toBeFocused();
+});
+
+test("the arrow keys move the choice in the usage and theme pickers, which take one Tab stop each", async ({ page }) => {
+	await bootOnboarding(page, 1);
+	const card = page.locator("section.card");
+	const browse = card.getByRole("radio", { name: /For browsing/ });
+	const develop = card.getByRole("radio", { name: /For developing/ });
+	await expect(develop).toHaveAttribute("tabindex", "-1");
+	await browse.focus();
+	await page.keyboard.press("ArrowRight");
+	await expect(develop).toBeFocused();
+	await expect(develop).toHaveAttribute("aria-checked", "true");
+	await expect(browse).toHaveAttribute("tabindex", "-1");
+
+	await receive(page, { event: "onboardingState", show: true, step: 4, usage: "browse" });
+	await card.getByRole("radio", { name: "Auto" }).focus();
+	await page.keyboard.press("ArrowLeft");
+	await expect(card.getByRole("radio", { name: "Dark" })).toBeFocused();
+	await expect(card.getByRole("radio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
+});
+
+test("the developer tips card is named after its own title", async ({ page }) => {
+	await bootOnboarding(page, 7, "develop");
+	await expect(page.getByRole("region", { name: "3 tips for developing" })).toBeVisible();
+});
+
+test("a browser without its own icon is read by its name alone", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	await expect(page.locator("section.card").getByRole("button", { name: "Chrome", exact: true })).toBeVisible();
+});
+
+test("a browser waiting for Full Disk Access stops inviting to allow it once the import runs", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource, lockedSafari] });
+	const card = page.locator("section.card");
+	await card.getByRole("button", { name: "Import", exact: true }).click();
+	await expect(card.locator(".src.locked")).toBeDisabled();
+	await receive(page, { event: "importFinished", summary: [{ sourceId: "chrome", profileId: "Profile 1", kind: "bookmarks", imported: 3 }] });
+	await expect(card.locator(".src.locked")).toBeDisabled();
+});
+
+test("a finished import hands the keyboard to Continue", async ({ page }) => {
+	await bootOnboarding(page, 2);
+	await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
+	const card = page.locator("section.card");
+	await card.getByRole("button", { name: "Import", exact: true }).click();
+	await receive(page, { event: "importFinished", summary: [{ sourceId: "chrome", profileId: "Profile 1", kind: "bookmarks", imported: 3 }] });
+	await expect(card.getByRole("button", { name: "Continue" })).toBeFocused();
+});
+
+test("the arrival is spoken, since the focus never reaches it", async ({ page }) => {
+	await bootOnboarding(page, 6);
+	await page.locator("section.card .ob-foot .ob-btn.primary").click();
+	await expect(page.locator(".live-announcer")).toHaveText("Welcome to Lilo.");
+});
+
+test("the intro's petals become the icon of the Home space a first run starts with", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const world = firstRunWorld();
+	await bootChrome(page, { ...world, spaces: [{ ...world.spaces[0], icon: "🏠" }] });
+	await receive(page, { event: "onboardingState", show: true, step: 0, usage: "browse" });
+	await page.locator(".intro .cta").click();
+	await expect(page.locator("section.card")).toBeVisible();
+	expect((await sentCommands(page)).find((command) => command.action === "updateSpace")?.payload).toEqual({ id: "space-home", icon: "🪻" });
+});
+
+test("the intro is a modal dialog, so VoiceOver stays out of the chrome under it", async ({ page }) => {
+	await bootOnboarding(page, 0);
+	const dialog = page.getByRole("dialog", { name: "Welcome home." });
+	await expect(dialog).toHaveAttribute("aria-modal", "true");
+	await expect(dialog.getByRole("button", { name: "Get started" })).toBeFocused();
+});
+
+test("each agent's connect button names it", async ({ page }) => {
+	await bootOnboarding(page, 6, "develop");
+	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
+	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "codex", configured: false, icon: "data:image/png;base64,AA==" }], allowed: [] });
+	await expect(page.locator("section.card").getByRole("button", { name: "Connect Codex" })).toBeVisible();
+});
+
+test.describe("in French at the window's minimum size", () => {
+	test.use({ locale: "fr-FR", viewport: { width: 600, height: 400 } });
+
+	test("the import keeps its options link in view, and the settings link lines up when it wraps", async ({ page }) => {
+		await bootOnboarding(page, 2);
+		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource, lockedSafari] });
+		const card = page.locator("section.card");
+		const more = card.getByRole("button", { name: "Choisir quoi importer" });
+		await more.scrollIntoViewIfNeeded();
+		await expect(more).toBeInViewport({ ratio: 1 });
+
+		const note = (await card.locator(".note.access").boundingBox())!;
+		const link = (await card.locator(".note.access button").boundingBox())!;
+		expect(link.y).toBeGreaterThan(note.y + 4);
+		expect(Math.round(link.x)).toBe(Math.round(note.x));
+	});
+});

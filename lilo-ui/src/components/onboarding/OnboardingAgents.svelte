@@ -32,7 +32,8 @@
         <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
       {:else}
         {@const busy = isConnectingAgentClient(client.id)}
-        <button class="ob-btn primary small" class:busy disabled={busy} aria-busy={busy} onclick={() => connectAgentClient(client.id)}>
+        <button class="ob-btn primary small" class:busy disabled={busy} aria-busy={busy}
+          aria-label={t("onboarding.agents.connectNamed", { name: t(`settings.agents.names.${client.id}`) })} onclick={() => connectAgentClient(client.id)}>
           {#if busy}<span class="spinner" aria-hidden="true"></span>{/if}{t("settings.agents.connect")}
         </button>
       {/if}

@@ -11,14 +11,24 @@
     setUsage(usage);
     goNext();
   }
+
+  function handleKeydown(event: KeyboardEvent): void {
+    const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const index = (USAGES.indexOf(onboarding.usage) + step + USAGES.length) % USAGES.length;
+    setUsage(USAGES[index]);
+    (event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button")[index]?.focus();
+  }
 </script>
 
 <h3>{t("onboarding.usage.title")}</h3>
 <p class="ob-sub">{t("onboarding.usage.subtitle")}</p>
 
-<div class="usages" role="radiogroup" aria-label={t("onboarding.usage.title")}>
+<div class="usages" role="radiogroup" tabindex="-1" aria-label={t("onboarding.usage.title")} onkeydown={handleKeydown}>
   {#each USAGES as usage (usage)}
-    <button class="us" class:on={onboarding.usage === usage} role="radio" aria-checked={onboarding.usage === usage} onclick={() => setUsage(usage)}>
+    <button class="us" class:on={onboarding.usage === usage} role="radio" aria-checked={onboarding.usage === usage}
+      tabindex={onboarding.usage === usage ? 0 : -1} onclick={() => setUsage(usage)}>
       <span class="pv pv-{usage}"><i><s></s><s></s><s></s></i><u></u></span>
       <b>{t(`onboarding.usage.${usage}`)}</b>
       <small>{t(`onboarding.usage.${usage}Desc`)}</small>

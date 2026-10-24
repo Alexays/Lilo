@@ -1489,7 +1489,8 @@
 		"agents": {
 			"title": "Vos agents IA",
 			"subtitle": "Claude Code, Codex ou Cursor travaillent dans leur propre espace Agents, sans toucher à votre clavier. Lilo n'embarque aucune IA.",
-			"allow": "Laisser les agents IA utiliser Lilo"
+			"allow": "Laisser les agents IA utiliser Lilo",
+			"connectNamed": "Connecter {name}"
 		},
 		"tips": {
 			"title": "3 astuces pour bien démarrer",

@@ -10,6 +10,7 @@
   import OnboardingAgents from "./OnboardingAgents.svelte";
   import { onboardingSteps } from "./onboardingModel";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
+  import { announce } from "../../lib/announce";
   import { chromeActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { getSetting } from "../../stores/settings.svelte";
@@ -25,6 +26,12 @@
   const cardSteps = $derived(steps.slice(1, -1));
   const agentsWelcome = $derived(onboarding.usage === "develop" && getSetting("agentControlEnabled", "false") === "true");
   const importedPages = $derived((importState.summary ?? []).filter((item) => item.kind === "history").reduce((sum, item) => sum + item.imported, 0));
+  const arrivalText = $derived([
+    t("onboarding.arrival.title"),
+    importedPages > 0 ? t("onboarding.arrival.imported", { count: importedPages }) : "",
+    agentsWelcome ? t("onboarding.arrival.agents") : "",
+  ].filter(Boolean).join(" "));
+  const title = $derived(step === "tips" && onboarding.usage === "develop" ? t("onboarding.devTips.title") : t(`onboarding.${step}.title`));
 
   // A tab gaining a new real URL during the intro means a link came from another app. Only URL
   // changes count: a replay starts with a page already open.
@@ -54,18 +61,25 @@
     else finishOnboarding();
   }
 
-  // A step change destroys the button that had the focus: the next screen's first control takes it,
-  // so the keyboard and VoiceOver carry on in the card instead of the top of the document.
+  // A step change destroys the button that had the focus: the next screen's main button takes it, so the keyboard
+  // and VoiceOver carry on in the card, and Return goes on rather than installing or toggling what comes first.
   function keepFocusInCard(screen: HTMLElement): void {
     queueMicrotask(() => {
       if (document.activeElement !== document.body) return;
-      screen.querySelector<HTMLElement>("button:not([disabled]), input:not([disabled]), a[href], [tabindex='0']")?.focus({ preventScroll: true });
+      (screen.querySelector<HTMLElement>(".ob-foot .ob-btn.primary:not([disabled])")
+        ?? screen.querySelector<HTMLElement>("button:not([disabled]), input:not([disabled]), a[href], [tabindex='0']"))?.focus({ preventScroll: true });
     });
   }
 
-  // The arrival only shows the toast; it closes on its own.
+  // The second click of a double click lands on the next screen's button, in the same place: it would skip a step.
+  function ignoreRepeatClick(event: MouseEvent): void {
+    if (event.detail > 1) event.stopPropagation();
+  }
+
+  // The arrival only shows the toast, which nothing focuses: it is spoken, and closes on its own.
   $effect(() => {
     if (step !== "arrival") return;
+    announce(untrack(() => arrivalText));
     const timer = setTimeout(finishOnboarding, 6000);
     return () => clearTimeout(timer);
   });
@@ -75,16 +89,16 @@
 
 {#if onboarding.visible}
   {#if step === "intro"}
-    <div class="full" use:reportInteractiveZone={{ id: "onboarding-intro" }}><OnboardingIntro /></div>
+    <div class="full" role="dialog" aria-modal="true" aria-label={t("onboarding.intro.headline")} use:reportInteractiveZone={{ id: "onboarding-intro" }}><OnboardingIntro /></div>
   {:else if step === "arrival"}
     <div class="toast" use:reportInteractiveZone={{ id: "onboarding-toast" }}>
-      <span>{t("onboarding.arrival.title")}{#if importedPages > 0}&nbsp;{t("onboarding.arrival.imported", { count: importedPages })}{/if}{#if agentsWelcome}&nbsp;{t("onboarding.arrival.agents")}{/if}</span>
+      <span>{arrivalText}</span>
       <button onclick={finishOnboarding}>{t("onboarding.arrival.done")}</button>
     </div>
   {:else if onboarding.collapsed}
     <button class="pill" use:reportInteractiveZone={{ id: "onboarding-pill" }} onclick={expandOnboarding}>{t("onboarding.resume")}</button>
   {:else}
-    <section class="card" aria-label={t(`onboarding.${step}.title`)} use:reportInteractiveZone={{ id: "onboarding-card" }}>
+    <section class="card" aria-label={title} use:reportInteractiveZone={{ id: "onboarding-card" }} onclickcapture={ignoreRepeatClick}>
       <header>
         {#if onboarding.mode === "full"}
           <div class="dots" aria-hidden="true">
@@ -133,10 +147,11 @@
   /* The screen scrolls under the header; it spans the card's padding so focus rings at its edges are not clipped. */
   .screen { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -28px -22px; padding: 0 28px 22px;
     animation: screen-in .45s var(--motion-ease-spring) both; }
-  /* A screen with its own scrolling part keeps its title and buttons in view and scrolls only that part. */
-  .screen:has(> :global(.ob-scroll)) { display: flex; flex-direction: column; overflow: visible; }
+  /* A screen with its own scrolling part keeps its title and buttons in view and scrolls only that part. It keeps
+     a line of it in sight: on a window too short for that, the whole screen scrolls instead. */
+  .screen:has(> :global(.ob-scroll)) { display: flex; flex-direction: column; }
   .screen:has(> :global(.ob-scroll)) > :global(:not(.ob-scroll)) { flex: none; }
-  .card :global(.ob-scroll) { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 4px; }
+  .card :global(.ob-scroll) { min-height: 32px; overflow-y: auto; overscroll-behavior: contain; margin: 0 -6px; padding: 0 6px 4px; }
   @keyframes screen-in { from { opacity: 0; transform: translateX(18px); } }
   .card :global(h3) { margin: 0; font-size: var(--font-size-3xl); letter-spacing: -0.4px; color: var(--text-primary); }
   .card :global(.ob-sub) { margin: 6px 0 18px; font-size: var(--font-size-md); line-height: 1.45; color: var(--text-secondary); }

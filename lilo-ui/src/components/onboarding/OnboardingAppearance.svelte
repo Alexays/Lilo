@@ -4,14 +4,24 @@
   import { goBack, goNext } from "../../stores/onboarding.svelte";
 
   const THEMES = ["system", "light", "dark"] as const;
+  const current = $derived(getSetting("theme", "system"));
+
+  function handleKeydown(event: KeyboardEvent): void {
+    const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const index = (Math.max(THEMES.findIndex((theme) => theme === current), 0) + step + THEMES.length) % THEMES.length;
+    setSetting("theme", THEMES[index]);
+    (event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("button")[index]?.focus();
+  }
 </script>
 
 <h3>{t("onboarding.appearance.title")}</h3>
 <p class="ob-sub">{t("onboarding.appearance.subtitle")}</p>
 
-<div class="themes" role="radiogroup" aria-label={t("onboarding.appearance.theme")}>
+<div class="themes" role="radiogroup" tabindex="-1" aria-label={t("onboarding.appearance.theme")} onkeydown={handleKeydown}>
   {#each THEMES as theme (theme)}
-    <button class="th" class:on={getSetting("theme", "system") === theme} role="radio" aria-checked={getSetting("theme", "system") === theme}
+    <button class="th" class:on={current === theme} role="radio" aria-checked={current === theme} tabindex={current === theme ? 0 : -1}
       onclick={() => setSetting("theme", theme)}>
       <span class="pv pv-{theme}"><i></i><u></u></span>{t(`onboarding.appearance.${theme}`)}
     </button>

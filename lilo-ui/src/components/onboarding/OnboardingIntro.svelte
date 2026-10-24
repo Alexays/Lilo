@@ -10,6 +10,10 @@
   let cta = $state<HTMLButtonElement | null>(null);
   let leaving = $state(false);
 
+  // The welcome is a modal dialog, which VoiceOver keeps to only once the focus is inside it.
+  // WebKit would draw a focus ring for a focus no key brought: `focusVisible` is not in the DOM types yet.
+  $effect(() => cta?.focus({ preventScroll: true, focusVisible: false } as FocusOptions));
+
   /** The petals fly into the sidebar's space icon and become the icon of the first space. */
   async function start(): Promise<void> {
     if (leaving) return;
@@ -30,7 +34,8 @@
       }));
     }
     const space = getActiveSpace();
-    if (space && (!space.icon || space.icon === "🌐")) spaceActions.update({ id: space.id, icon: "🪻" });
+    // Only an icon nobody chose: the default one, or the house of the Home space a first run starts with.
+    if (space && (!space.icon || space.icon === "🌐" || space.icon === "🏠")) spaceActions.update({ id: space.id, icon: "🪻" });
     goNext();
   }
 

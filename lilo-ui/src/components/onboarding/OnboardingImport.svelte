@@ -7,8 +7,9 @@
   import type { ImportSourceInfo } from "../../lib/bridge/protocol";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { IMPORT_KINDS, importStatus, profileKey, toggleSource } from "./onboardingModel";
-  import { getImportState, goNext, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
+  import { getImportState, getOnboarding, goBack, goNext, runSelectedImport, setImportChoices } from "../../stores/onboarding.svelte";
 
+  const onboarding = getOnboarding();
   const importState = getImportState();
   const choices = $derived(importState.choices);
   const sources = $derived(importState.sources ?? []);
@@ -49,8 +50,10 @@
   const keychainPrompt = $derived(importState.running && status.phase?.kind === "cookies"
     && sources.find((source) => source.id === status.phase?.sourceId)?.family === "chromium");
   let advanced = $state(false);
+  let continueButton = $state<HTMLButtonElement | null>(null);
 
-  // The import runs for a while with no focus change: its outcome is spoken once, as it lands.
+  // The import runs for a while with no focus change: its outcome is spoken once, as it lands, and Continue
+  // takes the focus the disabled Import button lost.
   let outcomeSpoken = untrack(() => finished);
   $effect(() => {
     if (!finished || outcomeSpoken) return;
@@ -59,6 +62,7 @@
       doneText,
       failures.length > 0 ? t("onboarding.import.partial", { list: failures.join(", ") }) : "",
     ].filter(Boolean).join(" "));
+    queueMicrotask(() => { if (document.activeElement === document.body) continueButton?.focus({ preventScroll: true }); });
   });
 
   function toggle<T>(list: T[], value: T): T[] {
@@ -70,7 +74,7 @@
   {#if source.iconDataURL}
     <img class="logo" src={source.iconDataURL} alt="" width="32" height="32" />
   {:else}
-    <span class="ico" data-family={source.family}>{source.name[0]}</span>
+    <span class="ico" data-family={source.family} aria-hidden="true">{source.name[0]}</span>
   {/if}
 {/snippet}
 
@@ -86,7 +90,7 @@
     {#each sources as source (source.id)}
       {@const on = chosenSources.includes(source)}
       {#if source.needsFullDiskAccess}
-        <button class="src locked" onclick={() => importActions.openFullDiskAccessSettings()}>
+        <button class="src locked" disabled={importState.running || finished} onclick={() => importActions.openFullDiskAccessSettings()}>
           {@render logo(source)}
           <span class="name">{source.name}<small class="hint">{t("onboarding.import.allow")}</small></span>
         </button>
@@ -159,14 +163,17 @@
 {/if}
 
 <div class="ob-foot">
-  {#if finished}<span></span>{:else}<button class="ob-btn ghost" disabled={importState.running} onclick={goNext}>{t("onboarding.skip")}</button>{/if}
-  {#if finished || sources.length === 0}
-    <button class="ob-btn primary" onclick={goNext}>{t("onboarding.continue")}</button>
-  {:else}
-    <button class="ob-btn primary" disabled={importState.running || chosenSources.length === 0} onclick={runSelectedImport}>
-      {importState.running ? t("onboarding.import.running") : t("onboarding.import.run")}
-    </button>
-  {/if}
+  {#if onboarding.mode === "full"}<button class="ob-btn ghost" disabled={importState.running} onclick={goBack}>{t("onboarding.back")}</button>{:else}<span></span>{/if}
+  <span class="actions">
+    {#if !finished && sources.length > 0}<button class="ob-btn ghost" disabled={importState.running} onclick={goNext}>{t("onboarding.skip")}</button>{/if}
+    {#if finished || sources.length === 0}
+      <button class="ob-btn primary" bind:this={continueButton} onclick={goNext}>{t("onboarding.continue")}</button>
+    {:else}
+      <button class="ob-btn primary" disabled={importState.running || chosenSources.length === 0} onclick={runSelectedImport}>
+        {importState.running ? t("onboarding.import.running") : t("onboarding.import.run")}
+      </button>
+    {/if}
+  </span>
 </div>
 
 <style>
@@ -178,6 +185,8 @@
   .src.on { border-color: var(--accent); }
   .src:disabled { cursor: default; }
   .src.locked .logo, .src.locked .ico { opacity: .75; }
+  .src.locked:disabled .hint { color: var(--text-secondary); }
+  .actions { display: flex; gap: 8px; }
   .ico { width: 30px; height: 30px; border-radius: var(--radius-sm); display: grid; place-items: center; color: #fff; font-weight: var(--font-weight-bold); background: #6d5ae6; flex: none; }
   .ico[data-family="safari"] { background: #2f9cf0; } .ico[data-family="firefox"] { background: #ff7139; }
   .name { flex: 1; }
@@ -186,7 +195,7 @@
   .hint { display: block; margin-top: 2px; font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); color: var(--accent-ink); }
   .note { font-size: var(--font-size-sm); color: var(--text-secondary); margin: 12px 0 0; }
   .note.done { color: var(--success-text); font-weight: var(--font-weight-semibold); }
-  .access .more { margin: 0 0 0 4px; }
+  .access .more { margin: 0; }
   .progress { margin-top: 14px; }
   /* Both labels share one cell while they crossfade. */
   .step { display: grid; margin: 0 0 8px; font-size: var(--font-size-sm); color: var(--text-secondary); }
