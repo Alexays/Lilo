@@ -769,7 +769,7 @@ describe("more scriptlets", () => {
 
 describe("node text scriptlets", () => {
 	const HOST = "www.youtube.com";
-	type Mutations = { addedNodes: { nodeName: string; textContent: string }[] }[];
+	type Mutations = { addedNodes: { nodeName: string; textContent: unknown }[] }[];
 	let observers: { cb: (m: Mutations) => void; connected: boolean }[];
 	let readyListeners: (() => void)[];
 
@@ -917,10 +917,12 @@ describe("dispatch", () => {
 });
 
 // document.cookie as a jar: each write keeps its name=value and records the full cookie string.
+type FakeElement = { clicks: number; click(): void; shadowRoot?: FakeDocument };
+
 class FakeDocument {
 	jar = new Map<string, string>();
 	writes: string[] = [];
-	elements = new Map<string, { clicks: number; click(): void; shadowRoot?: FakeDocument }>();
+	elements = new Map<string, FakeElement>();
 
 	get cookie(): string {
 		return [...this.jar].map(([k, v]) => `${k}=${v}`).join("; ");
@@ -938,7 +940,7 @@ class FakeDocument {
 	}
 
 	add(selector: string) {
-		const el = { clicks: 0, click: () => el.clicks++ };
+		const el: FakeElement = { clicks: 0, click: () => el.clicks++ };
 		this.elements.set(selector, el);
 		return el;
 	}

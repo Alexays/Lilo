@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
+declare const chrome: any;
+
 /** Lilo's answers to the permissions calls, and the calls it got. */
 let held: string[] = [];
 let granted = true;
