@@ -76,6 +76,7 @@ extension MainWindowController {
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
         sidebarWidth = fittedSidebarWidth
+        applyTitlebarStyle()
         storedWindowBackgroundColor = cachedBgColor
         applyWindowChromeColors(currentWindowBackgroundCSSColor())
     }

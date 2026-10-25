@@ -47,9 +47,12 @@
       case "right":
         return { left: anchor.left - 8 - cardWidth, top: clamp(anchor.top, cardHeight, window.innerHeight) };
       case "top":
-        return { left: clamp(anchor.left, cardWidth, window.innerWidth), top: anchor.bottom + 8 };
-      case "bottom":
-        return { left: clamp(anchor.left, cardWidth, window.innerWidth), top: anchor.top - 8 - cardHeight };
+      case "bottom": {
+        // Clear of the strip itself, toward the page.
+        const strip = document.querySelector(".tab-strip")?.getBoundingClientRect() ?? anchor;
+        const left = clamp(anchor.left, cardWidth, window.innerWidth);
+        return getTabPosition() === "top" ? { left, top: strip.bottom + 6 } : { left, top: strip.top - 8 - cardHeight };
+      }
       default:
         return { left: anchor.right + 8, top: clamp(anchor.top, cardHeight, window.innerHeight) };
     }

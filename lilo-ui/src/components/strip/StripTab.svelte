@@ -5,12 +5,18 @@
   import { hoverTabPreview, leaveTabPreview } from "../../stores/tabPreview.svelte";
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { openCommandBar } from "../../stores/commandBar.svelte";
 
-  let { tab, active = false, iconOnly = false }: { tab: TabState; active?: boolean; iconOnly?: boolean } = $props();
+  // `editsAddress`: the strip has no address bar, so a click on the active pill edits its address.
+  let { tab, active = false, iconOnly = false, editsAddress = false }: { tab: TabState; active?: boolean; iconOnly?: boolean; editsAddress?: boolean } = $props();
 
   const title = $derived(tabDisplayTitle(tab.title) || tab.url || t("tabItem.newTab"));
 
   function activate() {
+    if (active && editsAddress) {
+      openCommandBar(tab.url ?? "", "default", false, true);
+      return;
+    }
     optimisticallyActivateTab(tab.id);
     tabActions.switchTo(tab.id);
   }
@@ -53,7 +59,7 @@
     position: relative;
     flex: 0 1 170px;
     min-width: 32px;
-    height: 30px;
+    height: 32px;
     display: flex;
     align-items: center;
     border-radius: var(--radius-sm);

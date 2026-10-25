@@ -14,6 +14,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getActiveTabId, type TabState } from "../../stores/tabs.svelte";
   import { getAddressPlacement } from "../../stores/tabLayout.svelte";
+  import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { isDownloadsVisible, openDownloadsPanel } from "../../stores/panels.svelte";
   import { hasSessionDownloads } from "../../stores/downloads.svelte";
@@ -32,8 +33,10 @@
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
   const activeTabId = $derived(getActiveTabId(spaceId));
-  // Floating in while hidden, the strip brings back what the unmounted page toolbar holds.
-  const addressInActiveTab = $derived(getAddressPlacement() === "tabs" || !isSidebarVisible());
+  const editsAddress = $derived(getAddressPlacement() === "tabs");
+  // The address field itself shows only when it has something to say (a permission prompt), or while
+  // the strip floats in for hidden tabs and the page toolbar that holds it is gone.
+  const addressInActiveTab = $derived((editsAddress && getActiveUrlBarDrawer() !== null) || !isSidebarVisible());
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
 
@@ -90,7 +93,7 @@
       {:else}
         {@const tab = view.tabsById.get(item.id)}
         {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
-          <StripTab {tab} active={tab.id === activeTabId} {iconOnly} />
+          <StripTab {tab} active={tab.id === activeTabId} {iconOnly} {editsAddress} />
         {/if}
       {/if}
     </div>
@@ -223,8 +226,17 @@
     margin: 0 var(--bottom-dock-margin);
     padding: 0 10px;
     border-radius: var(--radius-xl);
-    background: color-mix(in srgb, var(--sidebar-bg) 82%, var(--bg-elevated));
+    background: color-mix(in srgb, var(--sidebar-bg) 55%, var(--bg-elevated));
     box-shadow: 0 0 0 0.5px var(--border), 0 6px 20px var(--sidebar-shadow);
+  }
+
+  /* The sidebar header spreads its controls; the strip keeps them together. */
+  .tab-strip > :global(.nav-controls) {
+    flex: none;
+  }
+
+  .tab-strip > :global(.nav-controls .nav-spacer) {
+    flex: 0 0 10px;
   }
 
   .lights-spacer {
@@ -291,13 +303,35 @@
     display: none;
   }
 
+  /* A hairline between two resting pills, gone beside the active or hovered one. */
+  .today-list .strip-slot + .strip-slot {
+    position: relative;
+  }
+
+  .today-list .strip-slot + .strip-slot::before {
+    content: "";
+    position: absolute;
+    left: -2.5px;
+    top: 9px;
+    bottom: 9px;
+    width: 1px;
+    background: var(--separator);
+  }
+
+  .today-list .strip-slot:has(> :global(.strip-tab.active)) + .strip-slot::before,
+  .today-list .strip-slot:has(> :global(.strip-tab.active))::before,
+  .today-list .strip-slot:hover::before,
+  .today-list .strip-slot:hover + .strip-slot::before {
+    display: none;
+  }
+
   .strip-slot > :global(.strip-tab) {
     flex: 1;
   }
 
   .strip-placeholder {
     width: 100%;
-    height: 30px;
+    height: 32px;
     border-radius: var(--radius-sm);
     background: var(--accent-tint-12);
   }
@@ -315,12 +349,12 @@
   /* An open drawer grows the address toward the page, never shifting the bar itself. */
   .tab-strip:not(.dock) .strip-address {
     align-self: flex-start;
-    margin-top: 7px;
+    margin-top: calc((var(--top-strip-height) - 32px) / 2);
   }
 
   .dock .strip-address {
     align-self: flex-end;
-    margin-bottom: 9px;
+    margin-bottom: calc((var(--bottom-dock-height) - 32px) / 2);
   }
 
   .dock .strip-address > :global(.url-display) {
@@ -337,8 +371,8 @@
 
   .strip-btn {
     flex: none;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: var(--radius-sm);
     display: grid;

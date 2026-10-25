@@ -23,9 +23,9 @@
   aria-haspopup="menu"
   aria-expanded={open}
   aria-label={t("bottomBar.spaces")}
+  style:--space-color={active?.color}
   onclick={() => (open = !open)}
 >
-  <span class="dot" style:background={active?.color}></span>
   <span class="name">{active?.icon} {active?.name ?? t("spaceBar.defaultSpaceName")}</span>
   <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
     <path d="M1 1l3.5 3.5L8 1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -52,7 +52,7 @@
 <style>
   .space-chip {
     flex: none;
-    height: 30px;
+    height: 32px;
     max-width: 180px;
     display: flex;
     align-items: center;
@@ -60,11 +60,17 @@
     padding: 0 10px;
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--bg-hover);
+    /* The Space's own color, as its bottom bar icon glows with it. */
+    background: color-mix(in srgb, var(--space-color, var(--accent)) 18%, transparent);
     color: var(--text-primary);
     font: inherit;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
+  }
+
+  .space-chip:hover,
+  .space-chip[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--space-color, var(--accent)) 28%, transparent);
   }
 
   .name,

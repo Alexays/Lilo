@@ -62,7 +62,7 @@ final class MainWindowController: NSWindowController {
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320
     /// These mirror `--top-strip-height`, `--page-toolbar-height`, `--bottom-dock-height` and `--bottom-dock-margin` in global.css.
-    static let topStripHeight: CGFloat = 48
+    static let topStripHeight: CGFloat = 40
     static let pageToolbarHeight: CGFloat = 40
     static let bottomDockHeight: CGFloat = 52
     static let bottomDockMargin: CGFloat = 10

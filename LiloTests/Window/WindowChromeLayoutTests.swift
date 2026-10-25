@@ -54,10 +54,10 @@ final class WindowChromeLayoutTests: XCTestCase {
         let window = try makeSizedWindow()
 
         layOut(window, .top)
-        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 16, height: 800 - 48 - 8))
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 16, height: 800 - 40 - 8))
 
         layOut(window, .top, address: .page)
-        XCTAssertEqual(window.contentFrameRect().height, 800 - 48 - 40 - 8, "the address row sits under the strip")
+        XCTAssertEqual(window.contentFrameRect().height, 800 - 40 - 40 - 8, "the address row sits under the strip")
 
         layOut(window, .bottom)
         XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 40))
@@ -95,6 +95,17 @@ final class WindowChromeLayoutTests: XCTestCase {
         window.windowDidEnterFullScreen(Notification(name: NSWindow.didEnterFullScreenNotification))
 
         XCTAssertEqual(window.contentEdges(), edges, "navigation stays reachable over the page")
+    }
+
+    func testTheLightsShareTheLineOfAToolbarOrStrip() throws {
+        let window = try makeSizedWindow()
+        XCTAssertEqual(window.window?.toolbarStyle, .unified, "today's left layout keeps its 52pt header")
+
+        window.applyTabLayout(TabLayout(position: .right, storedAddress: nil), animated: false)
+        XCTAssertEqual(window.window?.toolbarStyle, .unifiedCompact, "centered on the 40pt page toolbar")
+
+        window.applyTabLayout(.default, animated: false)
+        XCTAssertEqual(window.window?.toolbarStyle, .unified)
     }
 
     func testSettingThePositionMovesEveryWindow() async throws {

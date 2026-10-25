@@ -79,7 +79,7 @@
   .strip-folder,
   .strip-split {
     flex: none;
-    height: 30px;
+    height: 32px;
     display: flex;
     align-items: center;
     gap: 7px;

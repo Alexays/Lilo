@@ -486,7 +486,10 @@
 
   /* Lifted by a held press: the tabs float until dropped on an edge. */
   :global(html[data-tabs-lifting]) .sidebar {
-    transform: scale(0.96);
+    transform: translate(var(--lift-x, 0px), var(--lift-y, 0px)) scale(0.96);
+    transition: box-shadow var(--motion-duration-slow) ease;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
     box-shadow: var(--chrome-overlay-shadow);
     z-index: 72;
   }

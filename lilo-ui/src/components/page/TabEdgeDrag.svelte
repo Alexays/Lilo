@@ -19,15 +19,26 @@
   {/each}
 </div>
 <div class="hud" role="status">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <rect x="1.5" y="2" width="13" height="12" rx="2" stroke="currentColor" stroke-width="1.4" />
+    <path d={target === "top" ? "M1.5 6h13" : target === "bottom" ? "M1.5 10h13" : target === "right" ? "M10.5 2v12" : "M5.5 2v12"} stroke="currentColor" stroke-width="1.4" />
+  </svg>
   {target ? t(`tabEdgeDrag.${target}`) : t("tabEdgeDrag.pick")}
 </div>
 
 <style>
+  /* The page steps back while the tabs are in hand. */
   .tab-edge-drag {
     position: fixed;
     inset: 0;
     z-index: 70;
     pointer-events: none;
+    background: var(--chrome-overlay-backdrop-tint);
+    animation: dim-in 180ms ease both;
+  }
+
+  @keyframes dim-in {
+    from { opacity: 0; }
   }
 
   .mark {
@@ -84,6 +95,9 @@
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
     pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     box-shadow: var(--shadow-md);
   }
 

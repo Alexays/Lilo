@@ -73,8 +73,15 @@ extension MainWindowController {
     func applyTabLayout(_ layout: TabLayout, animated: Bool) {
         guard layout != tabLayout else { return }
         tabLayout = layout
+        applyTitlebarStyle()
         applySidebarLayout(animated: animated, syncTrafficLights: true)
         bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
+    }
+
+    /// The unified style centers the lights in the sidebar's 52pt header; the compact one centers them at 20pt,
+    /// on the line of a 40pt page toolbar or strip.
+    func applyTitlebarStyle() {
+        window?.toolbarStyle = tabLayout == .default ? .unified : .unifiedCompact
     }
 
     /// The setting is app-wide: every window moves, and the next launch paints the new layout first.

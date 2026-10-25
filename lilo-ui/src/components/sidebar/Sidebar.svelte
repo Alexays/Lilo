@@ -87,6 +87,7 @@
   <div
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
+    class:compact-header={isSidebarVisible() && hasPageToolbar()}
     inert={isOverlayPanelOpen}
     role="complementary"
     aria-label={t("sidebar.ariaLabel")}
@@ -177,8 +178,44 @@
       opacity var(--motion-duration-normal) ease;
   }
 
-  :global(html[data-tab-position='right']) .sidebar-header {
-    height: 40px;
+  /* With a page toolbar beside it, the header holds only the lights and the toggle: the Space's name
+     rises to that line, between them, so the list gains a row. */
+  .compact-header .sidebar-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--page-toolbar-height);
+    z-index: 21;
+    pointer-events: none;
+  }
+
+  .compact-header .sidebar-header :global(.nav-controls) {
+    flex: none;
+    margin-left: auto;
+    pointer-events: auto;
+  }
+
+  .compact-header .space-content {
+    margin-top: 2px;
+  }
+
+  .compact-header .space-content :global(.space-bar-slot) {
+    padding-right: 32px;
+  }
+
+  /* The traffic lights' room, when they sit in this header. */
+  :global(html[data-tab-position='left']) .compact-header .space-content :global(.space-bar-slot) {
+    padding-left: 64px;
+  }
+
+  /* With the address in the sidebar, it heads the list on the toggle's line and leaves the toggle its room. */
+  .compact-header > :global(.url-display) {
+    padding-right: 40px;
+  }
+
+  .compact-header .keep-awake-slot {
+    right: calc(var(--sidebar-right-pad, 10px) + 36px);
   }
 
   .sidebar-layout.pushed {

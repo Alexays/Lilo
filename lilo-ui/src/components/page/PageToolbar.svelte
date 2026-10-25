@@ -12,7 +12,7 @@
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && getTabPosition() !== "left" && areTrafficLightsVisible());
   // The sidebar keeps its toggle when it is there; bottom and top have no sidebar to hold it.
-  const navShow = $derived(row ? "history" : getTabPosition() === "bottom" ? "all" : "history");
+  const navShow = $derived(getTabPosition() === "bottom" ? "all" : "history");
 
   function startWindowDrag(event: PointerEvent) {
     if (event.button !== 0) return;
@@ -34,7 +34,10 @@
   {#if besideTrafficLights}
     <div class="lights-spacer"></div>
   {/if}
-  <NavControls {collapseLocked} show={navShow} />
+  <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. -->
+  {#if !row}
+    <NavControls {collapseLocked} show={navShow} />
+  {/if}
   {#if isAddressInPageToolbar() || row}
     <div class="address"><URLDisplay /></div>
   {/if}
@@ -54,7 +57,8 @@
     box-sizing: border-box;
     pointer-events: auto;
     background: var(--sidebar-bg);
-    z-index: 9;
+    /* Over the command bar's page veil: the address drawers hang from here into the page, as they hang beside it from the sidebar. */
+    z-index: 61;
   }
 
   .page-toolbar.row {

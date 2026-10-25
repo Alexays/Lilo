@@ -37,8 +37,14 @@ function nearestEdge(x: number, y: number): TabPosition | null {
 function setLifting(lifting: boolean): void {
 	_lifting = lifting;
 	_target = null;
-	if (lifting) document.documentElement.dataset.tabsLifting = "";
-	else delete document.documentElement.dataset.tabsLifting;
+	const root = document.documentElement;
+	if (lifting) {
+		root.dataset.tabsLifting = "";
+		return;
+	}
+	delete root.dataset.tabsLifting;
+	root.style.removeProperty("--lift-x");
+	root.style.removeProperty("--lift-y");
 }
 
 /**
@@ -63,6 +69,10 @@ export function pressTabsHeader(event: PointerEvent): void {
 	function onMove(move: PointerEvent): void {
 		if (_lifting) {
 			_target = nearestEdge(move.clientX, move.clientY);
+			// The lifted tabs follow the pointer, like a window being moved.
+			const style = document.documentElement.style;
+			style.setProperty("--lift-x", `${move.clientX - startX}px`);
+			style.setProperty("--lift-y", `${move.clientY - startY}px`);
 			return;
 		}
 		if (Math.hypot(move.clientX - startX, move.clientY - startY) <= MOVE_TOLERANCE_PX) return;

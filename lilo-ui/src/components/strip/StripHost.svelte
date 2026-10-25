@@ -82,7 +82,8 @@
     top: 0;
     pointer-events: auto;
     background-color: var(--sidebar-bg);
-    z-index: 10;
+    /* Over the command bar's page veil, like the page toolbar. */
+    z-index: 61;
     transition:
       transform var(--motion-duration-slow) var(--motion-ease-standard),
       box-shadow var(--motion-duration-slow) ease,
@@ -115,7 +116,9 @@
 
   /* Lifted by a held press: the strip floats until dropped on an edge. */
   :global(html[data-tabs-lifting]) .tab-strip-host {
-    transform: scale(0.96);
+    transform: translate(var(--lift-x, 0px), var(--lift-y, 0px)) scale(0.96);
+    transition: box-shadow var(--motion-duration-slow) ease;
+    border-radius: var(--radius-lg);
     box-shadow: var(--chrome-overlay-shadow);
     z-index: 72;
   }

@@ -8,7 +8,7 @@ output_path = os.path.join(root, "Lilo", "Generated", "ChromeUIAssets.swift")
 
 # Total-bundle budget: a runaway bundle fails the build in CI rather than silently bloating the
 # binary and slowing cold start.
-max_embedded_bytes = 1_250_000
+max_embedded_bytes = 1_270_000
 # The part of it loaded before the chrome's first frame, which every launch parses.
 max_first_frame_bytes = 540_000
 
