@@ -653,6 +653,9 @@
 		"reload": "Reload",
 		"reloadUnavailable": "Nothing to reload"
 	},
+	"strip": {
+		"ariaLabel": "Tabs"
+	},
 	"bottomBar": {
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",

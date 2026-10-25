@@ -653,6 +653,9 @@
 		"reload": "Actualiser",
 		"reloadUnavailable": "Rien à actualiser"
 	},
+	"strip": {
+		"ariaLabel": "Onglets"
+	},
 	"bottomBar": {
 		"downloads": "Téléchargements",
 		"downloadsActiveCount": "Téléchargements, {count} en cours",

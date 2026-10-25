@@ -30,6 +30,7 @@
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
   import PageToolbar from "./components/page/PageToolbar.svelte";
+  import TabStrip from "./components/strip/TabStrip.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
 
@@ -325,6 +326,19 @@
 
   <SplitDropZone />
 
+  {#if !isVerticalLayout()}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="tab-strip-host tabs-surface"
+      class:strip-hidden={!isSidebarShown()}
+      class:strip-overlay={isSidebarOverlay()}
+      use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
+      onmouseenter={cancelSidebarOverlayHide}
+      onmouseleave={scheduleSidebarOverlayHide}
+    >
+      <TabStrip edge={getTabPosition() === "bottom" ? "bottom" : "top"} />
+    </div>
+  {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="sidebar tabs-surface"
@@ -347,6 +361,7 @@
       ></div>
     {/if}
   </div>
+  {/if}
 
   <!-- Always mounted; active prop + CSS visibility controlled by sidebar mode -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -438,6 +453,72 @@
     height: 100vh;
     pointer-events: auto;
     z-index: 49;
+  }
+
+  /* The strip layouts reveal from a full-width edge. */
+  :global(html[data-tab-position='top']) .sidebar-hover-trigger,
+  :global(html[data-tab-position='bottom']) .sidebar-hover-trigger {
+    width: 100vw;
+    height: 6px;
+  }
+
+  :global(html[data-tab-position='bottom']) .sidebar-hover-trigger {
+    top: auto;
+    bottom: 0;
+  }
+
+  :global(html[data-tab-position='top']) .sidebar-overlay-tolerance,
+  :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
+    left: 0;
+    width: 100vw;
+    height: calc(var(--chrome-overlay-edge-gap) + 4px);
+  }
+
+  :global(html[data-tab-position='top']) .sidebar-overlay-tolerance {
+    top: var(--top-strip-height);
+  }
+
+  :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
+    top: auto;
+    bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+  }
+
+  .tab-strip-host {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    pointer-events: auto;
+    background-color: var(--sidebar-bg);
+    z-index: 10;
+    transition:
+      transform var(--motion-duration-slow) var(--motion-ease-standard),
+      box-shadow var(--motion-duration-slow) ease,
+      background-color var(--motion-duration-slow) var(--motion-ease-spring);
+  }
+
+  :global(html[data-tab-position='bottom']) .tab-strip-host {
+    top: auto;
+    bottom: var(--bottom-dock-margin);
+    background-color: transparent;
+  }
+
+  .tab-strip-host.strip-hidden {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  :global(html[data-tab-position='bottom']) .tab-strip-host.strip-hidden {
+    transform: translateY(calc(100% + var(--bottom-dock-margin)));
+  }
+
+  .tab-strip-host.strip-overlay {
+    box-shadow: 0 4px 24px var(--sidebar-shadow);
+    z-index: 50;
+  }
+
+  :global(html[data-tab-position='bottom']) .tab-strip-host.strip-overlay {
+    box-shadow: none;
   }
 
   :global(html[data-tab-position='right']) .sidebar-overlay-tolerance {
