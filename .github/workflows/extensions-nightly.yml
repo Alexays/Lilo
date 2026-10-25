@@ -1,0 +1,76 @@
+# Nightly extension regression checks: the idle CPU budget of a Release build with 20 store extensions
+# (make ext-bench) and every listed Web Store extension against Chrome's recorded behavior (make ext-nightly).
+# Store extensions are untrusted code: the job holds no secret, and its token only reads the repository.
+
+name: Extensions nightly
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  extensions:
+    name: Extension idle CPU and smoke (macOS)
+    if: github.repository == 'Alexays/Lilo'
+    # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against); macos-26 only has Xcode 26.
+    runs-on: xcode-27
+    # Two builds (Release for the bench, Debug for the smoke), about 5 minutes of bench and up to 30 of smoke.
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .derived.noindex/xcode/SourcePackages
+          key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      # The idle CPU budget is MAX_IDLE_CPU in the Makefile.
+      - name: Extension benchmark
+        id: bench
+        shell: bash
+        run: |
+          mkdir -p build/ext-bench-report
+          make ext-bench OUT=build/ext-bench-report | tee build/ext-bench-report/summary.txt
+      - name: Extension smoke of the listed extensions
+        id: smoke
+        if: ${{ !cancelled() }}
+        run: make ext-nightly TOP=1000
+      - name: Write the summary
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          {
+            echo "### Extension benchmark: ${{ steps.bench.outcome }}"
+            echo '```'
+            grep -E 'CPU %|budget' build/ext-bench-report/summary.txt || echo 'no idle measurement'
+            echo '```'
+            echo "### Extension smoke: ${{ steps.smoke.outcome }}"
+            echo '```'
+            head -n 60 .derived.noindex/ext-smoke/report.txt 2>/dev/null || echo 'no report'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: extensions-nightly-${{ github.sha }}
+          path: |
+            build/ext-bench-report/
+            .derived.noindex/ext-smoke/report.txt
+            .derived.noindex/ext-smoke/*.log
+            .derived.noindex/ext-smoke/*.jsonl
+          include-hidden-files: true
+          if-no-files-found: ignore

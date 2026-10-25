@@ -158,9 +158,10 @@ Heavier checks, run when your change touches their area:
 | Command | Runs |
 |---------|------|
 | `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior, and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
-| `make ext-nightly` | unattended `ext-smoke` of the top 500, with a report in `.derived.noindex/ext-smoke/report.txt` and a non-zero exit on a regression |
+| `make ext-nightly` | unattended `ext-smoke` of the top 500 (`TOP=1000` for all), with a report in `.derived.noindex/ext-smoke/report.txt` and a non-zero exit on a regression |
 | `make terminal-bench` | terminal throughput and lock-fairness benchmarks |
 | `make startup-bench` | launch times of a Release build against a throwaway profile |
+| `make ext-bench` | a Release build with 20 store extensions: restore, worker starts, API latency and idle CPU, failing when idle CPU % goes over `MAX_IDLE_CPU=35,25` (Lilo, its WebKit processes; `MAX_IDLE_CPU=` only measures) |
 | `make e2e-energy` | idle energy guard on a Release build (about 3 minutes, see [DEBUGGING.md](docs/DEBUGGING.md#9-measuring-energy)) |
 
 ### Where tests go
@@ -195,7 +196,11 @@ rather than carving out a helper just to reach it.
 - **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
   `startup-bench-<sha>` artifact. It never fails the run.
 
-It needs no secrets and only reads the repository, so pull requests from forks run it as is. CI runs
+`.github/workflows/extensions-nightly.yml` runs every night (and by hand) in `Alexays/Lilo` only, on the
+`xcode-27` image: `make ext-bench` against its idle CPU budget, then `make ext-nightly TOP=1000`. The
+reports are the `extensions-nightly-<sha>` artifact, and the run's summary quotes them.
+
+`build.yml` needs no secrets and only reads the repository, so pull requests from forks run it as is. CI runs
 a failed Swift or Playwright test once more and lists the tests that passed only on that retry in
 the run's summary; `make validate` and `make e2e` never retry, so a flaky test fails locally.
 
