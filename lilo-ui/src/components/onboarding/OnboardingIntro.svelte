@@ -4,7 +4,7 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { spaceActions } from "../../lib/bridge/actions";
   import { getActiveSpace } from "../../stores/spaces.svelte";
-  import { collapseOnboarding, goNext } from "../../stores/onboarding.svelte";
+  import { collapseOnboarding, getOnboarding, goNext } from "../../stores/onboarding.svelte";
 
   let mark = $state<HTMLDivElement | null>(null);
   let cta = $state<HTMLButtonElement | null>(null);
@@ -34,8 +34,11 @@
       }));
     }
     const space = getActiveSpace();
-    // Only an icon nobody chose: the default one, or the house of the Home space a first run starts with.
-    if (space && (!space.icon || space.icon === "🌐" || space.icon === "🏠")) spaceActions.update({ id: space.id, icon: "🪻" });
+    // Only on a first run, and only an icon nobody chose: the default one, or the house of the Home space it starts with.
+    // A replay leaves the user's Spaces as they are.
+    if (getOnboarding().firstRun && space && (!space.icon || space.icon === "🌐" || space.icon === "🏠")) {
+      spaceActions.update({ id: space.id, icon: "🪻" });
+    }
     goNext();
   }
 

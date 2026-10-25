@@ -29,6 +29,8 @@ const state = $state({
 	usage: "browse" as OnboardingUsage,
 	step: 0,
 	collapsed: false,
+	/** Shown because it was never finished, not replayed from the menu or Settings. */
+	firstRun: false,
 });
 
 const importState = $state({
@@ -51,6 +53,7 @@ export function initOnboardingStore(): void {
 		if (!data.show) return;
 		state.visible = true;
 		state.mode = "full";
+		state.firstRun = true;
 		state.usage = data.usage === "develop" || data.usage === "agents" ? data.usage : "browse";
 		state.step = resumeStep(data.step, state.usage);
 		importActions.scan();
@@ -94,6 +97,7 @@ export function importedSummary(kinds: readonly ImportKind[]): string {
 export function startOnboarding(mode: OnboardingMode = "full"): void {
 	state.visible = true;
 	state.collapsed = false;
+	state.firstRun = false;
 	state.mode = mode;
 	state.step = mode === "full" ? 0 : onboardingSteps(state.usage).indexOf(mode);
 	// A fresh scan recomputes the default choices; a previous run's results must not linger.
