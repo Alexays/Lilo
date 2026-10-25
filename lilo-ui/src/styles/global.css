@@ -133,12 +133,26 @@
      Svelte transitions, which need a function. */
   --motion-ease-bounce: linear(0, 0.029, 0.103, 0.202, 0.313, 0.426, 0.535, 0.634, 0.721, 0.796, 0.858, 0.908, 0.947, 0.976, 0.997, 1.012, 1.021, 1.026, 1.028, 1.028, 1.026, 1.024, 1.021, 1.018, 1.014, 1.011, 1.009, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
 
-  --chrome-content-top: var(--content-inset);
-  --chrome-content-right: var(--content-inset);
-  --chrome-content-bottom: var(--content-inset);
+  /* Mirror MainWindowController's topStripHeight, pageToolbarHeight, bottomDockHeight and bottomDockMargin. */
+  --top-strip-height: 48px;
+  --page-toolbar-height: 40px;
+  --bottom-dock-height: 52px;
+  --bottom-dock-margin: 10px;
   /* The sidebar narrows before the content gets under 320px, as MainWindowController.minimumContentWidth does. */
   --sidebar-fitted-width: min(var(--sidebar-width), 100vw - 2 * var(--content-inset) - 320px);
-  --chrome-content-left-visible: calc(var(--sidebar-fitted-width) + var(--content-inset));
+  /* The sidebar's column spans the content gutter too. */
+  --sidebar-column: calc(var(--sidebar-fitted-width) + var(--content-inset));
+  --side-panel-width: 0px;
+  /* Where the page sits while the tabs are docked; html[data-tab-position] moves the column. */
+  --tabs-left: var(--sidebar-column);
+  --tabs-right: var(--content-inset);
+  --tabs-top: var(--content-inset);
+  --tabs-bottom: var(--content-inset);
+  --chrome-content-left: var(--tabs-left);
+  --chrome-content-right: calc(var(--tabs-right) + var(--side-panel-width));
+  --chrome-content-top: var(--tabs-top);
+  --chrome-content-bottom: var(--tabs-bottom);
+  --chrome-content-left-visible: var(--chrome-content-left);
   --chrome-content-left-hidden: var(--content-inset);
   --chrome-overlay-edge-gap: 12px;
   --chrome-overlay-boundary-radius: var(--radius-md);
@@ -249,6 +263,39 @@ html[data-booting='true'] #chrome-root {
   opacity: 0;
 }
 
+html[data-tab-position='left'][data-address='page'] {
+  --tabs-top: var(--page-toolbar-height);
+}
+
+html[data-tab-position='right'] {
+  --tabs-left: var(--content-inset);
+  --tabs-right: var(--sidebar-column);
+  --tabs-top: var(--page-toolbar-height);
+}
+
+html[data-tab-position='top'] {
+  --tabs-left: var(--content-inset);
+  --tabs-top: var(--top-strip-height);
+}
+
+html[data-tab-position='top'][data-address='page'] {
+  --tabs-top: calc(var(--top-strip-height) + var(--page-toolbar-height));
+}
+
+html[data-tab-position='bottom'] {
+  --tabs-left: var(--content-inset);
+  --tabs-top: var(--page-toolbar-height);
+  --tabs-bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+}
+
+/* Hidden or floating over the page, the tabs leave it every edge. */
+html[data-tabs-hidden] {
+  --tabs-left: var(--content-inset);
+  --tabs-right: var(--content-inset);
+  --tabs-top: var(--content-inset);
+  --tabs-bottom: var(--content-inset);
+}
+
 html[data-booting='true'] .space-track {
   scroll-behavior: auto;
 }
@@ -258,14 +305,10 @@ html[data-booting='true'] .space-track {
 .chrome-content-overlay-root {
   position: fixed;
   top: var(--chrome-content-top);
-  left: var(--chrome-content-left-visible);
+  left: var(--chrome-content-left);
   right: var(--chrome-content-right);
   bottom: var(--chrome-content-bottom);
   border-radius: var(--chrome-overlay-boundary-radius);
-}
-
-.chrome-content-overlay-root.sidebar-hidden {
-  left: var(--chrome-content-left-hidden);
 }
 
 .chrome-floating-surface {

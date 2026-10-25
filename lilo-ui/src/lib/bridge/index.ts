@@ -11,6 +11,7 @@ import type {
 } from './protocol';
 
 export type {
+  AddressPlacement,
   BridgeCommandPayloadMap,
   BridgeBrowserStatePatchPayload,
   BridgeBrowserStateChangedPayload,
@@ -22,6 +23,7 @@ export type {
   BridgeSpaceSnapshot,
   BridgeTabSnapshot,
   BridgeTabUpdatedPayload,
+  TabPosition,
 } from './protocol';
 
 type UnknownBridgePayload = Record<string, unknown>;

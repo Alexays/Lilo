@@ -436,7 +436,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: var(--chrome-content-left-visible);
+    width: var(--sidebar-column);
     height: 100vh;
     background-color: var(--sidebar-bg);
     color: var(--sidebar-contrast);

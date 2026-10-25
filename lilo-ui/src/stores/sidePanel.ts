@@ -4,7 +4,7 @@ import { on } from "../lib/bridge";
 export function initSidePanelStore(): void {
 	on("sidePanelWidthChanged", ({ width }) => {
 		const style = document.documentElement.style;
-		if (width > 0) style.setProperty("--chrome-content-right", `calc(var(--content-inset) + ${width}px)`);
-		else style.removeProperty("--chrome-content-right");
+		if (width > 0) style.setProperty("--side-panel-width", `${width}px`);
+		else style.removeProperty("--side-panel-width");
 	});
 }
