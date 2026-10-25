@@ -684,6 +684,11 @@
 		"next": "Next track",
 		"previous": "Previous track"
 	},
+	"tabEditor": {
+		"title": "Edit tab",
+		"url": "Address",
+		"useCurrentPage": "Use Current Page"
+	},
 	"tabItem": {
 		"terminal": "Terminal",
 		"showChanges": "Show changes: {added} added, {removed} removed",
@@ -1830,8 +1835,7 @@
 		"Remove from Folder": "Remove from Folder",
 		"Delete Folder": "Delete Folder",
 		"Edit Folder": "Edit Folder",
-		"Set as Pinned Page": "Set as Pinned Page",
-		"Rename...": "Rename...",
+		"Edit...": "Edit...",
 		"New Folder": "New Folder",
 		"Open Folder": "Open Folder",
 		"Close Folder": "Close Folder",
@@ -1842,7 +1846,6 @@
 		"The space and all its tabs are deleted permanently.": "The space and all its tabs are deleted permanently.",
 		"Remove Bookmark": "Remove Bookmark",
 		"Remove Pinned Tab": "Remove Pinned Tab",
-		"Replace URL with Current": "Replace URL with Current",
 		"Restore Closed Tab": "Restore Closed Tab",
 		"Details": "Details",
 		"Remove…": "Remove…",

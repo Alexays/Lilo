@@ -89,6 +89,7 @@ final class TabBridgeHandler: BridgeHandler {
         "bookmarkTab",
         "unbookmarkTab",
         "renameTab",
+        "setTabHomeURL",
         "returnTabHome",
         "muteTab",
         "unmuteTab",
@@ -212,6 +213,17 @@ final class TabBridgeHandler: BridgeHandler {
         case "renameTab":
             withTabContext(message) { tab, spaceId in
                 _ = tryApplyStateCommand(.renameTab(spaceId: spaceId, tabId: tab.id, title: message.string("title", default: "")))
+            }
+
+        case "setTabHomeURL":
+            withTabContext(message) { tab, spaceId in
+                guard tab.isPinned || tab.isBookmarked,
+                      let url = message.string("url").flatMap(URL.init(string:)),
+                      ["http", "https", "file"].contains(url.scheme?.lowercased()) else { return }
+                let wasHome = !tab.isClosed && tab.matchesHomeURL(tab.url)
+                guard tryApplyStateCommand(.setTabHomeURL(spaceId: spaceId, tabId: tab.id, url: url)) != nil else { return }
+                // A tab sitting at its home page follows it there; one away from home stays on its page.
+                if wasHome, url != tab.url { tabManager.load(url, inTab: tab.id) }
             }
 
         case "returnTabHome":

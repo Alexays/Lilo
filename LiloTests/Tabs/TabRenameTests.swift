@@ -112,4 +112,35 @@ final class TabRenameTests: XCTestCase {
         window.updateRuntimeTab(id: tab.id) { $0.url = tab.homeURL }
         XCTAssertEqual(window.tabManager.tab(for: tab.id)?.bridgeData["homeTitle"] as? String, "", "back home, the slash goes")
     }
+
+    func testATypedHomeURLTakesATabAtHomeThereWithoutThePreviousTitle() async throws {
+        let (window, handler, _, tab) = try makePinnedTab()
+
+        try await send(handler, "setTabHomeURL", ["id": tab.id.uuidString, "url": "https://calendar.example/week"])
+
+        let moved = try XCTUnwrap(window.tabManager.tab(for: tab.id))
+        XCTAssertEqual(moved.homeURL?.absoluteString, "https://calendar.example/week")
+        XCTAssertNil(moved.homeTitle, "the inbox's title does not name the calendar")
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id), "the tab follows its home")
+        let loading = await pollUntil(timeout: 10) { (engine.view as? WKWebView)?.url?.host == "calendar.example" }
+        XCTAssertTrue(loading)
+    }
+
+    func testATypedHomeURLLeavesATabAwayFromHomeOnItsPage() async throws {
+        let (window, handler, _, tab) = try makePinnedTab()
+        window.updateRuntimeTab(id: tab.id) { $0.url = URL(string: "https://other.example/") }
+
+        try await send(handler, "setTabHomeURL", ["id": tab.id.uuidString, "url": "https://calendar.example/week"])
+
+        XCTAssertEqual(window.tabManager.tab(for: tab.id)?.homeURL?.absoluteString, "https://calendar.example/week")
+        XCTAssertNil(window.tabManager.engineTab(for: tab.id), "nothing loads")
+    }
+
+    func testAHomeURLMustBeAWebOrFileAddress() async throws {
+        let (window, handler, _, tab) = try makePinnedTab()
+
+        try await send(handler, "setTabHomeURL", ["id": tab.id.uuidString, "url": "javascript:alert(1)"])
+
+        XCTAssertEqual(window.tabManager.tab(for: tab.id)?.homeURL, tab.homeURL)
+    }
 }
