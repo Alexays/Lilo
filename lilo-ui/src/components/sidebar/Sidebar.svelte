@@ -204,9 +204,10 @@
     padding-right: 32px;
   }
 
-  /* The traffic lights' room, when they sit in this header. */
+  /* The traffic lights' room when they sit in this header (compact lights end at 66pt), plus the gap
+     macOS keeps between the lights and a title. */
   :global(html[data-tab-position='left']) .compact-header .space-content :global(.space-bar-slot) {
-    padding-left: 64px;
+    padding-left: 78px;
   }
 
   /* With the address in the sidebar, it heads the list on the toggle's line and leaves the toggle its room. */

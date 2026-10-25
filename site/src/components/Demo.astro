@@ -99,225 +99,235 @@ const issues = [
 ---
 
 <div class="demo">
-<div class="window" id="browser-demo" role="group" aria-label={text.demoWindow}>
-  <!-- Right and bottom keep a bar over the page for the traffic lights: shown by the edge picked below. -->
-  <div class="page-bar" aria-hidden="true">
-    <div class="lights">
-      <i></i>
-      <i></i>
-      <i></i>
-    </div>
-    <div class="navs">
-      <span>&#8249;</span>
-      <span>&#8250;</span>
-    </div>
-    <div class="addr">
-      {spaces.map((space) => (
-        <span data-demo-space={space.id}>
-          <b>{space.host}</b>
-          {space.path}
-        </span>
-      ))}
-    </div>
-  </div>
-  <div class="sb">
-    <div class="chrome-row" aria-hidden="true">
+  <div
+    class="window"
+    id="browser-demo"
+    role="group"
+    aria-label={text.demoWindow}
+  >
+    <!-- Right and bottom keep a bar over the page for the traffic lights: shown by the edge picked below. -->
+    <div class="page-bar" aria-hidden="true">
       <div class="lights">
         <i></i>
         <i></i>
         <i></i>
       </div>
       <div class="navs">
-        <span>&#9707;</span>
         <span>&#8249;</span>
         <span>&#8250;</span>
-        <span>&#8635;</span>
       </div>
-    </div>
-    <div class="addr" aria-hidden="true">
-      {spaces.map((space) => (
-        <span data-demo-space={space.id}>
-          <b>{space.host}</b>
-          {space.path}
-        </span>
-      ))}
-    </div>
-    {spaces.map((space) => (
-      <div class="space-content" data-demo-space={space.id} aria-hidden="true">
-        <div class="shead">
-          {space.icon} {space.name}
-          <em>&#9788;</em>
-        </div>
-        <div class="favs">
-          {space.favs.map(([icon, color]) => (
-            <span>
-              <i style={`background:${color}`}>{icon}</i>
-            </span>
-          ))}
-        </div>
-        <div>
-          {space.folders.map(([name, locked]) => (
-            <div class="row-item">
-              <span class="fi"></span>
-              <span class="tt">{name}</span>
-              {locked && <span class="lock">🔒</span>}
-            </div>
-          ))}
-        </div>
-        <div class="divider"></div>
-        <div>
-          {space.tabs.map(([name, color, icon, state]) => (
-            <div class={`row-item ${state ?? ""}`}>
-              <span class="fav" style={`background:${color}`}>
-                {icon}
-              </span>
-              <span class="tt">{name}</span>
-              {state === "on" && <span class="x">✕</span>}
-              {state === "agent" && <span class="who">agent</span>}
-            </div>
-          ))}
-        </div>
-      </div>
-    ))}
-    <div class="row-item newtab" aria-hidden="true">
-      <span>+</span>
-      <span>{text.demoNewTab}</span>
-    </div>
-    <div class="spacebar">
-      <div class="spaces" role="radiogroup" aria-label={text.demoSpaces}>
-        {spaces.map((space, index) => (
-          <>
-            <input
-              type="radio"
-              name="demo-space"
-              id={`demo-space-${space.id}`}
-              value={space.id}
-              checked={index === 0}
-              aria-label={text.demoSpace.replace("{name}", space.name)}
-            />
-            <label
-              for={`demo-space-${space.id}`}
-              title={space.name}
-              aria-hidden="true"
-            >
-              {space.icon}
-            </label>
-          </>
+      <div class="addr">
+        {spaces.map((space) => (
+          <span data-demo-space={space.id}>
+            <b>{space.host}</b>
+            {space.path}
+          </span>
         ))}
       </div>
-      <button
-        class="playback"
-        type="button"
-        aria-label={text.demoAutoplay}
-        aria-pressed="true"
-        title={text.demoAutoplay}
-        hidden
-      >
-        <svg
-          aria-hidden="true"
-          width="14"
-          height="14"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
-          <path class="pause" d="M4 3h3v10H4zM9 3h3v10H9z" />
-          <path class="play" d="m5 2 9 6-9 6z" />
-        </svg>
-      </button>
     </div>
-  </div>
-  <div class="view" aria-hidden="true">
-    <div class="article" data-demo-space="perso">
-      <div class="cover">
-        <span>
-          {text.demoArticleCoverFirst}
-          <br />
-          {text.demoArticleCoverSecond}
-        </span>
-      </div>
-      <div class="body">
-        <span class="meta">{text.demoArticleMeta}</span>
-        <p>{text.demoArticleText}</p>
-        <div class="days">
-          {[text.demoFirstDay, text.demoSecondDay, text.demoThirdDay].map(
-            (day, index) => (
-              <div>
-                <b>
-                  {text.demoDay} {index + 1}
-                </b>
-                {day}
-              </div>
-            )
-          )}
-        </div>
-      </div>
-    </div>
-    <div class="split" data-demo-space="work">
-      <div class="issues">
-        <b class="ttl">{text.demoInbox}</b>
-        {issues.map(([title, id, state]) => (
-          <div class="issue">
-            <i class={state}></i>
-            <span>{title}</span>
-            <small>{id}</small>
-          </div>
-        ))}
-      </div>
-      <div class="term">
-        <div>
-          <b>~/shop</b> claude
-        </div>
-        <div class="dim">{text.demoConnected}</div>
-        <div class="ag">navigate localhost:3000/checkout</div>
-        <div class="ag">click "{text.demoPayNow}"</div>
-        <div class="ok">{text.demoReproduced}</div>
-        <div class="ag">screenshot</div>
-        <div class="ok">{text.demoFixReady}</div>
-      </div>
-    </div>
-    <div class="player" data-demo-space="music">
-      <div class="art"></div>
-      <div class="now">
-        <small>{text.demoNowPlaying}</small>
-        <b>{text.demoPlaylist}</b>
-        <span class="track-count">{text.demoTrackCount}</span>
-        <div class="prog">
+    <div class="sb">
+      <div class="chrome-row" aria-hidden="true">
+        <div class="lights">
+          <i></i>
+          <i></i>
           <i></i>
         </div>
-        <div class="ctrl">
-          <span>⏮</span>
-          <span class="pp">❙❙</span>
-          <span>⏭</span>
+        <div class="navs">
+          <span>&#9707;</span>
+          <span>&#8249;</span>
+          <span>&#8250;</span>
+          <span>&#8635;</span>
         </div>
-        <ol>
-          <li>Night drive</li>
-          <li>Soft focus</li>
-          <li>After hours</li>
-        </ol>
+      </div>
+      <div class="addr" aria-hidden="true">
+        {spaces.map((space) => (
+          <span data-demo-space={space.id}>
+            <b>{space.host}</b>
+            {space.path}
+          </span>
+        ))}
+      </div>
+      {spaces.map((space) => (
+        <div
+          class="space-content"
+          data-demo-space={space.id}
+          aria-hidden="true"
+        >
+          <div class="shead">
+            {space.icon} {space.name}
+            <em>&#9788;</em>
+          </div>
+          <div class="favs">
+            {space.favs.map(([icon, color]) => (
+              <span>
+                <i style={`background:${color}`}>{icon}</i>
+              </span>
+            ))}
+          </div>
+          <div>
+            {space.folders.map(([name, locked]) => (
+              <div class="row-item">
+                <span class="fi"></span>
+                <span class="tt">{name}</span>
+                {locked && <span class="lock">🔒</span>}
+              </div>
+            ))}
+          </div>
+          <div class="divider"></div>
+          <div>
+            {space.tabs.map(([name, color, icon, state]) => (
+              <div class={`row-item ${state ?? ""}`}>
+                <span class="fav" style={`background:${color}`}>
+                  {icon}
+                </span>
+                <span class="tt">{name}</span>
+                {state === "on" && <span class="x">✕</span>}
+                {state === "agent" && <span class="who">agent</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div class="row-item newtab" aria-hidden="true">
+        <span>+</span>
+        <span>{text.demoNewTab}</span>
+      </div>
+      <div class="spacebar">
+        <div class="spaces" role="radiogroup" aria-label={text.demoSpaces}>
+          {spaces.map((space, index) => (
+            <>
+              <input
+                type="radio"
+                name="demo-space"
+                id={`demo-space-${space.id}`}
+                value={space.id}
+                checked={index === 0}
+                aria-label={text.demoSpace.replace("{name}", space.name)}
+              />
+              <label
+                for={`demo-space-${space.id}`}
+                title={space.name}
+                aria-hidden="true"
+              >
+                {space.icon}
+              </label>
+            </>
+          ))}
+        </div>
+        <button
+          class="playback"
+          type="button"
+          aria-label={text.demoAutoplay}
+          aria-pressed="true"
+          title={text.demoAutoplay}
+          hidden
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+          >
+            <path class="pause" d="M4 3h3v10H4zM9 3h3v10H9z" />
+            <path class="play" d="m5 2 9 6-9 6z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="view" aria-hidden="true">
+      <div class="article" data-demo-space="perso">
+        <div class="cover">
+          <span>
+            {text.demoArticleCoverFirst}
+            <br />
+            {text.demoArticleCoverSecond}
+          </span>
+        </div>
+        <div class="body">
+          <span class="meta">{text.demoArticleMeta}</span>
+          <p>{text.demoArticleText}</p>
+          <div class="days">
+            {[text.demoFirstDay, text.demoSecondDay, text.demoThirdDay].map(
+              (day, index) => (
+                <div>
+                  <b>
+                    {text.demoDay} {index + 1}
+                  </b>
+                  {day}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+      <div class="split" data-demo-space="work">
+        <div class="issues">
+          <b class="ttl">{text.demoInbox}</b>
+          {issues.map(([title, id, state]) => (
+            <div class="issue">
+              <i class={state}></i>
+              <span>{title}</span>
+              <small>{id}</small>
+            </div>
+          ))}
+        </div>
+        <div class="term">
+          <div>
+            <b>~/shop</b> claude
+          </div>
+          <div class="dim">{text.demoConnected}</div>
+          <div class="ag">navigate localhost:3000/checkout</div>
+          <div class="ag">click "{text.demoPayNow}"</div>
+          <div class="ok">{text.demoReproduced}</div>
+          <div class="ag">screenshot</div>
+          <div class="ok">{text.demoFixReady}</div>
+        </div>
+      </div>
+      <div class="player" data-demo-space="music">
+        <div class="art"></div>
+        <div class="now">
+          <small>{text.demoNowPlaying}</small>
+          <b>{text.demoPlaylist}</b>
+          <span class="track-count">{text.demoTrackCount}</span>
+          <div class="prog">
+            <i></i>
+          </div>
+          <div class="ctrl">
+            <span>⏮</span>
+            <span class="pp">❙❙</span>
+            <span>⏭</span>
+          </div>
+          <ol>
+            <li>Night drive</li>
+            <li>Soft focus</li>
+            <li>After hours</li>
+          </ol>
+        </div>
       </div>
     </div>
   </div>
+  <div class="edges" role="radiogroup" aria-label={text.demoTabsEdge}>
+    <span class="edges-label" aria-hidden="true">
+      {text.demoTabsEdge}
+    </span>
+    {edges.map(([edge, label], index) => (
+      <>
+        <input
+          type="radio"
+          name="demo-tabs"
+          id={`demo-tabs-${edge}`}
+          value={edge}
+          checked={index === 0}
+          aria-label={label}
+        />
+        <label for={`demo-tabs-${edge}`} title={label} aria-hidden="true">
+          <span class={`edge-glyph ${edge}`}></span>
+        </label>
+      </>
+    ))}
+  </div>
 </div>
-<div class="edges" role="radiogroup" aria-label={text.demoTabsEdge}>
-  <span class="edges-label" aria-hidden="true">{text.demoTabsEdge}</span>
-  {edges.map(([edge, label], index) => (
-    <>
-      <input
-        type="radio"
-        name="demo-tabs"
-        id={`demo-tabs-${edge}`}
-        value={edge}
-        checked={index === 0}
-        aria-label={label}
-      />
-      <label for={`demo-tabs-${edge}`} title={label} aria-hidden="true">
-        <span class={`edge-glyph ${edge}`}></span>
-      </label>
-    </>
-  ))}
-</div>
-</div>
-
 
 <script>
   import { gsap } from "gsap";
@@ -512,11 +522,13 @@ const issues = [
     grid-area: bar;
   }
 
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked) .sb {
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
+    .sb {
     grid-area: sb;
   }
 
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked) .view {
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
+    .view {
     grid-area: view;
   }
 
@@ -562,7 +574,9 @@ const issues = [
     overflow: hidden;
   }
 
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .space-content > div {
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
+    .space-content
+    > div {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -580,7 +594,9 @@ const issues = [
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead em,
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .spacebar,
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .newtab span:last-child,
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
+    .newtab
+    span:last-child,
   .demo:has(#demo-tabs-top:checked) .row-item.on {
     display: none;
   }
@@ -618,15 +634,43 @@ const issues = [
   }
 
   /* Each edge has its own keyframes so a new pick restarts the settle-in. */
-  .demo:has(#demo-tabs-left:checked) .window > * { animation: edge-left 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
-  .demo:has(#demo-tabs-right:checked) .window > * { animation: edge-right 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
-  .demo:has(#demo-tabs-top:checked) .window > * { animation: edge-top 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
-  .demo:has(#demo-tabs-bottom:checked) .window > * { animation: edge-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+  .demo:has(#demo-tabs-left:checked) .window > * {
+    animation: edge-left 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .demo:has(#demo-tabs-right:checked) .window > * {
+    animation: edge-right 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .demo:has(#demo-tabs-top:checked) .window > * {
+    animation: edge-top 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .demo:has(#demo-tabs-bottom:checked) .window > * {
+    animation: edge-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 
-  @keyframes edge-left { from { opacity: 0; transform: translateX(-10px); } }
-  @keyframes edge-right { from { opacity: 0; transform: translateX(10px); } }
-  @keyframes edge-top { from { opacity: 0; transform: translateY(-8px); } }
-  @keyframes edge-bottom { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes edge-left {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+  }
+  @keyframes edge-right {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+  }
+  @keyframes edge-top {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes edge-bottom {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .demo .window > * {
@@ -642,7 +686,9 @@ const issues = [
     padding: 4px 4px 4px 14px;
     border-radius: 999px;
     background: var(--surface);
-    box-shadow: 0 0 0 0.5px var(--line), 0 6px 18px color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow:
+      0 0 0 0.5px var(--line),
+      0 6px 18px color-mix(in srgb, var(--accent) 14%, transparent);
     color: var(--ink-2);
     font: 600 13px/1 var(--sys);
   }
@@ -668,7 +714,9 @@ const issues = [
     display: grid;
     place-items: center;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
   }
 
   .edges input:checked + label {
@@ -696,10 +744,30 @@ const issues = [
     background: currentColor;
   }
 
-  .edge-glyph.left::after { left: 2px; top: 2px; bottom: 2px; width: 6px; }
-  .edge-glyph.right::after { right: 2px; top: 2px; bottom: 2px; width: 6px; }
-  .edge-glyph.top::after { left: 2px; right: 2px; top: 2px; height: 4px; }
-  .edge-glyph.bottom::after { left: 3px; right: 3px; bottom: 2px; height: 4px; }
+  .edge-glyph.left::after {
+    left: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 6px;
+  }
+  .edge-glyph.right::after {
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 6px;
+  }
+  .edge-glyph.top::after {
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    height: 4px;
+  }
+  .edge-glyph.bottom::after {
+    left: 3px;
+    right: 3px;
+    bottom: 2px;
+    height: 4px;
+  }
 
   /* Phones keep the sidebar demo: a strip has no room on a narrow window. */
   @media (max-width: 900px) {
