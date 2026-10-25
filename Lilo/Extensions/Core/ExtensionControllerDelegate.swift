@@ -393,6 +393,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         popover.show(relativeTo: anchorRect, of: contentView, preferredEdge: .maxX)
 
         completionHandler(nil)
+        // The completion starts WebKit's color scheme check, whose answer writes into the action even once it is freed
+        // (WEBKIT-GAPS.md, gap 90). A script evaluated after it answers after it: holding the action until then.
+        action.popupWebView?.evaluateJavaScript("0") { _, _ in withExtendedLifetime(action) {} }
     }
 
     nonisolated func popoverDidClose(_ notification: Notification) {
