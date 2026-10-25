@@ -65,8 +65,10 @@ export const STATIC_CONSTANTS: Record<string, Record<string, unknown>> = {
     managed: {
       get(keys?: unknown, callback?: (items: Record<string, unknown>) => void) {
         if (typeof keys === 'function') { (keys as (i: Record<string, unknown>) => void)({}); return undefined; }
-        if (callback) { Promise.resolve({}).then(callback); return undefined; }
-        return Promise.resolve({});
+        // Keys given with defaults read their defaults, as from any empty storage area (Lightspeed reads its Env so).
+        const items = keys !== null && typeof keys === 'object' && !Array.isArray(keys) ? { ...keys } : {};
+        if (callback) { Promise.resolve(items).then(callback); return undefined; }
+        return Promise.resolve(items);
       },
       getBytesInUse(keys?: unknown, callback?: (bytes: number) => void) {
         if (typeof keys === 'function') { (keys as (n: number) => void)(0); return undefined; }

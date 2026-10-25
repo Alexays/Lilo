@@ -47,6 +47,17 @@ describe('installStaticChromeCompat runtime and DNR constants', () => {
   });
 });
 
+describe('storage.managed', () => {
+  it('is empty, so keys given with defaults read their defaults, as in Chrome', async () => {
+    (globalThis as any).chrome = { storage: {} };
+    installStaticChromeCompat(globalThis as any);
+    const { managed } = (globalThis as any).chrome.storage;
+    assert.deepEqual(await managed.get({ Env: 'prod', Key: '' }), { Env: 'prod', Key: '' });
+    assert.deepEqual(await managed.get(['Env']), {});
+    assert.deepEqual(await new Promise((resolve) => managed.get({ Env: 'prod' }, resolve)), { Env: 'prod' });
+  });
+});
+
 describe('the content compat bundle', () => {
   it('does its work once per world, however many content scripts entries run it', () => {
     const bundle = readFileSync(new URL('../../../ChromeContentCompat.js', import.meta.url), 'utf8');
