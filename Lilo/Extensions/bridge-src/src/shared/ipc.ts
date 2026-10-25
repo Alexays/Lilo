@@ -15,12 +15,14 @@ const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'functi
 
 interface Port {
   postMessage(message: unknown): void;
+  disconnect(): void;
   onMessage: { addListener(listener: (message: any) => void): void };
   onDisconnect: { addListener(listener: () => void): void };
 }
 
 interface PendingCall {
   port: Port;
+  message: unknown;
   resolve(value: unknown): void;
   reject(error: Error): void;
   timer?: ReturnType<typeof setTimeout>;
@@ -28,7 +30,15 @@ interface PendingCall {
 
 let port: Port | undefined;
 let ready = false;
-let nextId = 1;
+/**
+ * Names this context to Lilo, which stamps what it sends with it, and fills the high bits of its call ids. WebKit numbers
+ * ports per process (WEBKIT-GAPS 89): another context's channel, or another port of the extension, can share this one's
+ * number, and what Lilo sends either reaches both.
+ */
+const tag = 1 + Math.floor(Math.random() * 2 ** 20);
+/** Lilo's stamp on what it sends, also checked by message-answers.ts `messagesOnce`. */
+const channelKey = 'liloChannel';
+let nextId = tag * 2 ** 32 + 1;
 const pending = new Map<number, PendingCall>();
 let lastActivity = 0;
 let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -97,17 +107,29 @@ function connect(): Port | undefined {
   if (typeof runtime?.connectNative !== 'function') return undefined;
   const opened: Port = runtime.connectNative(CHANNEL_HOST);
   opened.onMessage.addListener((message) => {
+    if (message?.[channelKey] !== tag) return;
     lastActivity = Date.now();
-    if (typeof message?.reply === 'number') {
+    if (message.collided) {
+      // WebKit gave this port the number of a channel Lilo heard from first: what went on it goes again on a new one. It
+      // stays open: disconnecting it would make WebKit forget the page's other ports (WEBKIT-GAPS 89).
+      if (port === opened) port = undefined;
+      const next = connect();
+      if (!next) return;
+      for (const call of pending.values()) {
+        if (call.port !== opened) continue;
+        call.port = next;
+        next.postMessage(call.message);
+      }
+    } else if (typeof message.reply === 'number') {
       const call = pending.get(message.reply);
       if (!call) return;
       pending.delete(message.reply);
       clearTimeout(call.timer);
       if (message.error != null) call.reject(new Error(message.error));
       else call.resolve(message.result);
-    } else if (Array.isArray(message?.events)) {
+    } else if (Array.isArray(message.events)) {
       message.events.forEach(receive);
-    } else if (typeof message?.push === 'string') {
+    } else if (typeof message.push === 'string') {
       // Lilo keeps a pushed state current over the open channel only: what reaches a closed one is already stale.
       if (port === opened) bridgeEvents.get(message.push)?.(...(Array.isArray(message.args) ? message.args : []));
     } else {
@@ -127,7 +149,7 @@ function connect(): Port | undefined {
     }
   });
   port = opened;
-  opened.postMessage(isWorker ? { role: 'worker', instance } : { role: 'page' });
+  opened.postMessage(isWorker ? { role: 'worker', tag, instance } : { role: 'page', tag });
   if (isWorker) {
     lastActivity = Date.now();
     idleTimer ??= setTimeout(checkIdle, IDLE_MS);
@@ -161,7 +183,8 @@ export function gapCall<T>(namespace: string, method: string, params: unknown = 
   if (!channel) return Promise.reject(new Error('Gap API not available in this context'));
   const id = nextId++;
   return new Promise<T>((resolve, reject) => {
-    const call: PendingCall = { port: channel, resolve: resolve as (value: unknown) => void, reject };
+    const message = { id, namespace, method, params };
+    const call: PendingCall = { port: channel, message, resolve: resolve as (value: unknown) => void, reject };
     if (timeoutMs > 0) {
       call.timer = setTimeout(() => {
         pending.delete(id);
@@ -169,6 +192,6 @@ export function gapCall<T>(namespace: string, method: string, params: unknown = 
       }, timeoutMs);
     }
     pending.set(id, call);
-    channel.postMessage({ id, namespace, method, params });
+    channel.postMessage(message);
   });
 }

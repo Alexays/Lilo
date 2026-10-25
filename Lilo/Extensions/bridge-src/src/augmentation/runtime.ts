@@ -299,7 +299,7 @@ const relayedPorts = new WeakSet<object>();
 function relayContentScriptPort(port: any, name: string, id: string): void {
   if (relayedPorts.has(port) || !port.sender?.tab) return;
   relayedPorts.add(port);
-  const local: any = messagesOnce(port, name, true);
+  const local: any = messagesOnce(port, name);
   const remote: any = externalPort(name, undefined, gapCall<string>('runtime', 'connectExternal', { id, name, ...contentScript(port.sender) }));
   local.onMessage.addListener((message: unknown) => remote.postMessage(message));
   remote.onMessage.addListener((message: unknown) => local.postMessage(message));
