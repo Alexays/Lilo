@@ -15,6 +15,10 @@
   import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
   import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
+  import { getActiveTab } from "./stores/tabs.svelte";
+  import { getDayPart, getWallpaperColor, watchDayPart, watchWallpaperColor } from "./stores/spaceColor.svelte";
+  import { effectiveSpaceColor } from "./lib/spaceColor";
+  import type { SpaceColorMode } from "./lib/bridge/protocol";
   import {
     hideSidebarOverlay,
     isFullscreen,
@@ -45,17 +49,41 @@
     const leading = Math.floor(index);
     const progress = index - leading;
     if (progress === 0) return null;
-    const leadingColor = spaces[leading]?.color ?? "";
-    return { leadingColor, trailingColor: spaces[leading + 1]?.color ?? leadingColor, progress };
+    const leadingColor = spaceChromeColor(spaces[leading]);
+    const trailing = spaces[leading + 1];
+    return { leadingColor, trailingColor: trailing ? spaceChromeColor(trailing) : leadingColor, progress };
+  });
+  // Each source is read only by the mode that uses it, so a fixed Space never tracks the active tab.
+  function chromeColor(mode: SpaceColorMode | undefined, color: string, spaceId: string): string {
+    return effectiveSpaceColor(mode, color, {
+      dayPart: mode === "time" ? getDayPart() : "day",
+      pageColor: mode === "page" ? getActiveTab(spaceId)?.faviconDominantColor : undefined,
+      wallpaperColor: mode === "wallpaper" ? getWallpaperColor() : undefined,
+    });
+  }
+  function spaceChromeColor(space: { id: string; color: string; colorMode?: SpaceColorMode } | undefined): string {
+    return space ? chromeColor(space.colorMode, space.color, space.id) : "";
+  }
+  // The mode on screen: the open editor's choice, else the focused Space's. Its source is watched only meanwhile.
+  const shownColorMode = $derived(
+    editorState().open ? editorState().colorMode : getSpaceById(getFocusedSpaceId())?.colorMode,
+  );
+  $effect(() => {
+    if (shownColorMode === "time") return watchDayPart();
+  });
+  $effect(() => {
+    if (shownColorMode === "wallpaper") return watchWallpaperColor();
   });
   // The whole theme switches once, at the swipe's midpoint: each change rewrites ~20 root custom properties
   // and restyles the whole chrome document. Only the sidebar background follows the finger (swipeBackground).
   const themeSidebarColor = $derived.by(() => {
     // The open Space editor previews its color on the whole chrome, the window frame included.
     const currentEditor = editorState();
-    if (currentEditor.open && currentEditor.color) return currentEditor.color;
+    if (currentEditor.open && currentEditor.color) {
+      return chromeColor(currentEditor.colorMode, currentEditor.color, currentEditor.spaceId || getFocusedSpaceId());
+    }
     if (swipe) return swipe.progress < 0.5 ? swipe.leadingColor : swipe.trailingColor;
-    return getSpaceById(getFocusedSpaceId())?.color ?? "";
+    return spaceChromeColor(getSpaceById(getFocusedSpaceId()));
   });
   // Set on the sidebar element alone, so a swipe frame restyles that one element instead of the document.
   const swipeBackground = $derived.by(() => {

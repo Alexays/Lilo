@@ -785,6 +785,18 @@
 		"quickPicks": "Sélection rapide pour cet espace",
 		"spaceNamePlaceholder": "Nom de l'espace",
 		"colorLabel": "Couleur",
+		"colorMode": {
+			"fixed": "Fixe",
+			"time": "Heure",
+			"page": "Page",
+			"wallpaper": "Fond d'écran"
+		},
+		"colorModeHint": {
+			"fixed": "Lilo garde cette couleur.",
+			"time": "Cette couleur, plus chaude le soir et plus sombre la nuit.",
+			"page": "Teintée par le site ouvert. Ailleurs, cette couleur.",
+			"wallpaper": "Tirée de votre fond d'écran. Cette couleur prend le relais s'il n'est pas lisible."
+		},
 		"archiveLabel": "Archiver les onglets après",
 		"archive12Hours": "12 heures",
 		"archive24Hours": "24 heures",
@@ -1496,8 +1508,9 @@
 			}
 		},
 		"appearance": {
+			"color": "Couleur de Lilo",
 			"title": "Votre style",
-			"subtitle": "Clair, sombre, ou comme votre Mac. La fenêtre change tout de suite.",
+			"subtitle": "Clair, sombre, ou comme votre Mac, et d'où vient sa couleur. La fenêtre change tout de suite.",
 			"theme": "Thème",
 			"system": "Auto",
 			"light": "Clair",

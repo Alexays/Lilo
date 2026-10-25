@@ -25,6 +25,7 @@ import { initSearchEngineStore } from "./searchEngines";
 import { initSettingsStore } from "./settings.svelte";
 import { initShortcutKeysStore } from "./shortcutKeys.svelte";
 import { applySpaceInitialState, initSpaceStore } from "./spaces.svelte";
+import { initSpaceColorStore } from "./spaceColor.svelte";
 import { initTabMemoryStore } from "./tabMemory.svelte";
 import { initTabRenameStore } from "./tabRename.svelte";
 import { initTabShareStore } from "./tabShare.svelte";
@@ -55,6 +56,8 @@ const CRITICAL_STORES: StoreInitializer[] = [
 	// The address bar is first-paint chrome, and a permission request may arrive before the
 	// deferred stores start.
 	initUrlBarDrawerStore,
+	// A Space following the wallpaper asks for its color at first paint.
+	initSpaceColorStore,
 ];
 
 const DEFERRED_STORES: StoreInitializer[] = [

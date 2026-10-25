@@ -785,6 +785,18 @@
 		"quickPicks": "Quick picks for this space",
 		"spaceNamePlaceholder": "Space name",
 		"colorLabel": "Color",
+		"colorMode": {
+			"fixed": "Fixed",
+			"time": "Time of day",
+			"page": "Page",
+			"wallpaper": "Wallpaper"
+		},
+		"colorModeHint": {
+			"fixed": "Lilo keeps this color.",
+			"time": "This color, warmer in the evening and darker at night.",
+			"page": "Tinted by the site you're on. Elsewhere, this color.",
+			"wallpaper": "Taken from your wallpaper. This color stands in when it can't be read."
+		},
 		"archiveLabel": "Archive tabs after",
 		"archive12Hours": "12 hours",
 		"archive24Hours": "24 hours",
@@ -1496,8 +1508,9 @@
 			}
 		},
 		"appearance": {
+			"color": "Color of Lilo",
 			"title": "Your style",
-			"subtitle": "Light, dark, or following your Mac. The window updates right away.",
+			"subtitle": "Light, dark, or following your Mac, and where its color comes from. The window updates right away.",
 			"theme": "Theme",
 			"system": "Auto",
 			"light": "Light",

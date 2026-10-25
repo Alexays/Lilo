@@ -22,6 +22,7 @@ export function coerceSpaceSnapshot(
 		isPrivate: data.isPrivate ?? false,
 		sortOrder: data.sortOrder ?? 0,
 		archiveAfterHours: data.archiveAfterHours ?? 12,
+		colorMode: data.colorMode ?? "fixed",
 	};
 }
 

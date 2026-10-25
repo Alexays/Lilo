@@ -25,6 +25,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "permissionResponse",
         "extensionPermissionResponse",
         "updateWindowBackground",
+        "setWallpaperColorWatch",
         "sidebarOverlayChanged",
         "showTabContextMenu",
         "showFolderContextMenu",
@@ -138,6 +139,9 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "updateWindowBackground":
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
+
+        case "setWallpaperColorWatch":
+            windowController?.setWallpaperColorWatch(message.bool("enabled"))
 
         case "sidebarOverlayChanged":
             windowController?.handleSidebarOverlay(visible: message.bool("visible"))

@@ -37,6 +37,8 @@ export const chromeActions = {
 	removeInteractiveZone: emitId("removeInteractiveZone"),
 	updateWindowBackground: (color: string): void =>
 		emit("updateWindowBackground", { color }),
+	setWallpaperColorWatch: (enabled: boolean): void =>
+		emit("setWallpaperColorWatch", { enabled }),
 	sidebarResized: (width: number): void => emit("sidebarResized", { width }),
 	sidebarOverlayChanged: (visible: boolean): void =>
 		emit("sidebarOverlayChanged", { visible }),

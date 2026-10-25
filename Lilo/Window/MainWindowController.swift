@@ -198,6 +198,9 @@ final class MainWindowController: NSWindowController {
     var sidebarCollapseLocked = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]
     var storedWindowBackgroundColor: String?
+    /// Set while the chrome shows a Space that follows the wallpaper.
+    var wallpaperColorObservers: [(NotificationCenter, NSObjectProtocol)] = []
+    var sentWallpaperKey: String?
     /// The color applyWindowChromeColors last painted everywhere, so a resend of it is a no-op.
     var lastAppliedWindowChromeColor: NSColor?
     var didStartChromeUILoad = false
@@ -790,6 +793,7 @@ extension MainWindowController: NSWindowDelegate {
         // Their pages are served by this window's delegate methods.
         littleWindows.values.forEach { $0.window.close() }
         sidePanel.closeAll()
+        setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.
         if context.windows.windows.count == 1 { saveSessionBeforeQuit() }
         if let spaceId = tabManager.currentSpaceId {

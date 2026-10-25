@@ -1,7 +1,7 @@
 // Pure logic for the space editor: the "Signed in as" choice, save validation, the bridge
 // payload it sends.
 
-import type { BridgeCommandPayloadMap } from "../../lib/bridge/protocol";
+import type { BridgeCommandPayloadMap, SpaceColorMode } from "../../lib/bridge/protocol";
 
 /** A user profile, a profile created with the space, or a private space that forgets everything. */
 export type ProfileChoice = { kind: "profile"; id: string } | { kind: "new" } | { kind: "private" };
@@ -12,6 +12,7 @@ interface EditorFields {
   name: string;
   icon: string;
   color: string;
+  colorMode: SpaceColorMode;
   profileId: string;
   archiveAfterHours: number;
 }
@@ -42,7 +43,7 @@ export function spaceEditorSubmission(
 ):
   | { action: "createSpace"; payload: BridgeCommandPayloadMap["createSpace"] }
   | { action: "updateSpace"; payload: BridgeCommandPayloadMap["updateSpace"] } {
-  const base = { name: fields.name, icon: fields.icon, color: fields.color };
+  const base = { name: fields.name, icon: fields.icon, color: fields.color, colorMode: fields.colorMode };
   const profile =
     choice.kind === "profile"
       ? { profileId: choice.id }

@@ -1,4 +1,5 @@
 import { on } from "../lib/bridge";
+import type { SpaceColorMode } from "../lib/bridge/protocol";
 import {
 	DEFAULT_ACCENT_COLOR,
 	DEFAULT_SPACE_ICON,
@@ -61,6 +62,7 @@ interface EditorState {
 	name: string;
 	icon: string;
 	color: string;
+	colorMode: SpaceColorMode;
 	profileId: string;
 	spaceId: string;
 	archiveAfterHours: number;
@@ -78,6 +80,7 @@ const EMPTY_EDITOR_STATE: EditorFields = {
 	name: "",
 	icon: "",
 	color: "",
+	colorMode: "fixed",
 	profileId: "",
 	spaceId: "",
 	archiveAfterHours: 12,
@@ -187,6 +190,7 @@ export function openEditor(id?: string): void {
 		name: space.name,
 		icon: space.icon,
 		color: space.color,
+		colorMode: space.colorMode ?? "fixed",
 		profileId: space.profileId,
 		archiveAfterHours: space.archiveAfterHours ?? 12,
 	});
@@ -199,6 +203,7 @@ export function openAddEditor(): void {
 		name: DEFAULT_SPACE_NAME,
 		icon: DEFAULT_SPACE_ICON,
 		color: DEFAULT_ACCENT_COLOR,
+		colorMode: "fixed",
 		profileId: getActiveProfileId() || getActiveSpace()?.profileId || "",
 		archiveAfterHours: 12,
 	});

@@ -701,7 +701,10 @@ extension MainWindowController {
     }
 
     func currentWindowBackgroundCSSColor() -> String? {
-        if let activeSpaceColor = Self.normalizedCSSColor(context.spaceManager?.space(with: tabManager.currentSpaceId)?.color) {
+        let activeSpace = context.spaceManager?.space(with: tabManager.currentSpaceId)
+        // A color that follows the time, page or wallpaper is only known to the UI: its last report stands in until the next.
+        if activeSpace?.colorMode != Space.fixedColorMode, let storedWindowBackgroundColor { return storedWindowBackgroundColor }
+        if let activeSpaceColor = Self.normalizedCSSColor(activeSpace?.color) {
             return Self.resolvedSidebarBackgroundCSSColor(accentColor: activeSpaceColor)
         }
 
