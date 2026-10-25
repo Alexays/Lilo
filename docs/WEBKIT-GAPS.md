@@ -203,6 +203,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80, 84 a
 - **Impact:** a popup calling `runtime.reload()` or `management.uninstallSelf()`, or an extension disabled, updated or removed while its popup closes, crashed Lilo.
 - **Check:** Manual: reproducing it crashes the test host (`testUnloadClosesTheExtensionsPopupFirst` covers the workaround). Repro: show an extension's action popover, close it, and unload its context before the close animation ends. Expected: nothing. Actual: a crash in `WebExtensionAction::closePopup`.
 
+### 90. An action freed before its popup's color scheme check answers takes a write
+
+- **Gap:** once the app's `presentActionPopup` delegate call completes, WebKit evaluates a script in the popup to read its color scheme, and the answer calls `WebExtensionAction::setPopupPopoverAppearance` on the action it captured without holding it. An action freed meanwhile (its context unloaded) takes a one-byte write into freed memory. The allocator trusts freed memory to be zeroed, so a later object allocated there finds a pointer of 1 among its fields, and the app crashes far from the cause, mostly in the share-extension lookup WebKit runs at each web process launch. Chrome has no such check.
+- **Lilo:** evaluates a script of its own in the popup right after presenting it and holds the action until it answers, after WebKit's ([ExtensionControllerDelegate.swift] `presentActionPopup`).
+- **Impact:** an extension unloaded, updated or disabled just as its popup opened corrupted the heap; the test host crashed in `-[EXConcreteExtension _initWithPKPlugin:identity:]` or `__NSDictionaryI` code, releasing the address 1, in about half the CI runs.
+- **Check:** Manual: the corruption crashes only when the freed bytes are reused as a pointer. Repro: under lldb, break on `WebKit::WebExtensionAction::setPopupPopoverAppearance` and `-[WKWebExtensionAction dealloc]`, then run `testUnloadClosesTheExtensionsPopupFirst` without the workaround. Expected: the call comes before the dealloc. Actual: it comes after, its `this` 8 bytes past the freed action.
+
 ## Worker and JavaScript engine
 
 ### 14. `importScripts` runs pending promise callbacks

@@ -551,7 +551,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let adapter = window.tabManager.tabAdapter(for: tab.id)
         context.performAction(for: adapter)
-        let popover = context.action(for: adapter)?.popupPopover
+        weak var action = context.action(for: adapter)
+        let popover = action?.popupPopover
         let shown = await pollUntil(timeout: 10) { popover?.isShown == true }
         XCTAssertTrue(shown, "the popup shows")
 
@@ -560,6 +561,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         // WebKit's popover crashes when it finishes closing after its context unloaded.
         XCTAssertEqual(popover?.isShown, false, "the popup closes before its context unloads")
         XCTAssertFalse(extensions.delegate.hasOpenActionPopover)
+        let released = await pollUntil(timeout: 10) { action == nil }
+        XCTAssertTrue(released, "the action held until WebKit's color scheme check answers is released after it")
     }
 
     // MARK: - Teardown (cache eviction)
