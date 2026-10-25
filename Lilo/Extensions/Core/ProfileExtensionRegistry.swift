@@ -1197,8 +1197,10 @@ final class ProfileExtensionRegistry {
         guard let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
-        ), let graphics = NSGraphicsContext(bitmapImageRep: rep) else { return "" }
+        ) else { return "" }
+        // The context takes its scale from the rep's size when it is made: sized after, the icon fills one corner.
         rep.size = size
+        guard let graphics = NSGraphicsContext(bitmapImageRep: rep) else { return "" }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = graphics
         appearance.performAsCurrentDrawingAppearance { image.draw(in: NSRect(origin: .zero, size: size)) }
