@@ -358,6 +358,14 @@ function queued<T>(update: () => Promise<T>): Promise<T> {
 
 interface PendingUpdate { options: any; resolve: (result: unknown) => void; reject: (error: unknown) => void }
 
+/** Whether two JSON values are the same, whatever the order of their keys (WebKit stores rules as dictionaries). */
+function sameJSON(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null || Array.isArray(a) !== Array.isArray(b)) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && sameJSON(a[key], b[key]));
+}
+
 // WebKit recompiles all of the extension's rules on each update, so the calls made before one starts
 // go to WebKit as a single update, and an update that changes nothing is not sent.
 const updateRules = (getRules: string): Patch => (original, self) => {
@@ -394,8 +402,16 @@ const updateRules = (getRules: string): Patch => (original, self) => {
         if (mergeable) {
           try {
             let result: unknown;
-            if (added.size || (removed.size && (await namespace[getRules]()).some((rule: any) => removed.has(rule?.id)))) {
-              result = await original.call(namespace, { removeRuleIds: [...removed], addRules: [...added.values()].map(toWebKit) });
+            // A rule removed and added back as it is stays: WebKit would delete its rules database once the removals
+            // empty it and recompile every rule, which extensions replacing all their rules at each start would pay.
+            const current = new Map<number, any>(removed.size ? (await namespace[getRules]()).map((rule: any) => [rule?.id, rule]) : []);
+            const addRules: any[] = [];
+            for (const [id, rule] of added) {
+              if (removed.has(id) && sameJSON(current.get(id), rule)) removed.delete(id);
+              else addRules.push(toWebKit(rule));
+            }
+            if (addRules.length || [...removed].some((id) => current.has(id))) {
+              result = await original.call(namespace, { removeRuleIds: [...removed], addRules });
             }
             for (const call of calls) call.resolve(result);
             return;

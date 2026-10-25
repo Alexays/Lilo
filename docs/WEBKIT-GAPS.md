@@ -409,7 +409,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 38. Concurrent rule updates remove from stale rule ids
 
 - **Gap:** WebKit drops `removeRuleIds` it does not find among the last rules it loaded, which a pending update has not changed yet, so a second call removing and re-adding rule 1 fails ("Rule 1 does not have a unique ID"); concurrent updates also compile over each other.
-- **Lilo:** runs a context's updates one after the other, merging calls made while one runs into a single update, since WebKit recompiles every rule on each ([dnr-rules.ts] `queued`, `updateRules`).
+- **Lilo:** runs a context's updates one after the other, merging calls made while one runs into a single update, since WebKit recompiles every rule on each ([dnr-rules.ts] `queued`, `updateRules`). It also keeps out of the update the rules removed and added back unchanged: WebKit deletes its rules database whenever removals empty it, which Dashlane's worker, replacing all its rules at each start, caused every minute.
 - **Impact:** I don't care about cookies' rule updates failed.
 - **Check:** `testConcurrentDynamicRuleUpdatesRemoveFromStaleRuleIds`.
 
