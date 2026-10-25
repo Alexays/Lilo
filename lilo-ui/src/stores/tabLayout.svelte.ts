@@ -20,7 +20,12 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 
 export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement">): void {
 	const position = data.tabPosition ?? "left";
-	apply(position, data.addressPlacement ?? defaultAddress(position));
+	apply(position, (position !== "right" && data.addressPlacement) || defaultAddress(position));
+}
+
+/** On the right the address always sits above the page: the sidebar's first line is the toolbar's. */
+export function isAddressLocked(): boolean {
+	return _position === "right";
 }
 
 export function initTabLayoutStore(): void {

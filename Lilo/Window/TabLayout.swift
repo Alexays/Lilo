@@ -30,9 +30,11 @@ struct TabLayout: Equatable {
         self.address = address
     }
 
-    /// An address nobody chose follows the position.
+    /// An address nobody chose follows the position. On the right it always sits above the page: the
+    /// sidebar's first line is the toolbar's, with no room for it.
     init(position: TabPosition, storedAddress: String?) {
-        self.init(position: position, address: storedAddress.flatMap(AddressPlacement.init(rawValue:)) ?? .default(for: position))
+        let stored = position == .right ? nil : storedAddress.flatMap(AddressPlacement.init(rawValue:))
+        self.init(position: position, address: stored ?? .default(for: position))
     }
 
     init(storedPosition: String?, storedAddress: String?) {

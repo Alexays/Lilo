@@ -260,7 +260,8 @@
 			"addressPlacement": {
 				"title": "Address",
 				"description": "With the tabs, or in a bar above the page.",
-				"keywords": "address bar url toolbar location"
+				"keywords": "address bar url toolbar location",
+				"lockedRight": "With the tabs on the right, the address stays above the page."
 			},
 			"theme": {
 				"title": "Theme",

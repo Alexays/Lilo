@@ -210,11 +210,6 @@
     padding-left: 78px;
   }
 
-  /* With the address in the sidebar, it heads the list on the toggle's line and leaves the toggle its room. */
-  .compact-header > :global(.url-display) {
-    padding-right: 40px;
-  }
-
   .compact-header .keep-awake-slot {
     right: calc(var(--sidebar-right-pad, 10px) + 36px);
   }

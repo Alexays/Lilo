@@ -92,4 +92,23 @@
   .address > :global(.url-display) {
     padding: 0;
   }
+
+  /* Centered in its field, as Safari centers the address in its toolbar. */
+  .address :global(.url-text-line) {
+    justify-content: center;
+  }
+
+  /* The room the capture button takes on the right, mirrored, so the text centers on the field. */
+  .address :global(.url-text-shell) {
+    padding-left: 34px;
+  }
+
+  .address :global(.url-text-content) {
+    width: auto;
+    flex: 0 1 auto;
+  }
+
+  .address :global(.url-path) {
+    flex: 0 1 auto;
+  }
 </style>

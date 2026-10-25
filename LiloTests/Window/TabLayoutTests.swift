@@ -35,9 +35,16 @@ final class TabLayoutTests: XCTestCase {
 
     func testAChosenAddressStays() throws {
         let store = try makeSettingsStore()
-        store.set("tabPosition", value: "right")
+        store.set("tabPosition", value: "bottom")
         store.set("addressPlacement", value: "tabs")
         XCTAssertEqual(store.tabLayout.address, .tabs)
+    }
+
+    func testOnTheRightTheAddressStaysAboveThePage() throws {
+        let store = try makeSettingsStore()
+        store.set("tabPosition", value: "right")
+        store.set("addressPlacement", value: "tabs")
+        XCTAssertEqual(store.tabLayout.address, .page)
     }
 
     func testUnknownValuesFallBack() throws {
