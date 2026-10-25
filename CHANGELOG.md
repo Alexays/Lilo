@@ -4,6 +4,19 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-10-25
+
+### Fixed
+
+- An extension's items show once in a page's context menu, not twice.
+- The badge of a tab an agent controls stays in view when the window is narrower than the agent's viewport.
+- Extensions that talk to each other through a port, such as companion extensions starting together, no longer wait forever for an extension that is not ready, and no longer lose the first messages on a fresh connection.
+- An extension page or worker no longer sometimes stops hearing its events, or waits forever on its calls, when it opens at the same time as another part of the extension.
+- A content script's port to another extension no longer hands that extension a stray internal message now and then.
+- An extension's first notification no longer leaves the extension waiting until you answer macOS's permission prompt.
+- An extension disabled, updated or removed just as its popup opens no longer makes Lilo crash later.
+
+[0.2.2]: https://github.com/Alexays/Lilo/compare/v0.2.1...v0.2.2
 ## [0.2.1] - 2026-10-25
 
 ### Fixed

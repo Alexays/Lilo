@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension page or worker no longer sometimes stops hearing its events, or waits forever on its calls, when it opens at the same time as another part of the extension.
-time: 2026-10-25T18:28:28.749817+01:00

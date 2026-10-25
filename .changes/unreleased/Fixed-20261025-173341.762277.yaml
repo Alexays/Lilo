@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions that talk to each other through a port, such as companion extensions starting together, no longer wait forever for an extension that is not ready, and no longer lose the first messages on a fresh connection.
-time: 2026-10-25T17:33:41.762277+01:00
