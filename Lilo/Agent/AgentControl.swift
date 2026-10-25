@@ -155,8 +155,8 @@ final class AgentControl {
     private static let allowedClientsKey = "agentAllowedClients"
     /// The question asked of each client, by name and identity, and how many of its connections still wait on it.
     private var pendingConsents: [String: (question: Task<Bool?, Never>, waiting: Int)] = [:]
-    /// Questions shown in the drawers, by request id, until the user answers.
-    private(set) var pendingConsentAnswers: [String: CheckedContinuation<Bool?, Never>] = [:]
+    /// Questions shown in the drawers, by request id, with what the drawers show, until the user answers.
+    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<Bool?, Never>, request: [String: Any])] = [:]
 
     /// The client names the user let drive Lilo, each with the identities (`clientIdentity`) it was allowed as.
     var allowedClients: [String: [String]] {
@@ -295,10 +295,16 @@ final class AgentControl {
         if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: nil) }
         return await withTaskCancellationHandler {
-            await withCheckedContinuation { pendingConsentAnswers[requestId] = $0 }
+            await withCheckedContinuation { pendingConsentAnswers[requestId] = ($0, request) }
         } onCancel: {
             Task { @MainActor [weak self] in self?.answerConsent(requestId, granted: nil) }
         }
+    }
+
+    /// Shows the questions still waiting in a window whose chrome page just loaded: one that loaded or reloaded
+    /// after a question was sent never got it.
+    func resendPendingConsents(to router: BridgeRouter?) {
+        for pending in pendingConsentAnswers.values { router?.send(event: "agentControlRequested", data: pending.request) }
     }
 
     static let asksBeforeActionsKey = "agentAskBeforeActions"
@@ -356,7 +362,7 @@ final class AgentControl {
     /// The user's answer from a window's drawer, nil when nobody answered: the others drop the same question.
     /// `alwaysAllowSite` is the site of an action the user always allows from now on.
     func answerConsent(_ requestId: String, granted: Bool?, alwaysAllowSite: String? = nil) {
-        guard let answer = pendingConsentAnswers.removeValue(forKey: requestId) else { return }
+        guard let answer = pendingConsentAnswers.removeValue(forKey: requestId)?.answer else { return }
         if granted == true, let site = alwaysAllowSite, !site.isEmpty, !alwaysAllowedSites.contains(site),
            let data = try? JSONEncoder().encode(alwaysAllowedSites + [site]), let list = String(bytes: data, encoding: .utf8) {
             context?.settingsStore?.set(Self.alwaysAllowedSitesKey, value: list)

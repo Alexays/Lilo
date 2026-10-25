@@ -120,6 +120,28 @@ final class AgentConsentTests: AgentToolTestCase {
         XCTAssertTrue(allowed)
     }
 
+    func testAChromePageLoadedAfterTheQuestionShowsIt() async throws {
+        let newcomer = try AgentTestClient(path: socketURL)
+        _ = await newcomer.initialize(name: "Newcomer")
+        let asked = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.count == 1 }
+        XCTAssertTrue(asked)
+        let router = BridgeRouter(chromeWebView: window.chromeWebView)
+        let recorder = BridgeEventRecorder(router)
+        let handler = SettingsBridgeHandler(
+            settingsStore: context.settingsStore, sitePermissionStore: context.sitePermissionStore, zoomStoreProvider: { nil },
+            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil },
+            extensionDiagnosticsProvider: { [] }, forceLifecycleTrimHandler: {}, bridgeRouter: router
+        )
+        handler.agentControl = { [control] in control }
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "getAgentActivity", "payload": [:]])))
+
+        await pollUntil(timeout: 5) { recorder.events.contains { $0.name == "agentControlRequested" } }
+        let shown = recorder.events.filter { $0.name == "agentControlRequested" }.map(\.data)
+        XCTAssertEqual(shown.map { $0["requestId"] as? String }, [control.pendingConsentAnswers.keys.first])
+        XCTAssertEqual(shown.first?["clientName"] as? String, "Newcomer")
+    }
+
     func testAnApprovedNameFromAnotherProgramIsAskedAgain() async throws {
         context.settingsStore.set("agentAllowedClients", value: #"{"claude-code": ["/usr/local/bin/claude"]}"#)
         let impostor = try AgentTestClient(path: socketURL)

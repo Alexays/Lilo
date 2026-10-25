@@ -236,6 +236,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
         case "getAgentActivity":
             agentControl?()?.publishActivity()
+            agentControl?()?.resendPendingConsents(to: bridgeRouter)
 
         case "agentControlResponse":
             if let requestId = message.string("requestId") {
