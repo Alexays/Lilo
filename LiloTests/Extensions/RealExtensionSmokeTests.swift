@@ -74,7 +74,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         "gkncegdiihdghhkfpnnodppcbjeeimkc": "installed from the store, it needs an enterprise policy's managed configuration; Chrome's reference runs it unpacked (installType development), where it falls back to defaults", // Senso
         "hdjihnnclpjhfdbbinmgoiehhoehhlgf": "its popup waits for the window focus the test's window never gets, then pastes with document.execCommand('paste'), which WebKit answers false: it renders nothing", // Pasty
         "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, fails with 'Could not establish connection' where Chrome's is answered, so it shows its loader only", // Aircall Dialer
-        "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker extension.getBackgroundPage, which Chrome leaves out of workers: its background check compares the result with window and fails to load", // AI Exporter
+        "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker browser.extension.getBackgroundPage, which Chrome leaves out of workers and nothing can remove (WEBKIT-GAPS.md, gap 84): its background check compares the result with window and fails to load", // AI Exporter
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports

@@ -88,6 +88,18 @@ final class WebKitGapTests: XCTestCase {
         )
     }
 
+    func testWorkerKeepsGetBackgroundPageWhateverRemovesIt() async throws {
+        let title = try await bareWorkerTitle("""
+        const extension = browser.extension;
+        const removed = [delete extension.getBackgroundPage, Reflect.defineProperty(extension, 'getBackgroundPage', { value: undefined, configurable: true })];
+        chrome.action.setTitle({ title: `${removed.join(' ')} ${typeof extension.getBackgroundPage}` });
+        """)
+        XCTAssertEqual(
+            title, "true true function",
+            "WebKit's worker now leaves out extension.getBackgroundPage or lets it go: drop the worker's extension serve (chrome-compat.ts), and AI Exporter can leave knownFailures"
+        )
+    }
+
     func testEventsStopOnceNeitherGlobalIsTheNamespace() async throws {
         let worker = { (replaced: String) in """
         const namespace = browser;

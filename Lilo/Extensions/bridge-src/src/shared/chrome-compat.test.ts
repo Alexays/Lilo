@@ -41,6 +41,14 @@ describe('additions', () => {
     assert.deepEqual(chrome.extension.ViewType, { TAB: 'tab', POPUP: 'popup' });
   });
 
+  it('leave getBackgroundPage out of a worker, as Chrome, and keep it in a page', () => {
+    class Extension { getBackgroundPage() { return null; } }
+    assert.equal(install({ extension: new Extension() }).extension.getBackgroundPage, undefined);
+    (globalThis as any).chrome = { runtime: new Runtime([]), extension: new Extension() };
+    installChromeCompat({}, true);
+    assert.equal((globalThis as any).chrome.extension.getBackgroundPage(), null);
+  });
+
   it("give browser.cookies getPartitionKey, and the listeners of its onChanged to Lilo's event", () => {
     const webKitListeners: unknown[] = [];
     class Cookies { onChanged = { addListener(listener: unknown) { webKitListeners.push(listener); } }; }

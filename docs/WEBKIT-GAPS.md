@@ -34,6 +34,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** through `browser.runtime` (webextension-polyfill), the `lastError` of refused native ports and of Lilo's callbacks is missing.
 - **Check:** `testRuntimeMembersAreOwnPropertiesNothingRedefines`. Repro: `Object.defineProperty(browser.runtime, 'connectNative', { value: 1, configurable: true })`, then read it. Expected: redefined, or a `TypeError`. Actual: no error, original kept.
 
+### 84. The worker's `extension.getBackgroundPage` cannot be removed
+
+- **Gap:** WebKit gives the worker's `extension` namespace `getBackgroundPage`, which Chrome leaves out of workers. It is an own property of WebKit's object that, as gap 3's, `delete` and `Object.defineProperty` report removed and keep.
+- **Lilo:** the worker's `chrome.extension` reads it as `undefined` ([chrome-compat.ts] `serve`); `browser` stays WebKit's object (gap 2), so `browser.extension` keeps it.
+- **Impact:** a worker telling its context with `extension.getBackgroundPage && extension.getBackgroundPage() === window` reads `window`, which no worker has, and fails to load. AI Exporter does so through `browser`, which WXT picks when it exists.
+- **Check:** `testWorkerKeepsGetBackgroundPageWhateverRemovesIt`. Repro: in an MV3 worker, `delete browser.extension.getBackgroundPage`, then read `typeof browser.extension.getBackgroundPage`. Expected: `undefined`, as in Chrome. Actual: `function`.
+
 ### 13. Events lack `hasListeners`
 
 - **Gap:** WebKit events have `addListener`, `removeListener` and `hasListener` only.
