@@ -1555,6 +1555,10 @@
 			"light": "Light",
 			"dark": "Dark"
 		},
+		"tabs": {
+			"title": "Your tabs, your side",
+			"subtitle": "Pick an edge and watch the window follow. You can drag the tabs to another edge anytime."
+		},
 		"essentials": {
 			"title": "The essentials",
 			"subtitle": "Two settings that make a difference. You can change them anytime.",

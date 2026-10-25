@@ -30,6 +30,13 @@ describe("onboarding steps", () => {
 		assert.deepEqual(develop.slice(shared, -2), ["agents"]);
 	});
 
+	it("asks where the tabs go right after the style, whatever the usage", () => {
+		for (const usage of ["browse", "develop"] as const) {
+			const steps = onboardingSteps(usage);
+			assert.equal(steps[steps.indexOf("appearance") + 1], "tabs");
+		}
+	});
+
 	it("offers a password manager right after the import, whatever the usage", () => {
 		for (const usage of ["browse", "develop"] as const) {
 			const steps = onboardingSteps(usage);

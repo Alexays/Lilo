@@ -1555,6 +1555,10 @@
 			"light": "Clair",
 			"dark": "Sombre"
 		},
+		"tabs": {
+			"title": "Vos onglets, de votre côté",
+			"subtitle": "Choisissez un bord, la fenêtre suit. Vous pourrez glisser les onglets vers un autre bord à tout moment."
+		},
 		"essentials": {
 			"title": "L'essentiel",
 			"subtitle": "Deux réglages qui changent tout. Modifiables à tout moment.",

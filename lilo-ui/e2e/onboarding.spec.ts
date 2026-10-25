@@ -235,7 +235,7 @@ test.describe("in French", () => {
 		const spaced = (text: string | null) => (text ?? "").replace(/\s/g, " ");
 		expect(spaced(await page.locator(".note.done").textContent())).toContain("12 345 pages d'historique");
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
-		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
+		await receive(page, { event: "onboardingState", show: true, step: 8, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		expect(spaced(await page.locator(".toast span").textContent())).toContain("12 345 pages");
 	});
@@ -245,7 +245,7 @@ test.describe("in French", () => {
 		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		await receive(page, { event: "importFinished", summary: importedEverything });
-		await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
 		const text = "Bienvenue dans Lilo. Vos affaires sont là : 1 favori, 3 onglets ouverts, 2 pages d'historique et 1 extension.";
@@ -326,7 +326,7 @@ test("a double click on a step's button moves on one step, not two", async ({ pa
 	const box = (await card.locator(".ob-foot .ob-btn.primary").boundingBox())!;
 
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 2 });
-	await expect(card.getByRole("heading", { name: "The essentials" })).toBeVisible();
+	await expect(card.getByRole("heading", { name: "Your tabs, your side" })).toBeVisible();
 	const steps = (await sentCommands(page)).filter((command) => command.action === "setOnboardingStep");
 	expect(steps.map((command) => command.payload.step)).toEqual([5]);
 });
@@ -347,7 +347,7 @@ test("each step hands the keyboard to its main button, never to an action it wou
 	await expect(card.getByRole("heading", { name: "Your passwords" })).toBeVisible();
 	await expect(card.locator(".ob-foot .ob-btn.primary")).toBeFocused();
 
-	await receive(page, { event: "onboardingState", show: true, step: 5, usage: "browse" });
+	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
 	await card.getByRole("button", { name: "Continue" }).click();
 	await expect(card.getByRole("button", { name: "Let's go" })).toBeFocused();
 });
@@ -379,8 +379,8 @@ test("the agents choice turns AI agents on without the terminal, and asks to con
 
 	const settings = Object.fromEntries((await sentCommands(page)).filter((c) => c.action === "setSetting").map((c) => [c.payload.key, c.payload.value]));
 	expect(settings).toMatchObject({ onboardingUsage: "agents", agentControlEnabled: "true", terminalEnabled: "false" });
-	for (let step = 2; step < 6; step++) await receive(page, { event: "onboardingState", show: true, step, usage: "agents" });
-	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "agents" });
+	for (let step = 2; step < 7; step++) await receive(page, { event: "onboardingState", show: true, step, usage: "agents" });
+	await receive(page, { event: "onboardingState", show: true, step: 7, usage: "agents" });
 	await expect(card.locator("h3")).toHaveText(/agent/i);
 });
 
@@ -423,7 +423,7 @@ test("the arrival sums up the import, sign-ins aside, and speaks the same words"
 		{ sourceId: "chrome", profileId: "Profile 2", kind: "bookmarks", imported: 1233 },
 		{ sourceId: "chrome", profileId: "Profile 2", kind: "extensions", imported: 0, error: "store" },
 	] });
-	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+	await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
 	const text = "Welcome to Lilo. Your things are here: 1,234 bookmarks, 3 open tabs, 2 pages of history, and 1 extension.";
@@ -514,4 +514,20 @@ test.describe("in French at the window's minimum size", () => {
 		await expect(more).toBeInViewport({ ratio: 1 });
 		await expect(card.getByRole("button", { name: /Safari.*Autoriser l'accès/ })).toBeVisible();
 	});
+});
+
+test("the tabs step moves the real window and keeps the card on the page", async ({ page }) => {
+	await bootOnboarding(page, 5);
+	const card = page.locator("section.card");
+	await expect(card.getByRole("heading", { name: "Your tabs, your side" })).toBeVisible();
+
+	await card.getByRole("radio", { name: "Top" }).click();
+
+	const sets = (await sentCommands(page)).filter((c) => c.action === "setSetting");
+	expect(sets.at(-1)?.payload).toEqual({ key: "tabPosition", value: "top" });
+	await receive(page, { event: "tabLayoutChanged", position: "top", address: "tabs" });
+	const box = (await card.boundingBox())!;
+	const viewport = page.viewportSize()!;
+	await expect.poll(async () => (await card.boundingBox())!.y).toBeGreaterThan(48);
+	expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(viewport.width / 2);
 });
