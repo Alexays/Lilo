@@ -362,11 +362,6 @@ final class ChromeAPIShimTests: XCTestCase {
         ].joined(separator: " | "))
     }
 
-    /// A content script that hides `browser` and `chrome` behind proxies once loaded, as Proton Pass's does, still
-    /// gets the worker's `tabs.sendMessage`, which fills the field its inline menu was clicked for.
-    func testContentScriptHidingItsGlobalsStillGetsTabMessages() async throws {
-        let server = try await TinyHTTPServer(index: "<input id=email>")
-
     /// The extension's own pages a tab shows hear `tabs.sendMessage`, which WebKit delivers to them, and `tabs.connect`,
     /// which Lilo relays to them: only the tab's page answers.
     func testTabsMessagesReachTheExtensionsPagesATabShows() async throws {
@@ -375,28 +370,6 @@ final class ChromeAPIShimTests: XCTestCase {
         let (window, registry) = try browserContext.makeExtensionWindow()
         let folder = try writeExtension([
             "manifest.json": """
-            {"manifest_version": 3, "name": "Filler", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
-             "host_permissions": ["<all_urls>"], "content_scripts": [{"matches": ["<all_urls>"], "js": ["content.js"]}]}
-            """,
-            "content.js": """
-            const api = browser;
-            api.runtime.onMessage.addListener((message, sender, reply) => {
-              const input = document.getElementById('email');
-              input.value = message.fill;
-              reply(input.value);
-            });
-            setTimeout(() => {
-              for (const name of ['chrome', 'browser']) globalThis[name] = new Proxy(globalThis[name], { get() {} });
-              api.runtime.sendMessage('hidden');
-            });
-            """,
-            "sw.js": """
-            chrome.runtime.onMessage.addListener((message, sender) => {
-              chrome.tabs.sendMessage(sender.tab.id, { fill: 'me@example.com' }, { frameId: sender.frameId }).then(
-                (answer) => chrome.action.setTitle({ title: String(answer) }),
-                (error) => chrome.action.setTitle({ title: error.message }));
-            });
-
             {"manifest_version": 3, "name": "Pages", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"}, "permissions": ["tabs"]}
             """,
             "page.html": "<title>page</title><script src=page.js></script>",
@@ -431,11 +404,6 @@ final class ChromeAPIShimTests: XCTestCase {
         let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
         let context = try XCTUnwrap(registry.context(for: id))
         _ = await registry.backgrounds.load(id)
-        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
-        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Filler" }
-
-        XCTAssertEqual(context.action(for: nil)?.label, "me@example.com")
-
         _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#a")))
         _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#b")))
         await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Pages" }
@@ -526,6 +494,48 @@ final class ChromeAPIShimTests: XCTestCase {
         await pollUntil { context.action(for: nil)?.label == "gone" }
 
         XCTAssertEqual(context.action(for: nil)?.label, "gone")
+    }
+
+    /// A content script that hides `browser` and `chrome` behind proxies once loaded, as Proton Pass's does, still
+    /// gets the worker's `tabs.sendMessage`, which fills the field its inline menu was clicked for.
+    func testContentScriptHidingItsGlobalsStillGetsTabMessages() async throws {
+        let server = try await TinyHTTPServer(index: "<input id=email>")
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Filler", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
+             "host_permissions": ["<all_urls>"], "content_scripts": [{"matches": ["<all_urls>"], "js": ["content.js"]}]}
+            """,
+            "content.js": """
+            const api = browser;
+            api.runtime.onMessage.addListener((message, sender, reply) => {
+              const input = document.getElementById('email');
+              input.value = message.fill;
+              reply(input.value);
+            });
+            setTimeout(() => {
+              for (const name of ['chrome', 'browser']) globalThis[name] = new Proxy(globalThis[name], { get() {} });
+              api.runtime.sendMessage('hidden');
+            });
+            """,
+            "sw.js": """
+            chrome.runtime.onMessage.addListener((message, sender) => {
+              chrome.tabs.sendMessage(sender.tab.id, { fill: 'me@example.com' }, { frameId: sender.frameId }).then(
+                (answer) => chrome.action.setTitle({ title: String(answer) }),
+                (error) => chrome.action.setTitle({ title: error.message }));
+            });
+            """
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Filler" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "me@example.com")
     }
 }
 
