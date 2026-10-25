@@ -228,10 +228,10 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 
 ### 36. No `SharedArrayBuffer` in extension contexts
 
-- **Gap:** `SharedArrayBuffer` exists only in cross-origin isolated contexts, which extension contexts are not. Chrome gives extension pages and workers `SharedArrayBuffer` and `Atomics.wait` anyway.
-- **Lilo:** none: the engine decides which globals exist.
-- **Impact:** SQLite's OPFS database needs it: Distill Web Monitor's offscreen document cannot open its store.
-- **Check:** `testExtensionContextsLackSharedArrayBuffer`.
+- **Gap:** `SharedArrayBuffer` exists only in cross-origin isolated contexts, which extension contexts are not. Chrome gives extension pages and workers `SharedArrayBuffer` and `Atomics.wait` anyway. WebKit ignores the manifest's `cross_origin_embedder_policy` and `cross_origin_opener_policy` keys, which make Chrome's extension pages cross-origin isolated.
+- **Lilo:** none: the engine decides which globals exist. WebKit serves extension resources itself, so Lilo cannot add the `Cross-Origin-Embedder-Policy` and `Cross-Origin-Opener-Policy` headers that would isolate a page, and JavaScriptCore's `useSharedArrayBuffer` option is process wide, so it would reach web pages too.
+- **Impact:** SQLite's OPFS database needs it: Distill Web Monitor's offscreen document cannot open its store. Paperpile's worker loads `webidl-conversions`, which reads `SharedArrayBuffer.prototype` unguarded, and its error reporter logs the `ReferenceError`.
+- **Check:** `testExtensionContextsLackSharedArrayBuffer`. Repro: a worker of an extension whose manifest sets `cross_origin_embedder_policy` to `require-corp` and `cross_origin_opener_policy` to `same-origin` reads `typeof SharedArrayBuffer` and `crossOriginIsolated`. Expected: `function`, as in Chrome. Actual: `undefined` and `false`.
 
 ### 74. An assignment across an `await` checks its binding before the `await`
 

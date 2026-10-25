@@ -617,8 +617,11 @@ final class WebKitGapTests: XCTestCase {
     }
 
     func testExtensionContextsLackSharedArrayBuffer() async throws {
-        let title = try await bareWorkerTitle("chrome.action.setTitle({ title: typeof SharedArrayBuffer });")
-        XCTAssertEqual(title, "undefined", "WebKit now gives extensions SharedArrayBuffer, as Chrome does: update COMPATIBILITY.md (Distill can leave knownFailures)")
+        // Chrome's cross-origin isolation keys do not isolate the extension's contexts either.
+        let title = try await bareWorkerTitle("chrome.action.setTitle({ title: `${typeof SharedArrayBuffer} ${self.crossOriginIsolated}` });", manifest: [
+            "cross_origin_embedder_policy": ["value": "require-corp"], "cross_origin_opener_policy": ["value": "same-origin"]
+        ])
+        XCTAssertEqual(title, "undefined false", "WebKit now gives extensions SharedArrayBuffer, as Chrome does: update COMPATIBILITY.md (Distill and Paperpile can leave knownFailures)")
     }
 
     func testCookiesSetChecksAccessOverHTTPForACookieNotSecure() async throws {
