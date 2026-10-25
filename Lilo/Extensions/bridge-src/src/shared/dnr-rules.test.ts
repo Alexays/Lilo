@@ -138,6 +138,7 @@ describe('the declarativeNetRequest namespace', () => {
         applied.clear();
         ids.forEach((id) => applied.add(id));
       },
+      async getDynamicRules() { return [...applied].map((id) => ({ id, action: { type: 'block' }, condition: { urlFilter: 'ads' } })); },
     };
     (globalThis as any).chrome = { runtime: { getManifest: () => ({}) }, declarativeNetRequest: Object.create(prototype) };
     installChromeCompat({});
@@ -177,6 +178,36 @@ describe('the declarativeNetRequest namespace', () => {
     await dnr.updateDynamicRules({});
     await dnr.updateDynamicRules({ removeRuleIds: [1, 2] });
     assert.deepEqual(updates, [{ removeRuleIds: [1, 2], addRules: [] }]);
+  });
+
+  it('keeps the rules an update removes and adds back as they are, as a worker replacing all its rules at each start does', async () => {
+    // Dashlane, at each start of its worker: its two base rules, then those and its phishing domains, each replacing every rule.
+    const redirect = { id: 1, priority: 1, action: { type: 'redirect', redirect: { regexSubstitution: 'chrome-extension://x/vault/index.html\\1' } }, condition: { regexFilter: '^https?://app\\.example\\.com(.*)$', resourceTypes: ['main_frame'] } };
+    const allow = { id: 2, priority: 2, action: { type: 'allowAllRequests' }, condition: { regexFilter: 'https?://w*\\.?[a-z]+\\.example\\.com.+noredirect.*$', resourceTypes: ['main_frame'] } };
+    const phishing = (id: number) => ({ id, priority: 3, action: { type: 'block' }, condition: { regexFilter: `^https?://.*phish${id}\\.test.*$`, resourceTypes: ['main_frame'] } });
+    const replaceAll = async (dnr: any, rules: any[]) => {
+      const ids = (await dnr.getDynamicRules()).map((rule: any) => rule.id);
+      await dnr.updateDynamicRules({ removeRuleIds: ids, addRules: rules });
+    };
+    const start = async (dnr: any) => {
+      await replaceAll(dnr, [redirect, allow]);
+      await replaceAll(dnr, [redirect, allow, phishing(3), phishing(4)]);
+    };
+    // Rules come back from WebKit with their keys in another order.
+    const reordered = (rule: any) => Object.fromEntries(Object.entries(rule).reverse());
+    const { dnr, updates, ids } = countingNamespace([redirect, allow, phishing(3), phishing(4)].map(reordered));
+    const emptied = () => updates.filter((update) => update.removeRuleIds.length === 4).length;
+
+    await start(dnr);
+
+    const sent = () => updates.map((update) => [update.removeRuleIds, update.addRules.map((rule: any) => rule.id)]);
+    assert.deepEqual(sent(), [[[3, 4], []], [[], [3, 4]]]);
+    assert.equal(emptied(), 0, 'no update empties the rules, which made WebKit delete its database');
+    assert.deepEqual(ids(), [1, 2, 3, 4]);
+    await replaceAll(dnr, [redirect, allow, phishing(3), phishing(4)]);
+    assert.equal(updates.length, 2, 'replacing the rules by the same ones reaches WebKit not at all');
+    await replaceAll(dnr, [redirect, { ...allow, priority: 5 }, phishing(3), phishing(4)]);
+    assert.deepEqual(sent()[2], [[2], [2]], 'a changed rule is replaced alone');
   });
 
   it('sends the calls made before an update starts as one, applied in order', async () => {

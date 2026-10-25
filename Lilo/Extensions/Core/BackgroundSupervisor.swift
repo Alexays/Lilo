@@ -94,6 +94,11 @@ final class BackgroundSupervisor {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
         loadStartedAt[extensionId] = Date()
         defer { loadStartedAt[extensionId] = nil }
+        // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
+        let startsWorker = worker(extensionId) != .running
+        if startsWorker {
+            PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId, privacy: .public)")
+        }
         var timeout: Task<Void, Never>?
         let failure: String? = await withCheckedContinuation { continuation in
             let resumed = OSAllocatedUnfairLock(initialState: false)
@@ -111,6 +116,9 @@ final class BackgroundSupervisor {
         }
         timeout?.cancel()
         if let failure {
+            if startsWorker {
+                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "failed")
+            }
             Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
             health[extensionId]?.failureReason = failure
             return false
@@ -127,6 +135,9 @@ final class BackgroundSupervisor {
         guard health[extensionId] != nil else { return }
         switch channel {
         case .open:
+            if let context = context(extensionId) {
+                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "\(extensionId, privacy: .public)")
+            }
             health[extensionId]?.restartFailures = 0
             setFlag(\.failed, to: false, for: extensionId)
         case .idle, .unloaded:

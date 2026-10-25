@@ -54,6 +54,7 @@ final class GapEvents {
 
     private struct Page {
         let port: WKWebExtension.MessagePort
+        let channel: Int
         /// "namespace.event" names the page listens to: it hears only those.
         var listeners: Set<String> = []
         var pending: [[String: Any]] = []
@@ -72,6 +73,7 @@ final class GapEvents {
     private var workerReported: Set<String> = []
     /// The channels of the extension's open pages.
     private var pages: [String: [Page]] = [:]
+    private var nextPageChannel = 0
     /// Extensions with events for their connected worker or their pages, sent at the end of the turn.
     private var unflushed: Set<String> = []
     private var flushScheduled = false
@@ -150,6 +152,12 @@ final class GapEvents {
         Task { @MainActor [weak self] in self?.flush() }
     }
 
+    /// Sends `message` now over the extension's open channels, its running worker's and its pages': a stopped worker misses it.
+    func send(_ message: [String: Any], toOpenChannelsOf extensionId: String) {
+        workers[extensionId]?.port?.sendMessage(message) { _ in }
+        pages[extensionId]?.forEach { $0.port.sendMessage(message) { _ in } }
+    }
+
     /// Events the extension's worker has not received yet.
     func undelivered(to extensionId: String) -> [GapEventEnvelope] {
         workers[extensionId]?.undelivered ?? []
@@ -216,8 +224,9 @@ final class GapEvents {
                 guard let self, let port else { return }
                 if self.workers[extensionId]?.port === port {
                     self.detach(extensionId, .lost)
-                } else {
-                    self.pages[extensionId]?.removeAll { $0.port === port }
+                } else if let index = self.pages[extensionId]?.firstIndex(where: { $0.port === port }) {
+                    let channel = self.pages[extensionId]?.remove(at: index).channel
+                    NotificationCenter.default.post(name: .extensionPageChannelDidClose, object: self, userInfo: ["extensionId": extensionId, "channel": channel as Any])
                 }
             }
         }
@@ -225,7 +234,8 @@ final class GapEvents {
 
     private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, extensionId: String) {
         guard asWorker else {
-            pages[extensionId, default: []].append(Page(port: port))
+            nextPageChannel += 1
+            pages[extensionId, default: []].append(Page(port: port, channel: nextPageChannel))
             return
         }
         workers[extensionId, default: Worker()].port = port
@@ -283,8 +293,16 @@ final class GapEvents {
     private func answer(_ call: [String: Any], on port: WKWebExtension.MessagePort, extensionId: String) async {
         guard let id = call["id"], let namespace = call["namespace"] as? String, let method = call["method"] as? String else { return }
         let fromWorker = workers[extensionId]?.port === port
-        let (result, error) = await route(namespace, method, call["params"] as? [String: Any] ?? [:], extensionId, fromWorker)
+        var params = call["params"] as? [String: Any] ?? [:]
+        // Only Lilo names a page's channel: what the page holds (a port) goes with it.
+        params["pageChannel"] = fromWorker ? nil : pages[extensionId]?.first { $0.port === port }?.channel
+        let (result, error) = await route(namespace, method, params, extensionId, fromWorker)
         let reply: [String: Any] = error.map { ["reply": id, "error": $0] } ?? ["reply": id, "result": result ?? NSNull()]
         port.sendMessage(reply) { _ in }
     }
+}
+
+extension Notification.Name {
+    /// Object: the `GapEvents`. userInfo: "extensionId" and "channel" (Int), the `pageChannel` of the page's calls.
+    static let extensionPageChannelDidClose = Notification.Name("fr.arouillard.lilo.extensionPageChannelDidClose")
 }

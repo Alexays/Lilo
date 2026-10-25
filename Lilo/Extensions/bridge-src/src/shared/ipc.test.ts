@@ -43,7 +43,7 @@ globalThis.BroadcastChannel = class extends BroadcastChannel {
   }
 };
 mock.timers.enable({ apis: ['setTimeout', 'Date'] });
-const { gapCall, workerReady } = await import('./ipc.ts');
+const { bridgeEvents, channelClosed, gapCall, workerReady } = await import('./ipc.ts');
 const { storageAreaPatches } = await import('./storage-area.ts');
 
 describe('worker channel', () => {
@@ -103,6 +103,23 @@ describe('worker channel', () => {
     for (const envelope of [null, { namespace: 'nope', event: 'noop' }, { namespace: 'runtime', event: 'id' }, { namespace: 'runtime', event: 'onStartup' }, { event: 'onCreated' }]) {
       assert.doesNotThrow(() => port.receive(envelope));
     }
+    assert.deepEqual(dispatched, []);
+  });
+
+  it('hands a state Lilo pushes to its handler while the port is open, and says when the port closes', () => {
+    const port = ports.at(-1)!;
+    const states: unknown[] = [];
+    let closed = 0;
+    bridgeEvents.set('test.state', (state) => states.push(state));
+    channelClosed.push(() => { closed += 1; });
+
+    port.receive({ push: 'test.state', args: [1] });
+    mock.timers.tick(30_000);
+    port.receive({ push: 'test.state', args: [2] });
+
+    assert.deepEqual(port.sent.at(-1), { idle: true });
+    assert.equal(closed, 1);
+    assert.deepEqual(states, [1], 'what reaches a closed port is no longer kept current');
     assert.deepEqual(dispatched, []);
   });
 

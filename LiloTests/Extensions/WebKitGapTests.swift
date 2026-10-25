@@ -311,6 +311,16 @@ final class WebKitGapTests: XCTestCase {
             ("an empty description", ["description": ""], "Missing or empty `description` manifest entry."),
             ("an empty content_scripts list", ["content_scripts": [Any]()], "Empty or invalid `content_scripts` manifest entry."),
             (
+                "a file pattern without its host's slash",
+                ["content_scripts": [["matches": ["file://*"], "js": ["a.js"]]]],
+                "Manifest `content_scripts` entry has no specified `matches` entry."
+            ),
+            (
+                "an MV3 _execute_browser_action without a description",
+                ["commands": ["_execute_browser_action": ["suggested_key": ["default": "Ctrl+E"]]]],
+                "Empty or invalid `description` in the `commands` manifest entry."
+            ),
+            (
                 "a shortcut with spaces around its keys",
                 ["commands": ["open": ["description": "Open", "suggested_key": ["default": "Ctrl + Shift + Y"]]]],
                 "Invalid `suggested_key` in the `commands` manifest entry."
@@ -570,6 +580,20 @@ final class WebKitGapTests: XCTestCase {
     func testExtensionContextsLackSharedArrayBuffer() async throws {
         let title = try await bareWorkerTitle("chrome.action.setTitle({ title: typeof SharedArrayBuffer });")
         XCTAssertEqual(title, "undefined", "WebKit now gives extensions SharedArrayBuffer, as Chrome does: update COMPATIBILITY.md (Distill can leave knownFailures)")
+    }
+
+    func testCookiesSetChecksAccessOverHTTPForACookieNotSecure() async throws {
+        let worker = """
+        const set = (details) => chrome.cookies.set(details).then(() => 'set', (error) => error.message);
+        Promise.all([set({ url: 'https://example.com/', name: 'a', value: '1' }), set({ url: 'https://example.com/', name: 'b', value: '1', secure: true })])
+          .then((outcomes) => chrome.action.setTitle({ title: outcomes.join(' | ') }));
+        """
+        let httpsOnly = try await bareWorkerTitle(worker, permissions: ["cookies"], manifest: ["host_permissions": ["https://example.com/*"]])
+        let anyScheme = try await bareWorkerTitle(worker, permissions: ["cookies"], manifest: ["host_permissions": ["*://example.com/*"]])
+        XCTAssertEqual(
+            [httpsOnly, anyScheme], ["Invalid call to cookies.set(). Host permissions are missing or not granted. | set", "set | set"],
+            "WebKit now checks a cookie's own URL: drop the retry of cookiesPatches.set (cookies.ts)"
+        )
     }
 
     /// A worker that sets its action title to what `call` settles with: "applied" or the error message.

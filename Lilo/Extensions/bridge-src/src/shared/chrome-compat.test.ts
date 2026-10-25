@@ -127,6 +127,21 @@ describe('runtime.onInstalled and onStartup', () => {
   });
 });
 
+describe('runtime.getManifest', () => {
+  it("names the extension's own worker, which WebKit runs through Lilo's wrapper, for chrome and browser alike", () => {
+    class WorkerRuntime extends Runtime {
+      getManifest() {
+        return { permissions: [], background: { service_worker: 'js/lilo-background-wrapper.js', lilo_service_worker: 'js/sw.js', type: 'module' } };
+      }
+    }
+    const runtime = new WorkerRuntime([]);
+    (globalThis as any).chrome = { runtime };
+    installChromeCompat({});
+    assert.deepEqual((globalThis as any).chrome.runtime.getManifest().background, { service_worker: 'js/sw.js', type: 'module' });
+    assert.deepEqual(runtime.getManifest().background, { service_worker: 'js/sw.js', type: 'module' });
+  });
+});
+
 describe('members', () => {
   it('are own and enumerable, and work detached, as in Chrome', () => {
     // As WebKit's, the storage area prototype has no constructor.

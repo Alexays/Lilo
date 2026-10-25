@@ -195,6 +195,43 @@ final class RuntimeGapAPITests: XCTestCase {
         XCTAssertEqual(afterDisconnect.error, "Attempting to use a disconnected port object")
     }
 
+    func testAContentScriptsMessageCarriesItsFrameAsTheSender() async throws {
+        let sender = try await loadExtension("sender")
+        let target = try await loadExtension("target")
+        let relayed: [String: Any] = [
+            "id": target, "message": 1, "url": "https://example.com/page", "origin": "https://example.com", "tab": ["id": 4], "frameId": 2
+        ]
+        let sent = Task { await call("runtime", "sendExternal", relayed, from: sender) }
+        for _ in 0..<100 where queued("runtime.onMessageExternal", for: target).isEmpty { await Task.yield() }
+        let args = try XCTUnwrap(queued("runtime.onMessageExternal", for: target).first?.args)
+        _ = await call("runtime", "answerExternal", ["messageId": try XCTUnwrap(args[2] as? String), "worker": true], from: target)
+        _ = await sent.value
+
+        let from = try XCTUnwrap(args[1] as? [String: Any])
+        XCTAssertEqual(from["url"] as? String, "https://example.com/page")
+        XCTAssertEqual(from["origin"] as? String, "https://example.com")
+        XCTAssertEqual(from["frameId"] as? Int, 2)
+        XCTAssertEqual((from["tab"] as? [String: Int])?["id"], 4)
+    }
+
+    func testAPortGoesWithThePageThatOpenedIt() async throws {
+        let opener = try await loadExtension("opener")
+        let target = try await loadExtension("target")
+        let fromPage = await call("runtime", "connectExternal", ["id": target, "pageChannel": 7], from: opener)
+        let fromWorker = await call("runtime", "connectExternal", ["id": target], from: opener)
+        let pagePort = try XCTUnwrap(fromPage.result as? String)
+        let workerPort = try XCTUnwrap(fromWorker.result as? String)
+
+        NotificationCenter.default.post(name: .extensionPageChannelDidClose, object: registry.gapEvents, userInfo: ["extensionId": opener, "channel": 8])
+        NotificationCenter.default.post(name: .extensionPageChannelDidClose, object: registry.gapEvents, userInfo: ["extensionId": opener, "channel": 7])
+        let afterClose = await call("runtime", "portPost", ["portId": pagePort, "message": "late"], from: target)
+        let open = await call("runtime", "portPost", ["portId": workerPort, "message": "on"], from: target)
+
+        XCTAssertEqual(queued("runtime.portDisconnect", for: target).map { $0.args.first as? String }, [pagePort])
+        XCTAssertEqual(afterClose.error, "Attempting to use a disconnected port object")
+        XCTAssertNil(open.error, "the worker's port stays")
+    }
+
     // MARK: - action.onUserSettingsChanged
 
     func testPinningAnExtensionTellsItIsOnTheToolbar() async throws {

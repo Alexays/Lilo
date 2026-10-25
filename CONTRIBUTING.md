@@ -48,6 +48,9 @@ compiles it with Zig instead, which is also what happens, with a message, when t
 not available. `make install-debug` installs the Debug build into `~/Applications`, and
 `make install` a Release build into `/Applications`.
 
+Run `sudo DevToolsSecurity -enable` once: otherwise `xcodebuild` eventually fails to launch the test
+host with `INTERNAL ERROR: childPID > 0`, once its cached debugger authorization expires.
+
 ### Interface only
 
 To work on the sidebar, the command bar, settings or onboarding, Node.js is enough:

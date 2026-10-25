@@ -1,5 +1,19 @@
 import WebKit
 
+/// What WebKit's `Tab` lacks of one tab.
+struct TabFacts: Equatable {
+    let groupId: Int
+    let discarded: Bool
+    let frozen: Bool
+    let lastAccessed: Double?
+}
+
+/// The facts of the tabs a class of extension contexts sees, by window in the registry's order and by index, as last sent to them.
+struct ExtensionTabState: Equatable {
+    let windows: [ObjectIdentifier]
+    let tabs: [[TabFacts?]]
+}
+
 /// Window context for `TabGroupsBridgeHandler`, supplied lazily by `MainWindowController`: the handler is created in the
 /// per-window gap router before any window state exists.
 @MainActor
@@ -10,7 +24,8 @@ struct TabGroupsContext {
 
 /// `chrome.tabGroups`, `tabs.group`/`ungroup` and `tabs.discard` onto Lilo folders: group ids map to folder UUIDs per session, colors
 /// by nearest RGB; a tab arrives as its window position and index in WebKit's ordered lists, which round-trip to its UUID. Also
-/// `tabs.details`, the `Tab` fields WebKit lacks, which every tab result asks for.
+/// the `Tab` fields WebKit lacks: each extension context keeps them as the tab state Lilo sends it, and `tabs.details` answers
+/// what that state lacks.
 @MainActor
 final class TabGroupsBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
@@ -203,24 +218,29 @@ final class TabGroupsBridgeHandler: GapHandler {
         }
     }
 
-    // MARK: - tabs.details
+    // MARK: - tabs.details and the tab state
 
-    /// For each `{windowPosition, index}` of `tabs`: its `groupId`, `discarded`, `frozen` and `lastAccessed`, null for a tab Lilo
-    /// does not hold, and with `tabs`, the url and title of the tabs `reveal` lists, which WebKit leaves empty for hosts the
-    /// extension may not access. An empty tab reads as Chrome's new tab page.
-    private func tabDetails(_ call: GapCall) -> [Any] {
-        let positions = call.payload["tabs"] as? [[String: Any]] ?? []
+    /// For each tab of `tabs`, named by its window's position or key and its index: its `groupId`, `discarded`, `frozen`,
+    /// `lastAccessed` and window key, null for a tab Lilo does not hold, and with `tabs`, the url and title of the tabs `reveal`
+    /// lists, which WebKit leaves empty for hosts the extension may not access. An empty tab reads as Chrome's new tab page.
+    /// With `state`, also the tab state the context keeps from then on.
+    private func tabDetails(_ call: GapCall) -> [String: Any] {
         let reveal = Set(call.payload["reveal"] as? [Int] ?? [])
         let context = reveal.isEmpty ? nil : call.context.flatMap { $0.hasPermission(.tabs) ? $0 : nil }
-        return call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).enumerated().map { index, adapter -> Any in
-            guard let adapter, let tab = adapter.tabManager?.tab(for: adapter.tabId) else { return NSNull() }
-            let engine = adapter.engineTab
+        let windows = call.context.map { call.registry.extensionWindows(for: $0) } ?? []
+        let positions = (call.payload["tabs"] as? [[String: Any]] ?? []).map { tab -> [String: Any] in
+            guard let key = tab["windowKey"] as? String else { return tab }
+            return ["windowPosition": windows.firstIndex { Self.windowKey(ObjectIdentifier($0)) == key } ?? -1, "index": tab["index"] ?? -1]
+        }
+        let tabs = call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).enumerated().map { index, adapter -> Any in
+            guard let adapter, let facts = facts(of: adapter), let window = adapter.extensionWindow else { return NSNull() }
             var details: [String: Any] = [
-                "groupId": tab.groupId.map(groupId(forFolder:)) ?? Self.tabGroupIdNone,
-                "discarded": engine == nil,
-                "frozen": engine?.isFrozen ?? false
+                "groupId": facts.groupId,
+                "discarded": facts.discarded,
+                "frozen": facts.frozen,
+                "windowKey": Self.windowKey(ObjectIdentifier(window))
             ]
-            if let accessed = tab.lastActiveAt ?? engine?.createdAt { details["lastAccessed"] = accessed.timeIntervalSince1970 * 1000 }
+            if let accessed = facts.lastAccessed { details["lastAccessed"] = accessed }
             if let context, reveal.contains(index) {
                 let title = adapter.title(for: context) ?? ""
                 let url = adapter.url(for: context)
@@ -229,6 +249,65 @@ final class TabGroupsBridgeHandler: GapHandler {
             }
             return details
         }
+        guard call.bool("state"), let caller = call.context else { return ["tabs": tabs] }
+        return ["tabs": tabs, "state": Self.json(sendTabState(for: caller, registry: call.registry), for: caller, registry: call.registry)]
+    }
+
+    /// WebKit reads the index of each tab it reports, in a reply or an event, through here: when the facts the contexts keep
+    /// for the tab are out of date, the whole state goes to them first, so it reaches them ahead of WebKit's message.
+    func verifyTabState(of adapter: TabExtensionAdapter, at index: Int, for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) {
+        guard let sent = registry.sentTabStates[context.hasAccessToPrivateData] else { return }
+        if let window = adapter.extensionWindow, let position = sent.windows.firstIndex(of: ObjectIdentifier(window)),
+           sent.tabs[position].indices.contains(index), sent.tabs[position][index] == facts(of: adapter) { return }
+        sendTabState(for: context, registry: registry)
+    }
+
+    /// The state of the tabs `context`'s class of contexts sees, sent over their open channels when it changed.
+    @discardableResult
+    private func sendTabState(for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> ExtensionTabState {
+        registry.tabStateKeeper = self
+        let hasPrivateAccess = context.hasAccessToPrivateData
+        let windows = registry.extensionWindows.filter { hasPrivateAccess || !$0.isPrivateWindow }
+        let state = ExtensionTabState(
+            windows: windows.map { ObjectIdentifier($0) },
+            tabs: windows.map { window in window.tabs(for: context).map { ($0 as? TabExtensionAdapter).flatMap(facts(of:)) } }
+        )
+        guard registry.sentTabStates[hasPrivateAccess] != state else { return state }
+        registry.sentTabStates[hasPrivateAccess] = state
+        registry.sendToOpenChannels(hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
+        return state
+    }
+
+    private func facts(of adapter: TabExtensionAdapter) -> TabFacts? {
+        guard let tab = adapter.tabManager?.tab(for: adapter.tabId) else { return nil }
+        let engine = adapter.engineTab
+        return TabFacts(
+            groupId: tab.groupId.map(groupId(forFolder:)) ?? Self.tabGroupIdNone,
+            discarded: engine == nil,
+            frozen: engine?.isFrozen ?? false,
+            lastAccessed: (tab.lastActiveAt ?? engine?.createdAt).map { $0.timeIntervalSince1970 * 1000 }
+        )
+    }
+
+    /// The key a window goes by in the state, which the bridge maps WebKit's window ids to.
+    private static func windowKey(_ window: ObjectIdentifier) -> String {
+        String(UInt(bitPattern: window), radix: 36)
+    }
+
+    /// `{windows, tabs}`: each window's key, in `context`'s window order, which the bridge maps WebKit's window ids by, and its
+    /// tabs' `[groupId, discarded, frozen, lastAccessed]`.
+    private static func json(_ state: ExtensionTabState, for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> [String: Any] {
+        let windows = registry.extensionWindows(for: context).map { ObjectIdentifier($0) }
+        return [
+            "windows": windows.map(windowKey),
+            "tabs": windows.map { window -> [Any] in
+                guard let position = state.windows.firstIndex(of: window) else { return [] }
+                return state.tabs[position].map { facts -> Any in
+                    guard let facts else { return NSNull() }
+                    return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull()] as [Any]
+                }
+            }
+        ]
     }
 
     // MARK: - State command plumbing

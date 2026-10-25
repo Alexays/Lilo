@@ -587,7 +587,8 @@ final class BrowserStateStore {
         targetSpaceId: UUID,
         engine: WKWebViewTab?,
         interactionState: Any?,
-        restoringStartedAt: Date?
+        restoringStartedAt: Date?,
+        tabAdapter: TabExtensionAdapter? = nil
     ) {
         guard var sourceSnapshot = spaces[sourceSpaceId],
               var targetSnapshot = spaces[targetSpaceId] else {
@@ -601,9 +602,9 @@ final class BrowserStateStore {
         sourceSnapshot.restoringTabIds.removeValue(forKey: tabId)
         // Runtime overlay is flat (keyed by global tab id), so it needs no source-to-target handoff.
 
+        targetSnapshot.tabAdapters[tabId] = tabAdapter
         if let engine {
             targetSnapshot.engines[tabId] = engine
-            targetSnapshot.tabAdapters.removeValue(forKey: tabId)
             targetSnapshot.interactionStates.removeValue(forKey: tabId)
             targetSnapshot.interactionStateStashedAt.removeValue(forKey: tabId)
             if let restoringStartedAt {
@@ -611,7 +612,6 @@ final class BrowserStateStore {
             }
         } else {
             targetSnapshot.engines.removeValue(forKey: tabId)
-            targetSnapshot.tabAdapters.removeValue(forKey: tabId)
             targetSnapshot.restoringTabIds.removeValue(forKey: tabId)
             if let interactionState {
                 targetSnapshot.interactionStates[tabId] = interactionState
@@ -1055,6 +1055,12 @@ extension BrowserStateStore {
     func liveEngine(forTab id: UUID) -> WKWebViewTab? {
         guard let spaceId = owningSpaceId(forTab: id) else { return nil }
         return liveHost(for: spaceId)?.engine(for: id) ?? engine(tabId: id, spaceId: spaceId)
+    }
+
+    /// A tab's extension adapter wherever it lives, as `liveEngine(forTab:)` finds its engine.
+    func tabAdapter(forTab id: UUID) -> TabExtensionAdapter? {
+        guard let spaceId = owningSpaceId(forTab: id) else { return nil }
+        return liveHost(for: spaceId)?.tabAdapter(for: id) ?? spaces[spaceId]?.tabAdapters[id]
     }
 
     /// Tabs whose engine is parked live in a hidden space.

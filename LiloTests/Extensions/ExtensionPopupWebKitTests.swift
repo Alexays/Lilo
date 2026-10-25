@@ -40,10 +40,8 @@ final class ExtensionPopupWebKitTests: XCTestCase {
 
     // MARK: - Tests
 
-    /// Without space scoping (a floating-panel-style adapter), every added tab is exposed and the
-    /// active tab resolves directly. Space-scoped exposure depends on the live TabManager/current
-    /// space and is exercised by the app integration paths, not this lightweight unit.
-    func testWindowAdapterExposesAllTabsWhenNotSpaceScoped() async throws {
+    /// A window of no space (a floating panel) exposes every added tab, and its active tab resolves directly.
+    func testWindowAdapterOfNoSpaceExposesAllItsTabs() async throws {
         let context = try await makeExtensionContext()
         let firstEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
         let secondEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
@@ -53,7 +51,6 @@ final class ExtensionPopupWebKitTests: XCTestCase {
         windowAdapter?.add(tab: secondAdapter)
         windowAdapter?.activeAdapter = secondAdapter
 
-        XCTAssertFalse(windowAdapter?.scopesToCurrentSpace ?? true)
         XCTAssertEqual(windowAdapter?.tabs(for: context).count, 2)
         XCTAssertTrue(windowAdapter?.activeTab(for: context) as AnyObject === secondAdapter)
         XCTAssertTrue(secondAdapter.isSelected(for: context))

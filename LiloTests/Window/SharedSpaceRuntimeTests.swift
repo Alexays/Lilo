@@ -248,21 +248,28 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         XCTAssertEqual(stored.first?.frame, first.window?.frame)
     }
 
-    /// Extensions see one window per browser window showing their profile, and lose it when it closes.
-    func testEachWindowIsItsOwnExtensionWindow() throws {
+    /// Extensions see one window per space, shared by the browser windows showing it. A space whose browser window
+    /// closes stays a window in the background, in another browser window.
+    func testEachSpaceIsItsOwnExtensionWindow() throws {
         let first = makeWindow(), second = makeWindow()
         browserContext.context.windows.add(first)
         browserContext.context.windows.add(second)
         first.switchToSpace(spaceS.id)
         second.switchToSpace(spaceT.id)
         let registry = try XCTUnwrap(browserContext.context.profileContexts.existingContext(for: spaceS.profileId)).extensions
+        let windowS = try XCTUnwrap(first.tabManager.windowAdapter), windowT = try XCTUnwrap(second.tabManager.windowAdapter)
+        XCTAssertTrue(registry.windowAdapters.elementsEqual([windowS, windowT], by: ===))
 
-        XCTAssertEqual(registry.windowAdapters.count, 2)
+        second.switchToSpace(spaceS.id)
+        XCTAssertTrue(second.tabManager.windowAdapter === windowS, "a space shown in two browser windows is one window")
+        XCTAssertTrue(windowS.nsWindow === second.window)
+        second.switchToSpace(spaceT.id)
+        XCTAssertTrue(second.tabManager.windowAdapter === windowT, "a space keeps its window across switches")
 
         second.windowWillClose(Notification(name: NSWindow.willCloseNotification))
 
-        XCTAssertEqual(registry.windowAdapters.count, 1)
-        XCTAssertTrue(registry.windowAdapters.first?.nsWindow === first.window)
+        XCTAssertTrue(registry.windowAdapters.elementsEqual([windowS, windowT], by: ===))
+        XCTAssertTrue(windowT.nsWindow === first.window)
     }
 
     func testMovingATabToANewWindowShowsItThereAndTheSourceMovesOn() throws {

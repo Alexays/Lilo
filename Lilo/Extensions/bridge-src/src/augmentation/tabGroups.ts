@@ -55,7 +55,7 @@ export async function windowIdOrder(): Promise<number[]> {
 }
 
 /** Each tab's window position (in chrome.windows.getAll order) and index, or -1 when unknown. */
-export async function toPositions(
+async function toPositions(
   tabList: { index: number; windowId: number }[],
   windowIds: Promise<number[]> = windowIdOrder(),
 ): Promise<TabPosition[]> {

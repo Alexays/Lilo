@@ -85,7 +85,7 @@ final class SidePanelTests: XCTestCase {
     }
 
     private var thisWindow: [String: Any] {
-        ["windowId": 1, "windowPosition": window.window.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) } ?? -1]
+        ["windowId": 1, "windowPosition": window.tabManager.windowAdapter.flatMap { registry.windowPosition(of: $0, extensionId: extensionId) } ?? -1]
     }
 
     private func gesture(_ params: [String: Any]) -> [String: Any] {

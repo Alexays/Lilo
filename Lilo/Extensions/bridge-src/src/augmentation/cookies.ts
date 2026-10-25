@@ -41,7 +41,26 @@ const afterListening: Patch = (original, self) => function (this: unknown, ...ar
   }, callback);
 };
 
-export const cookiesPatches: Record<string, Patch> = { set: afterListening, remove: afterListening };
+/**
+ * WebKit checks the host access of a cookie not `secure` over http (WEBKIT-GAPS.md, gap 83): one an extension with
+ * https access only sets for an https URL fails, where Chrome sets it. Lilo sets it `secure` then, as only https reaches it.
+ */
+const setOverHTTPS: Patch = (original, self) => function (this: unknown, details: any, ...rest: unknown[]) {
+  const namespace = self(this);
+  if (details?.secure !== undefined || typeof details?.url !== 'string' || !/^https:/i.test(details.url)) {
+    return original.call(namespace, details, ...rest);
+  }
+  const callback = typeof rest[0] === 'function' ? rest[0] as (cookie?: unknown) => void : undefined;
+  return callbackify(() => original.call(namespace, details).catch((error: Error) => {
+    if (!/Host permissions are missing/.test(error?.message ?? '')) throw error;
+    return original.call(namespace, { ...details, secure: true });
+  }), callback);
+};
+
+export const cookiesPatches: Record<string, Patch> = {
+  set: (original, self) => afterListening(setOverHTTPS(original, self), self),
+  remove: afterListening,
+};
 
 /**
  * cookies.getPartitionKey for a tab's main frame, as Chrome checks it. Lilo knows neither WebKit's

@@ -361,6 +361,182 @@ final class ChromeAPIShimTests: XCTestCase {
             "The message port closed before a response was received.", "child rgb(1, 2, 3), top rgb(0, 0, 0)"
         ].joined(separator: " | "))
     }
+
+    /// The extension's own pages a tab shows hear `tabs.sendMessage`, which WebKit delivers to them, and `tabs.connect`,
+    /// which Lilo relays to them: only the tab's page answers.
+    func testTabsMessagesReachTheExtensionsPagesATabShows() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Pages", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"}, "permissions": ["tabs"]}
+            """,
+            "page.html": "<title>page</title><script src=page.js></script>",
+            "page.js": """
+            const tag = location.hash.slice(1);
+            chrome.runtime.onMessage.addListener((message, sender, reply) => { if (message === 'who') reply(tag); });
+            chrome.runtime.onConnect.addListener((port) => port.onMessage.addListener((message) => port.postMessage(`${tag} ${port.name} ${message}`)));
+            chrome.runtime.sendMessage(`ready ${tag}`);
+            """,
+            "sw.js": """
+            const ready = new Set();
+            chrome.runtime.onMessage.addListener((message) => {
+              if (typeof message !== 'string' || !message.startsWith('ready ')) return;
+              ready.add(message);
+              if (ready.size === 2) run();
+            });
+            const outcome = (sent) => sent.then((answer) => String(answer), (error) => error.message);
+            async function run() {
+              const tab = (await chrome.tabs.query({})).find((t) => t.url.endsWith('#b')).id;
+              const results = [await outcome(chrome.tabs.sendMessage(tab, 'who')), await outcome(chrome.tabs.sendMessage(tab, 'quiet'))];
+              const port = chrome.tabs.connect(tab, { name: 'panel' });
+              port.postMessage('first');
+              results.push(await new Promise((resolve) => {
+                port.onMessage.addListener(resolve);
+                port.onDisconnect.addListener(() => resolve('disconnected'));
+              }));
+              chrome.action.setTitle({ title: results.join(' | ') });
+            }
+            """
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#a")))
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#b")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Pages" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "b | undefined | b panel first")
+    }
+
+    /// A content script messages and connects to another extension, which hears its tab and frame as the sender.
+    func testContentScriptsReachAnotherExtension() async throws {
+        let server = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: text/html"], Data("<p>page</p>".utf8)) }
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        try await registry.load(from: try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Target", "version": "1.0", "background": {"service_worker": "sw.js"}}"#,
+            "sw.js": """
+            chrome.runtime.onMessageExternal.addListener((message, sender, reply) => {
+              reply(`${message} from tab ${sender.tab?.id === undefined ? 'none' : 'set'} frame ${sender.frameId} ${new URL(sender.url).pathname}`);
+            });
+            chrome.runtime.onConnectExternal.addListener((port) => port.onMessage.addListener((message) => port.postMessage(`${port.name} ${message}`)));
+            """
+        ]))
+        let target = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        try await registry.load(from: try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Sender", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
+             "host_permissions": ["<all_urls>"], "content_scripts": [{"matches": ["<all_urls>"], "js": ["content.js"]}]}
+            """,
+            "content.js": """
+            chrome.runtime.sendMessage('\(target)', 'ping').then((answer) => {
+              const port = chrome.runtime.connect('\(target)', { name: 'tunnel' });
+              port.onMessage.addListener((message) => chrome.runtime.sendMessage({ result: `${answer} | ${message}` }));
+              port.postMessage('hi');
+            });
+            """,
+            // The worker relays its content scripts' ports from its runtime.onConnect.
+            "sw.js": """
+            chrome.runtime.onMessage.addListener((message) => { if (message?.result) chrome.action.setTitle({ title: message.result }); });
+            chrome.runtime.onConnect.addListener(() => {});
+            """
+        ]))
+        let sender = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { $0 != target })
+        let context = try XCTUnwrap(registry.context(for: sender))
+        _ = await registry.backgrounds.load(target)
+        _ = await registry.backgrounds.load(sender)
+        await pollUntil { registry.gapEvents.reportedListeners(of: target) != nil && registry.gapEvents.reportedListeners(of: sender) != nil }
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/page")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Sender" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "ping from tab set frame 0 /page | tunnel hi")
+    }
+
+    /// A port to another extension's page disconnects once that page's tab closes.
+    func testAPortToAnotherExtensionsPageGoesWithThePage() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        try await registry.load(from: try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Target", "version": "1.0", "background": {"service_worker": "sw.js"}}"#,
+            "sw.js": "chrome.runtime.onInstalled.addListener(() => {});",
+            "page.html": "<title>page</title><script src=page.js></script>",
+            "page.js": "chrome.runtime.onConnectExternal.addListener((port) => port.postMessage('connected'));"
+        ]))
+        let target = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        try await registry.load(from: try writeExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Opener", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"}}"#,
+            // Connects until the target's page listens.
+            "sw.js": """
+            function connect() {
+              const port = chrome.runtime.connect('\(target)');
+              let connected = false;
+              port.onMessage.addListener((message) => { connected = true; chrome.action.setTitle({ title: message }); });
+              port.onDisconnect.addListener(() => (connected ? chrome.action.setTitle({ title: 'gone' }) : setTimeout(connect, 20)));
+            }
+            connect();
+            """
+        ]))
+        let opener = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { $0 != target })
+        let context = try XCTUnwrap(registry.context(for: opener))
+        _ = await registry.backgrounds.load(target)
+        await pollUntil { registry.gapEvents.reportedListeners(of: target) != nil }
+        _ = await registry.backgrounds.load(opener)
+        let tab = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(target)/page.html")))
+        await pollUntil { context.action(for: nil)?.label == "connected" }
+        XCTAssertEqual(context.action(for: nil)?.label, "connected")
+
+        window.closeTabStateFirst(id: try XCTUnwrap(tab?.id), undoable: false)
+        await pollUntil { context.action(for: nil)?.label == "gone" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "gone")
+    }
+
+    /// A content script that hides `browser` and `chrome` behind proxies once loaded, as Proton Pass's does, still
+    /// gets the worker's `tabs.sendMessage`, which fills the field its inline menu was clicked for.
+    func testContentScriptHidingItsGlobalsStillGetsTabMessages() async throws {
+        let server = try await TinyHTTPServer(index: "<input id=email>")
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Filler", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
+             "host_permissions": ["<all_urls>"], "content_scripts": [{"matches": ["<all_urls>"], "js": ["content.js"]}]}
+            """,
+            "content.js": """
+            const api = browser;
+            api.runtime.onMessage.addListener((message, sender, reply) => {
+              const input = document.getElementById('email');
+              input.value = message.fill;
+              reply(input.value);
+            });
+            setTimeout(() => {
+              for (const name of ['chrome', 'browser']) globalThis[name] = new Proxy(globalThis[name], { get() {} });
+              api.runtime.sendMessage('hidden');
+            });
+            """,
+            "sw.js": """
+            chrome.runtime.onMessage.addListener((message, sender) => {
+              chrome.tabs.sendMessage(sender.tab.id, { fill: 'me@example.com' }, { frameId: sender.frameId }).then(
+                (answer) => chrome.action.setTitle({ title: String(answer) }),
+                (error) => chrome.action.setTitle({ title: error.message }));
+            });
+            """
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Filler" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "me@example.com")
+    }
 }
 
 @MainActor

@@ -2,15 +2,30 @@
 // APIs WebKit omits there (chrome.storage.managed) are installed here, before the extension's own content scripts.
 import { installStaticChromeCompat } from './shared/static-compat.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
-import { answerAsChrome } from './shared/message-answers.ts';
+import { answerAsChrome, relayExternalMessaging } from './shared/message-answers.ts';
+
+// The build's banner skips the whole script in a world where it ran already.
+Object.defineProperty(globalThis, '__liloContentCompat', { value: true });
 
 installStaticChromeCompat(globalThis as any);
 
+// WebKit finds the world's listeners through its own `browser`, else `chrome`: Proton Pass hides both behind proxies
+// once loaded, which would leave its content script without tabs.sendMessage.
+const browser = (globalThis as any).browser;
+if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, set() {}, configurable: true });
+
 const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
-if (onMessage && !Object.hasOwn(globalThis, '__liloOnMessage')) {
+if (onMessage) {
   answerAsChrome(onMessage);
   // WebKit recreates a collected event object without the members answerAsChrome adds.
   Object.defineProperty(globalThis, '__liloOnMessage', { value: onMessage });
+}
+
+const runtime = (globalThis as any).chrome?.runtime;
+if (runtime && !Object.hasOwn(globalThis, '__liloRuntime')) {
+  relayExternalMessaging(runtime);
+  // WebKit recreates a collected namespace object, and its prototype, without the relay.
+  Object.defineProperty(globalThis, '__liloRuntime', { value: runtime });
 }
 
 // Content scripts read their browser from the user agent, as in Chrome; the page keeps Lilo's own.

@@ -291,7 +291,7 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
             return ["success": true]
         case "acceptExtensionHostAccessRequest":
             guard let id = message.string("id"), let registry = extensionRegistry else { return BridgeError("Missing extension id") }
-            await registry.access.acceptHostAccessRequest(extensionId: id, on: registry.delegate.windowAdapter?.visibleActiveAdapter)
+            await registry.access.acceptHostAccessRequest(extensionId: id, on: registry.delegate.windowAdapter?.activeAdapter)
             return ["success": true]
         case "setExtensionCommandShortcut":
             guard let id = message.string("id"), let command = message.string("command"), let registry = await targetRegistry(for: message) else {
@@ -468,7 +468,8 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         // Re-fetch after the await: a stale worker is reloaded into a BRAND-NEW context, and performing
         // the action on the torn-down one would present the popup against the dead worker (a hang).
         guard let context = registry.context(for: id) else { return nil }
-        context.performAction(for: actionTabAdapter)
+        // A window showing no web page hands the popup its stand-in tab, so the popup's current window is this one.
+        context.performAction(for: actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab)
         return nil
     }
 }

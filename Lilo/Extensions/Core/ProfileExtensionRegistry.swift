@@ -14,9 +14,8 @@ final class ProfileExtensionRegistry {
     let profileId: UUID
     let controller: WKWebExtensionController
     let delegate: ExtensionControllerDelegate
-    /// One adapter per registry: sharing one across profiles corrupts the returning controller on a
-    /// cross-profile space switch. Held strongly; the delegate and tabManager keep only weak references.
-    /// One extension window per browser window showing this profile, in opening order.
+    /// One extension window per space of this profile a browser window showed, in opening order: a space
+    /// keeps its window id across switches. Held strongly; the delegate and tabManager keep weak references.
     private(set) var windowAdapters: [WindowExtensionAdapter] = []
     let extensionStorage: ExtensionStorage
     private var openedWindowAdapters: Set<ObjectIdentifier> = []
@@ -48,6 +47,8 @@ final class ProfileExtensionRegistry {
         var staticBridgePayload: [String: Any]?
         /// Whole rows by the active tab whose action they show: windows of the profile each show their own.
         var bridgePayloads: [UUID?: [String: Any]] = [:]
+        /// The row last built, whose `rowVersion` a rebuilt identical row keeps.
+        var lastBridgePayload: [String: Any]?
     }
 
     struct ExtensionPageDiagnostic {
@@ -101,13 +102,18 @@ final class ProfileExtensionRegistry {
 
     var hasLoadedExtensions: Bool { !loadedRuntimes.isEmpty }
 
+    /// The tab state last sent to the contexts with private access (true) and without, once one asked for it.
+    var sentTabStates: [Bool: ExtensionTabState] = [:]
+    /// Keeps `sentTabStates` true to the tabs WebKit reports.
+    weak var tabStateKeeper: TabGroupsBridgeHandler?
+
     private nonisolated static let logger = Logger(liloCategory: "profile-extension-registry")
 
     /// Called when extensions load/unload so the UI can refresh.
     var onExtensionsChanged: (() -> Void)?
     private var extensionsChangedFlushPending = false
-    /// Payloads as of the last `onExtensionsChanged`; a flush that rebuilds identical ones stays silent.
-    private var lastNotifiedBridgePayloads: [[String: Any]] = []
+    /// Row versions as of the last `onExtensionsChanged`; a flush whose rows keep theirs stays silent.
+    private var lastNotifiedRowVersions: [Int] = []
 
     /// Coalesces to one `onExtensionsChanged` per main-actor turn: badge updates and tab activations
     /// arrive in bursts, and each callback rebuilds and pushes every bridge payload to the chrome UI.
@@ -118,10 +124,10 @@ final class ProfileExtensionRegistry {
             guard let self else { return }
             self.extensionsChangedFlushPending = false
             guard self.onExtensionsChanged != nil else { return }
-            let payloads = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.visibleActiveAdapter)
-            guard self.updater.statusChanged || !(payloads as NSArray).isEqual(to: self.lastNotifiedBridgePayloads) else { return }
+            let versions = self.extensionBridgePayloads(activeTab: self.delegate.windowAdapter?.activeAdapter).map { $0["rowVersion"] as? Int ?? 0 }
+            guard self.updater.statusChanged || versions != self.lastNotifiedRowVersions else { return }
             self.updater.statusChanged = false
-            self.lastNotifiedBridgePayloads = payloads
+            self.lastNotifiedRowVersions = versions
             self.onExtensionsChanged?()
         }
     }
@@ -334,16 +340,16 @@ final class ProfileExtensionRegistry {
 
     // MARK: - Window Lifecycle
 
-    /// The extension window of `nsWindow` for its normal or its private spaces, created on first use.
-    /// It becomes the focused one: windows bind their registry when they show its profile or take focus.
+    /// The extension window of `spaceId`, created on first use, now shown in `nsWindow`. It becomes the
+    /// focused one: windows bind their registry when they show a space of its profile or take focus.
     @discardableResult
-    func windowAdapter(for nsWindow: NSWindow, isPrivate: Bool = false) -> WindowExtensionAdapter {
-        let adapter = windowAdapters.first { $0.nsWindow === nsWindow && $0.isPrivateWindow == isPrivate } ?? {
-            let adapter = WindowExtensionAdapter(nsWindow: nsWindow, isPrivate: isPrivate)
-            adapter.scopesToCurrentSpace = true
+    func windowAdapter(for nsWindow: NSWindow, spaceId: UUID, isPrivate: Bool = false) -> WindowExtensionAdapter {
+        let adapter = windowAdapters.first { $0.spaceId == spaceId } ?? {
+            let adapter = WindowExtensionAdapter(nsWindow: nsWindow, spaceId: spaceId, isPrivate: isPrivate)
             windowAdapters.append(adapter)
             return adapter
         }()
+        adapter.nsWindow = nsWindow
         delegate.windowAdapter = adapter
         return adapter
     }
@@ -359,15 +365,30 @@ final class ProfileExtensionRegistry {
         controller.didOpenWindow(window)
     }
 
-    /// Closes `nsWindow`'s extension windows, normal and private, or the focused one when no window is named.
+    /// A closing browser window hands the spaces it showed last to another browser window, where they stay
+    /// background windows; with none left, or no window named (teardown), they close.
     func notifyWindowClosed(for nsWindow: NSWindow? = nil) {
-        let closing = nsWindow.map { window in windowAdapters.filter { $0.nsWindow === window } } ?? [delegate.windowAdapter].compactMap { $0 }
-        for window in closing {
-            windowAdapters.removeAll { $0 === window }
-            if delegate.windowAdapter === window { delegate.windowAdapter = windowAdapters.last }
-            guard openedWindowAdapters.remove(ObjectIdentifier(window)) != nil else { continue }
-            controller.didCloseWindow(window)
+        let heir = nsWindow.flatMap { closing in delegate.windows?.windows.first { $0.window != nil && $0.window !== closing } }
+        for window in windowAdapters where nsWindow == nil || window.nsWindow === nsWindow {
+            if let heir {
+                window.nsWindow = heir.window
+                window.tabManager = heir.tabManager
+            } else {
+                closeWindow(window)
+            }
         }
+    }
+
+    /// Closes the window of a space deleted or moved to another profile.
+    func notifySpaceRemoved(_ spaceId: UUID) {
+        windowAdapters.first { $0.spaceId == spaceId }.map(closeWindow)
+    }
+
+    private func closeWindow(_ window: WindowExtensionAdapter) {
+        windowAdapters.removeAll { $0 === window }
+        if delegate.windowAdapter === window { delegate.windowAdapter = nil }
+        guard openedWindowAdapters.remove(ObjectIdentifier(window)) != nil else { return }
+        controller.didCloseWindow(window)
     }
 
     // MARK: - Tab positions
@@ -408,13 +429,13 @@ final class ProfileExtensionRegistry {
         guard let context = context(for: extensionId),
               let window = adapter.extensionWindow as? WindowExtensionAdapter,
               let position = extensionWindows(for: context).firstIndex(where: { $0 === window }) else { return nil }
-        let index = window.index(of: adapter, for: context)
+        let index = window.index(of: adapter)
         return index == NSNotFound ? nil : ["windowPosition": position, "index": index]
     }
 
-    /// The place of `nsWindow` in the extension's `windows.getAll()`.
-    func windowPosition(of nsWindow: NSWindow, extensionId: String) -> Int? {
-        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0.nsWindow === nsWindow } }
+    /// The place of `window` in the extension's `windows.getAll()`.
+    func windowPosition(of window: WindowExtensionAdapter, extensionId: String) -> Int? {
+        context(for: extensionId).flatMap { extensionWindows(for: $0).firstIndex { $0 === window } }
     }
 
     /// The window at `position` in the extension's `windows.getAll()`.
@@ -429,22 +450,25 @@ final class ProfileExtensionRegistry {
         (windowAdapters.isEmpty ? [delegate.windowAdapter].compactMap { $0 } : windowAdapters) + delegate.popupWindowAdapters
     }
 
-    /// The windows `context` sees, the list its positions index: WebKit hides private windows from an extension without private access.
+    /// The windows `context` sees, in its `windows.getAll()` order, which its positions index. WebKit keeps that order per
+    /// context, the window opened or focused last first, and hides private windows from an extension without private access.
     func extensionWindows(for context: WKWebExtensionContext) -> [WindowExtensionAdapter] {
-        context.hasAccessToPrivateData ? extensionWindows : extensionWindows.filter { !$0.isPrivateWindow }
+        let windows = context.openWindows.compactMap { $0 as? WindowExtensionAdapter }
+        return context.hasAccessToPrivateData ? windows : windows.filter { !$0.isPrivateWindow }
     }
 
     /// Sends an event whose details hold window or tab positions to `ids`. The details are built once per
-    /// private-access class, the only thing positions depend on, for that class's first extension; a class
-    /// whose `details` is nil (the tab is hidden from it) gets nothing.
+    /// window list, the only thing positions depend on, for the first extension seeing it; extensions whose
+    /// `details` is nil (the tab is hidden from them) get nothing.
     func emitPositioned(_ namespace: String, _ event: String, to ids: [String], details: (_ extensionId: String) -> [String: Any]?) {
-        var classes: [(hasPrivateAccess: Bool, details: [String: Any]?, ids: [String])] = []
+        var classes: [(windows: [ObjectIdentifier], details: [String: Any]?, ids: [String])] = []
         for id in ids {
-            guard let hasPrivateAccess = context(for: id)?.hasAccessToPrivateData else { continue }
-            if let index = classes.firstIndex(where: { $0.hasPrivateAccess == hasPrivateAccess }) {
+            guard let context = context(for: id) else { continue }
+            let windows = extensionWindows(for: context).map { ObjectIdentifier($0) }
+            if let index = classes.firstIndex(where: { $0.windows == windows }) {
                 classes[index].ids.append(id)
             } else {
-                classes.append((hasPrivateAccess, details(id), [id]))
+                classes.append((windows, details(id), [id]))
             }
         }
         for group in classes {
@@ -549,6 +573,13 @@ final class ProfileExtensionRegistry {
     func extensionId(forOmniboxKeyword keyword: String) -> String? {
         let needle = keyword.lowercased()
         return loadedRuntimes.first { $0.omniboxKeyword?.lowercased() == needle }?.id
+    }
+
+    /// Sends each loaded extension with private access or without, as `hasPrivateAccess`, its `message` at once over its open channels.
+    func sendToOpenChannels(hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
+        for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess {
+            gapEvents.send(message(runtime.context), toOpenChannelsOf: runtime.id)
+        }
     }
 
     /// Fire a gap event to every loaded extension holding `requiredPermission`.
@@ -723,7 +754,7 @@ final class ProfileExtensionRegistry {
         updateRuntime(extensionId: extensionId) { $0.contextObserver = makeContextObserver(for: context, extensionId: extensionId) }
         disabledStoredExtensions.removeAll { $0.id == extensionId }
         failedRestores.removeAll { $0.stored.id == extensionId }
-        for adapter in windowAdapters { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
+        for adapter in windowAdapters where adapter.tabManager?.windowAdapter === adapter { adapter.tabManager?.rebuildTabsAwaitingTheirExtension() }
         let record = ExtensionStorage.InstalledExtension(
             id: extensionId, name: webExtension.displayName ?? extensionId, version: webExtension.version ?? "", path: installPath, isEnabled: true
         )
@@ -934,8 +965,23 @@ final class ProfileExtensionRegistry {
         return ExtensionNavigationTarget(url: url, webViewConfiguration: webViewConfiguration)
     }
 
-    /// Returns fully-populated bridge payloads for each extension, reading real values from WebKit.
-    /// The action (icon, badge, enabled state) is the one `activeTab` shows: each window passes its own.
+    /// Shared by every registry: a window showing another profile's row of the same id must not find its version.
+    private static var lastRowVersion = 0
+
+    /// Gives `row` the `rowVersion` of `last` when they are equal, else a new one: rows compare by version alone.
+    private static func setRowVersion(_ row: inout [String: Any], after last: [String: Any]?) {
+        row["rowVersion"] = last?["rowVersion"]
+        if let last, (row as NSDictionary).isEqual(to: last) { return }
+        lastRowVersion += 1
+        row["rowVersion"] = lastRowVersion
+    }
+
+    /// The disabled and failed rows as last built, by id: built on every call, they keep their version while equal.
+    private var storedBridgePayloads: [String: [String: Any]] = [:]
+
+    /// Returns fully-populated bridge payloads for each extension, reading real values from WebKit, each with a
+    /// `rowVersion` that changes with its fields. The action (icon, badge, enabled state) is the one `activeTab`
+    /// shows: each window passes its own.
     func extensionBridgePayloads(activeTab: TabExtensionAdapter?) -> [[String: Any]] {
         var payloads: [[String: Any]] = []
         payloads.reserveCapacity(loadedRuntimes.count + disabledStoredExtensions.count + failedRestores.count)
@@ -948,9 +994,12 @@ final class ProfileExtensionRegistry {
             var payload = loadedRuntimes[index].staticBridgePayload ?? buildStaticBridgePayload(at: index)
             loadedRuntimes[index].staticBridgePayload = payload
             addActionFields(to: &payload, at: index, activeTab: activeTab)
+            Self.setRowVersion(&payload, after: loadedRuntimes[index].lastBridgePayload)
+            loadedRuntimes[index].lastBridgePayload = payload
             loadedRuntimes[index].bridgePayloads[tabId] = payload
             payloads.append(payload)
         }
+        let loadedCount = payloads.count
         // A disabled extension has no WKWebExtension to read from; the row carries what storage kept.
         for stored in disabledStoredExtensions {
             let facts = storedManifestFacts(for: stored)
@@ -979,6 +1028,13 @@ final class ProfileExtensionRegistry {
                 "error": error
             ] as [String: Any])
         }
+        var stored: [String: [String: Any]] = [:]
+        for index in payloads.indices.dropFirst(loadedCount) {
+            guard let id = payloads[index]["id"] as? String else { continue }
+            Self.setRowVersion(&payloads[index], after: storedBridgePayloads[id])
+            stored[id] = payloads[index]
+        }
+        storedBridgePayloads = stored
         return payloads
     }
 
@@ -1169,6 +1225,7 @@ final class ProfileExtensionRegistry {
         if restoring == nil {
             restoring = Task {
                 await restoreStoredExtensions()
+                StartupMetrics.markOnce("extensionsRestored")
                 notifyExtensionsChanged()
                 updater.start()
             }
@@ -1235,7 +1292,10 @@ final class ProfileExtensionRegistry {
                         }
                         let sourceURL = try files.workingCopy(of: url)
                         let isDegraded = Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowed)
-                        return (index, .success((try await WKWebExtension(resourceBaseURL: sourceURL), sourceURL.path, isDegraded)))
+                        let signpost = PerfSignposts.extensions.beginInterval("createExtension", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id, privacy: .public)")
+                        let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
+                        PerfSignposts.extensions.endInterval("createExtension", signpost)
+                        return (index, .success((webExtension, sourceURL.path, isDegraded)))
                     } catch {
                         return (index, .failure(error))
                     }
@@ -1250,6 +1310,8 @@ final class ProfileExtensionRegistry {
             do {
                 guard let result else { continue }
                 let (webExtension, sourcePath, isDegraded) = try result.get()
+                let signpost = PerfSignposts.extensions.beginInterval("activate", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id, privacy: .public)")
+                defer { PerfSignposts.extensions.endInterval("activate", signpost) }
                 try await activate(
                     webExtension, id: stored.id, sourcePath: sourcePath, installPath: stored.path, isPreparationDegraded: isDegraded, stored: stored,
                     as: .startup

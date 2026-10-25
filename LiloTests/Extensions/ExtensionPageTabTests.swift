@@ -150,6 +150,62 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(views as? [[String: String]], [["contextType": "TAB", "url": pageURL.absoluteString]])
     }
 
+    /// Saladict's startup measure: a normal window and a panel, created then removed, are windows of their own.
+    func testANormalWindowsCreateOpensItsOwnWindowAndRemovingItLeavesTheUsersOne() async throws {
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let tabsBefore = window.tabManager.openTabs.map(\.id)
+        let browserWindows = browserContext.context.windows.windows.count
+
+        let created = try await page.callAsyncJavaScript("""
+            const current = await chrome.windows.getCurrent();
+            const t = await chrome.windows.create({ state: 'maximized' });
+            const n = await chrome.windows.create({ state: 'maximized', type: 'panel' });
+            await chrome.windows.update(current.id, { focused: true });
+            const [got, gotPanel] = await Promise.all([chrome.windows.get(t.id, { populate: true }), chrome.windows.get(n.id)]);
+            await chrome.windows.remove(t.id);
+            await chrome.windows.remove(n.id);
+            const after = (await chrome.windows.getAll()).map(({ id }) => id);
+            return JSON.stringify({ ids: [current.id, t.id, n.id, got.id, gotPanel.id], type: got.type, tabs: got.tabs.length, after });
+            """, contentWorld: .page) as? String
+        let reply = try XCTUnwrap(created.flatMap { try JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any] })
+        let ids = try XCTUnwrap(reply["ids"] as? [Int])
+
+        XCTAssertEqual(Set(ids.prefix(3)).count, 3, "each created window has a new id")
+        XCTAssertEqual(Array(ids.suffix(2)), [ids[1], ids[2]])
+        XCTAssertEqual(reply["type"] as? String, "normal")
+        XCTAssertEqual(reply["tabs"] as? Int, 1, "the window holds the one tab it opened")
+        XCTAssertEqual(reply["after"] as? [Int], [ids[0]], "only the user's window is left")
+        XCTAssertEqual(browserContext.context.windows.windows.count, browserWindows)
+        XCTAssertTrue(browserContext.context.windows.windows.contains { $0 === window }, "the user's window stays open")
+        XCTAssertEqual(window.tabManager.currentSpaceId, spaceId)
+        XCTAssertEqual(window.tabManager.openTabs.map(\.id), tabsBefore, "the user's tabs are untouched")
+        let panelsClosed = await pollUntil { !NSApp.windows.contains { $0.isVisible && $0.contentView is WKWebView } }
+        XCTAssertTrue(panelsClosed, "the created windows are gone")
+    }
+
+    /// With "Prefer a single window" on, a normal window opens as tabs of the current one, and removing it closes those tabs only.
+    func testASingleWindowWindowsCreateRemovesOnlyTheTabsItOpened() async throws {
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        window.context.settingsStore.set("singleWindow", value: "true")
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let tabsBefore = window.tabManager.openTabs.map(\.id)
+
+        let created = try await page.callAsyncJavaScript("""
+            const current = await chrome.windows.getCurrent();
+            const t = await chrome.windows.create({});
+            await chrome.windows.remove(t.id);
+            const again = await chrome.windows.remove(t.id).then(() => 'removed', () => 'failed');
+            return JSON.stringify([current.id === t.id, again]);
+            """, contentWorld: .page) as? String
+
+        XCTAssertEqual(created, "[true,\"failed\"]", "a second remove has no tab left to close, and never closes the window")
+        let closed = await pollUntil { window.tabManager.openTabs.map(\.id) == tabsBefore }
+        XCTAssertTrue(closed, "the tab the window opened closes, the user's stay")
+        XCTAssertTrue(browserContext.context.windows.windows.contains { $0 === window }, "the user's window stays open")
+    }
+
     func testAWindowsCreatePopupLoadsAWebPageInItsTab() async throws {
         let server = try await TinyHTTPServer(index: "<title>Sign in</title>")
         let pageURL = "http://127.0.0.1:\(server.port)/"
@@ -322,6 +378,48 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(cookies(fromSite), ["lax=1", "plain=1", "strict=1"])
         XCTAssertEqual(cookies(fromPage), ["lax=1", "plain=1", "strict=1"], "an extension page's fetch")
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
+    }
+
+    /// A window always has an active tab, as in Chrome: Dashlane's popup read `[0].url` of `tabs.query({active, currentWindow})`
+    /// and showed an empty vault when the window showed no web page. A terminal on screen has a stand-in tab, with no url.
+    func testAnActionPopupFindsTheActiveTabOfAWindowShowingATerminal() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("active")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Active", "version": "1.0", "description": "d", "permissions": ["tabs"], "action": {"default_popup": "popup.html"}}"#,
+            "popup.html": "<script src='popup.js'></script>",
+            "popup.js": """
+                const shown = (tabs) => tabs.map((tab) => `${tab.active} ${tab.url ?? 'none'}`).join();
+                Promise.all([chrome.tabs.query({ active: true, currentWindow: true }), chrome.tabs.query({ active: true, lastFocusedWindow: true })])
+                  .then(([current, focused]) => { document.title = `${shown(current)} / ${shown(focused)}`; });
+                """
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let page = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        window.activateTabStateFirst(id: page.id)
+        _ = try XCTUnwrap(window.createTerminalTab(activate: true))
+        let standIn = try XCTUnwrap(window.tabManager.windowAdapter?.activeTab)
+        XCTAssertNil(standIn.engineTab, "the terminal, not the web tab left behind, is the active tab")
+        window.window?.orderFront(nil)
+        defer { window.window?.orderOut(nil) }
+
+        let button = NSMenuItem()
+        button.representedObject = id
+        window.openExtensionFromMenu(button)
+        var title: String?
+        let shown = await pollUntil {
+            title = context.action(for: standIn)?.popupWebView?.title
+            return title?.isEmpty == false
+        }
+        context.action(for: standIn)?.popupPopover?.close()
+
+        XCTAssertTrue(shown, "the popup opens")
+        XCTAssertEqual(title, "true none / true none")
     }
 
     /// Chrome runs nothing of a page after its window.close(): neither an API callback or promise it

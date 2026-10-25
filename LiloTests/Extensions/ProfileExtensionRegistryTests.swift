@@ -774,6 +774,21 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         await fulfillment(of: [changed], timeout: 2)
     }
 
+    func testARebuiltRowKeepsItsVersionUntilOneOfItsFieldsChanges() async throws {
+        try await registry.load(from: try createMinimalExtension(named: "row_version_extension", in: tempDir))
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let version = { self.registry.extensionBridgePayloads(activeTab: nil).first?["rowVersion"] as? Int }
+        let first = try XCTUnwrap(version())
+
+        registry.refreshActionsForActiveTabChange()
+        XCTAssertEqual(version(), first, "the row is rebuilt as it was")
+
+        registry.updateActionColor(for: id) { $0.badgeColor = "#123456" }
+        let second = try XCTUnwrap(version())
+        XCTAssertNotEqual(second, first)
+        XCTAssertEqual(version(), second, "a cached row keeps its version")
+    }
+
     func testActionChangeBumpsIconVersionInExtensionSnapshot() async throws {
         let extDir = try createActionExtension(named: "action_icon_version_extension", displayName: "Action Icon Version")
 
@@ -844,6 +859,30 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try """
         const port = browser.runtime.connectNative('com.lilo.missing_host');
+        port.onDisconnect.addListener(() => chrome.action.setTitle({ title: 'disconnected' }));
+        port.postMessage({ hello: 1 });
+        """.write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+
+        _ = await registry.backgrounds.load(id)
+        let disconnected = await pollUntil(timeout: 10) { context.action(for: nil)?.label == "disconnected" }
+
+        XCTAssertTrue(disconnected, "the port never disconnected")
+        XCTAssertEqual(context.errors.map(\.localizedDescription), [])
+    }
+
+    /// Without nativeMessaging, Chrome has no connectNative to call; WebKit's (Liner, Mailvelope) opens a port
+    /// that disconnects once it sends, without an extension error.
+    func testANativePortWithoutThePermissionDisconnectsWithoutAnError() async throws {
+        let extDir = tempDir.appendingPathComponent("native_without_permission")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try """
+        {"manifest_version":3,"name":"Native","version":"1.0","description":"d","action":{},"background":{"service_worker":"background.js"}}
+        """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try """
+        const port = browser.runtime.connectNative('com.lilo.host');
         port.onDisconnect.addListener(() => chrome.action.setTitle({ title: 'disconnected' }));
         port.postMessage({ hello: 1 });
         """.write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
@@ -1026,27 +1065,27 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let registryA = try makeTestExtensionRegistry(in: tempDir)
         let registryB = try makeTestExtensionRegistry(in: tempDir)
 
-        let adapterA = registryA.windowAdapter(for: window)
-        let adapterB = registryB.windowAdapter(for: window)
+        let spaceId = UUID()
+        let adapterA = registryA.windowAdapter(for: window, spaceId: spaceId)
+        let adapterB = registryB.windowAdapter(for: window, spaceId: spaceId)
 
         XCTAssertFalse(adapterA === adapterB, "Distinct registries must not share a window adapter")
         XCTAssertTrue(registryA.delegate.windowAdapter === adapterA, "Registry must wire its delegate to its own adapter")
         XCTAssertTrue(registryB.delegate.windowAdapter === adapterB)
     }
 
-    /// Returning to a profile must reuse that registry's existing adapter, not mint a fresh one,
-    /// so the controller keeps the same WKWebExtensionWindow identity across a round trip.
-    func testWindowAdapterIsStableAcrossRepeatedCalls() throws {
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        let adapterFirst = registry.windowAdapter(for: window)
-        let adapterSecond = registry.windowAdapter(for: window)
+    /// Each space is one window to extensions, whichever browser window shows it: returning to a space reuses its
+    /// adapter, so the controller keeps the same WKWebExtensionWindow identity across a round trip.
+    func testEachSpaceKeepsOneWindowAdapter() throws {
+        let window = NSWindow(), otherWindow = NSWindow()
+        let spaceA = UUID(), spaceB = UUID()
+        let adapterA = registry.windowAdapter(for: window, spaceId: spaceA)
+        let adapterB = registry.windowAdapter(for: window, spaceId: spaceB)
 
-        XCTAssertTrue(adapterFirst === adapterSecond, "Repeated calls must return the same owned adapter")
+        XCTAssertFalse(adapterA === adapterB)
+        XCTAssertTrue(registry.windowAdapter(for: otherWindow, spaceId: spaceA) === adapterA, "Repeated calls must return the same owned adapter")
+        XCTAssertTrue(adapterA.nsWindow === otherWindow, "the space reports the browser window that shows it")
+        XCTAssertTrue(registry.extensionWindows.elementsEqual([adapterA, adapterB], by: ===))
     }
 
     // MARK: - Permission Request Tests

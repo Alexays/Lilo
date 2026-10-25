@@ -78,11 +78,11 @@ extension MainWindowController {
 
     // MARK: - Internal wiring
 
-    /// Points the tab manager and `registry`'s delegate at each other on every profile activation, so a cached registry restores
-    /// a coherent window. A private space shows in the private extension window, seen only by extensions allowed there.
-    func bindExtensionRegistry(_ registry: ProfileExtensionRegistry) {
+    /// Points the tab manager and `registry`'s delegate at each other on every space or profile activation, so a cached registry
+    /// restores a coherent window. Each space is its own extension window; a private one is seen only by extensions allowed there.
+    func bindExtensionRegistry(_ registry: ProfileExtensionRegistry, spaceId: UUID) {
         guard let window else { return }
-        let windowAdapter = registry.windowAdapter(for: window, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
+        let windowAdapter = registry.windowAdapter(for: window, spaceId: spaceId, isPrivate: tabManager.dataStore?.backingStore.isPersistent == false)
         windowAdapter.tabManager = tabManager
         tabManager.windowAdapter = windowAdapter
 
@@ -95,8 +95,8 @@ extension MainWindowController {
         }
 
         registry.notifyWindowOpened()
-        // A profile switch keeps the same NSWindow key, so windowDidBecomeKey doesn't re-fire: focus
-        // the now-active registry explicitly so its controller is focused and its keep-alive starts.
+        // A space or profile switch keeps the same NSWindow key, so windowDidBecomeKey doesn't re-fire: focus
+        // the space's window explicitly, which extensions hear as a window focus change.
         registry.notifyWindowFocused(window.isKeyWindow)
     }
 
@@ -120,7 +120,7 @@ extension MainWindowController {
                 changed.append(row)
                 continue
             }
-            guard !(previous as NSDictionary).isEqual(to: row) else { continue }
+            guard previous["rowVersion"] as? Int != row["rowVersion"] as? Int else { continue }
             var delta = row
             if let icon = row["iconDataURL"] as? String, icon == previous["iconDataURL"] as? String {
                 delta["iconDataURL"] = nil

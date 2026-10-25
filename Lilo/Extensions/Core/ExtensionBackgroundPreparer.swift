@@ -38,6 +38,9 @@ enum ExtensionBackgroundPreparer {
     /// The manifest is written at most once, and only when a step changed it. A folder whose stamp still matches
     /// Lilo's build, the sources given and the manifest, worker and ruleset files is left as it is.
     static func prepare(extensionURL: URL, preludeSource: String, compatSource: String? = nil) throws -> PreparationResult {
+        let signpost = PerfSignposts.extensions.beginInterval("prepare", id: PerfSignposts.extensions.makeSignpostID(), "\(extensionURL.lastPathComponent, privacy: .public)")
+        var stampMatched = false
+        defer { PerfSignposts.extensions.endInterval("prepare", signpost, "\(stampMatched ? "stamped" : "cold", privacy: .public)") }
         var hasher = SHA256()
         hasher.update(data: Data(buildStamp.utf8))
         hasher.update(data: Data(preludeSource.utf8))
@@ -49,6 +52,7 @@ enum ExtensionBackgroundPreparer {
             let files = Array(lines.dropFirst(2))
             if !files.isEmpty, lines[0] == inputs, let result = PreparationResult(rawValue: lines[1]),
                files == fileStamps(extensionURL, files.map { String($0.split(separator: " ", maxSplits: 2).last ?? "") }) {
+                stampMatched = true
                 return result
             }
         }
@@ -190,6 +194,8 @@ enum ExtensionBackgroundPreparer {
         try writeIfChanged(metadataData, to: metadataDir.appendingPathComponent("metadata.json"))
 
         background["service_worker"] = wrapperRelativePath
+        // What runtime.getManifest() reports, as extensions compare it with their worker's location.
+        background["lilo_service_worker"] = originalServiceWorker
         // WebKit runs `scripts` or `page`, kept for Firefox, over the service worker; Chrome runs the worker.
         if background["scripts"] != nil || background["page"] != nil || background["preferred_environment"] != nil {
             background["preferred_environment"] = "service_worker"
@@ -245,6 +251,11 @@ enum ExtensionBackgroundPreparer {
             if (commands["_execute_action"] as? [String: Any])?.isEmpty == true {
                 commands["_execute_action"] = nil
             }
+            // Chrome ignores MV2's action commands in MV3, where WebKit wants them described as any command.
+            if manifest["manifest_version"] as? Int == 3 {
+                commands["_execute_browser_action"] = nil
+                commands["_execute_page_action"] = nil
+            }
             // Chrome trims the whitespace around each key: "Ctrl + Shift + Y" is Ctrl+Shift+Y.
             for (name, value) in commands {
                 guard var command = value as? [String: Any], let keys = command["suggested_key"] as? [String: Any] else { continue }
@@ -266,6 +277,22 @@ enum ExtensionBackgroundPreparer {
         // WebKit rejects an empty list, which declares nothing in Chrome.
         if (manifest["content_scripts"] as? [Any])?.isEmpty == true {
             manifest["content_scripts"] = nil
+        }
+        // Chrome reads a file pattern's host as omitted (`file://*` is `file:///*`) or ignored
+        // (`file://localhost/a` is `file:///a`); WebKit drops the pattern.
+        if let entries = manifest["content_scripts"] as? [Any] {
+            manifest["content_scripts"] = entries.map { entry -> Any in
+                guard var script = entry as? [String: Any] else { return entry }
+                for key in ["matches", "exclude_matches"] {
+                    guard let patterns = script[key] as? [Any] else { continue }
+                    script[key] = patterns.map { item -> Any in
+                        guard let pattern = item as? String, pattern.hasPrefix("file://"), !pattern.hasPrefix("file:///") else { return item }
+                        let rest = pattern.dropFirst(7)
+                        return "file://" + (rest.firstIndex(of: "/").map { String(rest[$0...]) } ?? "/" + rest)
+                    }
+                }
+                return script
+            }
         }
         if var connectable = manifest["externally_connectable"] as? [String: Any] {
             // WebKit's patterns have no <all_urls> and no port; Chrome's match any port when they name none,

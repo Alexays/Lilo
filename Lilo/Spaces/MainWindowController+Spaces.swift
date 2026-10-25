@@ -54,6 +54,7 @@ extension MainWindowController {
             throw error
         }
         context.browserState.removeSpace(id: spaceId, discardEngine: context.discardEngine, discardTabAdapter: context.discardTabAdapter)
+        context.profileContexts.existingContext(for: sourceProfileId)?.extensions.notifySpaceRemoved(spaceId)
         // The move is already durable target-side; a failed source-row cleanup only leaves a stale
         // row behind, so it must not abort the move.
         loggingPersistenceError("spaceTabStates.moveCleanup[\(spaceId.uuidString)]") {
@@ -138,6 +139,7 @@ extension MainWindowController {
 
         let sourceProfileId = space.profileId
         context.browserState.removeSpace(id: id, discardEngine: context.discardEngine, discardTabAdapter: context.discardTabAdapter)
+        context.profileContexts.existingContext(for: sourceProfileId)?.extensions.notifySpaceRemoved(id)
         tabManager.terminalHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
         try context.sessionPersistenceCoordinator.deleteSpaceTabState(forSpace: id, inProfile: sourceProfileId)
@@ -209,21 +211,32 @@ extension MainWindowController {
             tabIds = sourceSnapshot.spaceTab.tabIds(inFolder: id)
         }
 
-        var transfers: [UUID: (engine: WKWebViewTab?, interactionState: Any?, restoringStartedAt: Date?)] = [:]
+        // A tab keeps its extension identity into a space of its profile and privacy that is already a window to extensions,
+        // and moves there (tabs.onDetached and onAttached); otherwise it closes, and opens again once that space is shown.
+        let registry = tabManager.extensionRegistry
+        let sourceWindow = tabManager.windowAdapter
+        let targetWindow = sourceSpace.profileId == targetSpace.profileId && sourceSpace.isPrivate == targetSpace.isPrivate
+            ? registry?.windowAdapters.first { $0.spaceId == targetSpaceId } : nil
+        var transfers: [UUID: (engine: WKWebViewTab?, interactionState: Any?, restoringStartedAt: Date?, adapter: TabExtensionAdapter?, index: Int)] = [:]
         for tabId in tabIds {
             let restoringStartedAt = context.browserState.space(id: sourceSpaceId)?.restoringTabIds[tabId]
+            let index = tabManager.tabAdapter(for: tabId).flatMap { sourceWindow?.index(of: $0) } ?? 0
             guard let detached = tabManager.detachTabForTransfer(id: tabId) else {
                 // A folder still moves its other tabs; a lone tab that cannot detach moves nothing.
                 if kind == .tab { return }
                 continue
             }
+            let adapter = tabManager.engineHost.removeTabAdapter(for: tabId)
+            if targetWindow == nil, let adapter { registry?.controller.didCloseTab(adapter, windowIsClosing: false) }
             let transfer = resolveTabTransfer(engine: detached.engine, from: sourceSpace, to: targetSpace)
             // Only a carried engine keeps its runtime state; a discarded one's is stale.
             if transfer.engine == nil { tabManager.runtimeOverlay.discardRuntimeState(for: tabId) }
             transfers[tabId] = (
                 engine: transfer.engine,
                 interactionState: transfer.interactionState,
-                restoringStartedAt: transfer.engine == nil ? nil : restoringStartedAt
+                restoringStartedAt: transfer.engine == nil ? nil : restoringStartedAt,
+                adapter: targetWindow == nil ? nil : adapter,
+                index: index
             )
         }
 
@@ -238,8 +251,20 @@ extension MainWindowController {
                 targetSpaceId: targetSpaceId,
                 engine: transfer.engine,
                 interactionState: transfer.interactionState,
-                restoringStartedAt: transfer.restoringStartedAt
+                restoringStartedAt: transfer.restoringStartedAt,
+                tabAdapter: transfer.adapter
             )
+        }
+        if let targetWindow, let sourceWindow {
+            for (tabId, transfer) in transfers {
+                guard let adapter = transfer.adapter else { continue }
+                adapter.engineTab = transfer.engine
+                adapter.extensionWindow = targetWindow
+                targetWindow.add(tab: adapter)
+                // A space another window shows looks its tabs up in that window's runtime.
+                context.browserState.liveHost(for: targetSpaceId)?.setTabAdapter(adapter, for: tabId)
+                registry?.controller.didMoveTab(adapter, from: transfer.index, in: sourceWindow)
+            }
         }
 
         browserRuntimeCoordinator.applyRuntimeProjection(from: changes, currentSpaceOnly: true)
@@ -320,18 +345,11 @@ extension MainWindowController {
                     engine.tabManager = heir.tabManager
                 }
             }
-            if let heir, let heirWindow = heir.tabManager.windowAdapter, let oldWindow = tabManager.windowAdapter {
-                let registry = tabManager.extensionRegistry
-                let indexById = registry == nil ? [:] : Dictionary(
-                    uniqueKeysWithValues: tabManager.tabs(forSpace: oldSpaceId).enumerated().map { ($1.id, $0) }
-                )
-                for adapter in runtime.tabAdapters.values where adapter.extensionWindow === oldWindow {
-                    oldWindow.remove(tab: adapter)
-                    adapter.extensionWindow = heirWindow
-                    adapter.tabManager = heir.tabManager
-                    heirWindow.add(tab: adapter)
-                    registry?.controller.didMoveTab(adapter, from: indexById[adapter.tabId] ?? 0, in: oldWindow)
-                }
+            // The space stays one window to extensions, now the heir's.
+            if let heir, let spaceWindow = tabManager.windowAdapter, spaceWindow === heir.tabManager.windowAdapter {
+                spaceWindow.nsWindow = heir.window
+                spaceWindow.tabManager = heir.tabManager
+                for adapter in runtime.tabAdapters.values { adapter.tabManager = heir.tabManager }
             }
             updateDisplayedTabs([])
             tabManager.detachSharedRuntime()
@@ -446,7 +464,6 @@ extension MainWindowController {
         } else if let sharedHost = context.browserState.liveHost(for: spaceId) {
             tabManager.adoptSharedRuntime(sharedHost, spaceId: spaceId)
             if previousSpaceId != spaceId { context.browserState.retainLiveHost(sharedHost, for: spaceId) }
-            for adapter in sharedHost.snapshot(tabs: [], activeTabId: nil).tabAdapters.values { tabManager.windowAdapter?.add(tab: adapter) }
             let snapshot = context.browserState.activateSpace(id: spaceId) { restoredSpaceSnapshot(for: targetSpace) }
             let preferred = activeTabBySpace[spaceId] ?? snapshot.spaceTab.state.activeTabId
             if let activeId = freeTab(preferring: preferred) ?? restorableActiveTabId(preferred: preferred, in: tabManager.currentTabs) {

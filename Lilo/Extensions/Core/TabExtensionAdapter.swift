@@ -57,15 +57,18 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     }
 
     func isSelected(for context: WKWebExtensionContext) -> Bool {
-        (extensionWindow as? WindowExtensionAdapter)?.visibleActiveAdapter === self
+        (extensionWindow as? WindowExtensionAdapter)?.activeTab === self
     }
 
     // MARK: - Index & Parent
 
-    /// The tab's index in its window, in the visible sidebar order. Returns NSNotFound when the
-    /// tab isn't in the current window (per the WKWebExtensionTab contract).
+    /// The tab's index in its space's window, in sidebar order; NSNotFound when it is in none.
     func indexInWindow(for context: WKWebExtensionContext) -> Int {
-        (extensionWindow as? WindowExtensionAdapter)?.index(of: self, for: context) ?? NSNotFound
+        let index = (extensionWindow as? WindowExtensionAdapter)?.index(of: self) ?? NSNotFound
+        if index != NSNotFound, let registry = tabManager?.extensionRegistry {
+            registry.tabStateKeeper?.verifyTabState(of: self, at: index, for: context, registry: registry)
+        }
+        return index
     }
 
     func parentTab(for context: WKWebExtensionContext) -> (any WKWebExtensionTab)? { parent }

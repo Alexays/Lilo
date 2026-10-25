@@ -273,7 +273,7 @@ final class SidePanelController: NSObject {
             info["windowPosition"] = position["windowPosition"]
             info["index"] = position["index"]
         } else {
-            info["windowPosition"] = window.window.flatMap { registry.windowPosition(of: $0, extensionId: entry.extensionId) } ?? -1
+            info["windowPosition"] = window.tabManager.windowAdapter.flatMap { registry.windowPosition(of: $0, extensionId: entry.extensionId) } ?? -1
         }
         registry.gapEvents.emit("sidePanel", event, args: [info], to: [entry.extensionId])
     }

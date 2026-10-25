@@ -1,4 +1,4 @@
-// WebKit answers a read before writes in flight, so calls wait for them. It also sizes a replaced non-Latin-1 value in
+// WebKit answers a read before writes in flight, so calls wait for them; the writes queued meanwhile go as one. It also sizes a replaced non-Latin-1 value in
 // UTF-16 bytes but the total in characters, failing the quota, so a set that fits is reapplied after removing its keys.
 // It stores values as JSON, where Chrome leaves out non-finite numbers and functions. A starting worker's reads answer once the
 // events that woke it are dispatched, as Chrome's slower storage answers them (Custom Cursors' onInstalled sets
@@ -10,10 +10,71 @@ import { workerStarting } from './ipc.ts';
 /** Each storage area's writes in flight, as the promise that settles once they all have. */
 const writesInFlight = new WeakMap<object, Promise<unknown>>();
 
-function ordered(write: boolean): Patch {
+function inFlight(area: object, write: Promise<unknown>): void {
+  const settled = write.then(() => {}, () => {});
+  writesInFlight.set(area, settled);
+  settled.then(() => { if (writesInFlight.get(area) === settled) writesInFlight.delete(area); });
+}
+
+/** How queued calls of a write method make one: `start` copies a call's argument, undefined when it joins none. */
+interface Merge {
+  start(argument: unknown): any;
+  join(merged: any, argument: unknown): boolean;
+}
+
+type Outcome = { ok: true; value: unknown } | { ok: false; error: unknown };
+
+const outcome = (call: () => unknown): Promise<Outcome> => Promise.resolve().then(call).then(
+  (value) => ({ ok: true, value }),
+  (error) => ({ ok: false, error }),
+);
+
+/** The write waiting for those in flight, which the next calls of its method join until another call comes. */
+interface Batch {
+  merge: Merge;
+  argument: any;
+  parts: unknown[];
+  done: Promise<Outcome[]>;
+}
+
+const batches = new WeakMap<object, Batch>();
+
+/** The answer to `argument`'s write, made in one call with the writes queued next to it; undefined when it joins none. */
+function batched(area: object, pending: Promise<unknown>, merge: Merge, original: (argument: unknown) => unknown, argument: unknown) {
+  let batch = batches.get(area);
+  if (batch?.merge !== merge || !merge.join(batch.argument, argument)) {
+    const merged = merge.start(argument);
+    if (merged === undefined) return undefined;
+    const queued: Batch = batch = { merge, argument: merged, parts: [], done: undefined! };
+    queued.done = pending.then(async () => {
+      if (batches.get(area) === queued) batches.delete(area);
+      const all = await outcome(() => original.call(area, queued.argument));
+      if (all.ok || queued.parts.length === 1) return queued.parts.map(() => all);
+      // One call failing fails the merged one: each goes again on its own, for its own answer.
+      const outcomes: Outcome[] = [];
+      for (const part of queued.parts) outcomes.push(await outcome(() => original.call(area, part)));
+      return outcomes;
+    });
+    batches.set(area, queued);
+    inFlight(area, queued.done);
+  }
+  const index = batch.parts.push(argument) - 1;
+  return batch.done.then((outcomes) => {
+    const own = outcomes[index];
+    if (own.ok) return own.value;
+    throw own.error;
+  });
+}
+
+function ordered(write: boolean, merge?: Merge): Patch {
   return (original, self) => function (this: unknown, ...args: any[]) {
     const area = self(this);
     const pending = writesInFlight.get(area);
+    if (merge && pending !== undefined && (args.length === 1 || (args.length === 2 && typeof args[1] === 'function'))) {
+      const result = batched(area, pending, merge, original, args[0]);
+      if (result) return args.length === 2 ? callbackify(() => result, args[1]) : result;
+    }
+    batches.delete(area);
     const starting = write ? undefined : workerStarting();
     if (!write && pending === undefined && !starting) return original.apply(this, args);
     const last = args.length - 1;
@@ -35,11 +96,7 @@ function ordered(write: boolean): Patch {
       call = () => { original.apply(this, args); return end; };
     }
     const result: Promise<unknown> = pending === undefined ? call() : pending.then(call);
-    if (write) {
-      const settled = result.then(() => {}, () => {});
-      writesInFlight.set(area, settled);
-      settled.then(() => { if (writesInFlight.get(area) === settled) writesInFlight.delete(area); });
-    }
+    if (write) inFlight(area, result);
     if (callback) return undefined;
     return starting ? result.then((value) => starting.then(() => value)) : result;
   };
@@ -47,6 +104,29 @@ function ordered(write: boolean): Patch {
 
 const read = ordered(false);
 const write = ordered(true);
+
+// Disjoint keys only, so each key's onChanged change carries the old and new values Chrome gives.
+const mergeSets: Merge = {
+  start: (items) => (items !== null && typeof items === 'object' && !Array.isArray(items) ? { ...items } : undefined),
+  join(merged, items) {
+    if (items === null || typeof items !== 'object' || Array.isArray(items) || Object.keys(items).some((key) => Object.hasOwn(merged, key))) return false;
+    Object.assign(merged, items);
+    return true;
+  },
+};
+
+const keyList = (keys: unknown): string[] | undefined => (typeof keys === 'string'
+  ? [keys]
+  : Array.isArray(keys) && keys.every((key) => typeof key === 'string') ? keys : undefined);
+
+const mergeRemoves: Merge = {
+  start: (keys) => keyList(keys)?.slice(),
+  join(merged, keys) {
+    const list = keyList(keys);
+    if (list) merged.push(...list);
+    return list !== undefined;
+  },
+};
 
 /**
  * WebKit stores the enumerable keys `items` inherits too, which Chrome ignores, and rejects the call over an inherited
@@ -131,9 +211,9 @@ function asChromeStores(value: any, seen = new Set<object>()): any {
 }
 
 export const storageAreaPatches: Record<string, Patch> = {
-  get: read, getBytesInUse: read, getKeys: read, remove: write, clear: write,
+  get: read, getBytesInUse: read, getKeys: read, remove: ordered(true, mergeRemoves), clear: write,
   set: (original, self) => {
-    const set = write(setWithinQuota(original, self), self);
+    const set = ordered(true, mergeSets)(setWithinQuota(original, self), self);
     return function (this: unknown, items: any, ...rest: unknown[]) {
       return set.call(this, asChromeStores(items), ...rest);
     };

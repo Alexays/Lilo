@@ -94,11 +94,12 @@ class Area {
   set(items: Record<string, unknown>, callback?: () => void) {
     if (typeof items !== 'object') throw new TypeError('items must be an object');
     this.calls.push('set');
+    if (Object.values(items).includes('unstorable')) return Promise.reject(new Error('Invalid value.'));
     return this.later(() => Object.assign(this.stored, items), callback);
   }
-  remove(key: string, callback?: () => void) {
+  remove(keys: string | string[], callback?: () => void) {
     this.calls.push('remove');
-    return this.later(() => delete this.stored[key], callback);
+    return this.later(() => [keys].flat().forEach((key) => delete this.stored[key]), callback);
   }
   later(write: () => void, callback?: () => void) {
     const done = new Promise<void>((resolve) => setTimeout(() => { write(); resolve(); }, 5));
@@ -153,5 +154,61 @@ describe('storage areas', () => {
     const { local } = install();
     local.set({ a: 1 });
     assert.deepEqual(await local.get('a'), { a: 1 });
+  });
+
+  it('make one call of the sets queued behind a write, each answered once it is stored', async () => {
+    const { chrome, local } = install();
+    const first = chrome.storage.local.set({ a: 1 });
+    const queued = [2, 3, 4, 5].map((n) => chrome.storage.local.set({ [`k${n}`]: n }));
+    const called = new Promise((resolve) => chrome.storage.local.set({ k6: 6 }, resolve));
+    const read = chrome.storage.local.get(['a', 'k2', 'k6']);
+    await Promise.all([first, ...queued, called]);
+    assert.deepEqual(local.stored, { a: 1, k2: 2, k3: 3, k4: 4, k5: 5, k6: 6 });
+    assert.deepEqual(await read, { a: 1, k2: 2, k6: 6 });
+    assert.deepEqual(local.calls, ['set', 'set', 'get']);
+  });
+
+  it('keep a write queued after a read out of the writes before it', async () => {
+    const { chrome, local } = install();
+    chrome.storage.local.set({ a: 1 });
+    chrome.storage.local.set({ b: 2 });
+    const read = chrome.storage.local.get(['b', 'c']);
+    chrome.storage.local.set({ c: 3 });
+    assert.deepEqual(await read, { b: 2 });
+    assert.deepEqual(await chrome.storage.local.get('c'), { c: 3 });
+    assert.deepEqual(local.calls, ['set', 'set', 'get', 'set', 'get']);
+  });
+
+  it('apply queued sets of the same key one after the other', async () => {
+    const { chrome, local } = install();
+    chrome.storage.local.set({ a: 1 });
+    chrome.storage.local.set({ a: 2 });
+    await chrome.storage.local.set({ a: 3 });
+    assert.equal(local.stored.a, 3);
+    assert.deepEqual(local.calls, ['set', 'set', 'set']);
+  });
+
+  it('make one call of the removes queued behind a write', async () => {
+    const { chrome, local } = install();
+    local.stored = { a: 1, b: 2, c: 3, d: 4 };
+    chrome.storage.local.set({ e: 5 });
+    await Promise.all([chrome.storage.local.remove('a'), chrome.storage.local.remove(['b', 'c'])]);
+    assert.deepEqual(local.stored, { d: 4, e: 5 });
+    assert.deepEqual(local.calls, ['set', 'remove']);
+  });
+
+  it('answer each queued set on its own when their one call fails', async () => {
+    const { chrome, local } = install();
+    chrome.storage.local.set({ a: 1 });
+    const fits = chrome.storage.local.set({ b: 2 });
+    const over = chrome.storage.local.set({ c: 'unstorable' });
+    const lastError = new Promise((resolve) => chrome.storage.local.set({ d: 'unstorable' }, () => resolve(chrome.runtime.lastError?.message)));
+    const after = chrome.storage.local.set({ e: 5 });
+    await fits;
+    await assert.rejects(over, /Invalid value/);
+    assert.equal(await lastError, 'Invalid value.');
+    await after;
+    assert.deepEqual(local.stored, { a: 1, b: 2, e: 5 });
+    assert.deepEqual(local.calls, ['set', 'set', 'set', 'set', 'set', 'set']);
   });
 });

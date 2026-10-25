@@ -286,6 +286,22 @@ export const i18nPatches: Record<string, Patch> = {
   },
 };
 
+/**
+ * The manifest names Lilo's wrapper as the worker WebKit registers, and keeps the extension's own in `lilo_service_worker`
+ * (ExtensionBackgroundPreparer): extensions compare it with their worker's location (webext-detect-page).
+ */
+export const runtimePatches: Record<string, Patch> = {
+  getManifest: (original, self) => function (this: unknown, ...args: unknown[]) {
+    const manifest = original.apply(self(this), args);
+    const background = manifest?.background;
+    if (typeof background?.lilo_service_worker === 'string') {
+      background.service_worker = background.lilo_service_worker;
+      delete background.lilo_service_worker;
+    }
+    return manifest;
+  },
+};
+
 /** The content script registrations WebKit has not answered yet. */
 const registering = new Set<Promise<unknown>>();
 

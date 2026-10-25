@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46 and 81 (`XMLHttpRequest`). Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`) and 82. Every other gap is fully worked around.
 
 ---
 
@@ -23,8 +23,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 2. Events reach a context only through its own `browser` or `chrome`
 
 - **Gap:** WebKit finds a context's listeners through the global `browser`, else `chrome`, and skips the context when neither is its own namespace object: no `runtime.onMessage`, `onConnect`, port message or `storage.onChanged`. With `chrome` being Lilo's proxy, an extension assigning `browser` (`var browser = chrome`, webextension-polyfill) would lose every event. Chrome lets extensions wrap or replace either.
-- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor).
-- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers).
+- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor), in content scripts too ([content-compat-entry.ts]).
+- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers). Without it, Proton Pass, whose content script hides both globals behind proxies once loaded, never got the worker's `tabs.sendMessage`: its inline menu closed without filling the field.
 - **Check:** `testEventsSkipAContextWhoseBrowserAndChromeAreReplaced`, `testEventsStopOnceNeitherGlobalIsTheNamespace`. Repro: in an MV3 worker, keep `chrome.storage` and `chrome.action`, listen to `storage.onChanged`, set `globalThis.browser = {}` and `globalThis.chrome = {}`, then set a key. Expected: the listener runs. Actual: never.
 
 ### 3. `runtime.connectNative`, `lastError` and `onInstalled` are own, fixed properties
@@ -94,16 +94,23 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 22. `sendMessage` with no response sets no error
 
 - **Gap:** WebKit resolves `undefined` and gives callbacks no `lastError` whether no listener exists or none responds. Chrome rejects with `Could not establish connection. Receiving end does not exist.` without a listener, sets `The message port closed before a response was received.` when none responds, and delivers a valueless response as `null`.
-- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
+- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page sends the probe (`listensProbe`), which the other pages answer while one listens, then asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when none does ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts, and the extension's pages it shows, answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
 - **Impact:** Video Downloader Professional reads its response when `lastError` is unset and throws; AdGuard's popup reads the answer of a message its starting worker does not receive yet.
 - **Check:** `testSendMessageCallbackWithoutResponseSetsNoLastError`; the `runtime.sendMessage callback without listener` contract checks Lilo's answer. Repro: from an extension page with nothing listening, `await browser.runtime.sendMessage(1)`. Expected: rejects. Actual: resolves.
 
 ### 42. No cross-extension messaging
 
 - **Gap:** WebKit throws `cross-extension messaging is not supported` in pages, and records an extension error in a worker. Chrome reaches the other extension's `onConnectExternal` / `onMessageExternal`, or fails with "Receiving end does not exist" when it is not installed.
-- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id go to native ([runtime.ts] `crossExtensionMessaging`), which checks the target's `externally_connectable.ids` and reported listeners and relays them as gap events to its `onMessageExternal` and `onConnectExternal` stand-ins (`externalEvents`, which also keep WebKit's for web pages) and the port's messages (`RuntimeBridgeHandler`). `browser.runtime` stays WebKit's (gap 2), and content scripts have no channel to Lilo. User-visible side: COMPATIBILITY.md, "runtime".
+- **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id go to native ([runtime.ts] `crossExtensionMessaging`), which checks the target's `externally_connectable.ids` and reported listeners and relays them as gap events to its `onMessageExternal` and `onConnectExternal` stand-ins (`externalEvents`, which also keep WebKit's for web pages) and the port's messages (`RuntimeBridgeHandler`), which close with the pages holding them (`GapEvents` `pageChannel`). `browser.runtime` goes there through WebKit's own methods (`crossExtensionPatches`). Content scripts have no channel to Lilo: theirs go to their worker as a marked message or port, which it relays (`relayExternalMessaging`, `relayForContentScripts`, `onConnect`). User-visible side: COMPATIBILITY.md, "runtime".
 - **Impact:** without Lilo, an extension talking to a companion extension (Sider) logs an error at every start.
 - **Check:** Manual. Repro: `browser.runtime.connect('abcdefghijklmnopabcdefghijklmnop')` from an extension page throws.
+
+### 82. `tabs.connect` does not reach the extension's pages a tab shows
+
+- **Gap:** WebKit's `tabs.connect` reaches the tab's content scripts only: a tab showing one of the extension's pages never fires its `runtime.onConnect`, and the port stays open. Chrome connects those pages too. `tabs.sendMessage` does reach them.
+- **Lilo:** `tabs.connect` asks for the tab's url as it opens WebKit's port; when the tab shows one of the extension's pages, the port goes over a marked `runtime.connect` instead, with what was posted meanwhile, and only the extension's top pages at the tab's url take it; the others hold it unanswered, as letting go before every process took it would drop it ([runtime.ts] `tabsConnect`, `onConnect`). Pages framed in a web page are not reached. User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** an extension whose worker connects to its own page opened in a tab (a popup or dashboard) got no answer.
+- **Check:** Manual (`testTabsMessagesReachTheExtensionsPagesATabShows` checks Lilo's answer). Repro: a tab shows the extension's page, whose `onConnect` listener answers each message; the worker runs `tabs.connect(tabId).postMessage(1)`. Expected: an answer. Actual: none, and no disconnect.
 
 ### 43. A port message sent before the port connects arrives twice
 
@@ -237,9 +244,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 
 ### 16. Manifest entries Chrome accepts are rejected
 
-- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>`, a pattern with a port (its patterns have no port) or a wildcard on a public suffix of the list's private section (`*://*.netlify.app/*`), which Chrome accepts.
-- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries dropped, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), `externally_connectable` wildcards on a public suffix of the bundled list are dropped, and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
-- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt and others).
+- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an MV3 `_execute_browser_action` or `_execute_page_action` command without a description (Chrome ignores them in MV3), a content script whose only `file://` patterns omit the host's slash (`file://*`, Chrome's `file:///*`), an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>`, a pattern with a port (its patterns have no port) or a wildcard on a public suffix of the list's private section (`*://*.netlify.app/*`), which Chrome accepts.
+- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries and MV3's MV2 action commands dropped, `file://` patterns with Chrome's empty host, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), `externally_connectable` wildcards on a public suffix of the bundled list are dropped, and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt, Axure RP, Lightning Extension and others).
 - **Check:** `testManifestEntriesChromeAcceptsAreRejected`. Repro: load a manifest with `"commands": { "_execute_action": {} }` (or each other entry) and read `WKWebExtension.errors`. Expected: none. Actual: one error each.
 
 ### 76. Host permissions match their path
@@ -391,6 +398,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
 - **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
 
+### 83. `cookies.set` checks a cookie not `secure` over http
+
+- **Gap:** WebKit checks the host access of a cookie set without `secure: true` for its http URL, whatever the scheme of `url`: an extension whose host permissions name https only fails with `Host permissions are missing or not granted.` Chrome checks `url` itself and sets the cookie.
+- **Lilo:** a `set` for an https URL with no `secure` that fails so is retried with `secure: true` ([cookies.ts] `setOverHTTPS`). User-visible side: COMPATIBILITY.md, "cookies".
+- **Impact:** Microsoft Solitaire Collection's worker could not set its bing.com cookies.
+- **Check:** `testCookiesSetChecksAccessOverHTTPForACookieNotSecure`. Repro: with `host_permissions: ["https://example.com/*"]`, `chrome.cookies.set({ url: 'https://example.com/', name: 'a', value: '1' })`. Expected: the cookie. Actual: the error; with `secure: true`, the cookie.
+
 ## declarativeNetRequest and content blockers
 
 ### 21. Content blocker regexes are a subset, ASCII only
@@ -409,7 +423,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 38. Concurrent rule updates remove from stale rule ids
 
 - **Gap:** WebKit drops `removeRuleIds` it does not find among the last rules it loaded, which a pending update has not changed yet, so a second call removing and re-adding rule 1 fails ("Rule 1 does not have a unique ID"); concurrent updates also compile over each other.
-- **Lilo:** runs a context's updates one after the other, merging calls made while one runs into a single update, since WebKit recompiles every rule on each ([dnr-rules.ts] `queued`, `updateRules`).
+- **Lilo:** runs a context's updates one after the other, merging calls made while one runs into a single update, since WebKit recompiles every rule on each ([dnr-rules.ts] `queued`, `updateRules`). It also keeps out of the update the rules removed and added back unchanged: WebKit deletes its rules database whenever removals empty it, which Dashlane's worker, replacing all its rules at each start, caused every minute.
 - **Impact:** I don't care about cookies' rule updates failed.
 - **Check:** `testConcurrentDynamicRuleUpdatesRemoveFromStaleRuleIds`.
 
@@ -479,6 +493,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 [webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
 [augmentation-entry.ts]: ../Lilo/Extensions/bridge-src/src/augmentation-entry.ts
 [background-entry.ts]: ../Lilo/Extensions/bridge-src/src/background-entry.ts
+[content-compat-entry.ts]: ../Lilo/Extensions/bridge-src/src/content-compat-entry.ts
 [callbackify.ts]: ../Lilo/Extensions/bridge-src/src/shared/callbackify.ts
 [chrome-compat.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-compat.ts
 [chrome-event.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-event.ts

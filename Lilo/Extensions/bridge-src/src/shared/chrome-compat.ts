@@ -2,19 +2,20 @@
 // `browser` breaks WebKit. SW-safe: no window/document/webkit.
 import { tabGroupsAugmentation, tabsWithGroups, manifestPermissions, discardTab } from '../augmentation/tabGroups.ts';
 import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns } from '../augmentation/webNavigation.ts';
-import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
-import { declarativeNetRequestPatches, staticRulesAdditions } from './dnr-rules.ts';
+import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, runtimePatches, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
-import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, externalEvents } from '../augmentation/runtime.ts';
+import {
+  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
+} from '../augmentation/runtime.ts';
 import { onAuthRequired } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
 import { detectLanguage } from '../augmentation/detectLanguage.ts';
 import { onUserScriptMessage, onUserScriptConnect } from '../augmentation/userScripts.ts';
-import { testMatchOutcomeFor } from '../augmentation/dnrTestMatch.ts';
+import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { GapChromeEvent, reportGapListener } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
@@ -179,10 +180,8 @@ function view(namespace: any, members: Record<PropertyKey, unknown>): object {
 
 // Native fires it when the user pins the extension to the address bar or unpins it.
 const actionOnUserSettingsChanged = new GapChromeEvent<[{ isOnToolbar?: boolean }]>('action', 'onUserSettingsChanged');
-// Events Lilo never fires: it has no blocking webRequest, and WebKit does not say which
-// declarativeNetRequest rule matched a request.
+// Never fired: Lilo has no blocking webRequest.
 const webRequestOnActionIgnored = new ChromeEvent<[unknown]>();
-const onRuleMatchedDebug = new ChromeEvent<[unknown]>();
 
 /**
  * Makes `globalThis.chrome` Lilo's proxy over WebKit's, which applies each namespace's description.
@@ -195,39 +194,41 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   const chrome = g.chrome;
   const perms = manifestPermissions(chrome);
   const nativeMessaging = perms.has('nativeMessaging');
-  // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is hidden.
-  const userScripts = perms.has('userScripts');
+  // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is
+  // hidden or the permission only optional (Table Capture listens before asking for it).
+  const userScripts = perms.has('userScripts') || !!chrome.runtime?.getManifest?.()?.optional_permissions?.includes('userScripts');
   const contextMenus: NamespaceCompat = { patch: contextMenusPatches };
   // Chrome reveals every tab's url to an extension that may hold `tabs`, which WebKit ignores: Lilo reads
   // them for it, and leaves out the empty ones WebKit reports to the others.
   const withheldURLs = !perms.has('tabs') && !chrome.runtime?.getManifest?.()?.optional_permissions?.includes('tabs');
   const groups = chrome.tabGroups === tabGroupsAugmentation ? tabsWithGroups : {};
   const noReceiver = () => 'Could not establish connection. Receiving end does not exist.';
-  // A page's message goes to the worker: Chrome's error then depends on whether the worker listens, and
-  // its promise rejects when nothing does. A worker's goes to pages, mostly not open, whose listeners
-  // Lilo does not know: its promise resolves.
-  const pageNoAnswer = () => gapCall<boolean>('runtime', 'workerListensToMessages').then(
-    (listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()),
-    noReceiver,
-  );
-  // Asked when nobody answered a tab's message: its content scripts answer the probe once one listens. Chrome also
-  // delivers it to the extension's own pages the tab shows, which the probe does not reach: those count as listening.
+  // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
+  // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
+  // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
+  const pageNoAnswer = () => Promise.resolve(chrome.runtime.sendMessage(listensProbe)).catch(() => undefined)
+    .then((listens) => listens === true || gapCall<boolean>('runtime', 'workerListensToMessages'))
+    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()), noReceiver);
+  // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
+  // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
+  // as listening: its page cannot listen yet (a tab opened on the popup hears tabs.onActivated's message at once).
   const tabNoAnswer = (original: Method, self: (that: unknown) => object) => function (this: unknown, tabId: unknown, _message: unknown, options?: unknown) {
     const tabs = self(this) as any;
     const target = options !== null && typeof options === 'object' ? [options] : [];
-    const showsOwnPage = async () => {
+    const loadsOwnPage = async () => {
       const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
       const base = chrome.runtime?.getURL?.('');
-      return typeof tab?.url === 'string' && !!base && tab.url.startsWith(base);
+      return tab?.status === 'loading' && !!base && [tab.url, tab.pendingUrl].some((url) => typeof url === 'string' && url.startsWith(base));
     };
     return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
-      async (listens) => (listens === true || await showsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
+      async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
       noReceiver,
     );
   };
   const tabsPatch: Record<string, Patch> = {
     ...tabPatches(withheldURLs),
     sendMessage: (original, self) => lastErrorWithoutAnswer(original, tabNoAnswer(original, self), true),
+    connect: tabsConnect,
   };
   const query = tabsPatch.query;
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
@@ -241,11 +242,9 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     webNavigation: { add: webNavigationAugmentation, patch: webNavigationPatches, standIns: webNavigationStandIns },
     // WebKit has no tab groups: tabs.group/ungroup and each tab's groupId map onto Lilo folders.
     tabs: { add: { discard: discardTab, ...tabsAdditions }, replace: groups.replace, patch: tabsPatch, standIns: tabStandIns(withheldURLs) },
-    declarativeNetRequest: {
-      patch: declarativeNetRequestPatches,
-      add: perms.has('declarativeNetRequestFeedback')
-        ? { ...staticRulesAdditions, testMatchOutcome: testMatchOutcomeFor(chrome.declarativeNetRequest), onRuleMatchedDebug }
-        : staticRulesAdditions,
+    // Read only once WebKit gives the namespace, which comes with the permissions its gap module needs.
+    get declarativeNetRequest() {
+      return gapModules.declarativeNetRequest.declarativeNetRequestCompat?.(chrome.declarativeNetRequest, perms.has('declarativeNetRequestFeedback'));
     },
     windows: { add: { onBoundsChanged }, patch: windowPatches(withheldURLs) },
     permissions: {
@@ -276,6 +275,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
+      patch: { ...runtimePatches, ...crossExtensionPatches },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
       standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
       add: {
@@ -342,4 +342,5 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   if (browser) Object.defineProperty(g, 'browser', { get: () => browser, set() {}, configurable: true });
   // The worker tells Lilo it listens, for the error of a page's message nobody answers.
   if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'));
+  if (!page && chrome.runtime?.onMessage) relayForContentScripts(chrome.runtime);
 }

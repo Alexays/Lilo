@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mockGapAPI } from '../shared/ipc.testkit.ts';
+import { mockGapAPI, pushToChannel } from '../shared/ipc.testkit.ts';
 
 const gapCalls: Array<{ namespace: string; method: string; params: any }> = [];
 let nextResult: unknown;
@@ -144,21 +144,23 @@ describe('windows.onBoundsChanged', () => {
   });
 });
 
-describe("Chrome's Tab objects", () => {
-  class NativeEvent {
-    listeners = new Set<(...args: any[]) => void>();
-    addListener(listener: (...args: any[]) => void) { this.listeners.add(listener); }
-    removeListener(listener: (...args: any[]) => void) { this.listeners.delete(listener); }
-    hasListener(listener: (...args: any[]) => void) { return this.listeners.has(listener); }
-    fire(...args: any[]) { for (const listener of this.listeners) listener(...args); }
-  }
+class NativeEvent {
+  listeners = new Set<(...args: any[]) => void>();
+  addListener(listener: (...args: any[]) => void) { this.listeners.add(listener); }
+  removeListener(listener: (...args: any[]) => void) { this.listeners.delete(listener); }
+  hasListener(listener: (...args: any[]) => void) { return this.listeners.has(listener); }
+  fire(...args: any[]) { for (const listener of this.listeners) listener(...args); }
+}
 
+describe("Chrome's Tab objects", () => {
   /** Lilo's answer for a loaded tab outside any group; with `reveal`, the url and title of the revealed tabs. */
-  const details = (extra: object = {}) => (params: any) => params.tabs.map((_: unknown, i: number) => ({
-    groupId: -1, discarded: false, frozen: false, lastAccessed: 5,
-    ...(params.reveal.includes(i) ? { url: 'chrome://newtab/', title: 'New Tab' } : {}),
-    ...extra,
-  }));
+  const details = (extra: object = {}) => (params: any) => ({
+    tabs: params.tabs.map((_: unknown, i: number) => ({
+      groupId: -1, discarded: false, frozen: false, lastAccessed: 5,
+      ...(params.reveal.includes(i) ? { url: 'chrome://newtab/', title: 'New Tab' } : {}),
+      ...extra,
+    })),
+  });
   const chromeFields = { groupId: -1, discarded: false, frozen: false, autoDiscardable: true };
 
   function install(permissions: string[], tabs: () => any[] = () => [{ id: 11, index: 0, windowId: 1, url: '', title: '', status: 'loading' }]) {
@@ -175,7 +177,7 @@ describe("Chrome's Tab objects", () => {
     const { chrome, webKit, withheld } = install([]);
     const left = { id: 11, index: 0, windowId: 1, status: 'loading', ...chromeFields };
     assert.deepEqual(await chrome.tabs.query({}), [{ ...left, lastAccessed: 5 }]);
-    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [] } }]);
+    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [], state: true } }]);
     const heard: unknown[] = [];
     const onUpdated = (...args: unknown[]) => heard.push(args);
     chrome.tabs.onUpdated.addListener(onUpdated);
@@ -190,11 +192,17 @@ describe("Chrome's Tab objects", () => {
     nextResult = details();
     const { chrome, webKit, withheld } = install(['tabs']);
     assert.deepEqual(await chrome.tabs.query({}), [{ ...withheld(), url: 'chrome://newtab/', title: 'New Tab', ...chromeFields, lastAccessed: 5 }]);
-    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [0] } }]);
+    assert.deepEqual(gapCalls, [{ namespace: 'tabs', method: 'details', params: { tabs: [{ windowPosition: -1, index: 0 }], reveal: [0], state: true } }]);
     const heard: unknown[] = [];
     chrome.tabs.onUpdated.addListener((...args: unknown[]) => heard.push(args));
     webKit.onUpdated.fire(11, { title: '' }, withheld());
     assert.deepEqual(heard, [[11, { title: '' }, { ...withheld(), ...chromeFields }]]);
+  });
+
+  it('leave out the url and title of a tab Lilo does not hold, such as the stand-in of a window showing no web page', async () => {
+    nextResult = () => [null];
+    const { chrome } = install(['tabs']);
+    assert.deepEqual(await chrome.tabs.query({}), [{ id: 11, index: 0, windowId: 1, status: 'loading', ...chromeFields }]);
   });
 
   it('report an unloaded tab as discarded, its status unloaded, as Chrome', async () => {
@@ -206,7 +214,7 @@ describe("Chrome's Tab objects", () => {
   });
 
   it('filter tabs.query on groupId, which WebKit ignores', async () => {
-    nextResult = () => [{ groupId: 4 }, { groupId: -1 }];
+    nextResult = () => ({ tabs: [{ groupId: 4 }, { groupId: -1 }] });
     const { chrome, asked } = install([], () => [{ id: 11, index: 0, windowId: 1 }, { id: 12, index: 1, windowId: 1 }]);
     assert.deepEqual((await chrome.tabs.query({ groupId: 4, active: true })).map((tab: any) => tab.id), [11]);
     assert.deepEqual(asked, [{ active: true }]);
@@ -240,5 +248,86 @@ describe("Chrome's Tab objects", () => {
     assert.deepEqual((await chrome.tabs.query({ url: 'chrome://newtab/*' })).map((tab: any) => tab.id), [11]);
     assert.deepEqual((await chrome.tabs.query({ url: ['https://example.com/*', 'chrome://newtab/*'] })).map((tab: any) => tab.id), [11, 12]);
     assert.deepEqual(await new Promise((resolve) => chrome.tabs.query({ url: 'chrome://extensions/*' }, resolve)), []);
+  });
+});
+
+describe('the tab state Lilo sends', () => {
+  // Window 7 is this suite's own: the tests above never map it to a key, and these run in order.
+  const facts = (groupId: number, lastAccessed: number, frozen = false) => [groupId, false, frozen, lastAccessed];
+  const state = (tabs: unknown[]) => ({ push: 'tabs.state', args: [{ windows: ['k7'], tabs: [tabs] }] });
+
+  function install(permissions: string[] = []) {
+    const calls = { query: 0, getAll: 0 };
+    let shown = [{ id: 71, index: 0, windowId: 7, url: 'https://a.test/', title: 'A' }];
+    class Tabs {
+      query() { calls.query += 1; return Promise.resolve(structuredClone(shown)); }
+      get(id: number) { return Promise.resolve(structuredClone(shown.find((tab) => tab.id === id))); }
+    }
+    const webKit = Object.assign(new Tabs(), { onCreated: new NativeEvent(), onUpdated: new NativeEvent() });
+    (globalThis as any).chrome = {
+      runtime: { getManifest: () => ({ permissions }) },
+      tabs: webKit,
+      windows: { getAll: async () => { calls.getAll += 1; return [{ id: 7 }]; } },
+    };
+    installChromeCompat({});
+    return { chrome: (globalThis as any).chrome, webKit, calls, show: (tabs: typeof shown) => { shown = tabs; } };
+  }
+
+  it("answers tabs.query from the state once the context holds it: one round trip, WebKit's", async () => {
+    nextResult = (params: any) => ({
+      tabs: params.tabs.map(() => ({ groupId: 3, discarded: false, frozen: false, lastAccessed: 9, windowKey: 'k7' })),
+      state: params.state ? { windows: ['k7'], tabs: [[facts(3, 9)]] } : undefined,
+    });
+    const { chrome, calls } = install();
+
+    const [first] = await chrome.tabs.query({});
+    assert.equal(first.groupId, 3);
+    assert.deepEqual(gapCalls.map((call) => call.params), [{ tabs: [{ windowPosition: 0, index: 0 }], reveal: [], state: true }]);
+    assert.deepEqual(calls, { query: 1, getAll: 1 }, 'the first call asks Lilo, the window order read alongside');
+
+    gapCalls.length = 0;
+    const [second] = await chrome.tabs.query({});
+    assert.equal(second.lastAccessed, 9);
+    pushToChannel(state([[5, true, false, 11]]));
+    const [third] = await chrome.tabs.query({});
+
+    assert.deepEqual(third, {
+      id: 71, index: 0, windowId: 7, url: 'https://a.test/', title: 'A',
+      groupId: 5, discarded: true, frozen: false, autoDiscardable: true, lastAccessed: 11, status: 'unloaded',
+    });
+    assert.equal(gapCalls.length, 0);
+    assert.deepEqual(calls, { query: 3, getAll: 1 });
+  });
+
+  it('gives tab events the state Lilo sends ahead of them', () => {
+    const { chrome, webKit } = install();
+    const heard: any[] = [];
+    chrome.tabs.onCreated.addListener((tab: unknown) => heard.push(tab));
+    chrome.tabs.onUpdated.addListener((_id: number, _change: unknown, tab: unknown) => heard.push(tab));
+
+    pushToChannel(state([facts(5, 11), facts(2, 12, true)]));
+    webKit.onCreated.fire({ id: 72, index: 1, windowId: 7, url: 'https://b.test/', title: 'B', status: 'loading' });
+    webKit.onUpdated.fire(71, { status: 'complete' }, { id: 71, index: 0, windowId: 7, url: 'https://a.test/', title: 'A', status: 'complete' });
+
+    assert.deepEqual(heard.map(({ groupId, frozen, lastAccessed }) => ({ groupId, frozen, lastAccessed })), [
+      { groupId: 2, frozen: true, lastAccessed: 12 },
+      { groupId: 5, frozen: false, lastAccessed: 11 },
+    ]);
+    assert.equal(gapCalls.length, 0, 'the context already holds the state');
+  });
+
+  it('reads a moved tab at its live index, from the state as from Lilo', async () => {
+    const { chrome, calls, show } = install(['tabs']);
+    pushToChannel(state([facts(5, 11), facts(6, 13)]));
+    show([{ id: 71, index: 1, windowId: 7, url: '', title: '' }]);
+    nextResult = (params: any) => ({ tabs: params.tabs.map(() => ({ groupId: 6, discarded: false, frozen: false, url: 'https://a.test/', title: 'A', windowKey: 'k7' })) });
+
+    const [moved] = await chrome.tabs.query({});
+    const { tabPositions } = await import('./tabGroups.ts');
+
+    assert.deepEqual([moved.groupId, moved.lastAccessed, moved.url], [6, undefined, 'https://a.test/']);
+    assert.deepEqual(gapCalls.map((call) => call.params), [{ tabs: [{ windowKey: 'k7', index: 1 }], reveal: [0], state: false }]);
+    assert.deepEqual(await tabPositions([71]), [{ windowPosition: 0, index: 1 }]);
+    assert.equal(calls.getAll, 1, 'only tabPositions reads the window order');
   });
 });

@@ -34,6 +34,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(wrapper.contains("importScripts(\"background.js\");"))
         let background = try loadBackground(from: extDir)
         XCTAssertEqual(background["service_worker"] as? String, "lilo-background-wrapper.js")
+        XCTAssertEqual(background["lilo_service_worker"] as? String, "background.js", "what runtime.getManifest() reports")
     }
 
     /// Tampermonkey imports its empty test.js between its startup flag and its listeners.
@@ -55,14 +56,14 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
     func testPreludeCarriesOnlyTheGapModulesTheManifestMayUse() throws {
         let extDir = tempDir.appendingPathComponent("gap-modules")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
-        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
+        try #"{"manifest_version":3,"name":"Gap","version":"1","background":{"service_worker":"background.js"},"permissions":["history","declarativeNetRequestWithHostAccess"],"optional_permissions":["system.cpu"],"omnibox":{"keyword":"k"}}"#
             .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
         let modules = prelude.matches(of: /__liloGapModules\?\?=\{\}\)\["(\w+)"\]/).map { String($0.1) }
-        XCTAssertEqual(modules, ["history", "omnibox", "system"])
+        XCTAssertEqual(modules, ["declarativeNetRequest", "history", "omnibox", "system"])
         XCTAssertTrue(prelude.hasSuffix("P"))
     }
 
@@ -361,6 +362,31 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let command = try XCTUnwrap(WKWebExtensionContext(for: prepared.webExtension).commands.first { $0.id == "_execute_action" })
         XCTAssertEqual(command.activationKey, "y")
         XCTAssertEqual(command.modifierFlags, [.command, .shift])
+    }
+
+    /// Lightning Extension: Chrome ignores MV2's action commands in MV3, which need no description there.
+    @MainActor
+    func testMV2ActionCommandsAreDroppedFromAnMV3Manifest() async throws {
+        let prepared = try await prepareAsChrome(#"""
+        {"action": {}, "commands": {"_execute_browser_action": {"suggested_key": {"default": "Ctrl+E"}}, "_execute_page_action": {},
+         "toggle": {"description": "Toggle"}}}
+        """#)
+
+        XCTAssertEqual(prepared.errors, [])
+        XCTAssertEqual(Set(WKWebExtensionContext(for: prepared.webExtension).commands.map(\.id)), ["_execute_action", "toggle"])
+    }
+
+    /// Axure RP: Chrome reads `file://*` as `file:///*`, and ignores a file URL's host.
+    @MainActor
+    func testFilePatternsTakeChromesEmptyHost() async throws {
+        let prepared = try await prepareAsChrome(#"""
+        {"content_scripts": [{"matches": ["file://*", "file://localhost/a/*", "file:///b/*", "https://*/*"], "exclude_matches": ["file://*.txt"], "js": ["a.js"]}]}
+        """#, files: ["a.js": ""])
+
+        XCTAssertEqual(prepared.errors, [])
+        let script = try XCTUnwrap((prepared.webExtension.manifest["content_scripts"] as? [[String: Any]])?.first)
+        XCTAssertEqual(script["matches"] as? [String], ["file:///*", "file:///a/*", "file:///b/*", "https://*/*"])
+        XCTAssertEqual(script["exclude_matches"] as? [String], ["file:///*.txt"])
     }
 
     @MainActor

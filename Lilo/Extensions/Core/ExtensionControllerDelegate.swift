@@ -108,24 +108,16 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionWindow)?, Error?) -> Void
     ) {
-        // A normal window is a browser window on the current space; popups and private windows stay panels.
+        // With "Prefer a single window" on, a normal window's tabs open in the current space, whose window it returns;
+        // any other window is a floating panel of its own, so its id never names a window or space of the user's.
         if configuration.windowType == .normal, !configuration.shouldBePrivate,
-           let windowController, let registry, let spaceId = windowController.tabManager.currentSpaceId {
-            if windowController.context.settingsStore.singleWindow, let nsWindow = windowController.window {
-                if configuration.tabURLs.isEmpty { windowController.newTab(nil) }
-                for (index, url) in configuration.tabURLs.enumerated() {
-                    windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused)
-                }
-                completionHandler(registry.windowAdapter(for: nsWindow), nil)
-                return
+           let windowController, windowController.prefersSingleWindow, let spaceWindow = windowController.tabManager.windowAdapter {
+            let urls = configuration.tabURLs.isEmpty ? [windowController.profileContext?.extensions.activeNewTabOverrideURL] : configuration.tabURLs.map(Optional.some)
+            for (index, url) in urls.enumerated() {
+                guard let tab = windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused) else { continue }
+                spaceWindow.tabIdsOpenedAsWindow.append(tab.id)
             }
-            let opened = windowController.context.openWindow(on: spaceId, opening: .urls(configuration.tabURLs))
-            guard let nsWindow = opened.window else {
-                completionHandler(nil, Self.extensionError("The window could not open"))
-                return
-            }
-            if !configuration.shouldBeFocused { windowController.window?.makeKeyAndOrderFront(nil) }
-            completionHandler(registry.windowAdapter(for: nsWindow), nil)
+            completionHandler(spaceWindow, nil)
             return
         }
         let windowAdapter = presentExtensionPanel(
@@ -461,8 +453,12 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             registry?.gapEvents.attach(port, extensionId: context.uniqueIdentifier)
             return
         }
+        // Without the permission, Chrome has no connectNative to call, so it reports no error. WebKit's, which every
+        // extension has for Lilo's channel, opens a port that closes on its first message, as a missing host's.
         guard holdsNativeMessaging(context) else {
-            completionHandler(Self.extensionError("Native messaging requires the nativeMessaging permission")); return
+            port.messageHandler = { [weak port] _, _ in port?.disconnect() }
+            completionHandler(nil)
+            return
         }
         nativeMessaging.connect(port, toHost: hostName, for: context, completionHandler: completionHandler)
     }
