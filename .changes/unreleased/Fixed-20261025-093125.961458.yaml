@@ -1,0 +1,3 @@
+kind: Fixed
+body: A right-click no longer leaves a tooltip on screen under the context menu.
+time: 2026-10-25T09:31:25.961458+01:00
