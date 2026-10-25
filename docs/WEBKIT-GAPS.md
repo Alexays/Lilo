@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82 and 87. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80, 84 and 89. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82 and 87. Every other gap is fully worked around.
 
 ---
 
@@ -153,6 +153,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Lilo:** once the worker's top-level code has run, the prelude waits for the content script registrations in flight and one more call's answer (`permissions.getAll`) before it dispatches the events Lilo sent meanwhile ([background-entry.ts] `__liloWorkerReady`, [chrome-leniency.ts] `registrationsSettled`, [ipc.ts] `workerReady`). Storage reads the worker made meanwhile answer after those events, as Chrome's storage, slower than its other answers, does ([storage-area.ts] `ordered`).
 - **Impact:** Glasp's early `onInstalled` overlapped its top-level menu rebuild and `menus.create` found its id used (4 runs in 10); Tactiq's `onInstalled` unregistered scripts its startup was still registering; Custom Cursors' startup read its cursors before its `onInstalled` set their defaults.
 - **Check:** Manual: timing dependent, not reduced to a minimal case. Repro: a module worker calls `browser.contextMenus.removeAll().then(...)` at top level, then posts on a native port the app answers at once. Expected: `removeAll` settles first. Actual: `onMessage` sometimes runs first.
+
+### 89. Ports opened in two processes can share a channel id
+
+- **Gap:** each web process numbers the ports it opens with its own counter, and the extension context keys its ports by that number alone. An extension page in a process of its own and the worker, or a content script and the worker, can draw the same number. A message sent to one of the two ports then reaches both, and a second native port with a number already open is not registered: its messages go to the first one, and once it is released the first one stops receiving. Chrome's port ids are unique.
+- **Lilo:** no workaround. A page whose channel to Lilo draws the worker's number never reaches Lilo (its calls and listener reports go unanswered), and the worker's channel stops reaching Lilo too.
+- **Impact:** intermittent, mostly under load: a page that never hears its events, a worker whose calls time out, a content script port to the worker that also receives the worker's answers from Lilo.
+- **Check:** Manual: timing dependent. Repro: stream WebKit's `Extensions` debug log and open extension pages in tabs (a process each) while the worker has its channel open, until a page's "Added 1 port for channel N in native world" repeats the worker's N. Expected: the page's messages reach its port. Actual: "Removed 1 port for channel N in native world" follows at once and neither port receives anything more.
 
 ## Pages and web views
 
