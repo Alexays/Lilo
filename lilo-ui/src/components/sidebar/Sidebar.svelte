@@ -152,6 +152,13 @@
     contain: content;
   }
 
+  /* The address details card grows past a narrow sidebar, over the page; the clip only matters while
+     a side panel slides, which the card never shows over. */
+  .sidebar-viewport:has(:global(.url-details)) {
+    overflow: visible;
+    contain: layout style;
+  }
+
   .sidebar-layout {
     position: relative;
     display: flex;

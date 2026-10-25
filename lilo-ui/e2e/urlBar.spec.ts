@@ -50,7 +50,10 @@ test("the details card is wider than a narrow sidebar and shows while a request 
 	await page.mouse.move(60, 72);
 	const card = page.locator(".url-details");
 	await expect(card).toBeVisible();
-	expect((await card.boundingBox())!.width).toBeGreaterThanOrEqual(300);
+	const box = (await card.boundingBox())!;
+	expect(box.width).toBeGreaterThanOrEqual(300);
+	const pastSidebar = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest(".url-details"), [box.x + box.width - 8, box.y + 8]);
+	expect(pastSidebar).toBe(true);
 	await expect(card.locator("dd").first()).not.toHaveText(/\n/);
 });
 
