@@ -1,7 +1,8 @@
 #!/bin/bash
 # Times a Release Lilo with 20 store extensions and a probe on a throwaway profile: launch to extensions restored,
 # per-extension preparation (cold, then stamped), worker starts, tabs.query and storage.get latency, and idle CPU.
-# Usage: bench_extensions.sh [runs=5] [--no-build] [--idle SECONDS=60] [--out DIR]
+# Usage: bench_extensions.sh [runs=5] [--no-build] [--idle SECONDS=60] [--out DIR] [--max-idle-cpu LILO,WEBKIT]
+# --max-idle-cpu exits non-zero when idle CPU % of Lilo or of its WebKit processes goes over that budget.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,11 +13,13 @@ RUNS=5
 BUILD=true
 IDLE=60
 KEEP=""
+MAX_IDLE_CPU=""
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-build) BUILD=false ;;
         --idle) IDLE="$2"; shift ;;
         --out) KEEP="$2"; [[ $KEEP = /* ]] || KEEP="$PWD/$KEEP"; shift ;;
+        --max-idle-cpu) MAX_IDLE_CPU="$2"; shift ;;
         *) RUNS="$1" ;;
     esac
     shift
@@ -46,6 +49,11 @@ EXTENSIONS=(
     jghecgabfgfdldnmbfkhmffcabddioke # Volume Master
     aopddeflghjljihihabdclejbojaomaf # AnyDoc Translator
 )
+
+if [ -n "$MAX_IDLE_CPU" ] && ! [[ $MAX_IDLE_CPU =~ ^[0-9.]+,[0-9.]+$ ]]; then
+    echo "--max-idle-cpu takes LILO,WEBKIT percentages, like 35,25" >&2
+    exit 1
+fi
 
 if ioreg -n Root -d1 -a | grep -A1 CGSSessionScreenIsLocked | grep -q '<true/>'; then
     echo "The screen is locked: unlock it to benchmark launches." >&2
@@ -175,10 +183,10 @@ kill "$APP_PID"
 wait "$APP_PID" 2>/dev/null || true
 APP_PID=""
 
-python3 -I - "$WORK/out" "$RUNS" "$IDLE" <<'PY'
+python3 -I - "$WORK/out" "$RUNS" "$IDLE" "$MAX_IDLE_CPU" <<'PY'
 import json, os, re, statistics, sys
 from datetime import datetime
-out, runs, idle = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+out, runs, idle, budget = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
 
 def pct(values, p):
     values = sorted(values)
@@ -253,10 +261,17 @@ start, end = (json.load(open(os.path.join(out, f"idle-{name}.json"))) for name i
 # A WebKit process started during the window counts from zero; one that ended in it is missed.
 delta = {k: [v[0] - start.get(k, [0, 0])[0], v[1] - start.get(k, [0, 0])[1]] for k, v in end.items()}
 webkit = [v for k, v in delta.items() if k != "app"]
+app_cpu, webkit_cpu = delta["app"][0] / int(idle) * 100, sum(v[0] for v in webkit) / int(idle) * 100
 print(f"\n== idle {idle} s, from 60 s after a launch")
-row("Lilo CPU % / wakeups per s", f"{delta['app'][0] / int(idle) * 100:.1f} / {delta['app'][1] / int(idle):.0f}")
+row("Lilo CPU % / wakeups per s", f"{app_cpu:.1f} / {delta['app'][1] / int(idle):.0f}")
 row("its WebKit processes CPU % / wakeups per s (processes)",
-    f"{sum(v[0] for v in webkit) / int(idle) * 100:.1f} / {sum(v[1] for v in webkit) / int(idle):.0f} ({len(webkit)})")
+    f"{webkit_cpu:.1f} / {sum(v[1] for v in webkit) / int(idle):.0f} ({len(webkit)})")
+over = []
+if budget:
+    app_max, webkit_max = (float(v) for v in budget.split(","))
+    over = [f"{name} {cpu:.1f}% > {limit:g}%" for name, cpu, limit in (("Lilo", app_cpu, app_max), ("WebKit processes", webkit_cpu, webkit_max)) if cpu > limit]
+    row("idle CPU budget, Lilo / WebKit processes %", f"{app_max:g} / {webkit_max:g}: {'over, ' + ', '.join(over) if over else 'ok'}")
 json.dump(rows, open(os.path.join(out, "summary.json"), "w"), indent=1)
+sys.exit(1 if over else 0)
 PY
 

@@ -273,7 +273,7 @@ ext-bridge-test: $(BRIDGE_DEPS)
 ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
-## Unattended ext-smoke of the top 500; report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
+## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
 ext-nightly:
 	@$(MAKE) --no-print-directory ext-smoke TOP=$(or $(TOP),500)
 
@@ -398,10 +398,12 @@ check-commits:
 startup-bench:
 	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT))
 
-# Extensions download once into build/ext-bench; the bench takes about 5 minutes.
-## Time a Release build with 20 store extensions: restore, preparation, worker starts, API latency, idle CPU (RUNS=5 IDLE=60)
+# Extensions download once into build/ext-bench; the bench takes about 5 minutes. The idle budget sits well above
+# a healthy build and well below a busy loop in a worker or the bridge; MAX_IDLE_CPU= measures without one.
+MAX_IDLE_CPU ?= 35,25
+## Time a Release build with 20 store extensions: restore, preparation, worker starts, API latency, idle CPU; fails over the idle CPU budget % of Lilo,WebKit (RUNS=5 IDLE=60 MAX_IDLE_CPU=35,25)
 ext-bench:
-	@scripts/bench_extensions.sh $(or $(RUNS),5) --idle $(or $(IDLE),60) $(if $(OUT),--out $(OUT))
+	@scripts/bench_extensions.sh $(or $(RUNS),5) --idle $(or $(IDLE),60) $(if $(OUT),--out $(OUT)) $(if $(MAX_IDLE_CPU),--max-idle-cpu $(MAX_IDLE_CPU))
 
 # SUDO=1 samples with powermetrics, SUDO=0 falls back to top; GIT=1 (needs sudo) also counts git runs.
 ## Sample the running Lilo's CPU, wakeups and energy (DURATION=120 LABEL=run OUT=~/lilo-energy GIT=0 SUDO=1)
