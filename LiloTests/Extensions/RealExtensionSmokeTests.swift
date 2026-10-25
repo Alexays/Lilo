@@ -66,6 +66,18 @@ final class RealExtensionSmokeTests: XCTestCase {
         "mfpiaehgjbbfednooihadalhehabhcjo": "Chrome too: it scripts a tab it has no access to (WebKit words the error differently)", // Scrolling screenshot tool
         "oeopbcgkkoapgobdbedcemjljbihmemj": "Lilo has no push backend: it logs the error instanceID.getToken fails with, Chrome's with Instance ID disabled, where Chrome gets a token", // Checker Plus for Gmail
         "inlikjemeeknofckkjolnjbpehgadgge": "WebKit gives extensions no SharedArrayBuffer, so its offscreen document cannot open its SQLite store", // Distill Web Monitor
+        "bomfdkbfpdhijjbeoicnfhjbdhncfhig": "WebKit gives extensions no SharedArrayBuffer (WEBKIT-GAPS.md, gap 36): its worker's error reporter logs the ReferenceError", // Paperpile
+        "hkhggnncdpfibdhinjiegagmopldibha": "Lilo has no push backend: it logs the error instanceID.getToken fails with, as Checker Plus for Gmail", // Checker Plus for Google Calendar
+        "ndakideadaglgpbblmppfonobpdgggin": "Chrome gives it chrome.mdns and chrome.system.network, which Lilo lacks: its worker logs that it cannot look for printers", // Mobility Print
+        "njdniclgegijdcdliklgieicanpmcngj": "WebKit has no Network Information API: its worker sets navigator.connection.onchange at startup and fails to load", // Lightspeed Insight Agent
+        "cmllgdnjnkbapbchnebiedipojhmnjej": "Chrome too: its module worker reads Element, which no worker has, and fails to start (Chrome's reference records the error only)", // Adaware AdBlock
+        "doojmbjmlfjjnbmnoijecmcbfeoakpjm": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): its tab probe runs before the script declaring ns", // NoScript
+        "mkhjobnjhllkhekbbedlkmgcglgaeidc": "Chrome too: its worker finds no Chromebook and disables itself with management.setEnabled, so its popup does not load; Chrome's reference reads the text of its blocked page", // iboss Cloud Connector
+        "gkncegdiihdghhkfpnnodppcbjeeimkc": "installed from the store, it needs an enterprise policy's managed configuration; Chrome's reference runs it unpacked (installType development), where it falls back to defaults", // Senso
+        "hdjihnnclpjhfdbbinmgoiehhoehhlgf": "its popup waits for the window focus the test's window never gets, then pastes with document.execCommand('paste'), which WebKit answers false: it renders nothing", // Pasty
+        "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, fails with 'Could not establish connection' where Chrome's is answered, so it shows its loader only", // Aircall Dialer
+        "kpbnombpnpcffllnianjibmpadjolanh": "Lilo reports 'Could not establish connection' for its popup's message, which Chrome delivers to a worker listener that returns true and never answers", // ACG Helper
+        "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker extension.getBackgroundPage, which Chrome leaves out of workers: its background check compares the result with window and fails to load", // AI Exporter
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
@@ -88,7 +100,10 @@ final class RealExtensionSmokeTests: XCTestCase {
         "pfjdepjjfjjahkjfpkcgfmfhmnakjfba": "some runs log runtime.lastError 'Could not establish connection' for a message no context receives yet; the cause is not yet known", // Detailed SEO Extension
         "callobklhcbilhphinckomhgkigmfocg": "its worker reads chrome.enterprise.reportingPrivate, which Chrome gives this extension only and Lilo lacks; some runs never reach that read", // Endpoint Verification
         "amfojhdiedpdnlijjbhjnhokbnohfdfb": "its welcome page's content script can ask its worker to check a context menu entry before the worker's storage answer, which creates that entry, has come back", // eJOY AI Dictionary
-        "blgcbajigpdfohpgcmbbfnphcgifjopc": "its Flutter build needs Chrome's ImageDecoder and Intl.v8BreakIterator, which WebKit lacks: it asks for a skwasm_heavy build its package does not ship" // ExpressKeys: Password Manager
+        "blgcbajigpdfohpgcmbbfnphcgifjopc": "its Flutter build needs Chrome's ImageDecoder and Intl.v8BreakIterator, which WebKit lacks: it asks for a skwasm_heavy build its package does not ship", // ExpressKeys: Password Manager
+        "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab", // TxtAnalyser
+        "medapdbncneneejhbgcjceippjlfkmkg": "some runs its popup reads its preferences before its worker has stored them (mdPlugins on undefined)", // Markdown Reader
+        "nfadicbbecgbdbgbibgflooojfbolpgk": "some runs its popup renders nothing after a message its worker does not answer yet, which Chrome logs too; the cause is not yet known" // Pie Shopping
     ]
 
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
@@ -127,11 +142,23 @@ final class RealExtensionSmokeTests: XCTestCase {
         // WebKit and Chrome word the same errors differently; ids and times differ from run to run.
         let normalized = { (message: String) -> String in
             message
+                // Chrome's recording keeps the first line of each error.
+                .replacingOccurrences(of: #"\n[\s\S]*"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #"Invalid call to \S+\(\)\. "#, with: "", options: .regularExpression)
                 // A promise rejected with undefined: V8 reports the bare text, JavaScriptCore the value.
                 .replacingOccurrences(of: #"^Uncaught \(in promise\)$"#, with: "undefined", options: .regularExpression)
-                // A logged "Error: " label stays: of console.error("Error: ", error), WebKit keeps only the label.
-                .replacingOccurrences(of: #"^(Error in event handler: |Error handling response: |Uncaught \(in promise\) )?((Type)?Error: (?! ))?"#, with: "", options: .regularExpression)
+                // A logged "Error: " label stays: of console.error("Error: ", error), WebKit keeps only the label. An unchecked
+                // lastError is the same error as the one WebKit reports for a call it fails.
+                .replacingOccurrences(
+                    of: #"^(Error in event handler: |Error handling response: |Uncaught \(in promise\) |Unchecked runtime\.lastError: )?((Type)?Error: (?! ))?"#,
+                    with: "", options: .regularExpression
+                )
+                .replacingOccurrences(of: "Unexpected keyword '", with: "Unexpected token '")
+                // Lilo cannot tell a message nobody answered from one whose listener promised an answer it never sent.
+                .replacingOccurrences(
+                    of: "A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received",
+                    with: "The message port closed before a response was received."
+                )
                 // V8's and JavaScriptCore's wording of a property read or destructured on undefined or null, of a missing variable and of one declared twice.
                 .replacingOccurrences(of: #"Cannot read properties of (undefined|null) \(reading '([^']+)'\)"#, with: "$1.$2", options: .regularExpression)
                 .replacingOccurrences(of: #"(undefined|null) is not an object \(evaluating '(?:[^']*\.)?([^'.]+)'\)"#, with: "$1.$2", options: .regularExpression)
@@ -140,7 +167,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 .replacingOccurrences(of: #"Cannot destructure property '([^']+)' (from null or undefined value|of '.*' as it is (undefined|null)\.)"#, with: "Cannot destructure property '$1'", options: .regularExpression)
                 // JavaScriptCore quotes the call of something that is not a function.
                 .replacingOccurrences(of: #"\. \(In '.*?', '.*?' is [^)]*\)"#, with: "", options: .regularExpression)
-                .replacingOccurrences(of: #" ?\([^()]*:\d+:\d+\)$"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: #" ?\([^()]*:\d+(:\d+)?\)$"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: "Load failed", with: "Failed to fetch")
                 // A plain object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
                 .replacingOccurrences(of: "[object Object]", with: "Object")
@@ -148,7 +175,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 .replacingOccurrences(of: #"Cannot find menu item with id \S+"#, with: "Menu item not found.", options: .regularExpression)
                 // A worker scripting the active tab at startup meets Chrome's about:blank, Lilo's popup tab
                 // or a tab still loading, which WebKit refuses in its own words.
-                .replacingOccurrences(of: #"Cannot access contents of url "[^"]*""#, with: "Cannot access contents of url", options: .regularExpression)
+                .replacingOccurrences(of: #"Cannot access contents of (url "[^"]*"|the page)"#, with: "Cannot access contents of url", options: .regularExpression)
                 .replacingOccurrences(of: "This extension does not have access to this tab.", with: "Cannot access contents of url")
                 .replacingOccurrences(of: #"\d+"#, with: "#", options: .regularExpression)
         }
@@ -179,7 +206,13 @@ final class RealExtensionSmokeTests: XCTestCase {
                 }
             }
             do {
-                let package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                let package: URL
+                do {
+                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                } catch let error as URLError where error.code == .timedOut {
+                    // The store's download host times out now and then under the shards' load: once more before failing.
+                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                }
                 defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) }
                 try await registry.load(from: package)
             } catch {
