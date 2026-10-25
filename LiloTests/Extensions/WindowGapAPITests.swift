@@ -123,7 +123,7 @@ final class WindowGapAPITests: XCTestCase {
 
         // WebKit asks for the open windows when a context loads, and finds a content script's tab among them.
         XCTAssertTrue(registry.extensionWindows.last === panel)
-        let position = try XCTUnwrap(registry.extensionWindows.firstIndex { $0 === panel })
+        let position = try XCTUnwrap(registry.extensionWindows(for: context).firstIndex { $0 === panel })
         let tab = registry.tabAdapters(atPositions: [["windowPosition": position, "index": 0]], extensionId: extensionId).first ?? nil
         XCTAssertNotNil(tab)
         panel.nsWindow?.close()
@@ -389,7 +389,8 @@ final class WindowGapAPITests: XCTestCase {
 
     // MARK: - private windows
 
-    /// WebKit lists [S, P, T]: this window's space S, a private space P showing one tab, and a space T, each its own window.
+    /// WebKit lists [T, P, S], the window opened last first: this window's space S, a private space P showing one tab, and a
+    /// space T, each its own window.
     func testAnExtensionWithoutPrivateAccessNeverReachesAPrivateTab() async throws {
         let thisWindow = try XCTUnwrap(window.tabManager.windowAdapter)
         let privateSpace = try browserContext.context.spaceManager.createSpace(name: "P", profileId: space.profileId, isPrivate: true)
@@ -416,17 +417,17 @@ final class WindowGapAPITests: XCTestCase {
                 XCTAssertFalse(found.first ?? nil === privateAdapter, "position \(windowPosition), \(index)")
             }
         }
-        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === otherAdapter)
+        XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 0, "index": 0]], extensionId: extensionId).first ?? nil === otherAdapter)
         XCTAssertNil(registry.tabPosition(of: privateAdapter, extensionId: extensionId))
-        XCTAssertEqual(registry.tabPosition(of: otherAdapter, extensionId: extensionId), ["windowPosition": 1, "index": 0])
-        XCTAssertEqual(registry.windowPosition(of: otherWindow, extensionId: extensionId), 1)
-        XCTAssertTrue(registry.extensionWindow(at: 1, extensionId: extensionId) === otherWindow)
+        XCTAssertEqual(registry.tabPosition(of: otherAdapter, extensionId: extensionId), ["windowPosition": 0, "index": 0])
+        XCTAssertEqual(registry.windowPosition(of: otherWindow, extensionId: extensionId), 0)
+        XCTAssertTrue(registry.extensionWindow(at: 1, extensionId: extensionId) === thisWindow)
 
         // Both tabs sit in background spaces, whose events still reach extensions, as a background window's do in Chrome.
         try XCTUnwrap(privateAdapter.engineTab).reportZoomChange(from: 1, to: 2)
         XCTAssertTrue(queued("tabs.onZoomChange").isEmpty, "no event about a private tab")
         try XCTUnwrap(otherAdapter.engineTab).reportZoomChange(from: 1, to: 2)
-        XCTAssertEqual(queued("tabs.onZoomChange").map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [[1, 0]])
+        XCTAssertEqual(queued("tabs.onZoomChange").map { [$0["windowPosition"] as? Int, $0["index"] as? Int] }, [[0, 0]])
 
         context.hasAccessToPrivateData = true
         XCTAssertTrue(registry.tabAdapters(atPositions: [["windowPosition": 1, "index": 0]], extensionId: extensionId).first ?? nil === privateAdapter)
@@ -436,7 +437,8 @@ final class WindowGapAPITests: XCTestCase {
 
     // MARK: - spaces
 
-    /// A space keeps its window and its tabs keep their places across switches; the window shown is the focused one.
+    /// A space keeps its window and its tabs across switches; the window shown is the focused one. WebKit lists the window
+    /// opened last first.
     func testEachSpaceIsAWindowThatKeepsItsTabsInTheBackground() async throws {
         let first = try openTab("https://allowed.test/first")
         let spaceWindow = try XCTUnwrap(window.tabManager.windowAdapter)
@@ -449,16 +451,17 @@ final class WindowGapAPITests: XCTestCase {
         XCTAssertFalse(otherWindow === spaceWindow)
         XCTAssertTrue(registry.delegate.windowAdapter === otherWindow, "the space shown is the focused window")
         XCTAssertTrue(registry.extensionWindows.elementsEqual([spaceWindow, otherWindow], by: ===))
-        XCTAssertEqual(second.position["windowPosition"], 1)
+        XCTAssertEqual(second.position["windowPosition"], 0)
         let adapter = try XCTUnwrap(window.tabManager.tabAdapter(for: first.id), "a background tab keeps its adapter")
-        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId), first.position)
-        XCTAssertTrue(registry.tabAdapters(atPositions: [first.position], extensionId: extensionId).first ?? nil === adapter)
+        let firstPosition = ["windowPosition": 1, "index": first.position["index"] ?? -1]
+        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId), firstPosition)
+        XCTAssertTrue(registry.tabAdapters(atPositions: [firstPosition], extensionId: extensionId).first ?? nil === adapter)
         XCTAssertTrue(spaceWindow.activeTab(for: try XCTUnwrap(registry.context(for: extensionId))) === adapter, "a background window keeps its active tab")
 
         window.switchToSpace(space.id)
         XCTAssertTrue(window.tabManager.windowAdapter === spaceWindow, "a space keeps its window id")
         XCTAssertTrue(registry.delegate.windowAdapter === spaceWindow)
-        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId), first.position)
+        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId), firstPosition, "a switch in a window without focus keeps the order")
     }
 
     /// Moving a tab to another space's window keeps its id (tabs.onDetached and onAttached); deleting the space closes its window.
@@ -476,7 +479,7 @@ final class WindowGapAPITests: XCTestCase {
 
         XCTAssertTrue(window.tabManager.tabAdapter(for: moved.id) === adapter)
         XCTAssertTrue(adapter.extensionWindow === otherWindow)
-        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId)?["windowPosition"], 1)
+        XCTAssertEqual(registry.tabPosition(of: adapter, extensionId: extensionId)?["windowPosition"], 0)
         let left = spaceWindow.tabs(for: try XCTUnwrap(registry.context(for: extensionId)))
         XCTAssertFalse(left.contains { $0 === adapter })
         XCTAssertTrue(left.contains { $0 === window.tabManager.tabAdapter(for: kept.id) })

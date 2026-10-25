@@ -8,7 +8,7 @@ struct TabFacts: Equatable {
     let lastAccessed: Double?
 }
 
-/// The facts of the tabs a class of extension contexts sees, by window in WebKit's order and by index, as last sent to them.
+/// The facts of the tabs a class of extension contexts sees, by window in the registry's order and by index, as last sent to them.
 struct ExtensionTabState: Equatable {
     let windows: [ObjectIdentifier]
     let tabs: [[TabFacts?]]
@@ -250,7 +250,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             return details
         }
         guard call.bool("state"), let caller = call.context else { return ["tabs": tabs] }
-        return ["tabs": tabs, "state": Self.json(sendTabState(for: caller, registry: call.registry))]
+        return ["tabs": tabs, "state": Self.json(sendTabState(for: caller, registry: call.registry), for: caller, registry: call.registry)]
     }
 
     /// WebKit reads the index of each tab it reports, in a reply or an event, through here: when the facts the contexts keep
@@ -266,15 +266,15 @@ final class TabGroupsBridgeHandler: GapHandler {
     @discardableResult
     private func sendTabState(for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> ExtensionTabState {
         registry.tabStateKeeper = self
-        let windows = registry.extensionWindows(for: context)
+        let hasPrivateAccess = context.hasAccessToPrivateData
+        let windows = registry.extensionWindows.filter { hasPrivateAccess || !$0.isPrivateWindow }
         let state = ExtensionTabState(
             windows: windows.map { ObjectIdentifier($0) },
             tabs: windows.map { window in window.tabs(for: context).map { ($0 as? TabExtensionAdapter).flatMap(facts(of:)) } }
         )
-        let hasPrivateAccess = context.hasAccessToPrivateData
         guard registry.sentTabStates[hasPrivateAccess] != state else { return state }
         registry.sentTabStates[hasPrivateAccess] = state
-        registry.sendToOpenChannels(["push": "tabs.state", "args": [Self.json(state)]], hasPrivateAccess: hasPrivateAccess)
+        registry.sendToOpenChannels(hasPrivateAccess: hasPrivateAccess) { ["push": "tabs.state", "args": [Self.json(state, for: $0, registry: registry)]] }
         return state
     }
 
@@ -294,12 +294,15 @@ final class TabGroupsBridgeHandler: GapHandler {
         String(UInt(bitPattern: window), radix: 36)
     }
 
-    /// `{windows, tabs}`: each window's key, in WebKit's window order, and its tabs' `[groupId, discarded, frozen, lastAccessed]`.
-    private static func json(_ state: ExtensionTabState) -> [String: Any] {
-        [
-            "windows": state.windows.map(windowKey),
-            "tabs": state.tabs.map { tabs in
-                tabs.map { facts -> Any in
+    /// `{windows, tabs}`: each window's key, in `context`'s window order, which the bridge maps WebKit's window ids by, and its
+    /// tabs' `[groupId, discarded, frozen, lastAccessed]`.
+    private static func json(_ state: ExtensionTabState, for context: WKWebExtensionContext, registry: ProfileExtensionRegistry) -> [String: Any] {
+        let windows = registry.extensionWindows(for: context).map { ObjectIdentifier($0) }
+        return [
+            "windows": windows.map(windowKey),
+            "tabs": windows.map { window -> [Any] in
+                guard let position = state.windows.firstIndex(of: window) else { return [] }
+                return state.tabs[position].map { facts -> Any in
                     guard let facts else { return NSNull() }
                     return [facts.groupId, facts.discarded, facts.frozen, facts.lastAccessed ?? NSNull()] as [Any]
                 }

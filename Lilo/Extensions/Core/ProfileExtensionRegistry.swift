@@ -450,22 +450,25 @@ final class ProfileExtensionRegistry {
         (windowAdapters.isEmpty ? [delegate.windowAdapter].compactMap { $0 } : windowAdapters) + delegate.popupWindowAdapters
     }
 
-    /// The windows `context` sees, the list its positions index: WebKit hides private windows from an extension without private access.
+    /// The windows `context` sees, in its `windows.getAll()` order, which its positions index. WebKit keeps that order per
+    /// context, the window opened or focused last first, and hides private windows from an extension without private access.
     func extensionWindows(for context: WKWebExtensionContext) -> [WindowExtensionAdapter] {
-        context.hasAccessToPrivateData ? extensionWindows : extensionWindows.filter { !$0.isPrivateWindow }
+        let windows = context.openWindows.compactMap { $0 as? WindowExtensionAdapter }
+        return context.hasAccessToPrivateData ? windows : windows.filter { !$0.isPrivateWindow }
     }
 
     /// Sends an event whose details hold window or tab positions to `ids`. The details are built once per
-    /// private-access class, the only thing positions depend on, for that class's first extension; a class
-    /// whose `details` is nil (the tab is hidden from it) gets nothing.
+    /// window list, the only thing positions depend on, for the first extension seeing it; extensions whose
+    /// `details` is nil (the tab is hidden from them) get nothing.
     func emitPositioned(_ namespace: String, _ event: String, to ids: [String], details: (_ extensionId: String) -> [String: Any]?) {
-        var classes: [(hasPrivateAccess: Bool, details: [String: Any]?, ids: [String])] = []
+        var classes: [(windows: [ObjectIdentifier], details: [String: Any]?, ids: [String])] = []
         for id in ids {
-            guard let hasPrivateAccess = context(for: id)?.hasAccessToPrivateData else { continue }
-            if let index = classes.firstIndex(where: { $0.hasPrivateAccess == hasPrivateAccess }) {
+            guard let context = context(for: id) else { continue }
+            let windows = extensionWindows(for: context).map { ObjectIdentifier($0) }
+            if let index = classes.firstIndex(where: { $0.windows == windows }) {
                 classes[index].ids.append(id)
             } else {
-                classes.append((hasPrivateAccess, details(id), [id]))
+                classes.append((windows, details(id), [id]))
             }
         }
         for group in classes {
@@ -572,10 +575,10 @@ final class ProfileExtensionRegistry {
         return loadedRuntimes.first { $0.omniboxKeyword?.lowercased() == needle }?.id
     }
 
-    /// Sends `message` at once over the open channels of the loaded extensions with private access or without, as `hasPrivateAccess`.
-    func sendToOpenChannels(_ message: [String: Any], hasPrivateAccess: Bool) {
+    /// Sends each loaded extension with private access or without, as `hasPrivateAccess`, its `message` at once over its open channels.
+    func sendToOpenChannels(hasPrivateAccess: Bool, _ message: (WKWebExtensionContext) -> [String: Any]) {
         for runtime in loadedRuntimes where runtime.context.hasAccessToPrivateData == hasPrivateAccess {
-            gapEvents.send(message, toOpenChannelsOf: runtime.id)
+            gapEvents.send(message(runtime.context), toOpenChannelsOf: runtime.id)
         }
     }
 
