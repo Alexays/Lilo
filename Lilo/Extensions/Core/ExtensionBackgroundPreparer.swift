@@ -482,6 +482,15 @@ enum ExtensionBackgroundPreparer {
         state[rulesetId] = updated.isEmpty ? nil : updated
         try writeMetadataFile(extensionURL: extensionURL, disabledStaticRulesPath, state)
         try writeStaticRulesetsStamp(extensionURL: extensionURL, urls: rulesets.map(\.url))
+        // The preparation stamp covers the ruleset files: Lilo's own rewrite must not prepare the extension again.
+        let preparedURL = extensionURL.appendingPathComponent(metadataDirectory, isDirectory: true).appendingPathComponent(preparedStampPath)
+        if changed, var lines = try? String(contentsOf: preparedURL, encoding: .utf8).components(separatedBy: "\n") {
+            let path = String(url.path.dropFirst(extensionURL.path.count + 1))
+            if let index = lines.indices.dropFirst(2).first(where: { lines[$0].split(separator: " ", maxSplits: 2).last.map(String.init) == path }) {
+                lines[index] = fileStamps(extensionURL, [path])[0]
+                try writeMetadataFile(extensionURL: extensionURL, preparedStampPath, Data(lines.joined(separator: "\n").utf8))
+            }
+        }
         return changed
     }
 

@@ -488,10 +488,11 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let extDir = tempDir.appendingPathComponent("disabled-rules")
         try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
         let manifest: [String: Any] = [
-            "manifest_version": 3, "name": "Rules", "version": "1",
+            "manifest_version": 3, "name": "Rules", "version": "1", "background": ["service_worker": "background.js"],
             "declarative_net_request": ["rule_resources": [["id": "main", "enabled": true, "path": "main.json"]]]
         ]
         try JSONSerialization.data(withJSONObject: manifest).write(to: extDir.appendingPathComponent("manifest.json"))
+        try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         let ruleset = extDir.appendingPathComponent("main.json")
         try #"[{"id": 1, "action": {"type": "block"}, "condition": {"urlFilter": "ads/"}}, {"id": 2, "action": {"type": "block"}, "condition": {"urlFilter": "track"}}]"#
             .write(to: ruleset, atomically: true, encoding: .utf8)
@@ -502,14 +503,20 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
             return rules.map { ($0["condition"] as? [String: Any]).flatMap { $0["urlFilter"] as? String ?? $0["regexFilter"] as? String } }
         }
 
+        let preludeURL = extDir.appendingPathComponent("lilo-background-prelude.js")
+        try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
+
         XCTAssertTrue(try ExtensionBackgroundPreparer.updateStaticRules(extensionURL: extDir, rulesets: rulesets, rulesetId: "main", disable: [2, 9], enable: []))
         XCTAssertEqual(try ExtensionBackgroundPreparer.disabledStaticRuleIds(extensionURL: extDir, rulesets: rulesets, rulesetId: "main"), [2, 9])
         XCTAssertEqual(try filters(), ["ads/", "^lilo-inert-rule:"])
+        _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "")
+        XCTAssertEqual(try String(contentsOf: preludeURL, encoding: .utf8), "edited", "the ruleset Lilo rewrote keeps the preparation stamped")
         XCTAssertFalse(try ExtensionBackgroundPreparer.updateStaticRules(extensionURL: extDir, rulesets: rulesets, rulesetId: "main", disable: [2], enable: []))
         XCTAssertFalse(try ExtensionBackgroundPreparer.updateStaticRules(extensionURL: extDir, rulesets: rulesets, rulesetId: "main", disable: [], enable: [9]), "no rule has id 9")
 
-        // Prepared again (its stamp gone), the file keeps the rule disabled.
+        // Prepared again (its stamps gone), the file keeps the rule disabled.
         try FileManager.default.removeItem(at: extDir.appendingPathComponent("_lilo/static-rulesets.txt"))
+        try FileManager.default.removeItem(at: extDir.appendingPathComponent("_lilo/prepared.txt"))
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "")
         XCTAssertEqual(try filters(), ["ads/", "^lilo-inert-rule:"])
 
