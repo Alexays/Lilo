@@ -63,7 +63,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-test
@@ -334,6 +334,12 @@ release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 ## Build the UI bundle and notarize the release artifacts
 release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
+
+# CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
+# against bridge-src on main, so neither needs npm here.
+## Archive and export the release app from the UI already built (CI)
+release-archive: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@scripts/build-app.sh release
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.
 ## Package an exported app into build/Lilo.dmg (APP=build/release/export/Lilo.app)

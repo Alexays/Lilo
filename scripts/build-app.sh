@@ -1,5 +1,5 @@
 #!/bin/bash
-# Archive, export, and optionally notarize Lilo.app.
+# Build, export, and optionally notarize Lilo.app.
 set -euo pipefail
 
 usage() {
@@ -7,7 +7,7 @@ usage() {
 Usage: scripts/build-app.sh [debug|release] [install] [notarize]
 
 Arguments:
-  debug|release   Select the Xcode configuration to archive. Defaults to debug.
+  debug|release   Select the Xcode configuration to build. Defaults to debug.
   install         Copy the exported app into place: a release replaces /Applications/Lilo.app,
                   where the DMG installs it; a debug build goes to ~/Applications/Lilo.app.
                   Builds this Mac's architecture only, unless notarizing.
@@ -29,7 +29,7 @@ Notarization (a keychain profile, or an Apple ID and app-specific password):
   LILO_NOTARY_APP_PASSWORD    App-specific password for that Apple ID.
 
 Artifacts:
-  build/<config>/archive/Lilo.xcarchive
+  build/<config>/archive/Lilo.xcarchive   (Developer ID signing only)
   build/<config>/export/Lilo.app
   build/<config>/dist/Lilo-<config>.zip
 EOF
@@ -103,19 +103,47 @@ fi
 rm -rf "$OUT_DIR"
 mkdir -p "$EXPORT_DIR" "$(dirname "$ZIP")"
 
+# A build with an archive's postprocessing rather than xcodebuild archive, which starts from an empty build folder
+# every time: this one compiles only what changed, and a change of signing settings compiles nothing.
 xcodebuild \
     -project "$ROOT/Lilo.xcodeproj" \
     -scheme Lilo \
     -configuration "$XCODE_CONFIGURATION" \
     -derivedDataPath "$DERIVED_DATA_DIR" \
-    -archivePath "$ARCHIVE_PATH" \
     -destination "generic/platform=macOS" \
     CODE_SIGN_STYLE=Manual \
     AD_HOC_CODE_SIGNING_ALLOWED=YES \
+    DEPLOYMENT_POSTPROCESSING=YES \
     "${SIGNING_SETTINGS[@]}" \
-    archive
+    build
+BUILT_APP="$DERIVED_DATA_DIR/Build/Products/$XCODE_CONFIGURATION/Lilo.app"
+# Xcode registers each app it builds with LaunchServices: the build folder's copy must never open links.
+"$LSREGISTER" -u "$BUILT_APP" >/dev/null 2>&1 || true
 
 if [ "$SIGNING" = "distribution" ]; then
+    # The archive -exportArchive signs from: the app, and the keys export reads.
+    ditto "$BUILT_APP" "$ARCHIVE_PATH/Products/Applications/Lilo.app"
+    cat > "$ARCHIVE_PATH/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>ApplicationProperties</key>
+    <dict>
+        <key>ApplicationPath</key>
+        <string>Applications/Lilo.app</string>
+        <key>CFBundleIdentifier</key>
+        <string>$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUILT_APP/Contents/Info.plist")</string>
+    </dict>
+    <key>ArchiveVersion</key>
+    <integer>2</integer>
+    <key>Name</key>
+    <string>Lilo</string>
+    <key>SchemeName</key>
+    <string>Lilo</string>
+</dict>
+</plist>
+EOF
     EXPORT_OPTIONS="$DERIVED_DATA_DIR/ExportOptions.plist"
     cat > "$EXPORT_OPTIONS" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -139,7 +167,7 @@ if [ "$SIGNING" = "distribution" ]; then
 EOF
     xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportPath "$EXPORT_DIR" -exportOptionsPlist "$EXPORT_OPTIONS"
 else
-    ditto "$ARCHIVE_PATH/Products/Applications/Lilo.app" "$APP"
+    ditto "$BUILT_APP" "$APP"
 fi
 
 if [ "$SIGNING" = "distribution" ] && [ -n "${LILO_PROVISIONING_PROFILE:-}" ]; then
@@ -208,7 +236,7 @@ else
 fi
 
 echo "Signing: $SIGNING_LABEL"
-echo "Archive: $ARCHIVE_PATH"
+[ "$SIGNING" = "distribution" ] && echo "Archive: $ARCHIVE_PATH"
 echo "Exported app: $APP"
 echo "Distribution zip: $ZIP"
 echo "Notarization: $NOTARIZATION"

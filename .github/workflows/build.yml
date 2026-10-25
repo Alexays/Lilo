@@ -173,7 +173,8 @@ jobs:
           path: build/*.xcresult
           if-no-files-found: ignore
 
-  # Beside the tests rather than before them: a Release-only build error still fails the run.
+  # Beside the tests rather than before them: a Release-only build error still fails the run. It is release.yml's
+  # build, ad-hoc signed for want of secrets (signing compiles nothing), so a release tag finds it built.
   release-build:
     name: Release Build (macOS)
     needs: changes
@@ -182,17 +183,53 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: xcodebuild -downloadComponent MetalToolchain
+      # Same key as release.yml's, which restores it.
+      - name: Hash the UI lockfile
+        id: ui-lock
+        run: echo "hash=$(grep -v '"version":' lilo-ui/package-lock.json | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore the UI build
+        id: ui-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            Lilo/Generated/ChromeUIAssets.swift
+            Lilo/Generated/NativeStrings.swift
+          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.ui-cache.outputs.cache-hit != 'true'
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: lilo-ui/package-lock.json
-      - run: xcodebuild -downloadComponent MetalToolchain
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # As release.yml builds it: no install script runs.
+      - name: Build the UI
+        if: steps.ui-cache.outputs.cache-hit != 'true'
+        run: |
+          npm --prefix lilo-ui ci --ignore-scripts
+          make ui-build
+      - name: Date files by their content
+        run: |
+          { git ls-files -s -z
+            for f in Lilo/Generated/ChromeUIAssets.swift Lilo/Generated/NativeStrings.swift; do
+              printf '100644 %s 0\t%s\0' "$(git hash-object "$f")" "$f"
+            done; } | python3 scripts/pin_mtimes.py
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: .derived.noindex/xcode/SourcePackages
-          key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
-      - run: make xcode-build-release
+          path: |
+            .derived.noindex/build-app
+            !.derived.noindex/build-app/Logs
+          key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
+          restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+      - run: make release-archive
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: |
+            .derived.noindex/build-app
+            !.derived.noindex/build-app/Logs
+          key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
 
   # Numbers are kept per merged commit: a pull request would only spend a second Release build on them.
   startup-bench:
