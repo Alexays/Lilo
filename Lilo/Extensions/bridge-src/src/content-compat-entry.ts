@@ -6,6 +6,11 @@ import { answerAsChrome } from './shared/message-answers.ts';
 
 installStaticChromeCompat(globalThis as any);
 
+// WebKit finds the world's listeners through its own `browser`, else `chrome`: Proton Pass hides both behind proxies
+// once loaded, which would leave its content script without tabs.sendMessage.
+const browser = (globalThis as any).browser;
+if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, set() {}, configurable: true });
+
 const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
 if (onMessage && !Object.hasOwn(globalThis, '__liloOnMessage')) {
   answerAsChrome(onMessage);

@@ -23,8 +23,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 2. Events reach a context only through its own `browser` or `chrome`
 
 - **Gap:** WebKit finds a context's listeners through the global `browser`, else `chrome`, and skips the context when neither is its own namespace object: no `runtime.onMessage`, `onConnect`, port message or `storage.onChanged`. With `chrome` being Lilo's proxy, an extension assigning `browser` (`var browser = chrome`, webextension-polyfill) would lose every event. Chrome lets extensions wrap or replace either.
-- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor).
-- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers).
+- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor), in content scripts too ([content-compat-entry.ts]).
+- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers). Without it, Proton Pass, whose content script hides both globals behind proxies once loaded, never got the worker's `tabs.sendMessage`: its inline menu closed without filling the field.
 - **Check:** `testEventsSkipAContextWhoseBrowserAndChromeAreReplaced`, `testEventsStopOnceNeitherGlobalIsTheNamespace`. Repro: in an MV3 worker, keep `chrome.storage` and `chrome.action`, listen to `storage.onChanged`, set `globalThis.browser = {}` and `globalThis.chrome = {}`, then set a key. Expected: the listener runs. Actual: never.
 
 ### 3. `runtime.connectNative`, `lastError` and `onInstalled` are own, fixed properties
@@ -479,6 +479,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 [webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
 [augmentation-entry.ts]: ../Lilo/Extensions/bridge-src/src/augmentation-entry.ts
 [background-entry.ts]: ../Lilo/Extensions/bridge-src/src/background-entry.ts
+[content-compat-entry.ts]: ../Lilo/Extensions/bridge-src/src/content-compat-entry.ts
 [callbackify.ts]: ../Lilo/Extensions/bridge-src/src/shared/callbackify.ts
 [chrome-compat.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-compat.ts
 [chrome-event.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-event.ts
