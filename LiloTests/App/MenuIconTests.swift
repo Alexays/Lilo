@@ -121,7 +121,8 @@ final class MenuIconTests: XCTestCase {
         let sidebar = try popUp { window.showSidebarContextMenu(spaceId: nil, anchorRect: nil) }
         XCTAssertTrue(sidebar.items.contains { $0.title == "Delete Space…".localized })
         XCTAssertTrue(sidebar.items.contains { $0.title == "Agents' Profile".localized })
-        assertIcons(sidebar, plain: profiles)
+        // The tab position choices, like the profiles, are a checked list.
+        assertIcons(sidebar, plain: profiles.union(["Left", "Right", "Top", "Bottom"].map(\.localized)))
         let expected: [String: MenuIcon] = [
             "New Tab": .newTab, "New Terminal Tab": .newTerminalTab, "Create Folder": .newFolder, "Edit Space": .edit,
             "New Space": .newSpace, "Delete Space…": .delete, "Restore Closed Tab": .restoreClosedTab

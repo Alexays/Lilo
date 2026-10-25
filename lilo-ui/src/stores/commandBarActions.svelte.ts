@@ -1,3 +1,4 @@
+import { setTabPosition } from "./tabLayout.svelte";
 import {
 	chromeActions,
 	spaceActions,
@@ -34,6 +35,10 @@ const ACTION_HANDLERS: Record<CommandActionId, () => void> = {
 	createSpace: openAddEditor,
 	createPrivateSpace: () => spaceActions.create({ isPrivate: true }),
 	toggleSidebar: () => chromeActions.toggleSidebar(),
+	moveTabsLeft: () => setTabPosition("left"),
+	moveTabsRight: () => setTabPosition("right"),
+	moveTabsTop: () => setTabPosition("top"),
+	moveTabsBottom: () => setTabPosition("bottom"),
 	reloadPage: () => tabActions.reload(),
 	goBack: () => tabActions.goBack(),
 	goForward: () => tabActions.goForward(),

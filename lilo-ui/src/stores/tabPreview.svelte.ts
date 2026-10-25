@@ -29,9 +29,12 @@ interface TabPreviewTarget {
 	favicon?: string;
 }
 
+/** The hovered row's rect: the card opens beside it, away from the tabs' edge. */
 interface TabPreviewAnchor {
 	top: number;
 	right: number;
+	bottom: number;
+	left: number;
 }
 
 interface ShownTabPreview {

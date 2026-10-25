@@ -386,4 +386,15 @@
   .counts .removed {
     color: var(--danger);
   }
+
+  /* On the right, it grows over the page to the left. */
+  :global(html[data-tab-position='right']) .url-details {
+    left: auto;
+  }
+
+  /* Over a bottom dock, it opens upward. */
+  :global(html[data-tab-position='bottom']) .url-details {
+    top: auto;
+    bottom: calc(100% + 2px);
+  }
 </style>

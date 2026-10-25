@@ -157,29 +157,34 @@ export function dndItem(
 		}
 	}
 
-	// Scrolls the list under the target zone while the pointer rests near its top or bottom
-	// edge, faster the deeper it goes; each scroll re-resolves through handleScroll.
+	// Scrolls the list under the target zone while the pointer rests near its leading or
+	// trailing edge (on the zone's axis), faster the deeper it goes; each scroll re-resolves
+	// through handleScroll.
 	function autoScroll(): void {
 		const drag = dndEngineStore.activeDrag;
 		if (!drag?.started) return;
-		const zoneElement = dndEngineStore.zones.get(drag.target?.zoneId ?? drag.source.zoneId)?.element ?? null;
+		const zone = dndEngineStore.zones.get(drag.target?.zoneId ?? drag.source.zoneId);
+		const zoneElement = zone?.element ?? null;
+		const horizontal = zone?.axis === "horizontal";
 		if (zoneElement !== autoScrollZone) {
 			autoScrollZone = zoneElement;
-			autoScrollContainer = zoneElement ? scrollContainerOf(zoneElement) : null;
+			autoScrollContainer = zoneElement ? scrollContainerOf(zoneElement, horizontal) : null;
 		}
 		const container = autoScrollContainer;
 		if (!container) return;
 		const point = drag.currentPoint;
 		const rect = container.getBoundingClientRect();
 		if (!isPointInsideRect(point, rect)) return;
-		const depth = point.y < rect.top + AUTO_SCROLL_EDGE_PX
-			? point.y - rect.top - AUTO_SCROLL_EDGE_PX
-			: Math.max(0, point.y - rect.bottom + AUTO_SCROLL_EDGE_PX);
+		const [position, start, end] = horizontal ? [point.x, rect.left, rect.right] : [point.y, rect.top, rect.bottom];
+		const depth = position < start + AUTO_SCROLL_EDGE_PX
+			? position - start - AUTO_SCROLL_EDGE_PX
+			: Math.max(0, position - end + AUTO_SCROLL_EDGE_PX);
 		if (depth === 0) return;
-		const before = container.scrollTop;
-		container.scrollTop += Math.sign(depth) *
-			Math.ceil(Math.min(1, Math.abs(depth) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_STEP_PX);
-		if (container.scrollTop !== before) autoScrollFrame.schedule(autoScroll);
+		const step = Math.sign(depth) * Math.ceil(Math.min(1, Math.abs(depth) / AUTO_SCROLL_EDGE_PX) * AUTO_SCROLL_MAX_STEP_PX);
+		const before = horizontal ? container.scrollLeft : container.scrollTop;
+		if (horizontal) container.scrollLeft += step;
+		else container.scrollTop += step;
+		if ((horizontal ? container.scrollLeft : container.scrollTop) !== before) autoScrollFrame.schedule(autoScroll);
 	}
 
 	// A scroll, or a transition settling (the empty drop zones revealed at drag start),
@@ -595,10 +600,12 @@ function targetDropRect(
 	return item ? new DOMRect(item.rect.left, item.rect.top, item.rect.width, item.rect.height) : null;
 }
 
-function scrollContainerOf(element: HTMLElement): HTMLElement | null {
+function scrollContainerOf(element: HTMLElement, horizontal: boolean): HTMLElement | null {
 	for (let node: HTMLElement | null = element; node; node = node.parentElement) {
-		const overflowY = getComputedStyle(node).overflowY;
-		if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+		const style = getComputedStyle(node);
+		const overflow = horizontal ? style.overflowX : style.overflowY;
+		const overflows = horizontal ? node.scrollWidth > node.clientWidth : node.scrollHeight > node.clientHeight;
+		if ((overflow === "auto" || overflow === "scroll") && overflows) {
 			return node;
 		}
 	}

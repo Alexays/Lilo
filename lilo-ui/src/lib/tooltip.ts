@@ -1,7 +1,7 @@
 import { on } from "./bridge";
 import { areTrafficLightsVisible } from "../stores/ui.svelte";
 
-type TooltipPlacement = "top" | "right" | "bottom";
+type TooltipPlacement = "top" | "right" | "left" | "bottom";
 
 type TooltipParams = string | {
 	text: string;
@@ -120,6 +120,10 @@ function inject() {
   transform: translateY(-50%);
   animation-name: lilo-tt-right-in;
 }
+.lilo-tooltip.lilo-tooltip-left {
+  transform: translateX(-100%) translateY(-50%);
+  animation-name: lilo-tt-left-in;
+}
 .lilo-tooltip.lilo-tooltip-bottom {
   transform: translateX(-50%) translateY(6px);
   animation-name: lilo-tt-bottom-in;
@@ -203,6 +207,9 @@ function inject() {
 .lilo-tooltip.lilo-tooltip-right.lilo-tooltip-leaving {
   animation-name: lilo-tt-right-out;
 }
+.lilo-tooltip.lilo-tooltip-left.lilo-tooltip-leaving {
+  animation-name: lilo-tt-left-out;
+}
 .lilo-tooltip.lilo-tooltip-bottom.lilo-tooltip-leaving {
   animation-name: lilo-tt-bottom-out;
 }
@@ -212,6 +219,9 @@ function inject() {
 @keyframes lilo-tt-right-in {
   from { opacity:0; transform:translateY(-50%) translateX(-3px); }
 }
+@keyframes lilo-tt-left-in {
+  from { opacity:0; transform:translateX(-100%) translateY(-50%) translateX(3px); }
+}
 @keyframes lilo-tt-bottom-in {
   from { opacity:0; transform:translateX(-50%) translateY(3px); }
 }
@@ -220,6 +230,9 @@ function inject() {
 }
 @keyframes lilo-tt-right-out {
   to { opacity:0; transform:translateY(-50%) translateX(-2px); }
+}
+@keyframes lilo-tt-left-out {
+  to { opacity:0; transform:translateX(-100%) translateY(-50%) translateX(2px); }
 }
 @keyframes lilo-tt-bottom-out {
   to { opacity:0; transform:translateX(-50%) translateY(4px); }
@@ -293,6 +306,8 @@ export function tooltip(node: HTMLElement, params: TooltipParams) {
 		const base = subtitle || memory ? "lilo-tooltip lilo-tooltip-rich" : "lilo-tooltip";
 		return p === "right"
 			? `${base} lilo-tooltip-right`
+			: p === "left"
+				? `${base} lilo-tooltip-left`
 			: p === "bottom"
 				? `${base} lilo-tooltip-bottom`
 				: base;
@@ -371,6 +386,9 @@ export function tooltip(node: HTMLElement, params: TooltipParams) {
 		if (resolvedPlacement === "right") {
 			left = rect.right + 8;
 			top = rect.top + rect.height / 2;
+		} else if (resolvedPlacement === "left") {
+			left = rect.left - 8;
+			top = rect.top + rect.height / 2;
 		} else if (resolvedPlacement === "bottom") {
 			top = rect.bottom;
 		}
@@ -389,6 +407,8 @@ export function tooltip(node: HTMLElement, params: TooltipParams) {
 			if (elRect.left < MARGIN) {
 				left = MARGIN;
 			}
+		} else if (resolvedPlacement === "left") {
+			if (elRect.left < MARGIN) left = rect.right + 8 + elRect.width;
 		} else if (elRect.left < MARGIN) {
 			left += MARGIN - elRect.left;
 		} else if (elRect.right > window.innerWidth - MARGIN) {

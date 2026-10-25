@@ -15,9 +15,10 @@
     onchange: (value: string) => void;
     /** Too narrow for the labels: options with an icon show it, their label as a tooltip. */
     compact?: boolean;
+    disabled?: boolean;
   }
 
-  let { value, options, ariaLabel, onchange, compact = false }: Props = $props();
+  let { value, options, ariaLabel, onchange, compact = false, disabled = false }: Props = $props();
 
   function handleKeydown(event: KeyboardEvent): void {
     const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
@@ -39,6 +40,7 @@
       aria-checked={option.value === value}
       tabindex={option.value === value ? 0 : -1}
       class:active={option.value === value}
+      {disabled}
       aria-label={compact && option.icon ? option.label : undefined}
       use:tooltip={{ text: option.label, disabled: !(compact && option.icon) }}
       onclick={() => onchange(option.value)}
@@ -87,6 +89,11 @@
     box-shadow:
       0 0 0 1px color-mix(in srgb, var(--bg-active) 54%, transparent),
       var(--shadow-control);
+  }
+
+  .ui-segmented button:disabled {
+    opacity: var(--disabled-opacity);
+    cursor: default;
   }
 
   .ui-segmented button:focus-visible {

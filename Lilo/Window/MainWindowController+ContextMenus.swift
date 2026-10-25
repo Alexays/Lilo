@@ -400,6 +400,13 @@ extension MainWindowController {
             let folder = TabFolder(spaceId: targetSpaceId, name: "New Folder", color: "#5865f2")
             self.applyContextMenuStateCommands([.createFolder(spaceId: targetSpaceId, folder: folder, section: .unpinned)])
         }
+        let positions = NSMenu()
+        for (position, title) in [(TabPosition.left, "Left"), (.right, "Right"), (.top, "Top"), (.bottom, "Bottom")] {
+            positions.addItem(title.localized) { self.setTabPosition(position) }.state = tabLayout.position == position ? .on : .off
+        }
+        let positionItem = menu.addItem(withTitle: "Tab Position".localized, action: nil, keyEquivalent: "")
+        positionItem.image = MenuIcon.sidebar.image
+        positionItem.submenu = positions
         menu.addItem(.separator())
         menu.addItem("Edit Space".localized, icon: .edit) { self.bridgeRouter.send(event: "openSpaceEditor", data: ["id": targetSpaceId.uuidString]) }
         menu.addItem("New Space".localized, icon: .newSpace) { self.bridgeRouter.send(event: "openAddSpaceEditor") }

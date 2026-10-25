@@ -58,6 +58,8 @@ export type SettingId =
   | "autoUpdate"
   | "shortcuts"
   | "theme"
+  | "tabPosition"
+  | "addressPlacement"
   | "appIcon"
   | "defaultZoom"
   | "minimumFontSize"
@@ -155,6 +157,7 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.media": { glyph: "play", tint: "pink" },
   "settings.groups.lilo": { glyph: "petals", tint: "lilo" },
   "settings.groups.theme": { glyph: "halfCircle", tint: "purple" },
+  "settings.groups.tabLayout": { glyph: "tabs", tint: "indigo" },
   "settings.groups.pages": { glyph: "page", tint: "blue" },
   "settings.groups.spaces": { glyph: "stack", tint: "indigo" },
   "settings.groups.profiles": { glyph: "person", tint: "blue" },
@@ -244,6 +247,8 @@ export const SETTINGS: SettingModel[] = [
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
+  { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },

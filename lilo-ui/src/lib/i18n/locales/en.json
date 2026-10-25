@@ -99,6 +99,16 @@
 		"engineMoveUp": "Move up",
 		"engineMoveDown": "Move down",
 		"engineAdd": "Add search engine",
+		"tabPosition": {
+			"left": "Left",
+			"right": "Right",
+			"top": "Top",
+			"bottom": "Bottom"
+		},
+		"addressPlacement": {
+			"tabs": "With the tabs",
+			"page": "Above the page"
+		},
 		"themeSystem": "System",
 		"themeLight": "Light",
 		"themeDark": "Dark",
@@ -139,6 +149,7 @@
 			"search": "Search",
 			"downloads": "Downloads",
 			"theme": "Theme",
+			"tabLayout": "Tabs",
 			"pages": "Pages",
 			"spaces": "Spaces",
 			"media": "Media and calls",
@@ -240,6 +251,17 @@
 				"title": "Downloads folder",
 				"description": "Where downloaded files are saved.",
 				"keywords": "download save location directory"
+			},
+			"tabPosition": {
+				"title": "Tabs",
+				"description": "Where your tabs, Spaces and favorites live. You can also drag the sidebar to another edge.",
+				"keywords": "tab position sidebar left right top bottom horizontal vertical strip layout"
+			},
+			"addressPlacement": {
+				"title": "Address",
+				"description": "With the tabs, or in a bar above the page.",
+				"keywords": "address bar url toolbar location",
+				"lockedRight": "With the tabs on the right, the address stays above the page."
 			},
 			"theme": {
 				"title": "Theme",
@@ -653,6 +675,16 @@
 		"reload": "Reload",
 		"reloadUnavailable": "Nothing to reload"
 	},
+	"tabEdgeDrag": {
+		"pick": "Drag to an edge",
+		"left": "Release to move tabs to the left",
+		"right": "Release to move tabs to the right",
+		"top": "Release to move tabs to the top",
+		"bottom": "Release to move tabs to the bottom"
+	},
+	"strip": {
+		"ariaLabel": "Tabs"
+	},
 	"bottomBar": {
 		"downloads": "Downloads",
 		"downloadsActiveCount": "Downloads, {count} active",
@@ -1038,6 +1070,14 @@
 			"createSpaceDesc": "Create a new browsing space",
 			"createPrivateSpace": "Private Space",
 			"createPrivateSpaceDesc": "Create a private browsing space",
+			"moveTabsLeft": "Move Tabs to the Left",
+			"moveTabsLeftDesc": "Put the tabs in a sidebar on the left",
+			"moveTabsRight": "Move Tabs to the Right",
+			"moveTabsRightDesc": "Put the tabs in a sidebar on the right",
+			"moveTabsTop": "Move Tabs to the Top",
+			"moveTabsTopDesc": "Put the tabs in a strip at the top",
+			"moveTabsBottom": "Move Tabs to the Bottom",
+			"moveTabsBottomDesc": "Put the tabs in a dock at the bottom",
 			"toggleSidebar": "Toggle Sidebar",
 			"toggleSidebarDesc": "Show or hide the sidebar",
 			"reloadPage": "Reload Page",
@@ -1516,6 +1556,10 @@
 			"light": "Light",
 			"dark": "Dark"
 		},
+		"tabs": {
+			"title": "Your tabs, your side",
+			"subtitle": "Pick an edge and watch the window follow. You can drag the tabs to another edge anytime."
+		},
 		"essentials": {
 			"title": "The essentials",
 			"subtitle": "Two settings that make a difference. You can change them anytime.",
@@ -1563,6 +1607,15 @@
 		"Not Now": "Not Now",
 		"Lilo couldn't move itself to Applications": "Lilo couldn't move itself to Applications",
 		"Drag Lilo to the Applications folder in the Finder, then open it from there.": "Drag Lilo to the Applications folder in the Finder, then open it from there.",
+		"Tab Position": "Tab Position",
+		"Left": "Left",
+		"Right": "Right",
+		"Top": "Top",
+		"Bottom": "Bottom",
+		"Move Tabs to the Left": "Move Tabs to the Left",
+		"Move Tabs to the Right": "Move Tabs to the Right",
+		"Move Tabs to the Top": "Move Tabs to the Top",
+		"Move Tabs to the Bottom": "Move Tabs to the Bottom",
 		"Toggle Sidebar": "Toggle Sidebar",
 		"Capture Selected Area": "Capture Selected Area",
 		"Capture Visible Area": "Capture Visible Area",

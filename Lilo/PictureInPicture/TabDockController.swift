@@ -16,6 +16,12 @@ final class TabDockController {
             applySlot()
         }
     }
+    var sidebarOnRight = false {
+        didSet {
+            guard sidebarOnRight != oldValue else { return }
+            applySlot()
+        }
+    }
 
     private let container = NSView()
     /// Hosts the engine view; carries the scale so the sibling controls stay unscaled.
@@ -119,7 +125,7 @@ final class TabDockController {
         }
         hadSlot = true
         container.frame = NSRect(
-            x: Self.horizontalInset,
+            x: sidebarOnRight ? chromeView.bounds.width - sidebarWidth - MainWindowController.contentInset + Self.horizontalInset : Self.horizontalInset,
             y: chromeView.bounds.height - slotRect.maxY,
             width: width,
             height: slotRect.height

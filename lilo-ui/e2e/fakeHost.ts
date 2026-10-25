@@ -2,11 +2,13 @@
 // the Swift host does. Unhandled commands are recorded but not echoed.
 import type { Page } from "@playwright/test";
 import type {
+	AddressPlacement,
 	BridgeProfileSnapshot,
 	BridgeSidebarTreeItemSnapshot,
 	BridgeSpaceSnapshot,
 	BridgeTabFolderSnapshot,
 	BridgeTabSnapshot,
+	TabPosition,
 } from "../src/lib/bridge/protocol";
 
 export interface FakeHostWorld {
@@ -19,6 +21,8 @@ export interface FakeHostWorld {
 	profiles?: BridgeProfileSnapshot[];
 	activeProfileId?: string;
 	sidebarWidth?: number;
+	tabPosition?: TabPosition;
+	addressPlacement?: AddressPlacement;
 	// The native bindings' keys by action id, as the host sends them after the initial state.
 	shortcutKeys?: Record<string, string>;
 }
@@ -302,6 +306,8 @@ export async function installFakeHost(
 				activeTabId: state.activeTabBySpace[state.activeSpaceId] ?? "",
 				sidebarWidth: state.sidebarWidth ?? 260,
 				sidebarVisible: true,
+				tabPosition: state.tabPosition,
+				addressPlacement: state.addressPlacement,
 				spaces: state.spaces,
 				profiles: state.profiles,
 				activeProfileId: state.activeProfileId,
@@ -315,10 +321,12 @@ export async function installFakeHost(
 export async function bootChrome(
 	page: Page,
 	world: FakeHostWorld,
+	// The strip layouts have no sidebar list to wait for.
+	ready = ".tab-list [data-tab-id]",
 ): Promise<void> {
 	await installFakeHost(page, world);
 	await page.goto("/");
-	await page.waitForSelector(".tab-list [data-tab-id]");
+	await page.waitForSelector(ready);
 	// The overlays' chunk loads after the first frame; the dev server compiles it on first request, seconds
 	// under load: a test opening the command bar or settings would spend its assertion's 5 s on that.
 	await page.waitForSelector(".banner-host", { state: "attached" });

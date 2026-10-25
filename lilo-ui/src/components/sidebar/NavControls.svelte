@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -7,7 +8,8 @@
 
   type HistoryDirection = "back" | "forward";
 
-  let { collapseLocked = false }: { collapseLocked?: boolean } = $props();
+  // The page toolbar can take the history buttons while the sidebar keeps its toggle.
+  let { collapseLocked = false, show = "all" }: { collapseLocked?: boolean; show?: "all" | "toggle" | "history" } = $props();
 
   const HISTORY_MENU_PRESS_DELAY_MS = 320;
   const HISTORY_MENU_CLICK_SUPPRESSION_MS = 520;
@@ -86,7 +88,7 @@
       return;
     }
 
-    chromeActions.startWindowDrag();
+    pressTabsHeader(event);
   }
 </script>
 
@@ -96,6 +98,7 @@
   aria-label={t("nav.navigationControls")}
   onpointerdown={handleWindowDragPointerDown}
 >
+  {#if show !== "history"}
   <button
     class="nav-btn"
     aria-label={t("nav.collapseSidebar")}
@@ -117,7 +120,13 @@
     </svg>
   </button>
 
-  <div class="nav-spacer"></div>
+  {/if}
+
+  {#if show === "all"}
+    <div class="nav-spacer"></div>
+  {/if}
+
+  {#if show !== "toggle"}
 
   <button
     class="nav-btn"
@@ -221,6 +230,7 @@
       </svg>
     </span>
   </button>
+  {/if}
 </div>
 
 <style>

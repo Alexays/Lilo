@@ -14,7 +14,7 @@ function previewRequests(posted: PostedMessage[]): PostedMessage[] {
 	return posted.filter((m) => m.action === "requestTabPreview");
 }
 
-const anchor = { top: 100, right: 260 };
+const anchor = { top: 100, right: 260, bottom: 132, left: 10 };
 
 function target(id: string, url = `https://example.com/${id}`) {
 	return { id, title: id, url };

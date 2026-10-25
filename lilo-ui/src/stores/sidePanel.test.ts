@@ -18,8 +18,8 @@ test("the content's right edge follows the side panel", async () => {
 		(globalThis as { window: { __lilo: { receive(msg: unknown): void } } }).window.__lilo.receive({ event: "sidePanelWidthChanged", width });
 
 	receive(368);
-	assert.equal(properties.get("--chrome-content-right"), "calc(var(--content-inset) + 368px)");
+	assert.equal(properties.get("--side-panel-width"), "368px");
 
 	receive(0);
-	assert.equal(properties.has("--chrome-content-right"), false, "a closed panel gives the edge back to the stylesheet");
+	assert.equal(properties.has("--side-panel-width"), false, "a closed panel gives the edge back to the stylesheet");
 });

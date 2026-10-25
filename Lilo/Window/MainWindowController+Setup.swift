@@ -16,11 +16,7 @@ extension MainWindowController {
         contentContainerView.wantsLayer = true
         contentView.addSubview(contentContainerView)
 
-        let frameView = WindowFrameView(
-            frame: contentView.bounds,
-            sidebarWidth: sidebarWidth,
-            contentInset: Self.contentInset
-        )
+        let frameView = WindowFrameView(frame: contentView.bounds, edges: contentEdges())
         frameView.autoresizingMask = [.width, .height]
         contentView.addSubview(frameView, positioned: .above, relativeTo: contentContainerView)
         windowFrameView = frameView
@@ -65,7 +61,7 @@ extension MainWindowController {
         let sidebarWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: sidebarWidthRange) : defaultSidebarWidth
         let bgColor = UserDefaults.lilo.string(forKey: cachedWindowBgColorKey) ?? ""
         webView.configuration.userContentController.addUserScript(
-            buildBootstrapScript(sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor)
+            buildBootstrapScript(sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor, tabLayout: .cached)
         )
         webView.load(URLRequest(url: ChromeUISchemeHandler.indexURL))
         _preloadedWebView = webView
@@ -80,6 +76,7 @@ extension MainWindowController {
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
         sidebarWidth = fittedSidebarWidth
+        applyTitlebarStyle()
         storedWindowBackgroundColor = cachedBgColor
         applyWindowChromeColors(currentWindowBackgroundCSSColor())
     }
@@ -95,6 +92,11 @@ extension MainWindowController {
                 UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
                 UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
                 applySidebarLayout(animated: false, syncTrafficLights: true)
+            }
+            let dbLayout = settings.tabLayout
+            if dbLayout != tabLayout {
+                dbLayout.cache()
+                applyTabLayout(dbLayout, animated: false)
             }
         }
 
@@ -552,6 +554,7 @@ extension MainWindowController {
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }
         settingsHandler.terminalOptionsProvider = { [weak self] in self?.terminalOptions() ?? [:] }
         settingsHandler.terminalThemeImporter = { [weak self] in await self?.importTerminalTheme() ?? false }
+        settingsHandler.onTabLayoutChanged = { [weak self] in self?.applyStoredTabLayoutEverywhere() }
         settingsHandler.onLifecyclePresetChanged = { [weak self] raw in
             guard let self else { return }
             self.context.applyLifecyclePreset(LifecyclePreset(rawValue: raw) ?? .default)
@@ -684,6 +687,8 @@ extension MainWindowController {
             "sidebarWidth": sidebarExpandedWidth,
             "sidebarVisible": sidebarVisible,
             "trafficLightsVisible": areTrafficLightsVisible(),
+            "tabPosition": tabLayout.position.rawValue,
+            "addressPlacement": tabLayout.address.rawValue,
             "isFullscreen": window?.styleMask.contains(.fullScreen) == true
         ]
         if let color = currentWindowBackgroundCSSColor(), !color.isEmpty {
@@ -716,11 +721,12 @@ extension MainWindowController {
         controller.removeAllUserScripts()
         controller.addUserScript(Self.buildBootstrapScript(
             sidebarWidth: sidebarExpandedWidth,
-            windowBackgroundColor: storedWindowBackgroundColor ?? ""
+            windowBackgroundColor: storedWindowBackgroundColor ?? "",
+            tabLayout: tabLayout
         ))
     }
 
-    static func buildBootstrapScript(sidebarWidth: CGFloat, windowBackgroundColor: String) -> WKUserScript {
+    static func buildBootstrapScript(sidebarWidth: CGFloat, windowBackgroundColor: String, tabLayout: TabLayout) -> WKUserScript {
         let source = """
                 (() => {
                     window.__liloBootstrapEvents = [];
@@ -730,6 +736,8 @@ extension MainWindowController {
                     }
 
                     root.dataset.booting = 'true';
+                    root.dataset.tabPosition = '\(tabLayout.position.rawValue)';
+                    root.dataset.address = '\(tabLayout.address.rawValue)';
 
                     if (\(sidebarWidth) > 0) {
                         root.style.setProperty('--sidebar-width', `${\(sidebarWidth)}px`);
@@ -759,37 +767,73 @@ extension MainWindowController {
 extension MainWindowController {
     // MARK: - Content Frame
 
+    /// Right and bottom always keep a toolbar over the page: the traffic lights stay top-left.
+    var hasPageToolbar: Bool {
+        switch tabLayout.position {
+        case .left: tabLayout.address == .page
+        case .right, .bottom: true
+        case .top: false
+        }
+    }
+
+    /// Where the page sits, side panel excluded. Hidden tabs leave the page every edge; an overlay floats over it.
+    func pageEdges() -> ContentEdges {
+        var edges = ContentEdges.uniform(Self.contentInset)
+        guard sidebarVisible else { return edges }
+        switch tabLayout.position {
+        case .left: edges.left += sidebarWidth
+        case .right: edges.right += sidebarWidth
+        case .top: edges.top = Self.topStripHeight + (tabLayout.address == .page ? Self.pageToolbarHeight : 0)
+        case .bottom: edges.bottom = Self.bottomDockHeight + Self.bottomDockMargin * 2
+        }
+        if hasPageToolbar { edges.top = Self.pageToolbarHeight }
+        return edges
+    }
+
+    func contentEdges() -> ContentEdges {
+        var edges = pageEdges()
+        edges.right += sidePanel.reservedWidth
+        return edges
+    }
+
     func contentFrameRect() -> NSRect {
         guard let contentView = window?.contentView else { return .zero }
-        let inset = Self.contentInset
+        let edges = contentEdges()
         return NSRect(
-            x: sidebarWidth + inset,
-            y: inset,
-            width: max(0, contentView.bounds.width - sidebarWidth - inset * 2 - sidePanel.reservedWidth),
-            height: contentView.bounds.height - inset * 2
+            x: edges.left,
+            y: edges.bottom,
+            width: max(0, contentView.bounds.width - edges.left - edges.right),
+            height: max(0, contentView.bounds.height - edges.top - edges.bottom)
         )
     }
 
     func updateContentContainerFrame(animated: Bool) {
         tabDock.sidebarWidth = sidebarWidth
+        tabDock.sidebarOnRight = tabLayout.position == .right
         let targetFrame = contentFrameRect()
+        let edges = contentEdges()
         guard animated, let windowFrameView, let layer = contentContainerView.layer else {
             contentContainerView.layer?.removeAnimation(forKey: "sidebarSlide")
             contentContainerView.frame = targetFrame
-            windowFrameView?.setSidebarWidth(sidebarWidth, animated: false)
+            windowFrameView?.setEdges(edges, animated: false)
             return
         }
 
-        // The opaque frame view sweeps as a curtain in sync with the sidebar slide, and the content
-        // follows its edge with a layer translation, so it re-lays-out exactly once: when growing
-        // immediately, when shrinking at the end.
-        let inFlightOffset = layer.presentation()?.value(forKeyPath: "transform.translation.x") as? CGFloat ?? 0
-        let visibleX = contentContainerView.frame.minX + inFlightOffset
-        let isGrowing = targetFrame.width > contentContainerView.frame.width
-        if isGrowing { contentContainerView.frame = targetFrame }
-        let slide = CABasicAnimation(keyPath: "transform.translation.x")
-        slide.fromValue = visibleX - contentContainerView.frame.minX
-        slide.toValue = targetFrame.minX - contentContainerView.frame.minX
+        // The opaque frame view sweeps as a curtain in sync with the tabs' slide, and the content
+        // follows its edge with a layer translation. It takes the larger of both sizes on each axis at
+        // once, so the new hole is never uncovered, and its exact size at the end; the curtain hides
+        // whatever overhangs meanwhile.
+        let current = contentContainerView.frame
+        let inFlightOffset = (layer.presentation()?.value(forKeyPath: "transform.translation") as? NSValue)?.sizeValue ?? .zero
+        let visibleOrigin = CGPoint(x: current.minX + inFlightOffset.width, y: current.minY + inFlightOffset.height)
+        contentContainerView.frame = NSRect(
+            origin: targetFrame.origin,
+            size: NSSize(width: max(current.width, targetFrame.width), height: max(current.height, targetFrame.height))
+        )
+        let origin = contentContainerView.frame.origin
+        let slide = CABasicAnimation(keyPath: "transform.translation")
+        slide.fromValue = NSValue(size: NSSize(width: visibleOrigin.x - origin.x, height: visibleOrigin.y - origin.y))
+        slide.toValue = NSValue(size: NSSize(width: targetFrame.minX - origin.x, height: targetFrame.minY - origin.y))
         slide.duration = WindowFrameView.toggleDuration
         slide.timingFunction = WindowFrameView.toggleTiming
         slide.fillMode = .forwards
@@ -797,7 +841,7 @@ extension MainWindowController {
         let slideId = UUID()
         slide.setValue(slideId, forKey: "slideID")
         layer.add(slide, forKey: "sidebarSlide")
-        windowFrameView.setSidebarWidth(sidebarWidth, animated: true) { [weak self] in
+        windowFrameView.setEdges(edges, animated: true) { [weak self] in
             // A re-toggle mid-animation fires this completion early; the newer toggle owns the slide then.
             guard let self, let layer = contentContainerView.layer,
                   layer.animation(forKey: "sidebarSlide")?.value(forKey: "slideID") as? UUID == slideId else { return }

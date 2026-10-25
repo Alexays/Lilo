@@ -58,7 +58,7 @@ extension MainWindowController {
 
     /// The sidebar's width as the window lets it be: it narrows before the content gets under `minimumContentWidth`.
     var fittedSidebarWidth: CGFloat {
-        guard sidebarVisible else { return 0 }
+        guard sidebarVisible, tabLayout.position.isVertical else { return 0 }
         let room = (window?.contentView?.bounds.width ?? .greatestFiniteMagnitude) - Self.contentInset * 2 - Self.minimumContentWidth
         return min(sidebarExpandedWidth, max(Self.sidebarWidthRange.lowerBound, room))
     }
@@ -68,6 +68,33 @@ extension MainWindowController {
         sidePanel.fitToWindow()
         updateContentContainerFrame(animated: animated)
         if syncTrafficLights { self.syncTrafficLights(animated: animated) }
+    }
+
+    func applyTabLayout(_ layout: TabLayout, animated: Bool) {
+        guard layout != tabLayout else { return }
+        tabLayout = layout
+        applyTitlebarStyle()
+        applySidebarLayout(animated: animated, syncTrafficLights: true)
+        bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
+    }
+
+    /// The unified style centers the lights in the sidebar's 52pt header; the compact one centers them at 20pt,
+    /// on the line of a 40pt page toolbar or strip.
+    func applyTitlebarStyle() {
+        window?.toolbarStyle = tabLayout == .default ? .unified : .unifiedCompact
+    }
+
+    /// The setting is app-wide: every window moves, and the next launch paints the new layout first.
+    func applyStoredTabLayoutEverywhere() {
+        guard let layout = context.settingsStore?.tabLayout else { return }
+        layout.cache()
+        let animated = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: animated) }
+    }
+
+    func setTabPosition(_ position: TabPosition) {
+        context.settingsStore?.set("tabPosition", value: position.rawValue)
+        applyStoredTabLayoutEverywhere()
     }
 
     func updateSidebarWidth(_ width: CGFloat) {
@@ -111,8 +138,10 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
+    /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
-        window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || sidebarOverlayVisible)
+        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
+        return window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || overlayCoversLights)
     }
 
     func showActiveTabSecurityInfo() {

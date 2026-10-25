@@ -1,4 +1,7 @@
 <script lang="ts">
+  import TabPositionPicker from "./TabPositionPicker.svelte";
+  import { getAddressPlacement, isAddressLocked, setAddressPlacement } from "../../stores/tabLayout.svelte";
+  import type { AddressPlacement } from "../../lib/bridge";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { getAgentsSpaceId } from "../../stores/agents.svelte";
   import { getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
@@ -116,6 +119,7 @@
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
+    if (id === "addressPlacement" && isAddressLocked()) return t("settings.items.addressPlacement.lockedRight");
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (updater && !updater.available) return t("settings.items.appUpdates.unavailable");
@@ -168,6 +172,8 @@
     <AppIconPicker />
   {:else if id === "theme"}
     <ThemePicker />
+  {:else if id === "tabPosition"}
+    <TabPositionPicker />
   {:else if id === "blockerAllowedDomains"}
     <UiTextField
       value={getSetting("contentBlockerAllowedDomains", "")}
@@ -260,6 +266,14 @@
       <UiButton onclick={() => settingsActions.chooseDownloadsFolder()}>
         {formatDownloadsFolderLabel(getSetting("downloadsFolder", ""), t("settings.downloadsFolderFallback"))}
       </UiButton>
+    {:else if id === "addressPlacement"}
+      <UiSegmented
+        value={getAddressPlacement()}
+        options={["tabs", "page"].map((placement) => ({ value: placement, label: t(`settings.addressPlacement.${placement}`) }))}
+        ariaLabel={title}
+        disabled={isAddressLocked()}
+        onchange={(value) => setAddressPlacement(value as AddressPlacement)}
+      />
     {:else if id === "autoplay"}
       <UiSelect
         value={getSetting("autoplayPolicy", "audio")}

@@ -539,3 +539,21 @@ test("all-scope search: an exact title match survives a long url and highlights 
 	assert.deepEqual(inbox.results[0]?.subtitleHighlights, []);
 	resetTabs();
 });
+
+test("moving the tabs offers every edge but the current one", () => {
+	resetTabs();
+
+	const output = computeResults(
+		{ parsed: parseInput("tabs top"), historyResults: [], searchSuggestions: [], searchEngine: "google" },
+		0,
+	);
+	const ids = output.sections.flatMap((section) => section.items.map((item) => item.result.id));
+	assert.ok(ids.some((id) => id.includes("moveTabsTop")), "the top edge is offered");
+
+	const left = computeResults(
+		{ parsed: parseInput("tabs left"), historyResults: [], searchSuggestions: [], searchEngine: "google" },
+		0,
+	);
+	const leftIds = left.sections.flatMap((section) => section.items.map((item) => item.result.id));
+	assert.ok(!leftIds.some((id) => id.includes("moveTabsLeft")), "the tabs are already on the left");
+});

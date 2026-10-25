@@ -231,4 +231,17 @@
       animation: none;
     }
   }
+
+  :global(html[data-tab-position='right']) .tab-switcher {
+    left: auto;
+    right: 10px;
+  }
+
+  /* No sidebar column in the strip layouts: centered on the page. */
+  :global(html[data-tab-position='top']) .tab-switcher,
+  :global(html[data-tab-position='bottom']) .tab-switcher {
+    top: calc(var(--chrome-content-top) + 12px);
+    left: calc(50vw - 130px);
+    width: 260px;
+  }
 </style>

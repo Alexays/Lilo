@@ -19,7 +19,9 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
   let spaceContentEl: HTMLDivElement | undefined = $state();
@@ -85,21 +87,27 @@
   <div
     class="sidebar-layout"
     class:pushed={isOverlayPanelOpen}
+    class:compact-header={isSidebarVisible() && hasPageToolbar()}
     inert={isOverlayPanelOpen}
     role="complementary"
     aria-label={t("sidebar.ariaLabel")}
   >
     <!-- Fixed header: does NOT swipe -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- On the right, the traffic lights and the history buttons live in the page toolbar. -->
     <div
       class="sidebar-header"
-      class:no-traffic-lights={!areTrafficLightsVisible()}
+      class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
       ondblclick={() => chromeActions.maximizeWindow()}
+      onpointerdown={pressTabsHeader}
     >
       <div class="header-spacer"></div>
-      <NavControls collapseLocked={isOverlayPanelOpen} />
+      <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
+      <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    <URLDisplay />
+    {#if !(isSidebarVisible() && isAddressInPageToolbar())}
+      <URLDisplay />
+    {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
     <div class="space-content" style={`--keep-awake-reserve: ${keepAwakeWidth ? keepAwakeWidth + 8 : 0}px;`}>
@@ -168,6 +176,42 @@
     transition:
       transform 220ms var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease;
+  }
+
+  /* With a page toolbar beside it, the header holds only the lights and the toggle: the Space's name
+     rises to that line, between them, so the list gains a row. */
+  .compact-header .sidebar-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--page-toolbar-height);
+    z-index: 21;
+    pointer-events: none;
+  }
+
+  .compact-header .sidebar-header :global(.nav-controls) {
+    flex: none;
+    margin-left: auto;
+    pointer-events: auto;
+  }
+
+  .compact-header .space-content {
+    margin-top: 2px;
+  }
+
+  .compact-header .space-content :global(.space-bar-slot) {
+    padding-right: 32px;
+  }
+
+  /* The traffic lights' room when they sit in this header (compact lights end at 66pt), plus the gap
+     macOS keeps between the lights and a title. */
+  :global(html[data-tab-position='left']) .compact-header .space-content :global(.space-bar-slot) {
+    padding-left: 78px;
+  }
+
+  .compact-header .keep-awake-slot {
+    right: calc(var(--sidebar-right-pad, 10px) + 36px);
   }
 
   .sidebar-layout.pushed {

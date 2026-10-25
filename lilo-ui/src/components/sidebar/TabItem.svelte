@@ -7,6 +7,7 @@
 </script>
 
 <script lang="ts">
+  import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { untrack } from "svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import TabLoader from "./TabLoader.svelte";
@@ -318,7 +319,7 @@
     iconSrc: tab.faviconDataURL,
     // Shown only on a deliberate dwell: sweeping across rows should not pop one per row.
     delay: 1000,
-    placement: "right" as const,
+    placement: tooltipSide(),
     anchor: tooltipAnchor,
     // The floating preview card already names the tab; both at once would stack
     // to the right of the row.
@@ -446,7 +447,7 @@
       const rect = e.currentTarget.getBoundingClientRect();
       hoverTabPreview(
         { id: tab.id, title: displayTitle, url: tab.url ?? "", favicon: isTerminal ? "" : tab.faviconDataURL },
-        { top: rect.top, right: rect.right },
+        rect,
       );
     }
   }}
@@ -565,7 +566,7 @@
         class="status-icon"
         role="img"
         aria-label={t("tabItem.cameraInUse")}
-        use:tooltip={{ text: t("tabItem.cameraInUse"), placement: "right" }}
+        use:tooltip={{ text: t("tabItem.cameraInUse"), placement: tooltipSide() }}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <rect x="1.4" y="3.4" width="6" height="5.2" rx="1.1" stroke="currentColor" stroke-width="1.2"/>
@@ -604,7 +605,7 @@
         class="status-icon"
         role="img"
         aria-label={t("tabItem.sharingScreen")}
-        use:tooltip={{ text: t("tabItem.sharingScreen"), placement: "right" }}
+        use:tooltip={{ text: t("tabItem.sharingScreen"), placement: tooltipSide() }}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <rect x="1.4" y="2" width="9.2" height="6.4" rx="1.1" stroke="currentColor" stroke-width="1.2"/>
@@ -618,7 +619,7 @@
         class="status-icon"
         role="img"
         aria-label={t("tabItem.popupOpen")}
-        use:tooltip={{ text: t("tabItem.popupOpen"), placement: "right" }}
+        use:tooltip={{ text: t("tabItem.popupOpen"), placement: tooltipSide() }}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <rect x="1.2" y="3.6" width="7.2" height="7.2" rx="1.2" stroke="currentColor" stroke-width="1.2"/>

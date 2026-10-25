@@ -4,6 +4,7 @@
   import OnboardingImport from "./OnboardingImport.svelte";
   import OnboardingPasswords from "./OnboardingPasswords.svelte";
   import OnboardingAppearance from "./OnboardingAppearance.svelte";
+  import OnboardingTabs from "./OnboardingTabs.svelte";
   import OnboardingEssentials from "./OnboardingEssentials.svelte";
   import OnboardingTips from "./OnboardingTips.svelte";
   import OnboardingUsage from "./OnboardingUsage.svelte";
@@ -117,6 +118,7 @@
           {:else if step === "import"}<OnboardingImport />
           {:else if step === "passwords"}<OnboardingPasswords />
           {:else if step === "appearance"}<OnboardingAppearance />
+          {:else if step === "tabs"}<OnboardingTabs />
           {:else if step === "essentials"}<OnboardingEssentials />
           {:else if step === "agents"}<OnboardingAgents />
           {:else if step === "tips"}<OnboardingTips />{/if}
@@ -131,7 +133,9 @@
   /* Under the command bar (z 60) so Cmd+T taught on the gestures step stays visible. */
   /* Centered by its insets and auto margins, not a translate: WebKit keeps a finished animation's -50% resolved
      against the height it started with, so a card that grows would hang off the window until something repaints it. */
-  .card { position: fixed; z-index: 55; pointer-events: auto; inset: 16px var(--chrome-content-right) 16px var(--chrome-content-left-visible); margin: auto;
+  .card { position: fixed; z-index: 55; pointer-events: auto; inset: calc(var(--chrome-content-top) + 8px) var(--chrome-content-right) calc(var(--chrome-content-bottom) + 8px) var(--chrome-content-left-visible); margin: auto;
+    /* Follows the page when the tabs change edge on the tabs step. */
+    transition: inset var(--motion-duration-slow) var(--motion-ease-standard);
     width: min(540px, calc(100vw - var(--chrome-content-left-visible) - 48px)); height: fit-content; max-height: calc(100vh - 32px);
     display: flex; flex-direction: column; overflow: hidden;
     border-radius: var(--radius-xl); padding: 22px 28px 22px; container-type: inline-size;

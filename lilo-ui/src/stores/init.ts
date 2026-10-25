@@ -37,6 +37,7 @@ import { initFolderLockStore } from "./folderLock.svelte";
 import { applySidebarFolderInitialState, applySidebarTabInitialState } from "./sidebar.svelte";
 import { initTabStore } from "./tabs.svelte";
 import { applyUIInitialState, initUIStore } from "./ui.svelte";
+import { applyTabLayoutInitialState, initTabLayoutStore } from "./tabLayout.svelte";
 import { createStartupMarkRecorder } from "./startupMarks";
 
 type InitialStateApplier = (data: BridgeInitialStatePayload) => void;
@@ -48,6 +49,7 @@ const CRITICAL_STORES: StoreInitializer[] = [
 	initSpaceStore,
 	initProfileStore,
 	initUIStore,
+	initTabLayoutStore,
 	initCommandBarStore,
 	initBannersStore,
 	// The sidebar shows a hung tab from any tab, from the first paint.
@@ -89,6 +91,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 const CRITICAL_STATE_APPLIERS: InitialStateApplier[] = [
 	applyInitialGeometry,
 	applyUIInitialState,
+	applyTabLayoutInitialState,
 	applySpaceInitialState,
 	applyProfileInitialState,
 	applySidebarTabInitialState,

@@ -4,18 +4,26 @@ import { chromeActions } from "../lib/bridge/actions";
 type SidebarMode = "visible" | "overlay" | "hidden";
 
 let _sidebarMode = $state<SidebarMode>("visible");
+
+/** The content edges in global.css give the page every edge while the tabs are not docked. */
+function setSidebarMode(mode: SidebarMode): void {
+	_sidebarMode = mode;
+	if (typeof document === "undefined") return;
+	if (mode === "visible") delete document.documentElement.dataset.tabsHidden;
+	else document.documentElement.dataset.tabsHidden = "";
+}
 let _trafficLightsVisible = $state<boolean>(true);
 let _isFullscreen = $state<boolean>(false);
 
 export function applyUIInitialState(data: BridgeInitialStatePayload): void {
-	_sidebarMode = data.sidebarVisible ? "visible" : "hidden";
+	setSidebarMode(data.sidebarVisible ? "visible" : "hidden");
 	_trafficLightsVisible = data.trafficLightsVisible ?? true;
 	_isFullscreen = data.isFullscreen ?? false;
 }
 
 export function initUIStore(): void {
 	on("sidebarVisibilityChanged", (data) => {
-		_sidebarMode = data.visible ? "visible" : "hidden";
+		setSidebarMode(data.visible ? "visible" : "hidden");
 	});
 
 	on("windowChromeStateChanged", (data) => {
@@ -45,14 +53,14 @@ export function areTrafficLightsVisible(): boolean {
 
 export function showSidebarOverlay(): void {
 	if (_sidebarMode === "hidden") {
-		_sidebarMode = "overlay";
+		setSidebarMode("overlay");
 		chromeActions.sidebarOverlayChanged(true);
 	}
 }
 
 export function hideSidebarOverlay(): void {
 	if (_sidebarMode === "overlay") {
-		_sidebarMode = "hidden";
+		setSidebarMode("hidden");
 		chromeActions.sidebarOverlayChanged(false);
 	}
 }

@@ -99,6 +99,16 @@
 		"engineMoveUp": "Monter",
 		"engineMoveDown": "Descendre",
 		"engineAdd": "Ajouter un moteur",
+		"tabPosition": {
+			"left": "Gauche",
+			"right": "Droite",
+			"top": "Haut",
+			"bottom": "Bas"
+		},
+		"addressPlacement": {
+			"tabs": "Avec les onglets",
+			"page": "Au-dessus de la page"
+		},
 		"themeSystem": "Système",
 		"themeLight": "Clair",
 		"themeDark": "Sombre",
@@ -139,6 +149,7 @@
 			"search": "Recherche",
 			"downloads": "Téléchargements",
 			"theme": "Thème",
+			"tabLayout": "Onglets",
 			"pages": "Pages",
 			"spaces": "Espaces",
 			"media": "Médias et appels",
@@ -240,6 +251,17 @@
 				"title": "Dossier de téléchargement",
 				"description": "Emplacement des fichiers téléchargés.",
 				"keywords": "téléchargements enregistrer emplacement"
+			},
+			"tabPosition": {
+				"title": "Onglets",
+				"description": "Où vivent vos onglets, Spaces et favoris. Vous pouvez aussi glisser la barre latérale vers un autre bord.",
+				"keywords": "position onglets barre latérale gauche droite haut bas horizontal vertical bande disposition"
+			},
+			"addressPlacement": {
+				"title": "Adresse",
+				"description": "Avec les onglets, ou dans une barre au-dessus de la page.",
+				"keywords": "barre adresse url barre d outils",
+				"lockedRight": "Avec les onglets à droite, l'adresse reste au-dessus de la page."
 			},
 			"theme": {
 				"title": "Thème",
@@ -653,6 +675,16 @@
 		"reload": "Actualiser",
 		"reloadUnavailable": "Rien à actualiser"
 	},
+	"tabEdgeDrag": {
+		"pick": "Glissez vers un bord",
+		"left": "Relâchez pour placer les onglets à gauche",
+		"right": "Relâchez pour placer les onglets à droite",
+		"top": "Relâchez pour placer les onglets en haut",
+		"bottom": "Relâchez pour placer les onglets en bas"
+	},
+	"strip": {
+		"ariaLabel": "Onglets"
+	},
 	"bottomBar": {
 		"downloads": "Téléchargements",
 		"downloadsActiveCount": "Téléchargements, {count} en cours",
@@ -1038,6 +1070,14 @@
 			"createSpaceDesc": "Créer un nouvel espace de navigation",
 			"createPrivateSpace": "Espace privé",
 			"createPrivateSpaceDesc": "Créer un espace de navigation privée",
+			"moveTabsLeft": "Placer les onglets à gauche",
+			"moveTabsLeftDesc": "Les onglets dans une barre latérale à gauche",
+			"moveTabsRight": "Placer les onglets à droite",
+			"moveTabsRightDesc": "Les onglets dans une barre latérale à droite",
+			"moveTabsTop": "Placer les onglets en haut",
+			"moveTabsTopDesc": "Les onglets dans une bande en haut",
+			"moveTabsBottom": "Placer les onglets en bas",
+			"moveTabsBottomDesc": "Les onglets dans un dock en bas",
 			"toggleSidebar": "Afficher/masquer la barre latérale",
 			"toggleSidebarDesc": "Afficher ou masquer la barre latérale",
 			"reloadPage": "Actualiser la page",
@@ -1516,6 +1556,10 @@
 			"light": "Clair",
 			"dark": "Sombre"
 		},
+		"tabs": {
+			"title": "Vos onglets, de votre côté",
+			"subtitle": "Choisissez un bord, la fenêtre suit. Vous pourrez glisser les onglets vers un autre bord à tout moment."
+		},
 		"essentials": {
 			"title": "L'essentiel",
 			"subtitle": "Deux réglages qui changent tout. Modifiables à tout moment.",
@@ -1563,6 +1607,15 @@
 		"Not Now": "Plus tard",
 		"Lilo couldn't move itself to Applications": "Lilo n'a pas pu se déplacer dans Applications",
 		"Drag Lilo to the Applications folder in the Finder, then open it from there.": "Glissez Lilo dans le dossier Applications du Finder, puis ouvrez-le depuis là.",
+		"Tab Position": "Position des onglets",
+		"Left": "Gauche",
+		"Right": "Droite",
+		"Top": "Haut",
+		"Bottom": "Bas",
+		"Move Tabs to the Left": "Placer les onglets à gauche",
+		"Move Tabs to the Right": "Placer les onglets à droite",
+		"Move Tabs to the Top": "Placer les onglets en haut",
+		"Move Tabs to the Bottom": "Placer les onglets en bas",
 		"Toggle Sidebar": "Afficher ou masquer la barre latérale",
 		"Capture Selected Area": "Capturer la zone sélectionnée",
 		"Capture Visible Area": "Capturer la zone visible",

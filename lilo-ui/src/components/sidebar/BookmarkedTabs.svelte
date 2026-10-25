@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tooltipSide } from "../../stores/tabLayout.svelte";
   import { translateFlip } from "../../lib/motion/translateFlip";
   import { springEase } from "../../lib/motion/spring";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -274,7 +275,7 @@
                     subtitle: bookmarkSubtitle(bookmark.url),
                     memory: bookmarkMemory(bookmark),
                     iconSrc: bookmark.faviconDataURL,
-                    placement: "right",
+                    placement: tooltipSide(),
                     disabled: dragActive || previewedTabId === bookmark.id,
                   }}
                   aria-label={bookmarkLabel(bookmark)}
@@ -293,7 +294,7 @@
                           url: bookmark.url ?? "",
                           favicon: bookmark.faviconDataURL,
                         },
-                        { top: rect.top, right: rect.right },
+                        rect,
                       );
                     }
                   }}

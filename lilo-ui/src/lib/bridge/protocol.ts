@@ -442,6 +442,9 @@ interface BridgeExtensionPermissionRequestPayload {
 	type: 'permissions' | 'urls' | 'matchPatterns';
 }
 
+export type TabPosition = "left" | "right" | "top" | "bottom";
+export type AddressPlacement = "tabs" | "page";
+
 export interface BridgeInitialStatePayload {
 	tabs: BridgeTabSnapshot[];
 	folders?: BridgeTabFolderSnapshot[];
@@ -450,6 +453,8 @@ export interface BridgeInitialStatePayload {
 	sidebarWidth: number;
 	sidebarVisible: boolean;
 	trafficLightsVisible?: boolean;
+	tabPosition?: TabPosition;
+	addressPlacement?: AddressPlacement;
 	isFullscreen?: boolean;
 	windowBackgroundColor?: string;
 	spaces?: BridgeSpaceSnapshot[];
@@ -807,6 +812,7 @@ export interface BridgeEventPayloadMap {
 	windowChromeStateChanged: { trafficLightsVisible: boolean };
 	/** The dominant color of this window's wallpaper and a small JPEG data URL of it; empty when it can't be read. */
 	wallpaperColorChanged: { color: string; thumbnail?: string };
+	tabLayoutChanged: { position: TabPosition; address: AddressPlacement };
 	windowFullscreenChanged: { isFullscreen: boolean };
 	windowFocusChanged: { focused: boolean };
 	cancelDrag: EmptyPayload;

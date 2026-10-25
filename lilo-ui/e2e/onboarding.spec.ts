@@ -180,7 +180,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640
 }
 
 test("finishing the onboarding leaves the default-browser invite closed", async ({ page }) => {
-	await bootOnboarding(page, 6);
+	await bootOnboarding(page, 7);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: true });
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 	await page.locator(".toast button").click();
@@ -235,7 +235,7 @@ test.describe("in French", () => {
 		const spaced = (text: string | null) => (text ?? "").replace(/\s/g, " ");
 		expect(spaced(await page.locator(".note.done").textContent())).toContain("12 345 pages d'historique");
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
-		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
+		await receive(page, { event: "onboardingState", show: true, step: 8, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		expect(spaced(await page.locator(".toast span").textContent())).toContain("12 345 pages");
 	});
@@ -245,7 +245,7 @@ test.describe("in French", () => {
 		await receive(page, { event: "importSourcesLoaded", sources: [chromeSource] });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		await receive(page, { event: "importFinished", summary: importedEverything });
-		await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+		await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
 		const text = "Bienvenue dans Lilo. Vos affaires sont là : 1 favori, 3 onglets ouverts, 2 pages d'historique et 1 extension.";
@@ -268,7 +268,7 @@ test.describe("at the window's minimum size", () => {
 	test.use({ viewport: { width: 600, height: 400 } });
 
 	test("an essentials row keeps its button on one line and its label readable", async ({ page }) => {
-		await bootOnboarding(page, 5);
+		await bootOnboarding(page, 6);
 		await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });
 		const row = page.locator(".ob-row").filter({ has: page.locator(".ob-btn") });
 		const button = row.locator(".ob-btn");
@@ -298,7 +298,7 @@ test.describe("at the window's minimum size", () => {
 	});
 
 	test("the arrival toast takes the width it has before wrapping", async ({ page }) => {
-		await bootOnboarding(page, 7, "develop");
+		await bootOnboarding(page, 8, "develop");
 		await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
@@ -308,7 +308,7 @@ test.describe("at the window's minimum size", () => {
 	});
 
 	test("the arrival toast stays inside the window", async ({ page }) => {
-		await bootOnboarding(page, 7, "develop");
+		await bootOnboarding(page, 8, "develop");
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		const toast = page.locator(".toast");
 		await expect(toast.getByRole("button")).toBeInViewport({ ratio: 1 });
@@ -326,7 +326,7 @@ test("a double click on a step's button moves on one step, not two", async ({ pa
 	const box = (await card.locator(".ob-foot .ob-btn.primary").boundingBox())!;
 
 	await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 2 });
-	await expect(card.getByRole("heading", { name: "The essentials" })).toBeVisible();
+	await expect(card.getByRole("heading", { name: "Your tabs, your side" })).toBeVisible();
 	const steps = (await sentCommands(page)).filter((command) => command.action === "setOnboardingStep");
 	expect(steps.map((command) => command.payload.step)).toEqual([5]);
 });
@@ -347,7 +347,7 @@ test("each step hands the keyboard to its main button, never to an action it wou
 	await expect(card.getByRole("heading", { name: "Your passwords" })).toBeVisible();
 	await expect(card.locator(".ob-foot .ob-btn.primary")).toBeFocused();
 
-	await receive(page, { event: "onboardingState", show: true, step: 5, usage: "browse" });
+	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
 	await card.getByRole("button", { name: "Continue" }).click();
 	await expect(card.getByRole("button", { name: "Let's go" })).toBeFocused();
 });
@@ -379,13 +379,13 @@ test("the agents choice turns AI agents on without the terminal, and asks to con
 
 	const settings = Object.fromEntries((await sentCommands(page)).filter((c) => c.action === "setSetting").map((c) => [c.payload.key, c.payload.value]));
 	expect(settings).toMatchObject({ onboardingUsage: "agents", agentControlEnabled: "true", terminalEnabled: "false" });
-	for (let step = 2; step < 6; step++) await receive(page, { event: "onboardingState", show: true, step, usage: "agents" });
-	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "agents" });
+	for (let step = 2; step < 7; step++) await receive(page, { event: "onboardingState", show: true, step, usage: "agents" });
+	await receive(page, { event: "onboardingState", show: true, step: 7, usage: "agents" });
 	await expect(card.locator("h3")).toHaveText(/agent/i);
 });
 
 test("the developer tips card is named after its own title", async ({ page }) => {
-	await bootOnboarding(page, 7, "develop");
+	await bootOnboarding(page, 8, "develop");
 	await expect(page.getByRole("region", { name: "3 tips for developing" })).toBeVisible();
 });
 
@@ -423,7 +423,7 @@ test("the arrival sums up the import, sign-ins aside, and speaks the same words"
 		{ sourceId: "chrome", profileId: "Profile 2", kind: "bookmarks", imported: 1233 },
 		{ sourceId: "chrome", profileId: "Profile 2", kind: "extensions", imported: 0, error: "store" },
 	] });
-	await receive(page, { event: "onboardingState", show: true, step: 6, usage: "browse" });
+	await receive(page, { event: "onboardingState", show: true, step: 7, usage: "browse" });
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
 	const text = "Welcome to Lilo. Your things are here: 1,234 bookmarks, 3 open tabs, 2 pages of history, and 1 extension.";
@@ -464,7 +464,7 @@ test("each password manager shows its own icon, and its initial when the icon fa
 });
 
 test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {
-	await bootOnboarding(page, 5);
+	await bootOnboarding(page, 6);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });
 	const card = page.locator("section.card");
 	await expect(card.getByRole("button", { name: "Use Lilo" })).toBeVisible();
@@ -473,7 +473,7 @@ test("the essentials show one primary action: Use Lilo stays secondary to Contin
 });
 
 test("the arrival is spoken, since the focus never reaches it", async ({ page }) => {
-	await bootOnboarding(page, 6);
+	await bootOnboarding(page, 7);
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 	await expect(page.locator(".live-announcer")).toHaveText("Welcome to Lilo.");
 });
@@ -496,7 +496,7 @@ test("the intro is a modal dialog, so VoiceOver stays out of the chrome under it
 });
 
 test("each agent's connect button names it", async ({ page }) => {
-	await bootOnboarding(page, 6, "develop");
+	await bootOnboarding(page, 7, "develop");
 	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
 	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "codex", configured: false, icon: "data:image/png;base64,AA==" }], allowed: [] });
 	await expect(page.locator("section.card").getByRole("button", { name: "Connect Codex" })).toBeVisible();
@@ -514,4 +514,20 @@ test.describe("in French at the window's minimum size", () => {
 		await expect(more).toBeInViewport({ ratio: 1 });
 		await expect(card.getByRole("button", { name: /Safari.*Autoriser l'accès/ })).toBeVisible();
 	});
+});
+
+test("the tabs step moves the real window and keeps the card on the page", async ({ page }) => {
+	await bootOnboarding(page, 5);
+	const card = page.locator("section.card");
+	await expect(card.getByRole("heading", { name: "Your tabs, your side" })).toBeVisible();
+
+	await card.getByRole("radio", { name: "Top" }).click();
+
+	const sets = (await sentCommands(page)).filter((c) => c.action === "setSetting");
+	expect(sets.at(-1)?.payload).toEqual({ key: "tabPosition", value: "top" });
+	await receive(page, { event: "tabLayoutChanged", position: "top", address: "tabs" });
+	const box = (await card.boundingBox())!;
+	const viewport = page.viewportSize()!;
+	await expect.poll(async () => (await card.boundingBox())!.y).toBeGreaterThan(48);
+	expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(viewport.width / 2);
 });

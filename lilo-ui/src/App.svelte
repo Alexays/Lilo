@@ -28,6 +28,8 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
+  import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
+  import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
 
@@ -224,10 +226,9 @@
     }
 
     function onMove(ev: MouseEvent) {
-      const newWidth = Math.max(
-        200,
-        Math.min(480, startWidth + ev.clientX - startX),
-      );
+      // On the right the handle sits on the sidebar's left edge: dragging left widens it.
+      const delta = getTabPosition() === "right" ? startX - ev.clientX : ev.clientX - startX;
+      const newWidth = Math.max(200, Math.min(480, startWidth + delta));
       scheduleSidebarWidth(newWidth);
     }
 
@@ -310,17 +311,32 @@
        is painted natively by WindowFrameView, so nothing full-viewport here. -->
 
   <!-- Double-click inset padding to maximize -->
+  <!-- A docked toolbar or strip over the page handles its own window drag. -->
   <div
     class="content-inset-zone"
     class:sidebar-hidden={!isSidebarVisible()}
-    use:reportInteractiveZone={{ id: "content-inset-zone" }}
+    class:zone-inactive={isSidebarVisible() && (hasPageToolbar() || !isVerticalLayout())}
+    use:reportInteractiveZone={{ id: "content-inset-zone", active: !isSidebarVisible() || (!hasPageToolbar() && isVerticalLayout()) }}
   ></div>
+
+  {#if isSidebarVisible() && (hasPageToolbar() || (getTabPosition() === "top" && getAddressPlacement() === "page"))}
+    <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
+    {#await import("./components/page/PageToolbar.svelte") then toolbar}
+      <toolbar.default row={getTabPosition() === "top"} />
+    {/await}
+  {/if}
 
   <SplitDropZone />
 
+  {#if !isVerticalLayout()}
+    <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
+    {#await import("./components/strip/StripHost.svelte") then host}
+      <host.default onenter={cancelSidebarOverlayHide} onleave={scheduleSidebarOverlayHide} />
+    {/await}
+  {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="sidebar"
+    class="sidebar tabs-surface"
     class:sidebar-hidden={!isSidebarShown()}
     class:sidebar-overlay={isSidebarOverlay()}
     class:swiping={swipeBackground !== null}
@@ -340,6 +356,7 @@
       ></div>
     {/if}
   </div>
+  {/if}
 
   <!-- Always mounted; active prop + CSS visibility controlled by sidebar mode -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -365,6 +382,12 @@
     onmouseenter={openSidebarOverlay}
     onmouseleave={scheduleSidebarOverlayHide}
   ></div>
+
+  {#if isLiftingTabs()}
+    {#await import("./components/page/TabEdgeDrag.svelte") then edgeDrag}
+      <edgeDrag.default />
+    {/await}
+  {/if}
 
   {#if showDeferredChrome}
     {#await import("./components/DeferredChrome.svelte") then deferred}
@@ -418,14 +441,62 @@
     z-index: 100;
   }
 
+  :global(html[data-tab-position='right']) .sidebar-hover-trigger {
+    left: auto;
+    right: 0;
+  }
+
   .sidebar-overlay-tolerance {
     position: fixed;
     top: 0;
-    left: var(--chrome-content-left-visible);
+    left: var(--sidebar-column);
     width: calc(var(--chrome-overlay-edge-gap) + 4px);
     height: 100vh;
     pointer-events: auto;
     z-index: 49;
+  }
+
+  /* The strip layouts reveal from a full-width edge. */
+  :global(html[data-tab-position='top']) .sidebar-hover-trigger,
+  :global(html[data-tab-position='bottom']) .sidebar-hover-trigger {
+    width: 100vw;
+    height: 6px;
+  }
+
+  :global(html[data-tab-position='bottom']) .sidebar-hover-trigger {
+    top: auto;
+    bottom: 0;
+  }
+
+  :global(html[data-tab-position='top']) .sidebar-overlay-tolerance,
+  :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
+    left: 0;
+    width: 100vw;
+    height: calc(var(--chrome-overlay-edge-gap) + 4px);
+  }
+
+  :global(html[data-tab-position='top']) .sidebar-overlay-tolerance {
+    top: var(--top-strip-height);
+  }
+
+  :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
+    top: auto;
+    bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+  }
+
+  /* Lifted by a held press: the tabs float until dropped on an edge. */
+  :global(html[data-tabs-lifting]) .sidebar {
+    transform: translate(var(--lift-x, 0px), var(--lift-y, 0px)) scale(0.96);
+    transition: box-shadow var(--motion-duration-slow) ease;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--chrome-overlay-shadow);
+    z-index: 72;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-overlay-tolerance {
+    left: auto;
+    right: var(--sidebar-column);
   }
 
   .zone-inactive {
@@ -436,27 +507,9 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: var(--chrome-content-left-visible);
+    width: var(--sidebar-column);
     height: 100vh;
     background-color: var(--sidebar-bg);
-    color: var(--sidebar-contrast);
-    --text-primary: var(--sidebar-contrast);
-    --text-secondary: var(--sidebar-secondary);
-    --text-muted: var(--sidebar-muted);
-    --bg-primary: var(--sidebar-panel);
-    --bg-secondary: var(--sidebar-subtle);
-    --bg-tertiary: var(--sidebar-elevated);
-    --bg-hover: var(--sidebar-hover);
-    --bg-active: var(--sidebar-active);
-    --bg-selected: var(--sidebar-selected);
-    --bg-elevated: var(--sidebar-elevated);
-    --border: var(--sidebar-border);
-    --separator: var(--sidebar-separator);
-    --accent: var(--sidebar-accent);
-    --accent-hover: var(--sidebar-accent-hover);
-    --accent-text: var(--sidebar-accent-text);
-    --danger: var(--sidebar-danger);
-    --sidebar-right-pad: 10px;
     pointer-events: auto;
     display: flex;
     flex-direction: column;
@@ -486,6 +539,15 @@
     pointer-events: none;
   }
 
+  :global(html[data-tab-position='right']) .sidebar {
+    left: auto;
+    right: 0;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar.sidebar-hidden {
+    transform: translateX(100%);
+  }
+
   /* Off-screen, not removed: looping spinners and pips would keep the compositor busy.
      Same list as html.window-unfocused in global.css. */
   .sidebar.sidebar-hidden :global(.tab-loader span),
@@ -506,6 +568,10 @@
     z-index: 50;
   }
 
+  :global(html[data-tab-position='right']) .sidebar.sidebar-overlay {
+    box-shadow: -4px 0 24px var(--sidebar-shadow);
+  }
+
   .sidebar-resize-handle {
     position: absolute;
     top: 0;
@@ -514,6 +580,11 @@
     height: 100%;
     cursor: col-resize;
     z-index: 10;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-resize-handle {
+    right: auto;
+    left: 0;
   }
 
   .sidebar-resize-handle:hover,

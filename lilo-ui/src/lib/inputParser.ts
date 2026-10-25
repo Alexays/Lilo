@@ -16,6 +16,10 @@ export type CommandActionId =
 	| "createPrivateSpace"
 	| "closeActiveTab"
 	| "toggleSidebar"
+	| "moveTabsLeft"
+	| "moveTabsRight"
+	| "moveTabsTop"
+	| "moveTabsBottom"
 	| "reloadPage"
 	| "goBack"
 	| "goForward"
@@ -180,6 +184,38 @@ export const COMMAND_ACTIONS = [
 		icon: "sidebar",
 		keywords: ["toggle sidebar", "sidebar", "show sidebar", "hide sidebar"],
 		shortcutId: "sidebar.toggle",
+	},
+	{
+		id: "moveTabsLeft",
+		nameKey: "commandBar.actions.moveTabsLeft",
+		descriptionKey: "commandBar.actions.moveTabsLeftDesc",
+		icon: "sidebar",
+		keywords: ["tabs left", "sidebar left", "tab position", "vertical tabs"],
+		shortcutId: "tabs.positionLeft",
+	},
+	{
+		id: "moveTabsRight",
+		nameKey: "commandBar.actions.moveTabsRight",
+		descriptionKey: "commandBar.actions.moveTabsRightDesc",
+		icon: "sidebar",
+		keywords: ["tabs right", "sidebar right", "tab position", "vertical tabs"],
+		shortcutId: "tabs.positionRight",
+	},
+	{
+		id: "moveTabsTop",
+		nameKey: "commandBar.actions.moveTabsTop",
+		descriptionKey: "commandBar.actions.moveTabsTopDesc",
+		icon: "sidebar",
+		keywords: ["tabs top", "tab bar", "tab position", "horizontal tabs"],
+		shortcutId: "tabs.positionTop",
+	},
+	{
+		id: "moveTabsBottom",
+		nameKey: "commandBar.actions.moveTabsBottom",
+		descriptionKey: "commandBar.actions.moveTabsBottomDesc",
+		icon: "sidebar",
+		keywords: ["tabs bottom", "tab bar", "tab position", "horizontal tabs", "dock"],
+		shortcutId: "tabs.positionBottom",
 	},
 	{
 		id: "reloadPage",

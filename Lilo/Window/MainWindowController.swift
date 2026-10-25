@@ -61,6 +61,11 @@ final class MainWindowController: NSWindowController {
     static let contentInset: CGFloat = 8
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320
+    /// These mirror `--top-strip-height`, `--page-toolbar-height`, `--bottom-dock-height` and `--bottom-dock-margin` in global.css.
+    static let topStripHeight: CGFloat = 40
+    static let pageToolbarHeight: CGFloat = 40
+    static let bottomDockHeight: CGFloat = 52
+    static let bottomDockMargin: CGFloat = 10
     /// Bounds main-thread archive encoding at switch and quit, and the disk footprint.
     static let maxPersistedInteractionStatesPerSpace = 10
 
@@ -194,6 +199,7 @@ final class MainWindowController: NSWindowController {
     var sidebarWidth: CGFloat = MainWindowController.defaultSidebarWidth
     var sidebarExpandedWidth: CGFloat = MainWindowController.defaultSidebarWidth
     var sidebarVisible = true
+    var tabLayout = TabLayout.cached
     var sidebarOverlayVisible = false
     var sidebarCollapseLocked = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]

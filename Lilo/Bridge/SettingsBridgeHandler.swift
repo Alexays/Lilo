@@ -79,6 +79,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     var onMinimumFontSizeChanged: ((CGFloat) -> Void)?
     var onAutoplayPolicyChanged: ((String) -> Void)?
     var onLifecyclePresetChanged: ((String) -> Void)?
+    var onTabLayoutChanged: (() -> Void)?
     /// Any `terminal*` setting changed: theme, font, size or imported themes.
     var onTerminalSettingsChanged: (() -> Void)?
     /// Themes (with preview colors), fonts and what Ghostty's config provides, for the settings page.
@@ -144,6 +145,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "minimumFontSize" { onMinimumFontSizeChanged?(CGFloat(Double(value) ?? 0)) }
                 if key == "autoplayPolicy" { onAutoplayPolicyChanged?(value) }
                 if key == "lifecyclePreset" { onLifecyclePresetChanged?(value) }
+                if key == "tabPosition" || key == "addressPlacement" { onTabLayoutChanged?() }
                 if key == DeviceSetupController.enabledKey { onAutoDeviceSwitchingChanged?() }
                 // Mirror the UI language choice so native menus/dialogs follow it on next launch.
                 if key == "locale" { Localization.persistOverride(value) }
