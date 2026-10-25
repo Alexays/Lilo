@@ -40,7 +40,7 @@
     "🌿",
     "🎮",
     "⭐",
-    "🔒",
+    "🎨",
   ];
 
   let showEmojiPopover = $state(false);
