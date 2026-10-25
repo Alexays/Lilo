@@ -4,6 +4,15 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-10-25
+
+### Fixed
+
+- A page opened from a peek as a tab now keeps its favicon.
+- Replaying the onboarding no longer changes the icon of your current Space.
+- An AI agent app that Lilo had once asked about, and that reconnects at each try like Claude's local agent mode, is asked again instead of being refused without a prompt until Lilo restarts.
+
+[0.2.1]: https://github.com/Alexays/Lilo/compare/v0.2.0...v0.2.1
 ## [0.2.0] - 2026-10-25
 
 ### Added

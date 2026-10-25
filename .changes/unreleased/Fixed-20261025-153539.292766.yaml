@@ -1,3 +1,0 @@
-kind: Fixed
-body: An AI agent app that Lilo had once asked about, and that reconnects at each try like Claude's local agent mode, is asked again instead of being refused without a prompt until Lilo restarts.
-time: 2026-10-25T15:35:39.292766+01:00
