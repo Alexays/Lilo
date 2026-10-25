@@ -99,6 +99,10 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertFalse(frame.agentName.isEmpty)
         let badge = frame.subviews.flatMap(\.subviews).compactMap { $0 as? NSTextField }.first
         XCTAssertTrue(badge?.stringValue.contains(frame.agentName) == true)
+        // The agent's 1280x800 viewport is larger than the window's content: the badge stays in what it shows.
+        let container = try XCTUnwrap(webView.superview)
+        let pill = try XCTUnwrap(badge?.superview)
+        XCTAssertTrue(container.bounds.contains(pill.convert(pill.bounds, to: container)))
 
         control.stopAll()
         await pollUntil { !webView.subviews.contains { $0 is AgentFrameView } }

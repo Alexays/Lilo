@@ -170,6 +170,33 @@ final class AgentFrameView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
+    // The page keeps the agent's viewport, larger than a small window: the frame and badge stay on the part shown.
+    override func viewDidMoveToSuperview() {
+        super.viewDidMoveToSuperview()
+        fitShownPart()
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        NotificationCenter.default.removeObserver(self, name: NSView.frameDidChangeNotification, object: nil)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        fitShownPart()
+        guard window != nil, let page = superview, let container = page.superview else { return }
+        for view in [page, container] {
+            view.postsFrameChangedNotifications = true
+            NotificationCenter.default.addObserver(self, selector: #selector(fitShownPart), name: NSView.frameDidChangeNotification, object: view)
+        }
+    }
+
+    @objc private func fitShownPart() {
+        guard let page = superview, let container = page.superview else { return }
+        let shown = page.bounds.intersection(page.convert(container.bounds, from: container))
+        if !shown.isEmpty { frame = shown }
+    }
+
     /// Frames `webView` for `agentName`; the cursor stays above the frame.
     static func show(on webView: WKWebView, agentName: String) {
         guard !webView.subviews.contains(where: { $0 is AgentFrameView }) else { return }
