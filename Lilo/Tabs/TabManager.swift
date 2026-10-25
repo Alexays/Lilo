@@ -219,6 +219,13 @@ final class TabManager {
             activeTabId = id
             browserStateStore?.noteTabActivated(id)
             delegate?.tabManager(self, didActivateTab: id)
+            // Extensions see the window's stand-in tab active instead.
+            if let windowAdapter, let previousAdapter = windowAdapter.activeAdapter, let registry = extensionRegistry {
+                windowAdapter.activeAdapter = nil
+                guard registry.hasLoadedExtensions, let shown = windowAdapter.activeTab else { return }
+                registry.controller.didActivateTab(shown, previousActiveTab: previousAdapter)
+                registry.refreshActionsForActiveTabChange()
+            }
             return
         }
         if engineHost.engine(for: id)?.isPageLost == true {
@@ -236,7 +243,7 @@ final class TabManager {
         delegate?.tabManager(self, didActivateTab: id)
 
         if let adapter = engineHost.tabAdapter(for: id), let registry = extensionRegistry {
-            let previousAdapter = windowAdapter?.activeAdapter
+            let previousAdapter = windowAdapter?.activeTab
             windowAdapter?.activeAdapter = adapter
             guard registry.hasLoadedExtensions else { return }
             registry.controller.didActivateTab(adapter, previousActiveTab: previousAdapter)

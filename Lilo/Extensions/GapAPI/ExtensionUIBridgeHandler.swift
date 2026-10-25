@@ -468,7 +468,8 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         // Re-fetch after the await: a stale worker is reloaded into a BRAND-NEW context, and performing
         // the action on the torn-down one would present the popup against the dead worker (a hang).
         guard let context = registry.context(for: id) else { return nil }
-        context.performAction(for: actionTabAdapter)
+        // A window showing no web page hands the popup its stand-in tab, so the popup's current window is this one.
+        context.performAction(for: actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab)
         return nil
     }
 }

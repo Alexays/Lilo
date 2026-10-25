@@ -57,7 +57,7 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     }
 
     func isSelected(for context: WKWebExtensionContext) -> Bool {
-        (extensionWindow as? WindowExtensionAdapter)?.visibleActiveAdapter === self
+        (extensionWindow as? WindowExtensionAdapter)?.activeTab === self
     }
 
     // MARK: - Index & Parent

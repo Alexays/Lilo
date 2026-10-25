@@ -197,6 +197,12 @@ describe("Chrome's Tab objects", () => {
     assert.deepEqual(heard, [[11, { title: '' }, { ...withheld(), ...chromeFields }]]);
   });
 
+  it('leave out the url and title of a tab Lilo does not hold, such as the stand-in of a window showing no web page', async () => {
+    nextResult = () => [null];
+    const { chrome } = install(['tabs']);
+    assert.deepEqual(await chrome.tabs.query({}), [{ id: 11, index: 0, windowId: 1, status: 'loading', ...chromeFields }]);
+  });
+
   it('report an unloaded tab as discarded, its status unloaded, as Chrome', async () => {
     nextResult = details({ discarded: true });
     const { chrome } = install([], () => [{ id: 11, index: 0, windowId: 1, status: 'complete' }]);

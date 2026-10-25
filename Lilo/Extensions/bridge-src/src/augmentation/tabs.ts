@@ -170,7 +170,8 @@ async function completeTabs(tabs: any[], withheldURLs: boolean, windowIds?: Prom
     const found = details?.[i];
     if (found?.url) Object.assign(tab, { url: found.url, title: found.title });
     asChromeTab(tab, found);
-    if (withheldURLs) withoutWithheld(tab);
+    // A tab Lilo does not hold and WebKit shows no url of, such as the stand-in of a window showing no web page, has none.
+    if (withheldURLs || !found) withoutWithheld(tab);
   });
 }
 

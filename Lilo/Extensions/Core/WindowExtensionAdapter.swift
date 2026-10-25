@@ -70,6 +70,22 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         return activeAdapter
     }
 
+    /// Stands for the active tab a browser window shows when extensions see no web tab active (a terminal, a diff, a locked
+    /// folder, a restored tab not yet activated), as Chrome shows its own pages as tabs: it has no url, title or page to script.
+    private lazy var contentTab = TabExtensionAdapter(tabId: UUID(), engineTab: nil, extensionWindow: self)
+
+    /// Whether the window shows a tab of its tab manager that no visible adapter stands for. Never for the extension window
+    /// (normal or private) the browser window does not show at the moment, nor for a window with no tab at all.
+    private var showsContentTab: Bool {
+        guard scopesToCurrentSpace, let tabManager, tabManager.windowAdapter === self, tabManager.activeOpenTabId != nil else { return false }
+        return visibleActiveAdapter == nil
+    }
+
+    /// The tab extensions see active: a browser window showing a tab always has one, as in Chrome.
+    var activeTab: TabExtensionAdapter? {
+        visibleActiveAdapter ?? (showsContentTab ? contentTab : nil)
+    }
+
     // MARK: - Exposed tab cache
 
     /// Every input of the exposed list: the current space's tree shape (content and runtime overlay
@@ -84,6 +100,7 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         var engineHostVersion: UInt64
         var membershipVersion: UInt64
         var activeAdapter: ObjectIdentifier?
+        var showsContentTab: Bool
     }
 
     private var membershipVersion: UInt64 = 0
@@ -105,7 +122,8 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
             engineHost: engineHost.map { ObjectIdentifier($0) },
             engineHostVersion: engineHost?.mutationVersion ?? 0,
             membershipVersion: membershipVersion,
-            activeAdapter: activeAdapter.map { ObjectIdentifier($0) }
+            activeAdapter: activeAdapter.map { ObjectIdentifier($0) },
+            showsContentTab: showsContentTab
         )
         guard key != exposedTabsKey else { return }
 
@@ -128,13 +146,16 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         var indexByTab: [ObjectIdentifier: Int] = [:]
         indexByTab.reserveCapacity(tabs.count + 1)
         for (index, tab) in tabs.enumerated() { indexByTab[ObjectIdentifier(tab as AnyObject)] = index }
-        if let activeAdapter, indexByTab[ObjectIdentifier(activeAdapter)] == nil {
-            let visible = isInCurrentSpace(activeAdapter)
+        var active: TabExtensionAdapter?
+        if let activeAdapter {
+            let visible = indexByTab[ObjectIdentifier(activeAdapter)] != nil ? true : isInCurrentSpace(activeAdapter)
             if visible == nil { cacheable = false }
-            if visible != false {
-                indexByTab[ObjectIdentifier(activeAdapter)] = tabs.count
-                tabs.append(activeAdapter)
-            }
+            if visible != false { active = activeAdapter }
+        }
+        if active == nil, key.showsContentTab { active = contentTab }
+        if let active, indexByTab[ObjectIdentifier(active)] == nil {
+            indexByTab[ObjectIdentifier(active)] = tabs.count
+            tabs.append(active)
         }
         exposedTabs = tabs
         exposedIndexByTab = indexByTab
@@ -158,10 +179,10 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         return exposedIndexByTab[ObjectIdentifier(tab as AnyObject)] ?? NSNotFound
     }
 
-    /// WebKit drops every tab of a window whose active tab its list lacks, so a window with no visible active tab (restored
-    /// tabs not yet activated, a terminal on screen) names its first tab rather than hide them all.
+    /// WebKit drops every tab of a window whose active tab its list lacks: a browser window showing a tab no visible adapter
+    /// stands for (a terminal, a restored tab not yet activated) names its stand-in, any other window its first tab.
     func activeTab(for context: WKWebExtensionContext) -> (any WKWebExtensionTab)? {
-        visibleActiveAdapter ?? tabs(for: context).first
+        activeTab ?? tabs(for: context).first
     }
 
     func windowType(for context: WKWebExtensionContext) -> WKWebExtension.WindowType { type }

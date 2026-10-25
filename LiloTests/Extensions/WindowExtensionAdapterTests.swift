@@ -36,6 +36,49 @@ final class WindowExtensionAdapterTests: XCTestCase {
         XCTAssertNotNil(window.visibleActiveAdapter)
     }
 
+    /// A browser window showing a tab always has an active tab, as in Chrome: showing a terminal, it has a stand-in, listed
+    /// and selected, with no url or page, until a web tab is active. The extension window it does not show has none.
+    func testABrowserWindowShowingATerminalHasAStandInActiveTab() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+        try #"{"manifest_version":3,"name":"Stand-in Test","version":"1.0"}"#
+            .write(to: directory.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: directory))
+        let tabManager = TabManager(engineFactory: WKEngineFactory())
+        let spaceId = UUID()
+        tabManager.currentSpaceId = spaceId
+        let terminal = Tab(title: "Terminal", spaceId: spaceId, kind: .terminal, cwd: NSTemporaryDirectory())
+        let item = TabTreeItem(spaceId: spaceId, kind: .tab, itemId: terminal.id, parentFolderId: nil, section: .unpinned, sortOrder: 0)
+        let state = try BrowserStateFixture(spaceId: spaceId, activeTabId: terminal.id, tabs: [terminal], folders: [], treeItems: [item])
+        tabManager.installSpaceTabStateForTests(SpaceTabState(state), spaceId: spaceId)
+        tabManager.activeTabId = terminal.id
+        let window = WindowExtensionAdapter(nsWindow: NSWindow())
+        window.scopesToCurrentSpace = true
+        window.tabManager = tabManager
+        XCTAssertNil(window.activeTab(for: context), "a window it does not show has no stand-in")
+
+        tabManager.windowAdapter = window
+        let standIn = try XCTUnwrap(window.activeTab(for: context) as? TabExtensionAdapter)
+        XCTAssertTrue(window.tabs(for: context).first as AnyObject === standIn)
+        XCTAssertEqual(standIn.indexInWindow(for: context), 0)
+        XCTAssertTrue(standIn.isSelected(for: context))
+        XCTAssertNil(standIn.url(for: context))
+        XCTAssertNil(standIn.webView(for: context))
+
+        let engine = WKWebViewTab(id: UUID(), webView: WKWebView())
+        let adapter = TabExtensionAdapter(engineTab: engine, extensionWindow: window)
+        tabManager.engineHost.setTabAdapter(adapter, for: engine.id)
+        window.add(tab: adapter)
+        window.activeAdapter = adapter
+        XCTAssertTrue(window.activeTab(for: context) as AnyObject === adapter)
+        XCTAssertFalse(window.tabs(for: context).contains { $0 as AnyObject === standIn })
+        XCTAssertFalse(standIn.isSelected(for: context))
+
+        window.activeAdapter = nil
+        XCTAssertTrue(window.activeTab(for: context) as AnyObject === standIn, "the stand-in keeps its identity")
+    }
+
     func testExposedTabsFollowMovesPinsAndSpaceSwitches() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

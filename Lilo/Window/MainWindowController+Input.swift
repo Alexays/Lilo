@@ -103,7 +103,7 @@ extension MainWindowController {
             await registry.backgrounds.ensureResponsive(extensionId)
             // Re-fetch: a stale worker is reloaded into a new context (see handleOpenExtensionPopup).
             guard let context = registry.context(for: extensionId) else { return }
-            context.performAction(for: actionTabAdapter)
+            context.performAction(for: actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab)
         }
     }
 

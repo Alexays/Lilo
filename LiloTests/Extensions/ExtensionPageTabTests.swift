@@ -324,6 +324,48 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
     }
 
+    /// A window always has an active tab, as in Chrome: Dashlane's popup read `[0].url` of `tabs.query({active, currentWindow})`
+    /// and showed an empty vault when the window showed no web page. A terminal on screen has a stand-in tab, with no url.
+    func testAnActionPopupFindsTheActiveTabOfAWindowShowingATerminal() async throws {
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("active")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Active", "version": "1.0", "description": "d", "permissions": ["tabs"], "action": {"default_popup": "popup.html"}}"#,
+            "popup.html": "<script src='popup.js'></script>",
+            "popup.js": """
+                const shown = (tabs) => tabs.map((tab) => `${tab.active} ${tab.url ?? 'none'}`).join();
+                Promise.all([chrome.tabs.query({ active: true, currentWindow: true }), chrome.tabs.query({ active: true, lastFocusedWindow: true })])
+                  .then(([current, focused]) => { document.title = `${shown(current)} / ${shown(focused)}`; });
+                """
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let page = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        window.activateTabStateFirst(id: page.id)
+        _ = try XCTUnwrap(window.createTerminalTab(activate: true))
+        let standIn = try XCTUnwrap(window.tabManager.windowAdapter?.activeTab)
+        XCTAssertNil(standIn.engineTab, "the terminal, not the web tab left behind, is the active tab")
+        window.window?.orderFront(nil)
+        defer { window.window?.orderOut(nil) }
+
+        let button = NSMenuItem()
+        button.representedObject = id
+        window.openExtensionFromMenu(button)
+        var title: String?
+        let shown = await pollUntil {
+            title = context.action(for: standIn)?.popupWebView?.title
+            return title?.isEmpty == false
+        }
+        context.action(for: standIn)?.popupPopover?.close()
+
+        XCTAssertTrue(shown, "the popup opens")
+        XCTAssertEqual(title, "true none / true none")
+    }
+
     /// Chrome runs nothing of a page after its window.close(): neither an API callback or promise it
     /// asked for next (Google Dictionary) nor the port disconnect the close itself causes (DuckDuckGo).
     func testAnExtensionPageRunsNothingAfterItsWindowClose() async throws {
