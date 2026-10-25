@@ -7,10 +7,10 @@
 
   let popover: HTMLDivElement | undefined = $state();
   let height = $state(0);
-  const rect = anchor.getBoundingClientRect();
+  const rect = $derived(anchor.getBoundingClientRect());
   // Toward the page: under a top strip, over a bottom dock.
   const top = $derived(getTabPosition() === "bottom" ? rect.top - 8 - height : rect.bottom + 8);
-  const left = Math.max(8, Math.min(rect.left, window.innerWidth - 248));
+  const left = $derived(Math.max(8, Math.min(rect.left, window.innerWidth - 248)));
 
   $effect(() => {
     popover?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });

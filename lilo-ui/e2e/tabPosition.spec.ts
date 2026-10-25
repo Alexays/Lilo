@@ -40,3 +40,50 @@ test("moving the tabs from the host moves the chrome", async ({ page }) => {
 	await expect(page.locator("html")).toHaveAttribute("data-tab-position", "bottom");
 	await expect(page.locator(".page-toolbar")).toBeVisible();
 });
+
+test("the top strip lists today's tabs and switches on click", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" });
+	const pills = page.locator(".tab-strip .strip-tab");
+	await expect(pills.first()).toBeVisible();
+	const target = pills.nth(1);
+	const tabId = await target.getAttribute("data-tab-id");
+
+	await target.getByRole("button").first().click();
+
+	const switches = (await sentCommands(page)).filter((c) => c.action === "switchTab");
+	expect(switches.at(-1)?.payload).toEqual({ id: tabId });
+});
+
+test("dragging a pill after the next one reorders the strip", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" });
+	const pills = page.locator(".tab-strip .today-list .strip-tab");
+	const first = (await pills.nth(0).boundingBox())!;
+	const second = (await pills.nth(1).boundingBox())!;
+
+	await page.mouse.move(first.x + 20, first.y + first.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(second.x + second.width - 4, second.y + second.height / 2, { steps: 12 });
+	await page.mouse.up();
+
+	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "commitSidebarDrop")).toBe(true);
+});
+
+test("the bottom dock opens its popovers upward", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" });
+	const chip = page.locator(".space-chip");
+	await chip.click();
+
+	const popover = (await page.locator(".strip-popover").boundingBox())!;
+	const dock = (await page.locator(".tab-strip").boundingBox())!;
+	expect(popover.y + popover.height).toBeLessThanOrEqual(dock.y);
+});
+
+test("settings open as a floating column in the top position and stay open when the position changes", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" });
+	await receive(page, { event: "openSettings" });
+	await expect(page.locator(".strip-panels.open")).toBeVisible();
+
+	await receive(page, { event: "tabLayoutChanged", position: "bottom", address: "page" });
+
+	await expect(page.locator(".strip-panels.open")).toBeVisible();
+});
