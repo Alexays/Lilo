@@ -161,10 +161,13 @@ async function senderInfo(): Promise<Record<string, unknown>> {
   return info;
 }
 
-/** This context's ends of the ports native relays between extensions, by port id: each takes a message, or undefined for a disconnect. */
-const externalPorts = new Map<string, (message?: { data: unknown }) => void>();
+/**
+ * This context's ends of the ports native relays between extensions, by port id: each takes a message, or undefined for a
+ * disconnect, with its lastError if any.
+ */
+const externalPorts = new Map<string, (message?: { data: unknown }, error?: string) => void>();
 bridgeEvents.set('runtime.portMessage', (portId: string, data: unknown) => externalPorts.get(portId)?.({ data }));
-bridgeEvents.set('runtime.portDisconnect', (portId: string) => externalPorts.get(portId)?.());
+bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => externalPorts.get(portId)?.(undefined, error));
 
 /**
  * A port native relays to another extension, by the id `opened` gives (a connecting extension's port, at once); a
@@ -177,11 +180,12 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
   let portId: string | undefined;
   let closed = false;
   let sending: Promise<unknown>;
-  const receive = (message?: { data: unknown }) => {
+  const receive = (message?: { data: unknown }, error?: string) => {
     if (message) return port.onMessage.dispatch(message.data, port);
     closed = true;
     externalPorts.delete(portId!);
-    port.onDisconnect.dispatch(port);
+    if (error) withLastError(error, () => port.onDisconnect.dispatch(port));
+    else port.onDisconnect.dispatch(port);
   };
   const port = {
     name,
@@ -339,7 +343,11 @@ export const externalEvents = (runtime: () => any) => ({
   onConnectExternal: new GapWrappedEvent<[unknown]>(
     'runtime.onConnectExternal', () => runtime().onConnectExternal, (listener) => listener,
     (listeners, info: { portId: string; name: string; sender: unknown }) => {
-      if (listeners.length === 0) return;
+      // A worker hears every port until it reports its listeners: one it does not take fails, unless a page took it.
+      if (listeners.length === 0) {
+        gapCall('runtime', 'portDecline', { portId: info.portId }).catch(() => {});
+        return;
+      }
       const port = externalPort(info.name, info.sender, info.portId);
       // The port goes once the pages that took it are gone; a worker holds it until either end disconnects it.
       if (!isWorker) gapCall('runtime', 'portAccept', { portId: info.portId }).catch(() => {});

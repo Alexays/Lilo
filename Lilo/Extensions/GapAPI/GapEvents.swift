@@ -118,9 +118,13 @@ final class GapEvents {
     func listeners(among ids: [String], namespace: String, event: String) -> [String] {
         let name = "\(namespace).\(event)"
         return ids.filter { id in
-            !workerReported.contains(id) || workerListeners[id]?.contains(name) == true
-                || pages[id]?.contains { $0.listeners.contains(name) } == true
+            !workerReported.contains(id) || workerListeners[id]?.contains(name) == true || pageListens(id, to: name)
         }
+    }
+
+    /// Whether one of the extension's open pages listens to `name`, a "namespace.event".
+    func pageListens(_ extensionId: String, to name: String) -> Bool {
+        pages[extensionId]?.contains { $0.listeners.contains(name) } == true
     }
 
     // MARK: - Events
@@ -131,7 +135,7 @@ final class GapEvents {
         let name = "\(namespace).\(event)"
         for id in ids {
             let toWorker = !workerReported.contains(id) || workerListeners[id]?.contains(name) == true
-            let toPages = pages[id]?.contains { $0.listeners.contains(name) } == true
+            let toPages = pageListens(id, to: name)
             guard toWorker || toPages else { continue }
             // Mutated in place: a copy of the worker would copy its whole undelivered queue.
             let envelope = workers[id, default: Worker()].envelope(namespace, event, args: args)
