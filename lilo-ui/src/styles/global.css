@@ -288,6 +288,11 @@ html[data-tab-position='bottom'] {
   --tabs-bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
 }
 
+/* A strip's floating panel column: overlays on the page start past it. */
+html[data-strip-panel-open] {
+  --chrome-content-left: calc(var(--sidebar-width) + 2 * var(--content-inset));
+}
+
 /* Hidden or floating over the page, the tabs leave it every edge. */
 html[data-tabs-hidden] {
   --tabs-left: var(--content-inset);

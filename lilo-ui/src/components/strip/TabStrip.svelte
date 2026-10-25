@@ -249,7 +249,7 @@
 
   /* Pills shrink to their icon, then the row scrolls sideways. */
   .today {
-    flex: 1;
+    flex: 1 1 200px;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -304,8 +304,8 @@
 
   .strip-address {
     position: relative;
-    flex: 0 1 300px;
-    min-width: 180px;
+    flex: 0 1 260px;
+    min-width: 160px;
   }
 
   .strip-address > :global(.url-display) {

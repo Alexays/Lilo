@@ -13,6 +13,13 @@
   $effect(() => {
     if (isPanelOpen) panelsLoaded = true;
   });
+
+  // Overlays on the page (the Settings shell first) start past the floating column while it is open.
+  $effect(() => {
+    if (isPanelOpen) document.documentElement.dataset.stripPanelOpen = "";
+    else delete document.documentElement.dataset.stripPanelOpen;
+    return () => delete document.documentElement.dataset.stripPanelOpen;
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->

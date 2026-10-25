@@ -536,12 +536,9 @@
     pointer-events: none;
   }
 
-  /* The gutter between the page and the sidebar moves to its left side. */
   :global(html[data-tab-position='right']) .sidebar {
     left: auto;
     right: 0;
-    padding-left: var(--content-inset);
-    box-sizing: border-box;
   }
 
   :global(html[data-tab-position='right']) .sidebar.sidebar-hidden {

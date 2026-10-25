@@ -61,6 +61,16 @@
     top: var(--top-strip-height);
   }
 
+  /* The sidebar header spreads its controls; the toolbar keeps them together on the left. */
+  .page-toolbar > :global(.nav-controls) {
+    flex: none;
+    gap: 2px;
+  }
+
+  .page-toolbar > :global(.nav-controls .nav-spacer) {
+    flex: 0 0 10px;
+  }
+
   /* Matches the sidebar header's reserve for the traffic lights. */
   .lights-spacer {
     width: 72px;

@@ -115,13 +115,14 @@
     place-items: center;
     background: transparent;
     color: var(--text-secondary);
-    opacity: 0;
+    display: none;
   }
 
+  /* Out of the way until wanted: a narrow pill keeps its room for the title. */
   .strip-tab:hover .strip-tab-close,
   .strip-tab.active .strip-tab-close,
-  .strip-tab-close:focus-visible {
-    opacity: 1;
+  .strip-tab:focus-within .strip-tab-close {
+    display: grid;
   }
 
   .strip-tab-close:hover {
