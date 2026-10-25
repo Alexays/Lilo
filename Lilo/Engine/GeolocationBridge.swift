@@ -200,7 +200,7 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
     }
 
     private func deliver(location: CLLocation, to requests: [PendingRequest]) {
-        guard let payload = jsonString([
+        let payload: [String: Any] = [
             "latitude": location.coordinate.latitude,
             "longitude": location.coordinate.longitude,
             "accuracy": location.horizontalAccuracy,
@@ -209,30 +209,25 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             "heading": location.course >= 0 ? location.course : NSNull(),
             "speed": location.speed >= 0 ? location.speed : NSNull(),
             "timestamp": location.timestamp.timeIntervalSince1970 * 1000
-        ]) else { return }
+        ]
+        guard JSONSerialization.isValidJSONObject(payload) else { return }
         for req in requests {
             // A frozen page misses the fix; a watch gets the next one once the tab is live again.
             guard let webView = req.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { continue }
-            let js = "window.__liloGeoCallback(\(req.id),'position',\(payload));"
-            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(js, in: req.frame)
+            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("geolocation", [req.id, "position", payload]),
+                                                                        in: req.frame, in: PageWorld.bridgeWorld)
             Self.logger.info("Delivered position to request \(req.id)")
         }
     }
 
     private func deliver(error: GeoError, to requests: [PendingRequest]) {
-        guard let payload = jsonString(["code": error.code, "message": error.message]) else { return }
+        let payload: [String: Any] = ["code": error.code, "message": error.message]
         for req in requests {
             guard let webView = req.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { continue }
-            let js = "window.__liloGeoCallback(\(req.id),'error',\(payload));"
-            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(js, in: req.frame)
+            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("geolocation", [req.id, "error", payload]),
+                                                                        in: req.frame, in: PageWorld.bridgeWorld)
             Self.logger.info("Delivered error (code \(error.code)) to request \(req.id)")
         }
-    }
-
-    private func jsonString(_ object: [String: Any]) -> String? {
-        guard JSONSerialization.isValidJSONObject(object),
-              let data = try? JSONSerialization.data(withJSONObject: object) else { return nil }
-        return String(data: data, encoding: .utf8)
     }
 
     // MARK: Delegate adapter
@@ -261,42 +256,49 @@ private final class LocationManagerDelegateAdapter: NSObject, CLLocationManagerD
     }
 }
 
-// MARK: - Polyfill source
+// MARK: - Page module
 
 extension GeolocationBridge {
-    /// JavaScript polyfill injected at document start to override `navigator.geolocation`.
-    static let polyfillSource: String = """
-(function(){
-'use strict';
-var handler=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.liloGeolocation;
-if(!handler)return;
-var nextId=Math.floor(Math.random()*0x7fffffff)*0x10000+1,callbacks={};
-window.__liloGeoCallback=function(id,type,data){
-var cb=callbacks[id];if(!cb)return;
-if(type==='position'){
-var pos={coords:{latitude:data.latitude,longitude:data.longitude,accuracy:data.accuracy,altitude:data.altitude,altitudeAccuracy:data.altitudeAccuracy,heading:data.heading,speed:data.speed},timestamp:data.timestamp};
-cb.success(pos);if(!cb.watch)delete callbacks[id];
-}else if(type==='error'){
-var err={code:data.code,message:data.message,PERMISSION_DENIED:1,POSITION_UNAVAILABLE:2,TIMEOUT:3};
-cb.error(err);if(!cb.watch)delete callbacks[id];
-}};
-function geo_get(success,error,options){
-var id=nextId++;callbacks[id]={success:success,error:error||function(){},watch:false};
-handler.postMessage({type:'get',id:id,highAccuracy:!!(options&&options.enableHighAccuracy)});
-}
-function geo_watch(success,error,options){
-var id=nextId++,high=!!(options&&options.enableHighAccuracy);callbacks[id]={success:success,error:error||function(){},watch:true,high:high};
-handler.postMessage({type:'watch',id:id,highAccuracy:high});
-return id;
-}
-window.addEventListener('pagehide',function(){for(var id in callbacks){if(callbacks[id].watch)handler.postMessage({type:'clear',id:+id});}});
-window.addEventListener('pageshow',function(e){if(!e.persisted)return;for(var id in callbacks){var cb=callbacks[id];if(cb.watch)handler.postMessage({type:'watch',id:+id,highAccuracy:cb.high});}});
-function geo_clear(id){
-delete callbacks[id];
-handler.postMessage({type:'clear',id:id});
-}
-var geo={getCurrentPosition:geo_get,watchPosition:geo_watch,clearWatch:geo_clear};
-try{Object.defineProperty(navigator,'geolocation',{get:function(){return geo;},configurable:false,enumerable:true});}catch(e){}
-})();
-"""
+    /// `navigator.geolocation`'s methods for `PageWorld`, swapped on WebKit's own `Geolocation` prototype.
+    static let pageModule = #"""
+    function () {
+      if (typeof Geolocation !== 'function') return;
+      let nextId = Math.floor(Math.random() * 0x7fffffff) * 0x10000 + 1;
+      const callbacks = create(null);
+      lilo.on('geolocation', (id, type, data) => {
+        const callback = callbacks[id];
+        if (!callback) return;
+        if (!callback.watch) delete callbacks[id];
+        if (type === 'position') {
+          const { latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, speed } = data;
+          callback.success({ coords: { latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, speed }, timestamp: data.timestamp });
+        } else {
+          callback.error({ code: data.code, message: data.message, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+        }
+      });
+      const request = (type, success, error, options) => {
+        const id = nextId++, highAccuracy = !!(options && options.enableHighAccuracy);
+        callbacks[id] = { success, error: error || (() => {}), watch: type === 'watch', highAccuracy };
+        lilo.send('liloGeolocation', { type, id, highAccuracy });
+        return id;
+      };
+      lilo.methods(Geolocation.prototype, {
+        getCurrentPosition(success, error, options) { request('get', success, error, options); },
+        watchPosition(success, error, options) { return request('watch', success, error, options); },
+        clearWatch(id) {
+          delete callbacks[id];
+          lilo.send('liloGeolocation', { type: 'clear', id });
+        },
+      });
+      apply(listen, window, ['pagehide', () => {
+        for (const id in callbacks) if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'clear', id: +id });
+      }]);
+      apply(listen, window, ['pageshow', event => {
+        if (!event.persisted) return;
+        for (const id in callbacks) {
+          if (callbacks[id].watch) lilo.send('liloGeolocation', { type: 'watch', id: +id, highAccuracy: callbacks[id].highAccuracy });
+        }
+      }]);
+    }
+    """#
 }

@@ -41,7 +41,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             guard let id = body["id"] as? Int else { return }
             guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
                 if let webView = message.webView {
-                    WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.__liloNotifyPermission(\(id),'denied');", in: message.frameInfo)
+                    WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifyPermission", [id, "denied"]),
+                                                                                in: message.frameInfo, in: PageWorld.bridgeWorld)
                 }
                 return
             }
@@ -49,7 +50,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             requestPermission(origin: origin, webView: message.webView) { [frame = message.frameInfo] granted in
                 // The prompt can outlive the tab going frozen; the page then keeps its pending request.
                 guard let webView = frame.webView, !CompositeFreezer.suspendedWebViews.contains(webView) else { return }
-                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.__liloNotifyPermission(\(id),'\(granted ? "granted" : "denied")');", in: frame)
+                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifyPermission", [id, granted ? "granted" : "denied"]),
+                                                                            in: frame, in: PageWorld.bridgeWorld)
             }
         case "show":
             guard allowanceHandler?(origin) == true else { return }
@@ -65,7 +67,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             // with no decision yet can still prompt.
             guard allowanceHandler?(origin) == true else { return }
             if let webView = message.frameInfo.webView {
-                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.__liloNotifySetPermission('granted');", in: message.frameInfo)
+                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", ["granted"]),
+                                                                            in: message.frameInfo, in: PageWorld.bridgeWorld)
             }
         default:
             break
@@ -96,7 +99,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     /// Runs the page's click handlers for a notification the user clicked; a no-op once its page is gone.
     func dispatchClick(identifier: String) {
         guard let entry = posted.removeValue(forKey: identifier), let webView = entry.webView else { return }
-        webView.evaluateJavaScript("window.__liloNotifyClick?.(\(entry.pageId));", in: entry.frame, in: .page)
+        webView.evaluateJavaScript(PageWorld.push("notifyClick", [entry.pageId]), in: entry.frame, in: PageWorld.bridgeWorld)
     }
 
     private func show(body: [String: Any], message: WKScriptMessage, origin: String) {
@@ -125,62 +128,77 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     }
 }
 
-// MARK: - Polyfill source
+// MARK: - Page module
 
 extension NotificationBridge {
-    /// JS polyfill injected at document start to override `window.Notification`.
-    static let polyfillSource: String = """
-(function(){
-'use strict';
-var handler=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.liloNotification;
-if(!handler)return;
-var permission='default',queried=false,nextId=1,pending={},shown={};
-function query(){if(!queried){queried=true;handler.postMessage({type:'query'});}}
-window.__liloNotifyPermission=function(id,result){
-var cb=pending[id];if(!cb)return;delete pending[id];permission=result;cb(result);
-};
-window.__liloNotifySetPermission=function(result){permission=result;};
-window.__liloNotifyClick=function(id){
-var n=shown[id];if(!n)return;delete shown[id];
-n.dispatchEvent({type:'click',target:n,currentTarget:n,defaultPrevented:false,preventDefault:function(){this.defaultPrevented=true;}});
-};
-function requestPermission(deprecatedCallback){
-return new Promise(function(resolve){
-var id=nextId++;
-pending[id]=function(result){if(typeof deprecatedCallback==='function'){try{deprecatedCallback(result);}catch(e){}}resolve(result);};
-handler.postMessage({type:'requestPermission',id:id});
-});
-}
-function LiloNotification(title,options){
-options=options||{};
-this.title=title==null?'':String(title);this.body=options.body||'';this.icon=options.icon||'';this.tag=options.tag||'';
-this.onclick=null;this.onclose=null;this.onerror=null;this.onshow=null;
-this._id=nextId++;this._listeners={};shown[this._id]=this;
-handler.postMessage({type:'show',id:this._id,title:this.title,body:this.body,icon:this.icon,tag:this.tag});
-}
-LiloNotification.prototype.close=function(){
-if(!shown[this._id])return;delete shown[this._id];handler.postMessage({type:'close',id:this._id});
-};
-LiloNotification.prototype.addEventListener=function(type,fn){
-if(typeof fn!=='function')return;var l=this._listeners[type]||(this._listeners[type]=[]);if(l.indexOf(fn)<0)l.push(fn);
-};
-LiloNotification.prototype.removeEventListener=function(type,fn){
-var l=this._listeners[type];if(l)this._listeners[type]=l.filter(function(f){return f!==fn;});
-};
-LiloNotification.prototype.dispatchEvent=function(event){
-var self=this,handlers=(this._listeners[event.type]||[]).slice(),on=this['on'+event.type];
-if(typeof on==='function')handlers.unshift(on);
-handlers.forEach(function(fn){try{fn.call(self,event);}catch(e){}});
-return !event.defaultPrevented;
-};
-Object.defineProperty(LiloNotification,'permission',{get:function(){query();return permission;},enumerable:true});
-LiloNotification.requestPermission=requestPermission;
-LiloNotification.maxActions=0;
-try{Object.defineProperty(window,'Notification',{value:LiloNotification,writable:true,configurable:true});}
-catch(e){try{window.Notification=LiloNotification;}catch(e2){}}
-// Subframes query on first read;
-// only the top document pays a native round trip per navigation.
-if(window.top===window)query();
-})();
-"""
+    /// `window.Notification` for `PageWorld`: WebKit's own interface, its constructor and members swapped for ones that
+    /// show through Lilo. Instances are EventTargets on the native prototype, so `instanceof` and events work as there.
+    static let pageModule = #"""
+    function () {
+      const Native = window.Notification;
+      if (typeof Native !== 'function') return;
+      const prototype = Native.prototype, fields = new WeakMap(), pending = create(null), shown = create(null);
+      let nextId = 1;
+      // WebKit's static `permission` is a read-only data property, not a getter.
+      const setPermission = value => defineProperty(Notification, 'permission', { value, writable: false, enumerable: true, configurable: true });
+      lilo.on('notifyPermission', (id, result) => {
+        const callback = pending[id];
+        if (!callback) return;
+        delete pending[id];
+        setPermission(result);
+        callback(result);
+      });
+      lilo.on('notifySetPermission', setPermission);
+      lilo.on('notifyClick', id => {
+        const notification = shown[id];
+        if (!notification) return;
+        delete shown[id];
+        apply(dispatch, notification, [new NativeEvent('click')]);
+      });
+      const attach = lilo.eventHandlers(prototype, ownKeys(prototype).filter(key => typeof key === 'string' && key.startsWith('on')).map(key => key.slice(2)));
+      const Notification = lilo.native(function Notification(title) {
+        if (!new.target) throw new NativeTypeError("Constructor requires 'new' operator");
+        if (arguments.length < 1) throw new NativeTypeError('Not enough arguments');
+        const options = arguments[1] || {}, notification = construct(EventTarget, [], new.target), id = nextId++;
+        const field = key => key in options ? options[key] : key === 'dir' ? 'auto' : key === 'silent' || key === 'data' ? null : '';
+        const values = { id, title: String(title), body: String(field('body')), icon: String(field('icon')), tag: String(field('tag')),
+                         dir: String(field('dir')), lang: String(field('lang')), silent: field('silent'), data: field('data'), navigate: field('navigate') };
+        fields.set(notification, values);
+        attach(notification);
+        shown[id] = notification;
+        lilo.send('liloNotification', { type: 'show', id, title: values.title, body: values.body, icon: values.icon, tag: values.tag });
+        return notification;
+      }, 'Notification');
+      defineProperty(Notification, 'prototype', { value: prototype, writable: false });
+      setPermission('default');
+      lilo.methods(Notification, { requestPermission(deprecatedCallback) {
+        return new NativePromise(resolve => {
+          const id = nextId++;
+          pending[id] = result => {
+            if (typeof deprecatedCallback === 'function') { try { deprecatedCallback(result); } catch (e) {} }
+            resolve(result);
+          };
+          lilo.send('liloNotification', { type: 'requestPermission', id });
+        });
+      } });
+      defineProperty(Notification.requestPermission, 'length', { value: Native.requestPermission.length });
+      defineProperty(prototype, 'constructor', { value: Notification });
+      for (const key of ownKeys(prototype)) {
+        const descriptor = getOwnPropertyDescriptor(prototype, key);
+        if (typeof key !== 'string' || key.startsWith('on') || !descriptor.get) continue;
+        lilo.accessors(prototype, { get [key]() { const values = fields.get(this); return values ? values[key] : undefined; } });
+      }
+      lilo.methods(prototype, {
+        close() {
+          const values = fields.get(this);
+          if (!values || !shown[values.id]) return;
+          delete shown[values.id];
+          lilo.send('liloNotification', { type: 'close', id: values.id });
+        },
+        show() {},
+      });
+      lilo.global('Notification', Notification);
+      lilo.send('liloNotification', { type: 'query' });
+    }
+    """#
 }

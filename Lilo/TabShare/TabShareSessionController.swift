@@ -121,7 +121,7 @@ final class TabShareSessionController {
         let engineId = ended.engine?.id
         let stillShared = engineId.map(isSharing(engineId:)) == true
         if !stillShared { ended.engine?.isTabShareSource = false }
-        ended.requester?.evaluateJavaScript("window.__liloTabShareEnded && window.__liloTabShareEnded('\(ended.token)');")
+        ended.requester?.evaluateJavaScript(PageWorld.push("tabShareEnded", [ended.token]), in: nil, in: PageWorld.bridgeWorld)
         onFrameStored?()   // parked pulls resolve to 410 so the shim ends its stream
         onSessionEnded?(token, stillShared ? nil : engineId)
     }

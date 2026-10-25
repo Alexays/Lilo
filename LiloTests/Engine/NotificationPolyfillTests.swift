@@ -13,9 +13,8 @@ final class NotificationPolyfillTests: XCTestCase {
 
     private func makeWebView(_ recorder: Recorder) async throws -> WKWebView {
         let configuration = WKWebViewConfiguration()
-        configuration.userContentController.add(recorder, name: NotificationBridge.messageHandlerName)
-        configuration.userContentController.addUserScript(
-            WKUserScript(source: NotificationBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+        configuration.userContentController.add(recorder, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
+        PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.loadHTMLString("<html></html>", baseURL: URL(string: "https://example.com"))
         _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }
@@ -37,7 +36,7 @@ final class NotificationPolyfillTests: XCTestCase {
         let show = try XCTUnwrap(recorder.messages.first { $0["type"] as? String == "show" })
         let id = try XCTUnwrap(show["id"] as? Int)
 
-        _ = try await webView.evaluateJavaScript("window.__liloNotifyClick(\(id)); 0")
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyClick", [id]), contentWorld: PageWorld.bridgeWorld)
         let log = try await webView.evaluateJavaScript("log.join(',')") as? String
         XCTAssertEqual(log, "onclick,listener")
 

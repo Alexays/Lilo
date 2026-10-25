@@ -9,9 +9,8 @@ final class EyeDropperBridgeTests: XCTestCase {
         let bridge = EyeDropperBridge()
         bridge.sample = { sampled }
         let configuration = WKWebViewConfiguration()
-        configuration.userContentController.addScriptMessageHandler(bridge, contentWorld: .page, name: EyeDropperBridge.messageHandlerName)
-        configuration.userContentController.addUserScript(
-            WKUserScript(source: EyeDropperBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
+        configuration.userContentController.addScriptMessageHandler(bridge, contentWorld: PageWorld.bridgeWorld, name: EyeDropperBridge.messageHandlerName)
+        PageWorld.install([EyeDropperBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.loadHTMLString("<p>pick</p>", baseURL: URL(string: "https://example.com/"))
         _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }

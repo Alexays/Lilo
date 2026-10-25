@@ -21,9 +21,8 @@ final class SerialBridgeTests: XCTestCase {
         bridge.listDevices = { devicePath.map { [SerialBridge.Device(path: $0, name: "Probe", usbVendorId: 0x2341, usbProductId: 0x43)] } ?? [] }
         bridge.chooseDevice = { devices, _, _ in devices.first }
         let configuration = WKWebViewConfiguration()
-        configuration.userContentController.addScriptMessageHandler(bridge, contentWorld: .page, name: SerialBridge.messageHandlerName)
-        configuration.userContentController.addUserScript(
-            WKUserScript(source: SerialBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        configuration.userContentController.addScriptMessageHandler(bridge, contentWorld: PageWorld.bridgeWorld, name: SerialBridge.messageHandlerName)
+        PageWorld.install([SerialBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.loadHTMLString("<p>serial</p>", baseURL: URL(string: "https://example.com/"))
         _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }

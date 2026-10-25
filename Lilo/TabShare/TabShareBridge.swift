@@ -51,9 +51,7 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
                 // The page's user activation was spent on the async picker; app-injected JS carries
                 // a fresh one, and native getDisplayMedia also rejects a document without focus.
                 requester.window?.makeFirstResponder(requester)
-                _ = try? await requester.callAsyncJavaScript(
-                    "window.__liloNativeDisplay(id)", arguments: ["id": id], in: message.frameInfo, contentWorld: .page
-                )
+                _ = try? await requester.evaluateJavaScript(PageWorld.push("nativeDisplay", [id]), in: message.frameInfo, contentWorld: PageWorld.bridgeWorld)
             }
             return (reply, nil)
         case "open":
@@ -85,20 +83,17 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     }
 }
 
-// MARK: - Shim source
+// MARK: - Page module
 
 extension TabShareBridge {
-    /// JS shim injected at document start (page world). Overrides `getDisplayMedia` to offer tab
-    /// sharing; the native path stays reachable through the saved original. `getUserMedia` with
-    /// Chrome's `chromeMediaSource` redeems an extension's capture stream id on the same ferry.
-    static let shimSource: String = """
-(function(){
-'use strict';
-var handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.liloTabShare;
-if (!handler || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return;
+    /// `getDisplayMedia` for `PageWorld`, offering tab sharing; the native path stays reachable through the replaced
+    /// original. `getUserMedia` with Chrome's `chromeMediaSource` redeems an extension's capture stream id on the same ferry.
+    static let pageModule = #"""
+function () {
+if (typeof MediaDevices !== 'function' || !navigator.mediaDevices || !MediaDevices.prototype.getDisplayMedia) return;
 // Cross-origin frames keep the native call, which enforces their display-capture permissions policy.
 try { if (window.top !== window && window.top.location.origin !== location.origin) return; } catch (e) { return; }
-var native = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
+var devices = navigator.mediaDevices, originals;
 var Decoder = window.VideoDecoder, Chunk = window.EncodedVideoChunk;
 // Captured before any page script runs, so the page cannot fake a user gesture.
 var activation = navigator.userActivation;
@@ -106,11 +101,11 @@ var activationDesc = activation && Object.getOwnPropertyDescriptor(Object.getPro
 var isActiveGetter = activationDesc && activationDesc.get;
 var active = {};
 var nativePending = {};
-// Non-writable: native calls it with a user gesture, which page code must not be able to borrow.
-Object.defineProperty(window, '__liloNativeDisplay', { value: function(id){
+// Pushed with a user gesture, which page code has no way to borrow.
+lilo.on('nativeDisplay', function(id){
   var p = nativePending[id];
-  if (p && !p.promise) p.promise = native(p.constraints);
-} });
+  if (p && !p.promise) p.promise = apply(originals.getDisplayMedia, devices, [p.constraints]);
+});
 // Static content paints nothing, so the canvas track would emit no frames: the encoder could
 // neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
 var refreshMs = 200;
@@ -121,16 +116,16 @@ function endSession(token, notifyNative){
   clearInterval(s.refresh);
   if (s.decoder && s.decoder.state !== 'closed') s.decoder.close();
   if (s.last) s.last.close();
-  if (notifyNative) { try { handler.postMessage({ action: 'stop', token: token }); } catch (e) {} }
+  if (notifyNative) lilo.send('liloTabShare', { action: 'stop', token: token });
   s.stream.getTracks().forEach(function(t){
     s.nativeStops.get(t)();
     if (!notifyNative) { try { t.dispatchEvent(new Event('ended')); } catch (e) {} }
   });
 }
-window.__liloTabShareEnded = function(token){ endSession(token, false); };
-window.addEventListener('pagehide', function(){
-  Object.keys(active).forEach(function(token){ endSession(token, true); });
-});
+lilo.on('tabShareEnded', function(token){ endSession(token, false); });
+apply(listen, window, ['pagehide', function(){
+  for (var token in active) endSession(token, true);
+}]);
 // Frames arrive as H.264 in sequence; a decoder starts (or restarts after an error) on a keyframe,
 // whose headers carry its config.
 function configure(entry, codec, desc){
@@ -208,26 +203,26 @@ function ferryStream(res){
   pump({ token: res.token, frameURL: res.frameURL, seq: 0 });
   return stream;
 }
-var nativeUserMedia = navigator.mediaDevices.getUserMedia && navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
 function chromeSource(c){ return c && typeof c === 'object' && c.mandatory && typeof c.mandatory === 'object' ? c.mandatory : null; }
-navigator.mediaDevices.getUserMedia = function(constraints){
+originals = lilo.methods(MediaDevices.prototype, {
+getUserMedia(constraints){
   var video = chromeSource(constraints && constraints.video), audio = chromeSource(constraints && constraints.audio);
   var source = (video || audio || {}).chromeMediaSource;
-  if (source !== 'tab' && source !== 'desktop') return nativeUserMedia(constraints);
+  if (source !== 'tab' && source !== 'desktop') return apply(originals.getUserMedia, this, arguments);
   var what = source === 'tab' ? 'tab' : 'screen';
   // WebKit has no per-page or system audio tap: the ferry carries video only.
   if (!video) return Promise.reject(new DOMException('Error starting ' + what + ' capture', 'NotSupportedError'));
-  return handler.postMessage({ action: 'open', streamId: String(video.chromeMediaSourceId), source: source }).then(ferryStream, function(){
+  return lilo.post('liloTabShare', { action: 'open', streamId: String(video.chromeMediaSourceId), source: source }).then(ferryStream, function(){
     throw new DOMException('Error starting ' + what + ' capture', 'AbortError');
   });
-};
-navigator.mediaDevices.getDisplayMedia = function(constraints){
+},
+getDisplayMedia(constraints){
   if (isActiveGetter && !isActiveGetter.call(activation)) {
     return Promise.reject(new DOMException('getDisplayMedia() requires user activation.', 'NotAllowedError'));
   }
   var id = String(Math.random()).slice(2);
   nativePending[id] = { constraints: constraints };
-  return handler.postMessage({ action: 'pick', id: id }).then(function(res){
+  return lilo.post('liloTabShare', { action: 'pick', id: id }).then(function(res){
     var pending = nativePending[id];
     delete nativePending[id];
     // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
@@ -241,7 +236,8 @@ navigator.mediaDevices.getDisplayMedia = function(constraints){
     delete nativePending[id];
     throw new DOMException('Permission denied', 'NotAllowedError');
   });
-};
-})();
-"""
+}
+});
+}
+"""#
 }

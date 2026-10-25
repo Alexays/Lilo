@@ -367,6 +367,15 @@ Lilo/Reader/
 
 The cosmetic, scriptlet and reader `.js` files are ordinary source files edited in place (Readability.js excepted: it is vendored third-party code, attributed in [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md)); the tests of the cosmetic and scriptlet runtimes live in `Lilo/Extensions/bridge-src/src/`. Bundled resources are looked up by name (`Bundle.appResourceURL`), so the folder a resource sits in does not matter at runtime.
 
+## Page-world APIs
+
+Web pages get what Lilo adds to WebKit (notifications, geolocation, Web Serial, EyeDropper, tab sharing, media and freeze control) through `Lilo/Engine/PageWorld.swift`, and only through it. A page, and every bot detector on it, compares what it sees with what the user agent claims: Safari, whose pages have no `window.webkit`, no unknown global and no built-in function that prints its source. Any such trace reads as a tampered browser and sites answer it with captchas, so:
+
+- Bridge handlers are registered in `PageWorld.bridgeWorld`, never in the page world: one page-world handler gives every page `window.webkit`, which cannot be deleted.
+- A page module is a function source passed to `PageWorld.install`. It reaches native code through `lilo.post` / `lilo.send`, and native code reaches it through `lilo.on` and `PageWorld.push`, evaluated in `bridgeWorld`. The two worlds talk over DOM events whose types are random per launch.
+- A module patches WebKit's own prototypes with `lilo.methods` / `lilo.accessors` and defines new interfaces with `lilo.nativeClass` / `lilo.global`: functions print as native code (in every same-origin frame), members keep WebIDL's descriptors, and no own property lands on `window`, `navigator` or `document`.
+- `LiloTests/Engine/PageWorldTests.swift` compares a tab with the same engine settings without Lilo's scripts and fails on any added, missing or reshaped property, any function that prints its source and any `window.webkit`. A deliberate new global (a Chrome API pages use) goes in its `addedGlobals`.
+
 ## Private WebKit API
 
 Some features have no public WebKit API: process identifiers and page suspension (tab lifecycle, process manager), page muting, Picture-in-Picture, the Web Inspector, WebKit feature flags (`about:config`), and a set of private `WKUIDelegate`/`WKNavigationDelegate` hooks (window frame, print headers and footers, pointer lock, process termination reasons). Lilo reaches them at runtime only, never through private headers or linked private symbols:

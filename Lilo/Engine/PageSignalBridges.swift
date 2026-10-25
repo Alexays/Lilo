@@ -5,7 +5,8 @@ final class FormDirtyBridge: NSObject, WKScriptMessageHandler {
     static let messageHandlerName = "liloFormDirty"
     var onChange: ((WKWebView, Bool) -> Void)?
 
-    static let polyfillSource = """
+    /// Runs in `PageWorld.bridgeWorld`: it only listens to the page's DOM events.
+    static let scriptSource = """
     (function () {
       'use strict';
       var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.liloFormDirty;

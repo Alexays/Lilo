@@ -23,25 +23,24 @@ final class EyeDropperBridge: NSObject, WKScriptMessageHandlerWithReply {
         return (String(format: "#%02x%02x%02x", channel(color.redComponent), channel(color.greenComponent), channel(color.blueComponent)), nil)
     }
 
-    static let polyfillSource = """
-(function(){
-'use strict';
-var handler=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.liloEyeDropper;
-if(!handler||!window.isSecureContext||'EyeDropper' in window)return;
-var open=false;
-class EyeDropper{
-open(options){
-if(open)return Promise.reject(new DOMException('An eye dropper is already open.','InvalidStateError'));
-var signal=options&&options.signal;
-if(signal&&signal.aborted)return Promise.reject(signal.reason||new DOMException('Aborted','AbortError'));
-open=true;
-return handler.postMessage({}).then(function(hex){return {sRGBHex:hex};},function(e){
-var text=String(e&&e.message||e),m=/^(\\w+): (.*)$/.exec(text);
-throw new DOMException(m?m[2]:text,m?m[1]:'AbortError');
-}).finally(function(){open=false;});
-}
-}
-window.EyeDropper=EyeDropper;
-})();
-"""
+    /// `window.EyeDropper` for `PageWorld`, in secure contexts.
+    static let pageModule = #"""
+    function () {
+      if (!window.isSecureContext || 'EyeDropper' in window) return;
+      let open = false;
+      class EyeDropper {
+        open(options) {
+          if (open) return NativePromise.reject(new DOMException('An eye dropper is already open.', 'InvalidStateError'));
+          const signal = options && options.signal;
+          if (signal && signal.aborted) return NativePromise.reject(signal.reason || new DOMException('Aborted', 'AbortError'));
+          open = true;
+          return lilo.post('liloEyeDropper', {}).then(sRGBHex => ({ sRGBHex }), error => {
+            const text = String(error && error.message || error), match = /^(\w+): (.*)$/.exec(text);
+            throw new DOMException(match ? match[2] : text, match ? match[1] : 'AbortError');
+          }).finally(() => { open = false; });
+        }
+      }
+      lilo.global('EyeDropper', lilo.nativeClass(EyeDropper));
+    }
+    """#
 }
