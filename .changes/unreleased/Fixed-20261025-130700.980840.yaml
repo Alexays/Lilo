@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Extensions no longer keep Lilo and its web processes busy after launch: restored tabs are seen by extensions again, so their scripts stop retrying in a loop.'
+time: 2026-10-25T13:07:00.98084+01:00

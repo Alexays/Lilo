@@ -1,0 +1,3 @@
+kind: Changed
+body: Each space is its own window to extensions, so switching spaces no longer hides the other spaces' tabs from them, and a window an extension opens is its own floating window, which it can close without touching yours.
+time: 2026-10-25T13:07:01.008503+01:00

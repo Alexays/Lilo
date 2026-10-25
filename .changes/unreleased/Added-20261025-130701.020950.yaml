@@ -1,0 +1,3 @@
+kind: Added
+body: Extensions can message other extensions from their content scripts, and reach their own pages open in a tab.
+time: 2026-10-25T13:07:01.02095+01:00

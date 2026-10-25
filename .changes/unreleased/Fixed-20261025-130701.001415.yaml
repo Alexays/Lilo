@@ -1,0 +1,3 @@
+kind: Fixed
+body: Lilo no longer quits when an extension opens a window just as it appears.
+time: 2026-10-25T13:07:01.001415+01:00
