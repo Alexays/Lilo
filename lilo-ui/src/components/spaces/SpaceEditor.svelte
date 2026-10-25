@@ -363,7 +363,7 @@
           <label
             class="color-swatch custom"
             class:selected={customColor}
-            style:background={customColor ? s.color : null}
+            style:background={customColor ? `radial-gradient(circle closest-side, ${s.color} 0 52%, transparent 56%), var(--hue-wheel)` : null}
             use:tooltip={t("spaceEditor.customColor")}
           >
             <input

@@ -310,7 +310,26 @@ test("the pointer leaving for the page keeps the custom color picker connected",
 	await expect(picker).toBeFocused();
 	await picker.fill("#123456");
 	await expect(page.locator(".color-swatch.custom")).toHaveClass(/selected/);
-	await expect(page.locator(".color-swatch.custom")).toHaveCSS("background-color", "rgb(18, 52, 86)");
+	await expect(page.locator(".color-swatch.custom")).toHaveCSS("background-image", /rgb\(18, 52, 86\)/);
 	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: true }));
 	await expect(picker).not.toBeFocused();
+});
+
+test("a custom color keeps the hue wheel around it, and the swatch still opens the color picker", async ({ page }) => {
+	const world = initialWorld();
+	world.spaces[0].color = "#4a90d9";
+	await bootChrome(page, world);
+	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), world.spaces[0].id);
+	const custom = page.locator(".color-swatch.custom");
+	await expect(custom).toHaveClass(/selected/);
+	expect(await custom.evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("conic-gradient");
+
+	const opened = page.evaluate(() => new Promise<boolean>((resolve) => {
+		document.querySelector(".color-swatch.custom input")!.addEventListener("click", (event) => {
+			event.preventDefault();
+			resolve(true);
+		}, { once: true });
+	}));
+	await custom.click();
+	expect(await opened).toBe(true);
 });

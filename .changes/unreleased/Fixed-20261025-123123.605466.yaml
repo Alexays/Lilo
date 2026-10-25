@@ -1,0 +1,3 @@
+kind: Fixed
+body: The custom color swatch in the Space editor keeps its color wheel once a custom color is picked, so it still reads as the way to pick another.
+time: 2026-10-25T12:31:23.605466+01:00
