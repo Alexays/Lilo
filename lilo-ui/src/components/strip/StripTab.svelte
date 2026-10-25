@@ -92,6 +92,7 @@
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
+    container-type: inline-size;
   }
 
   .strip-tab:hover {
@@ -164,11 +165,26 @@
     display: none;
   }
 
-  /* Out of the way until wanted: a narrow pill keeps its room for the title. */
-  .strip-tab:hover .strip-tab-close,
-  .strip-tab.active .strip-tab-close,
-  .strip-tab:focus-within .strip-tab-close {
-    display: grid;
+  /* Out of the way until wanted, and never in a pill too narrow for it: it would spill over its neighbor. */
+  @container (min-width: 72px) {
+    .strip-tab:hover .strip-tab-close,
+    .strip-tab.active .strip-tab-close,
+    .strip-tab:focus-within .strip-tab-close {
+      display: grid;
+    }
+  }
+
+  /* Squeezed to its icon, a pill shows just the icon, centered. */
+  @container (max-width: 47px) {
+    .strip-tab-title,
+    .strip-tab-site {
+      display: none;
+    }
+
+    .strip-tab-main {
+      justify-content: center;
+      padding: 0;
+    }
   }
 
   .strip-tab-close:hover {
