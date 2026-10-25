@@ -6,6 +6,8 @@ type Call = { namespace: string; method: string; params: any };
 
 let respond: (call: Call) => unknown = () => null;
 const portListeners: Array<(message: unknown) => void> = [];
+/** The tag ipc.ts names its context with, which Lilo stamps on what it sends. */
+let channelTag: unknown;
 
 /** Lilo pushes `envelope` on the channel, which a gap call or listener opened. */
 export function pushGapEvent(envelope: { namespace: string; event: string; args?: unknown[] }): void {
@@ -15,7 +17,7 @@ export function pushGapEvent(envelope: { namespace: string; event: string; args?
 /** Lilo pushes `message` on the channel as it is, as it pushes a state. */
 export function pushToChannel(message: object): void {
   assert.ok(portListeners.length > 0, 'no channel is open');
-  portListeners.forEach((listener) => listener(message));
+  portListeners.forEach((listener) => listener({ ...message, liloChannel: channelTag }));
 }
 
 export function mockGapAPI(respondWith: (call: Call) => unknown): void {
@@ -30,12 +32,14 @@ export function mockGapAPI(respondWith: (call: Call) => unknown): void {
         },
       },
       onDisconnect: { addListener() {} },
+      disconnect() {},
       postMessage(message: any) {
+        if (message?.role) channelTag = message.tag;
         if (typeof message?.id !== 'number') return;
         new Promise((resolve) => resolve(respond({ namespace: message.namespace, method: message.method, params: message.params })))
           .then(
-            (result) => listeners.forEach((listener) => listener({ reply: message.id, result })),
-            (error) => listeners.forEach((listener) => listener({ reply: message.id, error: String(error?.message ?? error) })),
+            (result) => listeners.forEach((listener) => listener({ reply: message.id, result, liloChannel: channelTag })),
+            (error) => listeners.forEach((listener) => listener({ reply: message.id, error: String(error?.message ?? error), liloChannel: channelTag })),
           );
       },
     };

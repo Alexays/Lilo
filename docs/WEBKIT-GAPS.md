@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80, 84 and 89. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82 and 87. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82, 87 and 89. Every other gap is fully worked around.
 
 ---
 
@@ -157,8 +157,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80, 84 a
 ### 89. Ports opened in two processes can share a channel id
 
 - **Gap:** each web process numbers the ports it opens with its own counter, and the extension context keys its ports by that number alone. An extension page in a process of its own and the worker, or a content script and the worker, can draw the same number. A message sent to one of the two ports then reaches both, and a second native port with a number already open is not registered: its messages go to the first one, and once it is released the first one stops receiving. Chrome's port ids are unique.
-- **Lilo:** a content script's port that the worker relays to another extension takes only Lilo's numbered messages, so the worker's answers from Lilo never reach the other extension ([message-answers.ts] `messagesOnce`). Otherwise no workaround: a page whose channel to Lilo draws the worker's number never reaches Lilo (its calls and listener reports go unanswered), and the worker's channel stops reaching Lilo too.
-- **Impact:** intermittent, mostly under load: a page that never hears its events, a worker whose calls time out, a content script port to the worker that also receives the worker's answers from Lilo.
+- **Lilo:** each context names itself with a random tag in its channel's first message and in the high bits of its call ids, and Lilo stamps everything it sends on a port with the tag of the context it adopted the port for ([ipc.ts] `tag`, [GapEvents.swift] `owners`). A context drops what is not stamped with its tag. Lilo keeps a channel WebKit did not register, so the first one of its number stays registered (`twins`); on that first port, it skips the calls of another context and answers its first message with `collided`, and that context opens a new channel and sends its pending calls there again. It leaves the first one open: a page disconnecting a port of a number another port still holds makes WebKit forget its other ports, which then never disconnect. `chrome.runtime` ports drop what Lilo stamps ([message-answers.ts] `messagesOnce`).
+- **Impact:** without it, intermittently and mostly under load, a page never heard its events and the worker's calls timed out. Still open: a `browser.runtime` port that shares the worker's channel number receives what Lilo sends the worker, and disconnects when the idle worker's channel closes.
 - **Check:** Manual: timing dependent. Repro: stream WebKit's `Extensions` debug log and open extension pages in tabs (a process each) while the worker has its channel open, until a page's "Added 1 port for channel N in native world" repeats the worker's N. Expected: the page's messages reach its port. Actual: "Removed 1 port for channel N in native world" follows at once and neither port receives anything more.
 
 ## Pages and web views

@@ -374,4 +374,17 @@ describe('runtime ports between extension pages and the worker', () => {
     assert.deepEqual(workerHeard, ['state?', 'state?', 'state?']);
     assert.deepEqual(pageHeard, [{ state: 1 }]);
   });
+
+  it('drops what Lilo sends a channel to it that WebKit numbered as the port', () => {
+    const { end, connect } = channel();
+    const runtime: any = crossExtensionMessaging({ id: 'ponmlkjihgfedcbaponmlkjihgfedcba', connect: (info: any) => end(info.name) });
+    const page = runtime.connect({ name: 'popup' });
+    const heard: unknown[] = [];
+    page.onMessage.addListener((message: unknown) => heard.push(message));
+    const lilo = end('lilo');
+    connect();
+    lilo.postMessage({ reply: 1, result: null, liloChannel: 7 });
+
+    assert.deepEqual(heard, []);
+  });
 });

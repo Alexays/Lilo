@@ -17,6 +17,11 @@ struct GapEventEnvelope: @unchecked Sendable {
 
 /// Lilo's one native port per extension page or worker, carrying gap calls and pushed events; events for a worker without a channel
 /// wait here and wake it. An idle worker asks to close its channel so WebKit can unload it; pushes batch per main-actor turn.
+///
+/// WebKit keys a context's ports by a number each web process counts on its own (WEBKIT-GAPS 89): two contexts' channels can
+/// share one, and then both reach the first port of that number. Each context names itself with a tag in its first message and
+/// in the high bits of its call ids, and Lilo stamps what it sends with the tag of the port's context: a context that finds
+/// its channel taken moves to a new one (ipc.ts).
 @MainActor
 final class GapEvents {
     enum WorkerChannel {
@@ -63,6 +68,8 @@ final class GapEvents {
     /// Past this many undelivered events the oldest go, so a chatty producer under a long-dead worker
     /// cannot grow memory without bound.
     private nonisolated static let undeliveredCap = 256
+    /// The tag of the context a message is for, which ipc.ts checks first.
+    private nonisolated static let channelKey = "liloChannel"
 
     private var workers: [String: Worker] = [:]
     /// "namespace.event" names each extension's worker listens to, kept across idle unloads so a
@@ -74,6 +81,13 @@ final class GapEvents {
     /// The channels of the extension's open pages.
     private var pages: [String: [Page]] = [:]
     private var nextPageChannel = 0
+    /// The tag of the context each adopted port belongs to, by port.
+    private var owners: [ObjectIdentifier: Int64] = [:]
+    /// Ports attached and not adopted yet, by extension.
+    private var opening: [String: [WKWebExtension.MessagePort]] = [:]
+    /// Ports WebKit numbered as an open one of their extension, by extension. WebKit never registers them; releasing one
+    /// unregisters whatever port holds its number and, once that is gone, disconnects the pages still holding it.
+    private var twins: [String: [WKWebExtension.MessagePort]] = [:]
     /// Extensions with events for their connected worker or their pages, sent at the end of the turn.
     private var unflushed: Set<String> = []
     private var flushScheduled = false
@@ -158,8 +172,15 @@ final class GapEvents {
 
     /// Sends `message` now over the extension's open channels, its running worker's and its pages': a stopped worker misses it.
     func send(_ message: [String: Any], toOpenChannelsOf extensionId: String) {
-        workers[extensionId]?.port?.sendMessage(message) { _ in }
-        pages[extensionId]?.forEach { $0.port.sendMessage(message) { _ in } }
+        var message = message
+        if let port = workers[extensionId]?.port {
+            message[Self.channelKey] = owners[ObjectIdentifier(port)]
+            port.sendMessage(message) { _ in }
+        }
+        for page in pages[extensionId] ?? [] {
+            message[Self.channelKey] = owners[ObjectIdentifier(page.port)]
+            page.port.sendMessage(message) { _ in }
+        }
     }
 
     /// Events the extension's worker has not received yet.
@@ -173,7 +194,9 @@ final class GapEvents {
         detach(extensionId, .unloaded)
         workerListeners[extensionId] = nil
         workerReported.remove(extensionId)
-        pages[extensionId] = nil
+        pages.removeValue(forKey: extensionId)?.forEach { owners[ObjectIdentifier($0.port)] = nil }
+        opening[extensionId] = nil
+        twins[extensionId] = nil
         if purge { workers[extensionId] = nil }
     }
 
@@ -186,7 +209,7 @@ final class GapEvents {
             for index in pages[id]?.indices ?? 0..<0 {
                 guard let page = pages[id]?[index], !page.pending.isEmpty else { continue }
                 pages[id]?[index].pending = []
-                page.port.sendMessage(["events": page.pending]) { _ in }
+                page.port.sendMessage(["events": page.pending, Self.channelKey: owners[ObjectIdentifier(page.port)] ?? 0]) { _ in }
             }
         }
     }
@@ -198,15 +221,31 @@ final class GapEvents {
     /// connected (WebKit drops what is sent before); the worker holds them until its top-level code has
     /// registered its listeners (ipc.ts `workerReady`).
     func attach(_ port: WKWebExtension.MessagePort, extensionId: String) {
+        // `isEqual` compares the extension, host and number.
+        if workers[extensionId]?.port?.isEqual(port) == true || pages[extensionId]?.contains(where: { $0.port.isEqual(port) }) == true
+            || opening[extensionId]?.contains(where: { $0.isEqual(port) }) == true {
+            twins[extensionId, default: []].append(port)
+            return
+        }
+        opening[extensionId, default: []].append(port)
         port.messageHandler = { [weak self, weak port] message, _ in
             guard let port, let message = message as? [String: Any] else { return }
             // A hop, not assumeIsolated: a handler WebKit calls off the main thread would trap.
             Task { @MainActor in
                 guard let self else { return }
+                let owner = self.owners[ObjectIdentifier(port)]
                 if let role = message["role"] as? String {
-                    self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String, extensionId: extensionId)
+                    let tag = (message["tag"] as? NSNumber)?.int64Value ?? 0
+                    if owner == nil {
+                        self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String, tag: tag, extensionId: extensionId)
+                    } else if owner != tag {
+                        // Another context's channel drew this port's number: it opens another one.
+                        port.sendMessage(["collided": true, Self.channelKey: tag]) { _ in }
+                    }
                     return
                 }
+                // Another context's call, which it sends again on its next channel.
+                if let id = (message["id"] as? NSNumber)?.int64Value, let owner, id >> 32 != owner { return }
                 if message["idle"] != nil {
                     self.close(port, extensionId: extensionId)
                     return
@@ -226,6 +265,8 @@ final class GapEvents {
         port.disconnectHandler = { [weak self, weak port] _ in
             Task { @MainActor in
                 guard let self, let port else { return }
+                self.opening[extensionId]?.removeAll { $0 === port }
+                self.owners[ObjectIdentifier(port)] = nil
                 if self.workers[extensionId]?.port === port {
                     self.detach(extensionId, .lost)
                 } else if let index = self.pages[extensionId]?.firstIndex(where: { $0.port === port }) {
@@ -236,12 +277,15 @@ final class GapEvents {
         }
     }
 
-    private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, extensionId: String) {
+    private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, tag: Int64, extensionId: String) {
+        opening[extensionId]?.removeAll { $0 === port }
+        owners[ObjectIdentifier(port)] = tag
         guard asWorker else {
             nextPageChannel += 1
             pages[extensionId, default: []].append(Page(port: port, channel: nextPageChannel))
             return
         }
+        if let previous = workers[extensionId]?.port { owners[ObjectIdentifier(previous)] = nil }
         workers[extensionId, default: Worker()].port = port
         workers[extensionId]?.instance = instance
         workers[extensionId]?.sentThrough = 0
@@ -253,6 +297,7 @@ final class GapEvents {
     /// confirmed goes out again on its next port, which it opens when woken for it (ipc.ts drops repeats).
     private func close(_ port: WKWebExtension.MessagePort, extensionId: String) {
         port.disconnect()
+        owners[ObjectIdentifier(port)] = nil
         guard workers[extensionId]?.port === port else { return }
         detach(extensionId, .idle)
         if workers[extensionId]?.undelivered.isEmpty == false { wake(extensionId) }
@@ -269,7 +314,8 @@ final class GapEvents {
     }
 
     private func detach(_ extensionId: String, _ channel: WorkerChannel) {
-        guard workers[extensionId]?.port != nil else { return }
+        guard let port = workers[extensionId]?.port else { return }
+        owners[ObjectIdentifier(port)] = nil
         workers[extensionId]?.port = nil
         workers[extensionId]?.sentThrough = 0
         workerChannel(extensionId, channel)
@@ -281,7 +327,7 @@ final class GapEvents {
               let first = worker.undelivered.firstIndex(where: { $0.seq > worker.sentThrough }),
               let last = worker.undelivered.last?.seq else { return }
         workers[extensionId]?.sentThrough = last
-        port.sendMessage(["events": worker.undelivered[first...].map(\.dictionary)]) { [weak self] error in
+        port.sendMessage(["events": worker.undelivered[first...].map(\.dictionary), Self.channelKey: owners[ObjectIdentifier(port)] ?? 0]) { [weak self] error in
             Task { @MainActor in
                 guard let self else { return }
                 if error == nil {
@@ -300,8 +346,9 @@ final class GapEvents {
         var params = call["params"] as? [String: Any] ?? [:]
         // Only Lilo names a page's channel: what the page holds (a port) goes with it.
         params["pageChannel"] = fromWorker ? nil : pages[extensionId]?.first { $0.port === port }?.channel
+        let tag = owners[ObjectIdentifier(port)] ?? 0
         let (result, error) = await route(namespace, method, params, extensionId, fromWorker)
-        let reply: [String: Any] = error.map { ["reply": id, "error": $0] } ?? ["reply": id, "result": result ?? NSNull()]
+        let reply: [String: Any] = error.map { ["reply": id, "error": $0, Self.channelKey: tag] } ?? ["reply": id, "result": result ?? NSNull(), Self.channelKey: tag]
         port.sendMessage(reply) { _ in }
     }
 }

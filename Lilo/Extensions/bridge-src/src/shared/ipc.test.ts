@@ -5,11 +5,17 @@ import assert from 'node:assert/strict';
 
 interface FakePort {
   sent: any[];
-  receive(message: unknown): void;
+  disconnected: boolean;
+  /** Lilo sends `message` stamped with the tag of the context the port is Lilo's channel of. */
+  receive(message: object, to?: number): void;
   disconnect(): void;
 }
 
 const ports: FakePort[] = [];
+/** The tag the context names itself with in its channels' first message. */
+const tag = (): number => ports[0].sent[0].tag;
+/** The id of the `index`th call the context made, which carries its tag in its high bits. */
+const callId = (index: number): number => tag() * 2 ** 32 + index;
 const dispatched: unknown[][] = [];
 const listening = { dispatch: (...args: unknown[]) => dispatched.push(args) };
 (globalThis as any).ServiceWorkerGlobalScope = function ServiceWorkerGlobalScope() {};
@@ -24,11 +30,15 @@ const listening = { dispatch: (...args: unknown[]) => dispatched.push(args) };
       const onDisconnect: Array<() => void> = [];
       const port = {
         sent: [] as any[],
+        disconnected: false,
         postMessage(message: unknown) { port.sent.push(message); },
         onMessage: { addListener: (listener: (message: unknown) => void) => onMessage.push(listener) },
         onDisconnect: { addListener: (listener: () => void) => onDisconnect.push(listener) },
-        receive: (message: unknown) => onMessage.forEach((listener) => listener(message)),
-        disconnect: () => onDisconnect.forEach((listener) => listener()),
+        receive: (message: object, to = tag()) => onMessage.forEach((listener) => listener({ ...message, liloChannel: to })),
+        disconnect: () => {
+          port.disconnected = true;
+          onDisconnect.forEach((listener) => listener());
+        },
       };
       ports.push(port);
       return port;
@@ -51,7 +61,8 @@ describe('worker channel', () => {
     const call = gapCall('bookmarks', 'get', {}, 0);
     const read = storageAreaPatches.get(async () => 'stored', (area) => area as object).call({}).then((value: unknown) => dispatched.push([value]));
     const first = ports[0];
-    assert.deepEqual(first.sent[0], { role: 'worker', instance: (first.sent[0] as any).instance });
+    assert.deepEqual(first.sent[0], { role: 'worker', tag: tag(), instance: (first.sent[0] as any).instance });
+    assert.equal(first.sent[1].id, callId(1));
     first.receive({ seq: 1, namespace: 'bookmarks', event: 'onCreated', args: [1] });
     first.receive({ events: [{ seq: 2, namespace: 'bookmarks', event: 'onRemoved', args: [2] }] });
     await new Promise(setImmediate);
@@ -59,7 +70,7 @@ describe('worker channel', () => {
     workerReady();
     await read;
     assert.deepEqual(dispatched.splice(0), [[1], [2], ['stored']]);
-    first.receive({ reply: 1, result: 'done' });
+    first.receive({ reply: callId(1), result: 'done' });
     assert.equal(await call, 'done');
   });
 
@@ -68,7 +79,7 @@ describe('worker channel', () => {
     const call = gapCall('bookmarks', 'get', {}, 0);
     mock.timers.tick(60_000);
     assert.equal(first.sent.some((message) => message.idle), false, 'a pending call keeps the port');
-    first.receive({ reply: 2, result: 'done' });
+    first.receive({ reply: callId(2), result: 'done' });
     assert.equal(await call, 'done');
 
     mock.timers.tick(19_000);
@@ -78,9 +89,9 @@ describe('worker channel', () => {
 
     const next = gapCall('bookmarks', 'get');
     assert.equal(ports.length, 2);
-    assert.deepEqual(ports[1].sent[0], { role: 'worker', instance: (ports[0].sent[0] as any).instance });
+    assert.deepEqual(ports[1].sent[0], { role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance });
     first.disconnect();
-    ports[1].receive({ reply: 3, result: 'still answered' });
+    ports[1].receive({ reply: callId(3), result: 'still answered' });
     assert.equal(await next, 'still answered', 'closing the idle port cuts no call of the new one');
   });
 
@@ -100,7 +111,7 @@ describe('worker channel', () => {
 
   it('ignores a malformed envelope, an unknown event or a member that is not one', () => {
     const port = ports.at(-1)!;
-    for (const envelope of [null, { namespace: 'nope', event: 'noop' }, { namespace: 'runtime', event: 'id' }, { namespace: 'runtime', event: 'onStartup' }, { event: 'onCreated' }]) {
+    for (const envelope of [{}, { namespace: 'nope', event: 'noop' }, { namespace: 'runtime', event: 'id' }, { namespace: 'runtime', event: 'onStartup' }, { event: 'onCreated' }]) {
       assert.doesNotThrow(() => port.receive(envelope));
     }
     assert.deepEqual(dispatched, []);
@@ -132,6 +143,33 @@ describe('worker channel', () => {
     lilo.close();
     for (let turn = 0; turn < 1000 && ports.length === count; turn++) await new Promise(setImmediate);
     assert.equal(ports.length, count + 1);
-    assert.deepEqual(ports.at(-1)!.sent, [{ role: 'worker', instance: (ports[0].sent[0] as any).instance }]);
+    assert.deepEqual(ports.at(-1)!.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance }]);
+  });
+
+  it("ignores what is not stamped with its tag: another port's messages, and Lilo's for another context", async () => {
+    const port = ports.at(-1)!;
+    const call = gapCall('bookmarks', 'get');
+    const id = port.sent.at(-1).id;
+    port.receive({ seq: 20, namespace: 'bookmarks', event: 'onCreated', args: ['other'] }, tag() + 1);
+    port.receive({ reply: id, result: 'theirs' }, tag() + 1);
+    port.receive({ reply: id, result: 'mine' });
+    assert.equal(await call, 'mine');
+    assert.deepEqual(dispatched, []);
+  });
+
+  it('sends what went on a channel Lilo says was given a taken number again on a new one, and keeps that one open', async () => {
+    const taken = ports.at(-1)!;
+    const call = gapCall('bookmarks', 'get');
+    const sent = taken.sent.at(-1);
+    taken.receive({ collided: true }, tag() + 1);
+    assert.equal(ports.at(-1), taken, "another context's collision is not this one's");
+
+    taken.receive({ collided: true });
+    const next = ports.at(-1)!;
+    assert.notEqual(next, taken);
+    assert.equal(taken.disconnected, false);
+    assert.deepEqual(next.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance }, sent]);
+    next.receive({ reply: sent.id, result: 'moved' });
+    assert.equal(await call, 'moved', 'the call survives the move');
   });
 });
