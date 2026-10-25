@@ -16,10 +16,7 @@ final class PagePopupTests: XCTestCase {
         let context = browserContext.context
         let profileId = try context.profileManager.createProfile(name: "P").id
         let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
-        controller = MainWindowController(context: context)
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
-        controller.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 1000, height: 800))
-        controller.switchToSpace(space.id)
+        controller = makeTestWindow(context, showing: space.id, size: NSSize(width: 1000, height: 800))
         opener = try XCTUnwrap(controller.createTabStateFirst(url: nil))
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
         webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true

@@ -42,12 +42,13 @@ final class TestRunCleanup: NSObject, XCTestObservation {
         // A loaded system can miss an exiting host's WebKit processes, and RunningBoard keeps idle ones suspended, so they
         // never see the host go and live on for hours: end every process this host launched before it exits.
         atexit {
-            guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid") else { return }
-            let responsible = unsafeBitCast(symbol, to: (@convention(c) (pid_t) -> pid_t).self)
-            var pids = [pid_t](repeating: 0, count: 8192)
-            let count = proc_listallpids(&pids, Int32(pids.count * MemoryLayout<pid_t>.stride))
             let host = getpid()
-            for pid in pids.prefix(Int(max(count, 0))) where pid != host && responsible(pid) == host { kill(pid, SIGKILL) }
+            TestRunCleanup.killProcesses { pid, responsible, _ in pid != host && responsible == host }
+        }
+        // A host killed outright (SIGKILL, a crash, a timed-out run) never reaches that atexit: thousands of its WebKit
+        // processes then pile up and saturate runningboardd. Those of hosts gone end now.
+        Self.killProcesses { pid, responsible, path in
+            path.contains("/WebKit.framework/") && responsible != pid && kill(responsible, 0) != 0 && errno == ESRCH
         }
         // Each test host's defaults domain (UserDefaults.lilo) and filter list cache (FilterListService's
         // LiloTests-pid folder, tens of MB) outlive it: those of hosts gone go now.
@@ -59,6 +60,19 @@ final class TestRunCleanup: NSObject, XCTestObservation {
         let temporary = FileManager.default.temporaryDirectory
         for folder in Self.leftByEndedHosts(in: temporary, prefix: "LiloTests-") {
             try? FileManager.default.removeItem(at: temporary.appendingPathComponent(folder))
+        }
+    }
+
+    /// Sends SIGKILL to every process `shouldEnd` picks from its pid, its responsible process's pid and its executable path.
+    private static func killProcesses(where shouldEnd: (_ pid: pid_t, _ responsible: pid_t, _ path: String) -> Bool) {
+        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid") else { return }
+        let responsible = unsafeBitCast(symbol, to: (@convention(c) (pid_t) -> pid_t).self)
+        var pids = [pid_t](repeating: 0, count: 16384)
+        let count = proc_listallpids(&pids, Int32(pids.count * MemoryLayout<pid_t>.stride))
+        var path = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+        for pid in pids.prefix(Int(max(count, 0))) where pid > 0 {
+            let length = proc_pidpath(pid, &path, UInt32(path.count))
+            if shouldEnd(pid, responsible(pid), length > 0 ? String(cString: path) : "") { kill(pid, SIGKILL) }
         }
     }
 

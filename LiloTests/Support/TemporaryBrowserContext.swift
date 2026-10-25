@@ -24,9 +24,13 @@ final class TemporaryBrowserContext {
         return (window, registry)
     }
 
+    /// XCTest keeps every test case, and whatever it holds, until the run ends: a test keeping a window or a registry
+    /// would keep their pages, popups and extension workers, each its own WebContent process. All end here instead.
     func tearDown() {
-        // A page left open outlives the context, its WebContent process with it, until the run ends.
+        for window in context.windows.windows { window.window?.close() }
         for tabId in context.browserState.allTabIds() { context.browserState.liveEngine(forTab: tabId)?.teardown() }
+        for profile in context.profileContexts.allContexts { profile.extensions.teardown() }
+        context.engineFactory.dropWarmPool()
         try? FileManager.default.removeItem(at: directory)
     }
 }

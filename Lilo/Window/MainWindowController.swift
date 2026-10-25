@@ -816,6 +816,9 @@ extension MainWindowController: NSWindowDelegate {
             for profile in context.profileContexts.allContexts { profile.extensions.notifyWindowClosed(for: window) }
         }
         chromeInput.stop()
+        // Whatever still holds this controller, the chrome page and its WebContent process end with the window.
+        let close = NSSelectorFromString("_close")
+        if chromeWebView.responds(to: close) { chromeWebView.perform(close) }
     }
 
     /// The empty toolbar only sizes the windowed title bar: shown for good in full screen, it would cover the
