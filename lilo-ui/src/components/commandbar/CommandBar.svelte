@@ -10,6 +10,7 @@
   import {
     autocompleteSelected,
     closeCommandBar,
+    dismissAutofill,
     consumeSelectAllOnOpen,
     executeRawQuery,
     executeRawQueryInNewTab,
@@ -376,6 +377,11 @@
         break;
       case "Backspace":
       case "Delete":
+        if (e.key === "Delete" && !e.metaKey && completionShown) {
+          e.preventDefault();
+          dismissAutofill();
+          break;
+        }
         // Cmd+Delete closes the selected tab, or removes a history entry or a deletable omnibox suggestion.
         if (e.metaKey && (runSelectedResultKey("close") || runSelectedResultKey("remove"))) e.preventDefault();
         break;
@@ -513,7 +519,7 @@
               aria-activedescendant={results.length > 0 ? `cb-result-${selectedIndex}` : undefined}
               value={query}
               oninput={(e) => {
-                setQuery((e.target as HTMLInputElement).value);
+                setQuery((e.target as HTMLInputElement).value, !(e instanceof InputEvent && e.inputType.startsWith("delete")));
                 trackCaret();
               }}
               onkeyup={trackCaret}

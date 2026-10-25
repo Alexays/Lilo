@@ -59,8 +59,9 @@ function seed(tabs: BridgeInitialStatePayload["tabs"], treeItems: BridgeInitialS
 	applySidebarFolderInitialState(initial);
 }
 
+// The ranking below the host autofill row, which commandBarResultKeys.test.ts covers.
 function search(input: string, historyResults: CommandResult[] = []) {
-	return computeResults({ parsed: parseInput(input), historyResults, searchSuggestions: [], searchEngine: "google", spaces }, 0);
+	return computeResults({ parsed: parseInput(input), historyResults, searchSuggestions: [], searchEngine: "google", spaces, autofill: false }, 0);
 }
 
 test("history ranks by match plus frecency: a page visited often lately beats a closer match seen once long ago", () => {

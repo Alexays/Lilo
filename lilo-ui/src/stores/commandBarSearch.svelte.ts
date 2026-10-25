@@ -565,6 +565,41 @@ export function getLocalHostCompletion(
 	return "";
 }
 
+// The site a typed host prefix completes to, Firefox's origin autofill: the most visited host
+// the query starts, found in an open tab, a bookmark or at least twice in history.
+function autofillResult(query: string, history: CommandResult[], tabs: TabState[]): CommandResult | undefined {
+	if (!/^[a-z0-9][a-z0-9.-]*$/.test(query)) return undefined;
+	const visits = new Map<string, number>();
+	const origins = new Map<string, string>();
+	const note = (url: string | undefined, count: number) => {
+		if (!url || !/^https?:\/\//i.test(url)) return;
+		const host = hostOf(url);
+		if (!host?.startsWith(query) || host.length === query.length) return;
+		if (!origins.has(host)) origins.set(host, `${new URL(url).origin}/`);
+		visits.set(host, (visits.get(host) ?? 0) + count);
+	};
+	for (const tab of tabs) note(tab.url, 2);
+	for (const tab of getBookmarkedTabs()) note(tab.url, 2);
+	for (const row of history) note(row.url, (row.payload.visitCount as number) || 1);
+
+	let host = "";
+	for (const [candidate, count] of visits) {
+		if (count >= 2 && count > (visits.get(host) ?? 0)) host = candidate;
+	}
+	if (!host) return undefined;
+	const origin = origins.get(host)!;
+	const target = normalizeURLForMatch(origin);
+	const openTab = tabs.find((tab) => tabMatchURL(tab) === target);
+	if (openTab) return toTabResult(openTab);
+	return createResult("autofill", "navigate", host, { typed: false }, {
+		subtitle: origin,
+		icon: ">",
+		hint: t("commandBar.hintGo"),
+		url: origin,
+		titleHighlights: Array.from(query, (_, index) => index),
+	});
+}
+
 function searchSuggestionResults(
 	query: string,
 	suggestions: string[],
@@ -863,6 +898,7 @@ function buildAllSections(
 	searchSuggestions: string[],
 	searchEngine: string,
 	spaces: BridgeSpaceSnapshot[],
+	autofill: boolean,
 ): CommandSectionDraft[] {
 	const seenURLs = new Set<string>();
 	const sections: CommandSectionDraft[] = [];
@@ -870,6 +906,10 @@ function buildAllSections(
 	const fallback = makeFallbackResult(parsed, searchEngine);
 	const locked = getLockedFolderRoots();
 	const inactiveTabs = getInactiveOpenTabs(locked);
+	const autofillRow = autofill && parsed.type !== "action"
+		? autofillResult(parsed.query.toLowerCase(), historyResults, inactiveTabs)
+		: undefined;
+	if (autofillRow?.url) seenURLs.add(autofillRow.url);
 
 	if (parsed.type === "url" && fallback) {
 		const target = normalizeURLForMatch(parsed.url ?? "");
@@ -882,7 +922,15 @@ function buildAllSections(
 				uniqueByURL([toTabResult(openMatch)], seenURLs),
 			);
 		}
-		addSection(sections, "navigate", t("commandBar.sectionGoTo"), [fallback], t("commandBar.subtitleDirectNavigation"));
+		addSection(
+			sections,
+			"navigate",
+			t("commandBar.sectionGoTo"),
+			autofillRow ? [autofillRow, fallback] : [fallback],
+			t("commandBar.subtitleDirectNavigation"),
+		);
+	} else if (autofillRow) {
+		addSection(sections, "navigate", t("commandBar.sectionGoTo"), [autofillRow]);
 	}
 
 	if (parsed.type === "action") {
@@ -963,6 +1011,8 @@ interface ComputeResultsParams {
 	spaces?: BridgeSpaceSnapshot[];
 	/** A tab being moved: the bar lists the Spaces it can go to instead. */
 	moveTabId?: string;
+	/** False right after a deletion: the bar then completes no host, so the typed text stays what Enter opens. */
+	autofill?: boolean;
 	/// When an extension omnibox keyword is active, its suggestions replace the normal sections.
 	omnibox?: { active: boolean; title: string; results: CommandResult[] };
 }
@@ -1006,7 +1056,7 @@ export function computeResults(
 	} else if (!parsed.query) {
 		sectionDrafts = buildEmptySections(parsed.scope, historyResults);
 	} else if (parsed.scope === "all") {
-		sectionDrafts = buildAllSections(parsed, historyResults, searchSuggestions, searchEngine, params.spaces ?? []);
+		sectionDrafts = buildAllSections(parsed, historyResults, searchSuggestions, searchEngine, params.spaces ?? [], params.autofill ?? true);
 	} else {
 		sectionDrafts = buildScopedSections(parsed.scope, parsed.query, historyResults, params.spaces ?? []);
 	}

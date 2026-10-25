@@ -51,6 +51,10 @@ function ensureGlobalTooltipListeners(): void {
 	window.addEventListener("blur", () => {
 		for (const handlers of tooltipGlobalHandlers) handlers.leave();
 	});
+	// A native context menu takes the mouse without a mouseleave or a window blur.
+	document.addEventListener("contextmenu", () => {
+		for (const handlers of tooltipGlobalHandlers) handlers.leave();
+	}, true);
 	document.addEventListener("visibilitychange", () => {
 		if (document.visibilityState === "visible") return;
 		for (const handlers of tooltipGlobalHandlers) handlers.leave();

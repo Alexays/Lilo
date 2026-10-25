@@ -29,3 +29,24 @@ test("a tooltip that would start just inside the left edge lands on the window m
 
 	expect(left).toBeCloseTo(16, 0);
 });
+
+test("a right-click hides the tooltip: the native menu that opens never sends a mouseleave", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+
+	const remaining = await page.evaluate(async () => {
+		const url = "/src/lib/tooltip.ts";
+		const { tooltip }: typeof import("../src/lib/tooltip") = await import(url);
+		const anchor = document.createElement("button");
+		document.body.appendChild(anchor);
+		const action = tooltip(anchor, { text: "Space", delay: 0 });
+		anchor.dispatchEvent(new MouseEvent("mouseenter"));
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		anchor.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true }));
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		const count = document.querySelectorAll(".lilo-tooltip").length;
+		action.destroy();
+		return count;
+	});
+
+	expect(remaining).toBe(0);
+});
