@@ -82,6 +82,13 @@ const spaces = [
   },
 ] satisfies Space[];
 
+const edges = [
+  ["left", text.demoTabsLeft],
+  ["right", text.demoTabsRight],
+  ["top", text.demoTabsTop],
+  ["bottom", text.demoTabsBottom],
+] as const;
+
 const issues = [
   [text.demoCheckoutIssue, "WEB-482", "prog"],
   [text.demoOnboardingIssue, "WEB-479", ""],
@@ -91,7 +98,28 @@ const issues = [
 ];
 ---
 
+<div class="demo">
 <div class="window" id="browser-demo" role="group" aria-label={text.demoWindow}>
+  <!-- Right and bottom keep a bar over the page for the traffic lights: shown by the edge picked below. -->
+  <div class="page-bar" aria-hidden="true">
+    <div class="lights">
+      <i></i>
+      <i></i>
+      <i></i>
+    </div>
+    <div class="navs">
+      <span>&#8249;</span>
+      <span>&#8250;</span>
+    </div>
+    <div class="addr">
+      {spaces.map((space) => (
+        <span data-demo-space={space.id}>
+          <b>{space.host}</b>
+          {space.path}
+        </span>
+      ))}
+    </div>
+  </div>
   <div class="sb">
     <div class="chrome-row" aria-hidden="true">
       <div class="lights">
@@ -270,6 +298,26 @@ const issues = [
     </div>
   </div>
 </div>
+<div class="edges" role="radiogroup" aria-label={text.demoTabsEdge}>
+  <span class="edges-label" aria-hidden="true">{text.demoTabsEdge}</span>
+  {edges.map(([edge, label], index) => (
+    <>
+      <input
+        type="radio"
+        name="demo-tabs"
+        id={`demo-tabs-${edge}`}
+        value={edge}
+        checked={index === 0}
+        aria-label={label}
+      />
+      <label for={`demo-tabs-${edge}`} title={label} aria-hidden="true">
+        <span class={`edge-glyph ${edge}`}></span>
+      </label>
+    </>
+  ))}
+</div>
+</div>
+
 
 <script>
   import { gsap } from "gsap";
@@ -288,6 +336,7 @@ const issues = [
     ];
 
     const group = demo.querySelector<HTMLElement>(".spaces");
+    const edgePicker = demo.parentElement?.querySelector<HTMLElement>(".edges");
     const playback = demo.querySelector<HTMLButtonElement>(".playback");
     const motion = gsap.matchMedia();
 
@@ -372,6 +421,8 @@ const issues = [
       group?.addEventListener("pointerdown", stop);
       group?.addEventListener("focusin", stop);
       group?.addEventListener("change", select);
+      edgePicker?.addEventListener("pointerdown", stop);
+      edgePicker?.addEventListener("focusin", stop);
       playback?.addEventListener("click", togglePlayback);
       document.addEventListener("visibilitychange", syncPlayback);
 
@@ -384,6 +435,8 @@ const issues = [
         group?.removeEventListener("pointerdown", stop);
         group?.removeEventListener("focusin", stop);
         group?.removeEventListener("change", select);
+        edgePicker?.removeEventListener("pointerdown", stop);
+        edgePicker?.removeEventListener("focusin", stop);
         playback?.removeEventListener("click", togglePlayback);
         document.removeEventListener("visibilitychange", syncPlayback);
         transition?.revert();
@@ -397,6 +450,264 @@ const issues = [
 </script>
 
 <style>
+  .demo {
+    display: grid;
+    gap: 20px;
+    justify-items: center;
+  }
+
+  .demo .window {
+    width: 100%;
+  }
+
+  /* Hidden until an edge needs it: right and bottom keep the traffic lights and the address there. */
+  .page-bar {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    padding: 0 10px 0 12px;
+    min-width: 0;
+  }
+
+  .page-bar .navs {
+    margin-left: 0;
+  }
+
+  .page-bar .addr {
+    flex: 1;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 5px 12px;
+    justify-content: center;
+  }
+
+  .demo:has(#demo-tabs-right:checked) .window,
+  .demo:has(#demo-tabs-top:checked) .window,
+  .demo:has(#demo-tabs-bottom:checked) .window {
+    padding: 0 8px 8px;
+  }
+
+  .demo:has(#demo-tabs-right:checked) .window {
+    grid-template-columns: minmax(0, 1fr) 252px;
+    grid-template-rows: 38px minmax(0, 1fr);
+    grid-template-areas: "bar sb" "view sb";
+    padding: 0 0 8px 8px;
+  }
+
+  .demo:has(#demo-tabs-top:checked) .window {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 48px minmax(0, 1fr);
+    grid-template-areas: "sb" "view";
+  }
+
+  .demo:has(#demo-tabs-bottom:checked) .window {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 38px minmax(0, 1fr) 62px;
+    grid-template-areas: "bar" "view" "sb";
+  }
+
+  .demo:has(#demo-tabs-right:checked) .page-bar,
+  .demo:has(#demo-tabs-bottom:checked) .page-bar {
+    display: flex;
+    grid-area: bar;
+  }
+
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked) .sb {
+    grid-area: sb;
+  }
+
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked) .view {
+    grid-area: view;
+  }
+
+  /* On the right and at the bottom the page bar holds the lights, the history and the address. */
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-bottom):checked) .sb > .chrome-row,
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-bottom):checked) .sb > .addr {
+    display: none;
+  }
+
+  /* A strip: one row, the active tab carrying the address. */
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .sb {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+    overflow: hidden;
+  }
+
+  .demo:has(#demo-tabs-bottom:checked) .sb {
+    margin-top: 8px;
+    padding: 0 8px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  .demo:has(#demo-tabs-top:checked) .sb > .chrome-row {
+    flex: none;
+  }
+
+  .demo:has(#demo-tabs-top:checked) .sb > .addr {
+    flex: 0 1 240px;
+    min-width: 120px;
+    margin: 0;
+    padding: 6px 10px;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .space-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .space-content > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead {
+    flex: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.16);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead em,
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .spacebar,
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .newtab span:last-child,
+  .demo:has(#demo-tabs-top:checked) .row-item.on {
+    display: none;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs {
+    display: flex;
+    gap: 0;
+    margin: 0;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs span {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .divider {
+    flex: none;
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item {
+    flex: 0 1 150px;
+    min-width: 32px;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item.on {
+    flex: 0 0 200px;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .newtab {
+    flex: none;
+  }
+
+  /* Each edge has its own keyframes so a new pick restarts the settle-in. */
+  .demo:has(#demo-tabs-left:checked) .window > * { animation: edge-left 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+  .demo:has(#demo-tabs-right:checked) .window > * { animation: edge-right 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+  .demo:has(#demo-tabs-top:checked) .window > * { animation: edge-top 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+  .demo:has(#demo-tabs-bottom:checked) .window > * { animation: edge-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
+
+  @keyframes edge-left { from { opacity: 0; transform: translateX(-10px); } }
+  @keyframes edge-right { from { opacity: 0; transform: translateX(10px); } }
+  @keyframes edge-top { from { opacity: 0; transform: translateY(-8px); } }
+  @keyframes edge-bottom { from { opacity: 0; transform: translateY(8px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .demo .window > * {
+      animation: none !important;
+    }
+  }
+
+  .edges {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 4px 4px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: 0 0 0 0.5px var(--line), 0 6px 18px color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--ink-2);
+    font: 600 13px/1 var(--sys);
+  }
+
+  .edges-label {
+    margin-right: 6px;
+  }
+
+  .edges input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .edges label {
+    width: 40px;
+    height: 32px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .edges input:checked + label {
+    background: var(--accent);
+    color: var(--on-brand);
+  }
+
+  .edges input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .edge-glyph {
+    position: relative;
+    width: 22px;
+    height: 16px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1.4px currentColor;
+  }
+
+  .edge-glyph::after {
+    content: "";
+    position: absolute;
+    border-radius: 1.5px;
+    background: currentColor;
+  }
+
+  .edge-glyph.left::after { left: 2px; top: 2px; bottom: 2px; width: 6px; }
+  .edge-glyph.right::after { right: 2px; top: 2px; bottom: 2px; width: 6px; }
+  .edge-glyph.top::after { left: 2px; right: 2px; top: 2px; height: 4px; }
+  .edge-glyph.bottom::after { left: 3px; right: 3px; bottom: 2px; height: 4px; }
+
+  /* Phones keep the sidebar demo: a strip has no room on a narrow window. */
+  @media (max-width: 900px) {
+    .edges {
+      display: none;
+    }
+  }
+
   /* Perso: a travel article */
   .article {
     display: grid;
