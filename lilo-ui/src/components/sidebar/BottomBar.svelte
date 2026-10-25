@@ -580,8 +580,10 @@
   </div>
 
   <div class="bottom-side end">
+    <!-- Shown for good while it is the only way to learn Spaces exist; past one, the bar reveals it on hover. -->
     <button
       class="bottom-btn"
+      class:reveal-on-hover={spaceBaseItems.length > 1}
       use:tooltip={t("bottomBar.newSpace")}
       aria-label={t("bottomBar.newSpace")}
       onclick={() => openAddEditor()}
@@ -625,7 +627,17 @@
     padding: 0;
     transition:
       background var(--transition-fast),
-      color var(--transition-fast);
+      color var(--transition-fast),
+      opacity var(--transition-fast);
+  }
+
+  .bottom-btn.reveal-on-hover {
+    opacity: 0;
+  }
+
+  .bottom-bar:hover .bottom-btn.reveal-on-hover,
+  .bottom-btn.reveal-on-hover:focus-visible {
+    opacity: 1;
   }
 
   .bottom-side {

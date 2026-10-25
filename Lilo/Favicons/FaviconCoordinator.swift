@@ -47,7 +47,10 @@ final class FaviconCoordinator {
     /// dominant color is computed once.
     func extract(from tab: WKWebViewTab, icons: [WKWebViewTab.LinkIcon]) {
         let shown = applyCached(from: tab)
-        guard let pageHost = tab.currentURL?.host?.lowercased(), shown?.isExpired ?? true,
+        // A site can switch icons on the same host (after signing in, say): an icon the page no
+        // longer offers is refetched before its TTL runs out.
+        let offered = shown?.iconURL.map { url in icons.contains { $0.url.absoluteString == url } } ?? false
+        guard let pageHost = tab.currentURL?.host?.lowercased(), (shown?.isExpired ?? true) || !offered,
               failedAt[pageHost].map({ Date().timeIntervalSince($0) >= Self.failureRetryInterval }) ?? true,
               !icons.isEmpty else {
             icons.forEach { $0.decide(nil) }
@@ -73,6 +76,7 @@ final class FaviconCoordinator {
             }.map(\.element)
             fetch = Task { @MainActor [weak self] in
                 var resolved: (dataURL: String, color: String?)?
+                var resolvedURL: URL?
                 var timedOut = false
                 // WebKit may drop a load's callback: past this, the host stops waiting and moves on.
                 let deadline = ContinuousClock.now + .seconds(10)
@@ -85,7 +89,10 @@ final class FaviconCoordinator {
                     let data = await received.next() ?? nil
                     timeout.cancel()
                     if data == nil, ContinuousClock.now >= deadline { timedOut = true }
-                    if let data, !data.isEmpty { resolved = await Self.resolve(data) }
+                    if let data, !data.isEmpty {
+                        resolved = await Self.resolve(data)
+                        resolvedURL = icon.url
+                    }
                 }
                 guard let self else { return nil }
                 self.inFlight[pageHost] = nil
@@ -98,7 +105,7 @@ final class FaviconCoordinator {
                     return nil
                 }
                 self.failedAt[pageHost] = nil
-                self.service.seed(host: pageHost, dataURL: resolved.dataURL, dominantColor: resolved.color, profileId: profileId)
+                self.service.seed(host: pageHost, dataURL: resolved.dataURL, dominantColor: resolved.color, iconURL: resolvedURL?.absoluteString, profileId: profileId)
                 return FaviconService.Resolved(dataURL: resolved.dataURL, dominantColor: resolved.color)
             }
             inFlight[pageHost] = fetch

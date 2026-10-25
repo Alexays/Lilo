@@ -101,6 +101,8 @@ final class FaviconService {
     private struct Entry {
         let dataURL: String
         let dominantColor: String?
+        /// The link icon it was loaded from; nil when it comes from a restored tab or the store.
+        let iconURL: String?
         let expiresAt: Date
         /// When this process last wrote the icon to each profile's store; absent when it has not.
         var persistedAt: [UUID: Date]
@@ -111,6 +113,7 @@ final class FaviconService {
     struct Resolved {
         let dataURL: String
         let dominantColor: String?
+        var iconURL: String?
         /// Past its TTL: still shown, but due for a refetch.
         var isExpired = false
     }
@@ -126,21 +129,21 @@ final class FaviconService {
     func cached(for host: String) -> Resolved? {
         let key = host.lowercased()
         guard let entry = cache.get(key) else { return nil }
-        return Resolved(dataURL: entry.dataURL, dominantColor: entry.dominantColor, isExpired: entry.isExpired)
+        return Resolved(dataURL: entry.dataURL, dominantColor: entry.dominantColor, iconURL: entry.iconURL, isExpired: entry.isExpired)
     }
 
     func clear(for host: String) { cache.remove(host.lowercased()) }
 
     /// Persists into `profileId`'s store; nil (private browsing) keeps the icon in the in-memory cache only.
     /// A refetch that yields the cached icon only extends its TTL, and rewrites the row at most daily.
-    func seed(host: String, dataURL: String, dominantColor: String?, profileId: UUID?) {
+    func seed(host: String, dataURL: String, dominantColor: String?, iconURL: String? = nil, profileId: UUID?) {
         let key = host.lowercased()
         let now = Date()
         let previous = cache.get(key).flatMap { $0.dataURL == dataURL && $0.dominantColor == dominantColor ? $0 : nil }
         var persistedAt = previous?.persistedAt ?? [:]
         let persists = profileId.map { now.timeIntervalSince(persistedAt[$0] ?? .distantPast) >= Self.persistInterval } ?? false
         if persists, let profileId { persistedAt[profileId] = now }
-        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, expiresAt: now.addingTimeInterval(Self.ttl), persistedAt: persistedAt))
+        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: iconURL, expiresAt: now.addingTimeInterval(Self.ttl), persistedAt: persistedAt))
         guard persists, let profileId else { return }
         storeForProfile(profileId)?.upsertManyAsync([FaviconStore.Entry(host: host, dataURL: dataURL, dominantColor: dominantColor)])
     }
@@ -159,7 +162,7 @@ final class FaviconService {
     func warmIfAbsent(host: String, dataURL: String, dominantColor: String?) {
         let key = host.lowercased()
         guard !dataURL.isEmpty, cache.get(key) == nil else { return }
-        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, expiresAt: Date().addingTimeInterval(Self.ttl), persistedAt: [:]))
+        cache.set(key, Entry(dataURL: dataURL, dominantColor: dominantColor, iconURL: nil, expiresAt: Date().addingTimeInterval(Self.ttl), persistedAt: [:]))
     }
 
     /// Restore-path favicon fill. Blobs carry no favicon data URLs, so absent ones are filled from

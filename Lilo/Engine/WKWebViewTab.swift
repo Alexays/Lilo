@@ -85,6 +85,7 @@ final class WKWebViewTab: NSObject {
     /// A link icon (`/favicon.ico` when the page declares none) WebKit loads on request through the
     /// page's own network session: its connections and cache, no credentials.
     struct LinkIcon {
+        let url: URL
         /// Largest dimension in the `sizes` attribute, 0 when absent.
         let size: Int
         let isTouchIcon: Bool
@@ -1384,8 +1385,9 @@ extension WKWebViewTab: WKNavigationDelegate {
         let value = { (key: String) in
             parameters.responds(to: NSSelectorFromString(key)) ? parameters.value(forKey: key) : nil
         }
-        guard value("url") is URL else { return completionHandler(nil) }
+        guard let url = value("url") as? URL else { return completionHandler(nil) }
         offeredIcons.append(LinkIcon(
+            url: url,
             size: (value("size") as? NSNumber)?.intValue ?? 0,
             // _WKLinkIconType: 0 favicon, 1 touch icon, 2 precomposed touch icon.
             isTouchIcon: (value("iconType") as? Int ?? 0) != 0,
