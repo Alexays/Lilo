@@ -1,7 +1,18 @@
+import AppKit
 import Foundation
 import XCTest
 
 final class TestRunCleanupTests: XCTestCase {
+    @MainActor
+    func testAWindowATestShowsStaysOutOfMissionControl() async {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.orderFront(nil)
+        let hidden = await pollUntil(timeout: 5) { window.collectionBehavior.isSuperset(of: [.transient, .ignoresCycle]) }
+        XCTAssertTrue(hidden, "\(window.collectionBehavior)")
+    }
+
     /// A run ending while another goes on must leave the other's stores alone: they are open in its
     /// network process, where every IndexedDB open then fails with "Unable to open database file on disk".
     func testARunEndingKeepsTheStoresOfARunStillGoing() throws {
