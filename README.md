@@ -24,10 +24,11 @@ Light on your Mac, quick on the web. Free and open source.
 
 </div>
 
-Lilo is a macOS browser built on WebKit, for people who live in a sidebar, and for the AI agents
-that work beside them: Spaces with their own sign-ins, the Chrome extensions you rely on, terminal
-tabs beside your pages, a built-in MCP server, and a battery that lasts the day. If you are leaving Arc, it
-imports your Spaces, pinned tabs and folders in a few clicks.
+Lilo is a Mac browser for people who live in a sidebar, and it is not another Chromium fork. It is
+native Swift and AppKit on the WebKit engine already in macOS, and it still runs the Chrome
+extensions you rely on. It puts terminal tabs beside your pages, and lets the AI agents you already
+use drive it over a built-in MCP server, in a Space of their own. Free, MIT licensed, no account. If
+you are leaving Arc, it imports your Spaces, pinned tabs and folders in a few clicks.
 
 > **Status: public beta.** Lilo is usable every day, but it is still a beta: expect rough edges and
 > an interface that still moves, and please [report what breaks](https://github.com/Alexays/Lilo/issues).
@@ -37,14 +38,21 @@ Join the [Discord community](https://discord.gg/NyJRAapk76) to share feedback an
 
 ## Why Lilo
 
-- **Built on WebKit.** Swift, AppKit and the WebKit engine already on your Mac, with the sidebar
-  and settings in Svelte. No bundled Chromium, no Electron: lower memory use, longer battery life,
-  and Apple's security updates with every macOS release.
-- **Organized.** A vertical sidebar with Spaces, pinned tabs and folders. Each Space can have its
-  own profile, so work and personal sign-ins live side by side in one window.
-- **Compatible.** Chrome Web Store extensions install with one click on "Add to Lilo".
-- **Private.** No account, no telemetry, no analytics, no server: nothing you do is sent to the
-  project. Ads and trackers are blocked out of the box.
+Most Arc alternatives are Chromium with a new sidebar. Lilo keeps the sidebar and changes the rest.
+
+- **Not Chromium.** No bundled browser engine, no Electron: Swift, AppKit and the system WebKit,
+  with the sidebar and settings in Svelte. Lower memory use, a battery that lasts the day, and
+  Apple's security updates with every macOS release.
+- **Chrome extensions anyway.** Leaving Chromium usually means leaving its extensions. In Lilo,
+  Chrome Web Store extensions install with one click on "Add to Lilo", on WebKit's native runtime
+  ([COMPATIBILITY.md](COMPATIBILITY.md)).
+- **Your agents drive it, it has no AI of its own.** No chatbot bolted on: the agents you already
+  run (Claude Code, Codex, Cursor or any MCP client) use a real browser through the built-in MCP
+  server, in their own Space and throwaway profile, and ask you before they send, pay or delete.
+- **A terminal beside your pages.** Ghostty-based terminal tabs live in the sidebar with your sites,
+  showing the branch and pending changes of their repository.
+- **Nothing to sign up for.** No account, no telemetry, no analytics, no server: nothing you do is
+  sent to the project. Ads and trackers are blocked out of the box.
 - **Yours.** MIT licensed. The whole interface is a Svelte layer over WebKit that you can change
   and rebuild in seconds.
 
