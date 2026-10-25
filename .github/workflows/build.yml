@@ -130,10 +130,33 @@ jobs:
           make project-sync
           test -z "$(git status --porcelain --untracked-files=all Lilo.xcodeproj)" \
             || { git status --short Lilo.xcodeproj; echo "::error::Lilo.xcodeproj is out of sync with project.yml: run 'make project-sync' and commit."; exit 1; }
+      # A checkout dates every file now, which would make Xcode rebuild all of a cached build: unchanged files keep the
+      # date of their content, and XCBuild ignores the new inodes.
+      - name: Date files by their content
+        run: |
+          git ls-files -s -z | python3 scripts/pin_mtimes.py
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+      # Debug build products of the last main build: a run rebuilds only what changed since. Saved from main only.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .derived.noindex/xcode
+            !.derived.noindex/xcode/SourcePackages
+            !.derived.noindex/xcode/Logs
+          key: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
+          restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+      - run: make swiftlint
       # swift-test builds Debug itself.
-      - run: make swiftlint xcode-build-release
       - run: make swift-test RESULT_BUNDLE=build/swift-test.xcresult
       - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: |
+            .derived.noindex/xcode
+            !.derived.noindex/xcode/SourcePackages
+            !.derived.noindex/xcode/Logs
+          key: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
       - name: List tests that passed only on a retry
         id: retried
         if: always()
@@ -149,6 +172,27 @@ jobs:
           name: swift-test-results
           path: build/*.xcresult
           if-no-files-found: ignore
+
+  # Beside the tests rather than before them: a Release-only build error still fails the run.
+  release-build:
+    name: Release Build (macOS)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .derived.noindex/xcode/SourcePackages
+          key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      - run: make xcode-build-release
 
   # Numbers are kept per merged commit: a pull request would only spend a second Release build on them.
   startup-bench:
