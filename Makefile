@@ -63,7 +63,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench energy-sample energy-compare \
+	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-test
@@ -397,6 +397,11 @@ check-commits:
 ## Time launches of a Release build against a throwaway profile (RUNS=10 TABS=0)
 startup-bench:
 	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT))
+
+# Extensions download once into build/ext-bench; the bench takes about 5 minutes.
+## Time a Release build with 20 store extensions: restore, preparation, worker starts, API latency, idle CPU (RUNS=5 IDLE=60)
+ext-bench:
+	@scripts/bench_extensions.sh $(or $(RUNS),5) --idle $(or $(IDLE),60) $(if $(OUT),--out $(OUT))
 
 # SUDO=1 samples with powermetrics, SUDO=0 falls back to top; GIT=1 (needs sudo) also counts git runs.
 ## Sample the running Lilo's CPU, wakeups and energy (DURATION=120 LABEL=run OUT=~/lilo-energy GIT=0 SUDO=1)
