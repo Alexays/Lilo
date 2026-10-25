@@ -145,6 +145,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                 // Chrome's recording keeps the first line of each error.
                 .replacingOccurrences(of: #"\n[\s\S]*"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #"Invalid call to \S+\(\)\. "#, with: "", options: .regularExpression)
+                // Lilo reports an unchecked lastError as the Error it raises, where Chrome logs the bare text.
+                .replacingOccurrences(of: #"^Error: (?=Unchecked runtime\.lastError: )"#, with: "", options: .regularExpression)
                 // A promise rejected with undefined: V8 reports the bare text, JavaScriptCore the value.
                 .replacingOccurrences(of: #"^Uncaught \(in promise\)$"#, with: "undefined", options: .regularExpression)
                 // A logged "Error: " label stays: of console.error("Error: ", error), WebKit keeps only the label. An unchecked
