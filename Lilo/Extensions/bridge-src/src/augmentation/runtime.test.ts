@@ -134,6 +134,17 @@ describe('runtime messaging to another extension', () => {
     assert.throws(() => port.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
   });
 
+  it('disconnects a port the other extension declined with lastError set', async () => {
+    answer = (msg) => (msg.method === 'connectExternal' ? '10' : null);
+    const port = runtime.connect(other);
+    const lastError = new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: ['10', noReceiver] });
+    answer = undefined;
+
+    assert.deepEqual(await lastError, { message: noReceiver });
+  });
+
   it("leaves the extension's own messages to WebKit", () => {
     webKitCalls.length = 0;
     assert.equal(runtime.sendMessage('a message'), 'webkit');
@@ -187,6 +198,14 @@ describe('runtime messages and ports from another extension', () => {
     assert.deepEqual(gapCalls.slice(-3).map((c) => [c.method, c.params]), [
       ['portAccept', { portId: '12' }], ['portPost', { portId: '12', message: 'ready' }], ['portDisconnect', { portId: '12' }],
     ], 'a page tells native it holds the port, which goes with the page');
+  });
+
+  it('declines a port no listener takes', async () => {
+    const webKitOnly = externalEvents(() => ({ onMessageExternal: webKitEvent(), onConnectExternal: webKitEvent() }));
+    webKitOnly.onConnectExternal.dispatch({ portId: '13', name: 'tunnel', sender });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepEqual(gapCalls.at(-1), { namespace: 'runtime', method: 'portDecline', params: { portId: '13' } });
   });
 });
 

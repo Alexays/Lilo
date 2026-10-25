@@ -10,8 +10,8 @@ import WebKit
 final class RuntimeBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
         "runtime.requestUpdateCheck", "runtime.workerListensToMessages",
-        "runtime.sendExternal", "runtime.answerExternal", "runtime.connectExternal", "runtime.portAccept", "runtime.portPost",
-        "runtime.portDisconnect"
+        "runtime.sendExternal", "runtime.answerExternal", "runtime.connectExternal", "runtime.portAccept", "runtime.portDecline",
+        "runtime.portPost", "runtime.portDisconnect"
     ]
 
     static let noReceiver = "Could not establish connection. Receiving end does not exist."
@@ -39,7 +39,10 @@ final class RuntimeBridgeHandler: GapHandler {
         let openerChannel: Int?
         /// The target's pages that took it: it goes with the last one, unless the target's worker may hold it too.
         var targetChannels: Set<Int> = []
-        let targetWorkerListens: Bool
+        /// Also true while the target's worker has not reported its listeners: it hears the port, and declines it without one.
+        var targetWorkerListens: Bool
+        /// Whether a page of the target heard the port: one then takes it.
+        let targetPagesHeard: Bool
         weak var registry: ProfileExtensionRegistry?
 
         func other(than extensionId: String) -> String? {
@@ -110,7 +113,8 @@ final class RuntimeBridgeHandler: GapHandler {
             let id = String(nextId)
             let targetWorkerListens = events.reportedListeners(of: target)?.contains("runtime.onConnectExternal") ?? true
             ports[id] = Port(
-                opener: call.extensionId, target: target, openerChannel: call.int("pageChannel"), targetWorkerListens: targetWorkerListens, registry: call.registry
+                opener: call.extensionId, target: target, openerChannel: call.int("pageChannel"), targetWorkerListens: targetWorkerListens,
+                targetPagesHeard: events.pageListens(target, to: "runtime.onConnectExternal"), registry: call.registry
             )
             // Both ends hear the port's messages from now on, before their contexts report it. An end whose worker
             // reported nothing yet already hears every event, and reporting for it would narrow that to these two.
@@ -123,6 +127,17 @@ final class RuntimeBridgeHandler: GapHandler {
         case "runtime.portAccept":
             if let id = call.string("portId"), ports[id]?.target == call.extensionId, let channel = call.int("pageChannel") {
                 ports[id]?.targetChannels.insert(channel)
+            }
+            return nil
+
+        case "runtime.portDecline":
+            // The worker had no listener: the port is left to the pages that heard it or, as in Chrome, fails.
+            guard let id = call.string("portId"), let port = ports[id], port.target == call.extensionId, call.int("pageChannel") == nil else {
+                return nil
+            }
+            ports[id]?.targetWorkerListens = false
+            if !port.targetPagesHeard {
+                disconnect(id, notifying: port.opener, registry: call.registry, error: Self.noReceiver)
             }
             return nil
 
@@ -175,9 +190,10 @@ final class RuntimeBridgeHandler: GapHandler {
         message.answer.resume(returning: Answer(value: answer))
     }
 
-    private func disconnect(_ id: String, notifying extensionId: String, registry: ProfileExtensionRegistry?) {
+    /// `error` is the other end's `runtime.lastError` while its `onDisconnect` listeners run.
+    private func disconnect(_ id: String, notifying extensionId: String, registry: ProfileExtensionRegistry?, error: String? = nil) {
         ports[id] = nil
-        registry?.gapEvents.emit("runtime", "portDisconnect", args: [id], to: [extensionId])
+        registry?.gapEvents.emit("runtime", "portDisconnect", args: error.map { [id, $0] } ?? [id], to: [extensionId])
     }
 
     /// A closed page's ends of ports go: the port disconnects for the other extension once nothing of this one holds it.

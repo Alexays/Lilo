@@ -195,6 +195,25 @@ final class RuntimeGapAPITests: XCTestCase {
         XCTAssertEqual(afterDisconnect.error, "Attempting to use a disconnected port object")
     }
 
+    /// A worker hears every port until it reports its listeners; one it declines fails for the opener, as in Chrome.
+    func testAPortTheTargetsWorkerDeclinesDisconnectsWithChromesError() async throws {
+        let opener = try await loadExtension("opener")
+        let target = try await loadExtension("target")
+        let connected = await call("runtime", "connectExternal", ["id": target], from: opener)
+        let portId = try XCTUnwrap(connected.result as? String)
+
+        _ = await router.route(
+            namespace: "runtime", method: "portDecline", params: ["portId": portId, "pageChannel": 2], extensionId: target, fromWorker: false, registry: registry
+        )
+        let afterPageDecline = queued("runtime.portDisconnect", for: opener).count
+        _ = await call("runtime", "portDecline", ["portId": portId], from: target)
+        let afterDecline = await call("runtime", "portPost", ["portId": portId, "message": "late"], from: opener)
+
+        XCTAssertEqual(afterPageDecline, 0, "a page without a listener leaves the port to the worker")
+        XCTAssertEqual(queued("runtime.portDisconnect", for: opener).map { $0.args as? [String] }, [[portId, Self.noReceiver]])
+        XCTAssertEqual(afterDecline.error, "Attempting to use a disconnected port object")
+    }
+
     func testAContentScriptsMessageCarriesItsFrameAsTheSender() async throws {
         let sender = try await loadExtension("sender")
         let target = try await loadExtension("target")
