@@ -49,33 +49,37 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertEqual(kept, "hooked")
     }
 
-    /// WebKit gates its third-party cookie blocking on tracking prevention: off, as by default, a site embedded
-    /// elsewhere still gets the cookies it set as a first party, though it cannot set new ones there.
-    func testOnlyTrackingPreventionKeepsFirstPartyCookiesFromThirdPartyRequests() async throws {
+    /// Third-party cookies follow tracking prevention: off, as by default, a site embedded elsewhere gets the
+    /// cookies it set as a first party and keeps the ones it sets there, as in Chrome; on, it gets none.
+    func testOnlyTrackingPreventionBlocksThirdPartyCookies() async throws {
         let seen = OSAllocatedUnfairLock<[String]>(initialState: [])
         let embedded = try await TinyHTTPServer { request in
             let cookie = request.split(separator: "\r\n").first { $0.lowercased().hasPrefix("cookie:") }.map(String.init) ?? ""
-            if request.hasPrefix("GET /echo ") { seen.withLock { $0.append(cookie) } }
-            return ("200 OK", ["Content-Type: text/html", "Set-Cookie: id=1; Path=/"], Data("embedded".utf8))
+            let path = request.split(separator: " ").dropFirst().first.map(String.init) ?? ""
+            seen.withLock { $0.append("\(path) \(cookie)") }
+            return ("200 OK", ["Content-Type: text/html", "Set-Cookie: \(path == "/framed" ? "framed" : "direct")=1; Path=/"], Data("embedded".utf8))
         }
-        let embedder = try await TinyHTTPServer(index: "<iframe src='http://localhost:\(embedded.port)/echo'></iframe>")
+        let embedder = try await TinyHTTPServer { request in
+            let path = request.split(separator: " ").dropFirst().first.map(String.init) ?? "/"
+            return ("200 OK", ["Content-Type: text/html"], Data("<iframe src='http://localhost:\(embedded.port)\(path)'></iframe>".utf8))
+        }
         let factory = WKEngineFactory()
 
         func embeddedCookie(trackingPrevention: Bool) async throws -> String? {
             factory.setTrackingPrevention(trackingPrevention)
             let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: false, identifier: nil)))
             defer { tab.teardown() }
-            tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://localhost:\(embedded.port)/"))))
-            _ = await pollUntil { tab.wkWebView.url != nil && !tab.wkWebView.isLoading }
-            let before = seen.withLock { $0.count }
-            tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(embedder.port)/"))))
-            _ = await pollUntil(timeout: 10) { seen.withLock { $0.count } > before }
-            return seen.withLock { $0.count > before ? $0.last : nil }
+            for url in ["http://localhost:\(embedded.port)/", "http://127.0.0.1:\(embedder.port)/framed", "http://127.0.0.1:\(embedder.port)/echo"] {
+                let before = seen.withLock { $0.count }
+                tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: url))))
+                _ = await pollUntil(timeout: 10) { seen.withLock { $0.count } > before }
+            }
+            return seen.withLock { $0.last { $0.hasPrefix("/echo ") }.map { String($0.dropFirst("/echo ".count)) } }
         }
 
         let off = try await embeddedCookie(trackingPrevention: false)
         let on = try await embeddedCookie(trackingPrevention: true)
-        XCTAssertEqual(off, "Cookie: id=1", "WebKit now blocks third-party cookies without tracking prevention: PRIVACY.md can say so")
+        XCTAssertEqual(off.map { Set($0.dropFirst("Cookie: ".count).components(separatedBy: "; ")) }, ["direct=1", "framed=1"])
         XCTAssertEqual(on, "")
     }
 
