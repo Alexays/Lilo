@@ -88,6 +88,10 @@ final class SettingsStore {
         set { set("sidebarVisible", value: newValue ? "true" : "false") }
     }
 
+    var tabLayout: TabLayout {
+        TabLayout(storedPosition: get("tabPosition"), storedAddress: get("addressPlacement"))
+    }
+
     var windowBackgroundColor: String {
         get { get("windowBackgroundColor") ?? "" }
         set { set("windowBackgroundColor", value: newValue) }
