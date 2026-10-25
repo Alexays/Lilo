@@ -98,10 +98,11 @@ Lilo, because it signs you out of sites it misclassifies as trackers. Lilo's con
 known trackers instead; turn tracking prevention on in Settings > Privacy. It keeps its statistics
 on your Mac only, and turning it off clears them, not the sites' data.
 
-With it off, a site embedded in another (an iframe, an image, a script) cannot set cookies, but it
-does receive the cookies it set while you visited it directly, so it can recognize you across the
-sites that embed it. WebKit blocks those cookies only together with tracking prevention: turn it on
-to block them.
+With it off, third-party cookies work as in Chrome: a site embedded in another (an iframe, an image,
+a script) receives the cookies it set while you visited it directly and can set new ones, so it can
+recognize you across the sites that embed it. Embedded apps that sign in with their own cookies,
+such as claude.ai artifacts, need them. WebKit blocks those cookies only together with tracking
+prevention: turn it on to block them.
 
 The content blocker lets bot-defense and captcha vendors through (PerimeterX/HUMAN, DataDome, Arkose
 Labs, hCaptcha, Cloudflare Turnstile): sites rely on their scripts to tell people from bots, and with

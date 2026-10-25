@@ -1,0 +1,3 @@
+kind: Fixed
+body: Claude artifacts and other embedded apps that sign in with their own cookies now open, instead of saying the browser isn't supported.
+time: 2026-10-25T10:37:34.192312+01:00

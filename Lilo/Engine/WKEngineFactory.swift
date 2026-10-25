@@ -35,6 +35,7 @@ final class WKEngineFactory {
     )
     /// WebKit's tracking prevention (ITP, resource load statistics). Off by default: its classifier
     /// signs users out of sites it misclassifies, and the content blocker already blocks trackers.
+    /// Off, third-party cookies are accepted as in Chrome.
     private var trackingPreventionEnabled = false
     /// Every website data store handed out, so a tracking prevention change reaches all of them.
     private let websiteDataStores = NSHashTable<WKWebsiteDataStore>.weakObjects()
@@ -352,6 +353,15 @@ final class WKEngineFactory {
         websiteDataStores.add(store)
         if store.responds(to: NSSelectorFromString("_setResourceLoadStatisticsEnabled:")) {
             store.setValue(trackingPreventionEnabled, forKey: "resourceLoadStatisticsEnabled")
+        }
+        // Without tracking prevention WebKit refuses every cookie an embedded site sets, partitioned
+        // ones too, which breaks frames that sign in with them (claude.ai artifacts).
+        let setPolicy = NSSelectorFromString("_setCookieAcceptPolicy:completionHandler:")
+        let cookieStore = store.httpCookieStore
+        if cookieStore.responds(to: setPolicy) {
+            typealias SetPolicy = @convention(c) (AnyObject, Selector, UInt, @escaping @convention(block) () -> Void) -> Void
+            let policy: HTTPCookie.AcceptPolicy = trackingPreventionEnabled ? .onlyFromMainDocumentDomain : .always
+            unsafeBitCast(cookieStore.method(for: setPolicy), to: SetPolicy.self)(cookieStore, setPolicy, policy.rawValue) {}
         }
         return store
     }
