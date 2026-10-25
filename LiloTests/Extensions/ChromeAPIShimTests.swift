@@ -312,6 +312,43 @@ final class ChromeAPIShimTests: XCTestCase {
         try controller.unload(context)
     }
 
+    /// A page's message to a worker still running its top-level code reaches the listener that code adds after a
+    /// slow import, which answers it, as in Chrome.
+    func testAPageMessageToAStartingWorkerReachesTheListenerItsTopLevelCodeAdds() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Starting", "version": "1.0", "background": {"service_worker": "sw.js"}}
+            """,
+            // Longer than the page takes to open and send.
+            "slow.js": "for (const end = Date.now() + 1000; Date.now() < end;) {}",
+            "sw.js": """
+            importScripts('slow.js');
+            const listening = Date.now();
+            chrome.runtime.onMessage.addListener((message, sender, reply) => {
+              setTimeout(() => reply(`${message.sent < listening ? 'sent while starting' : 'sent later'}, answered`), 10);
+              return true;
+            });
+            """,
+            "page.html": "<script src=page.js></script>",
+            "page.js": """
+            chrome.runtime.sendMessage({ sent: Date.now() }, (answer) => { document.title = `${answer} ${chrome.runtime.lastError?.message}`; });
+            """
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html"))))
+        var title = ""
+        await pollUntil(timeout: 15) {
+            title = (window.tabManager.engineTab(for: tab.id)?.view as? WKWebView)?.title ?? ""
+            return title.contains("answered")
+        }
+
+        XCTAssertEqual(title, "sent while starting, answered undefined")
+    }
+
     /// A page's storage answers settle one task each, as Chrome's: code awaiting one runs on before the next settles.
     func testAPageGetsEachStorageAnswerInATaskOfItsOwn() async throws {
         let browserContext = try await TemporaryBrowserContext()
