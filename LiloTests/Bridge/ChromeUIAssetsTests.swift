@@ -30,17 +30,17 @@ final class ChromeUIAssetsTests: XCTestCase {
     }
 
     func testBuildBootstrapScript_embedsSidebarWidth() {
-        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 320, windowBackgroundColor: "")
+        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 320, windowBackgroundColor: "", tabLayout: .default)
         XCTAssertTrue(script.source.contains("320"), "source should contain sidebar width")
     }
 
     func testBuildBootstrapScript_embedsBackgroundColor() {
-        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "#aabbcc")
+        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "#aabbcc", tabLayout: .default)
         XCTAssertTrue(script.source.contains("#aabbcc"), "source should contain background color")
     }
 
     func testBuildBootstrapScript_injectionTime() {
-        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "")
+        let script = MainWindowController.buildBootstrapScript(sidebarWidth: 260, windowBackgroundColor: "", tabLayout: .default)
         XCTAssertEqual(script.injectionTime, .atDocumentStart)
         XCTAssertTrue(script.isForMainFrameOnly)
     }

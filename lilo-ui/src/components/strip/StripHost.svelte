@@ -49,7 +49,7 @@
     bottom: calc(var(--chrome-content-bottom) + 4px);
     width: var(--sidebar-width);
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--float-radius-popover);
     background-color: var(--sidebar-bg);
     box-shadow: var(--chrome-overlay-shadow);
     pointer-events: auto;
