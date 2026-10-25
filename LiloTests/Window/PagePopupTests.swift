@@ -343,6 +343,19 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(controller.tabManager.tab(for: popup.engine.id)?.isPinned, false)
     }
 
+    func testExpandingALinkPeekKeepsTheFaviconItsPageLoaded() async throws {
+        try pinOpener()
+        try await clickLink("https://other.test/article")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        controller.context.faviconService.seed(host: "other.test", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", profileId: nil)
+
+        popup.openAsTab()
+
+        let tab = try XCTUnwrap(controller.tabManager.tab(for: popup.engine.id))
+        XCTAssertEqual(tab.faviconDataURL, "data:image/png;base64,QUJD")
+        XCTAssertEqual(tab.faviconDominantColor, "#112233")
+    }
+
     func testEscClosesALinkPeek() async throws {
         let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false

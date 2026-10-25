@@ -62,6 +62,8 @@ extension MainWindowController {
                 engine.delegate = self
                 configureEngineIfNeeded(engine)
             }
+            // An adopted page offered its icons before the tab existed, and WebKit offers them once per load.
+            if let adoptedEngine { faviconCoordinator.applyCached(from: adoptedEngine) }
             // Loads ahead of activation so the request is in flight while activation does its UI work.
             if adoptedEngine == nil { tabManager.loadPreparedTab(tab, nativeConfiguration: nativeConfiguration) }
             if activate {
