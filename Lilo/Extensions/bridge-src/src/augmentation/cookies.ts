@@ -42,7 +42,7 @@ const afterListening: Patch = (original, self) => function (this: unknown, ...ar
 };
 
 /**
- * WebKit checks the host access of a cookie not `secure` over http (WEBKIT-GAPS.md, gap 82): one an extension with
+ * WebKit checks the host access of a cookie not `secure` over http (WEBKIT-GAPS.md, gap 83): one an extension with
  * https access only sets for an https URL fails, where Chrome sets it. Lilo sets it `secure` then, as only https reaches it.
  */
 const setOverHTTPS: Patch = (original, self) => function (this: unknown, details: any, ...rest: unknown[]) {

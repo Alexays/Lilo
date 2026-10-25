@@ -398,7 +398,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
 - **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
 
-### 82. `cookies.set` checks a cookie not `secure` over http
+### 83. `cookies.set` checks a cookie not `secure` over http
 
 - **Gap:** WebKit checks the host access of a cookie set without `secure: true` for its http URL, whatever the scheme of `url`: an extension whose host permissions name https only fails with `Host permissions are missing or not granted.` Chrome checks `url` itself and sets the cookie.
 - **Lilo:** a `set` for an https URL with no `secure` that fails so is retried with `secure: true` ([cookies.ts] `setOverHTTPS`). User-visible side: COMPATIBILITY.md, "cookies".
