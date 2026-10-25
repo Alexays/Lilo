@@ -461,8 +461,12 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             registry?.gapEvents.attach(port, extensionId: context.uniqueIdentifier)
             return
         }
+        // Without the permission, Chrome has no connectNative to call, so it reports no error. WebKit's, which every
+        // extension has for Lilo's channel, opens a port that closes on its first message, as a missing host's.
         guard holdsNativeMessaging(context) else {
-            completionHandler(Self.extensionError("Native messaging requires the nativeMessaging permission")); return
+            port.messageHandler = { [weak port] _, _ in port?.disconnect() }
+            completionHandler(nil)
+            return
         }
         nativeMessaging.connect(port, toHost: hostName, for: context, completionHandler: completionHandler)
     }

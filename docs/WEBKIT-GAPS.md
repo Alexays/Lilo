@@ -237,9 +237,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 
 ### 16. Manifest entries Chrome accepts are rejected
 
-- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>`, a pattern with a port (its patterns have no port) or a wildcard on a public suffix of the list's private section (`*://*.netlify.app/*`), which Chrome accepts.
-- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries dropped, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), `externally_connectable` wildcards on a public suffix of the bundled list are dropped, and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
-- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt and others).
+- **Gap:** WebKit reports a manifest error for an empty `_execute_action` command, an MV3 `_execute_browser_action` or `_execute_page_action` command without a description (Chrome ignores them in MV3), a content script whose only `file://` patterns omit the host's slash (`file://*`, Chrome's `file:///*`), an empty `content_security_policy` object, a missing or empty `description`, an empty `content_scripts` list, shortcut keys with whitespace (`"Ctrl + Shift + Y"`), `web_accessible_resources` match patterns with schemes it does not grant (an entry naming only `extension_ids` included), and `externally_connectable` entries that are empty, use `<all_urls>`, a pattern with a port (its patterns have no port) or a wildcard on a public suffix of the list's private section (`*://*.netlify.app/*`), which Chrome accepts.
+- **Lilo:** rewrites them at install ([ExtensionBackgroundPreparer.swift] `acceptAsChrome`): a blank description, trimmed keys, empty entries and MV3's MV2 action commands dropped, `file://` patterns with Chrome's empty host, `<all_urls>` becomes `*://*/*`, ports are removed (widening `:3000` to every port), `externally_connectable` wildcards on a public suffix of the bundled list are dropped, and `web_accessible_resources` keep only the patterns WebKit takes. User-visible side: COMPATIBILITY.md, "Extension manifest".
+- **Impact:** without it, popular extensions failed to load (Dark Mode, Stylus, Proton VPN, Read Aloud, 7TV, AIPRM, axe DevTools, Norton Password Manager, Passbolt, Axure RP, Lightning Extension and others).
 - **Check:** `testManifestEntriesChromeAcceptsAreRejected`. Repro: load a manifest with `"commands": { "_execute_action": {} }` (or each other entry) and read `WKWebExtension.errors`. Expected: none. Actual: one error each.
 
 ### 76. Host permissions match their path
@@ -390,6 +390,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Lilo:** such a `fetch` from an extension page or worker goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
 - **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
 - **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
+
+### 82. `cookies.set` checks a cookie not `secure` over http
+
+- **Gap:** WebKit checks the host access of a cookie set without `secure: true` for its http URL, whatever the scheme of `url`: an extension whose host permissions name https only fails with `Host permissions are missing or not granted.` Chrome checks `url` itself and sets the cookie.
+- **Lilo:** a `set` for an https URL with no `secure` that fails so is retried with `secure: true` ([cookies.ts] `setOverHTTPS`). User-visible side: COMPATIBILITY.md, "cookies".
+- **Impact:** Microsoft Solitaire Collection's worker could not set its bing.com cookies.
+- **Check:** `testCookiesSetChecksAccessOverHTTPForACookieNotSecure`. Repro: with `host_permissions: ["https://example.com/*"]`, `chrome.cookies.set({ url: 'https://example.com/', name: 'a', value: '1' })`. Expected: the cookie. Actual: the error; with `secure: true`, the cookie.
 
 ## declarativeNetRequest and content blockers
 

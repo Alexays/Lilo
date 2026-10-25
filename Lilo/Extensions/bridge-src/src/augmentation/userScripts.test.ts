@@ -204,4 +204,12 @@ describe('runtime user-script events while the switch is off', () => {
       delete g.__liloUserScriptsAllowed;
     }
   });
+
+  it('stay with the permission only optional, as in Chrome, where Table Capture listens before asking for it', async () => {
+    const { installChromeCompat } = await import('../shared/chrome-compat.ts');
+    const g = globalThis as any;
+    g.chrome = { runtime: { getManifest: () => ({ permissions: [], optional_permissions: ['userScripts'] }) } };
+    installChromeCompat({});
+    assert.equal(typeof g.chrome.runtime.onUserScriptMessage?.addListener, 'function');
+  });
 });

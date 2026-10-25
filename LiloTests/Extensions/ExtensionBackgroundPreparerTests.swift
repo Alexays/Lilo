@@ -34,6 +34,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertTrue(wrapper.contains("importScripts(\"background.js\");"))
         let background = try loadBackground(from: extDir)
         XCTAssertEqual(background["service_worker"] as? String, "lilo-background-wrapper.js")
+        XCTAssertEqual(background["lilo_service_worker"] as? String, "background.js", "what runtime.getManifest() reports")
     }
 
     /// Tampermonkey imports its empty test.js between its startup flag and its listeners.
@@ -361,6 +362,31 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let command = try XCTUnwrap(WKWebExtensionContext(for: prepared.webExtension).commands.first { $0.id == "_execute_action" })
         XCTAssertEqual(command.activationKey, "y")
         XCTAssertEqual(command.modifierFlags, [.command, .shift])
+    }
+
+    /// Lightning Extension: Chrome ignores MV2's action commands in MV3, which need no description there.
+    @MainActor
+    func testMV2ActionCommandsAreDroppedFromAnMV3Manifest() async throws {
+        let prepared = try await prepareAsChrome(#"""
+        {"action": {}, "commands": {"_execute_browser_action": {"suggested_key": {"default": "Ctrl+E"}}, "_execute_page_action": {},
+         "toggle": {"description": "Toggle"}}}
+        """#)
+
+        XCTAssertEqual(prepared.errors, [])
+        XCTAssertEqual(Set(WKWebExtensionContext(for: prepared.webExtension).commands.map(\.id)), ["_execute_action", "toggle"])
+    }
+
+    /// Axure RP: Chrome reads `file://*` as `file:///*`, and ignores a file URL's host.
+    @MainActor
+    func testFilePatternsTakeChromesEmptyHost() async throws {
+        let prepared = try await prepareAsChrome(#"""
+        {"content_scripts": [{"matches": ["file://*", "file://localhost/a/*", "file:///b/*", "https://*/*"], "exclude_matches": ["file://*.txt"], "js": ["a.js"]}]}
+        """#, files: ["a.js": ""])
+
+        XCTAssertEqual(prepared.errors, [])
+        let script = try XCTUnwrap((prepared.webExtension.manifest["content_scripts"] as? [[String: Any]])?.first)
+        XCTAssertEqual(script["matches"] as? [String], ["file:///*", "file:///a/*", "file:///b/*", "https://*/*"])
+        XCTAssertEqual(script["exclude_matches"] as? [String], ["file:///*.txt"])
     }
 
     @MainActor

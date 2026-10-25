@@ -2,7 +2,7 @@
 // `browser` breaks WebKit. SW-safe: no window/document/webkit.
 import { tabGroupsAugmentation, tabsWithGroups, manifestPermissions, discardTab } from '../augmentation/tabGroups.ts';
 import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns } from '../augmentation/webNavigation.ts';
-import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
+import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, runtimePatches, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
@@ -192,8 +192,9 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   const chrome = g.chrome;
   const perms = manifestPermissions(chrome);
   const nativeMessaging = perms.has('nativeMessaging');
-  // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is hidden.
-  const userScripts = perms.has('userScripts');
+  // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is
+  // hidden or the permission only optional (Table Capture listens before asking for it).
+  const userScripts = perms.has('userScripts') || !!chrome.runtime?.getManifest?.()?.optional_permissions?.includes('userScripts');
   const contextMenus: NamespaceCompat = { patch: contextMenusPatches };
   // Chrome reveals every tab's url to an extension that may hold `tabs`, which WebKit ignores: Lilo reads
   // them for it, and leaves out the empty ones WebKit reports to the others.
@@ -271,6 +272,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
+      patch: runtimePatches,
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
       standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
       add: {

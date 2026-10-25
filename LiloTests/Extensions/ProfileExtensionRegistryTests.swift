@@ -873,6 +873,30 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(context.errors.map(\.localizedDescription), [])
     }
 
+    /// Without nativeMessaging, Chrome has no connectNative to call; WebKit's (Liner, Mailvelope) opens a port
+    /// that disconnects once it sends, without an extension error.
+    func testANativePortWithoutThePermissionDisconnectsWithoutAnError() async throws {
+        let extDir = tempDir.appendingPathComponent("native_without_permission")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try """
+        {"manifest_version":3,"name":"Native","version":"1.0","description":"d","action":{},"background":{"service_worker":"background.js"}}
+        """.write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try """
+        const port = browser.runtime.connectNative('com.lilo.host');
+        port.onDisconnect.addListener(() => chrome.action.setTitle({ title: 'disconnected' }));
+        port.postMessage({ hello: 1 });
+        """.write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+
+        _ = await registry.backgrounds.load(id)
+        let disconnected = await pollUntil(timeout: 10) { context.action(for: nil)?.label == "disconnected" }
+
+        XCTAssertTrue(disconnected, "the port never disconnected")
+        XCTAssertEqual(context.errors.map(\.localizedDescription), [])
+    }
+
     func testLoadDuplicateDoesNotAddTwice() async throws {
         let extDir = try createMinimalExtension(named: "test_extension", in: tempDir)
 
