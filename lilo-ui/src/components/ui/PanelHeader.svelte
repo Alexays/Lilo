@@ -48,6 +48,11 @@
     padding-left: 72px;
   }
 
+  /* Outside the default layout the lights sit on the 40pt line of the page toolbar or tab strip. */
+  :global(html:not([data-tab-position='left'][data-address='tabs'])) .panel-header-bar {
+    height: var(--page-toolbar-height);
+  }
+
   .panel-title {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
