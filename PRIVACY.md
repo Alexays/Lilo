@@ -103,6 +103,10 @@ does receive the cookies it set while you visited it directly, so it can recogni
 sites that embed it. WebKit blocks those cookies only together with tracking prevention: turn it on
 to block them.
 
+The content blocker lets bot-defense and captcha vendors through (PerimeterX/HUMAN, DataDome, Arkose
+Labs, hCaptcha, Cloudflare Turnstile): sites rely on their scripts to tell people from bots, and with
+them blocked they show a captcha on every visit. They can still see your visits to the sites using them.
+
 Lilo sends the Global Privacy Control signal (`Sec-GPC`, `navigator.globalPrivacyControl`) by
 default, on macOS versions whose WebKit supports it; turn it off in Settings > Privacy.
 

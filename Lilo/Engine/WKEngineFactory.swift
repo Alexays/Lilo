@@ -633,7 +633,7 @@ final class WKEngineFactory {
     private func ruleListIdentifier(allowlist: BlockerAllowlist) -> String {
         let sitesTag = allowlist.sites.isEmpty ? "" : ".al-\(Self.stableHash8(allowlist.sites.sorted().joined(separator: "|")))"
         let domainsTag = allowlist.domains.isEmpty ? "" : ".ad-\(Self.stableHash8(allowlist.domains.sorted().joined(separator: "|")))"
-        return "\(Self.ruleListIdentifierPrefix)v3.\(externalFilterRulesTag)\(sitesTag)\(domainsTag)"
+        return "\(Self.ruleListIdentifierPrefix)v4.\(externalFilterRulesTag)\(sitesTag)\(domainsTag)"
     }
 
     /// WebKit rejects a list past 150,000 rules.
@@ -717,12 +717,11 @@ final class WKEngineFactory {
     }
 
     /// The rule JSON plus trailing allowlist rules: one per allowed request domain (`url-filter` has no
-    /// alternation), then one for the sites. A per-rule `unless-top-url` fails to compile next to
-    /// `if-domain` triggers and makes WebKit rebuild cosmetic rules per page.
-    nonisolated private static func appendingAllowlistRule(_ json: String, allowlist: BlockerAllowlist) -> String? {
-        if allowlist.sites.isEmpty && allowlist.domains.isEmpty { return json }
+    /// alternation), bot-defense vendors' included, then one for the sites. A per-rule `unless-top-url` fails
+    /// to compile next to `if-domain` triggers and makes WebKit rebuild cosmetic rules per page.
+    nonisolated static func appendingAllowlistRule(_ json: String, allowlist: BlockerAllowlist) -> String? {
         guard let close = json.lastIndex(of: "]") else { return nil }
-        var rules: [[String: Any]] = allowlist.domains.map {
+        var rules: [[String: Any]] = (allowlist.domains + BlockerAllowlist.botDefenseDomains).map {
             ["trigger": ["url-filter": "^[a-z-]+://([^/]+\\.)?\($0.replacingOccurrences(of: ".", with: "\\."))[/:]"],
              "action": ["type": "ignore-previous-rules"]]
         }

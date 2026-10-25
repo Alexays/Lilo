@@ -16,6 +16,13 @@ protocol FilterRuleApplying: AnyObject {
 struct BlockerAllowlist: Equatable, Sendable {
     var sites: [String] = []
     var domains: [String] = []
+
+    /// Bot-defense and captcha vendors: privacy lists block their sensors as trackers, and a site whose sensor never
+    /// reports challenges every visit with a captcha.
+    static let botDefenseDomains = [
+        "perimeterx.net", "px-cdn.net", "px-cloud.net", "px-client.net", "pxchk.net",
+        "datadome.co", "captcha-delivery.com", "arkoselabs.com", "funcaptcha.com", "hcaptcha.com", "challenges.cloudflare.com"
+    ]
 }
 
 extension WKEngineFactory: FilterRuleApplying {}
