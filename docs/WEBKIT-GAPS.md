@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46 and 81 (`XMLHttpRequest`). Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`) and 82. Every other gap is fully worked around.
 
 ---
 
@@ -94,7 +94,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 ### 22. `sendMessage` with no response sets no error
 
 - **Gap:** WebKit resolves `undefined` and gives callbacks no `lastError` whether no listener exists or none responds. Chrome rejects with `Could not establish connection. Receiving end does not exist.` without a listener, sets `The message port closed before a response was received.` when none responds, and delivers a valueless response as `null`.
-- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
+- **Lilo:** every context's `runtime.onMessage` listeners send a valueless response as `null`, so `undefined` means no answer ([message-answers.ts] `answerAsChrome`). Callbacks of `chrome.runtime.sendMessage` and `tabs.sendMessage` then get Chrome's `lastError` (`lastErrorWithoutAnswer`). A page asks Lilo whether its worker listens (`workerListensToMessages`) to pick the error, and its promise rejects when the worker does not listen ([chrome-compat.ts] `pageNoAnswer`); a worker's message always gets "Receiving end does not exist". `tabs.sendMessage` left without an answer sends a probe the tab's content scripts, and the extension's pages it shows, answer while one listens (`listensProbe`, `tabNoAnswer`), and rejects when none does. `browser.runtime.sendMessage` and content script callbacks keep WebKit's answer (Lilo serves no `lastError` in content scripts).
 - **Impact:** Video Downloader Professional reads its response when `lastError` is unset and throws; AdGuard's popup reads the answer of a message its starting worker does not receive yet.
 - **Check:** `testSendMessageCallbackWithoutResponseSetsNoLastError`; the `runtime.sendMessage callback without listener` contract checks Lilo's answer. Repro: from an extension page with nothing listening, `await browser.runtime.sendMessage(1)`. Expected: rejects. Actual: resolves.
 
@@ -104,6 +104,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Lilo:** `chrome.runtime.connect` and `sendMessage` to another id go to native ([runtime.ts] `crossExtensionMessaging`), which checks the target's `externally_connectable.ids` and reported listeners and relays them as gap events to its `onMessageExternal` and `onConnectExternal` stand-ins (`externalEvents`, which also keep WebKit's for web pages) and the port's messages (`RuntimeBridgeHandler`). `browser.runtime` stays WebKit's (gap 2), and content scripts have no channel to Lilo. User-visible side: COMPATIBILITY.md, "runtime".
 - **Impact:** without Lilo, an extension talking to a companion extension (Sider) logs an error at every start.
 - **Check:** Manual. Repro: `browser.runtime.connect('abcdefghijklmnopabcdefghijklmnop')` from an extension page throws.
+
+### 82. `tabs.connect` does not reach the extension's pages a tab shows
+
+- **Gap:** WebKit's `tabs.connect` reaches the tab's content scripts only: a tab showing one of the extension's pages never fires its `runtime.onConnect`, and the port stays open. Chrome connects those pages too. `tabs.sendMessage` does reach them.
+- **Lilo:** `tabs.connect` asks for the tab's url as it opens WebKit's port; when the tab shows one of the extension's pages, the port goes over a marked `runtime.connect` instead, with what was posted meanwhile, and only the extension's top pages at the tab's url take it; the others hold it unanswered, as letting go before every process took it would drop it ([runtime.ts] `tabsConnect`, `onConnect`). Pages framed in a web page are not reached. User-visible side: COMPATIBILITY.md, "runtime".
+- **Impact:** an extension whose worker connects to its own page opened in a tab (a popup or dashboard) got no answer.
+- **Check:** Manual (`testTabsMessagesReachTheExtensionsPagesATabShows` checks Lilo's answer). Repro: a tab shows the extension's page, whose `onConnect` listener answers each message; the worker runs `tabs.connect(tabId).postMessage(1)`. Expected: an answer. Actual: none, and no disconnect.
 
 ### 43. A port message sent before the port connects arrives twice
 

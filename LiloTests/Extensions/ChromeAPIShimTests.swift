@@ -366,6 +366,10 @@ final class ChromeAPIShimTests: XCTestCase {
     /// gets the worker's `tabs.sendMessage`, which fills the field its inline menu was clicked for.
     func testContentScriptHidingItsGlobalsStillGetsTabMessages() async throws {
         let server = try await TinyHTTPServer(index: "<input id=email>")
+
+    /// The extension's own pages a tab shows hear `tabs.sendMessage`, which WebKit delivers to them, and `tabs.connect`,
+    /// which Lilo relays to them: only the tab's page answers.
+    func testTabsMessagesReachTheExtensionsPagesATabShows() async throws {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let (window, registry) = try browserContext.makeExtensionWindow()
@@ -392,6 +396,35 @@ final class ChromeAPIShimTests: XCTestCase {
                 (answer) => chrome.action.setTitle({ title: String(answer) }),
                 (error) => chrome.action.setTitle({ title: error.message }));
             });
+
+            {"manifest_version": 3, "name": "Pages", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"}, "permissions": ["tabs"]}
+            """,
+            "page.html": "<title>page</title><script src=page.js></script>",
+            "page.js": """
+            const tag = location.hash.slice(1);
+            chrome.runtime.onMessage.addListener((message, sender, reply) => { if (message === 'who') reply(tag); });
+            chrome.runtime.onConnect.addListener((port) => port.onMessage.addListener((message) => port.postMessage(`${tag} ${port.name} ${message}`)));
+            chrome.runtime.sendMessage(`ready ${tag}`);
+            """,
+            "sw.js": """
+            const ready = new Set();
+            chrome.runtime.onMessage.addListener((message) => {
+              if (typeof message !== 'string' || !message.startsWith('ready ')) return;
+              ready.add(message);
+              if (ready.size === 2) run();
+            });
+            const outcome = (sent) => sent.then((answer) => String(answer), (error) => error.message);
+            async function run() {
+              const tab = (await chrome.tabs.query({})).find((t) => t.url.endsWith('#b')).id;
+              const results = [await outcome(chrome.tabs.sendMessage(tab, 'who')), await outcome(chrome.tabs.sendMessage(tab, 'quiet'))];
+              const port = chrome.tabs.connect(tab, { name: 'panel' });
+              port.postMessage('first');
+              results.push(await new Promise((resolve) => {
+                port.onMessage.addListener(resolve);
+                port.onDisconnect.addListener(() => resolve('disconnected'));
+              }));
+              chrome.action.setTitle({ title: results.join(' | ') });
+            }
             """
         ])
         try await registry.load(from: folder)
@@ -402,6 +435,12 @@ final class ChromeAPIShimTests: XCTestCase {
         await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Filler" }
 
         XCTAssertEqual(context.action(for: nil)?.label, "me@example.com")
+
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#a")))
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html#b")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Pages" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "b | undefined | b panel first")
     }
 }
 

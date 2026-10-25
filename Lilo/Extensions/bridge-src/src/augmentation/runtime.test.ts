@@ -13,7 +13,7 @@ mockGapAPI((msg: any) => {
 });
 (globalThis as any).chrome = { runtime: {} };
 
-const { runtimeAdditions, crossExtensionMessaging, externalEvents, onConnect } = await import('./runtime.ts');
+const { runtimeAdditions, crossExtensionMessaging, externalEvents, onConnect, tabsConnect } = await import('./runtime.ts');
 const { liloLastError } = await import('../shared/callbackify.ts');
 
 describe('runtime.requestUpdateCheck', () => {
@@ -185,6 +185,73 @@ describe('runtime messages and ports from another extension', () => {
     assert.equal(received.name, 'tunnel');
     assert.deepEqual(received.sender, sender);
     assert.deepEqual(gapCalls.slice(-2).map((c) => [c.method, c.params]), [['portPost', { portId: '12', message: 'ready' }], ['portDisconnect', { portId: '12' }]]);
+  });
+});
+
+describe("ports tabs.connect opens to the extension's own pages", () => {
+  const fakePort = (name: string) => {
+    const port: any = {
+      name, posted: [] as unknown[], disconnected: false, heard: [] as Array<(message: unknown) => void>, closed: [] as Array<() => void>,
+      onMessage: { addListener: (listener: (message: unknown) => void) => port.heard.push(listener) },
+      onDisconnect: { addListener: (listener: () => void) => port.closed.push(listener) },
+      postMessage: (message: unknown) => port.posted.push(message),
+      disconnect: () => { port.disconnected = true; },
+    };
+    return port;
+  };
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('reach only the page the tab shows, which other pages leave to it', () => {
+    (globalThis as any).top = globalThis;
+    (globalThis as any).location = { href: 'chrome-extension://own/popup.html' };
+    const webKitOnConnect: any = Object.create({ addListener(this: any, listener: any) { this.listener = listener; }, removeListener() {} });
+    const heard: string[] = [];
+    onConnect(() => webKitOnConnect).addListener((port: any) => heard.push(port.name));
+    const shown = fakePort('panel?liloTab=chrome-extension://own/popup.html?lilo');
+    const elsewhere = fakePort('panel?liloTab=chrome-extension://own/options.html?lilo');
+    for (const port of [shown, elsewhere]) webKitOnConnect.listener(port);
+    delete (globalThis as any).top;
+    delete (globalThis as any).location;
+
+    assert.deepEqual(heard, ['panel']);
+    assert.deepEqual([shown, elsewhere].map((port) => port.disconnected), [false, false], 'a page lets go of none: WebKit would drop their queued messages');
+  });
+
+  it('go to the page a tab shows, with what was posted meanwhile', async () => {
+    const runtime = (globalThis as any).chrome.runtime;
+    let page: any;
+    runtime.getURL = (path: string) => `chrome-extension://own/${path}`;
+    runtime.connect = (info: { name: string }) => (page = fakePort(info.name));
+    const webKit = fakePort('panel');
+    const tabs = { get: (id: number) => Promise.resolve({ id, url: 'chrome-extension://own/popup.html' }) };
+    const port: any = tabsConnect(() => webKit, () => tabs).call(tabs, 5, { name: 'panel' });
+    const heard: unknown[] = [];
+    port.onMessage.addListener((message: unknown) => heard.push(message));
+    port.postMessage('first');
+    await tick();
+    port.postMessage('second');
+    page.heard.forEach((listener: (message: unknown) => void) => listener('back'));
+
+    assert.equal(page.name, 'panel?liloTab=chrome-extension://own/popup.html');
+    assert.deepEqual(page.posted, ['first', 'second']);
+    assert.deepEqual(webKit.posted, ['first']);
+    assert.equal(webKit.disconnected, true);
+    assert.deepEqual(heard, ['back']);
+    assert.equal(port.name, 'panel');
+  });
+
+  it("stay WebKit's for a web page, whose disconnect waits for the tab's url", async () => {
+    const webKit = fakePort('');
+    const tabs = { get: (id: number) => Promise.resolve({ id, url: 'https://example.com/' }) };
+    const port: any = tabsConnect(() => webKit, () => tabs).call(tabs, 7);
+    let disconnected = false;
+    port.onDisconnect.addListener(() => { disconnected = true; });
+    webKit.closed.forEach((listener: () => void) => listener());
+    assert.equal(disconnected, false);
+    await tick();
+
+    assert.equal(disconnected, true);
+    assert.throws(() => port.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
   });
 });
 

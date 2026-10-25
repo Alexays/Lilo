@@ -4,6 +4,8 @@ import { bridgeEvents, gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent, GapWrappedEvent } from '../shared/gap-event.ts';
+import { messagesOnce, once } from '../shared/message-answers.ts';
+import type { Patch } from '../shared/chrome-compat.ts';
 
 interface UpdateCheckResult {
   status: 'throttled' | 'no_update' | 'update_available';
@@ -49,51 +51,98 @@ export const runtimeLifecycle = {
 
 const noReceiver = 'Could not establish connection. Receiving end does not exist.';
 
-// Ends the name of a port chrome.runtime.connect opens, whose both ends are then Lilo's: only such a
-// port carries numbered messages, which a port of browser.runtime would not read.
-const once = '?lilo';
-const served = new WeakMap<object, object>();
+const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
+
+/** Ends, before `once`, the name of the port tabs.connect opens to the extension's own page a tab shows, with its url. */
+const tabMark = '?liloTab=';
 
 /**
- * WebKit delivers each message posted before the port connects twice or more (gap 43), so each carries its sender
- * and number and a repeat is dropped; a message the extension repeats gets a new number.
+ * WebKit's runtime.onConnect, `source`, handing out the port chrome.runtime.connect opened as messagesOnce's. A port
+ * tabs.connect opened to the pages a tab shows reaches only those.
  */
-function messagesOnce(port: any, name: string): object {
-  const sender = Math.random();
-  let sent = 0;
-  const received = new Map<number, number>();
-  const chromePort = {
+export const onConnect = (source: () => object) => new WrappedEvent<[any]>(source, (listener) => (port: any) => {
+  const name = port?.name;
+  if (typeof name !== 'string' || !name.endsWith(once)) return listener(port);
+  const plain = name.slice(0, -once.length);
+  const tab = plain.lastIndexOf(tabMark);
+  // The page the tab shows takes it, synchronously: a message the port delivers before its listener runs is lost. The
+  // other contexts hold it all the same: one letting go before every process took the port disconnects it, and its
+  // first messages, queued, with it (WEBKIT-GAPS 60).
+  if (tab >= 0) {
+    const shown = (globalThis as any).top === globalThis && (globalThis as any).location?.href === plain.slice(tab + tabMark.length);
+    return shown ? listener(messagesOnce(port, plain.slice(0, tab))) : undefined;
+  }
+  return listener(messagesOnce(port, plain));
+});
+
+/**
+ * tabs.connect, which Chrome also connects to the extension's own pages a tab shows, where WebKit reaches content
+ * scripts only: once `tabs.get` finds such a page in the tab, the port goes to the extension's pages at its url
+ * instead, with what was posted meanwhile. A port to a frame by id stays WebKit's.
+ */
+export const tabsConnect: Patch = (original, self) => function (this: unknown, tabId: number, info?: { name?: string; frameId?: number; documentId?: string }) {
+  const tabs: any = self(this);
+  const webKit = original.apply(tabs, info === undefined ? [tabId] : [tabId, info]);
+  if (info?.documentId !== undefined || (info?.frameId ?? 0) !== 0) return webKit;
+  const runtime = bridgeChrome().runtime;
+  const name = typeof info?.name === 'string' ? info.name : '';
+  let end = webKit;
+  let early: unknown[] | undefined = [];
+  // WebKit's port went before tabs.get answered: its runtime.lastError, null without one.
+  let lost: string | null | undefined;
+  let closed = false;
+  const port = {
     name,
-    sender: port.sender,
+    sender: undefined,
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
-    postMessage: (message: unknown) => port.postMessage({ [once]: [sender, ++sent], message }),
-    disconnect: () => port.disconnect(),
+    postMessage(message: unknown) {
+      if (closed) throw new Error('Attempting to use a disconnected port object');
+      early?.push(message);
+      end.postMessage(message);
+    },
+    disconnect() {
+      if (closed) return;
+      closed = true;
+      end.disconnect();
+    },
   };
-  port.onMessage.addListener((numbered: any) => {
-    // A context that kept WebKit's port posts its messages as they are.
-    const [from, number] = numbered?.[once] ?? [];
-    if (from === undefined) return chromePort.onMessage.dispatch(numbered, chromePort);
-    if (number <= (received.get(from) ?? 0)) return;
-    received.set(from, number);
-    chromePort.onMessage.dispatch(numbered.message, chromePort);
+  const follow = (source: any) => {
+    source.onMessage.addListener((message: unknown) => { if (end === source) port.onMessage.dispatch(message, port); });
+    source.onDisconnect.addListener(() => {
+      if (end !== source || closed) return;
+      if (early) {
+        lost = runtime.lastError?.message ?? null;
+        return;
+      }
+      closed = true;
+      port.onDisconnect.dispatch(port);
+    });
+  };
+  follow(webKit);
+  const get = tabs.get.__liloUnwrapped ?? tabs.get;
+  Promise.resolve(get.call(tabs, tabId)).catch(() => undefined).then((tab: any) => {
+    const posted = early!;
+    early = undefined;
+    if (closed) return;
+    if (typeof tab?.url === 'string' && tab.url.startsWith(runtime.getURL(''))) {
+      // chrome.runtime.connect marks it as a port both of whose ends are Lilo's.
+      end = runtime.connect({ name: `${name}${tabMark}${tab.url}` });
+      follow(end);
+      webKit.disconnect();
+      for (const message of posted) end.postMessage(message);
+    } else if (lost !== undefined) {
+      closed = true;
+      if (lost === null) port.onDisconnect.dispatch(port);
+      else withLastError(lost, () => port.onDisconnect.dispatch(port));
+    }
   });
-  // Synchronous: WebKit's runtime.lastError holds while it runs.
-  port.onDisconnect.addListener(() => chromePort.onDisconnect.dispatch(chromePort));
-  served.set(port, chromePort);
-  return chromePort;
-}
-
-/** WebKit's runtime.onConnect, `source`, handing out the port chrome.runtime.connect opened as messagesOnce's. */
-export const onConnect = (source: () => object) => new WrappedEvent<[any]>(source, (listener) => (port: any) => listener(
-  typeof port?.name === 'string' && port.name.endsWith(once) ? served.get(port) ?? messagesOnce(port, port.name.slice(0, -once.length)) : port,
-));
+  return port;
+};
 
 // Chrome's ids, and Lilo's for an unpacked extension without a manifest key.
 const otherExtension = (id: unknown, runtime: any) => typeof id === 'string' && /^([a-p]{32}|extension-[0-9a-f]{16})$/.test(id) && id !== runtime.id;
 const portClosed = 'The message port closed before a response was received.';
-const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
-
 /** What the other extension learns of this context as its sender: native checks the url and adds the id and origin. */
 async function senderInfo(): Promise<Record<string, unknown>> {
   const info: Record<string, unknown> = {};

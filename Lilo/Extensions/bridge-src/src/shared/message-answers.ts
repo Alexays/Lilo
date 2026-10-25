@@ -1,6 +1,7 @@
 // WebKit sends nothing where Chrome answers null or sets lastError, so every context answers null for a valueless
 // answer and a sender gets undefined only when no listener answered. SW-safe and content-script safe: chrome.* only.
 import { bridgeChrome, withLastError } from './callbackify.ts';
+import { ChromeEvent } from './chrome-event.ts';
 
 type Listener = (message: unknown, sender: unknown, sendResponse: (response?: unknown) => void) => unknown;
 
@@ -92,4 +93,41 @@ export function lastErrorWithoutAnswer(
       return response;
     });
   };
+}
+
+// Ends the name of a port Lilo opens whose both ends are Lilo's: only such a port carries numbered messages,
+// which a port of browser.runtime would not read.
+export const once = '?lilo';
+const served = new WeakMap<object, object>();
+
+/**
+ * WebKit delivers each message posted before the port connects twice or more (gap 43), so each carries its sender
+ * and number and a repeat is dropped; a message the extension repeats gets a new number.
+ */
+export function messagesOnce(port: any, name: string): object {
+  const known = served.get(port);
+  if (known) return known;
+  const sender = Math.random();
+  let sent = 0;
+  const received = new Map<number, number>();
+  const chromePort = {
+    name,
+    sender: port.sender,
+    onMessage: new ChromeEvent<[unknown, unknown]>(),
+    onDisconnect: new ChromeEvent<[unknown]>(),
+    postMessage: (message: unknown) => port.postMessage({ [once]: [sender, ++sent], message }),
+    disconnect: () => port.disconnect(),
+  };
+  port.onMessage.addListener((numbered: any) => {
+    // A context that kept WebKit's port posts its messages as they are.
+    const [from, number] = numbered?.[once] ?? [];
+    if (from === undefined) return chromePort.onMessage.dispatch(numbered, chromePort);
+    if (number <= (received.get(from) ?? 0)) return;
+    received.set(from, number);
+    chromePort.onMessage.dispatch(numbered.message, chromePort);
+  });
+  // Synchronous: WebKit's runtime.lastError holds while it runs.
+  port.onDisconnect.addListener(() => chromePort.onDisconnect.dispatch(chromePort));
+  served.set(port, chromePort);
+  return chromePort;
 }

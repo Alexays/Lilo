@@ -84,7 +84,9 @@ function install(page: boolean, answer: unknown): any {
   }
   // The tab's content scripts listen, without responding, when the probe is answered.
   class Tabs {
-    get(tabId: number) { return Promise.resolve({ id: tabId, url: tabId === 4 ? 'chrome-extension://abc/options.html' : 'https://example.com/' }); }
+    get(tabId: number) {
+      return Promise.resolve({ id: tabId, status: tabId === 4 ? 'loading' : 'complete', url: tabId >= 4 ? 'chrome-extension://abc/popup.html' : 'https://example.com/' });
+    }
     sendMessage(_tabId: number, message: unknown, ...rest: unknown[]) {
       const callback = typeof rest[rest.length - 1] === 'function' ? rest.pop() as (response: unknown) => void : undefined;
       probes.push(rest[0]);
@@ -139,11 +141,10 @@ describe('tabs.sendMessage promises', () => {
     contentListens = false;
   });
 
-  it("resolve for a tab showing one of the extension's pages, which Chrome delivers to", async () => {
+  it("resolve for a tab still loading one of the extension's pages, which cannot listen yet", async () => {
     const worker = install(false, undefined);
     assert.equal(await worker.tabs.sendMessage(4, 1), undefined);
-    assert.deepEqual(await new Promise((resolve) => worker.tabs.sendMessage(4, 1, (response: unknown) => resolve([response, worker.runtime.lastError?.message]))),
-      [undefined, 'The message port closed before a response was received.']);
+    await assert.rejects(worker.tabs.sendMessage(5, 1), { message: 'Could not establish connection. Receiving end does not exist.' }, 'a loaded page that does not listen');
   });
 });
 
