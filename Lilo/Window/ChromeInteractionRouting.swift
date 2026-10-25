@@ -214,12 +214,14 @@ final class ChromeInteractionShieldView: NSView {
             scrollPhase: event.captureGesturePhase(for: family)
         )
         let (target, effects) = input.coordinator.routePositional(sample, family: family)
-        input.apply(effects, for: event)
         switch target {
         case .chrome: input.router.chromeView.map { forward($0, event) }
         case .content: (input.controller.splitPanes.view(for: event) ?? input.router.currentContentView()).map { forward($0, event) }
         case .none: break
         }
+        // After the forward: a release over the page resamples into a chrome hover clear, which WebKit turns into a
+        // buttonless move that cancels the chrome's pointer drag before its mouse-up lands.
+        input.apply(effects, for: event)
     }
 }
 
