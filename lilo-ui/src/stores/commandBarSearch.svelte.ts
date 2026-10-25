@@ -1,3 +1,4 @@
+import { getTabPosition } from "./tabLayout.svelte";
 import { fuzzyMatch, fuzzySearch } from "../lib/fuzzySearch";
 import { hostOf, normalizeURLForMatch } from "../lib/url";
 import {
@@ -168,23 +169,27 @@ function tabFrecency(tab: TabState): number {
 // The localized name and description match alongside the English keywords; the name leads
 // the haystack so its highlights map onto the title. Rebuilt only when its inputs change.
 let actionIndexCache:
-	| { locale: string; terminalEnabled: boolean; entries: ActionSearchEntry[] }
+	| { locale: string; terminalEnabled: boolean; position: string; entries: ActionSearchEntry[] }
 	| undefined;
+
+const MOVE_TABS_ACTION = { left: "moveTabsLeft", right: "moveTabsRight", top: "moveTabsTop", bottom: "moveTabsBottom" } as const;
 
 function actionSearchIndex(): ActionSearchEntry[] {
 	const terminalEnabled = getSetting("terminalEnabled", "true") !== "false";
 	const locale = getLocale();
-	if (actionIndexCache?.locale === locale && actionIndexCache.terminalEnabled === terminalEnabled) {
+	const position = getTabPosition();
+	if (actionIndexCache?.locale === locale && actionIndexCache.terminalEnabled === terminalEnabled && actionIndexCache.position === position) {
 		return actionIndexCache.entries;
 	}
-	const entries = COMMAND_ACTIONS.filter((action) => terminalEnabled || (action.id !== "newTerminal" && action.id !== "nextWaitingTerminal")).map((action) => ({
+	// Moving the tabs where they already are is not an action.
+	const entries = COMMAND_ACTIONS.filter((action) => (terminalEnabled || (action.id !== "newTerminal" && action.id !== "nextWaitingTerminal")) && action.id !== MOVE_TABS_ACTION[position]).map((action) => ({
 		action,
 		searchText: [t(action.nameKey), t(action.descriptionKey), ...action.keywords]
 			.join(" ")
 			.toLowerCase(),
 		words: ` ${[t(action.nameKey), ...action.keywords].join(" ").toLowerCase()}`,
 	}));
-	actionIndexCache = { locale, terminalEnabled, entries };
+	actionIndexCache = { locale, terminalEnabled, position, entries };
 	return entries;
 }
 

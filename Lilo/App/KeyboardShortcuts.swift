@@ -63,6 +63,11 @@ enum KeyboardShortcuts {
         Action("find.previous", "Find Previous", "Edit", ["⇧⌘g"]),
         Action("spelling.check", "Check Document Now", "Edit", ["⌘;"]),
         Action("sidebar.toggle", "Toggle Sidebar", "View", ["⇧⌘s"]),
+        // No default keys: ⌃⌘ with the arrows already switches Spaces.
+        Action("tabs.positionLeft", "Move Tabs to the Left", "View"),
+        Action("tabs.positionRight", "Move Tabs to the Right", "View"),
+        Action("tabs.positionTop", "Move Tabs to the Top", "View"),
+        Action("tabs.positionBottom", "Move Tabs to the Bottom", "View"),
         Action("window.fullScreen", "Enter Full Screen", "View", ["⌃⌘f"]),
         Action("page.reload", "Reload Page", "View", ["⌘r"]),
         Action("page.reloadFromOrigin", "Reload Without Cache", "View", ["⇧⌘r"]),

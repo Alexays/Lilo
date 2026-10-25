@@ -136,6 +136,12 @@ final class KeyboardShortcutsTests: XCTestCase {
         XCTAssertTrue(KeyboardShortcuts.overrides.isEmpty, "back on the defaults")
     }
 
+    func testMovingTheTabsHasNoDefaultKeys() {
+        for id in ["tabs.positionLeft", "tabs.positionRight", "tabs.positionTop", "tabs.positionBottom"] {
+            XCTAssertEqual(KeyboardShortcuts.actionsById[id]?.defaults, [], id)
+        }
+    }
+
     func testEveryPresetIsConflictFree() {
         for (name, preset) in KeyboardShortcuts.presets {
             XCTAssertTrue(Set(preset.keys).isSubset(of: Set(KeyboardShortcuts.actionsById.keys)), name)

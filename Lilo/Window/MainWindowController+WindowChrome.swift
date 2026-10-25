@@ -85,6 +85,11 @@ extension MainWindowController {
         context.windows.windows.forEach { $0.applyTabLayout(layout, animated: animated) }
     }
 
+    func setTabPosition(_ position: TabPosition) {
+        context.settingsStore?.set("tabPosition", value: position.rawValue)
+        applyStoredTabLayoutEverywhere()
+    }
+
     func updateSidebarWidth(_ width: CGFloat) {
         sidebarExpandedWidth = width.clamped(to: Self.sidebarWidthRange)
         applySidebarLayout(animated: false)
