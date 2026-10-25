@@ -4,6 +4,14 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.3] - 2026-10-25
+
+### Fixed
+
+- Extension icons fill their spot in the toolbar and the extensions list again, instead of showing at a quarter of their size in one corner.
+- On a tab strip, every tab scrolls as one row, pinned and favorite ones too, and a pill squeezed to its icon no longer shows a stray close button over its neighbor.
+
+[0.2.3]: https://github.com/Alexays/Lilo/compare/v0.2.2...v0.2.3
 ## [0.2.2] - 2026-10-25
 
 ### Fixed
