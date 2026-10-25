@@ -381,7 +381,7 @@ final class ExtensionPageTabTests: XCTestCase {
     }
 
     /// A window always has an active tab, as in Chrome: Dashlane's popup read `[0].url` of `tabs.query({active, currentWindow})`
-    /// and showed an empty vault when the window showed no web page. A terminal on screen has a stand-in tab, with no url.
+    /// and showed an empty vault when the window showed no web page. A terminal on screen has a stand-in tab, a new tab with `tabs`.
     func testAnActionPopupFindsTheActiveTabOfAWindowShowingATerminal() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
         let extDir = tempDir.appendingPathComponent("active")
@@ -419,7 +419,7 @@ final class ExtensionPageTabTests: XCTestCase {
         context.action(for: standIn)?.popupPopover?.close()
 
         XCTAssertTrue(shown, "the popup opens")
-        XCTAssertEqual(title, "true none / true none")
+        XCTAssertEqual(title, "true chrome://newtab/ / true chrome://newtab/")
     }
 
     /// Chrome runs nothing of a page after its window.close(): neither an API callback or promise it

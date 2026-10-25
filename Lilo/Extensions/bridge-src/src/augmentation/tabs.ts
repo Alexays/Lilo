@@ -243,7 +243,7 @@ async function completeTabs(tabs: any[], withheldURLs: boolean, windowIds?: Prom
   }
   listed.forEach((tab, i) => {
     asChromeTab(tab, details[i]);
-    // A tab Lilo does not hold and WebKit shows no url of, such as the stand-in of a window showing no web page, has none.
+    // A tab Lilo does not hold and WebKit shows no url of has none.
     if (withheldURLs || !details[i]) withoutWithheld(tab);
   });
 }

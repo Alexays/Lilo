@@ -233,14 +233,16 @@ final class TabGroupsBridgeHandler: GapHandler {
             return ["windowPosition": windows.firstIndex { Self.windowKey(ObjectIdentifier($0)) == key } ?? -1, "index": tab["index"] ?? -1]
         }
         let tabs = call.registry.tabAdapters(atPositions: positions, extensionId: call.extensionId).enumerated().map { index, adapter -> Any in
-            guard let adapter, let facts = facts(of: adapter), let window = adapter.extensionWindow else { return NSNull() }
+            guard let adapter, let window = adapter.extensionWindow else { return NSNull() }
+            // A window's stand-in for a page that is no tab (a terminal) reads as a loaded, ungrouped new tab, as Chrome's own pages.
+            let facts = facts(of: adapter)
             var details: [String: Any] = [
-                "groupId": facts.groupId,
-                "discarded": facts.discarded,
-                "frozen": facts.frozen,
+                "groupId": facts?.groupId ?? Self.tabGroupIdNone,
+                "discarded": facts?.discarded ?? false,
+                "frozen": facts?.frozen ?? false,
                 "windowKey": Self.windowKey(ObjectIdentifier(window))
             ]
-            if let accessed = facts.lastAccessed { details["lastAccessed"] = accessed }
+            if let accessed = facts?.lastAccessed { details["lastAccessed"] = accessed }
             if let context, reveal.contains(index) {
                 let title = adapter.title(for: context) ?? ""
                 let url = adapter.url(for: context)
