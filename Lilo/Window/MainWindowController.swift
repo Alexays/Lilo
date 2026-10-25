@@ -827,7 +827,8 @@ extension MainWindowController: NSWindowDelegate {
     func windowDidChangeOcclusionState(_ notification: Notification) {
         guard let window else { return }
         let isVisible = window.occlusionState.contains(.visible)
-        bridgeRouter.isSilenced = !isVisible
+        // A window loaded before its setup (an extension's windows.create) can hear this before it has a router.
+        bridgeRouter?.isSilenced = !isVisible
         context.windowVisibilityChanged()
     }
 
