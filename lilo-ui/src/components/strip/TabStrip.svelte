@@ -300,10 +300,11 @@
   /* The sidebar header spreads its controls; the strip keeps them together. */
   .tab-strip > :global(.nav-controls) {
     flex: none;
+    margin-right: 6px;
   }
 
   .tab-strip > :global(.nav-controls .nav-spacer) {
-    flex: 0 0 10px;
+    flex: 0 0 2px;
   }
 
   .lights-spacer {
