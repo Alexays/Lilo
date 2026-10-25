@@ -19,7 +19,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
@@ -101,9 +101,10 @@
       onpointerdown={pressTabsHeader}
     >
       <div class="header-spacer"></div>
-      <NavControls collapseLocked={isOverlayPanelOpen} show={hasPageToolbar() ? "toggle" : "all"} />
+      <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
+      <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    {#if !isAddressInPageToolbar()}
+    {#if !(isSidebarVisible() && isAddressInPageToolbar())}
       <URLDisplay />
     {/if}
 

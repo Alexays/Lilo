@@ -46,7 +46,8 @@ function setLifting(lifting: boolean): void {
  * a press held still lifts the tabs to drop them on another edge.
  */
 export function pressTabsHeader(event: PointerEvent): void {
-	if (event.button !== 0 || handled.has(event)) return;
+	// A control-click is a right click on the Mac: its menu takes the release.
+	if (event.button !== 0 || event.ctrlKey || handled.has(event)) return;
 	const target = event.target as HTMLElement | null;
 	if (target?.closest("button, a, input, select, textarea, [role='button'], .url-display, .strip-tab")) return;
 	handled.add(event);
@@ -93,9 +94,16 @@ export function pressTabsHeader(event: PointerEvent): void {
 		window.removeEventListener("pointermove", onMove, true);
 		window.removeEventListener("pointerup", onUp, true);
 		window.removeEventListener("keydown", onKey, true);
+		window.removeEventListener("pointercancel", finish, true);
+		window.removeEventListener("contextmenu", finish, true);
+		window.removeEventListener("blur", finish);
 	}
 
 	window.addEventListener("pointermove", onMove, true);
 	window.addEventListener("pointerup", onUp, true);
 	window.addEventListener("keydown", onKey, true);
+	// A press that ends elsewhere (a menu, another app) must not leave the tabs lifted.
+	window.addEventListener("pointercancel", finish, true);
+	window.addEventListener("contextmenu", finish, true);
+	window.addEventListener("blur", finish);
 }

@@ -819,12 +819,16 @@ extension MainWindowController {
         }
 
         // The opaque frame view sweeps as a curtain in sync with the tabs' slide, and the content
-        // follows its edge with a layer translation, so it re-lays-out exactly once: when growing
-        // immediately, when shrinking at the end.
+        // follows its edge with a layer translation. It takes the larger of both sizes on each axis at
+        // once, so the new hole is never uncovered, and its exact size at the end; the curtain hides
+        // whatever overhangs meanwhile.
+        let current = contentContainerView.frame
         let inFlightOffset = (layer.presentation()?.value(forKeyPath: "transform.translation") as? NSValue)?.sizeValue ?? .zero
-        let visibleOrigin = CGPoint(x: contentContainerView.frame.minX + inFlightOffset.width, y: contentContainerView.frame.minY + inFlightOffset.height)
-        let isGrowing = targetFrame.width * targetFrame.height > contentContainerView.frame.width * contentContainerView.frame.height
-        if isGrowing { contentContainerView.frame = targetFrame }
+        let visibleOrigin = CGPoint(x: current.minX + inFlightOffset.width, y: current.minY + inFlightOffset.height)
+        contentContainerView.frame = NSRect(
+            origin: targetFrame.origin,
+            size: NSSize(width: max(current.width, targetFrame.width), height: max(current.height, targetFrame.height))
+        )
         let origin = contentContainerView.frame.origin
         let slide = CABasicAnimation(keyPath: "transform.translation")
         slide.fromValue = NSValue(size: NSSize(width: visibleOrigin.x - origin.x, height: visibleOrigin.y - origin.y))

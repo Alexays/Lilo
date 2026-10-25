@@ -121,3 +121,56 @@ test("a quick drag on the header still moves the window", async ({ page }) => {
 	expect((await sentCommands(page)).some((c) => c.action === "startWindowDrag")).toBe(true);
 	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
 });
+
+for (const position of ["left", "right", "top", "bottom"] as const) {
+	test(`hidden tabs on the ${position} come back over the page from their edge, with navigation`, async ({ page }) => {
+		const strip = position === "top" || position === "bottom";
+		await bootChrome(page, { ...initialWorld(), tabPosition: position }, strip ? ".tab-strip" : ".tab-list [data-tab-id]");
+		await page.mouse.move(600, 300);
+		await receive(page, { event: "sidebarVisibilityChanged", visible: false, width: 260 });
+		await expect(page.locator("html")).toHaveAttribute("data-tabs-hidden", "");
+		const edges = () => page.evaluate(() => ["left", "right", "top", "bottom"].map((edge) => getComputedStyle(document.documentElement).getPropertyValue(`--chrome-content-${edge}`)));
+		const before = await edges();
+
+		const viewport = page.viewportSize()!;
+		const point = { left: [2, 300], right: [viewport.width - 2, 300], top: [600, 2], bottom: [600, viewport.height - 2] }[position];
+		await page.mouse.move(point[0], point[1]);
+
+		const tabs = page.locator(strip ? ".tab-strip-host" : ".sidebar");
+		await expect(tabs).toHaveClass(strip ? /strip-overlay/ : /sidebar-overlay/);
+		expect(await edges()).toEqual(before);
+		await expect(tabs.getByRole("button", { name: /back/i })).toBeVisible();
+		await expect(tabs.locator(".url-display")).toBeVisible();
+	});
+}
+
+test("a control-click on the header never lifts the tabs", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const header = (await page.locator(".sidebar-header").boundingBox())!;
+
+	await page.keyboard.down("Control");
+	await page.mouse.move(header.x + 40, header.y + header.height / 2);
+	await page.mouse.down();
+	await page.waitForTimeout(500);
+
+	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
+	await page.mouse.up();
+	await page.keyboard.up("Control");
+});
+
+test("a click in the page closes a strip popover", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await page.locator(".space-chip").click();
+	await expect(page.locator(".strip-popover")).toBeVisible();
+
+	await receive(page, { event: "contentInteraction", isMouseDown: true });
+
+	await expect(page.locator(".strip-popover")).toHaveCount(0);
+});
+
+test("the page toolbar centers the address on the page", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" }, ".tab-strip");
+	const address = (await page.locator(".page-toolbar .url-display").boundingBox())!;
+	const toolbar = (await page.locator(".page-toolbar").boundingBox())!;
+	expect(Math.abs(address.x + address.width / 2 - (toolbar.x + toolbar.width / 2))).toBeLessThanOrEqual(2);
+});

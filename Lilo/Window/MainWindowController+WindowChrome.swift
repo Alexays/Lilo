@@ -131,8 +131,10 @@ extension MainWindowController {
         bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": sidebarVisible, "width": sidebarExpandedWidth])
     }
 
+    /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
-        window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || sidebarOverlayVisible)
+        let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
+        return window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || overlayCoversLights)
     }
 
     func showActiveTabSecurityInfo() {

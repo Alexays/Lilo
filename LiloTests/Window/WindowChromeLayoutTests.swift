@@ -125,6 +125,32 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertTrue(script.source.contains("root.dataset.address = 'page'"))
     }
 
+    func testTheLightsStayHiddenWhileTheTabsFloatInFromTheRightOrBottom() throws {
+        let window = try makeSizedWindow()
+        window.toggleSidebar()
+        for position in TabPosition.allCases {
+            layOut(window, position)
+            window.handleSidebarOverlay(visible: true)
+            XCTAssertEqual(window.areTrafficLightsVisible(), position == .left || position == .top, "\(position): the overlay covers the lights' corner only on the left and top")
+            window.handleSidebarOverlay(visible: false)
+        }
+    }
+
+    func testAnAnimatedSwitchNeverUncoversThePage() throws {
+        let window = try makeSizedWindow()
+        window.contentContainerView.wantsLayer = true
+        // The animated path runs only with the native frame curtain in place.
+        window.windowFrameView = WindowFrameView(frame: NSRect(x: 0, y: 0, width: 1200, height: 800), edges: window.contentEdges())
+        layOut(window, .top)
+
+        window.applyTabLayout(TabLayout(position: .left, storedAddress: nil), animated: true)
+
+        let target = window.contentFrameRect()
+        let frame = window.contentContainerView.frame
+        XCTAssertGreaterThanOrEqual(frame.width, target.width, "wide enough for the new hole while it slides")
+        XCTAssertGreaterThanOrEqual(frame.height, target.height, "tall enough for the new hole while it slides")
+    }
+
     private func makeSizedWindow() throws -> MainWindowController {
         let context = browserContext.context
         let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)

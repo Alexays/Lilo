@@ -67,17 +67,15 @@
     flex-shrink: 0;
   }
 
+  /* Centered on the page, whatever sits beside it. */
   .address {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    justify-content: center;
-    /* The nav buttons' width on the right, so the address stays centered on the page. */
-    margin-right: 96px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(480px, 100% - 2 * 180px);
   }
 
   .address > :global(.url-display) {
-    width: min(480px, 100%);
     padding: 0;
   }
 </style>

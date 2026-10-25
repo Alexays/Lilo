@@ -14,7 +14,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getActiveTabId, type TabState } from "../../stores/tabs.svelte";
   import { getAddressPlacement } from "../../stores/tabLayout.svelte";
-  import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { isDownloadsVisible, openDownloadsPanel } from "../../stores/panels.svelte";
   import { hasSessionDownloads } from "../../stores/downloads.svelte";
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
@@ -32,7 +32,8 @@
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
   const activeTabId = $derived(getActiveTabId(spaceId));
-  const addressInActiveTab = $derived(getAddressPlacement() === "tabs");
+  // Floating in while hidden, the strip brings back what the unmounted page toolbar holds.
+  const addressInActiveTab = $derived(getAddressPlacement() === "tabs" || !isSidebarVisible());
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
 
@@ -123,8 +124,8 @@
   }}
   oncontextmenu={showSidebarMenu}
 >
-  {#if edge === "top"}
-    {#if areTrafficLightsVisible()}<div class="lights-spacer"></div>{/if}
+  {#if edge === "top" && areTrafficLightsVisible()}<div class="lights-spacer"></div>{/if}
+  {#if edge === "top" || !isSidebarVisible()}
     <NavControls />
   {/if}
 
@@ -227,7 +228,7 @@
   }
 
   .lights-spacer {
-    width: 64px;
+    width: 72px;
     flex: none;
   }
 

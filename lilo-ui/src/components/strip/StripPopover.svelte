@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
+  import { dismissable } from "../../lib/actions/dismissable";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   let { anchor, label, onclose, children }: { anchor: HTMLElement; label: string; onclose: () => void; children: Snippet } = $props();
@@ -15,23 +16,10 @@
 
   $effect(() => {
     popover?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
-    const dismiss = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!popover?.contains(target) && !anchor.contains(target)) onclose();
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.stopPropagation();
-      onclose();
-      anchor.focus();
-    };
-    window.addEventListener("pointerdown", dismiss, true);
-    window.addEventListener("keydown", escape, true);
-    return () => {
-      window.removeEventListener("pointerdown", dismiss, true);
-      window.removeEventListener("keydown", escape, true);
-    };
   });
+
+  // A press outside, a click in the page or Escape closes it; the opener's own press toggles it instead.
+  const dismiss = $derived(dismissable({ onDismiss: onclose, ignore: `[aria-expanded="true"]`, escape: true, returnFocus: anchor }));
 </script>
 
 <div
@@ -42,6 +30,7 @@
   aria-label={label}
   style={`left: ${left}px; top: ${top}px;`}
   use:reportInteractiveZone={{ id: "strip-popover" }}
+  {@attach dismiss}
 >
   {@render children()}
 </div>
