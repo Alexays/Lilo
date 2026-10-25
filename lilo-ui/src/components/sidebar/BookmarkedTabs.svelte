@@ -45,7 +45,9 @@
     type SidebarZoneRef,
   } from "../../stores/sidebarDnd.svelte";
   import { getPreviewTabMoveToSpace } from "../../stores/dropConfirmation.svelte";
+  import { getRenamingTabId, setRenamingTabId } from "../../stores/tabRename.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { untrack } from "svelte";
 
   let {
     spaceId,
@@ -158,6 +160,44 @@
   function bookmarkMemory(bookmark: { id: string }): string {
     if (hoveredBookmarkId !== bookmark.id) return "";
     return tabUsageLabel(bookmark.id);
+  }
+
+  // A tile has no title to edit in place: the name is edited in a field under the grid.
+  const renamingBookmark = $derived.by(() => {
+    const id = interactive ? getRenamingTabId() : null;
+    return id ? bookmarks.find((tab) => tab.id === id) : undefined;
+  });
+  let renameInput: HTMLInputElement | undefined = $state();
+  let draftTitle = $state("");
+
+  $effect(() => {
+    if (!renamingBookmark) return;
+    draftTitle = untrack(() => bookmarkLabel(renamingBookmark));
+    clearTabPreview();
+    queueMicrotask(() => {
+      renameInput?.focus();
+      renameInput?.select();
+    });
+  });
+
+  function commitRename(): void {
+    const bookmark = renamingBookmark;
+    if (!bookmark) return;
+    setRenamingTabId(null);
+    const name = draftTitle.trim();
+    // Confirming the shown name keeps an unnamed bookmark following its page.
+    if (name !== bookmarkLabel(bookmark)) tabActions.rename(bookmark.id, name);
+  }
+
+  function handleRenameKeydown(e: KeyboardEvent): void {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitRename();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      setRenamingTabId(null);
+    }
   }
 
   function openBookmark(bookmark: { id: string }): void {
@@ -308,6 +348,18 @@
         </div>
       {/each}
     </div>
+    {#if renamingBookmark}
+      <input
+        bind:this={renameInput}
+        bind:value={draftTitle}
+        class="bookmark-title-input"
+        type="text"
+        spellcheck="false"
+        aria-label={t("tabItem.tabName")}
+        onkeydown={handleRenameKeydown}
+        onblur={commitRename}
+      />
+    {/if}
   </div>
 </div>
 
@@ -476,6 +528,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .bookmark-title-input {
+    display: block;
+    width: 100%;
+    height: 24px;
+    box-sizing: border-box;
+    margin-top: 6px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--bg-hover) 88%, transparent);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--font-size-md);
+    line-height: 1.3;
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
   }
 
   .bookmark-tile.closed .bookmark-icon-inner {
