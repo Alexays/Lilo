@@ -7,6 +7,7 @@ import { gapModules } from './shared/gap-modules.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { recordErrorDiagnostics } from './shared/error-diagnostics.ts';
 import { installPageWorkerMessages } from './shared/worker-messages.ts';
+import { installNetworkInformation } from './shared/network-information.ts';
 
 // Injected into every frame of an extension page; a web page framed there must not see the shims.
 const isExtensionOrigin = /^(webkit|chrome)-extension:/.test(String((globalThis as any).origin ?? ''));
@@ -42,4 +43,5 @@ if (isExtensionOrigin && !(globalThis as any).__liloAugmentationInstalled) {
   try {
     showChromeUserAgent(navigator);
   } catch { /* a frozen navigator keeps the tab's user agent */ }
+  installNetworkInformation(globalThis);
 }

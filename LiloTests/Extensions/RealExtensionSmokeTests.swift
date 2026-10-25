@@ -68,7 +68,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         "bomfdkbfpdhijjbeoicnfhjbdhncfhig": "WebKit gives extensions no SharedArrayBuffer (WEBKIT-GAPS.md, gap 36): its worker's error reporter logs the ReferenceError", // Paperpile
         "hkhggnncdpfibdhinjiegagmopldibha": "Lilo has no push backend: it logs the error instanceID.getToken fails with, as Checker Plus for Gmail", // Checker Plus for Google Calendar
         "ndakideadaglgpbblmppfonobpdgggin": "Chrome gives it chrome.mdns and chrome.system.network, which Lilo lacks: its worker logs that it cannot look for printers", // Mobility Print
-        "njdniclgegijdcdliklgieicanpmcngj": "WebKit has no Network Information API: its worker sets navigator.connection.onchange at startup and fails to load", // Lightspeed Insight Agent
         "cmllgdnjnkbapbchnebiedipojhmnjej": "Chrome too: its module worker reads Element, which no worker has, and fails to start (Chrome's reference records the error only)", // Adaware AdBlock
         "doojmbjmlfjjnbmnoijecmcbfeoakpjm": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): its tab probe runs before the script declaring ns", // NoScript
         "mkhjobnjhllkhekbbedlkmgcglgaeidc": "Chrome too: its worker finds no Chromebook and disables itself with management.setEnabled, so its popup does not load; Chrome's reference reads the text of its blocked page", // iboss Cloud Connector
