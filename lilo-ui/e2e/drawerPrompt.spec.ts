@@ -58,6 +58,27 @@ test("a request slides a hidden sidebar out so it can be answered", async ({ pag
 	await expect(page.locator(".url-drawer-clip")).toContainText("Claude");
 });
 
+for (const [position, address] of [["left", "tabs"], ["left", "page"], ["right", "page"], ["top", "tabs"], ["top", "page"], ["bottom", "tabs"], ["bottom", "page"]] as const) {
+	for (const mode of ["", ", the tabs hidden", ", in full screen with the tabs hidden"]) {
+		test(`an agent's request can be answered with the tabs ${position}, the address in the ${address}${mode}`, async ({ page }) => {
+			const strip = position === "top" || position === "bottom";
+			await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: address }, strip ? ".tab-strip .strip-tab" : undefined);
+			await page.mouse.move(600, 300);
+			if (mode) await page.evaluate(() => window.__lilo!.receive({ event: "sidebarVisibilityChanged", visible: false, width: 260 }));
+			if (mode.includes("full screen")) await page.evaluate(() => window.__lilo!.receive({ event: "windowFullscreenChanged", isFullscreen: true }));
+
+			await page.evaluate(() =>
+				window.__lilo!.receive({ event: "agentControlRequested", requestId: "a1", clientName: "Claude", executable: "/usr/local/bin/claude", profileName: "" }),
+			);
+
+			const allow = page.locator(".url-drawer-clip .prompt-actions button").last();
+			await expect(allow).toBeInViewport({ ratio: 1 });
+			await allow.click();
+			await expect.poll(() => sentCommands(page).then((all) => all.some((m) => m.action === "agentControlResponse"))).toBe(true);
+		});
+	}
+}
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 
