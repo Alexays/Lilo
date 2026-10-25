@@ -258,10 +258,15 @@ const cases = {
 window.runContracts = async () => {
   const results = {};
   for (const [name, run] of Object.entries(cases)) {
+    // A case that never settles is reported as one, not left to hang the whole run.
+    let timer;
+    const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('case timed out')), 20000); });
     try {
-      results[name] = { result: await run() };
+      results[name] = { result: await Promise.race([run(), timeout]) };
     } catch (error) {
       results[name] = { threw: String(error && error.message) };
+    } finally {
+      clearTimeout(timer);
     }
   }
   return results;
