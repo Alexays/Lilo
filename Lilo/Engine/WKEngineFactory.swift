@@ -739,10 +739,13 @@ final class WKEngineFactory {
         return String(head) + separator + rulesJSON.dropFirst().dropLast() + "]"
     }
 
-    /// Safari's version tracks the macOS release that ships its WebKit, so it is read from the OS.
-    private static let safariApplicationName: String = {
+    /// Safari's version, which ships with the system WebKit, as Safari states it: a point release (27.0.1) shows, and a user
+    /// agent that disagrees with the engine reads as a bot. The OS release stands in where Safari is missing.
+    static let safariApplicationName: String = {
         let os = ProcessInfo.processInfo.operatingSystemVersion
-        return "Version/\(os.majorVersion).\(os.minorVersion) Safari/605.1.15"
+        let version = Bundle(path: "/Applications/Safari.app")?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "\(os.majorVersion).\(os.minorVersion)"
+        return "Version/\(version) Safari/605.1.15"
     }()
 
     private func configuredWebViewConfiguration(
