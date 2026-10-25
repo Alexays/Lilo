@@ -18,12 +18,27 @@ const isProbe = (message: unknown) => (message as typeof listensProbe | undefine
 /** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
 const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
 
+let workerScript: string | undefined;
+
+/**
+ * WebKit names the worker by its extension's origin alone, where Chrome gives its script's url: Aircall's offscreen
+ * document answers only a sender whose url names its background script.
+ */
+function chromeSender(sender: any): unknown {
+  if (typeof sender?.url !== 'string' || sender.url !== sender.origin || sender.tab) return sender;
+  if (workerScript === undefined) {
+    const background = bridgeChrome()?.runtime?.getManifest?.()?.background;
+    workerScript = String(background?.lilo_service_worker ?? background?.service_worker ?? '');
+  }
+  return workerScript ? { ...sender, url: new URL(workerScript, `${sender.origin}/`).href } : sender;
+}
+
 function answeringListener(listener: Listener): Listener {
   let wrapper = answering.get(listener);
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
       if (isProbe(message) || isExternal(message)) return undefined;
-      const result = listener.call(this, message, sender, (response?: unknown) => sendResponse(response === undefined ? null : response));
+      const result = listener.call(this, message, chromeSender(sender), (response?: unknown) => sendResponse(response === undefined ? null : response));
       return typeof (result as PromiseLike<unknown>)?.then === 'function'
         ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
         : result;

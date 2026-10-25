@@ -71,6 +71,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 
 ## runtime and messaging
 
+### 85. A worker's message names its sender by the extension's origin
+
+- **Gap:** a message from the worker reaches a page's `runtime.onMessage` with a sender whose `url` is the extension's origin. Chrome's is the worker script's url.
+- **Lilo:** gives every `runtime.onMessage` listener the worker's script url, from the manifest, for such a sender ([message-answers.ts] `chromeSender`). A port the worker opens keeps WebKit's sender.
+- **Impact:** Aircall's offscreen document answers only a sender whose `url` names its background script, so its popup's first request was never answered.
+- **Check:** `testWorkerMessageSenderURLIsTheExtensionOrigin`. Repro: the worker calls `browser.runtime.sendMessage('ping')`; a page's listener reads `sender.url`. Expected: the worker's script url. Actual: the extension's origin.
+
 ### 79. Pages an extension's `externally_connectable` names get `browser.runtime` only
 
 - **Gap:** WebKit gives those web pages `browser.runtime.sendMessage` and `connect`, and no `chrome`. Chrome gives them `chrome.runtime`, with callbacks and `lastError`.

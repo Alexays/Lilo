@@ -88,6 +88,18 @@ final class WebKitGapTests: XCTestCase {
         )
     }
 
+    func testWorkerMessageSenderURLIsTheExtensionOrigin() async throws {
+        let sender = try await barePageResult(
+            worker: "setInterval(() => browser.runtime.sendMessage('ping').catch(() => {}), 100);",
+            pageScript: "return await new Promise((resolve) => browser.runtime.onMessage.addListener((_message, sender) => resolve(`${sender.url} ${sender.origin}`)));"
+        )
+        let origin = try XCTUnwrap(sender?.split(separator: " ").last.map(String.init))
+        XCTAssertEqual(
+            sender, "\(origin) \(origin)",
+            "WebKit now gives a worker's message the worker's url, as Chrome: drop chromeSender (message-answers.ts)"
+        )
+    }
+
     func testWorkerKeepsGetBackgroundPageWhateverRemovesIt() async throws {
         let title = try await bareWorkerTitle("""
         const extension = browser.extension;

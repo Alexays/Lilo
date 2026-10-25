@@ -73,7 +73,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         "mkhjobnjhllkhekbbedlkmgcglgaeidc": "Chrome too: its worker finds no Chromebook and disables itself with management.setEnabled, so its popup does not load; Chrome's reference reads the text of its blocked page", // iboss Cloud Connector
         "gkncegdiihdghhkfpnnodppcbjeeimkc": "installed from the store, it needs an enterprise policy's managed configuration; Chrome's reference runs it unpacked (installType development), where it falls back to defaults", // Senso
         "hdjihnnclpjhfdbbinmgoiehhoehhlgf": "its popup waits for the window focus the test's window never gets, then pastes with document.execCommand('paste'), which WebKit answers false: it renders nothing", // Pasty
-        "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, fails with 'Could not establish connection' where Chrome's is answered, so it shows its loader only", // Aircall Dialer
+        "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, comes back with an error without a message, which the popup logs; in Chrome's recording it fails before reaching that document, with 'Could not establish connection'", // Aircall Dialer
         "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker browser.extension.getBackgroundPage, which Chrome leaves out of workers and nothing can remove (WEBKIT-GAPS.md, gap 84): its background check compares the result with window and fails to load", // AI Exporter
     ]
 

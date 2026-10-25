@@ -25,6 +25,24 @@ class Event {
 }
 
 describe('runtime.onMessage listeners', () => {
+  // First: the worker's script is read once per context.
+  it("hear the worker's message from its script's url, as Chrome, where WebKit gives its origin", () => {
+    (globalThis as any).chrome = {
+      runtime: { getManifest: () => ({ background: { service_worker: 'js/lilo-background-wrapper.js', lilo_service_worker: 'js/sw.js' } }) },
+    };
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((_message: unknown, sender: unknown) => { heard.push(sender); });
+    const origin = 'chrome-extension://abc';
+    const page = { id: 'abc', url: `${origin}/popup.html`, origin };
+    const tab = { id: 'abc', url: origin, origin, tab: { id: 1 } };
+    for (const sender of [{ id: 'abc', url: origin, origin }, page, tab]) {
+      for (const listener of onMessage.listeners) listener('hi', sender, () => {});
+    }
+    assert.deepEqual(heard, [{ id: 'abc', url: `${origin}/js/sw.js`, origin }, page, tab]);
+  });
+
   it('answer null where they answer no value, as Chrome', async () => {
     const onMessage = new Event();
     answerAsChrome(onMessage);
