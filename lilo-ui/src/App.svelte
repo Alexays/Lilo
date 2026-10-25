@@ -31,6 +31,8 @@
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
   import PageToolbar from "./components/page/PageToolbar.svelte";
   import TabStrip from "./components/strip/TabStrip.svelte";
+  import TabEdgeDrag from "./components/page/TabEdgeDrag.svelte";
+  import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
 
@@ -408,6 +410,10 @@
     onmouseleave={scheduleSidebarOverlayHide}
   ></div>
 
+  {#if isLiftingTabs()}
+    <TabEdgeDrag />
+  {/if}
+
   {#if showDeferredChrome}
     {#await import("./components/DeferredChrome.svelte") then deferred}
       <deferred.default />
@@ -501,6 +507,14 @@
   :global(html[data-tab-position='bottom']) .sidebar-overlay-tolerance {
     top: auto;
     bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
+  }
+
+  /* Lifted by a held press: the tabs float until dropped on an edge. */
+  :global(html[data-tabs-lifting]) .sidebar,
+  :global(html[data-tabs-lifting]) .tab-strip-host {
+    transform: scale(0.96);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
+    z-index: 72;
   }
 
   .strip-panels {

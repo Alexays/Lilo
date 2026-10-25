@@ -87,3 +87,34 @@ test("settings open as a floating column in the top position and stay open when 
 
 	await expect(page.locator(".strip-panels.open")).toBeVisible();
 });
+
+test("holding the header then dropping near the right edge moves the tabs right", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const header = (await page.locator(".sidebar-header").boundingBox())!;
+	const viewport = page.viewportSize()!;
+
+	await page.mouse.move(header.x + 40, header.y + header.height / 2);
+	await page.mouse.down();
+	await page.waitForTimeout(500);
+	await expect(page.locator(".tab-edge-drag")).toBeVisible();
+	await page.mouse.move(viewport.width - 20, viewport.height / 2, { steps: 8 });
+	await expect(page.locator(".slot.right")).toBeVisible();
+	await page.mouse.up();
+
+	const sets = (await sentCommands(page)).filter((c) => c.action === "setSetting");
+	expect(sets.at(-1)?.payload).toEqual({ key: "tabPosition", value: "right" });
+	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
+});
+
+test("a quick drag on the header still moves the window", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const header = (await page.locator(".sidebar-header").boundingBox())!;
+
+	await page.mouse.move(header.x + 40, header.y + header.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(header.x + 80, header.y + header.height / 2, { steps: 4 });
+	await page.mouse.up();
+
+	expect((await sentCommands(page)).some((c) => c.action === "startWindowDrag")).toBe(true);
+	await expect(page.locator(".tab-edge-drag")).toHaveCount(0);
+});

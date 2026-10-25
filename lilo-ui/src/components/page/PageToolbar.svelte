@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import NavControls from "../sidebar/NavControls.svelte";
   import URLDisplay from "../urlbar/URLDisplay.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
@@ -16,7 +17,7 @@
   function startWindowDrag(event: PointerEvent) {
     if (event.button !== 0) return;
     if ((event.target as HTMLElement | null)?.closest("button, a, input, select, textarea, [role='button'], .url-display")) return;
-    chromeActions.startWindowDrag();
+    pressTabsHeader(event);
   }
 </script>
 

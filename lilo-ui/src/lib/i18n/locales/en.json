@@ -674,6 +674,13 @@
 		"reload": "Reload",
 		"reloadUnavailable": "Nothing to reload"
 	},
+	"tabEdgeDrag": {
+		"pick": "Drag to an edge",
+		"left": "Release to move tabs to the left",
+		"right": "Release to move tabs to the right",
+		"top": "Release to move tabs to the top",
+		"bottom": "Release to move tabs to the bottom"
+	},
 	"strip": {
 		"ariaLabel": "Tabs"
 	},

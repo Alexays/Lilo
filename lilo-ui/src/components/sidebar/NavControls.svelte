@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -87,7 +88,7 @@
       return;
     }
 
-    chromeActions.startWindowDrag();
+    pressTabsHeader(event);
   }
 </script>
 

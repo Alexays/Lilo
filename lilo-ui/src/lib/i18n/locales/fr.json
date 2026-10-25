@@ -674,6 +674,13 @@
 		"reload": "Actualiser",
 		"reloadUnavailable": "Rien à actualiser"
 	},
+	"tabEdgeDrag": {
+		"pick": "Glissez vers un bord",
+		"left": "Relâchez pour placer les onglets à gauche",
+		"right": "Relâchez pour placer les onglets à droite",
+		"top": "Relâchez pour placer les onglets en haut",
+		"bottom": "Relâchez pour placer les onglets en bas"
+	},
 	"strip": {
 		"ariaLabel": "Onglets"
 	},

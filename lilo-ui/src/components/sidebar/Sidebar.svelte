@@ -21,6 +21,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { areTrafficLightsVisible } from "../../stores/ui.svelte";
   import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
   let spaceContentEl: HTMLDivElement | undefined = $state();
@@ -97,6 +98,7 @@
       class="sidebar-header"
       class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
       ondblclick={() => chromeActions.maximizeWindow()}
+      onpointerdown={pressTabsHeader}
     >
       <div class="header-spacer"></div>
       <NavControls collapseLocked={isOverlayPanelOpen} show={hasPageToolbar() ? "toggle" : "all"} />

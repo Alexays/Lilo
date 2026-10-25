@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import NavControls from "../sidebar/NavControls.svelte";
   import KeepAwakeIndicator from "../sidebar/KeepAwakeIndicator.svelte";
   import URLDisplay from "../urlbar/URLDisplay.svelte";
@@ -59,7 +60,7 @@
   function startWindowDrag(event: PointerEvent) {
     if (event.button !== 0) return;
     if ((event.target as HTMLElement | null)?.closest("button, a, input, [role='button'], .url-display, .strip-tab")) return;
-    chromeActions.startWindowDrag();
+    pressTabsHeader(event);
   }
 
   function showSidebarMenu(event: MouseEvent) {
