@@ -18,6 +18,9 @@ final class AgentControl {
     /// How long a dropped connection's session waits for lilo-mcp to reconnect (it tries for 30 seconds) before
     /// its tabs go.
     static var reconnectGrace: Duration = .seconds(35)
+    /// How long the question letting a client in waits for the user: long enough to come back to the Mac, as the
+    /// client is told it waits, so nothing times out meanwhile.
+    static var connectionConsentTimeout: TimeInterval = 600
     /// Chrome-style integer ids for tabs, stable for the app's lifetime.
     var tabNumbers: [UUID: Int] = [:]
     var nextTabNumber = 1
@@ -151,9 +154,9 @@ final class AgentControl {
 
     private static let allowedClientsKey = "agentAllowedClients"
     /// The question asked of each client, by name and identity, and how many of its connections still wait on it.
-    private var pendingConsents: [String: (question: Task<Bool, Never>, waiting: Int)] = [:]
-    /// Questions shown in the drawers, by request id, until the user answers.
-    private(set) var pendingConsentAnswers: [String: CheckedContinuation<Bool, Never>] = [:]
+    private var pendingConsents: [String: (question: Task<Bool?, Never>, waiting: Int)] = [:]
+    /// Questions shown in the drawers, by request id, with what the drawers show, until the user answers.
+    private(set) var pendingConsentAnswers: [String: (answer: CheckedContinuation<Bool?, Never>, request: [String: Any])] = [:]
 
     /// The client names the user let drive Lilo, each with the identities (`clientIdentity`) it was allowed as.
     var allowedClients: [String: [String]] {
@@ -233,8 +236,8 @@ final class AgentControl {
 
     /// Asks the user the first time a client name connects from an executable; concurrent connections of one
     /// client share the question. The name alone is no credential: any program can claim it. Without `asking`,
-    /// only an approval already given counts.
-    func authorize(_ session: AgentSession, asking: Bool = true) async -> Bool {
+    /// only an approval already given counts. Nil when the user did not answer: the next try asks again.
+    func authorize(_ session: AgentSession, asking: Bool = true) async -> Bool? {
         let name = session.clientName
         // Reading code signatures touches the disk: off the main thread, before any approval is looked up.
         if session.identity.isEmpty {
@@ -246,16 +249,17 @@ final class AgentControl {
             markSeen(name)
             return true
         }
-        guard asking else { return false }
+        guard asking else { return nil }
         let key = name + "\n" + session.identity
         let identity = session.identity
         let question = pendingConsents[key]?.question ?? Task { @MainActor in
             Self.logger.notice("Asking the user to allow \(name, privacy: .public)")
-            // Long enough to come back to the Mac: the client is told it waits, so nothing times out meanwhile.
-            let allowed = await self.askConsent(name, executable: session.executable, timeout: 600)
-            Self.logger.notice("\(name, privacy: .public) \(allowed ? "allowed" : "not allowed", privacy: .public)")
+            let allowed = await self.askConsent(name, executable: session.executable, timeout: Self.connectionConsentTimeout)
+            Self.logger.notice("\(name, privacy: .public) \(allowed.map { $0 ? "allowed" : "denied" } ?? "unanswered", privacy: .public)")
+            // Dropped here, as every connection waiting on it may have left: a finished question is never reused.
+            self.pendingConsents[key] = nil
             // Remembered here rather than by a waiting connection: a client that reconnects in between is let in.
-            if allowed, !identity.isEmpty, self.allowedClients[name]?.contains(identity) != true {
+            if allowed == true, !identity.isEmpty, self.allowedClients[name]?.contains(identity) != true {
                 var clients = self.allowedClients
                 clients[name, default: []].append(identity)
                 self.saveAllowedClients(clients)
@@ -267,37 +271,40 @@ final class AgentControl {
         // Clients such as an agent app's local mode open a connection per try and leave while the user is
         // still on the way: the question stays up for the next one. Only an unidentified client's question
         // goes with its last connection, as its approval could reach no one.
-        let allowed = await withTaskCancellationHandler { await question.value } onCancel: {
+        return await withTaskCancellationHandler { await question.value } onCancel: {
             Task { @MainActor in
                 guard let pending = self.pendingConsents[key], pending.question == question else { return }
                 self.pendingConsents[key]?.waiting -= 1
                 if pending.waiting == 1, identity.isEmpty { question.cancel() }
             }
         }
-        if pendingConsents[key]?.question == question { pendingConsents[key] = nil }
-        return allowed
     }
 
     /// Asked in every window's address-bar drawer, which leaves the user's typing alone; the Dock icon
-    /// bounces when Lilo is in the background. Unanswered for two minutes, or cancelled, reads as no.
+    /// bounces when Lilo is in the background. Nil when nothing could ask, or unanswered after `timeout`, or cancelled.
     func askConsent(
         _ name: String, executable: String = "", profileName: String? = nil, action: [String: String]? = nil, timeout: TimeInterval = 120
-    ) async -> Bool {
-        guard let windows = context?.windows.windows, !windows.isEmpty else { return false }
+    ) async -> Bool? {
+        guard let windows = context?.windows.windows, !windows.isEmpty else { return nil }
         let requestId = UUID().uuidString
-        for window in windows {
-            window.bridgeRouter?.send(event: "agentControlRequested", data: [
-                "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
-                "action": action ?? NSNull()
-            ])
-        }
+        let request: [String: Any] = [
+            "requestId": requestId, "clientName": Self.displayName(name), "executable": executable, "profileName": profileName ?? "",
+            "action": action ?? NSNull()
+        ]
+        for window in windows { window.bridgeRouter?.send(event: "agentControlRequested", data: request) }
         if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: false) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout) { [weak self] in self?.answerConsent(requestId, granted: nil) }
         return await withTaskCancellationHandler {
-            await withCheckedContinuation { pendingConsentAnswers[requestId] = $0 }
+            await withCheckedContinuation { pendingConsentAnswers[requestId] = ($0, request) }
         } onCancel: {
-            Task { @MainActor [weak self] in self?.answerConsent(requestId, granted: false) }
+            Task { @MainActor [weak self] in self?.answerConsent(requestId, granted: nil) }
         }
+    }
+
+    /// Shows the questions still waiting in a window whose chrome page just loaded: one that loaded or reloaded
+    /// after a question was sent never got it.
+    func resendPendingConsents(to router: BridgeRouter?) {
+        for pending in pendingConsentAnswers.values { router?.send(event: "agentControlRequested", data: pending.request) }
     }
 
     static let asksBeforeActionsKey = "agentAskBeforeActions"
@@ -333,7 +340,7 @@ final class AgentControl {
         guard let label = found else { return }
         // Answered before the tool's own 60 s deadline, so the agent learns the user is needed.
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
-        guard await askConsent(session.clientName, action: action, timeout: 45) else {
+        guard await askConsent(session.clientName, action: action, timeout: 45) == true else {
             let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
             throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
         }
@@ -346,17 +353,17 @@ final class AgentControl {
         let site = engine.currentURL?.host() ?? ""
         let path = (file.path as NSString).abbreviatingWithTildeInPath
         let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
-        guard await askConsent(session.clientName, action: action, timeout: 45) else {
+        guard await askConsent(session.clientName, action: action, timeout: 45) == true else {
             throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
         }
         return file
     }
 
-    /// The user's answer from a window's drawer: the others drop the same question. `alwaysAllowSite` is the
-    /// site of an action the user always allows from now on.
-    func answerConsent(_ requestId: String, granted: Bool, alwaysAllowSite: String? = nil) {
-        guard let answer = pendingConsentAnswers.removeValue(forKey: requestId) else { return }
-        if granted, let site = alwaysAllowSite, !site.isEmpty, !alwaysAllowedSites.contains(site),
+    /// The user's answer from a window's drawer, nil when nobody answered: the others drop the same question.
+    /// `alwaysAllowSite` is the site of an action the user always allows from now on.
+    func answerConsent(_ requestId: String, granted: Bool?, alwaysAllowSite: String? = nil) {
+        guard let answer = pendingConsentAnswers.removeValue(forKey: requestId)?.answer else { return }
+        if granted == true, let site = alwaysAllowSite, !site.isEmpty, !alwaysAllowedSites.contains(site),
            let data = try? JSONEncoder().encode(alwaysAllowedSites + [site]), let list = String(bytes: data, encoding: .utf8) {
             context?.settingsStore?.set(Self.alwaysAllowedSitesKey, value: list)
         }
@@ -473,8 +480,10 @@ final class AgentSession {
     /// The question to the user, asked after the handshake replied: a client waits for its handshake less long
     /// than the user may take to answer.
     var authorization: Task<Void, Never>?
-    /// The user said no: its tool calls say so. The connection stays open, as lilo-mcp would reconnect and ask again.
+    /// The user clicked Deny: its tool calls say so. The connection stays open, as lilo-mcp would reconnect and ask again.
     var isRefused = false
+    /// The question ended unanswered (no window, timed out, withdrawn): the next tool call asks again.
+    var isUnanswered = false
 
     init(connection: AgentConnection) {
         self.connection = connection

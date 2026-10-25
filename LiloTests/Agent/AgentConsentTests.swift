@@ -79,6 +79,69 @@ final class AgentConsentTests: AgentToolTestCase {
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "not asked again")
     }
 
+    /// Local agent mode connects per try: its question can time out with no connection left to read the answer.
+    func testAQuestionThatTimedOutWithItsClientGoneIsAskedAgainAtTheNextConnection() async throws {
+        AgentControl.connectionConsentTimeout = 0.3
+        defer { AgentControl.connectionConsentTimeout = 600 }
+        let first = try AgentTestClient(path: socketURL)
+        _ = await first.initialize(name: "Newcomer")
+        let asked = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.count == 1 }
+        XCTAssertTrue(asked)
+        first.close()
+        let timedOut = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(timedOut)
+        AgentControl.connectionConsentTimeout = 600
+
+        let next = try AgentTestClient(path: socketURL)
+        _ = await next.initialize(name: "Newcomer")
+        let waiting = await next.callTool("tabs_context_mcp")
+        XCTAssertTrue(waiting.text.hasPrefix("[needs_user] Lilo is waiting for the user to allow Newcomer"), waiting.text)
+        try await answerConsent(true)
+        let allowed = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "Newcomer" && $0.isAuthorized } }
+        XCTAssertTrue(allowed)
+        let call = await next.callTool("tabs_context_mcp")
+        XCTAssertFalse(call.isError, call.text)
+    }
+
+    func testAnUnansweredQuestionLeavesTheClientWaitingAndItsNextToolCallAsksAgain() async throws {
+        AgentControl.connectionConsentTimeout = 0.3
+        defer { AgentControl.connectionConsentTimeout = 600 }
+        let newcomer = try AgentTestClient(path: socketURL)
+        _ = await newcomer.initialize(name: "Newcomer")
+        let timedOut = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "Newcomer" && $0.isUnanswered } }
+        XCTAssertTrue(timedOut)
+        XCTAssertFalse(control.sessions.contains { $0.isRefused }, "unanswered is no refusal")
+
+        AgentControl.connectionConsentTimeout = 600
+        let call = await newcomer.callTool("tabs_context_mcp")
+        XCTAssertTrue(call.text.hasPrefix("[needs_user] Lilo is waiting for the user to allow Newcomer"), call.text)
+        try await answerConsent(true)
+        let allowed = await pollUntil(timeout: 5) { self.control.sessions.contains { $0.clientName == "Newcomer" && $0.isAuthorized } }
+        XCTAssertTrue(allowed)
+    }
+
+    func testAChromePageLoadedAfterTheQuestionShowsIt() async throws {
+        let newcomer = try AgentTestClient(path: socketURL)
+        _ = await newcomer.initialize(name: "Newcomer")
+        let asked = await pollUntil(timeout: 5) { self.control.pendingConsentAnswers.count == 1 }
+        XCTAssertTrue(asked)
+        let router = BridgeRouter(chromeWebView: window.chromeWebView)
+        let recorder = BridgeEventRecorder(router)
+        let handler = SettingsBridgeHandler(
+            settingsStore: context.settingsStore, sitePermissionStore: context.sitePermissionStore, zoomStoreProvider: { nil },
+            historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil },
+            extensionDiagnosticsProvider: { [] }, forceLifecycleTrimHandler: {}, bridgeRouter: router
+        )
+        handler.agentControl = { [control] in control }
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "getAgentActivity", "payload": [:]])))
+
+        await pollUntil(timeout: 5) { recorder.events.contains { $0.name == "agentControlRequested" } }
+        let shown = recorder.events.filter { $0.name == "agentControlRequested" }.map(\.data)
+        XCTAssertEqual(shown.map { $0["requestId"] as? String }, [control.pendingConsentAnswers.keys.first])
+        XCTAssertEqual(shown.first?["clientName"] as? String, "Newcomer")
+    }
+
     func testAnApprovedNameFromAnotherProgramIsAskedAgain() async throws {
         context.settingsStore.set("agentAllowedClients", value: #"{"claude-code": ["/usr/local/bin/claude"]}"#)
         let impostor = try AgentTestClient(path: socketURL)

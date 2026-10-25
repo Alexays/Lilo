@@ -245,7 +245,7 @@ while true {
         var refused: (request: Data, reason: String)?
         if let initialize = bridge.initialize, initialize.key == "\(id)" {
             if answered, message["result"] != nil { bridge.accepted = initialize }
-            // Refused (the user said no, or no window could ask): an initialize error reads as a broken server.
+            // An initialize error reads as a broken server: the bridge answers alone with its reason.
             if answered, bridge.accepted == nil, let error = message["error"] as? [String: Any] {
                 refused = (initialize.line, error["message"] as? String ?? "Lilo refused the agent.")
                 bridge.unavailable = refused?.reason

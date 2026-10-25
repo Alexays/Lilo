@@ -85,7 +85,7 @@ final class LiloMCPTests: XCTestCase {
         XCTAssertEqual(process.terminationStatus, 0, "the agent leaving ends the bridge")
     }
 
-    func testARefusedAgentStillConnectsAndToolCallsSayWhy() async throws {
+    func testWithoutAWindowTheAgentConnectsAndToolCallsSayToOpenOne() async throws {
         let browserContext = try await TemporaryBrowserContext()
         let control = AgentControl(context: browserContext.context, socketURL: directory.appending(path: "agent.sock"))
         control.setEnabled(true)
@@ -96,10 +96,16 @@ final class LiloMCPTests: XCTestCase {
         let (process, input, output) = try launch(environment: ["LILO_APP_SUPPORT_DIR": directory.path])
         defer { process.terminate() }
 
-        // No window can ask the user: Lilo refuses the newcomer at once.
         try initialize(input)
+        let handshake = await receive(output)?["result"] as? [String: Any]
+        XCTAssertEqual((handshake?["serverInfo"] as? [String: Any])?["name"] as? String, "lilo")
 
-        try await assertAnsweredAlone(input, output, reason: "Open a Lilo window")
+        try send(input, 2, "tools/call", ["name": "tabs_context_mcp", "arguments": [:]])
+        let call = await receive(output)?["result"] as? [String: Any]
+        XCTAssertEqual((call?["_meta"] as? [String: Any])?["lilo/errorCode"] as? String, "needs_user")
+        let text = ((call?["content"] as? [[String: Any]])?.first?["text"] as? String) ?? ""
+        XCTAssertTrue(text.hasPrefix("[needs_user] Lilo has no window to ask the user to allow Newcomer in"), text)
+        XCTAssertFalse(control.sessions.contains { $0.isRefused }, "no window is no refusal")
     }
 
     func testLaunchesTheAppItShipsIn() async throws {
