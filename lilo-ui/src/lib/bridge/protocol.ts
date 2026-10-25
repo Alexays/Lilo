@@ -155,7 +155,11 @@ export interface BridgeSpaceSnapshot {
 	sortOrder: number;
 	/** Idle hours before a top-level unpinned tab is archived; 0 never archives. */
 	archiveAfterHours?: number;
+	/** Where the chrome color comes from; `color` is the base the other modes light or fall back to. */
+	colorMode?: SpaceColorMode;
 }
+
+export type SpaceColorMode = "fixed" | "time" | "page" | "wallpaper";
 
 export interface BridgeSpaceBrowserStatePayload {
 	spaceId: string;
@@ -507,6 +511,7 @@ export interface BridgeCommandPayloadMap {
 	permissionResponse: { requestId: string; granted: boolean; remember?: boolean };
 	extensionPermissionResponse: { requestId: string; granted: boolean };
 	updateWindowBackground: { color: string };
+	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;
 	showTabContextMenu: { id: string; x: number; y: number; width: number; height: number };
@@ -601,6 +606,7 @@ export interface BridgeCommandPayloadMap {
 		name?: string;
 		icon?: string;
 		color?: string;
+		colorMode?: SpaceColorMode;
 		isPrivate?: boolean;
 		profileId?: string;
 		/** Creates this profile with the space, which then uses it (profileId is ignored). */
@@ -617,6 +623,7 @@ export interface BridgeCommandPayloadMap {
 		name?: string;
 		icon?: string;
 		color?: string;
+		colorMode?: SpaceColorMode;
 		profileId?: string;
 		archiveAfterHours?: number;
 		newProfileName?: string;
@@ -798,6 +805,8 @@ export interface BridgeEventPayloadMap {
 	screenshotError: { message: string };
 	sidebarVisibilityChanged: { visible: boolean; width: number };
 	windowChromeStateChanged: { trafficLightsVisible: boolean };
+	/** The dominant color of this window's wallpaper; empty when it can't be read. */
+	wallpaperColorChanged: { color: string };
 	windowFullscreenChanged: { isFullscreen: boolean };
 	windowFocusChanged: { focused: boolean };
 	cancelDrag: EmptyPayload;

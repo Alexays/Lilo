@@ -34,6 +34,7 @@ final class SpaceBridgeHandler: BridgeHandler {
             let color = message.string("color", default: "#5865f2")
             let isPrivate = message.bool("isPrivate")
             let profileId = createRequestedProfile(message) ?? message.uuid("profileId")
+            let colorMode = Self.colorMode(message) ?? Space.fixedColorMode
 
             guard let windowController else { break }
             do {
@@ -41,6 +42,7 @@ final class SpaceBridgeHandler: BridgeHandler {
                     name: name,
                     icon: icon,
                     color: color,
+                    colorMode: colorMode,
                     isPrivate: isPrivate,
                     targetProfileId: profileId
                 )
@@ -101,6 +103,7 @@ final class SpaceBridgeHandler: BridgeHandler {
             let icon = message.string("icon")
             let color = message.string("color")
             let archiveAfterHours = message.int("archiveAfterHours")
+            let colorMode = Self.colorMode(message)
 
             // The space is resolved first: a profile is created only for a space that exists to use it.
             if let sourceSpace = spaceManager.space(with: id),
@@ -117,8 +120,13 @@ final class SpaceBridgeHandler: BridgeHandler {
                 } catch {
                     Self.logger.error("Failed to move space \(id.uuidString, privacy: .public) to profile \(profileUUID.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
                 }
-                guard let archiveAfterHours else { break }
-                do { try spaceManager.updateSpace(id: id) { $0.archiveAfterHours = archiveAfterHours } } catch {
+                guard archiveAfterHours != nil || colorMode != nil else { break }
+                do {
+                    try spaceManager.updateSpace(id: id) { space in
+                        if let archiveAfterHours { space.archiveAfterHours = archiveAfterHours }
+                        if let colorMode { space.colorMode = colorMode }
+                    }
+                } catch {
                     Self.logger.error("Failed to update space \(id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
                 }
                 break
@@ -128,6 +136,7 @@ final class SpaceBridgeHandler: BridgeHandler {
                 try spaceManager.updateSpace(id: id) { space in
                     if let icon { space.icon = icon }; if let color { space.color = color }; if let name { space.name = name }
                     if let archiveAfterHours { space.archiveAfterHours = archiveAfterHours }
+                    if let colorMode { space.colorMode = colorMode }
                 }
             } catch {
                 Self.logger.error("Failed to update space \(id.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
@@ -138,6 +147,10 @@ final class SpaceBridgeHandler: BridgeHandler {
         }
 
         return nil
+    }
+
+    private static func colorMode(_ message: BridgeMessage) -> String? {
+        message.string("colorMode").flatMap { Space.colorModes.contains($0) ? $0 : nil }
     }
 
     /// The editor's "New profile" choice: the profile is created together with the space that uses it.

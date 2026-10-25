@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		005A07D0F55869776B92EFFA /* MainWindowController+WallpaperColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3998F168FD2DD8AF1A0E0F90 /* MainWindowController+WallpaperColor.swift */; };
 		01653A6ACB1BC27CE693330F /* TabShareBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6B3D09E24A5709704E36983 /* TabShareBridge.swift */; };
 		017B9FAAD5729CF1A63C795F /* ScreenshotBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22A43D9234D57D35C4CCAF7 /* ScreenshotBridgeHandlerTests.swift */; };
 		01A51E03A9CD6AFC87580413 /* PowerMonitors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E2856031D050920A21C0296 /* PowerMonitors.swift */; };
@@ -170,6 +171,7 @@
 		510CD573EB8157B5A66D4DF2 /* SharedSpaceRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E6A2F13825700070354B2E /* SharedSpaceRuntimeTests.swift */; };
 		5110EFD6774746358808006E /* ChromeNavigationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02E6B9E162D7FF0E34A0109 /* ChromeNavigationPolicyTests.swift */; };
 		51858CA62086397BF5F678DE /* HistoryImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB8B9618FE85A3078DF27CE /* HistoryImportTests.swift */; };
+		5222223C3A352015E7834EBA /* WallpaperColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B5053BE20F338ADFB3C924 /* WallpaperColorTests.swift */; };
 		529F4D807F4B8E1DBE5BF034 /* AsyncPolling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC07FA48C9C6FC97D23F57 /* AsyncPolling.swift */; };
 		52BBD88D73A8D65F5A756C09 /* ZoomStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1BC6A247228E10FAC8E58F /* ZoomStore.swift */; };
 		540B173565F12ADAD7822DB4 /* AgentInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 715620253137C5B53ADBDDD3 /* AgentInputTests.swift */; };
@@ -769,6 +771,7 @@
 		36F11F1968C823B36B2C3E1E /* ChromiumCookieDecryptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumCookieDecryptor.swift; sourceTree = "<group>"; };
 		376E0049144A6D5DACEEBAEC /* SitePermissionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SitePermissionStore.swift; sourceTree = "<group>"; };
 		37E578566226F9657FC820A7 /* DownloadManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManagerTests.swift; sourceTree = "<group>"; };
+		3998F168FD2DD8AF1A0E0F90 /* MainWindowController+WallpaperColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+WallpaperColor.swift"; sourceTree = "<group>"; };
 		39FF06F27008EF2D19F063DB /* PageSnapshotServiceFlatteningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageSnapshotServiceFlatteningTests.swift; sourceTree = "<group>"; };
 		3A11733A5F99B14D3EBD132D /* SystemLidActionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemLidActionsTests.swift; sourceTree = "<group>"; };
 		3A552C76FFE45FCB22E962E2 /* NotificationsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsBridgeHandler.swift; sourceTree = "<group>"; };
@@ -1193,6 +1196,7 @@
 		F3696C6B2170D6955BC08BAD /* RealExtensionSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealExtensionSmokeTests.swift; sourceTree = "<group>"; };
 		F388357485E32883962C521E /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		F3ACCD8248F8F453C8D7993F /* PageSignalBridges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageSignalBridges.swift; sourceTree = "<group>"; };
+		F3B5053BE20F338ADFB3C924 /* WallpaperColorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallpaperColorTests.swift; sourceTree = "<group>"; };
 		F45EC459535117517B583FDE /* AgentControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentControl.swift; sourceTree = "<group>"; };
 		F4B8966AB8CBDAEF66631B8A /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
 		F516B252BF847E97BF5FE50D /* content-blocker-rules.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "content-blocker-rules.json"; sourceTree = "<group>"; };
@@ -1530,6 +1534,14 @@
 			path = LiloMCP;
 			sourceTree = "<group>";
 		};
+		53FB6BC26F9A5F2E1B6A4AC7 /* Spaces */ = {
+			isa = PBXGroup;
+			children = (
+				F3B5053BE20F338ADFB3C924 /* WallpaperColorTests.swift */,
+			);
+			path = Spaces;
+			sourceTree = "<group>";
+		};
 		589D39F7404EAD013CF531EB /* Storage */ = {
 			isa = PBXGroup;
 			children = (
@@ -1572,6 +1584,7 @@
 				345E3026D14DF06E8A50C0A2 /* Profiles */,
 				AB30981E4935B8E7C55E39AA /* Screenshots */,
 				4BA4217C8D163F93ED914079 /* Sessions */,
+				53FB6BC26F9A5F2E1B6A4AC7 /* Spaces */,
 				E6E9B92186E808528CBC0D70 /* State */,
 				78A83C66F6A79C2BB023B931 /* Storage */,
 				A0B5BBFE1DE45C2E3F7197AE /* Support */,
@@ -1916,6 +1929,7 @@
 			isa = PBXGroup;
 			children = (
 				B25951CBE4CBEC185444C6F2 /* MainWindowController+Spaces.swift */,
+				3998F168FD2DD8AF1A0E0F90 /* MainWindowController+WallpaperColor.swift */,
 				731FD67FF864100736397A04 /* Space.swift */,
 				DA0B491588CDFD138D534C43 /* SpaceManager.swift */,
 			);
@@ -2684,6 +2698,7 @@
 				0DCA19D9A1D9E1A3B510F8A8 /* MainWindowController+TabDock.swift in Sources */,
 				9FC375482ED3106C4CA62D70 /* MainWindowController+TabShare.swift in Sources */,
 				2D9DCCD4FF922C89F841AD0C /* MainWindowController+Terminal.swift in Sources */,
+				005A07D0F55869776B92EFFA /* MainWindowController+WallpaperColor.swift in Sources */,
 				38CBB0259F6A7628D5FCFD2C /* MainWindowController+WindowChrome.swift in Sources */,
 				59BD43916EDFC7506589A491 /* MainWindowController.swift in Sources */,
 				1E8744E7EE12369E201FAFEA /* ManagementBridgeHandler.swift in Sources */,
@@ -3063,6 +3078,7 @@
 				B2A7CD0EC82D30EA10A1E0D7 /* WKWebViewTabLoggingTests.swift in Sources */,
 				E3FCB3DD20185E64FB3652A3 /* WKWebViewTabSourceTests.swift in Sources */,
 				A4061B705534BA0A2B0D902D /* WKWebViewTabTeardownTests.swift in Sources */,
+				5222223C3A352015E7834EBA /* WallpaperColorTests.swift in Sources */,
 				FFD523CFCA6F12C004533A49 /* WebInspectorRecoveryTests.swift in Sources */,
 				8F11135AB1781461D345AFA0 /* WebKitGapTests.swift in Sources */,
 				AE46206E6B4741992AD43060 /* WebViewPrivateAccessorsTests.swift in Sources */,

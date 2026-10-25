@@ -76,6 +76,12 @@ enum Migrations {
             }
         }
 
+        migrator.registerMigration("v2") { db in
+            try db.alter(table: "spaces") { t in
+                t.add(column: "colorMode", .text).notNull().defaults(to: Space.fixedColorMode)
+            }
+        }
+
         try migrator.migrate(db)
     }
 

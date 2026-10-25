@@ -60,10 +60,11 @@ final class SpaceManager {
         name: String = "New Space",
         icon: String = "🌐",
         color: String = "#5865f2",
+        colorMode: String = Space.fixedColorMode,
         profileId: UUID,
         isPrivate: Bool = false
     ) throws -> Space {
-        let space = Space(
+        var space = Space(
             name: name,
             icon: icon,
             color: color,
@@ -71,6 +72,7 @@ final class SpaceManager {
             isPrivate: isPrivate,
             sortOrder: isPrivate ? spaces.count : persistentSpaces.count
         )
+        space.colorMode = colorMode
         if !isPrivate { try dbPool.write { db in try space.insert(db) } }
 
         spaces.append(space); normalizeOrdering()

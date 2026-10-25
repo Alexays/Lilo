@@ -273,7 +273,7 @@ final class FaviconService {
         return dominantColor(of: cgImage)
     }
 
-    private nonisolated static func dominantColor(of cgImage: CGImage) -> String? {
+    nonisolated static func dominantColor(of cgImage: CGImage) -> String? {
         guard let context = CGContext(
             data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 8 * 4,
             space: CGColorSpaceCreateDeviceRGB(),

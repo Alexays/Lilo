@@ -10,6 +10,7 @@
   import { getSpaces } from "../../stores/spaces.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
+  import ColorModePicker from "./ColorModePicker.svelte";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
@@ -347,7 +348,13 @@
       </div>
 
       <div class="field">
-        <span class="field-label">{t("spaceEditor.colorLabel")}</span>
+        <span class="field-label" id="space-color-label">{t("spaceEditor.colorLabel")}</span>
+        <ColorModePicker
+          value={s.colorMode}
+          color={s.color}
+          labelledby="space-color-label"
+          onchange={(colorMode) => updateEditorState({ colorMode })}
+        />
         <div class="color-grid">
           {#each PASTEL_COLORS as c, index (c)}
             <button

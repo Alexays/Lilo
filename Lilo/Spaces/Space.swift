@@ -13,6 +13,8 @@ struct Space: Sendable, Identifiable {
     var sortOrder: Int
     /// Idle hours before a top-level unpinned tab is archived; 0 never archives.
     var archiveAfterHours = 12
+    /// Where the chrome color comes from; `color` stays the base the other modes light or fall back to.
+    var colorMode = Space.fixedColorMode
     var createdAt: Date
     var modifiedAt: Date
 
@@ -25,6 +27,9 @@ struct Space: Sendable, Identifiable {
         createdAt = Date(); modifiedAt = Date()
     }
 
+    static let fixedColorMode = "fixed"
+    static let colorModes: Set<String> = [fixedColorMode, "time", "page", "wallpaper"]
+
     /// Serializable dictionary for bridge communication.
     var bridgeData: [String: Any] {
         [
@@ -35,7 +40,8 @@ struct Space: Sendable, Identifiable {
             "profileId": profileId.uuidString,
             "isPrivate": isPrivate,
             "sortOrder": sortOrder,
-            "archiveAfterHours": archiveAfterHours
+            "archiveAfterHours": archiveAfterHours,
+            "colorMode": colorMode
         ]
     }
 }
