@@ -2,6 +2,7 @@
 import { copy, localizedPath } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 import Flower from "./Flower.astro";
+import GitHubIcon from "./GitHubIcon.astro";
 
 interface Props {
   lang: Locale;
@@ -12,42 +13,314 @@ const text = copy[lang];
 const home = localizedPath(lang);
 const path = Astro.url.pathname;
 
-const sections = [
-  ["native", "WebKit"],
-  ["extensions", "Extensions"],
-  ["privacy", text.privacy],
-  ["build", "Terminal"],
-  ["agents", "Agents"],
-  ["faq", "FAQ"],
+const links = [
+  [`${home}#native`, "WebKit"],
+  [`${home}#extensions`, "Extensions"],
+  [`${home}#privacy`, text.privacy],
+  [`${home}#build`, "Terminal"],
+  [`${home}#agents`, "Agents"],
+  [`${home}moving/`, text.movingTitle],
+  [
+    "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
+    text.documentation,
+  ],
+  [`${home}changelog/`, text.changelog],
 ];
 ---
 
-<header class="wrap nav">
-  <a class="logo" href={home} aria-label={text.home}>
-    <Flower />
-    Lilo
-  </a>
-  <nav aria-label={text.navigation}>
-    {sections.map(([id, label]) => (
-      <a class="hide section-link" href={`${home}#${id}`}>
-        {label}
+<header class="site-header">
+  <div class="wrap nav">
+    <div class="nav-brand">
+      <button
+        class="icon-button menu-toggle"
+        type="button"
+        aria-label={text.toggleNavigation}
+        aria-controls="site-navigation"
+        aria-expanded="false"
+      >
+        <svg
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <a class="logo" href={home} aria-label={text.home}>
+        <Flower id="header-flower" class="bloom" />
+        Lilo
       </a>
-    ))}
-    <a
-      class="hide"
-      href={`${home}moving/`}
-      aria-current={path === `${home}moving/` ? "page" : undefined}
-    >
-      {text.moving}
-    </a>
-    <a
-      href={`${home}changelog/`}
-      aria-current={path === `${home}changelog/` ? "page" : undefined}
-    >
-      {text.changelog}
-    </a>
-    <a class="pill soft" href="https://github.com/Alexays/Lilo">
-      GitHub
-    </a>
-  </nav>
+    </div>
+    <nav id="site-navigation" aria-label={text.navigation}>
+      {links.map(([href, label]) => (
+        <a href={href} aria-current={path === href ? "page" : undefined}>
+          {label}
+        </a>
+      ))}
+    </nav>
+    <div class="nav-tools">
+      <button
+        class="icon-button theme-toggle"
+        type="button"
+        aria-label={text.darkMode}
+        aria-pressed="false"
+        title={text.toggleTheme}
+      >
+        <svg
+          class="theme-sun"
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+        >
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42m0-14.14-1.42 1.42m-11.3 11.3-1.42 1.42" />
+        </svg>
+        <svg
+          class="theme-moon"
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M20.9 13a9 9 0 0 1-9.9-9.9A9 9 0 1 0 20.9 13Z" />
+        </svg>
+      </button>
+      <a
+        class="icon-button"
+        href="https://github.com/Alexays/Lilo"
+        aria-label="GitHub"
+        title="GitHub"
+      >
+        <GitHubIcon />
+      </a>
+    </div>
+  </div>
 </header>
+
+<script>
+  const root = document.documentElement;
+  const header = document.querySelector<HTMLElement>(".site-header");
+  const menu = document.querySelector<HTMLButtonElement>(".menu-toggle");
+  const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
+  const systemTheme = matchMedia("(prefers-color-scheme: dark)");
+
+  const getTheme = () =>
+    root.dataset.theme ?? (systemTheme.matches ? "dark" : "light");
+
+  const syncTheme = () => {
+    const theme = getTheme();
+    toggle?.setAttribute("aria-pressed", String(theme === "dark"));
+
+    for (const meta of document.querySelectorAll<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    )) {
+      meta.media = meta.dataset.theme === theme ? "all" : "not all";
+    }
+  };
+
+  try {
+    const theme = localStorage.getItem("lilo-theme");
+
+    if (theme === "light" || theme === "dark") {
+      root.dataset.theme = theme;
+    }
+  } catch {
+    // Storage can be unavailable in private browsing.
+  }
+
+  toggle?.addEventListener("click", () => {
+    const theme = getTheme() === "dark" ? "light" : "dark";
+    root.dataset.theme = theme;
+    syncTheme();
+
+    try {
+      localStorage.setItem("lilo-theme", theme);
+    } catch {
+      // The toggle still works when the preference cannot be saved.
+    }
+  });
+
+  menu?.addEventListener("click", () => {
+    menu.setAttribute(
+      "aria-expanded",
+      String(menu.getAttribute("aria-expanded") !== "true")
+    );
+  });
+
+  document.addEventListener("click", ({ target }) => {
+    if (
+      menu?.getAttribute("aria-expanded") === "true" &&
+      target instanceof Element &&
+      (!header?.contains(target) || target.closest("a"))
+    ) {
+      menu.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      menu?.getAttribute("aria-expanded") === "true"
+    ) {
+      menu.setAttribute("aria-expanded", "false");
+      menu.focus();
+    }
+  });
+
+  header?.addEventListener("focusout", ({ relatedTarget }) => {
+    if (!(relatedTarget instanceof Node) || !header.contains(relatedTarget)) {
+      menu?.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  systemTheme.addEventListener("change", syncTheme);
+
+  syncTheme();
+
+  if (header) {
+    header.dataset.ready = "";
+  }
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    border-bottom: 1px solid var(--line);
+  }
+  .nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(max-content, 1fr);
+    align-items: center;
+    min-height: 64px;
+    padding-block: 8px;
+    gap: 20px;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo {
+    font-size: 20px;
+  }
+  .logo :global(svg) {
+    width: 26px;
+    height: 26px;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  nav a[aria-current="page"] {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-tools {
+    display: flex;
+    justify-self: end;
+    gap: 4px;
+  }
+  .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .icon-button:hover,
+  nav a:hover {
+    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  .menu-toggle,
+  .theme-toggle {
+    display: none;
+  }
+  [data-ready] .theme-toggle {
+    display: inline-flex;
+  }
+  .theme-sun {
+    display: var(--theme-sun);
+  }
+  .theme-moon {
+    display: var(--theme-moon);
+  }
+  @media (max-width: 1100px) {
+    .site-header:not([data-ready]) {
+      position: static;
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    nav {
+      display: grid;
+      order: 1;
+      width: 100%;
+    }
+    [data-ready] .menu-toggle {
+      display: inline-flex;
+    }
+    [data-ready] nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: max(16px, env(safe-area-inset-left, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      width: auto;
+      max-height: calc(100vh - 80px);
+      max-height: calc(100dvh - 80px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.25);
+    }
+    :has(.menu-toggle[aria-expanded="true"]) nav {
+      display: grid;
+    }
+    .menu-toggle[aria-expanded="true"] {
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+  }
+</style>

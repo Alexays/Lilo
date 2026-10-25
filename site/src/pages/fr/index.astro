@@ -1,7 +1,7 @@
 ---
 import Demo from "../../components/Demo.astro";
-import Footer from "../../components/Footer.astro";
-import Header from "../../components/Header.astro";
+import ExtensionStore from "../../components/ExtensionStore.astro";
+import Flower from "../../components/Flower.astro";
 import Layout from "../../layouts/Layout.astro";
 
 const lang = "fr";
@@ -68,101 +68,57 @@ const schema = [
   description="Navigateur Mac gratuit et open source, alternative à Arc : des espaces avec leurs propres connexions, les extensions Chrome et un serveur MCP pour vos agents IA."
   schema={schema}
 >
-  <div class="top">
-    <Header lang={lang} />
-
-    <div class="wrap" id="hero">
-      <div class="hero-copy">
-        <svg
-          class="mark bloom"
-          viewBox="112 112 800 800"
-          role="img"
-          aria-label="Logo de Lilo"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
-        <span class="beta">Bêta publique</span>
-        <h1>
-          Votre internet,
-          <br />
-          <span>en fleur.</span>
-        </h1>
-        <p class="sub">
-          Léger pour votre Mac, rapide sur le web. Gratuit et open source.
-          <br />
-          Des espaces avec leurs propres connexions, les extensions Chrome dont
-          vous avez besoin, une place pour vos agents IA, et une batterie qui
-          tient toute la journée.
-        </p>
-        <div class="cta">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-          >
-            Télécharger pour Mac
-          </a>
-          <a class="pill soft" href="https://github.com/Alexays/Lilo">
-            Une étoile sur GitHub
-          </a>
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap" id="hero">
+        <div class="hero-copy">
+          <Flower id="hero-flower" class="mark bloom" />
+          <span class="beta">Bêta publique</span>
+          <h1>
+            Votre internet,
+            <br />
+            <span>en fleur.</span>
+          </h1>
+          <p class="sub">
+            Léger pour votre Mac, rapide sur le web. Gratuit et open source.
+            <br />
+            Des espaces avec leurs propres connexions, les extensions Chrome
+            dont vous avez besoin, une place pour vos agents IA, et une batterie
+            qui tient toute la journée.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Télécharger pour Mac
+            </a>
+            <a class="pill soft" href="https://github.com/Alexays/Lilo">
+              Une étoile sur GitHub
+            </a>
+          </div>
+          <span class="brew">brew install --cask alexays/tap/lilo</span>
+          <span class="move-in">
+            Vous êtes installé en cinq minutes.{" "}
+            <a href="/fr/moving/">Voir le guide</a>
+          </span>
+          <span class="move-in">
+            Lilo est en bêta : attendez-vous à quelques imperfections, et{" "}
+            <a href="https://github.com/Alexays/Lilo/issues">
+              signalez-nous ce qui ne marche pas
+            </a>
+            .{" "}
+            <a href="https://discord.gg/NyJRAapk76">
+              Rejoignez-nous sur Discord
+            </a>{" "}
+            pour partager vos retours ou demander de l'aide.
+          </span>
         </div>
-        <span class="brew">brew install --cask alexays/tap/lilo</span>
-        <span class="move-in">
-          Vous êtes installé en cinq minutes.{" "}
-          <a href="/fr/moving/">Voir le guide</a>
-        </span>
-        <span class="move-in">
-          Lilo est en bêta : attendez-vous à quelques imperfections, et{" "}
-          <a href="https://github.com/Alexays/Lilo/issues">
-            signalez-nous ce qui ne marche pas
-          </a>
-          .{" "}
-          <a href="https://discord.gg/NyJRAapk76">Rejoignez-nous sur Discord</a>{" "}
-          pour partager vos retours ou demander de l'aide.
-        </span>
-      </div>
 
-      <div
-        class="window"
-        role="group"
-        aria-label="Fenêtre de Lilo. Choisissez un espace en bas de la barre latérale pour le voir changer."
-      >
-        <div class="sb">
-          <div class="chrome-row">
-            <div class="lights">
-              <i></i>
-              <i></i>
-              <i></i>
-            </div>
-            <div class="navs">
-              <span>&#9707;</span>
-              <span>&#8249;</span>
-              <span>&#8250;</span>
-              <span>&#8635;</span>
-            </div>
-          </div>
-          <div class="addr" id="addr"></div>
-          <div class="shead" id="sname"></div>
-          <div class="favs" id="favs"></div>
-          <div id="folders"></div>
-          <div class="divider"></div>
-          <div id="tabs"></div>
-          <div class="row-item newtab">
-            <span style="width:16px;text-align:center">+</span>
-            <span>Nouvel onglet</span>
-          </div>
-          <div class="spacebar" id="spacebar">
-            <span class="plus">+</span>
-          </div>
-        </div>
-        <div class="view" aria-hidden="true" id="view"></div>
+        <Demo lang={lang} />
       </div>
     </div>
-  </div>
 
-  <main id="main-content">
     <section class="band" id="native">
       <div class="wrap native">
         <div>
@@ -292,59 +248,7 @@ const schema = [
             <span>Suivi des prix</span>
           </div>
         </div>
-        <div class="store" aria-label="Maquette du Chrome Web Store">
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/keepa.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>Keepa</b>
-              <small>Suivi des prix Amazon</small>
-            </div>
-            <button class="add" type="button">
-              Ajouter à Lilo
-            </button>
-          </div>
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/dark-reader.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>Dark Reader</b>
-              <small>Le mode sombre sur tous les sites</small>
-            </div>
-            <button class="add" type="button">
-              Ajouter à Lilo
-            </button>
-          </div>
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/react-devtools.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>React Developer Tools</b>
-              <small>Inspecter les composants</small>
-            </div>
-            <button class="add" type="button">
-              Ajouter à Lilo
-            </button>
-          </div>
-          <p class="toast" id="toast">
-            Essayez un bouton&nbsp;: l'extension s'installe dans Lilo.
-          </p>
-        </div>
+        <ExtensionStore lang={lang} />
       </div>
     </section>
 
@@ -599,7 +503,11 @@ const schema = [
             </div>
           </div>
         </div>
-        <div class="termcard" aria-label="Maquette d'un onglet terminal">
+        <div
+          class="termcard"
+          role="img"
+          aria-label="Onglet terminal exécutant make validate, avec sa branche, ses modifications en attente et un indicateur de maintien en éveil."
+        >
           <div class="tc-head">
             <span class="tc-path">
               ~/Projects/<b>lilo</b>
@@ -624,7 +532,7 @@ const schema = [
               <b>Éveillé, écran rabattu</b>
               <small>Pendant make validate</small>
             </span>
-            <button type="button">Autoriser la veille</button>
+            <div class="sleep-action">Autoriser la veille</div>
           </div>
         </div>
       </div>
@@ -909,17 +817,7 @@ const schema = [
     <section class="band">
       <div class="wrap end">
         <span class="tag">Sous licence MIT</span>
-        <svg
-          class="mark"
-          viewBox="112 112 800 800"
-          aria-hidden="true"
-          style="width:72px"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
+        <Flower id="end-flower" class="mark small-mark" />
         <h2>Open source, pour de bon.</h2>
         <p>
           Lisez le code, forkez-le, modifiez la barre latérale en Svelte et
@@ -943,8 +841,5 @@ const schema = [
         </div>
       </div>
     </section>
-
-    <Footer lang={lang} />
   </main>
-  <Demo />
 </Layout>

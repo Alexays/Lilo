@@ -1,7 +1,7 @@
 ---
 import Demo from "../components/Demo.astro";
-import Footer from "../components/Footer.astro";
-import Header from "../components/Header.astro";
+import ExtensionStore from "../components/ExtensionStore.astro";
+import Flower from "../components/Flower.astro";
 import Layout from "../layouts/Layout.astro";
 
 const lang = "en";
@@ -68,99 +68,53 @@ const schema = [
   description="A free, open-source Arc alternative for Mac, built on WebKit: Spaces with their own sign-ins, Chrome extensions, a terminal and an MCP server for AI agents."
   schema={schema}
 >
-  <div class="top">
-    <Header lang={lang} />
-
-    <div class="wrap" id="hero">
-      <div class="hero-copy">
-        <svg
-          class="mark bloom"
-          viewBox="112 112 800 800"
-          role="img"
-          aria-label="Lilo logo"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
-        <span class="beta">Public beta</span>
-        <h1>
-          Your internet,
-          <br />
-          <span>in bloom.</span>
-        </h1>
-        <p class="sub">
-          Light on your Mac, quick on the web. Free and open source.
-          <br />
-          Spaces with their own sign-ins, the Chrome extensions you rely on,
-          room for your AI agents, and a battery that lasts the day.
-        </p>
-        <div class="cta">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-          >
-            Download for Mac
-          </a>
-          <a class="pill soft" href="https://github.com/Alexays/Lilo">
-            Star on GitHub
-          </a>
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap" id="hero">
+        <div class="hero-copy">
+          <Flower id="hero-flower" class="mark bloom" />
+          <span class="beta">Public beta</span>
+          <h1>
+            Your internet,
+            <br />
+            <span>in bloom.</span>
+          </h1>
+          <p class="sub">
+            Light on your Mac, quick on the web. Free and open source.
+            <br />
+            Spaces with their own sign-ins, the Chrome extensions you rely on,
+            room for your AI agents, and a battery that lasts the day.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Download for Mac
+            </a>
+            <a class="pill soft" href="https://github.com/Alexays/Lilo">
+              Star on GitHub
+            </a>
+          </div>
+          <span class="brew">brew install --cask alexays/tap/lilo</span>
+          <span class="move-in">
+            Moving in takes five minutes.{" "}
+            <a href="/moving/">See the moving guide</a>
+          </span>
+          <span class="move-in">
+            Lilo is in beta: expect rough edges, and{" "}
+            <a href="https://github.com/Alexays/Lilo/issues">
+              tell us what breaks
+            </a>
+            . <a href="https://discord.gg/NyJRAapk76">Join us on Discord</a> to
+            share feedback and get help.
+          </span>
         </div>
-        <span class="brew">brew install --cask alexays/tap/lilo</span>
-        <span class="move-in">
-          Moving in takes five minutes.{" "}
-          <a href="/moving/">See the moving guide</a>
-        </span>
-        <span class="move-in">
-          Lilo is in beta: expect rough edges, and{" "}
-          <a href="https://github.com/Alexays/Lilo/issues">
-            tell us what breaks
-          </a>
-          . <a href="https://discord.gg/NyJRAapk76">Join us on Discord</a> to
-          share feedback and get help.
-        </span>
-      </div>
 
-      <div
-        class="window"
-        role="group"
-        aria-label="Lilo window. Pick a Space at the bottom of the sidebar to see it change."
-      >
-        <div class="sb">
-          <div class="chrome-row">
-            <div class="lights">
-              <i></i>
-              <i></i>
-              <i></i>
-            </div>
-            <div class="navs">
-              <span>&#9707;</span>
-              <span>&#8249;</span>
-              <span>&#8250;</span>
-              <span>&#8635;</span>
-            </div>
-          </div>
-          <div class="addr" id="addr"></div>
-          <div class="shead" id="sname"></div>
-          <div class="favs" id="favs"></div>
-          <div id="folders"></div>
-          <div class="divider"></div>
-          <div id="tabs"></div>
-          <div class="row-item newtab">
-            <span style="width:16px;text-align:center">+</span>
-            <span>New Tab</span>
-          </div>
-          <div class="spacebar" id="spacebar">
-            <span class="plus">+</span>
-          </div>
-        </div>
-        <div class="view" aria-hidden="true" id="view"></div>
+        <Demo lang={lang} />
       </div>
     </div>
-  </div>
 
-  <main id="main-content">
     <section class="band" id="native">
       <div class="wrap native">
         <div>
@@ -285,59 +239,7 @@ const schema = [
             <span>Price trackers</span>
           </div>
         </div>
-        <div class="store" aria-label="Chrome Web Store mockup">
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/keepa.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>Keepa</b>
-              <small>Amazon price tracker</small>
-            </div>
-            <button class="add" type="button">
-              Add to Lilo
-            </button>
-          </div>
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/dark-reader.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>Dark Reader</b>
-              <small>Dark mode for every site</small>
-            </div>
-            <button class="add" type="button">
-              Add to Lilo
-            </button>
-          </div>
-          <div class="store-row">
-            <img
-              class="ei"
-              src="/img/react-devtools.png"
-              alt=""
-              width="48"
-              height="48"
-            />
-            <div>
-              <b>React Developer Tools</b>
-              <small>Inspect components</small>
-            </div>
-            <button class="add" type="button">
-              Add to Lilo
-            </button>
-          </div>
-          <p class="toast" id="toast">
-            Press a button: it installs in Lilo.
-          </p>
-        </div>
+        <ExtensionStore lang={lang} />
       </div>
     </section>
 
@@ -581,7 +483,11 @@ const schema = [
             </div>
           </div>
         </div>
-        <div class="termcard" aria-label="Terminal tab mockup">
+        <div
+          class="termcard"
+          role="img"
+          aria-label="Terminal tab running make validate, with its branch, pending changes and an awake indicator."
+        >
           <div class="tc-head">
             <span class="tc-path">
               ~/Projects/<b>lilo</b>
@@ -606,7 +512,7 @@ const schema = [
               <b>Awake, lid closed</b>
               <small>While make validate works</small>
             </span>
-            <button type="button">Let sleep</button>
+            <div class="sleep-action">Let sleep</div>
           </div>
         </div>
       </div>
@@ -877,17 +783,7 @@ const schema = [
     <section class="band">
       <div class="wrap end">
         <span class="tag">MIT licensed</span>
-        <svg
-          class="mark"
-          viewBox="112 112 800 800"
-          aria-hidden="true"
-          style="width:72px"
-        >
-          <use href="#petal-4" />
-          <use href="#petal-3" />
-          <use href="#petal-2" />
-          <use href="#petal-1" />
-        </svg>
+        <Flower id="end-flower" class="mark small-mark" />
         <h2>Open source, for good.</h2>
         <p>
           Read it, fork it, change the sidebar in Svelte and rebuild in seconds.
@@ -911,8 +807,5 @@ const schema = [
         </div>
       </div>
     </section>
-
-    <Footer lang={lang} />
   </main>
-  <Demo />
 </Layout>

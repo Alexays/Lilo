@@ -6,5 +6,8 @@ export default defineConfig({
   server: { port: 8787 },
   site: "https://getlilo.app",
   trailingSlash: "always",
-  vite: { server: { fs: { allow: [".."] } } },
+  vite: {
+    build: { assetsInlineLimit: 0 },
+    server: { fs: { allow: [".."] } },
+  },
 });

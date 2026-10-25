@@ -1,5 +1,7 @@
 ---
 import config from "../../../Xcode/Configs/Base.xcconfig?raw";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 
@@ -24,11 +26,6 @@ const englishPath = path.replace(/^\/fr(?=\/)/u, "");
 const canonical = new URL(path, Astro.site).href;
 const english = new URL(englishPath, Astro.site).href;
 const french = new URL(`/fr${englishPath}`, Astro.site).href;
-
-const imageAlt =
-  lang === "fr"
-    ? "La fleur de Lilo avec les mots : Lilo, your internet, in bloom."
-    : "The Lilo flower mark with the words: Lilo, your internet, in bloom.";
 
 const version = config.match(/^MARKETING_VERSION = (?<version>\S+)$/mu)?.[1];
 
@@ -71,11 +68,13 @@ const jsonLD = JSON.stringify({
     )}
     <meta
       name="theme-color"
+      data-theme="light"
       media="(prefers-color-scheme: light)"
       content="#e3dafa"
     />
     <meta
       name="theme-color"
+      data-theme="dark"
       media="(prefers-color-scheme: dark)"
       content="#403a5b"
     />
@@ -93,12 +92,12 @@ const jsonLD = JSON.stringify({
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={imageAlt} />
+    <meta property="og:image:alt" content={copy[lang].imageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content="https://getlilo.app/og.png" />
-    <meta name="twitter:image:alt" content={imageAlt} />
+    <meta name="twitter:image:alt" content={copy[lang].imageAlt} />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -117,6 +116,8 @@ const jsonLD = JSON.stringify({
     <a class="skip-link" href="#main-content">
       {copy[lang].skip}
     </a>
+    <Header lang={lang} />
     <slot />
+    <Footer lang={lang} />
   </body>
 </html>
