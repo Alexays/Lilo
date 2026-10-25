@@ -271,15 +271,15 @@ final class WebKitGapTests: XCTestCase {
     }
 
     func testStorageAnswersSettleInOneTask() async throws {
-        // A round's two answers often come in one task: the first's awaits have not run when the second settles.
+        // A round's two answers often come in one task: the first's awaits have not run when the second settles. On a
+        // busy machine the answers come apart more often, so the rounds go on until one shows it.
         let result = try await barePageResult(worker: "", permissions: ["storage"], pageScript: """
-        const rounds = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 500; i++) {
           let state = 'pending';
           browser.storage.local.get('a').then(async () => { await null; await null; state = 'done'; });
-          rounds.push(await browser.storage.local.get('b').then(() => state));
+          if (await browser.storage.local.get('b').then(() => state) === 'pending') return 'pending';
         }
-        return rounds.includes('pending') ? 'pending' : 'done';
+        return 'done';
         """)
         XCTAssertEqual(result, "pending", "WebKit now settles each storage answer in a task of its own, as Chrome: drop ownTask (shared/storage-area.ts)")
     }

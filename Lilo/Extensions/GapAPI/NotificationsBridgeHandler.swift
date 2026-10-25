@@ -101,14 +101,22 @@ final class NotificationsBridgeHandler: GapHandler {
     // MARK: - Create
 
     private func handleCreate(params: [String: Any], extensionId: String, extensionDirectory: URL?) async -> [String: Any] {
-        await requestPermissionIfNeeded()
-
         // Chrome treats an empty id like a missing one: each such create is a new notification.
         let requestedId = (params["notificationId"] ?? params["id"]) as? String ?? ""
         let notificationId = requestedId.isEmpty ? UUID().uuidString : requestedId
         let prefixedId = "\(extensionId):\(notificationId)"
 
-        await postNotification(prefixedId: prefixedId, extensionId: extensionId, notificationId: notificationId, options: params, extensionDirectory: extensionDirectory)
+        guard await notificationCenter.authorizationStatus() == .notDetermined else {
+            await postNotification(prefixedId: prefixedId, extensionId: extensionId, notificationId: notificationId, options: params, extensionDirectory: extensionDirectory)
+            return ["notificationId": notificationId]
+        }
+        // The extension's answer never waits for the person to answer macOS's permission prompt, as in Chrome.
+        Task {
+            do { _ = try await notificationCenter.requestAuthorization(options: [.alert, .sound]) } catch {
+                Self.logger.error("Notification permission request failed: \(error.localizedDescription)")
+            }
+            await postNotification(prefixedId: prefixedId, extensionId: extensionId, notificationId: notificationId, options: params, extensionDirectory: extensionDirectory)
+        }
         return ["notificationId": notificationId]
     }
 
@@ -309,11 +317,5 @@ final class NotificationsBridgeHandler: GapHandler {
         let status = await notificationCenter.authorizationStatus()
         let granted = status == .authorized || status == .provisional
         return ["level": granted ? "granted" : "denied"]
-    }
-
-    private func requestPermissionIfNeeded() async {
-        let authorizationStatus = await notificationCenter.authorizationStatus()
-        guard authorizationStatus == .notDetermined else { return }
-        do { _ = try await notificationCenter.requestAuthorization(options: [.alert, .sound]) } catch { Self.logger.error("Notification permission request failed: \(error.localizedDescription)") }
     }
 }

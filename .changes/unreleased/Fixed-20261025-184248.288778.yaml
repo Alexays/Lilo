@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension's first notification no longer leaves the extension waiting until you answer macOS's permission prompt.
+time: 2026-10-25T18:42:48.288778+01:00

@@ -157,6 +157,7 @@ final class ExtensionPageTabTests: XCTestCase {
         let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
         let tabsBefore = window.tabManager.openTabs.map(\.id)
         let browserWindows = browserContext.context.windows.windows.count
+        let windowsBefore = Set(NSApp.windows.map(ObjectIdentifier.init))
 
         let created = try await page.callAsyncJavaScript("""
             const current = await chrome.windows.getCurrent();
@@ -181,7 +182,10 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertTrue(browserContext.context.windows.windows.contains { $0 === window }, "the user's window stays open")
         XCTAssertEqual(window.tabManager.currentSpaceId, spaceId)
         XCTAssertEqual(window.tabManager.openTabs.map(\.id), tabsBefore, "the user's tabs are untouched")
-        let panelsClosed = await pollUntil { !NSApp.windows.contains { $0.isVisible && $0.contentView is WKWebView } }
+        // Only the windows this test opened: an earlier test class in the same process may leave its own.
+        let panelsClosed = await pollUntil {
+            !NSApp.windows.contains { !windowsBefore.contains(ObjectIdentifier($0)) && $0.isVisible && $0.contentView is WKWebView }
+        }
         XCTAssertTrue(panelsClosed, "the created windows are gone")
     }
 

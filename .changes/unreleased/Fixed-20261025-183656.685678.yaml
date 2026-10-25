@@ -1,0 +1,3 @@
+kind: Fixed
+body: A content script's port to another extension no longer hands that extension a stray internal message now and then.
+time: 2026-10-25T18:36:56.685678+01:00

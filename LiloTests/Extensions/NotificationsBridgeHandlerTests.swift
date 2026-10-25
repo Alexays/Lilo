@@ -11,6 +11,9 @@ final class NotificationsBridgeHandlerTests: XCTestCase {
         var removedPendingIdentifiers: [String] = []
         var categories: Set<UNNotificationCategory> = []
         var status: UNAuthorizationStatus = .authorized
+        /// The permission prompt, while nobody answered it.
+        var prompt: CheckedContinuation<Void, Never>?
+        var holdsPrompt = false
 
         func add(_ request: UNNotificationRequest) async throws {
             addedRequests.append(request)
@@ -37,9 +40,32 @@ final class NotificationsBridgeHandlerTests: XCTestCase {
         }
 
         func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool {
+            if holdsPrompt { await withCheckedContinuation { prompt = $0 } }
             status = .authorized
             return true
         }
+    }
+
+    func test_create_answers_before_the_permission_prompt_does() async throws {
+        let notificationCenter = NotificationCenterSpy()
+        notificationCenter.status = .notDetermined
+        notificationCenter.holdsPrompt = true
+        let handler = NotificationsBridgeHandler(notificationCenter: notificationCenter)
+        let msg = try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "notifications.create",
+            "payload": ["extensionId": "test-ext", "notificationId": "n1", "title": "T", "message": "B"] as [String: Any]
+        ]))
+
+        let answer = await handler.handle(msg)
+        let result = try XCTUnwrap(answer as? [String: Any])
+
+        XCTAssertEqual(result["notificationId"] as? String, "n1")
+        let asked = await pollUntil { notificationCenter.prompt != nil }
+        XCTAssertTrue(asked, "the first notification asks for permission")
+        XCTAssertTrue(notificationCenter.addedRequests.isEmpty)
+        notificationCenter.prompt?.resume()
+        let posted = await pollUntil { notificationCenter.addedRequests.first?.identifier == "test-ext:n1" }
+        XCTAssertTrue(posted, "the notification posts once the person answers")
     }
 
     func test_handledActions_contains_expected_keys() {
