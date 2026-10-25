@@ -8,8 +8,9 @@
   let popover: HTMLDivElement | undefined = $state();
   let height = $state(0);
   const rect = $derived(anchor.getBoundingClientRect());
-  // Toward the page: under a top strip, over a bottom dock.
-  const top = $derived(getTabPosition() === "bottom" ? rect.top - 8 - height : rect.bottom + 8);
+  // Toward the page, clear of the strip itself: under a top strip, over a bottom dock.
+  const strip = $derived((anchor.closest(".tab-strip") ?? anchor).getBoundingClientRect());
+  const top = $derived(getTabPosition() === "bottom" ? strip.top - 8 - height : strip.bottom + 4);
   const left = $derived(Math.max(8, Math.min(rect.left, window.innerWidth - 248)));
 
   $effect(() => {

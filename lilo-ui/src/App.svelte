@@ -29,9 +29,6 @@
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
-  import PageToolbar from "./components/page/PageToolbar.svelte";
-  import TabStrip from "./components/strip/TabStrip.svelte";
-  import TabEdgeDrag from "./components/page/TabEdgeDrag.svelte";
   import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
@@ -330,7 +327,10 @@
   ></div>
 
   {#if isSidebarVisible() && (hasPageToolbar() || (getTabPosition() === "top" && getAddressPlacement() === "page"))}
-    <PageToolbar row={getTabPosition() === "top"} />
+    <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
+    {#await import("./components/page/PageToolbar.svelte") then toolbar}
+      <toolbar.default row={getTabPosition() === "top"} />
+    {/await}
   {/if}
 
   <SplitDropZone />
@@ -345,7 +345,9 @@
       onmouseenter={cancelSidebarOverlayHide}
       onmouseleave={scheduleSidebarOverlayHide}
     >
-      <TabStrip edge={getTabPosition() === "bottom" ? "bottom" : "top"} />
+      {#await import("./components/strip/TabStrip.svelte") then strip}
+        <strip.default edge={getTabPosition() === "bottom" ? "bottom" : "top"} />
+      {/await}
     </div>
     <!-- A strip has no column for the panels: they float over the page's left edge. -->
     {#if stripPanelsLoaded}
@@ -411,7 +413,9 @@
   ></div>
 
   {#if isLiftingTabs()}
-    <TabEdgeDrag />
+    {#await import("./components/page/TabEdgeDrag.svelte") then edgeDrag}
+      <edgeDrag.default />
+    {/await}
   {/if}
 
   {#if showDeferredChrome}

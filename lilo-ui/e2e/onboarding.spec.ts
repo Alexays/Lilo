@@ -180,7 +180,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1024, height: 640
 }
 
 test("finishing the onboarding leaves the default-browser invite closed", async ({ page }) => {
-	await bootOnboarding(page, 6);
+	await bootOnboarding(page, 7);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: true });
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 	await page.locator(".toast button").click();
@@ -268,7 +268,7 @@ test.describe("at the window's minimum size", () => {
 	test.use({ viewport: { width: 600, height: 400 } });
 
 	test("an essentials row keeps its button on one line and its label readable", async ({ page }) => {
-		await bootOnboarding(page, 5);
+		await bootOnboarding(page, 6);
 		await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });
 		const row = page.locator(".ob-row").filter({ has: page.locator(".ob-btn") });
 		const button = row.locator(".ob-btn");
@@ -298,7 +298,7 @@ test.describe("at the window's minimum size", () => {
 	});
 
 	test("the arrival toast takes the width it has before wrapping", async ({ page }) => {
-		await bootOnboarding(page, 7, "develop");
+		await bootOnboarding(page, 8, "develop");
 		await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 
@@ -308,7 +308,7 @@ test.describe("at the window's minimum size", () => {
 	});
 
 	test("the arrival toast stays inside the window", async ({ page }) => {
-		await bootOnboarding(page, 7, "develop");
+		await bootOnboarding(page, 8, "develop");
 		await page.locator("section.card .ob-foot .ob-btn.primary").click();
 		const toast = page.locator(".toast");
 		await expect(toast.getByRole("button")).toBeInViewport({ ratio: 1 });
@@ -385,7 +385,7 @@ test("the agents choice turns AI agents on without the terminal, and asks to con
 });
 
 test("the developer tips card is named after its own title", async ({ page }) => {
-	await bootOnboarding(page, 7, "develop");
+	await bootOnboarding(page, 8, "develop");
 	await expect(page.getByRole("region", { name: "3 tips for developing" })).toBeVisible();
 });
 
@@ -464,7 +464,7 @@ test("each password manager shows its own icon, and its initial when the icon fa
 });
 
 test("the essentials show one primary action: Use Lilo stays secondary to Continue", async ({ page }) => {
-	await bootOnboarding(page, 5);
+	await bootOnboarding(page, 6);
 	await receive(page, { event: "defaultBrowserStatusLoaded", isDefault: false, shouldInvite: false });
 	const card = page.locator("section.card");
 	await expect(card.getByRole("button", { name: "Use Lilo" })).toBeVisible();
@@ -473,7 +473,7 @@ test("the essentials show one primary action: Use Lilo stays secondary to Contin
 });
 
 test("the arrival is spoken, since the focus never reaches it", async ({ page }) => {
-	await bootOnboarding(page, 6);
+	await bootOnboarding(page, 7);
 	await page.locator("section.card .ob-foot .ob-btn.primary").click();
 	await expect(page.locator(".live-announcer")).toHaveText("Welcome to Lilo.");
 });
@@ -496,7 +496,7 @@ test("the intro is a modal dialog, so VoiceOver stays out of the chrome under it
 });
 
 test("each agent's connect button names it", async ({ page }) => {
-	await bootOnboarding(page, 6, "develop");
+	await bootOnboarding(page, 7, "develop");
 	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
 	await receive(page, { event: "agentClientsLoaded", clients: [{ id: "codex", configured: false, icon: "data:image/png;base64,AA==" }], allowed: [] });
 	await expect(page.locator("section.card").getByRole("button", { name: "Connect Codex" })).toBeVisible();

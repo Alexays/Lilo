@@ -113,7 +113,6 @@
   </div>
 {/snippet}
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <nav
   class="tab-strip"
   class:dock={edge === "bottom"}

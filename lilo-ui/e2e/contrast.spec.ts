@@ -371,7 +371,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 			expect(await textContrast(page, ".note.done"), "import done").toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "defaultBrowserStatusLoaded", isDefault: true, shouldInvite: false });
-			await receive({ event: "onboardingState", show: true, step: 5, usage: "browse" });
+			await receive({ event: "onboardingState", show: true, step: 6, usage: "browse" });
 			expect(await textContrast(page, ".ob-done"), "default browser done").toBeGreaterThanOrEqual(4.5);
 		});
 

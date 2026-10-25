@@ -321,10 +321,12 @@ export async function installFakeHost(
 export async function bootChrome(
 	page: Page,
 	world: FakeHostWorld,
+	// The strip layouts have no sidebar list to wait for.
+	ready = ".tab-list [data-tab-id]",
 ): Promise<void> {
 	await installFakeHost(page, world);
 	await page.goto("/");
-	await page.waitForSelector(".tab-list [data-tab-id]");
+	await page.waitForSelector(ready);
 	// The overlays' chunk loads after the first frame; the dev server compiles it on first request, seconds
 	// under load: a test opening the command bar or settings would spend its assertion's 5 s on that.
 	await page.waitForSelector(".banner-host", { state: "attached" });

@@ -157,6 +157,7 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.media": { glyph: "play", tint: "pink" },
   "settings.groups.lilo": { glyph: "petals", tint: "lilo" },
   "settings.groups.theme": { glyph: "halfCircle", tint: "purple" },
+  "settings.groups.tabLayout": { glyph: "tabs", tint: "indigo" },
   "settings.groups.pages": { glyph: "page", tint: "blue" },
   "settings.groups.spaces": { glyph: "stack", tint: "indigo" },
   "settings.groups.profiles": { glyph: "person", tint: "blue" },

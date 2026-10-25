@@ -42,7 +42,7 @@ test("moving the tabs from the host moves the chrome", async ({ page }) => {
 });
 
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
-	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" });
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
 	await expect(pills.first()).toBeVisible();
 	const target = pills.nth(1);
@@ -55,7 +55,7 @@ test("the top strip lists today's tabs and switches on click", async ({ page }) 
 });
 
 test("dragging a pill after the next one reorders the strip", async ({ page }) => {
-	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" });
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .today-list .strip-tab");
 	const first = (await pills.nth(0).boundingBox())!;
 	const second = (await pills.nth(1).boundingBox())!;
@@ -69,17 +69,20 @@ test("dragging a pill after the next one reorders the strip", async ({ page }) =
 });
 
 test("the bottom dock opens its popovers upward", async ({ page }) => {
-	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" });
+	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" }, ".tab-strip");
 	const chip = page.locator(".space-chip");
 	await chip.click();
 
-	const popover = (await page.locator(".strip-popover").boundingBox())!;
 	const dock = (await page.locator(".tab-strip").boundingBox())!;
-	expect(popover.y + popover.height).toBeLessThanOrEqual(dock.y);
+	// The popover measures itself once shown, then settles above the dock.
+	await expect.poll(async () => {
+		const popover = (await page.locator(".strip-popover").boundingBox())!;
+		return popover.y + popover.height;
+	}).toBeLessThanOrEqual(dock.y);
 });
 
 test("settings open as a floating column in the top position and stay open when the position changes", async ({ page }) => {
-	await bootChrome(page, { ...initialWorld(), tabPosition: "top" });
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
 	await receive(page, { event: "openSettings" });
 	await expect(page.locator(".strip-panels.open")).toBeVisible();
 
