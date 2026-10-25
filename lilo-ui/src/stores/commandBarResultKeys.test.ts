@@ -168,7 +168,7 @@ test("the selection stays on the top row while history arrives, unless the user 
 	assert.equal(bar.getSelectedResult()?.kind, "search");
 	receive({ event: "historyResults", query: "news", results: news });
 	assert.equal(bar.getSelectedIndex(), 0);
-	assert.equal(bar.getSelectedResult()?.title, "Hacker News", "Enter opens what the top row shows");
+	assert.equal(bar.getSelectedResult()?.url, "https://news.ycombinator.com/", "Enter opens what the top row shows");
 
 	bar.openCommandBar("news");
 	bar.selectNext();
@@ -185,7 +185,8 @@ test("over a local top row, the ghost text only names the site root that row ope
 	assert.equal(bar.getAutocompleteSuggestion(), "docs.example");
 
 	bar.openCommandBar("gith");
-	assert.equal(bar.getAutocompleteSuggestion(), "");
+	assert.equal(bar.getSelectedResult()?.url, "https://github.com/", "a deep tab's site comes first, as its root");
+	assert.equal(bar.getAutocompleteSuggestion(), "github.com");
 });
 
 test("a search suggestion never puts ghost text over a top row that does something else", async () => {
@@ -219,8 +220,49 @@ test("a site the query starts leads, and its ghost text and Enter both go there"
 		{ id: "w", title: "Wikipedia", url: "https://wikipedia.org/", visitCount: 30, lastVisitedAt: Date.now() },
 	] });
 
-	assert.equal(bar.getSelectedResult()?.title, "Wikipedia");
+	assert.equal(bar.getSelectedResult()?.url, "https://wikipedia.org/");
 	assert.equal(bar.getAutocompleteSuggestion(), "wikipedia.org");
 	bar.executeSelected();
 	assert.deepEqual(last("navigate"), { url: "https://wikipedia.org/", typed: false });
+});
+
+test("a host prefix completes to the site even when history ranks a deep page of it first", async () => {
+	const { bar, receive, last } = await withBar();
+	bar.openCommandBar("plex.");
+	receive({ event: "historyResults", query: "plex.", results: [
+		{ id: "deep", title: "Plex", url: "http://plex.home.example/web/index.html#!/", visitCount: 40, lastVisitedAt: Date.now() },
+		{ id: "root", title: "Plex", url: "http://plex.home.example/", visitCount: 3, lastVisitedAt: Date.now() },
+		{ id: "once", title: "Plex TV", url: "https://plex.tv/link/", visitCount: 1, lastVisitedAt: Date.now() },
+	] });
+
+	assert.equal(bar.getSelectedResult()?.title, "plex.home.example");
+	assert.equal(bar.getAutocompleteSuggestion(), "plex.home.example");
+	assert.equal(bar.getResults().filter((result: { url?: string }) => result.url === "http://plex.home.example/").length, 1, "the root history row is not listed twice");
+	bar.executeSelected();
+	assert.deepEqual(last("navigate"), { url: "http://plex.home.example/", typed: false });
+
+	bar.openCommandBar("plex.t");
+	receive({ event: "historyResults", query: "plex.t", results: [
+		{ id: "once", title: "Plex TV", url: "https://plex.tv/link/", visitCount: 1, lastVisitedAt: Date.now() },
+	] });
+	assert.equal(bar.getAutocompleteSuggestion(), "", "a host seen once does not complete");
+});
+
+test("after a deletion, or Delete over the completion, the typed text stays what Enter opens", async () => {
+	const { bar, receive } = await withBar();
+	const history = [{ id: "w", title: "Wikipedia", url: "https://wikipedia.org/", visitCount: 30, lastVisitedAt: Date.now() }];
+	bar.openCommandBar("wikip");
+	receive({ event: "historyResults", query: "wikip", results: history });
+	assert.equal(bar.getAutocompleteSuggestion(), "wikipedia.org");
+
+	bar.setQuery("wiki", false);
+	receive({ event: "historyResults", query: "wiki", results: history });
+	assert.equal(bar.getAutocompleteSuggestion(), "");
+	assert.equal(bar.getSelectedResult()?.kind, "history");
+
+	bar.setQuery("wik");
+	receive({ event: "historyResults", query: "wik", results: history });
+	assert.equal(bar.getAutocompleteSuggestion(), "wikipedia.org");
+	bar.dismissAutofill();
+	assert.equal(bar.getAutocompleteSuggestion(), "");
 });

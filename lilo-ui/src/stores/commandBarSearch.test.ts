@@ -525,7 +525,7 @@ test("all-scope search: an exact title match survives a long url and highlights 
 	applySpaceInitialState(initialState);
 	applySidebarTabInitialState(initialState);
 	const search = (query: string) => computeResults(
-		{ parsed: parseInput(query), historyResults: [], searchSuggestions: [], searchEngine: "google" },
+		{ parsed: parseInput(query), historyResults: [], searchSuggestions: [], searchEngine: "google", autofill: false },
 		0,
 	);
 

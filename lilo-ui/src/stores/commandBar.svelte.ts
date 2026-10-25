@@ -41,6 +41,8 @@ let _selectedIndex = $state(0);
 // Set once the user picks a row (arrows, hover): late results then keep that row selected; until
 // then the selection stays on the top row, so Enter does what the top row shows.
 let _selectionMoved = false;
+// Off after a deletion until the next insertion, so backspacing never completes a host back.
+let _autofill = $state(true);
 let _historyResults: CommandResult[] = [];
 let _searchSuggestions: string[] = [];
 let _mode = $state<CommandBarMode>("default");
@@ -90,10 +92,10 @@ export const getAutocompleteSuggestion = (): string => {
 			: undefined;
 		return command ? _query.trim() + command.slice(parsed.query.length) : "";
 	}
-	// The ghost text only names what Enter opens: the site root a selected local top row goes to.
+	// The ghost text only names what Enter opens: the site root the selected top row goes to.
 	const top = _results[0];
-	if (parsed.scope !== "all" || parsed.type !== "search" || _selectedIndex !== 0 || !top?.url) return "";
-	if (top.kind !== "tab" && top.kind !== "bookmark" && top.kind !== "history") return "";
+	if (!_autofill || parsed.scope !== "all" || parsed.type === "action" || _selectedIndex !== 0 || !top?.url) return "";
+	if (top.kind !== "tab" && top.kind !== "bookmark" && top.kind !== "history" && top.kind !== "navigate") return "";
 	return /^https?:\/\/[^/?#]+\/?$/i.test(top.url) ? getLocalHostCompletion(parsed.query, [top.url]) : "";
 };
 export const getCommandBarOpenRequestId = (): number => _openRequestId;
@@ -257,6 +259,7 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 			archivedTabs: _archivedTabs,
 			spaces: getPagedSpaces(),
 			moveTabId: _moveTabId,
+			autofill: _autofill,
 			omnibox: {
 				active: !!_omniboxSessionId,
 				title: _omniboxTitle,
@@ -484,11 +487,17 @@ function closeCommandBarAfterNavigation(): void {
 	closeCommandBar();
 }
 
-export function setQuery(query: string): void {
+export function setQuery(query: string, autofill = true): void {
 	_query = query;
+	_autofill = autofill;
 	_selectedIndex = 0;
 	_selectionMoved = false;
 	scheduleSearchSuggest(query);
+}
+
+export function dismissAutofill(): void {
+	_autofill = false;
+	computeResults();
 }
 
 export function executeSelected(): void {
