@@ -117,7 +117,7 @@ extension AgentControl {
         guard space.profileId != profile.id else { return "Already in the profile \(profile.name)" }
         try await ensureAlone(session, wait: wait)
         if profile.id != (try agentsProfileId()), !grantedProfiles.contains(Self.grantKey(session, profile.id)) {
-            guard await askConsent(session.clientName, profileName: profile.name) else {
+            guard await askConsent(session.clientName, profileName: profile.name) == true else {
                 throw AgentToolError("The user did not allow the profile \(profile.name)", code: "needs_user")
             }
             grantProfile(profile.id, to: session)

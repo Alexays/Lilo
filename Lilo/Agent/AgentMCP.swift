@@ -28,9 +28,14 @@ enum AgentMCP {
         if method.hasPrefix("tools/"), !session.isAuthorized {
             guard session.authorization != nil else { return error(id: id, code: -32002, message: "Call initialize first") }
             if method == "tools/call" {
-                let text = session.isRefused
-                    ? "The user did not allow \(session.clientName) to control Lilo: ask them to allow it, then reconnect the lilo MCP server"
-                    : "Lilo is waiting for the user to allow \(session.clientName): ask them to answer the prompt under Lilo's address bar, then call the tool again"
+                if session.isUnanswered { ask(session, control: control) }
+                let text = if session.isRefused {
+                    "The user did not allow \(session.clientName) to control Lilo: ask them to allow it, then reconnect the lilo MCP server"
+                } else if control.context?.windows.windows.isEmpty ?? true {
+                    "Lilo has no window to ask the user to allow \(session.clientName) in: ask them to open one, then call the tool again"
+                } else {
+                    "Lilo is waiting for the user to allow \(session.clientName): ask them to answer the prompt under Lilo's address bar, then call the tool again"
+                }
                 return result(id: id, ["content": [AgentContent.text("[needs_user] " + text).json], "isError": true, "_meta": ["lilo/errorCode": "needs_user"]])
             }
         }
@@ -38,24 +43,11 @@ enum AgentMCP {
         case "initialize":
             if let name = (params["clientInfo"] as? [String: Any])?["name"] as? String, !name.isEmpty { session.clientName = name }
             session.supportsRoots = (params["capabilities"] as? [String: Any])?["roots"] != nil
-            let welcome = {
-                session.isAuthorized = true
-                control.resumeDroppedSession(into: session)
-                control.refreshControlledTabs()
-                control.publishActivity()
-            }
-            if await control.authorize(session, asking: false) {
-                welcome()
-            } else if control.context?.windows.windows.isEmpty ?? true {
-                // Nothing can ask the user: lilo-mcp reports this refusal at each tool call.
-                session.isRefused = true
-                let message = "Open a Lilo window so Lilo can ask the user to allow \(session.clientName), then reconnect the lilo MCP server"
-                return error(id: id, code: -32001, message: message, data: ["code": "needs_user"])
+            if await control.authorize(session, asking: false) == true {
+                welcome(session, control: control)
             } else {
                 // Asked once the handshake replied: its tool calls report the wait, so the client never times out.
-                session.authorization = Task { @MainActor in
-                    if await control.authorize(session) { welcome() } else if !Task.isCancelled { session.isRefused = true }
-                }
+                ask(session, control: control)
             }
             let requested = params["protocolVersion"] as? String ?? ""
             return result(id: id, [
@@ -142,6 +134,25 @@ enum AgentMCP {
             }
         default:
             return self.error(id: id, code: -32601, message: "Method not found: \(method)")
+        }
+    }
+
+    private static func welcome(_ session: AgentSession, control: AgentControl) {
+        session.isAuthorized = true
+        control.resumeDroppedSession(into: session)
+        control.refreshControlledTabs()
+        control.publishActivity()
+    }
+
+    /// Only a Deny refuses the session; left unanswered, its next tool call asks again.
+    private static func ask(_ session: AgentSession, control: AgentControl) {
+        session.isUnanswered = false
+        session.authorization = Task { @MainActor in
+            switch await control.authorize(session) {
+            case true?: welcome(session, control: control)
+            case false?: session.isRefused = true
+            case nil: session.isUnanswered = !Task.isCancelled
+            }
         }
     }
 
