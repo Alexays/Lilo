@@ -9,6 +9,21 @@
   // The first Space is the one on screen: its color answers the choice right away.
   const space = $derived(getActiveSpace());
 
+  // The color panel streams values while its wheel is dragged: the first goes out at once, then one every 100 ms.
+  let colorTimer: ReturnType<typeof setTimeout> | undefined;
+  let queuedColor = "";
+  function setColor(color: string): void {
+    queuedColor = color;
+    if (colorTimer) return;
+    const send = () => space && spaceActions.update({ id: space.id, color: queuedColor });
+    send();
+    const sent = queuedColor;
+    colorTimer = setTimeout(() => {
+      colorTimer = undefined;
+      if (queuedColor !== sent) send();
+    }, 100);
+  }
+
   const THEMES = ["system", "light", "dark"] as const;
   const current = $derived(getSetting("theme", "system"));
 
@@ -39,10 +54,11 @@
   <div class="color-source">
     <span class="group-label" id="onboarding-color-label">{t("onboarding.appearance.color")}</span>
     <ColorModePicker
-      value={space.colorMode ?? "fixed"}
+      mode={space.colorMode ?? "fixed"}
       color={space.color}
       labelledby="onboarding-color-label"
-      onchange={(colorMode) => spaceActions.update({ id: space.id, colorMode })}
+      onmode={(colorMode) => spaceActions.update({ id: space.id, colorMode })}
+      oncolor={setColor}
     />
   </div>
 {/if}

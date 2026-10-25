@@ -14,7 +14,7 @@
   import PanelHeader from "../ui/PanelHeader.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
-  import { nextProfileColor, PASTEL_COLORS, spacesByProfile, userProfiles } from "../settings/profilesModel";
+  import { nextProfileColor, spacesByProfile, userProfiles } from "../settings/profilesModel";
   import {
     canSave,
     initialProfileChoice,
@@ -72,7 +72,6 @@
   const saveEnabled = $derived(canSave(editorState().name, choice, newProfileName));
   // Deleting the only space would leave the window empty; the Agents space is no space of the user's.
   const isLastSpace = $derived(getSpaces().filter((space) => space.id !== getAgentsSpaceId()).length <= 1);
-  const customColor = $derived(!PASTEL_COLORS.includes(editorState().color));
 
   const hint = $derived.by(() => {
     if (choice.kind === "private") return t("spaceEditor.hintPrivate");
@@ -350,37 +349,12 @@
       <div class="field">
         <span class="field-label" id="space-color-label">{t("spaceEditor.colorLabel")}</span>
         <ColorModePicker
-          value={s.colorMode}
+          mode={s.colorMode}
           color={s.color}
           labelledby="space-color-label"
-          onchange={(colorMode) => updateEditorState({ colorMode })}
+          onmode={(colorMode) => updateEditorState({ colorMode })}
+          oncolor={(color) => updateEditorState({ color })}
         />
-        <div class="color-grid">
-          {#each PASTEL_COLORS as c, index (c)}
-            <button
-              class="color-swatch"
-              class:selected={s.color === c}
-              style:background={c}
-              onclick={() => updateEditorState({ color: c })}
-              aria-label={t("common.colorSwatch", { number: String(index + 1) })}
-              aria-pressed={s.color === c}
-            ></button>
-          {/each}
-          <!-- WebKit opens the macOS color panel for a color input. -->
-          <label
-            class="color-swatch custom"
-            class:selected={customColor}
-            style:background={customColor ? `radial-gradient(circle closest-side, ${s.color} 0 52%, transparent 56%), var(--hue-wheel)` : null}
-            use:tooltip={t("spaceEditor.customColor")}
-          >
-            <input
-              type="color"
-              aria-label={t("spaceEditor.customColor")}
-              value={s.color}
-              oninput={(e) => updateEditorState({ color: (e.currentTarget as HTMLInputElement).value })}
-            />
-          </label>
-        </div>
       </div>
 
       <div class="field">
@@ -854,69 +828,6 @@
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
     color: var(--text-secondary);
-  }
-
-  /* Two rows of seven: the twelve presets and the custom picker. */
-  .color-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .color-swatch {
-    position: relative;
-    aspect-ratio: 1;
-    border: 1px solid var(--text-primary-tint-12);
-    border-radius: 50%;
-    cursor: pointer;
-    transition:
-      box-shadow var(--motion-duration-fast),
-      border-color var(--motion-duration-fast),
-      transform 0.12s;
-    padding: 0;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, white 22%, transparent);
-  }
-  .color-swatch.selected {
-    border-color: var(--sidebar-swatch-ring, var(--text-primary));
-    box-shadow:
-      0 0 0 2px var(--accent-tint-22),
-      inset 0 0 0 1px color-mix(in srgb, white 28%, transparent);
-    transform: scale(1.1);
-  }
-  .color-swatch.selected::after {
-    content: "✓";
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: color-mix(in srgb, black 55%, transparent);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-  }
-  .color-swatch:hover {
-    transform: scale(1.1);
-  }
-  .color-swatch:focus-visible,
-  .color-swatch.custom:focus-within {
-    outline: var(--focus-outline);
-    outline-offset: 2px;
-  }
-
-  .color-swatch.custom {
-    overflow: hidden;
-    background: var(--hue-wheel);
-  }
-
-  .color-swatch.custom input {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    border: 0;
-    opacity: 0;
-    cursor: pointer;
   }
 
   /* Wraps rather than clips when a translation is longer than the sidebar is wide. */

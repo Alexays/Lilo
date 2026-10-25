@@ -1,10 +1,11 @@
-// The wallpaper color a Space can follow, read from the desktop picture of the window's screen.
+// The wallpaper color a Space can follow, and its preview, read from the desktop picture of the window's screen.
 
 import AppKit
 import ImageIO
+import UniformTypeIdentifiers
 
 extension MainWindowController {
-    /// The UI turns this on only while it shows a Space that follows the wallpaper; enabling again resends the color.
+    /// The UI turns this on only while it shows a Space that follows the wallpaper or the color picker; enabling again resends it.
     func setWallpaperColorWatch(_ enabled: Bool) {
         guard enabled else {
             for (center, token) in wallpaperColorObservers { center.removeObserver(token) }
@@ -37,16 +38,23 @@ extension MainWindowController {
         guard key != sentWallpaperKey else { return }
         sentWallpaperKey = key
         Task { [weak self] in
-            let color = await Task.detached(priority: .utility) { Self.wallpaperColor(at: url) }.value
+            let wallpaper = await Task.detached(priority: .utility) { Self.wallpaper(at: url) }.value
             // An empty color tells the UI to fall back to the Space's own.
-            self?.bridgeRouter.send(event: "wallpaperColorChanged", data: ["color": color ?? ""])
+            self?.bridgeRouter.send(event: "wallpaperColorChanged", data: [
+                "color": wallpaper?.color ?? "", "thumbnail": wallpaper?.thumbnail ?? ""
+            ])
         }
     }
 
-    nonisolated static func wallpaperColor(at url: URL) -> String? {
-        let options = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 64] as CFDictionary
+    /// The picture's dominant color, and a small JPEG of it for the color picker's preview.
+    nonisolated static func wallpaper(at url: URL) -> (color: String?, thumbnail: String)? {
+        let options = [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: 240] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options) else { return nil }
-        return FaviconService.dominantColor(of: image)
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, image, [kCGImageDestinationLossyCompressionQuality: 0.7] as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return (FaviconService.dominantColor(of: image), "data:image/jpeg;base64,\((data as Data).base64EncodedString())")
     }
 }

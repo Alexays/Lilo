@@ -794,8 +794,8 @@
 		"colorModeHint": {
 			"fixed": "Lilo keeps this color.",
 			"time": "This color, warmer in the evening and darker at night.",
-			"page": "Tinted by the site you're on. Elsewhere, this color.",
-			"wallpaper": "Taken from your wallpaper. This color stands in when it can't be read."
+			"page": "Takes the color of the site you're on.",
+			"wallpaper": "Takes the color of your wallpaper."
 		},
 		"archiveLabel": "Archive tabs after",
 		"archive12Hours": "12 hours",

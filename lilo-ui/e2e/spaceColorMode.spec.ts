@@ -38,19 +38,27 @@ test("each color mode previews on the whole chrome, the base color stays editabl
 	await expect.poll(() => sidebarBackground(page)).not.toBe(fixed);
 	// The base color is still the user's to pick under a moving mode.
 	const evening = await sidebarBackground(page);
-	await page.locator(".color-swatch").first().click();
+	await page.locator(".swatches .swatch").first().click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 
 	await modes.getByRole("radio", { name: "Page" }).click();
+	// The site brings the color: no swatches to pick from.
+	await expect(page.locator(".swatches")).toHaveCount(0);
+	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 	const tinted = await sidebarBackground(page);
-	await page.locator(".color-swatch").first().click();
-	expect(tinted).not.toBe(evening);
 
 	await modes.getByRole("radio", { name: "Wallpaper" }).click();
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: true });
-	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f" }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f", thumbnail: "data:image/jpeg;base64,AAAA" }));
 	await expect.poll(() => sidebarBackground(page)).not.toBe(tinted);
+	await expect(page.locator(".swatches")).toHaveCount(0);
+	// The tile shows the wallpaper itself.
+	expect(await modes.getByRole("radio", { name: "Wallpaper" }).locator(".thumb").evaluate((node) => getComputedStyle(node).backgroundImage))
+		.toContain("data:image/jpeg");
 
+	await modes.getByRole("radio", { name: "Fixed" }).click();
+	await expect(page.locator(".swatches")).toBeVisible();
+	await modes.getByRole("radio", { name: "Wallpaper" }).click();
 	await page.keyboard.press("Meta+Enter");
 	await expect(page.locator(".editor-panel")).toHaveCount(0);
 	expect(await lastCommand(page, "updateSpace")).toMatchObject({ id: SPACE_1, colorMode: "wallpaper" });
@@ -100,4 +108,9 @@ test("the onboarding's appearance step sets where the current Space's color come
 	await page.evaluate(() => window.__lilo!.receive({ event: "spaceUpdated", ...{ id: "space-home", name: "Home", icon: "H", color: "#5865f2", profileId: "profile-1", isPrivate: false, sortOrder: 0, colorMode: "time" } }));
 	await expect(modes.getByRole("radio", { name: "Time of day" })).toHaveAttribute("aria-checked", "true");
 	await expect(page.getByText("This color, warmer in the evening and darker at night.")).toBeVisible();
+
+	// The color is the user's here too, sent at once.
+	await page.locator(".swatches .swatch").nth(2).click();
+	await expect.poll(() => lastCommand(page, "updateSpace")).toMatchObject({ id: "space-home", color: expect.any(String) });
+	expect((await lastCommand(page, "updateSpace"))?.color).not.toBe("#5865f2");
 });

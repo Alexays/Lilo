@@ -30,10 +30,8 @@ test("the time of day lights the base color, midday leaves it as is", () => {
   assert.notEqual(lightForDayPart(base, "night"), lightForDayPart(base, "morning"));
 });
 
-test("a chromatic favicon tints the base color, a grey one leaves it", () => {
-  const tinted = effectiveSpaceColor("page", base, { dayPart: "day", pageColor: "#e5484d" });
-  assert.notEqual(tinted, base);
-  assert.notEqual(tinted, "#e5484d");
+test("a chromatic favicon gives its color, a grey one leaves the base", () => {
+  assert.equal(effectiveSpaceColor("page", base, { dayPart: "day", pageColor: "#e5484d" }), "#e5484d");
   assert.equal(effectiveSpaceColor("page", base, { dayPart: "day", pageColor: "#333333" }), base);
   assert.equal(effectiveSpaceColor("page", base, { dayPart: "day" }), base);
 });

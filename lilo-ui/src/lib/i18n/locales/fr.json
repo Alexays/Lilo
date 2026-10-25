@@ -794,8 +794,8 @@
 		"colorModeHint": {
 			"fixed": "Lilo garde cette couleur.",
 			"time": "Cette couleur, plus chaude le soir et plus sombre la nuit.",
-			"page": "Teintée par le site ouvert. Ailleurs, cette couleur.",
-			"wallpaper": "Tirée de votre fond d'écran. Cette couleur prend le relais s'il n'est pas lisible."
+			"page": "Prend la couleur du site ouvert.",
+			"wallpaper": "Prend la couleur de votre fond d'écran."
 		},
 		"archiveLabel": "Archiver les onglets après",
 		"archive12Hours": "12 heures",
