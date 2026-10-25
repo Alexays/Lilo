@@ -70,6 +70,21 @@ extension MainWindowController {
         if syncTrafficLights { self.syncTrafficLights(animated: animated) }
     }
 
+    func applyTabLayout(_ layout: TabLayout, animated: Bool) {
+        guard layout != tabLayout else { return }
+        tabLayout = layout
+        applySidebarLayout(animated: animated, syncTrafficLights: true)
+        bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
+    }
+
+    /// The setting is app-wide: every window moves, and the next launch paints the new layout first.
+    func applyStoredTabLayoutEverywhere() {
+        guard let layout = context.settingsStore?.tabLayout else { return }
+        layout.cache()
+        let animated = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        context.windows.windows.forEach { $0.applyTabLayout(layout, animated: animated) }
+    }
+
     func updateSidebarWidth(_ width: CGFloat) {
         sidebarExpandedWidth = width.clamped(to: Self.sidebarWidthRange)
         applySidebarLayout(animated: false)

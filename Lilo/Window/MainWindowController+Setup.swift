@@ -61,7 +61,7 @@ extension MainWindowController {
         let sidebarWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: sidebarWidthRange) : defaultSidebarWidth
         let bgColor = UserDefaults.lilo.string(forKey: cachedWindowBgColorKey) ?? ""
         webView.configuration.userContentController.addUserScript(
-            buildBootstrapScript(sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor)
+            buildBootstrapScript(sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor, tabLayout: .cached)
         )
         webView.load(URLRequest(url: ChromeUISchemeHandler.indexURL))
         _preloadedWebView = webView
@@ -91,6 +91,11 @@ extension MainWindowController {
                 UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
                 UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
                 applySidebarLayout(animated: false, syncTrafficLights: true)
+            }
+            let dbLayout = settings.tabLayout
+            if dbLayout != tabLayout {
+                dbLayout.cache()
+                applyTabLayout(dbLayout, animated: false)
             }
         }
 
@@ -548,6 +553,7 @@ extension MainWindowController {
         settingsHandler.onTerminalSettingsChanged = { [weak self] in self?.applyTerminalSettings() }
         settingsHandler.terminalOptionsProvider = { [weak self] in self?.terminalOptions() ?? [:] }
         settingsHandler.terminalThemeImporter = { [weak self] in await self?.importTerminalTheme() ?? false }
+        settingsHandler.onTabLayoutChanged = { [weak self] in self?.applyStoredTabLayoutEverywhere() }
         settingsHandler.onLifecyclePresetChanged = { [weak self] raw in
             guard let self else { return }
             self.context.applyLifecyclePreset(LifecyclePreset(rawValue: raw) ?? .default)
@@ -680,6 +686,8 @@ extension MainWindowController {
             "sidebarWidth": sidebarExpandedWidth,
             "sidebarVisible": sidebarVisible,
             "trafficLightsVisible": areTrafficLightsVisible(),
+            "tabPosition": tabLayout.position.rawValue,
+            "addressPlacement": tabLayout.address.rawValue,
             "isFullscreen": window?.styleMask.contains(.fullScreen) == true
         ]
         if let color = currentWindowBackgroundCSSColor(), !color.isEmpty {
@@ -712,11 +720,12 @@ extension MainWindowController {
         controller.removeAllUserScripts()
         controller.addUserScript(Self.buildBootstrapScript(
             sidebarWidth: sidebarExpandedWidth,
-            windowBackgroundColor: storedWindowBackgroundColor ?? ""
+            windowBackgroundColor: storedWindowBackgroundColor ?? "",
+            tabLayout: tabLayout
         ))
     }
 
-    static func buildBootstrapScript(sidebarWidth: CGFloat, windowBackgroundColor: String) -> WKUserScript {
+    static func buildBootstrapScript(sidebarWidth: CGFloat, windowBackgroundColor: String, tabLayout: TabLayout) -> WKUserScript {
         let source = """
                 (() => {
                     window.__liloBootstrapEvents = [];
@@ -726,6 +735,8 @@ extension MainWindowController {
                     }
 
                     root.dataset.booting = 'true';
+                    root.dataset.tabPosition = '\(tabLayout.position.rawValue)';
+                    root.dataset.address = '\(tabLayout.address.rawValue)';
 
                     if (\(sidebarWidth) > 0) {
                         root.style.setProperty('--sidebar-width', `${\(sidebarWidth)}px`);

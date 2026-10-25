@@ -10,7 +10,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
-        for key in ["cachedSidebarWidth", "cachedSidebarVisible"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
+        for key in ["cachedSidebarWidth", "cachedSidebarVisible", "cachedTabPosition", "cachedAddressPlacement"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
         browserContext = try await TemporaryBrowserContext()
     }
 
@@ -95,6 +95,34 @@ final class WindowChromeLayoutTests: XCTestCase {
         window.windowDidEnterFullScreen(Notification(name: NSWindow.didEnterFullScreenNotification))
 
         XCTAssertEqual(window.contentEdges(), edges, "navigation stays reachable over the page")
+    }
+
+    func testSettingThePositionMovesEveryWindow() async throws {
+        let first = try makeSizedWindow()
+        let second = try makeSizedWindow()
+        first.setupBridgeLate()
+        let handler = try XCTUnwrap(first.bridgeRouter.handlers["setSetting"])
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "setSetting", "payload": ["key": "tabPosition", "value": "bottom"]
+        ])))
+
+        for window in [first, second] {
+            XCTAssertEqual(window.tabLayout, TabLayout(position: .bottom, address: .page))
+            XCTAssertEqual(window.contentFrameRect().minY, 72, "the page sits above the dock")
+        }
+        XCTAssertEqual(TabLayout.cached.position, .bottom, "the next launch paints it first")
+    }
+
+    func testBootstrapScriptCarriesTheCachedLayout() {
+        let script = MainWindowController.buildBootstrapScript(
+            sidebarWidth: 260,
+            windowBackgroundColor: "",
+            tabLayout: TabLayout(position: .right, address: .page)
+        )
+
+        XCTAssertTrue(script.source.contains("root.dataset.tabPosition = 'right'"))
+        XCTAssertTrue(script.source.contains("root.dataset.address = 'page'"))
     }
 
     private func makeSizedWindow() throws -> MainWindowController {
