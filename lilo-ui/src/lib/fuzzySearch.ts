@@ -43,9 +43,13 @@ function matchRange(query: string, target: string, start: number, end: number): 
 	let consecutive = 0;
 	for (let qi = 0; qi < n; qi++) {
 		const ti = highlights[qi];
+		const wordStart = ti === start || WORD_SEPARATOR.test(target[ti - 1]);
 		consecutive = qi > 0 && highlights[qi - 1] === ti - 1 ? consecutive + 1 : 1;
 		score += consecutive * 2;
-		if (ti === start || WORD_SEPARATOR.test(target[ti - 1])) score += 5;
+		if (wordStart) score += 5;
+		// A jump into the middle of a word costs more than the char earns, so a long query
+		// scattered letter by letter across a title scores below the threshold.
+		else if (qi > 0 && consecutive === 1) score -= 3;
 		if (ti - start === qi) score += 3;
 	}
 	// Log-scaled so a long field still ranks a strong match above a weak short one.

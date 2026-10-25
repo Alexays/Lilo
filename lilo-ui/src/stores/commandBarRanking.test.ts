@@ -220,3 +220,15 @@ test("outside the : scope, actions need the query to start a word of their name 
 	assert.ok(actions("split").includes("New Split View"));
 	assert.ok(actions(":news").includes("New Split View"), "the : scope keeps fuzzy matching");
 });
+
+test("a long query scattered letter by letter across a tab never lists that tab", () => {
+	seed([
+		tab("lilo", "home", {
+			title: "Alexays/Lilo: A Mac browser on WebKit, not Chromium, that still runs Chrome extensions. Built in Swift and Svelte, it keeps your tabs organized in spaces with a vertical sidebar, split view and a command bar for everything you need",
+			url: "https://github.com/Alexays/Lilo",
+		}),
+		tab("moulures", "home", { title: "Moulures de porte - Leroy Merlin", url: "https://www.leroymerlin.fr/moulures" }),
+	]);
+	const tabs = search("moulure porte").results.filter((result) => result.kind === "tab").map((result) => result.id);
+	assert.deepEqual(tabs, ["tab-moulures"]);
+});
