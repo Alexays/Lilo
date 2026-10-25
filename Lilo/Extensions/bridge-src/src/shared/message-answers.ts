@@ -120,9 +120,10 @@ const served = new WeakMap<object, object>();
 
 /**
  * WebKit delivers each message posted before the port connects twice or more (gap 43), so each carries its sender
- * and number and a repeat is dropped; a message the extension repeats gets a new number.
+ * and number and a repeat is dropped; a message the extension repeats gets a new number. On a port both of whose
+ * ends number theirs, `numberedOnly` drops any other message: another port sharing its channel id posted it (gap 89).
  */
-export function messagesOnce(port: any, name: string): object {
+export function messagesOnce(port: any, name: string, numberedOnly = false): object {
   const known = served.get(port);
   if (known) return known;
   const sender = Math.random();
@@ -139,7 +140,7 @@ export function messagesOnce(port: any, name: string): object {
   port.onMessage.addListener((numbered: any) => {
     // A context that kept WebKit's port posts its messages as they are.
     const [from, number] = numbered?.[once] ?? [];
-    if (from === undefined) return chromePort.onMessage.dispatch(numbered, chromePort);
+    if (from === undefined) return numberedOnly ? undefined : chromePort.onMessage.dispatch(numbered, chromePort);
     if (number <= (received.get(from) ?? 0)) return;
     received.set(from, number);
     chromePort.onMessage.dispatch(numbered.message, chromePort);
@@ -181,7 +182,7 @@ export function relayExternalMessaging(runtime: any): void {
     value(this: unknown, ...args: any[]) {
       if (!otherExtension(args[0], runtime)) return connect.apply(this, args);
       const name = typeof args[1]?.name === 'string' ? args[1].name : '';
-      return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name);
+      return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name, true);
     },
     configurable: true, writable: true,
   });

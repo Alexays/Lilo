@@ -215,16 +215,18 @@ describe("a content script's messages to another extension", () => {
   function contentRuntime(answer: unknown) {
     const sent: unknown[] = [];
     const opened: unknown[] = [];
+    const deliver: ((message: unknown) => void)[] = [];
     const runtime = Object.create({
       sendMessage(message: unknown) { sent.push(message); return Promise.resolve(answer); },
       connect(info: { name: string }) {
         opened.push(info);
-        return { name: info.name, onMessage: { addListener() {} }, onDisconnect: { addListener() {} }, postMessage() {}, disconnect() {} };
+        const onMessage = { addListener(listener: (message: unknown) => void) { deliver.push(listener); } };
+        return { name: info.name, onMessage, onDisconnect: { addListener() {} }, postMessage() {}, disconnect() {} };
       },
     });
     runtime.id = 'ponmlkjihgfedcbaponmlkjihgfedcba';
     relayExternalMessaging(runtime);
-    return { runtime, sent, opened };
+    return { runtime, sent, opened, deliver };
   }
 
   it("go to the worker's relay and resolve with the other extension's answer", async () => {
@@ -248,5 +250,16 @@ describe("a content script's messages to another extension", () => {
     runtime.connect({ name: 'own' });
     assert.equal(port.name, 'tunnel');
     assert.deepEqual(opened, [{ name: `tunnel?liloExternal=${other}?lilo` }, { name: 'own' }]);
+  });
+
+  it("take only the relay's numbered messages, not another port's sharing the channel id", () => {
+    const { runtime, deliver } = contentRuntime(undefined);
+    const port = runtime.connect(other, { name: 'tunnel' });
+    const heard: unknown[] = [];
+    port.onMessage.addListener((message: unknown) => heard.push(message));
+    deliver[0]({ reply: 3, result: null });
+    deliver[0]({ '?lilo': [1, 1], message: 'hi' });
+    deliver[0]({ '?lilo': [1, 1], message: 'hi' });
+    assert.deepEqual(heard, ['hi']);
   });
 });
