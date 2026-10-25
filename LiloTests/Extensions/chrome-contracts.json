@@ -60,6 +60,7 @@
   },
   "alarms.create and get": {
    "result": {
+    "@type": "alarms.Alarm",
     "name": "string",
     "persistAcrossSessions": "boolean",
     "scheduledTime": "number"
@@ -70,6 +71,7 @@
   },
   "tabs.query shape": {
    "result": {
+    "@type": "tabs.Tab",
     "active": "boolean",
     "audible": "boolean",
     "autoDiscardable": "boolean",
@@ -102,6 +104,7 @@
    "result": {
     "created": [
      {
+      "@type": "tabs.Tab",
       "active": "boolean",
       "audible": "boolean",
       "autoDiscardable": "boolean",
@@ -142,6 +145,7 @@
   },
   "windows.getAll shape": {
    "result": {
+    "@type": "windows.Window",
     "alwaysOnTop": "boolean",
     "focused": "boolean",
     "height": "number",
@@ -183,6 +187,7 @@
   },
   "cookies.get shape": {
    "result": {
+    "@type": "cookies.Cookie",
     "domain": "string",
     "hostOnly": "boolean",
     "httpOnly": "boolean",
@@ -199,6 +204,7 @@
    "result": [
     "string",
     {
+     "@type": "bookmarks.BookmarkTreeNode",
      "dateAdded": "number",
      "id": "string",
      "index": "number",
@@ -214,6 +220,7 @@
   },
   "bookmarks.getTree root shape": {
    "result": {
+    "@type": "bookmarks.BookmarkTreeNode",
     "children": [
      {
       "children": [],
@@ -235,6 +242,7 @@
   },
   "history.addUrl and search": {
    "result": {
+    "@type": "history.HistoryItem",
     "id": "string",
     "lastVisitTime": "number",
     "title": "string",
@@ -268,6 +276,7 @@
   },
   "management.getSelf shape": {
    "result": {
+    "@type": "management.ExtensionInfo",
     "description": "string",
     "enabled": "boolean",
     "homepageUrl": "string",
@@ -316,6 +325,7 @@
   },
   "system.cpu.getInfo shape": {
    "result": {
+    "@type": "system.cpu.CpuInfo",
     "archName": "string",
     "features": [],
     "modelName": "string",
@@ -335,6 +345,7 @@
   },
   "system.memory.getInfo shape": {
    "result": {
+    "@type": "system.memory.MemoryInfo",
     "availableCapacity": "number",
     "capacity": "number"
    }
@@ -428,6 +439,437 @@
     "location": true,
     "captured": true
    }
+  },
+  "tabs.sendMessage to a tab without content script": {
+   "result": "Could not establish connection. Receiving end does not exist."
+  },
+  "tabs.sendMessage to a dynamically registered content script": {
+   "result": [
+    [
+     {
+      "ping": 1
+     },
+     {
+      "@type": "runtime.MessageSender",
+      "id": "string",
+      "origin": "string",
+      "url": "string"
+     }
+    ],
+    {
+     "@type": "runtime.Port",
+     "disconnect": "function",
+     "name": "string",
+     "onDisconnect": "event",
+     "onMessage": "event",
+     "postMessage": "function",
+     "sender": "undefined"
+    },
+    [
+     {
+      "ping": 2
+     },
+     "contract",
+     {
+      "@type": "runtime.MessageSender",
+      "id": "string",
+      "origin": "string",
+      "url": "string"
+     }
+    ]
+   ]
+  },
+  "tabs.sendMessage to the extension's own page in a tab": {
+   "result": [
+    {
+     "ping": 1
+    },
+    {
+     "@type": "runtime.MessageSender",
+     "id": "string",
+     "origin": "string",
+     "url": "string"
+    }
+   ]
+  },
+  "windows.create normal then remove": {
+   "result": [
+    true,
+    "normal",
+    {
+     "@type": "windows.Window",
+     "alwaysOnTop": "boolean",
+     "focused": "boolean",
+     "height": "number",
+     "id": "number",
+     "incognito": "boolean",
+     "left": "number",
+     "state": "string",
+     "tabs": [
+      {
+       "active": "boolean",
+       "audible": "boolean",
+       "autoDiscardable": "boolean",
+       "discarded": "boolean",
+       "frozen": "boolean",
+       "groupId": "number",
+       "height": "number",
+       "highlighted": "boolean",
+       "id": "number",
+       "incognito": "boolean",
+       "index": "number",
+       "lastAccessed": "number",
+       "mutedInfo": {
+        "muted": "boolean"
+       },
+       "pendingUrl": "string",
+       "pinned": "boolean",
+       "selected": "boolean",
+       "splitViewId": "number",
+       "status": "string",
+       "title": "string",
+       "url": "string",
+       "width": "number",
+       "windowId": "number"
+      }
+     ],
+     "top": "number",
+     "type": "string",
+     "width": "number"
+    },
+    true
+   ]
+  },
+  "popup tabs.query and runtime.sendMessage": {
+   "result": {
+    "tabs": 1,
+    "currentTab": true,
+    "tab": {
+     "@type": "tabs.Tab",
+     "active": "boolean",
+     "audible": "boolean",
+     "autoDiscardable": "boolean",
+     "discarded": "boolean",
+     "favIconUrl": "string",
+     "frozen": "boolean",
+     "groupId": "number",
+     "height": "number",
+     "highlighted": "boolean",
+     "id": "number",
+     "incognito": "boolean",
+     "index": "number",
+     "lastAccessed": "number",
+     "mutedInfo": {
+      "muted": "boolean"
+     },
+     "openerTabId": "number",
+     "pinned": "boolean",
+     "selected": "boolean",
+     "splitViewId": "number",
+     "status": "string",
+     "title": "string",
+     "url": "string",
+     "width": "number",
+     "windowId": "number"
+    },
+    "answer": [
+     {
+      "ping": "popup"
+     },
+     {
+      "@type": "runtime.MessageSender",
+      "id": "string",
+      "origin": "string",
+      "url": "string"
+     }
+    ]
+   }
+  }
+ },
+ "contentScript": {
+  "isolated": {
+   "chrome": "object",
+   "chrome.loadTimes": "function",
+   "chrome.csi": "function",
+   "chrome.dom": "object",
+   "chrome.dom.openOrClosedShadowRoot": "function",
+   "chrome.extension": "object",
+   "chrome.extension.ViewType": "object",
+   "chrome.extension.ViewType.POPUP": "string",
+   "chrome.extension.ViewType.TAB": "string",
+   "chrome.extension.inIncognitoContext": "boolean",
+   "chrome.i18n": "object",
+   "chrome.i18n.detectLanguage": "function",
+   "chrome.i18n.getAcceptLanguages": "function",
+   "chrome.i18n.getMessage": "function",
+   "chrome.i18n.getUILanguage": "function",
+   "chrome.runtime": "object",
+   "chrome.runtime.dynamicId": "string",
+   "chrome.runtime.id": "string",
+   "chrome.runtime.onMessage": "event",
+   "chrome.runtime.onConnect": "event",
+   "chrome.runtime.connect": "function",
+   "chrome.runtime.getManifest": "function",
+   "chrome.runtime.getURL": "function",
+   "chrome.runtime.getVersion": "function",
+   "chrome.runtime.sendMessage": "function",
+   "chrome.runtime.ContextType": "object",
+   "chrome.runtime.ContextType.BACKGROUND": "string",
+   "chrome.runtime.ContextType.DEVELOPER_TOOLS": "string",
+   "chrome.runtime.ContextType.OFFSCREEN_DOCUMENT": "string",
+   "chrome.runtime.ContextType.POPUP": "string",
+   "chrome.runtime.ContextType.SIDE_PANEL": "string",
+   "chrome.runtime.ContextType.TAB": "string",
+   "chrome.runtime.OnInstalledReason": "object",
+   "chrome.runtime.OnInstalledReason.CHROME_UPDATE": "string",
+   "chrome.runtime.OnInstalledReason.INSTALL": "string",
+   "chrome.runtime.OnInstalledReason.SHARED_MODULE_UPDATE": "string",
+   "chrome.runtime.OnInstalledReason.UPDATE": "string",
+   "chrome.runtime.OnRestartRequiredReason": "object",
+   "chrome.runtime.OnRestartRequiredReason.APP_UPDATE": "string",
+   "chrome.runtime.OnRestartRequiredReason.OS_UPDATE": "string",
+   "chrome.runtime.OnRestartRequiredReason.PERIODIC": "string",
+   "chrome.runtime.PlatformArch": "object",
+   "chrome.runtime.PlatformArch.ARM": "string",
+   "chrome.runtime.PlatformArch.ARM64": "string",
+   "chrome.runtime.PlatformArch.MIPS": "string",
+   "chrome.runtime.PlatformArch.MIPS64": "string",
+   "chrome.runtime.PlatformArch.RISCV64": "string",
+   "chrome.runtime.PlatformArch.X86_32": "string",
+   "chrome.runtime.PlatformArch.X86_64": "string",
+   "chrome.runtime.PlatformNaclArch": "object",
+   "chrome.runtime.PlatformNaclArch.ARM": "string",
+   "chrome.runtime.PlatformNaclArch.MIPS": "string",
+   "chrome.runtime.PlatformNaclArch.MIPS64": "string",
+   "chrome.runtime.PlatformNaclArch.X86_32": "string",
+   "chrome.runtime.PlatformNaclArch.X86_64": "string",
+   "chrome.runtime.PlatformOs": "object",
+   "chrome.runtime.PlatformOs.ANDROID": "string",
+   "chrome.runtime.PlatformOs.CROS": "string",
+   "chrome.runtime.PlatformOs.LINUX": "string",
+   "chrome.runtime.PlatformOs.MAC": "string",
+   "chrome.runtime.PlatformOs.OPENBSD": "string",
+   "chrome.runtime.PlatformOs.WIN": "string",
+   "chrome.runtime.RequestUpdateCheckStatus": "object",
+   "chrome.runtime.RequestUpdateCheckStatus.NO_UPDATE": "string",
+   "chrome.runtime.RequestUpdateCheckStatus.THROTTLED": "string",
+   "chrome.runtime.RequestUpdateCheckStatus.UPDATE_AVAILABLE": "string",
+   "chrome.scripting": "object",
+   "chrome.scripting.ExecutionWorld": "object",
+   "chrome.scripting.ExecutionWorld.ISOLATED": "string",
+   "chrome.scripting.ExecutionWorld.MAIN": "string",
+   "chrome.scripting.StyleOrigin": "object",
+   "chrome.scripting.StyleOrigin.AUTHOR": "string",
+   "chrome.scripting.StyleOrigin.USER": "string",
+   "chrome.scripting.globalParams": "object",
+   "chrome.storage": "object",
+   "chrome.storage.sync": "object",
+   "chrome.storage.sync.get": "function",
+   "chrome.storage.sync.getKeys": "function",
+   "chrome.storage.sync.set": "function",
+   "chrome.storage.sync.remove": "function",
+   "chrome.storage.sync.clear": "function",
+   "chrome.storage.sync.getBytesInUse": "function",
+   "chrome.storage.sync.setAccessLevel": "function",
+   "chrome.storage.sync.onChanged": "event",
+   "chrome.storage.sync.QUOTA_BYTES": "number",
+   "chrome.storage.sync.QUOTA_BYTES_PER_ITEM": "number",
+   "chrome.storage.sync.MAX_ITEMS": "number",
+   "chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_HOUR": "number",
+   "chrome.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE": "number",
+   "chrome.storage.sync.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE": "number",
+   "chrome.storage.session": "object",
+   "chrome.storage.session.get": "function",
+   "chrome.storage.session.getKeys": "function",
+   "chrome.storage.session.set": "function",
+   "chrome.storage.session.remove": "function",
+   "chrome.storage.session.clear": "function",
+   "chrome.storage.session.getBytesInUse": "function",
+   "chrome.storage.session.setAccessLevel": "function",
+   "chrome.storage.session.onChanged": "event",
+   "chrome.storage.session.QUOTA_BYTES": "number",
+   "chrome.storage.managed": "object",
+   "chrome.storage.managed.get": "function",
+   "chrome.storage.managed.getKeys": "function",
+   "chrome.storage.managed.set": "function",
+   "chrome.storage.managed.remove": "function",
+   "chrome.storage.managed.clear": "function",
+   "chrome.storage.managed.getBytesInUse": "function",
+   "chrome.storage.managed.setAccessLevel": "function",
+   "chrome.storage.managed.onChanged": "event",
+   "chrome.storage.local": "object",
+   "chrome.storage.local.get": "function",
+   "chrome.storage.local.getKeys": "function",
+   "chrome.storage.local.set": "function",
+   "chrome.storage.local.remove": "function",
+   "chrome.storage.local.clear": "function",
+   "chrome.storage.local.getBytesInUse": "function",
+   "chrome.storage.local.setAccessLevel": "function",
+   "chrome.storage.local.onChanged": "event",
+   "chrome.storage.local.QUOTA_BYTES": "number",
+   "chrome.storage.onChanged": "event",
+   "chrome.storage.AccessLevel": "object",
+   "chrome.storage.AccessLevel.TRUSTED_AND_UNTRUSTED_CONTEXTS": "string",
+   "chrome.storage.AccessLevel.TRUSTED_CONTEXTS": "string",
+   "browser": "object",
+   "browser.dom": "object",
+   "browser.dom.openOrClosedShadowRoot": "function",
+   "browser.extension": "object",
+   "browser.extension.ViewType": "object",
+   "browser.extension.ViewType.POPUP": "string",
+   "browser.extension.ViewType.TAB": "string",
+   "browser.extension.inIncognitoContext": "boolean",
+   "browser.i18n": "object",
+   "browser.i18n.detectLanguage": "function",
+   "browser.i18n.getAcceptLanguages": "function",
+   "browser.i18n.getMessage": "function",
+   "browser.i18n.getUILanguage": "function",
+   "browser.runtime": "object",
+   "browser.runtime.dynamicId": "string",
+   "browser.runtime.id": "string",
+   "browser.runtime.onMessage": "event",
+   "browser.runtime.onConnect": "event",
+   "browser.runtime.connect": "function",
+   "browser.runtime.getManifest": "function",
+   "browser.runtime.getURL": "function",
+   "browser.runtime.getVersion": "function",
+   "browser.runtime.sendMessage": "function",
+   "browser.runtime.ContextType": "object",
+   "browser.runtime.ContextType.BACKGROUND": "string",
+   "browser.runtime.ContextType.DEVELOPER_TOOLS": "string",
+   "browser.runtime.ContextType.OFFSCREEN_DOCUMENT": "string",
+   "browser.runtime.ContextType.POPUP": "string",
+   "browser.runtime.ContextType.SIDE_PANEL": "string",
+   "browser.runtime.ContextType.TAB": "string",
+   "browser.runtime.OnInstalledReason": "object",
+   "browser.runtime.OnInstalledReason.CHROME_UPDATE": "string",
+   "browser.runtime.OnInstalledReason.INSTALL": "string",
+   "browser.runtime.OnInstalledReason.SHARED_MODULE_UPDATE": "string",
+   "browser.runtime.OnInstalledReason.UPDATE": "string",
+   "browser.runtime.OnRestartRequiredReason": "object",
+   "browser.runtime.OnRestartRequiredReason.APP_UPDATE": "string",
+   "browser.runtime.OnRestartRequiredReason.OS_UPDATE": "string",
+   "browser.runtime.OnRestartRequiredReason.PERIODIC": "string",
+   "browser.runtime.PlatformArch": "object",
+   "browser.runtime.PlatformArch.ARM": "string",
+   "browser.runtime.PlatformArch.ARM64": "string",
+   "browser.runtime.PlatformArch.MIPS": "string",
+   "browser.runtime.PlatformArch.MIPS64": "string",
+   "browser.runtime.PlatformArch.RISCV64": "string",
+   "browser.runtime.PlatformArch.X86_32": "string",
+   "browser.runtime.PlatformArch.X86_64": "string",
+   "browser.runtime.PlatformNaclArch": "object",
+   "browser.runtime.PlatformNaclArch.ARM": "string",
+   "browser.runtime.PlatformNaclArch.MIPS": "string",
+   "browser.runtime.PlatformNaclArch.MIPS64": "string",
+   "browser.runtime.PlatformNaclArch.X86_32": "string",
+   "browser.runtime.PlatformNaclArch.X86_64": "string",
+   "browser.runtime.PlatformOs": "object",
+   "browser.runtime.PlatformOs.ANDROID": "string",
+   "browser.runtime.PlatformOs.CROS": "string",
+   "browser.runtime.PlatformOs.LINUX": "string",
+   "browser.runtime.PlatformOs.MAC": "string",
+   "browser.runtime.PlatformOs.OPENBSD": "string",
+   "browser.runtime.PlatformOs.WIN": "string",
+   "browser.runtime.RequestUpdateCheckStatus": "object",
+   "browser.runtime.RequestUpdateCheckStatus.NO_UPDATE": "string",
+   "browser.runtime.RequestUpdateCheckStatus.THROTTLED": "string",
+   "browser.runtime.RequestUpdateCheckStatus.UPDATE_AVAILABLE": "string",
+   "browser.scripting": "object",
+   "browser.scripting.ExecutionWorld": "object",
+   "browser.scripting.ExecutionWorld.ISOLATED": "string",
+   "browser.scripting.ExecutionWorld.MAIN": "string",
+   "browser.scripting.StyleOrigin": "object",
+   "browser.scripting.StyleOrigin.AUTHOR": "string",
+   "browser.scripting.StyleOrigin.USER": "string",
+   "browser.scripting.globalParams": "object",
+   "browser.storage": "object",
+   "browser.storage.sync": "object",
+   "browser.storage.sync.get": "function",
+   "browser.storage.sync.getKeys": "function",
+   "browser.storage.sync.set": "function",
+   "browser.storage.sync.remove": "function",
+   "browser.storage.sync.clear": "function",
+   "browser.storage.sync.getBytesInUse": "function",
+   "browser.storage.sync.setAccessLevel": "function",
+   "browser.storage.sync.onChanged": "event",
+   "browser.storage.sync.QUOTA_BYTES": "number",
+   "browser.storage.sync.QUOTA_BYTES_PER_ITEM": "number",
+   "browser.storage.sync.MAX_ITEMS": "number",
+   "browser.storage.sync.MAX_WRITE_OPERATIONS_PER_HOUR": "number",
+   "browser.storage.sync.MAX_WRITE_OPERATIONS_PER_MINUTE": "number",
+   "browser.storage.sync.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE": "number",
+   "browser.storage.session": "object",
+   "browser.storage.session.get": "function",
+   "browser.storage.session.getKeys": "function",
+   "browser.storage.session.set": "function",
+   "browser.storage.session.remove": "function",
+   "browser.storage.session.clear": "function",
+   "browser.storage.session.getBytesInUse": "function",
+   "browser.storage.session.setAccessLevel": "function",
+   "browser.storage.session.onChanged": "event",
+   "browser.storage.session.QUOTA_BYTES": "number",
+   "browser.storage.managed": "object",
+   "browser.storage.managed.get": "function",
+   "browser.storage.managed.getKeys": "function",
+   "browser.storage.managed.set": "function",
+   "browser.storage.managed.remove": "function",
+   "browser.storage.managed.clear": "function",
+   "browser.storage.managed.getBytesInUse": "function",
+   "browser.storage.managed.setAccessLevel": "function",
+   "browser.storage.managed.onChanged": "event",
+   "browser.storage.local": "object",
+   "browser.storage.local.get": "function",
+   "browser.storage.local.getKeys": "function",
+   "browser.storage.local.set": "function",
+   "browser.storage.local.remove": "function",
+   "browser.storage.local.clear": "function",
+   "browser.storage.local.getBytesInUse": "function",
+   "browser.storage.local.setAccessLevel": "function",
+   "browser.storage.local.onChanged": "event",
+   "browser.storage.local.QUOTA_BYTES": "number",
+   "browser.storage.onChanged": "event",
+   "browser.storage.AccessLevel": "object",
+   "browser.storage.AccessLevel.TRUSTED_AND_UNTRUSTED_CONTEXTS": "string",
+   "browser.storage.AccessLevel.TRUSTED_CONTEXTS": "string"
+  },
+  "main": {
+   "chrome": "object",
+   "chrome.app": "object",
+   "chrome.app.InstallState": "object",
+   "chrome.app.InstallState.DISABLED": "string",
+   "chrome.app.InstallState.INSTALLED": "string",
+   "chrome.app.InstallState.NOT_INSTALLED": "string",
+   "chrome.app.RunningState": "object",
+   "chrome.app.RunningState.CANNOT_RUN": "string",
+   "chrome.app.RunningState.READY_TO_RUN": "string",
+   "chrome.app.RunningState.RUNNING": "string",
+   "chrome.app.getDetails": "function",
+   "chrome.app.getIsInstalled": "function",
+   "chrome.app.installState": "function",
+   "chrome.app.isInstalled": "boolean",
+   "chrome.app.runningState": "function",
+   "chrome.csi": "function",
+   "chrome.loadTimes": "function"
+  },
+  "page": {
+   "chrome": "object",
+   "chrome.loadTimes": "function",
+   "chrome.csi": "function",
+   "chrome.app": "object",
+   "chrome.app.isInstalled": "boolean",
+   "chrome.app.getDetails": "function",
+   "chrome.app.getIsInstalled": "function",
+   "chrome.app.installState": "function",
+   "chrome.app.runningState": "function",
+   "chrome.app.InstallState": "object",
+   "chrome.app.InstallState.DISABLED": "string",
+   "chrome.app.InstallState.INSTALLED": "string",
+   "chrome.app.InstallState.NOT_INSTALLED": "string",
+   "chrome.app.RunningState": "object",
+   "chrome.app.RunningState.CANNOT_RUN": "string",
+   "chrome.app.RunningState.READY_TO_RUN": "string",
+   "chrome.app.RunningState.RUNNING": "string"
   }
  }
 }

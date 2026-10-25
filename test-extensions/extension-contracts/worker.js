@@ -25,3 +25,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'session' || !changes.indexedDBAsked) return;
   indexedDBRoundtrip('contract-worker').then((answer) => chrome.storage.session.set({ indexedDBAnswer: answer }));
 });
+
+// The worker listens to messages only while the popup case asks: the sendMessage cases need it without a listener.
+function answer(message, sender, sendResponse) {
+  sendResponse({ echo: message, sender });
+}
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'session' || !changes.workerListens) return;
+  if (changes.workerListens.newValue) chrome.runtime.onMessage.addListener(answer);
+  else chrome.runtime.onMessage.removeListener(answer);
+  chrome.storage.session.set({ workerListening: Boolean(changes.workerListens.newValue) });
+});

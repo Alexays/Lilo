@@ -10,5 +10,6 @@
     "system.memory", "tabs", "topSites", "webNavigation"
   ],
   "host_permissions": ["<all_urls>"],
-  "action": {}
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [{ "matches": ["http://127.0.0.1/surface*"], "js": ["surface.js"] }]
 }

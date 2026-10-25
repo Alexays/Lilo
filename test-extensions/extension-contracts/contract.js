@@ -3,12 +3,19 @@
 // must be identical in both: exact values where they are deterministic, otherwise the shape of the
 // result (keys and types), and the exact message of an expected error.
 
-// Keys sorted, values replaced by their type; an array keeps the shape of its first element.
-function shape(value) {
+// The test server's origin (http://127.0.0.1:port), whose every path answers a plain page.
+const site = new URL(location.href).searchParams.get('site');
+
+// Keys sorted, values replaced by their type; an array keeps the shape of its first element and an event is
+// 'event'. A chrome-types interface name (tabs.Tab) as `type` tags the object, whose required properties
+// ChromeContractTests checks.
+function shape(value, type) {
   if (value === null) return 'null';
-  if (Array.isArray(value)) return value.length ? [shape(value[0])] : [];
+  if (Array.isArray(value)) return value.length ? [shape(value[0], type)] : [];
+  if (typeof value === 'object' && typeof value.addListener === 'function') return 'event';
   if (typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, shape(value[key])]));
+    const shaped = Object.fromEntries(Object.keys(value).sort().map((key) => [key, shape(value[key])]));
+    return type ? { '@type': type, ...shaped } : shaped;
   }
   return typeof value;
 }
@@ -34,6 +41,40 @@ function nextEvent(event, run, timeoutMs = 3000, matches = () => true) {
     }
     event.addListener(listener);
     Promise.resolve().then(run).catch(() => {});
+  });
+}
+
+// A new background tab at `url`, once it has loaded.
+async function loadedTab(url) {
+  const tab = await chrome.tabs.create({ url, active: false });
+  await new Promise((resolve) => {
+    const listener = (id, change) => {
+      if (id !== tab.id || change.status !== 'complete') return;
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve();
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.get(tab.id).then((current) => listener(tab.id, current));
+  });
+  return tab;
+}
+
+// What popup.js reports once `chrome.action.openPopup()` opened it, or 'timeout'.
+function popupReport() {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { chrome.storage.onChanged.removeListener(reported); resolve('timeout'); }, 10000);
+    function reported(changes, area) {
+      if (area !== 'session' || !changes.popupReport?.newValue) return;
+      clearTimeout(timer);
+      chrome.storage.onChanged.removeListener(reported);
+      resolve(changes.popupReport.newValue);
+    }
+    chrome.storage.onChanged.addListener(reported);
+    chrome.storage.session.remove('popupReport').then(() => chrome.action.openPopup()).catch((error) => {
+      clearTimeout(timer);
+      chrome.storage.onChanged.removeListener(reported);
+      resolve(`openPopup: ${error.message}`);
+    });
   });
 }
 
@@ -92,19 +133,19 @@ const cases = {
     await chrome.alarms.create('contract', { delayInMinutes: 5 });
     const alarm = await chrome.alarms.get('contract');
     await chrome.alarms.clear('contract');
-    return shape(alarm);
+    return shape(alarm, 'alarms.Alarm');
   },
   'alarms.get missing': async () => String(await chrome.alarms.get('nope')),
-  'tabs.query shape': async () => shape((await chrome.tabs.query({ currentWindow: true }))[0]),
+  'tabs.query shape': async () => shape((await chrome.tabs.query({ currentWindow: true }))[0], 'tabs.Tab'),
   'tabs.get invalid id': () => errorOf(() => chrome.tabs.get(-5)),
   'tabs.create and remove events': async () => {
     const created = await nextEvent(chrome.tabs.onCreated, () => chrome.tabs.create({ url: 'about:blank', active: false }));
     const tab = created[0];
     const removed = await nextEvent(chrome.tabs.onRemoved, () => chrome.tabs.remove(tab.id));
-    return { created: created.map(shape), removed: removed.map(shape) };
+    return { created: [shape(tab, 'tabs.Tab')], removed: removed.map((arg) => shape(arg)) };
   },
   'tabs.TAB_ID_NONE': () => chrome.tabs.TAB_ID_NONE,
-  'windows.getAll shape': async () => shape((await chrome.windows.getAll({ populate: false }))[0]),
+  'windows.getAll shape': async () => shape((await chrome.windows.getAll({ populate: false }))[0], 'windows.Window'),
   'windows.WINDOW_ID_CURRENT': () => chrome.windows.WINDOW_ID_CURRENT,
   'cookies.onChanged sequence': async () => {
     const url = 'https://contract.example/';
@@ -122,21 +163,21 @@ const cases = {
     await chrome.cookies.set({ url: 'https://contract.example/', name: 'shape', value: 'v', secure: true });
     const cookie = await chrome.cookies.get({ url: 'https://contract.example/', name: 'shape' });
     await chrome.cookies.remove({ url: 'https://contract.example/', name: 'shape' });
-    return shape(cookie);
+    return shape(cookie, 'cookies.Cookie');
   },
   'bookmarks.create and onCreated': async () => {
     const tree = await chrome.bookmarks.getTree();
     const parentId = tree[0].children[0].id;
     const args = await nextEvent(chrome.bookmarks.onCreated, () => chrome.bookmarks.create({ parentId, title: 'contract', url: 'https://contract.example/' }));
     await chrome.bookmarks.remove(args[0]);
-    return args.map(shape);
+    return [shape(args[0]), shape(args[1], 'bookmarks.BookmarkTreeNode')];
   },
   'bookmarks.get missing': () => errorOf(() => chrome.bookmarks.get('999999')),
-  'bookmarks.getTree root shape': async () => shape((await chrome.bookmarks.getTree())[0]),
+  'bookmarks.getTree root shape': async () => shape((await chrome.bookmarks.getTree())[0], 'bookmarks.BookmarkTreeNode'),
   'history.addUrl and search': async () => {
     await chrome.history.addUrl({ url: 'https://contract.example/visited' });
     const items = await chrome.history.search({ text: 'contract.example/visited', startTime: 0 });
-    return shape(items[0]);
+    return shape(items[0], 'history.HistoryItem');
   },
   'contextMenus duplicate id': async () => {
     await new Promise((resolve) => chrome.contextMenus.create({ id: 'dup', title: 'one' }, resolve));
@@ -152,7 +193,7 @@ const cases = {
     return rules;
   },
   'downloads.search empty': async () => chrome.downloads.search({ query: ['no-such-download-contract'] }),
-  'management.getSelf shape': async () => shape(await chrome.management.getSelf()),
+  'management.getSelf shape': async () => shape(await chrome.management.getSelf(), 'management.ExtensionInfo'),
   'permissions.contains': async () => [await chrome.permissions.contains({ permissions: ['tabs'] }), await chrome.permissions.contains({ permissions: ['debugger'] })],
   'permissions.request outside a gesture': () => errorOf(() => chrome.permissions.request({ permissions: ['debugger'] })),
   'idle.queryState': async () => typeof (await chrome.idle.queryState(60)),
@@ -160,8 +201,8 @@ const cases = {
   'i18n.getMessage extension id': () => chrome.i18n.getMessage('@@extension_id') === chrome.runtime.id,
   'topSites.get shape': async () => Array.isArray(await chrome.topSites.get()),
   'sessions.MAX_SESSION_RESULTS': () => chrome.sessions.MAX_SESSION_RESULTS,
-  'system.cpu.getInfo shape': async () => shape(await chrome.system.cpu.getInfo()),
-  'system.memory.getInfo shape': async () => shape(await chrome.system.memory.getInfo()),
+  'system.cpu.getInfo shape': async () => shape(await chrome.system.cpu.getInfo(), 'system.cpu.CpuInfo'),
+  'system.memory.getInfo shape': async () => shape(await chrome.system.memory.getInfo(), 'system.memory.MemoryInfo'),
   'notifications.create missing fields': () => errorOf(() => chrome.notifications.create('n', { type: 'basic', title: 't' })),
   'action.setBadgeText and get': async () => {
     await chrome.action.setBadgeText({ text: '12' });
@@ -186,16 +227,7 @@ const cases = {
     return frames;
   },
   'webNavigation on a discarded tab': async () => {
-    const tab = await chrome.tabs.create({ url: 'https://contract.example/discarded', active: false });
-    await new Promise((resolve) => {
-      const listener = (id, change) => {
-        if (id !== tab.id || change.status !== 'complete') return;
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
-      };
-      chrome.tabs.onUpdated.addListener(listener);
-      chrome.tabs.get(tab.id).then((current) => listener(tab.id, current));
-    });
+    const tab = await loadedTab('https://contract.example/discarded');
     await chrome.tabs.discard(tab.id);
     const frames = await chrome.webNavigation.getAllFrames({ tabId: tab.id });
     const frame = await chrome.webNavigation.getFrame({ tabId: tab.id, frameId: 0 });
@@ -229,16 +261,7 @@ const cases = {
   },
   'pageCapture.saveAsMHTML on an extension page': async () => {
     const url = chrome.runtime.getURL('capture.html');
-    const tab = await chrome.tabs.create({ url, active: false });
-    await new Promise((resolve) => {
-      const listener = (id, change) => {
-        if (id !== tab.id || change.status !== 'complete') return;
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
-      };
-      chrome.tabs.onUpdated.addListener(listener);
-      chrome.tabs.get(tab.id).then((current) => listener(tab.id, current));
-    });
+    const tab = await loadedTab(url);
     const blob = await chrome.pageCapture.saveAsMHTML({ tabId: tab.id }).catch((error) => error.message);
     await chrome.tabs.remove(tab.id);
     if (typeof blob === 'string') return blob;
@@ -252,6 +275,76 @@ const cases = {
       captured: /captured/.test(text),
     };
   },
+  'tabs.sendMessage to a tab without content script': async () => {
+    const tab = await loadedTab(`${site}/plain`);
+    const error = await errorOf(() => chrome.tabs.sendMessage(tab.id, { ping: 1 }));
+    await chrome.tabs.remove(tab.id);
+    return error;
+  },
+  'tabs.sendMessage to a dynamically registered content script': async () => {
+    await chrome.scripting.registerContentScripts([{ id: 'dynamic', matches: ['http://127.0.0.1/dynamic*'], js: ['dynamic.js'], runAt: 'document_start' }]);
+    const tab = await loadedTab(`${site}/dynamic`);
+    const answer = await chrome.tabs.sendMessage(tab.id, { ping: 1 }).catch((error) => error.message);
+    const port = chrome.tabs.connect(tab.id, { name: 'contract' });
+    const reply = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve('timeout'), 3000);
+      port.onMessage.addListener((message) => { clearTimeout(timer); resolve(message); });
+      port.postMessage({ ping: 2 });
+    });
+    // A disconnected port throws on reading its events.
+    const portShape = shape(port, 'runtime.Port');
+    port.disconnect();
+    await chrome.tabs.remove(tab.id);
+    await chrome.scripting.unregisterContentScripts({ ids: ['dynamic'] });
+    return [
+      typeof answer === 'string' ? answer : [answer.echo, shape(answer.sender, 'runtime.MessageSender')],
+      portShape,
+      typeof reply === 'string' ? reply : [reply.echo, reply.name, shape(reply.sender, 'runtime.MessageSender')],
+    ];
+  },
+  "tabs.sendMessage to the extension's own page in a tab": async () => {
+    const tab = await loadedTab(chrome.runtime.getURL('listener.html'));
+    const answer = await chrome.tabs.sendMessage(tab.id, { ping: 1 }).catch((error) => error.message);
+    await chrome.tabs.remove(tab.id);
+    return typeof answer === 'string' ? answer : [answer.echo, shape(answer.sender, 'runtime.MessageSender')];
+  },
+  'windows.create normal then remove': async () => {
+    const before = (await chrome.windows.getAll()).map(({ id }) => id);
+    const created = await chrome.windows.create({ type: 'normal', url: `${site}/window`, focused: false });
+    await chrome.windows.remove(created.id);
+    const after = (await chrome.windows.getAll()).map(({ id }) => id);
+    return [!before.includes(created.id), created.type, shape(created, 'windows.Window'), JSON.stringify(after) === JSON.stringify(before)];
+  },
+  'popup tabs.query and runtime.sendMessage': async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const listening = (on) => nextEvent(chrome.storage.onChanged, () => chrome.storage.session.set({ workerListens: on }), 3000,
+      (changes, area) => area === 'session' && changes.workerListening?.newValue === on);
+    await listening(true);
+    const report = await popupReport();
+    await listening(false);
+    if (typeof report === 'string') return report;
+    return {
+      tabs: report.tabs.length,
+      currentTab: report.tabs[0]?.id === tab.id,
+      tab: shape(report.tabs[0], 'tabs.Tab'),
+      answer: typeof report.answer === 'string' ? report.answer : [report.answer.echo, shape(report.answer.sender, 'runtime.MessageSender')],
+    };
+  },
+};
+
+// What the manifest's content script sees in its isolated world, and a function chrome.scripting injects in the
+// page's main world.
+window.contentSurfaces = async () => {
+  const tab = await loadedTab(`${site}/surface`);
+  const target = { tabId: tab.id };
+  let isolated;
+  for (let tries = 0; tries < 100 && !isolated; tries++) {
+    [{ result: isolated }] = await chrome.scripting.executeScript({ target, func: () => document.documentElement.getAttribute('data-surface') });
+    if (!isolated) await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  const [{ result: main }] = await chrome.scripting.executeScript({ target, func: worldSurface, world: 'MAIN' });
+  await chrome.tabs.remove(tab.id);
+  return { isolated: JSON.parse(isolated), main };
 };
 
 // Runs every case, each isolated, and returns { name: { result } | { threw } }.

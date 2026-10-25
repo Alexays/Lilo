@@ -15,3 +15,40 @@ tabs.create and remove events | WebKit's Tab objects lack splitViewId, and add i
 tabs.get invalid id | WebKit's error message differs from Chrome's.
 tabs.query shape | WebKit's Tab objects lack splitViewId, and add isArticle and isInReaderMode.
 webNavigation on a tab before its first commit | WebKit lists the tab's initial empty document, with an empty URL, where Chrome lists no frame until the first navigation commits.
+popup tabs.query and runtime.sendMessage | Lilo's MessageSender adds documentId for an extension page; WebKit's Tab objects lack splitViewId, openerTabId and the extension page's favIconUrl, and add isArticle and isInReaderMode.
+tabs.sendMessage to a dynamically registered content script | Lilo's MessageSender adds documentId for an extension page.
+tabs.sendMessage to the extension's own page in a tab | Lilo's MessageSender adds documentId for an extension page.
+windows.create normal then remove | The tabs of the window windows.create returns lack splitViewId, pendingUrl, autoDiscardable, discarded, frozen, groupId and lastAccessed, and add isArticle and isInReaderMode.
+# Required properties (chrome-types) an object a case tags lacks: Type.property (case) | why.
+alarms.Alarm.persistAcrossSessions (alarms.create and get) | WebKit's Alarm objects lack persistAcrossSessions.
+bookmarks.BookmarkTreeNode.syncing (bookmarks.create and onCreated) | Lilo's bookmark nodes lack syncing.
+bookmarks.BookmarkTreeNode.syncing (bookmarks.getTree root shape) | Lilo's bookmark nodes lack syncing.
+management.ExtensionInfo.isApp (management.getSelf shape) | Lilo's ExtensionInfo lacks isApp.
+management.ExtensionInfo.mayDisable (management.getSelf shape) | Lilo's ExtensionInfo lacks mayDisable.
+management.ExtensionInfo.optionsUrl (management.getSelf shape) | Lilo's ExtensionInfo lacks optionsUrl when the extension has no options page.
+tabs.Tab.autoDiscardable (windows.create normal then remove) | WebKit builds the created window's tabs without the tab state Lilo completes tab objects with.
+tabs.Tab.discarded (windows.create normal then remove) | WebKit builds the created window's tabs without the tab state Lilo completes tab objects with.
+tabs.Tab.frozen (windows.create normal then remove) | WebKit builds the created window's tabs without the tab state Lilo completes tab objects with.
+tabs.Tab.groupId (windows.create normal then remove) | WebKit builds the created window's tabs without the tab state Lilo completes tab objects with.
+tabs.Tab.lastAccessed (windows.create normal then remove) | WebKit builds the created window's tabs without the tab state Lilo completes tab objects with.
+# Members a content script (isolated), a main-world script (main) or the page (page) sees unlike in Chrome: world path | why.
+# A chrome.* path covers its members and its browser.* twin.
+isolated chrome.csi | Chrome's legacy page timing function, which Lilo gives no world.
+isolated chrome.loadTimes | Chrome's legacy page timing function, which Lilo gives no world.
+isolated chrome.extension.ViewType | WebKit's content-script extension namespace lacks the enum, and the content compat does not add it.
+isolated chrome.i18n.detectLanguage | WebKit gives content scripts no detectLanguage.
+isolated chrome.i18n.getPreferredSystemLanguages | WebKit's own addition.
+isolated chrome.i18n.getSystemUILanguage | WebKit's own addition.
+isolated chrome.runtime.dynamicId | WebKit has no dynamic extension URLs.
+isolated chrome.runtime.getDocumentId | WebKit's own addition.
+isolated chrome.runtime.getFrameId | WebKit's own addition.
+isolated chrome.scripting | WebKit gives content scripts no scripting namespace (Chrome's holds globalParams and its enums).
+isolated chrome.storage.AccessLevel | WebKit has no storage access levels.
+isolated chrome.storage.local.setAccessLevel | WebKit has no storage access levels.
+isolated chrome.storage.sync.setAccessLevel | WebKit has no storage access levels.
+isolated chrome.storage.sync.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE | WebKit's content-script sync area lacks the constant.
+isolated chrome.storage.managed | The content compat's managed area has get, getBytesInUse and onChanged only, and a QUOTA_BYTES Chrome's lacks.
+isolated chrome.storage.session | WebKit gives content scripts no session area, where Chrome's exists and refuses calls until setAccessLevel.
+main browser | WebKit gives main-world scripts browser.runtime with connect and sendMessage; Chrome gives them nothing without externally_connectable.
+main chrome | Lilo gives the page no chrome object, where Chrome's holds app, csi and loadTimes.
+page chrome | Lilo gives the page no chrome object, where Chrome's holds app, csi and loadTimes.
