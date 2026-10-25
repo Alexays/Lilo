@@ -42,7 +42,8 @@ final class SidePanelController: NSObject {
 
     private var panelWidth: CGFloat {
         guard let bounds = window.window?.contentView?.bounds else { return width }
-        let available = bounds.width - window.sidebarWidth - MainWindowController.contentInset * 2
+        let edges = window.pageEdges()
+        let available = bounds.width - edges.left - edges.right
         return max(0, min(width, available - Self.minimumContentWidth - SplitDividerView.width))
     }
 
@@ -252,10 +253,10 @@ final class SidePanelController: NSObject {
 
     private func layoutPanel() {
         guard let panel, let bounds = window.window?.contentView?.bounds else { return }
-        let inset = MainWindowController.contentInset
+        let edges = window.pageEdges()
         let width = panelWidth
-        panel.frame = NSRect(x: bounds.maxX - inset - width, y: inset, width: width, height: bounds.height - inset * 2)
-        divider.frame = NSRect(x: panel.frame.minX - SplitDividerView.width, y: inset, width: SplitDividerView.width, height: panel.frame.height)
+        panel.frame = NSRect(x: bounds.maxX - edges.right - width, y: edges.bottom, width: width, height: max(0, bounds.height - edges.top - edges.bottom))
+        divider.frame = NSRect(x: panel.frame.minX - SplitDividerView.width, y: edges.bottom, width: SplitDividerView.width, height: panel.frame.height)
     }
 
     private func retire(_ entry: Entry) {
@@ -290,7 +291,7 @@ final class SidePanelController: NSObject {
         }
         divider.onDrag = { [weak self] point in
             guard let self, let bounds = window.window?.contentView?.bounds else { return }
-            width = max(Self.minimumWidth, bounds.maxX - MainWindowController.contentInset - point.x - SplitDividerView.width / 2)
+            width = max(Self.minimumWidth, bounds.maxX - window.pageEdges().right - point.x - SplitDividerView.width / 2)
             layoutPanel()
             window.updateContentContainerFrame(animated: false)
         }

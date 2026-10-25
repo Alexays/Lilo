@@ -29,12 +29,13 @@ extension MainWindowController {
     /// Docks `engine` in the sidebar slot; the chrome mounts the slot on the bridge event and the
     /// zone stream then positions the native container.
     func dockInCallTab(_ engine: WKWebViewTab) {
-        guard let contentView = window?.contentView else {
+        guard let contentView = window?.contentView, tabLayout.position.isVertical else {
             floatingTabPanel.float(engine)
             return
         }
         setPipDockActive(true, title: engine.currentTitle ?? "")
         tabDock.sidebarWidth = sidebarWidth
+        tabDock.sidebarOnRight = tabLayout.position == .right
         tabDock.dock(
             engine,
             logicalSize: contentContainerView.bounds.size,

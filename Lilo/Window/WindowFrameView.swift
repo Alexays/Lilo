@@ -1,5 +1,17 @@
 import AppKit
 
+/// Distances from each window edge to the content hole, the content inset included.
+struct ContentEdges: Equatable {
+    var left: CGFloat
+    var right: CGFloat
+    var top: CGFloat
+    var bottom: CGFloat
+
+    static func uniform(_ inset: CGFloat) -> ContentEdges {
+        ContentEdges(left: inset, right: inset, top: inset, bottom: inset)
+    }
+}
+
 /// Pure frame geometry: four opaque bands tiling everything outside the content
 /// hole, plus four corner squares carrying the concave rounded-corner bites.
 /// Bottom-left-origin (CALayer) coordinates, matching `contentFrameRect()`.
@@ -16,12 +28,12 @@ struct WindowFrameGeometry: Equatable {
     /// Effective corner radius after clamping to the hole size.
     var cornerRadius: CGFloat
 
-    init(size: CGSize, sidebarWidth: CGFloat, inset: CGFloat, cornerRadius: CGFloat) {
+    init(size: CGSize, edges: ContentEdges, cornerRadius: CGFloat) {
         let hole = CGRect(
-            x: sidebarWidth + inset,
-            y: inset,
-            width: max(0, size.width - sidebarWidth - inset * 2),
-            height: max(0, size.height - inset * 2)
+            x: edges.left,
+            y: edges.bottom,
+            width: max(0, size.width - edges.left - edges.right),
+            height: max(0, size.height - edges.top - edges.bottom)
         )
         contentHole = hole
         leftBand = CGRect(x: 0, y: 0, width: hole.minX, height: size.height)
@@ -50,8 +62,7 @@ final class WindowFrameView: NSView {
     static let colorFadeDuration: TimeInterval = 0.34
     private static let colorFadeTiming = CAMediaTimingFunction(controlPoints: 0.22, 1, 0.36, 1)
 
-    private let contentInset: CGFloat
-    private(set) var sidebarWidth: CGFloat
+    private(set) var edges: ContentEdges
     private var frameColor: CGColor?
     private var cornerPathRadius: CGFloat = -1
 
@@ -67,9 +78,8 @@ final class WindowFrameView: NSView {
     private var bandLayers: [CALayer] { [leftBand, rightBand, topBand, bottomBand] }
     private var cornerLayers: [CAShapeLayer] { [topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner] }
 
-    init(frame: NSRect, sidebarWidth: CGFloat, contentInset: CGFloat) {
-        self.sidebarWidth = sidebarWidth
-        self.contentInset = contentInset
+    init(frame: NSRect, edges: ContentEdges) {
+        self.edges = edges
         super.init(frame: frame)
         wantsLayer = true
         layerContentsRedrawPolicy = .never
@@ -105,10 +115,10 @@ final class WindowFrameView: NSView {
         applyLayout(animated: false)
     }
 
-    /// Updates the sidebar band width. Non-animated sets are cheap layer-frame writes
+    /// Updates the content hole. Non-animated sets are cheap layer-frame writes
     /// (sidebar live-resize drag); animated runs the 280ms compositor-only curtain sweep.
-    func setSidebarWidth(_ width: CGFloat, animated: Bool, completion: (() -> Void)? = nil) {
-        sidebarWidth = width
+    func setEdges(_ edges: ContentEdges, animated: Bool, completion: (() -> Void)? = nil) {
+        self.edges = edges
         applyLayout(animated: animated, completion: completion)
     }
 
@@ -135,8 +145,7 @@ final class WindowFrameView: NSView {
     private func applyLayout(animated: Bool, completion: (() -> Void)? = nil) {
         let geometry = WindowFrameGeometry(
             size: bounds.size,
-            sidebarWidth: sidebarWidth,
-            inset: contentInset,
+            edges: edges,
             cornerRadius: Self.contentCornerRadius
         )
         updateCornerPathsIfNeeded(radius: geometry.cornerRadius)

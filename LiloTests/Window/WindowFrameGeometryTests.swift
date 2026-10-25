@@ -6,7 +6,7 @@ final class WindowFrameGeometryTests: XCTestCase {
     private let size = CGSize(width: 1280, height: 800)
 
     func testBandsTileEverythingOutsideTheContentHole() {
-        let geometry = WindowFrameGeometry(size: size, sidebarWidth: 260, inset: 8, cornerRadius: 10)
+        let geometry = WindowFrameGeometry(size: size, edges: ContentEdges(left: 268, right: 8, top: 8, bottom: 8), cornerRadius: 10)
 
         XCTAssertEqual(geometry.contentHole, CGRect(x: 268, y: 8, width: 1280 - 260 - 16, height: 800 - 16))
         XCTAssertEqual(geometry.leftBand, CGRect(x: 0, y: 0, width: 268, height: 800))
@@ -25,7 +25,7 @@ final class WindowFrameGeometryTests: XCTestCase {
     }
 
     func testCornerSquaresSitInsideTheHoleCorners() {
-        let geometry = WindowFrameGeometry(size: size, sidebarWidth: 260, inset: 8, cornerRadius: 10)
+        let geometry = WindowFrameGeometry(size: size, edges: ContentEdges(left: 268, right: 8, top: 8, bottom: 8), cornerRadius: 10)
         let hole = geometry.contentHole
 
         XCTAssertEqual(geometry.cornerRadius, 10)
@@ -36,15 +36,23 @@ final class WindowFrameGeometryTests: XCTestCase {
     }
 
     func testHiddenSidebarLeavesOnlyTheInsetBand() {
-        let geometry = WindowFrameGeometry(size: size, sidebarWidth: 0, inset: 8, cornerRadius: 10)
+        let geometry = WindowFrameGeometry(size: size, edges: ContentEdges(left: 8, right: 8, top: 8, bottom: 8), cornerRadius: 10)
 
         XCTAssertEqual(geometry.leftBand.width, 8)
         XCTAssertEqual(geometry.contentHole.minX, 8)
         XCTAssertEqual(geometry.contentHole.width, 1280 - 16)
     }
 
+    func testAHoleOffsetFromTheTopAndBottom() {
+        let geometry = WindowFrameGeometry(size: CGSize(width: 800, height: 600), edges: ContentEdges(left: 8, right: 8, top: 48, bottom: 72), cornerRadius: 10)
+
+        XCTAssertEqual(geometry.contentHole, CGRect(x: 8, y: 72, width: 784, height: 480))
+        XCTAssertEqual(geometry.topBand, CGRect(x: 8, y: 552, width: 784, height: 48))
+        XCTAssertEqual(geometry.bottomBand, CGRect(x: 8, y: 0, width: 784, height: 72))
+    }
+
     func testDegenerateSizesProduceNoNegativeRects() {
-        let geometry = WindowFrameGeometry(size: CGSize(width: 10, height: 10), sidebarWidth: 260, inset: 8, cornerRadius: 10)
+        let geometry = WindowFrameGeometry(size: CGSize(width: 10, height: 10), edges: ContentEdges(left: 268, right: 8, top: 8, bottom: 8), cornerRadius: 10)
 
         XCTAssertEqual(geometry.contentHole.width, 0)
         XCTAssertGreaterThanOrEqual(geometry.rightBand.width, 0)
@@ -54,7 +62,7 @@ final class WindowFrameGeometryTests: XCTestCase {
 
     func testCornerRadiusClampsToHoleSize() {
         // Hole height 4: the radius clamps to 2 (half the hole's smaller dimension).
-        let geometry = WindowFrameGeometry(size: CGSize(width: 600, height: 20), sidebarWidth: 100, inset: 8, cornerRadius: 10)
+        let geometry = WindowFrameGeometry(size: CGSize(width: 600, height: 20), edges: ContentEdges(left: 108, right: 8, top: 8, bottom: 8), cornerRadius: 10)
 
         XCTAssertEqual(geometry.cornerRadius, 2)
         XCTAssertEqual(geometry.topLeftCorner.size, CGSize(width: 2, height: 2))

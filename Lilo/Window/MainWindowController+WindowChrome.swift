@@ -58,7 +58,7 @@ extension MainWindowController {
 
     /// The sidebar's width as the window lets it be: it narrows before the content gets under `minimumContentWidth`.
     var fittedSidebarWidth: CGFloat {
-        guard sidebarVisible else { return 0 }
+        guard sidebarVisible, tabLayout.position.isVertical else { return 0 }
         let room = (window?.contentView?.bounds.width ?? .greatestFiniteMagnitude) - Self.contentInset * 2 - Self.minimumContentWidth
         return min(sidebarExpandedWidth, max(Self.sidebarWidthRange.lowerBound, room))
     }

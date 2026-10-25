@@ -117,6 +117,19 @@ final class SidePanelTests: XCTestCase {
         XCTAssertNil(registry.tabPosition(of: try XCTUnwrap(window.sidePanel.webView), extensionId: extensionId), "a side panel is not a tab")
     }
 
+    func testRightPositionDocksThePanelAgainstThePage() async throws {
+        window.tabLayout = TabLayout(position: .right, storedAddress: nil)
+        window.applySidebarLayout(animated: false)
+
+        await call("open", gesture(thisWindow))
+
+        let panel = try XCTUnwrap(panelView)
+        let bounds = try XCTUnwrap(window.window?.contentView).bounds
+        XCTAssertEqual(panel.frame.maxX, bounds.maxX - window.sidebarWidth - MainWindowController.contentInset, "between the page and the sidebar")
+        XCTAssertEqual(panel.frame.minX, window.contentFrameRect().maxX + SplitDividerView.width)
+        XCTAssertEqual(panel.frame.maxY, bounds.maxY - MainWindowController.pageToolbarHeight, "under the page toolbar, like the page")
+    }
+
     func testThePanelTakesTheNewSpaceColor() async throws {
         await call("open", gesture(thisWindow))
         let panel = try XCTUnwrap(panelView)

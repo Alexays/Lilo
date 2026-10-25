@@ -39,6 +39,77 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.sidebarWidth, 480, "its width once there is room")
     }
 
+    func testRightPositionPutsTheContentLeftOfTheSidebar() throws {
+        let window = try makeSizedWindow()
+        window.updateSidebarWidth(300)
+        window.pendingSidebarWidthPersistWork?.cancel()
+
+        layOut(window, .right)
+
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 300 - 16, height: 800 - 40 - 8))
+        XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
+    }
+
+    func testTopStripAndBottomDockReserveTheirHeight() throws {
+        let window = try makeSizedWindow()
+
+        layOut(window, .top)
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 16, height: 800 - 48 - 8))
+
+        layOut(window, .top, address: .page)
+        XCTAssertEqual(window.contentFrameRect().height, 800 - 48 - 40 - 8, "the address row sits under the strip")
+
+        layOut(window, .bottom)
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 40))
+    }
+
+    func testTheRightSidebarNarrowsLikeTheLeftOne() throws {
+        let window = try makeSizedWindow()
+        let nsWindow = try XCTUnwrap(window.window)
+        window.updateSidebarWidth(480)
+        window.pendingSidebarWidthPersistWork?.cancel()
+        layOut(window, .right)
+
+        nsWindow.setContentSize(nsWindow.minSize)
+
+        XCTAssertEqual(window.contentFrameRect().width, MainWindowController.minimumContentWidth, "the content keeps room")
+        XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
+        nsWindow.setContentSize(NSSize(width: 1200, height: 800))
+        XCTAssertEqual(window.sidebarWidth, 480, "its width once there is room")
+    }
+
+    func testHiddenTabsGiveThePageEveryEdge() throws {
+        let window = try makeSizedWindow()
+        window.toggleSidebar()
+        for position in TabPosition.allCases {
+            layOut(window, position)
+            XCTAssertEqual(window.contentEdges(), .uniform(8), "\(position)")
+        }
+    }
+
+    func testFullScreenKeepsTheToolbarRow() throws {
+        let window = try makeSizedWindow()
+        layOut(window, .bottom)
+        let edges = window.contentEdges()
+
+        window.windowDidEnterFullScreen(Notification(name: NSWindow.didEnterFullScreenNotification))
+
+        XCTAssertEqual(window.contentEdges(), edges, "navigation stays reachable over the page")
+    }
+
+    private func makeSizedWindow() throws -> MainWindowController {
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        try XCTUnwrap(window.window).setContentSize(NSSize(width: 1200, height: 800))
+        return window
+    }
+
+    private func layOut(_ window: MainWindowController, _ position: TabPosition, address: AddressPlacement? = nil) {
+        window.tabLayout = TabLayout(position: position, storedAddress: address?.rawValue)
+        window.applySidebarLayout(animated: false)
+    }
+
     func testFullScreenLeavesTheTopOfTheChromeUncovered() throws {
         let controller = MainWindowController(context: browserContext.context)
         let nsWindow = try XCTUnwrap(controller.window)
