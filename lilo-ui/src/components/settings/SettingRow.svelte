@@ -266,7 +266,7 @@
         {formatDownloadsFolderLabel(getSetting("downloadsFolder", ""), t("settings.downloadsFolderFallback"))}
       </UiButton>
     {:else if id === "addressPlacement"}
-      <UiSelect
+      <UiSegmented
         value={getAddressPlacement()}
         options={["tabs", "page"].map((placement) => ({ value: placement, label: t(`settings.addressPlacement.${placement}`) }))}
         ariaLabel={title}

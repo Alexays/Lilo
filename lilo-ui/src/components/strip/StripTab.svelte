@@ -56,7 +56,7 @@
     height: 30px;
     display: flex;
     align-items: center;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
   }
@@ -69,7 +69,7 @@
     flex: 0 0 220px;
     background: var(--bg-selected);
     color: var(--text-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-control);
   }
 
   .strip-tab.icon-only {
@@ -110,7 +110,7 @@
     height: 20px;
     margin-right: 5px;
     border: 0;
-    border-radius: 5px;
+    border-radius: var(--radius-xs);
     display: grid;
     place-items: center;
     background: transparent;

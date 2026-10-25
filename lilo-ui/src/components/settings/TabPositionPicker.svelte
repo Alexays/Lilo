@@ -100,7 +100,7 @@
   .tabs,
   .page {
     position: absolute;
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
   }
 
   .tabs {

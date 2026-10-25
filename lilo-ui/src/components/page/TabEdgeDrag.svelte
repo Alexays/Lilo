@@ -32,7 +32,7 @@
 
   .mark {
     position: absolute;
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
     background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
   }
 
@@ -58,7 +58,7 @@
 
   .slot {
     position: absolute;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: var(--accent-tint-14);
     box-shadow: inset 0 0 0 1.5px var(--accent);
     animation: slot-in 180ms var(--motion-ease-spring) both;
@@ -67,7 +67,7 @@
   .slot.left { left: 8px; top: 8px; bottom: 8px; width: var(--sidebar-width); }
   .slot.right { right: 8px; top: 8px; bottom: 8px; width: var(--sidebar-width); }
   .slot.top { left: 8px; right: 8px; top: 4px; height: calc(var(--top-strip-height) - 8px); }
-  .slot.bottom { left: var(--bottom-dock-margin); right: var(--bottom-dock-margin); bottom: var(--bottom-dock-margin); height: var(--bottom-dock-height); border-radius: 16px; }
+  .slot.bottom { left: var(--bottom-dock-margin); right: var(--bottom-dock-margin); bottom: var(--bottom-dock-margin); height: var(--bottom-dock-height); border-radius: var(--radius-xl); }
 
   .hud {
     position: fixed;
@@ -76,14 +76,15 @@
     transform: translateX(-50%);
     z-index: 71;
     padding: 7px 16px;
-    border-radius: 999px;
-    background: rgba(29, 29, 31, 0.86);
-    color: #ffffff;
+    border-radius: var(--radius-chip);
+    /* Inverted, like a system HUD. */
+    background: var(--text-primary);
+    color: var(--bg-primary);
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
     pointer-events: none;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
   }
 
   @keyframes slot-in {

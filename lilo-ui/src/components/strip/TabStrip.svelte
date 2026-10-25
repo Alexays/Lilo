@@ -221,8 +221,8 @@
     height: var(--bottom-dock-height);
     margin: 0 var(--bottom-dock-margin);
     padding: 0 10px;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--sidebar-bg) 82%, rgba(255, 255, 255, 0.5));
+    border-radius: var(--radius-xl);
+    background: color-mix(in srgb, var(--sidebar-bg) 82%, var(--bg-elevated));
     box-shadow: 0 0 0 0.5px var(--border), 0 6px 20px var(--sidebar-shadow);
   }
 
@@ -297,7 +297,7 @@
   .strip-placeholder {
     width: 100%;
     height: 30px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--accent-tint-12);
   }
 
@@ -339,7 +339,7 @@
     width: 30px;
     height: 30px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
     background: transparent;

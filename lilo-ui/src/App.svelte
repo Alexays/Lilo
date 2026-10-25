@@ -12,7 +12,7 @@
   import { onChromeInitialStateReady } from "./stores/init";
   import { getOnboarding } from "./stores/onboarding.svelte";
   import { getActiveUrlBarDrawer } from "./stores/urlBarDrawer.svelte";
-  import { editorState, hasActivePanel, isDesignSystemShellOpen, isSettingsShellOpen } from "./stores/panels.svelte";
+  import { editorState } from "./stores/panels.svelte";
   import { getPagedSpaces, getSpacePagerVirtualIndex } from "./stores/pager.svelte";
   import { getFocusedSpaceId, getSpaceById } from "./stores/spaces.svelte";
   import { getActiveTab } from "./stores/tabs.svelte";
@@ -298,13 +298,6 @@
       colorSchemeQuery.removeEventListener("change", handleColorSchemeChange);
     };
   });
-
-  const isPanelOpen = $derived(hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen());
-  // Latched like the sidebar's: the panels chunk loads on first open, then stays for close animations.
-  let stripPanelsLoaded = $state(false);
-  $effect(() => {
-    if (isPanelOpen && !isVerticalLayout()) stripPanelsLoaded = true;
-  });
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -336,32 +329,10 @@
   <SplitDropZone />
 
   {#if !isVerticalLayout()}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="tab-strip-host tabs-surface"
-      class:strip-hidden={!isSidebarShown()}
-      class:strip-overlay={isSidebarOverlay()}
-      use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
-      onmouseenter={cancelSidebarOverlayHide}
-      onmouseleave={scheduleSidebarOverlayHide}
-    >
-      {#await import("./components/strip/TabStrip.svelte") then strip}
-        <strip.default edge={getTabPosition() === "bottom" ? "bottom" : "top"} />
-      {/await}
-    </div>
-    <!-- A strip has no column for the panels: they float over the page's left edge. -->
-    {#if stripPanelsLoaded}
-      {#await import("./components/sidebar/SidebarPanels.svelte") then panels}
-        <div
-          class="strip-panels tabs-surface"
-          class:open={isPanelOpen}
-          inert={!isPanelOpen}
-          use:reportInteractiveZone={{ id: "strip-panels", active: isPanelOpen }}
-        >
-          <panels.default active={isPanelOpen} />
-        </div>
-      {/await}
-    {/if}
+    <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
+    {#await import("./components/strip/StripHost.svelte") then host}
+      <host.default onenter={cancelSidebarOverlayHide} onleave={scheduleSidebarOverlayHide} />
+    {/await}
   {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -514,75 +485,10 @@
   }
 
   /* Lifted by a held press: the tabs float until dropped on an edge. */
-  :global(html[data-tabs-lifting]) .sidebar,
-  :global(html[data-tabs-lifting]) .tab-strip-host {
+  :global(html[data-tabs-lifting]) .sidebar {
     transform: scale(0.96);
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
-    z-index: 72;
-  }
-
-  .strip-panels {
-    position: fixed;
-    left: var(--content-inset);
-    top: calc(var(--chrome-content-top) + 4px);
-    bottom: calc(var(--chrome-content-bottom) + 4px);
-    width: var(--sidebar-width);
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: var(--sidebar-bg);
     box-shadow: var(--chrome-overlay-shadow);
-    pointer-events: auto;
-    z-index: 45;
-    transform: translateX(calc(-100% - 2 * var(--content-inset)));
-    transition: transform 220ms var(--motion-ease-spring);
-  }
-
-  .strip-panels.open {
-    transform: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .strip-panels {
-      transition: none;
-    }
-  }
-
-  .tab-strip-host {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    pointer-events: auto;
-    background-color: var(--sidebar-bg);
-    z-index: 10;
-    transition:
-      transform var(--motion-duration-slow) var(--motion-ease-standard),
-      box-shadow var(--motion-duration-slow) ease,
-      background-color var(--motion-duration-slow) var(--motion-ease-spring);
-  }
-
-  :global(html[data-tab-position='bottom']) .tab-strip-host {
-    top: auto;
-    bottom: var(--bottom-dock-margin);
-    background-color: transparent;
-  }
-
-  .tab-strip-host.strip-hidden {
-    transform: translateY(-100%);
-    pointer-events: none;
-  }
-
-  :global(html[data-tab-position='bottom']) .tab-strip-host.strip-hidden {
-    transform: translateY(calc(100% + var(--bottom-dock-margin)));
-  }
-
-  .tab-strip-host.strip-overlay {
-    box-shadow: 0 4px 24px var(--sidebar-shadow);
-    z-index: 50;
-  }
-
-  :global(html[data-tab-position='bottom']) .tab-strip-host.strip-overlay {
-    box-shadow: none;
+    z-index: 72;
   }
 
   :global(html[data-tab-position='right']) .sidebar-overlay-tolerance {

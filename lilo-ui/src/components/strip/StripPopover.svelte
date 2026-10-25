@@ -55,9 +55,9 @@
     overflow-y: auto;
     padding: 6px;
     box-sizing: border-box;
-    border-radius: 12px;
+    border-radius: var(--float-radius-popover);
     background: var(--chrome-overlay-surface-strong);
-    box-shadow: var(--chrome-overlay-shadow, 0 14px 36px rgba(0, 0, 0, 0.18));
+    box-shadow: var(--chrome-overlay-shadow);
     pointer-events: auto;
     animation: popover-in 180ms var(--motion-ease-spring) both;
   }

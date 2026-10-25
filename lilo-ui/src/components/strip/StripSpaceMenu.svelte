@@ -59,7 +59,7 @@
     gap: 7px;
     padding: 0 10px;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
     color: var(--text-primary);
     font: inherit;
@@ -90,7 +90,7 @@
     gap: 10px;
     padding: 0 8px;
     border: 0;
-    border-radius: 7px;
+    border-radius: calc(var(--float-radius-popover) - 6px);
     background: transparent;
     color: var(--text-primary);
     font: inherit;
