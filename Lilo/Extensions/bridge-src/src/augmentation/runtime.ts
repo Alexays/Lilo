@@ -153,7 +153,9 @@ async function senderInfo(): Promise<Record<string, unknown>> {
   const url = (globalThis as any).location?.href;
   if (url) info.url = url;
   if (!isWorker) {
-    const tab = await Promise.resolve(bridgeChrome()?.tabs?.getCurrent?.()).catch(() => undefined);
+    // WebKit's getCurrent sometimes never answers in a page a tab shows: the message then goes without its tab.
+    const unanswered = new Promise((resolve) => setTimeout(resolve, 500));
+    const tab = await Promise.race([Promise.resolve(bridgeChrome()?.tabs?.getCurrent?.()).catch(() => undefined), unanswered]);
     if (tab) info.tab = tab;
   }
   return info;
