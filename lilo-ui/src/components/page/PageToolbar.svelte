@@ -14,6 +14,34 @@
   // The sidebar keeps its toggle when it is there; bottom and top have no sidebar to hold it.
   const navShow = $derived(getTabPosition() === "bottom" ? "all" : "history");
 
+  // The address text centers on its field: the room its trailing buttons take on the right (capture,
+  // pinned extensions) is mirrored on the left, measured since that cluster grows and shrinks.
+  let addressEl: HTMLDivElement | undefined = $state();
+  $effect(() => {
+    const el = addressEl;
+    if (!el) return;
+    const measure = () => {
+      const trigger = el.querySelector<HTMLElement>(".url-trigger");
+      const text = el.querySelector<HTMLElement>(".url-text-content");
+      if (!trigger || !text) return;
+      const field = trigger.getBoundingClientRect();
+      const box = text.getBoundingClientRect();
+      // Left padding moves the centered text by half its width.
+      const current = parseFloat(el.style.getPropertyValue("--address-balance")) || 0;
+      const next = Math.max(0, Math.round(current + (field.left + field.right) - (box.left + box.right)));
+      if (next !== current) el.style.setProperty("--address-balance", `${next}px`);
+    };
+    // The field renders after this container, and its address and buttons change: watch both.
+    const resize = new ResizeObserver(measure);
+    resize.observe(el);
+    const mutation = new MutationObserver(measure);
+    mutation.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => {
+      resize.disconnect();
+      mutation.disconnect();
+    };
+  });
+
   function startWindowDrag(event: PointerEvent) {
     if (event.button !== 0) return;
     if ((event.target as HTMLElement | null)?.closest("button, a, input, select, textarea, [role='button'], .url-display")) return;
@@ -39,7 +67,7 @@
     <NavControls {collapseLocked} show={navShow} />
   {/if}
   {#if isAddressInPageToolbar() || row}
-    <div class="address"><URLDisplay /></div>
+    <div class="address" bind:this={addressEl}><URLDisplay /></div>
   {/if}
 </div>
 
@@ -98,9 +126,8 @@
     justify-content: center;
   }
 
-  /* The room the capture button takes on the right, mirrored, so the text centers on the field. */
   .address :global(.url-text-shell) {
-    padding-left: 34px;
+    padding-left: var(--address-balance, 0px);
   }
 
   .address :global(.url-text-content) {

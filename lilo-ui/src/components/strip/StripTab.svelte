@@ -11,7 +11,17 @@
   let { tab, active = false, iconOnly = false, editsAddress = false }: { tab: TabState; active?: boolean; iconOnly?: boolean; editsAddress?: boolean } = $props();
 
   const title = $derived(tabDisplayTitle(tab.title) || tab.url || t("tabItem.newTab"));
-
+  // With no address bar on screen, the active pill always says which site this is, and whether it is secure.
+  const site = $derived.by(() => {
+    if (!active || !editsAddress || !tab.url) return null;
+    try {
+      const url = new URL(tab.url);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+      return { host: url.hostname.replace(/^www\./, ""), secure: url.protocol === "https:" };
+    } catch {
+      return null;
+    }
+  });
   function activate() {
     if (active && editsAddress) {
       openCommandBar(tab.url ?? "", "default", false, true);
@@ -39,14 +49,31 @@
   oncontextmenu={showMenu}
   onauxclick={(e) => e.button === 1 && tabActions.close(tab.id)}
 >
-  <button class="strip-tab-main" aria-label={title} aria-current={active ? "page" : undefined} onclick={activate}>
+  <!-- One tab stop for the whole strip: the active pill holds it, the arrow keys move along. -->
+  <button
+    class="strip-tab-main"
+    role="tab"
+    aria-selected={active}
+    aria-label={site ? `${site.host}, ${title}` : title}
+    tabindex={active ? 0 : -1}
+    data-roving
+    onclick={activate}
+  >
     <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+    {#if site}
+      <span class="strip-tab-site">
+        {#if site.secure}
+          <svg width="9" height="11" viewBox="0 0 11 12" aria-hidden="true"><rect x="1" y="5" width="9" height="6.5" rx="1.5" fill="currentColor" /><path d="M3 5V3.5a2.5 2.5 0 0 1 5 0V5" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
+        {/if}
+        {site.host}
+      </span>
+    {/if}
     {#if !iconOnly}
-      <span class="strip-tab-title">{title}</span>
+      <span class="strip-tab-title" class:secondary={!!site}>{title}</span>
     {/if}
   </button>
   {#if !iconOnly}
-    <button class="strip-tab-close" aria-label={t("tabItem.closeTab")} onclick={() => tabActions.close(tab.id)}>
+    <button class="strip-tab-close" tabindex="-1" aria-label={t("tabItem.closeTab")} onclick={() => tabActions.close(tab.id)}>
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
         <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
       </svg>
@@ -72,7 +99,7 @@
   }
 
   .strip-tab.active {
-    flex: 0 0 220px;
+    flex: 0 0 260px;
     background: var(--bg-selected);
     color: var(--text-primary);
     box-shadow: var(--shadow-control);
@@ -101,6 +128,19 @@
   .icon-only .strip-tab-main {
     justify-content: center;
     padding: 0;
+  }
+
+  .strip-tab-site {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+  }
+
+  .strip-tab-title.secondary {
+    color: var(--text-secondary);
   }
 
   .strip-tab-title {

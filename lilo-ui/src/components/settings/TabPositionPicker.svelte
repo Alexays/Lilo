@@ -2,6 +2,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import type { TabPosition } from "../../lib/bridge";
   import { getTabPosition, setTabPosition } from "../../stores/tabLayout.svelte";
+  import { getActiveSpace } from "../../stores/spaces.svelte";
 
   let { compact = false }: { compact?: boolean } = $props();
 
@@ -18,7 +19,7 @@
   }
 </script>
 
-<div class="positions" class:compact role="radiogroup" tabindex="-1" aria-label={t("settings.items.tabPosition.title")} onkeydown={handleKeydown}>
+<div class="positions" class:compact style:--space-color={getActiveSpace()?.color} role="radiogroup" tabindex="-1" aria-label={t("settings.items.tabPosition.title")} onkeydown={handleKeydown}>
   {#each POSITIONS as position (position)}
     <button
       class="position"
@@ -81,7 +82,8 @@
     border: 2px solid transparent;
     border-radius: var(--radius-md);
     box-shadow: 0 0 0 1px var(--separator);
-    background: var(--bg-hover);
+    /* The window as it looks: the active Space's color around the page. */
+    background: color-mix(in srgb, var(--space-color, var(--accent)) 16%, var(--bg-hover));
   }
 
   .position.on .shot {
@@ -109,7 +111,7 @@
   }
 
   .position.on .tabs {
-    background: var(--accent);
+    background: var(--space-color, var(--accent));
     opacity: 1;
   }
 

@@ -1,5 +1,7 @@
 import { on, type AddressPlacement, type BridgeInitialStatePayload, type TabPosition } from "../lib/bridge";
 import { setSetting } from "./settings.svelte";
+import { tick } from "svelte";
+import { prefersReducedMotion } from "../lib/motion/reducedMotion";
 
 let _position = $state<TabPosition>("left");
 let _address = $state<AddressPlacement>("tabs");
@@ -9,13 +11,25 @@ function defaultAddress(position: TabPosition): AddressPlacement {
 	return position === "right" || position === "bottom" ? "page" : "tabs";
 }
 
+let applied = false;
+
 function apply(position: TabPosition, address: AddressPlacement): void {
-	_position = position;
-	_address = address;
-	if (typeof document === "undefined") return;
-	const root = document.documentElement;
-	root.dataset.tabPosition = position;
-	root.dataset.address = address;
+	const update = () => {
+		_position = position;
+		_address = address;
+		if (typeof document === "undefined") return;
+		const root = document.documentElement;
+		root.dataset.tabPosition = position;
+		root.dataset.address = address;
+	};
+	// A new edge morphs the tabs there (global.css names them), while the native page slides alongside.
+	const morph = applied && position !== _position && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
+	applied = true;
+	if (!morph) return update();
+	document.startViewTransition(async () => {
+		update();
+		await tick();
+	});
 }
 
 export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement">): void {

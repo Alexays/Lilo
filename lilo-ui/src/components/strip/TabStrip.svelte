@@ -21,7 +21,9 @@
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
-  import { dndItemsForSidebarItems, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
+  import { dndItemsForFolderTabs, dndItemsForSidebarItems, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
+  import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { tick } from "svelte";
   import { isShadowItem } from "../../lib/dndEngine/projection";
   import { commitSidebarDrop, getZoneItems, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
   import { tooltip } from "../../lib/tooltip";
@@ -40,13 +42,75 @@
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
 
-  // The same drop commit as the sidebar's root lists: reorder, and move between pinned and today.
-  type StripSection = "pinned" | "unpinned";
+  // The same drop commit as the sidebar's lists: reorder, and move between favorites, pinned and today.
+  type StripSection = "bookmarked" | "pinned" | "unpinned";
   const zoneRef = (section: StripSection): SidebarZoneRef => ({ id: `strip-root-${section}-${spaceId}`, section, parentFolderId: null });
   const baseItems = $derived({
+    bookmarked: dndItemsForFolderTabs(view.bookmarked),
     pinned: dndItemsForSidebarItems(view.rootItems.pinned, "pinned"),
     unpinned: dndItemsForSidebarItems(view.rootItems.unpinned, "unpinned"),
   });
+
+  /** A folder's direct children, as the drop commit sees them. */
+  function folderChildItems(folderId: string, section: "pinned" | "unpinned"): SidebarDndItem[] {
+    const children = (view.treeIndex.childrenByFolderId.get(folderId) ?? []).map((item) => ({ id: item.itemId, kind: item.kind }));
+    return dndItemsForSidebarItems(children, section, folderId);
+  }
+
+  let stripEl: HTMLElement | undefined = $state();
+  let todayEl: HTMLDivElement | undefined = $state();
+  let overflowStart = $state(false);
+  let overflowEnd = $state(false);
+
+  function measureOverflow(): void {
+    if (!todayEl) return;
+    overflowStart = todayEl.scrollLeft > 1;
+    overflowEnd = todayEl.scrollLeft + todayEl.clientWidth < todayEl.scrollWidth - 1;
+  }
+
+  // A mouse wheel scrolls vertically: the strip turns it sideways. It has to be non-passive to keep the page still.
+  $effect(() => {
+    const el = todayEl;
+    if (!el) return;
+    const wheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || el.scrollWidth <= el.clientWidth) return;
+      event.preventDefault();
+      el.scrollLeft += event.deltaY;
+    };
+    const resize = new ResizeObserver(measureOverflow);
+    resize.observe(el);
+    el.addEventListener("wheel", wheel, { passive: false });
+    el.addEventListener("scroll", measureOverflow, { passive: true });
+    return () => {
+      resize.disconnect();
+      el.removeEventListener("wheel", wheel);
+      el.removeEventListener("scroll", measureOverflow);
+    };
+  });
+
+  // The active pill comes into view, and the strip keeps exactly one tab stop.
+  $effect(() => {
+    void activeTabId;
+    void view;
+    void tick().then(() => {
+      todayEl?.querySelector(`[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
+      if (rovers.length && !rovers.some((rover) => rover.tabIndex === 0)) rovers[0].tabIndex = 0;
+      measureOverflow();
+    });
+  });
+
+  function handleArrows(event: KeyboardEvent): void {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    const rovers = [...(stripEl?.querySelectorAll<HTMLElement>("[data-roving]") ?? [])];
+    const index = rovers.indexOf(document.activeElement as HTMLElement);
+    if (index < 0) return;
+    event.preventDefault();
+    const next = event.key === "Home" ? 0 : event.key === "End" ? rovers.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + rovers.length) % rovers.length;
+    rovers[index].tabIndex = -1;
+    rovers[next].tabIndex = 0;
+    rovers[next].focus();
+  }
 
   /** A folder's tabs, nested folders flattened: the popover lists them in sidebar order. */
   function folderTabs(folderId: string): TabState[] {
@@ -76,7 +140,7 @@
 
 {#snippet items(section: StripSection)}
   {@const zone = zoneRef(section)}
-  {@const iconOnly = section === "pinned"}
+  {@const iconOnly = section !== "unpinned"}
   {#each getZoneItems(zone, baseItems[section]) as item (item.id)}
     <div
       class="strip-slot"
@@ -88,7 +152,7 @@
       {:else if item.kind === "folder"}
         {@const folder = view.foldersById.get(item.id)}
         {#if folder}
-          <StripFolder {folder} tabs={folderTabs(folder.id)} {activeTabId} />
+          <StripFolder {folder} tabs={folderTabs(folder.id)} {activeTabId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
         {/if}
       {:else}
         {@const tab = view.tabsById.get(item.id)}
@@ -103,7 +167,7 @@
 {#snippet zoneOf(section: StripSection)}
   {@const zone = zoneRef(section)}
   <div
-    class={section === "pinned" ? "group" : "today-list"}
+    class={section === "unpinned" ? "today-list" : "group"}
     use:dndZone={{
       id: zone.id,
       axis: "horizontal",
@@ -117,10 +181,13 @@
   </div>
 {/snippet}
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <nav
+  bind:this={stripEl}
   class="tab-strip"
   class:dock={edge === "bottom"}
   aria-label={t("strip.ariaLabel")}
+  onkeydown={handleArrows}
   onpointerdown={startWindowDrag}
   ondblclick={(event) => {
     if (!(event.target as HTMLElement).closest("button, .strip-tab, .url-display")) chromeActions.maximizeWindow();
@@ -134,12 +201,10 @@
 
   <StripSpaceMenu />
 
+  <!-- Laid out by the strip; only the tabs are in the list. -->
+  <div class="strip-tabs" role="tablist" aria-orientation="horizontal" aria-label={t("strip.ariaLabel")}>
   {#if view.bookmarked.length}
-    <div class="group">
-      {#each view.bookmarked as tab (tab.id)}
-        <StripTab {tab} active={tab.id === activeTabId} iconOnly />
-      {/each}
-    </div>
+    {@render zoneOf("bookmarked")}
   {/if}
 
   {#if view.rootItems.pinned.length}
@@ -154,7 +219,7 @@
     <div class="strip-address"><URLDisplay /></div>
   {/if}
 
-  <div class="today">
+  <div class="today" class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={todayEl}>
     {@render zoneOf("unpinned")}
     <button
       class="strip-btn"
@@ -166,6 +231,8 @@
         <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
       </svg>
     </button>
+  </div>
+
   </div>
 
   <div class="trailing">
@@ -244,6 +311,10 @@
     flex: none;
   }
 
+  .strip-tabs {
+    display: contents;
+  }
+
   .group {
     display: flex;
     align-items: center;
@@ -274,6 +345,19 @@
     display: none;
   }
 
+  /* Pills scrolled out of sight fade at the edge they went past. */
+  .today.overflow-start {
+    mask-image: linear-gradient(to right, transparent, black 24px);
+  }
+
+  .today.overflow-end {
+    mask-image: linear-gradient(to left, transparent, black 24px);
+  }
+
+  .today.overflow-start.overflow-end {
+    mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
+  }
+
   .today-list {
     flex: 1;
     min-width: 0;
@@ -290,7 +374,7 @@
   }
 
   .strip-slot:has(> :global(.strip-tab.active)) {
-    flex: 0 0 220px;
+    flex: 0 0 260px;
   }
 
   .strip-slot.icon-only,

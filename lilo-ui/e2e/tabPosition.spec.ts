@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
-import { initialWorld } from "./fixtures";
+import { folderWorld, initialWorld, SPACE_1 } from "./fixtures";
 
 async function receive(page: Page, message: Record<string, unknown>): Promise<void> {
 	await page.evaluate((msg) => window.__lilo!.receive(msg), message);
@@ -48,7 +48,7 @@ test("the top strip lists today's tabs and switches on click", async ({ page }) 
 	const target = pills.nth(1);
 	const tabId = await target.getAttribute("data-tab-id");
 
-	await target.getByRole("button").first().click();
+	await target.getByRole("tab").click();
 
 	const switches = (await sentCommands(page)).filter((c) => c.action === "switchTab");
 	expect(switches.at(-1)?.payload).toEqual({ id: tabId });
@@ -173,4 +173,71 @@ test("the page toolbar centers the address on the page", async ({ page }) => {
 	const address = (await page.locator(".page-toolbar .url-display").boundingBox())!;
 	const toolbar = (await page.locator(".page-toolbar").boundingBox())!;
 	expect(Math.abs(address.x + address.width / 2 - (toolbar.x + toolbar.width / 2))).toBeLessThanOrEqual(2);
+});
+
+test("the active pill names its site when the strip holds the address", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "tabs" }, ".tab-strip .strip-tab");
+	const site = page.locator(".strip-tab.active .strip-tab-site");
+	await expect(site).toBeVisible();
+	expect((await site.textContent())?.trim()).not.toBe("");
+});
+
+test("the strip is one tab stop, walked with the arrow keys", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	const rovers = page.locator(".tab-strip [data-roving]");
+	await expect(rovers.locator('xpath=self::*[@tabindex="0"]')).toHaveCount(1);
+	const stop = rovers.locator('xpath=self::*[@tabindex="0"]');
+	await stop.focus();
+	const before = await stop.evaluate((el) => el.closest("[data-tab-id]")?.getAttribute("data-tab-id"));
+
+	await page.keyboard.press("ArrowRight");
+
+	const after = await page.evaluate(() => document.activeElement?.closest("[data-tab-id], .strip-folder")?.getAttribute("data-tab-id") ?? "moved");
+	expect(after).not.toBe(before);
+	await expect(page.locator(".tab-strip [data-roving][tabindex='0']")).toHaveCount(1);
+});
+
+test("a pill dropped on a folder chip goes into the folder", async ({ page }) => {
+	await bootChrome(page, { ...folderWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	const pill = page.locator('.today-list .strip-tab[data-tab-id="tab-beta"]');
+	const chip = page.locator(".strip-folder", { hasText: "Docs" });
+	const from = (await pill.boundingBox())!;
+	const to = (await chip.boundingBox())!;
+
+	await page.mouse.move(from.x + 20, from.y + from.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 14 });
+	await expect(chip).toHaveClass(/drop-target/);
+	await page.mouse.up();
+
+	const drop = (await sentCommands(page)).filter((c) => c.action === "commitSidebarDrop").at(-1);
+	expect(JSON.stringify(drop?.payload)).toContain("folder-docs");
+});
+
+test("a mouse wheel scrolls the strip sideways", async ({ page }) => {
+	await page.setViewportSize({ width: 720, height: 600 });
+	await bootChrome(page, { ...folderWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	const today = page.locator(".tab-strip .today");
+	const overflowing = await today.evaluate((el) => el.scrollWidth > el.clientWidth);
+	test.skip(!overflowing, "the fixture fits at this width");
+	const box = (await today.boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+	await page.mouse.wheel(0, 200);
+
+	await expect.poll(() => today.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+	await expect(today).toHaveClass(/overflow-start/);
+});
+
+test("a locked folder unlocks from its chip", async ({ page }) => {
+	const world = folderWorld();
+	world.foldersBySpace![SPACE_1][0] = { ...world.foldersBySpace![SPACE_1][0], isLocked: true };
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	await page.locator(".strip-folder", { hasText: "Docs" }).click();
+
+	await page.locator(".strip-popover input[type=password]").fill("secret");
+	await page.locator(".strip-popover .unlock-submit").click();
+
+	const unlock = (await sentCommands(page)).filter((c) => c.action === "unlockTabFolder").at(-1);
+	expect(unlock?.payload).toEqual({ id: "folder-docs", password: "secret" });
 });

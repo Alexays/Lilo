@@ -288,6 +288,27 @@ html[data-tab-position='bottom'] {
   --tabs-bottom: calc(var(--bottom-dock-height) + 2 * var(--bottom-dock-margin));
 }
 
+/* Changing edge: only the tabs and the page toolbar move; the rest of the chrome swaps in place. */
+.sidebar,
+.tab-strip-host {
+  view-transition-name: tabs;
+}
+
+.page-toolbar {
+  view-transition-name: page-toolbar;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(tabs),
+::view-transition-group(page-toolbar) {
+  animation-duration: var(--motion-duration-slow);
+  animation-timing-function: var(--motion-ease-standard);
+}
+
 /* A strip's floating panel column: overlays on the page start past it. */
 html[data-strip-panel-open] {
   --chrome-content-left: calc(var(--sidebar-width) + 2 * var(--content-inset));
