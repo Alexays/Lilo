@@ -5,7 +5,7 @@ How a Lilo release is cut, from version bump to published DMG. Maintainer-only; 
 ## Preconditions
 
 - `main` is green in CI and `make validate` passes locally.
-- The repository secrets listed below are configured (first release only).
+- The `release` environment secrets listed below are configured (first release only).
 
 ## Version bump
 
@@ -60,6 +60,8 @@ The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub
 8. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
 ## Secrets
+
+They are secrets of the `release` environment, which only `v*` tags may deploy to, so no workflow pushed on another branch can read them.
 
 | Secret | Contents |
 |--------|----------|
