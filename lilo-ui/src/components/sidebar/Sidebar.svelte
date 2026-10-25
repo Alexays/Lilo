@@ -178,40 +178,14 @@
       opacity var(--motion-duration-normal) ease;
   }
 
-  /* With a page toolbar beside it, the header holds only the lights and the toggle: the Space's name
-     rises to that line, between them, so the list gains a row. */
+  /* With a page toolbar beside it, the header holds only the lights and the toggle, on that toolbar's line. */
   .compact-header .sidebar-header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
     height: var(--page-toolbar-height);
-    z-index: 21;
-    pointer-events: none;
   }
 
   .compact-header .sidebar-header :global(.nav-controls) {
     flex: none;
     margin-left: auto;
-    pointer-events: auto;
-  }
-
-  .compact-header .space-content {
-    margin-top: 2px;
-  }
-
-  .compact-header .space-content :global(.space-bar-slot) {
-    padding-right: 32px;
-  }
-
-  /* The traffic lights' room when they sit in this header (compact lights end at 66pt), plus the gap
-     macOS keeps between the lights and a title. */
-  :global(html[data-tab-position='left']) .compact-header .space-content :global(.space-bar-slot) {
-    padding-left: 78px;
-  }
-
-  .compact-header .keep-awake-slot {
-    right: calc(var(--sidebar-right-pad, 10px) + 36px);
   }
 
   .sidebar-layout.pushed {
