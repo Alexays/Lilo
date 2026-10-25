@@ -19,6 +19,8 @@
   import type { DndActiveDrag } from "../../lib/dndEngine/store.svelte";
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import TabItem from "./TabItem.svelte";
+  import SavedTabEditor from "./SavedTabEditor.svelte";
+  import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
   import type { BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
@@ -139,6 +141,7 @@
   const pinnedDividerHidden = $derived(pinnedRootCount === 0 && !dragActive);
   const folderContentUnmountDelayMs = MOTION.folderCollapseMs;
   let renamingFolderId: string | null = $state(null);
+  const editingTab = $derived(interactive ? getEditingTab() : null);
   let tabListBodyEl: HTMLDivElement | undefined = $state();
   let tabListEl: HTMLDivElement | undefined = $state();
   let pinnedListEl: HTMLDivElement | undefined = $state();
@@ -785,7 +788,9 @@
       {/if}
     {:else}
       {@const tab = tabsById.get(entry.id)}
-      {#if tab}
+      {#if tab && editingTab?.id === tab.id}
+        <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+      {:else if tab}
         <TabItem
           {tab}
           isActive={tab.id === activeTabId}
@@ -892,7 +897,9 @@
                   </div>
                 {:else}
                   {@const tab = tabsById.get(childEntry.id)}
-                  {#if tab}
+                  {#if tab && editingTab?.id === tab.id}
+                    <SavedTabEditor {tab} homeURL={editingTab.homeURL} onclose={closeTabEditor} />
+                  {:else if tab}
                     <div class="indented-tab-wrapper">
                       <TabItem
                         {tab}

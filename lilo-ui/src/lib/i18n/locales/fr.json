@@ -684,6 +684,11 @@
 		"next": "Piste suivante",
 		"previous": "Piste précédente"
 	},
+	"tabEditor": {
+		"title": "Modifier l'onglet",
+		"url": "Adresse",
+		"useCurrentPage": "Utiliser la page actuelle"
+	},
 	"tabItem": {
 		"terminal": "Terminal",
 		"showChanges": "Afficher les modifications : {added} ajoutées, {removed} supprimées",
@@ -1830,8 +1835,7 @@
 		"Remove from Folder": "Retirer du dossier",
 		"Delete Folder": "Supprimer le dossier",
 		"Edit Folder": "Modifier le dossier",
-		"Set as Pinned Page": "Remplacer la page épinglée par celle-ci",
-		"Rename...": "Renommer...",
+		"Edit...": "Modifier...",
 		"New Folder": "Nouveau dossier",
 		"Open Folder": "Ouvrir le dossier",
 		"Close Folder": "Fermer le dossier",
@@ -1842,7 +1846,6 @@
 		"The space and all its tabs are deleted permanently.": "L'espace et tous ses onglets sont supprimés définitivement.",
 		"Remove Bookmark": "Supprimer le favori",
 		"Remove Pinned Tab": "Supprimer l'onglet épinglé",
-		"Replace URL with Current": "Remplacer l'URL par l'actuelle",
 		"Restore Closed Tab": "Rouvrir l'onglet fermé",
 		"Details": "Détails",
 		"Remove…": "Supprimer…",

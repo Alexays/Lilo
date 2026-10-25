@@ -137,8 +137,11 @@ struct SpaceTab {
     mutating func setTabHomeURL(_ tabId: UUID, url: URL?) {
         guard updateTab(tabId, in: &state.tree, mutate: { tab in
             if let url {
-                tab.captureHomeSnapshot()
+                // The current page's title and favicon describe only that page: another home starts
+                // bare and takes its own once the tab opens it.
+                if tab.url == url.absoluteString { tab.captureHomeSnapshot() } else { tab.clearHomeSnapshot() }
                 tab.homeURL = url.absoluteString
+                if tab.isClosed { tab.restoreHomeSnapshot() }
             } else {
                 tab.clearHomeSnapshot()
             }

@@ -93,7 +93,8 @@ extension MainWindowController {
 
         let menu = NSMenu()
         if tab.isPinned || tab.isBookmarked {
-            menu.addItem("Rename...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabRename", data: ["id": tabId]) }
+            let homeURL = (tab.homeURL ?? tab.url)?.absoluteString ?? ""
+            menu.addItem("Edit...".localized, icon: .edit) { self.bridgeRouter.send(event: "beginTabEdit", data: ["id": tabId, "homeURL": homeURL]) }
         }
         let actions = TabContextMenuActions.forTab(tab)
         if actions.contains(.createFolderFromTab) {
@@ -128,11 +129,6 @@ extension MainWindowController {
         } else {
             menu.addItem("Bookmark Tab".localized, icon: .bookmark, handler: toggleBookmark)
             menu.addItem((tab.isPinned ? "Unpin Tab" : "Pin Tab").localized, icon: tab.isPinned ? .unpin : .pin, handler: togglePin)
-        }
-        if tab.isPinned || tab.isBookmarked, tab.homeURL != nil, let url = tab.url, url != tab.homeURL {
-            menu.addItem((tab.isPinned ? "Set as Pinned Page" : "Replace URL with Current").localized, icon: .replaceURL) {
-                self.applyContextMenuStateCommands([.setTabHomeURL(spaceId: spaceId, tabId: uuid, url: url)])
-            }
         }
         if let groupId = tab.groupId, let folder = tabManager.folder(id: groupId), folder.isSplit {
             menu.addItem("Separate Split View".localized, icon: .separateSplit) {

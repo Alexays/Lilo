@@ -70,17 +70,65 @@ test("double-clicking a pinned tab's title renames it, and Return confirms", asy
 	expect((await renameCommands(page)).map((command) => command.payload)).toEqual([{ id: "tab-home", title: "Home base" }]);
 });
 
-test("Rename from the menu opens the editor, and Escape cancels", async ({ page }) => {
+async function openEditor(page: Page, homeURL = "https://example.com/tab-home") {
+	await page.evaluate((url) => window.__lilo!.receive({ event: "beginTabEdit", id: "tab-home", homeURL: url }), homeURL);
+	return page.locator(".pinned-list .saved-tab-editor");
+}
+
+async function homeURLCommands(page: Page) {
+	return (await sentCommands(page)).filter((command) => command.action === "setTabHomeURL");
+}
+
+test("Edit from the menu puts the editor in the row's place, and Escape cancels", async ({ page }) => {
 	await bootWithHome(page);
 
-	await page.evaluate(() => window.__lilo!.receive({ event: "beginTabRename", id: "tab-home" }));
-	const input = page.locator(`${HOME} .tab-title-input`);
-	await expect(input).toBeFocused();
+	const editor = await openEditor(page);
+	await expect(page.locator(HOME)).toHaveCount(0);
+	await expect(editor.getByRole("textbox", { name: "Tab name" })).toBeFocused();
+	await expect(editor.getByRole("textbox", { name: "Address" })).toHaveValue("https://example.com/tab-home");
+	await expect(editor.getByRole("button", { name: "Use Current Page" })).toHaveCount(0);
 	await page.keyboard.type("Nope");
 	await page.keyboard.press("Escape");
 
-	await expect(input).toHaveCount(0);
+	await expect(editor).toHaveCount(0);
 	await expect(page.locator(`${HOME} .tab-title`)).toHaveText("Pinned Home");
+	expect(await renameCommands(page)).toEqual([]);
+	expect(await homeURLCommands(page)).toEqual([]);
+});
+
+test("away from home, Use Current Page makes the page the tab is on its home", async ({ page }) => {
+	await bootWithHome(page);
+
+	const editor = await openEditor(page, "https://example.com/start");
+	await editor.getByRole("button", { name: "Use Current Page" }).click();
+	await expect(editor.getByRole("textbox", { name: "Address" })).toHaveValue("https://example.com/tab-home");
+	await editor.getByRole("button", { name: "Save" }).click();
+
+	await expect(editor).toHaveCount(0);
+	expect(await renameCommands(page)).toEqual([]);
+	expect((await homeURLCommands(page)).map((command) => command.payload)).toEqual([{ id: "tab-home", url: "https://example.com/tab-home" }]);
+});
+
+test("an address that is not one keeps the editor open and sends nothing", async ({ page }) => {
+	await bootWithHome(page);
+
+	const editor = await openEditor(page);
+	await editor.getByRole("textbox", { name: "Address" }).fill("not an address");
+	await expect(editor.getByRole("button", { name: "Save" })).toBeDisabled();
+	await page.keyboard.press("Enter");
+
+	await expect(editor).toBeVisible();
+	expect(await homeURLCommands(page)).toEqual([]);
+});
+
+test("a click outside the editor cancels it", async ({ page }) => {
+	await bootWithHome(page);
+
+	const editor = await openEditor(page);
+	await editor.getByRole("textbox", { name: "Tab name" }).fill("Elsewhere");
+	await page.locator('[data-tab-id="tab-beta"]').click();
+
+	await expect(editor).toHaveCount(0);
 	expect(await renameCommands(page)).toEqual([]);
 });
 
