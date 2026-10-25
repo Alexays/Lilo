@@ -63,7 +63,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         "ojplmecpdpgccookcobabopnaifgidhf": "JavaScriptCore checks a binding an assignment across an await targets before the await, so its content scripts' modules throw where V8 waits for the await (WEBKIT-GAPS.md, gap 74)", // Buyhatke
         "agjnjboanicjcpenljmaaigopkgdnihi": "JavaScriptCore rejects `in` in an arrow function body inside a for initializer, so its module worker fails to parse", // PreMiD
         "ckkdlimhmcjmikdlpkmbgfkaikojcbjk": "Chrome too: it removes a required permission (WebKit words the error differently)", // Markdown Viewer
-        "mfpiaehgjbbfednooihadalhehabhcjo": "Chrome too: it scripts a tab it has no access to (WebKit words the error differently)", // Scrolling screenshot tool
         "oeopbcgkkoapgobdbedcemjljbihmemj": "Lilo has no push backend: it logs the error instanceID.getToken fails with, Chrome's with Instance ID disabled, where Chrome gets a token", // Checker Plus for Gmail
         "inlikjemeeknofckkjolnjbpehgadgge": "WebKit gives extensions no SharedArrayBuffer, so its offscreen document cannot open its SQLite store", // Distill Web Monitor
         "bomfdkbfpdhijjbeoicnfhjbdhncfhig": "WebKit gives extensions no SharedArrayBuffer (WEBKIT-GAPS.md, gap 36): its worker's error reporter logs the ReferenceError", // Paperpile
@@ -76,7 +75,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         "gkncegdiihdghhkfpnnodppcbjeeimkc": "installed from the store, it needs an enterprise policy's managed configuration; Chrome's reference runs it unpacked (installType development), where it falls back to defaults", // Senso
         "hdjihnnclpjhfdbbinmgoiehhoehhlgf": "its popup waits for the window focus the test's window never gets, then pastes with document.execCommand('paste'), which WebKit answers false: it renders nothing", // Pasty
         "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, fails with 'Could not establish connection' where Chrome's is answered, so it shows its loader only", // Aircall Dialer
-        "kpbnombpnpcffllnianjibmpadjolanh": "Lilo reports 'Could not establish connection' for its popup's message, which Chrome delivers to a worker listener that returns true and never answers", // ACG Helper
         "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker extension.getBackgroundPage, which Chrome leaves out of workers: its background check compares the result with window and fails to load", // AI Exporter
     ]
 
@@ -90,6 +88,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         "aeblfdkhhhdcdjpifhhbdiojplfjncoa": "the popup's tab activates while its WebAssembly core starts: its icon update skips a tab with no url, which Chrome reports until the tab commits, where Lilo reports the url from the navigation start (WebKit's own access checks on a loading tab need it)", // 1Password
         "hgmoccdbjhknikckedaaebbpdeebhiei": "its popup can read its stored state before the worker has written it", // Ahrefs SEO Toolbar
         "bgnkhhnnamicmpeenaelnjfhikgbkllg": "its popup can message its worker once the worker listens but before its handler is set up, which then answers nothing; when the worker does not listen yet, the popup's promise rejects as in Chrome", // AdGuard AdBlocker
+        "apjcbfpjihpedihablmalmbbhjpklbdf": "its popup can message its worker once the worker listens but before its handler is set up, which then answers nothing; when the worker does not listen yet, the popup's promise rejects as in Chrome", // AdGuard AdBlocker (Beta)
         "gkojfkhlekighikafcpjkiklfbnlmeio": "a tab event can reach its worker before its asynchronous startup has set up what its tab listeners use", // Hola VPN
         "gidejehfgombmkfflghejpncblgfkagj": "its worker's handler fails on a request to its server, which Chrome fails too, before it answers: its content scripts then read the answer as null (e.mode, r.length)", // Cuponomia
         "oiiaigjnkhngdbnoookogelabohpglmd": "some runs fail a request to its API, or WebKit fails to size storage.sync for its set", // HubSpot Sales
