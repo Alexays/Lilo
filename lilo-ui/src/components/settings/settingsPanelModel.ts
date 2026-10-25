@@ -58,6 +58,8 @@ export type SettingId =
   | "autoUpdate"
   | "shortcuts"
   | "theme"
+  | "tabPosition"
+  | "addressPlacement"
   | "appIcon"
   | "defaultZoom"
   | "minimumFontSize"
@@ -244,6 +246,8 @@ export const SETTINGS: SettingModel[] = [
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
+  { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "minimumFontSize", section: "appearance", groupKey: "settings.groups.pages" },
   { id: "newSpace", section: "tabs", groupKey: "settings.groups.spaces" },

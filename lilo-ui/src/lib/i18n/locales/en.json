@@ -99,6 +99,16 @@
 		"engineMoveUp": "Move up",
 		"engineMoveDown": "Move down",
 		"engineAdd": "Add search engine",
+		"tabPosition": {
+			"left": "Left",
+			"right": "Right",
+			"top": "Top",
+			"bottom": "Bottom"
+		},
+		"addressPlacement": {
+			"tabs": "With the tabs",
+			"page": "Above the page"
+		},
 		"themeSystem": "System",
 		"themeLight": "Light",
 		"themeDark": "Dark",
@@ -139,6 +149,7 @@
 			"search": "Search",
 			"downloads": "Downloads",
 			"theme": "Theme",
+			"tabLayout": "Tabs",
 			"pages": "Pages",
 			"spaces": "Spaces",
 			"media": "Media and calls",
@@ -240,6 +251,16 @@
 				"title": "Downloads folder",
 				"description": "Where downloaded files are saved.",
 				"keywords": "download save location directory"
+			},
+			"tabPosition": {
+				"title": "Tabs",
+				"description": "Where your tabs, Spaces and favorites live. You can also drag the sidebar to another edge.",
+				"keywords": "tab position sidebar left right top bottom horizontal vertical strip layout"
+			},
+			"addressPlacement": {
+				"title": "Address",
+				"description": "With the tabs, or in a bar above the page.",
+				"keywords": "address bar url toolbar location"
 			},
 			"theme": {
 				"title": "Theme",

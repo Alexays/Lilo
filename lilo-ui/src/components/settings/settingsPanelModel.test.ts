@@ -113,7 +113,7 @@ test("settings search reaches hidden keywords and section names", () => {
   const resolve = (key: string) => catalog[key] ?? "";
 
   assert.deepEqual(searchSettings("cookies", resolve).map((setting) => setting.id), ["clearData"]);
-  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "defaultZoom", "minimumFontSize"]);
+  assert.deepEqual(searchSettings("appearance", resolve).map((setting) => setting.id), ["theme", "appIcon", "tabPosition", "addressPlacement", "defaultZoom", "minimumFontSize"]);
 });
 
 test("folds permissions, data, and zoom into one row per site", () => {
@@ -137,4 +137,14 @@ test("folds permissions, data, and zoom into one row per site", () => {
       ["zoom.us", 1, null, 0],
     ],
   );
+});
+
+test("the tab position sits under Appearance, found by what people call it", () => {
+  const catalog: Record<string, string> = {
+    "settings.items.tabPosition.title": "Tabs",
+    "settings.items.tabPosition.keywords": "tab position sidebar left right top bottom",
+  };
+  const resolve = (key: string) => catalog[key] ?? "";
+
+  assert.ok(searchSettings("sidebar top", resolve).some((setting) => setting.id === "tabPosition"));
 });

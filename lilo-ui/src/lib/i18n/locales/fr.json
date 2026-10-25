@@ -99,6 +99,16 @@
 		"engineMoveUp": "Monter",
 		"engineMoveDown": "Descendre",
 		"engineAdd": "Ajouter un moteur",
+		"tabPosition": {
+			"left": "Gauche",
+			"right": "Droite",
+			"top": "Haut",
+			"bottom": "Bas"
+		},
+		"addressPlacement": {
+			"tabs": "Avec les onglets",
+			"page": "Au-dessus de la page"
+		},
 		"themeSystem": "Système",
 		"themeLight": "Clair",
 		"themeDark": "Sombre",
@@ -139,6 +149,7 @@
 			"search": "Recherche",
 			"downloads": "Téléchargements",
 			"theme": "Thème",
+			"tabLayout": "Onglets",
 			"pages": "Pages",
 			"spaces": "Espaces",
 			"media": "Médias et appels",
@@ -240,6 +251,16 @@
 				"title": "Dossier de téléchargement",
 				"description": "Emplacement des fichiers téléchargés.",
 				"keywords": "téléchargements enregistrer emplacement"
+			},
+			"tabPosition": {
+				"title": "Onglets",
+				"description": "Où vivent vos onglets, Spaces et favoris. Vous pouvez aussi glisser la barre latérale vers un autre bord.",
+				"keywords": "position onglets barre latérale gauche droite haut bas horizontal vertical bande disposition"
+			},
+			"addressPlacement": {
+				"title": "Adresse",
+				"description": "Avec les onglets, ou dans une barre au-dessus de la page.",
+				"keywords": "barre adresse url barre d outils"
 			},
 			"theme": {
 				"title": "Thème",
