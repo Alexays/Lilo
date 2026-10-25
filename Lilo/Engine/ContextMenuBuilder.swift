@@ -92,6 +92,11 @@ final class ContextMenuBuilder: NSObject {
 
         // Extension context menu items (chrome.contextMenus)
         if !extensionItems.isEmpty {
+            // WebKit already proposes its own copies; Lilo's replace them, as choosing one counts as the
+            // extension's user gesture.
+            for item in menu.items where (item.target as? NSObject)?.className == "_WKWebExtensionMenuItem" {
+                menu.removeItem(item)
+            }
             menu.addItem(.separator())
             extensionItems.forEach { menu.addItem($0) }
         }

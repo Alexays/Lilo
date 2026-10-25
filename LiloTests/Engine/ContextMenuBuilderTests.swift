@@ -39,6 +39,40 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertFalse(titles.contains("Open Link in New Tab".localized))
     }
 
+    /// WebKit proposes the extensions' items itself: the menu shows them once, as Lilo's copies.
+    func testBuildShowsAnExtensionsItemsOnce() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("menu-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let registry = try makeTestExtensionRegistry(in: folder)
+        defer { registry.teardown() }
+        let extensionFolder = folder.appendingPathComponent("ext")
+        try FileManager.default.createDirectory(at: extensionFolder, withIntermediateDirectories: true)
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Menu", "version": "1.0", "permissions": ["contextMenus"],
+            "background": ["service_worker": "background.js"]
+        ]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: extensionFolder.appendingPathComponent("manifest.json"))
+        try "chrome.contextMenus.create({ id: 'item', title: 'Extension item', contexts: ['all'] });"
+            .write(to: extensionFolder.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extensionFolder)
+        let id = try XCTUnwrap(registry.loadedExtensions.last?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        let adapter = TabExtensionAdapter(engineTab: WKWebViewTab(id: UUID(), webView: WKWebView()))
+        let created = await pollUntil { !context.menuItems(for: adapter).isEmpty }
+        XCTAssertTrue(created)
+
+        let menu = NSMenu()
+        context.menuItems(for: adapter).forEach(menu.addItem)
+        let ours = context.menuItems(for: adapter)
+        makeBuilder().build(menu, linkURL: nil, extensionItems: ours)
+
+        let shown = menu.items.filter { $0.title == "Extension item" }
+        XCTAssertEqual(shown.count, 1)
+        XCTAssertIdentical(shown.first, ours.first)
+    }
+
     func testBuildAddsLinkActionsWhenLinkPresent() {
         let menu = NSMenu()
         makeBuilder().build(menu, linkURL: URL(string: "https://example.com"), extensionItems: [])
