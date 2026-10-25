@@ -436,8 +436,13 @@ final class AgentFoldersTests: AgentToolTestCase {
 
         client.close()
 
-        let wiped = await pollUntil(timeout: 5) { await store.backingStore.dataRecords(ofTypes: WKWebsiteDataStore.testDataTypes).isEmpty }
-        XCTAssertTrue(wiped, "nothing an agent left reaches the next one")
+        // WebKit takes up to 9 s to remove a profile's data on a loaded runner.
+        var left: [WKWebsiteDataRecord] = []
+        let wiped = await pollUntil {
+            left = await store.backingStore.dataRecords(ofTypes: WKWebsiteDataStore.testDataTypes)
+            return left.isEmpty
+        }
+        XCTAssertTrue(wiped, "nothing an agent left reaches the next one: \(left.map { "\($0.displayName) \($0.dataTypes.sorted())" })")
     }
 
     func testAgentActionsRecordTheTabActedOn() async throws {
