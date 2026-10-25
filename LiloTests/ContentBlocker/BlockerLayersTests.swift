@@ -133,4 +133,22 @@ final class BlockerLayersTests: XCTestCase {
         let paused = try await load(expecting: untouched)
         XCTAssertEqual(paused, untouched, "a paused site gets neither rule")
     }
+
+    /// Privacy lists block bot-defense sensors as trackers; without them sites challenge every visit.
+    func testBotDefenseSensorsGetThroughABlockingList() async throws {
+        let blocks = ["perimeterx", "datadome", "hcaptcha", "captcha-delivery", "arkoselabs"]
+            .map { ["trigger": ["url-filter": $0], "action": ["type": "block"]] }
+        let blocking = String(decoding: try JSONSerialization.data(withJSONObject: blocks), as: UTF8.self)
+        let json = try XCTUnwrap(WKEngineFactory.appendingAllowlistRule(blocking, allowlist: BlockerAllowlist()))
+        let rules = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: [String: Any]]])
+        let exceptions = rules.compactMap { $0["action"]?["type"] as? String == "ignore-previous-rules" ? $0["trigger"]?["url-filter"] as? String : nil }
+        for url in ["https://client.perimeterx.net/PX123/main.min.js", "https://js.datadome.co/tags.js", "https://a.hcaptcha.com/x",
+                    "https://geo.captcha-delivery.com/captcha/", "https://client-api.arkoselabs.com/v2/api.js"] {
+            let range = NSRange(url.startIndex..., in: url)
+            XCTAssertTrue(exceptions.contains { (try? NSRegularExpression(pattern: $0))?.firstMatch(in: url, range: range) != nil }, url)
+        }
+        let store = try XCTUnwrap(WKContentRuleListStore.default())
+        _ = try await store.compileContentRuleList(forIdentifier: "lilo.tests.bot-defense", encodedContentRuleList: json)
+        try await store.removeContentRuleList(forIdentifier: "lilo.tests.bot-defense")
+    }
 }

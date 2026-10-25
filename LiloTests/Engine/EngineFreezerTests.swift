@@ -4,11 +4,27 @@ import XCTest
 
 @MainActor
 final class EngineFreezerTests: XCTestCase {
-    func testCooperativeScriptDefinesFreezeAndResume() {
-        let src = CooperativeFreezer.userScriptSource
-        XCTAssertTrue(src.contains("__liloFreeze"))
-        XCTAssertTrue(src.contains("__liloResume"))
-        XCTAssertFalse(src.isEmpty)
+    func testCooperativeFreezeHidesThePageUntilResume() async throws {
+        let configuration = WKWebViewConfiguration()
+        PageWorld.install([CooperativeFreezer.pageModule], on: configuration.userContentController)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.loadHTMLString("<script>window.changes = 0; document.addEventListener('visibilitychange', () => changes++)</script>",
+                               baseURL: URL(string: "https://example.com/"))
+        // The initial about:blank already reads complete: wait for this page.
+        let loaded = await pollUntil(timeout: 5) {
+            ((try? await webView.evaluateJavaScript("location.href === 'https://example.com/' && document.readyState === 'complete'")) as? Bool) == true
+        }
+        XCTAssertTrue(loaded)
+        let state = "[document.visibilityState, document.hidden, changes].join()"
+        // A web view outside a window is hidden to WebKit already: a resume returns the page to that.
+        let native = try await webView.evaluateJavaScript("[document.visibilityState, document.hidden].join()") as? String
+
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("freeze"), contentWorld: PageWorld.bridgeWorld)
+        let frozen = try await webView.evaluateJavaScript(state) as? String
+        XCTAssertEqual(frozen, "hidden,true,1")
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("resume"), contentWorld: PageWorld.bridgeWorld)
+        let resumed = try await webView.evaluateJavaScript(state) as? String
+        XCTAssertEqual(resumed, "\(native ?? ""),2")
     }
 
     func testFreezeResumeTogglesIsFrozenFlagIdempotently() {

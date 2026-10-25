@@ -504,8 +504,8 @@ final class ProfileExtensionRegistry {
         // through the tab-share shim's getUserMedia, fed over the ferry's frame scheme.
         if let tabShare {
             config.webViewConfiguration.setURLSchemeHandler(tabShare.frames, forURLScheme: TabShareFrameSchemeHandler.scheme)
-            userContentController.addScriptMessageHandler(tabShare.bridge, contentWorld: .page, name: TabShareBridge.messageHandlerName)
-            userContentController.addUserScript(WKUserScript(source: TabShareBridge.shimSource, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+            userContentController.addScriptMessageHandler(tabShare.bridge, contentWorld: PageWorld.bridgeWorld, name: TabShareBridge.messageHandlerName)
+            PageWorld.install([TabShareBridge.pageModule], on: userContentController)
         }
 
         self.pageScripts = userContentController

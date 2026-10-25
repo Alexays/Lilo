@@ -80,14 +80,11 @@ final class SerialBridge: NSObject, WKScriptMessageHandlerWithReply {
             do {
                 let connection = try SerialConnection(path: path, options: body)
                 connection.onData = { [weak webView] data in
-                    webView?.callAsyncJavaScript("window.__liloSerialData?.(id, data)",
-                                                 arguments: ["id": path, "data": data.base64EncodedString()],
-                                                 in: nil, in: .page, completionHandler: nil)
+                    webView?.evaluateJavaScript(PageWorld.push("serialData", [path, data.base64EncodedString()]), in: nil, in: PageWorld.bridgeWorld)
                 }
                 connection.onEnd = { [weak self, weak webView, weak connection] in
                     if self?.connections[path]?.connection === connection { self?.connections[path] = nil }
-                    webView?.callAsyncJavaScript("window.__liloSerialEnd?.(id)", arguments: ["id": path],
-                                                 in: nil, in: .page, completionHandler: nil)
+                    webView?.evaluateJavaScript(PageWorld.push("serialEnd", [path]), in: nil, in: PageWorld.bridgeWorld)
                 }
                 connections[path] = Owned(connection: connection, webView: webView, document: document)
                 connection.start()
@@ -326,83 +323,116 @@ final class SerialConnection: @unchecked Sendable {
     }
 }
 
-// MARK: - Polyfill source
+// MARK: - Page module
 
 extension SerialBridge {
-    /// `navigator.serial` for secure top-level documents. Bytes cross the bridge as base64.
-    static let polyfillSource = """
-(function(){
-'use strict';
-var handler=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.liloSerial;
-if(!handler||!window.isSecureContext||window.top!==window||'serial' in navigator)return;
-var documentToken=Math.random().toString(36).slice(2)+Date.now().toString(36);
-function toError(e){
-var text=String(e&&e.message||e),m=/^(\\w+): (.*)$/.exec(text);
-if(m&&m[1]==='TypeError')return new TypeError(m[2]);
-return new DOMException(m?m[2]:text,m?m[1]:'NetworkError');
-}
-function call(action,args){
-var message=Object.assign({action:action,document:documentToken},args||{});
-return handler.postMessage(message).catch(function(e){throw toError(e);});
-}
-function toBase64(bytes){
-var s='';for(var i=0;i<bytes.length;i+=32768)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
-return btoa(s);
-}
-function fromBase64(text){
-var s=atob(text),bytes=new Uint8Array(s.length);for(var i=0;i<s.length;i++)bytes[i]=s.charCodeAt(i);return bytes;
-}
-function withHandlers(target,types){
-types.forEach(function(type){target['on'+type]=null;target.addEventListener(type,function(e){var h=target['on'+type];if(typeof h==='function')h.call(target,e);});});
-}
-var ports={};
-class SerialPort extends EventTarget{
-constructor(info){super();this._info=info;this.readable=null;this.writable=null;this._controller=null;this._closing=false;withHandlers(this,['connect','disconnect']);}
-get connected(){return true;}
-getInfo(){var info={};if(this._info.usbVendorId!=null)info.usbVendorId=this._info.usbVendorId;if(this._info.usbProductId!=null)info.usbProductId=this._info.usbProductId;return info;}
-async open(options){
-if(this.readable)throw new DOMException('The port is already open.','InvalidStateError');
-if(!options||!options.baudRate)throw new TypeError('A baudRate is required.');
-await call('open',{id:this._info.id,baudRate:options.baudRate,dataBits:options.dataBits||8,stopBits:options.stopBits||1,parity:options.parity||'none',flowControl:options.flowControl||'none'});
-var port=this;this._closing=false;
-this.readable=new ReadableStream({start:function(c){port._controller=c;},cancel:function(){port._controller=null;}});
-this.writable=new WritableStream({write:function(chunk){
-var bytes=chunk instanceof Uint8Array?chunk:ArrayBuffer.isView(chunk)?new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength):new Uint8Array(chunk);
-return call('write',{id:port._info.id,data:toBase64(bytes)});
-}});
-}
-async close(){
-if(!this.readable)throw new DOMException('The port is already closed.','InvalidStateError');
-this._closing=true;
-var readable=this.readable,writable=this.writable,controller=this._controller;
-this.readable=null;this.writable=null;this._controller=null;
-if(controller){try{controller.close();}catch(e){}}
-if(!readable.locked){try{await readable.cancel();}catch(e){}}
-if(!writable.locked){try{await writable.close();}catch(e){}}
-await call('close',{id:this._info.id});
-}
-setSignals(signals){return call('setSignals',Object.assign({id:this._info.id},signals||{}));}
-getSignals(){return call('getSignals',{id:this._info.id});}
-async forget(){await call('forget',{id:this._info.id});delete ports[this._info.id];}
-}
-function portFor(info){return ports[info.id]||(ports[info.id]=new SerialPort(info));}
-class Serial extends EventTarget{
-constructor(){super();withHandlers(this,['connect','disconnect']);}
-async requestPort(options){return portFor(await call('requestPort',{filters:(options&&options.filters)||[]}));}
-async getPorts(){return (await call('getPorts')).map(portFor);}
-}
-var serial=new Serial();
-window.__liloSerialData=function(id,data){
-var port=ports[id];if(port&&port._controller){try{port._controller.enqueue(fromBase64(data));}catch(e){}}
-};
-window.__liloSerialEnd=function(id){
-var port=ports[id];if(!port||port._closing)return;
-if(port._controller){try{port._controller.error(new DOMException('The device has been lost.','NetworkError'));}catch(e){}}
-port.readable=null;port.writable=null;port._controller=null;
-port.dispatchEvent(new Event('disconnect'));serial.dispatchEvent(new Event('disconnect'));
-};
-window.SerialPort=SerialPort;window.Serial=Serial;
-Object.defineProperty(Navigator.prototype,'serial',{get:function(){return serial;},configurable:true,enumerable:true});
-})();
-"""
+    /// `navigator.serial` for `PageWorld`, in secure top-level documents. Bytes cross the bridge as base64.
+    static let pageModule = #"""
+    function () {
+      if (!window.isSecureContext || window.top !== window || 'serial' in navigator) return;
+      const documentToken = Math.random().toString(36).slice(2) + Date.now().toString(36), illegal = {}, ports = create(null);
+      const toError = error => {
+        const text = String(error && error.message || error), match = /^(\w+): (.*)$/.exec(text);
+        if (match && match[1] === 'TypeError') return new NativeTypeError(match[2]);
+        return new DOMException(match ? match[2] : text, match ? match[1] : 'NetworkError');
+      };
+      const call = (action, args) => lilo.post('liloSerial', assign({ action, document: documentToken }, args)).catch(error => { throw toError(error); });
+      const toBase64 = bytes => {
+        let text = '';
+        for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+        return btoa(text);
+      };
+      const fromBase64 = text => {
+        const binary = atob(text), bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      };
+      class SerialPort extends EventTarget {
+        #info; #readable = null; #writable = null; #controller = null; #closing = false;
+        constructor(token, info) {
+          if (token !== illegal) throw new NativeTypeError('Illegal constructor');
+          super();
+          this.#info = info;
+          attachPort(this);
+        }
+        get readable() { return this.#readable; }
+        get writable() { return this.#writable; }
+        get connected() { return true; }
+        getInfo() {
+          const info = {};
+          if (this.#info.usbVendorId != null) info.usbVendorId = this.#info.usbVendorId;
+          if (this.#info.usbProductId != null) info.usbProductId = this.#info.usbProductId;
+          return info;
+        }
+        async open(options) {
+          if (this.#readable) throw new DOMException('The port is already open.', 'InvalidStateError');
+          if (!options || !options.baudRate) throw new NativeTypeError('A baudRate is required.');
+          const id = this.#info.id;
+          await call('open', { id, baudRate: options.baudRate, dataBits: options.dataBits || 8, stopBits: options.stopBits || 1,
+                               parity: options.parity || 'none', flowControl: options.flowControl || 'none' });
+          this.#closing = false;
+          this.#readable = new ReadableStream({ start: controller => { this.#controller = controller; }, cancel: () => { this.#controller = null; } });
+          this.#writable = new WritableStream({ write: chunk => {
+            const bytes = chunk instanceof Uint8Array ? chunk
+              : ArrayBuffer.isView(chunk) ? new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength) : new Uint8Array(chunk);
+            return call('write', { id, data: toBase64(bytes) });
+          } });
+        }
+        async close() {
+          if (!this.#readable) throw new DOMException('The port is already closed.', 'InvalidStateError');
+          this.#closing = true;
+          const readable = this.#readable, writable = this.#writable, controller = this.#controller;
+          this.#readable = null; this.#writable = null; this.#controller = null;
+          if (controller) { try { controller.close(); } catch (e) {} }
+          if (!readable.locked) { try { await readable.cancel(); } catch (e) {} }
+          if (!writable.locked) { try { await writable.close(); } catch (e) {} }
+          await call('close', { id: this.#info.id });
+        }
+        setSignals(signals) { return call('setSignals', assign({ id: this.#info.id }, signals || {})); }
+        getSignals() { return call('getSignals', { id: this.#info.id }); }
+        async forget() {
+          await call('forget', { id: this.#info.id });
+          delete ports[this.#info.id];
+        }
+        static receive(port, data) {
+          if (port.#controller) { try { port.#controller.enqueue(fromBase64(data)); } catch (e) {} }
+        }
+        static end(port) {
+          if (port.#closing) return;
+          if (port.#controller) { try { port.#controller.error(new DOMException('The device has been lost.', 'NetworkError')); } catch (e) {} }
+          port.#readable = null; port.#writable = null; port.#controller = null;
+          return true;
+        }
+      }
+      // Reached only from here: SerialPort's statics go once the class is defined.
+      const { receive, end } = SerialPort;
+      delete SerialPort.receive;
+      delete SerialPort.end;
+      class Serial extends EventTarget {
+        constructor(token) {
+          if (token !== illegal) throw new NativeTypeError('Illegal constructor');
+          super();
+          attachSerial(this);
+        }
+        async requestPort(options) { return portFor(await call('requestPort', { filters: (options && options.filters) || [] })); }
+        async getPorts() { return (await call('getPorts')).map(portFor); }
+      }
+      const attachPort = lilo.eventHandlers(SerialPort.prototype, ['connect', 'disconnect']);
+      const attachSerial = lilo.eventHandlers(Serial.prototype, ['connect', 'disconnect']);
+      const portFor = info => ports[info.id] || (ports[info.id] = new SerialPort(illegal, info));
+      const serial = new Serial(illegal);
+      lilo.on('serialData', (id, data) => { if (ports[id]) receive(ports[id], data); });
+      lilo.on('serialEnd', id => {
+        const port = ports[id];
+        if (!port || !end(port)) return;
+        apply(dispatch, port, [new NativeEvent('disconnect')]);
+        apply(dispatch, serial, [new NativeEvent('disconnect')]);
+      });
+      lilo.nativeClass(SerialPort);
+      lilo.nativeClass(Serial);
+      lilo.global('SerialPort', SerialPort);
+      lilo.global('Serial', Serial);
+      lilo.accessors(Navigator.prototype, { get serial() { return serial; } });
+    }
+    """#
 }

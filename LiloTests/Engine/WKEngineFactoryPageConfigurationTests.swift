@@ -25,9 +25,10 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
 
+        let safari = Bundle(path: "/Applications/Safari.app")?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
         let os = ProcessInfo.processInfo.operatingSystemVersion
         XCTAssertEqual(tab.wkWebView.configuration.applicationNameForUserAgent,
-                       "Version/\(os.majorVersion).\(os.minorVersion) Safari/605.1.15")
+                       "Version/\(safari ?? "\(os.majorVersion).\(os.minorVersion)") Safari/605.1.15")
     }
 
     /// A page's change to navigator.credentials outlives a collection, as in Chrome: WebKit makes a new

@@ -7,6 +7,14 @@ import os
 @MainActor
 final class WebstoreInstallHandler: NSObject, WKScriptMessageHandlerWithReply {
     static let messageHandlerName = "liloWebstore"
+    /// The store shim reaches this handler as `window.webkit.messageHandlers.liloWebstore`; the handler lives in
+    /// `PageWorld.bridgeWorld`, so the store, and only the store, gets that path for `PageWorld`.
+    static let pageModule = #"""
+    function () {
+      if (location.hostname !== 'chromewebstore.google.com' || window.top !== window) return;
+      lilo.global('webkit', { messageHandlers: { liloWebstore: { postMessage: body => lilo.post('liloWebstore', body) } } });
+    }
+    """#
     private static let logger = Logger(liloCategory: "webstore-install")
 
     private let registryProvider: @MainActor (WKWebView?) -> ProfileExtensionRegistry?

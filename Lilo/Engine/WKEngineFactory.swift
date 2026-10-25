@@ -633,7 +633,7 @@ final class WKEngineFactory {
     private func ruleListIdentifier(allowlist: BlockerAllowlist) -> String {
         let sitesTag = allowlist.sites.isEmpty ? "" : ".al-\(Self.stableHash8(allowlist.sites.sorted().joined(separator: "|")))"
         let domainsTag = allowlist.domains.isEmpty ? "" : ".ad-\(Self.stableHash8(allowlist.domains.sorted().joined(separator: "|")))"
-        return "\(Self.ruleListIdentifierPrefix)v3.\(externalFilterRulesTag)\(sitesTag)\(domainsTag)"
+        return "\(Self.ruleListIdentifierPrefix)v4.\(externalFilterRulesTag)\(sitesTag)\(domainsTag)"
     }
 
     /// WebKit rejects a list past 150,000 rules.
@@ -717,12 +717,11 @@ final class WKEngineFactory {
     }
 
     /// The rule JSON plus trailing allowlist rules: one per allowed request domain (`url-filter` has no
-    /// alternation), then one for the sites. A per-rule `unless-top-url` fails to compile next to
-    /// `if-domain` triggers and makes WebKit rebuild cosmetic rules per page.
-    nonisolated private static func appendingAllowlistRule(_ json: String, allowlist: BlockerAllowlist) -> String? {
-        if allowlist.sites.isEmpty && allowlist.domains.isEmpty { return json }
+    /// alternation), bot-defense vendors' included, then one for the sites. A per-rule `unless-top-url` fails
+    /// to compile next to `if-domain` triggers and makes WebKit rebuild cosmetic rules per page.
+    nonisolated static func appendingAllowlistRule(_ json: String, allowlist: BlockerAllowlist) -> String? {
         guard let close = json.lastIndex(of: "]") else { return nil }
-        var rules: [[String: Any]] = allowlist.domains.map {
+        var rules: [[String: Any]] = (allowlist.domains + BlockerAllowlist.botDefenseDomains).map {
             ["trigger": ["url-filter": "^[a-z-]+://([^/]+\\.)?\($0.replacingOccurrences(of: ".", with: "\\."))[/:]"],
              "action": ["type": "ignore-previous-rules"]]
         }
@@ -740,10 +739,13 @@ final class WKEngineFactory {
         return String(head) + separator + rulesJSON.dropFirst().dropLast() + "]"
     }
 
-    /// Safari's version tracks the macOS release that ships its WebKit, so it is read from the OS.
-    private static let safariApplicationName: String = {
+    /// Safari's version, which ships with the system WebKit, as Safari states it: a point release (27.0.1) shows, and a user
+    /// agent that disagrees with the engine reads as a bot. The OS release stands in where Safari is missing.
+    static let safariApplicationName: String = {
         let os = ProcessInfo.processInfo.operatingSystemVersion
-        return "Version/\(os.majorVersion).\(os.minorVersion) Safari/605.1.15"
+        let version = Bundle(path: "/Applications/Safari.app")?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "\(os.majorVersion).\(os.minorVersion)"
+        return "Version/\(version) Safari/605.1.15"
     }()
 
     private func configuredWebViewConfiguration(
@@ -829,15 +831,17 @@ final class WKEngineFactory {
         if let existing = contentControllersByKey[key] { return existing }
 
         let contentController = WKUserContentController()
-        contentController.addScriptMessageHandler(webstoreInstallHandler, contentWorld: .page, name: WebstoreInstallHandler.messageHandlerName)
+        // Never in the page world, which would then expose `window.webkit` to every page.
+        let world = PageWorld.bridgeWorld
+        contentController.addScriptMessageHandler(webstoreInstallHandler, contentWorld: world, name: WebstoreInstallHandler.messageHandlerName)
         // WKWebView calls the geolocation permission delegate but ships no position provider, so no
         // coordinates ever arrive after granting. A CoreLocation-backed polyfill is required.
-        contentController.add(geolocationBridge, name: GeolocationBridge.messageHandlerName)
-        contentController.add(notificationBridge, name: NotificationBridge.messageHandlerName)
-        contentController.addScriptMessageHandler(serialBridge, contentWorld: .page, name: SerialBridge.messageHandlerName)
-        contentController.addScriptMessageHandler(eyeDropperBridge, contentWorld: .page, name: EyeDropperBridge.messageHandlerName)
-        contentController.add(formDirtyBridge, name: FormDirtyBridge.messageHandlerName)
-        contentController.addScriptMessageHandler(tabShareBridge, contentWorld: .page, name: TabShareBridge.messageHandlerName)
+        contentController.add(geolocationBridge, contentWorld: world, name: GeolocationBridge.messageHandlerName)
+        contentController.add(notificationBridge, contentWorld: world, name: NotificationBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(serialBridge, contentWorld: world, name: SerialBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(eyeDropperBridge, contentWorld: world, name: EyeDropperBridge.messageHandlerName)
+        contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }
         contentControllersByKey[key] = contentController
@@ -848,6 +852,13 @@ final class WKEngineFactory {
     /// The full user-script set for a content controller. Also used to rescript a live controller
     /// after an injection-table change (message handlers and the rule list are managed separately).
     private func installUserScripts(on contentController: WKUserContentController) {
+        // First, so the store shim below finds the store's transport.
+        PageWorld.install([
+            GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
+            TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
+        ], on: contentController)
+        contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
+                                                     in: PageWorld.bridgeWorld))
         // Store shim for regular tabs (the store is a normal https tab without ChromeAPIAugmentation.js), top-level only. Injected
         // only into the store when the match-pattern SPI exists; it self-guards on the hostname otherwise.
         if let source = bundledTemplate("ChromeWebStoreShim") {
@@ -857,19 +868,6 @@ final class WKEngineFactory {
         } else {
             Self.logger.error("ChromeWebStoreShim.js not found in bundle: Chrome Web Store install will not work")
         }
-        contentController.addUserScript(WKUserScript(source: GeolocationBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
-        contentController.addUserScript(WKUserScript(source: NotificationBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
-        contentController.addUserScript(WKUserScript(source: SerialBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        contentController.addUserScript(WKUserScript(source: EyeDropperBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
-        contentController.addUserScript(WKUserScript(source: FormDirtyBridge.polyfillSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
-        contentController.addUserScript(WKUserScript(source: TabShareBridge.shimSource, injectionTime: .atDocumentStart, forMainFrameOnly: false))
-        contentController.addUserScript(WKUserScript(source: WKWebViewTab.mediaControlSource, injectionTime: .atDocumentStart, forMainFrameOnly: true))
-        // WebKit lets go of navigator.credentials and hands out a new one without what the page or a
-        // password manager's passkey hook set on it: the navigator keeps it for the page's life.
-        contentController.addUserScript(WKUserScript(
-            source: "try{Object.defineProperty(navigator,Symbol(),{value:navigator.credentials})}catch(e){}",
-            injectionTime: .atDocumentStart, forMainFrameOnly: false
-        ))
         installedFilterUserScripts.forEach { contentController.addUserScript($0) }
     }
 

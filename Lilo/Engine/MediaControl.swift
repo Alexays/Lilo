@@ -3,41 +3,38 @@ import WebKit
 /// Plays, pauses and skips a page's media from the sidebar's media card. The page's Media Session
 /// handlers go first, as the page's own buttons would; bare media elements are the fallback.
 extension WKWebViewTab {
-    /// Page world, main frame: it hooks `navigator.mediaSession` before the page registers its handlers.
-    static let mediaControlSource = """
-    (function () {
-      'use strict';
-      var handlers = {};
-      var session = navigator.mediaSession;
-      if (session && typeof session.setActionHandler === 'function') {
-        var setActionHandler = session.setActionHandler;
-        session.setActionHandler = function (action, handler) {
-          handlers[action] = handler;
-          return setActionHandler.apply(this, arguments);
-        };
-      }
-      var paused = [];
-      window.__liloMedia = function (action) {
+    /// For `PageWorld`, main frame: it hooks Media Session before the page registers its handlers.
+    static let mediaControlModule = #"""
+    function () {
+      if (window.top !== window || typeof MediaSession !== 'function') return;
+      const handlers = create(null);
+      let paused = [];
+      const original = lilo.methods(MediaSession.prototype, { setActionHandler(action, handler) {
+        const result = apply(original.setActionHandler, this, arguments);
+        handlers[action] = handler;
+        return result;
+      } });
+      lilo.on('media', action => {
         if (action === 'tracks') return !!(handlers.nexttrack || handlers.previoustrack);
         if (handlers[action]) {
-          try { handlers[action]({ action: action }); return true; } catch (e) {}
+          try { handlers[action]({ action }); return true; } catch (e) {}
         }
         if (action === 'pause') {
-          paused = Array.prototype.filter.call(document.querySelectorAll('video, audio'), function (m) { return !m.paused; });
-          paused.forEach(function (m) { m.pause(); });
+          paused = Array.prototype.filter.call(document.querySelectorAll('video, audio'), media => !media.paused);
+          paused.forEach(media => media.pause());
         } else if (action === 'play') {
-          paused.forEach(function (m) { try { m.play().catch(function () {}); } catch (e) {} });
+          paused.forEach(media => { try { media.play().catch(() => {}); } catch (e) {} });
           paused = [];
         }
         return true;
-      };
-    })();
-    """
+      });
+    }
+    """#
 
     /// `action` is play, pause, nexttrack or previoustrack.
     func controlMedia(_ action: String) {
         guard ["play", "pause", "nexttrack", "previoustrack"].contains(action), wake() else { return }
-        wkWebView.evaluateJavaScript("window.__liloMedia && window.__liloMedia('\(action)')") { [weak self] _, _ in
+        wkWebView.evaluateJavaScript(PageWorld.push("media", [action]), in: nil, in: PageWorld.bridgeWorld) { [weak self] _ in
             // Media in frames the script does not reach still stops; it runs after the script so the
             // script's own list of what it paused stays whole for the next play.
             if action == "pause" { self?.wkWebView.pauseAllMediaPlayback() }
@@ -48,7 +45,7 @@ extension WKWebViewTab {
     /// Lilo asks this on its own, not on a user action: the page gets no user activation from it.
     func hasMediaTrackControls() async -> Bool {
         await withCheckedContinuation { continuation in
-            WebViewPrivateAccessors(wkWebView).evaluateWithoutUserGesture("!!(window.__liloMedia && window.__liloMedia('tracks'))") {
+            WebViewPrivateAccessors(wkWebView).evaluateWithoutUserGesture(PageWorld.push("media", ["tracks"]), in: nil, in: PageWorld.bridgeWorld) {
                 continuation.resume(returning: $0 as? Bool ?? false)
             }
         }
