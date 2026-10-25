@@ -311,6 +311,28 @@ html[data-booting='true'] .space-track {
   border-radius: var(--chrome-overlay-boundary-radius);
 }
 
+/* The sidebar's palette, for every surface that sits on the window frame: sidebar, strip, page toolbar. */
+.tabs-surface {
+    color: var(--sidebar-contrast);
+    --text-primary: var(--sidebar-contrast);
+    --text-secondary: var(--sidebar-secondary);
+    --text-muted: var(--sidebar-muted);
+    --bg-primary: var(--sidebar-panel);
+    --bg-secondary: var(--sidebar-subtle);
+    --bg-tertiary: var(--sidebar-elevated);
+    --bg-hover: var(--sidebar-hover);
+    --bg-active: var(--sidebar-active);
+    --bg-selected: var(--sidebar-selected);
+    --bg-elevated: var(--sidebar-elevated);
+    --border: var(--sidebar-border);
+    --separator: var(--sidebar-separator);
+    --accent: var(--sidebar-accent);
+    --accent-hover: var(--sidebar-accent-hover);
+    --accent-text: var(--sidebar-accent-text);
+    --danger: var(--sidebar-danger);
+    --sidebar-right-pad: 10px;
+}
+
 .chrome-floating-surface {
   background: var(--chrome-overlay-surface);
   border: 1px solid var(--chrome-overlay-border);

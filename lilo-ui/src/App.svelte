@@ -28,7 +28,8 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
-  import { getTabPosition } from "./stores/tabLayout.svelte";
+  import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
+  import PageToolbar from "./components/page/PageToolbar.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
 
@@ -310,17 +311,23 @@
        is painted natively by WindowFrameView, so nothing full-viewport here. -->
 
   <!-- Double-click inset padding to maximize -->
+  <!-- A docked toolbar or strip over the page handles its own window drag. -->
   <div
     class="content-inset-zone"
     class:sidebar-hidden={!isSidebarVisible()}
-    use:reportInteractiveZone={{ id: "content-inset-zone" }}
+    class:zone-inactive={isSidebarVisible() && (hasPageToolbar() || !isVerticalLayout())}
+    use:reportInteractiveZone={{ id: "content-inset-zone", active: !isSidebarVisible() || (!hasPageToolbar() && isVerticalLayout()) }}
   ></div>
+
+  {#if isSidebarVisible() && (hasPageToolbar() || (getTabPosition() === "top" && getAddressPlacement() === "page"))}
+    <PageToolbar row={getTabPosition() === "top"} />
+  {/if}
 
   <SplitDropZone />
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="sidebar"
+    class="sidebar tabs-surface"
     class:sidebar-hidden={!isSidebarShown()}
     class:sidebar-overlay={isSidebarOverlay()}
     class:swiping={swipeBackground !== null}
@@ -449,24 +456,6 @@
     width: var(--sidebar-column);
     height: 100vh;
     background-color: var(--sidebar-bg);
-    color: var(--sidebar-contrast);
-    --text-primary: var(--sidebar-contrast);
-    --text-secondary: var(--sidebar-secondary);
-    --text-muted: var(--sidebar-muted);
-    --bg-primary: var(--sidebar-panel);
-    --bg-secondary: var(--sidebar-subtle);
-    --bg-tertiary: var(--sidebar-elevated);
-    --bg-hover: var(--sidebar-hover);
-    --bg-active: var(--sidebar-active);
-    --bg-selected: var(--sidebar-selected);
-    --bg-elevated: var(--sidebar-elevated);
-    --border: var(--sidebar-border);
-    --separator: var(--sidebar-separator);
-    --accent: var(--sidebar-accent);
-    --accent-hover: var(--sidebar-accent-hover);
-    --accent-text: var(--sidebar-accent-text);
-    --danger: var(--sidebar-danger);
-    --sidebar-right-pad: 10px;
     pointer-events: auto;
     display: flex;
     flex-direction: column;
