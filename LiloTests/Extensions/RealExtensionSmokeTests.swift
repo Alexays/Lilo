@@ -81,28 +81,22 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
-        "cnlhokffphohmfcddnibpohmkdfafdli": "some runs its popup still renders nothing, after other extensions in the same shard; the cause is not yet known", // MultiPassword
-        "eppiocemhmnlbhjplcgkofciiegomcon": "its welcome page can message its worker before the worker's ad blocker has fetched its identity, a race Chrome runs too and mostly wins by milliseconds", // Urban VPN Proxy
-        "bkdgflcldnnnapblkhphbgpggdiikppg": "its popup closes itself on a tab activation while its worker still answers it on the popup's port, a race Chrome runs too: posting on a disconnected port throws in both", // DuckDuckGo
+        "bkdgflcldnnnapblkhphbgpggdiikppg": "some runs its worker's privacy-dashboard port hears messages shaped as the answers Lilo sends on its own channel ({reply, result}) and logs them as unrecognized, with the worker running; the cause is not yet known", // DuckDuckGo
         "aicmkgpgakddgnaphhhpliifpcfhicfo": "its worker posts on the port it opens back to its popup, which WebKit disconnects when the popup runs in a tab of another process (WEBKIT-GAPS.md, gap 60)", // Postman Interceptor
         "aeblfdkhhhdcdjpifhhbdiojplfjncoa": "the popup's tab activates while its WebAssembly core starts: its icon update skips a tab with no url, which Chrome reports until the tab commits, where Lilo reports the url from the navigation start (WebKit's own access checks on a loading tab need it)", // 1Password
-        "hgmoccdbjhknikckedaaebbpdeebhiei": "its popup can read its stored state before the worker has written it", // Ahrefs SEO Toolbar
-        "bgnkhhnnamicmpeenaelnjfhikgbkllg": "its popup can message its worker once the worker listens but before its handler is set up, which then answers nothing; when the worker does not listen yet, the popup's promise rejects as in Chrome", // AdGuard AdBlocker
-        "apjcbfpjihpedihablmalmbbhjpklbdf": "its popup can message its worker once the worker listens but before its handler is set up, which then answers nothing; when the worker does not listen yet, the popup's promise rejects as in Chrome", // AdGuard AdBlocker (Beta)
+        "bgnkhhnnamicmpeenaelnjfhikgbkllg": "its worker adds its runtime.onMessage listener and handlers only after an asynchronous setup: its popup, opened as the worker starts, can get no answer (response.listenerId on undefined), a race Chrome runs too and records the same errors for", // AdGuard AdBlocker
+        "apjcbfpjihpedihablmalmbbhjpklbdf": "its worker adds its runtime.onMessage listener and handlers only after an asynchronous setup: its popup, opened as the worker starts, can get no answer (response.listenerId on undefined), a race Chrome runs too and records the same errors for", // AdGuard AdBlocker (Beta)
         "gkojfkhlekighikafcpjkiklfbnlmeio": "a tab event can reach its worker before its asynchronous startup has set up what its tab listeners use", // Hola VPN
         "gidejehfgombmkfflghejpncblgfkagj": "its worker's handler fails on a request to its server, which Chrome fails too, before it answers: its content scripts then read the answer as null (e.mode, r.length)", // Cuponomia
         "oiiaigjnkhngdbnoookogelabohpglmd": "some runs fail a request to its API, or WebKit fails to size storage.sync for its set", // HubSpot Sales
         "admmjipmmciaobhojoghlmleefbicajg": "some runs fail Firebase Messaging's support check in its worker; the cause is not yet known", // Norton Password Manager
         "caljgklbbfbcjjanaijlacgncafpegll": "some runs fail Firebase Messaging's support check in its worker, as Norton Password Manager's; the cause is not yet known", // Avira Password Manager
-        "jddgbeighonaipjikdnfdpiefhoomlae": "some runs read its store before it is set up (this.store.hasLanguageSomeTranslations); the cause is not yet known", // YouBoost
-        "kdfieneakcjfaiglcfcgkidlkmlijjnh": "its popup can read its session before its worker answers the request for it, then renders nothing (session[property] on undefined)", // AI Grammar and Spell Checker by Ginger
+        "kdfieneakcjfaiglcfcgkidlkmlijjnh": "its popup reads its session before the answer to its own request for it (asyncGetSession) comes back, then renders nothing (session[property] on undefined)", // AI Grammar and Spell Checker by Ginger
         "pfjdepjjfjjahkjfpkcgfmfhmnakjfba": "some runs log runtime.lastError 'Could not establish connection' for a message no context receives yet; the cause is not yet known", // Detailed SEO Extension
         "callobklhcbilhphinckomhgkigmfocg": "its worker reads chrome.enterprise.reportingPrivate, which Chrome gives this extension only and Lilo lacks; some runs never reach that read", // Endpoint Verification
         "amfojhdiedpdnlijjbhjnhokbnohfdfb": "its welcome page's content script can ask its worker to check a context menu entry before the worker's storage answer, which creates that entry, has come back", // eJOY AI Dictionary
         "blgcbajigpdfohpgcmbbfnphcgifjopc": "its Flutter build needs Chrome's ImageDecoder and Intl.v8BreakIterator, which WebKit lacks: it asks for a skwasm_heavy build its package does not ship", // ExpressKeys: Password Manager
-        "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab", // TxtAnalyser
-        "medapdbncneneejhbgcjceippjlfkmkg": "some runs its popup reads its preferences before its worker has stored them (mdPlugins on undefined)", // Markdown Reader
-        "nfadicbbecgbdbgbibgflooojfbolpgk": "some runs its popup renders nothing after a message its worker does not answer yet, which Chrome logs too; the cause is not yet known" // Pie Shopping
+        "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab" // TxtAnalyser
     ]
 
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
