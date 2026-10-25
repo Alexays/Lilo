@@ -101,6 +101,8 @@ final class GapBridgeRouter {
         registry: ProfileExtensionRegistry
     ) async -> (result: Any?, error: String?) {
         let action = "\(namespace).\(method)"
+        let signpost = PerfSignposts.extensions.beginInterval("gapCall", id: PerfSignposts.extensions.makeSignpostID(), "\(action, privacy: .public)")
+        defer { PerfSignposts.extensions.endInterval("gapCall", signpost) }
         #if DEBUG
         // An error of a page or the worker in full: WebKit keeps only a console.error's first argument.
         if action == "diagnostics.console" {
