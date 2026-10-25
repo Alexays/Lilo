@@ -61,7 +61,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions chrome-surface \
+	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -280,6 +280,10 @@ ext-nightly:
 ## Rebuild top-extensions.json from the Chrome Web Store user counts (TOP=500)
 top-extensions:
 	@node scripts/top-extensions.mjs $(or $(TOP),500)
+
+## Rebuild top-manifests.json, the top extensions' manifests TopManifestTests loads (network)
+top-manifests:
+	@node scripts/top-manifests.mjs
 
 ## Regenerate the Chrome API surface ChromeSurfaceTests checks (from chrome-types)
 chrome-surface: $(BRIDGE_DEPS)

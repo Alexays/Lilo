@@ -1,0 +1,2 @@
+# Top extensions whose manifest WebKit loads with an error Lilo leaves, one per line: id: error | why.
+# TopManifestTests fails on any other error, and on a listed one that no longer occurs.
