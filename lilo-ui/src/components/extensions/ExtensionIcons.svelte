@@ -390,6 +390,10 @@
     pointer-events: none;
   }
 
+  .ext-icon-image:not([hidden]) + .ext-initial {
+    display: none;
+  }
+
   .ext-icon-image {
     width: 15px;
     height: 15px;
