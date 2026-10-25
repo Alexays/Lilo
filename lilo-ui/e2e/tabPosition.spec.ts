@@ -214,19 +214,33 @@ test("a pill dropped on a folder chip goes into the folder", async ({ page }) =>
 	expect(JSON.stringify(drop?.payload)).toContain("folder-docs");
 });
 
-test("a mouse wheel scrolls the strip sideways", async ({ page }) => {
+test("a mouse wheel scrolls every tab of the strip sideways, pinned ones too", async ({ page }) => {
 	await page.setViewportSize({ width: 720, height: 600 });
 	await bootChrome(page, { ...folderWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
-	const today = page.locator(".tab-strip .today");
-	const overflowing = await today.evaluate((el) => el.scrollWidth > el.clientWidth);
+	const scroller = page.locator(".tab-strip .scroller");
+	const overflowing = await scroller.evaluate((el) => el.scrollWidth > el.clientWidth);
 	test.skip(!overflowing, "the fixture fits at this width");
-	const box = (await today.boundingBox())!;
+	const firstTab = scroller.locator(".strip-tab, .strip-folder").first();
+	const before = (await firstTab.boundingBox())!.x;
+	const box = (await scroller.boundingBox())!;
 	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 
 	await page.mouse.wheel(0, 200);
 
-	await expect.poll(() => today.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
-	await expect(today).toHaveClass(/overflow-start/);
+	await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+	await expect(scroller).toHaveClass(/overflow-start/);
+	expect((await firstTab.boundingBox())!.x).toBeLessThan(before);
+});
+
+test("a pill squeezed to its icon shows no close button over its neighbor", async ({ page }) => {
+	await page.setViewportSize({ width: 600, height: 600 });
+	await bootChrome(page, { ...folderWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	const narrow = page.locator(".tab-strip .today-list .strip-tab:not(.active)").last();
+	test.skip((await narrow.boundingBox())!.width >= 72, "the fixture leaves the pills wide at this width");
+
+	await narrow.hover();
+
+	await expect(narrow.locator(".strip-tab-close")).toBeHidden();
 });
 
 test("a locked folder unlocks from its chip", async ({ page }) => {

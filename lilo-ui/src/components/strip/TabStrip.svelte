@@ -58,19 +58,19 @@
   }
 
   let stripEl: HTMLElement | undefined = $state();
-  let todayEl: HTMLDivElement | undefined = $state();
+  let scrollerEl: HTMLDivElement | undefined = $state();
   let overflowStart = $state(false);
   let overflowEnd = $state(false);
 
   function measureOverflow(): void {
-    if (!todayEl) return;
-    overflowStart = todayEl.scrollLeft > 1;
-    overflowEnd = todayEl.scrollLeft + todayEl.clientWidth < todayEl.scrollWidth - 1;
+    if (!scrollerEl) return;
+    overflowStart = scrollerEl.scrollLeft > 1;
+    overflowEnd = scrollerEl.scrollLeft + scrollerEl.clientWidth < scrollerEl.scrollWidth - 1;
   }
 
   // A mouse wheel scrolls vertically: the strip turns it sideways. It has to be non-passive to keep the page still.
   $effect(() => {
-    const el = todayEl;
+    const el = scrollerEl;
     if (!el) return;
     const wheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || el.scrollWidth <= el.clientWidth) return;
@@ -93,7 +93,7 @@
     void activeTabId;
     void view;
     void tick().then(() => {
-      todayEl?.querySelector(`[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      scrollerEl?.querySelector(`[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
       const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
       if (rovers.length && !rovers.some((rover) => rover.tabIndex === 0)) rovers[0].tabIndex = 0;
       measureOverflow();
@@ -203,23 +203,24 @@
 
   <!-- Laid out by the strip; only the tabs are in the list. -->
   <div class="strip-tabs" role="tablist" aria-orientation="horizontal" aria-label={t("strip.ariaLabel")}>
-  {#if view.bookmarked.length}
-    {@render zoneOf("bookmarked")}
-  {/if}
-
-  {#if view.rootItems.pinned.length}
-    <span class="divider" aria-hidden="true"></span>
-    {@render zoneOf("pinned")}
-  {/if}
-
-  <span class="divider" aria-hidden="true"></span>
-
   <!-- The active tab's address heads the row, outside its scroller: its drawers and cards must not be clipped. -->
   {#if addressInActiveTab}
     <div class="strip-address"><URLDisplay /></div>
   {/if}
 
-  <div class="today" class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={todayEl}>
+  <!-- Every tab scrolls as one row, as in the sidebar. -->
+  <div class="scroller" class:overflow-start={overflowStart} class:overflow-end={overflowEnd} bind:this={scrollerEl}>
+    {#if view.bookmarked.length}
+      {@render zoneOf("bookmarked")}
+    {/if}
+
+    {#if view.rootItems.pinned.length}
+      <span class="divider" aria-hidden="true"></span>
+      {@render zoneOf("pinned")}
+    {/if}
+
+    <span class="divider" aria-hidden="true"></span>
+
     {@render zoneOf("unpinned")}
     <button
       class="strip-btn"
@@ -331,8 +332,8 @@
     background: var(--separator);
   }
 
-  /* Pills shrink to their icon, then the row scrolls sideways. */
-  .today {
+  /* Today's pills shrink to their icon, then the whole row scrolls sideways. */
+  .scroller {
     flex: 1 1 200px;
     min-width: 0;
     display: flex;
@@ -342,20 +343,20 @@
     scrollbar-width: none;
   }
 
-  .today::-webkit-scrollbar {
+  .scroller::-webkit-scrollbar {
     display: none;
   }
 
   /* Pills scrolled out of sight fade at the edge they went past. */
-  .today.overflow-start {
+  .scroller.overflow-start {
     mask-image: linear-gradient(to right, transparent, black 24px);
   }
 
-  .today.overflow-end {
+  .scroller.overflow-end {
     mask-image: linear-gradient(to left, transparent, black 24px);
   }
 
-  .today.overflow-start.overflow-end {
+  .scroller.overflow-start.overflow-end {
     mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
   }
 
