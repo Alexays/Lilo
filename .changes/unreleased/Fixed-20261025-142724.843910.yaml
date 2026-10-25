@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions that check the network connection type, such as Lightspeed Insight Agent, start again, and extensions reading managed settings with defaults get those defaults.
+time: 2026-10-25T14:27:24.84391+01:00

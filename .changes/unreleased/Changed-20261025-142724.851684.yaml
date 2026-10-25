@@ -1,0 +1,3 @@
+kind: Changed
+body: Ad blockers that turn off some of their rules no longer make Lilo prepare them again at the next launch.
+time: 2026-10-25T14:27:24.851684+01:00
