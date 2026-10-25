@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`) and 82. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`) and 82. Every other gap is fully worked around.
 
 ---
 
@@ -453,6 +453,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Lilo:** drops the empty lists from the rule WebKit gets, the original stored beside it for `get*Rules` ([dnr-rules.ts] `EXCLUSIONS`, `webKitRule`).
 - **Impact:** I don't care about cookies' dynamic rules (`excludedInitiatorDomains: []` in most of its 1625 rules) all failed.
 - **Check:** `testDeclarativeNetRequestRejectsEmptyExclusions`. Repro: in an MV3 worker, `chrome.declarativeNetRequest.updateSessionRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', excludedInitiatorDomains: [] } }] })`. Expected: resolves. Actual: rejects.
+
+### 84. Session rules recompile every rule at each launch
+
+- **Gap:** WebKit compiles an extension's session, dynamic and enabled static rules into one content rule list, and reuses the stored list only when the SHA-1 of the translated rules matches its last compile (`WebExtensionContext::compileDeclarativeNetRequestRules`, `LastLoadedDeclarativeNetRequestHash` in `WebExtensionContextCocoa.mm`). Session rules are kept in memory (`declarativeNetRequestSessionRulesStore`), so the compile at load (`loadDeclarativeNetRequestRules` in `WebExtensionContext::load`) misses the session rules the last run ended with and recompiles every rule, then the worker adding them back compiles again. The hash is read when a compile starts: an update made while the load compile runs compares with the previous run's hash and can reuse the previous run's list, and whichever finishes last is applied. Chrome indexes each static ruleset once.
+- **Lilo:** none for the compiles themselves. It sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`, so an unchanged extension without session rules compiles nothing at launch.
+- **Impact:** at every launch, AdGuard compiles its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Tampermonkey its list once, for seconds of CPU each.
+- **Check:** Manual. Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
 
 ## storage
 
