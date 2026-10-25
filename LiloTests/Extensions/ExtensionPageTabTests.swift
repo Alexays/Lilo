@@ -150,6 +150,62 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(views as? [[String: String]], [["contextType": "TAB", "url": pageURL.absoluteString]])
     }
 
+    /// Saladict's startup measure: a normal window and a panel, created then removed, are windows of their own.
+    func testANormalWindowsCreateOpensItsOwnWindowAndRemovingItLeavesTheUsersOne() async throws {
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let tabsBefore = window.tabManager.openTabs.map(\.id)
+        let browserWindows = browserContext.context.windows.windows.count
+
+        let created = try await page.callAsyncJavaScript("""
+            const current = await chrome.windows.getCurrent();
+            const t = await chrome.windows.create({ state: 'maximized' });
+            const n = await chrome.windows.create({ state: 'maximized', type: 'panel' });
+            await chrome.windows.update(current.id, { focused: true });
+            const [got, gotPanel] = await Promise.all([chrome.windows.get(t.id, { populate: true }), chrome.windows.get(n.id)]);
+            await chrome.windows.remove(t.id);
+            await chrome.windows.remove(n.id);
+            const after = (await chrome.windows.getAll()).map(({ id }) => id);
+            return JSON.stringify({ ids: [current.id, t.id, n.id, got.id, gotPanel.id], type: got.type, tabs: got.tabs.length, after });
+            """, contentWorld: .page) as? String
+        let reply = try XCTUnwrap(created.flatMap { try JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any] })
+        let ids = try XCTUnwrap(reply["ids"] as? [Int])
+
+        XCTAssertEqual(Set(ids.prefix(3)).count, 3, "each created window has a new id")
+        XCTAssertEqual(Array(ids.suffix(2)), [ids[1], ids[2]])
+        XCTAssertEqual(reply["type"] as? String, "normal")
+        XCTAssertEqual(reply["tabs"] as? Int, 1, "the window holds the one tab it opened")
+        XCTAssertEqual(reply["after"] as? [Int], [ids[0]], "only the user's window is left")
+        XCTAssertEqual(browserContext.context.windows.windows.count, browserWindows)
+        XCTAssertTrue(browserContext.context.windows.windows.contains { $0 === window }, "the user's window stays open")
+        XCTAssertEqual(window.tabManager.currentSpaceId, spaceId)
+        XCTAssertEqual(window.tabManager.openTabs.map(\.id), tabsBefore, "the user's tabs are untouched")
+        let panelsClosed = await pollUntil { !NSApp.windows.contains { $0.isVisible && $0.contentView is WKWebView } }
+        XCTAssertTrue(panelsClosed, "the created windows are gone")
+    }
+
+    /// With "Prefer a single window" on, a normal window opens as tabs of the current one, and removing it closes those tabs only.
+    func testASingleWindowWindowsCreateRemovesOnlyTheTabsItOpened() async throws {
+        let (window, _, _, _, tabId, _) = try await openExtensionPage()
+        window.context.settingsStore.set("singleWindow", value: "true")
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let tabsBefore = window.tabManager.openTabs.map(\.id)
+
+        let created = try await page.callAsyncJavaScript("""
+            const current = await chrome.windows.getCurrent();
+            const t = await chrome.windows.create({});
+            await chrome.windows.remove(t.id);
+            const again = await chrome.windows.remove(t.id).then(() => 'removed', () => 'failed');
+            return JSON.stringify([current.id === t.id, again]);
+            """, contentWorld: .page) as? String
+
+        XCTAssertEqual(created, "[true,\"failed\"]", "a second remove has no tab left to close, and never closes the window")
+        let closed = await pollUntil { window.tabManager.openTabs.map(\.id) == tabsBefore }
+        XCTAssertTrue(closed, "the tab the window opened closes, the user's stay")
+        XCTAssertTrue(browserContext.context.windows.windows.contains { $0 === window }, "the user's window stays open")
+    }
+
     func testAWindowsCreatePopupLoadsAWebPageInItsTab() async throws {
         let server = try await TinyHTTPServer(index: "<title>Sign in</title>")
         let pageURL = "http://127.0.0.1:\(server.port)/"

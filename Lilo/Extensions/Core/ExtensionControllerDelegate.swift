@@ -108,23 +108,15 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionWindow)?, Error?) -> Void
     ) {
-        // A normal window is a browser window on the current space, which is that space's window to extensions;
-        // popups and private windows stay panels.
+        // With "Prefer a single window" on, a normal window's tabs open in the current space, whose window it returns;
+        // any other window is a floating panel of its own, so its id never names a window or space of the user's.
         if configuration.windowType == .normal, !configuration.shouldBePrivate,
-           let windowController, let spaceWindow = windowController.tabManager.windowAdapter, let spaceId = spaceWindow.spaceId {
-            if windowController.context.settingsStore.singleWindow {
-                if configuration.tabURLs.isEmpty { windowController.newTab(nil) }
-                for (index, url) in configuration.tabURLs.enumerated() {
-                    windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused)
-                }
-                completionHandler(spaceWindow, nil)
-                return
+           let windowController, windowController.prefersSingleWindow, let spaceWindow = windowController.tabManager.windowAdapter {
+            let urls = configuration.tabURLs.isEmpty ? [windowController.profileContext?.extensions.activeNewTabOverrideURL] : configuration.tabURLs.map(Optional.some)
+            for (index, url) in urls.enumerated() {
+                guard let tab = windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused) else { continue }
+                spaceWindow.tabIdsOpenedAsWindow.append(tab.id)
             }
-            guard windowController.context.openWindow(on: spaceId, opening: .urls(configuration.tabURLs)).window != nil else {
-                completionHandler(nil, Self.extensionError("The window could not open"))
-                return
-            }
-            if !configuration.shouldBeFocused { windowController.window?.makeKeyAndOrderFront(nil) }
             completionHandler(spaceWindow, nil)
             return
         }

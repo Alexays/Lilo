@@ -11,6 +11,9 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
     private var extensionTabIdentifiers: Set<ObjectIdentifier> = []
     weak var activeAdapter: TabExtensionAdapter?
 
+    /// The tabs a normal `windows.create` opened in this space with "Prefer a single window" on: removing the window closes them only.
+    var tabIdsOpenedAsWindow: [UUID] = []
+
     /// The space this window is to extensions; nil for a floating panel or a page popup, whose tab belongs to no space.
     let spaceId: UUID?
 
@@ -186,8 +189,17 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         window.makeKeyAndOrderFront(nil); completionHandler(nil)
     }
 
-    /// Closing a space's window closes the browser window showing it; a background space has none to close.
+    /// Closing a space's window closes the browser window showing it; a background space has none to close. With "Prefer a single
+    /// window" on, it closes only the tabs `windows.create` opened in the space, and fails when there are none.
     func close(for context: WKWebExtensionContext, completionHandler: @escaping (Error?) -> Void) {
+        if spaceId != nil, (nsWindow?.windowController as? MainWindowController)?.prefersSingleWindow == true {
+            let tabs = tabIdsOpenedAsWindow.compactMap { tabManager?.tabAdapter(for: $0) }
+            tabIdsOpenedAsWindow = []
+            guard !tabs.isEmpty else { completionHandler(Self.windowUnavailableError); return }
+            for tab in tabs { tab.close(for: context) { _ in } }
+            completionHandler(nil)
+            return
+        }
         guard let window = nsWindow, !isBackgroundSpace else { completionHandler(Self.windowUnavailableError); return }
         window.close(); completionHandler(nil)
     }
