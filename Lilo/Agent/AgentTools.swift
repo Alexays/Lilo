@@ -481,6 +481,7 @@ enum AgentTools {
                 continue
             }
             let maxMs = Int((limit - ContinuousClock.now) / .milliseconds(1))
+            let asked = engine.currentURL
             // The page's own timer ends the wait, but a document that goes away takes it along. Nil: the script
             // failed to run.
             let quiet = await withCheckedContinuation { (continuation: CheckedContinuation<Bool?, Never>) in
@@ -495,9 +496,10 @@ enum AgentTools {
                 ) { answer((try? $0.get()) as? Bool) }
                 DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(maxMs + 100)) { answer(false) }
             }
-            // A document that went away is a new load starting.
+            // A document that went away is a new load, which may have finished before this resumes: that page
+            // settles in turn. A script that cannot run in the page it was asked in ends the wait.
             guard let quiet else {
-                if engine.isLoading { continue }
+                if engine.isLoading || engine.currentURL != asked { continue }
                 return true
             }
             guard quiet, !engine.isLoading, capture?.indexByLoad.isEmpty != false else { continue }
