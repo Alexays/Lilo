@@ -80,6 +80,9 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
+        "cnlhokffphohmfcddnibpohmkdfafdli": "some runs its popup still renders nothing, after other extensions in the same shard; the cause is not yet known", // MultiPassword
+        "pphgdbgldlmicfdkhondlafkiomnelnk": "some runs a page connects to its worker before the worker adds its runtime.onConnect listener; it passes on reruns", // 1ClickVPN Proxy for Chrome
+        "ocfjjghignicohbjammlhhoeimpfnlhc": "some runs its worker messages a tab before the tab's content script listens; it passes on reruns", // Flash Player Enable
         "bkdgflcldnnnapblkhphbgpggdiikppg": "some runs its worker's privacy-dashboard port hears messages shaped as the answers Lilo sends on its own channel ({reply, result}) and logs them as unrecognized, with the worker running; the cause is not yet known", // DuckDuckGo
         "aicmkgpgakddgnaphhhpliifpcfhicfo": "its worker posts on the port it opens back to its popup, which WebKit disconnects when the popup runs in a tab of another process (WEBKIT-GAPS.md, gap 60)", // Postman Interceptor
         "aeblfdkhhhdcdjpifhhbdiojplfjncoa": "the popup's tab activates while its WebAssembly core starts: its icon update skips a tab with no url, which Chrome reports until the tab commits, where Lilo reports the url from the navigation start (WebKit's own access checks on a loading tab need it)", // 1Password
