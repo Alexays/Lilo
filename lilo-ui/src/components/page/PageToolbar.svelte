@@ -7,12 +7,10 @@
   import { getTabPosition, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
   import { areTrafficLightsVisible } from "../../stores/ui.svelte";
 
-  let { collapseLocked = false, row = false }: { collapseLocked?: boolean; row?: boolean } = $props();
+  let { row = false }: { row?: boolean } = $props();
 
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && getTabPosition() !== "left" && areTrafficLightsVisible());
-  // The sidebar keeps its toggle when it is there; bottom and top have no sidebar to hold it.
-  const navShow = $derived(getTabPosition() === "bottom" ? "all" : "history");
 
   // The address text centers on its field: the room its trailing buttons take on the right (capture,
   // pinned extensions) is mirrored on the left, measured since that cluster grows and shrinks.
@@ -64,7 +62,7 @@
   {/if}
   <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. -->
   {#if !row}
-    <NavControls {collapseLocked} show={navShow} />
+    <NavControls show="history" />
   {/if}
   {#if isAddressInPageToolbar() || row}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>
@@ -97,10 +95,6 @@
   .page-toolbar > :global(.nav-controls) {
     flex: none;
     gap: 2px;
-  }
-
-  .page-toolbar > :global(.nav-controls .nav-spacer) {
-    flex: 0 0 10px;
   }
 
   /* Matches the sidebar header's reserve for the traffic lights. */

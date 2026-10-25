@@ -109,6 +109,8 @@ function inject() {
   font-family: inherit;
   line-height: 1.35;
   pointer-events: none;
+  /* Its own width, not the room left before the window's edge: the boundary check moves it back in. */
+  width: max-content;
   max-width: 280px;
   transform: translateX(-50%) translateY(calc(-100% - 6px));
   animation: lilo-tt-in 120ms cubic-bezier(.22,1,.36,1) both;

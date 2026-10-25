@@ -5,6 +5,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   type HistoryDirection = "back" | "forward";
 
@@ -18,6 +19,8 @@
   let lastHistoryMenuDirection: HistoryDirection | null = null;
   let lastHistoryMenuOpenedAt = 0;
 
+  // The toggle draws the tabs' bar on the edge they hold.
+  const TOGGLE_BAR = { left: "M5.5 2v12", right: "M10.5 2v12", top: "M1.5 6h13", bottom: "M1.5 10h13" };
   const activeTab = $derived(getActiveTab());
   const canGoBack = $derived(activeTab?.canGoBack ?? false);
   const canGoForward = $derived(activeTab?.canGoForward ?? false);
@@ -116,7 +119,7 @@
         stroke="currentColor"
         stroke-width="1.4"
       />
-      <path d="M5.5 2v12" stroke="currentColor" stroke-width="1.4" />
+      <path d={TOGGLE_BAR[getTabPosition()]} stroke="currentColor" stroke-width="1.4" />
     </svg>
   </button>
 

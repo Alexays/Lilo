@@ -196,7 +196,7 @@
 >
   {#if edge === "top" && areTrafficLightsVisible()}<div class="lights-spacer"></div>{/if}
   {#if edge === "top" || !isSidebarVisible()}
-    <NavControls />
+    <NavControls show="history" />
   {/if}
 
   <StripSpaceMenu />
@@ -273,6 +273,7 @@
       </button>
     {/if}
     <KeepAwakeIndicator />
+    <NavControls show="toggle" />
   </div>
 </nav>
 
@@ -298,13 +299,12 @@
   }
 
   /* The sidebar header spreads its controls; the strip keeps them together. */
-  .tab-strip > :global(.nav-controls) {
+  .tab-strip :global(.nav-controls) {
     flex: none;
-    margin-right: 6px;
   }
 
-  .tab-strip > :global(.nav-controls .nav-spacer) {
-    flex: 0 0 2px;
+  .tab-strip > :global(.nav-controls) {
+    margin-right: 6px;
   }
 
   .lights-spacer {
