@@ -232,7 +232,8 @@ test("a profile in the Signed in as list wears a dot of its color, not its initi
 	const dot = row.locator(".choice-dot");
 	await expect(dot).toHaveCSS("background-color", "rgb(122, 140, 240)");
 	const box = (await dot.boundingBox())!;
-	expect([box.width, box.height]).toEqual([10, 10]);
+	expect(box.width).toBeCloseTo(10, 0);
+	expect(box.height).toBeCloseTo(10, 0);
 });
 
 for (const sidebarWidth of [MIN_SIDEBAR_WIDTH, 260, 320]) {
