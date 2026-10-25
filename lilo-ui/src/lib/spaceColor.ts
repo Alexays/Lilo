@@ -47,8 +47,7 @@ export function effectiveSpaceColor(
 		case "time":
 			return lightForDayPart(color, context.dayPart);
 		case "page":
-			// Mixed, not replaced: the Space stays recognizable from one site to the next.
-			return isChromaticHex(context.pageColor) ? interpolateHexColors(color, context.pageColor, 0.6) : color;
+			return isChromaticHex(context.pageColor) ? context.pageColor! : color;
 		case "wallpaper":
 			return context.wallpaperColor || color;
 		default:

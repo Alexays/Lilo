@@ -805,8 +805,8 @@ export interface BridgeEventPayloadMap {
 	screenshotError: { message: string };
 	sidebarVisibilityChanged: { visible: boolean; width: number };
 	windowChromeStateChanged: { trafficLightsVisible: boolean };
-	/** The dominant color of this window's wallpaper; empty when it can't be read. */
-	wallpaperColorChanged: { color: string };
+	/** The dominant color of this window's wallpaper and a small JPEG data URL of it; empty when it can't be read. */
+	wallpaperColorChanged: { color: string; thumbnail?: string };
 	windowFullscreenChanged: { isFullscreen: boolean };
 	windowFocusChanged: { focused: boolean };
 	cancelDrag: EmptyPayload;
