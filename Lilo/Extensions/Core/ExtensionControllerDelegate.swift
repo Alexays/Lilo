@@ -449,8 +449,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             completionHandler(Self.extensionError("No native messaging application specified")); return
         }
         if hostName == Self.channelHostName {
-            completionHandler(nil)
+            // Attached first: the completion hands the port the messages its context sent meanwhile, lost without a handler.
             registry?.gapEvents.attach(port, extensionId: context.uniqueIdentifier)
+            completionHandler(nil)
             return
         }
         // Without the permission, Chrome has no connectNative to call, so it reports no error. WebKit's, which every

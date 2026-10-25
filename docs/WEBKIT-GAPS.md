@@ -102,7 +102,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 18. Messages sent on a port before it is connected are dropped
 
 - **Gap:** WebKit drops what the app sends on a `WKWebExtension.MessagePort` before the port's first message arrives, and what a worker sends on a port still connecting. Chrome queues them.
-- **Lilo:** holds a native port's error until its first message ([ExtensionNativeMessaging.swift]), and Lilo sends a worker its events once the worker's first message on its port arrived ([GapEvents.swift] `adopt`).
+- **Lilo:** holds a native port's error until its first message ([ExtensionNativeMessaging.swift]), and Lilo sends a worker its events once the worker's first message on its port arrived ([GapEvents.swift] `adopt`). Its channel's message handler is set before `connectUsing` completes: the completion delivers the messages the context sent meanwhile, and a port without a handler loses them ([ExtensionControllerDelegate.swift]).
 - **Check:** Manual. Repro: call `port.sendMessage` at once in `connectUsing`. Expected: delivered. Actual: never delivered.
 
 ### 22. `sendMessage` with no response sets no error
