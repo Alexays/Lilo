@@ -265,7 +265,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         ViewType: { TAB: 'tab', POPUP: 'popup' },
       },
       // Chrome leaves it out of workers, which test it before comparing its page with `window`. WebKit's own
-      // member cannot be removed, so `browser.extension` keeps it (WEBKIT-GAPS.md, gap 84).
+      // member cannot be removed, so `browser.extension` keeps it (WEBKIT-GAPS.md, gap 87).
       serve: page ? undefined : () => ({ getBackgroundPage: undefined }),
     },
     webRequest: {

@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`) and 82. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82 and 87. Every other gap is fully worked around.
 
 ---
 
@@ -34,7 +34,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** through `browser.runtime` (webextension-polyfill), the `lastError` of refused native ports and of Lilo's callbacks is missing.
 - **Check:** `testRuntimeMembersAreOwnPropertiesNothingRedefines`. Repro: `Object.defineProperty(browser.runtime, 'connectNative', { value: 1, configurable: true })`, then read it. Expected: redefined, or a `TypeError`. Actual: no error, original kept.
 
-### 84. The worker's `extension.getBackgroundPage` cannot be removed
+### 87. The worker's `extension.getBackgroundPage` cannot be removed
 
 - **Gap:** WebKit gives the worker's `extension` namespace `getBackgroundPage`, which Chrome leaves out of workers. It is an own property of WebKit's object that, as gap 3's, `delete` and `Object.defineProperty` report removed and keep.
 - **Lilo:** the worker's `chrome.extension` reads it as `undefined` ([chrome-compat.ts] `serve`); `browser` stays WebKit's object (gap 2), so `browser.extension` keeps it.
@@ -71,7 +71,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 
 ## runtime and messaging
 
-### 85. A worker's message names its sender by the extension's origin
+### 88. A worker's message names its sender by the extension's origin
 
 - **Gap:** a message from the worker reaches a page's `runtime.onMessage` with a sender whose `url` is the extension's origin. Chrome's is the worker script's url.
 - **Lilo:** gives every `runtime.onMessage` listener the worker's script url, from the manifest, for such a sender ([message-answers.ts] `chromeSender`). A port the worker opens keeps WebKit's sender.
@@ -505,7 +505,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** lost writes in rare overlaps; parallel smoke runs of one extension can fail each other.
 - **Check:** Manual: needs a second process or profile.
 
-### 84. Storage answers settle together in one task
+### 86. Storage answers settle together in one task
 
 - **Gap:** WebKit can settle the promises of several storage calls in one task, so the second's callbacks run before the code awaiting the first has run on. Chrome settles each answer in a task of its own.
 - **Lilo:** a page's or worker's storage answer that settles while another one's task has not ended waits for a task of its own, in the order they came ([storage-area.ts] `ownTask`).
