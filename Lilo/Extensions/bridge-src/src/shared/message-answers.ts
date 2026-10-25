@@ -2,6 +2,7 @@
 // answer and a sender gets undefined only when no listener answered. SW-safe and content-script safe: chrome.* only.
 import { bridgeChrome, withLastError } from './callbackify.ts';
 import { ChromeEvent } from './chrome-event.ts';
+import { home } from './static-compat.ts';
 
 type Listener = (message: unknown, sender: unknown, sendResponse: (response?: unknown) => void) => unknown;
 
@@ -14,12 +15,14 @@ const answering = new WeakMap<Listener, Listener>();
  */
 export const listensProbe = { liloListens: true } as const;
 const isProbe = (message: unknown) => (message as typeof listensProbe | undefined)?.liloListens === true;
+/** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
+const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
 
 function answeringListener(listener: Listener): Listener {
   let wrapper = answering.get(listener);
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
-      if (isProbe(message)) return undefined;
+      if (isProbe(message) || isExternal(message)) return undefined;
       const result = listener.call(this, message, sender, (response?: unknown) => sendResponse(response === undefined ? null : response));
       return typeof (result as PromiseLike<unknown>)?.then === 'function'
         ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
@@ -130,4 +133,41 @@ export function messagesOnce(port: any, name: string): object {
   port.onDisconnect.addListener(() => chromePort.onDisconnect.dispatch(chromePort));
   served.set(port, chromePort);
   return chromePort;
+}
+
+// Chrome's ids, and Lilo's for an unpacked extension without a manifest key.
+export const otherExtension = (id: unknown, runtime: any) => typeof id === 'string' && /^([a-p]{32}|extension-[0-9a-f]{16})$/.test(id) && id !== runtime.id;
+/** Ends, before `once`, the name of a port a content script opens to another extension, with that extension's id. */
+export const externalMark = '?liloExternal=';
+
+/**
+ * A content script's runtime.sendMessage and connect to another extension, which WebKit lacks: they go to the
+ * extension's worker, which relays them (runtime.ts relayForContentScripts). A content script's runtime.lastError
+ * stays WebKit's, so a callback learns of no failure.
+ */
+export function relayExternalMessaging(runtime: any): void {
+  const target = home(runtime);
+  const { sendMessage, connect } = target;
+  // Each content script entry carries its own copy of the compat: the first one relays for all.
+  if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
+  const relayed = function (this: unknown, ...args: any[]) {
+    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(this, args);
+    const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
+    const sent = Promise.resolve(sendMessage.call(runtime, { liloExternal: args[0], message: args[1] })).then((answer: any) => {
+      if (!answer || 'error' in answer) throw new Error(answer?.error ?? noReceiver);
+      return answer.response;
+    });
+    if (!callback) return sent;
+    sent.then((response) => callback(response), () => callback());
+    return undefined;
+  };
+  Object.defineProperty(target, 'sendMessage', { value: Object.assign(relayed, { __liloRelays: true }), configurable: true, writable: true });
+  Object.defineProperty(target, 'connect', {
+    value(this: unknown, ...args: any[]) {
+      if (!otherExtension(args[0], runtime)) return connect.apply(this, args);
+      const name = typeof args[1]?.name === 'string' ? args[1].name : '';
+      return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name);
+    },
+    configurable: true, writable: true,
+  });
 }

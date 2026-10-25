@@ -6,7 +6,9 @@ import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPat
 import { storageAreaPatches } from './storage-area.ts';
 import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
-import { runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, externalEvents, tabsConnect } from '../augmentation/runtime.ts';
+import {
+  runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
+} from '../augmentation/runtime.ts';
 import { onAuthRequired } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
@@ -274,7 +276,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
-      patch: runtimePatches,
+      patch: { ...runtimePatches, ...crossExtensionPatches },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
       standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
       add: {
@@ -341,4 +343,5 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   if (browser) Object.defineProperty(g, 'browser', { get: () => browser, set() {}, configurable: true });
   // The worker tells Lilo it listens, for the error of a page's message nobody answers.
   if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'));
+  if (!page && chrome.runtime?.onMessage) relayForContentScripts(chrome.runtime);
 }

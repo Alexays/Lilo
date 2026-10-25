@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { answerAsChrome, listensProbe } from './message-answers.ts';
+import { answerAsChrome, listensProbe, relayExternalMessaging } from './message-answers.ts';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
@@ -63,6 +63,15 @@ describe('runtime.onMessage listeners', () => {
     assert.equal(await onMessage.send(listensProbe), true);
     onMessage.removeListener(listener);
     assert.equal(await onMessage.send(listensProbe), undefined);
+    assert.deepEqual(heard, []);
+  });
+
+  it("leave a content script's message to another extension to the worker's relay", async () => {
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((message: unknown) => { heard.push(message); });
+    assert.equal(await onMessage.send({ liloExternal: 'abcdefghijklmnopabcdefghijklmnop', message: 1 }), undefined);
     assert.deepEqual(heard, []);
   });
 });
@@ -163,5 +172,48 @@ describe('sendMessage promises of a page', () => {
     await assert.rejects(chrome.runtime.sendMessage(1), { message: 'Could not establish connection. Receiving end does not exist.' });
     workerListens = true;
     assert.equal(await chrome.runtime.sendMessage(1), undefined);
+  });
+
+});
+
+describe("a content script's messages to another extension", () => {
+  const other = 'abcdefghijklmnopabcdefghijklmnop';
+  // WebKit's content script runtime, its methods on the prototype; `answer` is the worker relay's.
+  function contentRuntime(answer: unknown) {
+    const sent: unknown[] = [];
+    const opened: unknown[] = [];
+    const runtime = Object.create({
+      sendMessage(message: unknown) { sent.push(message); return Promise.resolve(answer); },
+      connect(info: { name: string }) {
+        opened.push(info);
+        return { name: info.name, onMessage: { addListener() {} }, onDisconnect: { addListener() {} }, postMessage() {}, disconnect() {} };
+      },
+    });
+    runtime.id = 'ponmlkjihgfedcbaponmlkjihgfedcba';
+    relayExternalMessaging(runtime);
+    return { runtime, sent, opened };
+  }
+
+  it("go to the worker's relay and resolve with the other extension's answer", async () => {
+    const { runtime, sent } = contentRuntime({ response: 'pong' });
+    assert.equal(await runtime.sendMessage(other, 'ping'), 'pong');
+    assert.equal(await new Promise((resolve) => runtime.sendMessage(other, 'ping', {}, resolve)), 'pong');
+    assert.deepEqual(await runtime.sendMessage('own'), { response: 'pong' }, "the extension's own message goes as it is");
+    assert.deepEqual(sent, [{ liloExternal: other, message: 'ping' }, { liloExternal: other, message: 'ping' }, 'own']);
+  });
+
+  it("reject with Chrome's error when nothing receives, and resolve undefined without an answer", async () => {
+    const noReceiver = 'Could not establish connection. Receiving end does not exist.';
+    await assert.rejects(contentRuntime({ error: noReceiver }).runtime.sendMessage(other, 1), { message: noReceiver });
+    await assert.rejects(contentRuntime(undefined).runtime.sendMessage(other, 1), { message: noReceiver }, 'the extension has no worker to relay it');
+    assert.equal(await contentRuntime({ closed: true }).runtime.sendMessage(other, 1), undefined);
+  });
+
+  it('open a port the worker relays, named for the other extension', () => {
+    const { runtime, opened } = contentRuntime(undefined);
+    const port = runtime.connect(other, { name: 'tunnel' });
+    runtime.connect({ name: 'own' });
+    assert.equal(port.name, 'tunnel');
+    assert.deepEqual(opened, [{ name: `tunnel?liloExternal=${other}?lilo` }, { name: 'own' }]);
   });
 });

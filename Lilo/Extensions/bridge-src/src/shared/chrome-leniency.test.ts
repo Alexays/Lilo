@@ -101,7 +101,9 @@ describe('hasListeners, which WebKit events lack', () => {
   });
 
   it('ignores a listener that is not a function, as Chrome does', () => {
-    const refuse = () => { throw new Error("Invalid call to removeListener(). The 'listener' value is invalid, because a function is expected."); };
+    const refuse = (listener?: unknown) => {
+      if (typeof listener !== 'function') throw new Error("Invalid call to removeListener(). The 'listener' value is invalid, because a function is expected.");
+    };
     const event: any = Object.create({ addListener: refuse, removeListener: refuse, hasListener: refuse });
     install({ runtime: { onMessage: event } });
     assert.equal(event.addListener(undefined), undefined);
