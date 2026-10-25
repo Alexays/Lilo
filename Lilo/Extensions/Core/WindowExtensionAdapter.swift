@@ -158,8 +158,10 @@ final class WindowExtensionAdapter: NSObject, WKWebExtensionWindow {
         return exposedIndexByTab[ObjectIdentifier(tab as AnyObject)] ?? NSNotFound
     }
 
+    /// WebKit drops every tab of a window whose active tab its list lacks, so a window with no visible active tab (restored
+    /// tabs not yet activated, a terminal on screen) names its first tab rather than hide them all.
     func activeTab(for context: WKWebExtensionContext) -> (any WKWebExtensionTab)? {
-        visibleActiveAdapter
+        visibleActiveAdapter ?? tabs(for: context).first
     }
 
     func windowType(for context: WKWebExtensionContext) -> WKWebExtension.WindowType { type }
