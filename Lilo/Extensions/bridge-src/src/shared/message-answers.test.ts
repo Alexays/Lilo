@@ -174,6 +174,21 @@ describe('sendMessage promises of a page', () => {
     assert.equal(await chrome.runtime.sendMessage(1), undefined);
   });
 
+  it('resolve when another page, as an offscreen document, listens without answering', async () => {
+    mockGapAPI(({ method }) => (method === 'workerListensToMessages' ? false : null));
+    let pageListens = false;
+    class Runtime {
+      getManifest() { return {}; }
+      get lastError(): unknown { return null; }
+      sendMessage(message: unknown) { return Promise.resolve(pageListens && (message as typeof listensProbe)?.liloListens ? true : undefined); }
+    }
+    (globalThis as any).chrome = { runtime: new Runtime() };
+    installChromeCompat({}, true);
+    const chrome = (globalThis as any).chrome;
+    await assert.rejects(chrome.runtime.sendMessage(1), { message: 'Could not establish connection. Receiving end does not exist.' });
+    pageListens = true;
+    assert.equal(await chrome.runtime.sendMessage(1), undefined);
+  });
 });
 
 describe("a content script's messages to another extension", () => {

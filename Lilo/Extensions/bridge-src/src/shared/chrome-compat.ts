@@ -203,13 +203,12 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   const withheldURLs = !perms.has('tabs') && !chrome.runtime?.getManifest?.()?.optional_permissions?.includes('tabs');
   const groups = chrome.tabGroups === tabGroupsAugmentation ? tabsWithGroups : {};
   const noReceiver = () => 'Could not establish connection. Receiving end does not exist.';
-  // A page's message goes to the worker: Chrome's error then depends on whether the worker listens, and
-  // its promise rejects when nothing does. A worker's goes to pages, mostly not open, whose listeners
-  // Lilo does not know: its promise resolves.
-  const pageNoAnswer = () => gapCall<boolean>('runtime', 'workerListensToMessages').then(
-    (listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()),
-    noReceiver,
-  );
+  // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
+  // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
+  // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
+  const pageNoAnswer = () => Promise.resolve(chrome.runtime.sendMessage(listensProbe)).catch(() => undefined)
+    .then((listens) => listens === true || gapCall<boolean>('runtime', 'workerListensToMessages'))
+    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()), noReceiver);
   // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
   // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
   // as listening: its page cannot listen yet (a tab opened on the popup hears tabs.onActivated's message at once).
