@@ -57,13 +57,14 @@ final class WebKitGapTests: XCTestCase {
 
     /// Loads an extension with `worker` as its service worker and an empty page.html, opens the page in a
     /// web view of the bare controller, and returns what `pageScript` returns there.
-    private func barePageResult(worker: String, workerPath: String = "background.js", pageScript: String) async throws -> String? {
+    private func barePageResult(worker: String, workerPath: String = "background.js", permissions: [String] = [], pageScript: String) async throws -> String? {
         let folder = try writeExtension([
-            "manifest_version": 3, "name": "Gap", "version": "1.0", "background": ["service_worker": workerPath]
+            "manifest_version": 3, "name": "Gap", "version": "1.0", "permissions": permissions, "background": ["service_worker": workerPath]
         ], files: ["page.html": "<p>page</p>"])
         try FileManager.default.createDirectory(at: folder.appendingPathComponent(workerPath).deletingLastPathComponent(), withIntermediateDirectories: true)
         try worker.write(to: folder.appendingPathComponent(workerPath), atomically: true, encoding: .utf8)
         let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        context.webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         try controller.load(context)
         context.loadBackgroundContent { _ in }
         let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: try XCTUnwrap(context.webViewConfiguration))
@@ -243,6 +244,20 @@ final class WebKitGapTests: XCTestCase {
         browser.storage.local.get('key').then((items) => chrome.action.setTitle({ title: JSON.stringify(items) }));
         """, permissions: ["storage"])
         XCTAssertEqual(title, "{}", "WebKit now orders a read after the writes before it: drop the ordering of shared/storage-area.ts and the storage gap of COMPATIBILITY.md")
+    }
+
+    func testStorageAnswersSettleInOneTask() async throws {
+        // A round's two answers often come in one task: the first's awaits have not run when the second settles.
+        let result = try await barePageResult(worker: "", permissions: ["storage"], pageScript: """
+        const rounds = [];
+        for (let i = 0; i < 20; i++) {
+          let state = 'pending';
+          browser.storage.local.get('a').then(async () => { await null; await null; state = 'done'; });
+          rounds.push(await browser.storage.local.get('b').then(() => state));
+        }
+        return rounds.includes('pending') ? 'pending' : 'done';
+        """)
+        XCTAssertEqual(result, "pending", "WebKit now settles each storage answer in a task of its own, as Chrome: drop ownTask (shared/storage-area.ts)")
     }
 
     func testSendMessageCallbackWithoutResponseSetsNoLastError() async throws {

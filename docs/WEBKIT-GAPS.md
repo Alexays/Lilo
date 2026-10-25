@@ -484,6 +484,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74 and 80. W
 - **Impact:** lost writes in rare overlaps; parallel smoke runs of one extension can fail each other.
 - **Check:** Manual: needs a second process or profile.
 
+### 84. Storage answers settle together in one task
+
+- **Gap:** WebKit can settle the promises of several storage calls in one task, so the second's callbacks run before the code awaiting the first has run on. Chrome settles each answer in a task of its own.
+- **Lilo:** a page's or worker's storage answer that settles while another one's task has not ended waits for a task of its own, in the order they came ([storage-area.ts] `ownTask`).
+- **Impact:** Markdown Reader's popup waits for a `storage.local.get()` before it mounts, and found its preferences, read just before, not loaded yet: it threw on every run of `make ext-smoke`.
+- **Check:** `testStorageAnswersSettleInOneTask`. Repro: `let state = 'pending'; storage.local.get('a').then(async () => { await null; await null; state = 'done'; }); await storage.local.get('b'); state` is sometimes `pending`, always `done` in Chrome.
+
 [WebKitGapTests.swift]: ../LiloTests/Extensions/WebKitGapTests.swift
 [RealExtensionSmokeTests.swift]: ../LiloTests/Extensions/RealExtensionSmokeTests.swift
 [action.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/action.ts

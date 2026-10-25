@@ -2,7 +2,8 @@
 // UTF-16 bytes but the total in characters, failing the quota, so a set that fits is reapplied after removing its keys.
 // It stores values as JSON, where Chrome leaves out non-finite numbers and functions. A starting worker's reads answer once the
 // events that woke it are dispatched, as Chrome's slower storage answers them (Custom Cursors' onInstalled sets
-// the defaults its startup read finds missing).
+// the defaults its startup read finds missing). WebKit can settle several answers in one task, before the code awaiting the
+// first runs on, where Chrome answers each in a task of its own (Markdown Reader's popup mounts before its preferences load).
 import { callbackify } from './callbackify.ts';
 import type { Patch } from './chrome-compat.ts';
 import { workerStarting } from './ipc.ts';
@@ -66,17 +67,46 @@ function batched(area: object, pending: Promise<unknown>, merge: Merge, original
   });
 }
 
+/** Set from an answer settling until a later task runs: an answer settling meanwhile waits for a task of its own. */
+let nextTask: MessagePort | undefined;
+const waiting: Array<() => void> = [];
+
+/** `answer`, settled in a task no other storage answer settles in, in the order the answers come. */
+function ownTask(answer: unknown): unknown {
+  if (typeof (answer as PromiseLike<unknown> | undefined)?.then !== 'function') return answer;
+  const settle = (value: unknown, failed: boolean) => {
+    const result = () => (failed ? Promise.reject(value) : value);
+    if (nextTask) return new Promise<void>((resolve) => { waiting.push(resolve); }).then(result);
+    // Closed once no answer waits, so nothing stays open at idle.
+    const { port1, port2 } = new MessageChannel();
+    port1.onmessage = () => {
+      const next = waiting.shift();
+      if (next) {
+        next();
+        port2.postMessage(null);
+        return;
+      }
+      port1.close();
+      nextTask = undefined;
+    };
+    nextTask = port2;
+    port2.postMessage(null);
+    return result();
+  };
+  return Promise.resolve(answer).then((value) => settle(value, false), (error) => settle(error, true));
+}
+
 function ordered(write: boolean, merge?: Merge): Patch {
   return (original, self) => function (this: unknown, ...args: any[]) {
     const area = self(this);
     const pending = writesInFlight.get(area);
     if (merge && pending !== undefined && (args.length === 1 || (args.length === 2 && typeof args[1] === 'function'))) {
       const result = batched(area, pending, merge, original, args[0]);
-      if (result) return args.length === 2 ? callbackify(() => result, args[1]) : result;
+      if (result) return args.length === 2 ? callbackify(() => result, args[1]) : ownTask(result);
     }
     batches.delete(area);
     const starting = write ? undefined : workerStarting();
-    if (!write && pending === undefined && !starting) return original.apply(this, args);
+    if (!write && pending === undefined && !starting) return ownTask(original.apply(this, args));
     const last = args.length - 1;
     const callback = typeof args[last] === 'function' ? args[last] : undefined;
     if (starting && callback) {
@@ -98,7 +128,7 @@ function ordered(write: boolean, merge?: Merge): Patch {
     const result: Promise<unknown> = pending === undefined ? call() : pending.then(call);
     if (write) inFlight(area, result);
     if (callback) return undefined;
-    return starting ? result.then((value) => starting.then(() => value)) : result;
+    return ownTask(starting ? result.then((value) => starting.then(() => value)) : result);
   };
 }
 

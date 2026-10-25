@@ -134,6 +134,20 @@ describe('storage areas', () => {
     assert.deepEqual(await after, {});
   });
 
+  it('settle each answer in a task of its own, in order, as Chrome, where WebKit settles several in one', async () => {
+    const { chrome } = install();
+    const ran: string[] = [];
+    const first = chrome.storage.local.get('a').then(async () => {
+      await null;
+      await null;
+      ran.push('first awaited');
+    });
+    const second = chrome.storage.local.get('b').then(() => ran.push('second'));
+    const third = chrome.storage.sync.get('c').then(() => ran.push('third'));
+    await Promise.all([first, second, third]);
+    assert.deepEqual(ran, ['first awaited', 'second', 'third']);
+  });
+
   it('call WebKit at once when no write is in flight, or for another area', () => {
     const { chrome, local, sync } = install();
     chrome.storage.local.get('a');

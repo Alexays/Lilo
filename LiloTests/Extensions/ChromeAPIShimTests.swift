@@ -312,6 +312,38 @@ final class ChromeAPIShimTests: XCTestCase {
         try controller.unload(context)
     }
 
+    /// A page's storage answers settle one task each, as Chrome's: code awaiting one runs on before the next settles.
+    func testAPageGetsEachStorageAnswerInATaskOfItsOwn() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Answers", "version": "1.0", "permissions": ["storage"], "background": {"service_worker": "sw.js"}}
+            """,
+            "sw.js": "",
+            "page.html": "<p>page</p>"
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: try XCTUnwrap(URL(string: "chrome-extension://\(id)/page.html"))))
+        var rounds: String?
+        await pollUntil(timeout: 15) {
+            rounds = try? await (window.tabManager.engineTab(for: tab.id)?.view as? WKWebView)?.callAsyncJavaScript("""
+            const rounds = [];
+            for (let i = 0; i < 20; i++) {
+              let state = 'pending';
+              chrome.storage.local.get('a').then(async () => { await null; await null; state = 'done'; });
+              rounds.push(await chrome.storage.local.get('b').then(() => state));
+            }
+            return [...new Set(rounds)].join();
+            """, arguments: [:], in: nil, contentWorld: .page) as? String
+            return rounds != nil
+        }
+
+        XCTAssertEqual(rounds, "done")
+    }
+
     /// A script `executeScript` injects runs the content compat: `tabs.sendMessage` tells its listener from none,
     /// and `insertCSS` reaches the frame named.
     func testScriptedContentScriptsAnswerAsChrome() async throws {
