@@ -31,7 +31,9 @@ extension MainWindowController {
         guard let updatedTab = updateRuntimeTab(id: tabId, mutate: { tab in
             tab.faviconDataURL = faviconDataURL
             tab.faviconDominantColor = color
-            if tab.matchesHomeURL(tab.url) {
+            // The home page's icon follows its site: signing in can land on another path of the same host.
+            let host = tab.url?.host?.lowercased()
+            if tab.matchesHomeURL(tab.url) || (host != nil && host == tab.homeURL?.host?.lowercased()) {
                 tab.homeFaviconDataURL = faviconDataURL
                 tab.homeFaviconDominantColor = color
             }
