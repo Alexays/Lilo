@@ -461,7 +461,13 @@ final class TerminalSessionTests: XCTestCase {
         timeout: TimeInterval = 30, file: StaticString = #filePath, line: UInt = #line, _ condition: @MainActor () -> Bool
     ) async throws {
         guard await pollUntil(timeout: timeout, condition) else {
-            return XCTFail("Condition not met within \(timeout)s", file: file, line: line)
+            // Tells a shell that never started or printed from output that never reached the screen.
+            let session = sessions.last.map { session in
+                let status = session.status
+                return "pid \(session.pid), \(status.state), exit \(status.exitCode.map(String.init) ?? "none"), "
+                    + "\(session.outputBatches) batches, screen \(screen(session).suffix(300).debugDescription)"
+            }
+            return XCTFail("Condition not met within \(timeout)s; last session: \(session ?? "none")", file: file, line: line)
         }
     }
 }
