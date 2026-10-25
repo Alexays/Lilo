@@ -8,6 +8,7 @@
   import { tooltipTabURL } from "../../lib/bridge/coerceHelpers";
   import { clearTabPreview, getTabPreview, holdTabPreview } from "../../stores/tabPreview.svelte";
   import { tabUsageLabel } from "../../stores/tabMemory.svelte";
+  import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   const preview = $derived(getTabPreview());
   const terminal = $derived(preview?.terminal ?? null);
@@ -26,6 +27,7 @@
   const usage = $derived(preview ? tabUsageLabel(preview.tabId) : "");
   const displayURL = $derived(tooltipTabURL(preview?.url));
   let cardHeight = $state(0);
+  let cardWidth = $state(0);
 
   // Any scroll (sidebar tab list included) invalidates the anchor: hide instantly.
   $effect(() => {
@@ -35,14 +37,23 @@
     return () => window.removeEventListener("scroll", hide, true);
   });
 
-  const top = $derived(
-    preview
-      ? Math.max(
-          8,
-          Math.min(preview.anchor.top, window.innerHeight - cardHeight - 8),
-        )
-      : 0,
-  );
+  const clamp = (value: number, size: number, room: number) => Math.max(8, Math.min(value, room - size - 8));
+
+  // Beside a sidebar row, under a top strip's pill, above a bottom dock's.
+  const placement = $derived.by(() => {
+    if (!preview) return { left: 0, top: 0 };
+    const { anchor } = preview;
+    switch (getTabPosition()) {
+      case "right":
+        return { left: anchor.left - 8 - cardWidth, top: clamp(anchor.top, cardHeight, window.innerHeight) };
+      case "top":
+        return { left: clamp(anchor.left, cardWidth, window.innerWidth), top: anchor.bottom + 8 };
+      case "bottom":
+        return { left: clamp(anchor.left, cardWidth, window.innerWidth), top: anchor.top - 8 - cardHeight };
+      default:
+        return { left: anchor.right + 8, top: clamp(anchor.top, cardHeight, window.innerHeight) };
+    }
+  });
 </script>
 
 {#if preview}
@@ -50,8 +61,9 @@
     class="tab-preview-card float-surface"
     class:terminal={!!terminal}
     class:answerable
-    style={`left: ${preview.anchor.right + 8}px; top: ${top}px;`}
+    style={`left: ${placement.left}px; top: ${placement.top}px;`}
     bind:clientHeight={cardHeight}
+    bind:clientWidth={cardWidth}
     aria-hidden={!answerable}
     use:reportInteractiveZone={{ id: "tab-preview-card", active: answerable }}
     onmouseenter={holdTabPreview}

@@ -7,7 +7,8 @@
 
   type HistoryDirection = "back" | "forward";
 
-  let { collapseLocked = false }: { collapseLocked?: boolean } = $props();
+  // The page toolbar can take the history buttons while the sidebar keeps its toggle.
+  let { collapseLocked = false, show = "all" }: { collapseLocked?: boolean; show?: "all" | "toggle" | "history" } = $props();
 
   const HISTORY_MENU_PRESS_DELAY_MS = 320;
   const HISTORY_MENU_CLICK_SUPPRESSION_MS = 520;
@@ -96,6 +97,7 @@
   aria-label={t("nav.navigationControls")}
   onpointerdown={handleWindowDragPointerDown}
 >
+  {#if show !== "history"}
   <button
     class="nav-btn"
     aria-label={t("nav.collapseSidebar")}
@@ -117,7 +119,13 @@
     </svg>
   </button>
 
-  <div class="nav-spacer"></div>
+  {/if}
+
+  {#if show === "all"}
+    <div class="nav-spacer"></div>
+  {/if}
+
+  {#if show !== "toggle"}
 
   <button
     class="nav-btn"
@@ -221,6 +229,7 @@
       </svg>
     </span>
   </button>
+  {/if}
 </div>
 
 <style>

@@ -28,6 +28,7 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
+  import { getTabPosition } from "./stores/tabLayout.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
 
@@ -224,10 +225,9 @@
     }
 
     function onMove(ev: MouseEvent) {
-      const newWidth = Math.max(
-        200,
-        Math.min(480, startWidth + ev.clientX - startX),
-      );
+      // On the right the handle sits on the sidebar's left edge: dragging left widens it.
+      const delta = getTabPosition() === "right" ? startX - ev.clientX : ev.clientX - startX;
+      const newWidth = Math.max(200, Math.min(480, startWidth + delta));
       scheduleSidebarWidth(newWidth);
     }
 
@@ -418,14 +418,24 @@
     z-index: 100;
   }
 
+  :global(html[data-tab-position='right']) .sidebar-hover-trigger {
+    left: auto;
+    right: 0;
+  }
+
   .sidebar-overlay-tolerance {
     position: fixed;
     top: 0;
-    left: var(--chrome-content-left-visible);
+    left: var(--sidebar-column);
     width: calc(var(--chrome-overlay-edge-gap) + 4px);
     height: 100vh;
     pointer-events: auto;
     z-index: 49;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-overlay-tolerance {
+    left: auto;
+    right: var(--sidebar-column);
   }
 
   .zone-inactive {
@@ -486,6 +496,18 @@
     pointer-events: none;
   }
 
+  /* The gutter between the page and the sidebar moves to its left side. */
+  :global(html[data-tab-position='right']) .sidebar {
+    left: auto;
+    right: 0;
+    padding-left: var(--content-inset);
+    box-sizing: border-box;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar.sidebar-hidden {
+    transform: translateX(100%);
+  }
+
   /* Off-screen, not removed: looping spinners and pips would keep the compositor busy.
      Same list as html.window-unfocused in global.css. */
   .sidebar.sidebar-hidden :global(.tab-loader span),
@@ -506,6 +528,10 @@
     z-index: 50;
   }
 
+  :global(html[data-tab-position='right']) .sidebar.sidebar-overlay {
+    box-shadow: -4px 0 24px var(--sidebar-shadow);
+  }
+
   .sidebar-resize-handle {
     position: absolute;
     top: 0;
@@ -514,6 +540,11 @@
     height: 100%;
     cursor: col-resize;
     z-index: 10;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-resize-handle {
+    right: auto;
+    left: 0;
   }
 
   .sidebar-resize-handle:hover,

@@ -20,6 +20,7 @@
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
   let spaceContentEl: HTMLDivElement | undefined = $state();
@@ -91,15 +92,18 @@
   >
     <!-- Fixed header: does NOT swipe -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- On the right, the traffic lights and the history buttons live in the page toolbar. -->
     <div
       class="sidebar-header"
-      class:no-traffic-lights={!areTrafficLightsVisible()}
+      class:no-traffic-lights={!areTrafficLightsVisible() || getTabPosition() === "right"}
       ondblclick={() => chromeActions.maximizeWindow()}
     >
       <div class="header-spacer"></div>
-      <NavControls collapseLocked={isOverlayPanelOpen} />
+      <NavControls collapseLocked={isOverlayPanelOpen} show={hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    <URLDisplay />
+    {#if !isAddressInPageToolbar()}
+      <URLDisplay />
+    {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
     <div class="space-content" style={`--keep-awake-reserve: ${keepAwakeWidth ? keepAwakeWidth + 8 : 0}px;`}>
@@ -168,6 +172,10 @@
     transition:
       transform 220ms var(--motion-ease-spring),
       opacity var(--motion-duration-normal) ease;
+  }
+
+  :global(html[data-tab-position='right']) .sidebar-header {
+    height: 40px;
   }
 
   .sidebar-layout.pushed {

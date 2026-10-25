@@ -386,4 +386,9 @@
   .counts .removed {
     color: var(--danger);
   }
+
+  /* On the right, it grows over the page to the left. */
+  :global(html[data-tab-position='right']) .url-details {
+    left: auto;
+  }
 </style>
