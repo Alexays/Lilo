@@ -51,12 +51,13 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
 1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
-2. Builds the UI bundle and the extension bridge with `npm ci --ignore-scripts`, before any secret is in reach. The checkout keeps no token.
-3. Imports the Developer ID certificate into a temporary keychain.
-4. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-notarize` (archive, export, notarize, staple).
-5. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs, notarizes and staples the DMG itself.
-6. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
-7. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
+2. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`, before any secret is in reach. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
+3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
+4. Imports the Developer ID certificate into a temporary keychain.
+5. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-archive` (build, export signed with Developer ID, hardened runtime and a secure timestamp).
+6. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs the DMG and notarizes it, a single submission whose ticket also covers the app inside, and staples the DMG. The app itself is not stapled: a copy taken out of the DMG and first opened offline relies on Gatekeeper's online check, and Sparkle updates download the stapled DMG.
+7. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
+8. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
 ## Secrets
 
@@ -77,8 +78,10 @@ Download the Sparkle release matching `project.yml`, then run `bin/generate_keys
 
 ```bash
 make release            # archive and export, no notarization
-make release-notarize   # same, plus notarize and staple
+make release-notarize   # same, plus notarize and staple the app
 ```
+
+`scripts/build-app.sh` runs `xcodebuild build` with an archive's postprocessing, then wraps the app in the `.xcarchive` that `-exportArchive` signs: `xcodebuild archive` would start from an empty build folder every time.
 
 Both wrap `scripts/build-app.sh`; signing and notarization are configured via the `LILO_*` environment variables documented at the top of that script (`LILO_TEAM_ID`, `LILO_CODE_SIGN_IDENTITY`, `LILO_NOTARY_*`, and friends).
 
@@ -91,14 +94,15 @@ Once Apple grants it:
 1. In the developer portal, enable the capability on the `fr.arouillard.lilo` identifier, then create and download a **Developer ID** provisioning profile for it.
 2. Point `LILO_PROVISIONING_PROFILE` at that file (in `Makefile.local`, see `Makefile.local.example`). `make release` and `make release-notarize` then embed it as `Contents/embedded.provisionprofile` and re-sign the exported app with the entitlement added. Debug and development-signed builds ignore the variable.
 3. Check the result before notarizing a release: `codesign -d --entitlements - build/release/export/Lilo.app` lists the entitlement, and the app launches.
-4. For CI releases, store the profile as a base64 secret, decode it to a file in `release.yml` and pass its path as `LILO_PROVISIONING_PROFILE` to `make release-notarize`.
+4. For CI releases, store the profile as a base64 secret, decode it to a file in `release.yml` and pass its path as `LILO_PROVISIONING_PROFILE` to `make release-archive`.
 
 ## Publish checklist
 
 1. Verify the DMG's app on a clean mount:
    ```bash
+   xcrun stapler validate Lilo.dmg
+   spctl -a -vvv -t open --context context:primary-signature Lilo.dmg
    spctl -a -vvv /Volumes/Lilo/Lilo.app
-   xcrun stapler validate /Volumes/Lilo/Lilo.app
    ```
 2. Publish the draft release.
 3. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's

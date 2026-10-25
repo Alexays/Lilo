@@ -46,23 +46,57 @@ jobs:
             || { echo "::error::Xcode/Configs/Base.xcconfig is not at ${GITHUB_REF_NAME#v}."; exit 1; }
           make release-status
 
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-
       - name: Show selected Xcode
         run: xcodebuild -version
 
       - name: Install Metal Toolchain
         run: xcodebuild -downloadComponent MetalToolchain
 
-      # Before any secret is in reach: no install script runs, and the build steps after it find the stamps current.
-      - name: Build the UI and the extension bridge
+      # The generated UI sources, also saved by build.yml's release-build job. The key leaves out the lockfile's
+      # version lines, which a release bumps: a dependency change still shows in its resolved and integrity lines.
+      - name: Hash the UI lockfile
+        id: ui-lock
+        run: echo "hash=$(grep -v '"version":' lilo-ui/package-lock.json | shasum -a 256 | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Restore the UI build
+        id: ui-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            Lilo/Generated/ChromeUIAssets.swift
+            Lilo/Generated/NativeStrings.swift
+          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+      - name: Setup Node
+        if: steps.ui-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+      # Before any secret is in reach: no install script runs. The bridge bundles are committed, and checked against
+      # bridge-src by CI on main.
+      - name: Build the UI
+        if: steps.ui-cache.outputs.cache-hit != 'true'
         run: |
           npm --prefix lilo-ui ci --ignore-scripts
-          npm --prefix Lilo/Extensions/bridge-src ci --ignore-scripts
-          make build/.ui-build.stamp build/.ext-bridge-build.stamp
+          make ui-build
+
+      # A checkout dates every file now, which would make Xcode rebuild all of the cached build: files, the generated
+      # UI sources included, keep the date of their content, and XCBuild ignores the new inodes.
+      - name: Date files by their content
+        run: |
+          { git ls-files -s -z
+            for f in Lilo/Generated/ChromeUIAssets.swift Lilo/Generated/NativeStrings.swift; do
+              printf '100644 %s 0\t%s\0' "$(git hash-object "$f")" "$f"
+            done; } | python3 scripts/pin_mtimes.py
+          defaults write com.apple.dt.XCBuild IgnoreFileSystemDeviceInodeChanges -bool YES
+      # The Release build of build.yml's release-build job on the last main push: only what
+      # changed since compiles.
+      - name: Restore the last main release build
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .derived.noindex/build-app
+            !.derived.noindex/build-app/Logs
+          key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
+          restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
 
       - name: Import certificate
         env:
@@ -85,17 +119,17 @@ jobs:
       - name: Download libghostty-vt
         run: make vt-build
 
-      - name: Build, sign, and notarize
+      # Signed with Developer ID, hardened runtime and a secure timestamp; the DMG's notarization covers it.
+      - name: Build and sign
         env:
           LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
-          LILO_NOTARY_APPLE_ID: ${{ secrets.APPLE_NOTARY_APPLE_ID }}
-          LILO_NOTARY_APP_PASSWORD: ${{ secrets.APPLE_NOTARY_PASSWORD }}
-        run: make release-notarize
+        run: make release-archive
 
       # Installs the pinned dmgbuild into build/ and lays out the window from scripts/dmg/.
       - name: Create DMG
         run: make dmg
 
+      # One submission: the ticket covers the DMG and the app inside, and is stapled to the DMG.
       - name: Sign and notarize DMG
         env:
           LILO_TEAM_ID: ${{ secrets.APPLE_NOTARY_TEAM_ID }}
