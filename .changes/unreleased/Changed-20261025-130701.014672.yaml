@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Extensions start faster and answer sooner: less code loads in their background, tab queries take one round trip, and bursts of storage writes go out together.'
-time: 2026-10-25T13:07:01.014672+01:00

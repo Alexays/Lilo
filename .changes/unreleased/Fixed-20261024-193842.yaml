@@ -1,3 +1,0 @@
-kind: Fixed
-body: When the extension update service cannot be reached, Lilo checks again 30 minutes later instead of 5 hours later.
-time: 2026-10-24T19:38:42.465553+02:00

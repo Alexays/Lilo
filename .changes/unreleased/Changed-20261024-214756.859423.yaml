@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Extensions start faster and cost less while idle: Lilo prepares an extension again only when it or Lilo changed, opens restored extensions together, loads only the APIs an extension may use, wakes a stopped extension only for what it listens to, and reports each tab change once.'
-time: 2026-10-24T21:47:56.859423+02:00

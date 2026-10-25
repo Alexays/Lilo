@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions that check whether a page already runs their script, then inject it (translators, screenshot and SEO tools), work again, and ad blockers that register their scripts at run time get the same compatibility as the others.
-time: 2026-10-24T21:47:56.893259+02:00

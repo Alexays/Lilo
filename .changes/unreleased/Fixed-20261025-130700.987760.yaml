@@ -1,3 +1,0 @@
-kind: Fixed
-body: Dashlane's toolbar popup no longer shows an empty vault while the window shows a terminal or another page that is not a website, and extensions that reapply the same blocking rules at each start no longer make Lilo rebuild them.
-time: 2026-10-25T13:07:00.98776+01:00
