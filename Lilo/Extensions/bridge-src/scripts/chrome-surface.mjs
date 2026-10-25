@@ -1,5 +1,6 @@
 // Writes LiloTests/Extensions/chrome-surface.json and src/shared/chrome-constants.gen.ts from chrome-types: the
-// chrome.* surface stable Chrome exposes to an MV3 extension on macOS. Usage: `make chrome-surface`.
+// chrome.* surface stable Chrome exposes to an MV3 extension on macOS, with each object type's required
+// properties. Usage: `make chrome-surface`.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
@@ -27,6 +28,9 @@ function skipped(t) {
 }
 
 const entries = [];
+// `namespace.Type` -> required property -> the object type it holds, or null; an optional property holding an
+// object type is listed too, as `name?`.
+const types = {};
 // namespace -> member -> value, for the enums and literal constants.
 const constants = {};
 
@@ -60,7 +64,7 @@ function visit(body, prefix, inherited) {
       // devtools.* only exists in DevTools pages.
       worker: inherited.worker && !t['chrome-disallow-service-workers'] && !`${prefix}${statement.name?.getText(source) ?? ''}`.startsWith('devtools'),
     };
-    const add = (name, kind) => entries.push({ path: `${prefix}${name}`, kind, ...scope });
+    const add = (name, kind, value) => entries.push({ path: `${prefix}${name}`, kind, ...scope, ...value === undefined ? {} : { value } });
     if (ts.isModuleDeclaration(statement)) {
       // `namespace system.cpu` nests one declaration per dotted part.
       let name = statement.name.text.replace(/^_/, '');
@@ -86,17 +90,37 @@ function visit(body, prefix, inherited) {
           for (const method of methods) add(`${name}.${method}`, 'function');
           continue;
         }
-        add(name, 'property');
         const value = literal(type);
+        add(name, 'property', value);
         if (value !== undefined) setConstant(prefix, name, value);
       }
     } else if (ts.isTypeAliasDeclaration(statement) && (t['chrome-enum'] || isStringUnion(statement.type))) {
-      add(statement.name.text, 'enum');
       const members = ts.isUnionTypeNode(statement.type) ? statement.type.types : [statement.type];
       const values = members.map(literal).filter((v) => typeof v === 'string');
-      if (values.length) setConstant(prefix, statement.name.text, Object.fromEntries(values.map((v) => [enumKey(v), v])));
+      const value = values.length ? Object.fromEntries(values.map((v) => [enumKey(v), v])) : undefined;
+      add(statement.name.text, 'enum', value);
+      if (value) setConstant(prefix, statement.name.text, value);
+    } else if (ts.isInterfaceDeclaration(statement)) {
+      const required = {};
+      for (const member of statement.members) {
+        // Deprecated properties stay: Chrome still fills them (Tab.selected).
+        const memberTags = tags(member);
+        if (!member.name || (memberTags['chrome-platform'] && !memberTags['chrome-platform'].includes('mac')) || memberTags['chrome-channel']) continue;
+        const type = ts.isPropertySignature(member) ? objectType(member.type, prefix) : null;
+        if (!member.questionToken) required[member.name.getText(source)] = type;
+        else if (type) required[`${member.name.getText(source)}?`] = type;
+      }
+      types[`${prefix}${statement.name.text}`] = required;
     }
   }
+}
+
+// The interface a property holds, or the elements of its array hold, by its full name.
+function objectType(type, prefix) {
+  if (type && ts.isArrayTypeNode(type)) return objectType(type.elementType, prefix);
+  if (!type || !ts.isTypeReferenceNode(type)) return null;
+  const name = type.typeName.getText(source);
+  return name.includes('.') ? name : `${prefix}${name}`;
 }
 
 // A schema enum whose values carry no description is declared as a bare union of string literals;
@@ -119,7 +143,16 @@ const surface = entries.filter((e) => !mv2Only.has(e.path) && !mv2Only.has(e.pat
 
 const version = JSON.parse(readFileSync(require.resolve('chrome-types/package.json'), 'utf8')).version;
 const root = new URL('../../../../', import.meta.url);
-writeFileSync(new URL('LiloTests/Extensions/chrome-surface.json', root), `${JSON.stringify({ chromeTypes: version, surface }, null, 1)}\n`);
+// Only references to interfaces stay: a referenced enum or alias holds no properties to check.
+for (const required of Object.values(types)) {
+  for (const [name, type] of Object.entries(required)) {
+    if (type && !types[type]) {
+      if (name.endsWith('?')) delete required[name];
+      else required[name] = null;
+    }
+  }
+}
+writeFileSync(new URL('LiloTests/Extensions/chrome-surface.json', root), `${JSON.stringify({ chromeTypes: version, surface, types }, null, 1)}\n`);
 const kept = Object.fromEntries(Object.entries(constants).filter(([namespace]) => surface.some((e) => e.path === namespace)));
 writeFileSync(
   new URL('src/shared/chrome-constants.gen.ts', new URL('../', import.meta.url)),
