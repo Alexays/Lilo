@@ -327,6 +327,19 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertTrue(isDropped(#"a.example,~/x{1,2}/##.ad"#), "dropping the exclusion would widen the rule")
     }
 
+    /// Pages report an internationalized host in punycode, so the tables key it that way.
+    func testInternationalizedHostsArePunycoded() {
+        let out = FilterListConverter.convert("""
+        inkomstförsäkring.se,~sub.inkomstförsäkring.se##.x
+        graubünden.*##+js(aopr, x)
+        @@||przesył-energii.pl^$generichide
+        """)
+        XCTAssertEqual(out.domainCosmetic, [.init(domains: ["xn--inkomstfrskring-9kb71a.se"], selector: ".x")])
+        XCTAssertEqual(out.cosmeticExceptions, [.init(domains: ["sub.xn--inkomstfrskring-9kb71a.se"], selector: ".x")])
+        XCTAssertEqual(out.scriptlets.first?.domains, ["xn--graubnden-u9a.*"])
+        XCTAssertEqual(out.genericHide, ["xn--przesy-energii-lnc.pl"])
+    }
+
     func testScriptletExceptionsAndTheirTable() {
         let out = FilterListConverter.convert("""
         a.example#@#+js(set, x, 1)

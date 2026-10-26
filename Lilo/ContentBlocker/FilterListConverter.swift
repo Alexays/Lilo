@@ -273,12 +273,19 @@ enum FilterListConverter {
         host = host.dropFirst(2)
         if host.hasSuffix("^") { host = host.dropLast() }
         // `name.*` is uBO's entity: the site under any public suffix, as the site table keys it.
-        guard !host.isEmpty, !host.dropLast(host.hasSuffix(".*") ? 2 : 0).contains(where: { "/*^|".contains($0) }) else { return nil }
-        return [host.lowercased()]
+        guard !host.isEmpty, !host.dropLast(host.hasSuffix(".*") ? 2 : 0).contains(where: { "/*^|".contains($0) }),
+              let ascii = asciiHost(host.lowercased()) else { return nil }
+        return [ascii]
+    }
+
+    /// The host as pages report it: an internationalized name in its punycode form. nil when it cannot be encoded.
+    private static func asciiHost(_ host: String) -> String? {
+        host.allSatisfy(\.isASCII) ? host : URLComponents(string: "http://" + host)?.encodedHost
     }
 
     /// A rule's lowercased domains, those it names and the `~` ones it excludes. uBO's `host>>` applies to the host only, and `*`
-    /// to every site. nil when a uBO `/regex/` entry, which exact-host tables cannot apply, would leave the rule wider.
+    /// to every site. nil when a uBO `/regex/` entry, which exact-host tables cannot apply, or a host that cannot be encoded
+    /// would leave the rule wider.
     private static func ruleDomains(_ domainPart: Substring) -> (included: [String], excluded: [String])? {
         var included: [String] = []
         var excluded: [String] = []
@@ -296,6 +303,8 @@ enum FilterListConverter {
             }
             if host.hasSuffix(">>") { host.removeLast(2) }
             guard !host.isEmpty, host != "*" else { continue }
+            guard let ascii = asciiHost(host) else { return nil }
+            host = ascii
             if isExcluded {
                 excluded.append(host)
             } else {
