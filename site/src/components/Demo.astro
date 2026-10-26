@@ -56,7 +56,150 @@ const modes = [
   data-exit-english={copy.en.demoExitFullscreen}
   data-exit-french={copy.fr.demoExitFullscreen}
 >
-  <div class="demo-toolbar">
+  <div class="demo-menubar">
+    <nav class="mac-menubar" aria-label="Lilo" role="menubar">
+      <span class="menu-flower" aria-hidden="true">
+        <Flower id={`demo-menu-flower-${lang}`} />
+      </span>
+      {demoMenus.map((menu, index) => (
+        <details class="mac-menu" data-menu={menu.label}>
+          <summary
+            role="menuitem"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            tabindex={index === 0 ? 0 : -1}
+          >
+            <span data-menu-label={menu.label}>{menuLabel(menu.label)}</span>
+          </summary>
+          <div
+            class="menu-items"
+            role="menu"
+            aria-label={menuLabel(menu.label)}
+            data-menu-name={menu.label}
+          >
+            {menu.children?.map((item) =>
+              "separator" in item ? (
+                <hr
+                  role="separator"
+                  data-developer-only={item.developerOnly || undefined}
+                  data-terminal-only={item.terminalOnly || undefined}
+                  hidden={item.developerOnly}
+                />
+              ) : item.dynamic === "spaces" ? (
+                <div
+                  data-menu-list="spaces"
+                  role="group"
+                  aria-label={menuLabel("Spaces")}
+                  data-menu-name="Spaces"
+                />
+              ) : item.children ? (
+                <details class="menu-submenu" data-submenu={item.label}>
+                  <summary
+                    role="menuitem"
+                    aria-haspopup="menu"
+                    aria-expanded="false"
+                    tabindex="-1"
+                  >
+                    <span class="menu-label" data-menu-label={item.label}>
+                      {menuLabel(item.label)}
+                    </span>
+                    <span class="submenu-arrow" aria-hidden="true">
+                      ›
+                    </span>
+                  </summary>
+                  <div
+                    class="menu-items"
+                    role="menu"
+                    aria-label={menuLabel(item.label)}
+                    data-menu-name={item.label}
+                    data-menu-list={item.dynamic}
+                    data-empty-label={
+                      item.emptyLabel ? menuLabel(item.emptyLabel) : undefined
+                    }
+                    data-empty-key={item.emptyLabel}
+                  >
+                    {item.children.map((child) =>
+                      "separator" in child ? (
+                        <hr role="separator" />
+                      ) : child.dynamic === "extensions" ? (
+                        <div
+                          data-menu-list="extensions"
+                          data-native-label={messages.exploreMacNote}
+                          role="group"
+                          aria-label={menuLabel("Extensions")}
+                          data-menu-name="Extensions"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          tabindex="-1"
+                          data-action={child.action}
+                          data-shortcut={child.shortcutId}
+                          data-native-only={child.macOnly || undefined}
+                          disabled
+                          title={
+                            child.macOnly ? messages.exploreMacNote : undefined
+                          }
+                        >
+                          <span
+                            class="menu-label"
+                            data-menu-label={child.label}
+                          >
+                            {menuLabel(child.label)}
+                          </span>
+                          {child.macOnly && (
+                            <span class="menu-note" aria-hidden="true">
+                              Mac
+                            </span>
+                          )}
+                          <kbd aria-hidden="true">{child.keys}</kbd>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </details>
+              ) : (
+                <button
+                  type="button"
+                  role={
+                    item.action === "bookmark" ? "menuitemcheckbox" : "menuitem"
+                  }
+                  aria-checked={
+                    item.action === "bookmark" ? "false" : undefined
+                  }
+                  tabindex="-1"
+                  data-action={item.action}
+                  data-shortcut={item.shortcutId}
+                  data-native-only={item.macOnly || undefined}
+                  data-alternate={item.alternate || undefined}
+                  data-developer-only={item.developerOnly || undefined}
+                  data-default-label={menuLabel(item.label)}
+                  data-label-key={item.label}
+                  data-alternate-key={menuAlternates.get(item.action ?? "")}
+                  data-alternate-label={menuLabel(
+                    menuAlternates.get(item.action ?? "") ?? item.label
+                  )}
+                  disabled={item.action !== "fullscreen"}
+                  hidden={item.developerOnly || Boolean(item.alternate)}
+                  title={item.macOnly ? messages.exploreMacNote : undefined}
+                >
+                  <span class="menu-label" data-menu-label={item.label}>
+                    {menuLabel(item.label)}
+                  </span>
+                  {item.macOnly && (
+                    <span class="menu-note" aria-hidden="true">
+                      Mac
+                    </span>
+                  )}
+                  <kbd aria-hidden="true">{item.keys}</kbd>
+                </button>
+              )
+            )}
+          </div>
+        </details>
+      ))}
+    </nav>
     <div class="demo-modes" role="group" aria-label={text.demoWindow}>
       {modes.map((mode) => (
         <button
@@ -111,187 +254,6 @@ const modes = [
   </div>
   <div class="demo-viewport" id="demo-viewport">
     <div class="demo-desktop">
-      <nav class="mac-menubar" aria-label="Lilo" role="menubar">
-        <span class="menu-flower" aria-hidden="true">
-          <Flower id={`demo-menu-flower-${lang}`} />
-        </span>
-        {demoMenus.map((menu, index) => (
-          <details class="mac-menu" data-menu={menu.label}>
-            <summary
-              role="menuitem"
-              aria-haspopup="menu"
-              aria-expanded="false"
-              tabindex={index === 0 ? 0 : -1}
-            >
-              <span data-menu-label={menu.label}>{menuLabel(menu.label)}</span>
-            </summary>
-            <div
-              class="menu-items"
-              role="menu"
-              aria-label={menuLabel(menu.label)}
-              data-menu-name={menu.label}
-            >
-              {menu.children?.map((item) =>
-                "separator" in item ? (
-                  <hr
-                    role="separator"
-                    data-developer-only={item.developerOnly || undefined}
-                    data-terminal-only={item.terminalOnly || undefined}
-                    hidden={item.developerOnly}
-                  />
-                ) : item.dynamic === "spaces" ? (
-                  <div
-                    data-menu-list="spaces"
-                    role="group"
-                    aria-label={menuLabel("Spaces")}
-                    data-menu-name="Spaces"
-                  />
-                ) : item.children ? (
-                  <details class="menu-submenu" data-submenu={item.label}>
-                    <summary
-                      role="menuitem"
-                      aria-haspopup="menu"
-                      aria-expanded="false"
-                      tabindex="-1"
-                    >
-                      <span class="menu-label" data-menu-label={item.label}>
-                        {menuLabel(item.label)}
-                      </span>
-                      <span class="submenu-arrow" aria-hidden="true">
-                        ›
-                      </span>
-                    </summary>
-                    <div
-                      class="menu-items"
-                      role="menu"
-                      aria-label={menuLabel(item.label)}
-                      data-menu-name={item.label}
-                      data-menu-list={item.dynamic}
-                      data-empty-label={
-                        item.emptyLabel ? menuLabel(item.emptyLabel) : undefined
-                      }
-                      data-empty-key={item.emptyLabel}
-                    >
-                      {item.children.map((child) =>
-                        "separator" in child ? (
-                          <hr role="separator" />
-                        ) : child.dynamic === "extensions" ? (
-                          <div
-                            data-menu-list="extensions"
-                            data-native-label={messages.exploreMacNote}
-                            role="group"
-                            aria-label={menuLabel("Extensions")}
-                            data-menu-name="Extensions"
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            role="menuitem"
-                            tabindex="-1"
-                            data-action={child.action}
-                            data-shortcut={child.shortcutId}
-                            data-native-only={child.macOnly || undefined}
-                            disabled
-                            title={
-                              child.macOnly
-                                ? messages.exploreMacNote
-                                : undefined
-                            }
-                          >
-                            <span
-                              class="menu-label"
-                              data-menu-label={child.label}
-                            >
-                              {menuLabel(child.label)}
-                            </span>
-                            {child.macOnly && (
-                              <span class="menu-note" aria-hidden="true">
-                                Mac
-                              </span>
-                            )}
-                            <kbd aria-hidden="true">{child.keys}</kbd>
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </details>
-                ) : (
-                  <button
-                    type="button"
-                    role={
-                      item.action === "bookmark"
-                        ? "menuitemcheckbox"
-                        : "menuitem"
-                    }
-                    aria-checked={
-                      item.action === "bookmark" ? "false" : undefined
-                    }
-                    tabindex="-1"
-                    data-action={item.action}
-                    data-shortcut={item.shortcutId}
-                    data-native-only={item.macOnly || undefined}
-                    data-alternate={item.alternate || undefined}
-                    data-developer-only={item.developerOnly || undefined}
-                    data-default-label={menuLabel(item.label)}
-                    data-label-key={item.label}
-                    data-alternate-key={menuAlternates.get(item.action ?? "")}
-                    data-alternate-label={menuLabel(
-                      menuAlternates.get(item.action ?? "") ?? item.label
-                    )}
-                    disabled={item.action !== "fullscreen"}
-                    hidden={item.developerOnly || Boolean(item.alternate)}
-                    title={item.macOnly ? messages.exploreMacNote : undefined}
-                  >
-                    <span class="menu-label" data-menu-label={item.label}>
-                      {menuLabel(item.label)}
-                    </span>
-                    {item.macOnly && (
-                      <span class="menu-note" aria-hidden="true">
-                        Mac
-                      </span>
-                    )}
-                    <kbd aria-hidden="true">{item.keys}</kbd>
-                  </button>
-                )
-              )}
-            </div>
-          </details>
-        ))}
-        <span class="menu-status" aria-hidden="true">
-          <svg
-            viewBox="0 0 20 20"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-          >
-            <path d="M3 8a11 11 0 0 1 14 0M6 11a6 6 0 0 1 8 0m-5 3a2 2 0 0 1 2 0" />
-            <circle cx="10" cy="16" r=".8" fill="currentColor" stroke="none" />
-          </svg>
-          <svg
-            viewBox="0 0 28 16"
-            width="23"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.2"
-          >
-            <rect x="1" y="2" width="23" height="12" rx="3" />
-            <path d="M26 6v4" stroke-linecap="round" />
-            <rect
-              x="3"
-              y="4"
-              width="17"
-              height="8"
-              rx="1.3"
-              fill="currentColor"
-              stroke="none"
-            />
-          </svg>
-        </span>
-      </nav>
       <iframe
         src={`/demo/?lang=${lang}`}
         title={text.demoWindow}
@@ -789,17 +751,16 @@ const modes = [
 
       delete menu.dataset.openLeft;
       panel.style.removeProperty("--menu-offset-y");
-      const desktopRect = desktop.getBoundingClientRect();
-      const scale = desktopRect.width / desktop.offsetWidth;
+      const bounds = viewport.getBoundingClientRect();
       let rect = panel.getBoundingClientRect();
 
-      if (rect.right > desktopRect.right - 5) {
+      if (rect.right > bounds.right - 5) {
         menu.dataset.openLeft = "";
         rect = panel.getBoundingClientRect();
       }
 
-      const vertical = Math.min(0, desktopRect.bottom - rect.bottom - 6);
-      panel.style.setProperty("--menu-offset-y", `${vertical / scale}px`);
+      const vertical = Math.min(0, bounds.bottom - rect.bottom - 6);
+      panel.style.setProperty("--menu-offset-y", `${vertical}px`);
     };
 
     const openMenu = (menu: HTMLDetailsElement) => {
@@ -1016,7 +977,9 @@ const modes = [
         return;
       }
 
-      const visibleMenus = menus.filter((candidate) => !candidate.hidden);
+      const visibleMenus = menus.filter((candidate) =>
+        candidate.checkVisibility()
+      );
 
       const next =
         visibleMenus[
@@ -1288,7 +1251,7 @@ const modes = [
       }
 
       const { height, width } = entry.contentRect;
-      const scale = Math.min(1, width / 900, height / 670);
+      const scale = Math.min(1, width / 900, height / 640);
 
       if (scale <= 0) {
         return;
@@ -1338,60 +1301,85 @@ const modes = [
       0 0 0 1px #00000020;
     text-align: left;
   }
-  .demo-toolbar {
+  .demo-menubar {
+    position: relative;
+    z-index: 2;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--tint) 10%, var(--paper));
+    align-items: center;
+    gap: 0 8px;
+    min-height: 30px;
+    padding: 0 6px 0 12px;
+    container: demo-menubar / inline-size;
+    color: var(--ink);
+    background: var(--paper);
+    font:
+      12px/1.4 -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
+  .mac-menubar {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 1px;
+    min-width: 0;
   }
   .demo-modes,
   .demo-tools {
     display: flex;
+    flex: none;
     align-items: center;
-    gap: 4px;
   }
-  .demo-tools {
-    flex-shrink: 0;
-    margin-left: auto;
+  .demo-modes {
+    gap: 1px;
+    padding: 2px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--ink) 7%, transparent);
   }
-  .demo-toolbar button {
+  .demo-modes button,
+  .demo-tools button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
-    border: 1px solid transparent;
-    border-radius: 7px;
-    padding: 0 10px;
+    min-height: 22px;
+    border: 0;
+    border-radius: 5px;
+    padding: 0 9px;
     background: transparent;
     color: var(--ink-2);
-    font: 600 12px/1.2 var(--sys);
+    font: 500 12px/1 var(--sys);
     white-space: nowrap;
     cursor: pointer;
   }
-  .demo-toolbar button:hover {
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  .demo-modes button:hover,
+  .demo-tools button:hover {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
     color: var(--ink);
   }
-  .demo-toolbar button:focus-visible {
+  .demo-modes button:focus-visible,
+  .demo-tools button:focus-visible {
     outline-offset: -2px;
   }
   .demo-modes button[aria-pressed="true"] {
-    border-color: var(--line);
     background: var(--surface);
     color: var(--ink);
-    box-shadow: 0 1px 3px #0000000a;
+    box-shadow:
+      0 1px 2px #00000014,
+      0 0 0 0.5px #0000001a;
+  }
+  .demo-tools {
+    margin-left: auto;
   }
   .demo-tools button {
-    width: 36px;
+    width: 26px;
+    min-height: 24px;
     padding: 0;
   }
   .demo-tools svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.75;
@@ -1401,11 +1389,32 @@ const modes = [
   .demo-tools .expand-exit {
     display: none;
   }
+  /* The menus give way from the right; a phone puts the modes on their own row. */
+  @container demo-menubar (width < 1040px) {
+    .mac-menu:nth-of-type(n + 6) {
+      display: none;
+    }
+  }
+  @container demo-menubar (width < 680px) {
+    .mac-menu:nth-of-type(n + 2) {
+      display: none;
+    }
+  }
+  @container demo-menubar (width < 440px) {
+    .demo-modes {
+      order: 1;
+      flex-basis: 100%;
+      margin-bottom: 6px;
+    }
+    .demo-modes button {
+      flex: 1;
+    }
+  }
   .demo-viewport {
     position: relative;
     width: 100%;
-    aspect-ratio: 900 / 670;
-    max-height: min(670px, calc(100svh - 160px));
+    aspect-ratio: 900 / 640;
+    max-height: min(640px, calc(100svh - 130px));
     overflow: clip;
     background: var(--sidebar);
   }
@@ -1417,23 +1426,6 @@ const modes = [
     width: 100%;
     height: 100%;
     transform-origin: top left;
-  }
-  .mac-menubar {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 1px;
-    flex: none;
-    height: 30px;
-    padding: 0 12px;
-    color: var(--ink);
-    background: var(--paper);
-    font:
-      12px/1.4 -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
   }
   .menu-flower {
     display: flex;
@@ -1570,14 +1562,6 @@ const modes = [
   .menu-items :global([hidden]) {
     display: none;
   }
-  .menu-status {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    margin-left: auto;
-    opacity: 0.65;
-    font-size: 13px;
-  }
   iframe {
     display: block;
     flex: 1;
@@ -1604,10 +1588,10 @@ const modes = [
   .demo-shell::backdrop {
     background: var(--paper);
   }
-  .demo-shell:is(:fullscreen, [data-expanded]) .demo-toolbar {
+  .demo-shell:is(:fullscreen, [data-expanded]) .demo-menubar {
     flex: none;
-    padding-inline: max(8px, env(safe-area-inset-left, 0px))
-      max(8px, env(safe-area-inset-right, 0px));
+    padding-inline: max(12px, env(safe-area-inset-left, 0px))
+      max(6px, env(safe-area-inset-right, 0px));
   }
   .demo-shell:is(:fullscreen, [data-expanded]) .demo-viewport {
     flex: 1;
@@ -1630,20 +1614,15 @@ const modes = [
     color: var(--ink);
   }
   @media (pointer: coarse) {
-    .demo-toolbar button {
+    .demo-menubar {
       min-height: 44px;
     }
-    .demo-tools button {
-      width: 44px;
-    }
-  }
-  @media (max-width: 380px) {
-    .demo-toolbar {
-      gap: 4px;
-      padding-inline: 6px;
-    }
     .demo-modes button {
-      padding-inline: 7px;
+      min-height: 36px;
+    }
+    .demo-tools button {
+      width: 40px;
+      min-height: 40px;
     }
   }
 </style>
