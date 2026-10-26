@@ -5,6 +5,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { t } from "../../lib/i18n/state.svelte";
   import type { Snippet } from "svelte";
+  import { MediaQuery } from "svelte/reactivity";
 
   interface Props {
     active: boolean;
@@ -15,6 +16,8 @@
     description?: string;
     /** Shows a back control before the title (drill-in pages). */
     onback?: () => void;
+    /** A navigation column on the card's left, told whether it is narrowed to icons; the content centers beside it. */
+    nav?: Snippet<[boolean]>;
     children: Snippet;
   }
 
@@ -26,8 +29,11 @@
     title,
     description,
     onback,
+    nav,
     children,
   }: Props = $props();
+
+  const narrow = new MediaQuery("max-width: 720px");
 
   function shellTransition(
     _node: Element,
@@ -49,10 +55,15 @@
 {#if active}
   <section
     class="ui-shell-frame"
+    class:with-nav={!!nav}
+    class:nav-compact={narrow.current}
     aria-label={ariaLabel}
     transition:shellTransition
     use:reportInteractiveZone={{ id: interactiveZoneId, active }}
   >
+    {#if nav}
+      <div class="ui-shell-frame-nav">{@render nav(narrow.current)}</div>
+    {/if}
     <div class="ui-shell-frame-scroll">
       <header class="ui-shell-frame-header">
         {#if onback}
@@ -94,6 +105,46 @@
     border-radius: var(--chrome-overlay-boundary-radius);
     background: color-mix(in srgb, var(--bg-primary) 96%, var(--sidebar-bg));
     color: var(--text-primary);
+  }
+
+  /* The card clips the column at its own corners: one shape, a hairline between nav and content. */
+  .ui-shell-frame.with-nav {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+
+  .ui-shell-frame.with-nav.nav-compact {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .ui-shell-frame-nav {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* Its first control lines up with the page title. */
+    padding-top: calc(2 * var(--space-24));
+    background: color-mix(in srgb, var(--bg-secondary) 35%, transparent);
+    box-shadow: inset -1px 0 var(--separator);
+  }
+
+  /* The strip's pill already names and closes the page. */
+  .ui-shell-frame-nav :global(.panel-header) {
+    display: none;
+  }
+
+  .with-nav .ui-shell-frame-scroll {
+    padding: var(--space-24) var(--space-32) var(--space-32);
+  }
+
+  .with-nav .ui-shell-frame-header {
+    top: calc(-1 * var(--space-24));
+    padding-top: var(--space-24);
+  }
+
+  .with-nav .ui-shell-frame-header,
+  .with-nav .ui-shell-frame-main {
+    max-width: 760px;
+    margin-inline: auto;
   }
 
   .ui-shell-frame-scroll {

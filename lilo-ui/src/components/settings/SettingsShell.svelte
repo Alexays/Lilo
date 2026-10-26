@@ -15,6 +15,8 @@
   import { resolveDisplayName } from "../extensions/extensionPanelModel";
   import { SETTINGS_SECTIONS, settingTitleKey } from "./settingsPanelModel";
   import SettingsSectionContent from "./SettingsSectionContent.svelte";
+  import SettingsPanel from "./SettingsPanel.svelte";
+  import { isVerticalLayout } from "../../stores/tabLayout.svelte";
   import UiShellFrame from "../ui/UiShellFrame.svelte";
 
   const shellOpen = $derived(isSettingsShellOpen());
@@ -55,12 +57,16 @@
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
+<!-- A tab strip has no sidebar to hold the navigation: the page's card does. -->
+{#snippet settingsNav(compact: boolean)}<SettingsPanel {compact} />{/snippet}
+
 <UiShellFrame
   active={shellOpen}
   ariaLabel={t("settings.panelTitle")}
   interactiveZoneId="settings-shell"
   {title}
   onback={subpage && !query.trim() ? closeSettingsSubpage : undefined}
+  nav={isVerticalLayout() ? undefined : settingsNav}
 >
   <SettingsSectionContent {section} {subpage} {query} />
   <ClearDataSheet />

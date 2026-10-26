@@ -16,7 +16,8 @@
   import { getAddressPlacement } from "../../stores/tabLayout.svelte";
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { isDownloadsVisible, openDownloadsPanel } from "../../stores/panels.svelte";
+  import { closeSettingsShell, isDownloadsVisible, isSettingsShellOpen, openDownloadsPanel } from "../../stores/panels.svelte";
+  import { LINE_ICONS } from "../commandbar/commandBarIcons";
   import { hasSessionDownloads } from "../../stores/downloads.svelte";
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
@@ -35,6 +36,9 @@
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
   const activeTabId = $derived(getActiveTabId(spaceId));
+  // Settings is a page of its own here: its pill is the active one, the page's tab steps back.
+  const settingsOpen = $derived(isSettingsShellOpen());
+  const shownActiveId = $derived(settingsOpen ? "" : activeTabId);
   const editsAddress = $derived(getAddressPlacement() === "tabs");
   // The address field itself shows only when it has something to say (a permission prompt), or while
   // the strip floats in for hidden tabs and the page toolbar that holds it is gone.
@@ -90,10 +94,10 @@
 
   // The active pill comes into view, and the strip keeps exactly one tab stop.
   $effect(() => {
-    void activeTabId;
+    void shownActiveId;
     void view;
     void tick().then(() => {
-      scrollerEl?.querySelector(`[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      scrollerEl?.querySelector(settingsOpen ? ".strip-settings" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
       const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
       if (rovers.length && !rovers.some((rover) => rover.tabIndex === 0)) rovers[0].tabIndex = 0;
       measureOverflow();
@@ -152,12 +156,12 @@
       {:else if item.kind === "folder"}
         {@const folder = view.foldersById.get(item.id)}
         {#if folder}
-          <StripFolder {folder} tabs={folderTabs(folder.id)} {activeTabId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
+          <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
         {/if}
       {:else}
         {@const tab = view.tabsById.get(item.id)}
         {#if tab && !(tab.id === activeTabId && addressInActiveTab && !iconOnly)}
-          <StripTab {tab} active={tab.id === activeTabId} {iconOnly} {editsAddress} />
+          <StripTab {tab} active={tab.id === shownActiveId} {iconOnly} {editsAddress} />
         {/if}
       {/if}
     </div>
@@ -222,6 +226,21 @@
     <span class="divider" aria-hidden="true"></span>
 
     {@render zoneOf("unpinned")}
+    {#if settingsOpen}
+      <div class="strip-settings">
+        <button class="strip-settings-main" role="tab" aria-selected="true" tabindex="0" data-roving>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+            <path d={LINE_ICONS.gear} stroke-linejoin="round" />
+          </svg>
+          {t("settings.panelTitle")}
+        </button>
+        <button class="strip-settings-close" tabindex="-1" aria-label={t("common.close")} onclick={closeSettingsShell}>
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    {/if}
     <button
       class="strip-btn"
       aria-label={t("tabItem.newTab")}
@@ -420,6 +439,49 @@
     height: 32px;
     border-radius: var(--radius-sm);
     background: var(--accent-tint-12);
+  }
+
+  /* The active pill's look, sized to its label. */
+  .strip-settings {
+    flex: none;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    background: var(--bg-selected);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-control);
+  }
+
+  .strip-settings-main {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px 0 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    cursor: default;
+  }
+
+  .strip-settings-close {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    display: grid;
+    place-items: center;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .strip-settings-close:hover {
+    background: var(--bg-hover);
   }
 
   .strip-address {

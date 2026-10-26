@@ -13,6 +13,8 @@
     setSettingsQuery,
   } from "../../stores/panels.svelte";
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   const query = $derived(getSettingsQuery());
   const searching = $derived(query.trim().length > 0);
   const counts = $derived(searching ? getSettingsSearchResults().countBySection : {});
@@ -40,6 +42,7 @@
   activeId={searching ? null : getSettingsShellSection()}
   onSelect={setActiveSettingsSection}
   onclose={closeSettingsShell}
+  {compact}
 >
   {#snippet toolbar()}
     <UiSearchField
