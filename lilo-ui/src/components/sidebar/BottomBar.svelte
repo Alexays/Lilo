@@ -109,9 +109,14 @@
   });
   $effect(() => {
     const spaceId = getActiveSpaceId();
-    spaceScrollerEl
-      ?.querySelector(`[data-space-dnd-id="${CSS.escape(spaceId)}"]`)
-      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const el = spaceScrollerEl;
+    const tile = el?.querySelector(`[data-space-dnd-id="${CSS.escape(spaceId)}"]`);
+    if (!el || !tile) return;
+    // Not scrollIntoView: it would also scroll every ancestor, up to a page embedding the UI.
+    const bar = el.getBoundingClientRect();
+    const box = tile.getBoundingClientRect();
+    if (box.left < bar.left) el.scrollLeft += box.left - bar.left;
+    else if (box.right > bar.right) el.scrollLeft += box.right - bar.right;
   });
 
   // What needs a look in the other Spaces, shown on their icons: a terminal waiting for an answer
