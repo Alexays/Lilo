@@ -68,7 +68,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	swift-test swift-test-slow blocker-coverage blocker-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
-	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-test
 
@@ -453,9 +453,18 @@ site-dev: $(SITE_DEPS)
 site-dev-stop: $(SITE_DEPS)
 	@npm --prefix site run dev -- stop
 
-## Preview the built website with Cloudflare's headers and redirects on localhost:8787
+## Preview the built website with Cloudflare's headers and redirects on localhost:8788
 site-preview: site-generate
 	@npm --prefix site run preview
+
+## Compare the website with a disposable native Debug session (no personal profiles or preferences)
+site-native-preview: app
+	@task_root="$$(mktemp -d /tmp/lilo-demo-native.XXXXXX)"; \
+	mkdir -p "$$task_root/home"; \
+	CFFIXED_USER_HOME="$$task_root/home" LILO_APP_SUPPORT_DIR="$$task_root/support" \
+	build/debug/export/Lilo.app/Contents/MacOS/Lilo & task_pid=$$!; \
+	trap 'kill "$$task_pid" 2>/dev/null || true; wait "$$task_pid" 2>/dev/null || true; rm -rf "$$task_root"' EXIT INT TERM HUP; \
+	wait "$$task_pid"
 
 ## Build getlilo.app with Astro, Markdown copies and FAQ metadata
 site-generate: $(SITE_DEPS)
@@ -473,9 +482,31 @@ site-fix: $(SITE_DEPS)
 site-test: site-generate
 	@npm --prefix site run test
 
+## Exercise the interactive website demo in a browser with production headers
+site-e2e: site-generate
+	@npm --prefix site run test:e2e
+
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:
 	@npm --prefix site update
+
+## Set up Astro's official Svelte integration
+site-add-svelte: $(SITE_DEPS)
+	@cd site && npm exec astro add svelte -- --yes
+
+## Install the browser-only terminal and MCP playground libraries
+site-playground-deps: $(SITE_DEPS)
+	@npm --prefix site install --save-exact @xterm/xterm @xterm/addon-fit just-bash @modelcontextprotocol/client @modelcontextprotocol/server zod
+
+## Audit the website's dependency tree
+site-audit: $(SITE_DEPS)
+	@npm --prefix site audit
+
+## Export the built Mac app's classic icon and Codex's app icon for the website (macOS; CODEX_ICON=path)
+site-demo-icons:
+	@mkdir -p site/src/assets/demo
+	@sips -s format png -z 256 256 .derived.noindex/xcode/Build/Products/Debug/Lilo.app/Contents/Resources/AppIcon.icns --out site/src/assets/demo/lilo-classic.png
+	@sips -s format png -z 128 128 '$(or $(CODEX_ICON),/Applications/ChatGPT.app/Contents/Resources/app.icns)' --out site/src/assets/demo/codex.png
 
 ## Check the Cloudflare deployment without publishing
 site-deploy-check: site-generate

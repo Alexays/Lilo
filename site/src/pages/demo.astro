@@ -1,0 +1,70 @@
+---
+import config from "../../../Xcode/Configs/Base.xcconfig?raw";
+import { getDemoAssets } from "../lib/demo-assets";
+import { nativeDemoData } from "../lib/native-demo-data";
+
+const version = config.match(/^MARKETING_VERSION = (?<version>\S+)$/mu)?.[1];
+
+if (!version) {
+  throw new Error("MARKETING_VERSION is missing from Base.xcconfig");
+}
+
+const assets = await getDemoAssets();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Lilo</title>
+  </head>
+  <body>
+    <div id="demo-surface"></div>
+    <main
+      id="app"
+      data-version={version}
+      data-assets={JSON.stringify(assets)}
+      data-native={JSON.stringify(nativeDemoData)}
+    >
+      <h1>Lilo</h1>
+    </main>
+  </body>
+</html>
+
+<script>
+  import type { DemoAssets } from "../demo/assets";
+  import { startDemo } from "../demo/runtime";
+  import type { NativeDemoData } from "../lib/native-demo-data";
+
+  const app = document.querySelector<HTMLElement>("#app");
+  const version = app?.dataset.version;
+  const assets = app?.dataset.assets;
+  const native = app?.dataset.native;
+
+  if (!version || !assets || !native) {
+    throw new Error("Missing Lilo demo bootstrap data");
+  }
+
+  // SAFETY: the assets are serialized by this page's build-time frontmatter.
+  await startDemo(
+    version,
+    JSON.parse(assets) as DemoAssets,
+    JSON.parse(native) as NativeDemoData
+  );
+</script>
+
+<style>
+  h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

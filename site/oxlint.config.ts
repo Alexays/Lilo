@@ -9,7 +9,7 @@ export default defineConfig({
   ignorePatterns: core.ignorePatterns,
   overrides: [
     {
-      files: ["**/*.astro"],
+      files: ["**/*.astro", "**/*.svelte"],
       rules: {
         "unicorn/filename-case": [
           "error",

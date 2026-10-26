@@ -1,4 +1,5 @@
 """Check the deployed output, including the routes and metadata kept during migration."""
+import base64
 import json
 from pathlib import Path
 import re
@@ -165,25 +166,65 @@ class SiteTests(unittest.TestCase):
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
 
-    def test_home_previews_are_static_and_extensions_link_to_the_store(self):
+    def test_home_demo_embeds_the_real_interface_and_extensions_link_to_the_store(self):
         extension_ids = {"neebplgakaahbhdphmkckjjcegoiijjo", "eimadpbcbfnmbkopoojfekhnkhdbieeh",
                          "fmkadmapgofadopljbjfkapdkoienihi"}
         for page in ["index.html", "fr/index.html"]:
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 demo = next(node for node in parsed if node.attrs.get("id") == "browser-demo")
-                controls = [node for node in nodes(demo) if node.tag == "input"]
-                self.assertEqual(len(controls), 3)
-                self.assertTrue(all(node.attrs.get("type") == "radio" and node.attrs.get("aria-label") for node in controls))
-                self.assertEqual(sum("checked" in node.attrs for node in controls), 1)
-                self.assertTrue(all(any(label.tag == "label" and label.attrs.get("for") == control.attrs["id"]
-                                        for label in nodes(demo)) for control in controls))
-                self.assertIn("Lisbonne" if page.startswith("fr/") else "Lisbon", inline_text(demo))
+                frames = [node for node in nodes(demo) if node.tag == "iframe"]
+                self.assertEqual(len(frames), 1)
+                self.assertEqual(frames[0].attrs["src"], "/demo/?lang=" + ("fr" if page.startswith("fr/") else "en"))
+                self.assertEqual(frames[0].attrs.get("loading"), "lazy")
+                self.assertTrue(frames[0].attrs.get("title"))
+                actions = {node.attrs.get("data-action") for node in nodes(demo)}
+                self.assertTrue({"settings", "newTab", "terminal", "newSpace", "reset", "fullscreen"}.issubset(actions))
+                self.assertFalse(any("data-demo-space" in node.attrs for node in nodes(demo)))
                 links = [node for node in parsed if "store-link" in node.classes]
                 self.assertEqual({urlparse(node.attrs["href"]).path.split("/")[-1] for node in links}, extension_ids)
                 self.assertTrue(all(urlparse(node.attrs["href"]).netloc == "chromewebstore.google.com" for node in links))
                 self.assertTrue(all(inline_text(node).strip() in node.attrs["aria-label"] for node in links))
                 self.assertFalse(any(node.tag == "button" and "add" in node.classes for node in parsed))
+
+    def test_demo_assets_and_scoped_frame_policy_ship_together(self):
+        parsed = tree(DIST / "demo/index.html")
+        self.assertTrue(any(node.attrs.get("name") == "robots" and node.attrs.get("content") == "noindex" for node in parsed))
+        scripts = [node.attrs["src"] for node in parsed if node.tag == "script" and "src" in node.attrs]
+        self.assertTrue(scripts)
+        for source in scripts:
+            self.assertTrue(source.startswith("/_astro/"))
+            self.assertTrue((DIST / source.lstrip("/")).is_file())
+        headers = (DIST / "_headers").read_text()
+        self.assertIn("frame-src 'self'", headers)
+        self.assertRegex(headers, r"/demo/\*\s+! Content-Security-Policy\s+Content-Security-Policy:.*frame-ancestors 'self'")
+
+    def test_demo_assets_match_the_native_icon_catalog_and_ship_locally(self):
+        parsed = tree(DIST / "demo/index.html")
+        app = next(node for node in parsed if node.attrs.get("id") == "app")
+        assets = json.loads(app.attrs["data-assets"])
+        root = Path(__file__).resolve().parents[2]
+        source = (root / "Lilo/App/AppIconPreference.swift").read_text()
+        variants = re.search(r"static let variants = \[(.*?)\]", source).group(1)
+        self.assertEqual([icon["id"] for icon in assets["appIcons"]], re.findall(r'"([a-z]+)"', variants))
+        for url in [icon["dataURL"] for icon in assets["appIcons"]] + list(assets["images"].values()):
+            with self.subTest(url=url):
+                if not url.startswith("data:image/"):
+                    self.assertTrue(url.startswith("/"))
+                    self.assertTrue((DIST / url.lstrip("/")).is_file())
+        for key, source in {
+            "bitwarden": root / "lilo-ui/public/password-managers/nngceckbapebfimnlniiiahkandclblb.png",
+            "darkReader": root / "site/src/assets/extensions/dark-reader.png",
+            "codex": root / "site/src/assets/demo/codex.png",
+        }.items():
+            with self.subTest(embedded=key):
+                prefix, encoded = assets["images"][key].split(",", 1)
+                self.assertEqual(prefix, "data:image/png;base64")
+                self.assertEqual(base64.b64decode(encoded), source.read_bytes())
+        for source in (root / "lilo-ui/public/password-managers").glob("*.png"):
+            with self.subTest(manager=source.name):
+                self.assertFalse((DIST / "demo/password-managers" / source.name).is_symlink())
+                self.assertEqual((DIST / "demo/password-managers" / source.name).read_bytes(), source.read_bytes())
 
     def test_import_tables_can_be_scrolled_by_keyboard_and_have_row_groups(self):
         for page in ["moving/index.html", "fr/moving/index.html"]:
