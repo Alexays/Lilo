@@ -94,6 +94,10 @@
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
     transition: background-color var(--motion-duration-fast) ease;
+  }
+
+  /* Only a pill with a title queries its own width; an icon pill keeps its intrinsic width, which the strip's groups size on. */
+  .strip-tab:not(.icon-only) {
     container-type: inline-size;
   }
 

@@ -81,6 +81,13 @@ test("many squeezed pills never slide under the Settings tab", async ({ page }) 
 	expect(overlapping).toBe(0);
 });
 
+test("an active favorite names its site without sliding over the favorites beside it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), activeTabBySpace: { [SPACE_1]: "tab-wiki" }, tabPosition: "top", addressPlacement: "tabs" }, ".tab-strip .strip-tab");
+	const groups = await page.locator(".tab-strip .scroller > .group").evaluateAll((els) => els.map((el) => [el.getBoundingClientRect().width, el.scrollWidth]));
+
+	for (const [width, scrollWidth] of groups) expect(scrollWidth, "a group holds its pills").toBeLessThanOrEqual(Math.ceil(width) + 1);
+});
+
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
