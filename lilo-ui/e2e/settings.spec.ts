@@ -394,7 +394,7 @@ test("each agent app shows its status as a badge and at most one action", async 
 		allowed: [{ name: "claude-code", displayName: "Claude Code", lastSeen: null, client: "claudeCode" }],
 	}), icon);
 	await page.evaluate(() => window.__lilo!.receive({
-		event: "agentActivity", clients: [{ name: "claude-code", busy: false, actingTabIds: [] }], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true,
+		event: "agentActivity", clients: [{ name: "claude-code", busy: false, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
 	}));
 	await page.locator(".section-nav-button").filter({ hasText: "AI agents" }).click();
 
@@ -411,10 +411,10 @@ test("each agent app shows its status as a badge and at most one action", async 
 	await expect(row("Claude Code").locator(".ui-badge")).toHaveClass(/success/);
 
 	await page.evaluate(() => window.__lilo!.receive({
-		event: "agentActivity", clients: [{ name: "claude-code", busy: true, actingTabIds: [] }], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true,
+		event: "agentActivity", clients: [{ name: "claude-code", busy: true, actingTabIds: [], spaceIds: [] }], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [],
 	}));
 	await expectRow("Claude Code", "Acting now", ["Remove"]);
-	await page.evaluate(() => window.__lilo!.receive({ event: "agentActivity", clients: [], agentsSpaceId: "", agentsProfileId: "", agentsSpaceVisible: true }));
+	await page.evaluate(() => window.__lilo!.receive({ event: "agentActivity", clients: [], agentsSpaceIds: [], agentsProfileId: "", hiddenAgentsSpaceIds: [] }));
 	await expectRow("Claude Code", "Allowed", ["Remove"]);
 
 	await row("Claude Code").getByRole("button", { name: "Remove" }).click();

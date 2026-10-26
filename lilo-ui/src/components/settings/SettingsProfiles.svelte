@@ -1,7 +1,7 @@
 <script lang="ts">
   import { profileActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
-  import { getAgentsProfileId, getAgentsSpaceId } from "../../stores/agents.svelte";
+  import { getAgentsProfileId, getAgentsSpaceIds } from "../../stores/agents.svelte";
   import { getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { nextProfileColor, PASTEL_COLORS, spacesByProfile, userProfiles } from "./profilesModel";
@@ -9,7 +9,7 @@
   import UiButton from "../ui/UiButton.svelte";
 
   const users = $derived(userProfiles(getProfiles(), getAgentsProfileId()));
-  const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceId()));
+  const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceIds()));
   const counts = $derived(getProfileExtensionCounts());
 
   let creating = $state(false);

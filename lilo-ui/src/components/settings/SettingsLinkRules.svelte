@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
-  import { getAgentsSpaceId } from "../../stores/agents.svelte";
+  import { isAgentsSpace } from "../../stores/agents.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { type LinkRule, parseLinkRules } from "./settingsPanelModel";
@@ -19,7 +19,7 @@
   const destinations = $derived([
     { value: "little", label: t("settings.linkRules.littleWindow") },
     ...getSpaces()
-      .filter((space) => !space.isPrivate && space.id !== getAgentsSpaceId())
+      .filter((space) => !space.isPrivate && !isAgentsSpace(space.id))
       .map((space) => ({ value: space.id, label: `${space.icon} ${space.name}` })),
   ]);
 

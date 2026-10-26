@@ -5,7 +5,7 @@ import { initialWorld, SPACE_2 } from "./fixtures";
 test("the Agents space stays out of the spaces settings list and its search", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate((agents) => {
-		window.__lilo!.receive({ event: "agentActivity", clients: [], agentsSpaceId: agents, agentsProfileId: "profile-1", agentsSpaceVisible: false });
+		window.__lilo!.receive({ event: "agentActivity", clients: [], agentsSpaceIds: [agents], agentsProfileId: "profile-1", hiddenAgentsSpaceIds: [agents] });
 		window.__lilo!.receive({ event: "openSettings" });
 	}, SPACE_2);
 	await page.locator(".section-nav-button", { hasText: "Tabs and spaces" }).click();

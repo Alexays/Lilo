@@ -5,7 +5,7 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import BottomConfirmSheet from "../ui/BottomConfirmSheet.svelte";
-  import { getAgentsProfileId, getAgentsSpaceId } from "../../stores/agents.svelte";
+  import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
@@ -54,12 +54,14 @@
   let newProfileName = $state("");
 
   const users = $derived(userProfiles(getProfiles(), getAgentsProfileId()));
-  const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceId()));
+  const usage = $derived(spacesByProfile(getSpaces(), getAgentsSpaceIds()));
   const extensionCounts = $derived(getProfileExtensionCounts());
   // What the "New profile" choice will wear: the color Swift would pick, sent along explicitly.
   const newProfileColor = $derived(nextProfileColor(getProfiles()));
   const editingSpace = $derived(getSpaces().find((space) => space.id === editorState().spaceId));
   const editingPrivate = $derived(editorState().mode === "edit" && editingSpace?.isPrivate === true);
+  // Each agent picks its own profile: an Agents space keeps the one it was made for.
+  const editingAgents = $derived(editorState().mode === "edit" && isAgentsSpace(editorState().spaceId));
   const archiveOptions = $derived(
     [
       ["12", "spaceEditor.archive12Hours"],
@@ -70,8 +72,8 @@
     ].map(([value, key]) => ({ value, label: t(key) })),
   );
   const saveEnabled = $derived(canSave(editorState().name, choice, newProfileName));
-  // Deleting the only space would leave the window empty; the Agents space is no space of the user's.
-  const isLastSpace = $derived(getSpaces().filter((space) => space.id !== getAgentsSpaceId()).length <= 1);
+  // Deleting the only space would leave the window empty; an Agents space is no space of the user's.
+  const isLastSpace = $derived(getSpaces().filter((space) => !isAgentsSpace(space.id)).length <= 1);
 
   const hint = $derived.by(() => {
     if (choice.kind === "private") return t("spaceEditor.hintPrivate");
@@ -357,54 +359,56 @@
         />
       </div>
 
-      <div class="field">
-        <div class="field-label-row">
-          <span class="field-label">{t("spaceEditor.signedInAs")}</span>
-          <button class="manage-link" onclick={manageProfiles}>{t("spaceEditor.manageProfiles")}</button>
-        </div>
-        <div class="profile-choices" role="radiogroup" aria-label={t("spaceEditor.signedInAs")}>
-          {#if !editingPrivate}
-            {#each users as profile (profile.id)}
+      {#if !editingAgents}
+        <div class="field">
+          <div class="field-label-row">
+            <span class="field-label">{t("spaceEditor.signedInAs")}</span>
+            <button class="manage-link" onclick={manageProfiles}>{t("spaceEditor.manageProfiles")}</button>
+          </div>
+          <div class="profile-choices" role="radiogroup" aria-label={t("spaceEditor.signedInAs")}>
+            {#if !editingPrivate}
+              {#each users as profile (profile.id)}
+                {@render profileRow({
+                  kind: "profile",
+                  color: profile.color,
+                  checked: choice.kind === "profile" && choice.id === profile.id,
+                  select: () => (choice = { kind: "profile", id: profile.id }),
+                  label: profile.name,
+                  detail: profileMeta(profile.id),
+                })}
+              {/each}
               {@render profileRow({
-                kind: "profile",
-                color: profile.color,
-                checked: choice.kind === "profile" && choice.id === profile.id,
-                select: () => (choice = { kind: "profile", id: profile.id }),
-                label: profile.name,
-                detail: profileMeta(profile.id),
+                kind: "new",
+                checked: choice.kind === "new",
+                select: () => (choice = { kind: "new" }),
+                label: t("settings.profiles.newProfile"),
+                detail: t("spaceEditor.newProfileDetail"),
               })}
-            {/each}
-            {@render profileRow({
-              kind: "new",
-              checked: choice.kind === "new",
-              select: () => (choice = { kind: "new" }),
-              label: t("settings.profiles.newProfile"),
-              detail: t("spaceEditor.newProfileDetail"),
-            })}
-            {#if choice.kind === "new"}
-              <input
-                class="new-profile-input"
-                type="text"
-                {@attach (node) => node.focus()}
-                bind:value={newProfileName}
-                placeholder={t("spaceEditor.profileNamePlaceholder")}
-                aria-label={t("spaceEditor.profileNamePlaceholder")}
-                spellcheck="false"
-              />
+              {#if choice.kind === "new"}
+                <input
+                  class="new-profile-input"
+                  type="text"
+                  {@attach (node) => node.focus()}
+                  bind:value={newProfileName}
+                  placeholder={t("spaceEditor.profileNamePlaceholder")}
+                  aria-label={t("spaceEditor.profileNamePlaceholder")}
+                  spellcheck="false"
+                />
+              {/if}
             {/if}
-          {/if}
-          {#if s.mode === "add" || editingPrivate}
-            {@render profileRow({
-              kind: "private",
-              checked: choice.kind === "private",
-              select: () => (choice = { kind: "private" }),
-              label: t("spaceEditor.private"),
-              detail: t("spaceEditor.privateDetail"),
-            })}
-          {/if}
+            {#if s.mode === "add" || editingPrivate}
+              {@render profileRow({
+                kind: "private",
+                checked: choice.kind === "private",
+                select: () => (choice = { kind: "private" }),
+                label: t("spaceEditor.private"),
+                detail: t("spaceEditor.privateDetail"),
+              })}
+            {/if}
+          </div>
+          <p class="field-hint">{hint}</p>
         </div>
-        <p class="field-hint">{hint}</p>
-      </div>
+      {/if}
 
       <!-- Per-Space settings: one .field each, below the profile choice. -->
       {#if s.mode === "edit"}

@@ -39,14 +39,14 @@ final class ProfileBridgeHandler: BridgeHandler {
             guard let id = message.uuid("id") else { break }
             let successor = message.uuid("moveTo")
             do {
-                if let successor, let windowController {
+                if let windowController {
                     let context = windowController.context
-                    let agentsSpaceId = context.settingsStore?.agentsSpaceId
+                    let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
                     for space in context.spaceManager?.spaces(for: id) ?? [] where !space.isPrivate {
-                        // An agent borrowing this profile goes back to its own throwaway one.
-                        if space.id == agentsSpaceId {
-                            try await context.agentControl.moveAgentsSpace(to: context.agentControl.agentsProfileId())
-                        } else {
+                        // Agents working in this profile go back to their own throwaway one.
+                        if agentsSpaceIds.contains(space.id) {
+                            try context.agentControl.returnAgents(from: space)
+                        } else if let successor {
                             try await windowController.moveSpaceToProfile(id: space.id, targetProfileId: successor, name: nil, icon: nil, color: nil)
                         }
                     }

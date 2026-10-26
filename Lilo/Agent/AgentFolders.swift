@@ -1,23 +1,28 @@
 import AppKit
 import WebKit
 
-/// Where agent tabs live: the Agents space, one space for every agent's tabs, kept apart from the
-/// user's own, with one folder per conversation in it.
+/// Where agent tabs live: the Agents spaces, one per profile agents work in, kept apart from the user's
+/// own, with one folder per conversation in the space of the profile it works in.
 extension AgentControl {
     static let agentsSpaceKey = "agentsSpaceId"
 
-    /// The Agents space, and the window showing it if one does. The first agent creates it, in the
-    /// agents' own ephemeral profile.
-    func agentSpace() throws -> (space: Space, host: MainWindowController?) {
+    /// The Agents space of the session's profile, and the window showing it if one does.
+    func agentSpace(for session: AgentSession) throws -> (space: Space, host: MainWindowController?) {
+        try agentSpace(in: session.profileId ?? agentsProfileId())
+    }
+
+    /// The Agents space of `profileId`, created the first time an agent works in that profile.
+    func agentSpace(in profileId: UUID) throws -> (space: Space, host: MainWindowController?) {
         guard let context, let spaces = context.spaceManager, let settings = context.settingsStore else {
             throw AgentToolError("Lilo is not ready yet")
         }
         // Commands go through a window, whichever space it shows.
         guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
-        var space = spaces.space(with: settings.agentsSpaceId)
+        var space = agentsSpace(in: profileId)
         if space == nil {
-            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#d97757", profileId: try agentsProfileId())
-            settings.set(Self.agentsSpaceKey, value: created.id.uuidString)
+            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#d97757", profileId: profileId)
+            let ids = settings.agentsSpaceIds.filter { spaces.space(with: $0) != nil } + [created.id]
+            settings.set(Self.agentsSpaceKey, value: ids.map(\.uuidString).joined(separator: ","))
             space = created
         }
         guard let space else { throw AgentToolError("Lilo has no space agents can use") }
@@ -27,8 +32,7 @@ extension AgentControl {
         }
         // Past conversations' folders go before the first agent of this run: each starts in a clean space.
         // So do blank tabs outside them, which no agent opens, unless a window shows one.
-        if !agentsSpaceCleaned {
-            agentsSpaceCleaned = true
+        if cleanedAgentsSpaceIds.insert(space.id).inserted {
             for folder in context.browserState.structuralProjection(forSpace: space.id)?.folders ?? [] {
                 _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: space.id, folderId: folder.id))
             }
@@ -41,9 +45,22 @@ extension AgentControl {
         return (space, context.windows.windows(showing: space.id).first)
     }
 
-    /// The conversation's own folder in the Agents space, created with its first tab.
+    /// The Agents space of `profileId` if there is one: unlike `agentSpace(in:)`, never created.
+    func agentsSpace(in profileId: UUID) -> Space? {
+        guard let context, let spaces = context.spaceManager else { return nil }
+        return context.settingsStore?.agentsSpaceIds.lazy.compactMap(spaces.space(with:)).first { $0.profileId == profileId }
+    }
+
+    /// The id of the session's Agents space if there is one, never created: a refresh must not create
+    /// a space, nor drop every tab while no window is open.
+    func agentsSpaceId(of session: AgentSession) -> UUID? {
+        guard let profileId = session.profileId ?? context?.settingsStore?.get(Self.agentsProfileKey).flatMap(UUID.init(uuidString:)) else { return nil }
+        return agentsSpace(in: profileId)?.id
+    }
+
+    /// The conversation's own folder in the Agents space of its profile, created with its first tab.
     func agentFolder(for session: AgentSession, create: Bool) throws -> (folderId: UUID?, space: Space, host: MainWindowController?) {
-        let (space, host) = try agentSpace()
+        let (space, host) = try agentSpace(for: session)
         if let id = session.folderId, tabFolder(id, in: space.id) != nil { return (id, space, host) }
         guard create, let commander = host ?? context?.windows.activeWindow else { return (nil, space, host) }
         let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#d97757")
@@ -89,7 +106,7 @@ extension AgentControl {
 
     /// Follows a new title or project name.
     func renameFolder(of session: AgentSession) {
-        guard let context, let folderId = session.folderId, let (space, host) = try? agentSpace(),
+        guard let context, let folderId = session.folderId, let (space, host) = try? agentSpace(for: session),
               let folder = tabFolder(folderId, in: space.id), let commander = host ?? context.windows.activeWindow else { return }
         _ = try? commander.applyBrowserCommand(.updateFolder(
             spaceId: space.id, folderId: folderId, name: folderName(for: session), color: folder.color, isCollapsed: folder.isCollapsed
@@ -97,10 +114,10 @@ extension AgentControl {
     }
 
     /// A conversation that ended takes its folder and tabs along: nobody drives them any more. While a
-    /// window shows the Agents space they stay under the user's eyes, until the next run's cleanup.
+    /// window shows its Agents space they stay under the user's eyes, until the next run's cleanup.
     func dropFolder(of session: AgentSession) {
         guard let context, let folderId = session.folderId,
-              let spaceId = context.settingsStore?.agentsSpaceId,
+              let spaceId = agentsSpaceId(of: session),
               tabFolder(folderId, in: spaceId) != nil else { return }
         let tabs = tabs(inFolder: folderId, spaceId: spaceId)
         if let host = context.windows.windows(showing: spaceId).first {
@@ -210,7 +227,7 @@ extension AgentControl {
             }
             throw AgentToolError("Tab \(number) not found: use tabs_context_mcp to list your tabs")
         }
-        // A tab whose engine was let go (the Agents space moved to another profile) gets a new one, unshown.
+        // A tab whose engine was let go (its folder moved to another profile) gets a new one, unshown.
         guard let engine = host?.tabManager.ensureLiveEngine(forTabId: tab.id)
             ?? context?.windows.window(forTab: tab.id)?.tabManager.engineTab(for: tab.id)
             ?? context?.browserState.engine(tabId: tab.id, spaceId: space.id)
@@ -270,7 +287,7 @@ extension AgentControl {
         let owner = sessions.first { session in
             guard session.isAuthorized else { return false }
             if isolatedTabs(of: session).contains(where: { $0.id == tabId }) { return true }
-            guard let folderId = session.folderId, let spaceId = context?.settingsStore?.agentsSpaceId else { return false }
+            guard let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { return false }
             return tabs(inFolder: folderId, spaceId: spaceId).contains { $0.id == tabId }
         }
         return owner.map { Self.displayName($0.clientName) } ?? "Agent".localized
@@ -280,13 +297,11 @@ extension AgentControl {
     /// no window shows the agent space any more.
     func refreshControlledTabs() {
         guard let context else { return }
-        // The stored id, not agentSpace(): a refresh must not create the space, nor drop every tab while no window is open.
-        let agentsSpaceId = context.settingsStore?.agentsSpaceId
         var controlled: Set<UUID> = []
         for session in sessions where session.isAuthorized {
             controlled.formUnion(isolatedTabs(of: session).map(\.id))
-            guard let folderId = session.folderId, let agentsSpaceId else { continue }
-            controlled.formUnion(tabs(inFolder: folderId, spaceId: agentsSpaceId).map(\.id))
+            guard let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { continue }
+            controlled.formUnion(tabs(inFolder: folderId, spaceId: spaceId).map(\.id))
         }
         for id in controlled.symmetricDifference(controlledTabIds) {
             let isControlled = controlled.contains(id)
@@ -341,12 +356,27 @@ extension AgentControl {
         controlledTabIds = controlled
     }
 
-    /// The session's folder in the Agents space: an agent only connected, idle or not, has none, and one
+    /// The session's folder in its Agents space: an agent only connected, idle or not, has none, and one
     /// the user deleted no longer counts.
     func agentsSpaceFolder(of session: AgentSession) -> TabFolder? {
-        guard session.isAuthorized, let folderId = session.folderId,
-              let spaceId = context?.settingsStore?.agentsSpaceId else { return nil }
+        guard session.isAuthorized, let folderId = session.folderId, let spaceId = agentsSpaceId(of: session) else { return nil }
         return tabFolder(folderId, in: spaceId)
+    }
+
+    /// Moves the session's folder, if it has one in `source`, to `target`, another profile's Agents space:
+    /// its tabs leave their engines behind and load again there, with that profile's sign-ins.
+    func moveFolder(of session: AgentSession, from source: Space, to target: Space) throws {
+        guard let context, let folderId = session.folderId, tabFolder(folderId, in: source.id) != nil else { return }
+        if let host = context.windows.windows(showing: source.id).first {
+            try host.moveToSpace(.folder, id: folderId, targetSpaceId: target.id)
+        } else {
+            guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
+            let ids = Set(tabs(inFolder: folderId, spaceId: source.id).map(\.id))
+            context.browserState.discardParkedEngines(ids, spaceId: source.id) { context.discardEngine($0) }
+            _ = try commander.applyBrowserCommand(.moveFolderToSpace(
+                folderId: folderId, sourceSpaceId: source.id, targetSpaceId: target.id, allowsPinnedTabs: true
+            ))
+        }
     }
 
     private func tabFolder(_ id: UUID, in spaceId: UUID) -> TabFolder? {

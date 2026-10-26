@@ -1,5 +1,5 @@
 import type { BridgeFeatureFlagSnapshot } from "../../lib/bridge/protocol";
-import { getAgentsSpaceId } from "../../stores/agents.svelte";
+import { isAgentsSpace } from "../../stores/agents.svelte";
 import { t } from "../../lib/i18n/state.svelte";
 import { type ExtensionState, getExtensions } from "../../stores/extensions.svelte";
 import { getSettingsQuery, type SettingsSectionId } from "../../stores/panels.svelte";
@@ -38,7 +38,7 @@ const results = $derived.by((): SettingsSearchResults => {
   const settings = searchSettings(query, (key) => t(key)).filter(
     (setting) => !setting.requires || isToggleOn(setting.requires, getSetting),
   );
-  const spaces = getSpaces().filter((space) => space.id !== getAgentsSpaceId() && matchesSearch(space.name, query));
+  const spaces = getSpaces().filter((space) => !isAgentsSpace(space.id) && matchesSearch(space.name, query));
   // A site also matches on what it holds, so "camera" or "zoom" lists the sites concerned.
   const sites = buildSites(getSitePermissions(), getWebsiteData(), getZoomLevels()).filter((site) =>
     matchesSearch(

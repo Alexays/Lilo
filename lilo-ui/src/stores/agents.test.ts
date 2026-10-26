@@ -10,12 +10,12 @@ function receive(msg: Record<string, unknown>): void {
 	(globalThis as unknown as LiloWindow).window.__lilo?.receive(msg);
 }
 
-function activity(...clients: { name: string; busy?: boolean }[]): void {
+function activity(...clients: { name: string; busy?: boolean; spaceIds?: string[] }[]): void {
 	receive({
 		event: "agentActivity",
-		clients: clients.map((client) => ({ busy: false, actingTabIds: [], ...client })),
-		agentsSpaceId: "agents",
-		agentsSpaceVisible: true,
+		clients: clients.map((client) => ({ busy: false, actingTabIds: [], spaceIds: ["agents"], ...client })),
+		agentsSpaceIds: ["agents", "agents-pro"],
+		hiddenAgentsSpaceIds: [],
 	});
 }
 
@@ -52,10 +52,10 @@ test("a connected agent shows its app icon once the client list arrives", async 
 
 	activity({ name: "claude-ai" });
 	assert.equal(iconRequests(posted), before + 1);
-	assert.deepEqual(store.getAgentIcons(), []);
+	assert.equal(store.getAgentIcons("agents"), undefined);
 
 	snapshot();
-	assert.deepEqual(store.getAgentIcons(), ["data:claude"]);
+	assert.deepEqual(store.getAgentIcons("agents"), ["data:claude"]);
 });
 
 test("an unknown agent keeps the robot and asks for the client list only once", async () => {
@@ -67,7 +67,7 @@ test("an unknown agent keeps the robot and asks for the client list only once", 
 	activity({ name: "my-script" });
 	activity({ name: "other-tool" });
 	activity({ name: "other-tool", busy: true });
-	assert.deepEqual(store.getAgentIcons(), []);
+	assert.equal(store.getAgentIcons("agents"), undefined);
 	assert.equal(iconRequests(posted), before + 1);
 });
 
@@ -77,7 +77,18 @@ test("the acting agent comes last, in front of the others", async () => {
 	snapshot();
 
 	activity({ name: "claude-ai", busy: true }, { name: "cursor-vscode" });
-	assert.deepEqual(store.getAgentIcons(), ["data:cursor", "data:claude"]);
+	assert.deepEqual(store.getAgentIcons("agents"), ["data:cursor", "data:claude"]);
 	activity({ name: "claude-ai" }, { name: "cursor-vscode", busy: true });
-	assert.deepEqual(store.getAgentIcons(), ["data:claude", "data:cursor"]);
+	assert.deepEqual(store.getAgentIcons("agents"), ["data:claude", "data:cursor"]);
+});
+
+test("each Agents space shows the agents working in it", async () => {
+	stubBridgeWindow();
+	const store = await loadAgentsStore();
+	snapshot();
+
+	activity({ name: "claude-ai", busy: true, spaceIds: ["agents-pro"] }, { name: "cursor-vscode" });
+	assert.deepEqual(store.getAgentIcons("agents"), ["data:cursor"]);
+	assert.deepEqual(store.getAgentIcons("agents-pro"), ["data:claude"]);
+	assert.ok(store.isAgentsSpace("agents-pro"));
 });

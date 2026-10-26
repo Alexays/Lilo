@@ -3,7 +3,7 @@
   import { getAddressPlacement, isAddressLocked, setAddressPlacement } from "../../stores/tabLayout.svelte";
   import type { AddressPlacement } from "../../lib/bridge";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
-  import { getAgentsSpaceId } from "../../stores/agents.svelte";
+  import { isAgentsSpace } from "../../stores/agents.svelte";
   import { getLocale, setLocale, t } from "../../lib/i18n/state.svelte";
   import { isSupportedLocale, SUPPORTED_LOCALES } from "../../lib/i18n/translate";
   import { parseSearchEngines } from "../../lib/searchEngineModel";
@@ -266,7 +266,7 @@
           { value: "current", label: t("settings.linkRules.currentSpace") },
           { value: "little", label: t("settings.linkRules.littleWindow") },
           ...getSpaces()
-            .filter((space) => !space.isPrivate && space.id !== getAgentsSpaceId())
+            .filter((space) => !space.isPrivate && !isAgentsSpace(space.id))
             .map((space) => ({ value: space.id, label: `${space.icon} ${space.name}` })),
         ]}
         ariaLabel={title}

@@ -605,7 +605,7 @@ extension BrowserContext {
     func spaceManager(_ manager: SpaceManager, didCreateSpace space: Space) {
         windows.windows.forEach { $0.spaceWasCreated(space) }
         windows.activeWindow?.profileContext?.sessionPersistence?.scheduleSave()
-        if !space.isPrivate { keepAgentsSpaceLast(manager) }
+        if !space.isPrivate { keepAgentsSpacesLast(manager) }
     }
 
     func spaceManager(_ manager: SpaceManager, didDeleteSpace space: Space) {
@@ -623,9 +623,9 @@ extension BrowserContext {
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
-        // Each window goes back to the user space it last showed; the Agents space only when nothing else is left.
-        let agentsSpaceId = settingsStore.agentsSpaceId
-        let userSpaceIds = Set(manager.spaces.filter { !$0.isPrivate && $0.id != agentsSpaceId }.map(\.id))
+        // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
+        let agentsSpaceIds = settingsStore.agentsSpaceIds
+        let userSpaceIds = Set(manager.spaces.filter { !$0.isPrivate && !agentsSpaceIds.contains($0.id) }.map(\.id))
         for window in showingWindows {
             let replacement = window.recentSpaceIds.first(where: userSpaceIds.contains)
                 ?? manager.spaces.first { userSpaceIds.contains($0.id) }?.id
@@ -645,19 +645,21 @@ extension BrowserContext {
         windows.windows.filter { $0.tabManager.currentSpaceId == nil }.forEach { $0.switchToSpace(id) }
     }
 
-    /// The Agents space stays after the user's own spaces, where the bar draws it apart. True when it
+    /// The Agents spaces stay after the user's own spaces, where the bar draws them apart. True when one
     /// had to move.
     @discardableResult
-    private func keepAgentsSpaceLast(_ manager: SpaceManager) -> Bool {
-        guard let id = settingsStore.agentsSpaceId, manager.space(with: id) != nil,
-              let last = manager.spaces.last(where: { !$0.isPrivate }), last.id != id else { return false }
-        try? manager.moveSpace(id: id, toIndex: .max)
+    private func keepAgentsSpacesLast(_ manager: SpaceManager) -> Bool {
+        let agentsSpaceIds = settingsStore.agentsSpaceIds
+        guard let lastUserSpace = manager.spaces.lastIndex(where: { !$0.isPrivate && !agentsSpaceIds.contains($0.id) }),
+              let misplaced = manager.spaces[..<lastUserSpace].first(where: { agentsSpaceIds.contains($0.id) }) else { return false }
+        // One at a time: each move reports back here, which moves the next.
+        try? manager.moveSpace(id: misplaced.id, toIndex: .max)
         return true
     }
 
     func spaceManager(_ manager: SpaceManager, didReorderSpaces spaces: [Space]) {
         // The move back reports the final order itself.
-        guard !keepAgentsSpaceLast(manager) else { return }
+        guard !keepAgentsSpacesLast(manager) else { return }
         StartupMetrics.trace("space-dnd", "stage=delegateDidReorderSpaces order=\(StartupMetrics.spaceOrderDescription(spaces))")
         windows.windows.forEach { $0.spacesWereReordered(spaces) }
         windows.activeWindow?.profileContext?.sessionPersistence?.scheduleSave()

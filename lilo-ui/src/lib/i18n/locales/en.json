@@ -1411,7 +1411,7 @@
 			"media": "wants to use your camera or microphone"
 		},
 		"agentControl": "wants to control Lilo: open tabs in its own folder, read their pages and act in them with your sign-ins.",
-		"agentProfile": "wants to move the Agents space to the profile {profile}, to act with its sign-ins.",
+		"agentProfile": "wants to move its tabs to the profile {profile}, to act with its sign-ins.",
 		"agentExecutable": "Program: {path}",
 		"agentClick": "wants to click \"{label}\" in {tab} ({site}).",
 		"agentSubmit": "wants to press Enter to submit \"{label}\" in {tab} ({site}).",
@@ -1989,7 +1989,6 @@
 		"Added Lilo to Cursor": "Added Lilo to Cursor",
 		"Added Lilo to Codex": "Added Lilo to Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo could not read %@: add this server to it yourself: %@",
-		"Agents' Profile": "Agents' Profile",
 		"Stop Agents": "Stop Agents",
 		"Delete %@ and %@?": "Delete %@ and %@?",
 		"1 tab": "1 tab",

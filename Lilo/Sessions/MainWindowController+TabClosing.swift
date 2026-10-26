@@ -193,8 +193,8 @@ extension MainWindowController {
 
         // Agents open their tabs in their own folders, so a blank tab there would only sit unused: the
         // window moves to its neighbour, and with no agent connected the bar leaves the space out.
-        if isLastOpenTabInSpace, spaceId == context.settingsStore.agentsSpaceId,
-           let neighbour = context.spaceManager?.spaces.last(where: { $0.id != spaceId && !$0.isPrivate }) {
+        if isLastOpenTabInSpace, case let agentsSpaceIds = context.settingsStore.agentsSpaceIds, agentsSpaceIds.contains(spaceId),
+           let neighbour = context.spaceManager?.spaces.last(where: { !agentsSpaceIds.contains($0.id) && !$0.isPrivate }) {
             _ = try? applyBrowserCommand(.closeTab(spaceId: spaceId, tabId: id))
             tabManager.discardPreparedTabRuntime(for: id)
             switchToSpace(neighbour.id)

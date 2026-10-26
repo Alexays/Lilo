@@ -106,22 +106,18 @@ enum AgentInteractionTools {
                 "timeout": AgentTools.prop("number", "Seconds before the run is stopped, 60 by default, up to 600.")
             ], required: ["code"]),
         AgentTools.tool("list_profiles", """
-            Lilo's profiles, each with its own cookies and sign-ins. Your tabs live in the Agents space, which runs in \
-            the one marked current: by default the ephemeral Agents profile, signed in nowhere and wiped after you. \
-            usedByUser marks the profile the user works in now, where their sign-ins are.
+            Lilo's profiles, each with its own cookies and sign-ins. Your tabs run in the one marked current: by default \
+            the ephemeral Agents profile, signed in nowhere and wiped after the last agent in it. usedByUser marks the \
+            profile the user works in now, where their sign-ins are.
             """, [:]),
         AgentTools.tool("switch_profile", """
-            Move the Agents space, your tabs included, to another profile, to act with its sign-ins: the tabs reload. \
-            The user allows each profile once. Refused while another agent has tabs in the Agents space, unless wait \
-            lets it finish first. Close your tabs once done: an open one holds the space for everyone.
-            """, [
-                "profile": AgentTools.prop("string", "The profile's name or id, from list_profiles."),
-                "wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")
-            ], required: ["profile"]),
+            Move your tabs to another profile, to act with its sign-ins: they reload there. Other agents stay in \
+            their own profile. The user allows each profile once.
+            """, ["profile": AgentTools.prop("string", "The profile's name or id, from list_profiles.")], required: ["profile"]),
         AgentTools.tool("reset_profile", """
             Start over signed in nowhere: wipes the ephemeral Agents profile (cookies, storage, cache, history) and reloads \
-            your tabs. Only that profile, never one of the user's; refused while another agent has tabs in the Agents space, \
-            unless wait lets it finish first.
+            your tabs. Only that profile, never one of the user's; refused while another agent has tabs in it, unless wait \
+            lets it finish first.
             """, ["wait": AgentTools.prop("number", "Seconds to wait for other agents to close their tabs, up to 600 (default 0).")]),
         AgentTools.tool("list_connected_browsers", "Lists the browsers this server can drive: the running Lilo.", [:]),
         AgentTools.tool("select_browser", "Select the browser to drive. Lilo is the only one.", ["deviceId": AgentTools.prop("string", "The browser id.")]),
@@ -256,7 +252,7 @@ enum AgentInteractionTools {
         case "reset_profile":
             return [.text(try await control.resetProfile(for: session, wait: arguments["wait"]))]
         case "switch_profile":
-            return [.text(try await control.switchProfile(arguments["profile"] as? String ?? "", for: session, wait: arguments["wait"]))]
+            return [.text(try await control.switchProfile(arguments["profile"] as? String ?? "", for: session))]
         case "list_connected_browsers":
             return [.text(AgentTools.json([["deviceId": "lilo", "name": "Lilo", "isCurrent": true]]))]
         case "select_browser", "switch_browser":

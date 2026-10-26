@@ -28,12 +28,12 @@ export function userProfiles<P extends { id: string }>(profiles: P[], agentsProf
   return agentsProfileId ? profiles.filter((profile) => profile.id !== agentsProfileId) : profiles;
 }
 
-/** The spaces signed in with each profile. A private space keeps nothing of its profile, and the
+/** The spaces signed in with each profile. A private space keeps nothing of its profile, and an
  * Agents space only borrows one, so neither counts as using it. */
-export function spacesByProfile<S extends SpaceLike>(spaces: S[], agentsSpaceId: string): Map<string, S[]> {
+export function spacesByProfile<S extends SpaceLike>(spaces: S[], agentsSpaceIds: string[]): Map<string, S[]> {
   const usage = new Map<string, S[]>();
   for (const space of spaces) {
-    if (space.isPrivate || space.id === agentsSpaceId) continue;
+    if (space.isPrivate || agentsSpaceIds.includes(space.id)) continue;
     const list = usage.get(space.profileId);
     if (list) list.push(space);
     else usage.set(space.profileId, [space]);
