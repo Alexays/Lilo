@@ -4,6 +4,15 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] - 2026-10-26
+
+### Fixed
+
+- The Check now button sits beside Lilo's version in Settings again, instead of stretching across the row below it.
+- Moving the tabs from the sidebar to the top or the bottom no longer leaves the new tab bar deaf to clicks and hovers until the window is resized.
+- With many tabs on a tab strip, squeezed tabs no longer slide under the Settings tab: the row scrolls instead.
+
+[0.3.2]: https://github.com/Alexays/Lilo/compare/v0.3.1...v0.3.2
 ## [0.3.1] - 2026-10-26
 
 ### Added
