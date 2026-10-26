@@ -28,7 +28,7 @@
   class="tab-strip-host tabs-surface"
   class:strip-hidden={!isSidebarShown()}
   class:strip-overlay={isSidebarOverlay()}
-  use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
+  use:reportInteractiveZone={{ id: "tab-strip", active: isSidebarShown() }}
   onmouseenter={onenter}
   onmouseleave={onleave}
 >

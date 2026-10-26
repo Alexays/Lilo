@@ -41,6 +41,27 @@ test("moving the tabs from the host moves the chrome", async ({ page }) => {
 	await expect(page.locator(".page-toolbar")).toBeVisible();
 });
 
+test("the sidebar going away after the strip came keeps the strip clickable", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await receive(page, { event: "tabLayoutChanged", position: "top", address: "tabs" });
+	await expect(page.locator(".tab-strip .strip-tab").first()).toBeVisible();
+	const strip = (await page.locator(".tab-strip-host").boundingBox())!;
+
+	// The old sidebar's teardown can trail the strip's mount: replay its removals last, as a live window sends them.
+	const zones = new Map<string, { y: number; width: number; height: number }>();
+	const removals: string[] = [];
+	for (const command of await sentCommands(page)) {
+		if (command.action === "registerInteractiveZones") {
+			for (const zone of command.payload.zones as { id: string; y: number; width: number; height: number }[]) zones.set(zone.id, zone);
+		} else if (command.action === "removeInteractiveZone") {
+			removals.push(command.payload.id as string);
+		}
+	}
+	for (const id of removals) zones.delete(id);
+
+	expect([...zones.values()].some((zone) => zone.y <= strip.y + 1 && zone.height >= strip.height - 1 && zone.width >= strip.width - 1)).toBe(true);
+});
+
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	const pills = page.locator(".tab-strip .strip-tab");
