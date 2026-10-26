@@ -316,6 +316,17 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertTrue(isDropped("~a.example##.x:has-text(ad)"), "generic procedural rules are not supported")
     }
 
+    /// A `/regex/` domain keeps its commas whole and is dropped: the site tables match exact hosts only.
+    func testRegexDomainsAreDroppedWhole() {
+        let mixed = FilterListConverter.convert(#"a.example,/^[0-9a-z]{5,8}\.(com|net)$/,b.example##+js(aopr, x)"#)
+        XCTAssertEqual(mixed.scriptlets, [.init(domains: ["a.example", "b.example"], name: "abort-on-property-read", args: ["x"])])
+        XCTAssertEqual(FilterListConverter.convert(#"a.example,/x{1,2}/##.ad"#).domainCosmetic, [.init(domains: ["a.example"], selector: ".ad")])
+        XCTAssertTrue(isDropped(#"/^[0-9a-z]{5,8}\.(com|net)$/##+js(aopr, x)"#))
+        XCTAssertTrue(isDropped(#"/x{1,2}/##.ad"#), "a regex-only rule must not become generic")
+        XCTAssertTrue(isDropped(#"/x{1,2}/#@#.ad"#))
+        XCTAssertTrue(isDropped(#"a.example,~/x{1,2}/##.ad"#), "dropping the exclusion would widen the rule")
+    }
+
     func testScriptletExceptionsAndTheirTable() {
         let out = FilterListConverter.convert("""
         a.example#@#+js(set, x, 1)

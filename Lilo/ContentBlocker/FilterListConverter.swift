@@ -173,7 +173,7 @@ enum FilterListConverter {
             }
             // uBO compiles an excluded host as an exception there; an exception's own exclusions are dropped, which only
             // hides less.
-            let (included, excluded) = ruleDomains(domainPart)
+            guard let (included, excluded) = ruleDomains(domainPart) else { continue }
             if selector.hasPrefix("+js(") {
                 guard let (name, args) = scriptlet(selector, trusted: trusted || isException) else { continue }
                 if isException {
@@ -278,21 +278,31 @@ enum FilterListConverter {
     }
 
     /// A rule's lowercased domains, those it names and the `~` ones it excludes. uBO's `host>>` applies to the host only, and `*`
-    /// to every site.
-    private static func ruleDomains(_ domainPart: Substring) -> (included: [String], excluded: [String]) {
+    /// to every site. nil when a uBO `/regex/` entry, which exact-host tables cannot apply, would leave the rule wider.
+    private static func ruleDomains(_ domainPart: Substring) -> (included: [String], excluded: [String])? {
         var included: [String] = []
         var excluded: [String] = []
-        for d in domainPart.split(separator: ",") {
-            var host = d.trimmingCharacters(in: .whitespaces).lowercased()
+        var namesRegex = false
+        var parts = domainPart.split(separator: ",", omittingEmptySubsequences: false)[...]
+        while var host = parts.popFirst()?.trimmingCharacters(in: .whitespaces).lowercased() {
+            let isExcluded = host.hasPrefix("~")
+            if isExcluded { host.removeFirst() }
+            if host.hasPrefix("/") {
+                // A regex's own commas don't separate domains.
+                while host.count < 2 || !host.hasSuffix("/"), let next = parts.popFirst() { host += "," + next }
+                guard !isExcluded else { return nil }
+                namesRegex = true
+                continue
+            }
             if host.hasSuffix(">>") { host.removeLast(2) }
             guard !host.isEmpty, host != "*" else { continue }
-            if host.hasPrefix("~") {
-                excluded.append(String(host.dropFirst()))
+            if isExcluded {
+                excluded.append(host)
             } else {
                 included.append(host)
             }
         }
-        return (included, excluded)
+        return namesRegex && included.isEmpty ? nil : (included, excluded)
     }
 
     /// Split the inside of `##+js(...)` into arguments, as uBO does: one wrapped in ', " or ` is taken
