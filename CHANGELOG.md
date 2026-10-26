@@ -6,6 +6,10 @@ What changes in each Lilo release, for people using it. The format follows
 
 ## [0.3.1] - 2026-10-26
 
+### Added
+
+- The AI agents step of the setup copies Lilo's configuration for any other MCP agent, as Settings does.
+
 ### Fixed
 
 - The address bar keeps its height when its site controls button shows up, as when a site uses the camera or microphone.
