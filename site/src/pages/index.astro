@@ -10,8 +10,9 @@ const schema = [
   {
     "@id": "https://getlilo.app/#website",
     "@type": "WebSite",
+    alternateName: ["Lilo", "getlilo.app"],
     inLanguage: ["en", "fr"],
-    name: "Lilo",
+    name: "Lilo Browser",
     publisher: {
       "@id": "https://getlilo.app/#author",
     },
@@ -26,12 +27,16 @@ const schema = [
   {
     "@id": "https://getlilo.app/#app",
     "@type": "SoftwareApplication",
+    alternateName: ["Lilo Browser", "Lilo for Mac"],
     applicationCategory: "BrowserApplication",
+    applicationSubCategory: "Web browser",
     author: {
       "@id": "https://getlilo.app/#author",
     },
     description:
-      "A free, open-source, private by default Arc alternative for Mac that is not Chromium: native WebKit that runs Chrome extensions, with terminal tabs and an MCP server for your AI agents.",
+      "Lilo Browser is a free, open-source, private by default Arc alternative for Mac that is not Chromium: native WebKit that runs Chrome extensions, with terminal tabs and an MCP server for AI agents.",
+    disambiguatingDescription:
+      "Lilo Browser is a web browser app for macOS, not the Lilo search engine at lilo.org.",
     downloadUrl:
       "https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg",
     image: "https://getlilo.app/og.png",
@@ -64,8 +69,8 @@ const schema = [
 
 <Layout
   lang={lang}
-  title="Lilo: a Mac browser on WebKit, with Spaces and Chrome extensions"
-  description="A free, open-source, private by default Arc alternative for Mac that is not Chromium: native WebKit that runs Chrome extensions, with terminal tabs and an MCP server for your AI agents."
+  title="Lilo Browser: a WebKit browser for Mac with Spaces and Chrome extensions"
+  description="Lilo Browser is a free, open-source, private by default Arc alternative for Mac that is not Chromium: native WebKit that runs Chrome extensions, with terminal tabs and an MCP server for AI agents."
   schema={schema}
 >
   <main id="main-content">
@@ -75,6 +80,8 @@ const schema = [
           <Flower id="hero-flower" class="mark bloom" />
           <span class="beta">Public beta</span>
           <h1>
+            <span class="kicker">Lilo, the WebKit browser for Mac</span>
+            <span class="visually-hidden">: </span>
             Your internet,
             <br />
             <span>in bloom.</span>
@@ -810,6 +817,14 @@ const schema = [
                 Read the privacy notes
               </a>
               .
+            </p>
+          </details>
+          <details>
+            <summary>Is Lilo related to the Lilo search engine?</summary>
+            <p>
+              No. Lilo Browser is an independent, open-source web browser for
+              Mac. The Lilo search engine at lilo.org is a separate project with
+              no link to it. In Lilo, you pick your search engine in Settings.
             </p>
           </details>
           <details>

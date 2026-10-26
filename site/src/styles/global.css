@@ -196,6 +196,24 @@ a {
   background-clip: text;
   color: transparent;
 }
+.hero-copy h1 .kicker {
+  display: block;
+  margin-bottom: 14px;
+  font-size: clamp(16px, 1.8vw, 19px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0;
+  background: none;
+  color: var(--ink-2);
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .move-in {
   font-size: 14px;
   color: var(--ink-2);

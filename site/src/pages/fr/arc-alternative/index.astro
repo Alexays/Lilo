@@ -1,0 +1,361 @@
+---
+import Flower from "../../../components/Flower.astro";
+import Layout from "../../../layouts/Layout.astro";
+
+const lang = "fr";
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/arc-alternative/",
+        name: "Alternative à Arc",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/fr/arc-alternative/#faq",
+    "@type": "FAQPage",
+    inLanguage: "fr",
+    mainEntity: [],
+    url: "https://getlilo.app/fr/arc-alternative/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo Browser : une alternative à Arc gratuite pour Mac, sans Chromium"
+  description="Vous cherchez une alternative à Arc ? Le navigateur Lilo garde les espaces, la barre latérale, la vue partagée et l'aperçu, importe vos espaces Arc et repose sur WebKit plutôt que Chromium. Gratuit et open source."
+  schema={schema}
+>
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap">
+        <div class="hero-copy">
+          <Flower id="hero-flower" class="mark bloom" />
+          <h1>
+            Une alternative à Arc
+            <br />
+            <span>qui continue d'avancer.</span>
+          </h1>
+          <p class="sub">
+            The Browser Company a cessé d'ajouter des fonctions à Arc en 2025
+            pour se consacrer à Dia. Lilo garde ce que vous aimiez dans Arc, les
+            espaces dans une barre latérale, la vue partagée, l'aperçu et la
+            petite fenêtre, et récupère vos espaces Arc. Il est gratuit, open
+            source, et basé sur WebKit plutôt que sur Chromium.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Télécharger pour Mac
+            </a>
+            <a class="pill soft" href="#compare">
+              Comparer avec Arc
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="band" id="familiar">
+      <div class="wrap">
+        <div class="head">
+          <span class="tag">En terrain connu</span>
+          <h2>La façon de naviguer d'Arc, toujours là.</h2>
+          <p>
+            Les idées qui rendaient Arc différent sont celles autour desquelles
+            Lilo est construit.
+          </p>
+        </div>
+        <div class="feat-list two">
+          <div>
+            <b>Les espaces.</b> Séparez travail, vie personnelle et navigation
+            privée, chacun avec son nom, sa couleur, son emoji et, si vous le
+            voulez, son propre profil avec ses connexions et ses extensions.
+          </div>
+          <div>
+            <b>Une barre latérale.</b> Les onglets à gauche comme dans Arc, ou à
+            droite, en haut ou en bas. Onglets épinglés, favoris et dossiers que
+            vous pouvez imbriquer et verrouiller.
+          </div>
+          <div>
+            <b>La vue partagée.</b> Jusqu'à quatre pages côte à côte, ou un
+            terminal à côté de votre travail.
+          </div>
+          <div>
+            <b>L'aperçu et la petite fenêtre.</b> Les liens des onglets épinglés
+            s'ouvrent par-dessus la page, et une fenêtre rapide depuis n'importe
+            quelle app accueille un lien ou une recherche, puis rejoint un
+            espace si elle prend de l'importance.
+          </div>
+          <div>
+            <b>La barre de commande.</b> Onglets, favoris, historique et toutes
+            les actions depuis un seul champ, avec <kbd>⌘T</kbd>.
+          </div>
+          <div>
+            <b>L'archive des onglets.</b> Les onglets non épinglés partent
+            d'eux-mêmes dans une archive, avec un délai réglé par espace, et
+            reviennent quand vous en avez besoin.
+          </div>
+          <div>
+            <b>Vos raccourcis.</b> Partez du préréglage Arc dans les Réglages,
+            puis modifiez ce que vous voulez.
+          </div>
+          <div>
+            <b>Vos extensions.</b> Les extensions Manifest V3 du Chrome Web
+            Store s'installent en un clic et restent à jour.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="compare">
+      <div class="wrap">
+        <div class="head">
+          <span class="tag">Côte à côte</span>
+          <h2 id="arc-comparison">Arc et Lilo, comparés.</h2>
+          <p>
+            Deux navigateurs à barre latérale pour Mac, construits de façons
+            très différentes.
+          </p>
+        </div>
+        <div
+          class="matrix"
+          role="region"
+          aria-labelledby="arc-comparison"
+          tabindex="0"
+        >
+          <table>
+            <thead>
+              <tr>
+                <td></td>
+                <th scope="col">Arc</th>
+                <th scope="col">Lilo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Moteur</th>
+                <td>Chromium</td>
+                <td>WebKit, le moteur de Safari</td>
+              </tr>
+              <tr>
+                <th scope="row">Nouvelles fonctions</th>
+                <td class="n">Arrêtées en 2025</td>
+                <td class="y">Bêta publique, versions régulières</td>
+              </tr>
+              <tr>
+                <th scope="row">Prix</th>
+                <td>Gratuit</td>
+                <td>Gratuit</td>
+              </tr>
+              <tr>
+                <th scope="row">Code source</th>
+                <td class="n">Fermé</td>
+                <td class="y">Open source, MIT</td>
+              </tr>
+              <tr>
+                <th scope="row">Compte</th>
+                <td>Obligatoire</td>
+                <td>Aucun</td>
+              </tr>
+              <tr>
+                <th scope="row">Espaces et profils</th>
+                <td class="y">Oui</td>
+                <td class="y">Oui</td>
+              </tr>
+              <tr>
+                <th scope="row">Extensions du Chrome Web Store</th>
+                <td class="y">Oui</td>
+                <td class="y">Manifest V3</td>
+              </tr>
+              <tr>
+                <th scope="row">Onglets terminal</th>
+                <td class="n">Non</td>
+                <td class="y">Oui</td>
+              </tr>
+              <tr>
+                <th scope="row">Agents IA</th>
+                <td class="n">Pas de serveur MCP</td>
+                <td class="y">Serveur MCP local, sur activation</td>
+              </tr>
+              <tr>
+                <th scope="row">Synchronisation</th>
+                <td class="y">Oui</td>
+                <td class="n">Non</td>
+              </tr>
+              <tr>
+                <th scope="row">Plateformes</th>
+                <td>Mac, Windows</td>
+                <td>Mac uniquement, macOS 26 ou plus récent</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="move">
+      <div class="wrap steps">
+        <div class="head" style="margin:0">
+          <span class="tag">Quitter Arc</span>
+          <h2>Vos espaces Arc vous suivent.</h2>
+          <p>
+            Lilo lit Arc sur votre Mac et n'y change rien.{" "}
+            <a href="/fr/moving/">Tout sur le passage à Lilo</a>.
+          </p>
+        </div>
+        <div class="claims">
+          <div class="claim">
+            <span class="ic" style="background:#b39df4">
+              1
+            </span>
+            <div>
+              <h3>Espaces, onglets et vues partagées</h3>
+              <p>
+                Chaque espace Arc devient un espace Lilo avec son icône et sa
+                couleur, ses onglets épinglés et ouverts, ses dossiers et ses
+                vues partagées jusqu'à quatre onglets. Les favoris Arc
+                deviennent des onglets enregistrés.
+              </p>
+            </div>
+          </div>
+          <div class="claim">
+            <span class="ic" style="background:#9ac7eb">
+              2
+            </span>
+            <div>
+              <h3>Historique et connexions</h3>
+              <p>
+                Vos pages récentes alimentent la barre de commande, et vos
+                cookies sont copiés pour que vous restiez connecté. macOS
+                demande une fois d'autoriser Lilo à utiliser la clé «&nbsp;Safe
+                Storage&nbsp;» d'Arc.
+              </p>
+            </div>
+          </div>
+          <div class="claim">
+            <span class="ic" style="background:#9bd3b4">
+              3
+            </span>
+            <div>
+              <h3>Extensions</h3>
+              <p>
+                Celles du Chrome Web Store sont réinstallées depuis le store, à
+                jour. Vous choisissez lesquelles.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="faq">
+      <div class="wrap faq">
+        <div class="head" style="margin:0">
+          <span class="tag">Questions</span>
+          <h2>Quitter Arc.</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Arc va-t-il disparaître&nbsp;?</summary>
+            <p>
+              The Browser Company a cessé de développer de nouvelles fonctions
+              pour Arc en 2025 pour se consacrer à Dia. Arc s'ouvre toujours et
+              reçoit encore des correctifs, donc rien ne presse, mais il
+              n'évoluera plus beaucoup.
+            </p>
+          </details>
+          <details>
+            <summary>Lilo est-il basé sur Chromium, comme Arc&nbsp;?</summary>
+            <p>
+              Non. Lilo repose sur WebKit, le moteur fourni avec macOS, dans une
+              app écrite en Swift. Aucun Chromium n'est embarqué, ce qui le rend
+              léger pour la mémoire et la batterie, et il fait quand même
+              tourner les extensions Chrome.
+            </p>
+          </details>
+          <details>
+            <summary>Puis-je importer mes espaces Arc&nbsp;?</summary>
+            <p>
+              Oui. Chaque espace arrive comme un espace Lilo avec son icône, sa
+              couleur, ses onglets épinglés et ouverts, ses dossiers et ses vues
+              partagées. Ce qui, dans la barre latérale d'Arc, n'est ni un
+              onglet, ni un dossier, ni une vue partagée est ignoré.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Mes raccourcis clavier d'Arc fonctionnent-ils&nbsp;?
+            </summary>
+            <p>
+              Choisissez le préréglage Arc dans Réglages, Général, Raccourcis
+              clavier, puis modifiez ce que vous voulez. Les conflits sont
+              signalés pendant la saisie.
+            </p>
+          </details>
+          <details>
+            <summary>Qu'est-ce qu'Arc a et que Lilo n'a pas&nbsp;?</summary>
+            <p>
+              La synchronisation, une version Windows et une app mobile. Lilo
+              n'a ni compte ni serveur, donc rien par où synchroniser. Votre
+              gestionnaire de mots de passe continue de synchroniser vos mots de
+              passe partout.
+            </p>
+          </details>
+          <details>
+            <summary>Lilo est-il gratuit&nbsp;?</summary>
+            <p>
+              Oui. Lilo est gratuit et open source sous{" "}
+              <a href="https://github.com/Alexays/Lilo/blob/main/LICENSE">
+                licence MIT
+              </a>
+              . Pas d'offre payante, pas de compte et pas de télémétrie.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap end">
+        <span class="tag">Gratuit et open source</span>
+        <Flower id="end-flower" class="mark small-mark" />
+        <h2>Essayez-le à côté d'Arc.</h2>
+        <p>
+          Importez vos espaces, gardez Arc aussi longtemps que vous voulez, et
+          voyez si Lilo vous ressemble.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <a
+            class="pill dark"
+            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            style="padding:14px 22px"
+          >
+            Télécharger pour Mac
+          </a>
+          <a
+            class="pill soft"
+            href="/fr/"
+            style="padding:14px 22px;background:color-mix(in srgb, var(--tint) 30%, var(--surface))"
+          >
+            Retour à Lilo
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

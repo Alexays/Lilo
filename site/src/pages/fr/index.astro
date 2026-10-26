@@ -10,8 +10,9 @@ const schema = [
   {
     "@id": "https://getlilo.app/#website",
     "@type": "WebSite",
+    alternateName: ["Lilo", "getlilo.app"],
     inLanguage: ["en", "fr"],
-    name: "Lilo",
+    name: "Lilo Browser",
     publisher: {
       "@id": "https://getlilo.app/#author",
     },
@@ -26,12 +27,16 @@ const schema = [
   {
     "@id": "https://getlilo.app/#app",
     "@type": "SoftwareApplication",
+    alternateName: ["Lilo Browser", "Lilo for Mac"],
     applicationCategory: "BrowserApplication",
+    applicationSubCategory: "Web browser",
     author: {
       "@id": "https://getlilo.app/#author",
     },
     description:
-      "Alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA.",
+      "Lilo Browser, l'alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA.",
+    disambiguatingDescription:
+      "Lilo Browser est une app de navigateur web pour macOS, pas le moteur de recherche Lilo de lilo.org.",
     downloadUrl:
       "https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg",
     image: "https://getlilo.app/og.png",
@@ -64,8 +69,8 @@ const schema = [
 
 <Layout
   lang={lang}
-  title="Lilo : navigateur Mac basé sur WebKit, avec espaces et extensions Chrome"
-  description="Alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA."
+  title="Lilo Browser : le navigateur Mac sur WebKit, avec espaces et extensions Chrome"
+  description="Lilo Browser, l'alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA."
   schema={schema}
 >
   <main id="main-content">
@@ -75,6 +80,8 @@ const schema = [
           <Flower id="hero-flower" class="mark bloom" />
           <span class="beta">Bêta publique</span>
           <h1>
+            <span class="kicker">Lilo, le navigateur WebKit pour Mac</span>
+            <span class="visually-hidden"> : </span>
             Votre internet,
             <br />
             <span>en fleur.</span>
@@ -847,6 +854,17 @@ const schema = [
                 Lire les notes de confidentialité
               </a>
               .
+            </p>
+          </details>
+          <details>
+            <summary>
+              Lilo a-t-il un lien avec le moteur de recherche Lilo&nbsp;?
+            </summary>
+            <p>
+              Non. Lilo Browser est un navigateur web pour Mac, indépendant et
+              open source. Le moteur de recherche Lilo de lilo.org est un autre
+              projet, sans aucun lien avec lui. Dans Lilo, vous choisissez votre
+              moteur de recherche dans les Réglages.
             </p>
           </details>
           <details>

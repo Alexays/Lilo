@@ -13,8 +13,8 @@ import xml.etree.ElementTree as ET
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from generate import DIST, Node, Tree, plain, sync_json_ld
 
-PAGES = ["index.html", "moving/index.html", "changelog/index.html",
-         "fr/index.html", "fr/moving/index.html", "fr/changelog/index.html"]
+PAGES = ["index.html", "moving/index.html", "arc-alternative/index.html", "changelog/index.html",
+         "fr/index.html", "fr/moving/index.html", "fr/arc-alternative/index.html", "fr/changelog/index.html"]
 
 
 def nodes(node):

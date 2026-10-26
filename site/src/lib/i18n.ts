@@ -2,10 +2,11 @@ export type Locale = "en" | "fr";
 
 export const copy = {
   en: {
+    arcAlternative: "Arc alternative",
     changelog: "Changelog",
     changelogDescription:
       "New features, improvements and fixes in Lilo, a free, open-source browser for Mac. Read the release notes for every version.",
-    changelogTitle: "Lilo changelog: what’s new in every release",
+    changelogTitle: "Lilo Browser changelog: what’s new in every release",
     darkMode: "Dark mode",
     darkReaderDescription: "Dark mode for every site",
     demoBack: "Back",
@@ -80,10 +81,12 @@ export const copy = {
     viewExtension: "View extension",
   },
   fr: {
+    arcAlternative: "Alternative à Arc",
     changelog: "Nouveautés",
     changelogDescription:
       "Les nouvelles fonctions, améliorations et corrections de Lilo, un navigateur gratuit et open source pour Mac. Retrouvez les notes de chaque version.",
-    changelogTitle: "Nouveautés de Lilo : les notes de chaque version",
+    changelogTitle:
+      "Nouveautés du navigateur Lilo : les notes de chaque version",
     darkMode: "Mode sombre",
     darkReaderDescription: "Le mode sombre sur tous les sites",
     demoBack: "Précédent",
