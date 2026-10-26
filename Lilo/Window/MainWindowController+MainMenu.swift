@@ -8,9 +8,9 @@ extension MainWindowController {
 
     /// The Spaces the Spaces menu lists and ⌃1 to ⌃9 count: a private or hidden agents one only while it is shown here.
     var switchableSpaces: [Space] {
-        let hiddenAgentsSpaceId = context.agentControl.hiddenAgentsSpaceId
+        let hiddenAgentsSpaceIds = context.agentControl.hiddenAgentsSpaceIds
         return (context.spaceManager?.spaces ?? []).filter {
-            $0.id == tabManager.currentSpaceId || (!$0.isPrivate && $0.id != hiddenAgentsSpaceId)
+            $0.id == tabManager.currentSpaceId || (!$0.isPrivate && !hiddenAgentsSpaceIds.contains($0.id))
         }
     }
 
@@ -109,10 +109,11 @@ extension MainWindowController {
         if menu.items.isEmpty { menu.addItem(withTitle: "No Other Spaces".localized, action: nil, keyEquivalent: "") }
     }
 
-    /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never the
+    /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never an
     /// Agents space: its tabs are the agents'.
     func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
-        for space in switchableSpaces where space.id != tabManager.currentSpaceId && space.id != context.settingsStore.agentsSpaceId {
+        let agentsSpaceIds = context.settingsStore.agentsSpaceIds
+        for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentsSpaceIds.contains(space.id) {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
                 do { try moveToSpace(.tab, id: id, targetSpaceId: space.id) } catch {

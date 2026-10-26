@@ -13,8 +13,8 @@ final class AgentControl {
     private(set) weak var context: BrowserContext?
     private var server: AgentSocketServer?
     private(set) var sessions: [AgentSession] = []
-    /// The Agents space is emptied of past conversations' folders once per run, before the first agent works.
-    var agentsSpaceCleaned = false
+    /// Agents spaces emptied of past conversations' folders this run: each once, before the first agent works there.
+    var cleanedAgentsSpaceIds: Set<UUID> = []
     /// How long a dropped connection's session waits for lilo-mcp to reconnect (it tries for 30 seconds) before
     /// its tabs go.
     static var reconnectGrace: Duration = .seconds(35)
@@ -115,8 +115,8 @@ final class AgentControl {
     }
 
     private var activityPending = false
-    /// The agents Space while the sidebar leaves it out, so the menu bar leaves it out too.
-    private(set) var hiddenAgentsSpaceId: UUID?
+    /// The Agents spaces the sidebar leaves out, so the menu bar leaves them out too.
+    private(set) var hiddenAgentsSpaceIds: Set<UUID> = []
 
     /// Tells every window which agents are connected and which are acting now, once per main-thread turn.
     /// A tab keeps its activity dot this long after the agent's last action on it, so quick clicks read
@@ -131,24 +131,34 @@ final class AgentControl {
             activityPending = false
             let authorized = sessions.filter(\.isAuthorized)
             let since = Date().addingTimeInterval(-Self.actingLinger)
+            // The Agents space each agent works in: one with no folder yet works in none.
+            let working = Dictionary(uniqueKeysWithValues: authorized.compactMap { session in
+                agentsSpaceFolder(of: session) == nil ? nil : agentsSpaceId(of: session).map { (session.id, $0) }
+            })
             let clients = Set(authorized.map(\.clientName)).sorted().map { name in
                 let mine = authorized.filter { $0.clientName == name }
                 // A tab of the call running now, however long it takes, or of one that just ended.
                 let acting = mine.flatMap { session in
                     session.actedOn.filter { $0.value > since || (session.activeCalls > 0 && $0.value >= session.callStartedAt) }.keys
                 }
-                return ["name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString)] as [String: Any]
+                return [
+                    "name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString),
+                    "spaceIds": Set(mine.compactMap { working[$0.id] }).map(\.uuidString)
+                ] as [String: Any]
             }
-            let spaceId = context.settingsStore?.get(Self.agentsSpaceKey) ?? ""
-            // With no agent working there and no tab left, the space has nothing to show: the bar leaves it
+            let spaceIds = context.settingsStore?.agentsSpaceIds ?? []
+            // With no agent working there and no tab left, a space has nothing to show: the bar leaves it
             // out. The blank tab a space keeps after its last close does not count.
-            let visible = sessions.contains { agentsSpaceFolder(of: $0) != nil } || UUID(uuidString: spaceId).flatMap { context.browserState.structuralProjection(forSpace: $0) }?
-                .tabs.contains { !$0.isClosed && ($0.kind != .web || $0.url != nil) } == true
-            hiddenAgentsSpaceId = visible ? nil : UUID(uuidString: spaceId)
+            let busy = Set(working.values)
+            hiddenAgentsSpaceIds = Set(spaceIds.filter { id in
+                !busy.contains(id) && context.browserState.structuralProjection(forSpace: id)?
+                    .tabs.contains { !$0.isClosed && ($0.kind != .web || $0.url != nil) } != true
+            })
             let profileId = context.settingsStore?.get(Self.agentsProfileKey) ?? ""
             for window in context.windows.windows {
                 window.bridgeRouter?.send(event: "agentActivity", data: [
-                    "clients": clients, "agentsSpaceId": spaceId, "agentsProfileId": profileId, "agentsSpaceVisible": visible
+                    "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
+                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString)
                 ])
             }
         }
@@ -391,8 +401,8 @@ final class AgentControl {
         dropFolder(of: closing)
         dropIsolatedSpace(of: closing)
         publishActivity()
-        // The last agent with tabs gone, nothing it did in the agents' profile is kept for the next one.
-        if !sessions.contains(where: { agentsSpaceFolder(of: $0) != nil }) { Task { await wipeAgentsProfile() } }
+        // The last agent with tabs in the agents' profile gone, nothing it did there is kept for the next one.
+        if !sessions.contains(where: { $0.profileId == nil && agentsSpaceFolder(of: $0) != nil }) { Task { await wipeAgentsProfile() } }
     }
 
     /// lilo-mcp replays the handshake when it reconnects, and an agent may launch a new lilo-mcp: a new connection
@@ -413,7 +423,7 @@ final class AgentControl {
         session.title = dropped.title
         session.projectName = dropped.projectName
         session.actedOn = dropped.actedOn
-        session.profileNotice = dropped.profileNotice
+        session.profileId = dropped.profileId
         sessions.removeAll { $0 === dropped }
         context?.powerKeeper.terminalEnded(dropped.id)
     }
@@ -488,12 +498,12 @@ final class AgentSession {
     var callStartedAt = Date.distantPast
     /// The calls in flight on a tab, by call: one the client gave up on keeps running in the page.
     var tabCalls: [UUID: (tab: Int, tool: String, startedAt: Date)] = [:]
-    /// Its own tab folder in the Agents space, created with its first tab: one per conversation.
+    /// The profile it works in, nil for the agents' own ephemeral one.
+    var profileId: UUID?
+    /// Its own tab folder in the Agents space of its profile, created with its first tab: one per conversation.
     var folderId: UUID?
     /// Its private space for isolated tabs, created with the first one and deleted when it leaves.
     var isolatedSpaceId: UUID?
-    /// Set when the Agents space changed profile without this agent asking: its next tool call fails with it.
-    var profileNotice: String?
     /// What its folder is named after: the task it gave, else its project folder, else when it came.
     var title: String?
     var projectName: String?

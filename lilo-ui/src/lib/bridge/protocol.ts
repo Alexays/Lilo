@@ -934,10 +934,12 @@ export interface BridgeEventPayloadMap {
 	keepAwakeChanged: BridgeKeepAwakeState;
 	agentActivity: {
 		clients: BridgeAgentClient[];
-		agentsSpaceId: string;
+		/** One Agents space per profile agents work in. */
+		agentsSpaceIds: string[];
 		/** The agents' throwaway profile, empty before the first agent. */
 		agentsProfileId: string;
-		agentsSpaceVisible: boolean;
+		/** Agents spaces with no agent working there and no tab left. */
+		hiddenAgentsSpaceIds: string[];
 	};
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
 	appNames: { names: Record<string, string> };
@@ -1130,6 +1132,8 @@ export interface BridgeAgentClient {
 	busy: boolean;
 	/** Tabs it acts on now, or did a moment ago. */
 	actingTabIds: string[];
+	/** The Agents spaces it works in. */
+	spaceIds: string[];
 }
 
 export type BridgeMediaAction = "play" | "pause" | "nexttrack" | "previoustrack";

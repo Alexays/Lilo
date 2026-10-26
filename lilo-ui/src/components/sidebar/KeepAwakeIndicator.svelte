@@ -11,7 +11,7 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { formatTerminalDuration } from "../../lib/terminalTitle";
   import { tooltip } from "../../lib/tooltip";
-  import { getAgentsSpaceId } from "../../stores/agents.svelte";
+  import { getAgentsSpaceIds, isHiddenAgentsSpace } from "../../stores/agents.svelte";
   import { getKeepAwakeState, getTerminals } from "../../stores/keepAwake.svelte";
 
   const keepAwake = $derived(getKeepAwakeState());
@@ -102,7 +102,8 @@
   }
 
   function showAgents(): void {
-    spaceActions.switchTo(getAgentsSpaceId());
+    const ids = getAgentsSpaceIds();
+    spaceActions.switchTo(ids.find((id) => !isHiddenAgentsSpace(id)) ?? ids[0]);
     open = false;
   }
 </script>

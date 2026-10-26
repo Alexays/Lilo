@@ -105,8 +105,10 @@ final class SpaceBridgeHandler: BridgeHandler {
             let archiveAfterHours = message.int("archiveAfterHours")
             let colorMode = Self.colorMode(message)
 
-            // The space is resolved first: a profile is created only for a space that exists to use it.
+            // The space is resolved first: a profile is created only for a space that exists to use it. An Agents
+            // space keeps its profile: each agent switches its own, moving every agent's tabs would switch them all.
             if let sourceSpace = spaceManager.space(with: id),
+               windowController?.context.settingsStore?.agentsSpaceIds.contains(id) != true,
                let profileUUID = createRequestedProfile(message) ?? message.uuid("profileId"),
                sourceSpace.profileId != profileUUID {
                 do {
@@ -117,9 +119,6 @@ final class SpaceBridgeHandler: BridgeHandler {
                         icon: icon,
                         color: color
                     )
-                    if let context = windowController?.context, id == context.settingsStore?.agentsSpaceId {
-                        context.agentControl.agentsSpaceMoved(to: profileUUID, by: nil)
-                    }
                 } catch {
                     Self.logger.error("Failed to move space \(id.uuidString, privacy: .public) to profile \(profileUUID.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
                 }

@@ -12,7 +12,7 @@
   import { isPointInsideRect } from "../../lib/dndEngine/geometry";
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import SpaceMoveHint from "../spaces/SpaceMoveHint.svelte";
-  import { getAgentIcons, getAgentsProfileId, getAgentsSpaceId, isAgentsSpaceVisible, isAnyAgentActing } from "../../stores/agents.svelte";
+  import { getAgentClients, getAgentIcons, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfiles } from "../../stores/profiles.svelte";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { userProfiles } from "../settings/profilesModel";
@@ -121,7 +121,9 @@
     for (const terminal of getTerminals()) {
       if (terminal.awaitingInputSince > 0) states[terminal.spaceId] = "attention";
     }
-    if (isAnyAgentActing() && states[getAgentsSpaceId()] !== "attention") states[getAgentsSpaceId()] = "agent";
+    for (const client of getAgentClients()) {
+      if (client.busy) for (const id of client.spaceIds) if (states[id] !== "attention") states[id] = "agent";
+    }
     delete states[getActiveSpaceId()];
     return states;
   });
@@ -141,11 +143,9 @@
   const reorderableSpaces = $derived(
     spaces.filter((space) => !space.isPrivate),
   );
-  // Native keeps the Agents space last: with no agent and no tab, the bar leaves it out unless it is shown.
+  // Native keeps the Agents spaces last: with no agent and no tab, the bar leaves one out unless it is shown.
   const spaceBaseItems = $derived(
-    dndItemsForSpaces(spaces).filter(
-      (item) => item.id !== getAgentsSpaceId() || isAgentsSpaceVisible() || item.id === getActiveSpaceId(),
-    ),
+    dndItemsForSpaces(spaces).filter((item) => !isHiddenAgentsSpace(item.id) || item.id === getActiveSpaceId()),
   );
   const spaceZoneItems = $derived(visualSpaceItems ?? spaceBaseItems);
   const spacesById = $derived(new Map(spaces.map((space) => [space.id, space])));
@@ -158,7 +158,7 @@
   const anySpaceDropGuideActive = $derived(spaceReorderActive || sidebarItemDragActive);
 
   function canReorder(space: SpaceState): boolean {
-    return !space.isPrivate && space.id !== getAgentsSpaceId();
+    return !space.isPrivate && !isAgentsSpace(space.id);
   }
 
   function handleSpaceClick(spaceId: string): void {
@@ -426,9 +426,9 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    {#if space.id === getAgentsSpaceId() && getAgentIcons().length}
+    {#if getAgentIcons(space.id)}
       <span class="agent-icons" aria-hidden="true">
-        {#each getAgentIcons().slice(-3) as icon (icon)}
+        {#each getAgentIcons(space.id)!.slice(-3) as icon (icon)}
           <img src={icon} alt="" draggable="false" />
         {/each}
       </span>
@@ -522,7 +522,7 @@
             use:dndItem={{
               item: entry,
               zoneId: "bottom-bar-spaces",
-              disabled: isShadowItem(entry) || entry.isPrivate || entry.id === getAgentsSpaceId() || sidebarItemDragActive,
+              disabled: isShadowItem(entry) || entry.isPrivate || isAgentsSpace(entry.id) || sidebarItemDragActive,
               onDragMove: handleSpaceDragMove,
               onDrop: handleSpaceDrop,
               onCancel: handleSpaceCancel,
@@ -531,8 +531,8 @@
             {#if isShadowItem(entry)}
               <div class="space-dnd-placeholder" aria-hidden="true"></div>
             {:else if space}
-              <!-- The Agents space shows a profile only when it borrows one of the user's. -->
-              {@const profile = showsProfiles && !space.isPrivate && space.profileId !== getAgentsProfileId()
+              <!-- An Agents space shows its profile whenever it is one of the user's: they share its name. -->
+              {@const profile = (showsProfiles || isAgentsSpace(space.id)) && !space.isPrivate && space.profileId !== getAgentsProfileId()
                 ? getProfileById(space.profileId)
                 : undefined}
               <div

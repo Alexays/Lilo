@@ -196,8 +196,7 @@ enum AgentTools {
             guard let url = arguments["url"] as? String, !url.isEmpty else { throw AgentToolError("url is required") }
             let method = (arguments["method"] as? String ?? "GET").uppercased()
             // In one of the user's profiles the request carries their cookies: it may act for them, as a click does.
-            if !["GET", "HEAD"].contains(method), !engine.isPrivateBrowsing,
-               try control.agentSpace().space.profileId != control.agentsProfileId() {
+            if !["GET", "HEAD"].contains(method), !engine.isPrivateBrowsing, session.profileId != nil {
                 let target = URL(string: url, relativeTo: engine.currentURL)?.absoluteString ?? url
                 try await control.approveConsequentialAction("fetch", label: "\(method) \(target)", frame: nil, engine: engine, session: session)
             }

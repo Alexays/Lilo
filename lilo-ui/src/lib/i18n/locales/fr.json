@@ -1411,7 +1411,7 @@
 			"media": "veut utiliser votre caméra ou votre micro"
 		},
 		"agentControl": "veut piloter Lilo : ouvrir des onglets dans son propre dossier, lire leurs pages et y agir avec vos connexions.",
-		"agentProfile": "veut passer l'espace Agents sur le profil {profile}, pour agir avec ses connexions.",
+		"agentProfile": "veut passer ses onglets sur le profil {profile}, pour agir avec ses connexions.",
 		"agentExecutable": "Programme : {path}",
 		"agentClick": "veut cliquer sur « {label} » dans {tab} ({site}).",
 		"agentSubmit": "veut appuyer sur Entrée pour valider « {label} » dans {tab} ({site}).",
@@ -1989,7 +1989,6 @@
 		"Added Lilo to Cursor": "Lilo a été ajouté à Cursor",
 		"Added Lilo to Codex": "Lilo a été ajouté à Codex",
 		"Lilo could not read %@: add this server to it yourself: %@": "Lilo n'a pas pu lire %@ : ajoutez-y ce serveur vous-même : %@",
-		"Agents' Profile": "Profil des agents",
 		"Stop Agents": "Arrêter les agents",
 		"Delete %@ and %@?": "Supprimer %@ et %@ ?",
 		"1 tab": "1 onglet",

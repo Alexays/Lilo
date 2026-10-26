@@ -79,8 +79,9 @@ final class SettingsStore {
         set { set("sidebarWidth", value: String(newValue)) }
     }
 
-    var agentsSpaceId: UUID? {
-        self.get(AgentControl.agentsSpaceKey).flatMap(UUID.init(uuidString:))
+    /// One Agents space per profile agents work in, comma-separated.
+    var agentsSpaceIds: [UUID] {
+        (get(AgentControl.agentsSpaceKey) ?? "").split(separator: ",").compactMap { UUID(uuidString: String($0)) }
     }
 
     var sidebarVisible: Bool {

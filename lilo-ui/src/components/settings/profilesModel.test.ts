@@ -23,14 +23,14 @@ test("the agents' throwaway profile is not one of the user's", () => {
 });
 
 test("the Agents space and private spaces do not count as using a profile", () => {
-  const usage = spacesByProfile(spaces, "agents-space");
+  const usage = spacesByProfile(spaces, ["agents-space"]);
   assert.deepEqual(usage.get("perso")?.map((space) => space.id), ["home", "music"]);
   assert.deepEqual(usage.get("work")?.map((space) => space.id), ["docs"]);
 });
 
 test("removing a used profile moves its spaces to one of the other user profiles", () => {
   const users = userProfiles(profiles, "agents");
-  const removal = profileRemoval(users[1], users, spacesByProfile(spaces, "agents-space"));
+  const removal = profileRemoval(users[1], users, spacesByProfile(spaces, ["agents-space"]));
   assert.equal(removal.removable, true);
   assert.deepEqual(removal.targets.map((profile) => profile.id), ["perso"]);
   assert.deepEqual(removal.moving.map((space) => space.id), ["docs"]);

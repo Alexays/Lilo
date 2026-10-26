@@ -87,9 +87,19 @@ class AgentToolTestCase: XCTestCase {
             ?? context.browserState.owningSpaceId(forTab: id).flatMap { context.browserState.engine(tabId: id, spaceId: $0) })
     }
 
-    /// The space every agent works in, once the first one opened a tab.
+    /// The Agents space of the agents' own profile, where agents work by default, once the first one opened a tab.
     var agentsSpaceId: UUID? {
-        context.settingsStore.agentsSpaceId
+        context.settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:)).flatMap { control.agentsSpace(in: $0)?.id }
+    }
+
+    /// Switches `client` to the user's profile P, allowing it as the user would.
+    @discardableResult
+    func switchToUserProfile(_ client: AgentTestClient? = nil) async -> (text: String, isError: Bool, images: [Data]) {
+        let client = client ?? self.client!
+        let switching = Task { await client.callTool("switch_profile", ["profile": "P"]) }
+        await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        if let request = control.pendingConsentAnswers.keys.first { control.answerConsent(request, granted: true) }
+        return await switching.value
     }
 
     func js(_ script: String, tab: Int) async throws -> Any? {

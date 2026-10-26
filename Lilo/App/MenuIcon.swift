@@ -8,7 +8,7 @@ enum MenuIcon: CaseIterable {
     case moveToFolder, removeFromFolder, openFolder, closeFolder, edit, delete
     case lock, unlock, changePassword, removeLock
     case bookmark, unbookmark, pin, unpin, mute, unmute, keepAwake
-    case close, closeOthers, restoreClosedTab, profile, stopAgents
+    case close, closeOthers, restoreClosedTab, stopAgents
     case back, forward, reload, copyLink, pictureInPicture, download
     case open, quickLook, showInFinder, openInTerminal, retry, cancel, removeFromList
     case details, options, copy, paste, selectAll, clearScreen
@@ -55,7 +55,6 @@ enum MenuIcon: CaseIterable {
         case .close: "xmark"
         case .closeOthers: "xmark.square"
         case .restoreClosedTab: "arrow.uturn.backward"
-        case .profile: "person.crop.circle"
         case .stopAgents: "stop.circle"
         case .back: "chevron.backward"
         case .forward: "chevron.forward"

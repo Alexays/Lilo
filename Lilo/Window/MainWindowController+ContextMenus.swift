@@ -428,20 +428,9 @@ extension MainWindowController {
         menu.addItem(.separator())
         let restore = menu.addItem("Restore Closed Tab".localized, icon: .restoreClosedTab) { _ = self.restoreClosedTabStateFirst() }
         if context.recentlyClosed.recentEntries.isEmpty { restore.action = nil }
-        if context.settingsStore?.get(AgentControl.agentsSpaceKey) == targetSpaceId.uuidString,
-           let current = context.spaceManager.space(with: targetSpaceId)?.profileId {
+        if context.settingsStore?.agentsSpaceIds.contains(targetSpaceId) == true, !context.agentControl.sessions.isEmpty {
             menu.addItem(.separator())
-            let profiles = NSMenu()
-            for profile in context.profileManager.profiles {
-                profiles.addItem(profile.name) { Task { await self.context.agentControl.userMovedAgentsSpace(to: profile.id) } }
-                    .state = profile.id == current ? .on : .off
-            }
-            let profileItem = menu.addItem(withTitle: "Agents' Profile".localized, action: nil, keyEquivalent: "")
-            profileItem.image = MenuIcon.profile.image
-            profileItem.submenu = profiles
-            if !context.agentControl.sessions.isEmpty {
-                menu.addItem("Stop Agents".localized, icon: .stopAgents) { self.context.agentControl.stopAll() }
-            }
+            menu.addItem("Stop Agents".localized, icon: .stopAgents) { self.context.agentControl.stopAll() }
         }
         presentContextMenu(menu, anchorRect: anchorRect)
     }

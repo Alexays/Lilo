@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Each agent works in its own profile, in an Agents space per profile: one agent switching profile no longer moves the other agents'' tabs, and the Agents space menu no longer has a profile picker.'
+time: 2026-10-26T12:12:55.918822+01:00

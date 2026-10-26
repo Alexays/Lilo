@@ -3,7 +3,7 @@ import type { BridgeInitialStatePayload } from "../lib/bridge/protocol";
 import { chromeActions, spaceActions } from "../lib/bridge/actions";
 import { createFrameScheduler } from "../lib/motion/frameScheduler";
 import { prefersReducedMotion } from "../lib/motion/reducedMotion";
-import { getAgentsSpaceId, isAgentsSpaceVisible } from "./agents.svelte";
+import { isHiddenAgentsSpace } from "./agents.svelte";
 import { hasActivePanel } from "./panels.svelte";
 import {
 	beginSpaceTransition,
@@ -21,13 +21,12 @@ type SpaceList = ReturnType<typeof getSpaces>;
 // Derived so a swipe's per-frame reads reuse one list instead of filtering the spaces each frame.
 const pagedSpaces = $derived.by((): SpaceList => {
 	const spaces = getSpaces();
-	const agentsId = getAgentsSpaceId();
-	if (!agentsId || isAgentsSpaceVisible() || agentsId === getActiveSpaceId()) return spaces;
-	return spaces.filter((space) => space.id !== agentsId);
+	const activeId = getActiveSpaceId();
+	return spaces.filter((space) => space.id === activeId || !isHiddenAgentsSpace(space.id));
 });
 const activePagedIndex = $derived(getSpaceIndex(getActiveSpaceId(), pagedSpaces));
 
-/** The Spaces a swipe pages through: the Agents space only while the bar shows it, or it is open. */
+/** The Spaces a swipe pages through: an Agents space only while the bar shows it, or it is open. */
 export function getPagedSpaces(): SpaceList {
 	return pagedSpaces;
 }

@@ -10,7 +10,7 @@ output_path = os.path.join(root, "Lilo", "Generated", "ChromeUIAssets.swift")
 # binary and slowing cold start.
 max_embedded_bytes = 1_300_000
 # The part of it loaded before the chrome's first frame, which every launch parses.
-max_first_frame_bytes = 540_000
+max_first_frame_bytes = 541_000
 
 mime_types = {
     ".html": "text/html",

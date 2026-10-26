@@ -23,7 +23,7 @@ extension MainWindowController {
     func recentTabRows() -> [[String: Any]] {
         guard let currentSpaceId = tabManager.currentSpaceId, let spaceManager = context.spaceManager else { return [] }
         let spaces = Dictionary(spaceManager.spaces.map { ($0.id, $0) }) { first, _ in first }
-        let agentsSpaceId = context.settingsStore?.agentsSpaceId
+        let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
         let inPrivateSpace = spaces[currentSpaceId]?.isPrivate == true
         var rows: [[String: Any]] = []
         var seen = Set<UUID>()
@@ -32,7 +32,7 @@ extension MainWindowController {
             guard rows.count < Self.recentTabsLimit, seen.insert(id).inserted,
                   let stored = context.browserState.durableTab(for: id), !stored.tab.isClosed,
                   let space = spaces[stored.spaceId],
-                  space.id == currentSpaceId || (!inPrivateSpace && !space.isPrivate && space.id != agentsSpaceId) else { return }
+                  space.id == currentSpaceId || (!inPrivateSpace && !space.isPrivate && !agentsSpaceIds.contains(space.id)) else { return }
             let tab = context.browserState.runtimeOverlay.applied(to: stored.tab)
             rows.append([
                 "id": id.uuidString, "title": tab.customTitle ?? tab.title, "url": tab.url?.absoluteString ?? "",
