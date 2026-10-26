@@ -700,6 +700,8 @@ export interface BridgeCommandPayloadMap {
 	getAppNames: { ids: string[] };
 	getUpdaterStatus: EmptyPayload;
 	checkForUpdates: EmptyPayload;
+	installUpdate: EmptyPayload;
+	dismissUpdate: EmptyPayload;
 	unlockDeveloperTools: EmptyPayload;
 	setAutomaticUpdates: { enabled: boolean };
 	getShortcuts: EmptyPayload;
@@ -944,6 +946,8 @@ export interface BridgeEventPayloadMap {
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
 	appNames: { names: Record<string, string> };
 	updaterStatus: BridgeUpdaterStatus;
+	/** The downloaded update waiting for a relaunch; null once dismissed. */
+	updateReady: { version: string | null };
 	shortcutsLoaded: { groups: BridgeShortcutGroup[]; controlTabOrder: BridgeControlTabOrder };
 	/** Each bound action's first keys as the menus show them ("⇧⌘T"), by action id ("tab.reopenClosed"). */
 	shortcutKeys: { keys: Record<string, string> };

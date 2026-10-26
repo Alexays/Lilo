@@ -35,6 +35,7 @@ let _clearDataSheetOpen = $state(false);
 let _appIcons = $state.raw<{ id: string; dataURL: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
+let _readyUpdate = $state<string | null>(null);
 let _shortcuts = $state.raw<BridgeShortcutGroup[]>([]);
 let _controlTabOrder = $state<BridgeControlTabOrder>("recent");
 let _recordingShortcut = $state<string | null>(null);
@@ -79,6 +80,14 @@ export function initSettingsStore(): void {
 	});
 	on("updaterStatus", (data) => {
 		_updater = data;
+	});
+	on("updateReady", (data) => {
+		_readyUpdate = data.version;
+		// The update shows the chosen app icon, which only reaches the chrome with the settings.
+		if (data.version && _appIcons.length === 0) {
+			settingsActions.load();
+			settingsActions.loadAppIcons();
+		}
 	});
 	on("shortcutsLoaded", (data) => {
 		_shortcuts = data.groups;
@@ -176,6 +185,11 @@ export function getAppIcons(): { id: string; dataURL: string }[] {
 	return _appIcons;
 }
 
+/** The preview of the app icon chosen in the settings, once the previews are loaded. */
+export function getChosenAppIcon(): string | undefined {
+	return _appIcons.find((icon) => icon.id === getSetting("appIcon", "classic"))?.dataURL;
+}
+
 export function connectAgentClient(client: string): void {
 	if (_connectingAgentClients.includes(client)) return;
 	_connectingAgentClients = [..._connectingAgentClients, client];
@@ -192,6 +206,11 @@ export function getAgentClientsSnapshot(): BridgeAgentClientsSnapshot {
 
 export function getUpdaterStatus(): BridgeUpdaterStatus | null {
 	return _updater;
+}
+
+/** The version of the downloaded update waiting for a relaunch, null when none is shown. */
+export function getReadyUpdate(): string | null {
+	return _readyUpdate;
 }
 
 /** The menus' keyboard shortcuts, loaded when their page opens. */

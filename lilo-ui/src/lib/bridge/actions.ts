@@ -214,6 +214,8 @@ export const settingsActions = {
 	revokeAgentClient: (name: string): void => emit("revokeAgentClient", { name }),
 	loadUpdaterStatus: emitEmpty("getUpdaterStatus"),
 	checkForUpdates: emitEmpty("checkForUpdates"),
+	installUpdate: emitEmpty("installUpdate"),
+	dismissUpdate: emitEmpty("dismissUpdate"),
 	unlockDeveloperTools: emitEmpty("unlockDeveloperTools"),
 	setAutomaticUpdates: (enabled: boolean): void => emit("setAutomaticUpdates", { enabled }),
 	loadShortcuts: emitEmpty("getShortcuts"),

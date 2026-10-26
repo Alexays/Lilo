@@ -36,6 +36,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil)
         #endif
     }()
+    /// The downloaded update and the block that installs it and relaunches; nil once dismissed.
+    var readyUpdate: (version: String, install: () -> Void)?
 
     static func main() {
         StartupMetrics.mark("main")
@@ -331,6 +333,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 }
 
 extension AppDelegate: SPUUpdaterDelegate {
+    /// A downloaded update waits for quit instead of Sparkle's alert: the sidebar offers to relaunch now.
+    nonisolated func updater(_ updater: SPUUpdater, willInstallUpdateOnQuit item: SUAppcastItem, immediateInstallationBlock: @escaping () -> Void) -> Bool {
+        // Sparkle calls its delegate, and runs the block, on the main thread.
+        nonisolated(unsafe) let install = immediateInstallationBlock
+        MainActor.assumeIsolated {
+            readyUpdate = (item.displayVersionString, install)
+            browserContext.windows.windows.forEach { $0.sendUpdateReady() }
+        }
+        return true
+    }
+
     /// The feed's `releases/latest` redirect is cached by URLSession, so a check could keep reading the
     /// previous release's appcast: a fresh query string makes every check reach GitHub.
     nonisolated func feedURLString(for updater: SPUUpdater) -> String? {

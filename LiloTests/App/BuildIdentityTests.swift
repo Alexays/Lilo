@@ -42,4 +42,23 @@ final class BuildIdentityTests: XCTestCase {
         let url = try XCTUnwrap(delegate.feedURLString(for: updater))
         XCTAssertTrue(url.hasPrefix(feed + "?check="), url)
     }
+
+    func testUpdatesAreCheckedAndDownloadedInTheBackgroundFromTheFirstLaunch() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        XCTAssertEqual(info["SUEnableAutomaticChecks"] as? Bool, true)
+        XCTAssertEqual(info["SUAutomaticallyUpdate"] as? Bool, true)
+    }
+
+    /// The sidebar's Restart runs Sparkle's install block; taking it also keeps Sparkle's own alert away.
+    @MainActor func testADownloadedUpdateWaitsForTheSidebarsRestart() throws {
+        let delegate = try XCTUnwrap(NSApp.delegate as? AppDelegate)
+        defer { delegate.readyUpdate = nil }
+        let updater = SPUUpdater(hostBundle: .main, applicationBundle: .main, userDriver: SPUStandardUserDriver(hostBundle: .main, delegate: nil), delegate: nil)
+        var installed = false
+
+        XCTAssertTrue(delegate.updater(updater, willInstallUpdateOnQuit: .empty(), immediateInstallationBlock: { installed = true }))
+        delegate.readyUpdate?.install()
+
+        XCTAssertTrue(installed)
+    }
 }

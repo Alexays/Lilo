@@ -203,6 +203,15 @@ final class SettingsBridgeHandler: BridgeHandler {
             updaterController?.checkForUpdates(nil)
             publishUpdaterStatus()
 
+        case "installUpdate":
+            (NSApp.delegate as? AppDelegate)?.readyUpdate?.install()
+
+        case "dismissUpdate":
+            // Sparkle still installs it on quit.
+            guard let delegate = NSApp.delegate as? AppDelegate else { break }
+            delegate.readyUpdate = nil
+            delegate.browserContext.windows.windows.forEach { $0.sendUpdateReady() }
+
         case "unlockDeveloperTools":
             UserDefaults.lilo.set(true, forKey: AppDelegate.developerToolsKey)
             for item in NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.submenu?.items ?? [] where item.tag == AppDelegate.developerToolsTag {

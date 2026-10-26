@@ -58,6 +58,10 @@ extension MainWindowController {
     func sendShortcutKeys() {
         bridgeRouter?.send(event: "shortcutKeys", data: ["keys": KeyboardShortcuts.displayedKeys])
     }
+
+    func sendUpdateReady() {
+        bridgeRouter?.send(event: "updateReady", data: ["version": (NSApp.delegate as? AppDelegate)?.readyUpdate?.version ?? NSNull()])
+    }
 }
 
 // MARK: - Handoff

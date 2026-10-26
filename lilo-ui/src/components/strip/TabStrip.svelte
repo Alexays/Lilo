@@ -8,7 +8,9 @@
   import StripSpaceMenu from "./StripSpaceMenu.svelte";
   import StripPopover from "./StripPopover.svelte";
   import MediaCard from "../sidebar/MediaCard.svelte";
+  import UpdateCard from "../sidebar/UpdateCard.svelte";
   import { getMediaCardTab } from "../../stores/media.svelte";
+  import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
@@ -45,6 +47,8 @@
   const addressInActiveTab = $derived((editsAddress && getActiveUrlBarDrawer() !== null) || !isSidebarVisible());
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
+  let updateOpen = $state(false);
+  let updateButton: HTMLButtonElement | undefined = $state();
 
   // The same drop commit as the sidebar's lists: reorder, and move between favorites, pinned and today.
   type StripSection = "bookmarked" | "pinned" | "unpinned";
@@ -275,6 +279,25 @@
       {#if mediaOpen && mediaButton}
         <StripPopover anchor={mediaButton} label={getMediaCardTab()?.title ?? ""} onclose={() => (mediaOpen = false)}>
           <MediaCard />
+        </StripPopover>
+      {/if}
+    {/if}
+    {#if getReadyUpdate()}
+      <!-- Like the media card, the update card opens from its icon. -->
+      <button
+        bind:this={updateButton}
+        class="strip-btn update-btn"
+        class:on={updateOpen}
+        aria-label={t("updateCard.restartLabel", { version: getReadyUpdate() ?? "" })}
+        aria-expanded={updateOpen}
+        use:tooltip={{ text: t("updateCard.ready"), placement: edge === "top" ? "bottom" : "top" }}
+        onclick={() => (updateOpen = !updateOpen)}
+      >
+        {#if getChosenAppIcon()}<img src={getChosenAppIcon()} alt="" width="18" height="18" />{/if}
+      </button>
+      {#if updateOpen && updateButton}
+        <StripPopover anchor={updateButton} label={t("updateCard.ready")} onclose={() => (updateOpen = false)}>
+          <UpdateCard />
         </StripPopover>
       {/if}
     {/if}
@@ -536,5 +559,34 @@
   .strip-btn.on {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  .update-btn {
+    position: relative;
+    animation: update-btn-pop 640ms var(--motion-ease-bounce) both;
+  }
+
+  .update-btn img {
+    border-radius: var(--radius-xs);
+  }
+
+  /* An accent dot says it waits for a relaunch. */
+  .update-btn::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+  }
+
+  @keyframes update-btn-pop {
+    from {
+      transform: scale(0.3) rotate(-30deg);
+      opacity: 0;
+    }
   }
 </style>

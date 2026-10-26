@@ -88,6 +88,11 @@
     <string>https://github.com/Alexays/Lilo/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>$(SPARKLE_PUBLIC_ED_KEY)</string>
+    <!-- Checks and downloads in the background from the first launch, without Sparkle's permission prompt. -->
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUAutomaticallyUpdate</key>
+    <true/>
     <key>SURequireSignedFeed</key>
     <true/>
     <!-- Sparkle refuses to start a signed-feed updater without it. -->
