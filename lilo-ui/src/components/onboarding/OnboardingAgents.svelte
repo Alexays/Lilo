@@ -28,7 +28,7 @@
   {#each clients as client (client.id)}
     <div class="ob-row">
       {#if client.icon}<img class="app" src={client.icon} alt="" width="30" height="30" />{:else}<span class="ob-icon"><SettingsIcon name="agents" /></span>{/if}
-      <span class="ob-text">{t(`settings.agents.names.${client.id}`)}<small>{t(client.configured ? "settings.agents.clientConnected" : "settings.agents.clientDescription")}</small></span>
+      <span class="ob-text">{t(`settings.agents.names.${client.id}`)}{#if !client.configured}<small>{t("settings.agents.clientDescription")}</small>{/if}</span>
       {#if client.configured}
         <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
       {:else}
