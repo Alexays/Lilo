@@ -67,6 +67,15 @@ enum AgentMCP {
             guard !Task.isCancelled else { return nil }
             let name = params["name"] as? String ?? ""
             let arguments = params["arguments"] as? [String: Any] ?? [:]
+            if let notice = session.profileNotice {
+                session.profileNotice = nil
+                // The profile tools act on the profile itself and say which one it is.
+                if !name.hasSuffix("_profile"), name != "list_profiles" {
+                    return result(id: id, [
+                        "content": [AgentContent.text("[profile_changed] " + notice).json], "isError": true, "_meta": ["lilo/errorCode": "profile_changed"]
+                    ])
+                }
+            }
             session.activeCalls += 1
             let startedAt = Date()
             session.callStartedAt = startedAt

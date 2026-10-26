@@ -1,0 +1,3 @@
+kind: Fixed
+body: A long agent script or profile switch is no longer cut off after 90 seconds as if Lilo were frozen.
+time: 2026-10-26T11:52:08.852809+01:00

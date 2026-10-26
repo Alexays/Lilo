@@ -108,6 +108,7 @@ extension AgentControl {
             return
         }
         guard let commander = context.windows.activeWindow else { return }
+        endedTabNumbers.formUnion(tabs.compactMap { tabNumbers[$0.id] })
         context.browserState.discardParkedEngines(Set(tabs.map(\.id)), spaceId: spaceId) { context.discardEngine($0) }
         _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
     }
@@ -200,7 +201,15 @@ extension AgentControl {
            let tab = isolatedTabs(of: session).first(where: { tabNumbers[$0.id] == number }) {
             (found, space, host) = (tab, isolated.space, isolated.host)
         }
-        guard let tab = found else { throw AgentToolError("Tab \(number) not found: use tabs_context_mcp to list your tabs") }
+        guard let tab = found else {
+            if endedTabNumbers.contains(number) {
+                throw AgentToolError("""
+                    Tab \(number) closed with the conversation that opened it, whose connection to Lilo ended (lilo-mcp quit \
+                    or stayed away over 35 s): use tabs_create_mcp for a new one
+                    """)
+            }
+            throw AgentToolError("Tab \(number) not found: use tabs_context_mcp to list your tabs")
+        }
         // A tab whose engine was let go (the Agents space moved to another profile) gets a new one, unshown.
         guard let engine = host?.tabManager.ensureLiveEngine(forTabId: tab.id)
             ?? context?.windows.window(forTab: tab.id)?.tabManager.engineTab(for: tab.id)

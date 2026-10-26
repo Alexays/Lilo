@@ -117,6 +117,9 @@ final class SpaceBridgeHandler: BridgeHandler {
                         icon: icon,
                         color: color
                     )
+                    if let context = windowController?.context, id == context.settingsStore?.agentsSpaceId {
+                        context.agentControl.agentsSpaceMoved(to: profileUUID, by: nil)
+                    }
                 } catch {
                     Self.logger.error("Failed to move space \(id.uuidString, privacy: .public) to profile \(profileUUID.uuidString, privacy: .public): \(String(describing: error), privacy: .public)")
                 }
