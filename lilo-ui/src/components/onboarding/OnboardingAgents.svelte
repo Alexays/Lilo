@@ -63,4 +63,6 @@
   .spinner { width: 0.8em; height: 0.8em; border: 0.15em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .app { width: 30px; height: 30px; flex: none; }
+  /* One column on the right: Done, Connect and Copy line up whatever their label. */
+  .ob-done, .ob-btn.small { min-width: 84px; justify-content: center; text-align: center; }
 </style>
