@@ -91,3 +91,153 @@ describe('credentialed fetch', () => {
     assert.deepEqual(rejections, []);
   });
 });
+
+describe('credentialed XMLHttpRequest', () => {
+  (globalThis as any).ProgressEvent ??= class extends Event {
+    loaded: number;
+    total: number;
+    lengthComputable: boolean;
+    constructor(type: string, init: ProgressEventInit = {}) {
+      super(type);
+      this.loaded = init.loaded ?? 0;
+      this.total = init.total ?? 0;
+      this.lengthComputable = init.lengthComputable ?? false;
+    }
+  };
+  const sent: string[] = [];
+  // WebKit's request, its state behind prototype getters and its handler attributes fired by dispatchEvent.
+  class WebKitXHR extends EventTarget {
+    withCredentials = false;
+    responseType = '';
+    timeout = 0;
+    webkitState = 0;
+    url = '';
+    get readyState() { return this.webkitState; }
+    get status() { return 0; }
+    get responseText() { return ''; }
+    open(_method: string, url: string) { this.webkitState = 1; this.url = url; }
+    setRequestHeader() {}
+    send() { sent.push(`webkit ${this.url}`); }
+    abort() {}
+    override dispatchEvent(event: Event): boolean {
+      const result = super.dispatchEvent(event);
+      (this as any)[`on${event.type}`]?.call(this, event);
+      return result;
+    }
+  }
+  const scope: any = {
+    location: { protocol: 'chrome-extension:', host: 'abc', href: 'chrome-extension://abc/page.html' },
+    navigator: { userAgent: 'Chrome' },
+    fetch: async () => new Response('webkit'),
+    XMLHttpRequest: WebKitXHR,
+  };
+  installCredentialedFetch(scope);
+
+  /** The request's events as `type readyState`, once it ends. */
+  function events(xhr: any): Promise<string[]> {
+    const seen: string[] = [];
+    return new Promise((resolve) => {
+      for (const type of ['loadstart', 'readystatechange', 'progress', 'load', 'error', 'abort', 'timeout']) {
+        xhr.addEventListener(type, () => seen.push(`${type} ${xhr.readyState}`));
+      }
+      xhr.addEventListener('loadend', () => resolve([...seen, `loadend ${xhr.readyState}`]));
+    });
+  }
+
+  beforeEach(() => {
+    calls.length = 0;
+    sent.length = 0;
+    answer = null;
+  });
+
+  it('leaves to WebKit a request without credentials, to its own origin or synchronous', () => {
+    const plain = new scope.XMLHttpRequest();
+    plain.open('GET', 'https://example.com/a');
+    plain.send();
+    const own = new scope.XMLHttpRequest();
+    own.open('GET', '/b');
+    own.withCredentials = true;
+    own.send();
+    const sync = new scope.XMLHttpRequest();
+    sync.open('GET', 'https://example.com/c', false);
+    sync.withCredentials = true;
+    sync.send();
+    assert.deepEqual(sent, ['webkit https://example.com/a', 'webkit /b', 'webkit https://example.com/c']);
+    assert.equal(calls.length, 0);
+  });
+
+  it("answers Lilo's response with XMLHttpRequest's states and events", async () => {
+    answer = { status: 200, headers: [['content-type', 'application/json'], ['x-test', '1']], body: btoa('{"user":1}'), url: 'https://example.com/final', redirected: true };
+    const xhr = new scope.XMLHttpRequest();
+    xhr.open('POST', 'https://example.com/session');
+    xhr.setRequestHeader('X-Test', '1');
+    xhr.withCredentials = true;
+    xhr.responseType = 'json';
+    let loaded = false;
+    xhr.onload = () => { loaded = true; };
+    const ended = events(xhr);
+    xhr.send('x=1');
+    assert.equal(xhr.readyState, 1);
+    assert.deepEqual(await ended, ['loadstart 1', 'readystatechange 2', 'readystatechange 3', 'progress 3', 'readystatechange 4', 'load 4', 'loadend 4']);
+    assert.ok(loaded);
+    assert.deepEqual(xhr.response, { user: 1 });
+    assert.deepEqual([xhr.status, xhr.responseURL, xhr.getResponseHeader('X-Test')], [200, 'https://example.com/final', '1']);
+    assert.equal(xhr.getAllResponseHeaders(), 'content-type: application/json\r\nx-test: 1\r\n');
+    assert.equal(calls[0].method, 'POST');
+    assert.equal(atob(calls[0].body), 'x=1');
+    assert.deepEqual(calls[0].headers.find(([name]: string[]) => name === 'x-test'), ['x-test', '1']);
+    assert.equal(sent.length, 0);
+  });
+
+  it('answers text, an array buffer or a blob as its response type asks', async () => {
+    for (const [responseType, check] of [
+      ['', (xhr: any) => assert.deepEqual([xhr.response, xhr.responseText], ['café', 'café'])],
+      ['arraybuffer', (xhr: any) => assert.equal(xhr.response.byteLength, 5)],
+      ['blob', async (xhr: any) => assert.equal(await xhr.response.text(), 'café')],
+    ] as const) {
+      answer = { status: 200, headers: [['content-type', 'text/plain; charset=utf-8']], body: btoa('cafÃ©'), url: 'https://example.com/', redirected: false };
+      const xhr = new scope.XMLHttpRequest();
+      xhr.open('GET', 'https://example.com/');
+      xhr.withCredentials = true;
+      xhr.responseType = responseType;
+      const ended = events(xhr);
+      xhr.send();
+      await ended;
+      await check(xhr);
+    }
+  });
+
+  it('falls back to WebKit for a host the extension may not access', async () => {
+    const xhr = new scope.XMLHttpRequest();
+    xhr.open('GET', 'https://other.example/');
+    xhr.withCredentials = true;
+    xhr.send();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(sent, ['webkit https://other.example/']);
+  });
+
+  it('ends with error and status 0 when Lilo cannot reach the site', async () => {
+    answer = Promise.reject(new Error('Failed to fetch'));
+    (answer as Promise<unknown>).catch(() => {});
+    const xhr = new scope.XMLHttpRequest();
+    xhr.open('GET', 'https://example.com/');
+    xhr.withCredentials = true;
+    const ended = events(xhr);
+    xhr.send();
+    assert.deepEqual(await ended, ['loadstart 1', 'readystatechange 4', 'error 4', 'loadend 4']);
+    assert.equal(xhr.status, 0);
+  });
+
+  it('ends with abort, then unsent, once aborted', async () => {
+    answer = new Promise(() => {});
+    const xhr = new scope.XMLHttpRequest();
+    xhr.open('GET', 'https://example.com/');
+    xhr.withCredentials = true;
+    const ended = events(xhr);
+    xhr.send();
+    xhr.abort();
+    assert.deepEqual(await ended, ['readystatechange 4', 'abort 4', 'loadend 4']);
+    assert.equal(xhr.readyState, 0);
+    assert.throws(() => xhr.send(), { name: 'InvalidStateError' });
+  });
+});
