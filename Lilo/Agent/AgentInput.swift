@@ -70,10 +70,18 @@ enum AgentInput {
         webView.scrollWheel(with: event)
     }
 
+    /// WKWebView's text substitution switches, which AppKit's Edit menu toggles but Swift does not see.
+    static let substitutionKeys = ["automaticQuoteSubstitutionEnabled", "automaticDashSubstitutionEnabled", "automaticTextReplacementEnabled"]
+
     /// Types `text` one character at a time, as key presses the page sees.
     static func type(_ webView: WKWebView, text: String) async {
         await settleFocus()
         guard !text.isEmpty else { return }
+        // The user's smart quotes, dashes and text replacements would rewrite what the agent types ("--cask"
+        // into an em dash): off while it types. They are global to every web view, so they come back right after.
+        let saved = substitutionKeys.map { webView.value(forKey: $0) as? Bool ?? false }
+        for key in substitutionKeys { webView.setValue(false, forKey: key) }
+        defer { for (key, value) in zip(substitutionKeys, saved) { webView.setValue(value, forKey: key) } }
         for character in text {
             let string = String(character)
             pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),

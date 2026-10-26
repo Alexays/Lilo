@@ -85,6 +85,19 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertEqual(title, "Shop")
     }
 
+    func testPostingButtonsAreAsked() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><div role="button">Tout poster</div><button>Post all</button><button>Reply</button><button>Répondre</button></body>
+            """)
+        for label in ["Tout poster", "Post all", "Reply", "Répondre"] {
+            let reply = Task { try await click(label, tab: tab) }
+            control.answerConsent(try await pendingQuestion(), granted: false)
+
+            let result = try await reply.value
+            XCTAssertTrue(result.text.hasPrefix("[needs_user]"), "\(label): \(result.text)")
+        }
+    }
+
     func testEnterInAFormThatSendsIsAsked() async throws {
         let tab = try await shopTab()
         _ = try await js("document.getElementById('message').focus(); 1", tab: tab)

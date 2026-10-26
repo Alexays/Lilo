@@ -16,7 +16,8 @@ enum AgentInteractionTools {
             left_click_drag, zoom, scroll_to, hover.
             A click or Enter on a control that sends, pays, buys, orders, deletes, transfers, publishes or signs up \
             first waits up to 45 s for the user's approval in Lilo; refused or unanswered, it fails with [needs_user]: \
-            ask the user to do it or allow it.
+            ask the user to do it or allow it. A click or key returns once the requests it started end, up to 10 s, and \
+            names those still running: leaving the page then may cancel them.
             """, [
                 "action": ["type": "string", "enum": ["left_click", "right_click", "double_click", "triple_click", "type", "key",
                                                       "screenshot", "wait", "scroll", "left_click_drag", "zoom", "scroll_to", "hover"]],
@@ -262,6 +263,9 @@ enum AgentInteractionTools {
         }
     }
 
+    /// How long a click or key waits for the requests it started to end.
+    static var requestWait = Duration.seconds(10)
+
     private static func computer(_ arguments: [String: Any], session: AgentSession, control: AgentControl) async throws -> [AgentContent] {
         let (tab, engine) = try control.agentTab(arguments["tabId"], session: session)
         let webView = engine.wkWebView
@@ -290,6 +294,7 @@ enum AgentInteractionTools {
         }
         if action == "screenshot" || action == "zoom" { try await AgentDevTools.refuseTextLeaks(tabId: tab.id, control: control) }
         if pressesEnter { AgentCallSent.current?.write = true }
+        let loadsBefore = control.captures[tab.id].map { Set($0.indexByLoad.keys) } ?? []
         switch action {
         case let refAction where frame != nil && ["left_click", "right_click", "double_click", "triple_click", "hover", "scroll_to"].contains(refAction):
             let parameters: [String: Any] = ["ref": arguments["ref"] ?? "", "action": action, "modifiers": arguments["modifiers"] ?? ""]
@@ -349,6 +354,16 @@ enum AgentInteractionTools {
             let start = ContinuousClock.now
             while !engine.isLoading, ContinuousClock.now - start < .milliseconds(100) { try? await Task.sleep(for: .milliseconds(20)) }
             if engine.isLoading { await AgentTools.waitForLoad(engine, capture: control.captures[tab.id]) }
+            // A post or a payment sent by script: leaving the page before its request ends would cancel it.
+            if let capture = control.captures[tab.id] {
+                let running = { capture.indexByLoad.filter { !loadsBefore.contains($0.key) }.values.map { capture.requests[$0] } }
+                while !running().isEmpty, ContinuousClock.now - start < requestWait { try? await Task.sleep(for: .milliseconds(50)) }
+                let left = running()
+                if !left.isEmpty {
+                    let shown = left.prefix(3).map { "\($0.method) \($0.url.prefix(120))" }.joined(separator: ", ")
+                    reply += ". \(left.count) request\(left.count == 1 ? "" : "s") it started still running (\(shown)): leaving or reloading the page now may cancel them"
+                }
+            }
         }
         if control.recordingTabs.contains(tab.id) { await recordFrame(engine, tabId: tab.id, control: control) }
         return [.text(reply)]

@@ -319,7 +319,7 @@
   }
 
   // Matched as whole words once lowercased and stripped of accents.
-  const consequentialWords = /\b(send|pay|payment|buy|purchase|order|checkout|delete|transfer|publish|sign ?up|register|subscribe|donate|envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|inscription|inscrire|souscrire)\b/
+  const consequentialWords = /\b(send|pay|payment|buy|purchase|order|checkout|delete|transfer|publish|post|tweet|reply|sign ?up|register|subscribe|donate|envoyer|payer|paiement|acheter|commander|supprimer|virement|transferer|publier|poster|repondre|inscription|inscrire|souscrire)\b/
   // The label of the control a click on `ref` or at (x, y), or Enter in the focused field, would trigger, when it
   // sends, pays, buys, orders, deletes, transfers, publishes or signs up; null otherwise.
   const consequential = ({ ref: id, x, y, enter }) => {

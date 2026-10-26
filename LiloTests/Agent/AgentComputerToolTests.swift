@@ -367,6 +367,54 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(value, "every key landed", "read right after the call, with no wait")
     }
 
+    func testAClickWaitsForTheRequestItStartedThenNamesOneStillRunning() async throws {
+        let server = try await TinyHTTPServer { request in
+            if request.hasPrefix("POST /post") { Thread.sleep(forTimeInterval: 1) }
+            if request.hasPrefix("POST /stall") { Thread.sleep(forTimeInterval: 5) }
+            return request.hasPrefix("GET / ")
+                ? ("200 OK", ["Content-Type: text/html"], Data("""
+                    <!doctype html><body style="margin:0"><script>window.done = []</script>
+                    <button style="position:absolute;left:20px;top:20px;width:200px;height:60px"
+                      onclick="fetch('/post', { method: 'POST' }).then(() => done.push('post'))">Post</button>
+                    <button style="position:absolute;left:20px;top:120px;width:200px;height:60px"
+                      onclick="fetch('/stall', { method: 'POST' })">Stall</button></body>
+                    """.utf8))
+                : ("200 OK", ["Content-Type: text/plain"], Data("ok".utf8))
+        }
+        let tab = try await newAgentTab()
+        _ = await client.callTool("navigate", ["tabId": tab, "url": "http://127.0.0.1:\(server.port)/"])
+        context.settingsStore.set(AgentControl.asksBeforeActionsKey, value: "false")
+        let wait = AgentInteractionTools.requestWait
+        defer { AgentInteractionTools.requestWait = wait }
+        AgentInteractionTools.requestWait = .seconds(2)
+
+        let posted = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 50]])
+        let post = control.captures.values.compactMap { $0.requests.last { $0.url.hasSuffix("/post") } }.first
+        let stalled = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 150]])
+
+        XCTAssertEqual(post?.status, 200, "the request ended before the click returned: \(posted.text)")
+        XCTAssertFalse(posted.text.contains("still running"), posted.text)
+        XCTAssertTrue(stalled.text.contains("1 request it started still running (POST http://127.0.0.1:\(server.port)/stall)"), stalled.text)
+    }
+
+    func testTypeKeepsQuotesAndDashesAsTypedAndLeavesTheUsersSettings() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0"><div id="f" contenteditable style="position:absolute;left:20px;top:20px;width:400px;height:30px"></div></body>
+            """)
+        let webView = try engine(forTab: tab).wkWebView
+        let keys = AgentInput.substitutionKeys
+        let saved = keys.map { webView.value(forKey: $0) as? Bool ?? false }
+        defer { for (key, value) in zip(keys, saved) { webView.setValue(value, forKey: key) } }
+        for key in keys { webView.setValue(true, forKey: key) }
+        _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 35]])
+
+        _ = await client.callTool("computer", ["tabId": tab, "action": "type", "text": #"it's "ok" -- brew install --cask"#])
+
+        let value = try await js("f.textContent", tab: tab) as? String
+        XCTAssertEqual(value, #"it's "ok" -- brew install --cask"#)
+        XCTAssertEqual(keys.map { webView.value(forKey: $0) as? Bool }, [true, true, true], "the user's settings are back")
+    }
+
     func testSelectAllThenDeleteEmptiesAField() async throws {
         let tab = try await agentTab(showing: """
             <!doctype html><body style="margin:0"><input id="f" value="hello" style="position:absolute;left:20px;top:20px;width:200px;height:30px"></body>
