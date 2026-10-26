@@ -82,17 +82,18 @@ final class ImportScaleTests: XCTestCase {
                 XCTAssertFalse(tab.isPinned || tab.isClosed || tab.isBookmarked, "\(tab.title) in \(space.name)")
             }
             XCTAssertEqual(pinned + unpinned, space.tabCount, space.name)
+            XCTAssertEqual(state.tree.bookmarked.map(Self.title), space.favorites, "favorite folders are flattened into \(space.name)")
             let splits = (state.tree.pinned + state.tree.unpinned).compactMap { node -> SplitLayout? in
                 if case let .folder(folder) = node { folder.splitLayout } else { nil }
             }
             XCTAssertEqual(splits.map(\.paneIds.count), [2, 3, 4], "splits in \(space.name)")
         }
         let live = try XCTUnwrap(context.browserState.space(id: activeSpaceId)?.spaceTab.state.tree)
-        XCTAssertEqual(live.bookmarked.map(Self.title), arc.favorites["Default"], "favorite folders are flattened into the active space")
+        XCTAssertEqual(live.bookmarked, [], "favorites go with the Arc spaces, not the active space")
         for profile in Self.arcProfiles.dropFirst() {
             let lilo = try XCTUnwrap(context.spaceManager.spaces.first { $0.name == Self.arcProfileNames[profile] })
-            XCTAssertEqual(try SpaceTabStateStore(dbPool: context.dbManager.pool(for: lilo.profileId)).load(spaceId: lilo.id)?.tree.bookmarked.map(Self.title),
-                           arc.favorites[profile], "\(profile) favorites land in its own profile")
+            XCTAssertEqual(try SpaceTabStateStore(dbPool: context.dbManager.pool(for: lilo.profileId)).load(spaceId: lilo.id)?.tree.bookmarked,
+                           [], "nor the space named after \(profile)")
         }
 
         let spaces = context.spaceManager.spaces.count
@@ -332,6 +333,8 @@ final class ImportScaleTests: XCTestCase {
         var unpinnedRoots: [String] = []
         var unpinnedFolders: [[String]] = []
         var tabCount = 0
+        /// Its profile's, flattened: Arc shows them in every space.
+        var favorites: [String] = []
     }
 
     /// `spaces` spaces spread over three profiles, each with `chains` folder chains six levels deep, one past Lilo's cap (a split inside the
@@ -339,7 +342,7 @@ final class ImportScaleTests: XCTestCase {
     /// files carry: no URL, arc:// URLs, easels, dangling children, a cycle, duplicates, empty titles, a repeated space
     /// name and a code-point-only icon.
     private func writeArc(spaces: Int, chains: Int, unpinned: Int, spacePrefix: String = "Espace")
-        throws -> (spaces: [ExpectedSpace], favorites: [String: [String]], tabCount: Int) {
+        throws -> (spaces: [ExpectedSpace], tabCount: Int) {
         var items: [Any] = []
         var counter = 0
         func add(_ id: String, _ title: String?, children: [String] = [], data: [String: Any]) {
@@ -376,7 +379,7 @@ final class ImportScaleTests: XCTestCase {
             // Space 4 shares space 1's name and profile: it must stay a space of its own.
             let title = "\(spacePrefix) \(index == 4 ? 1 : index) ✨"
             let host = "s\(index).\(spacePrefix.lowercased()).example"
-            var space = ExpectedSpace(name: index == 4 ? "\(title) 2" : title, icon: "🌐", color: "#5865f2")
+            var space = ExpectedSpace(name: index == 4 ? "\(title) 2" : title, icon: "🌐", color: "#5865f2", favorites: favorites[profile] ?? [])
             var info: [String: Any] = [:]
             switch index % 3 {
             case 0:
@@ -484,8 +487,7 @@ final class ImportScaleTests: XCTestCase {
         let cache = Self.arcProfileNames.mapValues { ["name": $0] }
         try JSONSerialization.data(withJSONObject: ["profile": ["info_cache": cache]]).write(to: userData.appendingPathComponent("Local State"))
         try JSONSerialization.data(withJSONObject: root).write(to: arcRoot.appendingPathComponent("StorableSidebar.json"))
-        // The first Arc profile's favorites land in the active space, the others in the space named after their profile.
-        return (expected, favorites, expected.map(\.tabCount).reduce(0, +) + favorites.values.map(\.count).reduce(0, +))
+        return (expected, expected.map { $0.tabCount + $0.favorites.count }.reduce(0, +))
     }
 
     /// Folders of 40 bookmarks: a tenth on the bar, nested two deep, the rest under "Other bookmarks".
