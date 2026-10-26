@@ -11,6 +11,7 @@
   const enabled = $derived(getSetting("agentControlEnabled", "false") === "true");
   // Only the apps on this Mac, or already pointed at Lilo.
   const clients = $derived(getAgentClientsSnapshot().clients.filter((client) => client.icon || client.configured));
+  let otherCopied = $state(false);
 </script>
 
 <h3>{t("onboarding.agents.title")}</h3>
@@ -39,6 +40,17 @@
       {/if}
     </div>
   {/each}
+  <div class="ob-row">
+    <span class="ob-icon"><SettingsIcon name="grid" /></span>
+    <span class="ob-text">{t("settings.items.agentOther.title")}<small>{t("settings.items.agentOther.description")}</small></span>
+    {#if otherCopied}
+      <span class="ob-done">{t("onboarding.agents.copied")}</span>
+    {:else}
+      <button class="ob-btn small" aria-label={t("settings.agents.copy")} onclick={() => { settingsActions.connectAgentClient("other"); otherCopied = true; }}>
+        {t("common.copy")}
+      </button>
+    {/if}
+  </div>
 {/if}
 
 <div class="ob-foot">
