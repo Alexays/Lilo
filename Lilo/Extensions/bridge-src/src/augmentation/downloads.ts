@@ -1,6 +1,7 @@
 import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { createGapEventsFromNames, gapMethod } from '../shared/gap-event.ts';
+import { ChromeEvent } from '../shared/chrome-event.ts';
 
 export const downloadsAugmentation = {
   download(options: any, callback?: (downloadId: number) => void) {
@@ -34,5 +35,7 @@ export const downloadsAugmentation = {
   showDefaultFolder() {
     gapCall<void>('downloads', 'showDefaultFolder', {}).catch(() => {});
   },
-  ...createGapEventsFromNames('downloads', ['onCreated', 'onChanged', 'onErased', 'onDeterminingFilename']),
+  ...createGapEventsFromNames('downloads', ['onCreated', 'onChanged', 'onErased']),
+  // Native never asks listeners to name a download, so listening costs no round trip.
+  onDeterminingFilename: new ChromeEvent<[unknown, unknown]>(),
 };

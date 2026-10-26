@@ -80,6 +80,58 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertEqual(firstId, b.id)
     }
 
+    func testSearchMatchesChromesQueryFilenameAndInProgressState() async throws {
+        var paused = DownloadItem(
+            id: nil, url: "https://example.com/q3/report.pdf", filename: "report.pdf",
+            destinationPath: "/tmp/report.pdf", bytesReceived: 10, totalBytes: 100,
+            state: .paused, startedAt: Date(timeIntervalSinceNow: -60), fileMissing: false
+        )
+        var draft = paused
+        draft.url = "https://example.com/q3/report-draft.pdf"
+        draft.destinationPath = "/tmp/report-draft.pdf"
+        draft.state = .complete
+        draft.startedAt = Date()
+        try store.insert(&paused)
+        try store.insert(&draft)
+
+        func ids(_ payload: [String: Any]) async -> [Int64]? {
+            (await handler.handle(makeBridgeMessage(action: "downloads.search", payload: payload)) as? [[String: Any]])?
+                .compactMap { $0["id"] as? Int64 }
+        }
+
+        let inProgress = await ids(["state": "in_progress", "limit": 1])
+        let query = await ids(["query": ["q3", "-draft"]])
+        let byPath = await ids(["filename": "/tmp/report-draft.pdf", "query": ["report"]])
+        let byBasename = await ids(["filename": "report-draft.pdf"])
+        XCTAssertEqual(inProgress, [paused.id!], "a paused download is in_progress, and the limit applies after the state")
+        XCTAssertEqual(query, [paused.id!])
+        XCTAssertEqual(byPath, [draft.id!])
+        XCTAssertEqual(byBasename, [])
+    }
+
+    func testDownloadRejectsAFilenameOutsideTheDownloadsFolder() async {
+        for filename in ["", "/tmp/x.txt", "../x.txt", "a/../x.txt", "a//x.txt", "./x.txt", "a/", ".hidden"] {
+            let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: ["url": "data:text/plain,x", "filename": filename]))
+            XCTAssertEqual((result as? BridgeError)?.message, "Invalid filename", filename)
+        }
+    }
+
+    func testDownloadIntoASubfolderCreatesIt() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("gap-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+
+        let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: ["url": "data:text/plain,x", "filename": "reports/2026/x.txt"]))
+        let id = try XCTUnwrap(result as? Int64)
+        await manager.cancel(id: id)
+
+        var isDirectory: ObjCBool = false
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("reports/2026").path, isDirectory: &isDirectory))
+        XCTAssertTrue(isDirectory.boolValue)
+        XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("reports/2026/x.txt").path)
+    }
+
     func testEraseReturnsRemovedIds() async throws {
         var item = DownloadItem(
             id: nil, url: "https://example.com/c.zip", filename: "c.zip",

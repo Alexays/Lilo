@@ -13,6 +13,8 @@ mockGapAPI((msg: any) => {
 (globalThis as any).chrome = { runtime: {} };
 
 const { downloadsAugmentation } = await import('./downloads.ts');
+const { GapChromeEvent } = await import('../shared/gap-event.ts');
+const { ChromeEvent } = await import('../shared/chrome-event.ts');
 
 describe('downloadsAugmentation', () => {
   beforeEach(() => {
@@ -50,5 +52,10 @@ describe('downloadsAugmentation', () => {
     const result = await downloadsAugmentation.erase({ state: 'complete' });
 
     assert.deepEqual(result, [3, 4]);
+  });
+
+  it('onDeterminingFilename is a local event that reports no listener to native', () => {
+    assert.ok(downloadsAugmentation.onDeterminingFilename instanceof ChromeEvent);
+    assert.ok(!(downloadsAugmentation.onDeterminingFilename instanceof GapChromeEvent));
   });
 });

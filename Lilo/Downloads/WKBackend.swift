@@ -141,7 +141,7 @@ final class WKBackend: NSObject {
             let name = destination.deletingPathExtension().lastPathComponent
             let ext = destination.pathExtension
             let newName = ext.isEmpty ? "\(name) (\(counter))" : "\(name) (\(counter)).\(ext)"
-            finalURL = directory.appendingPathComponent(newName)
+            finalURL = destination.deletingLastPathComponent().appendingPathComponent(newName)
             counter += 1
         }
         return finalURL
