@@ -454,4 +454,6 @@ test("seven clicks on the version row unlock Lilo's developer tools, once", asyn
 
 	expect((await sentCommands(page)).filter((c) => c.action === "unlockDeveloperTools")).toHaveLength(1);
 	await expect(row).toContainText("developer tools are now in the Develop menu");
+	const button = (await row.getByRole("button", { name: "Check now" }).boundingBox())!;
+	expect(button.x, "the button sits beside the text, as on every row").toBeGreaterThan((await row.locator(".ui-list-row-title").boundingBox())!.x + 100);
 });
