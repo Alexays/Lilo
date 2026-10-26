@@ -1,0 +1,387 @@
+---
+import Flower from "../../../components/Flower.astro";
+import Layout from "../../../layouts/Layout.astro";
+
+const lang = "fr";
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/ai-agents/",
+        name: "Navigateur pour agents IA",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/fr/ai-agents/#faq",
+    "@type": "FAQPage",
+    inLanguage: "fr",
+    mainEntity: [],
+    url: "https://getlilo.app/fr/ai-agents/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo Browser : un vrai navigateur Mac pour vos agents IA, avec serveur MCP"
+  description="Donnez à Claude Code, Codex, Cursor ou tout client MCP un vrai navigateur WebKit sur votre Mac. Les agents travaillent dans leur propre espace, et Lilo vous demande avant qu'ils envoient, paient ou suppriment. Gratuit et open source."
+  schema={schema}
+>
+  <main id="main-content">
+    <div class="top">
+      <div class="wrap">
+        <div class="hero-copy">
+          <Flower id="hero-flower" class="mark bloom" />
+          <h1>
+            Un navigateur
+            <br />
+            <span>pour vos agents IA.</span>
+          </h1>
+          <p class="sub">
+            Lilo intègre un serveur MCP. Claude Code, Codex, Cursor ou tout
+            client MCP ouvrent des onglets, cliquent, tapent, lisent les pages,
+            la console et le réseau, dans un vrai navigateur à côté de vous,
+            dans leur propre espace. Lilo n'embarque aucune IA&nbsp;: gardez
+            l'agent que vous utilisez déjà.
+          </p>
+          <div class="cta">
+            <a
+              class="pill dark"
+              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            >
+              Télécharger pour Mac
+            </a>
+            <a class="pill soft" href="#connect">
+              Connecter un agent
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="band" id="tools">
+      <div class="wrap">
+        <div class="head">
+          <span class="tag">Ce que font les agents</span>
+          <h2>Un vrai navigateur, pas un navigateur sans interface.</h2>
+          <p>
+            Les agents pilotent les mêmes onglets WebKit que vous, donc vous les
+            voyez travailler et pouvez reprendre la main à tout moment.
+          </p>
+        </div>
+        <div class="feat-list two">
+          <div>
+            <b>Naviguer.</b> Ouvrir, parcourir et fermer des onglets dans leur
+            propre dossier, cliquer, taper, remplir des formulaires et faire des
+            captures d'écran.
+          </div>
+          <div>
+            <b>Lire.</b> La page sous forme d'arbre d'accessibilité avec des
+            références d'éléments, son texte, la console et les requêtes réseau.
+          </div>
+          <div>
+            <b>Déboguer.</b> Commandes devtools, simulation du réseau et
+            émulation, pour tester le site que vous construisez en localhost.
+          </div>
+          <div>
+            <b>Requêter.</b> Envoyer une requête HTTP depuis un onglet, comme la
+            page le ferait, avec son origine, ses règles CORS et ses cookies.
+            Les cookies et les en-têtes d'autorisation ne sont jamais renvoyés à
+            l'agent.
+          </div>
+          <div>
+            <b>Exécuter.</b> Un programme JavaScript qui appelle les autres
+            outils en boucle, en un seul appel, au lieu de dizaines
+            d'allers-retours.
+          </div>
+          <div>
+            <b>Emprunter un profil.</b> Les agents démarrent connectés nulle
+            part. Quand une tâche a besoin d'un de vos comptes, ils peuvent
+            emprunter un profil une fois que vous l'avez autorisé.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="safety">
+      <div class="wrap">
+        <div class="head">
+          <span class="tag">Vous gardez la main</span>
+          <h2>Lilo vous demande quand ça compte.</h2>
+          <p>
+            Les agents ne prennent jamais votre clavier, votre souris ni vos
+            onglets, et les clics importants vous attendent.
+          </p>
+        </div>
+        <div class="shields two">
+          <div class="shield">
+            <span class="sic" style="background:#b39df4">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="8" height="16" rx="2" />
+                <rect x="13" y="4" width="8" height="16" rx="2" />
+              </svg>
+            </span>
+            <div>
+              <h3>Leur propre espace</h3>
+              <p>
+                Les agents travaillent dans l'espace Agents, avec un profil
+                jetable effacé après chaque session. Ils ne voient jamais un
+                espace privé et n'y agissent jamais.
+              </p>
+            </div>
+          </div>
+          <div class="shield">
+            <span class="sic" style="background:#f4bb8c">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z" />
+              </svg>
+            </span>
+            <div>
+              <h3>Envoyer, payer, supprimer</h3>
+              <p>
+                Avant qu'un agent clique sur ce qui envoie, paie, achète,
+                supprime, publie ou crée un compte, Lilo vous demande&nbsp;:
+                autoriser une fois, toujours autoriser sur le site, ou refuser.
+              </p>
+            </div>
+          </div>
+          <div class="shield">
+            <span class="sic" style="background:#9bd3b4">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
+            </span>
+            <div>
+              <h3>Autorisé une fois, par programme</h3>
+              <p>
+                La première fois qu'un client se connecte, vous l'autorisez.
+                L'autorisation est liée au programme derrière la connexion, pas
+                au nom qu'il annonce.
+              </p>
+            </div>
+          </div>
+          <div class="shield">
+            <span class="sic" style="background:#9ac7eb">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 3h9l4 4v14H6z" />
+                <path d="M14 3v5h5" />
+              </svg>
+            </span>
+            <div>
+              <h3>Vos fichiers et vos cookies</h3>
+              <p>
+                Lilo demande toujours avant qu'un agent transmette un de vos
+                fichiers à une page, et avant qu'une requête autre que GET ou
+                HEAD parte avec les cookies d'un de vos profils.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="connect">
+      <div class="wrap steps">
+        <div class="head" style="margin:0">
+          <span class="tag">Connexion</span>
+          <h2>Un interrupteur, un clic.</h2>
+          <p>
+            Les agents se connectent à Lilo par un socket local sur votre Mac.{" "}
+            <a href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">
+              Lire la documentation des agents (en anglais)
+            </a>
+            .
+          </p>
+        </div>
+        <div class="claims">
+          <div class="claim">
+            <span class="ic" style="background:#b39df4">
+              1
+            </span>
+            <div>
+              <h3>Activez-le</h3>
+              <p>
+                Réglages, Agents IA, «&nbsp;Laisser les agents IA utiliser
+                Lilo&nbsp;». C'est désactivé tant que vous ne l'activez pas.
+              </p>
+            </div>
+          </div>
+          <div class="claim">
+            <span class="ic" style="background:#9ac7eb">
+              2
+            </span>
+            <div>
+              <h3>Connectez votre client</h3>
+              <p>
+                Connecter ajoute Lilo à Claude Code, Claude Desktop, Codex ou
+                Cursor. Tout autre client MCP copie la configuration.
+              </p>
+            </div>
+          </div>
+          <div class="claim">
+            <span class="ic" style="background:#9bd3b4">
+              3
+            </span>
+            <div>
+              <h3>Demandez à votre agent</h3>
+              <p>
+                Ses onglets apparaissent dans l'espace Agents pendant qu'il
+                travaille, et Lilo vous demande quand un clic compte.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="faq">
+      <div class="wrap faq">
+        <div class="head" style="margin:0">
+          <span class="tag">Questions</span>
+          <h2>À propos des agents.</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Lilo intègre-t-il de l'IA&nbsp;?</summary>
+            <p>
+              Non. Lilo n'embarque ni modèle ni assistant. Il donne aux agents
+              que vous utilisez déjà un navigateur où travailler, par son
+              serveur MCP.
+            </p>
+          </details>
+          <details>
+            <summary>Quels agents fonctionnent avec Lilo&nbsp;?</summary>
+            <p>
+              Claude Code, Claude Desktop, Codex et Cursor se connectent en un
+              clic. Tout autre client MCP fonctionne avec la configuration que
+              Lilo copie pour vous.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Les agents voient-ils mes onglets et mes comptes&nbsp;?
+            </summary>
+            <p>
+              Pas par défaut. Ils travaillent dans l'espace Agents, avec un
+              profil effacé après chaque session et connecté nulle part. Ils
+              peuvent emprunter un de vos profils pour une tâche une fois que
+              vous l'avez autorisé, et ne voient jamais un espace privé.
+            </p>
+          </details>
+          <details>
+            <summary>
+              La demande d'autorisation est-elle un bac à sable&nbsp;?
+            </summary>
+            <p>
+              Non. C'est un filet de sécurité pour les agents bien élevés. Le
+              code qu'un agent exécute lui-même, en JavaScript ou par des
+              commandes devtools, n'est pas couvert&nbsp;: ne connectez que des
+              agents de confiance.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Est-ce que quelque chose passe par un serveur&nbsp;?
+            </summary>
+            <p>
+              Lilo ne fait tourner aucun serveur et ne nous envoie rien. Les
+              agents lui parlent par un socket local. Ce qu'un agent lit part
+              chez le fournisseur du modèle qu'il utilise, comme pour tout autre
+              outil qu'il lance.
+            </p>
+          </details>
+          <details>
+            <summary>Est-ce gratuit&nbsp;?</summary>
+            <p>
+              Oui. Lilo, serveur MCP compris, est gratuit et open source sous{" "}
+              <a href="https://github.com/Alexays/Lilo/blob/main/LICENSE">
+                licence MIT
+              </a>
+              .
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap end">
+        <span class="tag">Gratuit et open source</span>
+        <Flower id="end-flower" class="mark small-mark" />
+        <h2>Donnez un navigateur à votre agent.</h2>
+        <p>
+          Activez les agents IA dans les Réglages, connectez votre client, et
+          regardez-le travailler à côté de vous.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <a
+            class="pill dark"
+            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+            style="padding:14px 22px"
+          >
+            Télécharger pour Mac
+          </a>
+          <a
+            class="pill soft"
+            href="/fr/"
+            style="padding:14px 22px;background:color-mix(in srgb, var(--tint) 30%, var(--surface))"
+          >
+            Retour à Lilo
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</Layout>

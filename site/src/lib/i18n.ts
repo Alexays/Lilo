@@ -2,6 +2,7 @@ export type Locale = "en" | "fr";
 
 export const copy = {
   en: {
+    aiAgents: "Browser for AI agents",
     arcAlternative: "Arc alternative",
     changelog: "Changelog",
     changelogDescription:
@@ -81,6 +82,7 @@ export const copy = {
     viewExtension: "View extension",
   },
   fr: {
+    aiAgents: "Navigateur pour agents IA",
     arcAlternative: "Alternative à Arc",
     changelog: "Nouveautés",
     changelogDescription:
