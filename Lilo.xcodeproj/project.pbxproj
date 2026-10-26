@@ -474,6 +474,7 @@
 		CD791D22DFB974BA1EAC96C9 /* AgentControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45EC459535117517B583FDE /* AgentControl.swift */; };
 		CED061D4C61DBFC02926072A /* SettingsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D69528864D08E338A2920B /* SettingsBridgeHandler.swift */; };
 		CEE94D0A85A5AAE532FBC5AB /* TabRenameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B4D0EE5722E43A281A69A3A /* TabRenameTests.swift */; };
+		CEEE790F52C7B471ED65E0EF /* WKWebViewTabTrackingPreventionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00A9029C20B80F88D6D39E /* WKWebViewTabTrackingPreventionTests.swift */; };
 		CF86B7CBBFCB53878E8F5F33 /* SessionRestorePreloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AEC88F04C1DC1D3BF3EBFC /* SessionRestorePreloadTests.swift */; };
 		CFA61DFF3EA0EFB4B920F10C /* SitePermissionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E458A8C4075DA751CB1D872 /* SitePermissionStoreTests.swift */; };
 		CFAB0EF281F26A8CB865F66F /* PageFindController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E352D8AF7C9DBB3E4F57EB /* PageFindController.swift */; };
@@ -1229,6 +1230,7 @@
 		FE33F1BC16095EB5A431DA4D /* AppIconPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconPreference.swift; sourceTree = "<group>"; };
 		FEA7B781D2407BC214A591CB /* OmniboxBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniboxBridgeHandlerTests.swift; sourceTree = "<group>"; };
 		FECC304FF06C06D6169A35F4 /* SystemPowerBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPowerBackend.swift; sourceTree = "<group>"; };
+		FF00A9029C20B80F88D6D39E /* WKWebViewTabTrackingPreventionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabTrackingPreventionTests.swift; sourceTree = "<group>"; };
 		FF3EA5172838EE61F815CAF0 /* SidePanelBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidePanelBridgeHandler.swift; sourceTree = "<group>"; };
 		FF59FA943F792C5E3F23A869 /* ChangesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesView.swift; sourceTree = "<group>"; };
 		FF7117041CE128545835AF81 /* WebstoreInstallHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebstoreInstallHandlerTests.swift; sourceTree = "<group>"; };
@@ -2146,6 +2148,7 @@
 				24395920E5020A85C239D981 /* WKWebViewTabLoggingTests.swift */,
 				6927B2D3B13F62F69A3A4523 /* WKWebViewTabSourceTests.swift */,
 				960DFFCE802FDF5C7EAE7DA7 /* WKWebViewTabTeardownTests.swift */,
+				FF00A9029C20B80F88D6D39E /* WKWebViewTabTrackingPreventionTests.swift */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -3106,6 +3109,7 @@
 				B2A7CD0EC82D30EA10A1E0D7 /* WKWebViewTabLoggingTests.swift in Sources */,
 				E3FCB3DD20185E64FB3652A3 /* WKWebViewTabSourceTests.swift in Sources */,
 				A4061B705534BA0A2B0D902D /* WKWebViewTabTeardownTests.swift in Sources */,
+				CEEE790F52C7B471ED65E0EF /* WKWebViewTabTrackingPreventionTests.swift in Sources */,
 				5222223C3A352015E7834EBA /* WallpaperColorTests.swift in Sources */,
 				FFD523CFCA6F12C004533A49 /* WebInspectorRecoveryTests.swift in Sources */,
 				8F11135AB1781461D345AFA0 /* WebKitGapTests.swift in Sources */,

@@ -93,7 +93,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
             ("WKFrameInfo", ["_handle"]),
             ("_WKFrameHandle", ["frameID"]),
             ("_WKFrameTreeNode", ["info", "childFrames"]),
-            ("WKWebsiteDataStore", ["_setResourceLoadStatisticsEnabled:", "_resourceLoadStatisticsEnabled", "_clearResourceLoadStatistics:"]),
+            ("WKWebsiteDataStore", ["_setResourceLoadStatisticsEnabled:", "_resourceLoadStatisticsEnabled", "_clearResourceLoadStatistics:", "_logUserInteraction:completionHandler:"]),
         ]
         for (className, selectors) in expectations {
             guard let cls = NSClassFromString(className) else {

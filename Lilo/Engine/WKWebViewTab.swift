@@ -119,6 +119,7 @@ final class WKWebViewTab: NSObject {
     let createdAt = Date()
     private let webView: WKWebView
     private var webInspectorRequestedAt: ContinuousClock.Instant?
+    private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none
@@ -484,6 +485,21 @@ final class WKWebViewTab: NSObject {
         let selector = NSSelectorFromString("_preconnectToServer:")
         guard webView.responds(to: selector) else { return }
         webView.perform(selector, with: url)
+    }
+
+    /// Records a press on the page as user interaction for tracking prevention, once an hour per site.
+    /// WebKit drops the interactions it sees itself, so its classifier would purge the cookies (and the
+    /// sign-in) of sites the user does use. A no-op while tracking prevention is off.
+    func logUserInteraction() {
+        guard let url = webView.url, let host = url.host else { return }
+        let now = ContinuousClock.now
+        if let last = lastLoggedInteraction, last.host == host, now - last.at < .seconds(3600) { return }
+        lastLoggedInteraction = (host, now)
+        let store = webView.configuration.websiteDataStore
+        let selector = NSSelectorFromString("_logUserInteraction:completionHandler:")
+        guard store.responds(to: selector) else { return }
+        typealias LogUserInteraction = @convention(c) (AnyObject, Selector, NSURL, @escaping @convention(block) () -> Void) -> Void
+        unsafeBitCast(store.method(for: selector), to: LogUserInteraction.self)(store, selector, url as NSURL) {}
     }
 
     func reload() {
