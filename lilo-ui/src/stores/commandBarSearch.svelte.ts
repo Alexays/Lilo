@@ -398,12 +398,15 @@ function getLockedFolderResults(query: string, locked = getLockedFolderRoots()):
 	const matched = new Set<string>();
 	for (const tab of getOpenTabs()) {
 		const rootId = tab.groupId ? locked.get(tab.groupId) : undefined;
-		if (rootId && !matched.has(rootId) && fuzzyMatch(needle, tabHaystack(tab))) matched.add(rootId);
+		if (!rootId || matched.has(rootId)) continue;
+		// Same bar as the all-scope open tabs: a letter-by-letter scatter across a long URL is no match.
+		const match = fuzzyMatch(needle, tabHaystack(tab), (tab.customTitle || tabDisplayTitle(tab.title)).length);
+		if (match && match.score >= 0) matched.add(rootId);
 	}
 	return [...matched].map((folderId) => {
 		const name = folders.get(folderId)?.name ?? "";
 		return createResult(`locked-${folderId}`, "lockedFolder", t("commandBar.lockedFolderResults", { name }), { folderId }, {
-			icon: name.charAt(0).toUpperCase(),
+			icon: Array.from(name)[0]?.toUpperCase() ?? "",
 			hint: t("tabFolder.unlock"),
 		});
 	});

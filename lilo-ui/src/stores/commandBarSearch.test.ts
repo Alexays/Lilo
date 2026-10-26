@@ -129,6 +129,39 @@ test("all-scope search: locked folder tabs never surface by title", () => {
 	resetTabs();
 });
 
+test("all-scope search: a locked folder needs a real match, not letters scattered across a URL", () => {
+	resetTabs();
+	const url = "https://shop.example.com/bons-plans/kitchen-crepe-maker-40-cm";
+	const initialState = {
+		activeSpaceId: "space",
+		activeTabId: "active-tab",
+		sidebarWidth: 0,
+		sidebarVisible: true,
+		spaces: [{ id: "space", name: "Space", icon: "S", color: "#5865f2", profileId: "profile", isPrivate: false, sortOrder: 0 }],
+		tabs: [
+			tab("active-tab", "Active", "https://active.example"),
+			{ ...tab("deal-tab", "Crepe maker", url), groupId: "vault" },
+		],
+		treeItems: [],
+		folders: [
+			{ id: "vault", spaceId: "space", name: "🍳", color: "#f06aa6", isCollapsed: true, isLocked: true, lock: { allowsBiometrics: false, biometricsAvailable: false } },
+		],
+	};
+	applySidebarTabInitialState(initialState);
+	applySidebarFolderInitialState(initialState);
+
+	const lockedFor = (query: string) => computeResults(
+		{ parsed: parseInput(query), historyResults: [], searchSuggestions: [], searchEngine: "google" },
+		0,
+	).results.filter((result) => result.kind === "lockedFolder");
+
+	assert.equal(lockedFor("monip").length, 0);
+	const locked = lockedFor("crepe");
+	assert.equal(locked.length, 1);
+	assert.equal(locked[0]?.icon, "🍳");
+	resetTabs();
+});
+
 test("all-scope search: a tab in a subfolder of a locked folder stays hidden too", () => {
 	resetTabs();
 	const initialState: BridgeInitialStatePayload = {
