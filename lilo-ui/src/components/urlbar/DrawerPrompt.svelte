@@ -1,5 +1,6 @@
-<!-- A question asked from the address bar: icon, message, then a quiet dismiss, an optional second
-     answer, and the accent confirm. Shared by the permission requests and the default-browser invite. -->
+<!-- A question asked from the address bar: icon, message, an optional second answer on its own row,
+     then a quiet dismiss beside the accent confirm. Shared by the permission requests and the
+     default-browser invite. -->
 <script lang="ts">
   import type { Snippet } from "svelte";
   import UiButton from "../ui/UiButton.svelte";
@@ -9,7 +10,7 @@
     icon: UrlDrawerIconName;
     dismissLabel: string;
     confirmLabel: string;
-    /** A second way to agree, shown between the two. */
+    /** A second way to agree, shown above the two. */
     alternateLabel?: string;
     confirmDisabled?: boolean;
     showActions?: boolean;
@@ -41,9 +42,11 @@
 </div>
 {#if showActions}
   <div class="prompt-actions">
-    <UiButton variant="ghost" onclick={ondismiss}>{dismissLabel}</UiButton>
     {#if alternateLabel && onalternate}<UiButton onclick={onalternate}>{alternateLabel}</UiButton>{/if}
-    <UiButton variant="primary" disabled={confirmDisabled} onclick={onconfirm}>{confirmLabel}</UiButton>
+    <div class="prompt-answers">
+      <UiButton variant="ghost" onclick={ondismiss}>{dismissLabel}</UiButton>
+      <UiButton variant="primary" disabled={confirmDisabled} onclick={onconfirm}>{confirmLabel}</UiButton>
+    </div>
   </div>
 {/if}
 
@@ -80,10 +83,18 @@
 
   .prompt-actions {
     display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 8px 2px 2px;
+  }
+
+  .prompt-answers {
+    display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
-    padding: 8px 2px 2px;
+    max-width: 100%;
   }
 
   /* An answer naming a long site wraps rather than run off the drawer: the site must stay readable. */
