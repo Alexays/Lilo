@@ -374,7 +374,7 @@
 			},
 			"preventCrossSiteTracking": {
 				"title": "Empêcher le suivi entre sites",
-				"description": "La protection contre le pistage de WebKit, seul moyen d'empêcher un site intégré à d'autres de lire ses propres cookies. Elle peut vous déconnecter des sites qu'elle classe à tort ; le bloqueur de contenu de Lilo bloque déjà les traqueurs connus.",
+				"description": "La protection contre le pistage de WebKit : un site intégré à d'autres ne peut pas lire ses propres cookies, et ne peut donc pas vous suivre de site en site. Une app intégrée qui se connecte avec ses propres cookies peut demander de la désactiver.",
 				"keywords": "itp intelligent tracking prevention pistage suivi cookies traqueurs"
 			},
 			"clearOnQuit": {

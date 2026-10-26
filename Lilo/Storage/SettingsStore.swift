@@ -152,8 +152,8 @@ final class SettingsStore {
     /// Global Privacy Control / Do Not Track signals, injected via JS only.
     var sendGPC: Bool { (get("sendGPC") ?? "true") == "true" }
 
-    /// WebKit's tracking prevention (ITP); off unless the user turns it on.
-    var preventCrossSiteTracking: Bool { self.get("preventCrossSiteTracking") == "true" }
+    /// WebKit's tracking prevention (ITP); on unless the user turns it off.
+    var preventCrossSiteTracking: Bool { (get("preventCrossSiteTracking") ?? "true") == "true" }
 
     var minimumFontSize: CGFloat { CGFloat(Double(get("minimumFontSize") ?? "") ?? 0) }
 

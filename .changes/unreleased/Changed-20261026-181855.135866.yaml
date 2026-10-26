@@ -1,0 +1,3 @@
+kind: Changed
+body: 'Cross-site tracking prevention is on by default, as in Safari: sites embedded in others can''t follow you from site to site. Turn it off in Settings > Privacy if an embedded app that signs in with its own cookies stops working.'
+time: 2026-10-26T18:18:55.135866+01:00

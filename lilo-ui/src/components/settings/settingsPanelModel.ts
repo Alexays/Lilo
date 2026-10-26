@@ -212,7 +212,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   blockerRegional: { key: "blockerRegional", fallback: true },
   httpsOnly: { key: "httpsOnly", fallback: false },
   sendGPC: { key: "sendGPC", fallback: true },
-  preventCrossSiteTracking: { key: "preventCrossSiteTracking", fallback: false },
+  preventCrossSiteTracking: { key: "preventCrossSiteTracking", fallback: true },
   clearOnQuit: { key: "clearSiteDataOnQuit", fallback: false },
   autoUpdateExtensions: { key: "autoUpdateExtensions", fallback: true },
   agentControl: { key: "agentControlEnabled", fallback: false },
