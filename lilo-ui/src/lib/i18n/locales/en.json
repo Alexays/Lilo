@@ -374,7 +374,7 @@
 			},
 			"preventCrossSiteTracking": {
 				"title": "Prevent cross-site tracking",
-				"description": "WebKit's tracking prevention: sites embedded in others can't read their own cookies, so they can't follow you from site to site. An embedded app that signs in with its own cookies may need it off.",
+				"description": "WebKit's tracking prevention: sites embedded in others can't read their own cookies, so they can't follow you from site to site. Turn it off only if an embedded site you use stops working.",
 				"keywords": "itp intelligent tracking prevention cookies trackers"
 			},
 			"clearOnQuit": {

@@ -100,9 +100,10 @@ through the Storage Access API, and Lilo asks you first. Tracking prevention als
 of sites it classifies as trackers, unless you used that site in the last 30 days: a click on a page
 counts as using its site. It keeps its statistics on your Mac only.
 
-Embedded apps that sign in with their own cookies without asking, such as claude.ai artifacts, need
-third-party cookies: turn tracking prevention off in Settings > Privacy to let them work as in Chrome.
-Turning it off clears its statistics, not the sites' data.
+Cookies a site marks `Partitioned` still work in its frames, kept apart for each site embedding it,
+so embedded apps that sign in with them, such as claude.ai artifacts, keep working. Turned off in
+Settings > Privacy, third-party cookies work as in Chrome, and a `Partitioned` cookie is stored
+unpartitioned. Turning it off clears its statistics, not the sites' data.
 
 The content blocker lets bot-defense and captcha vendors through (PerimeterX/HUMAN, DataDome, Arkose
 Labs, hCaptcha, Cloudflare Turnstile): sites rely on their scripts to tell people from bots, and with
