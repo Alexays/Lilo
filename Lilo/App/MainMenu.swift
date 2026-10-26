@@ -188,12 +188,20 @@ extension AppDelegate {
         developMenu.add("Load Unpacked Extension…".localized, #selector(MainWindowController.loadUnpackedExtension(_:)), icon: .loadExtension)
         developMenu.add("Feature Flags (about:config)…".localized, #selector(MainWindowController.openFeatureFlags(_:)), icon: .featureFlags)
         #if DEBUG
-        developMenu.addItem(.separator())
-        developMenu.add("Design System".localized, #selector(MainWindowController.openDesignSystem(_:)), icon: .designSystem)
-        developMenu.add("Open Chrome Devtools".localized, #selector(MainWindowController.showChromeWebInspector(_:)), icon: .chromeDevtools)
+        let developerTools = true
+        #else
+        let developerTools = UserDefaults.lilo.bool(forKey: Self.developerToolsKey)
+        #endif
+        let separator = NSMenuItem.separator()
+        developMenu.addItem(separator)
+        let designSystemItem = developMenu.add("Design System".localized, #selector(MainWindowController.openDesignSystem(_:)), icon: .designSystem)
+        let chromeDevtoolsItem = developMenu.add("Open Chrome Devtools".localized, #selector(MainWindowController.showChromeWebInspector(_:)), icon: .chromeDevtools)
         let hitboxDebugItem = developMenu.add("Show Hitbox Debug Overlay".localized, #selector(MainWindowController.toggleHitboxDebug(_:)), icon: .hitboxOverlay)
         hitboxDebugItem.state = UserDefaults.lilo.bool(forKey: MainWindowController.hitboxDebugDefaultsKey) ? .on : .off
-        #endif
+        for item in [separator, designSystemItem, chromeDevtoolsItem, hitboxDebugItem] {
+            item.tag = Self.developerToolsTag
+            item.isHidden = !developerTools
+        }
 
         let windowMenu = submenu("Window".localized, in: mainMenu)
         windowMenu.add("Minimize".localized, #selector(NSWindow.miniaturize(_:)), shortcut: "window.minimize")

@@ -441,3 +441,17 @@ test("content blocking splits into its switch, what it blocks, and its lists", a
 	await expect(frame.getByRole("region", { name: "What Lilo blocks" })).toHaveCount(0);
 	await expect(frame.locator('[data-setting-id="blockerSites"]')).toHaveCount(0);
 });
+
+test("seven clicks on the version row unlock Lilo's developer tools, once", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	const row = page.locator(".ui-list-row").filter({ has: page.getByRole("button", { name: "Check now" }) }).first();
+
+	for (let click = 0; click < 6; click++) await row.locator(".ui-list-row-title").click();
+	expect((await sentCommands(page)).filter((c) => c.action === "unlockDeveloperTools")).toHaveLength(0);
+	await row.locator(".ui-list-row-title").click();
+	await row.locator(".ui-list-row-title").click();
+
+	expect((await sentCommands(page)).filter((c) => c.action === "unlockDeveloperTools")).toHaveLength(1);
+	await expect(row).toContainText("developer tools are now in the Develop menu");
+});

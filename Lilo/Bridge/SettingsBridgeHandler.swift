@@ -44,6 +44,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         "revokeAgentClient",
         "getUpdaterStatus",
         "checkForUpdates",
+        "unlockDeveloperTools",
         "setAutomaticUpdates",
         "getShortcuts",
         "recordShortcut",
@@ -201,6 +202,12 @@ final class SettingsBridgeHandler: BridgeHandler {
         case "checkForUpdates":
             updaterController?.checkForUpdates(nil)
             publishUpdaterStatus()
+
+        case "unlockDeveloperTools":
+            UserDefaults.lilo.set(true, forKey: AppDelegate.developerToolsKey)
+            for item in NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.submenu?.items ?? [] where item.tag == AppDelegate.developerToolsTag {
+                item.isHidden = false
+            }
 
         case "setAutomaticUpdates":
             if let updater = updaterController?.updater {

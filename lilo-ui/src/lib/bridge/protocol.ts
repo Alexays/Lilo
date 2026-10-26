@@ -700,6 +700,7 @@ export interface BridgeCommandPayloadMap {
 	getAppNames: { ids: string[] };
 	getUpdaterStatus: EmptyPayload;
 	checkForUpdates: EmptyPayload;
+	unlockDeveloperTools: EmptyPayload;
 	setAutomaticUpdates: { enabled: boolean };
 	getShortcuts: EmptyPayload;
 	/** Records the next key press for this action; null stops recording. */
