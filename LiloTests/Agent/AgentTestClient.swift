@@ -78,13 +78,13 @@ final class AgentTestClient: @unchecked Sendable {
         return reply
     }
 
-    /// Calls a tool and returns its text content joined, and whether it reported an error.
-    func callTool(_ name: String, _ arguments: [String: Any] = [:]) async -> (text: String, isError: Bool, images: [Data]) {
+    /// Calls a tool and returns its text content joined, whether it reported an error, and its `_meta`.
+    func callTool(_ name: String, _ arguments: [String: Any] = [:]) async -> (text: String, isError: Bool, images: [Data], meta: [String: Any]) {
         let result = await request("tools/call", ["name": name, "arguments": arguments]) ?? [:]
         let content = result["content"] as? [[String: Any]] ?? []
         let text = content.compactMap { $0["text"] as? String }.joined(separator: "\n")
         let images = content.compactMap { ($0["data"] as? String).flatMap { Data(base64Encoded: $0) } }
-        return (text, result["isError"] as? Bool ?? (result["error"] != nil), images)
+        return (text, result["isError"] as? Bool ?? (result["error"] != nil), images, result["_meta"] as? [String: Any] ?? [:])
     }
 
     private func readLine() -> Data? {

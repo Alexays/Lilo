@@ -17,7 +17,7 @@ final class AgentCaptureTests: AgentToolTestCase {
         _ = await client.callTool("read_console_messages", ["tabId": tab])
 
         _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 50]])
-        var errors = (text: "", isError: false, images: [Data]())
+        var errors = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             errors = await self.client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
             return errors.text.contains("rejected")
@@ -39,7 +39,7 @@ final class AgentCaptureTests: AgentToolTestCase {
             Promise.reject(undefined)
             1
             """, tab: tab)
-        var errors = (text: "", isError: false, images: [Data]())
+        var errors = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             errors = await self.client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
             return errors.text.components(separatedBy: "Unhandled rejection").count > 3
@@ -64,7 +64,7 @@ final class AgentCaptureTests: AgentToolTestCase {
         let server = try await TinyHTTPServer(index: #"<!doctype html><img src="/missing.png"><p>served</p>"#)
         let tab = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": tab, "url": "127.0.0.1:\(server.port)/"])
-        var reply = (text: "", isError: false, images: [Data]())
+        var reply = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             reply = await self.client.callTool("read_network_requests", ["tabId": tab])
             return reply.text.contains(" 404 ")
@@ -79,7 +79,7 @@ final class AgentCaptureTests: AgentToolTestCase {
         let server = try await TinyHTTPServer(index: #"<!doctype html><img src="/node_modules/.vite/dep.png"><img src="/api/data.png"><p>served</p>"#)
         let tab = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": tab, "url": "127.0.0.1:\(server.port)/"])
-        var reply = (text: "", isError: false, images: [Data]())
+        var reply = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             reply = await self.client.callTool("read_network_requests", ["tabId": tab, "exclude": ["/node_modules/"]])
             return reply.text.contains("/api/data.png")

@@ -91,9 +91,12 @@ enum AgentMCP {
             }
             // The call may outlive its reply (a page script that never settles ignores cancellation): its tab
             // stays busy until it really ends.
-            let work = Task {
-                defer { session.tabCalls[callId] = nil }
-                return try await AgentTools.call(name, arguments: arguments, session: session, control: control)
+            let sent = AgentCallSent()
+            let work = AgentCallSent.$current.withValue(sent) {
+                Task {
+                    defer { session.tabCalls[callId] = nil }
+                    return try await AgentTools.call(name, arguments: arguments, session: session, control: control)
+                }
             }
             // The profile tools bound their own waits, which may take minutes; a script may ask for its own.
             let takesTimeout = name == "javascript_tool" || name == "run"
@@ -127,9 +130,13 @@ enum AgentMCP {
                 return result(id: id, ["content": (warning.map(AgentContent.text) + content).map(\.json)])
             } catch {
                 let code = (error as? AgentToolError)?.code
-                let text = (warning + [(code.map { "[\($0)] " } ?? "") + error.localizedDescription]).joined(separator: "\n")
+                let commit = sent.write ? ["It may have reached the site already: read the page or the data back before trying again, or it may happen twice."] : []
+                let text = (warning + [(code.map { "[\($0)] " } ?? "") + error.localizedDescription] + commit).joined(separator: "\n")
                 var reply: [String: Any] = ["content": [AgentContent.text(text).json], "isError": true]
-                if let code { reply["_meta"] = ["lilo/errorCode": code] }
+                var meta: [String: Any] = [:]
+                meta["lilo/errorCode"] = code
+                if sent.write { meta["lilo/possibleCommit"] = true }
+                if !meta.isEmpty { reply["_meta"] = meta }
                 return result(id: id, reply)
             }
         default:
@@ -206,4 +213,12 @@ struct AgentToolError: LocalizedError {
         self.code = code
     }
     var errorDescription: String? { message }
+}
+
+/// Marks a tool call that sent something that can change the site (a click, Enter, a write request), so its failure
+/// tells the agent to read the site back before trying again.
+@MainActor
+final class AgentCallSent {
+    @TaskLocal static var current: AgentCallSent?
+    var write = false
 }

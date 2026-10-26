@@ -60,6 +60,38 @@ final class AgentFetchRunTests: AgentToolTestCase {
         XCTAssertTrue(reply.text.contains("POST http://127.0.0.1:\(server.port)/api"), reply.text)
     }
 
+    func testAFailedWriteMayHaveReachedTheSiteAndAFailedReadDidNot() async throws {
+        let server = try await makeServer()
+        let tab = try await tab(on: server)
+
+        let post = await client.callTool("fetch", ["tabId": tab, "url": "http://127.0.0.1:1/api", "method": "POST"])
+        let get = await client.callTool("fetch", ["tabId": tab, "url": "http://127.0.0.1:1/api"])
+
+        XCTAssertTrue(post.isError, post.text)
+        XCTAssertEqual(post.meta["lilo/possibleCommit"] as? Bool, true, post.text)
+        XCTAssertTrue(post.text.contains("may have reached the site"), post.text)
+        XCTAssertTrue(get.isError, get.text)
+        XCTAssertNil(get.meta["lilo/possibleCommit"], get.text)
+        XCTAssertFalse(get.text.contains("may have reached the site"), get.text)
+    }
+
+    func testARunThatClickedThenFailedMayHaveReachedTheSite() async throws {
+        let tab = try await agentTab(showing: "<button>Go</button>")
+
+        let clicked = await client.callTool("run", ["code": """
+            await tool('computer', { action: 'left_click', coordinate: [10, 10], tabId: \(tab) })
+            throw new Error('later step failed')
+            """])
+        let read = await client.callTool("run", ["code": """
+            await tool('get_page_text', { tabId: \(tab) })
+            throw new Error('later step failed')
+            """])
+
+        XCTAssertEqual(clicked.meta["lilo/possibleCommit"] as? Bool, true, clicked.text)
+        XCTAssertTrue(read.isError, read.text)
+        XCTAssertNil(read.meta["lilo/possibleCommit"], read.text)
+    }
+
     func testFetchSendsAScalarBodyAsJSON() async throws {
         let server = try await makeServer()
         let tab = try await tab(on: server)

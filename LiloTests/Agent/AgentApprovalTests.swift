@@ -31,7 +31,7 @@ final class AgentApprovalTests: AgentToolTestCase {
     }
 
     /// Clicks the button labelled `label` through its ref, as an agent does.
-    private func click(_ label: String, tab: Int) async throws -> (text: String, isError: Bool, images: [Data]) {
+    private func click(_ label: String, tab: Int) async throws -> (text: String, isError: Bool, images: [Data], meta: [String: Any]) {
         let found = await client.callTool("find", ["tabId": tab, "query": label])
         let range = try XCTUnwrap(found.text.range(of: #"ref_\d+"#, options: .regularExpression), found.text)
         return await client.callTool("computer", ["tabId": tab, "action": "left_click", "ref": String(found.text[range])])

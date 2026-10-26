@@ -94,7 +94,7 @@ class AgentToolTestCase: XCTestCase {
 
     /// Switches `client` to the user's profile P, allowing it as the user would.
     @discardableResult
-    func switchToUserProfile(_ client: AgentTestClient? = nil) async -> (text: String, isError: Bool, images: [Data]) {
+    func switchToUserProfile(_ client: AgentTestClient? = nil) async -> (text: String, isError: Bool, images: [Data], meta: [String: Any]) {
         let client = client ?? self.client!
         let switching = Task { await client.callTool("switch_profile", ["profile": "P"]) }
         await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }

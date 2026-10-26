@@ -397,7 +397,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
         let tab = try await agentTab(showing: Self.page)
 
         _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 150]])
-        var console = (text: "", isError: false, images: [Data]())
+        var console = (text: "", isError: false, images: [Data](), meta: [String: Any]())
         await pollUntil {
             console = await self.client.callTool("read_console_messages", ["tabId": tab])
             return console.text.contains("alert(hi) dismissed")

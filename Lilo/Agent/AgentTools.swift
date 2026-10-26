@@ -208,6 +208,7 @@ enum AgentTools {
             options["credentials"] = arguments["credentials"] as? String
             options["responseType"] = arguments["responseType"] as? String
             if let body = arguments["body"], !(body is NSNull) { options["body"] = body as? String ?? json(body) }
+            if !["GET", "HEAD", "OPTIONS"].contains(method) { AgentCallSent.current?.write = true }
             return [.text(json(try await page(engine, "request", options) ?? [:]))]
         default:
             if let content = try await AgentInteractionTools.call(name, arguments: arguments, session: session, control: control) { return content }

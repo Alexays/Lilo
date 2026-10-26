@@ -51,3 +51,9 @@ An error only you can resolve (a denied prompt, agent access turned off, Lilo no
 open) carries the code `needs_user`: in `_meta["lilo/errorCode"]` on a tool result, in
 `error.data.code` on a JSON-RPC error, and as a `[needs_user]` prefix in the message. When Lilo
 can't take an agent at all, `lilo-mcp` still answers at once and says why.
+
+A tool call that fails after it sent something that can change the site (a click, Enter, a `fetch`
+other than GET, HEAD or OPTIONS, including inside `browser_batch` or `run`) carries
+`_meta["lilo/possibleCommit"] = true` and says so in its message: the action may have gone through,
+so the agent reads the site back before trying again rather than doing it twice. Any other failed
+call changed nothing on the site and is safe to retry.

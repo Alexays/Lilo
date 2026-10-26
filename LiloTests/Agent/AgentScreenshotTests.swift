@@ -174,11 +174,11 @@ final class AgentScreenshotTests: AgentToolTestCase {
         return folder.appending(path: "shot.png").path
     }
 
-    private func bitmap(_ reply: (text: String, isError: Bool, images: [Data])) throws -> NSBitmapImageRep {
+    private func bitmap(_ reply: (text: String, isError: Bool, images: [Data], meta: [String: Any])) throws -> NSBitmapImageRep {
         try XCTUnwrap(reply.images.first.flatMap(NSBitmapImageRep.init(data:)), reply.text)
     }
 
-    private func saved(_ reply: (text: String, isError: Bool, images: [Data])) throws -> NSBitmapImageRep {
+    private func saved(_ reply: (text: String, isError: Bool, images: [Data], meta: [String: Any])) throws -> NSBitmapImageRep {
         let path = try XCTUnwrap(reply.text.components(separatedBy: "Saved to ").last, reply.text)
         return try XCTUnwrap(NSBitmapImageRep(data: try Data(contentsOf: URL(fileURLWithPath: path))), reply.text)
     }

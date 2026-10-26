@@ -1127,12 +1127,12 @@ private extension AgentToolTestCase {
         try await engine(forTab: tab).wkWebView.callAsyncJavaScript(body, arguments: [:], contentWorld: .page)
     }
 
-    func mock(_ tab: Int, _ rule: [String: Any]) async -> (text: String, isError: Bool, images: [Data]) {
+    func mock(_ tab: Int, _ rule: [String: Any]) async -> (text: String, isError: Bool, images: [Data], meta: [String: Any]) {
         await client.callTool("network_mock", rule.merging(["tabId": tab, "action": "add"]) { $1 })
     }
 
     /// Adds a rule whose body comes from a local file, answering the user's question with `granted`.
-    func mockFile(_ tab: Int, _ rule: [String: Any], granted: Bool = true) async throws -> (text: String, isError: Bool, images: [Data]) {
+    func mockFile(_ tab: Int, _ rule: [String: Any], granted: Bool = true) async throws -> (text: String, isError: Bool, images: [Data], meta: [String: Any]) {
         let adding = Task { await mock(tab, rule) }
         let asked = await pollUntil { !self.control.pendingConsentAnswers.isEmpty }
         XCTAssertTrue(asked, "the user allows the file first")

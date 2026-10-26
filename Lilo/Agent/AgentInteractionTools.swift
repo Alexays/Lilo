@@ -289,12 +289,15 @@ enum AgentInteractionTools {
             }
         }
         if action == "screenshot" || action == "zoom" { try await AgentDevTools.refuseTextLeaks(tabId: tab.id, control: control) }
+        if pressesEnter { AgentCallSent.current?.write = true }
         switch action {
         case let refAction where frame != nil && ["left_click", "right_click", "double_click", "triple_click", "hover", "scroll_to"].contains(refAction):
             let parameters: [String: Any] = ["ref": arguments["ref"] ?? "", "action": action, "modifiers": arguments["modifiers"] ?? ""]
             reply = try await AgentTools.page(engine, "act", parameters, in: frame) as? String ?? ""
+            if ["left_click", "double_click", "triple_click"].contains(action) { AgentCallSent.current?.write = true }
         case "left_click", "right_click", "double_click", "triple_click":
             let point = try await point(of: arguments, engine: engine)
+            if action != "right_click" { AgentCallSent.current?.write = true }
             let clicks = ["double_click": 2, "triple_click": 3][action] ?? 1
             await AgentInput.click(webView, at: point, button: action == "right_click" ? .right : .left, clickCount: clicks, modifiers: modifiers)
             reply = "Clicked at (\(Int(point.x)), \(Int(point.y)))"
@@ -389,6 +392,8 @@ enum AgentInteractionTools {
         static let limit = 200
         let session: AgentSession
         let control: AgentControl
+        // The program's tools answer from WebKit callbacks, outside the run's task: they mark the run's call themselves.
+        let sent = AgentCallSent.current
         var calls = 0
         var isStopped = false
         /// The code of the last tool error, kept for the run's own error when the program lets it through.
@@ -412,7 +417,9 @@ enum AgentInteractionTools {
             nonisolated(unsafe) let input = body?["input"] as? [String: Any] ?? [:]
             Task {
                 do {
-                    let content = try await AgentTools.call(name, arguments: input, session: session, control: control)
+                    let content = try await AgentCallSent.$current.withValue(sent) {
+                        try await AgentTools.call(name, arguments: input, session: session, control: control)
+                    }
                     replyHandler(content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n"), nil)
                 } catch {
                     errorCode = (error as? AgentToolError)?.code ?? errorCode
