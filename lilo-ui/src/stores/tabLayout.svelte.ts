@@ -12,6 +12,8 @@ function defaultAddress(position: TabPosition): AddressPlacement {
 }
 
 let applied = false;
+// Well past the morph's own length (--motion-duration-slow).
+const MORPH_DEADLINE_MS = 1000;
 
 function apply(position: TabPosition, address: AddressPlacement): void {
 	const update = () => {
@@ -26,10 +28,13 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 	const morph = applied && position !== _position && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
 	applied = true;
 	if (!morph) return update();
-	document.startViewTransition(async () => {
+	const transition = document.startViewTransition(async () => {
 		update();
 		await tick();
 	});
+	// Lilo's WebKit can leave a morph unfinished: its frozen snapshot would cover the chrome and take its clicks.
+	const deadline = setTimeout(() => transition.skipTransition(), MORPH_DEADLINE_MS);
+	void transition.finished.finally(() => clearTimeout(deadline));
 }
 
 export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement">): void {

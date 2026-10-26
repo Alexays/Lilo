@@ -1,0 +1,3 @@
+kind: Fixed
+body: Moving the tabs to another edge no longer leaves the tab bar frozen or unclickable until Lilo restarts.
+time: 2026-10-26T08:39:56.840148+01:00

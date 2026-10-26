@@ -39,6 +39,30 @@ test("a layout change from the host moves the chrome", async () => {
 	assert.equal(store.hasPageToolbar(), false, "on top the address row joins the strip instead");
 });
 
+test("a morph to a new edge that never finishes is skipped, so the chrome is never left frozen", async (t) => {
+	stubBridgeWindow({ document: true });
+	const dataset = stubRoot();
+	const doc = (globalThis as unknown as { document: Record<string, unknown> }).document;
+	let skipped = 0;
+	doc.startViewTransition = (update: () => Promise<void>) => {
+		void update();
+		return { finished: new Promise(() => {}), skipTransition: () => skipped++ };
+	};
+	(globalThis as { matchMedia?: unknown }).matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const store = await (await freshStores())("/src/stores/tabLayout.svelte.ts");
+	store.initTabLayoutStore();
+	store.applyTabLayoutInitialState({ tabPosition: "left" });
+
+	receive({ event: "tabLayoutChanged", position: "top", address: "tabs" });
+	t.mock.timers.tick(999);
+	assert.equal(skipped, 0, "the morph gets its time");
+	t.mock.timers.tick(1);
+
+	assert.equal(skipped, 1);
+	assert.equal(dataset.tabPosition, "top");
+});
+
 test("choosing a position or an address stores the setting", async () => {
 	const posted = stubBridgeWindow({ document: true });
 	stubRoot();
