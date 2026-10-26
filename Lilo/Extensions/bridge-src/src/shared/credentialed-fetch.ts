@@ -42,11 +42,19 @@ export function installCredentialedFetch(scope: any): void {
       const headers: [string, string][] = [];
       request.headers.forEach((value, name) => headers.push([name, value]));
       if (!request.headers.has('user-agent')) headers.push(['User-Agent', scope.navigator?.userAgent ?? '']);
-      const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect });
+      // No timeout: a long poll or a large download takes as long as it takes, as in Chrome.
+      const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect }, 0);
+      let onAbort = (): void => {};
       const aborted = new Promise<never>((_, reject) => {
-        signal.addEventListener('abort', () => reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError')), { once: true });
+        onAbort = () => reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError'));
+        signal.addEventListener('abort', onAbort, { once: true });
       });
-      const answer = await Promise.race([call.catch((error) => { throw new TypeError(String(error?.message ?? 'Failed to fetch')); }), aborted]);
+      let answer: Answer | null;
+      try {
+        answer = await Promise.race([call.catch((error) => { throw new TypeError(String(error?.message ?? 'Failed to fetch')); }), aborted]);
+      } finally {
+        signal.removeEventListener('abort', onAbort);
+      }
       // The request, not `input`: building it took a body stream `init` or `input` held.
       if (answer == null) return fetch.call(scope, request);
       const binary = atob(answer.body);

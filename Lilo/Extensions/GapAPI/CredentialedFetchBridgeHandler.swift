@@ -24,8 +24,10 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
         let store = WKWebsiteDataStore(forIdentifier: call.registry.profileId).httpCookieStore
         var method = call.string("method") ?? "GET"
         var body = call.string("body").flatMap { Data(base64Encoded: $0) }
-        let headers = (call.payload["headers"] as? [[String]] ?? []).filter { $0.count == 2 }
+        var headers = (call.payload["headers"] as? [[String]] ?? []).filter { $0.count == 2 }
         let origin = "\(context.baseURL.scheme ?? "")://\(context.baseURL.host ?? "")"
+        // The profile's jar, read once over XPC and kept current with what each hop sets.
+        var jar: [HTTPCookie]?
         // As fetch: at most 20 redirects, each hop with the cookies of its own URL.
         for hop in 0...20 {
             var request = URLRequest(url: url)
@@ -35,7 +37,8 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
             for header in headers where header[0].lowercased() != "cookie" { request.addValue(header[1], forHTTPHeaderField: header[0]) }
             request.setValue(origin, forHTTPHeaderField: "Origin")
             if context.hasAccess(to: url) {
-                for (name, value) in HTTPCookie.requestHeaderFields(with: await store.cookies(for: url)) { request.setValue(value, forHTTPHeaderField: name) }
+                if jar == nil { jar = await store.allCookies() }
+                for (name, value) in HTTPCookie.requestHeaderFields(with: await store.cookies(for: url, in: jar)) { request.setValue(value, forHTTPHeaderField: name) }
             }
             let data: Data
             let response: HTTPURLResponse
@@ -49,7 +52,11 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
             let fields = response.allHeaderFields.reduce(into: [String: String]()) { fields, entry in
                 if let name = entry.key as? String, let value = entry.value as? String { fields[name] = value }
             }
-            for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) { await store.setCookie(cookie) }
+            for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) {
+                await store.setCookie(cookie)
+                jar?.removeAll { $0.name == cookie.name && $0.domain == cookie.domain && $0.path == cookie.path }
+                jar?.append(cookie)
+            }
             if (300...399).contains(response.statusCode), response.statusCode != 304,
                let location = response.value(forHTTPHeaderField: "Location"), let next = URL(string: location, relativeTo: url)?.absoluteURL {
                 if call.string("redirect") == "error" || hop == 20 { return BridgeError("Failed to fetch") }
@@ -57,6 +64,10 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
                 if response.statusCode == 303 || ([301, 302].contains(response.statusCode) && method == "POST") {
                     method = method == "HEAD" ? "HEAD" : "GET"
                     body = nil
+                }
+                // As fetch, a hop to another origin drops Authorization for the rest of the chain.
+                if next.scheme?.lowercased() != url.scheme?.lowercased() || next.host?.lowercased() != url.host?.lowercased() || next.port != url.port {
+                    headers.removeAll { $0[0].lowercased() == "authorization" }
                 }
                 url = next
                 continue
@@ -83,12 +94,15 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
 
 extension WKHTTPCookieStore {
     /// The cookies a request to `url` carries, whatever its initiator: domain, path, `Secure` and expiry match.
-    func cookies(for url: URL) async -> [HTTPCookie] {
+    /// Taken from `jar` when given, the store's whole jar otherwise.
+    func cookies(for url: URL, in jar: [HTTPCookie]? = nil) async -> [HTTPCookie] {
         guard let host = url.host?.lowercased() else { return [] }
         let path = url.path.isEmpty ? "/" : url.path
         let secure = url.scheme?.lowercased() == "https"
         let now = Date()
-        return await allCookies().filter { cookie in
+        let cookies: [HTTPCookie]
+        if let jar { cookies = jar } else { cookies = await allCookies() }
+        return cookies.filter { cookie in
             let domain = cookie.domain.lowercased()
             let domainMatches = domain.hasPrefix(".") ? host == domain.dropFirst() || host.hasSuffix(domain) : host == domain
             return domainMatches && path.hasPrefix(cookie.path) && (!cookie.isSecure || secure) && (cookie.expiresDate.map { $0 > now } ?? true)

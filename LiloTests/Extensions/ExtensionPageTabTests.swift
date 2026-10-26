@@ -384,6 +384,40 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
     }
 
+    /// A credentialed fetch keeps Authorization across a same-origin redirect and drops it at a hop to another origin, as fetch does.
+    func testCredentialedFetchesDropAuthorizationAtACrossOriginRedirect() async throws {
+        let server = try await TinyHTTPServer { request in
+            let lines = request.split(separator: "\r\n")
+            let port = lines.first { $0.lowercased().hasPrefix("host:") }?.split(separator: ":").last ?? ""
+            if request.hasPrefix("GET /away ") { return ("302 Found", ["Location: http://127.0.0.1:\(port)/echo"], Data()) }
+            if request.hasPrefix("GET /near ") { return ("302 Found", ["Location: /echo"], Data()) }
+            let authorization = lines.first { $0.lowercased().hasPrefix("authorization:") }.map(String.init) ?? "none"
+            return ("200 OK", ["Content-Type: text/plain"], Data(authorization.utf8))
+        }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("authorization")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Auth", "version": "1.0", "description": "d", "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"]}"#,
+            "page.html": "<title>page</title>"
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let pageTab = try XCTUnwrap(window.createTabStateFirst(url: context.baseURL.appendingPathComponent("page.html")))
+        _ = await pollUntil { window.tabManager.engineTab(for: pageTab.id)?.currentTitle == "page" }
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: pageTab.id)?.view as? WKWebView)
+        let fetch = "return await fetch(url, { credentials: 'include', cache: 'no-store', headers: { Authorization: 'Bearer t' } }).then((r) => r.text(), (e) => 'fails ' + e)"
+
+        let near = try await page.callAsyncJavaScript(fetch, arguments: ["url": "http://localhost:\(server.port)/near"], in: nil, contentWorld: .page)
+        let away = try await page.callAsyncJavaScript(fetch, arguments: ["url": "http://localhost:\(server.port)/away"], in: nil, contentWorld: .page)
+
+        XCTAssertEqual((near as? String)?.lowercased(), "authorization: bearer t")
+        XCTAssertEqual(away as? String, "none")
+    }
+
     /// A window always has an active tab, as in Chrome: Dashlane's popup read `[0].url` of `tabs.query({active, currentWindow})`
     /// and showed an empty vault when the window showed no web page. A terminal on screen has a stand-in tab, a new tab with `tabs`.
     func testAnActionPopupFindsTheActiveTabOfAWindowShowingATerminal() async throws {
