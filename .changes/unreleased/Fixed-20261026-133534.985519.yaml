@@ -1,0 +1,3 @@
+kind: Fixed
+body: Links on image-heavy pages like Mobbin open right away again, instead of sometimes taking up to a minute while the content blocker kept the page busy.
+time: 2026-10-26T13:35:34.985519+01:00

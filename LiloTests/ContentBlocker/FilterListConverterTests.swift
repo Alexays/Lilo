@@ -250,6 +250,11 @@ final class FilterListConverterTests: XCTestCase {
 
     func testWildcardAndAnchors() {
         XCTAssertEqual(trigger("|http://ad.*/track|")?["url-filter"] as? String, "^http://ad\\..*/track$")
+        XCTAssertEqual(trigger("/ad/image/*")?["url-filter"] as? String, "/ad/image/.*")
+        XCTAssertEqual(trigger("||ads.example^*/track")?["url-filter"] as? String, "^https?://([^/]+\\.)?ads\\.example[^-a-zA-Z0-9._%].*/track")
+        XCTAssertTrue(isDropped("/site=*/viewid="), "an unanchored inner wildcard costs every load")
+        XCTAssertTrue(isDropped(#"/\.com\/.*\/track/"#))
+        XCTAssertEqual(actionType("@@/site=*/viewid="), "ignore-previous-rules")
     }
 
     func testSkippedLines() {
