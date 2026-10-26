@@ -125,8 +125,9 @@ const schema = [
             <h2>Built on WebKit. Not on a second Chrome.</h2>
             <p>
               Lilo uses the engine already inside macOS, written in Swift. No
-              Chromium bundled, no Electron. Your Mac spends its energy on your
-              pages.
+              Chromium bundled, no Electron, and your Chrome extensions still
+              install from the Chrome Web Store. Your Mac spends its energy on
+              your pages.
             </p>
           </div>
           <div class="claims">
@@ -219,6 +220,29 @@ const schema = [
             </span>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="band" id="extensions">
+      <div class="wrap ext">
+        <div class="head" style="margin:0">
+          <span class="tag">Chrome extensions</span>
+          <h2>The Chrome Web Store, with an "Add to Lilo" button.</h2>
+          <p>
+            Browse the store you know and install in one click. Lilo runs
+            Manifest V3 extensions on WebKit, keeps them updated, and gives each
+            profile its own set.
+          </p>
+          <div class="cats">
+            <span>Password managers</span>
+            <span>Ad blockers</span>
+            <span>Dark mode</span>
+            <span>Dev tools</span>
+            <span>Writing helpers</span>
+            <span>Price trackers</span>
+          </div>
+        </div>
+        <ExtensionStore lang={lang} />
       </div>
     </section>
 
@@ -369,29 +393,6 @@ const schema = [
             </div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="band" id="extensions">
-      <div class="wrap ext">
-        <div class="head" style="margin:0">
-          <span class="tag">Chrome extensions</span>
-          <h2>The Chrome Web Store, with an "Add to Lilo" button.</h2>
-          <p>
-            Browse the store you know and install in one click. Lilo runs
-            Manifest V3 extensions on WebKit, keeps them updated, and gives each
-            profile its own set.
-          </p>
-          <div class="cats">
-            <span>Password managers</span>
-            <span>Ad blockers</span>
-            <span>Dark mode</span>
-            <span>Dev tools</span>
-            <span>Writing helpers</span>
-            <span>Price trackers</span>
-          </div>
-        </div>
-        <ExtensionStore lang={lang} />
       </div>
     </section>
 

@@ -128,8 +128,9 @@ const schema = [
             <h2>Basé sur WebKit. Pas sur un Chrome de plus.</h2>
             <p>
               Écrit en Swift, Lilo utilise le moteur déjà présent dans macOS.
-              Pas de Chromium embarqué, pas d'Electron. Votre Mac consacre son
-              énergie à vos pages.
+              Pas de Chromium embarqué, pas d'Electron, et vos extensions Chrome
+              s'installent toujours depuis le Chrome Web Store. Votre Mac
+              consacre son énergie à vos pages.
             </p>
           </div>
           <div class="claims">
@@ -225,6 +226,31 @@ const schema = [
             </span>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="band" id="extensions">
+      <div class="wrap ext">
+        <div class="head" style="margin:0">
+          <span class="tag">Extensions Chrome</span>
+          <h2>
+            Le Chrome Web Store, avec un bouton «&nbsp;Ajouter à Lilo&nbsp;».
+          </h2>
+          <p>
+            Parcourez la boutique que vous connaissez et installez en un clic.
+            Lilo exécute les extensions Manifest V3 sur WebKit, les tient à jour
+            et donne à chaque profil les siennes.
+          </p>
+          <div class="cats">
+            <span>Gestionnaires de mots de passe</span>
+            <span>Bloqueurs de pub</span>
+            <span>Mode sombre</span>
+            <span>Outils de développement</span>
+            <span>Aide à l'écriture</span>
+            <span>Suivi des prix</span>
+          </div>
+        </div>
+        <ExtensionStore lang={lang} />
       </div>
     </section>
 
@@ -378,31 +404,6 @@ const schema = [
             </div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="band" id="extensions">
-      <div class="wrap ext">
-        <div class="head" style="margin:0">
-          <span class="tag">Extensions Chrome</span>
-          <h2>
-            Le Chrome Web Store, avec un bouton «&nbsp;Ajouter à Lilo&nbsp;».
-          </h2>
-          <p>
-            Parcourez la boutique que vous connaissez et installez en un clic.
-            Lilo exécute les extensions Manifest V3 sur WebKit, les tient à jour
-            et donne à chaque profil les siennes.
-          </p>
-          <div class="cats">
-            <span>Gestionnaires de mots de passe</span>
-            <span>Bloqueurs de pub</span>
-            <span>Mode sombre</span>
-            <span>Outils de développement</span>
-            <span>Aide à l'écriture</span>
-            <span>Suivi des prix</span>
-          </div>
-        </div>
-        <ExtensionStore lang={lang} />
       </div>
     </section>
 
