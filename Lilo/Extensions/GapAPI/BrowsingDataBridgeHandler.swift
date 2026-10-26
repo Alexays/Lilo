@@ -52,7 +52,9 @@ final class BrowsingDataBridgeHandler: GapHandler {
         let since = Date(timeIntervalSince1970: sinceMs / 1000)
         let originTypes = options["originTypes"] as? [String: Any]
 
-        if !siteTypes.isEmpty, originTypes?["unprotectedWeb"] as? Bool ?? true,
+        // Chrome's default is unprotectedWeb alone; a given `originTypes` counts only its true keys. protectedWeb
+        // (hosted apps) names nothing in Lilo, and WebKit cannot single out extension pages' data.
+        if !siteTypes.isEmpty, originTypes == nil || originTypes?["unprotectedWeb"] as? Bool == true,
            let store = call.registry.controller.configuration.defaultWebsiteDataStore {
             let types = siteTypes.reduce(into: Set<String>()) { $0.formUnion(Self.websiteDataTypes[$1]!) }
             // Records list http(s) and file sites only, so going through them spares extension pages'

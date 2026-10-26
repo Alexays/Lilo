@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { mockGapAPI } from './ipc.testkit.ts';
 import { installCredentialedFetch } from './credentialed-fetch.ts';
@@ -59,5 +59,35 @@ describe('credentialed fetch', () => {
     const controller = new AbortController();
     controller.abort();
     await assert.rejects(scope.fetch('https://example.com/', { credentials: 'include', signal: controller.signal }), { name: 'AbortError' });
+  });
+
+  it('waits past the ipc timeout for a long poll', async () => {
+    let release!: (value: unknown) => void;
+    answer = new Promise((resolve) => { release = resolve; });
+    mock.timers.enable({ apis: ['setTimeout'] });
+    try {
+      const response = scope.fetch('https://example.com/poll', { credentials: 'include' });
+      mock.timers.tick(60_000);
+      release({ status: 200, headers: [], body: btoa('late'), url: 'https://example.com/poll', redirected: false });
+      assert.equal(await (await response).text(), 'late');
+    } finally {
+      mock.timers.reset();
+    }
+  });
+
+  it('ignores an abort once settled', async () => {
+    const controller = new AbortController();
+    const rejections: unknown[] = [];
+    const track = (reason: unknown) => rejections.push(reason);
+    process.on('unhandledRejection', track);
+    try {
+      answer = { status: 200, headers: [], body: btoa('done'), url: 'https://example.com/', redirected: false };
+      await scope.fetch('https://example.com/', { credentials: 'include', signal: controller.signal });
+      controller.abort();
+      await new Promise((resolve) => setImmediate(resolve));
+    } finally {
+      process.off('unhandledRejection', track);
+    }
+    assert.deepEqual(rejections, []);
   });
 });

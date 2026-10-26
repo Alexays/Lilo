@@ -138,7 +138,9 @@ final class ExtensionAccess {
     /// What `new` would be granted at load beyond what `old` is: its added manifest permissions, and
     /// the granted match patterns no old one already covers. Chrome's permission-increase check.
     static func addedAccess(from old: WKWebExtension, to new: WKWebExtension) -> (permissions: [String], matchPatterns: [String]) {
-        let permissions = new.requestedPermissions.subtracting(old.requestedPermissions).map(\.rawValue).sorted()
+        // The manifest's own list: `requestedPermissions` drops the ones only Lilo's Gap APIs implement.
+        let permissions = Set(new.manifest["permissions"] as? [String] ?? [])
+            .subtracting(old.manifest["permissions"] as? [String] ?? []).sorted()
         let oldPatterns = baseMatchPatterns(for: old)
         let patterns = baseMatchPatterns(for: new)
             .filter { pattern in !oldPatterns.contains { $0.matches(pattern) } }
