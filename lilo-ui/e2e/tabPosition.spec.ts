@@ -61,6 +61,7 @@ test("the sidebar going away after the strip came keeps the strip clickable", as
 	for (const id of removals) zones.delete(id);
 
 	expect([...zones.values()].some((zone) => zone.y <= strip.y + 1 && zone.height >= strip.height - 1 && zone.width >= strip.width - 1)).toBe(true);
+});
 
 test("many squeezed pills never slide under the Settings tab", async ({ page }) => {
 	await page.setViewportSize({ width: 700, height: 500 });
