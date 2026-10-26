@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82, 87 and 89. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89 and 92. Every other gap is fully worked around.
 
 ---
 
@@ -140,11 +140,18 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** without it, MultiPassword's offscreen document never reaches its worker, which never starts.
 - **Check:** `testExtensionPagesAreNotClientsOfTheWorker`. Repro: worker at `worker/background.js`; a root page posts to the active registration's worker. Expected: scope is the root, the page is a client, the message arrives. Actual: scope `worker/`, no client, no message.
 
+### 92. A page in its worker's process can find no registration
+
+- **Gap:** `navigator.serviceWorker.getRegistrations()` in an extension page WebKit runs in the process that loaded the worker can answer nothing for the page's whole life, while pages in other processes find the activated registration at the same moment. In `make ext-smoke` it happens whenever another extension ran before in the same profile, never for the first one. WebKit's web process answers that call from its own table of the origins with registrations once the table is imported, without asking the network process (`WebSWClientConnection::mayHaveServiceWorkerRegisteredForOrigin`): that process's table is the likely cause, not confirmed. Chrome finds the registration.
+- **Lilo:** while `ready` finds no registration, the page asks the worker over its channel whether it runs; once it answers, `ready` resolves with a stand-in whose `active` worker carries the page's messages ([worker-messages.ts] `workerStandIn`). The stand-in has no `pushManager`, `showNotification` or `update`.
+- **Impact:** MultiPassword's offscreen document, which WebKit runs in its worker's process, never reached the worker, which then answered none of its popup's requests: the popup rendered nothing.
+- **Check:** Manual: depends on an earlier extension, not reduced to a minimal case. Repro: `make ext-smoke IDS=inomeogfingihgjfjlpeplalcfajhgai,cnlhokffphohmfcddnibpohmkdfafdli SHARDS=1` with the stand-in removed. Expected: MultiPassword's offscreen document finds the registration a tab opened at the same time finds. Actual: it finds none.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
-- **Lilo:** no workaround. Its tabs enable element fullscreen, so an extension page in a tab runs in a process of its own. Enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
-- **Impact:** Postman Interceptor's worker answers its popup on a port it opens back, which fails when the popup is in a tab ([RealExtensionSmokeTests.swift] lists it).
+- **Lilo:** a `chrome.runtime.connect` port is Lilo's at both ends, so while it connects, the context takes its `onConnect` listeners off WebKit's event and puts them back after: WebKit then asks only the other processes ([chrome-event.ts] `unheard`, [runtime.ts] `crossExtensionMessaging`). A port another context opens to it while its listeners are off misses it: in a stress run, a page connecting while the worker connected about once a millisecond lost 5 to 11 of 1000 ports. A `browser.runtime.connect` port stays WebKit's. Lilo's tabs enable element fullscreen, so an extension page in a tab runs in a process of its own; enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
+- **Impact:** without it, Postman Interceptor's worker answered its popup on a port it opens back, which failed when the popup was in a tab.
 - **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects`. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
 
 ### 70. A port message can reach a worker before earlier calls' answers
@@ -164,8 +171,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 91. A content script in a frame of an offscreen document cannot message
 
 - **Gap:** WebKit finds a content script's sender by its tab (`WebExtensionContext::runtimeSendMessage` and `runtimeConnect`) and fails with "Tab not found" for a frame of an extension view that is no tab, such as an offscreen document's iframe. Chrome injects the content scripts there and delivers their messages with a sender that has no `tab`.
-- **Lilo:** none: its offscreen document is a web view WebKit maps to no tab.
-- **Impact:** ProWritingAid's offscreen prefetch frame logs the error at each worker start ([RealExtensionSmokeTests.swift] lists it).
+- **Lilo:** the content script sends its messages and opens its ports through the extension page at the top of its frame, which sends them as its own ([frame-messaging.ts]): each request carries a key Lilo writes into the extension's content-script compat and `_lilo/frame-key`, which the frame's page cannot read, so no web page messages as the content script. An extension whose `web_accessible_resources` cover either file gets no key, and keeps the gap.
+- **Impact:** without Lilo's relay, ProWritingAid's offscreen prefetch frame logs the error at each worker start.
 - **Check:** Manual: not reduced to a test. Repro: an offscreen document frames a web page whose all-frames content script calls `chrome.runtime.sendMessage`. Expected: the worker hears it. Actual: `runtime.lastError` "Tab not found".
 
 ## Pages and web views
@@ -264,7 +271,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 80. Storing a `CryptoKey` in IndexedDB stalls the service worker
 
 - **Gap:** an MV3 worker that puts a `CryptoKey` in IndexedDB never sees the transaction complete, and nothing in the worker runs again (not even its timers). An extension page stores the same key at once, as Chrome's worker does.
-- **Lilo:** none.
+- **Lilo:** none: WebKit wraps a `CryptoKey` in every structured clone, not only IndexedDB's, and a worker waits for the wrap, its thread blocked, on its loader's main thread (`WorkerGlobalScope::serializeAndWrapCryptoKey`, `unwrapCryptoKey` alike): a `postMessage` of the key to a page that would store it stalls the worker the same way, as would reading back a key a page stored. `runtime` messages carry a key as `{}`, and storing an exported form needs an extractable key, leaves its material unwrapped on disk, and cannot rebuild it within the read's `success` event (`importKey` is asynchronous).
 - **Impact:** 2FAS Auth stores its signing keys this way: its worker stops during its first setup, so its pairing page shows no QR code and its toolbar button does nothing.
 - **Check:** Manual: it would stall the test host's worker for good. Repro: in an MV3 worker, `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])`, then `put` its `privateKey` in an object store and set the action title in `oncomplete` and in a 3 s `setTimeout`. Expected: a title. Actual: neither ever runs.
 
@@ -429,7 +436,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 81. An extension's requests leave out `SameSite` cookies
 
 - **Gap:** WebKit takes an extension page or worker for another site than the hosts it requests, so a `fetch` with `credentials: "include"` to a host the extension may access carries the cookies without `SameSite` only, never the `Lax` or `Strict` ones. Chrome sends an extension's request to a host it may access every cookie, as a first party.
-- **Lilo:** such a `fetch` from an extension page or worker goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
+- **Lilo:** such a `fetch` from an extension page or worker, or an extension page's asynchronous `XMLHttpRequest` with `withCredentials`, goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
 - **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
 - **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
 
@@ -548,6 +555,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 [chrome-event.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-event.ts
 [chrome-leniency.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-leniency.ts
 [dnr-rules.ts]: ../Lilo/Extensions/bridge-src/src/shared/dnr-rules.ts
+[frame-messaging.ts]: ../Lilo/Extensions/bridge-src/src/shared/frame-messaging.ts
 [install-gap-apis.ts]: ../Lilo/Extensions/bridge-src/src/shared/install-gap-apis.ts
 [ipc.ts]: ../Lilo/Extensions/bridge-src/src/shared/ipc.ts
 [message-answers.ts]: ../Lilo/Extensions/bridge-src/src/shared/message-answers.ts

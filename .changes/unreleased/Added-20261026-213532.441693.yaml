@@ -1,0 +1,3 @@
+kind: Added
+body: Extensions can find printers and devices on the local network (chrome.mdns, chrome.system.network), rename downloads as they start (downloads.onDeterminingFilename), and send cookies with XMLHttpRequest as in Chrome
+time: 2026-10-26T21:35:32.441693+01:00
