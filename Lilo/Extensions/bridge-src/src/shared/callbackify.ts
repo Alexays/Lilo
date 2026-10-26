@@ -39,9 +39,15 @@ export function bridgeChrome(): any {
   return installedChrome ?? (globalThis as any).chrome;
 }
 
+/** Logs a callback's exception in Chrome's words: V8 prefixes a thrown non-Error with "Uncaught". */
+function reportCallbackError(error: unknown): void {
+  // One string: WebKit reports only the first argument of a console.error.
+  console.error(`Error handling response: ${error instanceof Error ? '' : 'Uncaught '}${String(error)}`);
+}
+
 /**
  * Chrome's dual callback/Promise pattern: with a callback, an error goes to chrome.runtime.lastError and the callback
- * gets undefined. An exception thrown from a callback is logged, as Chrome does.
+ * gets undefined, and runs with the global object as `this`. An exception thrown from a callback is logged, as Chrome does.
  */
 export function callbackify<T>(
   impl: () => Promise<T>,
@@ -49,13 +55,12 @@ export function callbackify<T>(
 ): Promise<T> | undefined {
   const promise = impl();
   if (callback) {
-    // Chrome's wording, in one string: WebKit reports only the first argument of a console.error.
     promise.then((result: T) => {
-      try { callback(result); } catch (error) { console.error(`Error handling response: ${String(error)}`); }
+      try { callback.call(globalThis, result); } catch (error) { reportCallbackError(error); }
     }, (err: unknown) => {
       try {
-        withLastError(err instanceof Error ? err.message : String(err), () => callback(undefined as unknown as T));
-      } catch (error) { console.error(`Error handling response: ${String(error)}`); }
+        withLastError(err instanceof Error ? err.message : String(err), () => callback.call(globalThis, undefined as unknown as T));
+      } catch (error) { reportCallbackError(error); }
     });
     return undefined;
   }
