@@ -1,6 +1,6 @@
 // The chrome UI in any browser, against the e2e fake host seeded with a sample world (make ui-preview).
 // ?world=default|empty|onboarding, &theme=light|dark (the system's otherwise), &open=settings|commandbar,
-// &tabs=left|right|top|bottom.
+// &tabs=left|right|top|bottom, &update=1 (a downloaded update waiting for a relaunch).
 import type { Page } from "@playwright/test";
 import { installFakeHost, type FakeHostWorld } from "../e2e/fakeHost";
 import { LILO_SHORTCUT_KEYS } from "../e2e/fixtures";
@@ -95,6 +95,16 @@ function emptyWorld(): FakeHostWorld {
 	};
 }
 
+// The classic icon's four petals (Lilo/Resources/AppIcon.icon) on its light backdrop.
+function appIcon(): string {
+	const petal = "M0,-12 C58,-28 114,-108 114,-202 C114,-286 64,-344 0,-344 C-64,-344 -114,-286 -114,-202 C-114,-108 -58,-28 0,-12Z";
+	const petals = [[135, "#7C5DEE", "#4A2FC8"], [-135, "#A88DF8", "#795CEB"], [45, "#CDBAFF", "#9C82F6"], [-45, "#E4D8FF", "#B7A0FF"]] as const;
+	const defs = petals.map(([, from, to], i) => `<linearGradient id="p${i}" x1=".15" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient>`).join("");
+	const paths = petals.map(([angle], i) => `<path transform="translate(512 512) rotate(${angle}) scale(1.12)" d="${petal}" fill="url(#p${i})"/>`).join("");
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="bg" x2="0" y2="1"><stop offset="0" stop-color="#FCFAFF"/><stop offset="1" stop-color="#E8DEFF"/></linearGradient>${defs}</defs><rect width="1024" height="1024" fill="url(#bg)"/>${paths}</svg>`;
+	return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 function extension(id: string, name: string, color: string, extra: { badgeText?: string; isEnabled?: boolean } = {}) {
 	const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${color}"/><text x="16" y="22" font-family="system-ui" font-size="16" font-weight="600" fill="#fff" text-anchor="middle">${name[0]}</text></svg>`;
 	return {
@@ -115,6 +125,8 @@ const settings: Record<string, string> = {
 // The answers the Swift side gives to what the surfaces ask for when they open.
 const replies: Record<string, () => Record<string, unknown>> = {
 	getSettings: () => ({ event: "settingsLoaded", settings }),
+	getAppIcons: () => ({ event: "appIconsLoaded", icons: [{ id: "classic", dataURL: appIcon() }] }),
+	dismissUpdate: () => ({ event: "updateReady", version: null }),
 	scanImportSources: () => ({
 		event: "importSourcesLoaded",
 		sources: [
@@ -192,6 +204,7 @@ if (worldName === "default") {
 	];
 	lilo.receive({ event: "extensionsChanged", ids: extensions.map((e) => e.id), extensions });
 }
+if (params.get("update") === "1") lilo.receive({ event: "updateReady", version: "0.3.4" });
 if (worldName === "onboarding") lilo.receive({ event: "onboardingState", show: true, step: 0, usage: "browse" });
 const open = params.get("open");
 if (open === "settings") lilo.receive({ event: "openSettings" });

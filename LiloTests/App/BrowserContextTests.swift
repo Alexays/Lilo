@@ -16,7 +16,7 @@ final class BrowserContextTests: XCTestCase {
     }
 
     func testBootstrapOpensTheDatabaseUnderItsDirectoryAndLoadsStores() async throws {
-        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: TestProfileIds.next)
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
         try await context.bootstrap()
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("global.db").path))
@@ -29,7 +29,7 @@ final class BrowserContextTests: XCTestCase {
 
     /// Several windows await the same bootstrap: the database opens once.
     func testConcurrentBootstrapsShareOneDatabaseManager() async throws {
-        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: TestProfileIds.next)
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
         async let first: Void = context.bootstrap()
         async let second: Void = context.bootstrap()
         _ = try await (first, second)
@@ -42,7 +42,7 @@ final class BrowserContextTests: XCTestCase {
     func testContextIsReleasedWithItsWindow() async throws {
         weak var released: BrowserContext?
         do {
-            let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: TestProfileIds.next)
+            let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
             try await context.bootstrap()
             let window = MainWindowController(context: context)
             context.windows.add(window)
@@ -63,7 +63,7 @@ final class BrowserContextTests: XCTestCase {
         try WindowStore(dbPool: seed.globalPool).replaceAll(stored)
         try seed.globalPool.close()
 
-        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: TestProfileIds.next)
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
         try await context.bootstrap()
         context.saveWindowsNow()
 

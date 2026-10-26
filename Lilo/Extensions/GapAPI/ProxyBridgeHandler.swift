@@ -197,7 +197,7 @@ final class ProxyBridgeHandler: GapHandler {
     private func applyCredential(user: String, password: String, for request: AuthRequest) {
         let registry = request.registry
         guard let value = applied[registry.profileId] as? [String: Any],
-              var configuration = Self.configurations(for: value, at: request.challenger).first else { return }
+              let configuration = Self.configurations(for: value, at: request.challenger).first else { return }
         configuration.applyCredential(username: user, password: password)
         registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations = [configuration]
     }

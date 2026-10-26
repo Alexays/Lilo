@@ -14,7 +14,9 @@ let gapTestRegistry: ProfileExtensionRegistry = {
 
 extension GapHandler {
     /// Runs `message` as the gap router would, from the extension its `extensionId` names.
-    func handle(_ message: BridgeMessage, registry: ProfileExtensionRegistry = gapTestRegistry) async -> Any? {
+    func handle(_ message: BridgeMessage, registry: ProfileExtensionRegistry? = nil) async -> Any? {
+        // Resolved here, not as the default value: a default argument is evaluated off the main actor.
+        let registry = registry ?? gapTestRegistry
         let extensionId = message.string("extensionId") ?? "test-extension"
         return await handle(GapCall(
             action: message.action,

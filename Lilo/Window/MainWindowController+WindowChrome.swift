@@ -198,6 +198,7 @@ extension MainWindowController {
         StartupMetrics.mark("chromeInitialStateSent")
         bridgeRouter.send(event: "initialState", data: data)
         sendShortcutKeys()
+        if (NSApp.delegate as? AppDelegate)?.readyUpdate != nil { sendUpdateReady() }
         // A reloaded chrome starts blank: it needs the split panes and the placeholder again.
         splitPanes.sentPaneFrames = [:]
         splitPanes.applyFrames(animatesFocus: false)

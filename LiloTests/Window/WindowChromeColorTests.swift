@@ -116,7 +116,7 @@ final class WindowChromeColorTests: XCTestCase {
 
         // Lilo was only ever used in light mode; macOS is dark now.
         NSApp.appearance = NSAppearance(named: .darkAqua)
-        let relaunch = BrowserContext(appSupportDirectory: browserContext.context.appSupportDirectory, makeProfileId: TestProfileIds.next)
+        let relaunch = BrowserContext(appSupportDirectory: browserContext.context.appSupportDirectory, makeProfileId: { TestProfileIds.next() })
         try await relaunch.bootstrap()
         let controller = MainWindowController(context: relaunch)
         controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)

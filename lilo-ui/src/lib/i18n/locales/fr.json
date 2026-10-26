@@ -1314,6 +1314,13 @@
 		"undo": "Annuler",
 		"undoLabel": "Annuler : {closed}"
 	},
+	"updateCard": {
+		"ready": "Prête à installer",
+		"restart": "Relancer",
+		"restartLabel": "Relancer Lilo pour installer la version {version}",
+		"restarting": "Redémarrage...",
+		"later": "Plus tard"
+	},
 	"sitePermissions": {
 		"manage": "Contrôles du site",
 		"camera": "Caméra",

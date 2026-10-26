@@ -107,7 +107,7 @@ final class SessionPersistenceTests: XCTestCase {
     /// Loads the persisted state once every write already queued on the serial writer has run.
     /// Reads the store directly: `restoreSpaceTabState` would reseed the dedup cache.
     private func persistedState(of spaceId: UUID) throws -> SpaceTabState? {
-        try profileDBPool.writeWithoutTransaction { _ in }
+        profileDBPool.writeWithoutTransaction { _ in }
         return try SpaceTabStateStore(dbPool: profileDBPool).load(spaceId: spaceId)
     }
 

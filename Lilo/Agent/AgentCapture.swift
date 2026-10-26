@@ -75,7 +75,7 @@ final class AgentCapture: NSObject {
         }
         // The URL changes as a navigation starts, often still in the old document: the end of the load
         // hooks the new one, in case the start was too early.
-        let hook = { (webView: WKWebView) in MainActor.assumeIsolated { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(Self.consoleHook) } }
+        let hook: @Sendable (WKWebView) -> Void = { webView in MainActor.assumeIsolated { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(Self.consoleHook) } }
         observations = [
             webView.observe(\.url, options: [.initial]) { webView, _ in hook(webView) },
             webView.observe(\.isLoading, options: [.new]) { webView, change in if change.newValue == false { hook(webView) } }

@@ -3932,13 +3932,12 @@ final class BrowserStateStoreTests: XCTestCase {
 
         var sampleCount = 0
         let footprint = Dictionary(uniqueKeysWithValues: ids.map { ($0, UInt64(100)) })
-        let sampler: @MainActor ([UUID: WKWebViewTab]) -> [UUID: UInt64] = { _ in sampleCount += 1; return footprint }
 
         var discardCount = 0
         store.trimEnginesExceedingFootprintCeiling(
             ceilingBytes: 1_000,   // sum is 300, well under
             discardEngine: { _ in discardCount += 1; return nil },
-            footprintSampler: sampler
+            footprintSampler: { _ in sampleCount += 1; return footprint }
         )
 
         XCTAssertEqual(discardCount, 0)
@@ -3954,13 +3953,12 @@ final class BrowserStateStoreTests: XCTestCase {
 
         var sampleCount = 0
         let footprint = Dictionary(uniqueKeysWithValues: ids.map { ($0, UInt64(100)) })   // total 300
-        let sampler: @MainActor ([UUID: WKWebViewTab]) -> [UUID: UInt64] = { _ in sampleCount += 1; return footprint }
 
         var discardCount = 0
         let footprintTotals = store.trimEnginesExceedingFootprintCeiling(
             ceilingBytes: 150,   // must drop the two oldest (300 -> 200 -> 100) to fall under
             discardEngine: { _ in discardCount += 1; return nil },
-            footprintSampler: sampler
+            footprintSampler: { _ in sampleCount += 1; return footprint }
         )
 
         XCTAssertEqual(footprintTotals.total, 300)
@@ -4015,13 +4013,12 @@ final class BrowserStateStoreTests: XCTestCase {
 
         let allIds = [visibleTabId, pinnedTabId, audioTabId, normalTabId]
         let footprint = Dictionary(uniqueKeysWithValues: allIds.map { ($0, UInt64(1_000)) })
-        let sampler: @MainActor ([UUID: WKWebViewTab]) -> [UUID: UInt64] = { _ in footprint }
 
         var discardCount = 0
         store.trimEnginesExceedingFootprintCeiling(
             ceilingBytes: 100,   // hugely exceeded: only the unprotected normal tab may be evicted
             discardEngine: { _ in discardCount += 1; return nil },
-            footprintSampler: sampler
+            footprintSampler: { _ in footprint }
         )
 
         XCTAssertEqual(discardCount, 1)

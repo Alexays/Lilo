@@ -19,6 +19,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
+  import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
@@ -73,6 +74,12 @@
         if (opener?.isConnected && lost) opener.focus({ preventScroll: true });
       });
     };
+  });
+
+  // Kept out of the first frame: loaded with the first update, then kept so its close still animates.
+  let updateCardLoaded = $state(false);
+  $effect(() => {
+    if (getReadyUpdate()) updateCardLoaded = true;
   });
 
   // Latched on first open: the panels chunk loads once, then stays mounted so close animations
@@ -140,6 +147,11 @@
     <!-- Fixed above the bottom bar: does NOT swipe -->
     <PipDock />
     <MediaCard />
+    {#if updateCardLoaded}
+      {#await import("./UpdateCard.svelte") then card}
+        <card.default />
+      {/await}
+    {/if}
 
     <!-- Fixed bottom bar: does NOT swipe -->
     <BottomBar />

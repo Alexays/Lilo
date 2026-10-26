@@ -48,7 +48,7 @@ final class WebKitGapTests: XCTestCase {
         context.webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         context.webExtension.allRequestedMatchPatterns.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         try controller.load(context)
-        context.loadBackgroundContent { _ in }
+        Task.immediate { try? await context.loadBackgroundContent() }
         // The worker's title is its outcome. The bound only stops a hang: compiling a ruleset near
         // WebKit's 150000-rule cap takes over 30 s on a machine busy with parallel test runs.
         await pollUntil(timeout: 120) { context.action(for: nil)?.label != "waiting" }
@@ -66,7 +66,7 @@ final class WebKitGapTests: XCTestCase {
         let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
         context.webExtension.requestedPermissions.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         try controller.load(context)
-        context.loadBackgroundContent { _ in }
+        Task.immediate { try? await context.loadBackgroundContent() }
         let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: try XCTUnwrap(context.webViewConfiguration))
         page.load(URLRequest(url: context.baseURL.appendingPathComponent("page.html")))
         await pollUntil { (try? await page.evaluateJavaScript("document.readyState + location.pathname")) as? String == "complete/page.html" }
@@ -445,7 +445,7 @@ final class WebKitGapTests: XCTestCase {
         let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
         context.setPermissionStatus(.grantedExplicitly, for: .nativeMessaging)
         try controller.load(context)
-        context.loadBackgroundContent { _ in }
+        Task.immediate { try? await context.loadBackgroundContent() }
         await pollUntil(timeout: 10) { context.action(for: nil)?.label != "waiting" }
 
         XCTAssertEqual(
@@ -539,7 +539,9 @@ final class WebKitGapTests: XCTestCase {
         let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
         try controller.load(context)
         var answer: String?
-        context.loadBackgroundContent { error in answer = String(describing: error) }
+        Task.immediate {
+            do { try await context.loadBackgroundContent(); answer = "loaded" } catch { answer = String(describing: error) }
+        }
         await pollUntil(timeout: 5) { answer != nil }
         XCTAssertNil(answer, "WebKit now loads a worker that opens a WebSocket: NeatDownloadManager can leave knownFailures")
     }

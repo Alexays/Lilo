@@ -28,8 +28,8 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         )
 
         XCTAssertEqual(result, .prepared)
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("background.js")), "console.log('vendor');")
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"))
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("background.js"), encoding: .utf8), "console.log('vendor');")
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("importScripts('lilo-background-prelude.js');"))
         XCTAssertTrue(wrapper.contains("importScripts(\"background.js\");"))
         let background = try loadBackground(from: extDir)
@@ -49,7 +49,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         try ";".write(to: extDir.appendingPathComponent("lib/semicolon.js"), atomically: true, encoding: .utf8)
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
-        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
+        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"), encoding: .utf8)
         XCTAssertTrue(prelude.contains(#"globalThis.__liloEmptyScripts = ["/lib/blank.js", "/test.js"];"#), prelude)
     }
 
@@ -61,7 +61,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         try "".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
-        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"))
+        let prelude = try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"), encoding: .utf8)
         let modules = prelude.matches(of: /__liloGapModules\?\?=\{\}\)\["(\w+)"\]/).map { String($0.1) }
         XCTAssertEqual(modules, ["declarativeNetRequest", "history", "omnibox", "system"])
         XCTAssertTrue(prelude.hasSuffix("P"))
@@ -91,7 +91,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
             preludeSource: "globalThis.__liloBackgroundPreludeInstalled = true;"
         )
 
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"))
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("import './lilo-background-prelude.js';"))
         XCTAssertTrue(wrapper.contains("import \"./worker.js\";"))
         let background = try loadBackground(from: extDir)
@@ -110,9 +110,9 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let result = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         XCTAssertEqual(result, .prepared)
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/background.js")), "console.log('vendor');")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/background.js"), encoding: .utf8), "console.log('vendor');")
         XCTAssertTrue(FileManager.default.fileExists(atPath: extDir.appendingPathComponent("js/lilo-background-prelude.js").path))
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js"))
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("importScripts('lilo-background-prelude.js');"))
         XCTAssertTrue(wrapper.contains("importScripts(\"background.js\");"), "must import the vendor worker by basename, got: \(wrapper)")
         XCTAssertFalse(wrapper.contains("js/"), "wrapper imports must be co-located basenames, got: \(wrapper)")
@@ -134,15 +134,15 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         try "console.log('vendor');".write(to: extDir.appendingPathComponent("js/background.js"), atomically: true, encoding: .utf8)
 
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
-        let manifestAfterFirst = try String(contentsOf: extDir.appendingPathComponent("manifest.json"))
-        let wrapperAfterFirst = try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js"))
+        let manifestAfterFirst = try String(contentsOf: extDir.appendingPathComponent("manifest.json"), encoding: .utf8)
+        let wrapperAfterFirst = try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js"), encoding: .utf8)
 
         let result = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         XCTAssertEqual(result, .prepared)
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("manifest.json")), manifestAfterFirst, "manifest unchanged on re-prepare")
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js")), wrapperAfterFirst, "wrapper unchanged on re-prepare")
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/background.js")), "console.log('vendor');", "vendor worker untouched")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("manifest.json"), encoding: .utf8), manifestAfterFirst, "manifest unchanged on re-prepare")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/lilo-background-wrapper.js"), encoding: .utf8), wrapperAfterFirst, "wrapper unchanged on re-prepare")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("js/background.js"), encoding: .utf8), "console.log('vendor');", "vendor worker untouched")
         XCTAssertFalse(FileManager.default.fileExists(atPath: extDir.appendingPathComponent("lilo-background-wrapper.js").path), "no second, root-level wrapper")
     }
 
@@ -157,7 +157,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         let result = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P")
 
         XCTAssertEqual(result, .prepared)
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("src/lilo-background-wrapper.js"))
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("src/lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("import './lilo-background-prelude.js';"))
         XCTAssertTrue(wrapper.contains("import \"./worker.js\";"), "must import the vendor worker by basename, got: \(wrapper)")
         XCTAssertFalse(wrapper.contains("src/"), "wrapper imports must be co-located basenames, got: \(wrapper)")
@@ -191,10 +191,10 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         try "console.log('vendor');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
 
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "one")
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js")), "globalThis.__liloWorkerScript = \"background.js\";\none")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"), encoding: .utf8), "globalThis.__liloWorkerScript = \"background.js\";\none")
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "two")
 
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js")), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"), encoding: .utf8), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
     }
 
     func testPrepareLeavesAFolderWhoseStampMatchesUntilItsWorkerChanges() throws {
@@ -208,15 +208,15 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
         try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
         XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
-        XCTAssertEqual(try String(contentsOf: preludeURL), "edited", "a matching stamp skips the preparation")
+        XCTAssertEqual(try String(contentsOf: preludeURL, encoding: .utf8), "edited", "a matching stamp skips the preparation")
 
         try "console.log('vendor 2');".write(to: extDir.appendingPathComponent("background.js"), atomically: true, encoding: .utf8)
         XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "P"), .prepared)
-        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nP")
+        XCTAssertEqual(try String(contentsOf: preludeURL, encoding: .utf8), "globalThis.__liloWorkerScript = \"background.js\";\nP")
 
         try "edited".write(to: preludeURL, atomically: true, encoding: .utf8)
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "Q")
-        XCTAssertEqual(try String(contentsOf: preludeURL), "globalThis.__liloWorkerScript = \"background.js\";\nQ", "a new prelude prepares again")
+        XCTAssertEqual(try String(contentsOf: preludeURL, encoding: .utf8), "globalThis.__liloWorkerScript = \"background.js\";\nQ", "a new prelude prepares again")
     }
 
     /// Metadata carries no `backgroundPreludeHash`, and `readMetadata` round-trips what `prepare` just
@@ -237,7 +237,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         // `.prepared` here proves the field's absence doesn't break parsing.
         let second = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "two")
         XCTAssertEqual(second, .prepared)
-        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js")), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
+        XCTAssertEqual(try String(contentsOf: extDir.appendingPathComponent("lilo-background-prelude.js"), encoding: .utf8), "globalThis.__liloWorkerScript = \"background.js\";\ntwo")
     }
 
     func testPrepareUsesMetadataWhenManifestAlreadyPointsAtWrapper() throws {
@@ -251,7 +251,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
 
         _ = try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "new")
 
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"))
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("importScripts(\"real-bg.js\");"))
     }
 
@@ -280,7 +280,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
 
         XCTAssertEqual(try ExtensionBackgroundPreparer.prepare(extensionURL: extDir, preludeSource: "prelude"), .prepared)
 
-        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"))
+        let wrapper = try String(contentsOf: extDir.appendingPathComponent("lilo-background-wrapper.js"), encoding: .utf8)
         XCTAssertTrue(wrapper.contains("importScripts(\"new-bg.js\");"))
         XCTAssertEqual(try loadMetadata(from: extDir)["originalServiceWorker"] as? String, "new-bg.js")
         XCTAssertTrue(FileManager.default.fileExists(atPath: extDir.appendingPathComponent("lilo-background-prelude.js").path),
@@ -472,7 +472,7 @@ final class ExtensionBackgroundPreparerTests: XCTestCase {
         context.webExtension.allRequestedMatchPatterns.forEach { context.setPermissionStatus(.grantedExplicitly, for: $0) }
         try controller.load(context)
         defer { try? controller.unload(context) }
-        context.loadBackgroundContent { _ in }
+        Task.immediate { try? await context.loadBackgroundContent() }
         await pollUntil(timeout: 20) { context.action(for: nil)?.label != "waiting" }
         XCTAssertEqual(context.action(for: nil)?.label, "applied")
 

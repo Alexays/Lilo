@@ -109,7 +109,7 @@ enum AgentTools {
             control.refreshControlledTabs()
             let entry = { (tab: Tab) -> [String: Any] in ["tabId": control.number(for: tab.id), "title": tab.title, "url": tab.url?.absoluteString ?? ""] }
             let available = tabs.map(entry) + isolated.map { entry($0).merging(["isolated": true]) { $1 } }
-            return [.text(json(["availableTabs": available, "tabGroupId": folderId?.uuidString ?? NSNull()]))]
+            return [.text(json(["availableTabs": available, "tabGroupId": folderId.map { $0.uuidString as Any } ?? NSNull()]))]
         case "tabs_create_mcp":
             nameFolder(session, arguments["title"], control: control)
             if arguments["isolated"] as? Bool == true {

@@ -46,7 +46,7 @@ enum AppFreezer {
     static func isLilo(_ pid: pid_t) -> Bool {
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return false }
-        return (String(cString: path) as NSString).lastPathComponent == "Lilo"
+        return (path.withUnsafeBufferPointer { String(cString: $0.baseAddress!) } as NSString).lastPathComponent == "Lilo"
     }
 }
 

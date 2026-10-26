@@ -30,7 +30,7 @@ final class SidePanelBridgeHandler: GapHandler {
         unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             let uninstalled = note.userInfo?["uninstalled"] as? Bool == true
-            nonisolated(unsafe) let registry = note.object as? ProfileExtensionRegistry
+            let registry = note.object as? ProfileExtensionRegistry
             MainActor.assumeIsolated {
                 self?.options.removeValue(forKey: "\(profileId).\(extensionId)")
                 registry?.delegate.windows?.windows.forEach { $0.sidePanel.extensionDidUnload(extensionId) }
@@ -185,7 +185,7 @@ final class SidePanelBridgeHandler: GapHandler {
             window = adapter.nsWindow?.windowController as? MainWindowController
             guard window != nil else { return BridgeError("No browser window for windowId: \(windowId)") }
         }
-        guard let tabId else { return window.map { body($0, nil) } }
+        guard let tabId else { return window.flatMap { body($0, nil) } }
         guard let tab = self.tab(at: call.payload["tab"], call: call) else { return BridgeError("No tab with id: \(tabId).") }
         guard let tabWindow = (tab.extensionWindow as? WindowExtensionAdapter)?.nsWindow?.windowController as? MainWindowController else {
             return BridgeError("No browser window for tabId: \(tabId)")
