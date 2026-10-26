@@ -211,6 +211,18 @@ describe('storage areas', () => {
     assert.deepEqual(local.calls, ['set', 'remove']);
   });
 
+  it('store a queued write\'s items as they are when it is made, as Chrome', async () => {
+    const { chrome, local } = install();
+    const list = [1, 2];
+    const nested = { n: 1 };
+    chrome.storage.local.set({ a: 1 });
+    const queued = chrome.storage.local.set({ list, nested, when: new Date(0) });
+    list.length = 0;
+    nested.n = 2;
+    await queued;
+    assert.deepEqual(local.stored, { a: 1, list: [1, 2], nested: { n: 1 }, when: '1970-01-01T00:00:00.000Z' });
+  });
+
   it('answer each queued set on its own when their one call fails', async () => {
     const { chrome, local } = install();
     chrome.storage.local.set({ a: 1 });

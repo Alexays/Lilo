@@ -4,6 +4,11 @@ import { installPageWorkerMessages, installWorkerClientMessages } from './worker
 
 class WindowClient {}
 
+// As WebKit's: waitUntil throws on an event a script builds.
+class ExtendableMessageEvent extends MessageEvent<unknown> {
+  waitUntil(_promise: Promise<unknown>) { throw new DOMException('Event is not trusted', 'InvalidStateError'); }
+}
+
 const channels: BroadcastChannel[] = [];
 class Channel extends BroadcastChannel {
   constructor(name: string) { super(name); channels.push(this); }
@@ -14,11 +19,11 @@ function page(href: string) {
   class ServiceWorker {
     scriptURL: string;
     constructor(scriptURL: string) { this.scriptURL = scriptURL; }
-    postMessage(data: unknown) { sent.push(data); }
+    postMessage(data: unknown, ..._transfer: unknown[]) { sent.push(data); }
   }
   const url = new URL(href);
   const scope = {
-    ServiceWorker, BroadcastChannel: Channel, MessageEvent, crypto,
+    ServiceWorker, BroadcastChannel: Channel, MessageEvent, MessagePort, crypto,
     location: { protocol: url.protocol, host: url.host, href },
     navigator: { serviceWorker: new EventTarget() },
   };
@@ -27,7 +32,7 @@ function page(href: string) {
 }
 
 function worker() {
-  const scope = Object.assign(new EventTarget(), { BroadcastChannel: Channel, WindowClient, MessageEvent });
+  const scope = Object.assign(new EventTarget(), { BroadcastChannel: Channel, WindowClient, MessageEvent, ExtendableMessageEvent, MessageChannel, crypto });
   installWorkerClientMessages(scope);
   return scope;
 }
@@ -58,6 +63,37 @@ describe('worker messages', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     assert.deepEqual(popupAnswers, []);
     assert.deepEqual(offscreen.sent, []);
+  });
+
+  it('gives the worker an event whose waitUntil takes the handler\'s promise', async () => {
+    const sw = worker();
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const handled = new Promise<ExtendableMessageEvent>((resolve) => sw.addEventListener('message', (e) => {
+      (e as ExtendableMessageEvent).waitUntil(Promise.reject(new Error('handled')));
+      resolve(e as ExtendableMessageEvent);
+    }, { once: true }));
+    offscreen.worker('chrome-extension://abc/lilo-background-wrapper.js').postMessage('hi');
+    const message = await handled;
+    assert.ok(message instanceof ExtendableMessageEvent);
+    assert.deepEqual(message.ports, []);
+  });
+
+  it('hands the worker a port the page transferred, which answers on the page\'s own port', async () => {
+    const sw = worker();
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const { port1, port2 } = new MessageChannel();
+    const received = next(sw);
+    offscreen.worker('chrome-extension://abc/lilo-background-wrapper.js').postMessage({ id: 1 }, [port2]);
+    const message = await received;
+    assert.equal(message.ports.length, 1);
+    const answered = new Promise((resolve) => { port1.onmessage = ({ data }) => resolve(data); });
+    message.ports[0].postMessage({ id: 1, result: 'done' });
+    assert.deepEqual(await answered, { id: 1, result: 'done' });
+    const asked = new Promise((resolve) => { message.ports[0].onmessage = ({ data }) => resolve(data); });
+    port1.postMessage('again');
+    assert.equal(await asked, 'again');
+    port1.close();
+    message.ports[0].close();
   });
 
   it('leaves another origin\'s worker to the native postMessage', () => {

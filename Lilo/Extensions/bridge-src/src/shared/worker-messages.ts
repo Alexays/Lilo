@@ -3,7 +3,17 @@
 
 const CHANNEL = 'lilo-worker-messages';
 
-type Envelope = { page: string; toWorker: boolean; data: unknown; url?: string };
+type Envelope = { page: string; toWorker: boolean; data: unknown; url?: string; ports?: string[] };
+/** A message on a transferred port, which BroadcastChannel cannot carry: each end relays its own real port. */
+type PortEnvelope = { port: string; toWorker: boolean; data: unknown };
+
+/** Relays `port` over `channel` as the page's end of `id` when `toWorker`, else as the worker's. */
+function relayPort(channel: any, port: any, id: string, toWorker: boolean): void {
+  port.onmessage = ({ data }: { data: unknown }) => channel.postMessage({ port: id, toWorker, data } satisfies PortEnvelope);
+  channel.addEventListener('message', ({ data }: { data: PortEnvelope }) => {
+    if (data?.port === id && data.toWorker !== toWorker) port.postMessage(data.data);
+  });
+}
 
 export function installPageWorkerMessages(scope: any): void {
   const { ServiceWorker, BroadcastChannel, location } = scope;
@@ -14,14 +24,20 @@ export function installPageWorkerMessages(scope: any): void {
   const page = scope.crypto.randomUUID();
   const channel = new BroadcastChannel(CHANNEL);
   const post = ServiceWorker.prototype.postMessage;
-  ServiceWorker.prototype.postMessage = function (this: { scriptURL: string }, data: unknown, ...rest: unknown[]) {
+  ServiceWorker.prototype.postMessage = function (this: { scriptURL: string }, data: unknown, ...rest: any[]) {
     if (!this.scriptURL.startsWith(base)) return post.call(this, data, ...rest);
-    channel.postMessage({ page, toWorker: true, data, url: location.href } satisfies Envelope);
+    const transfer: unknown[] = Array.isArray(rest[0]) ? rest[0] : rest[0]?.transfer ?? [];
+    const ports = transfer.filter((item) => item instanceof scope.MessagePort).map((port) => {
+      const id = scope.crypto.randomUUID();
+      relayPort(channel, port, id, true);
+      return id;
+    });
+    channel.postMessage({ page, toWorker: true, data, url: location.href, ports } satisfies Envelope);
   };
-  channel.onmessage = ({ data }: { data: Envelope }) => {
+  channel.addEventListener('message', ({ data }: { data: Envelope }) => {
     if (data?.toWorker !== false || data.page !== page) return;
     container.dispatchEvent(new scope.MessageEvent('message', { data: data.data }));
-  };
+  });
   // WebKit scopes the worker to its script's directory, Chrome to the extension's root: a page outside
   // that directory (MultiPassword's, whose worker is in background/) would wait for it forever.
   const nativeReady = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(container), 'ready')?.get;
@@ -45,8 +61,14 @@ export function installWorkerClientMessages(scope: any): void {
   if (!BroadcastChannel || !WindowClient) return;
   const channel = new BroadcastChannel(CHANNEL);
   const Event = scope.ExtendableMessageEvent ?? scope.MessageEvent;
-  channel.onmessage = ({ data }: { data: Envelope }) => {
+  channel.addEventListener('message', ({ data }: { data: Envelope }) => {
     if (data?.toWorker !== true || typeof data.url !== 'string') return;
+    // The worker's ends are real ports, so their start, queueing and close behave as Chrome's.
+    const ports = (data.ports ?? []).map((id) => {
+      const { port1, port2 } = new scope.MessageChannel();
+      relayPort(channel, port2, id, false);
+      return port1;
+    });
     // A WindowClient, as Chrome's source is: extensions check it comes from one of their own pages.
     const source = Object.create(WindowClient.prototype, {
       id: { value: data.page },
@@ -55,8 +77,12 @@ export function installWorkerClientMessages(scope: any): void {
       frameType: { value: 'top-level' },
       postMessage: { value: (answer: unknown) => channel.postMessage({ page: data.page, toWorker: false, data: answer } satisfies Envelope) },
     });
-    const event = new Event('message', { data: data.data, origin: new URL(data.url).origin });
-    Object.defineProperty(event, 'source', { value: source });
+    const event = new Event('message', { data: data.data, origin: new URL(data.url).origin, ports });
+    // WebKit's waitUntil throws InvalidStateError on a script-built event; its promise has no worker lifetime to extend.
+    Object.defineProperties(event, {
+      source: { value: source },
+      waitUntil: { value: (promise: unknown) => { Promise.resolve(promise).catch(() => {}); } },
+    });
     scope.dispatchEvent(event);
-  };
+  });
 }
