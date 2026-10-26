@@ -44,12 +44,14 @@ DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
 # They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
-# line counts): about 100 s together.
+# line counts): about 100 s together. The ruleset compile takes a second alone, but WebKit starves it while
+# the other test runs keep every core busy: past its 120 s bound, it only skips.
 SLOW_TESTS := GapRouterStoreProviderTests/testAnIdleWorkerUnloadsOnChromesScheduleAndHearsLaterEvents \
 	GitDiffTests/testTerminalLineCountsRunOncePerIntervalButFollowADirectoryChangeAtOnce \
 	ProfileExtensionRegistryTests/testReEnabledOrReloadedWorkerHearsNeitherOnInstalledNorOnStartup \
 	ProfileExtensionRegistryTests/testWorkersRestoredLateHearOnStartupOnly \
 	WebKitGapTests/testLifecycleEventsDependOnTheControllerAge \
+	WebKitGapTests/testRulesetOverWebKitsRuleCapDoesNotApply \
 	WebKitGapTests/testWebSocketStallsTheWorkerLoad
 DEBUG_TEAM_ID := $(or $(LILO_DEBUG_TEAM_ID),$(LILO_TEAM_ID))
 DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SIGN_IDENTITY="$(or $(LILO_DEBUG_CODE_SIGN_IDENTITY),Apple Development)" CODE_SIGN_STYLE=Manual)
