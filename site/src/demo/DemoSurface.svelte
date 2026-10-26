@@ -467,7 +467,10 @@ export const requestFolderDeletion = (id: string) => {
 <style>
   :global(::highlight(demo-find-results)) { background: #f4d97a; color: #242033; }
   :global(::highlight(demo-find-current)) { background: #eea352; color: #242033; }
-  :global(body) { background: var(--sidebar-bg); }
+  /* Stands in for the native window frame; outranks lilo-ui's transparent `html, body`, which loads later. */
+  :global(html body) { background: var(--sidebar-bg); }
+  /* The demo sits in a page that scrolls: the sidebar must hand vertical wheel back to it. */
+  :global(#app .space-track), :global(#app .space-scroll) { overscroll-behavior-y: auto; }
   .traffic-lights { position: fixed; left: 17px; top: 14px; z-index: 1000; display: flex; gap: 8px; }
   :global(html[data-tab-position="left"]) .traffic-lights { top: 20px; }
   .traffic-lights button { border: 0; width: 12px; height: 12px; border-radius: 50%; padding: 0; display: grid; place-items: center; font: 12px/1 -apple-system, sans-serif; color: #412d28; cursor: pointer; box-shadow: inset 0 0 0 0.5px #00000012; }
