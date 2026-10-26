@@ -412,9 +412,9 @@ vt-zip: vt-build-source
 check-commits:
 	@scripts/check_commits.sh $(BASE)
 
-## Time launches of a Release build against a throwaway profile (RUNS=10 TABS=0)
+## Time launches of a Release build against a throwaway profile (RUNS=10 TABS=0; APP=path times that app, unbuilt)
 startup-bench:
-	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT))
+	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT)) $(if $(APP),--app '$(abspath $(APP))')
 
 # Extensions download once into build/ext-bench; the bench takes about 5 minutes. The idle budget sits well above
 # a healthy build and well below a busy loop in a worker or the bridge; MAX_IDLE_CPU= measures without one.

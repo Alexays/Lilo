@@ -230,31 +230,18 @@ jobs:
             .derived.noindex/build-app
             !.derived.noindex/build-app/Logs
           key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
-
-  # Numbers are kept per merged commit: a pull request would only spend a second Release build on them.
-  startup-bench:
-    name: Startup Benchmark (macOS, informational)
-    needs: app
-    if: github.event_name == 'push' && needs.app.result == 'success'
-    runs-on: xcode-27
-    timeout-minutes: 45
-    # Launch times drift with the runner: the numbers are kept per commit, never gate a merge.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-          cache-dependency-path: lilo-ui/package-lock.json
-      - run: xcodebuild -downloadComponent MetalToolchain
+      # Launches of the app just built, kept per merged commit. They drift with the runner, so they never fail the run.
+      # Re-signed without the hardened runtime, whose library validation rejects the ad-hoc signed Sparkle.framework.
       - name: Run startup benchmark
+        if: github.event_name == 'push'
+        continue-on-error: true
         shell: bash
         run: |
+          codesign --force --deep --sign - --preserve-metadata=entitlements build/release/export/Lilo.app
           mkdir -p build/startup-bench
-          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench | tee build/startup-bench/summary.txt
+          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench APP=build/release/export/Lilo.app | tee build/startup-bench/summary.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
+        if: github.event_name == 'push' && always()
         with:
           name: startup-bench-${{ github.sha }}
           path: build/startup-bench/

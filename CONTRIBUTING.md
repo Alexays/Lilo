@@ -193,8 +193,8 @@ rather than carving out a helper just to reach it.
 - **libghostty-vt** (`.github/workflows/ghostty-vt.yml`, by hand or when `GHOSTTY_SHA` changes on
   `main`): builds the xcframework `make vt-build` downloads and publishes it as the
   `ghostty-vt-<sha>` prerelease, whose notes give the new `VT_SHA256`.
-- **Startup benchmark** (informational): `make startup-bench RUNS=5 TABS=10`, uploaded as the
-  `startup-bench-<sha>` artifact. It never fails the run.
+- **Startup benchmark** (informational, pushes to `main`): `make startup-bench RUNS=5 TABS=10` on the
+  app the Release build just exported, uploaded as the `startup-bench-<sha>` artifact. It never fails the run.
 
 `.github/workflows/extensions-nightly.yml` runs every night (and by hand) in `Alexays/Lilo` only, on the
 `xcode-27` image: `make ext-bench` against its idle CPU budget, then `make ext-nightly TOP=1000`. The
