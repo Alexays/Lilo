@@ -379,9 +379,10 @@
     mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
   }
 
+  /* Never narrower than its pills at their smallest: past that the row scrolls, rather than pills sliding under what follows. */
   .today-list {
     flex: 1;
-    min-width: 0;
+    min-width: min-content;
     display: flex;
     align-items: center;
     gap: 4px;
