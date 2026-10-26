@@ -77,6 +77,17 @@ final class EngineFreezerTests: XCTestCase {
 
         tab.freeze()
         XCTAssertTrue(CompositeFreezer.suspendedWebViews.contains(tab.wkWebView))
+        // What WebKit's scripting.executeScript sends once its frame-tree round trip returns.
+        let selector = NSSelectorFromString("_callAsyncJavaScript:arguments:inFrame:inContentWorld:withUserGesture:completionHandler:")
+        let method = try XCTUnwrap(class_getInstanceMethod(WKWebView.self, selector))
+        typealias CallMethod = @convention(c) (
+            WKWebView, Selector, NSString, NSDictionary?, WKFrameInfo?, WKContentWorld, Bool, @convention(block) (Any?, Error?) -> Void
+        ) -> Void
+        var scriptError: Error?
+        unsafeBitCast(method_getImplementation(method), to: CallMethod.self)(tab.wkWebView, selector, "return 1", nil, nil, .page, false) { _, error in
+            scriptError = error
+        }
+        XCTAssertNotNil(scriptError, "an extension script on a frozen page fails instead of raising")
         XCTAssertTrue(tab.tryClose())
         tab.stopLoading()
         let preview = await tab.takePreviewSnapshot()

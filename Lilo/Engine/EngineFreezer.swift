@@ -32,7 +32,26 @@ final class CompositeFreezer {
     /// so code that only holds a raw web view (bridges replying to a page) checks here and skips.
     static let suspendedWebViews = NSHashTable<WKWebView>.weakObjects()
 
+    /// WebKit's `scripting.executeScript` calls `_callAsyncJavaScript:` after an async frame-tree round trip, which a slow
+    /// background process can stretch past any extension loan: on a page frozen meanwhile the call fails instead of raising.
+    private static let failsAsyncJavaScriptWhileSuspended: Void = {
+        let selector = NSSelectorFromString("_callAsyncJavaScript:arguments:inFrame:inContentWorld:withUserGesture:completionHandler:")
+        guard let method = class_getInstanceMethod(WKWebView.self, selector) else { return }
+        typealias Completion = @convention(block) (Any?, Error?) -> Void
+        typealias CallMethod = @convention(c) (WKWebView, Selector, NSString, NSDictionary?, WKFrameInfo?, WKContentWorld, Bool, Completion?) -> Void
+        let original = unsafeBitCast(method_getImplementation(method), to: CallMethod.self)
+        typealias CallBlock = @convention(block) (WKWebView, NSString, NSDictionary?, WKFrameInfo?, WKContentWorld, Bool, Completion?) -> Void
+        let call: CallBlock = { webView, body, arguments, frame, world, userGesture, completion in
+            guard MainActor.assumeIsolated({ suspendedWebViews.contains(webView) }) else {
+                return original(webView, selector, body, arguments, frame, world, userGesture, completion)
+            }
+            completion?(nil, WKError(.javaScriptExceptionOccurred))
+        }
+        method_setImplementation(method, imp_implementationWithBlock(call))
+    }()
+
     func freeze(_ webView: WKWebView) {
+        _ = Self.failsAsyncJavaScriptWhileSuspended
         // Native, definitive: stop audio so a frozen tab is silent regardless of page cooperation.
         webView.pauseAllMediaPlayback()
         // Cooperative: tell the page it is hidden so it self-throttles (rAF/timers gate on visibility).
