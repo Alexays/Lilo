@@ -14,6 +14,7 @@ What changes in each Lilo release, for people using it. The format follows
 
 - AI agents now type text exactly as written, without your Mac's smart quotes or dashes, and Lilo asks you before an agent posts or replies on a site. A click from an agent also waits for the request it starts, so a post or payment is not cut off when the agent moves on.
 - Text an agent types with line breaks no longer lands out of order in editors such as X's, an agent's tab shown at a size the agent set no longer lets its other pages show around it, and an agent restarted through Claude Desktop keeps its tabs.
+- Full-page screenshots of sites that keep an invisible frame the size of the window, such as LinkedIn, now capture the whole page.
 
 [0.5.0]: https://github.com/Alexays/Lilo/compare/v0.4.1...v0.5.0
 ## [0.4.1] - 2026-10-26
