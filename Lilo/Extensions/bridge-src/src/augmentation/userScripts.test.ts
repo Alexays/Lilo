@@ -141,6 +141,26 @@ describe('runtime.onUserScriptConnect', () => {
     assert.equal(disconnected, true);
     assert.throws(() => port.postMessage('late'));
   });
+
+  it('relays, in order, a message and a disconnect that arrive while the sender tab resolves', async () => {
+    const { onUserScriptConnect } = await import('./userScripts.ts');
+    const heard: string[] = [];
+    const listener = (port: any) => {
+      heard.push(`connect ${port.sender.tab?.id}`);
+      port.onMessage.addListener((message: unknown) => heard.push(`message ${message}`));
+      port.onDisconnect.addListener(() => heard.push('disconnect'));
+    };
+    onUserScriptConnect.addListener(listener);
+
+    onUserScriptConnect.dispatch('connect', 'p2', 'chat', { id: 'ext', tabPosition: { windowPosition: 1, index: 0 } });
+    onUserScriptConnect.dispatch('message', 'p2', 'early');
+    onUserScriptConnect.dispatch('disconnect', 'p2');
+    await settle();
+    await settle();
+    onUserScriptConnect.removeListener(listener);
+
+    assert.deepEqual(heard, ['connect 21', 'message early', 'disconnect']);
+  });
 });
 
 describe('userScripts while the switch is off', () => {
