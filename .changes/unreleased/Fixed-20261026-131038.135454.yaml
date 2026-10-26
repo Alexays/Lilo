@@ -1,3 +1,0 @@
-kind: Fixed
-body: Clicking a docked call or video from another space goes back to its space and tab, instead of hiding it.
-time: 2026-10-26T13:10:38.135454+01:00

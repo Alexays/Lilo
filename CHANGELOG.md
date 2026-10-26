@@ -4,6 +4,23 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.3] - 2026-10-26
+
+### Changed
+
+- Each agent works in its own profile, in an Agents space per profile: one agent switching profile no longer moves the other agents' tabs, and the Agents space menu no longer has a profile picker.
+- An agent's permission prompt puts Deny beside Allow Once, with Always Allow on its own row above.
+
+### Fixed
+
+- An active pinned or favorite tab on a tab strip no longer covers the tabs beside it.
+- An agent whose MCP server restarts keeps its tabs, and a tab that closed with its conversation says why.
+- A long agent script or profile switch is no longer cut off after 90 seconds as if Lilo were frozen.
+- The command bar no longer puts a locked folder above the web search when a query only matches scattered letters of one of its tabs, and a folder named with an emoji shows that emoji as its icon.
+- Clicking a docked call or video from another space goes back to its space and tab, instead of hiding it.
+- Links on image-heavy pages like Mobbin open right away again, instead of sometimes taking up to a minute while the content blocker kept the page busy.
+
+[0.3.3]: https://github.com/Alexays/Lilo/compare/v0.3.2...v0.3.3
 ## [0.3.2] - 2026-10-26
 
 ### Fixed

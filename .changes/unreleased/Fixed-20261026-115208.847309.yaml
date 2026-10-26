@@ -1,3 +1,0 @@
-kind: Fixed
-body: An agent whose MCP server restarts keeps its tabs, and a tab that closed with its conversation says why.
-time: 2026-10-26T11:52:08.847309+01:00
