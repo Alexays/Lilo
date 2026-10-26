@@ -14,7 +14,7 @@ class Channel extends BroadcastChannel {
   constructor(name: string) { super(name); channels.push(this); }
 }
 
-function page(href: string) {
+function page(href: string, registrations: unknown[] = []) {
   const sent: unknown[] = [];
   class ServiceWorker {
     scriptURL: string;
@@ -25,7 +25,9 @@ function page(href: string) {
   const scope = {
     ServiceWorker, BroadcastChannel: Channel, MessageEvent, MessagePort, crypto,
     location: { protocol: url.protocol, host: url.host, href },
-    navigator: { serviceWorker: new EventTarget() },
+    navigator: { serviceWorker: Object.assign(new EventTarget(), { getRegistrations: async () => registrations }) },
+    chrome: { runtime: { getManifest: () => ({ background: { service_worker: 'background/worker.js' } }) } },
+    setTimeout,
   };
   installPageWorkerMessages(scope);
   return { scope, sent, worker: (script: string) => new ServiceWorker(script) };
@@ -94,6 +96,25 @@ describe('worker messages', () => {
     assert.equal(await asked, 'again');
     port1.close();
     message.ports[0].close();
+  });
+
+  it('resolves ready with the registration a page finds', async () => {
+    const registration = { active: { scriptURL: 'chrome-extension://abc/background/lilo-background-wrapper.js' } };
+    const offscreen = page('chrome-extension://abc/offscreen.html', [{ active: { scriptURL: 'https://example.com/sw.js' } }, registration]);
+    assert.equal(await (offscreen.scope.navigator.serviceWorker as any).ready, registration);
+  });
+
+  it('resolves ready with a stand-in carrying the messages once the worker answers a page that finds no registration', async () => {
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const pending = (offscreen.scope.navigator.serviceWorker as any).ready;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    const sw = worker();
+    const { active } = await pending;
+    assert.equal(active.scriptURL, 'chrome-extension://abc/background/worker.js');
+    const received = next(sw);
+    active.postMessage({ event: 'connected' });
+    assert.deepEqual((await received).data, { event: 'connected' });
+    assert.deepEqual(offscreen.sent, []);
   });
 
   it('leaves another origin\'s worker to the native postMessage', () => {

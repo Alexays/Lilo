@@ -85,6 +85,18 @@ export class WrappedEvent<T extends unknown[]> extends ChromeEvent<T> {
   hasListeners(): boolean {
     return this.wrappers.size > 0;
   }
+
+  /** Runs `run` with the listeners off WebKit's event, which WebKit then counts this context out of, and back after. */
+  unheard<R>(run: () => R): R {
+    if (!this.wrappers.size) return run();
+    const [event, { add, remove }] = this.native();
+    for (const wrapper of this.wrappers.values()) remove.call(event, wrapper);
+    try {
+      return run();
+    } finally {
+      for (const wrapper of this.wrappers.values()) add.call(event, wrapper);
+    }
+  }
 }
 
 /** A ChromeEvent for each of `eventNames`, keyed by name. */
