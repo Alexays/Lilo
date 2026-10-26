@@ -1,7 +1,8 @@
 // WebKit applies the extension's rules but exposes no matcher, so this re-evaluates them with Chrome's matching and
-// precedence; response-header conditions never match. SW-safe: chrome.* and fetch only.
+// precedence; response-header conditions never match. SW-safe: chrome.*, gap calls and fetch only.
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import { INERT_FILTER, fromWebKit, webKitRule } from '../shared/dnr-rules.ts';
+import { gapCall } from '../shared/ipc.ts';
 
 interface Condition {
   urlFilter?: string;
@@ -61,7 +62,7 @@ function site(host: string): string {
 }
 
 /** Chrome's urlFilter: `*` any run, `^` a separator or the end, `|` an anchor, `||` a domain anchor. */
-function urlFilterMatches(filter: string, url: string, caseSensitive: boolean): boolean {
+function urlFilterRegExp(filter: string, flags: string): RegExp {
   let pattern = filter;
   let prefix = '';
   if (pattern.startsWith('||')) {
@@ -78,29 +79,58 @@ function urlFilterMatches(filter: string, url: string, caseSensitive: boolean): 
     if (ch === '^') return '(?:[^a-zA-Z0-9_.%-]|$)';
     return ch.replace(/[.+?${}()|[\]\\/]/g, '\\$&');
   }).join('');
-  return new RegExp(prefix + body + (anchoredEnd ? '$' : ''), caseSensitive ? '' : 'i').test(url);
+  return new RegExp(prefix + body + (anchoredEnd ? '$' : ''), flags);
 }
 
-/** Whether `rule` applies to `request`, condition by condition, as Chrome evaluates them. */
-export function ruleMatches(rule: Rule, request: TestRequest): boolean {
+/** A rule's urlFilter and regexFilter, compiled; null for a regexFilter that never matches, being invalid. */
+interface CompiledFilters {
+  urlFilter?: RegExp;
+  regexFilter?: RegExp | null;
+}
+
+const compiledFilters = new WeakMap<Rule, CompiledFilters>();
+
+function filtersOf(rule: Rule): CompiledFilters {
+  let filters = compiledFilters.get(rule);
+  if (filters) return filters;
   const c = rule.condition ?? {};
+  const flags = c.isUrlFilterCaseSensitive === true ? '' : 'i';
+  filters = {};
+  if (c.urlFilter !== undefined) filters.urlFilter = urlFilterRegExp(c.urlFilter, flags);
+  if (c.regexFilter !== undefined) {
+    try {
+      filters.regexFilter = new RegExp(c.regexFilter, flags);
+    } catch {
+      filters.regexFilter = null;
+    }
+  }
+  compiledFilters.set(rule, filters);
+  return filters;
+}
+
+/** The request's host and initiator host, lowercased ('' without an initiator); undefined for an invalid url. */
+interface RequestHosts {
+  host: string;
+  initiatorHost: string;
+}
+
+function hostsOf(request: TestRequest): RequestHosts | undefined {
   let url: URL;
   try {
     url = new URL(request.url);
   } catch {
-    return false;
+    return undefined;
   }
-  const host = url.hostname.toLowerCase();
   const initiatorHost = request.initiator ? (() => { try { return new URL(request.initiator).hostname.toLowerCase(); } catch { return ''; } })() : '';
+  return { host: url.hostname.toLowerCase(), initiatorHost };
+}
+
+/** Whether `rule` applies to `request`, condition by condition, as Chrome evaluates them, the regexes last. */
+export function ruleMatches(rule: Rule, request: TestRequest, hosts = hostsOf(request)): boolean {
+  if (!hosts) return false;
+  const { host, initiatorHost } = hosts;
+  const c = rule.condition ?? {};
   if (c.responseHeaders || c.excludedResponseHeaders) return false;
-  if (c.urlFilter !== undefined && !urlFilterMatches(c.urlFilter, request.url, c.isUrlFilterCaseSensitive === true)) return false;
-  if (c.regexFilter !== undefined) {
-    try {
-      if (!new RegExp(c.regexFilter, c.isUrlFilterCaseSensitive === true ? '' : 'i').test(request.url)) return false;
-    } catch {
-      return false;
-    }
-  }
   if (c.requestDomains && !hostMatches(host, c.requestDomains)) return false;
   if (c.excludedRequestDomains && hostMatches(host, c.excludedRequestDomains)) return false;
   const initiatorDomains = c.initiatorDomains ?? c.domains;
@@ -119,7 +149,10 @@ export function ruleMatches(rule: Rule, request: TestRequest): boolean {
     const thirdParty = initiatorHost !== '' && site(initiatorHost) !== site(host);
     if ((c.domainType === 'thirdParty') !== thirdParty) return false;
   }
-  return true;
+  if (c.urlFilter === undefined && c.regexFilter === undefined) return true;
+  const filters = filtersOf(rule);
+  if (filters.urlFilter && !filters.urlFilter.test(request.url)) return false;
+  return filters.regexFilter === undefined || (filters.regexFilter !== null && filters.regexFilter.test(request.url));
 }
 
 /**
@@ -129,8 +162,10 @@ export function ruleMatches(rule: Rule, request: TestRequest): boolean {
 export function matchOutcome(sources: RuleSource[], request: TestRequest): { ruleId: number; rulesetId: string }[] {
   const order = [SESSION_RULESET_ID, DYNAMIC_RULESET_ID];
   const sourceRank = (id: string) => (order.includes(id) ? order.indexOf(id) : order.length);
+  const hosts = hostsOf(request);
+  if (!hosts) return [];
   const matched = sources.flatMap((source) => source.rules
-    .filter((rule) => ruleMatches(rule, request))
+    .filter((rule) => ruleMatches(rule, request, hosts))
     .map((rule) => ({ rule, rulesetId: source.rulesetId })));
   const rank = (m: { rule: Rule; rulesetId: string }) => [-(m.rule.priority ?? 1), ACTION_ORDER.indexOf(m.rule.action.type), sourceRank(m.rulesetId)];
   const byPrecedence = (a: typeof matched[number], b: typeof matched[number]) => {
@@ -145,23 +180,41 @@ export function matchOutcome(sources: RuleSource[], request: TestRequest): { rul
   return [...(winner ? [winner] : []), ...headers].map((m) => ({ ruleId: m.rule.id, rulesetId: m.rulesetId }));
 }
 
+/** The parsed static rules, for the enabled rulesets and disabled rule ids `key` names. */
+let staticCache: { key: string; sources: Promise<RuleSource[]> } | undefined;
+
 /** The rules WebKit applies for this extension: its enabled static rulesets, dynamic and session rules. */
 async function ruleSources(dnr: any): Promise<RuleSource[]> {
   const c = bridgeChrome();
   const resources: { id: string; path: string }[] = c.runtime.getManifest?.()?.declarative_net_request?.rule_resources ?? [];
-  const enabled: string[] = await dnr.getEnabledRulesets();
-  const staticSources = await Promise.all(resources
-    .filter((resource) => enabled.includes(resource.id))
-    .map(async (resource) => ({
-      rulesetId: resource.id,
-      rules: await fetch(c.runtime.getURL(resource.path)).then((r) => r.json()).catch(() => []) as Rule[],
-    })));
+  const [enabled, session, dynamic, disabled]: [string[], Rule[], Rule[], number[][]] = await Promise.all([
+    dnr.getEnabledRulesets(),
+    dnr.getSessionRules(),
+    dnr.getDynamicRules(),
+    Promise.all(resources.map((resource) => gapCall<number[]>('declarativeNetRequest', 'getDisabledRuleIds', { rulesetId: resource.id }))),
+  ]);
+  // Disabling static rules rewrites their ruleset's file (inert rules), so the file follows the disabled ids too.
+  const key = JSON.stringify(resources.map((resource, i) => (enabled.includes(resource.id) ? disabled[i] : null)));
+  if (staticCache?.key !== key) {
+    staticCache = {
+      key,
+      sources: Promise.all(resources
+        .filter((resource) => enabled.includes(resource.id))
+        .map(async (resource) => {
+          const rules = await fetch(c.runtime.getURL(resource.path)).then((r) => r.json()).catch(() => {
+            staticCache = undefined;
+            return [];
+          }) as Rule[];
+          return { rulesetId: resource.id, rules: fromWebKit(rules.filter((rule) => rule.condition?.regexFilter !== INERT_FILTER)) };
+        })),
+    };
+  }
   // WebKit applies a rule it can express; Lilo prepared the static rule files, inert rules included.
   const applied = (rule: Rule) => webKitRule(rule) !== undefined;
   return [
-    { rulesetId: SESSION_RULESET_ID, rules: (await dnr.getSessionRules()).filter(applied) },
-    { rulesetId: DYNAMIC_RULESET_ID, rules: (await dnr.getDynamicRules()).filter(applied) },
-    ...staticSources.map((source) => ({ ...source, rules: fromWebKit(source.rules.filter((rule) => rule.condition?.regexFilter !== INERT_FILTER)) })),
+    { rulesetId: SESSION_RULESET_ID, rules: session.filter(applied) },
+    { rulesetId: DYNAMIC_RULESET_ID, rules: dynamic.filter(applied) },
+    ...await staticCache.sources,
   ];
 }
 

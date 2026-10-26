@@ -66,20 +66,21 @@ final class TabGroupsBridgeHandler: GapHandler {
             return BridgeError("No active window for tabGroups")
         }
         let tabManager = context.tabManager
+        let windows = call.context.map { registry.extensionWindows(for: $0) } ?? []
 
         switch call.action {
         case "tabGroups.query":
-            return queryGroups(call, tabManager: tabManager)
+            return queryGroups(call, tabManager: tabManager, windows: windows)
 
         case "tabGroups.get":
             guard let groupId = call.int("groupId"),
                   let folder = folder(forGroup: groupId, tabManager: tabManager) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
-            return ["group": groupDict(folder)]
+            return ["group": groupDict(folder, windows: windows)]
 
         case "tabGroups.update":
-            return updateGroup(call, context: context)
+            return updateGroup(call, context: context, windows: windows)
 
         case "tabGroups.move":
             // Reordering a folder maps onto Lilo's sectioned sidebar tree, which has no single linear
@@ -88,7 +89,7 @@ final class TabGroupsBridgeHandler: GapHandler {
                   let folder = folder(forGroup: groupId, tabManager: tabManager) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
-            return ["group": groupDict(folder)]
+            return ["group": groupDict(folder, windows: windows)]
 
         case "tabs.group":
             return groupTabs(call, context: context, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
@@ -110,26 +111,26 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     // MARK: - tabGroups.query
 
-    private func queryGroups(_ call: GapCall, tabManager: TabManager) -> [String: Any] {
-        guard let spaceId = tabManager.currentSpaceId else { return ["groups": []] }
+    /// The groups of every window the caller sees; the bridge filters them by `windowId`, which only WebKit knows.
+    private func queryGroups(_ call: GapCall, tabManager: TabManager, windows: [WindowExtensionAdapter]) -> [String: Any] {
         let titleFilter = call.string("title")
         let colorFilter = call.string("color")
         let collapsedFilter = call.payload["collapsed"] != nil ? call.bool("collapsed") : nil
 
-        let groups = tabManager.folders(forSpace: spaceId)
+        let groups = windows.compactMap(\.spaceId).flatMap { tabManager.folders(forSpace: $0) }
             .filter { folder in
                 if let titleFilter, folder.name != titleFilter { return false }
                 if let colorFilter, Self.chromeColor(forHex: folder.color) != colorFilter { return false }
                 if let collapsedFilter, folder.isCollapsed != collapsedFilter { return false }
                 return true
             }
-            .map { groupDict($0) }
+            .map { groupDict($0, windows: windows) }
         return ["groups": groups]
     }
 
     // MARK: - tabGroups.update
 
-    private func updateGroup(_ call: GapCall, context: TabGroupsContext) -> Any? {
+    private func updateGroup(_ call: GapCall, context: TabGroupsContext, windows: [WindowExtensionAdapter]) -> Any? {
         guard let groupId = call.int("groupId"),
               let folder = folder(forGroup: groupId, tabManager: context.tabManager) else {
             return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
@@ -142,7 +143,7 @@ final class TabGroupsBridgeHandler: GapHandler {
             .updateFolder(spaceId: folder.spaceId, folderId: folder.id, name: newName, color: newColor, isCollapsed: newCollapsed),
             context: context
         )?.foldersById[folder.id] {
-            return ["group": groupDict(updated)]
+            return ["group": groupDict(updated, windows: windows)]
         }
         return BridgeError("Failed to update tab group")
     }
@@ -325,13 +326,18 @@ final class TabGroupsBridgeHandler: GapHandler {
     // MARK: - Events
 
     /// Fires `chrome.tabGroups.onCreated`, `onUpdated` and `onRemoved` for a space's folder change, whichever made it, to the
-    /// extensions of `registry` holding `tabGroups`. A pushed group's `windowId` is -1: only WebKit knows the window's id.
+    /// extensions of `registry` holding `tabGroups` that listen to it.
     func foldersChanged(from old: [TabFolder], to new: [TabFolder], registry: ProfileExtensionRegistry) {
-        guard !registry.extensionIds(withPermission: "tabGroups").isEmpty else { return }
+        let ids = registry.extensionIds(withPermission: "tabGroups")
+        guard !ids.isEmpty else { return }
         let oldById = Dictionary(old.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let newIds = Set(new.map(\.id))
         let emit = { (event: String, folder: TabFolder) in
-            registry.emitGapEvent("tabGroups", event, args: [self.groupDict(folder)], requiredPermission: "tabGroups")
+            let listening = registry.gapEvents.listeners(among: ids, namespace: "tabGroups", event: event)
+            guard !listening.isEmpty else { return }
+            registry.emitPositioned("tabGroups", event, to: listening) { extensionId in
+                self.groupDict(folder, windows: registry.context(for: extensionId).map { registry.extensionWindows(for: $0) } ?? [])
+            }
         }
         for folder in old where !newIds.contains(folder.id) { emit("onRemoved", folder) }
         for folder in new {
@@ -364,15 +370,15 @@ final class TabGroupsBridgeHandler: GapHandler {
         return tabManager.folder(id: folderId)
     }
 
-    /// Chrome `TabGroup` shape. `windowId` is a placeholder: the JS augmentation overwrites it with
-    /// the live `chrome.windows.getCurrent().id`, which only the WebKit side knows.
-    private func groupDict(_ folder: TabFolder) -> [String: Any] {
+    /// Chrome `TabGroup` shape, with the position of its space's window in `windows` (the caller's `windows.getAll()`, -1 when
+    /// absent) in place of `windowId`, which only WebKit knows and the bridge maps the position to.
+    private func groupDict(_ folder: TabFolder, windows: [WindowExtensionAdapter]) -> [String: Any] {
         [
             "id": groupId(forFolder: folder.id),
             "title": folder.name,
             "color": Self.chromeColor(forHex: folder.color),
             "collapsed": folder.isCollapsed,
-            "windowId": -1
+            "windowPosition": windows.firstIndex { $0.spaceId == folder.spaceId } ?? -1
         ]
     }
 

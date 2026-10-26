@@ -29,9 +29,7 @@ extension MainWindowController {
         context.engineFactory.sessionsContextProvider = { [weak context] registry in
             guard let context, let window = context.windows.window(showingProfileOf: registry) else { return nil }
             return SessionsContext(
-                recentlyClosedURLs: context.recentlyClosed.recentEntries.filter(window.isVisibleToExtensions).compactMap {
-                    if case .page(let url) = $0.content { url } else { nil }
-                },
+                recentlyClosed: context.recentlyClosed.recentEntries.filter(window.isVisibleToExtensions),
                 restore: { [weak window] index in window?.restoreClosedTabForExtension(at: index) }
             )
         }
@@ -92,6 +90,13 @@ extension MainWindowController {
         tabManager.extensionRegistry = registry
         registry.onExtensionsChanged = { [weak context, weak registry] in
             context?.windows.windows.forEach { if $0.profileContext?.extensions === registry { $0.sendExtensionsChangedEvent() } }
+        }
+
+        // Another profile's prompts here are denied and closed, so its extensions never wait on a profile the window left.
+        for profile in context.profileContexts.allContexts where profile.extensions !== registry {
+            for id in profile.extensions.denyPermissionRequests(shownIn: self) {
+                bridgeRouter?.send(event: "permissionRequestClosed", data: ["requestId": id])
+            }
         }
 
         registry.notifyWindowOpened()
@@ -186,8 +191,11 @@ extension MainWindowController {
         ])
     }
 
+    /// Resolves through the registry that asked, only for a prompt this window shows.
     func resolveExtensionPermissionRequest(requestId: String, granted: Bool) {
-        profileContext?.extensions.resolvePermissionRequest(id: requestId, granted: granted)
+        context.profileContexts.allContexts
+            .first { $0.extensions.permissionPromptWindows.object(forKey: requestId as NSString) === self }?
+            .extensions.resolvePermissionRequest(id: requestId, granted: granted)
     }
 
     // MARK: - Engine Configuration

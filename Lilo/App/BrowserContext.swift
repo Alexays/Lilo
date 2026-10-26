@@ -57,7 +57,10 @@ final class BrowserContext {
     var sentMediaActivity: [ObjectIdentifier: NSArray] = [:]
     let powerKeeper = PowerKeeper()
     var recentlyClosed = RecentlyClosedStack() {
-        didSet { saveClosedTerminals() }
+        didSet {
+            saveClosedTerminals()
+            SessionsBridgeHandler.recentlyClosedChanged(from: oldValue, to: recentlyClosed, in: self)
+        }
     }
     var closedTerminalsSavePending = false
     var tabArchive = TabArchive() {
