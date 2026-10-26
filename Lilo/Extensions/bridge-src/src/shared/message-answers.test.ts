@@ -173,6 +173,18 @@ describe('tabs.sendMessage promises', () => {
     assert.equal(await worker.tabs.sendMessage(4, 1), undefined);
     await assert.rejects(worker.tabs.sendMessage(5, 1), { message: 'Could not establish connection. Receiving end does not exist.' }, 'a loaded page that does not listen');
   });
+
+  it('reject for the sending page\'s own tab, still loading, which Chrome never delivers to', async () => {
+    const page = install(true, undefined);
+    const scope = globalThis as any;
+    const saved = { top: scope.top, location: scope.location };
+    Object.assign(scope, { top: scope, location: { href: 'chrome-extension://abc/popup.html#home' } });
+    try {
+      await assert.rejects(page.tabs.sendMessage(4, 1), { message: 'Could not establish connection. Receiving end does not exist.' });
+    } finally {
+      Object.assign(scope, saved);
+    }
+  });
 });
 
 describe('sendMessage promises of a page', () => {

@@ -41,7 +41,7 @@ export function bridgeChrome(): any {
 
 /**
  * Chrome's dual callback/Promise pattern: with a callback, an error goes to chrome.runtime.lastError and the callback
- * gets undefined. Exceptions thrown from callbacks are swallowed, as Chrome's native APIs do.
+ * gets undefined. An exception thrown from a callback is logged, as Chrome does.
  */
 export function callbackify<T>(
   impl: () => Promise<T>,
@@ -49,12 +49,13 @@ export function callbackify<T>(
 ): Promise<T> | undefined {
   const promise = impl();
   if (callback) {
+    // Chrome's wording, in one string: WebKit reports only the first argument of a console.error.
     promise.then((result: T) => {
-      try { callback(result); } catch { /* Chrome silently swallows callback throws */ }
+      try { callback(result); } catch (error) { console.error(`Error handling response: ${String(error)}`); }
     }, (err: unknown) => {
       try {
         withLastError(err instanceof Error ? err.message : String(err), () => callback(undefined as unknown as T));
-      } catch { /* Chrome silently swallows callback throws */ }
+      } catch (error) { console.error(`Error handling response: ${String(error)}`); }
     });
     return undefined;
   }

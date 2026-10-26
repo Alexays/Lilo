@@ -218,7 +218,11 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     const loadsOwnPage = async () => {
       const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
       const base = chrome.runtime?.getURL?.('');
-      return tab?.status === 'loading' && !!base && [tab.url, tab.pendingUrl].some((url) => typeof url === 'string' && url.startsWith(base));
+      const scope = globalThis as any;
+      // Chrome never delivers a page's message to the page itself: its own tab does not count.
+      const own = scope.top === scope && typeof scope.location?.href === 'string' ? scope.location.href.split('#')[0] : undefined;
+      return tab?.status === 'loading' && !!base && [tab.url, tab.pendingUrl]
+        .some((url) => typeof url === 'string' && url.startsWith(base) && url.split('#')[0] !== own);
     };
     return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
       async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
