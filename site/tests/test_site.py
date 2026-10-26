@@ -54,7 +54,7 @@ class SiteTests(unittest.TestCase):
                 links = [node.attrs["href"] for node in nodes(navigation[0]) if node.tag == "a"]
                 home = "/fr/" if page.startswith("fr/") else "/"
                 self.assertEqual(links, [home + "#" + section for section in
-                                        ["native", "extensions", "privacy", "build", "agents"]]
+                                        ["native", "privacy", "extensions", "build", "agents"]]
                                  + [home + "moving/", "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
                                     home + "changelog/"])
 

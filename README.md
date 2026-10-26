@@ -4,7 +4,7 @@
 
 **Your internet, in bloom.**
 
-Light on your Mac, quick on the web. Free and open source.
+Light on your Mac, quick on the web, private by default. Free and open source.
 
 [![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](LICENSE)
@@ -43,6 +43,10 @@ Most Arc alternatives are Chromium with a new sidebar. Lilo keeps the sidebar an
 - **Not Chromium.** No bundled browser engine, no Electron: Swift, AppKit and the system WebKit,
   with the sidebar and settings in Svelte. Lower memory use, a battery that lasts the day, and
   Apple's security updates with every macOS release.
+- **Private by default.** No account, no telemetry, no analytics, no server: nothing you do is
+  sent to the project. Ads and trackers are blocked out of the box, cross-site tracking is blocked
+  as in Safari, and Global Privacy Control is on (macOS 27). Every request Lilo makes on its own is
+  [listed, with how to turn it off](PRIVACY.md#requests-lilo-makes-on-its-own).
 - **Chrome extensions anyway.** Leaving Chromium usually means leaving its extensions. In Lilo,
   Chrome Web Store extensions install with one click on "Add to Lilo", on WebKit's native runtime
   ([COMPATIBILITY.md](COMPATIBILITY.md)).
@@ -51,8 +55,6 @@ Most Arc alternatives are Chromium with a new sidebar. Lilo keeps the sidebar an
   server, in their own Space and throwaway profile, and ask you before they send, pay or delete.
 - **A terminal beside your pages.** Ghostty-based terminal tabs live in the sidebar with your sites,
   showing the branch and pending changes of their repository.
-- **Nothing to sign up for.** No account, no telemetry, no analytics, no server: nothing you do is
-  sent to the project. Ads and trackers are blocked out of the box.
 - **Yours.** MIT licensed. The whole interface is a Svelte layer over WebKit that you can change
   and rebuild in seconds.
 

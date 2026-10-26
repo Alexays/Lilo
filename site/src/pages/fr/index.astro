@@ -31,7 +31,7 @@ const schema = [
       "@id": "https://getlilo.app/#author",
     },
     description:
-      "Alternative à Arc gratuite et open source pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA.",
+      "Alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA.",
     downloadUrl:
       "https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg",
     image: "https://getlilo.app/og.png",
@@ -65,7 +65,7 @@ const schema = [
 <Layout
   lang={lang}
   title="Lilo : navigateur Mac basé sur WebKit, avec espaces et extensions Chrome"
-  description="Alternative à Arc gratuite et open source pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA."
+  description="Alternative à Arc gratuite, open source et privée par défaut pour Mac, sans Chromium : WebKit natif avec les extensions Chrome, des terminaux et un serveur MCP pour vos agents IA."
   schema={schema}
 >
   <main id="main-content">
@@ -80,7 +80,8 @@ const schema = [
             <span>en fleur.</span>
           </h1>
           <p class="sub">
-            Léger pour votre Mac, rapide sur le web. Gratuit et open source.
+            Léger pour votre Mac, rapide sur le web, privé par défaut. Gratuit
+            et open source.
             <br />
             Pas un énième dérivé de Chromium : du WebKit natif qui fait tourner
             vos extensions Chrome, des terminaux à côté de vos pages, et un
@@ -227,31 +228,6 @@ const schema = [
       </div>
     </section>
 
-    <section class="band" id="extensions">
-      <div class="wrap ext">
-        <div class="head" style="margin:0">
-          <span class="tag">Extensions Chrome</span>
-          <h2>
-            Le Chrome Web Store, avec un bouton «&nbsp;Ajouter à Lilo&nbsp;».
-          </h2>
-          <p>
-            Parcourez la boutique que vous connaissez et installez en un clic.
-            Lilo exécute les extensions Manifest V3 sur WebKit, les tient à jour
-            et donne à chaque profil les siennes.
-          </p>
-          <div class="cats">
-            <span>Gestionnaires de mots de passe</span>
-            <span>Bloqueurs de pub</span>
-            <span>Mode sombre</span>
-            <span>Outils de développement</span>
-            <span>Aide à l'écriture</span>
-            <span>Suivi des prix</span>
-          </div>
-        </div>
-        <ExtensionStore lang={lang} />
-      </div>
-    </section>
-
     <section class="band" id="privacy">
       <div class="wrap privacy">
         <div class="head" style="margin:0">
@@ -263,8 +239,8 @@ const schema = [
             aller. Et vous pouvez vérifier chaque ligne de code.
           </p>
           <p class="opt">
-            Dans les Réglages, d'un seul interrupteur&nbsp;: le mode HTTPS
-            uniquement et Global Privacy Control.
+            Activé par défaut&nbsp;: Global Privacy Control (macOS 27). Dans les
+            Réglages, d'un seul interrupteur&nbsp;: le mode HTTPS uniquement.
           </p>
         </div>
         <div class="shields">
@@ -289,7 +265,9 @@ const schema = [
               <h3>Traqueurs bloqués d'office</h3>
               <p>
                 Publicités, traqueurs et bannières de cookies sont filtrés grâce
-                à des listes communautaires tenues à jour. Rien à installer.
+                à des listes communautaires tenues à jour, et les sites intégrés
+                à d'autres ne peuvent pas vous suivre de l'un à l'autre. Rien à
+                installer.
               </p>
             </div>
           </div>
@@ -370,7 +348,61 @@ const schema = [
               </p>
             </div>
           </div>
+          <div class="shield">
+            <span class="sic" style="background:#f5d77a">
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M8 6h12M8 12h12M8 18h12" />
+                <path d="M4 6h.01M4 12h.01M4 18h.01" />
+              </svg>
+            </span>
+            <div>
+              <h3>Chaque requête, listée</h3>
+              <p>
+                En dehors des pages que vous ouvrez, Lilo contacte une poignée
+                de services (listes de filtres, mises à jour). Chacun est
+                <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md#requests-lilo-makes-on-its-own">
+                  listé, avec la façon de le couper
+                </a>
+                .
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
+    </section>
+
+    <section class="band" id="extensions">
+      <div class="wrap ext">
+        <div class="head" style="margin:0">
+          <span class="tag">Extensions Chrome</span>
+          <h2>
+            Le Chrome Web Store, avec un bouton «&nbsp;Ajouter à Lilo&nbsp;».
+          </h2>
+          <p>
+            Parcourez la boutique que vous connaissez et installez en un clic.
+            Lilo exécute les extensions Manifest V3 sur WebKit, les tient à jour
+            et donne à chaque profil les siennes.
+          </p>
+          <div class="cats">
+            <span>Gestionnaires de mots de passe</span>
+            <span>Bloqueurs de pub</span>
+            <span>Mode sombre</span>
+            <span>Outils de développement</span>
+            <span>Aide à l'écriture</span>
+            <span>Suivi des prix</span>
+          </div>
+        </div>
+        <ExtensionStore lang={lang} />
       </div>
     </section>
 
