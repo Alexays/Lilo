@@ -19,9 +19,15 @@ final class ProxyBridgeHandler: GapHandler {
     private var applied: [UUID: NSDictionary] = [:]
     nonisolated(unsafe) private var observers: [Any] = []
 
-    /// A proxy challenge waiting on the extensions asked about it; a nil answer leaves it to Lilo's prompt.
+    /// An extension's worker (no `pageChannel`) or one of its pages.
+    private struct AuthContext: Hashable {
+        let extensionId: String
+        let pageChannel: Int?
+    }
+
+    /// A proxy challenge waiting on the contexts with a blocking listener; a nil answer leaves it to Lilo's prompt.
     private struct AuthRequest {
-        var awaiting: Set<String>
+        var awaiting: Set<AuthContext>
         let completion: @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
         let registry: ProfileExtensionRegistry
         let challenger: (host: String, port: Int)
@@ -33,6 +39,8 @@ final class ProxyBridgeHandler: GapHandler {
     private let lastAuthRequestIds = NSMapTable<TabExtensionAdapter, NSString>.weakToStrongObjects()
     /// How long extensions get to answer before the challenge goes to Lilo's prompt.
     private static let authAnswerTimeout: Duration = .seconds(30)
+    /// Reported by a context with a blocking or asyncBlocking listener, which answers each challenge it hears (webRequest.ts).
+    private static let blockingAuthListener = "webRequest.onAuthRequired.blocking"
 
     init(settingsProvider: @escaping (ProfileExtensionRegistry) -> ExtensionSettingsStore?) {
         self.settingsProvider = settingsProvider
@@ -67,7 +75,8 @@ final class ProxyBridgeHandler: GapHandler {
             return result
 
         case "webRequest.answerAuth":
-            guard let id = call.string("requestId"), var request = authRequests[id], request.awaiting.contains(call.extensionId) else { return nil }
+            let context = AuthContext(extensionId: call.extensionId, pageChannel: call.int("pageChannel"))
+            guard let id = call.string("requestId"), var request = authRequests[id], request.awaiting.contains(context) else { return nil }
             if call.bool("cancel") {
                 finishAuth(id, (.cancelAuthenticationChallenge, nil))
             } else if let credentials = call.payload["credentials"] as? [String: Any],
@@ -75,7 +84,7 @@ final class ProxyBridgeHandler: GapHandler {
                 applyCredential(user: user, password: password, for: request)
                 finishAuth(id, (.useCredential, URLCredential(user: user, password: password, persistence: .forSession)))
             } else {
-                request.awaiting.remove(call.extensionId)
+                request.awaiting.remove(context)
                 authRequests[id] = request
                 if request.awaiting.isEmpty { finishAuth(id, nil) }
             }
@@ -145,7 +154,7 @@ final class ProxyBridgeHandler: GapHandler {
 
     /// Chrome's `webRequest.onAuthRequired` for a proxy's challenge to the load of `url` in `tab`: each listening
     /// extension holding `webRequest` and `webRequestAuthProvider` may answer with credentials or cancel it.
-    /// `completion` gets nil when none does, for Lilo's prompt.
+    /// `completion` gets nil when none does, for Lilo's prompt: at once when no context has a blocking listener.
     func authenticate(
         _ challenge: URLAuthenticationChallenge, url: URL?, tab: TabExtensionAdapter?, registry: ProfileExtensionRegistry,
         completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
@@ -164,10 +173,6 @@ final class ProxyBridgeHandler: GapHandler {
             requestId = "lilo-auth-\(nextAuthRequest)"
             if let tab { lastAuthRequestIds.setObject(requestId as NSString, forKey: tab) }
         }
-        let deadline = ContinuousClock.now + Self.authAnswerTimeout
-        authRequests[requestId] = AuthRequest(
-            awaiting: Set(ids), completion: completion, registry: registry, challenger: (space.host, space.port), deadline: deadline
-        )
         var details: [String: Any] = [
             "requestId": requestId, "url": url?.absoluteString ?? "", "method": "GET", "frameId": 0, "parentFrameId": -1,
             "type": "main_frame", "frameType": "outermost_frame", "documentLifecycle": "active",
@@ -182,6 +187,14 @@ final class ProxyBridgeHandler: GapHandler {
             details["tab"] = tab.flatMap { registry.tabPosition(of: $0, extensionId: id) } ?? NSNull()
             registry.gapEvents.emit("webRequest", "onAuthRequired", args: [details], to: [id])
         }
+        let awaiting = Set(ids.flatMap { id in
+            registry.gapEvents.contexts(of: id, listeningTo: Self.blockingAuthListener).map { AuthContext(extensionId: id, pageChannel: $0) }
+        })
+        guard !awaiting.isEmpty else { return completion(nil) }
+        let deadline = ContinuousClock.now + Self.authAnswerTimeout
+        authRequests[requestId] = AuthRequest(
+            awaiting: awaiting, completion: completion, registry: registry, challenger: (space.host, space.port), deadline: deadline
+        )
         Task { @MainActor [weak self] in
             try? await Task.sleep(until: deadline)
             // A retry may reuse the id: only this challenge times out here.

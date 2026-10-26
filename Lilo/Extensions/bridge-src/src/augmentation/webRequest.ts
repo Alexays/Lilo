@@ -1,7 +1,7 @@
 // webRequest.onAuthRequired for a proxy's challenge, which WebKit never reports: Lilo pushes it and takes the
 // listeners' blocking or asyncBlocking answer. SW-safe: no window/document/webkit.
 import { gapCall } from '../shared/ipc.ts';
-import { GapWrappedEvent } from '../shared/gap-event.ts';
+import { GapWrappedEvent, reportGapListener, reportGapListenerRemoved } from '../shared/gap-event.ts';
 import { tabAt, type TabPosition } from './tabs.ts';
 
 interface AuthAnswer {
@@ -16,6 +16,13 @@ interface RequestFilter {
 }
 
 const webSchemes = ['http', 'https', 'ws', 'wss'];
+/** Reported by a context with a listener that may answer: Lilo waits for the answer of those contexts only. */
+const blockingListener = 'webRequest.onAuthRequired.blocking';
+
+/** Whether a listener's extraInfoSpec lets it answer. */
+function blocks(spec: unknown): boolean {
+  return Array.isArray(spec) && (spec.includes('blocking') || spec.includes('asyncBlocking'));
+}
 
 /** Chrome's match pattern for `url`; a path matches the URL's path and query. */
 function matchesPattern(pattern: string, url: URL): boolean {
@@ -41,15 +48,15 @@ function applies(filter: RequestFilter | undefined, details: any): boolean {
 }
 
 /**
- * Runs the listeners on native's details and sends the first answer giving credentials or cancelling, else an empty
- * one once every listener answered: the tab then prompts the user. A context without listeners leaves it to others.
+ * Runs the listeners on native's details. A context with a blocking listener sends the first answer giving credentials or
+ * cancelling, else an empty one once every listener answered; one without any never answers, as Lilo waits only for the others.
  */
 async function receiveAuth(listeners: [(...args: any[]) => unknown, unknown[]][], raw: { tab: TabPosition | null } & Record<string, unknown>): Promise<void> {
   if (listeners.length === 0) return;
   const { tab: position, ...rest } = raw;
   const tab = position ? await tabAt(position).catch(() => undefined) : undefined;
   const details: Record<string, unknown> = { ...rest, tabId: typeof tab?.id === 'number' ? tab.id : -1 };
-  let answered = false;
+  let answered = !listeners.some(([, [, spec]]) => blocks(spec));
   const answer = (params: Record<string, unknown>) => {
     if (answered) return;
     answered = true;
@@ -74,8 +81,20 @@ async function receiveAuth(listeners: [(...args: any[]) => unknown, unknown[]][]
   answer({});
 }
 
+class AuthRequiredEvent extends GapWrappedEvent<[unknown, unknown?]> {
+  override addListener(listener: (details: unknown, callback?: unknown) => void, ...rest: unknown[]): void {
+    super.addListener(listener, ...rest);
+    if (blocks(this.added.get(listener)?.[1])) reportGapListener(blockingListener);
+  }
+
+  override removeListener(listener: (details: unknown, callback?: unknown) => void): void {
+    super.removeListener(listener);
+    if (![...this.added.values()].some(([, spec]) => blocks(spec))) reportGapListenerRemoved(blockingListener);
+  }
+}
+
 /** WebKit's onAuthRequired, `source`, which also hears the proxy challenges Lilo pushes. */
-export const onAuthRequired = (source: () => object) => new GapWrappedEvent<[unknown, unknown?]>(
+export const onAuthRequired = (source: () => object) => new AuthRequiredEvent(
   'webRequest.onAuthRequired',
   source,
   // WebKit's own events only observe: an asyncBlocking listener gets a callback that does nothing.

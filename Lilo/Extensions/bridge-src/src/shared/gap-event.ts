@@ -2,7 +2,7 @@
 // SW-safe: no window/document/webkit. (assert-background-prelude-safe.mjs)
 
 import { ChromeEvent, WrappedEvent } from './chrome-event.ts';
-import { gapCall } from './ipc.ts';
+import { channelClosed, channelOpened, gapCall } from './ipc.ts';
 import { callbackify } from './callbackify.ts';
 
 /** Each reported listener's report, settled once native has answered it. */
@@ -10,6 +10,30 @@ const reports = new Map<string, Promise<unknown>>();
 let unreportedListeners: string[] | undefined;
 let batchAnswered: Promise<unknown> = Promise.resolve();
 let answerBatch: (call: Promise<unknown>) => void = () => {};
+/** A page's channel closed: Lilo forgot the listeners reported on it, which go again on the next one. */
+let channelLost = false;
+
+/** Reports `events`, each mapped in `reports` to `reported`, else to the call: one whose report fails is reported again by its next listener. */
+function listen(events: string[], reported?: Promise<unknown>): Promise<unknown> {
+  const call: Promise<unknown> = gapCall('events', 'listen', { events }).catch(() => {
+    if (channelLost) return;
+    for (const name of events) if (reports.get(name) === (reported ?? call)) reports.delete(name);
+  });
+  return call;
+}
+
+// Lilo keeps the worker's listeners across its channels, a page's only for one channel.
+if (typeof (globalThis as any).ServiceWorkerGlobalScope !== 'function') {
+  channelClosed.push(() => { channelLost = true; });
+  channelOpened.push(() => {
+    if (!channelLost) return;
+    channelLost = false;
+    const names = [...reports.keys()].filter((name) => !unreportedListeners?.includes(name));
+    if (names.length === 0) return;
+    const call = listen(names);
+    for (const name of names) reports.set(name, call);
+  });
+}
 
 function startBatch(): void {
   unreportedListeners = [];
@@ -19,7 +43,7 @@ function startBatch(): void {
 function sendBatch(evenEmpty: boolean): void {
   const events = unreportedListeners ?? [];
   unreportedListeners = undefined;
-  answerBatch(events.length > 0 || evenEmpty ? gapCall('events', 'listen', { events }) : Promise.resolve());
+  answerBatch(events.length > 0 || evenEmpty ? listen(events, batchAnswered) : Promise.resolve());
 }
 
 /**
@@ -33,13 +57,13 @@ export function reportGapListener(name: string): void {
     reports.set(name, batchAnswered);
     return;
   }
-  reports.set(name, gapCall('events', 'listen', { events: [name] }).catch(() => {}));
+  reports.set(name, listen([name]));
   startBatch();
   setTimeout(() => sendBatch(false), 0);
 }
 
 /** The context's last listener of `name` went: native stops sending it, and a stopped worker stops waking for it. */
-function reportGapListenerRemoved(name: string): void {
+export function reportGapListenerRemoved(name: string): void {
   if (!reports.delete(name)) return;
   const batched = unreportedListeners?.indexOf(name) ?? -1;
   if (batched >= 0) unreportedListeners!.splice(batched, 1);
@@ -88,7 +112,7 @@ export class GapChromeEvent<T extends unknown[] = []> extends ChromeEvent<T> {
  * through `wrap`, and native's through `receive`, which gets every listener with the arguments it was added with.
  */
 export class GapWrappedEvent<T extends unknown[]> extends WrappedEvent<T> {
-  private readonly added = new Map<(...args: T) => void, unknown[]>();
+  protected readonly added = new Map<(...args: T) => void, unknown[]>();
   private readonly gapName: string;
   private readonly receive: (listeners: [(...args: any[]) => unknown, unknown[]][], ...args: any[]) => void;
 
@@ -114,6 +138,7 @@ export class GapWrappedEvent<T extends unknown[]> extends WrappedEvent<T> {
   override removeListener(listener: (...args: T) => void): void {
     super.removeListener(listener);
     this.added.delete(listener);
+    if (this.added.size === 0) reportGapListenerRemoved(this.gapName);
   }
 
   override hasListener(listener: (...args: T) => void): boolean {

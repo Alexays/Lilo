@@ -55,6 +55,8 @@ let start: (() => void) | undefined;
 export const bridgeEvents = new Map<string, (...args: any[]) => void>();
 /** Each runs when the channel closes: what Lilo pushed over it is no longer kept current. */
 export const channelClosed: Array<() => void> = [];
+/** Each runs when a channel opens, before the call that opened it is sent. */
+export const channelOpened: Array<() => void> = [];
 
 function receive(envelope: unknown): void {
   if (isWorker && !ready) held.push(envelope);
@@ -154,6 +156,7 @@ function connect(): Port | undefined {
     lastActivity = Date.now();
     idleTimer ??= setTimeout(checkIdle, IDLE_MS);
   }
+  channelOpened.forEach((listener) => listener());
   return opened;
 }
 

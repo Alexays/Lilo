@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { test } from 'node:test';
-import { mockGapAPI } from './ipc.testkit.ts';
-import { collectGapListeners, GapChromeEvent, sendGapListeners } from './gap-event.ts';
+import { closeGapChannel, mockGapAPI } from './ipc.testkit.ts';
+import { collectGapListeners, GapChromeEvent, GapWrappedEvent, sendGapListeners } from './gap-event.ts';
 
 test('GapChromeEvent sends the first event at once, then the rest of the task in one call', async () => {
   const calls: unknown[] = [];
@@ -63,4 +63,46 @@ test('a listener added and removed before its batch is sent is never reported', 
   moved.removeListener(listener);
   await new Promise((resolve) => setTimeout(resolve, 5));
   assert.deepEqual(calls, [{ namespace: 'events', method: 'listen', params: { events: ['history.onVisitRemoved'] } }]);
+});
+
+test('a GapWrappedEvent reports its last listener going', async () => {
+  const calls: unknown[] = [];
+  mockGapAPI((msg) => { calls.push(msg); });
+  const webKit = Object.create({ addListener() {}, removeListener() {} });
+  const external = new GapWrappedEvent('runtime.onMessageExternal', () => webKit, (listener) => listener, () => {});
+  const first = () => {};
+  const second = () => {};
+  external.addListener(first);
+  external.addListener(second);
+  external.removeListener(first);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  external.removeListener(second);
+  assert.deepEqual(calls, [
+    { namespace: 'events', method: 'listen', params: { events: ['runtime.onMessageExternal'] } },
+    { namespace: 'events', method: 'unlisten', params: { events: ['runtime.onMessageExternal'] } },
+  ]);
+});
+
+test('a page reports its listeners again on the channel after a closed one, and one Lilo failed to record on its next listener', async () => {
+  const calls: any[] = [];
+  let refuse = true;
+  mockGapAPI((msg) => {
+    calls.push(msg);
+    if (refuse && msg.params.events.includes('alarms.onAlarm')) {
+      refuse = false;
+      throw new Error('refused');
+    }
+  });
+  new GapChromeEvent('idle', 'onStateChanged').addListener(() => {});
+  const alarm = new GapChromeEvent('alarms', 'onAlarm');
+  alarm.addListener(() => {});
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  closeGapChannel();
+  alarm.addListener(() => {});
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.deepEqual(calls.slice(0, 2).map((call) => call.params.events), [['idle.onStateChanged'], ['alarms.onAlarm']]);
+  assert.equal(calls.length, 4);
+  assert.ok(calls[2].params.events.includes('idle.onStateChanged'), 'the reported listeners go again on the new channel');
+  assert.ok(!calls[2].params.events.includes('alarms.onAlarm'));
+  assert.deepEqual(calls[3].params.events, ['alarms.onAlarm'], 'the failed report goes again with the next listener');
 });
