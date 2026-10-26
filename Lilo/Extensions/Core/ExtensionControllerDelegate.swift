@@ -250,8 +250,21 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
     // MARK: - Options Page
 
     func webExtensionController(_ controller: WKWebExtensionController, openOptionsPageFor context: WKWebExtensionContext, completionHandler: @escaping (Error?) -> Void) {
-        guard let optionsURL = context.optionsPageURL,
-              let window = windows?.window(showingProfileOf: registry),
+        guard let optionsURL = context.optionsPageURL else {
+            completionHandler(Self.extensionError("The options page could not open")); return
+        }
+        // As in Chrome, an options page already open in this profile is focused, whatever its query or fragment.
+        for window in windows?.windows ?? [] where window.profileContext?.extensions === registry {
+            guard let tab = window.tabManager.openTabs.first(where: {
+                $0.url?.scheme == optionsURL.scheme && $0.url?.host == optionsURL.host && $0.url?.path == optionsURL.path
+            }) else { continue }
+            if !opensTabsInBackground {
+                window.activateTabStateFirst(id: tab.id)
+                window.window?.makeKeyAndOrderFront(nil)
+            }
+            completionHandler(nil); return
+        }
+        guard let window = windows?.window(showingProfileOf: registry),
               window.createTabStateFirst(url: optionsURL, activate: !opensTabsInBackground) != nil else {
             completionHandler(Self.extensionError("The options page could not open")); return
         }
@@ -265,11 +278,11 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         permissions: [String] = [], origins: [String] = [], type: String
     ) {
         guard let registry else { return }
-        // The answer resolves through the prompting window's registry, so it must show this profile.
         guard let window = windows?.window(showingProfileOf: registry) else {
             registry.resolvePermissionRequest(id: requestId, granted: false)
             return
         }
+        registry.permissionPromptWindows.setObject(window, forKey: requestId as NSString)
         window.sendExtensionPermissionRequest(
             requestId: requestId,
             extensionId: context.uniqueIdentifier,

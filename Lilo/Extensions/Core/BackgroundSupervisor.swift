@@ -241,14 +241,17 @@ final class BackgroundSupervisor {
         return now.timeIntervalSince(lastAttempt) >= debounce
     }
 
-    /// The context's errors changed: a background that failed to load gets one debounced revive.
+    /// The context's errors changed: a background that newly failed to load gets one debounced revive.
     func contextErrorsChanged(_ extensionId: String) {
-        guard let context = context(extensionId), health[extensionId] != nil else { return }
-        ExtensionDiagnostics.logContextErrorsIfNeeded(context, extensionId: extensionId, reason: "notification", logger: Self.logger)
-        health[extensionId]?.lastErrorCount = context.errors.count
+        guard let context = context(extensionId), let previousCount = health[extensionId]?.lastErrorCount else { return }
+        let errors = context.errors
+        // `errors` is cumulative; a shorter list was reset, so all of it is new.
+        let newErrors = errors.dropFirst(previousCount <= errors.count ? previousCount : 0)
+        ExtensionDiagnostics.logContextErrorsIfNeeded(newErrors, of: context, extensionId: extensionId, reason: "notification", logger: Self.logger)
+        health[extensionId]?.lastErrorCount = errors.count
         didChange(extensionId)
-        guard !context.errors.isEmpty, context.webExtension.hasBackgroundContent,
-              ExtensionDiagnostics.errorsWarrantBackgroundRevive(context.errors) else { return }
+        guard context.webExtension.hasBackgroundContent,
+              ExtensionDiagnostics.errorsWarrantBackgroundRevive(newErrors) else { return }
         // The debounce in `reviveIfNeeded` is the guard against the error a failed reload emits.
         Task { @MainActor [weak self] in await self?.reviveIfNeeded(extensionId) }
     }

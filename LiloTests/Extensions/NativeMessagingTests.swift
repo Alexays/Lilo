@@ -285,6 +285,26 @@ final class NativeMessagingTests: XCTestCase {
         XCTAssertEqual(decodedB, messageB)
     }
 
+    func testSeveralFramesAndPartialTrailingFrameInOneChunk() throws {
+        let messages = (0..<3).map { ["id": "\($0)"] }
+        var chunk = Data()
+        for message in messages { chunk.append(try XCTUnwrap(NativeMessaging.encodeFrame(message))) }
+        let trailing = try XCTUnwrap(NativeMessaging.encodeFrame(["id": "last"]))
+        chunk.append(trailing.prefix(6))
+
+        let first = NativeMessaging.extractFrames(from: chunk)
+        XCTAssertFalse(first.oversizeError)
+        XCTAssertEqual(try first.payloads.map { try JSONSerialization.jsonObject(with: $0) as? [String: String] }, messages)
+        XCTAssertEqual(first.remainder, trailing.prefix(6))
+
+        var buffer = first.remainder
+        buffer.append(trailing.dropFirst(6))
+        let second = NativeMessaging.extractFrames(from: buffer)
+        XCTAssertEqual(second.payloads.count, 1)
+        XCTAssertEqual(try JSONSerialization.jsonObject(with: second.payloads[0]) as? [String: String], ["id": "last"])
+        XCTAssertTrue(second.remainder.isEmpty)
+    }
+
     /// Exactly at the cap: allowed. Since no payload bytes follow the header yet, extraction just
     /// waits for more data rather than reporting an oversize error.
     func testHeaderAtMaxMessageBytesBoundaryIsTreatedAsIncompleteNotOversize() {

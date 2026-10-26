@@ -21,6 +21,8 @@ final class ExtensionDiagnosticsTests: XCTestCase {
         XCTAssertTrue(ExtensionDiagnostics.errorsWarrantBackgroundRevive([backgroundFailed]))
         XCTAssertTrue(ExtensionDiagnostics.errorsWarrantBackgroundRevive([resourceNotFound, scriptError, backgroundFailed]),
                       "a background that failed to load is revived whatever else was recorded")
+        XCTAssertFalse(ExtensionDiagnostics.errorsWarrantBackgroundRevive(([backgroundFailed, scriptError] as [any Error]).dropFirst()),
+                       "a load failure outside the new errors is not revived again")
     }
 
     func testDiagnosticDescriptionIncludesDomainCodeMessageAndUserInfo() {
