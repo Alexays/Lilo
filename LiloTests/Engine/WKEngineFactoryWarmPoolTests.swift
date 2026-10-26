@@ -182,7 +182,9 @@ final class WKEngineFactoryWarmPoolTests: XCTestCase {
         factory.suppressWarmPool = true
         XCTAssertEqual(factory.test_warmPoolCount, 0)
 
-        await warm(factory, factory.defaultDataStore())
-        XCTAssertEqual(factory.test_warmPoolCount, 0, "no speculative views while power-constrained")
+        // A refill lands 300 ms after the rearm: waiting past it, not out the poll's 15 s, shows none came.
+        factory.rearmWarmPool(dataStore: factory.defaultDataStore(), profileId: nil)
+        let refilled = await pollUntil(timeout: 1) { factory.test_warmPoolCount != 0 }
+        XCTAssertFalse(refilled, "no speculative views while power-constrained")
     }
 }
