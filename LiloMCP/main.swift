@@ -72,8 +72,8 @@ struct LineReader {
 final class Bridge: @unchecked Sendable {
     let lock = NSLock()
     var lilo: Int32
-    /// The agent's requests Lilo has not answered yet, by id.
-    var pending: [String: (id: Any, sent: Date)] = [:]
+    /// The agent's requests Lilo has not answered yet, by id, with when they count as unanswered.
+    var pending: [String: (id: Any, deadline: Date)] = [:]
     /// The agent's initialize request until Lilo answers it.
     var initialize: (key: String, line: Data)?
     /// The initialize request Lilo accepted, replayed on every reconnection.
@@ -200,7 +200,12 @@ Thread.detachNewThread {
         }
         // Requests only: a line with an id and no method answers one of Lilo's own requests.
         if let message, let method = message["method"] as? String, let id = message["id"], !(id is NSNull) {
-            bridge.pending["\(id)"] = (id, Date())
+            // A tool call may ask Lilo for a longer limit or wait, and a profile switch may wait on the user's answer.
+            let params = message["params"] as? [String: Any]
+            let arguments = params?["arguments"] as? [String: Any]
+            let asked = ["timeout", "wait"].compactMap { (arguments?[$0] as? NSNumber)?.doubleValue }.max() ?? 0
+            let consent: TimeInterval = (params?["name"] as? String)?.hasSuffix("_profile") == true ? 120 : 0
+            bridge.pending["\(id)"] = (id, Date().addingTimeInterval(timeout + min(max(asked, 0), 600) + consent))
             if method == "initialize" { bridge.initialize = ("\(id)", line) }
         }
         _ = writeAll(bridge.lilo, line) && writeAll(bridge.lilo, newline)
@@ -223,7 +228,7 @@ Thread.detachNewThread {
     while true {
         sleep(5)
         bridge.lock.lock()
-        let expired = bridge.pending.filter { -$0.value.sent.timeIntervalSinceNow > timeout }
+        let expired = bridge.pending.filter { $0.value.deadline < Date() }
         for key in expired.keys { bridge.pending[key] = nil }
         bridge.lock.unlock()
         for request in expired.values { fail(request.id, "Lilo is not responding: quit and reopen Lilo.", needsUser: true) }

@@ -365,6 +365,46 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(control.sessions.count, 1, "the dropped session gave way to the new one")
     }
 
+    func testAgentConnectingAgainBeforeItsOldConnectionClosesKeepsItsTabs() async throws {
+        AgentControl.reconnectGrace = .seconds(10)
+        let number = try await newAgentTab()
+        let again = try AgentTestClient(path: socketURL)
+        defer { again.close() }
+        _ = await again.initialize(name: "Test Agent")
+
+        client.close()
+        await pollUntil(timeout: 5) { self.control.sessions.count == 1 }
+
+        let tabs = try await availableTabs(again)
+        XCTAssertEqual(tabs.map { $0["tabId"] as? Int }, [number])
+    }
+
+    func testTabClosedWithItsConversationSaysWhy() async throws {
+        let number = try await newAgentTab()
+        client.close()
+        await pollUntil(timeout: 5) { self.control.sessions.isEmpty }
+        let again = try AgentTestClient(path: socketURL)
+        defer { again.close() }
+        _ = await again.initialize(name: "Test Agent")
+
+        let reply = await again.callTool("navigate", ["tabId": number, "url": "about:blank"])
+
+        XCTAssertTrue(reply.isError)
+        XCTAssertTrue(reply.text.contains("closed with the conversation"), reply.text)
+    }
+
+    func testTheUserMovingTheAgentsSpaceFailsTheAgentsNextCallOnce() async throws {
+        let number = try await agentTab(showing: "<title>Moved</title>")
+
+        await control.userMovedAgentsSpace(to: space.profileId)
+        let told = await client.callTool("get_page_text", ["tabId": number])
+        let next = await client.callTool("get_page_text", ["tabId": number])
+
+        XCTAssertTrue(told.isError)
+        XCTAssertTrue(told.text.contains("[profile_changed] The user moved the Agents space to the profile P"), told.text)
+        XCTAssertFalse(next.isError, next.text)
+    }
+
     func testATabWhoseEngineWasReplacedStaysTheAgents() async throws {
         let number = try await newAgentTab()
         let id = try tabId(of: number)

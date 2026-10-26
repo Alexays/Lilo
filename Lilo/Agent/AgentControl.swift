@@ -24,6 +24,8 @@ final class AgentControl {
     /// Chrome-style integer ids for tabs, stable for the app's lifetime.
     var tabNumbers: [UUID: Int] = [:]
     var nextTabNumber = 1
+    /// Numbers of the tabs that closed with the conversation that opened them, for the error naming why.
+    var endedTabNumbers: Set<Int> = []
     /// Tabs currently flagged `isAgentControlled`, to clear the ones that left a folder.
     var controlledTabIds: Set<UUID> = []
     /// Hosts agent tabs of a space no window shows: off screen, transparent, never key, out of
@@ -181,10 +183,10 @@ final class AgentControl {
         }
     }
 
-    /// What an approval binds to, and the executable shown when asking: the agent that launched `lilo-mcp`,
-    /// else the socket's peer itself. A Developer ID or App Store signed agent is known by its signing
+    /// What an approval binds to, the executable shown when asking, and its process: the agent that launched
+    /// `lilo-mcp`, else the socket's peer itself. A Developer ID or App Store signed agent is known by its signing
     /// identifier and team, so its updates keep the approval; any other by its path. Empty when unknown.
-    nonisolated static func clientIdentity(peer: pid_t) -> (identity: String, executable: String) {
+    nonisolated static func clientIdentity(peer: pid_t) -> (identity: String, executable: String, pid: pid_t) {
         func code(_ pid: pid_t) -> (code: SecCode, staticCode: SecStaticCode, path: String)? {
             var code: SecCode?
             var staticCode: SecStaticCode?
@@ -197,14 +199,16 @@ final class AgentControl {
         // lilo-mcp only relays: the agent is the process that launched it. An update replacing lilo-mcp on disk leaves
         // the running one with neither code nor path to read: it counts as a relay too, as only its parent could vouch for it.
         var client = code(peer)
+        var pid = peer
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         if client?.path == URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
             || (client == nil && proc_pidpath(peer, &path, UInt32(path.count)) <= 0) {
             var info = proc_bsdinfo()
-            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "") }
-            client = code(pid_t(info.pbi_ppid))
+            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "", peer) }
+            pid = pid_t(info.pbi_ppid)
+            client = code(pid)
         }
-        guard let client else { return ("", "") }
+        guard let client else { return ("", "", pid) }
         let executable = (client.path as NSString).abbreviatingWithTildeInPath
         var info: CFDictionary?
         SecCodeCopySigningInformation(client.staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
@@ -216,9 +220,9 @@ final class AgentControl {
            SecRequirementCreateWithString(
                "identifier \"\(identifier)\" and anchor apple generic and certificate leaf[subject.OU] = \"\(team)\"" as CFString, [], &requirement
            ) == errSecSuccess, SecCodeCheckValidity(client.code, [], requirement) == errSecSuccess {
-            return ("\(identifier) \(team)", executable)
+            return ("\(identifier) \(team)", executable, pid)
         }
-        return (client.path, executable)
+        return (client.path, executable, pid)
     }
 
     private static let lastSeenKey = "agentClientLastSeen"
@@ -245,7 +249,7 @@ final class AgentControl {
         // Reading code signatures touches the disk: off the main thread, before any approval is looked up.
         if session.identity.isEmpty {
             let peer = session.connection.peerPID
-            (session.identity, session.executable) = await Task.detached { AgentControl.clientIdentity(peer: peer) }.value
+            (session.identity, session.executable, session.clientPID) = await Task.detached { AgentControl.clientIdentity(peer: peer) }.value
         }
         if session.identity.isEmpty { Self.logger.warning("Could not read the signature of \(name, privacy: .public): asking for this connection only") }
         if !session.identity.isEmpty, allowedClients[name]?.contains(session.identity) == true {
@@ -391,18 +395,25 @@ final class AgentControl {
         if !sessions.contains(where: { agentsSpaceFolder(of: $0) != nil }) { Task { await wipeAgentsProfile() } }
     }
 
-    /// lilo-mcp replays the handshake from the same process when it reconnects: the new connection carries on
-    /// the conversation its dropped one held, with its tabs.
+    /// lilo-mcp replays the handshake when it reconnects, and an agent may launch a new lilo-mcp: a new connection
+    /// from the same agent process carries on the conversation its dropped one held, with its tabs.
     func resumeDroppedSession(into session: AgentSession) {
-        let pid = session.connection.peerPID
-        guard pid > 0, let dropped = sessions.first(where: {
-            $0 !== session && $0.connection.isClosed && $0.isAuthorized && $0.connection.peerPID == pid && $0.clientName == session.clientName
-        }) else { return }
+        guard let dropped = sessions.first(where: { $0 !== session && $0.connection.isClosed && $0.isAuthorized && Self.sameClient($0, session) })
+        else { return }
+        handOver(dropped, to: session)
+    }
+
+    private static func sameClient(_ one: AgentSession, _ other: AgentSession) -> Bool {
+        one.clientPID > 0 && one.clientPID == other.clientPID && one.clientName == other.clientName
+    }
+
+    private func handOver(_ dropped: AgentSession, to session: AgentSession) {
         session.folderId = dropped.folderId
         session.isolatedSpaceId = dropped.isolatedSpaceId
         session.title = dropped.title
         session.projectName = dropped.projectName
         session.actedOn = dropped.actedOn
+        session.profileNotice = dropped.profileNotice
         sessions.removeAll { $0 === dropped }
         context?.powerKeeper.terminalEnded(dropped.id)
     }
@@ -415,8 +426,18 @@ final class AgentControl {
             // A cancelled request gets no reply, and stops what it was doing for a client that is gone.
             for request in session.requests.values { request.cancel() }
             session.authorization?.cancel()
+            let keeps = session.isAuthorized && (session.folderId != nil || session.isolatedSpaceId != nil)
+            // The agent's new lilo-mcp may connect before this one is gone.
+            if keeps, let heir = self.sessions.first(where: {
+                $0 !== session && !$0.connection.isClosed && $0.isAuthorized && $0.folderId == nil && $0.isolatedSpaceId == nil && Self.sameClient($0, session)
+            }) {
+                self.handOver(session, to: heir)
+                self.refreshControlledTabs()
+                self.publishActivity()
+                return
+            }
             // Lilo may drop a connection the bridge then makes again: its tabs, and what the agent set on them, wait.
-            guard session.isAuthorized, session.folderId != nil || session.isolatedSpaceId != nil, Self.reconnectGrace > .zero else {
+            guard keeps, Self.reconnectGrace > .zero else {
                 return end(session)
             }
             Task { [weak self] in
@@ -453,6 +474,8 @@ final class AgentSession {
     /// the handshake reads it.
     var identity = ""
     var executable = ""
+    /// That process's id: a new connection from it carries on this conversation. 0 until the handshake reads it.
+    var clientPID: pid_t = 0
     var lastActivity = Date()
     let id = UUID()
     /// Tool calls in flight, for the activity indicator.
@@ -469,6 +492,8 @@ final class AgentSession {
     var folderId: UUID?
     /// Its private space for isolated tabs, created with the first one and deleted when it leaves.
     var isolatedSpaceId: UUID?
+    /// Set when the Agents space changed profile without this agent asking: its next tool call fails with it.
+    var profileNotice: String?
     /// What its folder is named after: the task it gave, else its project folder, else when it came.
     var title: String?
     var projectName: String?

@@ -78,13 +78,28 @@ extension AgentControl {
     }
 
     /// Moves the Agents space and its tabs to `profileId`: the tabs reload with that profile's sign-ins.
-    func moveAgentsSpace(to profileId: UUID) async throws {
+    func moveAgentsSpace(to profileId: UUID, by mover: AgentSession? = nil) async throws {
         guard let context, let commander = context.windows.activeWindow,
               let id = context.settingsStore?.agentsSpaceId,
               context.spaceManager.space(with: id)?.profileId != profileId else { return }
         try await commander.moveSpaceToProfile(id: id, targetProfileId: profileId, name: nil, icon: nil, color: nil)
+        agentsSpaceMoved(to: profileId, by: mover)
+    }
+
+    /// The Agents space now runs in `profileId`, moved by `mover` or by the user when nil. The other agents working
+    /// there fail their next call with the news: what they were about to do was meant for the previous sign-ins.
+    func agentsSpaceMoved(to profileId: UUID, by mover: AgentSession?) {
         refreshControlledTabs()
         publishActivity()
+        let name = context?.profileManager.profiles.first { $0.id == profileId }?.name ?? ""
+        let who = mover.map { "The agent \(Self.displayName($0.clientName))" } ?? "The user"
+        // By folder id: the moved space's folders are not loaded again yet.
+        for session in sessions where session !== mover && session.isAuthorized && session.folderId != nil {
+            session.profileNotice = """
+                \(who) moved the Agents space to the profile \(name): your tabs reloaded with its sign-ins. Check it is \
+                the account your task needs (switch_profile to change it), then call the tool again
+                """
+        }
     }
 
     /// The user moved the Agents space from its menu: every connected agent may use that profile.
@@ -122,7 +137,7 @@ extension AgentControl {
             }
             grantProfile(profile.id, to: session)
         }
-        try await moveAgentsSpace(to: profile.id)
+        try await moveAgentsSpace(to: profile.id, by: session)
         return "Now in the profile \(profile.name): your tabs reloaded with its sign-ins."
     }
 

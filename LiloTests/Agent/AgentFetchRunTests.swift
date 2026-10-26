@@ -48,7 +48,7 @@ final class AgentFetchRunTests: AgentToolTestCase {
         let inAgentsProfile = await client.callTool("fetch", ["tabId": tab, "url": "/api", "method": "POST"])
         XCTAssertFalse(inAgentsProfile.isError, inAgentsProfile.text)
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "the Agents profile holds none of the user's cookies")
-        try await control.moveAgentsSpace(to: space.profileId)
+        try await control.moveAgentsSpace(to: space.profileId, by: control.sessions.first)
 
         let post = Task { await client.callTool("fetch", ["tabId": tab, "url": "/api", "method": "POST"]) }
         let asked = await pollUntil { !self.control.pendingConsentAnswers.isEmpty }
