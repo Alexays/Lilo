@@ -1,9 +1,8 @@
 import XCTest
 @testable import Lilo
 
-/// `TabGroupsBridgeHandler` bridges chrome.tabGroups onto Lilo's tab-folder model. The behavior that
-/// touches live tab state needs a window; here we lock down the pure translation logic (the Chrome
-/// color palette mapping) and the fail-closed behavior when no window context is available.
+/// `TabGroupsBridgeHandler` bridges chrome.tabGroups onto Lilo's tab-folder model: the Chrome color palette mapping,
+/// the fail-closed behavior when no window context is available, and the window each group names.
 @MainActor
 final class TabGroupsBridgeHandlerTests: XCTestCase {
 
@@ -46,5 +45,44 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         let msg = try XCTUnwrap(BridgeMessage(dictionary: ["action": "tabGroups.query"]))
         let result = await handler.handle(msg)
         XCTAssertTrue(result is BridgeError, "expected a BridgeError when no window is active")
+    }
+
+    /// Each group names its own space's window by its place in the caller's `windows.getAll()`, the window focused last
+    /// first, in `query` answers, which cover every window, and in events alike.
+    func test_groupsNameTheWindowOfTheirSpace() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let registry = try context.profileContexts.context(for: profileId).extensions
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.close() }
+        window.setupExtensions()
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("tab-groups-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Groups", "version": "1.0", "permissions": ["tabGroups"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: directory.appendingPathComponent("manifest.json"))
+        try await registry.load(from: directory)
+        let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
+
+        try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: TabFolder(spaceId: space.id, name: "First", color: "#1a73e8"), section: .unpinned))
+        let other = try context.spaceManager.createSpace(name: "T", profileId: profileId)
+        window.switchToSpace(other.id)
+        try window.applyBrowserCommand(.createFolder(spaceId: other.id, folder: TabFolder(spaceId: other.id, name: "Shown", color: "#1a73e8"), section: .unpinned))
+        try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: TabFolder(spaceId: space.id, name: "Behind", color: "#1a73e8"), section: .unpinned))
+        let answer = await context.engineFactory.gapRouter.route(
+            namespace: "tabGroups", method: "query", params: [:], extensionId: extensionId, fromWorker: true, registry: registry
+        )
+
+        let positions = { (groups: [[String: Any]]) in
+            Dictionary(uniqueKeysWithValues: groups.map { ($0["title"] as? String ?? "", $0["windowPosition"] as? Int ?? -9) })
+        }
+        let groups = try XCTUnwrap((answer.result as? [String: Any])?["groups"] as? [[String: Any]])
+        let created = registry.gapEvents.undelivered(to: extensionId).filter { $0.event == "onCreated" }.compactMap { $0.args.first as? [String: Any] }
+        XCTAssertEqual(positions(groups), ["Shown": 0, "First": 1, "Behind": 1])
+        XCTAssertEqual(positions(created), ["First": 0, "Shown": 0, "Behind": 1])
+        XCTAssertNil(groups.first?["windowId"], "only WebKit knows window ids")
     }
 }

@@ -28,10 +28,16 @@ struct RecentlyClosedStack {
         let parentFolderId: UUID?
         let section: TabTreeItem.Section?
         let sortOrder: Int?
+        /// Unique for this launch and kept while the entry stays, so chrome.sessions ids name it; the stack assigns it.
+        var id = 0
+
+        // The id belongs to the launch: a saved entry gets a new one when restored.
+        private enum CodingKeys: String, CodingKey { case content, spaceId, parentFolderId, section, sortOrder }
     }
 
     private var entries: [Entry] = []
     private let maxSize = 20
+    private var nextId = 1
 
     mutating func push(
         _ content: Entry.Content,
@@ -45,8 +51,10 @@ struct RecentlyClosedStack {
             spaceId: spaceId,
             parentFolderId: parentFolderId,
             section: section,
-            sortOrder: sortOrder
+            sortOrder: sortOrder,
+            id: nextId
         )
+        nextId += 1
         entries.append(entry)
         if entries.count > maxSize {
             entries.removeFirst()
@@ -69,7 +77,13 @@ struct RecentlyClosedStack {
 
     /// Puts entries from an earlier launch under this launch's, keeping the newest when full.
     mutating func restoreOlder(_ older: [Entry]) {
-        entries = Array((older + entries).suffix(maxSize))
+        let restored = older.map { entry in
+            var entry = entry
+            entry.id = nextId
+            nextId += 1
+            return entry
+        }
+        entries = Array((restored + entries).suffix(maxSize))
     }
 
     mutating func removeAll(inSpace spaceId: UUID) {

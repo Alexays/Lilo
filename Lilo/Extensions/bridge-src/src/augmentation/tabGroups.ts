@@ -2,10 +2,12 @@
 // which native maps back to a Lilo tab. SW-safe: no window/document/webkit.
 import { gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
-import { createGapEventsFromNames } from '../shared/gap-event.ts';
+import { resolvingEvent } from '../shared/gap-event.ts';
+import { ChromeEvent } from '../shared/chrome-event.ts';
 import type { NamespaceCompat } from '../shared/chrome-compat.ts';
 
 export const TAB_GROUP_ID_NONE = -1;
+const WINDOW_ID_CURRENT = -2;
 
 interface TabGroup {
   id: number;
@@ -25,7 +27,6 @@ export function manifestPermissions(chromeObj: any): Set<string> {
   }
 }
 
-/** windowId is the one identifier only WebKit knows; stamp it from the live current window. */
 async function currentWindowId(): Promise<number> {
   try {
     const w = await bridgeChrome()?.windows?.getCurrent?.();
@@ -35,9 +36,12 @@ async function currentWindowId(): Promise<number> {
   }
 }
 
-function stampWindowId(group: TabGroup, windowId: number): TabGroup {
-  if (group) group.windowId = windowId;
-  return group;
+/** A group as native sends it: its window as a position in chrome.windows.getAll, -1 when unknown. */
+type NativeGroup = Omit<TabGroup, 'windowId'> & { windowPosition: number };
+
+/** windowId is the one identifier only WebKit knows: `order` is chrome.windows.getAll's ids. */
+function withWindowId({ windowPosition, ...group }: NativeGroup, order: number[]): TabGroup {
+  return { ...group, windowId: order[windowPosition] ?? -1 };
 }
 
 interface TabPosition {
@@ -103,6 +107,15 @@ export function discardTab(tabId?: number | ((tab: unknown) => void), callback?:
   }, cb);
 }
 
+/** A call native answers with one group, its window resolved in parallel. */
+async function groupCall(method: string, params: object): Promise<TabGroup> {
+  const [res, order] = await Promise.all([gapCall<{ group: NativeGroup }>('tabGroups', method, params), windowIdOrder()]);
+  return withWindowId(res.group, order);
+}
+
+const groupEvent = (name: string) =>
+  resolvingEvent<NativeGroup>('tabGroups', name, async (raw) => [withWindowId(raw, await windowIdOrder())]);
+
 function asIdArray(raw: unknown): number[] {
   if (Array.isArray(raw)) return raw.filter((n) => typeof n === 'number') as number[];
   return typeof raw === 'number' ? [raw] : [];
@@ -122,38 +135,37 @@ export const tabGroupsAugmentation = {
     ORANGE: 'orange',
   },
 
+  // Native answers for every window the extension sees; only WebKit knows window ids, so the windowId filter runs here.
   query(queryInfo: any = {}, callback?: (groups: TabGroup[]) => void) {
     return callbackify(async () => {
-      const res = await gapCall<{ groups: TabGroup[] }>('tabGroups', 'query', queryInfo ?? {});
-      const wid = await currentWindowId();
-      return (res?.groups ?? []).map((g) => stampWindowId(g, wid));
+      const asked = queryInfo?.windowId;
+      const [res, order, windowId] = await Promise.all([
+        gapCall<{ groups: NativeGroup[] }>('tabGroups', 'query', queryInfo ?? {}),
+        windowIdOrder(),
+        asked === WINDOW_ID_CURRENT ? currentWindowId() : asked,
+      ]);
+      const groups = (res?.groups ?? []).map((g) => withWindowId(g, order));
+      return typeof windowId === 'number' ? groups.filter((g) => g.windowId === windowId) : groups;
     }, callback);
   },
 
   get(groupId: number, callback?: (group: TabGroup) => void) {
-    return callbackify(async () => {
-      const res = await gapCall<{ group: TabGroup }>('tabGroups', 'get', { groupId });
-      return stampWindowId(res?.group, await currentWindowId());
-    }, callback);
+    return callbackify(() => groupCall('get', { groupId }), callback);
   },
 
   update(groupId: number, updateProperties: any = {}, callback?: (group: TabGroup) => void) {
-    return callbackify(async () => {
-      const res = await gapCall<{ group: TabGroup }>('tabGroups', 'update', { groupId, ...updateProperties });
-      return stampWindowId(res?.group, await currentWindowId());
-    }, callback);
+    return callbackify(() => groupCall('update', { groupId, ...updateProperties }), callback);
   },
 
   move(groupId: number, moveProperties: any = {}, callback?: (group: TabGroup) => void) {
-    return callbackify(async () => {
-      const res = await gapCall<{ group: TabGroup }>('tabGroups', 'move', { groupId, ...moveProperties });
-      return stampWindowId(res?.group, await currentWindowId());
-    }, callback);
+    return callbackify(() => groupCall('move', { groupId, ...moveProperties }), callback);
   },
 
-  // Native pushes onCreated/onUpdated/onRemoved with windowId -1 (only WebKit knows it); onMoved
-  // has no native source and stays inert, so feature detection and addListener() calls don't throw.
-  ...createGapEventsFromNames('tabGroups', ['onCreated', 'onUpdated', 'onMoved', 'onRemoved']),
+  onCreated: groupEvent('onCreated'),
+  onUpdated: groupEvent('onUpdated'),
+  onRemoved: groupEvent('onRemoved'),
+  // Lilo never moves a group (tabGroups.move is a no-op): a plain event costs no listen round trip.
+  onMoved: new ChromeEvent<[TabGroup]>(),
 };
 
 function liloGroup(options: any = {}, callback?: (groupId: number) => void) {

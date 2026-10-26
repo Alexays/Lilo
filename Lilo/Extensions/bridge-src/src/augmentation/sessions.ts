@@ -30,6 +30,6 @@ export const sessionsAugmentation = {
     );
   },
 
-  // No native push for session changes; the inert listener keeps feature detection safe.
+  // Native pushes it when a closed tab joins or leaves the stack.
   ...createGapEventsFromNames('sessions', ['onChanged']),
 };
