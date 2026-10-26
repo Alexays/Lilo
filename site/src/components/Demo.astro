@@ -115,6 +115,7 @@ const issues = [
       <div class="navs">
         <span>&#8249;</span>
         <span>&#8250;</span>
+        <span>&#8635;</span>
       </div>
       <div class="addr">
         {spaces.map((space) => (
@@ -133,7 +134,7 @@ const issues = [
           <i></i>
         </div>
         <div class="navs">
-          <span>&#9707;</span>
+          <span class="tabs-toggle"></span>
           <span>&#8249;</span>
           <span>&#8250;</span>
           <span>&#8635;</span>
@@ -156,6 +157,16 @@ const issues = [
           <div class="shead">
             {space.icon} {space.name}
             <em>&#9788;</em>
+            <svg class="chevron" width="10" height="10" viewBox="0 0 10 10">
+              <path
+                d="M2 3.5l3 3 3-3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+            </svg>
           </div>
           <div class="favs">
             {space.favs.map(([icon, color]) => (
@@ -180,6 +191,7 @@ const issues = [
                 <span class="fav" style={`background:${color}`}>
                   {icon}
                 </span>
+                {state === "on" && <b class="site">{space.host}</b>}
                 <span class="tt">{name}</span>
                 {state === "on" && <span class="x">✕</span>}
                 {state === "agent" && <span class="who">agent</span>}
@@ -192,6 +204,9 @@ const issues = [
         <span>+</span>
         <span>{text.demoNewTab}</span>
       </div>
+      <span class="strip-toggle" aria-hidden="true">
+        <span class="tabs-toggle"></span>
+      </span>
       <div class="spacebar">
         <div class="spaces" role="radiogroup" aria-label={text.demoSpaces}>
           {spaces.map((space, index) => (
@@ -322,7 +337,7 @@ const issues = [
           aria-label={label}
         />
         <label for={`demo-tabs-${edge}`} title={label} aria-hidden="true">
-          <span class={`edge-glyph ${edge}`}></span>
+          <span class={`edge-glyph edge-${edge}`}></span>
         </label>
       </>
     ))}
@@ -483,12 +498,64 @@ const issues = [
     margin-left: 0;
   }
 
+  .page-bar .navs span:first-child {
+    margin-right: 0;
+  }
+
   .page-bar .addr {
     flex: 1;
-    max-width: 360px;
+    max-width: 480px;
+    height: 32px;
     margin: 0 auto;
-    padding: 5px 12px;
+    padding: 0 12px;
+    align-items: center;
     justify-content: center;
+  }
+
+  /* Drawn on the edge the tabs sit on, as the app's own toggle is. */
+  .tabs-toggle {
+    position: relative;
+    align-self: center;
+    width: 15px;
+    height: 12px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1.3px currentColor;
+  }
+
+  .tabs-toggle::after {
+    content: "";
+    position: absolute;
+    left: 2.5px;
+    top: 2.5px;
+    bottom: 2.5px;
+    width: 3px;
+    border-radius: 1px;
+    background: currentColor;
+  }
+
+  .demo:has(#demo-tabs-right:checked) .tabs-toggle::after {
+    left: auto;
+    right: 2.5px;
+  }
+
+  .demo:has(#demo-tabs-top:checked) .tabs-toggle::after {
+    right: 2.5px;
+    bottom: auto;
+    width: auto;
+    height: 2.5px;
+  }
+
+  .demo:has(#demo-tabs-bottom:checked) .tabs-toggle::after {
+    right: 2.5px;
+    top: auto;
+    width: auto;
+    height: 2.5px;
+  }
+
+  .shead .chevron,
+  .row-item .site,
+  .strip-toggle {
+    display: none;
   }
 
   .demo:has(#demo-tabs-right:checked) .window,
@@ -499,21 +566,23 @@ const issues = [
 
   .demo:has(#demo-tabs-right:checked) .window {
     grid-template-columns: minmax(0, 1fr) 252px;
-    grid-template-rows: 38px minmax(0, 1fr);
+    grid-template-rows: 40px minmax(0, 1fr);
     grid-template-areas: "bar sb" "view sb";
     padding: 0 0 8px 8px;
   }
 
   .demo:has(#demo-tabs-top:checked) .window {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 48px minmax(0, 1fr);
+    grid-template-rows: 40px minmax(0, 1fr);
     grid-template-areas: "sb" "view";
   }
 
+  /* The dock floats 10px off the window's edges, so the window drops its bottom inset. */
   .demo:has(#demo-tabs-bottom:checked) .window {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 38px minmax(0, 1fr) 62px;
+    grid-template-rows: 40px minmax(0, 1fr) 72px;
     grid-template-areas: "bar" "view" "sb";
+    padding: 0 8px;
   }
 
   .demo:has(#demo-tabs-right:checked) .page-bar,
@@ -532,46 +601,59 @@ const issues = [
     grid-area: view;
   }
 
-  /* On the right and at the bottom the page bar holds the lights, the history and the address. */
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-bottom):checked) .sb > .chrome-row,
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-bottom):checked) .sb > .addr {
+  /* The address lives in the page bar on the right and at the bottom, in the active pill at the top. */
+  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
+    .sb
+    > .addr,
+  .demo:has(#demo-tabs-bottom:checked) .sb > .chrome-row {
     display: none;
   }
 
-  /* A strip: one row, the active tab carrying the address. */
+  /* On the right the sidebar's top row keeps only the tabs toggle. */
+  .demo:has(#demo-tabs-right:checked) .sb > .chrome-row .lights,
+  .demo:has(#demo-tabs-right:checked)
+    .sb
+    > .chrome-row
+    .navs
+    span:not(.tabs-toggle),
+  .demo:has(#demo-tabs-top:checked) .sb > .chrome-row .tabs-toggle {
+    display: none;
+  }
+
+  .demo:has(#demo-tabs-right:checked) .sb > .chrome-row .tabs-toggle {
+    margin-right: 4px;
+  }
+
+  /* A strip: one row of 32px pills with 6px corners, the tabs toggle at its end. */
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .sb {
     flex-direction: row;
     align-items: center;
     gap: 6px;
-    padding: 0 4px;
+    padding: 0 2px 0 4px;
     overflow: hidden;
   }
 
   .demo:has(#demo-tabs-bottom:checked) .sb {
-    margin-top: 8px;
-    padding: 0 8px;
-    border-radius: 14px;
+    margin: 10px 2px;
+    padding: 0 10px;
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.12);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
   .demo:has(#demo-tabs-top:checked) .sb > .chrome-row {
     flex: none;
+    margin-right: 6px;
   }
 
-  .demo:has(#demo-tabs-top:checked) .sb > .addr {
-    flex: 0 1 240px;
-    min-width: 120px;
-    margin: 0;
-    padding: 6px 10px;
-  }
-
+  /* Pills past the end fade out, as the app's strip does before it scrolls. */
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .space-content {
     display: flex;
     align-items: center;
     gap: 4px;
     flex: 1;
     overflow: hidden;
+    mask-image: linear-gradient(to left, transparent, black 24px);
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
@@ -585,52 +667,125 @@ const issues = [
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead {
     flex: none;
-    padding: 6px 10px;
-    border-radius: 8px;
+    height: 32px;
+    gap: 7px;
+    padding: 0 10px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.16);
+    font-size: 13px;
+    font-weight: 600;
     letter-spacing: 0;
     text-transform: none;
   }
 
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead .chevron {
+    display: block;
+    flex: none;
+    opacity: 0.7;
+  }
+
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead em,
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .lock,
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .spacebar,
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
     .newtab
-    span:last-child,
-  .demo:has(#demo-tabs-top:checked) .row-item.on {
+    span:last-child {
     display: none;
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs {
+    flex: none;
     display: flex;
-    gap: 0;
+    align-items: center;
+    gap: 2px;
     margin: 0;
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs span {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     background: transparent;
   }
 
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs::after,
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .divider {
+    content: "";
     flex: none;
     width: 1px;
     height: 18px;
     margin: 0 4px;
+    background: rgba(255, 255, 255, 0.14);
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item {
-    flex: 0 1 150px;
+    position: relative;
+    flex: 0 1 170px;
     min-width: 32px;
+    height: 32px;
+    gap: 8px;
+    padding: 0 8px;
+    border-radius: 6px;
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item.on {
-    flex: 0 0 200px;
+    flex: 0 0 260px;
+  }
+
+  /* Folders keep their whole name, packed 2px apart like the pinned row. */
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs + div {
+    flex: none;
+    gap: 2px;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
+    .favs
+    + div
+    .row-item {
+    flex: none;
+    gap: 7px;
+    padding: 0 9px;
+  }
+
+  /* A hairline between two resting pills, none beside the active one. */
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
+    .divider
+    + div
+    > .row-item:not(.on)
+    + .row-item:not(.on)::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    bottom: 9px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .demo:has(#demo-tabs-top:checked) .row-item .site {
+    display: block;
+    flex: none;
+    font-weight: 600;
+  }
+
+  .demo:has(#demo-tabs-top:checked) .row-item.on .tt {
+    color: rgba(255, 255, 255, 0.65);
   }
 
   .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .newtab {
     flex: none;
+    width: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .strip-toggle {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.55);
   }
 
   /* Each edge has its own keyframes so a new pick restarts the settle-in. */
@@ -744,25 +899,25 @@ const issues = [
     background: currentColor;
   }
 
-  .edge-glyph.left::after {
+  .edge-glyph.edge-left::after {
     left: 2px;
     top: 2px;
     bottom: 2px;
     width: 6px;
   }
-  .edge-glyph.right::after {
+  .edge-glyph.edge-right::after {
     right: 2px;
     top: 2px;
     bottom: 2px;
     width: 6px;
   }
-  .edge-glyph.top::after {
+  .edge-glyph.edge-top::after {
     left: 2px;
     right: 2px;
     top: 2px;
     height: 4px;
   }
-  .edge-glyph.bottom::after {
+  .edge-glyph.edge-bottom::after {
     left: 3px;
     right: 3px;
     bottom: 2px;
