@@ -4,6 +4,15 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.4] - 2026-10-26
+
+### Fixed
+
+- Moving the tabs to another edge no longer leaves the tab bar frozen or unclickable until Lilo restarts.
+- A permission prompt opened from the address above the page hangs down into the page instead of rising off the top of the window.
+- An agent you allowed is no longer asked again after Lilo updates while the agent keeps its connection helper running.
+
+[0.2.4]: https://github.com/Alexays/Lilo/compare/v0.2.3...v0.2.4
 ## [0.2.3] - 2026-10-25
 
 ### Fixed
