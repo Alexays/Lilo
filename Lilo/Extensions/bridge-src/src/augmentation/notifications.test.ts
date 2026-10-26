@@ -52,6 +52,21 @@ describe('notificationsAugmentation', () => {
     assert.equal((gapCalls[0].params as any).notificationId, 'n1');
   });
 
+  it('create treats an undefined or null id as omitted, keeping the options and callback', async () => {
+    for (const id of [undefined, null]) {
+      gapCalls.length = 0;
+      const created = await new Promise((resolve) => notificationsAugmentation.create(id, { type: 'basic', title: 'T' }, resolve));
+      assert.equal(created, '');
+      assert.deepEqual(gapCalls[0].params, { notificationId: '', type: 'basic', title: 'T' });
+    }
+  });
+
+  it('onPermissionLevelChanged listens without telling native', async () => {
+    notificationsAugmentation.onPermissionLevelChanged.addListener(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(gapCalls.length, 0);
+  });
+
   it('clear calls gapCall with correct notificationId param', async () => {
     await notificationsAugmentation.clear('n2');
     assert.equal(gapCalls[0].namespace, 'notifications');

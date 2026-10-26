@@ -4,8 +4,21 @@ import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { tabPositions } from './tabGroups.ts';
 
+let colorContext: OffscreenCanvasRenderingContext2D | undefined;
+
+/** A CSS color string as the browser serializes it (#rrggbb, or rgba() below full opacity), so it reads back. */
 function colorToString(color: string | number[]): string {
-  if (typeof color === 'string') return color;
+  if (typeof color === 'string') {
+    colorContext ??= new OffscreenCanvas(1, 1).getContext('2d')!;
+    // An invalid color leaves fillStyle as it was: only a valid one reads the same from two starting values.
+    colorContext.fillStyle = '#000000';
+    colorContext.fillStyle = color;
+    const parsed = colorContext.fillStyle as string;
+    colorContext.fillStyle = '#ffffff';
+    colorContext.fillStyle = color;
+    if (colorContext.fillStyle !== parsed) throw new Error('The color specification could not be parsed.');
+    return parsed;
+  }
   const [r, g, b] = color as number[];
   const a = (color as number[])[3] ?? 255;
   return `rgba(${r},${g},${b},${(a / 255).toFixed(3)})`;
@@ -48,10 +61,9 @@ export const actionColorAugmentation = {
     details: { color: string | number[]; tabId?: number },
     callback?: () => void
   ) {
-    const color = colorToString(details.color);
     return callbackify(
       async () => gapCall<null>('action', 'setBadgeBackgroundColor', {
-        color,
+        color: colorToString(details.color),
         tabId: details.tabId,
         // The toolbar shows Lilo tabs, which native finds by position.
         tabs: details.tabId === undefined ? undefined : await tabPositions([details.tabId]),
@@ -74,10 +86,9 @@ export const actionColorAugmentation = {
     details: { color: string | number[]; tabId?: number },
     callback?: () => void
   ) {
-    const color = colorToString(details.color);
     return callbackify(
       async () => gapCall<null>('action', 'setBadgeTextColor', {
-        color,
+        color: colorToString(details.color),
         tabId: details.tabId,
         // The toolbar shows Lilo tabs, which native finds by position.
         tabs: details.tabId === undefined ? undefined : await tabPositions([details.tabId]),
