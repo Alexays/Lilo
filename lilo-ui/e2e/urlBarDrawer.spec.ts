@@ -72,3 +72,13 @@ test("a site permission request asks in plain language and sends the answer", as
 	const response = (await sentCommands(page)).find((c) => c.action === "permissionResponse");
 	expect(response?.payload).toEqual({ requestId: "req-1", granted: true });
 });
+
+test("the site-controls button showing up keeps the address bar's height", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const without = (await page.locator(".url-trigger").first().boundingBox())!.height;
+
+	await bootChrome(page, worldWithActiveCamera());
+	await expect(page.locator(".permissions-btn")).toBeVisible();
+
+	expect((await page.locator(".url-trigger").first().boundingBox())!.height).toBe(without);
+});

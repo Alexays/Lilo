@@ -1028,6 +1028,8 @@
     justify-content: center;
     width: 18px;
     height: 18px;
+    /* Taller than the 16px line: the overhang keeps the bar's height whether the button shows or not. */
+    margin-block: -1px;
     flex-shrink: 0;
     padding: 0;
     border: none;
