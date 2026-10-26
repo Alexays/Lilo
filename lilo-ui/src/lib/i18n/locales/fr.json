@@ -467,7 +467,8 @@
 				"keywords": "mise à jour version nouvelle",
 				"check": "Rechercher",
 				"lastChecked": "Vérifié le {time}",
-				"unavailable": "Cette version ne se met pas à jour toute seule."
+				"unavailable": "Cette version ne se met pas à jour toute seule.",
+				"developerTools": "Les outils de développement de Lilo sont maintenant dans le menu Développement."
 			},
 			"autoUpdate": {
 				"title": "Installer les mises à jour automatiquement",

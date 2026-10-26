@@ -85,6 +85,13 @@
   const ZOOM_LEVELS = ["0.75", "0.9", "1.0", "1.1", "1.25", "1.5"];
   const MINIMUM_FONT_SIZES = ["0", "9", "12", "14", "16", "18", "24"];
 
+  // Seven clicks on the version row unlock the Develop menu's tools for Lilo itself, as Android's build number does.
+  let versionClicks = $state(0);
+  function clickVersion(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest("button") || ++versionClicks !== 7) return;
+    settingsActions.unlockDeveloperTools();
+  }
+
   // Remounts the new-profile field once a profile is created, which empties it.
   let profileFieldKey = $state(0);
 
@@ -122,6 +129,7 @@
     if (id === "addressPlacement" && isAddressLocked()) return t("settings.items.addressPlacement.lockedRight");
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
+      if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");
       if (updater && !updater.available) return t("settings.items.appUpdates.unavailable");
       if (!updater?.lastCheck) return t(settingDescriptionKey(id));
       const time = new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short" }).format(updater.lastCheck * 1000);
@@ -166,6 +174,13 @@
   <SettingsLinkRules {title} {description} />
 {:else if link}
   <UiLinkRow {title} {description} {count} onclick={link} />
+{:else if id === "appUpdates"}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div onclick={clickVersion}>
+    <UiListRow {title} {description}>
+      <UiButton disabled={!updater?.available} onclick={() => settingsActions.checkForUpdates()}>{t("settings.items.appUpdates.check")}</UiButton>
+    </UiListRow>
+  </div>
 {:else}
 <UiListRow {title} {description}>
   {#if id === "appIcon"}
@@ -281,8 +296,6 @@
         ariaLabel={title}
         onchange={(value) => setSetting("autoplayPolicy", value)}
       />
-    {:else if id === "appUpdates"}
-      <UiButton disabled={!updater?.available} onclick={() => settingsActions.checkForUpdates()}>{t("settings.items.appUpdates.check")}</UiButton>
     {:else if id === "autoUpdate"}
       <UiToggle
         ariaLabel={title}

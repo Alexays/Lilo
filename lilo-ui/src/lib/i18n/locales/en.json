@@ -467,7 +467,8 @@
 				"keywords": "update version upgrade release",
 				"check": "Check now",
 				"lastChecked": "Checked {time}",
-				"unavailable": "This build does not update itself."
+				"unavailable": "This build does not update itself.",
+				"developerTools": "Lilo's own developer tools are now in the Develop menu."
 			},
 			"autoUpdate": {
 				"title": "Install updates automatically",

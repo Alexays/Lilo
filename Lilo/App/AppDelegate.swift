@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     static let developMenuTag = 7001
     /// Mirrors the `showDevelopMenu` setting: the menu bar is built before the settings store opens.
     static let showDevelopMenuKey = "showDevelopMenu"
+    /// The Develop menu's tools for Lilo itself: always in Debug, unlocked in a release from the settings' version row.
+    static let developerToolsTag = 7002
+    static let developerToolsKey = "developerToolsUnlocked"
     /// Nil in Debug and test builds, and in builds without a Sparkle public key: they never check for updates.
     private(set) lazy var updaterController: SPUStandardUpdaterController? = {
         #if DEBUG
