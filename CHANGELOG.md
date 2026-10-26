@@ -4,6 +4,13 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-10-26
+
+### Fixed
+
+- The address bar keeps its height when its site controls button shows up, as when a site uses the camera or microphone.
+
+[0.3.1]: https://github.com/Alexays/Lilo/compare/v0.3.0...v0.3.1
 ## [0.3.0] - 2026-10-26
 
 ### Added
