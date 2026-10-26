@@ -4,6 +4,22 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-10-26
+
+### Added
+
+- Agents learn when a failed click, Enter or write request may already have reached the site, so they check before trying again instead of doing it twice
+- A page the content blocker stops from loading offers Visit Anyway, which loads it once without blocking, in place of Try Again
+
+### Changed
+
+- Lilo checks for and downloads updates on its own, then offers a Restart card at the bottom of the sidebar (an icon in a top or bottom tab bar) instead of an alert; ignored, the update installs when Lilo quits
+
+### Fixed
+
+- Importing from Arc puts each profile's Favorites in every one of its spaces, and no longer loses them when a space has the same name as its profile
+
+[0.4.0]: https://github.com/Alexays/Lilo/compare/v0.3.3...v0.4.0
 ## [0.3.3] - 2026-10-26
 
 ### Changed

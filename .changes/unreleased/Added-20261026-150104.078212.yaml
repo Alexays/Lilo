@@ -1,3 +1,0 @@
-kind: Added
-body: Agents learn when a failed click, Enter or write request may already have reached the site, so they check before trying again instead of doing it twice
-time: 2026-10-26T15:01:04.078212+01:00

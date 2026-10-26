@@ -1,3 +1,0 @@
-kind: Changed
-body: Lilo checks for and downloads updates on its own, then offers a Restart card at the bottom of the sidebar (an icon in a top or bottom tab bar) instead of an alert; ignored, the update installs when Lilo quits
-time: 2026-10-26T16:12:20.239388+01:00
