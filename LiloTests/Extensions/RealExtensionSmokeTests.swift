@@ -55,7 +55,6 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions of top-extensions.json that do not run cleanly yet, by id, with what breaks them. A
     /// newly broken extension fails the test, and so does a listed one that now runs cleanly.
     static let knownFailures: [String: String] = [
-        "fdjamakpfbbddfjaooikfcpapjohcfmg": "Chrome too fails its carbon commands (a is not a function); WebKit reports the ApplicationRequestError its framework rethrows, which Chrome only logs", // Dashlane
         "gjjbmfigjpgnehjioicaalopaikcnheo": "Chrome too: its worker reads settings its backend did not send", // Dark Theme
         "adlpodnneegcnbophopdmhedicjbcgco": "Chrome too: its worker reads settings its backend did not send", // Troywell VPN
         "lieogkinebikhdchceieedcigeafdkid": "Chrome too: its worker fails at startup without the Eagle app (with another error)", // Eagle
@@ -67,33 +66,34 @@ final class RealExtensionSmokeTests: XCTestCase {
         "inlikjemeeknofckkjolnjbpehgadgge": "WebKit gives extensions no SharedArrayBuffer, so its offscreen document cannot open its SQLite store", // Distill Web Monitor
         "bomfdkbfpdhijjbeoicnfhjbdhncfhig": "WebKit gives extensions no SharedArrayBuffer (WEBKIT-GAPS.md, gap 36): its worker's error reporter logs the ReferenceError", // Paperpile
         "hkhggnncdpfibdhinjiegagmopldibha": "Lilo has no push backend: it logs the error instanceID.getToken fails with, as Checker Plus for Gmail", // Checker Plus for Google Calendar
-        "ndakideadaglgpbblmppfonobpdgggin": "Chrome gives it chrome.mdns and chrome.system.network, which Lilo lacks: its worker logs that it cannot look for printers. It finds them to offer through printerProvider, which the macOS print panel never asks", // Mobility Print
         "cmllgdnjnkbapbchnebiedipojhmnjej": "Chrome too: its module worker reads Element, which no worker has, and fails to start (Chrome's reference records the error only)", // Adaware AdBlock
         "doojmbjmlfjjnbmnoijecmcbfeoakpjm": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): its tab probe runs before the script declaring ns", // NoScript
         "mkhjobnjhllkhekbbedlkmgcglgaeidc": "Chrome too: its worker finds no Chromebook and disables itself with management.setEnabled, so its popup does not load; Chrome's reference reads the text of its blocked page", // iboss Cloud Connector
         "hdjihnnclpjhfdbbinmgoiehhoehhlgf": "its popup waits for the window focus the test's window never gets, then pastes with document.execCommand('paste'), which WebKit answers false: it renders nothing", // Pasty
         "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, comes back with an error without a message, which the popup logs; in Chrome's recording it fails before reaching that document, with 'Could not establish connection'", // Aircall Dialer
         "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker browser.extension.getBackgroundPage, which Chrome leaves out of workers and nothing can remove (WEBKIT-GAPS.md, gap 87): its background check compares the result with window and fails to load", // AI Exporter
-        "npnbdojkgkbcdfdjlfdmplppdphlhhcf": "the content scripts of its offscreen document's frame cannot message, which WebKit fails with Tab not found (WEBKIT-GAPS.md, gap 91)", // ProWritingAid
+        "fgmbnmjmbjenlhbefngfibmjkpbcljaj": "its worker messages the popup's tab while it loads, which Lilo counts as listening (a tab opened on the popup hears tabs.onActivated at once): it gets the closed-port error where Chrome reports no receiver", // Highlight This
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
+        "cdjkkeofanojcdolaakkckkmfcjejlij": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): some runs its status thread starts before the script defining WEBSOCKET_CONNECTED", // GIS NR plugin
+        "gejiddohjgogedgjnonbofjigllpkmbf": "as 1Password's: the popup's tab activates while its WebAssembly core starts, so its context menu update fails", // 1Password Nightly
+        "ofpnmcalabcbjgholdjcjblkibolbppb": "some runs its worker removes and recreates its quick-action menu from concurrent events, racing itself", // Monica
+        "ienfalfjdbdpebioblfackkekamfmbnh": "some runs a content script connects while its worker is not running yet; the cause is not yet known", // Angular DevTools
         "gkncegdiihdghhkfpnnodppcbjeeimkc": "some runs pass: installed from the store, it needs an enterprise policy's managed configuration; Chrome's reference runs it unpacked (installType development), where it falls back to defaults", // Senso
-        "cnlhokffphohmfcddnibpohmkdfafdli": "some runs its popup still renders nothing, after other extensions in the same shard; the cause is not yet known", // MultiPassword
         "pphgdbgldlmicfdkhondlafkiomnelnk": "some runs a page connects to its worker before the worker adds its runtime.onConnect listener; it passes on reruns", // 1ClickVPN Proxy for Chrome
         "ocfjjghignicohbjammlhhoeimpfnlhc": "some runs its worker messages a tab before the tab's content script listens; it passes on reruns", // Flash Player Enable
         "bkdgflcldnnnapblkhphbgpggdiikppg": "some runs its worker's privacy-dashboard port hears messages shaped as the answers Lilo sends on its own channel ({reply, result}) and logs them as unrecognized, with the worker running; the cause is not yet known", // DuckDuckGo
-        "aicmkgpgakddgnaphhhpliifpcfhicfo": "its worker posts on the port it opens back to its popup, which WebKit disconnects when the popup runs in a tab of another process (WEBKIT-GAPS.md, gap 60)", // Postman Interceptor
         "aeblfdkhhhdcdjpifhhbdiojplfjncoa": "the popup's tab activates while its WebAssembly core starts: its icon update skips a tab with no url, which Chrome reports until the tab commits, where Lilo reports the url from the navigation start (WebKit's own access checks on a loading tab need it)", // 1Password
         "bgnkhhnnamicmpeenaelnjfhikgbkllg": "its worker adds its runtime.onMessage listener and handlers only after an asynchronous setup: its popup, opened as the worker starts, can get no answer (response.listenerId on undefined), a race Chrome runs too and records the same errors for", // AdGuard AdBlocker
         "apjcbfpjihpedihablmalmbbhjpklbdf": "its worker adds its runtime.onMessage listener and handlers only after an asynchronous setup: its popup, opened as the worker starts, can get no answer (response.listenerId on undefined), a race Chrome runs too and records the same errors for", // AdGuard AdBlocker (Beta)
         "gkojfkhlekighikafcpjkiklfbnlmeio": "a tab event can reach its worker before its asynchronous startup has set up what its tab listeners use", // Hola VPN
         "gidejehfgombmkfflghejpncblgfkagj": "its worker's handler fails on a request to its server, which Chrome fails too, before it answers: its content scripts then read the answer as null (e.mode, r.length)", // Cuponomia
         "oiiaigjnkhngdbnoookogelabohpglmd": "some runs fail a request to its API, or WebKit fails to size storage.sync for its set", // HubSpot Sales
-        "admmjipmmciaobhojoghlmleefbicajg": "some runs fail Firebase Messaging's support check in its worker; the cause is not yet known", // Norton Password Manager
-        "caljgklbbfbcjjanaijlacgncafpegll": "some runs fail Firebase Messaging's support check in its worker, as Norton Password Manager's; the cause is not yet known", // Avira Password Manager
+        "admmjipmmciaobhojoghlmleefbicajg": "WebKit gives its worker no PushManager or PushSubscription, so Firebase Messaging's support check fails once its IndexedDB check answers, some 20 to 40 ms after its top-level code: the error is reported only when it lands before the test reads the errors", // Norton Password Manager
+        "caljgklbbfbcjjanaijlacgncafpegll": "WebKit gives its worker no PushManager or PushSubscription, so Firebase Messaging's support check fails, as Norton Password Manager's, and is reported only when it lands before the test reads the errors", // Avira Password Manager
         "kdfieneakcjfaiglcfcgkidlkmlijjnh": "its popup reads its session before the answer to its own request for it (asyncGetSession) comes back, then renders nothing (session[property] on undefined)", // AI Grammar and Spell Checker by Ginger
         "pfjdepjjfjjahkjfpkcgfmfhmnakjfba": "some runs log runtime.lastError 'Could not establish connection' for a message no context receives yet; the cause is not yet known", // Detailed SEO Extension
         "callobklhcbilhphinckomhgkigmfocg": "its worker reads chrome.enterprise.reportingPrivate, which Chrome gives this extension only and Lilo lacks; some runs never reach that read", // Endpoint Verification
