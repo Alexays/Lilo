@@ -33,9 +33,8 @@ final class WKEngineFactory {
         backingStore: applyingTrackingPrevention(to: .default()),
         identifier: "persistent:default"
     )
-    /// WebKit's tracking prevention (ITP, resource load statistics). Off by default: its classifier
-    /// signs users out of sites it misclassifies, and the content blocker already blocks trackers.
-    /// Off, third-party cookies are accepted as in Chrome.
+    /// WebKit's tracking prevention (ITP, resource load statistics), set from the user's setting at
+    /// bootstrap. Off, third-party cookies are accepted as in Chrome.
     private var trackingPreventionEnabled = false
     /// Every website data store handed out, so a tracking prevention change reaches all of them.
     private let websiteDataStores = NSHashTable<WKWebsiteDataStore>.weakObjects()

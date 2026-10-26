@@ -93,16 +93,16 @@ Lilo uses the WebKit framework that ships with macOS, and with it these system s
 
 ## Tracking prevention and GPC
 
-WebKit's cross-site tracking prevention (Intelligent Tracking Prevention) is off by default in
-Lilo, because it signs you out of sites it misclassifies as trackers. Lilo's content blocker blocks
-known trackers instead; turn tracking prevention on in Settings > Privacy. It keeps its statistics
-on your Mac only, and turning it off clears them, not the sites' data.
+WebKit's cross-site tracking prevention (Intelligent Tracking Prevention) is on by default, as in
+Safari. A site embedded in another (an iframe, an image, a script) gets none of its own cookies
+there, so it cannot recognize you across the sites that embed it. An embed can ask for its cookies
+through the Storage Access API, and Lilo asks you first. Tracking prevention also deletes the cookies
+of sites it classifies as trackers, unless you used that site in the last 30 days: a click on a page
+counts as using its site. It keeps its statistics on your Mac only.
 
-With it off, third-party cookies work as in Chrome: a site embedded in another (an iframe, an image,
-a script) receives the cookies it set while you visited it directly and can set new ones, so it can
-recognize you across the sites that embed it. Embedded apps that sign in with their own cookies,
-such as claude.ai artifacts, need them. WebKit blocks those cookies only together with tracking
-prevention: turn it on to block them.
+Embedded apps that sign in with their own cookies without asking, such as claude.ai artifacts, need
+third-party cookies: turn tracking prevention off in Settings > Privacy to let them work as in Chrome.
+Turning it off clears its statistics, not the sites' data.
 
 The content blocker lets bot-defense and captcha vendors through (PerimeterX/HUMAN, DataDome, Arkose
 Labs, hCaptcha, Cloudflare Turnstile): sites rely on their scripts to tell people from bots, and with

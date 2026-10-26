@@ -374,7 +374,7 @@
 			},
 			"preventCrossSiteTracking": {
 				"title": "Prevent cross-site tracking",
-				"description": "WebKit's tracking prevention, the only way to keep sites embedded in others from reading their own cookies. It can sign you out of sites it misclassifies; Lilo's content blocker already blocks known trackers.",
+				"description": "WebKit's tracking prevention: sites embedded in others can't read their own cookies, so they can't follow you from site to site. An embedded app that signs in with its own cookies may need it off.",
 				"keywords": "itp intelligent tracking prevention cookies trackers"
 			},
 			"clearOnQuit": {

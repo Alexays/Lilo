@@ -73,15 +73,15 @@ test("settings under a switch that is off drop out of their group", () => {
   assert.equal(sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get)).length, 2);
 });
 
-test("cross-site tracking prevention is a protection switch, off until set", () => {
+test("cross-site tracking prevention is a protection switch, on until turned off", () => {
   const protection = sectionGroups("privacy").find((group) => group.groupKey === "settings.groups.protection");
   assert.ok(protection?.settings.includes("preventCrossSiteTracking"));
 
   const values: Record<string, string> = {};
   const get = (key: string, fallback: string) => values[key] ?? fallback;
-  assert.equal(isToggleOn("preventCrossSiteTracking", get), false);
-  values.preventCrossSiteTracking = "true";
   assert.equal(isToggleOn("preventCrossSiteTracking", get), true);
+  values.preventCrossSiteTracking = "false";
+  assert.equal(isToggleOn("preventCrossSiteTracking", get), false);
 });
 
 test("reads the sites the blocker skips", () => {
