@@ -147,4 +147,38 @@ final class ExtensionPreparationTests: XCTestCase {
 
         XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json"), encoding: .utf8), original)
     }
+
+    // MARK: - Frame key
+
+    private func frameKey(_ dir: URL) -> String? {
+        try? String(contentsOf: dir.appendingPathComponent("_lilo/frame-key"), encoding: .utf8)
+    }
+
+    func testWritesTheFrameKeyIntoTheCompatAndForExtensionPages() throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try writeManifest(#"{"content_scripts":[{"js":["vendor.js"],"matches":["<all_urls>"]}],"web_accessible_resources":[{"resources":["images/*"],"matches":["<all_urls>"]}]}"#, to: dir)
+
+        try prepareCompat(dir, compatSource: #"const k="__LILO_FRAME_KEY__";"#)
+
+        let key = try XCTUnwrap(frameKey(dir))
+        XCTAssertTrue(key.range(of: "^[0-9a-f]{64}$", options: .regularExpression) != nil)
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8), #"const k="\#(key)";"#)
+    }
+
+    /// A web page that could load the key, or the compat holding it, could message as the extension's content scripts.
+    func testWritesNoFrameKeyWhereWebPagesCanLoadLilosFiles() throws {
+        for resources in [#"[{"resources":["*.js"],"matches":["<all_urls>"]}]"#, #"["/*"]"#, #"[{"resources":["_LILO/*"],"matches":["https://example.com/*"]}]"#] {
+            let dir = makeTempDir()
+            defer { try? FileManager.default.removeItem(at: dir) }
+            try writeManifest(#"{"web_accessible_resources":\#(resources)}"#, to: dir)
+            try FileManager.default.createDirectory(at: dir.appendingPathComponent("_lilo"), withIntermediateDirectories: true)
+            try "stale".write(to: dir.appendingPathComponent("_lilo/frame-key"), atomically: true, encoding: .utf8)
+
+            try prepareCompat(dir, compatSource: #"const k="__LILO_FRAME_KEY__";"#)
+
+            XCTAssertNil(frameKey(dir), resources)
+            XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8), #"const k="__LILO_FRAME_KEY__";"#)
+        }
+    }
 }
