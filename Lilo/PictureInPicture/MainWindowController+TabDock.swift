@@ -15,7 +15,8 @@ extension MainWindowController {
         tabDock.onDockCleared = { [weak self] in self?.setPipDockActive(false) }
         tabDock.onReturnToTab = { [weak self] engineId in
             self?.tabDock.undock()
-            self?.activateTabStateFirst(id: engineId)
+            // The dock outlives space switches: its tab may live in another space.
+            self?.switchToRecentTab(engineId)
         }
         tabDock.onDismiss = { [weak self] _ in
             // The call keeps running detached; a PiP-able video may still surface it.

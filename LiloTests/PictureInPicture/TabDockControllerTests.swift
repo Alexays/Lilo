@@ -18,6 +18,27 @@ final class TabDockControllerTests: XCTestCase {
         return container.frame
     }
 
+    func testClickingTheDockFromAnotherSpaceReturnsToItsTab() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let callSpace = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
+        let otherSpace = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let window = makeTestWindow(context, showing: callSpace.id)
+        window.setupTabDock()
+        let call = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example/")))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: call.id))
+        window.tabDock.dock(engine, logicalSize: .zero, in: window.contentContainerView, above: nil, chromeView: window.chromeWebView)
+        window.switchToSpace(otherSpace.id)
+
+        window.tabDock.onReturnToTab?(call.id)
+
+        XCTAssertEqual(window.tabManager.currentSpaceId, callSpace.id)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, call.id)
+        XCTAssertFalse(window.tabDock.isDocking)
+    }
+
     func testDockPositionsContainerFromZoneRect() {
         let controller = TabDockController()
         controller.sidebarWidth = 240
