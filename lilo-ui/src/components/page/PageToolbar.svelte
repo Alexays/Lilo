@@ -103,9 +103,10 @@
     flex-shrink: 0;
   }
 
-  /* Centered on the page, whatever sits beside it. */
+  /* Centered on the page, whatever sits beside it; an open drawer grows it down into the page, never off the window. */
   .address {
     position: absolute;
+    top: calc((var(--page-toolbar-height) - 32px) / 2);
     left: 50%;
     transform: translateX(-50%);
     width: min(480px, 100% - 2 * 180px);

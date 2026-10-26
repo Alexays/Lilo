@@ -44,6 +44,21 @@ test("an agent asking to connect shows ahead of a waiting extension prompt, whic
 	await expect(drawer).toContainText("Okta Verify");
 });
 
+test("a request opened from the address over the page hangs down into it, never off the window", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), addressPlacement: "page" });
+	await page.evaluate(() =>
+		window.__lilo!.receive({ event: "agentControlRequested", requestId: "a1", clientName: "Claude Code", executable: "/usr/local/bin/claude", profileName: "" }),
+	);
+	const drawer = page.locator(".page-toolbar .url-drawer-clip");
+	await expect(drawer).toContainText("Claude Code");
+
+	const address = page.locator(".page-toolbar .address");
+	await expect.poll(async () => (await address.boundingBox())!.height).toBeGreaterThan(80);
+	const box = (await address.boundingBox())!;
+	expect(box.y).toBeGreaterThanOrEqual(0);
+	expect((await drawer.boundingBox())!.y).toBeGreaterThan(box.y);
+});
+
 test("a request slides a hidden sidebar out so it can be answered", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.mouse.move(600, 300);
