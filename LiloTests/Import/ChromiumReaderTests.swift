@@ -110,7 +110,7 @@ final class ChromiumReaderTests: XCTestCase {
                 try db.execute(sql: "INSERT INTO urls (url, title, visit_count, last_visit_time) VALUES (?, ?, ?, ?)", arguments: [row.0, row.1, row.2, row.3])
             }
         }
-        if !wal { try pool.writeWithoutTransaction { try $0.checkpoint(.truncate) } }
+        if !wal { _ = try pool.writeWithoutTransaction { try $0.checkpoint(.truncate) } }
         // Keep `pool` alive until the read when testing the WAL case.
         if wal { walPool = pool }
     }

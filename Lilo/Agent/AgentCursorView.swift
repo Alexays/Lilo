@@ -99,7 +99,7 @@ final class AgentCursorView: NSView {
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.4
             ring.animator().alphaValue = 0
-        }, completionHandler: { ring.removeFromSuperview() })
+        }, completionHandler: { MainActor.assumeIsolated { ring.removeFromSuperview() } })
     }
 
     /// A coral arrow with a white outline, so it reads on any page and never passes for the user's.

@@ -7,7 +7,7 @@ import XCTest
 @MainActor
 final class BlockerLayersTests: XCTestCase {
     /// The page's own !important rule, more specific than the site's, yields to it as to uBO's user-origin CSS.
-    private static let page = """
+    nonisolated private static let page = """
     <style>#site.site-ad { display: block !important }</style><img src="/ad.png"><div id="native" data-native-ad></div><div id="excepted" data-excepted-ad></div>
     <div id="generic" class="generic-ad"></div><div id="site" class="site-ad"></div><div id="styled" class="styled"></div>
     <p id="procedural" class="post">Sponsored</p>
@@ -93,8 +93,8 @@ final class BlockerLayersTests: XCTestCase {
             let page = #"<img src="/track.png?utm_source=x&id=1"><script src="/ad.js"></script>"#
             return ("200 OK", ["Content-Type: text/html"], Data(path == "/" ? page.utf8 : "".utf8))
         }
-        var allowlist = BlockerAllowlist()
-        let service = FilterListService(engineFactory: WKEngineFactory(), allowlistProvider: { allowlist })
+        let allowlist = OSAllocatedUnfairLock(initialState: BlockerAllowlist())
+        let service = FilterListService(engineFactory: WKEngineFactory(), allowlistProvider: { allowlist.withLock { $0 } })
         service.fetchList = { url in
             url.absoluteString.hasSuffix("/quick-fixes.txt") ? "||127.0.0.1^*/track.png$image,removeparam=utm_source\n/ad.js$script,redirect=noop.js" : ""
         }
@@ -127,7 +127,7 @@ final class BlockerLayersTests: XCTestCase {
 
         let filtered = try await load(expecting: ["/track.png?id=1"])
         XCTAssertEqual(filtered, ["/track.png?id=1"], "the parameter goes, the script is replaced")
-        allowlist = BlockerAllowlist(sites: ["127.0.0.1"])
+        allowlist.withLock { $0 = BlockerAllowlist(sites: ["127.0.0.1"]) }
         await service.installBlockerExtension()
         let untouched = ["/ad.js", "/track.png?utm_source=x&id=1"]
         let paused = try await load(expecting: untouched)

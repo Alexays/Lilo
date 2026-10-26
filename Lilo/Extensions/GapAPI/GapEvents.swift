@@ -240,7 +240,7 @@ final class GapEvents {
                         self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String, tag: tag, extensionId: extensionId)
                     } else if owner != tag {
                         // Another context's channel drew this port's number: it opens another one.
-                        port.sendMessage(["collided": true, Self.channelKey: tag]) { _ in }
+                        try? await port.sendMessage(["collided": true, Self.channelKey: tag])
                     }
                     return
                 }
@@ -349,7 +349,7 @@ final class GapEvents {
         let tag = owners[ObjectIdentifier(port)] ?? 0
         let (result, error) = await route(namespace, method, params, extensionId, fromWorker)
         let reply: [String: Any] = error.map { ["reply": id, "error": $0, Self.channelKey: tag] } ?? ["reply": id, "result": result ?? NSNull(), Self.channelKey: tag]
-        port.sendMessage(reply) { _ in }
+        try? await port.sendMessage(reply)
     }
 }
 

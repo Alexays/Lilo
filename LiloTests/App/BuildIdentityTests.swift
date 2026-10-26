@@ -3,7 +3,7 @@ import XCTest
 import Sparkle
 
 final class BuildIdentityTests: XCTestCase {
-    func testDebugBuildsKeepClearOfTheInstalledAppsDataAndHelper() throws {
+    @MainActor func testDebugBuildsKeepClearOfTheInstalledAppsDataAndHelper() throws {
         #if DEBUG
         let override = ProcessInfo.processInfo.environment["LILO_APP_SUPPORT_DIR"]
         unsetenv("LILO_APP_SUPPORT_DIR")

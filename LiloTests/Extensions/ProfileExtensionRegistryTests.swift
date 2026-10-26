@@ -125,7 +125,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let revived = await registry.backgrounds.reviveIfNeeded(id)
 
         XCTAssertFalse(revived, "a revive must not restart a worker that is already loading")
-        await loading.value
+        _ = await loading.value
         XCTAssertFalse(registry.backgrounds.isLoadInFlight(id), "the guard clears once the load resolves")
     }
 
@@ -551,7 +551,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let adapter = window.tabManager.tabAdapter(for: tab.id)
         context.performAction(for: adapter)
-        weak var action = context.action(for: adapter)
+        weak let action = context.action(for: adapter)
         let popover = action?.popupPopover
         let shown = await pollUntil(timeout: 10) { popover?.isShown == true }
         XCTAssertTrue(shown, "the popup shows")
@@ -607,7 +607,7 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         var registry: ProfileExtensionRegistry? = try makeTestExtensionRegistry(in: tempDir)
         let extDir = try createMinimalExtension(named: "teardown_dealloc", displayName: "Teardown Dealloc", in: tempDir)
         try await registry?.load(from: extDir)
-        weak var weakRegistry = registry
+        weak let weakRegistry = registry
 
         registry?.teardown()
         registry = nil

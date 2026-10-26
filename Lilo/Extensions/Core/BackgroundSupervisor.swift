@@ -97,7 +97,7 @@ final class BackgroundSupervisor {
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
-            PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId, privacy: .public)")
+            _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId, privacy: .public)")
         }
         var timeout: Task<Void, Never>?
         let failure: String? = await withCheckedContinuation { continuation in

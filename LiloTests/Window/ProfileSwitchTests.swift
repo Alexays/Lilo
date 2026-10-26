@@ -10,7 +10,7 @@ final class ProfileSwitchTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("profile-switch-\(UUID().uuidString)")
-        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: TestProfileIds.next)
+        let context = BrowserContext(appSupportDirectory: tempDir.path, makeProfileId: { TestProfileIds.next() })
         try await context.bootstrap()
         controller = MainWindowController(context: context)
     }

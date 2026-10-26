@@ -1499,16 +1499,17 @@ extension GitDiff.File {
 /// A part of a drawn view that VoiceOver reads as its own element; pressing it runs `press`.
 @MainActor
 final class ChangesAccessibilityElement: NSAccessibilityElement {
-    private let press: (() -> Void)?
+    private let press: (@MainActor () -> Void)?
 
-    init(press: (() -> Void)? = nil) {
+    init(press: (@MainActor () -> Void)? = nil) {
         self.press = press
         super.init()
     }
 
     override func accessibilityPerformPress() -> Bool {
-        press?()
-        return press != nil
+        guard let press else { return false }
+        MainActor.assumeIsolated(press)
+        return true
     }
 
     override func isAccessibilitySelectorAllowed(_ selector: Selector) -> Bool {

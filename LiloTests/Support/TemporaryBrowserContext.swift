@@ -10,7 +10,7 @@ final class TemporaryBrowserContext {
 
     init() async throws {
         directory = FileManager.default.temporaryDirectory.appendingPathComponent("browser-context-\(UUID().uuidString)")
-        context = BrowserContext(appSupportDirectory: directory.path, makeProfileId: TestProfileIds.next)
+        context = BrowserContext(appSupportDirectory: directory.path, makeProfileId: { TestProfileIds.next() })
         try await context.bootstrap()
     }
 

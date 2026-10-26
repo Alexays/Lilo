@@ -68,7 +68,8 @@ final class AgentSocketTests: XCTestCase {
     func testOversizedMessageClosesConnection() async throws {
         let client = try AgentTestClient(path: socketURL)
         let chunk = Data(repeating: 0x61, count: 1024 * 1024)
-        Task.detached { for _ in 0...AgentConnection.maxMessageBytes / chunk.count { client.sendRaw(chunk) } }
+        let chunks = AgentConnection.maxMessageBytes / chunk.count
+        Task.detached { for _ in 0...chunks { client.sendRaw(chunk) } }
 
         let reply = await client.receive()
         let other = try AgentTestClient(path: socketURL)

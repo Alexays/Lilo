@@ -80,8 +80,8 @@ final class ExtensionPreparationTests: XCTestCase {
 
         try prepareCompat(dir)
 
-        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js")), "/* compat */")
-        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json")), original)
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8), "/* compat */")
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json"), encoding: .utf8), original)
     }
 
     func testContentCompatIsIdempotent() throws {
@@ -119,7 +119,7 @@ final class ExtensionPreparationTests: XCTestCase {
         try prepareCompat(dir, compatSource: "/* fresh */")
 
         XCTAssertEqual(
-            try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js")),
+            try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8),
             "/* fresh */",
             "compat file must be refreshed even when the manifest already references it"
         )
@@ -145,6 +145,6 @@ final class ExtensionPreparationTests: XCTestCase {
 
         try prepareCompat(dir)
 
-        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json")), original)
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json"), encoding: .utf8), original)
     }
 }
