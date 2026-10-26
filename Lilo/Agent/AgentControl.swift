@@ -194,14 +194,17 @@ final class AgentControl {
                   SecCodeCopyPath(staticCode, [], &url) == errSecSuccess, let url else { return nil }
             return (code, staticCode, (url as URL).resolvingSymlinksInPath().path)
         }
-        guard var client = code(peer) else { return ("", "") }
-        // lilo-mcp only relays: the agent is the process that launched it.
-        if client.path == URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path {
+        // lilo-mcp only relays: the agent is the process that launched it. An update replacing lilo-mcp on disk leaves
+        // the running one with neither code nor path to read: it counts as a relay too, as only its parent could vouch for it.
+        var client = code(peer)
+        var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
+        if client?.path == URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
+            || (client == nil && proc_pidpath(peer, &path, UInt32(path.count)) <= 0) {
             var info = proc_bsdinfo()
-            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0,
-                  let parent = code(pid_t(info.pbi_ppid)) else { return ("", "") }
-            client = parent
+            guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "") }
+            client = code(pid_t(info.pbi_ppid))
         }
+        guard let client else { return ("", "") }
         let executable = (client.path as NSString).abbreviatingWithTildeInPath
         var info: CFDictionary?
         SecCodeCopySigningInformation(client.staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info)
