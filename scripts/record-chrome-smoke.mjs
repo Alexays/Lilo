@@ -1,10 +1,13 @@
 // Usage: node scripts/record-chrome-smoke.mjs [id,id,...] (Chrome's reference for RealExtensionSmokeTests).
-// Errors depend on timing, so re-recording an extension version in the same Chrome adds to its recorded errors.
+// Errors and renders depend on timing, so re-recording an extension version in the same Chrome adds to its recorded
+// errors, page changes and context menu items, and keeps the fuller fingerprint of each page: a loaded machine can
+// leave a page on its loading screen.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { launchChrome, root, sleep, stableChromeForTesting } from './chrome-for-testing.mjs';
 
 const listPath = join(root, 'LiloTests/Extensions/top-extensions.json');
@@ -20,8 +23,67 @@ const recorded = previous.extensions;
 // As long as RealExtensionSmokeTests waits for a worker and for a popup's text, plus a margin after.
 const workerTimeout = 10_000;
 const popupTimeout = 40_000;
+const optionsTimeout = 20_000;
 const minimumCapture = 20_000;
 const tailCapture = 5_000;
+// A page counts as rendered once its fingerprint has held still that long, and no earlier than `settleMinimum`
+// after it opened: a loading screen that gives way to the UI must not pass for the UI.
+const settleMinimum = 5_000;
+const settleQuiet = 2_000;
+// How long content scripts get on the test page before its changes are read.
+const pageSettle = 4_000;
+
+const extensionsDir = join(root, 'LiloTests/Extensions');
+const probes = readFileSync(join(extensionsDir, 'smoke-probes.js'), 'utf8');
+const smokePage = readFileSync(join(extensionsDir, 'smoke-page.html'), 'utf8');
+// Its images and frames answer an image, as RealExtensionSmokeTests' server does.
+const gif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+const server = createServer((request, response) => {
+  if (request.url === '/') response.writeHead(200, { 'Content-Type': 'text/html' }).end(smokePage);
+  else response.writeHead(200, { 'Content-Type': 'image/gif' }).end(gif);
+}).listen(0, '127.0.0.1');
+await new Promise((resolve) => server.once('listening', resolve));
+const pageURL = `http://127.0.0.1:${server.address().port}/`;
+
+// As RealExtensionSmokeTests compares fingerprints: `tokens` shows most of `expected`.
+const covers = (tokens, expected) => {
+  const shown = new Set(tokens.split(' '));
+  return expected.size > 0 && [...expected].filter((token) => shown.has(token)).length * 2 >= expected.size;
+};
+
+// Runs before the worker's own code, beside it so its relative imports resolve as before: it notes the context
+// menu items the worker creates, and `__liloSmokeMenus(url)` lists the contexts of each leaf item that still exists
+// and applies on `url` (Chrome has no call listing them). It passes the worker's own callbacks through untouched,
+// so an unchecked lastError reports as it would.
+const menusHook = `(() => {
+  const api = globalThis.chrome?.contextMenus;
+  if (!api) return;
+  const created = new Map();
+  const { create, update } = api;
+  api.create = function (properties, ...rest) {
+    const id = create.call(this, properties, ...rest);
+    created.set(id, { ...properties });
+    return id;
+  };
+  api.update = function (id, properties, ...rest) {
+    if (created.has(id)) Object.assign(created.get(id), properties);
+    return update.call(this, id, properties, ...rest);
+  };
+  const matches = (pattern, url) => pattern === '<all_urls>'
+    || new RegExp('^' + pattern.split('*').map((part) => part.replace(/\\W/g, '\\\\$&')).join('.*') + '$').test(url);
+  globalThis.__liloSmokeMenus = async (url) => {
+    const exists = await Promise.all([...created.keys()].map((id) => new Promise((resolve) => {
+      update.call(api, id, {}, () => resolve(!chrome.runtime.lastError));
+    })));
+    const items = [...created].filter((_, index) => exists[index]);
+    const parents = new Set(items.map(([, item]) => item.parentId));
+    return items
+      .filter(([id, item]) => !parents.has(id) && item.type !== 'separator' && item.visible !== false
+        && (!item.documentUrlPatterns || item.documentUrlPatterns.some((pattern) => matches(pattern, url))))
+      .map(([, item]) => [item.contexts ?? 'page'].flat().sort().join(','));
+  };
+})();
+`;
 
 const varint = (buffer, offset) => {
   let value = 0;
@@ -76,8 +138,18 @@ function unpackCRX(crx, id, dir) {
   const manifestPath = join(extension, 'manifest.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8').replace(/^﻿/, ''));
   manifest.key = key.toString('base64');
+  const worker = manifest.background?.service_worker;
+  if (worker) {
+    const folder = dirname(join(extension, worker));
+    const original = `./${encodeURI(worker.split('/').pop())}`;
+    writeFileSync(join(folder, '__lilo_smoke_menus.js'), menusHook);
+    writeFileSync(join(folder, '__lilo_smoke_worker.js'), manifest.background.type === 'module'
+      ? `import './__lilo_smoke_menus.js';\nimport '${original}';\n`
+      : `importScripts('__lilo_smoke_menus.js', '${original}');\n`);
+    manifest.background.service_worker = join(dirname(worker), '__lilo_smoke_worker.js');
+  }
   writeFileSync(manifestPath, JSON.stringify(manifest));
-  return { extension, manifest };
+  return { extension, manifest: { ...manifest, background: manifest.background && { ...manifest.background, service_worker: worker } } };
 }
 
 async function capture(browser, id, manifest) {
@@ -122,36 +194,82 @@ async function capture(browser, id, manifest) {
   await send('Target.setDiscoverTargets', { discover: true });
   await send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
 
-  if (manifest.background?.service_worker) {
-    for (let waited = 0; waited < workerTimeout; waited += 100) {
+  // A stopped worker's session never answers.
+  const evaluate = (expression, session) => Promise.race([
+    send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, session).then(({ result }) => result.value, () => undefined),
+    sleep(3_000),
+  ]);
+  // The milliseconds the worker takes to run its top-level code, undefined when it does not within `workerTimeout`.
+  const workerStarts = async (resume) => {
+    for (const started = Date.now(); Date.now() - started < workerTimeout; await sleep(100)) {
+      // A worker that starts again does in the same session, where it waits for the debugger each time.
+      if (resume) send('Runtime.runIfWaitingForDebugger', {}, workerSession).catch(() => {});
       // As RealExtensionSmokeTests waits for the worker to connect: once the worker has its bindings, its top-level code
       // runs in the same task, before the evaluation answers. An evaluation answers earlier, before the bindings.
-      const started = workerSession && await send('Runtime.evaluate', { expression: "typeof chrome === 'object'", returnByValue: true }, workerSession)
-        .then(({ result }) => result.value === true, () => false);
-      if (started) break;
-      await sleep(100);
+      if (workerSession && await evaluate("typeof chrome === 'object'", workerSession) === true) return Date.now() - started;
     }
-  }
-  let popupText;
-  const popup = manifest.action?.default_popup;
-  if (popup) {
-    // Resolved as Lilo resolves it: a query or fragment stays one.
-    const { targetId } = await send('Target.createTarget', { url: new URL(popup, origin).href });
-    const deadline = Date.now() + popupTimeout;
-    let text = '';
-    while (!text && Date.now() < deadline) {
-      await sleep(250);
+    return undefined;
+  };
+  const sessionOf = async (targetId) => {
+    for (const opened = Date.now(); Date.now() - opened < 5_000; await sleep(50)) {
       const session = [...sessionTargets].find(([, target]) => target === targetId)?.[0];
-      if (!session) continue;
-      // As RealExtensionSmokeTests reads it: a form control and no text is no blank popup.
-      const expression = "document.body?.innerText || (document.body?.querySelector('input, button, select, textarea') ? '[form control]' : '')";
-      text = await send('Runtime.evaluate', { expression, returnByValue: true }, session)
-        .then(({ result }) => result.value ?? '', () => '');
+      if (session) return session;
     }
-    popupText = text.length > 0;
+    return undefined;
+  };
+  // A tab's fingerprint (smoke-probes.js) once it settles, and the milliseconds until it first showed most of it,
+  // as RealExtensionSmokeTests measures its own; undefined for a page that shows nothing within `timeout`.
+  const render = async (url, timeout, background = false) => {
+    const { targetId } = await send('Target.createTarget', { url, background });
+    const opened = Date.now();
+    const samples = [];
+    for (let still = opened; Date.now() - opened < timeout;) {
+      await sleep(250);
+      const session = await sessionOf(targetId);
+      const tokens = (session && await evaluate(`(${probes}).fingerprint().join(' ')`, session)) || '';
+      if (tokens !== samples.at(-1)?.tokens) still = Date.now();
+      samples.push({ at: Date.now() - opened, tokens });
+      if (tokens && Date.now() - opened >= settleMinimum && Date.now() - still >= settleQuiet) break;
+    }
+    await send('Target.closeTarget', { targetId }).catch(() => {});
+    const tokens = samples.findLast((sample) => sample.tokens)?.tokens;
+    if (!tokens) return undefined;
+    const settled = new Set(tokens.split(' '));
+    return { tokens, ms: samples.find((sample) => covers(sample.tokens, settled)).at };
+  };
+
+  const recording = {};
+  const worker = manifest.background?.service_worker;
+  if (worker) await workerStarts();
+  // Resolved as Lilo resolves it: a query or fragment stays one.
+  const popup = manifest.action?.default_popup && new URL(manifest.action.default_popup, origin).href;
+  if (popup) {
+    recording.popup = await render(popup, popupTimeout);
+    recording.popupText = recording.popup !== undefined;
+  }
+  const { targetId: page } = await send('Target.createTarget', { url: pageURL });
+  await sleep(pageSettle);
+  const pageSession = await sessionOf(page);
+  const changes = pageSession && await evaluate(`(${probes}).pageChanges(${JSON.stringify(smokePage)})`, pageSession);
+  if (changes?.length) recording.page = changes;
+  await send('Target.closeTarget', { targetId: page }).catch(() => {});
+  const menus = workerSession && await evaluate(`globalThis.__liloSmokeMenus?.(${JSON.stringify(pageURL.replace(/:\d+/, ''))})`, workerSession);
+  if (menus?.length) recording.menus = menus.sort();
+  const options = manifest.options_ui?.page ?? manifest.options_page;
+  if (options) recording.options = await render(new URL(options, origin).href, optionsTimeout);
+  if (worker && popup) {
+    // As an idle worker stops: the popup then opens on a stopped worker, which its messages start again. It opens as
+    // RealExtensionSmokeTests' idle check opens it, as a popup over a blank tab.
+    await send('Target.closeTarget', { targetId: sessionTargets.get(workerSession) }).catch(() => {});
+    for (const since = Date.now(); Date.now() - since < 3_000 && await evaluate('1', workerSession) === 1;) await sleep(50);
+    const { targetId: blank } = await send('Target.createTarget', { url: 'about:blank' });
+    const [again, restarted] = await Promise.all([render(popup, popupTimeout, true), workerStarts(true)]);
+    await send('Target.closeTarget', { targetId: blank }).catch(() => {});
+    recording.workerRestartMs = restarted;
+    recording.restartPopup = again ?? { tokens: '' };
   }
   await sleep(Math.max(tailCapture, minimumCapture - (Date.now() - start)));
-  return { popupText, errors: [...errors] };
+  return { ...recording, errors: [...errors] };
 }
 
 async function record({ name, id }) {
@@ -175,14 +293,26 @@ async function record({ name, id }) {
 const queue = top.filter(({ id }) => !only || only.has(id));
 let failed = 0;
 // A few Chromes at a time, each in its own profile.
-await Promise.all(Array.from({ length: 4 }, async () => {
+await Promise.all(Array.from({ length: 6 }, async () => {
   for (let entry = queue.shift(); entry; entry = queue.shift()) {
     try {
-      const { version, popupText, errors, ...rest } = await record(entry);
+      const { name, version, errors, ...rest } = await record(entry);
       const before = recorded[entry.id];
-      if (previous.chrome === chromeVersion && before?.version === version) errors.unshift(...before.errors.filter((e) => !errors.includes(e)));
-      recorded[entry.id] = { ...rest, version, popupText, errors };
-      console.log(`${entry.id} ${entry.name} ${version}: popup ${popupText ?? 'none'}, ${errors.length} errors`);
+      if (previous.chrome === chromeVersion && before?.version === version) {
+        errors.unshift(...before.errors.filter((e) => !errors.includes(e)));
+        const size = (render) => (render?.tokens ? render.tokens.split(' ').length : 0);
+        for (const key of ['popup', 'options', 'restartPopup']) if (size(before[key]) > size(rest[key])) rest[key] = before[key];
+        if (before.popupText) rest.popupText = true;
+        if (before.page) rest.page = [...new Set([...rest.page ?? [], ...before.page])].sort();
+        if (before.menus?.length > (rest.menus?.length ?? 0)) rest.menus = before.menus;
+        rest.workerRestartMs = Math.min(rest.workerRestartMs ?? Infinity, before.workerRestartMs ?? Infinity);
+        if (rest.workerRestartMs === Infinity) delete rest.workerRestartMs;
+      }
+      recorded[entry.id] = { name, version, ...rest, errors };
+      const words = (render) => (render ? `${render.tokens.split(' ').length} tokens in ${render.ms} ms` : 'nothing');
+      console.log(`${entry.id} ${entry.name} ${version}: popup ${rest.popup === undefined && !rest.popupText ? 'none' : words(rest.popup)}, `
+        + `options ${rest.options === undefined ? 'none' : words(rest.options)}, page ${rest.page?.length ?? 0} changes, menus ${rest.menus?.length ?? 0}, `
+        + `worker restart ${rest.workerRestartMs ?? 'none'} ms, ${errors.length} errors`);
     } catch (error) {
       failed++;
       console.error(`${entry.id} ${entry.name}: not recorded: ${error.message}`);
@@ -192,4 +322,5 @@ await Promise.all(Array.from({ length: 4 }, async () => {
 const extensions = Object.fromEntries(top.filter(({ id }) => recorded[id]).map(({ id }) => [id, recorded[id]]));
 writeFileSync(out, `${JSON.stringify({ chrome: chromeVersion, extensions }, null, 1)}\n`);
 console.log(`${Object.keys(extensions).length} extensions recorded from Chrome ${chromeVersion} into ${out}`);
+server.close();
 process.exit(failed ? 1 : 0);
