@@ -904,8 +904,12 @@ a {
 }
 .ask-acts {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+.ask-acts div {
+  display: flex;
   gap: 5px;
 }
 .ask-acts span {
@@ -915,17 +919,24 @@ a {
   font-weight: 500;
   background: rgba(255, 255, 255, 0.16);
 }
-.ask-acts span:first-child {
+.ask-acts div span:first-child {
   background: transparent;
   color: rgba(255, 255, 255, 0.8);
 }
-.ask-acts span:last-child {
+.ask-acts div span:last-child {
   background: #fff;
   color: #2b2531;
   font-weight: 600;
 }
 .row-item.in {
   padding-left: 24px;
+}
+.agwin .spacebar {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0 4px;
 }
 .agwin .spacebar i {
   width: 30px;

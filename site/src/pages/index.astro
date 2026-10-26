@@ -573,7 +573,7 @@ const schema = [
         <div
           class="window agwin"
           role="img"
-          aria-label='Lilo with the Agents Space open. Claude Code works in its own folder, on a checkout page, and the address bar asks: Claude Code wants to click "Pay now" in Checkout (shop.test). Deny, Always Allow on shop.test, or Allow Once.'
+          aria-label='Lilo with the Agents Space open. Claude Code works in its own folder, on a checkout page, and the address bar asks: Claude Code wants to click "Pay now" in Checkout (shop.test). Always Allow on shop.test, Deny, or Allow Once.'
         >
           <div class="sb">
             <div class="chrome-row">
@@ -603,9 +603,11 @@ const schema = [
                 </span>
               </div>
               <div class="ask-acts">
-                <span>Deny</span>
                 <span>Always Allow on shop.test</span>
-                <span>Allow Once</span>
+                <div>
+                  <span>Deny</span>
+                  <span>Allow Once</span>
+                </div>
               </div>
             </div>
             <div class="shead">

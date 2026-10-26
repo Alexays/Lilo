@@ -595,7 +595,7 @@ const schema = [
         <div
           class="window agwin"
           role="img"
-          aria-label="Lilo avec l'espace Agents ouvert. Claude Code travaille dans son propre dossier, sur une page de paiement, et la barre d'adresse demande : Claude Code veut cliquer sur « Payer » dans Paiement (shop.test). Refuser, Toujours autoriser sur shop.test, ou Autoriser une fois."
+          aria-label="Lilo avec l'espace Agents ouvert. Claude Code travaille dans son propre dossier, sur une page de paiement, et la barre d'adresse demande : Claude Code veut cliquer sur « Payer » dans Paiement (shop.test). Toujours autoriser sur shop.test, Refuser, ou Autoriser une fois."
         >
           <div class="sb">
             <div class="chrome-row">
@@ -625,9 +625,11 @@ const schema = [
                 </span>
               </div>
               <div class="ask-acts">
-                <span>Refuser</span>
                 <span>Toujours autoriser sur shop.test</span>
-                <span>Autoriser une fois</span>
+                <div>
+                  <span>Refuser</span>
+                  <span>Autoriser une fois</span>
+                </div>
               </div>
             </div>
             <div class="shead">
