@@ -104,14 +104,24 @@ final class BrowserImporter {
             if kinds.contains(.bookmarks) || kinds.contains(.tabs) {
                 do {
                     let others = ImportedBookmark(title: sink.otherBookmarksTitle(source.name), url: nil, children: bundle.otherBookmarks)
-                    // The bookmarked section holds tabs only: favorite folders are flattened.
+                    // The bookmarked section holds tabs only: favorite folders are flattened. Arc shows a profile's
+                    // favorites in each of its spaces, so each space gets them.
+                    let favorites = Self.flattened(bundle.favorites)
                     let icons = Dictionary(bundle.favicons.map { ($0.host, $0.dataURL) }, uniquingKeysWith: { first, _ in first })
                     var targets = [Target(spaceId: lilo.spaceId, bookmarks: bundle.bookmarksBar + [others], pinned: bundle.pinnedTabs,
-                                          unpinned: bundle.openTabs, bookmarked: Self.flattened(bundle.favorites), icons: icons)]
+                                          unpinned: bundle.openTabs, bookmarked: bundle.spaces.isEmpty ? favorites : [], icons: icons)]
                     for space in bundle.spaces {
                         let spaceId = try sink.findSpace(space.name, lilo.profileId)
                             ?? sink.createSpace(space.name, space.icon ?? "🌐", space.color, lilo.profileId)
-                        targets.append(Target(spaceId: spaceId, bookmarks: [], pinned: space.pinned, unpinned: space.unpinned, bookmarked: [], icons: icons))
+                        // A space named like the profile is the profile's own: one target, or its save would overwrite the other's.
+                        if let index = targets.firstIndex(where: { $0.spaceId == spaceId }) {
+                            targets[index].pinned += space.pinned
+                            targets[index].unpinned += space.unpinned
+                            targets[index].bookmarked += favorites
+                        } else {
+                            targets.append(Target(spaceId: spaceId, bookmarks: [], pinned: space.pinned, unpinned: space.unpinned,
+                                                  bookmarked: favorites, icons: icons))
+                        }
                     }
                     for index in targets.indices {
                         targets[index].tree = sink.tree(targets[index].spaceId) ?? sink.loadSpaceState(targets[index].spaceId, lilo.profileId)?.tree

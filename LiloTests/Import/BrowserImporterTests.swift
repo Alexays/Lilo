@@ -189,18 +189,14 @@ final class BrowserImporterTests: XCTestCase {
         _ = await importer().run([selection], sources: sources) { _ in }
         _ = await importer().run([selection], sources: sources) { _ in }
 
-        let favorites = applied.compactMap { command -> [StoredSidebarNode]? in
-            guard case let .importSidebarNodes(_, nodes, section) = command, section == .bookmarked else { return nil }
-            return nodes
-        }.flatMap { $0 }
-        XCTAssertEqual(favorites.count, 2, "favorite folders are flattened")
-        for node in favorites {
-            guard case let .tab(tab) = node else { return XCTFail("the bookmarked section holds tabs only") }
-            XCTAssertTrue(tab.isBookmarked, "a closed favorite must stay bookmarked or repair drops it")
-        }
         XCTAssertEqual(createdSpaces, ["Work"], "a second import reuses the Arc space")
         let work = try XCTUnwrap(spaceIds["Work"].flatMap { savedStates[$0] })
         XCTAssertEqual(work.tree.pinned.count, 1, "and adds nothing twice to it")
+        XCTAssertEqual(work.tree.bookmarked.count, 2, "favorite folders are flattened")
+        for node in work.tree.bookmarked {
+            guard case let .tab(tab) = node else { return XCTFail("the bookmarked section holds tabs only") }
+            XCTAssertTrue(tab.isBookmarked, "a closed favorite must stay bookmarked or repair drops it")
+        }
     }
 
     /// The tabs come in closed: with no icon of their own they would show an initial until first opened.
@@ -256,7 +252,7 @@ final class BrowserImporterTests: XCTestCase {
 
         let tabs = first.filter { $0.kind == .tabs }
         XCTAssertEqual(tabs.map(\.error), [nil, nil])
-        XCTAssertEqual(tabs.map(\.imported), [14, 4], "favorites and space tabs; the easel and the arc:// tab are skipped")
+        XCTAssertEqual(tabs.map(\.imported), [18, 4], "favorites in each space and space tabs; the easel and the arc:// tab are skipped")
 
         let arcProfile = try XCTUnwrap(profileIds["Arc Freelance"], "a second Arc profile gets its own Lilo profile")
         XCTAssertEqual(createdSpaces, ["Work", "Home", "Lab", "Freelance", "Acme"])
@@ -264,8 +260,12 @@ final class BrowserImporterTests: XCTestCase {
                        "a space of an unknown Arc profile falls to the first one")
         XCTAssertEqual(spaceProfiles["Acme"], arcProfile)
         XCTAssertEqual(spaceColors, ["Work": "#5b6bf2", "Acme": "#ff7f00"])
-        XCTAssertEqual(tree.bookmarked.map(Self.title), ["Inbox", "Chat"], "only the first profile's favorites land in the active space")
-        XCTAssertEqual(savedStates[spaceIds["Freelance"]!]?.tree.bookmarked.map(Self.title), ["Acme Mail"])
+        XCTAssertEqual(tree.bookmarked, [], "favorites go with the Arc spaces, not the active space")
+        for name in ["Work", "Home", "Lab"] {
+            XCTAssertEqual(savedStates[spaceIds[name]!]?.tree.bookmarked.map(Self.title), ["Inbox", "Chat"], "every space shows its profile's favorites")
+        }
+        XCTAssertEqual(savedStates[spaceIds["Acme"]!]?.tree.bookmarked.map(Self.title), ["Acme Mail"])
+        XCTAssertEqual(savedStates[spaceIds["Freelance"]!]?.tree.bookmarked, [])
 
         let work = try XCTUnwrap(savedStates[spaceIds["Work"]!])
         XCTAssertNil(work.activeTabId, "nothing is loaded by the import")
@@ -297,7 +297,37 @@ final class BrowserImporterTests: XCTestCase {
         XCTAssertEqual(second.filter { $0.kind == .tabs }.map(\.imported), [0, 0])
         XCTAssertEqual(createdSpaces.count, 5)
         XCTAssertEqual(savedStates, before, "a second import adds nothing")
-        XCTAssertEqual(tree.bookmarked.count, 2)
+        XCTAssertEqual(tree.bookmarked, [])
+    }
+
+    /// The profile's own space and the Arc space are then one Lilo space: neither save may overwrite the other.
+    func testArcSpaceNamedLikeItsProfileKeepsFavoritesAndTabs() async throws {
+        let userData = home.appendingPathComponent("Library/Application Support/Arc/User Data")
+        try FileManager.default.createDirectory(at: userData.appendingPathComponent("Profile 1"), withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: userData.appendingPathComponent("Profile 1/Bookmarks"))
+        try Data(#"{"profile": {"info_cache": {"Profile 1": {"name": "Acme"}}}}"#.utf8).write(to: userData.appendingPathComponent("Local State"))
+        try Data("""
+        {"sidebar": {"containers": [{"global": {}}, {
+          "topAppsContainerIDs": [{"custom": {"_0": {"directoryBasename": "Profile 1"}}}, "fav"],
+          "spaces": ["s1", {"id": "s1", "title": "Acme", "profile": {"custom": {"_0": {"directoryBasename": "Profile 1"}}},
+                            "containerIDs": ["pinned", "p1", "unpinned", "u1"]}],
+          "items": [
+            "fav", {"id": "fav", "childrenIds": ["f1"], "data": {"itemContainer": {}}},
+            "f1", {"id": "f1", "title": "Mail", "data": {"tab": {"savedURL": "https://mail.example/"}}},
+            "p1", {"id": "p1", "childrenIds": [], "data": {"itemContainer": {}}},
+            "u1", {"id": "u1", "childrenIds": ["t1"], "data": {"itemContainer": {}}},
+            "t1", {"id": "t1", "title": "Board", "data": {"tab": {"savedURL": "https://board.example/"}}}
+          ]}]}}
+        """.utf8).write(to: userData.deletingLastPathComponent().appendingPathComponent("StorableSidebar.json"))
+
+        _ = await importer().run([.init(sourceId: "chrome", profileId: "Default", kinds: [.bookmarks], extensionIds: []),
+                                  .init(sourceId: "arc", profileId: "Profile 1", kinds: [.tabs], extensionIds: [])],
+                                 sources: BrowserImportScanner.scan(home: home, isInstalled: { _ in true })) { _ in }
+
+        XCTAssertEqual(createdSpaces, ["Acme"])
+        let acme = try XCTUnwrap(savedStates[spaceIds["Acme"]!])
+        XCTAssertEqual(acme.tree.bookmarked.map(Self.title), ["Mail"])
+        XCTAssertEqual(acme.tree.unpinned.map(Self.title), ["Board"])
     }
 
     func testChromiumSessionKeepsPinnedTabsAndGroupsAndRerunsAddNothing() async throws {
