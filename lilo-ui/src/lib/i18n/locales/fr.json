@@ -374,7 +374,7 @@
 			},
 			"preventCrossSiteTracking": {
 				"title": "Empêcher le suivi entre sites",
-				"description": "La protection contre le pistage de WebKit : un site intégré à d'autres ne peut pas lire ses propres cookies, et ne peut donc pas vous suivre de site en site. Une app intégrée qui se connecte avec ses propres cookies peut demander de la désactiver.",
+				"description": "La protection contre le pistage de WebKit : un site intégré à d'autres ne peut pas lire ses propres cookies, et ne peut donc pas vous suivre de site en site. Ne la désactivez que si un site intégré que vous utilisez cesse de fonctionner.",
 				"keywords": "itp intelligent tracking prevention pistage suivi cookies traqueurs"
 			},
 			"clearOnQuit": {
