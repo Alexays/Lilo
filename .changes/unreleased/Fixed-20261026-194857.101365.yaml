@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions whose pages wait for their background worker, such as MultiPassword, no longer show an empty popup when another extension started before them
+time: 2026-10-26T19:48:57.101365+01:00
