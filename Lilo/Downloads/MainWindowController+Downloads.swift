@@ -9,8 +9,8 @@ import WebKit
 extension MainWindowController {
     func setupDownloads() {
         context.downloadManager.downloadsFolderProvider = { [weak context] in context?.settingsStore?.downloadsFolder }
-        context.downloadManager.chooseDestination = { [weak context] proposed, webView in
-            guard context?.settingsStore?.askDownloadLocation == true else { return proposed }
+        context.downloadManager.chooseDestination = { [weak context] proposed, webView, prompts in
+            guard prompts || context?.settingsStore?.askDownloadLocation == true else { return proposed }
             // An agent's download lands in the folder: no panel over the user's window.
             if (webView?.uiDelegate as? WKWebViewTab)?.agentDialogHandler?("Download saved to \(proposed.path)") == true { return proposed }
             let panel = NSSavePanel()
@@ -19,6 +19,10 @@ extension MainWindowController {
             // On the window of the page that downloads, not whichever window is key.
             guard let window = webView?.window ?? NSApp.keyWindow else { return panel.runModal() == .OK ? panel.url : nil }
             return await panel.beginSheetModal(for: window) == .OK ? panel.url : nil
+        }
+        context.downloadManager.suggestFilename = { [weak context] item in
+            guard let registry = item.profileId.flatMap({ context?.profileContexts.existingContext(for: $0)?.extensions }) else { return nil }
+            return await DownloadsBridgeHandler.suggestFilename(for: item, registry: registry)
         }
         context.downloadManager.webView = tabManager.activeEngineTab?.wkWebView
     }

@@ -4,6 +4,9 @@ import AppKit
 import UserNotifications
 import OSLog
 
+/// A download's filename relative to the downloads folder and Chrome's conflictAction for it, as an extension suggests them.
+typealias FilenameSuggestion = (filename: String, conflictAction: String)
+
 /// Façade coordinating WKBackend and URLSessionBackend.
 /// All callers interact with this class; backend selection is internal.
 @MainActor
@@ -23,10 +26,13 @@ final class DownloadManager {
     }
     var settingsFolder: URL? { downloadsFolderProvider() }
 
-    var chooseDestination: ((URL, WKWebView?) async -> URL?)? {
+    var chooseDestination: ((URL, WKWebView?, _ prompts: Bool) async -> URL?)? {
         get { wkBackend.chooseDestination }
         set { wkBackend.chooseDestination = newValue }
     }
+
+    /// chrome.downloads.onDeterminingFilename for a browser download about to start, never asked for a private space's.
+    var suggestFilename: ((DownloadItem) async -> FilenameSuggestion?)?
 
     weak var webView: WKWebView? {
         didSet { wkBackend.webView = webView }
@@ -80,6 +86,10 @@ final class DownloadManager {
                 // Deferred: the backend finishes registering the download after this callback returns.
                 Task { @MainActor [weak self] in self?.forgetPrivateDownloads(inSpace: spaceId) }
             }
+        }
+        wkBackend.suggestFilename = { [weak self] download, item in
+            guard let self, pendingPrivateSpaceIds[download] == nil, forgottenPendingDownloads[download] == nil else { return nil }
+            return await suggestFilename?(item)
         }
         // A private download that never got a row is not tracked: nothing else would let it go.
         wkBackend.onDropped = { [weak self] download in
