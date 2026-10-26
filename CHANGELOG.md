@@ -4,6 +4,17 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-26
+
+### Added
+
+- Seven clicks on Lilo's version row in Settings add Lilo's own developer tools to the Develop menu, such as its chrome's devtools.
+
+### Changed
+
+- With the tabs on top or at the bottom, Settings opens as a page: its sections sit beside the content in one card, and the tab strip shows an active Settings tab that closes it.
+
+[0.3.0]: https://github.com/Alexays/Lilo/compare/v0.2.4...v0.3.0
 ## [0.2.4] - 2026-10-26
 
 ### Fixed
