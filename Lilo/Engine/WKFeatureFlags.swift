@@ -18,9 +18,11 @@ enum WKFeatureFlags {
     private typealias SetFn = @convention(c) (NSObject, Selector, ObjCBool, AnyObject) -> Void
     private static let setSelector = NSSelectorFromString("_setEnabled:forFeature:")
 
-    /// WebKit-experimental flags Lilo turns ON by default for web compatibility (all are OFF in stock
-    /// WebKit). These become Lilo's effective default; users can still flip them in about:config.
+    /// WebKit-experimental flags Lilo turns ON by default for web compatibility or speed (all are OFF in
+    /// stock WebKit). These become Lilo's effective default; users can still flip them in about:config.
     private static let defaultsOn: Set<String> = [
+        // `<link rel=prefetch>`: a page a site announces as next opens from the cache.
+        "LinkPrefetchEnabled",
         "CloseWatcherEnabled",
         "RequestIdleCallbackEnabled",
         "SelectShowPickerEnabled",

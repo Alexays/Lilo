@@ -83,6 +83,26 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertEqual(on, "")
     }
 
+    /// A page announcing its next page with `<link rel=prefetch>` gets it fetched ahead, so a click opens it from the cache.
+    func testTabsPrefetchTheNextPageASiteAnnounces() async throws {
+        let prefetches = OSAllocatedUnfairLock<[String]>(initialState: [])
+        let server = try await TinyHTTPServer { request in
+            let lines = request.split(separator: "\r\n").map { $0.lowercased() }
+            if lines.first?.hasPrefix("get /next ") == true, lines.contains(where: { $0.hasSuffix("purpose: prefetch") }) {
+                prefetches.withLock { $0.append("/next") }
+            }
+            return ("200 OK", ["Content-Type: text/html", "Cache-Control: max-age=300"], Data("<link rel=prefetch href=/next><p>landing</p>".utf8))
+        }
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)))
+        defer { tab.teardown() }
+
+        tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))))
+
+        let prefetched = await pollUntil(timeout: 10) { !prefetches.withLock { $0 }.isEmpty }
+        XCTAssertTrue(prefetched, "the announced next page was prefetched")
+    }
+
     /// A page that asked Lilo something (here notification permission) and then navigates itself must
     /// not be held behind a beforeunload panel: the reply is not the user interacting with the page.
     func testANativeReplyLeavesThePageWithoutUserActivation() async throws {
