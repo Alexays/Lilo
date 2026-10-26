@@ -102,39 +102,117 @@ final class RealExtensionSmokeTests: XCTestCase {
         "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab" // TxtAnalyser
     ]
 
+    /// Opens `url` in a tab and reads its fingerprint (smoke-probes.js) every 250 ms, as Chrome's recording does, until it
+    /// shows at least half of `expected`, Chrome's, or anything without one, for at most `timeout`; then closes the tab.
+    /// Returns the last fingerprint and whether it matched.
+    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool) {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
+        defer { window.closeTabStateFirst(id: tab.id, undoable: false) }
+        let opened = Date()
+        var tokens: Set<String> = []
+        while Date().timeIntervalSince(opened) < timeout {
+            try await Task.sleep(for: .milliseconds(250))
+            guard let engine = window.tabManager.engineTab(for: tab.id) else { continue }
+            // As pageText: on screen, as a popup, and unattended.
+            browserContext.context.agentControl.attach(engine, to: nil)
+            engine.agentDialogHandler = { _ in true }
+            let page = engine.view as? WKWebView
+            tokens = Set((try? await page?.evaluateJavaScript("(\(probes)).fingerprint()") as? [String]) ?? [])
+            if expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count {
+                return (tokens, true)
+            }
+        }
+        return (tokens, false)
+    }
+
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
     private struct ChromeSmoke: Decodable {
+        /// A page's fingerprint (smoke-probes.js), space-separated, and the milliseconds until it showed most of it.
+        struct Render: Decodable {
+            let tokens: String
+            let ms: Int?
+        }
         struct Recording: Decodable {
             let version: String
             let popupText: Bool?
+            let popup: Render?
+            /// The popup opened again once the worker was stopped.
+            let restartPopup: Render?
+            let options: Render?
+            /// What its content scripts changed on smoke-page.html (smoke-probes.js).
+            let page: [String]?
+            /// The contexts of each context menu item it adds that applies on that page.
+            let menus: [String]?
+            /// From the popup's opening on a stopped worker to the worker's top-level code having run.
+            let workerRestartMs: Int?
             let errors: [String]
         }
         let extensions: [String: Recording]
     }
 
+    /// One extension's results, written to the report once its last check, maybe the idle one, is done.
+    private final class Outcome {
+        let id: String, name: String
+        var version = "?"
+        var staleChrome: String?
+        var problems: [String] = []
+        /// The full text of the errors WebKit cuts to their first argument, to debug a failure by.
+        var details: [String] = []
+        /// Milliseconds each step took, and the steps reported as slow.
+        var timings: [String: Int] = [:]
+        var slow: [String] = []
+        /// The worker's state when the idle check clicked the toolbar button.
+        var idle: String?
+
+        init(id: String, name: String) {
+            self.id = id
+            self.name = name
+        }
+
+        /// Reported, never failed: past 5 s, or past 3 times Chrome's time and a second more.
+        func time(_ step: String, since start: Date, chrome: Int?) {
+            let ms = Int(Date().timeIntervalSince(start) * 1000)
+            timings[step] = ms
+            if ms > 5000 || chrome.map({ ms > 3 * $0 && ms - $0 > 1000 }) == true {
+                slow.append("\(step) \(ms) ms" + (chrome.map { " (Chrome \($0) ms)" } ?? ""))
+            }
+        }
+    }
+
     func testStoreExtensionsInstallStartAndShowTheirPopup() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
+        // The idle check's profile: there, nothing but the check wakes the workers. Its window stays on screen, as a
+        // popover shows only from one, with a blank tab for the toolbar button to act on.
+        let (idleWindow, idleRegistry) = try browserContext.makeExtensionWindow()
+        idleWindow.window?.orderFront(nil)
+        let blank = try XCTUnwrap(idleWindow.createTabStateFirst(url: try XCTUnwrap(URL(string: "about:blank"))))
+        idleWindow.activateTabStateFirst(id: blank.id)
         // A camera or microphone request is refused as a user would: WebKit asks macOS before Lilo's
         // permission handler, so even a denied request would prompt for the test host. Tab and desktop
         // streams still go through the tab-share shim.
-        registry.pageScripts.addUserScript(WKUserScript(source: """
-        (() => {
-          const shared = navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices);
-          if (!shared) return;
-          navigator.mediaDevices.getUserMedia = (constraints) =>
-            [constraints?.video, constraints?.audio].some((c) => c?.mandatory?.chromeMediaSource)
-              ? shared(constraints)
-              : Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
-        })();
-        """, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
-        let top = try JSONDecoder().decode(
-            TopExtensions.self,
-            from: Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("top-extensions.json"))
-        )
-        let chromeSmoke = try JSONDecoder().decode(
-            ChromeSmoke.self,
-            from: Data(contentsOf: URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("chrome-smoke.json"))
-        )
+        for registry in [registry, idleRegistry] {
+            registry.pageScripts.addUserScript(WKUserScript(source: """
+            (() => {
+              const shared = navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices);
+              if (!shared) return;
+              navigator.mediaDevices.getUserMedia = (constraints) =>
+                [constraints?.video, constraints?.audio].some((c) => c?.mandatory?.chromeMediaSource)
+                  ? shared(constraints)
+                  : Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+            })();
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: false, in: .page))
+        }
+        let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        let top = try JSONDecoder().decode(TopExtensions.self, from: Data(contentsOf: folder.appendingPathComponent("top-extensions.json")))
+        let chromeSmoke = try JSONDecoder().decode(ChromeSmoke.self, from: Data(contentsOf: folder.appendingPathComponent("chrome-smoke.json")))
+        // The same probes and test page as Chrome's recording.
+        let probes = try String(contentsOf: folder.appendingPathComponent("smoke-probes.js"), encoding: .utf8)
+        let smokePage = try String(contentsOf: folder.appendingPathComponent("smoke-page.html"), encoding: .utf8)
+        let html = Data(smokePage.utf8), image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
+        let server = try await TinyHTTPServer { request in
+            request.hasPrefix("GET / ") ? ("200 OK", ["Content-Type: text/html"], html) : ("200 OK", ["Content-Type: image/gif"], image)
+        }
+        let pageURL = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
         // WebKit and Chrome word the same errors differently; ids and times differ from run to run.
         let normalized = { (message: String) -> String in
             message
@@ -187,65 +265,38 @@ final class RealExtensionSmokeTests: XCTestCase {
         }
         defer { try? report?.close() }
         var results: [String] = []
-        for (name, id) in selected.map({ ($0.name, $0.id) }) {
-            var problems: [String] = []
-            var version = "?"
-            var staleChrome: String?
-            // The full text of the errors WebKit cuts to their first argument, to debug a failure by.
-            var details: [String] = []
-            defer {
-                results.append(problems.isEmpty ? "ok   \(id) \(name) \(version)" : "FAIL \(id) \(name) \(version): \(problems.joined(separator: "; "))")
-                let line: [String: Any?] = [
-                    "id": id, "name": name, "version": version, "problems": problems, "details": details, "staleChrome": staleChrome,
-                    "known": Self.knownFailures[id], "intermittent": Self.intermittent[id]
-                ]
-                if let data = try? JSONSerialization.data(withJSONObject: line.compactMapValues { $0 }) {
-                    try? report?.write(contentsOf: data + Data("\n".utf8))
-                }
+        let finish = { (outcome: Outcome) in
+            let (id, name, problems) = (outcome.id, outcome.name, outcome.problems)
+            results.append(problems.isEmpty ? "ok   \(id) \(name) \(outcome.version)" : "FAIL \(id) \(name) \(outcome.version): \(problems.joined(separator: "; "))")
+            let line: [String: Any?] = [
+                "id": id, "name": name, "version": outcome.version, "problems": problems, "details": outcome.details,
+                "staleChrome": outcome.staleChrome, "known": Self.knownFailures[id], "intermittent": Self.intermittent[id],
+                "timings": outcome.timings, "slow": outcome.slow, "idle": outcome.idle
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: line.compactMapValues { $0 }) {
+                try? report?.write(contentsOf: data + Data("\n".utf8))
             }
-            do {
-                let package: URL
-                do {
-                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
-                } catch let error as URLError where error.code == .timedOut {
-                    // The store's download host times out now and then under the shards' load: once more before failing.
-                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
-                }
-                defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) }
-                try await registry.load(from: package)
-            } catch {
-                problems.append("install: \(error)")
-                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) installs: \(error)") }
-                continue
+            if let known = Self.knownFailures[id] {
+                XCTAssertFalse(problems.isEmpty, "\(name) now runs cleanly: drop it from knownFailures (\(known))")
+            } else if Self.intermittent[id] == nil {
+                XCTAssertEqual(problems, [], "\(name)")
             }
-            guard let context = registry.context(for: id) else {
-                problems.append("does not load")
-                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) loads") }
-                continue
-            }
-            version = context.webExtension.version ?? "?"
-            let recorded = chromeSmoke.extensions[id]
-            // Chrome's behavior with another version says nothing about this one: all its errors count.
-            let chrome = recorded?.version == version ? recorded : nil
-            if chrome == nil { staleChrome = recorded?.version ?? "nothing" }
-            if context.webExtension.hasBackgroundContent {
-                let loaded = await registry.backgrounds.load(id)
-                let connected = await pollUntil(timeout: 10) { registry.lifecycle.worker(of: id) == .running }
-                // Chrome's recording opens the popup once the worker's top-level code has run, which its listener report follows.
-                _ = await pollUntil(timeout: 2) { registry.gapEvents.reportedListeners(of: id) != nil }
-                if !loaded { problems.append("the service worker does not load") }
-                if !connected { problems.append("the worker never connects to Lilo") }
-                if registry.backgrounds.health(for: id)?.bridgeStatus != "loaded" { problems.append("degraded") }
-            }
-            if let popup = (context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String, !popup.isEmpty {
-                // Resolved as WebKit and Chrome open it: a query or fragment stays one.
-                // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
-                let text = try await pageText(window, try XCTUnwrap(URL(string: popup, relativeTo: context.baseURL)), timeout: 40)
-                if text.isEmpty && chrome?.popupText != false { problems.append("the popup renders nothing") }
-            }
-            let chromeErrors = (chrome?.errors ?? []).map(normalized)
-            // A request for a file the package lacks fails in Chrome too, which reports no extension error for it.
-            problems += context.errors
+        }
+        let errorsOf = { (registry: ProfileExtensionRegistry, id: String) -> [String] in
+            let diagnostics = registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == id }?["pageDiagnostics"] as? [[String: Any]] ?? []
+            var seen: Set<String> = []
+            return Array(diagnostics.compactMap { $0["level"] as? String == "error" ? $0["message"] as? String : nil }
+                .map { String($0.prefix(500)) }.filter { seen.insert($0).inserted }.suffix(10))
+        }
+        let tokens = { (render: ChromeSmoke.Render?) in Set(render?.tokens.split(separator: " ").map(String.init) ?? []) }
+        let mismatch = { (page: String, shown: Set<String>, expected: Set<String>) in
+            "\(page) shows \(expected.intersection(shown).count) of Chrome's \(expected.count) words and controls (missing: "
+                + expected.subtracting(shown).sorted().prefix(8).joined(separator: " ") + ")"
+        }
+        // The errors Chrome's recording has not, normalized.
+        let unexpected = { (errors: [Error], chromeErrors: [String]) in
+            errors
+                // A request for a file the package lacks fails in Chrome too, which reports no extension error for it.
                 .filter { ($0 as NSError).domain != WKWebExtension.errorDomain || ($0 as NSError).code != WKWebExtension.Error.resourceNotFound.rawValue }
                 .map(\.localizedDescription)
                 // WebKit keeps only the leading text of a console.error, so a Chrome error starting with it is the same.
@@ -253,23 +304,216 @@ final class RealExtensionSmokeTests: XCTestCase {
                     let error = normalized(error)
                     return error.isEmpty || !chromeErrors.contains { $0.hasPrefix(error) }
                 }
-                .map { "error: \($0)" }
-            if let known = Self.knownFailures[id] {
-                XCTAssertFalse(problems.isEmpty, "\(name) now runs cleanly: drop it from knownFailures (\(known))")
-            } else if Self.intermittent[id] == nil {
-                XCTAssertEqual(problems, [], "\(name)")
+        }
+
+        // The idle check: an extension with a worker and a popup loads again in the idle profile, by batches whose
+        // install events and welcome pages are over before they wait. Once a batch's workers went idle (Lilo releases
+        // the channel after 20 s, and WebKit unloads the worker after), or after a minute, each one's toolbar button
+        // opens its popup on the worker it starts again, as Chrome's recording does on a stopped worker.
+        struct Idle {
+            let outcome: Outcome
+            let package: URL
+            let chrome: ChromeSmoke.Recording?
+        }
+        var idleQueue: [Idle] = [], idleBatch: [Idle] = [], quietSince = Date.distantFuture
+        let idleBatchSize = 20
+        let advanceIdle = { (draining: Bool) in
+            if idleBatch.isEmpty, idleQueue.count >= idleBatchSize || draining && !idleQueue.isEmpty {
+                idleBatch = Array(idleQueue.prefix(idleBatchSize))
+                idleQueue.removeFirst(idleBatch.count)
+                for entry in idleBatch {
+                    defer { try? FileManager.default.removeItem(at: entry.package.deletingLastPathComponent()) }
+                    do {
+                        try await idleRegistry.load(from: entry.package)
+                    } catch {
+                        entry.outcome.problems.append("idle check: install: \(error)")
+                        continue
+                    }
+                    _ = await idleRegistry.backgrounds.load(entry.outcome.id)
+                    _ = await pollUntil(timeout: 10) { idleRegistry.lifecycle.worker(of: entry.outcome.id) == .running }
+                }
+                // Welcome pages close before the wait: their events would keep the workers awake.
+                try await Task.sleep(for: .seconds(3))
+                for tab in idleWindow.tabManager.openTabs where tab.id != blank.id { idleWindow.closeTabStateFirst(id: tab.id, undoable: false) }
+                idleWindow.activateTabStateFirst(id: blank.id)
+                quietSince = Date()
             }
-            if !problems.isEmpty {
-                let diagnostics = registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == id }?["pageDiagnostics"] as? [[String: Any]] ?? []
-                var seen: Set<String> = []
-                details = Array(diagnostics.compactMap { $0["level"] as? String == "error" ? $0["message"] as? String : nil }
-                    .map { String($0.prefix(500)) }.filter { seen.insert($0).inserted }.suffix(10))
+            guard !idleBatch.isEmpty else { return }
+            let quiet = { idleBatch.allSatisfy { idleRegistry.lifecycle.worker(of: $0.outcome.id) != .running } || Date().timeIntervalSince(quietSince) > 60 }
+            if draining { _ = await pollUntil(timeout: 70) { quiet() } }
+            guard quiet() else { return }
+            for entry in idleBatch {
+                let (outcome, id, chrome) = (entry.outcome, entry.outcome.id, entry.chrome)
+                defer { finish(outcome) }
+                guard let context = idleRegistry.context(for: id) else { continue }
+                // An extension may turn its button off, or its popup, on a page it cannot act on.
+                let action = idleWindow.tabManager.tabAdapter(for: blank.id).flatMap { context.action(for: $0) }
+                guard action?.isEnabled == true, action?.presentsPopup == true else {
+                    outcome.idle = "no popup on a blank tab"
+                    await idleRegistry.unload(extensionId: id)
+                    continue
+                }
+                outcome.idle = idleRegistry.lifecycle.worker(of: id).map { "\($0)" } ?? "unloaded"
+                let errorCount = context.errors.count
+                let clicked = Date()
+                let button = NSMenuItem()
+                button.representedObject = id
+                idleWindow.openExtensionFromMenu(button)
+                let defaultPopup = (context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String
+                var expected = tokens(chrome?.restartPopup ?? chrome?.popup)
+                var shown: Set<String> = [], matched = false, restarted = outcome.idle == "running"
+                while !(matched && restarted) && Date().timeIntervalSince(clicked) < 40 {
+                    try await Task.sleep(for: .milliseconds(250))
+                    if !restarted && idleRegistry.lifecycle.worker(of: id) == .running {
+                        restarted = true
+                        outcome.time("restart", since: clicked, chrome: chrome?.workerRestartMs)
+                    }
+                    let popup = idleWindow.tabManager.tabAdapter(for: blank.id).flatMap { (idleRegistry.context(for: id) ?? context).action(for: $0)?.popupWebView }
+                    // Chrome's recording opens the manifest's popup: one the extension set for the blank tab only has to show something.
+                    if let path = popup?.url?.path, let defaultPopup, path != URL(string: defaultPopup, relativeTo: context.baseURL)?.path { expected = [] }
+                    guard !matched else { continue }
+                    shown = Set((try? await popup?.evaluateJavaScript("(\(probes)).fingerprint()") as? [String]) ?? [])
+                    matched = expected.isEmpty ? !shown.isEmpty : expected.intersection(shown).count * 2 >= expected.count
+                    if matched { outcome.time("idlePopup", since: clicked, chrome: chrome?.restartPopup?.ms) }
+                }
+                if !restarted { outcome.problems.append("once idle, its worker does not start again from the toolbar button") }
+                if shown.isEmpty {
+                    outcome.problems.append("once its worker was idle, the popup renders nothing")
+                } else if !matched {
+                    outcome.problems.append(mismatch("once its worker was idle, the popup", shown, expected))
+                }
+                let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), (chrome?.errors ?? []).map(normalized))
+                outcome.problems += errors.map { "once its worker was idle, error: \($0)" }
+                if !outcome.problems.isEmpty && outcome.details.isEmpty { outcome.details = errorsOf(idleRegistry, id) }
+                idleRegistry.delegate.closeOpenActionPopups(reason: "idle check", extensionId: id)
+                await idleRegistry.unload(extensionId: id)
             }
+            idleBatch = []
+            for tab in idleWindow.tabManager.openTabs where tab.id != blank.id { idleWindow.closeTabStateFirst(id: tab.id, undoable: false) }
+        }
+
+        for (name, id) in selected.map({ ($0.name, $0.id) }) {
+            let outcome = Outcome(id: id, name: name)
+            var idle: Idle?
+            defer {
+                if let idle { idleQueue.append(idle) } else { finish(outcome) }
+            }
+            let package: URL
+            do {
+                do {
+                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                } catch let error as URLError where error.code == .timedOut {
+                    // The store's download host times out now and then under the shards' load: once more before failing.
+                    package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: id)
+                }
+                try await registry.load(from: package)
+            } catch {
+                outcome.problems.append("install: \(error)")
+                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) installs: \(error)") }
+                continue
+            }
+            defer { if idle == nil { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()) } }
+            guard let context = registry.context(for: id) else {
+                outcome.problems.append("does not load")
+                if Self.knownFailures[id] == nil && Self.intermittent[id] == nil { XCTFail("\(name) loads") }
+                continue
+            }
+            outcome.version = context.webExtension.version ?? "?"
+            let recorded = chromeSmoke.extensions[id]
+            // Chrome's behavior with another version says nothing about this one: all its errors count.
+            let chrome = recorded?.version == outcome.version ? recorded : nil
+            if chrome == nil { outcome.staleChrome = recorded?.version ?? "nothing" }
+            var connected = false
+            if context.webExtension.hasBackgroundContent {
+                let starting = Date()
+                let loaded = await registry.backgrounds.load(id)
+                connected = await pollUntil(timeout: 10) { registry.lifecycle.worker(of: id) == .running }
+                if connected { outcome.time("worker", since: starting, chrome: chrome?.workerRestartMs) }
+                // Chrome's recording opens the popup once the worker's top-level code has run, which its listener report follows.
+                _ = await pollUntil(timeout: 2) { registry.gapEvents.reportedListeners(of: id) != nil }
+                if !loaded { outcome.problems.append("the service worker does not load") }
+                if !connected { outcome.problems.append("the worker never connects to Lilo") }
+                if registry.backgrounds.health(for: id)?.bridgeStatus != "loaded" { outcome.problems.append("degraded") }
+            }
+            // Resolved as WebKit and Chrome open it: a query or fragment stays one.
+            let popupURL = ((context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String)
+                .flatMap { $0.isEmpty ? nil : URL(string: $0, relativeTo: context.baseURL) }
+            if let popupURL {
+                // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
+                let expected = tokens(chrome?.popup)
+                let opened = Date()
+                let (shown, matched) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
+                if shown.isEmpty && chrome?.popupText != false {
+                    outcome.problems.append("the popup renders nothing")
+                } else if !matched && !expected.isEmpty {
+                    outcome.problems.append(mismatch("the popup", shown, expected))
+                }
+                if matched { outcome.time("popup", since: opened, chrome: chrome?.popup?.ms) }
+            }
+            let chromePage = Set(chrome?.page ?? [])
+            // WebKit hands Lilo only the items for every context and the toolbar button's: the page's own context menu
+            // gets the others from WebKit, out of the test's reach.
+            let chromeMenus = chrome?.menus?.filter { $0.split(separator: ",").contains("all") }.count ?? 0
+            let chromeActionMenus = chrome?.menus?.filter { !Set($0.split(separator: ",")).isDisjoint(with: ["action", "browser_action", "page_action"]) }.count ?? 0
+            if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0 || context.webExtension.manifest["content_scripts"] != nil {
+                let tab = try XCTUnwrap(window.createTabStateFirst(url: pageURL))
+                let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+                browserContext.context.agentControl.attach(engine, to: nil)
+                let page = try XCTUnwrap(engine.view as? WKWebView)
+                func leaves(_ items: [NSMenuItem]) -> Int {
+                    items.reduce(0) { $0 + ($1.isSeparatorItem ? 0 : $1.submenu.map { leaves($0.items) } ?? 1) }
+                }
+                // Each kind of change Chrome made, at least half of it.
+                let lacking = { (changes: Set<String>) in
+                    ["added:", "attribute:", "hidden:"].flatMap { kind in
+                        let expected = chromePage.filter { $0.hasPrefix(kind) }
+                        return expected.intersection(changes).count * 2 >= expected.count ? [] : expected.subtracting(changes).sorted()
+                    }
+                }
+                var changes: Set<String> = [], menus = 0, actionMenus = 0
+                // Without anything of Chrome's to wait for, its content scripts get a second to report their errors.
+                let started = Date(), timeout: TimeInterval = chromePage.isEmpty && chromeMenus + chromeActionMenus == 0 ? 1 : 10
+                while Date().timeIntervalSince(started) < timeout {
+                    try await Task.sleep(for: .milliseconds(250))
+                    changes = Set((try? await page.callAsyncJavaScript(
+                        "return (\(probes)).pageChanges(original)", arguments: ["original": smokePage], in: nil, contentWorld: .page
+                    ) as? [String]) ?? [])
+                    let adapter = window.tabManager.tabAdapter(for: tab.id)
+                    menus = adapter.map { leaves(context.menuItems(for: $0)) } ?? 0
+                    actionMenus = leaves(context.action(for: adapter)?.menuItems ?? [])
+                    if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0, lacking(changes).isEmpty,
+                       menus * 2 >= chromeMenus, actionMenus * 2 >= chromeActionMenus { break }
+                }
+                if !lacking(changes).isEmpty { outcome.problems.append("the test page lacks Chrome's " + lacking(changes).joined(separator: " ")) }
+                if menus * 2 < chromeMenus { outcome.problems.append("its context menus show \(menus) of Chrome's \(chromeMenus) items for all contexts") }
+                if actionMenus * 2 < chromeActionMenus {
+                    outcome.problems.append("its toolbar button's menu shows \(actionMenus) of Chrome's \(chromeActionMenus) context menu items")
+                }
+                window.closeTabStateFirst(id: tab.id, undoable: false)
+            }
+            if let optionsURL = context.optionsPageURL, chrome == nil || chrome?.options != nil {
+                let expected = tokens(chrome?.options)
+                let opened = Date()
+                let (shown, matched) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
+                if shown.isEmpty {
+                    outcome.problems.append("the options page renders nothing")
+                } else if !matched && !expected.isEmpty {
+                    outcome.problems.append(mismatch("the options page", shown, expected))
+                }
+                if matched { outcome.time("options", since: opened, chrome: chrome?.options?.ms) }
+            }
+            outcome.problems += unexpected(context.errors, (chrome?.errors ?? []).map(normalized)).map { "error: \($0)" }
+            if !outcome.problems.isEmpty { outcome.details = errorsOf(registry, id) }
             await registry.unload(extensionId: id)
             // Each extension starts with no page open, as in a new Chrome profile: WebKit injects content
             // scripts into the pages already open when an extension loads, which Chrome never does.
             for tab in window.tabManager.openTabs { window.closeTabStateFirst(id: tab.id, undoable: false) }
+            if connected, popupURL != nil, chrome?.restartPopup?.tokens.isEmpty != true {
+                idle = Idle(outcome: outcome, package: package, chrome: chrome)
+            }
+            try await advanceIdle(false)
         }
+        while !idleQueue.isEmpty || !idleBatch.isEmpty { try await advanceIdle(true) }
         print("SMOKE summary:\n" + results.joined(separator: "\n"))
     }
 

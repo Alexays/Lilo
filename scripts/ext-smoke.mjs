@@ -74,17 +74,32 @@ const line = ({ id, name, version, problems, details = [] }, suffix = '') => [
   ...problems.length ? details.map((detail) => `      | ${detail.replace(/\s*\n\s*/g, ' ')}`) : [],
 ].join('\n');
 const minutes = (ms) => `${(ms / 60000).toFixed(1)} min`;
+// Each check RealExtensionSmokeTests runs, by the problems it reports.
+const checks = [
+  ['install', /^install|^does not load/], ['worker', /service worker|worker never connects|^degraded|worker does not start again/],
+  ['popup', /^the popup/], ['popup after a worker restart', /^once its worker restarts/], ['options page', /^the options page/],
+  ['test page', /^the test page/], ['context menus', /context menu items|context menus show/], ['errors', /^error: /],
+];
+const failing = checks.map(([check, pattern]) => [check, failed.filter(({ problems }) => problems.some((problem) => pattern.test(problem)))])
+  .filter(([, entries]) => entries.length);
+const steps = ['worker', 'popup', 'options', 'restart', 'restartPopup'].map((step) => {
+  const times = results.map(({ timings }) => timings?.[step]).filter((ms) => ms !== undefined).sort((a, b) => a - b);
+  return times.length ? `${step} ${times[Math.floor(times.length / 2)]} ms (${times.length})` : null;
+}).filter(Boolean);
 // A section only when it lists something.
 const section = (title, lines) => (lines.length ? [`\n${title} (${lines.length}):`, ...lines] : []);
 const report = [
   `ext-smoke ${new Date().toISOString()}: ${selected.length} extensions, ${shardCount} shards, build ${minutes(built - start)}, tests ${minutes(Date.now() - built)}`,
   `ok ${results.length - failed.length}, fail ${failed.length} (known ${knownFailing.length}, intermittent ${failed.filter(({ intermittent }) => intermittent).length}, new ${newFailures.length}), not run ${missing.length}`,
+  ...failing.length ? [`failing checks: ${failing.map(([check, entries]) => `${check} ${entries.length}`).join(', ')}`] : [],
+  ...steps.length ? [`median times: ${steps.join(', ')}`] : [],
   ...failedRuns.map(({ shard, status, log }) => `shard ${shard} failed outside the extensions (xcodebuild ${status}, MV3 probe, feature checks or crash): ${log}`),
-  ...section('new failures', newFailures.map(line)),
+  ...section('new failures', newFailures.map((result) => line(result))),
   ...section('known failures that now run cleanly, to drop from knownFailures', staleKnown.map((result) => line(result, ` (${result.known})`))),
   ...section('not run', missing.map((entry) => `  ${entry}`)),
   ...section('stale Chrome references', staleChrome.map(({ id, name, version, staleChrome: recorded }) => `  ${id} ${name}: recorded ${recorded}, installed ${version}`)),
   ...staleChrome.length ? [`  make chrome-smoke IDS=${staleChrome.map(({ id }) => id).join(',')}`] : [],
+  ...section('slow, reported only', results.filter(({ slow }) => slow?.length).map(({ id, name, slow }) => `  ${id} ${name}: ${slow.join(', ')}`)),
   ...section('intermittent', intermittent.map((result) => line(result, result.problems.length ? '' : ': ok'))),
   ...section('known failures', knownFailing.map((result) => line(result, ` (${result.known})`))),
 ].join('\n');
