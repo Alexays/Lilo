@@ -69,6 +69,8 @@ enum PageSnapshotExpansion {
       function dominantFrame() {
         var best = null, bestArea = 0, frames = document.querySelectorAll('iframe');
         for (var i = 0; i < frames.length; i++) {
+          // A transparent frame can outsize the real scroller: LinkedIn keeps a viewport-sized preload one.
+          if (!frames[i].checkVisibility({ opacityProperty: true, visibilityProperty: true })) continue;
           var rect = frames[i].getBoundingClientRect(), area = rect.width * rect.height;
           if (rect.width < 100 || rect.height < 100 || area <= bestArea) continue;
           bestArea = area; best = frames[i];

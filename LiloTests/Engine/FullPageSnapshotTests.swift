@@ -169,6 +169,31 @@ final class FullPageSnapshotTests: XCTestCase {
         try assertRedOverBlue(image)
     }
 
+    /// A transparent viewport-sized frame behind the page (LinkedIn preloads one) is no candidate, however large.
+    func testTakeFullPageSnapshotIgnoresAnInvisibleFrame() async throws {
+        let child = "data:text/html,<body style='margin:0'><div style='height:1000px'></div></body>"
+        let tab = try await loadedTab(
+            width: 200,
+            height: 600,
+            bodyStyle: "margin:0;padding:0;overflow:hidden;height:100vh;",
+            body: """
+                <iframe style="opacity:0;z-index:-1;position:absolute;top:0;width:100vw;height:100vh;border:0"
+                    src="\(child)" onload="window.__childLoaded=1"></iframe>
+                <div id="scroller" style="height:100%;overflow-y:auto;">
+                    <div style="height:1500px;background:#ff0000;"></div>
+                    <div style="height:1500px;background:#0000ff;"></div>
+                </div>
+                """,
+            settlesWhen: "window.__childLoaded ? document.getElementById('scroller').scrollHeight : 0",
+            isAtLeast: 3000
+        )
+
+        let snapshot = await tab.takeFullPageSnapshot()?.image
+        let image = try XCTUnwrap(snapshot, "Expected a non-nil snapshot")
+        XCTAssertEqual(image.size.height, 3000, accuracy: 1, "The visible scroller should have been expanded")
+        try assertRedOverBlue(image)
+    }
+
     /// Expansion is for the duration of the capture only: the page the user is looking at must come
     /// back exactly as it was, inline styles included.
     func testCaptureLeavesTheExpandedPageAsItFoundIt() async throws {
