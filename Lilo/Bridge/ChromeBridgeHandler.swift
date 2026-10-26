@@ -32,7 +32,8 @@ final class ChromeBridgeHandler: BridgeHandler {
         "showSidebarContextMenu",
         "showExtensionContextMenu",
         "showDownloadContextMenu",
-        "allowCertificateException"
+        "allowCertificateException",
+        "loadBypassingContentBlocker"
     ]
 
     private let interactiveZoneStore: ChromeInteractiveZoneStore
@@ -71,6 +72,12 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "allowCertificateException":
             if let host = message.string("host") { windowController?.allowInsecureTrust(forHost: host) }
+
+        case "loadBypassingContentBlocker":
+            if let tabManager = windowController?.tabManager {
+                tabManager.activeEngineTab?.bypassesContentBlockersOnce = true
+                tabManager.reloadActiveTab()
+            }
 
         case "showBackHistoryMenu":
             windowController?.showNavigationHistoryMenu(direction: .back, anchorRect: anchorRect(from: message))

@@ -606,6 +606,7 @@ export interface BridgeCommandPayloadMap {
 		tabId?: string;
 	};
 	allowCertificateException: { host: string };
+	loadBypassingContentBlocker: EmptyPayload;
 
 	createSpace: {
 		name?: string;

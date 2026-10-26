@@ -262,6 +262,8 @@ final class WKWebViewTab: NSObject {
     private var navigationStartUptime: UInt64?
     /// Trust presented by the main host on its latest challenge; what "Visit Anyway" pins the exception to.
     private(set) var lastServerTrust: SecTrust?
+    /// The next main-frame load runs without content rule lists: the error page's "Visit Anyway" on a blocked page.
+    var bypassesContentBlockersOnce = false
     /// Set once the page itself asked to close (window.close, or beforeunload answered "leave"),
     /// so the close path does not ask it again.
     private(set) var pageRequestedClose = false
@@ -1050,6 +1052,11 @@ extension WKWebViewTab: WKNavigationDelegate {
             // Keyed on the top-level page, as Chrome's javascript content setting is; frames inherit it.
             if navigationAction.targetFrame?.isMainFrame != false, let url = navigationAction.request.url, let delegate {
                 preferences.allowsContentJavaScript = delegate.tab(self, allowsJavaScriptAt: url)
+            }
+            // WKWebpagePreferences._setContentBlockersEnabled:; holds through redirects, so their target page loads unfiltered too.
+            if bypassesContentBlockersOnce, navigationAction.targetFrame?.isMainFrame != false {
+                bypassesContentBlockersOnce = false
+                preferences.setValue(false, forKey: "contentBlockersEnabled")
             }
             decisionHandler(policy(for: navigationAction), preferences)
         }

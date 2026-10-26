@@ -78,6 +78,8 @@
   const canShowSavedCopy = $derived(error != null && SAVED_COPY_CODES.has(error.code));
 
   const isCertError = $derived(error != null && CERT_ERROR_CODES.has(error.code));
+  // WebKitErrorFrameLoadBlockedByContentBlocker: trying again only gets blocked again.
+  const isBlockedByContentBlocker = $derived(error?.code === 104);
   const errorHost = $derived.by(() => {
     try {
       return error?.url ? new URL(error.url).hostname : "";
@@ -110,7 +112,11 @@
       {/if}
       <div class="error-actions">
         <UiButton disabled={!canGoBack} onclick={() => tabActions.goBack()}>{t("errorPage.back")}</UiButton>
-        <UiButton variant="primary" onclick={retry}>{t("errorPage.tryAgain")}</UiButton>
+        {#if isBlockedByContentBlocker}
+          <UiButton variant="primary" onclick={() => postMessage("loadBypassingContentBlocker", {})}>{t("errorPage.visitAnyway")}</UiButton>
+        {:else}
+          <UiButton variant="primary" onclick={retry}>{t("errorPage.tryAgain")}</UiButton>
+        {/if}
         {#if canShowSavedCopy}
           <UiButton onclick={() => tabActions.showCachedCopy()}>{t("errorPage.showSavedCopy")}</UiButton>
         {/if}
