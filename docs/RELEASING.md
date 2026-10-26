@@ -71,6 +71,7 @@ They are secrets of the `release` environment, which only `v*` tags may deploy t
 | `APPLE_NOTARY_APPLE_ID` | Apple ID for notarytool |
 | `APPLE_NOTARY_PASSWORD` | app-specific password for notarytool |
 | `SPARKLE_ED_PRIVATE_KEY` | Sparkle EdDSA private key that signs `appcast.xml` |
+| `HOMEBREW_TAP_TOKEN` | fine-grained token with `contents: write` on `Alexays/homebrew-tap`, used by `homebrew.yml` |
 
 ### Sparkle key (once)
 
@@ -107,6 +108,6 @@ Once Apple grants it:
    spctl -a -vvv /Volumes/Lilo/Lilo.app
    ```
 2. Publish the draft release.
-3. Update the `lilo` cask in the `alexays/tap` Homebrew tap to the new version and the DMG's
-   sha256 (`shasum -a 256 Lilo.dmg`), so `brew install --cask alexays/tap/lilo` and
-   `brew upgrade` pick it up.
+3. Publishing runs `.github/workflows/homebrew.yml`, which bumps the `lilo` cask of the
+   `alexays/tap` Homebrew tap to the new version and the DMG's sha256, so
+   `brew install --cask alexays/tap/lilo` and `brew upgrade` pick it up.

@@ -1,0 +1,51 @@
+# Bumps the lilo cask of Alexays/homebrew-tap to a release once it is published: release.yml only uploads a draft,
+# so the cask never points at a DMG nobody can download. Needs HOMEBREW_TAP_TOKEN in the release environment, a
+# fine-grained token with contents: write on Alexays/homebrew-tap.
+
+name: Homebrew
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  bump-cask:
+    if: github.repository == 'Alexays/Lilo' && startsWith(github.event.release.tag_name, 'v') && !github.event.release.prerelease
+    environment: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout the tap
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Alexays/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Update the cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=${TAG#v}
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern Lilo.dmg --dir "$RUNNER_TEMP"
+          sha=$(sha256sum "$RUNNER_TEMP/Lilo.dmg" | cut -d' ' -f1)
+          sed -i -E \
+            -e "s/^  version \"[^\"]*\"/  version \"$version\"/" \
+            -e "s/^  sha256 \"[^\"]*\"/  sha256 \"$sha\"/" \
+            Casks/lilo.rb
+          if ! grep -qx "  version \"$version\"" Casks/lilo.rb || ! grep -qx "  sha256 \"$sha\"" Casks/lilo.rb; then
+            echo "::error::Casks/lilo.rb has no version or sha256 line to update."; exit 1
+          fi
+          git diff --quiet && { echo "The cask is already at $version."; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "lilo $version"
+          git push
