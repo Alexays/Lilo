@@ -82,10 +82,13 @@ function installWith(c: any, perms: Set<string>): void {
   if (perms.has('pageCapture') && !c.pageCapture) c.pageCapture = m.pageCapture.pageCaptureAugmentation;
   if (perms.has('declarativeContent') && !c.declarativeContent) c.declarativeContent = m.declarativeContent.declarativeContentAugmentation;
   if (perms.has('printerProvider') && !c.printerProvider) c.printerProvider = m.printerProvider.printerProviderAugmentation;
+  // Chrome keeps mdns to allowlisted extensions; Lilo gives it to any that declares the permission.
+  if (perms.has('mdns') && !c.mdns) c.mdns = m.mdns.mdnsAugmentation;
   // Each chrome.system.* namespace comes with its own permission.
   const system: Record<string, unknown> = {};
   if (perms.has('system.cpu')) system.cpu = m.system.systemCpuAugmentation;
   if (perms.has('system.memory')) system.memory = m.system.systemMemoryAugmentation;
+  if (perms.has('system.network')) system.network = m.system.systemNetworkAugmentation;
   if (perms.has('system.storage')) system.storage = m.system.systemStorageAugmentation;
   if (perms.has('system.display')) system.display = m.system.systemDisplayAugmentation;
   if (Object.keys(system).length > 0 && !c.system) c.system = system;

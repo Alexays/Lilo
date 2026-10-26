@@ -23,7 +23,7 @@ const gapModuleFiles = new Map(
 const needs = {
   declarativeNetRequest: ['declarativeNetRequest', 'declarativeNetRequestWithHostAccess', 'declarativeNetRequestFeedback'],
   instanceID: ['gcm'],
-  system: ['system.cpu', 'system.memory', 'system.storage', 'system.display'],
+  system: ['system.cpu', 'system.memory', 'system.network', 'system.storage', 'system.display'],
 };
 
 // Chrome's constants for a gap module's namespaces go in its chunk, the others in the bundles. The chunk hands them
