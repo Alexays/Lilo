@@ -157,7 +157,7 @@ Heavier checks, run when your change touches their area:
 
 | Command | Runs |
 |---------|------|
-| `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior, and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
+| `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior (their errors, what their popup and options page show, their popup again once the worker went idle, what their content scripts change on a local page, their context menu items, with the slow steps reported), and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
 | `make ext-nightly` | unattended `ext-smoke` of the top 500 (`TOP=1000` for all), with a report in `.derived.noindex/ext-smoke/report.txt` and a non-zero exit on a regression |
 | `make terminal-bench` | terminal throughput and lock-fairness benchmarks |
 | `make startup-bench` | launch times of a Release build against a throwaway profile |
