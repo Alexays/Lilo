@@ -161,6 +161,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** without it, intermittently and mostly under load, a page never heard its events and the worker's calls timed out. Still open: a `browser.runtime` port that shares the worker's channel number receives what Lilo sends the worker, and disconnects when the idle worker's channel closes.
 - **Check:** Manual: timing dependent. Repro: stream WebKit's `Extensions` debug log and open extension pages in tabs (a process each) while the worker has its channel open, until a page's "Added 1 port for channel N in native world" repeats the worker's N. Expected: the page's messages reach its port. Actual: "Removed 1 port for channel N in native world" follows at once and neither port receives anything more.
 
+### 91. A content script in a frame of an offscreen document cannot message
+
+- **Gap:** WebKit finds a content script's sender by its tab (`WebExtensionContext::runtimeSendMessage` and `runtimeConnect`) and fails with "Tab not found" for a frame of an extension view that is no tab, such as an offscreen document's iframe. Chrome injects the content scripts there and delivers their messages with a sender that has no `tab`.
+- **Lilo:** none: its offscreen document is a web view WebKit maps to no tab.
+- **Impact:** ProWritingAid's offscreen prefetch frame logs the error at each worker start ([RealExtensionSmokeTests.swift] lists it).
+- **Check:** Manual: not reduced to a test. Repro: an offscreen document frames a web page whose all-frames content script calls `chrome.runtime.sendMessage`. Expected: the worker hears it. Actual: `runtime.lastError` "Tab not found".
+
 ## Pages and web views
 
 ### 5. A suspended web view crashes WebKit's in-flight `scripting.executeScript`

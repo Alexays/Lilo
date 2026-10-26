@@ -45,17 +45,16 @@
   },
   "kbfnbcaeplbcioakkpcpgfkobkghlhen": {
    "name": "Grammarly: AI Writing Assistant and Grammar Checker App",
-   "version": "14.1341.0",
+   "version": "14.1342.0",
    "popupText": true,
    "errors": [
     "grm ERROR [Cookies] ░░ failed to read a CSRFToken cookie Error: Condition was not met after 5 tries. Errors: ''",
     "grm ERROR [universal.bg.mise.service] ░░ Failed to get Iterable client access token 401:{\"reason\":\"authentication_error\"}",
     "grm ERROR [universal.bg.sideEffects.iterable] ░░ SideEffect getting Iterable client access token failed: bgFirstStart 401:{\"reason\":\"authentication_error\"}",
+    "grm ERROR [knowledgeHub.bgService] ░░ User institution id is not defined",
     "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyExtensionMode\"",
     "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyEnrollmentToken\"",
-    "grm ERROR [universal.bg.user.manger.utils] ░░ Fail to get GrammarlyEnrollmentToken from managedStore Error: Manage storage timeout to get access",
-    "grm ERROR [tracing.otel] ░░ [flushOtel] forceFlush failed Object",
-    "grm ERROR [knowledgeHub.bgService] ░░ User institution id is not defined"
+    "grm ERROR [tracing.otel] ░░ [flushOtel] forceFlush failed Object"
    ]
   },
   "aapbdbdomjkkjkaonfhkkikfgjllcleb": {
@@ -104,7 +103,7 @@
   },
   "bgnkhhnnamicmpeenaelnjfhikgbkllg": {
    "name": "AdGuard AdBlocker",
-   "version": "5.5.3.25",
+   "version": "5.5.3.28",
    "popupText": true,
    "errors": [
     "TypeError: Cannot read properties of undefined (reading 'listenerId')",
@@ -422,7 +421,7 @@
   },
   "hdhinadidafjejdhmfkjgnolgimiaplp": {
    "name": "Read Aloud: A Text to Speech Voice Reader",
-   "version": "2.27.0",
+   "version": "2.28.0",
    "popupText": true,
    "errors": []
   },
@@ -533,8 +532,11 @@
   },
   "neebplgakaahbhdphmkckjjcegoiijjo": {
    "name": "Keepa - Amazon Price Tracker",
-   "version": "5.74",
-   "errors": []
+   "version": "5.75",
+   "errors": [
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
+    "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
+   ]
   },
   "ooadnieabchijkibjpeieeliohjidnjj": {
    "name": "네이버 동영상 플러그인",
@@ -568,15 +570,13 @@
   },
   "cofdbpoegempjloogbagkncekinflcnj": {
    "name": "DeepL: translate and write with AI",
-   "version": "1.104.2",
+   "version": "1.105.1",
    "popupText": true,
    "errors": [
-    "Error checking feature flag \"pt-1003_brex_action_logs\": Error: Failed to initialize Statsig client: Unable to determine Statsig userID: organization_id, account_id, and installation_id are all unavailable",
-    "Error checking feature flag \"pt-1625_brex_react_in_page_translators\": Error: Failed to initialize Statsig client: Unable to determine Statsig userID: organization_id, account_id, and installation_id are all unavailable",
     "Error checking feature flag \"pt-1078_brex_native_messaging_translate\": Error: Failed to initialize Statsig client: Unable to determine Statsig userID: organization_id, account_id, and installation_id are all unavailable",
     "Uncaught (in promise) Error: Cannot find menu item with id dlTranslateFullPage",
-    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
-    "Uncaught (in promise) Error: Cannot find menu item with id dlParent"
+    "Uncaught (in promise) Error: Cannot find menu item with id dlParent",
+    "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist."
    ]
   },
   "dcngeagmmhegagicpcmpinaoklddcgon": {
@@ -728,7 +728,7 @@
   },
   "bpoadfkcbjbfhfodiogcnhhhpibjhbnh": {
    "name": "Immersive Translate: AI Web, PDF & Video Translator",
-   "version": "1.34.2",
+   "version": "1.34.4",
    "popupText": true,
    "errors": [
     "Failed to load resource: the server responded with a status of 434 ()",
@@ -765,7 +765,7 @@
   },
   "gppongmhjkpfnbhagpmjfkannfbllamg": {
    "name": "Wappalyzer - Technology profiler",
-   "version": "6.12.7",
+   "version": "6.12.8",
    "popupText": true,
    "errors": []
   },
@@ -801,7 +801,7 @@
   },
   "mfidniedemcgceagapgdekdbmanojomk": {
    "name": "Coupert - Automatic Coupon Finder & Cash Back",
-   "version": "6.90.59",
+   "version": "6.90.69",
    "popupText": true,
    "errors": [
     "Error: No Listener: tabs:outgoing.message.ready"
@@ -809,7 +809,7 @@
   },
   "ndnaehgpjlnokgebbaldlmgkapkpjkkb": {
    "name": "Mailtrack® – Email Tracker for Gmail",
-   "version": "12.99.1",
+   "version": "12.100.0",
    "popupText": true,
    "errors": []
   },
@@ -986,7 +986,7 @@
   },
   "ghmbeldphafepmbegfdlkpapadhbakde": {
    "name": "Proton Pass: Free Password Manager",
-   "version": "1.42.0",
+   "version": "1.43.0",
    "popupText": true,
    "errors": []
   },
@@ -1096,11 +1096,9 @@
   },
   "ohahllgiabjaoigichmmfljhkcfikeof": {
    "name": "AdBlocker Ultimate",
-   "version": "4.4.3",
+   "version": "4.4.5",
    "popupText": true,
-   "errors": [
-    "Error: Could not establish connection. Receiving end does not exist."
-   ]
+   "errors": []
   },
   "ohedcglhbbfdgaogjhcclacoccbagkjg": {
    "name": "Адаптер Рутокен Плагин",
@@ -1257,7 +1255,7 @@
   },
   "cimpffimgeipdhnhjohpbehjkcdpjolg": {
    "name": "Watch2Gether",
-   "version": "10.6",
+   "version": "11.0",
    "popupText": true,
    "errors": [
     "Failed to load resource: the server responded with a status of 401 ()"
@@ -1265,7 +1263,7 @@
   },
   "ckejmhbmlajgoklhgbapkiccekfoccmk": {
    "name": "Mobile simulator - responsive testing tool",
-   "version": "4.22.0",
+   "version": "4.22.1",
    "errors": []
   },
   "clngdbkpkpeebahjckkjfobafhncgmne": {
@@ -1380,10 +1378,10 @@
   },
   "fdjamakpfbbddfjaooikfcpapjohcfmg": {
    "name": "Dashlane — Password Manager",
-   "version": "6.2643.0",
+   "version": "6.2644.0",
    "popupText": true,
    "errors": [
-    "[background/framework] Error while processing incoming carbon-legacy.carbon command (id: 0.9480604535459076) TypeError: a is not a function",
+    "[background/framework] Error while processing incoming carbon-legacy.carbon command (id: 0.7879335983214327) TypeError: a is not a function",
     "[background/amphora] a is not a function Object"
    ]
   },
@@ -1395,7 +1393,7 @@
   },
   "fggkaccpbmombhnjkjokndojfgagejfb": {
    "name": "Tactiq: AI note taker for Google Meet, Zoom and MS Teams",
-   "version": "3.1.7320",
+   "version": "3.1.7340",
    "popupText": true,
    "errors": [
     "TypeError: Failed to fetch",
@@ -1434,7 +1432,7 @@
   },
   "hbapdpeemoojbophdfndmlgdhppljgmp": {
    "name": "Keywords Everywhere - Keyword Tool",
-   "version": "11.55",
+   "version": "11.56",
    "popupText": true,
    "errors": []
   },
@@ -1511,7 +1509,7 @@
   },
   "ioimlbgefgadofblnajllknopjboejda": {
    "name": "Transpose: pitch ▸ speed ▸ loop",
-   "version": "6.5.4",
+   "version": "6.5.5",
    "errors": []
   },
   "iplffkdpngmdjhlpjmppncnlhomiipha": {
@@ -1913,7 +1911,7 @@
   },
   "phidhnmbkbkbkbknhldmpmnacgicphkf": {
    "name": "MyBib: Free Citation Generator",
-   "version": "2.0.1",
+   "version": "2.1.0",
    "popupText": true,
    "errors": [
     "Failed to load resource: the server responded with a status of 400 ()",
@@ -2123,7 +2121,7 @@
   },
   "ajhbdcgfhlhhmocddefknjjkejcfpbnj": {
    "name": "Allow Copy +",
-   "version": "4.0.6",
+   "version": "4.1.1",
    "errors": []
   },
   "bkbdaodnaecdijpajecpncpdomgcoakc": {
@@ -2216,7 +2214,7 @@
   },
   "jfedfbgedapdagkghmgibemcoggfppbb": {
    "name": "cat-catch",
-   "version": "2.7.2",
+   "version": "2.7.3",
    "popupText": true,
    "errors": []
   },
@@ -2425,7 +2423,7 @@
   },
   "fbeffbjdlemaoicjdapfpikkikjoneco": {
    "name": "Scratch Addons",
-   "version": "1.45.2",
+   "version": "1.45.3",
    "popupText": true,
    "errors": []
   },
@@ -2656,7 +2654,7 @@
   },
   "emnoomldgleagdjapdeckpmebokijail": {
    "name": "wanteeed",
-   "version": "2.711.0",
+   "version": "2.713.0",
    "errors": []
   },
   "fedoeoceggohfajbhbadkfhgckjkieop": {
@@ -2813,7 +2811,7 @@
   },
   "ahmapmilbkfamljbpgphfndeemhnajme": {
    "name": "Helperbird: Dyslexia & Accessibility Tools",
-   "version": "2026.10.11",
+   "version": "2026.10.26",
    "popupText": true,
    "errors": []
   },
@@ -2984,7 +2982,7 @@
   },
   "ijgkbcbalaekboipcmaefchfjpognmog": {
    "name": "VK Music Saver — download music from VK",
-   "version": "2.13.2",
+   "version": "2.13.3",
    "popupText": true,
    "errors": []
   },
@@ -3394,7 +3392,7 @@
   },
   "didegimhafipceonhjepacocaffmoppf": {
    "name": "Passbolt - Open source password manager",
-   "version": "5.17.0",
+   "version": "5.17.1",
    "errors": []
   },
   "dlaajbpfmppphhflganljdalclmcockl": {
@@ -3417,7 +3415,7 @@
   },
   "eanggfilgoajaocelnaflolkadkeghjp": {
    "name": "HARPA AI: Web Automation with ChatGPT, Claude, Gemini, Grok",
-   "version": "16.1.0",
+   "version": "16.2.0",
    "errors": [
     "\u001b[38;2;0;147;76m[$ai]\u001b[0m OpenaiSessionApi: Cloudflare check required"
    ]
@@ -3480,15 +3478,15 @@
   },
   "fonalplhodhnenmokepaijoemaednpjm": {
    "name": "Directo - Travel Deals - Save on Hotels",
-   "version": "2.107.0",
+   "version": "2.107.1",
    "errors": [
+    "Status error fetching Truesign token: ",
     "Status error fetching Truesign token: Forbidden",
-    "Uncaught error in async message handler Object {\"serverId\":\"DIRECTO_CORE_BACKGROUND\",\"handlerId\":\"submitVisit\",\"payload\":{\"platform\":null,\"listing_id\":null,\"user_id\":\"f849f466-8086-4b6e-b72f-7f27a0517e3d\",\"user_email\":\"\",\"url_visited\":\"https://www.getdirecto.com/onboarding/installed\",\"currency\":null,\"checkin\":null,\"checkout\":null,\"adults\":null,\"childrenOccupancy\":{\"kind\":\"unknown\"}}} ApiError: Status error (401): ",
-    "Error: Status error (401): ",
     "Unhandled error during update for \"extension\" config: ApiError: Status error (401): ",
-    "Unhandled error during update for \"currency\" config: ApiError: Status error (401): ",
     "Unhandled error during update for \"extension-core\" config: ApiError: Status error (401): ",
     "Unhandled error during update for \"directo-links\" config: ApiError: Status error (401): ",
+    "Uncaught error in async message handler Object {\"serverId\":\"DIRECTO_CORE_BACKGROUND\",\"handlerId\":\"submitVisit\",\"payload\":{\"platform\":null,\"listing_id\":null,\"user_id\":\"67214fbe-162f-49b4-8406-1bcd823d27ad\",\"user_email\":\"\",\"url_visited\":\"https://www.getdirecto.com/onboarding/installed\",\"currency\":null,\"checkin\":null,\"checkout\":null,\"adults\":null,\"childrenOccupancy\":{\"kind\":\"unknown\"}}} ApiError: Status error (401): ",
+    "Error: Status error (401): ",
     "Failed to fetch CUG status from API: ApiError: Status error (401): "
    ]
   },
@@ -3620,7 +3618,7 @@
   },
   "jhidcpailhmpjpbdbhceiaeeggkalgmd": {
    "name": "Ice Dodo",
-   "version": "0.281",
+   "version": "0.282",
    "popupText": true,
    "errors": []
   },
@@ -3637,7 +3635,7 @@
   },
   "jlmpjdjjbgclbocgajdjefcidcncaied": {
    "name": "daily.dev | Where developers discover what's next",
-   "version": "3.47.12",
+   "version": "3.47.13",
    "errors": []
   },
   "jpcmhcelnjdmblfmjabdeclccemkghjk": {
@@ -3684,7 +3682,7 @@
   },
   "lggdbpblkekjjbobadliahffoaobaknh": {
    "name": "Tango – Document and Automate Your Processes",
-   "version": "8.9.21",
+   "version": "8.9.22",
    "errors": [
     "Error: Could not establish connection. Receiving end does not exist."
    ]
@@ -3816,9 +3814,11 @@
   },
   "ndgimibanhlabgdgjcpbbndiehljcpfh": {
    "name": "SelectorsHub",
-   "version": "5.8.6",
+   "version": "5.8.7",
    "popupText": true,
-   "errors": []
+   "errors": [
+    "Error: Could not establish connection. Receiving end does not exist."
+   ]
   },
   "nfmlkliedggdodlbgghmmchhgckjoaml": {
    "name": "Blockify: Ad Blocker for Spotify, YouTube, & more!",
@@ -3830,7 +3830,7 @@
   },
   "njcickgebhnpgmoodjdgohkclfplejli": {
    "name": "RoValra - Roblox Improved",
-   "version": "2.6.18",
+   "version": "2.6.19.5",
    "popupText": true,
    "errors": []
   },
@@ -4029,7 +4029,7 @@
   },
   "bnompdfnhdbgdaoanapncknhmckenfog": {
    "name": "Email Tracker + Email Tracking Detector & Blocker",
-   "version": "5.0.64",
+   "version": "5.0.66",
    "popupText": true,
    "errors": [
     "Google Analytics request failed with an exception TypeError: Failed to fetch",
@@ -4170,7 +4170,7 @@
   },
   "ecabifbgmdmgdllomnfinbmaellmclnh": {
    "name": "Reader View",
-   "version": "0.8.8",
+   "version": "0.8.9",
    "errors": []
   },
   "ecmeogcbcoalojmkfkmancobmiahaigg": {
@@ -4289,11 +4289,9 @@
   },
   "gaidoampbkcknofoejhnhbhbhhifgdop": {
    "name": "Censor Tracker – Proxy for Privacy & Security",
-   "version": "19.0.0",
+   "version": "21.0.0",
    "popupText": true,
-   "errors": [
-    "TypeError: Cannot read properties of undefined (reading 'addListener')"
-   ]
+   "errors": []
   },
   "gcjpefhffmcgplgklffgbebganmhffje": {
    "name": "NetSupport School Student",
@@ -4307,7 +4305,7 @@
   },
   "gejiddohjgogedgjnonbofjigllpkmbf": {
    "name": "1Password Nightly – Password Manager",
-   "version": "8.12.46.16",
+   "version": "8.12.46.18",
    "popupText": true,
    "errors": [
     "Error: WASM is not initialized, unable to make core call."
@@ -4350,7 +4348,7 @@
   },
   "hddnkoipeenegfoeaoibdmnaalmgkpip": {
    "name": "Toby: Tab Manager & Session Saver",
-   "version": "2.0.0.15",
+   "version": "2.0.0.16",
    "popupText": true,
    "errors": []
   },
@@ -4362,7 +4360,7 @@
   },
   "hfjngafpndganmdggnapblamgbfjhnof": {
    "name": "RoSeal - Augmented Roblox Experience",
-   "version": "2.1.66.0",
+   "version": "2.1.67.0",
    "errors": []
   },
   "hgenngnjgfkdggambccohomebieocekm": {
@@ -4392,7 +4390,7 @@
   },
   "hldjnlbobkdkghfidgoecgmklcemanhm": {
    "name": "Web Highlights: PDF & Web Highlighter + Notes & AI Summary",
-   "version": "13.0.52",
+   "version": "13.0.53",
    "errors": []
   },
   "hmaahgcbijnfogbgmnnjmlbfjoncneff": {
@@ -4519,17 +4517,17 @@
   },
   "jfgfiigpkhlkbnfnbobbkinehhfdhndo": {
    "name": "Page Assist - A Web UI for Local AI Models",
-   "version": "1.5.88",
+   "version": "1.5.89",
    "errors": []
   },
   "jigflhhckdjdefdjmodlkomnmdonfbbn": {
    "name": "Joko: Cash back & automatic coupons",
-   "version": "2.2.3",
+   "version": "2.2.4",
    "errors": [
     "Unchecked runtime.lastError: Could not establish connection. Receiving end does not exist.",
     "Error: Could not establish connection. Receiving end does not exist.",
     "Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received",
-    "Error: No tab with id: 594573862."
+    "Error: No tab with id: 1498995514."
    ]
   },
   "jiihcciniecimeajcniapbngjjbonjan": {
@@ -4565,7 +4563,7 @@
   },
   "kbbdabhdfibnancpjfhlkhafgdilcnji": {
    "name": "Screenity - Screen Recorder & Annotation Tool",
-   "version": "4.7.1",
+   "version": "4.7.2",
    "errors": [
     "Invalid tab URL",
     "Could not establish connection. Receiving end does not exist.",
@@ -4753,7 +4751,7 @@
   },
   "odcnpipkhjegpefkfplmedhmkmmhmoko": {
    "name": "Jobright Autofill – Instant Job Applications, Job Match, AI Tailor Resume",
-   "version": "1.24.1",
+   "version": "1.25.0",
    "errors": []
   },
   "oiaejidbmkiecgbjeifoejpgmdaleoha": {
@@ -4796,7 +4794,7 @@
   },
   "pjbepnginjokklnhdgladnmlghcchbeb": {
    "name": "MPSTATS - аналитика Wildberries и OZON",
-   "version": "4.272",
+   "version": "4.273",
    "popupText": true,
    "errors": [
     "backgroundRequest error Error: Request failed with status 401"
@@ -4971,7 +4969,7 @@
   },
   "blablbabaofdahfdlgblgopmmmhmipif": {
    "name": "Delayed Close About:Blank",
-   "version": "1.1",
+   "version": "2.0",
    "errors": []
   },
   "bmebokbfolangbgkdodkfcblkdcdkpgo": {
@@ -5212,9 +5210,11 @@
   },
   "eignhdfgaldabilaaegmdfbajngjmoke": {
    "name": "Black Menu for Google™",
-   "version": "32.0.7",
+   "version": "32.1.0",
    "popupText": true,
-   "errors": []
+   "errors": [
+    "Failed to load resource: the server responded with a status of 401 ()"
+   ]
   },
   "ejbjamhkdedinncaeiackcdehpccoejm": {
    "name": "Speed Dial",
@@ -5298,7 +5298,7 @@
   },
   "fgmbnmjmbjenlhbefngfibmjkpbcljaj": {
    "name": "Highlight This: finds and marks words",
-   "version": "6.3.13",
+   "version": "6.3.14",
    "popupText": true,
    "errors": [
     "Error handling response: TypeError: Cannot read properties of undefined (reading 'license')",
@@ -5404,7 +5404,7 @@
   },
   "ggacghlcchiiejclfdajbpkbjfgjhfol": {
    "name": "FullPage Capture - Full Page Screenshot",
-   "version": "1.19.76",
+   "version": "1.19.78",
    "popupText": true,
    "errors": []
   },
@@ -5538,7 +5538,7 @@
   },
   "hjbfbllnfhppnhjdhhbmjabikmkfekgf": {
    "name": "Shopify Spy Tool & Sales Tracker for Dropshipping - Koala Inspector",
-   "version": "4.25",
+   "version": "4.26",
    "errors": []
   },
   "hkbdddpiemdeibjoknnofflfgbgnebcm": {
@@ -5686,7 +5686,7 @@
   },
   "ioadaikpljilagoddljnamloiebcoopb": {
    "name": "店小秘助手",
-   "version": "2.8.91",
+   "version": "2.8.93",
    "errors": [
     "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
     "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked."
@@ -5750,7 +5750,7 @@
   },
   "jgocjgkdladclacgmkkiklmdcmngjcba": {
    "name": "GPT Workspace",
-   "version": "4.21.3",
+   "version": "4.22.0",
    "errors": []
   },
   "jhegmncopobmnnmcdaobcepcamekoomb": {
@@ -6050,7 +6050,7 @@
   },
   "nbkomboflhdlliegkaiepilnfmophgfg": {
    "name": "Custom Progress Bar for YouTube™",
-   "version": "4.0.25",
+   "version": "4.0.26",
    "popupText": true,
    "errors": [
     "Failed to load resource: the server responded with a status of 404 ()"
@@ -6202,7 +6202,7 @@
   },
   "onbcflemjnkemjpjcpkkpcnephnpjkcb": {
    "name": "Genesys Cloud for Chrome",
-   "version": "1.0.19",
+   "version": "1.0.20",
    "errors": []
   },
   "oncbjlgldmiagjophlhobkogeladjijl": {
@@ -6295,7 +6295,7 @@
   },
   "pkgccpejnmalmdinmhkkfafefagiiiad": {
    "name": "FeHelper - JSON格式化、编解码、二维码、开发者工具箱",
-   "version": "2026.10.19",
+   "version": "2026.10.20",
    "popupText": true,
    "errors": []
   },
@@ -6303,6 +6303,14 @@
    "name": "Discrub - Discord Message Manager",
    "version": "2.2.6",
    "errors": []
+  },
+  "pliibjocnfmkagafnbkfcimonlnlpghj": {
+   "name": "ClickUp: Tasks, Screenshots, Email, Time",
+   "version": "1.10.18",
+   "popupText": true,
+   "errors": [
+    "Datadog Logging Failed: TypeError: Failed to fetch"
+   ]
   },
   "pncfbmialoiaghdehhbnbhkkgmjanfhe": {
    "name": "uBlacklist",
@@ -6431,6 +6439,11 @@
    "version": "1.0.3",
    "errors": []
   },
+  "ainlglbojoodfdbndbfofojhmjbmelmm": {
+   "name": "Linkclump Plus",
+   "version": "2.16.1.1",
+   "errors": []
+  },
   "ajiejmhbejpdgkkigpddefnjmgcbkenk": {
    "name": "Clipboard Manager and Text Expander - Clipboard History Pro",
    "version": "3627",
@@ -6521,9 +6534,12 @@
   },
   "apjcbfpjihpedihablmalmbbhjpklbdf": {
    "name": "AdGuard AdBlocker (Beta)",
-   "version": "5.5.3.25",
+   "version": "5.5.3.28",
    "popupText": true,
-   "errors": []
+   "errors": [
+    "TypeError: Cannot read properties of undefined (reading 'listenerId')",
+    "TypeError: Cannot destructure property 'areFilterLimitsExceeded' of 'options' as it is undefined."
+   ]
   },
   "apldhonppojnaadpeoghllcjealkkmem": {
    "name": "Color Picker & Eyedropper – GoPickColors",
@@ -6559,7 +6575,7 @@
   },
   "baohinapilmkigilbbbcccncoljkdpnd": {
    "name": "Shortcuts for Google™",
-   "version": "32.0.6",
+   "version": "32.1.0",
    "popupText": true,
    "errors": []
   },
@@ -6669,7 +6685,7 @@
   },
   "bhbcbkonalnjkflmdkdodieehnmmeknp": {
    "name": "Email Finder - GetProspect",
-   "version": "7.2.7",
+   "version": "7.2.8",
    "errors": []
   },
   "bhmibpbadaengbikmoglphhlhioajdjn": {

@@ -71,8 +71,8 @@ function unpackCRX(crx, id, dir) {
   // unzip exits 1 on warnings it recovers from.
   const { status } = spawnSync('unzip', ['-q', '-o', zip, '-d', extension], { stdio: 'ignore' });
   if (status > 1) throw new Error(`unzip failed with status ${status}`);
-  // Some packages carry read-only modes, which would block the key below and the cleanup.
-  execFileSync('chmod', ['-R', 'u+w', extension]);
+  // Some packages carry read-only files or untraversable folders, which would block the key below and the cleanup.
+  execFileSync('chmod', ['-R', 'u+rwX', extension]);
   const manifestPath = join(extension, 'manifest.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8').replace(/^﻿/, ''));
   manifest.key = key.toString('base64');
