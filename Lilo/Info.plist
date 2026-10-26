@@ -119,7 +119,7 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>This website requests access to your microphone.</string>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Lilo connects to devices on your local network when you open their pages, such as a router or printer.</string>
+    <string>Lilo connects to devices on your local network, such as a router or printer, when you open their pages or an extension looks for them.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>This website requests speech recognition to turn what you say into text.</string>
     <key>NSLocationWhenInUseUsageDescription</key>

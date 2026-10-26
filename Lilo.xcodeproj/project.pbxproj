@@ -360,6 +360,7 @@
 		9D52B0C2856412798E1E5B9E /* LittleWindowHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = B253B8F9BA1E48BC97D78CBA /* LittleWindowHotKey.swift */; };
 		9DF8CA13582E4871AA0F0977 /* BrowserStateFixtureSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 758C964D56746BC82A42145F /* BrowserStateFixtureSupport.swift */; };
 		9E3C053B81DACE3C8B13016A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C59BD19569C28D371A40FB5 /* main.swift */; };
+		9E6F28A95B02C36E69D3918F /* LocalNetworkBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5970C3BEE3FB82050318B9AC /* LocalNetworkBridgeHandler.swift */; };
 		9EC76C520E0FDBD5B02F5388 /* TerminalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEDB2F809344EB7640D8C79 /* TerminalThemeTests.swift */; };
 		9F25E508E4E60060142B1564 /* WKWebViewTabCommitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682D3D1F1970F982CF1B53DE /* WKWebViewTabCommitTests.swift */; };
 		9F2A10535E31D10005486BCC /* TabsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4A29B20C87F53245DEF9AE /* TabsBridgeHandler.swift */; };
@@ -888,6 +889,7 @@
 		57AEC88F04C1DC1D3BF3EBFC /* SessionRestorePreloadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRestorePreloadTests.swift; sourceTree = "<group>"; };
 		585A1CE3451EE726F20A8405 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		588DBF129A3AEF2628F2FA6C /* ChromiumSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumSessionTests.swift; sourceTree = "<group>"; };
+		5970C3BEE3FB82050318B9AC /* LocalNetworkBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkBridgeHandler.swift; sourceTree = "<group>"; };
 		5A71C552CC20324A27A705FC /* FirefoxReaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirefoxReaderTests.swift; sourceTree = "<group>"; };
 		5B0ADA4FA130D5616136D531 /* ProgressEmitGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressEmitGate.swift; sourceTree = "<group>"; };
 		5B1BA9B9CF2570DAFD17722B /* ProfileExtensionRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileExtensionRegistry.swift; sourceTree = "<group>"; };
@@ -1798,6 +1800,7 @@
 				4595B45175C3E57FAD9378B1 /* IdentityBridgeHandler.swift */,
 				E95DB31AC42F9F7A49444E37 /* IdleBridgeHandler.swift */,
 				0FE7D786B57EA99CAF5C3AE0 /* InstanceIDBridgeHandler.swift */,
+				5970C3BEE3FB82050318B9AC /* LocalNetworkBridgeHandler.swift */,
 				F13AD66F688CF5229E923F2B /* ManagementBridgeHandler.swift */,
 				3A552C76FFE45FCB22E962E2 /* NotificationsBridgeHandler.swift */,
 				B88ACB1E8D3A57A3ED0F5B0D /* OffscreenBridgeHandler.swift */,
@@ -2792,6 +2795,7 @@
 				8854035A1251D7D7CF6BE4B8 /* LiloIntents.swift in Sources */,
 				8687188245C6EAAF9E92830A /* LittleWindowController.swift in Sources */,
 				9D52B0C2856412798E1E5B9E /* LittleWindowHotKey.swift in Sources */,
+				9E6F28A95B02C36E69D3918F /* LocalNetworkBridgeHandler.swift in Sources */,
 				0DFE32CC709F813422EAC344 /* Localization.swift in Sources */,
 				974D15992241EA89232814A3 /* Logging.swift in Sources */,
 				D65093F4B158C1830BE75EB8 /* MainMenu.swift in Sources */,
