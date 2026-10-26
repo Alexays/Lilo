@@ -3,6 +3,10 @@
 import { installStaticChromeCompat } from './shared/static-compat.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { answerAsChrome, relayExternalMessaging } from './shared/message-answers.ts';
+import { relayFrameMessaging } from './shared/frame-messaging.ts';
+
+// ExtensionBackgroundPreparer writes the extension's frame key over it: it must stay a single string literal.
+const frameKey = '__LILO_FRAME_KEY__';
 
 // The build's banner skips the whole script in a world where it ran already.
 Object.defineProperty(globalThis, '__liloContentCompat', { value: true });
@@ -24,6 +28,7 @@ if (onMessage) {
 const runtime = (globalThis as any).chrome?.runtime;
 if (runtime && !Object.hasOwn(globalThis, '__liloRuntime')) {
   relayExternalMessaging(runtime);
+  relayFrameMessaging(globalThis, runtime, frameKey);
   // WebKit recreates a collected namespace object, and its prototype, without the relay.
   Object.defineProperty(globalThis, '__liloRuntime', { value: runtime });
 }

@@ -59,6 +59,7 @@ enum ExtensionBackgroundPreparer {
         // A skipped folder is left untouched, and one without a manifest is not an extension.
         guard result != .skipped, FileManager.default.fileExists(atPath: extensionURL.appendingPathComponent("manifest.json").path) else { return result }
         var stamped = ["manifest.json"]
+        if FileManager.default.fileExists(atPath: extensionURL.appendingPathComponent(frameKeyPath).path) { stamped.append(frameKeyPath) }
         if result == .prepared, let worker = try? readMetadata(from: stampURL.deletingLastPathComponent())?.originalServiceWorker {
             stamped.append(worker)
         }
@@ -495,6 +496,10 @@ enum ExtensionBackgroundPreparer {
     }
 
     private static let contentCompatPath = "_lilo/lilo-content-compat.js"
+    /// The key a content script shows the extension page it relays its messages through (frame-messaging.ts), which
+    /// extension pages read from this file and content scripts from the compat, written over `frameKeyPlaceholder`.
+    private static let frameKeyPath = "_lilo/frame-key"
+    private static let frameKeyPlaceholder = "__LILO_FRAME_KEY__"
 
     /// Prepends a compat content script to every isolated-world JS entry so APIs WebKit omits there (`chrome.storage.managed`) exist
     /// before the extension's scripts; never MAIN-world, where it would leak. Written for every extension, as the bridge also prepends it
@@ -519,9 +524,58 @@ enum ExtensionBackgroundPreparer {
         try verifyWriteTargetInside(extensionURL, target: metadataDir)
         try verifyWriteTargetInside(extensionURL, target: compatURL)
         try FileManager.default.createDirectory(at: metadataDir, withIntermediateDirectories: true)
-        try writeIfChanged(Data(compatSource.utf8), to: compatURL)
+        let keyURL = extensionURL.appendingPathComponent(frameKeyPath)
+        try verifyWriteTargetInside(extensionURL, target: keyURL)
+        var source = compatSource
+        // A web page that could load either file would hold the key: such an extension goes without the relay.
+        if compatSource.contains(frameKeyPlaceholder), !servesToWebPages(manifest, frameKeyPath), !servesToWebPages(manifest, contentCompatPath) {
+            // Fresh on each preparation: a key shipped in the extension's own `_lilo/` is never used.
+            let key = SymmetricKey(size: .bits256).withUnsafeBytes { $0.map { String(format: "%02x", $0) }.joined() }
+            try writeIfChanged(Data(key.utf8), to: keyURL)
+            source = compatSource.replacingOccurrences(of: frameKeyPlaceholder, with: key)
+        } else if FileManager.default.fileExists(atPath: keyURL.path) {
+            try FileManager.default.removeItem(at: keyURL)
+        }
+        try writeIfChanged(Data(source.utf8), to: compatURL)
 
         if changed { manifest["content_scripts"] = contentScripts }
+    }
+
+    /// Whether a web_accessible_resources pattern of `manifest` covers `path`, with or without its leading slash,
+    /// ignoring case (the file system does), `*` and `?` as wildcards: it errs towards covering.
+    private static func servesToWebPages(_ manifest: [String: Any], _ path: String) -> Bool {
+        let patterns = (manifest["web_accessible_resources"] as? [Any] ?? []).flatMap { entry -> [String] in
+            if let resource = entry as? String { return [resource] }
+            return ((entry as? [String: Any])?["resources"] as? [Any] ?? []).compactMap { $0 as? String }
+        }
+        let text = Array(path.lowercased())
+        return patterns.contains { pattern in
+            let lowered = pattern.lowercased()
+            return wildcardMatches(Array(lowered), text) || wildcardMatches(Array(lowered.drop(while: { $0 == "/" })), text)
+        }
+    }
+
+    private static func wildcardMatches(_ pattern: [Character], _ text: [Character]) -> Bool {
+        var patternIndex = 0, textIndex = 0
+        var star: Int?, starText = 0
+        while textIndex < text.count {
+            if patternIndex < pattern.count, pattern[patternIndex] == "?" || pattern[patternIndex] == text[textIndex] {
+                patternIndex += 1
+                textIndex += 1
+            } else if patternIndex < pattern.count, pattern[patternIndex] == "*" {
+                star = patternIndex
+                starText = textIndex
+                patternIndex += 1
+            } else if let star {
+                patternIndex = star + 1
+                starText += 1
+                textIndex = starText
+            } else {
+                return false
+            }
+        }
+        while patternIndex < pattern.count, pattern[patternIndex] == "*" { patternIndex += 1 }
+        return patternIndex == pattern.count
     }
 
     /// The extension's scripts holding only whitespace, root-relative ("/test.js"): the prelude skips

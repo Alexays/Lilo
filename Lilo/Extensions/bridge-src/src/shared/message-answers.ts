@@ -17,6 +17,15 @@ export const listensProbe = { liloListens: true } as const;
 const isProbe = (message: unknown) => (message as typeof listensProbe | undefined)?.liloListens === true;
 /** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
 const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
+/** A content script's message the extension page at the top of its frame sends for it (frame-messaging.ts), with its url. */
+const frameUrl = (message: unknown) => (message as { liloFrame?: unknown } | undefined)?.liloFrame;
+
+/** The sender Chrome gives a content script of a frame no tab shows: here the extension page's, with the frame's url. */
+function frameSender(sender: any, url: string): unknown {
+  let origin: string | undefined;
+  try { origin = new URL(url).origin; } catch { /* the page's sender keeps its origin */ }
+  return { ...sender, url, ...(origin && { origin }) };
+}
 
 let workerScript: string | undefined;
 
@@ -38,7 +47,14 @@ function answeringListener(listener: Listener): Listener {
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
       if (isProbe(message) || isExternal(message)) return undefined;
-      const result = listener.call(this, message, chromeSender(sender), (response?: unknown) => sendResponse(response === undefined ? null : response));
+      const url = frameUrl(message);
+      const framed = typeof url === 'string';
+      const result = listener.call(
+        this,
+        framed ? (message as { message?: unknown }).message : message,
+        framed ? frameSender(sender, url) : chromeSender(sender),
+        (response?: unknown) => sendResponse(response === undefined ? null : response),
+      );
       return typeof (result as PromiseLike<unknown>)?.then === 'function'
         ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
         : result;
@@ -116,6 +132,8 @@ export function lastErrorWithoutAnswer(
 // Ends the name of a port Lilo opens whose both ends are Lilo's: only such a port carries numbered messages,
 // which a port of browser.runtime would not read.
 export const once = '?lilo';
+/** Ends, before `once`, the name of a port a frame's content script opens through its extension page, with its url encoded. */
+export const frameMark = '?liloFrame=';
 const served = new WeakMap<object, object>();
 
 /**
@@ -128,9 +146,14 @@ export function messagesOnce(port: any, name: string): object {
   const sender = Math.random();
   let sent = 0;
   const received = new Map<number, number>();
+  const frame = name.lastIndexOf(frameMark);
+  let url: string | undefined;
+  try {
+    if (frame >= 0) url = decodeURIComponent(name.slice(frame + frameMark.length));
+  } catch { /* a name of the extension's own */ }
   const chromePort = {
-    name,
-    sender: port.sender,
+    name: url === undefined ? name : name.slice(0, frame),
+    sender: url !== undefined && port.sender ? frameSender(port.sender, url) : port.sender,
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage: (message: unknown) => port.postMessage({ [once]: [sender, ++sent], message }),

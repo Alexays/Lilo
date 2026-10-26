@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { answerAsChrome, listensProbe, relayExternalMessaging } from './message-answers.ts';
+import { answerAsChrome, frameMark, listensProbe, messagesOnce, relayExternalMessaging } from './message-answers.ts';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
@@ -91,6 +91,29 @@ describe('runtime.onMessage listeners', () => {
     onMessage.addListener((message: unknown) => { heard.push(message); });
     assert.equal(await onMessage.send({ liloExternal: 'abcdefghijklmnopabcdefghijklmnop', message: 1 }), undefined);
     assert.deepEqual(heard, []);
+  });
+
+  it("hear a frame's message its extension page sends for it from the frame's url, as Chrome", () => {
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((message: unknown, sender: unknown) => { heard.push([message, sender]); });
+    const page = { id: 'abc', url: 'chrome-extension://abc/offscreen.html', origin: 'chrome-extension://abc' };
+    for (const listener of onMessage.listeners) listener({ liloFrame: 'https://example.com/frame.html', message: 'ping' }, page, () => {});
+    assert.deepEqual(heard, [['ping', { id: 'abc', url: 'https://example.com/frame.html', origin: 'https://example.com' }]]);
+  });
+});
+
+describe('a port a frame opens through its extension page', () => {
+  it("takes its own name and the frame's url as its sender", () => {
+    const event = () => ({ addListener() {} });
+    const url = 'https://example.com/frame.html?q=a?liloTab=x';
+    const port: any = messagesOnce({
+      sender: { id: 'abc', url: 'chrome-extension://abc/offscreen.html', origin: 'chrome-extension://abc' },
+      onMessage: event(), onDisconnect: event(), postMessage() {}, disconnect() {},
+    }, `name?liloFrame=x${frameMark}${encodeURIComponent(url)}`);
+    assert.equal(port.name, 'name?liloFrame=x');
+    assert.deepEqual(port.sender, { id: 'abc', url, origin: 'https://example.com' });
   });
 });
 
