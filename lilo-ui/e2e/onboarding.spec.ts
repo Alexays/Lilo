@@ -384,6 +384,20 @@ test("the agents choice turns AI agents on without the terminal, and asks to con
 	await expect(card.locator("h3")).toHaveText(/agent/i);
 });
 
+test("the agents step copies Lilo's configuration for any other agent", async ({ page }) => {
+	await bootOnboarding(page, 1);
+	const card = page.locator("section.card");
+	await card.getByRole("radio", { name: /With my AI agents/ }).click();
+	await card.getByRole("button", { name: "Continue" }).click();
+	await receive(page, { event: "settingsLoaded", settings: { agentControlEnabled: "true" } });
+	await receive(page, { event: "onboardingState", show: true, step: 7, usage: "agents" });
+
+	await card.getByRole("button", { name: "Copy configuration" }).click();
+
+	expect((await sentCommands(page)).filter((c) => c.action === "connectAgentClient").map((c) => c.payload)).toContainEqual({ client: "other" });
+	await expect(card).toContainText("Copied");
+});
+
 test("the developer tips card is named after its own title", async ({ page }) => {
 	await bootOnboarding(page, 8, "develop");
 	await expect(page.getByRole("region", { name: "3 tips for developing" })).toBeVisible();

@@ -1575,6 +1575,7 @@
 			"title": "Your AI agents",
 			"subtitle": "Claude Code, Codex or Cursor work in their own Agents space, without touching your keyboard. Lilo has no AI of its own.",
 			"allow": "Let AI agents use Lilo",
+			"copied": "Copied",
 			"connectNamed": "Connect {name}"
 		},
 		"tips": {

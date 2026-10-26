@@ -11,6 +11,7 @@
   const enabled = $derived(getSetting("agentControlEnabled", "false") === "true");
   // Only the apps on this Mac, or already pointed at Lilo.
   const clients = $derived(getAgentClientsSnapshot().clients.filter((client) => client.icon || client.configured));
+  let otherCopied = $state(false);
 </script>
 
 <h3>{t("onboarding.agents.title")}</h3>
@@ -27,7 +28,7 @@
   {#each clients as client (client.id)}
     <div class="ob-row">
       {#if client.icon}<img class="app" src={client.icon} alt="" width="30" height="30" />{:else}<span class="ob-icon"><SettingsIcon name="agents" /></span>{/if}
-      <span class="ob-text">{t(`settings.agents.names.${client.id}`)}<small>{t(client.configured ? "settings.agents.clientConnected" : "settings.agents.clientDescription")}</small></span>
+      <span class="ob-text">{t(`settings.agents.names.${client.id}`)}{#if !client.configured}<small>{t("settings.agents.clientDescription")}</small>{/if}</span>
       {#if client.configured}
         <span class="ob-done">{t("onboarding.essentials.defaultDone")}</span>
       {:else}
@@ -39,6 +40,17 @@
       {/if}
     </div>
   {/each}
+  <div class="ob-row">
+    <span class="ob-icon"><SettingsIcon name="grid" /></span>
+    <span class="ob-text">{t("settings.items.agentOther.title")}<small>{t("settings.items.agentOther.description")}</small></span>
+    {#if otherCopied}
+      <span class="ob-done">{t("onboarding.agents.copied")}</span>
+    {:else}
+      <button class="ob-btn small" aria-label={t("settings.agents.copy")} onclick={() => { settingsActions.connectAgentClient("other"); otherCopied = true; }}>
+        {t("common.copy")}
+      </button>
+    {/if}
+  </div>
 {/if}
 
 <div class="ob-foot">
@@ -51,4 +63,6 @@
   .spinner { width: 0.8em; height: 0.8em; border: 0.15em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .app { width: 30px; height: 30px; flex: none; }
+  /* One column on the right: Done, Connect and Copy line up whatever their label. */
+  .ob-done, .ob-btn.small { min-width: 84px; justify-content: center; text-align: center; }
 </style>
