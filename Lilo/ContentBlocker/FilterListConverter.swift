@@ -584,10 +584,22 @@ enum FilterListConverter {
         // Matching every URL is only meant for a rule scoped to its sites.
         if filters.contains(".*"), trigger["if-domain"] == nil { return [] }
         // WebKit runs an unanchored filter with an unbounded repetition before its end (`a.*b`, `a[0-9]*b`) over the whole of every
-        // request URL: a few hundred dominate the cost of each load. Exceptions stay, as skipping one would block more.
-        if !isException, filters.contains(where: {
-            !$0.hasPrefix("^") && $0.dropLast($0.hasSuffix(".*") ? 2 : 0).range(of: #"(?<!\\)[.\])]\*"#, options: .regularExpression) != nil
-        }) {
+        // request URL: a few hundred dominate the cost of each load.
+        let isCostly = { (filter: String) in
+            !filter.hasPrefix("^")
+                && filter.dropLast(filter.hasSuffix(".*") ? 2 : 0).range(of: #"(?<!\\)[.\])]\*"#, options: .regularExpression) != nil
+        }
+        if isException {
+            // Widening an exception blocks less but never breaks a site: one stops at its first `.*` where what is left stays
+            // specific (site-scoped, or 8 characters) and is a whole regex (no group or class cut open).
+            filters = filters.map { filter in
+                guard isCostly(filter), let star = filter.range(of: #"(?<!\\)\.\*"#, options: .regularExpression) else { return filter }
+                let prefix = filter[..<star.lowerBound]
+                guard !prefix.isEmpty, prefix.range(of: #"(?<!\\)[\[\]()]"#, options: .regularExpression) == nil,
+                      trigger["if-domain"] != nil || prefix.filter({ $0 != "\\" }).count >= 8 else { return filter }
+                return String(prefix)
+            }
+        } else if filters.contains(where: isCostly) {
             // A page rule needs only the navigation's own URL, which WebKit matches once per page as the top URL: the filter moves
             // there, behind one matching every load. `$frame` also maps to "document", so the options name the page types.
             var pageTypes = Set<String>()

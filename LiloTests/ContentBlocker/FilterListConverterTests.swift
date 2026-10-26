@@ -256,7 +256,12 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertTrue(isDropped(#"/\.com\/.*\/track/"#))
         XCTAssertTrue(isDropped(#"/\/js\/[a-z0-9]+\.js$/"#))
         XCTAssertEqual(trigger(#"/^https?:\/\/[a-z]+\.com\/ad\.js/"#)?["url-filter"] as? String, #"^https?:\/\/[a-z][a-z]*\.com\/ad\.js"#)
-        XCTAssertEqual(actionType("@@/site=*/viewid="), "ignore-previous-rules")
+        XCTAssertEqual(trigger("@@/zig_cookiepolicybar/*/CookieBar.js$script")?["url-filter"] as? String, "/zig_cookiepolicybar/",
+                       "a costly exception widens to what precedes its wildcard")
+        XCTAssertEqual(trigger("@@/site=*/viewid=$script,domain=a.example")?["url-filter"] as? String, "/site=")
+        XCTAssertEqual(trigger("@@/site=*/viewid=$script")?["url-filter"] as? String, "/site=.*/viewid=", "too short to stand on every site")
+        XCTAssertEqual(trigger(#"@@/\/(ab|cd).*\/x\.js/$domain=a.example"#)?["url-filter"] as? String, #"\/(ab).*\/x\.js"#,
+                       "a prefix cutting a group open stays whole")
     }
 
     /// A costly page rule matches the page's URL once, as its top URL, instead of every load's.
