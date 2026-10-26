@@ -1,3 +1,0 @@
-kind: Fixed
-body: Lilo no longer quits when an extension runs a script in a tab that was just put to sleep.
-time: 2026-10-26T18:16:57.006967+01:00

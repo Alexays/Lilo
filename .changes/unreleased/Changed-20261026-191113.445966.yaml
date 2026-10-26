@@ -1,3 +1,0 @@
-kind: Changed
-body: Pages that tell the browser which page comes next (link prefetch) now get it loaded ahead, so following that link opens it at once.
-time: 2026-10-26T19:11:13.445966+01:00
