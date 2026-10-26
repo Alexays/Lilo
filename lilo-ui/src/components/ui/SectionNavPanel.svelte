@@ -2,6 +2,7 @@
   import type { ComponentProps, Snippet } from "svelte";
   import PanelHeader from "./PanelHeader.svelte";
   import SettingsIcon from "../settings/SettingsIcon.svelte";
+  import { tooltip } from "../../lib/tooltip";
 
   interface SectionNavSection {
     id: Id;
@@ -31,21 +32,23 @@
     onclose: () => void;
     /** Rendered under the header, above the rows (the settings search). */
     toolbar?: Snippet;
+    /** Icons only, each named by a tooltip: the toolbar and group labels step aside. */
+    compact?: boolean;
   }
 
-  let { title, ariaLabel, groups, activeId, onSelect, onclose, toolbar }: Props = $props();
+  let { title, ariaLabel, groups, activeId, onSelect, onclose, toolbar, compact = false }: Props = $props();
 </script>
 
-<div class="panel-shell section-nav-panel">
+<div class="panel-shell section-nav-panel" class:compact>
   <PanelHeader {title} {onclose} />
 
-  {#if toolbar}
+  {#if toolbar && !compact}
     <div class="section-nav-toolbar">{@render toolbar()}</div>
   {/if}
 
   <nav class="section-nav" aria-label={ariaLabel}>
     {#each groups as group, index (group.id)}
-      {#if group.label}
+      {#if group.label && !compact}
         <div class="section-nav-group-label">{group.label}</div>
       {:else if index > 0}
         <div class="section-nav-separator" role="separator"></div>
@@ -59,6 +62,7 @@
             type="button"
             aria-current={section.id === activeId ? "page" : undefined}
             onclick={() => onSelect(section.id)}
+            use:tooltip={{ text: section.label, placement: "right", disabled: !compact }}
           >
             {#if section.icon != null}
               <span class="section-nav-icon" aria-hidden="true">
@@ -188,6 +192,28 @@
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-variant-numeric: tabular-nums;
+  }
+
+  .compact .section-nav {
+    padding-inline: var(--space-8);
+  }
+
+  .compact .section-nav-button {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .compact :is(.section-nav-count, .section-nav-attention) {
+    display: none;
+  }
+
+  /* Out of sight, still the button's name. */
+  .compact .section-nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
   .section-nav-attention {

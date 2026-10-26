@@ -14,6 +14,7 @@
     isDesignSystemShellOpen,
     isSettingsShellOpen,
   } from "../../stores/panels.svelte";
+  import { isVerticalLayout } from "../../stores/tabLayout.svelte";
 
   let { active = false }: { active?: boolean } = $props();
   const activePanel = $derived(getActivePanel());
@@ -36,7 +37,7 @@
 </script>
 
 <div class="sidebar-panel" class:active bind:this={panelEl}>
-  {#if isSettingsShellOpen()}
+  {#if isSettingsShellOpen() && isVerticalLayout()}
     <SettingsPanel />
   {/if}
   {#if isDesignSystemShellOpen()}

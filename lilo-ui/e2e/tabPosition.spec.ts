@@ -81,14 +81,71 @@ test("the bottom dock opens its popovers upward", async ({ page }) => {
 	}).toBeLessThanOrEqual(dock.y);
 });
 
-test("settings open as a floating column in the top position and stay open when the position changes", async ({ page }) => {
+test("settings open as a page with its navigation and an active pill in the top strip, across a position change", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
 	await receive(page, { event: "openSettings" });
-	await expect(page.locator(".strip-panels.open")).toBeVisible();
+
+	const pill = page.locator(".tab-strip .strip-settings");
+	await expect(pill.getByRole("tab", { name: "Settings" })).toHaveAttribute("aria-selected", "true");
+	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveCount(0);
+	await expect(page.locator(".ui-shell-frame .ui-shell-frame-nav .section-nav-button")).toHaveCount(8);
+	await expect(page.locator(".strip-panels.open")).toHaveCount(0);
+	await expect(page.locator("html")).not.toHaveAttribute("data-strip-panel-open");
 
 	await receive(page, { event: "tabLayoutChanged", position: "bottom", address: "page" });
 
-	await expect(page.locator(".strip-panels.open")).toBeVisible();
+	await expect(pill).toBeVisible();
+	await expect(page.locator(".ui-shell-frame-nav")).toBeVisible();
+	await expect(page.locator(".strip-panels.open")).toHaveCount(0);
+});
+
+test("a narrow window narrows the settings navigation to icons named by tooltips, and widens it back", async ({ page }) => {
+	await page.setViewportSize({ width: 700, height: 800 });
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await receive(page, { event: "openSettings" });
+
+	const privacy = page.locator(".ui-shell-frame-nav .section-nav-button").filter({ hasText: "Privacy" });
+	await expect(page.locator(".ui-shell-frame-nav .section-nav-toolbar")).toHaveCount(0);
+	await privacy.hover();
+	await expect(page.locator(".lilo-tooltip-title").filter({ hasText: /^Privacy$/ })).toBeVisible();
+
+	await page.setViewportSize({ width: 1300, height: 800 });
+	await expect(page.locator(".ui-shell-frame-nav .section-nav-toolbar")).toBeVisible();
+	await expect(privacy.locator(".section-nav-label")).toHaveCSS("position", "static");
+});
+
+test("the settings pill's close button closes settings", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await receive(page, { event: "openSettings" });
+
+	await page.locator(".strip-settings").getByRole("button", { name: "Close" }).click();
+
+	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	await expect(page.locator(".strip-settings")).toHaveCount(0);
+	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveAttribute("data-tab-id", "tab-alpha");
+});
+
+test("clicking another tab in the strip leaves settings for it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	await receive(page, { event: "openSettings" });
+	await expect(page.locator(".strip-settings")).toBeVisible();
+
+	await page.locator('.tab-strip .strip-tab[data-tab-id="tab-beta"]').getByRole("tab").click();
+
+	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	await expect(page.locator(".strip-settings")).toHaveCount(0);
+	const switches = (await sentCommands(page)).filter((c) => c.action === "switchTab");
+	expect(switches.at(-1)?.payload).toEqual({ id: "tab-beta" });
+});
+
+test("settings in the sidebar layout keep their navigation in the sidebar, with no strip pill", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await receive(page, { event: "openSettings" });
+
+	await expect(page.locator(".sidebar .section-nav-button")).toHaveCount(8);
+	await expect(page.locator(".ui-shell-frame")).toBeVisible();
+	await expect(page.locator(".ui-shell-frame-nav")).toHaveCount(0);
+	await expect(page.locator(".strip-settings")).toHaveCount(0);
 });
 
 test("holding the header then dropping near the right edge moves the tabs right", async ({ page }) => {

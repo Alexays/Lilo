@@ -1,20 +1,21 @@
 <script lang="ts">
   import TabStrip from "./TabStrip.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { hasActivePanel, isDesignSystemShellOpen, isSettingsShellOpen } from "../../stores/panels.svelte";
+  import { hasActivePanel, isDesignSystemShellOpen } from "../../stores/panels.svelte";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
 
   let { onenter, onleave }: { onenter: () => void; onleave: () => void } = $props();
 
-  const isPanelOpen = $derived(hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen());
+  // Settings is not among them: in a strip it is a page of its own, its navigation inside.
+  const isPanelOpen = $derived(hasActivePanel() || isDesignSystemShellOpen());
   // Latched like the sidebar's: the panels chunk loads on first open, then stays for close animations.
   let panelsLoaded = $state(false);
   $effect(() => {
     if (isPanelOpen) panelsLoaded = true;
   });
 
-  // Overlays on the page (the Settings shell first) start past the floating column while it is open.
+  // Overlays on the page (the Design System shell first) start past the floating column while it is open.
   $effect(() => {
     if (isPanelOpen) document.documentElement.dataset.stripPanelOpen = "";
     else delete document.documentElement.dataset.stripPanelOpen;
