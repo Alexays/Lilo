@@ -254,6 +254,8 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertEqual(trigger("||ads.example^*/track")?["url-filter"] as? String, "^https?://([^/]+\\.)?ads\\.example[^-a-zA-Z0-9._%].*/track")
         XCTAssertTrue(isDropped("/site=*/viewid="), "an unanchored inner wildcard costs every load")
         XCTAssertTrue(isDropped(#"/\.com\/.*\/track/"#))
+        XCTAssertTrue(isDropped(#"/\/js\/[a-z0-9]+\.js$/"#))
+        XCTAssertEqual(trigger(#"/^https?:\/\/[a-z]+\.com\/ad\.js/"#)?["url-filter"] as? String, #"^https?:\/\/[a-z][a-z]*\.com\/ad\.js"#)
         XCTAssertEqual(actionType("@@/site=*/viewid="), "ignore-previous-rules")
     }
 

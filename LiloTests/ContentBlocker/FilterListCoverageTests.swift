@@ -125,7 +125,10 @@ final class FilterListCoverageTests: XCTestCase {
                 if entries.contains(where: { $0.hasPrefix("~") }), entries.contains(where: { !$0.hasPrefix("~") }) { return "domain and ~domain" }
             }
             let pattern = body.prefix { $0 != "$" }
-            if kind == "network", !pattern.hasPrefix("|"), pattern.trimmingCharacters(in: ["*"]).contains("*") { return "unanchored inner wildcard" }
+            if kind == "network", !pattern.hasPrefix("|"), !pattern.hasPrefix("/^"),
+               pattern.hasPrefix("/") ? pattern.dropLast().contains(where: { $0 == "*" || $0 == "+" }) : pattern.trimmingCharacters(in: ["*"]).contains("*") {
+                return "unanchored unbounded repetition"
+            }
             if body.hasPrefix("/") { return "regex WebKit cannot express" }
             if !body.allSatisfy(\.isASCII) { return "non-ASCII" }
             return "other"

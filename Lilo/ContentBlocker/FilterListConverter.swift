@@ -583,11 +583,11 @@ enum FilterListConverter {
         }
         // Matching every URL is only meant for a rule scoped to its sites.
         if filters.contains(".*"), trigger["if-domain"] == nil { return [] }
-        // WebKit runs an unanchored `a.*b` over the whole of every request URL, so a few hundred of them dominate the cost of each
-        // load and starve a page that loads many long-URL images. Exceptions stay: skipping one would block more.
-        if !isException, filters.contains(where: { !$0.hasPrefix("^") && $0.dropLast($0.hasSuffix(".*") ? 2 : 0).contains(".*") }) {
-            return []
-        }
+        // WebKit runs an unanchored filter with an unbounded repetition before its end (`a.*b`, `a[0-9]*b`) over the whole of every
+        // request URL: a few hundred dominate the cost of each load. Exceptions stay, as skipping one would block more.
+        if !isException, filters.contains(where: {
+            !$0.hasPrefix("^") && $0.dropLast($0.hasSuffix(".*") ? 2 : 0).range(of: #"(?<!\\)[.\])]\*"#, options: .regularExpression) != nil
+        }) { return [] }
 
         return filters.map { filter -> NetworkRule in
             var t = trigger
