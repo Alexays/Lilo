@@ -103,9 +103,9 @@ final class FilterListService {
     }
 
     /// Caps the content rules, css-display-none rules included; the engine compiles them in several lists.
-    private static let maxRules = 420_000
+    static let maxRules = 420_000
     /// Caps the generic cosmetic selectors, token table and native complex selectors together.
-    private static let maxCosmeticSelectors = 60_000
+    static let maxCosmeticSelectors = 60_000
     /// Caps the per-host cosmetic table (selectors, exceptions, generichide), read in main frames only.
     private static let maxSiteCosmetics = 150_000
     /// Caps the per-host scriptlet table; bounds the size of the table injected into every frame.
@@ -119,7 +119,7 @@ final class FilterListService {
     private static let partialRefreshAcceptAge: TimeInterval = 3 * refreshInterval
     /// Bumped whenever the conversion changes: a cache in another format is reconverted at launch
     /// instead of serving the old conversion until the next scheduled refresh.
-    private nonisolated static let cacheFormat = "8"
+    private nonisolated static let cacheFormat = "9"
 
     /// Names the conversion format and the lists it was made from: a cache stamped otherwise is redone.
     nonisolated static func cacheStamp(for sources: [URL]) -> String {

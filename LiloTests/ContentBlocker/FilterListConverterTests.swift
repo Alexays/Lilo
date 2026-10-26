@@ -259,6 +259,19 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertEqual(actionType("@@/site=*/viewid="), "ignore-previous-rules")
     }
 
+    /// A costly page rule matches the page's URL once, as its top URL, instead of every load's.
+    func testCostlyPageRulesMoveToTheTopURL() throws {
+        let page = try XCTUnwrap(trigger("/?pl=*&sm=$doc"))
+        XCTAssertEqual(page["url-filter"] as? String, ".*")
+        XCTAssertEqual(page["if-top-url"] as? [String], [#"/\?pl=.*&sm="#])
+        XCTAssertEqual(page["load-context"] as? [String], ["top-frame"])
+        XCTAssertEqual(page["resource-type"] as? [String], ["document"])
+        let all = FilterListConverter.convert("/?track=*&key=$all").blocks.compactMap { ($0["trigger"] as? [String: Any])?["resource-type"] as? [String] }
+        XCTAssertEqual(all, [["document"], ["popup"]])
+        XCTAssertTrue(isDropped("/go/*?ident=$frame"), "a frame rule must not turn into a page rule")
+        XCTAssertTrue(isDropped("/x*y$doc,domain=a.example"), "the top URL is the only condition a rule can carry")
+    }
+
     func testSkippedLines() {
         for line in [
             "", "! a comment", "[Adblock Plus 2.0]",

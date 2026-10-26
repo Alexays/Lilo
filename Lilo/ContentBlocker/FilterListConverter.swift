@@ -587,7 +587,29 @@ enum FilterListConverter {
         // request URL: a few hundred dominate the cost of each load. Exceptions stay, as skipping one would block more.
         if !isException, filters.contains(where: {
             !$0.hasPrefix("^") && $0.dropLast($0.hasSuffix(".*") ? 2 : 0).range(of: #"(?<!\\)[.\])]\*"#, options: .regularExpression) != nil
-        }) { return [] }
+        }) {
+            // A page rule needs only the navigation's own URL, which WebKit matches once per page as the top URL: the filter moves
+            // there, behind one matching every load. `$frame` also maps to "document", so the options name the page types.
+            var pageTypes = Set<String>()
+            for option in optionsStr?.split(separator: ",") ?? [] {
+                switch option.trimmingCharacters(in: .whitespaces) {
+                case "document", "doc": pageTypes.insert("document")
+                case "popup": pageTypes.insert("popup")
+                case "all": pageTypes.formUnion(["document", "popup"])
+                default: break
+                }
+            }
+            guard trigger["if-domain"] == nil, trigger["unless-domain"] == nil else { return [] }
+            var t = trigger
+            t["url-filter"] = ".*"
+            t["load-context"] = ["top-frame"]
+            t["if-top-url"] = filters
+            if let caseSensitive = t.removeValue(forKey: "url-filter-is-case-sensitive") { t["top-url-filter-is-case-sensitive"] = caseSensitive }
+            return pageTypes.sorted().map { type in
+                t["resource-type"] = [type]
+                return (["trigger": t, "action": ["type": "block"]], false, isImportant)
+            }
+        }
 
         return filters.map { filter -> NetworkRule in
             var t = trigger
