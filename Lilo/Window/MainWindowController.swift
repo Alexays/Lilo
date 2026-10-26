@@ -822,6 +822,7 @@ extension MainWindowController: NSWindowDelegate {
         browsingActivity = nil
         // WebKit must get an answer for every permission request; an open prompt dies with the window.
         for tabId in Set(pendingPermissionRequests.map(\.tabId)) { denyPermissionRequests(forTab: tabId) }
+        profileContext?.extensions.denyPermissionRequests(shownIn: self)
         pagePopups.values.forEach { $0.close() }
         // Their pages are served by this window's delegate methods.
         littleWindows.values.forEach { $0.window.close() }
