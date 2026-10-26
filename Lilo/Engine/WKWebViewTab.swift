@@ -151,15 +151,21 @@ final class WKWebViewTab: NSObject {
     /// The viewport an agent set with resize_window: it stays through every move of the view.
     var agentViewport: NSSize?
 
-    /// Fills `bounds`, or keeps the agent's viewport at its top left.
+    /// Fills `bounds`, or keeps the agent's viewport: centered on an axis it is smaller on, like a device
+    /// preview, else from the top left.
     func fitView(in bounds: NSRect) {
         guard let size = agentViewport else {
             view.frame = bounds
             view.autoresizingMask = [.width, .height]
             return
         }
-        view.autoresizingMask = [.maxXMargin, .minYMargin]
-        view.frame = NSRect(x: bounds.minX, y: bounds.maxY - size.height, width: size.width, height: size.height)
+        let narrower = size.width < bounds.width, shorter = size.height < bounds.height
+        var mask: NSView.AutoresizingMask = narrower ? [.minXMargin, .maxXMargin] : .maxXMargin
+        mask.formUnion(shorter ? [.minYMargin, .maxYMargin] : .minYMargin)
+        view.autoresizingMask = mask
+        let x = narrower ? (bounds.midX - size.width / 2).rounded() : bounds.minX
+        let y = shorter ? (bounds.midY - size.height / 2).rounded() : bounds.maxY - size.height
+        view.frame = NSRect(x: x, y: y, width: size.width, height: size.height)
     }
 
     private var effectivePermissionUsageState: WebPermissionUsageState {

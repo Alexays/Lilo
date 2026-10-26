@@ -366,6 +366,25 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(control.sessions.count, 1, "the dropped session gave way to the new one")
     }
 
+    func testAnAgentRelaunchedThroughANewLauncherKeepsItsTabs() async throws {
+        AgentControl.reconnectGrace = .seconds(10)
+        let number = try await newAgentTab()
+        let dropped = try XCTUnwrap(control.sessions.first)
+        XCTAssertFalse(dropped.identity.isEmpty, "the test client is signed")
+        // Claude Desktop starts lilo-mcp through a `disclaimer` launcher: a new one, with a new pid, each time.
+        dropped.clientPID = 99_999
+        client.close()
+        await pollUntil(timeout: 5) { dropped.connection.isClosed }
+
+        let again = try AgentTestClient(path: socketURL)
+        defer { again.close() }
+        _ = await again.initialize(name: "Test Agent")
+
+        let tabs = try await availableTabs(again)
+        XCTAssertEqual(tabs.map { $0["tabId"] as? Int }, [number])
+        XCTAssertEqual(control.sessions.count, 1, "the dropped session gave way to the new one")
+    }
+
     func testAgentConnectingAgainBeforeItsOldConnectionClosesKeepsItsTabs() async throws {
         AgentControl.reconnectGrace = .seconds(10)
         let number = try await newAgentTab()

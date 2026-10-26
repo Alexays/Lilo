@@ -12,14 +12,16 @@ enum AgentInteractionTools {
             at one pixel per point, origin top left; a fullPage, fullResolution or element screenshot keeps that frame \
             and says how its own pixels map to it. Click on an element's center: take a screenshot first to find it, \
             or pass `ref` instead. Lilo's agent cursor never shows in screenshots.
-            Actions: left_click, right_click, double_click, triple_click, type, key, screenshot, wait, scroll, \
-            left_click_drag, zoom, scroll_to, hover.
+            Actions: left_click, right_click, double_click, triple_click, type, insert_text, key, screenshot, wait, \
+            scroll, left_click_drag, zoom, scroll_to, hover. insert_text puts text at the caret in one go, as the text \
+            system does, with no key presses and the clipboard left alone: the way for long or multi-line text in a \
+            rich editor; type sends real keys, for pages that listen to them.
             A click or Enter on a control that sends, pays, buys, orders, deletes, transfers, publishes or signs up \
             first waits up to 45 s for the user's approval in Lilo; refused or unanswered, it fails with [needs_user]: \
             ask the user to do it or allow it. A click or key returns once the requests it started end, up to 10 s, and \
             names those still running: leaving the page then may cancel them.
             """, [
-                "action": ["type": "string", "enum": ["left_click", "right_click", "double_click", "triple_click", "type", "key",
+                "action": ["type": "string", "enum": ["left_click", "right_click", "double_click", "triple_click", "type", "insert_text", "key",
                                                       "screenshot", "wait", "scroll", "left_click_drag", "zoom", "scroll_to", "hover"]],
                 "coordinate": ["type": "array", "items": ["type": "number"], "description": "(x, y) for clicks, scroll, hover, and the end of a drag."],
                 "ref": AgentTools.prop("string", "An element ref from read_page or find, instead of coordinate; for screenshot, the element to capture."),
@@ -28,7 +30,7 @@ enum AgentInteractionTools {
                 "fullPage": AgentTools.prop("boolean", "screenshot: the whole page, lazy content loaded, without resizing the viewport."),
                 "fullResolution": AgentTools.prop("boolean", "screenshot: at the page's device pixel ratio instead of one pixel per point."),
                 "savePath": AgentTools.prop("string", "screenshot: an absolute .png path to write it to, folders created; the reply gives the path, not the image."),
-                "text": AgentTools.prop("string", "The text to type, or for key the keys: space separated, modifiers joined by + (cmd+a, Return)."),
+                "text": AgentTools.prop("string", "The text to type or insert, or for key the keys: space separated, modifiers joined by + (cmd+a, Return)."),
                 "modifiers": AgentTools.prop("string", "Modifier keys held during a click, joined by + (cmd, shift, alt, ctrl)."),
                 "scroll_direction": ["type": "string", "enum": ["up", "down", "left", "right"]],
                 "scroll_amount": AgentTools.prop("number", "Wheel ticks, 3 by default."),
@@ -104,7 +106,7 @@ enum AgentInteractionTools {
                     The body of an async function: await and return work. For example: for (const u of urls) \
                     { await tool('navigate', {tabId: 1, url: u}); out.push(await tool('get_page_text', {tabId: 1})) } return out
                     """),
-                "timeout": AgentTools.prop("number", "Seconds before the run is stopped, 60 by default, up to 600.")
+                "timeout": AgentTools.prop("number", "Seconds before the run is stopped, 60 by default, up to 600. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications.")
             ], required: ["code"]),
         AgentTools.tool("list_profiles", """
             Lilo's profiles, each with its own cookies and sign-ins. Your tabs run in the one marked current: by default \
@@ -139,6 +141,7 @@ enum AgentInteractionTools {
             }
             engine.agentViewport = NSSize(width: width, height: height)
             engine.fitView(in: engine.view.superview?.bounds ?? engine.view.frame)
+            (engine.view.superview as? ContentContainerView)?.updateStage(under: engine.view, fixedSize: true)
             return [.text("Resized the viewport to \(Int(width))x\(Int(height)), kept until the tab leaves your group" + zoomNote(engine))]
         case "read_console_messages":
             let (tab, _) = try control.agentTab(arguments["tabId"], session: session)
@@ -313,6 +316,9 @@ enum AgentInteractionTools {
         case "type":
             await AgentInput.type(webView, text: arguments["text"] as? String ?? "")
             reply = "Typed"
+        case "insert_text":
+            await AgentInput.insertText(webView, text: arguments["text"] as? String ?? "")
+            reply = "Inserted"
         case "key":
             guard let keys = arguments["text"] as? String, !keys.isEmpty else { throw AgentToolError("text holds the keys to press") }
             for _ in 0..<Int(min(max(number(arguments["repeat"]) ?? 1, 1), 100)) { await AgentInput.key(webView, chord: keys) }

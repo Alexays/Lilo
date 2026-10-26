@@ -71,7 +71,7 @@ enum AgentTools {
             """, [
                 "action": ["type": "string", "enum": ["javascript_exec"], "description": "Always \"javascript_exec\"."],
                 "text": prop("string", "The JavaScript code to run."),
-                "timeout": prop("number", "Seconds before the call is stopped, 60 by default, up to 600: for a long fetch or wait."),
+                "timeout": prop("number", "Seconds before the call is stopped, 60 by default, up to 600: for a long fetch or wait. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications."),
                 "tabId": prop("number", "The tab.")
             ], required: ["action", "text", "tabId"]),
         tool("fetch", """

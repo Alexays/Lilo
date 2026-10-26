@@ -7,6 +7,8 @@ enum AgentMCP {
 
     /// Tool calls past this many seconds are stopped and answered with an error.
     static var toolDeadline: TimeInterval = 60
+    /// How often a long call tells a client that asked for progress that it still runs.
+    static var progressInterval = Duration.seconds(10)
 
     static func handle(_ message: [String: Any]?, session: AgentSession, control: AgentControl) async -> [String: Any]? {
         guard let message else { return error(id: NSNull(), code: -32700, message: "Parse error") }
@@ -98,6 +100,25 @@ enum AgentMCP {
                     return try await AgentTools.call(name, arguments: arguments, session: session, control: control)
                 }
             }
+            // A client that asked for progress hears from a long call regularly: MCP clients give up on a quiet
+            // request after their own timeout (60 s in the SDKs), well before a script's or a profile wait's.
+            nonisolated(unsafe) let progressToken = (params["_meta"] as? [String: Any])?["progressToken"]
+            let heartbeat = progressToken.map { token in
+                Task {
+                    var beats = 0
+                    while true {
+                        try? await Task.sleep(for: progressInterval)
+                        guard !Task.isCancelled else { return }
+                        beats += 1
+                        let elapsed = Int(Date().timeIntervalSince(startedAt))
+                        let note: [String: Any] = ["jsonrpc": "2.0", "method": "notifications/progress", "params": [
+                            "progressToken": token, "progress": beats, "message": "\(name) still running after \(elapsed) s"
+                        ]]
+                        if let line = AgentConnection.line(note) { session.connection.send(line) }
+                    }
+                }
+            }
+            defer { heartbeat?.cancel() }
             // The profile tools bound their own waits, which may take minutes; a script may ask for its own.
             let takesTimeout = name == "javascript_tool" || name == "run"
             let timeout = takesTimeout ? (arguments["timeout"] as? NSNumber).map { min(max($0.doubleValue, 1), 600) } : nil

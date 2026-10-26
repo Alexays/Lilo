@@ -77,18 +77,49 @@ enum AgentInput {
     static func type(_ webView: WKWebView, text: String) async {
         await settleFocus()
         guard !text.isEmpty else { return }
-        // The user's smart quotes, dashes and text replacements would rewrite what the agent types ("--cask"
-        // into an em dash): off while it types. They are global to every web view, so they come back right after.
+        await withoutSubstitutions(webView) {
+            for character in text {
+                let string = String(character)
+                pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),
+                         keyCode: keyCodes[string.lowercased()] ?? 0, modifiers: character.isUppercase ? [.shift] : [])
+                // A rich editor (X's composer) opens the new paragraph, then puts the caret in it at its next
+                // render: keys sent before that land in the old one, out of order.
+                if character.isNewline {
+                    await afterPendingEvents(webView, "_doAfterProcessingAllPendingKeyEvents:")
+                    await afterRender(webView)
+                }
+            }
+            // WebKit queues the keys: the call returns once the page, or the frame holding the focus, has handled them all.
+            await afterPendingEvents(webView, "_doAfterProcessingAllPendingKeyEvents:")
+        }
+    }
+
+    /// Inserts `text` at the caret in one go, as the text system does for a dictation or an emoji: no key
+    /// presses, and the clipboard is left alone.
+    static func insertText(_ webView: WKWebView, text: String) async {
+        await settleFocus()
+        guard !text.isEmpty else { return }
+        await withoutSubstitutions(webView) {
+            webView.insertText(text)
+            // Sent to the page's process after the insertion: answered once the page has it.
+            _ = try? await webView.callAsyncJavaScript("return 0", arguments: [:], in: nil, contentWorld: world)
+        }
+    }
+
+    /// The user's smart quotes, dashes and text replacements would rewrite what the agent types ("--cask" into an
+    /// em dash): off while it types. They are global to every web view, so they come back right after.
+    private static func withoutSubstitutions(_ webView: WKWebView, _ body: () async -> Void) async {
         let saved = substitutionKeys.map { webView.value(forKey: $0) as? Bool ?? false }
         for key in substitutionKeys { webView.setValue(false, forKey: key) }
-        defer { for (key, value) in zip(substitutionKeys, saved) { webView.setValue(value, forKey: key) } }
-        for character in text {
-            let string = String(character)
-            pressKey(webView, characters: string, ignoringModifiers: string.lowercased(),
-                     keyCode: keyCodes[string.lowercased()] ?? 0, modifiers: character.isUppercase ? [.shift] : [])
-        }
-        // WebKit queues the keys: the call returns once the page, or the frame holding the focus, has handled them all.
-        await afterPendingEvents(webView, "_doAfterProcessingAllPendingKeyEvents:")
+        await body()
+        for (key, value) in zip(substitutionKeys, saved) { webView.setValue(value, forKey: key) }
+    }
+
+    /// Returns once the page has rendered a frame and run what that render scheduled, or after 100 ms in a page
+    /// that is not painted.
+    private static func afterRender(_ webView: WKWebView) async {
+        let script = "await new Promise(done => { setTimeout(done, 100); requestAnimationFrame(() => setTimeout(done, 0)) })"
+        _ = try? await webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: world)
     }
 
     /// One mouse event, sent as is with no agent cursor: chrome.debugger's `Input.dispatchMouseEvent`.

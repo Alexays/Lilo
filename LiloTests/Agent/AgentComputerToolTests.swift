@@ -415,6 +415,57 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(keys.map { webView.value(forKey: $0) as? Bool }, [true, true, true], "the user's settings are back")
     }
 
+    /// A framework editor: Enter opens the new paragraph, and puts the caret in it, at its next render.
+    private static let richEditor = """
+        <!doctype html><body style="margin:0"><div id="ed" contenteditable style="position:absolute;left:20px;top:20px;width:400px;height:200px"><p><br></p></div>
+        <script>
+        const ed = document.getElementById('ed')
+        window.inputs = []
+        ed.addEventListener('beforeinput', e => inputs.push(e.inputType))
+        ed.addEventListener('keydown', e => {
+          if (e.key !== 'Enter') return
+          e.preventDefault()
+          requestAnimationFrame(() => {
+            const p = document.createElement('p')
+            p.appendChild(document.createElement('br'))
+            ed.appendChild(p)
+            const range = document.createRange()
+            range.setStart(p, 0)
+            getSelection().removeAllRanges()
+            getSelection().addRange(range)
+          })
+        })
+        </script></body>
+        """
+
+    func testTypeWaitsForARichEditorToOpenEachParagraph() async throws {
+        let tab = try await agentTab(showing: Self.richEditor)
+        _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [60, 30]])
+
+        _ = await client.callTool("computer", ["tabId": tab, "action": "type", "text": "First line.\n\nSecond line."])
+
+        let paragraphs = try await js("[...ed.querySelectorAll('p')].map(p => p.textContent)", tab: tab) as? [String]
+        XCTAssertEqual(paragraphs, ["First line.", "", "Second line."])
+    }
+
+    func testInsertTextPutsItAtTheCaretInOneGoAsTyped() async throws {
+        let tab = try await agentTab(showing: Self.richEditor)
+        let webView = try engine(forTab: tab).wkWebView
+        let keys = AgentInput.substitutionKeys
+        let saved = keys.map { webView.value(forKey: $0) as? Bool ?? false }
+        defer { for (key, value) in zip(keys, saved) { webView.setValue(value, forKey: key) } }
+        for key in keys { webView.setValue(true, forKey: key) }
+        _ = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [60, 30]])
+
+        let reply = await client.callTool("computer", ["tabId": tab, "action": "insert_text", "text": #"it's "ok" -- brew install --cask"#])
+
+        XCTAssertEqual(reply.text, "Inserted")
+        let text = try await js("ed.textContent", tab: tab) as? String
+        XCTAssertEqual(text, #"it's "ok" -- brew install --cask"#, "read right after the call, substitutions left out")
+        let inputs = try await js("inputs", tab: tab) as? [String]
+        XCTAssertEqual(inputs, ["insertText"], "one insertion, no key presses")
+    }
+
     func testSelectAllThenDeleteEmptiesAField() async throws {
         let tab = try await agentTab(showing: """
             <!doctype html><body style="margin:0"><input id="f" value="hello" style="position:absolute;left:20px;top:20px;width:200px;height:30px"></body>
@@ -439,6 +490,31 @@ final class AgentComputerToolTests: AgentToolTestCase {
 
         XCTAssertFalse(reply.isError, reply.text)
         XCTAssertEqual(reply.text, "\"late\"")
+    }
+
+    func testALongCallSendsProgressToAClientThatAskedForIt() async throws {
+        let tab = try await newAgentTab()
+        AgentMCP.progressInterval = .milliseconds(500)
+        defer { AgentMCP.progressInterval = .seconds(10) }
+
+        client.send(["jsonrpc": "2.0", "id": 901, "method": "tools/call", "params": [
+            "name": "javascript_tool", "_meta": ["progressToken": "long-script"],
+            "arguments": ["tabId": tab, "action": "javascript_exec", "text": "await new Promise(r => setTimeout(() => r('done'), 1600))"]
+        ]])
+        var progress: [[String: Any]] = []
+        var reply: [String: Any]?
+        while reply == nil, let message = await client.receive() {
+            if message["method"] as? String == "notifications/progress" { progress.append(message["params"] as? [String: Any] ?? [:]) }
+            if message["id"] as? Int == 901 { reply = message }
+        }
+
+        XCTAssertGreaterThanOrEqual(progress.count, 2)
+        XCTAssertEqual(progress.compactMap { $0["progressToken"] as? String }, Array(repeating: "long-script", count: progress.count))
+        XCTAssertEqual(progress.compactMap { $0["progress"] as? Int }, Array(1...progress.count), "increasing")
+        let content = (reply?["result"] as? [String: Any])?["content"] as? [[String: Any]]
+        XCTAssertEqual(content?.first?["text"] as? String, "\"done\"")
+        let after = await client.request("ping")
+        XCTAssertNotNil(after?["result"] ?? after, "no progress after the reply")
     }
 
     func testDialogsNeverOpenSheets() async throws {

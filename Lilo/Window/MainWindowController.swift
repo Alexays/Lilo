@@ -37,10 +37,37 @@ private final class LiloContentView: NSView {
 /// Holds the page views. A page kept rendering under the shown one (a shared tab, an agent's tab, an
 /// inspected tab) stays out of the accessibility tree, so VoiceOver reads only the page on screen.
 final class ContentContainerView: NSView {
+    /// Under a shown page smaller than the container (an agent set its viewport): an opaque backdrop in the
+    /// frame color, so the agent pages kept rendering below it do not show around it.
+    private let stage: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.autoresizingMask = [.width, .height]
+        return view
+    }()
+
+    var stageColor = NSColor.windowBackgroundColor {
+        didSet { stage.layer?.backgroundColor = stageColor.cgColor }
+    }
+
+    /// Puts the stage right under `view`, the shown page, when it has a fixed size that leaves part of the
+    /// container uncovered; takes it away otherwise. A fixed-size page that is not the shown one changes nothing.
+    func updateStage(under view: NSView, fixedSize: Bool) {
+        if fixedSize, subviews.last(where: { $0 !== stage }) !== view { return }
+        guard fixedSize, view.superview === self, !view.frame.contains(bounds) else {
+            stage.removeFromSuperview()
+            return
+        }
+        stage.frame = bounds
+        stage.layer?.backgroundColor = stageColor.cgColor
+        addSubview(stage, positioned: .below, relativeTo: view)
+    }
+
     override func accessibilityChildren() -> [Any]? {
         let shown = subviews.filter { !$0.isHidden }
-        // Only what VoiceOver reads covers a page: the split focus ring sits on the pane it rings.
-        let exposed = shown.map { !NSAccessibility.unignoredChildren(from: [$0]).isEmpty }
+        // Only what VoiceOver reads covers a page: the split focus ring sits on the pane it rings. The stage
+        // reads as nothing but covers what is below it.
+        let exposed = shown.map { $0 === stage || !NSAccessibility.unignoredChildren(from: [$0]).isEmpty }
         let uncovered = shown.indices.filter { index in
             // An agent's page keeps its own size and may run past the container; the panes of a
             // split above it cover it together.

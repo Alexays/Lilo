@@ -413,8 +413,11 @@ final class AgentControl {
         handOver(dropped, to: session)
     }
 
+    /// The same agent: its process, or a launcher it starts lilo-mcp through afresh each time (Claude's `disclaimer`),
+    /// known then by the code signing it was approved under.
     private static func sameClient(_ one: AgentSession, _ other: AgentSession) -> Bool {
-        one.clientPID > 0 && one.clientPID == other.clientPID && one.clientName == other.clientName
+        guard one.clientName == other.clientName else { return false }
+        return one.clientPID > 0 && one.clientPID == other.clientPID || !one.identity.isEmpty && one.identity == other.identity
     }
 
     private func handOver(_ dropped: AgentSession, to session: AgentSession) {

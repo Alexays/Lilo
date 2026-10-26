@@ -49,6 +49,53 @@ final class ContentContainerViewTests: XCTestCase {
         XCTAssertEqual(names(container), ["shown tab"])
     }
 
+    func testAShownPageSmallerThanTheContainerHidesThePagesBelowIt() {
+        let bounds = NSRect(x: 0, y: 0, width: 800, height: 600)
+        let container = ContentContainerView(frame: bounds)
+        let agentPage = page(NSRect(x: 0, y: bounds.maxY - 800, width: 1280, height: 800), "agent tab")
+        let shown = page(NSRect(x: 205, y: 0, width: 390, height: 600), "shown tab")
+        container.addSubview(agentPage)
+        container.addSubview(shown)
+
+        container.updateStage(under: shown, fixedSize: true)
+
+        let stage = container.subviews.first { $0 !== agentPage && $0 !== shown }
+        XCTAssertEqual(container.subviews.count, 3)
+        XCTAssertTrue(container.subviews[1] === stage, "between the agent page and the shown one")
+        XCTAssertEqual(stage?.frame, bounds)
+        XCTAssertNotNil(stage?.layer?.backgroundColor, "opaque")
+        XCTAssertEqual(names(container), ["shown tab"])
+    }
+
+    func testTheStageGoesWhenTheShownPageFillsTheContainerAgain() {
+        let bounds = NSRect(x: 0, y: 0, width: 800, height: 600)
+        let container = ContentContainerView(frame: bounds)
+        let shown = page(NSRect(x: 205, y: 0, width: 390, height: 600), "shown tab")
+        container.addSubview(page(bounds, "agent tab"))
+        container.addSubview(shown)
+        container.updateStage(under: shown, fixedSize: true)
+
+        shown.frame = bounds
+        container.updateStage(under: shown, fixedSize: true)
+        XCTAssertEqual(container.subviews.count, 2)
+
+        shown.frame = NSRect(x: 205, y: 0, width: 390, height: 600)
+        container.updateStage(under: shown, fixedSize: false)
+        XCTAssertEqual(container.subviews.count, 2, "a page without a fixed size, a split pane, needs none")
+    }
+
+    func testAFixedSizePageBelowTheShownOneLeavesTheStageAlone() {
+        let bounds = NSRect(x: 0, y: 0, width: 800, height: 600)
+        let container = ContentContainerView(frame: bounds)
+        let agentPage = page(NSRect(x: 0, y: 0, width: 390, height: 600), "agent tab")
+        container.addSubview(agentPage)
+        container.addSubview(page(bounds, "shown tab"))
+
+        container.updateStage(under: agentPage, fixedSize: true)
+
+        XCTAssertEqual(container.subviews.count, 2)
+    }
+
     func testThePanesOfASplitCoverThePageBelowThemTogether() {
         let bounds = NSRect(x: 0, y: 0, width: 800, height: 600)
         let container = ContentContainerView(frame: bounds)

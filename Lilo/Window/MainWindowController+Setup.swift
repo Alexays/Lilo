@@ -176,6 +176,7 @@ extension MainWindowController {
         // background-color transition (the UI throttles updateWindowBackground to ~10Hz
         // during space swipes; the native fade smooths between samples).
         windowFrameView?.setFrameColor(resolvedColor)
+        (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
         for divider in splitPanes.dividers.values { divider.setFrameColor(resolvedColor, animated: true) }
         sidePanel.setFrameColor(resolvedColor)
         // A Changes view paints the frame color under its cards.
@@ -874,6 +875,7 @@ extension MainWindowController {
         if !isSplitPane, contentContainerView.subviews.last !== nextView {
             contentContainerView.addSubview(nextView, positioned: .above, relativeTo: nil)
         }
+        (contentContainerView as? ContentContainerView)?.updateStage(under: nextView, fixedSize: !isSplitPane && engine.agentViewport != nil)
 
         processOutgoingContentViews(outgoingViews)
         nextView.isHidden = false
