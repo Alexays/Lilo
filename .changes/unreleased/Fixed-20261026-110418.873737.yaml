@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'With many tabs on a tab strip, squeezed tabs no longer slide under the Settings tab: the row scrolls instead.'
+time: 2026-10-26T11:04:18.873737+01:00

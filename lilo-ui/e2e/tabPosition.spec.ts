@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { folderWorld, initialWorld, SPACE_1 } from "./fixtures";
+import { tab, treeItem } from "../src/stores/testFixtures";
 
 async function receive(page: Page, message: Record<string, unknown>): Promise<void> {
 	await page.evaluate((msg) => window.__lilo!.receive(msg), message);
@@ -60,6 +61,23 @@ test("the sidebar going away after the strip came keeps the strip clickable", as
 	for (const id of removals) zones.delete(id);
 
 	expect([...zones.values()].some((zone) => zone.y <= strip.y + 1 && zone.height >= strip.height - 1 && zone.width >= strip.width - 1)).toBe(true);
+
+test("many squeezed pills never slide under the Settings tab", async ({ page }) => {
+	await page.setViewportSize({ width: 700, height: 500 });
+	const world = initialWorld();
+	for (let index = 0; index < 30; index++) {
+		world.tabsBySpace[SPACE_1].push(tab(`tab-extra-${index}`, SPACE_1, { title: `Extra ${index}` }));
+		world.treeItemsBySpace![SPACE_1].push(treeItem(`tab-extra-${index}`, SPACE_1, 10 + index));
+	}
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "tabs" }, ".tab-strip .strip-tab");
+	await receive(page, { event: "openSettings" });
+	const settings = (await page.locator(".tab-strip .strip-settings").boundingBox())!;
+
+	const overlapping = await page.locator(".tab-strip .today-list .strip-tab").evaluateAll(
+		(pills, edge) => pills.filter((pill) => { const box = pill.getBoundingClientRect(); return box.right > edge.left + 1 && box.left < edge.right - 1; }).length,
+		{ left: settings.x, right: settings.x + settings.width },
+	);
+	expect(overlapping).toBe(0);
 });
 
 test("the top strip lists today's tabs and switches on click", async ({ page }) => {
