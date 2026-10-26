@@ -17,21 +17,31 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
     private var sockets: [Int: Socket] = [:]
     private var nextId = 0
     private lazy var session = URLSession(configuration: .ephemeral, delegate: self, delegateQueue: .main)
-    nonisolated(unsafe) private var unloadObserver: Any?
+    nonisolated(unsafe) private var observers: [Any] = []
 
     override init() {
         super.init()
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        observers.append(NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated {
                 guard let self else { return }
                 for (id, socket) in self.sockets where socket.extensionId == extensionId { self.drop(id, code: .goingAway) }
             }
-        }
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: .extensionWorkerDidStart, object: nil, queue: .main) { [weak self] note in
+            guard let events = note.object as? GapEvents, let extensionId = note.userInfo?["extensionId"] as? String else { return }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let worker = events.workerInstance(of: extensionId)
+                for (id, socket) in self.sockets where socket.extensionId == extensionId && socket.registry?.gapEvents === events && socket.worker != worker {
+                    self.drop(id, code: .goingAway)
+                }
+            }
+        })
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -104,14 +114,15 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
         }
     }
 
-    /// Sends the event to the worker that opened the socket; one that stopped or restarted closes it.
+    /// Sends the event to the worker that opened the socket, waking one that let its channel go, as a socket message extends a
+    /// Chrome worker's life; one that stopped or restarted closes it.
     private func emit(_ id: Int, _ event: [String: Any]) {
         guard let socket = sockets[id], let registry = socket.registry else { return }
         guard registry.gapEvents.workerInstance(of: socket.extensionId) == socket.worker else {
             drop(id, code: .goingAway)
             return
         }
-        registry.gapEvents.emit("webSocket", "onEvent", args: [event.merging(["id": id]) { $1 }], to: [socket.extensionId], wakes: false)
+        registry.gapEvents.emit("webSocket", "onEvent", args: [event.merging(["id": id]) { $1 }], to: [socket.extensionId])
     }
 
     private func drop(_ id: Int, code: URLSessionWebSocketTask.CloseCode) {

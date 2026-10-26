@@ -24,6 +24,7 @@ class LiloWebSocket extends EventTarget {
   readonly CLOSING = CLOSING;
   readonly CLOSED = CLOSED;
   readonly url: string;
+  private readonly origin: string;
   readyState = CONNECTING;
   protocol = '';
   extensions = '';
@@ -46,6 +47,7 @@ class LiloWebSocket extends EventTarget {
       throw new DOMException(`The URL '${String(url)}' is invalid.`, 'SyntaxError');
     }
     this.url = parsed.href;
+    this.origin = parsed.origin;
     reportGapListener('webSocket.onEvent');
     const list = protocols === undefined ? [] : Array.isArray(protocols) ? protocols : [protocols];
     gapCall<number>('webSocket', 'connect', { url: this.url, protocols: list }).then((id) => {
@@ -79,12 +81,20 @@ class LiloWebSocket extends EventTarget {
   receive(...events: any[]): void {
     for (const event of events) {
       if (event.type === 'open') {
+        // Closed while connecting: it never opens.
+        if (this.readyState !== CONNECTING) continue;
         this.readyState = OPEN;
         this.protocol = event.protocol ?? '';
         this.fire(new Event('open'));
       } else if (event.type === 'message') {
-        const data = typeof event.text === 'string' ? event.text : Uint8Array.from(atob(event.binary ?? ''), (c) => c.charCodeAt(0)).buffer;
-        this.fire(new MessageEvent('message', { data: typeof data === 'string' || this.binaryType === 'arraybuffer' ? data : new Blob([data]), origin: new URL(this.url).origin }));
+        let data: string | ArrayBuffer = event.text;
+        if (typeof data !== 'string') {
+          const binary = atob(event.binary ?? '');
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          data = bytes.buffer;
+        }
+        this.fire(new MessageEvent('message', { data: typeof data === 'string' || this.binaryType === 'arraybuffer' ? data : new Blob([data]), origin: this.origin }));
       } else if (event.type === 'error') {
         this.fire(new Event('error'));
       } else if (event.type === 'close') {

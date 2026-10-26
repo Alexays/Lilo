@@ -160,8 +160,14 @@ final class ExtensionSettingsAPITests: XCTestCase {
         return try XCTUnwrap(answers.first)
     }
 
+    /// The worker of `id` reports an onAuthRequired listener, `blocking` or observing only.
+    private func reportAuthListener(of id: String, blocking: Bool) {
+        profile.extensions.gapEvents.listen(["webRequest.onAuthRequired"] + (blocking ? ["webRequest.onAuthRequired.blocking"] : []), extensionId: id)
+    }
+
     func testProxyChallengeTakesTheCredentialsOfAnAuthProvider() async throws {
         let id = try await loadExtension(permissions: ["proxy", "webRequest", "webRequestAuthProvider"], hostPermissions: ["<all_urls>"])
+        reportAuthListener(of: id, blocking: true)
         _ = await call("proxy", "set", ["value": ["mode": "fixed_servers", "rules": ["singleProxy": ["host": "proxy.test", "port": 3128]]]], from: id)
 
         let answer = try await proxyChallenge(heardBy: id) { requestId in
@@ -182,6 +188,7 @@ final class ExtensionSettingsAPITests: XCTestCase {
 
     func testProxyChallengeCancelsOrFallsBackToThePrompt() async throws {
         let id = try await loadExtension(permissions: ["proxy", "webRequest", "webRequestAuthProvider"], hostPermissions: ["<all_urls>"])
+        reportAuthListener(of: id, blocking: true)
 
         let cancelled = try await proxyChallenge(heardBy: id) { requestId in
             _ = await call("webRequest", "answerAuth", ["requestId": requestId, "cancel": true], from: id)
@@ -192,6 +199,16 @@ final class ExtensionSettingsAPITests: XCTestCase {
 
         XCTAssertEqual(cancelled?.0, .cancelAuthenticationChallenge)
         XCTAssertNil(unanswered)
+    }
+
+    func testProxyChallengeGoesToThePromptAtOnceWhenNoListenerMayAnswer() async throws {
+        let id = try await loadExtension(permissions: ["proxy", "webRequest", "webRequestAuthProvider"], hostPermissions: ["<all_urls>"])
+        reportAuthListener(of: id, blocking: false)
+
+        let answer = try await proxyChallenge(heardBy: id) { _ in XCTFail("the prompt does not wait for an observer") }
+
+        XCTAssertNil(answer)
+        XCTAssertEqual(events("webRequest.onAuthRequired", to: id).count, 1, "an observer still hears the challenge")
     }
 
     func testProxyChallengeSkipsExtensionsWithoutAuthProvider() async throws {
@@ -340,6 +357,20 @@ final class ExtensionSettingsAPITests: XCTestCase {
         let after = await store.dataRecords(ofTypes: [WKWebsiteDataTypeCookies]).map(\.displayName)
         XCTAssertEqual(Set(before), ["a.test", "b.test"])
         XCTAssertEqual(after, ["b.test"])
+        await store.removeData(ofTypes: [WKWebsiteDataTypeCookies], modifiedSince: .distantPast)
+    }
+
+    func testBrowsingDataSparesWebsitesWhenOriginTypesLeaveThemOut() async throws {
+        let id = try await loadExtension()
+        let store = try XCTUnwrap(profile.extensions.controller.configuration.defaultWebsiteDataStore)
+        let cookie = try XCTUnwrap(HTTPCookie(properties: [.domain: "a.test", .path: "/", .name: "n", .value: "v", .expires: Date(timeIntervalSinceNow: 3600)]))
+        await store.httpCookieStore.setCookie(cookie)
+
+        let (_, error) = await call("browsingData", "remove", ["options": ["originTypes": ["extension": true, "protectedWeb": true]], "dataToRemove": ["cookies": true]], from: id)
+
+        XCTAssertNil(error)
+        let after = await store.dataRecords(ofTypes: [WKWebsiteDataTypeCookies]).map(\.displayName)
+        XCTAssertEqual(after, ["a.test"])
         await store.removeData(ofTypes: [WKWebsiteDataTypeCookies], modifiedSince: .distantPast)
     }
 

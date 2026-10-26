@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { mockGapAPI } from '../shared/ipc.testkit.ts';
 
 const answers: unknown[] = [];
+const reports: unknown[] = [];
 mockGapAPI((msg: any) => {
   if (msg.method === 'answerAuth') answers.push(msg.params);
+  if (msg.namespace === 'events') reports.push({ [msg.method]: msg.params.events });
   return null;
 });
 (globalThis as any).chrome = { runtime: {} };
@@ -45,7 +47,38 @@ describe('webRequest.onAuthRequired for a proxy challenge', () => {
     assert.deepEqual(answers.at(-1), { requestId: 'lilo-auth-1', cancel: true });
   });
 
-  it('answers nothing for listeners whose filter leaves the request out, or that only observe', async () => {
+  it('reports a listener that may answer apart, so Lilo waits for the contexts that have one only', async () => {
+    reports.length = 0;
+    const observer = () => {};
+    const blocker = () => ({});
+    event.addListener(observer, { urls: ['<all_urls>'] });
+    event.addListener(blocker, { urls: ['<all_urls>'] }, ['blocking']);
+    await settle();
+    event.removeListener(blocker);
+    event.removeListener(observer);
+
+    assert.deepEqual(reports, [
+      { listen: ['webRequest.onAuthRequired'] },
+      { listen: ['webRequest.onAuthRequired.blocking'] },
+      { unlisten: ['webRequest.onAuthRequired.blocking'] },
+      { unlisten: ['webRequest.onAuthRequired'] },
+    ]);
+  });
+
+  it('never answers from a context whose listeners only observe', async () => {
+    const count = answers.length;
+    let heard = false;
+    const observer = () => { heard = true; return { cancel: true }; };
+    event.addListener(observer, { urls: ['<all_urls>'] });
+    event.dispatch(challenge);
+    await settle();
+    event.removeListener(observer);
+
+    assert.equal(heard, true);
+    assert.equal(answers.length, count);
+  });
+
+  it('answers empty when its blocking listeners leave the request out, while observers only observe', async () => {
     const elsewhere = () => ({ cancel: true });
     const observer = () => ({ cancel: true });
     event.addListener(elsewhere, { urls: ['https://other.test/*'] }, ['blocking']);

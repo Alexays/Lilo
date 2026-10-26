@@ -141,6 +141,13 @@ final class GapEvents {
         pages[extensionId]?.contains { $0.listeners.contains(name) } == true
     }
 
+    /// The extension's contexts that reported listening to `name`: nil for its worker, else a page's `pageChannel`.
+    func contexts(of extensionId: String, listeningTo name: String) -> [Int?] {
+        var contexts: [Int?] = workerListeners[extensionId]?.contains(name) == true ? [nil] : []
+        for page in pages[extensionId] ?? [] where page.listeners.contains(name) { contexts.append(page.channel) }
+        return contexts
+    }
+
     // MARK: - Events
 
     /// Sends the event to each extension's worker that listens, waking it if stopped unless `wakes` is
@@ -286,9 +293,11 @@ final class GapEvents {
             return
         }
         if let previous = workers[extensionId]?.port { owners[ObjectIdentifier(previous)] = nil }
+        let restarted = workers[extensionId]?.instance != instance
         workers[extensionId, default: Worker()].port = port
         workers[extensionId]?.instance = instance
         workers[extensionId]?.sentThrough = 0
+        if restarted { NotificationCenter.default.post(name: .extensionWorkerDidStart, object: self, userInfo: ["extensionId": extensionId]) }
         workerChannel(extensionId, .open)
         deliver(to: extensionId)
     }
@@ -356,4 +365,6 @@ final class GapEvents {
 extension Notification.Name {
     /// Object: the `GapEvents`. userInfo: "extensionId" and "channel" (Int), the `pageChannel` of the page's calls.
     static let extensionPageChannelDidClose = Notification.Name("fr.arouillard.lilo.extensionPageChannelDidClose")
+    /// Object: the `GapEvents`. userInfo: "extensionId". A new worker instance connected: what the previous one held is gone.
+    static let extensionWorkerDidStart = Notification.Name("fr.arouillard.lilo.extensionWorkerDidStart")
 }
