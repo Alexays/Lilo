@@ -1,1232 +1,1649 @@
 ---
-import { copy } from "../lib/i18n";
+import nativeEnglish from "../../../lilo-ui/src/lib/i18n/locales/en.json?raw";
+import nativeFrench from "../../../lilo-ui/src/lib/i18n/locales/fr.json?raw";
+import { demoMenus } from "../demo/menu";
+import { copy, demoMessages } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
+import Flower from "./Flower.astro";
 
 interface Props {
   lang: Locale;
 }
 
-interface Space {
-  id: string;
-  icon: string;
-  name: string;
-  host: string;
-  path: string;
-  favs: [icon: string, color: string][];
-  folders: [name: string, locked?: boolean][];
-  tabs: [name: string, color: string, icon: string, state?: "on" | "agent"][];
-}
-
 const { lang } = Astro.props;
 const text = copy[lang];
+const messages = demoMessages[lang];
 
-const spaces = [
-  {
-    favs: [
-      ["✉", "#5b8def"],
-      ["31", "#e5534b"],
-      ["◉", "#f4a93b"],
-      ["⌖", "#34a853"],
-    ],
-    folders: [[text.demoHome], [text.demoRenovation], [text.demoTrips, true]],
-    host: "slowtravel.blog",
-    icon: "🏠",
-    id: "perso",
-    name: "Perso",
-    path: text.demoTravelPath,
-    tabs: [
-      [text.demoArticleTitle, "#f4bb8c", "✦", "on"],
-      [text.demoRecipes, "#9bd3b4", "☘"],
-      [text.demoFlat, "#92a8ff", "⌂"],
-      ["~/Projects/lilo", "#1a1a2e", "$"],
-    ],
-  },
-  {
-    favs: [
-      ["✉", "#5b8def"],
-      ["◷", "#6a4be0"],
-      ["▤", "#2f9e8f"],
-      ["✎", "#e0825f"],
-    ],
-    folders: [[text.demoLaunch], [text.demoHiring], [text.demoReviews]],
-    host: "tracker.team",
-    icon: "💼",
-    id: "work",
-    name: text.demoWork,
-    path: "/web/inbox",
-    tabs: [
-      [text.demoInboxTab, "#6a4be0", "◷", "on"],
-      [text.demoPullRequest, "#24292f", "❖"],
-      [text.demoCheckoutTest, "#d97757", "A", "agent"],
-      ["~/shop", "#1a1a2e", "$"],
-    ],
-  },
-  {
-    favs: [
-      ["♫", "#e5534b"],
-      ["♪", "#34a853"],
-      ["◉", "#629aa9"],
-      ["★", "#a238ff"],
-    ],
-    folders: [["Setlists"], [text.demoGear]],
-    host: "radio.fm",
-    icon: "🎧",
-    id: "music",
-    name: text.demoMusic,
-    path: "/late-night",
-    tabs: [
-      [text.demoPlaylist, "#b39df4", "♫", "on"],
-      [text.demoConcerts, "#026cdf", "★"],
-      [text.demoSynth, "#555", "☷"],
-    ],
-  },
-] satisfies Space[];
+// SAFETY: these raw imports are the repository's native localization catalogs.
+const { native } = JSON.parse(lang === "fr" ? nativeFrench : nativeEnglish) as {
+  native: Record<string, string>;
+};
 
-const edges = [
-  ["left", text.demoTabsLeft],
-  ["right", text.demoTabsRight],
-  ["top", text.demoTabsTop],
-  ["bottom", text.demoTabsBottom],
-] as const;
+const menuLabel = (label: string) => {
+  const ordinal = /^Tab (?<ordinal>\d)$/u.exec(label)?.groups?.ordinal;
 
-const issues = [
-  [text.demoCheckoutIssue, "WEB-482", "prog"],
-  [text.demoOnboardingIssue, "WEB-479", ""],
-  [text.demoPricingIssue, "WEB-471", "done"],
-  [text.demoLoginIssue, "WEB-468", ""],
-  [text.demoChangelogIssue, "WEB-460", "done"],
+  if (label === "Exit Full Screen") {
+    return text.demoExitFullscreen;
+  }
+
+  return ordinal
+    ? native["Tab %d"].replace("%d", ordinal)
+    : (native[label] ?? label);
+};
+
+const menuAlternates = new Map([
+  ["sidebar", "Show Sidebar"],
+  ["pin", "Unpin Tab"],
+  ["mute", "Unmute Tab"],
+  ["fullscreen", "Exit Full Screen"],
+]);
+
+const modes = [
+  { action: "browser", label: text.demoBrowser },
+  { action: "terminal", label: text.demoTerminal },
+  { action: "mcp", label: text.demoMcp },
 ];
 ---
 
-<div class="demo">
-  <div
-    class="window"
-    id="browser-demo"
-    role="group"
-    aria-label={text.demoWindow}
-  >
-    <!-- Right and bottom keep a bar over the page for the traffic lights: shown by the edge picked below. -->
-    <div class="page-bar" aria-hidden="true">
-      <div class="lights">
-        <i></i>
-        <i></i>
-        <i></i>
-      </div>
-      <div class="navs">
-        <span>&#8249;</span>
-        <span>&#8250;</span>
-        <span>&#8635;</span>
-      </div>
-      <div class="addr">
-        {spaces.map((space) => (
-          <span data-demo-space={space.id}>
-            <b>{space.host}</b>
-            {space.path}
-          </span>
-        ))}
-      </div>
-    </div>
-    <div class="sb">
-      <div class="chrome-row" aria-hidden="true">
-        <div class="lights">
-          <i></i>
-          <i></i>
-          <i></i>
-        </div>
-        <div class="navs">
-          <span class="tabs-toggle"></span>
-          <span>&#8249;</span>
-          <span>&#8250;</span>
-          <span>&#8635;</span>
-        </div>
-      </div>
-      <div class="addr" aria-hidden="true">
-        {spaces.map((space) => (
-          <span data-demo-space={space.id}>
-            <b>{space.host}</b>
-            {space.path}
-          </span>
-        ))}
-      </div>
-      {spaces.map((space) => (
-        <div
-          class="space-content"
-          data-demo-space={space.id}
-          aria-hidden="true"
-        >
-          <div class="shead">
-            {space.icon} {space.name}
-            <em>&#9788;</em>
-            <svg class="chevron" width="10" height="10" viewBox="0 0 10 10">
-              <path
-                d="M2 3.5l3 3 3-3"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              ></path>
-            </svg>
-          </div>
-          <div class="favs">
-            {space.favs.map(([icon, color]) => (
-              <span>
-                <i style={`background:${color}`}>{icon}</i>
-              </span>
-            ))}
-          </div>
-          <div>
-            {space.folders.map(([name, locked]) => (
-              <div class="row-item">
-                <span class="fi"></span>
-                <span class="tt">{name}</span>
-                {locked && <span class="lock">🔒</span>}
-              </div>
-            ))}
-          </div>
-          <div class="divider"></div>
-          <div>
-            {space.tabs.map(([name, color, icon, state]) => (
-              <div class={`row-item ${state ?? ""}`}>
-                <span class="fav" style={`background:${color}`}>
-                  {icon}
-                </span>
-                {state === "on" && <b class="site">{space.host}</b>}
-                <span class="tt">{name}</span>
-                {state === "on" && <span class="x">✕</span>}
-                {state === "agent" && <span class="who">agent</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-      <div class="row-item newtab" aria-hidden="true">
-        <span>+</span>
-        <span>{text.demoNewTab}</span>
-      </div>
-      <span class="strip-toggle" aria-hidden="true">
-        <span class="tabs-toggle"></span>
-      </span>
-      <div class="spacebar">
-        <div class="spaces" role="radiogroup" aria-label={text.demoSpaces}>
-          {spaces.map((space, index) => (
-            <>
-              <input
-                type="radio"
-                name="demo-space"
-                id={`demo-space-${space.id}`}
-                value={space.id}
-                checked={index === 0}
-                aria-label={text.demoSpace.replace("{name}", space.name)}
-              />
-              <label
-                for={`demo-space-${space.id}`}
-                title={space.name}
-                aria-hidden="true"
-              >
-                {space.icon}
-              </label>
-            </>
-          ))}
-        </div>
+<div
+  class="demo-shell"
+  id="browser-demo"
+  role="group"
+  aria-label={text.demoWindow}
+  data-menu-locale={lang}
+  data-mac-english={demoMessages.en.exploreMacNote}
+  data-mac-french={demoMessages.fr.exploreMacNote}
+  data-exit-english={copy.en.demoExitFullscreen}
+  data-exit-french={copy.fr.demoExitFullscreen}
+>
+  <div class="demo-toolbar">
+    <div class="demo-modes" role="group" aria-label={text.demoWindow}>
+      {modes.map((mode) => (
         <button
-          class="playback"
           type="button"
-          aria-label={text.demoAutoplay}
-          aria-pressed="true"
-          title={text.demoAutoplay}
-          hidden
+          data-action={mode.action}
+          aria-pressed={mode.action === "browser"}
         >
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-          >
-            <path class="pause" d="M4 3h3v10H4zM9 3h3v10H9z" />
-            <path class="play" d="m5 2 9 6-9 6z" />
-          </svg>
+          {mode.label}
         </button>
-      </div>
+      ))}
     </div>
-    <div class="view" aria-hidden="true">
-      <div class="article" data-demo-space="perso">
-        <div class="cover">
-          <span>
-            {text.demoArticleCoverFirst}
-            <br />
-            {text.demoArticleCoverSecond}
-          </span>
-        </div>
-        <div class="body">
-          <span class="meta">{text.demoArticleMeta}</span>
-          <p>{text.demoArticleText}</p>
-          <div class="days">
-            {[text.demoFirstDay, text.demoSecondDay, text.demoThirdDay].map(
-              (day, index) => (
-                <div>
-                  <b>
-                    {text.demoDay} {index + 1}
-                  </b>
-                  {day}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-      <div class="split" data-demo-space="work">
-        <div class="issues">
-          <b class="ttl">{text.demoInbox}</b>
-          {issues.map(([title, id, state]) => (
-            <div class="issue">
-              <i class={state}></i>
-              <span>{title}</span>
-              <small>{id}</small>
+    <div class="demo-tools">
+      <button
+        type="button"
+        data-action="explore"
+        aria-label={text.demoExplore}
+        title={text.demoExplore}
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="m15.5 8.5-2 5-5 2 2-5Z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        data-action="reset"
+        aria-label={text.demoReset}
+        title={text.demoReset}
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M3 11a9 9 0 1 1 2.6 6.4M3 4v7h7" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        data-action="fullscreen"
+        data-enter-label={text.demoFullscreen}
+        data-exit-label={text.demoExitFullscreen}
+        aria-label={text.demoFullscreen}
+        aria-controls="demo-viewport"
+        aria-expanded="false"
+        title={text.demoFullscreen}
+      >
+        <svg class="expand-enter" aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+        </svg>
+        <svg class="expand-exit" aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="demo-viewport" id="demo-viewport">
+    <div class="demo-desktop">
+      <nav class="mac-menubar" aria-label="Lilo" role="menubar">
+        <span class="menu-flower" aria-hidden="true">
+          <Flower id={`demo-menu-flower-${lang}`} />
+        </span>
+        {demoMenus.map((menu, index) => (
+          <details class="mac-menu" data-menu={menu.label}>
+            <summary
+              role="menuitem"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              tabindex={index === 0 ? 0 : -1}
+            >
+              <span data-menu-label={menu.label}>{menuLabel(menu.label)}</span>
+            </summary>
+            <div
+              class="menu-items"
+              role="menu"
+              aria-label={menuLabel(menu.label)}
+              data-menu-name={menu.label}
+            >
+              {menu.children?.map((item) =>
+                "separator" in item ? (
+                  <hr
+                    role="separator"
+                    data-developer-only={item.developerOnly || undefined}
+                    data-terminal-only={item.terminalOnly || undefined}
+                    hidden={item.developerOnly}
+                  />
+                ) : item.dynamic === "spaces" ? (
+                  <div
+                    data-menu-list="spaces"
+                    role="group"
+                    aria-label={menuLabel("Spaces")}
+                    data-menu-name="Spaces"
+                  />
+                ) : item.children ? (
+                  <details class="menu-submenu" data-submenu={item.label}>
+                    <summary
+                      role="menuitem"
+                      aria-haspopup="menu"
+                      aria-expanded="false"
+                      tabindex="-1"
+                    >
+                      <span class="menu-label" data-menu-label={item.label}>
+                        {menuLabel(item.label)}
+                      </span>
+                      <span class="submenu-arrow" aria-hidden="true">
+                        ›
+                      </span>
+                    </summary>
+                    <div
+                      class="menu-items"
+                      role="menu"
+                      aria-label={menuLabel(item.label)}
+                      data-menu-name={item.label}
+                      data-menu-list={item.dynamic}
+                      data-empty-label={
+                        item.emptyLabel ? menuLabel(item.emptyLabel) : undefined
+                      }
+                      data-empty-key={item.emptyLabel}
+                    >
+                      {item.children.map((child) =>
+                        "separator" in child ? (
+                          <hr role="separator" />
+                        ) : child.dynamic === "extensions" ? (
+                          <div
+                            data-menu-list="extensions"
+                            data-native-label={messages.exploreMacNote}
+                            role="group"
+                            aria-label={menuLabel("Extensions")}
+                            data-menu-name="Extensions"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            tabindex="-1"
+                            data-action={child.action}
+                            data-shortcut={child.shortcutId}
+                            data-native-only={child.macOnly || undefined}
+                            disabled
+                            title={
+                              child.macOnly
+                                ? messages.exploreMacNote
+                                : undefined
+                            }
+                          >
+                            <span
+                              class="menu-label"
+                              data-menu-label={child.label}
+                            >
+                              {menuLabel(child.label)}
+                            </span>
+                            {child.macOnly && (
+                              <span class="menu-note" aria-hidden="true">
+                                Mac
+                              </span>
+                            )}
+                            <kbd aria-hidden="true">{child.keys}</kbd>
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </details>
+                ) : (
+                  <button
+                    type="button"
+                    role={
+                      item.action === "bookmark"
+                        ? "menuitemcheckbox"
+                        : "menuitem"
+                    }
+                    aria-checked={
+                      item.action === "bookmark" ? "false" : undefined
+                    }
+                    tabindex="-1"
+                    data-action={item.action}
+                    data-shortcut={item.shortcutId}
+                    data-native-only={item.macOnly || undefined}
+                    data-alternate={item.alternate || undefined}
+                    data-developer-only={item.developerOnly || undefined}
+                    data-default-label={menuLabel(item.label)}
+                    data-label-key={item.label}
+                    data-alternate-key={menuAlternates.get(item.action ?? "")}
+                    data-alternate-label={menuLabel(
+                      menuAlternates.get(item.action ?? "") ?? item.label
+                    )}
+                    disabled={item.action !== "fullscreen"}
+                    hidden={item.developerOnly || Boolean(item.alternate)}
+                    title={item.macOnly ? messages.exploreMacNote : undefined}
+                  >
+                    <span class="menu-label" data-menu-label={item.label}>
+                      {menuLabel(item.label)}
+                    </span>
+                    {item.macOnly && (
+                      <span class="menu-note" aria-hidden="true">
+                        Mac
+                      </span>
+                    )}
+                    <kbd aria-hidden="true">{item.keys}</kbd>
+                  </button>
+                )
+              )}
             </div>
-          ))}
-        </div>
-        <div class="term">
-          <div>
-            <b>~/shop</b> claude
-          </div>
-          <div class="dim">{text.demoConnected}</div>
-          <div class="ag">navigate localhost:3000/checkout</div>
-          <div class="ag">click "{text.demoPayNow}"</div>
-          <div class="ok">{text.demoReproduced}</div>
-          <div class="ag">screenshot</div>
-          <div class="ok">{text.demoFixReady}</div>
-        </div>
-      </div>
-      <div class="player" data-demo-space="music">
-        <div class="art"></div>
-        <div class="now">
-          <small>{text.demoNowPlaying}</small>
-          <b>{text.demoPlaylist}</b>
-          <span class="track-count">{text.demoTrackCount}</span>
-          <div class="prog">
-            <i></i>
-          </div>
-          <div class="ctrl">
-            <span>⏮</span>
-            <span class="pp">❙❙</span>
-            <span>⏭</span>
-          </div>
-          <ol>
-            <li>Night drive</li>
-            <li>Soft focus</li>
-            <li>After hours</li>
-          </ol>
-        </div>
-      </div>
+          </details>
+        ))}
+        <span class="menu-status" aria-hidden="true">
+          <svg
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          >
+            <path d="M3 8a11 11 0 0 1 14 0M6 11a6 6 0 0 1 8 0m-5 3a2 2 0 0 1 2 0" />
+            <circle cx="10" cy="16" r=".8" fill="currentColor" stroke="none" />
+          </svg>
+          <svg
+            viewBox="0 0 28 16"
+            width="23"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+          >
+            <rect x="1" y="2" width="23" height="12" rx="3" />
+            <path d="M26 6v4" stroke-linecap="round" />
+            <rect
+              x="3"
+              y="4"
+              width="17"
+              height="8"
+              rx="1.3"
+              fill="currentColor"
+              stroke="none"
+            />
+          </svg>
+        </span>
+      </nav>
+      <iframe
+        src={`/demo/?lang=${lang}`}
+        title={text.demoWindow}
+        loading="lazy"
+        allow="fullscreen"
+      ></iframe>
     </div>
   </div>
-  <div class="edges" role="radiogroup" aria-label={text.demoTabsEdge}>
-    <span class="edges-label" aria-hidden="true">
-      {text.demoTabsEdge}
-    </span>
-    {edges.map(([edge, label], index) => (
-      <>
-        <input
-          type="radio"
-          name="demo-tabs"
-          id={`demo-tabs-${edge}`}
-          value={edge}
-          checked={index === 0}
-          aria-label={label}
-        />
-        <label for={`demo-tabs-${edge}`} title={label} aria-hidden="true">
-          <span class={`edge-glyph edge-${edge}`}></span>
-        </label>
-      </>
-    ))}
-  </div>
+  <noscript>
+    <p>{text.demoNoScript}</p>
+  </noscript>
 </div>
 
 <script>
-  import { gsap } from "gsap";
-  import { CustomEase } from "gsap/CustomEase";
+  import { menuActionEnabled, parseMenuMessage } from "../demo/menu";
+  import type {
+    DemoMenuLabels,
+    DemoMenuList,
+    DemoMenuRow,
+    DemoMenuState,
+  } from "../demo/menu";
 
-  const demo = document.querySelector<HTMLElement>("#browser-demo");
+  const closeMenu = (menu: HTMLDetailsElement) => {
+    menu.open = false;
+    menu
+      .querySelector(":scope > summary")
+      ?.setAttribute("aria-expanded", "false");
 
-  if (demo) {
-    gsap.registerPlugin(CustomEase);
-    gsap.config({ autoSleep: 1 });
+    for (const child of menu.querySelectorAll<HTMLDetailsElement>(
+      ".menu-submenu[open]"
+    )) {
+      child.open = false;
+      child
+        .querySelector(":scope > summary")
+        ?.setAttribute("aria-expanded", "false");
+    }
+  };
 
-    const ease = CustomEase.create("space-slide", "0.22,1,0.36,1");
+  const menuItems = (panel: HTMLElement) =>
+    [...panel.querySelectorAll<HTMLElement>("button, summary")].filter(
+      (item) =>
+        item.closest("[role='menu']") === panel &&
+        !item.hidden &&
+        !(item instanceof HTMLButtonElement && item.disabled)
+    );
 
-    const controls = [
-      ...demo.querySelectorAll<HTMLInputElement>('input[type="radio"]'),
-    ];
+  const menuKeyboardContext = (
+    menu: HTMLDetailsElement,
+    active: HTMLElement
+  ) => {
+    const panel =
+      active.closest<HTMLElement>("[role='menu']") ??
+      menu.querySelector<HTMLElement>(":scope > .menu-items");
 
-    const group = demo.querySelector<HTMLElement>(".spaces");
-    const edgePicker = demo.parentElement?.querySelector<HTMLElement>(".edges");
-    const playback = demo.querySelector<HTMLButtonElement>(".playback");
-    const motion = gsap.matchMedia();
+    if (!panel) {
+      return null;
+    }
 
-    motion.add("(prefers-reduced-motion: no-preference)", () => {
-      let current = controls.findIndex((control) => control.checked);
-      let autoplay = true;
-      let visible = false;
-      let transition: gsap.core.Tween | undefined;
+    const parent = active.parentElement;
 
-      const show = (index: number) => {
-        transition?.revert();
+    const submenu =
+      active.tagName === "SUMMARY" &&
+      parent instanceof HTMLDetailsElement &&
+      parent.classList.contains("menu-submenu")
+        ? parent
+        : null;
 
-        const direction =
-          (index - current + controls.length) % controls.length === 1
-            ? 36
-            : -36;
+    return {
+      active,
+      containingSubmenu: submenu?.open
+        ? submenu
+        : panel.closest<HTMLDetailsElement>(".menu-submenu"),
+      items: menuItems(panel),
+      menu,
+      rootSummary: menu.querySelector<HTMLElement>(":scope > summary"),
+      submenu,
+    };
+  };
 
-        const control = controls[index];
+  type MenuKeyboardContext = NonNullable<
+    ReturnType<typeof menuKeyboardContext>
+  >;
 
-        control.checked = true;
-        current = index;
+  const terminalMenuActions = new Set([
+    "newTerminal",
+    "newTerminalBeside",
+    "newTerminalBelow",
+    "nextWaitingTerminal",
+  ]);
 
-        const space = `[data-demo-space="${control.value}"]`;
+  const syncMenuButton = (button: HTMLButtonElement, state: DemoMenuState) => {
+    const action = button.dataset.action ?? "";
+    button.disabled =
+      action !== "fullscreen" && !menuActionEnabled(action, state);
 
-        const panes = demo.querySelectorAll(
-          `.space-content${space} > :not(.divider), .view > ${space}`
-        );
+    if (terminalMenuActions.has(action)) {
+      button.hidden = state.terminalEnabled === false;
+    }
 
-        transition = gsap.fromTo(
-          panes,
-          { autoAlpha: 0, x: direction },
-          {
-            autoAlpha: 1,
-            clearProps: "transform,opacity,visibility",
-            duration: 0.42,
-            ease,
-            stagger: 0.035,
-            x: 0,
-          }
-        );
-      };
+    const alternate =
+      (action === "sidebar" && !state.sidebarVisible) ||
+      (action === "pin" && state.isPinned) ||
+      (action === "mute" && state.isMuted);
 
-      const cycle = gsap.timeline({ paused: true, repeat: -1 });
-      cycle.call(() => show((current + 1) % controls.length), [], 3.2);
+    const label = alternate
+      ? button.dataset.alternateLabel
+      : button.dataset.defaultLabel;
 
-      const syncPlayback = () => {
-        const playing = autoplay && visible && !document.hidden;
-        cycle.paused(!playing);
+    const text = button.querySelector(".menu-label");
 
-        if (!playing) {
-          transition?.progress(1);
-        }
+    if (text && label && text.textContent !== label) {
+      text.textContent = label;
+    }
 
-        playback?.setAttribute("aria-pressed", String(autoplay));
-      };
+    if (action === "bookmark") {
+      button.setAttribute("aria-checked", String(state.isBookmarked));
+    }
+  };
 
-      const stop = () => {
-        autoplay = false;
-        syncPlayback();
-      };
+  interface MenuListContent {
+    rows: DemoMenuRow[];
+    action: string;
+  }
 
-      const select = () => {
-        stop();
-        show(controls.findIndex((control) => control.checked));
-      };
+  const menuContents = (
+    state: DemoMenuState
+  ): Record<DemoMenuList, MenuListContent> => ({
+    extensions: { action: "", rows: state.extensions ?? [] },
+    folders: {
+      action: "moveToFolder",
+      rows: state.isBookmarked ? [] : (state.folders ?? []),
+    },
+    moveSpaces: {
+      action: "moveToSpace",
+      rows: (state.spaces ?? []).filter((space) => !space.selected),
+    },
+    recentlyClosed: {
+      action: "restoreClosedTab",
+      rows: state.recentlyClosed ?? [],
+    },
+    recentlyVisited: {
+      action: "openHistoryItem",
+      rows: state.recentlyVisited ?? [],
+    },
+    spaces: { action: "selectSpace", rows: state.spaces ?? [] },
+    terminals: { action: "selectTab", rows: state.terminals ?? [] },
+  });
 
-      const togglePlayback = () => {
-        autoplay = !autoplay;
-        cycle.restart().pause();
-        syncPlayback();
-      };
+  const createMenuRow = (
+    row: DemoMenuRow,
+    index: number,
+    name: string,
+    action: string,
+    panel: HTMLElement,
+    state: DemoMenuState
+  ) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.role = row.selected === undefined ? "menuitem" : "menuitemradio";
+    button.tabIndex = -1;
+    button.dataset.action = action;
+    button.dataset.id = row.id;
+    button.disabled =
+      name === "extensions" ||
+      ((name === "folders" || name === "moveSpaces") && !state.hasActiveTab);
 
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          visible = entry.intersectionRatio >= 0.2;
-          syncPlayback();
-        },
-        { threshold: 0.2 }
-      );
+    if (row.selected !== undefined) {
+      button.setAttribute("aria-checked", String(row.selected));
+    }
 
-      observer.observe(demo);
-      group?.addEventListener("pointerdown", stop);
-      group?.addEventListener("focusin", stop);
-      group?.addEventListener("change", select);
-      edgePicker?.addEventListener("pointerdown", stop);
-      edgePicker?.addEventListener("focusin", stop);
-      playback?.addEventListener("click", togglePlayback);
-      document.addEventListener("visibilitychange", syncPlayback);
+    const label = document.createElement("span");
+    label.className = "menu-label";
+    label.textContent = `${row.icon ? `${row.icon}  ` : ""}${row.title}`;
+    button.append(label);
 
-      if (playback) {
-        playback.hidden = false;
+    if (name === "extensions") {
+      button.dataset.nativeOnly = "true";
+      button.title = panel.dataset.nativeLabel ?? "";
+      const note = document.createElement("span");
+      note.className = "menu-note";
+      note.textContent = "Mac";
+      note.setAttribute("aria-hidden", "true");
+      button.append(note);
+    }
+
+    if (name === "spaces" && index < 9) {
+      const keys = document.createElement("kbd");
+      keys.setAttribute("aria-hidden", "true");
+      keys.textContent = state.shortcutKeys
+        ? (state.shortcutKeys[`space.select${index + 1}`] ?? "")
+        : `⌃${index + 1}`;
+      button.append(keys);
+    }
+
+    return button;
+  };
+
+  const renderMenuList = (
+    panel: HTMLElement,
+    name: string,
+    content: MenuListContent,
+    state: DemoMenuState
+  ) => {
+    const { action, rows } = content;
+
+    const signature = JSON.stringify([
+      rows,
+      state.hasActiveTab,
+      state.shortcutKeys,
+      panel.dataset.emptyLabel,
+      panel.dataset.nativeLabel,
+    ]);
+
+    if (panel.dataset.signature === signature) {
+      return;
+    }
+
+    panel.dataset.signature = signature;
+
+    const buttons = rows.map((row, index) =>
+      createMenuRow(row, index, name, action, panel, state)
+    );
+
+    if (!buttons.length && panel.dataset.emptyLabel) {
+      const empty = document.createElement("button");
+      empty.type = "button";
+      empty.role = "menuitem";
+      empty.disabled = true;
+      empty.textContent = panel.dataset.emptyLabel;
+      buttons.push(empty);
+    }
+
+    panel.replaceChildren(...buttons);
+
+    if (name === "extensions" && rows.length) {
+      const separator = document.createElement("hr");
+      separator.role = "separator";
+      panel.append(separator);
+    }
+  };
+
+  const applyMenuLabels = (demo: HTMLElement, message: DemoMenuLabels) => {
+    const locale = message.locale ?? demo.dataset.menuLocale;
+    const french = locale === "fr";
+
+    const exitLabel = french
+      ? demo.dataset.exitFrench
+      : demo.dataset.exitEnglish;
+
+    const nativeLabel = french
+      ? demo.dataset.macFrench
+      : demo.dataset.macEnglish;
+
+    if (locale) {
+      demo.dataset.menuLocale = locale;
+    }
+
+    const translate = (key: string) => {
+      if (key === "Exit Full Screen") {
+        return exitLabel ?? key;
       }
 
-      return () => {
-        observer.disconnect();
-        group?.removeEventListener("pointerdown", stop);
-        group?.removeEventListener("focusin", stop);
-        group?.removeEventListener("change", select);
-        edgePicker?.removeEventListener("pointerdown", stop);
-        edgePicker?.removeEventListener("focusin", stop);
-        playback?.removeEventListener("click", togglePlayback);
-        document.removeEventListener("visibilitychange", syncPlayback);
-        transition?.revert();
+      const ordinal = /^Tab (?<ordinal>\d)$/u.exec(key)?.groups?.ordinal;
 
-        if (playback) {
-          playback.hidden = true;
+      return ordinal
+        ? (message.labels["Tab %d"] ?? "Tab %d").replace("%d", ordinal)
+        : (message.labels[key] ?? key);
+    };
+
+    for (const label of demo.querySelectorAll<HTMLElement>(
+      "[data-menu-label]"
+    )) {
+      label.textContent = translate(label.dataset.menuLabel ?? "");
+    }
+
+    for (const panel of demo.querySelectorAll<HTMLElement>(
+      "[data-menu-name]"
+    )) {
+      panel.setAttribute("aria-label", translate(panel.dataset.menuName ?? ""));
+    }
+
+    for (const button of demo.querySelectorAll<HTMLElement>(
+      "[data-label-key]"
+    )) {
+      button.dataset.defaultLabel = translate(button.dataset.labelKey ?? "");
+
+      if (button.dataset.alternateKey) {
+        button.dataset.alternateLabel = translate(button.dataset.alternateKey);
+      }
+    }
+
+    for (const panel of demo.querySelectorAll<HTMLElement>(
+      "[data-empty-key]"
+    )) {
+      panel.dataset.emptyLabel = translate(panel.dataset.emptyKey ?? "");
+    }
+
+    if (nativeLabel) {
+      for (const button of demo.querySelectorAll<HTMLElement>(
+        "[data-native-only]"
+      )) {
+        button.title = nativeLabel;
+      }
+
+      for (const panel of demo.querySelectorAll<HTMLElement>(
+        "[data-native-label]"
+      )) {
+        panel.dataset.nativeLabel = nativeLabel;
+      }
+    }
+  };
+
+  const demo = document.querySelector<HTMLElement>("#browser-demo");
+  const frame = demo?.querySelector<HTMLIFrameElement>("iframe");
+  const viewport = demo?.querySelector<HTMLElement>(".demo-viewport");
+  const desktop = demo?.querySelector<HTMLElement>(".demo-desktop");
+
+  const expand = demo?.querySelector<HTMLButtonElement>(
+    ".demo-tools [data-action='fullscreen']"
+  );
+
+  if (demo && frame && viewport && desktop && expand) {
+    type DemoMessage =
+      | string
+      | { type: "lilo-demo:menu-command"; action: string; id: string };
+
+    let ready = false;
+    let visible = false;
+    let pendingMessage: DemoMessage | null = null;
+    let previousFocus: HTMLElement | null = null;
+    const inertSiblings: HTMLElement[] = [];
+
+    const send = (message: DemoMessage) => {
+      frame.contentWindow?.postMessage(message, location.origin);
+    };
+
+    const syncVisibility = () => {
+      send(
+        visible && !document.hidden ? "lilo-demo:visible" : "lilo-demo:hidden"
+      );
+    };
+
+    const syncAppearance = () => {
+      const dark =
+        document.documentElement.dataset.theme === "dark" ||
+        (!document.documentElement.dataset.theme &&
+          matchMedia("(prefers-color-scheme: dark)").matches);
+
+      send(dark ? "lilo-demo:dark" : "lilo-demo:light");
+    };
+
+    const closeMenus = () => {
+      for (const menu of demo.querySelectorAll<HTMLDetailsElement>(
+        ".mac-menu[open], .menu-submenu[open]"
+      )) {
+        closeMenu(menu);
+      }
+    };
+
+    const syncExpansion = () => {
+      const expanded =
+        document.fullscreenElement === demo ||
+        Object.hasOwn(demo.dataset, "expanded");
+
+      const label = expanded
+        ? expand.dataset.exitLabel
+        : expand.dataset.enterLabel;
+
+      expand.setAttribute("aria-expanded", String(expanded));
+
+      if (label) {
+        expand.setAttribute("aria-label", label);
+        expand.title = label;
+      }
+
+      const menuButton = demo.querySelector<HTMLButtonElement>(
+        ".mac-menu [data-action='fullscreen']"
+      );
+
+      const menuLabel = expanded
+        ? menuButton?.dataset.alternateLabel
+        : menuButton?.dataset.defaultLabel;
+
+      const menuText = menuButton?.querySelector(".menu-label");
+
+      if (menuText && menuLabel) {
+        menuText.textContent = menuLabel;
+      }
+    };
+
+    const setExpanded = (expanded: boolean) => {
+      if (Object.hasOwn(demo.dataset, "expanded") === expanded) {
+        return;
+      }
+
+      demo.toggleAttribute("data-expanded", expanded);
+
+      if (expanded) {
+        previousFocus =
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+
+        let branch: HTMLElement | null = demo;
+
+        while (branch && branch !== document.body) {
+          const parent: HTMLElement | null = branch.parentElement;
+
+          if (!parent) {
+            break;
+          }
+
+          for (const sibling of parent.children) {
+            if (
+              sibling instanceof HTMLElement &&
+              sibling !== branch &&
+              !sibling.inert
+            ) {
+              sibling.inert = true;
+              inertSiblings.push(sibling);
+            }
+          }
+
+          branch = parent;
         }
-      };
+
+        expand.focus({ preventScroll: true });
+      } else {
+        for (const sibling of inertSiblings) {
+          sibling.inert = false;
+        }
+
+        inertSiblings.length = 0;
+        previousFocus?.focus({ preventScroll: true });
+        previousFocus = null;
+      }
+
+      syncExpansion();
+    };
+
+    const fullscreen = async () => {
+      if (Object.hasOwn(demo.dataset, "expanded")) {
+        setExpanded(false);
+
+        return;
+      }
+
+      if (document.fullscreenElement === demo) {
+        await document.exitFullscreen();
+
+        return;
+      }
+
+      try {
+        await demo.requestFullscreen();
+      } catch {
+        setExpanded(true);
+      }
+    };
+
+    const syncMode = (action: string) => {
+      if (!["browser", "terminal", "mcp", "reset"].includes(action)) {
+        return;
+      }
+
+      for (const button of demo.querySelectorAll<HTMLButtonElement>(
+        ".demo-modes button"
+      )) {
+        button.setAttribute(
+          "aria-pressed",
+          String(
+            button.dataset.action === (action === "reset" ? "browser" : action)
+          )
+        );
+      }
+    };
+
+    const exitOnEscape = (event: KeyboardEvent) => {
+      if (
+        event.key === "Escape" &&
+        !event.defaultPrevented &&
+        Object.hasOwn(demo.dataset, "expanded")
+      ) {
+        event.preventDefault();
+        setExpanded(false);
+      }
+    };
+
+    const positionMenu = (menu: HTMLDetailsElement) => {
+      const panel = menu.querySelector<HTMLElement>(":scope > .menu-items");
+
+      if (!panel) {
+        return;
+      }
+
+      delete menu.dataset.openLeft;
+      panel.style.removeProperty("--menu-offset-y");
+      const desktopRect = desktop.getBoundingClientRect();
+      const scale = desktopRect.width / desktop.offsetWidth;
+      let rect = panel.getBoundingClientRect();
+
+      if (rect.right > desktopRect.right - 5) {
+        menu.dataset.openLeft = "";
+        rect = panel.getBoundingClientRect();
+      }
+
+      const vertical = Math.min(0, desktopRect.bottom - rect.bottom - 6);
+      panel.style.setProperty("--menu-offset-y", `${vertical / scale}px`);
+    };
+
+    const openMenu = (menu: HTMLDetailsElement) => {
+      menu.open = true;
+      menu
+        .querySelector(":scope > summary")
+        ?.setAttribute("aria-expanded", "true");
+      positionMenu(menu);
+    };
+
+    demo.addEventListener("click", (event) => {
+      const submenu =
+        event.target instanceof Element
+          ? event.target.closest<HTMLDetailsElement>(".menu-submenu")
+          : null;
+
+      if (
+        submenu &&
+        event.target instanceof Element &&
+        event.target.closest("summary") ===
+          submenu.querySelector(":scope > summary")
+      ) {
+        event.preventDefault();
+        openMenu(submenu);
+
+        return;
+      }
+
+      const button =
+        event.target instanceof Element
+          ? event.target.closest<HTMLButtonElement>("[data-action]")
+          : null;
+
+      const action = button?.dataset.action;
+
+      if (!action || button?.disabled) {
+        return;
+      }
+
+      closeMenus();
+
+      if (action === "fullscreen") {
+        void fullscreen();
+      } else {
+        syncMode(action);
+
+        const message: DemoMessage = button?.dataset.id
+          ? { action, id: button.dataset.id, type: "lilo-demo:menu-command" }
+          : `lilo-demo:${action}`;
+
+        if (ready) {
+          send(message);
+        } else {
+          pendingMessage = message;
+        }
+
+        frame.focus();
+      }
     });
+    const menus = [...demo.querySelectorAll<HTMLDetailsElement>(".mac-menu")];
+
+    const focusMenu = (menu: HTMLDetailsElement, first: boolean) => {
+      closeMenus();
+      openMenu(menu);
+
+      const panel = menu.querySelector<HTMLElement>(":scope > .menu-items");
+
+      if (panel) {
+        (first ? menuItems(panel)[0] : menuItems(panel).at(-1))?.focus();
+      }
+    };
+
+    let lastMenuState: DemoMenuState | null = null;
+
+    const syncMenuState = (state: DemoMenuState) => {
+      lastMenuState = state;
+
+      for (const button of demo.querySelectorAll<HTMLButtonElement>(
+        ".mac-menu button[data-action]:not([data-id])"
+      )) {
+        syncMenuButton(button, state);
+      }
+
+      for (const item of demo.querySelectorAll<HTMLElement>(
+        "[data-developer-only]"
+      )) {
+        item.hidden = !state.developerTools;
+      }
+
+      for (const item of demo.querySelectorAll<HTMLElement>(
+        "[data-terminal-only]"
+      )) {
+        item.hidden = state.terminalEnabled === false;
+      }
+
+      for (const item of demo.querySelectorAll<HTMLElement>(
+        "[data-shortcut]"
+      )) {
+        const id = item.dataset.shortcut;
+        const keys = item.querySelector("kbd");
+
+        if (id && keys && state.shortcutKeys) {
+          keys.textContent = state.shortcutKeys[id] ?? "";
+        }
+      }
+
+      const develop = demo.querySelector<HTMLDetailsElement>(
+        "[data-menu='Develop']"
+      );
+
+      if (develop) {
+        develop.hidden = state.showDevelopMenu === false;
+
+        if (develop.hidden) {
+          closeMenu(develop);
+        }
+      }
+
+      for (const [name, content] of Object.entries(menuContents(state))) {
+        const panel = demo.querySelector<HTMLElement>(
+          `[data-menu-list='${name}']`
+        );
+
+        if (panel) {
+          renderMenuList(panel, name, content, state);
+        }
+      }
+
+      syncExpansion();
+    };
+
+    const syncMenuLabels = (message: DemoMenuLabels) => {
+      applyMenuLabels(demo, message);
+
+      if (lastMenuState) {
+        syncMenuState(lastMenuState);
+      }
+    };
+
+    let typed = "";
+    let typedAt = 0;
+
+    const syncAlternates = (
+      event: Pick<KeyboardEvent, "altKey" | "shiftKey">
+    ) => {
+      for (const alternate of demo.querySelectorAll<HTMLButtonElement>(
+        "[data-alternate]"
+      )) {
+        const shown =
+          alternate.dataset.alternate === "shift"
+            ? event.shiftKey
+            : event.altKey;
+
+        alternate.hidden = !shown;
+        const primary = alternate.previousElementSibling;
+
+        if (primary instanceof HTMLButtonElement) {
+          primary.hidden = shown;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", syncAlternates, true);
+    document.addEventListener("keyup", syncAlternates, true);
+    window.addEventListener("blur", () =>
+      syncAlternates({ altKey: false, shiftKey: false })
+    );
+
+    const focusChildMenu = (menu: HTMLDetailsElement) => {
+      openMenu(menu);
+      const panel = menu.querySelector<HTMLElement>(":scope > .menu-items");
+
+      if (panel) {
+        menuItems(panel)[0]?.focus();
+      }
+    };
+
+    const moveVertical = (context: MenuKeyboardContext, key: string) => {
+      openMenu(context.menu);
+      const direction = key === "ArrowDown" ? 1 : -1;
+      const index = context.items.indexOf(context.active);
+
+      let next =
+        (index + direction + context.items.length) % context.items.length;
+
+      if (index === -1) {
+        next = direction > 0 ? 0 : context.items.length - 1;
+      }
+
+      context.items[next]?.focus();
+    };
+
+    const moveBoundary = (context: MenuKeyboardContext, key: string) => {
+      openMenu(context.menu);
+      (key === "Home" ? context.items[0] : context.items.at(-1))?.focus();
+    };
+
+    const moveHorizontal = (
+      context: MenuKeyboardContext,
+      direction: number
+    ) => {
+      if (direction > 0 && context.submenu) {
+        focusChildMenu(context.submenu);
+
+        return;
+      }
+
+      if (direction < 0 && context.containingSubmenu) {
+        closeMenu(context.containingSubmenu);
+        context.containingSubmenu
+          .querySelector<HTMLElement>(":scope > summary")
+          ?.focus();
+
+        return;
+      }
+
+      const visibleMenus = menus.filter((candidate) => !candidate.hidden);
+
+      const next =
+        visibleMenus[
+          (visibleMenus.indexOf(context.menu) +
+            direction +
+            visibleMenus.length) %
+            visibleMenus.length
+        ];
+
+      if (context.menu.open) {
+        focusMenu(next, true);
+      } else {
+        next.querySelector<HTMLElement>(":scope > summary")?.focus();
+      }
+    };
+
+    const activateMenuSummary = (context: MenuKeyboardContext) => {
+      if (!context.submenu && context.active !== context.rootSummary) {
+        return false;
+      }
+
+      focusChildMenu(context.submenu ?? context.menu);
+
+      return true;
+    };
+
+    const typeAhead = (context: MenuKeyboardContext, event: KeyboardEvent) => {
+      if (
+        event.key.length !== 1 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const now = performance.now();
+      typed =
+        now - typedAt < 600 && typed !== event.key
+          ? typed + event.key
+          : event.key;
+      typedAt = now;
+      const needle = typed.toLocaleLowerCase();
+      const index = context.items.indexOf(context.active);
+
+      const match = [
+        ...context.items.slice(index + 1),
+        ...context.items.slice(0, index + 1),
+      ].find((item) =>
+        item.textContent?.trim().toLocaleLowerCase().startsWith(needle)
+      );
+
+      match?.focus();
+    };
+
+    const handleMenuKeyDown = (event: KeyboardEvent) => {
+      const menu = event.currentTarget;
+
+      if (
+        !(menu instanceof HTMLDetailsElement) ||
+        !(event.target instanceof HTMLElement)
+      ) {
+        return;
+      }
+
+      if (event.key === "Tab") {
+        closeMenus();
+
+        return;
+      }
+
+      if (event.key === "Escape" && !menu.open) {
+        return;
+      }
+
+      const context = menuKeyboardContext(menu, event.target);
+
+      if (!context) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowDown":
+        case "ArrowUp": {
+          moveVertical(context, event.key);
+          break;
+        }
+
+        case "Home":
+        case "End": {
+          moveBoundary(context, event.key);
+          break;
+        }
+
+        case "Enter":
+        case " ": {
+          if (!activateMenuSummary(context)) {
+            return;
+          }
+
+          break;
+        }
+
+        case "ArrowRight": {
+          moveHorizontal(context, 1);
+          break;
+        }
+
+        case "ArrowLeft": {
+          moveHorizontal(context, -1);
+          break;
+        }
+
+        case "Escape": {
+          const selected = context.containingSubmenu ?? menu;
+          closeMenu(selected);
+          selected.querySelector<HTMLElement>(":scope > summary")?.focus();
+          break;
+        }
+
+        default: {
+          typeAhead(context, event);
+
+          return;
+        }
+      }
+
+      event.preventDefault();
+    };
+
+    const handleMenuToggle = (event: Event) => {
+      const menu = event.currentTarget;
+
+      if (!(menu instanceof HTMLDetailsElement)) {
+        return;
+      }
+
+      typed = "";
+      menu
+        .querySelector(":scope > summary")
+        ?.setAttribute("aria-expanded", String(menu.open));
+
+      if (menu.open) {
+        for (const other of menus) {
+          if (other !== menu) {
+            closeMenu(other);
+          }
+        }
+
+        positionMenu(menu);
+      }
+    };
+
+    for (const menu of menus) {
+      menu.addEventListener("toggle", handleMenuToggle);
+      menu.addEventListener("keydown", handleMenuKeyDown);
+      menu.addEventListener("pointerenter", () => {
+        if (menus.some((candidate) => candidate.open)) {
+          closeMenus();
+          openMenu(menu);
+        }
+      });
+      menu.addEventListener("focusin", () => {
+        for (const root of menus) {
+          const summary = root.querySelector<HTMLElement>(":scope > summary");
+
+          if (summary) {
+            summary.tabIndex = root === menu ? 0 : -1;
+          }
+        }
+      });
+      menu.addEventListener("pointerover", (event) => {
+        if (
+          event.pointerType !== "mouse" ||
+          !(event.target instanceof Element)
+        ) {
+          return;
+        }
+
+        const target = event.target.closest<HTMLElement>("button, summary");
+        const panel = target?.closest<HTMLElement>("[role='menu']");
+
+        if (!panel) {
+          return;
+        }
+
+        for (const child of panel.children) {
+          if (child instanceof HTMLDetailsElement) {
+            if (child.querySelector(":scope > summary") === target) {
+              openMenu(child);
+            } else {
+              closeMenu(child);
+            }
+          }
+        }
+      });
+
+      for (const submenu of menu.querySelectorAll<HTMLDetailsElement>(
+        ".menu-submenu"
+      )) {
+        submenu.addEventListener("toggle", () => {
+          submenu
+            .querySelector(":scope > summary")
+            ?.setAttribute("aria-expanded", String(submenu.open));
+
+          if (submenu.open) {
+            positionMenu(submenu);
+          }
+        });
+      }
+    }
+
+    document.addEventListener("pointerdown", (event) => {
+      syncAlternates(event);
+
+      if (
+        !(event.target instanceof Element && event.target.closest(".mac-menu"))
+      ) {
+        closeMenus();
+      }
+    });
+    window.addEventListener("message", (event) => {
+      if (
+        event.origin !== location.origin ||
+        event.source !== frame.contentWindow
+      ) {
+        return;
+      }
+
+      if (event.data === "lilo-demo:ready") {
+        ready = true;
+        syncAppearance();
+        syncVisibility();
+
+        if (pendingMessage) {
+          send(pendingMessage);
+          pendingMessage = null;
+        }
+      }
+
+      const menuMessage = parseMenuMessage(event);
+
+      if (menuMessage?.type === "lilo-demo:menu-state") {
+        syncMenuState(menuMessage);
+      }
+
+      if (menuMessage?.type === "lilo-demo:menu-labels") {
+        syncMenuLabels(menuMessage);
+      }
+
+      if (event.data === "lilo-demo:interaction") {
+        closeMenus();
+      }
+
+      for (const mode of ["browser", "terminal", "mcp"]) {
+        if (event.data === `lilo-demo:mode:${mode}`) {
+          syncMode(mode);
+        }
+      }
+
+      if (event.data === "lilo-demo:fullscreen") {
+        void fullscreen();
+      }
+    });
+    new ResizeObserver(([entry]) => {
+      if (!entry) {
+        return;
+      }
+
+      const { height, width } = entry.contentRect;
+      const scale = Math.min(1, width / 900, height / 670);
+
+      if (scale <= 0) {
+        return;
+      }
+
+      desktop.style.width = `${width / scale}px`;
+      desktop.style.height = `${height / scale}px`;
+      desktop.style.transform = `scale(${scale})`;
+    }).observe(viewport);
+    new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting;
+        syncVisibility();
+      },
+      { threshold: 0 }
+    ).observe(demo);
+    new MutationObserver(syncAppearance).observe(document.documentElement, {
+      attributeFilter: ["data-theme"],
+      attributes: true,
+    });
+    matchMedia("(prefers-color-scheme: dark)").addEventListener(
+      "change",
+      syncAppearance
+    );
+    document.addEventListener("visibilitychange", syncVisibility);
+    document.addEventListener("fullscreenchange", syncExpansion);
+    document.addEventListener("keydown", exitOnEscape);
+
+    const bindFrameKeyboard = () => {
+      frame.contentDocument?.addEventListener("keydown", exitOnEscape);
+    };
+
+    frame.addEventListener("load", bindFrameKeyboard);
+    bindFrameKeyboard();
   }
 </script>
 
 <style>
-  .demo {
-    display: grid;
-    gap: 20px;
-    justify-items: center;
-  }
-
-  .demo .window {
-    width: 100%;
-  }
-
-  /* Hidden until an edge needs it: right and bottom keep the traffic lights and the address there. */
-  .page-bar {
-    display: none;
-    align-items: center;
-    gap: 16px;
-    padding: 0 10px 0 12px;
-    min-width: 0;
-  }
-
-  .page-bar .navs {
-    margin-left: 0;
-  }
-
-  .page-bar .navs span:first-child {
-    margin-right: 0;
-  }
-
-  .page-bar .addr {
-    flex: 1;
-    max-width: 480px;
-    height: 32px;
+  .demo-shell {
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 0 12px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow:
+      0 40px 90px -30px #29203955,
+      0 0 0 1px #00000020;
+    text-align: left;
+  }
+  .demo-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--tint) 10%, var(--paper));
+  }
+  .demo-modes,
+  .demo-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .demo-tools {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .demo-toolbar button {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-  }
-
-  /* Drawn on the edge the tabs sit on, as the app's own toggle is. */
-  .tabs-toggle {
-    position: relative;
-    align-self: center;
-    width: 15px;
-    height: 12px;
-    border-radius: 3px;
-    box-shadow: inset 0 0 0 1.3px currentColor;
-  }
-
-  .tabs-toggle::after {
-    content: "";
-    position: absolute;
-    left: 2.5px;
-    top: 2.5px;
-    bottom: 2.5px;
-    width: 3px;
-    border-radius: 1px;
-    background: currentColor;
-  }
-
-  .demo:has(#demo-tabs-right:checked) .tabs-toggle::after {
-    left: auto;
-    right: 2.5px;
-  }
-
-  .demo:has(#demo-tabs-top:checked) .tabs-toggle::after {
-    right: 2.5px;
-    bottom: auto;
-    width: auto;
-    height: 2.5px;
-  }
-
-  .demo:has(#demo-tabs-bottom:checked) .tabs-toggle::after {
-    right: 2.5px;
-    top: auto;
-    width: auto;
-    height: 2.5px;
-  }
-
-  .shead .chevron,
-  .row-item .site,
-  .strip-toggle {
-    display: none;
-  }
-
-  .demo:has(#demo-tabs-right:checked) .window,
-  .demo:has(#demo-tabs-top:checked) .window,
-  .demo:has(#demo-tabs-bottom:checked) .window {
-    padding: 0 8px 8px;
-  }
-
-  .demo:has(#demo-tabs-right:checked) .window {
-    grid-template-columns: minmax(0, 1fr) 252px;
-    grid-template-rows: 40px minmax(0, 1fr);
-    grid-template-areas: "bar sb" "view sb";
-    padding: 0 0 8px 8px;
-  }
-
-  .demo:has(#demo-tabs-top:checked) .window {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 40px minmax(0, 1fr);
-    grid-template-areas: "sb" "view";
-  }
-
-  /* The dock floats 10px off the window's edges, so the window drops its bottom inset. */
-  .demo:has(#demo-tabs-bottom:checked) .window {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 40px minmax(0, 1fr) 72px;
-    grid-template-areas: "bar" "view" "sb";
-    padding: 0 8px;
-  }
-
-  .demo:has(#demo-tabs-right:checked) .page-bar,
-  .demo:has(#demo-tabs-bottom:checked) .page-bar {
-    display: flex;
-    grid-area: bar;
-  }
-
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
-    .sb {
-    grid-area: sb;
-  }
-
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
-    .view {
-    grid-area: view;
-  }
-
-  /* The address lives in the page bar on the right and at the bottom, in the active pill at the top. */
-  .demo:has(:is(#demo-tabs-right, #demo-tabs-top, #demo-tabs-bottom):checked)
-    .sb
-    > .addr,
-  .demo:has(#demo-tabs-bottom:checked) .sb > .chrome-row {
-    display: none;
-  }
-
-  /* On the right the sidebar's top row keeps only the tabs toggle. */
-  .demo:has(#demo-tabs-right:checked) .sb > .chrome-row .lights,
-  .demo:has(#demo-tabs-right:checked)
-    .sb
-    > .chrome-row
-    .navs
-    span:not(.tabs-toggle),
-  .demo:has(#demo-tabs-top:checked) .sb > .chrome-row .tabs-toggle {
-    display: none;
-  }
-
-  .demo:has(#demo-tabs-right:checked) .sb > .chrome-row .tabs-toggle {
-    margin-right: 4px;
-  }
-
-  /* A strip: one row of 32px pills with 6px corners, the tabs toggle at its end. */
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .sb {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    padding: 0 2px 0 4px;
-    overflow: hidden;
-  }
-
-  .demo:has(#demo-tabs-bottom:checked) .sb {
-    margin: 10px 2px;
+    min-height: 36px;
+    border: 1px solid transparent;
+    border-radius: 7px;
     padding: 0 10px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  }
-
-  .demo:has(#demo-tabs-top:checked) .sb > .chrome-row {
-    flex: none;
-    margin-right: 6px;
-  }
-
-  /* Pills past the end fade out, as the app's strip does before it scrolls. */
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .space-content {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-    overflow: hidden;
-    mask-image: linear-gradient(to left, transparent, black 24px);
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
-    .space-content
-    > div {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead {
-    flex: none;
-    height: 32px;
-    gap: 7px;
-    padding: 0 10px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.16);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead .chevron {
-    display: block;
-    flex: none;
-    opacity: 0.7;
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .shead em,
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .lock,
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .spacebar,
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
-    .newtab
-    span:last-child {
-    display: none;
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    margin: 0;
-  }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs span {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
     background: transparent;
+    color: var(--ink-2);
+    font: 600 12px/1.2 var(--sys);
+    white-space: nowrap;
+    cursor: pointer;
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs::after,
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .divider {
-    content: "";
-    flex: none;
-    width: 1px;
+  .demo-toolbar button:hover {
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--ink);
+  }
+  .demo-toolbar button:focus-visible {
+    outline-offset: -2px;
+  }
+  .demo-modes button[aria-pressed="true"] {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 3px #0000000a;
+  }
+  .demo-tools button {
+    width: 36px;
+    padding: 0;
+  }
+  .demo-tools svg {
+    width: 18px;
     height: 18px;
-    margin: 0 4px;
-    background: rgba(255, 255, 255, 0.14);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item {
+  .demo-tools .expand-exit {
+    display: none;
+  }
+  .demo-viewport {
     position: relative;
-    flex: 0 1 170px;
-    min-width: 32px;
-    height: 32px;
-    gap: 8px;
-    padding: 0 8px;
-    border-radius: 6px;
+    width: 100%;
+    aspect-ratio: 900 / 670;
+    max-height: min(670px, calc(100svh - 160px));
+    overflow: clip;
+    background: var(--sidebar);
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .row-item.on {
-    flex: 0 0 260px;
+  .demo-desktop {
+    position: absolute;
+    inset: 0 auto auto 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    transform-origin: top left;
   }
-
-  /* Folders keep their whole name, packed 2px apart like the pinned row. */
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .favs + div {
+  .mac-menubar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1px;
     flex: none;
-    gap: 2px;
+    height: 30px;
+    padding: 0 12px;
+    color: var(--ink);
+    background: var(--paper);
+    font:
+      12px/1.4 -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
-    .favs
-    + div
-    .row-item {
-    flex: none;
-    gap: 7px;
-    padding: 0 9px;
+  .menu-flower {
+    display: flex;
+    align-items: center;
+    margin-right: 9px;
   }
-
-  /* A hairline between two resting pills, none beside the active one. */
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked)
-    .divider
-    + div
-    > .row-item:not(.on)
-    + .row-item:not(.on)::before {
-    content: "";
+  .menu-flower :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+  .mac-menu {
+    position: relative;
+  }
+  .mac-menu > summary {
+    list-style: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .mac-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .mac-menu:first-of-type > summary {
+    font-weight: 700;
+  }
+  .mac-menu[open] > summary {
+    background: #716c7b20;
+  }
+  .menu-items {
     position: absolute;
     left: 0;
-    top: 9px;
-    bottom: 9px;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.14);
+    top: calc(100% + 2px);
+    min-width: 250px;
+    width: max-content;
+    max-width: 380px;
+    padding: 5px;
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow:
+      0 10px 30px #00000025,
+      0 0 0 1px #00000018;
+    transform: translateY(var(--menu-offset-y, 0px));
   }
-
-  .demo:has(#demo-tabs-top:checked) .row-item .site {
-    display: block;
-    flex: none;
-    font-weight: 600;
+  .mac-menu[data-open-left] > .menu-items {
+    left: auto;
+    right: 0;
   }
-
-  .demo:has(#demo-tabs-top:checked) .row-item.on .tt {
-    color: rgba(255, 255, 255, 0.65);
+  .menu-submenu {
+    position: relative;
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .newtab {
-    flex: none;
-    width: 32px;
-    padding: 0;
-    justify-content: center;
+  .menu-submenu > .menu-items {
+    top: -5px;
+    left: calc(100% - 4px);
   }
-
-  .demo:has(:is(#demo-tabs-top, #demo-tabs-bottom):checked) .strip-toggle {
-    flex: none;
-    width: 32px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    color: rgba(255, 255, 255, 0.55);
+  .menu-submenu[data-open-left] > .menu-items {
+    left: auto;
+    right: calc(100% - 4px);
   }
-
-  /* Each edge has its own keyframes so a new pick restarts the settle-in. */
-  .demo:has(#demo-tabs-left:checked) .window > * {
-    animation: edge-left 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  .menu-submenu > summary {
+    list-style: none;
+    user-select: none;
   }
-  .demo:has(#demo-tabs-right:checked) .window > * {
-    animation: edge-right 0.42s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .demo:has(#demo-tabs-top:checked) .window > * {
-    animation: edge-top 0.42s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .demo:has(#demo-tabs-bottom:checked) .window > * {
-    animation: edge-bottom 0.42s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  @keyframes edge-left {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-  }
-  @keyframes edge-right {
-    from {
-      opacity: 0;
-      transform: translateX(10px);
-    }
-  }
-  @keyframes edge-top {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-  }
-  @keyframes edge-bottom {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .demo .window > * {
-      animation: none !important;
-    }
-  }
-
-  .edges {
+  .menu-items :global(button),
+  .menu-submenu > summary {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 4px 4px 14px;
-    border-radius: 999px;
-    background: var(--surface);
-    box-shadow:
-      0 0 0 0.5px var(--line),
-      0 6px 18px color-mix(in srgb, var(--accent) 14%, transparent);
-    color: var(--ink-2);
-    font: 600 13px/1 var(--sys);
-  }
-
-  .edges-label {
-    margin-right: 6px;
-  }
-
-  .edges input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
+    gap: 8px;
+    width: 100%;
+    min-height: 25px;
+    padding: 4px 9px 4px 24px;
     border: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .edges label {
-    width: 40px;
-    height: 32px;
-    border-radius: 999px;
-    display: grid;
-    place-items: center;
+    border-radius: 4px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
     cursor: pointer;
-    transition:
-      background-color 0.2s,
-      color 0.2s;
-  }
-
-  .edges input:checked + label {
-    background: var(--accent);
-    color: var(--on-brand);
-  }
-
-  .edges input:focus-visible + label {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  .edge-glyph {
-    position: relative;
-    width: 22px;
-    height: 16px;
-    border-radius: 3px;
-    box-shadow: inset 0 0 0 1.4px currentColor;
-  }
-
-  .edge-glyph::after {
-    content: "";
-    position: absolute;
-    border-radius: 1.5px;
-    background: currentColor;
-  }
-
-  .edge-glyph.edge-left::after {
-    left: 2px;
-    top: 2px;
-    bottom: 2px;
-    width: 6px;
-  }
-  .edge-glyph.edge-right::after {
-    right: 2px;
-    top: 2px;
-    bottom: 2px;
-    width: 6px;
-  }
-  .edge-glyph.edge-top::after {
-    left: 2px;
-    right: 2px;
-    top: 2px;
-    height: 4px;
-  }
-  .edge-glyph.edge-bottom::after {
-    left: 3px;
-    right: 3px;
-    bottom: 2px;
-    height: 4px;
-  }
-
-  /* Phones keep the sidebar demo: a strip has no room on a narrow window. */
-  @media (max-width: 900px) {
-    .edges {
-      display: none;
-    }
-  }
-
-  /* Perso: a travel article */
-  .article {
-    display: grid;
-    grid-template-rows: 46% auto;
-  }
-  .article .cover {
-    background: linear-gradient(160deg, #f4bb8c, #f1a7a5 45%, #92a8ff);
-    position: relative;
-  }
-  .article .cover span {
-    position: absolute;
-    left: 32px;
-    bottom: 22px;
-    font: 800 34px/1.05 var(--round);
-    color: #fff;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  }
-  .article .body {
-    padding: 22px 32px;
-    display: grid;
-    gap: 14px;
-    align-content: start;
-  }
-  .article .meta {
-    font-size: 12px;
-    color: #6b6b80;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .article p {
-    font-size: 14px;
-    line-height: 1.6;
-    color: #3b3b4f;
-    max-width: 52ch;
-  }
-  .article .days {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-  }
-  .article .days div {
-    border-radius: 10px;
-    background: #f6f3fb;
-    padding: 12px;
-    font-size: 12.5px;
-    color: #4b4b63;
-  }
-  .article .days b {
-    display: block;
-    font-size: 13.5px;
-    color: #1f2328;
-    margin-bottom: 2px;
-  }
-  /* Work: issue list split with a terminal */
-  .split {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-    gap: 6px;
-    background: var(--frame);
-  }
-  .issues {
-    background: #fff;
-    padding: 18px 20px;
-    display: grid;
-    gap: 4px;
-    align-content: start;
-    border-radius: 10px 0 0 10px;
-  }
-  .issues .ttl {
-    display: block;
-    margin: 0 0 8px;
-    font: 700 16px/1.2 var(--sys);
-  }
-  .issue {
-    display: grid;
-    grid-template-columns: 12px minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    padding: 9px 6px;
-    border-bottom: 1px solid #eeecf3;
-    font-size: 13px;
-  }
-  .issue i {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 2px solid #c3c1d0;
-  }
-  .issue i.prog {
-    border-color: #f4bb8c;
-    background: conic-gradient(#f4bb8c 50%, transparent 0);
-  }
-  .issue i.done {
-    border-color: #6a4be0;
-    background: #6a4be0;
-  }
-  .issue span {
-    overflow: hidden;
     white-space: nowrap;
+  }
+  .menu-items :global(button:not(:disabled):hover),
+  .menu-items :global(button:focus-visible),
+  .menu-submenu > summary:hover,
+  .menu-submenu > summary:focus-visible,
+  .menu-submenu[open] > summary {
+    background: #416bcd;
+    color: white;
+    outline: none;
+  }
+  .menu-items :global(button:disabled) {
+    color: var(--ink-2);
+    opacity: 0.55;
+    cursor: default;
+  }
+  .menu-items :global(button[aria-checked="true"])::before {
+    position: absolute;
+    left: 7px;
+    content: "✓";
+  }
+  .menu-items :global(.menu-label) {
+    flex: 1;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
-  .issue small {
-    font: 11px var(--mono);
-    color: #8a8aa3;
-  }
-  .term {
-    background: #14141f;
-    color: #c8c8d8;
-    font: 12px/1.75 var(--mono);
-    padding: 16px;
-    border-radius: 0 10px 10px 0;
-    overflow: hidden;
-  }
-  .term b {
-    color: #b39df4;
-    font-weight: 500;
-  }
-  .term .ok {
-    color: #9bd3b4;
-  }
-  .term .ag {
-    color: #f4bb8c;
-  }
-  .term .dim {
-    color: #6d6d85;
-  }
-  /* Music: a player */
-  .player {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 28px;
-    padding: 32px;
-    align-items: start;
-    background: linear-gradient(180deg, #faf5ff, #ffffff 60%);
-  }
-  .player .art {
-    aspect-ratio: 1;
-    border-radius: 16px;
-    background: radial-gradient(
-      circle at 30% 30%,
-      #f0a8c8,
-      #b39df4 50%,
-      #4a2fc8
-    );
-    box-shadow: 0 20px 40px -18px rgba(74, 47, 200, 0.6);
-  }
-  .player .now {
-    display: grid;
-    gap: 10px;
-  }
-  .player .now small {
-    font-size: 12px;
-    color: #6b6b80;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .player .now b {
-    font: 800 24px/1.1 var(--round);
-  }
-  .player .prog {
-    height: 5px;
-    border-radius: 3px;
-    background: #ece8f5;
-    overflow: hidden;
-  }
-  .player .prog i {
-    display: block;
-    width: 38%;
-    height: 100%;
-    background: #6a4be0;
-  }
-  .player .ctrl {
-    display: flex;
-    gap: 18px;
-    font-size: 18px;
-    color: #3b3b4f;
-    align-items: center;
-  }
-  .player .ctrl .pp {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #1a1a2e;
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-size: 14px;
-  }
-  .player ol {
-    margin: 8px 0 0;
-    padding-left: 1.2em;
-    display: grid;
-    gap: 6px;
-    font-size: 13px;
-    color: #4b4b63;
-  }
-  .spacebar label {
-    width: 30px;
-    height: 28px;
-    border-radius: 8px;
-    border: 0;
-    display: grid;
-    place-items: center;
-    background: transparent;
-    font-size: 14px;
-    cursor: pointer;
-    filter: grayscale(0.6);
+  .menu-items :global(kbd) {
+    flex: none;
+    font: inherit;
     opacity: 0.7;
   }
-  .spacebar input:checked + label {
-    background: rgba(255, 255, 255, 0.2);
-    filter: none;
-    opacity: 1;
+  .menu-items :global(.menu-note) {
+    margin-left: auto;
+    font-size: 10px;
   }
-
-  /* Space selection also tints the shared header and footer. */
-  :global(html:has(#demo-space-perso:checked)) {
-    --tint: #c3a5ea;
+  .submenu-arrow {
+    margin-left: auto;
+    font-size: 17px;
+    line-height: 1;
   }
-  :global(html:has(#demo-space-work:checked)) {
-    --tint: #92a8ff;
-  }
-  :global(html:has(#demo-space-music:checked)) {
-    --tint: #f0a8c8;
-  }
-  .window:has(#demo-space-perso:checked)
-    [data-demo-space]:not([data-demo-space="perso"]),
-  .window:has(#demo-space-work:checked)
-    [data-demo-space]:not([data-demo-space="work"]),
-  .window:has(#demo-space-music:checked)
-    [data-demo-space]:not([data-demo-space="music"]) {
-    display: none;
-  }
-  .space-content {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-  }
-  .spacebar input {
-    position: absolute;
-    width: 1px;
+  .menu-items :global(hr) {
     height: 1px;
-    padding: 0;
+    margin: 4px 7px;
     border: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
+    background: var(--line);
   }
-  .spacebar input:focus-visible + label {
-    outline: 2px solid #fff;
-    outline-offset: 3px;
+  .menu-items :global([data-menu-list="spaces"]),
+  .menu-items[data-menu-list] {
+    max-height: 300px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
-  .spacebar {
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 0 4px;
-    position: relative;
-  }
-  .spaces {
-    display: flex;
-    gap: 6px;
-  }
-  .playback {
-    position: absolute;
-    right: 0;
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-  }
-  .playback[hidden],
-  .playback[aria-pressed="true"] .play,
-  .playback[aria-pressed="false"] .pause {
+  .mac-menu[hidden],
+  .menu-items :global([hidden]) {
     display: none;
   }
-  .playback:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  .track-count {
+  .menu-status {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-left: auto;
+    opacity: 0.65;
     font-size: 13px;
-    color: #6b6b80;
   }
-  @media (max-width: 900px) {
-    .split,
-    .player {
-      grid-template-columns: minmax(0, 1fr);
+  iframe {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    border: 0;
+    width: 100%;
+    height: 640px;
+    color-scheme: normal;
+    background: #e2daf1;
+  }
+  .demo-shell:is(:fullscreen, [data-expanded]) {
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  .demo-shell[data-expanded] {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+  }
+  .demo-shell::backdrop {
+    background: var(--paper);
+  }
+  .demo-shell:is(:fullscreen, [data-expanded]) .demo-toolbar {
+    flex: none;
+    padding-inline: max(8px, env(safe-area-inset-left, 0px))
+      max(8px, env(safe-area-inset-right, 0px));
+  }
+  .demo-shell:is(:fullscreen, [data-expanded]) .demo-viewport {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+  .demo-shell:is(:fullscreen, [data-expanded]) .expand-enter {
+    display: none;
+  }
+  .demo-shell:is(:fullscreen, [data-expanded]) .expand-exit {
+    display: block;
+  }
+  :global(html:has(.demo-shell[data-expanded])) {
+    overflow: hidden;
+  }
+  noscript p {
+    padding: 12px 16px;
+    font: 13px/1.5 var(--sys);
+    color: var(--ink);
+  }
+  @media (pointer: coarse) {
+    .demo-toolbar button {
+      min-height: 44px;
     }
-    .term {
-      display: none;
+    .demo-tools button {
+      width: 44px;
+    }
+  }
+  @media (max-width: 380px) {
+    .demo-toolbar {
+      gap: 4px;
+      padding-inline: 6px;
+    }
+    .demo-modes button {
+      padding-inline: 7px;
     }
   }
 </style>

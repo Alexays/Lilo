@@ -190,7 +190,8 @@ def sync_json_ld(path):
 
 
 def main():
-    pages = sorted(path.relative_to(DIST).as_posix() for path in DIST.rglob("index.html"))
+    pages = sorted(path.relative_to(DIST).as_posix() for path in DIST.rglob("index.html")
+                   if not path.is_relative_to(DIST / "demo"))
     full = []
     for path in sorted(pages, key=lambda path: (path != "index.html", path)):
         sync_json_ld(path)
