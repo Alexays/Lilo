@@ -27,6 +27,16 @@ async function openActions(page: Page): Promise<void> {
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
 	await page.locator(".command-bar-input").fill(":");
 	await expect(page.locator(".command-bar-result").first()).toBeVisible();
+	// Some actions arrive a moment later and shift the rows: measure once the list holds still.
+	let last = "";
+	await expect
+		.poll(async () => {
+			const now = JSON.stringify(await page.locator(".command-bar-result").evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().y)));
+			const settled = now === last;
+			last = now;
+			return settled;
+		}, { intervals: [100] })
+		.toBe(true);
 }
 
 test("action rows draw a line icon centered in its tile, the tile centered on the title block", async ({ page }) => {
