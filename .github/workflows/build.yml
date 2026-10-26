@@ -70,8 +70,10 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('lilo-ui/package-lock.json') }}
-      - run: npx playwright install --with-deps chromium
+          key: playwright-shell-${{ runner.os }}-${{ hashFiles('lilo-ui/package-lock.json') }}
+      # The image's Chrome already brings the libraries the headless shell needs; --with-deps would also apt-get
+      # fonts and Xvfb from a mirror that takes up to 13 minutes.
+      - run: npx playwright install --only-shell chromium
         working-directory: lilo-ui
       - run: make e2e
       - name: List tests that passed only on a retry
