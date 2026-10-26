@@ -395,8 +395,10 @@
     min-width: 32px;
   }
 
+  /* A width, not just a flex basis: WebKit sizes a group on its slots' widths and would leave the active pill overflowing. */
   .strip-slot:has(> :global(.strip-tab.active)) {
-    flex: 0 0 260px;
+    flex: none;
+    width: 260px;
   }
 
   .strip-slot.icon-only,
