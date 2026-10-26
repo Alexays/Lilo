@@ -178,7 +178,9 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div onclick={clickVersion}>
     <UiListRow {title} {description}>
-      <UiButton disabled={!updater?.available} onclick={() => settingsActions.checkForUpdates()}>{t("settings.items.appUpdates.check")}</UiButton>
+      {#snippet action()}
+        <UiButton disabled={!updater?.available} onclick={() => settingsActions.checkForUpdates()}>{t("settings.items.appUpdates.check")}</UiButton>
+      {/snippet}
     </UiListRow>
   </div>
 {:else}
