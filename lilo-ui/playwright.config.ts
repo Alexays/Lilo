@@ -8,6 +8,8 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
+	// Playwright's default, half the cores, leaves two of the CI runner's four idle; locally it keeps the Mac usable.
+	workers: process.env.CI ? "100%" : undefined,
 	// CI lists the tests that passed only on their retry from the JSON report (scripts/retried_tests.py).
 	reporter: process.env.CI ? [["list"], ["github"], ["json", { outputFile: "test-results/report.json" }]] : "list",
 	use: {
