@@ -88,6 +88,12 @@ final class DownloadsBridgeHandler: GapHandler {
             guard ["http", "https", "data"].contains(scheme) else {
                 return BridgeError("Unsupported download URL scheme")
             }
+            let requested = call.string("filename")
+            // Chrome takes a path relative to the downloads folder, so nothing may climb out of it or hide.
+            if let requested, requested.hasPrefix("/")
+                || requested.split(separator: "/", omittingEmptySubsequences: false).contains(where: { $0.isEmpty || $0.hasPrefix(".") }) {
+                return BridgeError("Invalid filename")
+            }
             var request = URLRequest(url: url)
             request.httpMethod = call.string("method") ?? "GET"
             request.httpBody = call.string("body").map { Data($0.utf8) }
@@ -103,17 +109,24 @@ final class DownloadsBridgeHandler: GapHandler {
                     request.setValue(value, forHTTPHeaderField: name)
                 }
             }
-            let filename = Self.sanitizeFilename(call.string("filename")) ?? url.lastPathComponent
+            let filename = requested ?? url.lastPathComponent
             let folder = resolvedDownloadsFolder(downloadManager.settingsFolder)
+            let target = folder.appendingPathComponent(filename)
             // "uniquify" (the default) and "prompt" let the backend pick a free name in the folder.
-            var destination: URL? = call.string("conflictAction") == "overwrite" ? folder.appendingPathComponent(filename) : nil
+            var destination: URL? = call.string("conflictAction") == "overwrite" ? target : nil
             if call.bool("saveAs") {
                 let panel = NSSavePanel()
-                panel.nameFieldStringValue = filename
+                panel.nameFieldStringValue = target.lastPathComponent
                 panel.directoryURL = folder
                 let response = await withCheckedContinuation { continuation in panel.begin { continuation.resume(returning: $0) } }
                 guard response == .OK, let chosen = panel.url else { return BridgeError("Download canceled") }
                 destination = chosen
+            } else if requested?.contains("/") == true {
+                do {
+                    try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+                } catch {
+                    return BridgeError(error.localizedDescription)
+                }
             }
             return bridged { try downloadManager.startExtensionDownload(request: request, suggestedFilename: filename, destination: destination) }
 
@@ -183,44 +196,22 @@ final class DownloadsBridgeHandler: GapHandler {
         (call.int("downloadId") ?? call.int("id")).map(Int64.init)
     }
 
-    /// Reduce a JS-supplied `filename` to a single safe path component: strip directory separators
-    /// and parent-traversal so the suggested name can't escape the downloads directory downstream.
-    private static func sanitizeFilename(_ raw: String?) -> String? {
-        guard let raw, !raw.isEmpty else { return nil }
-        let lastComponent = (raw as NSString).lastPathComponent
-        let cleaned = lastComponent
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: ":", with: "_")
-        let trimmed = cleaned.drop { $0 == "." }
-        return trimmed.isEmpty ? nil : String(trimmed)
-    }
-
     private static func searchItems(in store: DownloadStore, matching call: GapCall) async throws -> [DownloadItem] {
         let id = call.int("id").map(Int64.init)
         let url = call.string("url")
         let filename = call.string("filename")
-        let query = (call.payload["query"] as? [String])?.joined(separator: " ")
-            ?? call.string("query")
+        let query = (call.payload["query"] as? [String]) ?? call.string("query").map { [$0] } ?? []
         // Chrome reads 0 as unlimited; the cap keeps the read bounded.
         let limit = call.int("limit").map { $0 > 0 ? min($0, maxSearchResults) : maxSearchResults } ?? maxSearchResults
-
-        let state = chromeState(from: call.string("state"))
-        // in_progress spans two stored states, so it stays a Swift filter; the others hit the SQL predicate.
-        let sqlState = state == .inProgress ? nil : state
-        let items = try await Task.detached {
-            try store.search(state: sqlState, query: query, url: url, filename: filename, id: id, limit: limit)
-        }.value
-        guard state == .inProgress else { return items }
-        return items.filter { $0.state == .inProgress || $0.state == .paused }
-    }
-
-    private static func chromeState(from value: String?) -> DownloadState? {
-        switch value {
-        case "in_progress": return .inProgress
-        case "interrupted": return .interrupted
-        case "complete": return .complete
-        default: return nil
+        let states: [DownloadState] = switch call.string("state") {
+        case "in_progress": [.inProgress, .paused]
+        case "interrupted": [.interrupted]
+        case "complete": [.complete]
+        default: []
         }
+        return try await Task.detached {
+            try store.search(states: states, query: query, url: url, filename: filename, id: id, limit: limit)
+        }.value
     }
 
     static func chromeState(for item: DownloadItem) -> String {
