@@ -44,12 +44,14 @@ DMGBUILD_DIR := build/dmgbuild-$(DMGBUILD_VERSION)
 # Inside the checkout, so a worktree's build goes with the worktree instead of staying in ~/Library.
 XCODEBUILD := xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath $(CURDIR)/.derived.noindex/xcode
 # They wait out real clocks (a worker's 30 s unload, a controller's first 5 s, a terminal's 5 s between
-# line counts): about 100 s together.
+# line counts): about 100 s together. The ruleset compile takes a second alone, but WebKit starves it while
+# the other test runs keep every core busy: past its 120 s bound, it only skips.
 SLOW_TESTS := GapRouterStoreProviderTests/testAnIdleWorkerUnloadsOnChromesScheduleAndHearsLaterEvents \
 	GitDiffTests/testTerminalLineCountsRunOncePerIntervalButFollowADirectoryChangeAtOnce \
 	ProfileExtensionRegistryTests/testReEnabledOrReloadedWorkerHearsNeitherOnInstalledNorOnStartup \
 	ProfileExtensionRegistryTests/testWorkersRestoredLateHearOnStartupOnly \
 	WebKitGapTests/testLifecycleEventsDependOnTheControllerAge \
+	WebKitGapTests/testRulesetOverWebKitsRuleCapDoesNotApply \
 	WebKitGapTests/testWebSocketStallsTheWorkerLoad
 DEBUG_TEAM_ID := $(or $(LILO_DEBUG_TEAM_ID),$(LILO_TEAM_ID))
 DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SIGN_IDENTITY="$(or $(LILO_DEBUG_CODE_SIGN_IDENTITY),Apple Development)" CODE_SIGN_STYLE=Manual)
@@ -412,9 +414,9 @@ vt-zip: vt-build-source
 check-commits:
 	@scripts/check_commits.sh $(BASE)
 
-## Time launches of a Release build against a throwaway profile (RUNS=10 TABS=0)
+## Time launches of a Release build against a throwaway profile (RUNS=10 TABS=0; APP=path times that app, unbuilt)
 startup-bench:
-	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT))
+	@scripts/bench_startup.sh $(or $(RUNS),10) --tabs $(or $(TABS),0) $(if $(OUT),--out $(OUT)) $(if $(APP),--app '$(abspath $(APP))')
 
 # Extensions download once into build/ext-bench; the bench takes about 5 minutes. The idle budget sits well above
 # a healthy build and well below a busy loop in a worker or the bridge; MAX_IDLE_CPU= measures without one.

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Median startup marks of a Release Lilo on a throwaway home, onboarding pending then completed. Usage:
-# bench_startup.sh [runs=10] [--no-build] [--tabs N] [--url URL] [--all] [--out DIR] [--variant NAME:[app=PATH] [VAR=value]...]
+# bench_startup.sh [runs=10] [--no-build] [--app PATH] [--tabs N] [--url URL] [--all] [--out DIR] [--variant NAME:[app=PATH] [VAR=value]...]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,6 +16,7 @@ VARIANTS=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-build) BUILD=false ;;
+        --app) APP="$2"; BUILD=false; shift ;;
         --tabs) TABS="$2"; shift ;;
         --url) URL="$2"; shift ;;
         --all) ALL=true ;;
