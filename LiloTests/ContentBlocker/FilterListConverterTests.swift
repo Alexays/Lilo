@@ -250,6 +250,31 @@ final class FilterListConverterTests: XCTestCase {
 
     func testWildcardAndAnchors() {
         XCTAssertEqual(trigger("|http://ad.*/track|")?["url-filter"] as? String, "^http://ad\\..*/track$")
+        XCTAssertEqual(trigger("/ad/image/*")?["url-filter"] as? String, "/ad/image/.*")
+        XCTAssertEqual(trigger("||ads.example^*/track")?["url-filter"] as? String, "^https?://([^/]+\\.)?ads\\.example[^-a-zA-Z0-9._%].*/track")
+        XCTAssertTrue(isDropped("/site=*/viewid="), "an unanchored inner wildcard costs every load")
+        XCTAssertTrue(isDropped(#"/\.com\/.*\/track/"#))
+        XCTAssertTrue(isDropped(#"/\/js\/[a-z0-9]+\.js$/"#))
+        XCTAssertEqual(trigger(#"/^https?:\/\/[a-z]+\.com\/ad\.js/"#)?["url-filter"] as? String, #"^https?:\/\/[a-z][a-z]*\.com\/ad\.js"#)
+        XCTAssertEqual(trigger("@@/zig_cookiepolicybar/*/CookieBar.js$script")?["url-filter"] as? String, "/zig_cookiepolicybar/",
+                       "a costly exception widens to what precedes its wildcard")
+        XCTAssertEqual(trigger("@@/site=*/viewid=$script,domain=a.example")?["url-filter"] as? String, "/site=")
+        XCTAssertEqual(trigger("@@/site=*/viewid=$script")?["url-filter"] as? String, "/site=.*/viewid=", "too short to stand on every site")
+        XCTAssertEqual(trigger(#"@@/\/(ab|cd).*\/x\.js/$domain=a.example"#)?["url-filter"] as? String, #"\/(ab).*\/x\.js"#,
+                       "a prefix cutting a group open stays whole")
+    }
+
+    /// A costly page rule matches the page's URL once, as its top URL, instead of every load's.
+    func testCostlyPageRulesMoveToTheTopURL() throws {
+        let page = try XCTUnwrap(trigger("/?pl=*&sm=$doc"))
+        XCTAssertEqual(page["url-filter"] as? String, ".*")
+        XCTAssertEqual(page["if-top-url"] as? [String], [#"/\?pl=.*&sm="#])
+        XCTAssertEqual(page["load-context"] as? [String], ["top-frame"])
+        XCTAssertEqual(page["resource-type"] as? [String], ["document"])
+        let all = FilterListConverter.convert("/?track=*&key=$all").blocks.compactMap { ($0["trigger"] as? [String: Any])?["resource-type"] as? [String] }
+        XCTAssertEqual(all, [["document"], ["popup"]])
+        XCTAssertTrue(isDropped("/go/*?ident=$frame"), "a frame rule must not turn into a page rule")
+        XCTAssertTrue(isDropped("/x*y$doc,domain=a.example"), "the top URL is the only condition a rule can carry")
     }
 
     func testSkippedLines() {

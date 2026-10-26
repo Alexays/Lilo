@@ -63,7 +63,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-generate site-check site-fix site-test site-lock site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -257,6 +257,12 @@ swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@out="$(abspath $(or $(OUT),build/blocker-coverage.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report what an image load costs a page with and without the default filter lists (network; OUT=build/blocker-bench.txt)
+blocker-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/blocker-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_BENCH="$$out" $(TEST) -only-testing:LiloTests/ContentBlockerBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Run the terminal throughput and lock-fairness benchmarks
