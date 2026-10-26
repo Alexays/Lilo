@@ -238,6 +238,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
   const getCurrent = tabsPatch.getCurrent;
   tabsPatch.getCurrent = (original, self) => currentTabOfThisPage(getCurrent(original, self), self);
+  const runtimeOnConnect = onConnect(() => chrome.runtime.onConnect);
   const compat: Record<string, NamespaceCompat> = {
     // WebKit does not expose badge colors to Swift, so the color calls are bridged onto its chrome.action.
     action: { replace: action, add: { onUserSettingsChanged: actionOnUserSettingsChanged }, patch: actionPatches },
@@ -284,7 +285,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
     runtime: {
       patch: { ...runtimePatches, ...crossExtensionPatches },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
-      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
+      standIns: { ...runtimeLifecycle, onConnect: runtimeOnConnect, ...externalEvents(() => chrome.runtime) },
       add: {
         getContexts,
         ...runtimeAdditions,
@@ -298,7 +299,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
           // WebKit's lastError is null without an error, Chrome's undefined (eJOY tests it with typeof).
           get lastError() { return liloLastError() ?? runtime.lastError ?? undefined; },
           ...(nativeMessaging ? nativeMessagingAsChrome(runtime) : {}),
-          ...crossExtensionMessaging(runtime, sendLocal),
+          ...crossExtensionMessaging(runtime, sendLocal, runtimeOnConnect),
         };
       },
     },

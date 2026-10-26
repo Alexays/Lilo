@@ -375,6 +375,28 @@ describe('runtime ports between extension pages and the worker', () => {
     assert.deepEqual(pageHeard, [{ state: 1 }]);
   });
 
+  it('connects with its own onConnect listeners off WebKit event, so WebKit asks only the other processes', () => {
+    const listeners = new Set<unknown>();
+    const webKitOnConnect: any = Object.create({
+      addListener: (listener: unknown) => listeners.add(listener),
+      removeListener: (listener: unknown) => listeners.delete(listener),
+    });
+    const own = onConnect(() => webKitOnConnect);
+    own.addListener(() => {});
+    own.addListener(() => {});
+    const { end } = channel();
+    const heardWhileConnecting: number[] = [];
+    const runtime: any = crossExtensionMessaging(
+      { id: 'ponmlkjihgfedcbaponmlkjihgfedcba', connect: (info: any) => { heardWhileConnecting.push(listeners.size); return end(info.name); } },
+      undefined,
+      own,
+    );
+    runtime.connect({ name: 'back' });
+
+    assert.deepEqual(heardWhileConnecting, [0]);
+    assert.equal(listeners.size, 2);
+  });
+
   it('drops what Lilo sends a channel to it that WebKit numbered as the port', () => {
     const { end, connect } = channel();
     const runtime: any = crossExtensionMessaging({ id: 'ponmlkjihgfedcbaponmlkjihgfedcba', connect: (info: any) => end(info.name) });

@@ -344,8 +344,8 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertTrue(read, "the popup's page in a tab reads that tab")
     }
 
-    /// A credentialed fetch to a host the extension may access carries the site's SameSite=Lax and Strict cookies, as
-    /// in Chrome, where WebKit leaves them out of an extension's request (ChatGPT's side panel read signed out).
+    /// A credentialed fetch or XMLHttpRequest to a host the extension may access carries the site's SameSite=Lax and
+    /// Strict cookies, as in Chrome, where WebKit leaves them out of an extension's request (ChatGPT's side panel read signed out).
     func testCredentialedFetchesCarryTheSiteCookiesAsInChrome() async throws {
         let server = try await TinyHTTPServer { request in
             if request.hasPrefix("GET /set ") {
@@ -376,12 +376,23 @@ final class ExtensionPageTabTests: XCTestCase {
         let echo = "http://127.0.0.1:\(server.port)/echo"
         let fromPage = try await page.callAsyncJavaScript("return await fetch(url, { credentials: 'include', cache: 'no-store' }).then((r) => r.text(), (e) => 'fails ' + e)", arguments: ["url": echo], in: nil, contentWorld: .page)
         let fromWorker = try await page.callAsyncJavaScript("return await chrome.runtime.sendMessage(url)", arguments: ["url": echo], in: nil, contentWorld: .page)
+        let fromXHR = try await page.callAsyncJavaScript("""
+            return await new Promise((resolve) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', url);
+              xhr.withCredentials = true;
+              xhr.onload = () => resolve(xhr.responseText);
+              xhr.onerror = () => resolve('fails');
+              xhr.send();
+            })
+            """, arguments: ["url": echo], in: nil, contentWorld: .page)
         let siteTab = try XCTUnwrap(window.tabManager.engineTab(for: site.id)?.view as? WKWebView)
         let fromSite = try await siteTab.callAsyncJavaScript("return await fetch('/echo', { cache: 'no-store' }).then((r) => r.text())", arguments: [:], in: nil, contentWorld: .page)
         let cookies = { (echoed: Any?) in Set(((echoed as? String) ?? "").replacingOccurrences(of: "Cookie: ", with: "").components(separatedBy: "; ")) }
         XCTAssertEqual(cookies(fromSite), ["lax=1", "plain=1", "strict=1"])
         XCTAssertEqual(cookies(fromPage), ["lax=1", "plain=1", "strict=1"], "an extension page's fetch")
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
+        XCTAssertEqual(cookies(fromXHR), ["lax=1", "plain=1", "strict=1"], "an extension page's XMLHttpRequest with withCredentials")
     }
 
     /// A credentialed fetch keeps Authorization across a same-origin redirect and drops it at a hop to another origin, as fetch does.
@@ -516,6 +527,39 @@ final class ExtensionPageTabTests: XCTestCase {
 
         await pollUntil { context.action(for: nil)?.label != "waiting" }
         XCTAssertEqual(context.action(for: nil)?.label, "2 1", "the worker gets both requests once, the page one answer")
+    }
+
+    /// A worker listening to onConnect connects back to the page that connected to it, in a tab of another process, as
+    /// Postman Interceptor does: WebKit would disconnect that port on the worker's own process's answer (WEBKIT-GAPS.md, gap 60).
+    func testAWorkerListeningToOnConnectConnectsBackToAPageInATab() async throws {
+        let (window, registry, id) = try await loadClosingExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Ports", "version": "1.0", "action": {"default_title": "waiting"}, "background": {"service_worker": "worker.js"}}"#,
+            "worker.js": """
+                chrome.runtime.onConnect.addListener(() => {
+                    const back = chrome.runtime.connect({ name: 'back' });
+                    back.onDisconnect.addListener(() => chrome.action.setTitle({ title: 'disconnected' }));
+                    back.postMessage('heard');
+                });
+                chrome.runtime.onMessage.addListener((message) => { chrome.action.setTitle({ title: message }); });
+                """,
+            "page.html": "<script src='page.js'></script>",
+            // Busy past the connection back, so the worker's own process answers first.
+            "page.js": """
+                chrome.runtime.connect({ name: 'popup' });
+                chrome.runtime.onConnect.addListener((port) => port.onMessage.addListener((message) => chrome.runtime.sendMessage(message)));
+                for (const end = Date.now() + 1000; Date.now() < end;) {}
+                """
+        ])
+        let context = try XCTUnwrap(registry.context(for: id))
+
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "chrome-extension://\(id)/page.html")))
+
+        await pollUntil { context.action(for: nil)?.label != "waiting" }
+        try await Task.sleep(for: .milliseconds(300))
+        let page = window.tabManager.engineTab(for: tab.id)?.view as? WKWebView
+        let background = context.value(forKey: "_backgroundWebView") as? WKWebView
+        XCTAssertNotEqual(page?.value(forKey: "_webProcessIdentifier") as? Int, background?.value(forKey: "_webProcessIdentifier") as? Int)
+        XCTAssertEqual(context.action(for: nil)?.label, "heard", "the page gets the worker's message on the port it opened back")
     }
 
     /// WebKit's own executeScript, under way on a tab that closes itself, ends without taking the app

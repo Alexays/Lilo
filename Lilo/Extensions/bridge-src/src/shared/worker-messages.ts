@@ -45,14 +45,33 @@ export function installPageWorkerMessages(scope: any): void {
   Object.defineProperty(container, 'ready', {
     configurable: true,
     get: () => ready ??= new Promise((resolve) => {
-      nativeReady?.call(container).then(resolve);
-      const find = () => container.getRegistrations().then((registrations: { active?: { scriptURL: string } }[]) => {
-        const own = registrations.find((registration) => registration.active?.scriptURL.startsWith(base));
-        if (own) resolve(own);
-        else scope.setTimeout(find, 100);
+      let settled = false;
+      const settle = (registration: unknown) => { settled = true; resolve(registration); };
+      nativeReady?.call(container).then(settle);
+      const own = (): Promise<unknown> => container.getRegistrations().then((registrations: { active?: { scriptURL: string } }[]) =>
+        registrations.find((registration) => registration.active?.scriptURL.startsWith(base)));
+      // WebKit can find no registration from a process that loaded the worker, as MultiPassword's offscreen document
+      // (WEBKIT-GAPS 92): once the worker answers, a stand-in takes the messages, which go over the channel anyway.
+      channel.addEventListener('message', ({ data }: { data: { pong?: string } }) => {
+        if (data?.pong === page && !settled) own().then((found) => settle(found ?? workerStandIn(scope, base)));
+      });
+      const find = () => own().then((found) => {
+        if (settled) return;
+        if (found) return settle(found);
+        channel.postMessage({ ping: page });
+        scope.setTimeout(find, 100);
       });
       find();
     }),
+  });
+}
+
+/** A registration of the extension's worker, named by its manifest as Chrome names it, that only carries messages. */
+function workerStandIn(scope: any, base: string): object {
+  const scriptURL = new URL(scope.chrome?.runtime?.getManifest?.()?.background?.service_worker ?? '', base).href;
+  const active = Object.create(scope.ServiceWorker.prototype, { scriptURL: { value: scriptURL }, state: { value: 'activated' } });
+  return Object.create(scope.ServiceWorkerRegistration?.prototype ?? Object.prototype, {
+    active: { value: active }, installing: { value: null }, waiting: { value: null }, scope: { value: new URL('.', scriptURL).href },
   });
 }
 
@@ -61,7 +80,8 @@ export function installWorkerClientMessages(scope: any): void {
   if (!BroadcastChannel || !WindowClient) return;
   const channel = new BroadcastChannel(CHANNEL);
   const Event = scope.ExtendableMessageEvent ?? scope.MessageEvent;
-  channel.addEventListener('message', ({ data }: { data: Envelope }) => {
+  channel.addEventListener('message', ({ data }: { data: Envelope & { ping?: string } }) => {
+    if (typeof data?.ping === 'string') return channel.postMessage({ pong: data.ping });
     if (data?.toWorker !== true || typeof data.url !== 'string') return;
     // The worker's ends are real ports, so their start, queueing and close behave as Chrome's.
     const ports = (data.ports ?? []).map((id) => {

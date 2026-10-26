@@ -921,7 +921,7 @@ final class WebKitGapTests: XCTestCase {
 
         XCTAssertEqual(
             context.action(for: nil)?.label, "disconnected",
-            "WebKit now waits for every process before it disconnects a port nobody received yet: Postman Interceptor can leave the intermittent list"
+            "WebKit now waits for every process before it disconnects a port nobody received yet: drop unheard (runtime.ts crossExtensionMessaging)"
         )
     }
 }

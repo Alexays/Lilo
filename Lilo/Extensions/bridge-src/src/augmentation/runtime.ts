@@ -59,7 +59,7 @@ const tabMark = '?liloTab=';
 /**
  * WebKit's runtime.onConnect, `source`, handing out the port chrome.runtime.connect opened as messagesOnce's. A port
  * tabs.connect opened to the pages a tab shows reaches only those; a content script's to another extension, the worker,
- * which relays it. No listener of Lilo's own: a worker listening to onConnect loses its ports to pages (WEBKIT-GAPS 60).
+ * which relays it. No listener of Lilo's own: chrome.runtime.connect takes these listeners off while it connects (WEBKIT-GAPS 60).
  */
 export const onConnect = (source: () => object) => new WrappedEvent<[any]>(source, (listener) => (port: any) => {
   const name = port?.name;
@@ -250,14 +250,21 @@ function sendExternal(args: any[]): unknown {
  * chrome.runtime's connect and sendMessage, which Lilo relays to another extension's onConnectExternal and
  * onMessageExternal (WebKit has no cross-extension messaging); `sendLocal` sends the extension's own messages.
  */
-export function crossExtensionMessaging(runtime: any, sendLocal: (...args: any[]) => any = (...args) => runtime.sendMessage(...args)) {
+export function crossExtensionMessaging(
+  runtime: any,
+  sendLocal: (...args: any[]) => any = (...args) => runtime.sendMessage(...args),
+  ownOnConnect?: WrappedEvent<[any]>,
+) {
   return {
     connect(...args: any[]) {
       if (otherExtension(args[0], runtime)) return connectExternal(args);
       const [id, info] = typeof args[0] === 'string' ? args : [undefined, args[0]];
       const name = typeof info?.name === 'string' ? info.name : '';
       const marked = { ...info, name: name + once };
-      return messagesOnce(id === undefined ? runtime.connect(marked) : runtime.connect(id, marked), name);
+      const open = () => (id === undefined ? runtime.connect(marked) : runtime.connect(id, marked));
+      // WebKit disconnects the port when the first process answers with no receiver, as this context's own does
+      // when it listens (WEBKIT-GAPS 60): it asks only the processes listening once the connect reaches it.
+      return messagesOnce(ownOnConnect ? ownOnConnect.unheard(open) : open(), name);
     },
     sendMessage(...args: any[]) {
       return toOtherExtension(args, runtime) ? sendExternal(args) : sendLocal(...args);
