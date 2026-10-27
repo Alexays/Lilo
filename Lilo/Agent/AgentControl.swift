@@ -207,12 +207,14 @@ final class AgentControl {
             return (code, staticCode, (url as URL).resolvingSymlinksInPath().path)
         }
         // lilo-mcp only relays: the agent is the process that launched it. An update replacing lilo-mcp on disk leaves
-        // the running one with neither code nor path to read: it counts as a relay too, as only its parent could vouch for it.
+        // the running one with no code to read, its path naming the new file or nothing: it counts as a relay too, as
+        // only its parent could vouch for it.
         var client = code(peer)
         var pid = peer
+        let helper = URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
-        if client?.path == URL(fileURLWithPath: AgentClientConfig.helperPath).resolvingSymlinksInPath().path
-            || (client == nil && proc_pidpath(peer, &path, UInt32(path.count)) <= 0) {
+        if client?.path == helper || (client == nil && (proc_pidpath(peer, &path, UInt32(path.count)) <= 0
+            || URL(fileURLWithPath: String(cString: path)).resolvingSymlinksInPath().path == helper)) {
             var info = proc_bsdinfo()
             guard proc_pidinfo(peer, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) > 0 else { return ("", "", peer) }
             pid = pid_t(info.pbi_ppid)
