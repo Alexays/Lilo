@@ -738,12 +738,12 @@ final class BrowserStateStore {
         }
     }
 
-    /// Freezes every live engine of every Space but agent tabs, visible ones included, for a closed lid. Returns
-    /// only the engines this call froze, so a resume leaves the idle-frozen ones frozen.
+    /// Freezes every live engine of every Space but agent tabs and calls, visible ones included, for a closed lid.
+    /// Returns only the engines this call froze, so a resume leaves the idle-frozen ones frozen.
     func freezeAllEngines() -> [WKWebViewTab] {
         var frozen: [WKWebViewTab] = []
         for snapshot in spaces.values {
-            for engine in snapshot.engines.values where !engine.isFrozen && !engine.isAgentControlled {
+            for engine in snapshot.engines.values where !engine.isFrozen && !engine.isAgentControlled && !engine.hasActiveCapture {
                 engine.freeze()
                 frozen.append(engine)
             }

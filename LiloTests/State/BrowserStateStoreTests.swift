@@ -3624,6 +3624,24 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertFalse(agentEngine.isFrozen)
     }
 
+    func testFreezeAllEnginesKeepsCallsRunning() {
+        let activeSpaceId = UUID()
+        let call = Tab(id: UUID(), url: URL(string: "https://call.example"), title: "Call", spaceId: activeSpaceId)
+        let callEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { callEngine.teardown() }
+        callEngine.isTabShareSource = true
+        let store = BrowserStateStore()
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [call], folders: [], treeItems: [], engines: [call.id: callEngine], activeTabId: call.id)
+        )
+
+        let frozen = store.freezeAllEngines()
+
+        XCTAssertTrue(frozen.isEmpty)
+        XCTAssertFalse(callEngine.isFrozen, "a call goes on with the lid closed, through headphones")
+    }
+
     func testFreezeAllEnginesFreezesEveryLiveEngineOnceAndReturnsOnlyThoseItFroze() {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         let visible = Tab(id: UUID(), url: URL(string: "https://visible.example"), title: "Visible", spaceId: activeSpaceId)
