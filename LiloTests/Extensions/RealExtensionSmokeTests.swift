@@ -332,7 +332,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             return Array(diagnostics.compactMap { $0["level"] as? String == "error" ? $0["message"] as? String : nil }
                 .map { String($0.prefix(500)) }.filter { seen.insert($0).inserted }.suffix(10))
         }
-        let tokens = { (render: ChromeSmoke.Render?) in Set(render?.tokens.split(separator: " ").map(String.init) ?? []) }
+        // A recording of Chrome's own error page (ERR_BLOCKED_BY_CLIENT) is no reference: only showing something counts.
+        let tokens = { (render: ChromeSmoke.Render?) -> Set<String> in
+            let words = Set(render?.tokens.split(separator: " ").map(String.init) ?? [])
+            return words.isSuperset(of: ["blocked", "chromium", "err", "client"]) ? [] : words
+        }
         let mismatch = { (page: String, shown: Set<String>, expected: Set<String>) in
             "\(page) shows \(expected.intersection(shown).count) of Chrome's \(expected.count) words and controls (missing: "
                 + expected.subtracting(shown).sorted().prefix(8).joined(separator: " ") + ")"
