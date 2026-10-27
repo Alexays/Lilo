@@ -72,6 +72,8 @@ struct Tab: Sendable, Equatable {
     var terminalExitCode: Int32 = 0
     var terminalDuration: TimeInterval = 0
     var hasUnreadOutput = false
+    /// Web tabs, runtime only: the page posted a notification while the tab was not shown.
+    var hasUnreadNotification = false
     /// Runtime only: when the terminal's running program, or a page dialog held until the tab shows, started waiting for an answer.
     var awaitingInputSince: Date?
 
@@ -251,6 +253,8 @@ struct Tab: Sendable, Equatable {
                 put(field, terminalDuration)
             case .hasUnreadOutput:
                 put(field, hasUnreadOutput)
+            case .hasUnreadNotification:
+                put(field, hasUnreadNotification)
             case .awaitingInputSince:
                 put(field, (awaitingInputSince?.timeIntervalSince1970 ?? 0) * 1000)
             }
@@ -292,6 +296,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let terminalExitCode: Int32
     let terminalDuration: TimeInterval
     let hasUnreadOutput: Bool
+    let hasUnreadNotification: Bool
     let awaitingInputSince: Date?
 
     init(_ tab: Tab) {
@@ -315,6 +320,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         terminalExitCode = tab.terminalExitCode
         terminalDuration = tab.terminalDuration
         hasUnreadOutput = tab.hasUnreadOutput
+        hasUnreadNotification = tab.hasUnreadNotification
         awaitingInputSince = tab.awaitingInputSince
     }
 
@@ -340,6 +346,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.terminalExitCode = terminalExitCode
         tab.terminalDuration = terminalDuration
         tab.hasUnreadOutput = hasUnreadOutput
+        tab.hasUnreadNotification = hasUnreadNotification
         tab.awaitingInputSince = awaitingInputSince
         return tab
     }

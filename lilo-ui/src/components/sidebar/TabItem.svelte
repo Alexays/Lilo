@@ -36,6 +36,7 @@
   import { getHangSeconds, getPageHang } from "../../stores/pageHang.svelte";
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import { terminalFolder, terminalTitle, formatTerminalDuration } from "../../lib/terminalTitle";
+  import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
   import type { TabState } from "../../stores/tabs.svelte";
   import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
@@ -190,8 +191,9 @@
 
   const isTerminal = $derived(tab.kind === "terminal");
   const isChanges = $derived(tab.kind === "changes");
+  const unread = $derived(titleUnread(tab.title ?? "", tab.isPinned || tab.isBookmarked));
   const pageTitle = $derived.by((): string => {
-    if (tab.title && tab.title !== DEFAULT_TAB_TITLE) return tab.title;
+    if (unread.title && unread.title !== DEFAULT_TAB_TITLE) return unread.title;
     if (tab.url && tab.url !== "") return fallbackTabTitle(tab.url);
     return t(isTerminal ? "tabItem.terminal" : "tabItem.newTab");
   });
@@ -215,6 +217,11 @@
   // dot marks only a result not seen yet.
   const hasUnreadOutput = $derived(
     isTerminal && !!tab.hasUnreadOutput && !isActive && tab.terminalState !== "busy" && tab.terminalState !== "waiting",
+  );
+  // A sleeping tab keeps the title it had, so its count is stale.
+  const pageUnreadCount = $derived(!isTerminal && !isChanges && !isActive && !tab.isClosed ? unread.count : 0);
+  const hasPageUnread = $derived(
+    pageUnreadCount > 0 || (!isTerminal && !isChanges && !isActive && !tab.isClosed && (unread.marked || !!tab.hasUnreadNotification)),
   );
   // The one insistent signal: a background program (typically an agent) or page dialog waits for an answer.
   const awaitingInput = $derived(!!tab.awaitingInputSince && !isActive);
@@ -267,6 +274,7 @@
       tab.isMuted ? t("tabItem.muted") : tab.isAudioPlaying ? t("tabItem.playingAudio") : "",
       tab.isClosed && !isTerminal ? t("tabItem.sleeping") : "",
       awaitingInput && !isTerminal ? t("tabItem.terminalAttention") : "",
+      pageUnreadCount > 0 ? t("tabItem.unreadCount", { count: String(pageUnreadCount) }) : hasPageUnread ? t("tabItem.unread") : "",
       terminalIconLabel,
     ].filter(Boolean).join(", "),
   );
@@ -556,8 +564,10 @@
   {#if hangSeconds !== null}
     <span class="hang-timer">{hangRepeat ? t("tabItem.hangAgain") : t("tabItem.hangSeconds", { seconds: String(hangSeconds) })}</span>
   {/if}
-  {#if hasUnreadOutput}
-    <span class="terminal-unread" aria-hidden="true"></span>
+  {#if hasUnreadOutput || (hasPageUnread && !pageUnreadCount)}
+    <span class="unread-dot" aria-hidden="true"></span>
+  {:else if pageUnreadCount}
+    <span class="unread-count" aria-hidden="true">{unreadBadgeText(pageUnreadCount)}</span>
   {/if}
 
   <div class="tab-actions" inert={actionsInert || undefined}>
@@ -1027,11 +1037,27 @@
     stroke-linecap: round;
   }
 
-  .terminal-unread {
+  .unread-dot {
     flex: none;
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: var(--accent);
+  }
+
+  .unread-count {
+    flex: none;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: var(--radius-chip);
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 16px;
+    text-align: center;
   }
 </style>

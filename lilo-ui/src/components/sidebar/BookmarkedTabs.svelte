@@ -49,6 +49,7 @@
   import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
   import SavedTabEditor from "./SavedTabEditor.svelte";
   import { t } from "../../lib/i18n/state.svelte";
+  import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
 
   let {
     spaceId,
@@ -153,7 +154,15 @@
   }
 
   function bookmarkLabel(bookmark: { title?: string; customTitle?: string; url?: string }): string {
-    return bookmark.customTitle || bookmark.title?.trim() || bookmarkHost(bookmark);
+    return bookmark.customTitle || titleUnread(bookmark.title ?? "", true).title.trim() || bookmarkHost(bookmark);
+  }
+
+  // A sleeping bookmark keeps the title it had, so its count is stale; the open one is being read.
+  function bookmarkUnread(bookmark: { id: string; title?: string; isClosed: boolean; hasUnreadNotification?: boolean }): string {
+    if (bookmark.isClosed || bookmark.id === activeTabId) return "";
+    const unread = titleUnread(bookmark.title ?? "", true);
+    if (unread.count) return unreadBadgeText(unread.count);
+    return unread.marked || bookmark.hasUnreadNotification ? "dot" : "";
   }
 
   // Only the hovered tile reads the memory estimate, so a process snapshot doesn't rebuild
@@ -259,6 +268,7 @@
           {:else}
             {@const bookmark = bookmarksById.get(entry.id)}
             {#if bookmark}
+              {@const unreadBadge = bookmarkUnread(bookmark)}
               <div role="presentation">
                 <div
                   role="button"
@@ -278,7 +288,11 @@
                     placement: tooltipSide(),
                     disabled: dragActive || previewedTabId === bookmark.id,
                   }}
-                  aria-label={bookmarkLabel(bookmark)}
+                  aria-label={unreadBadge === "dot"
+                    ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unread")}`
+                    : unreadBadge
+                      ? `${bookmarkLabel(bookmark)}, ${t("tabItem.unreadCount", { count: unreadBadge })}`
+                      : bookmarkLabel(bookmark)}
                   onclick={() => openBookmark(bookmark)}
                   onkeydown={(event) => handleBookmarkTileKeydown(event, bookmark)}
                   oncontextmenu={(e) => handleBookmarkContextMenu(bookmark, e)}
@@ -316,6 +330,11 @@
                       />
                     {/if}
                   </div>
+                  {#if unreadBadge === "dot"}
+                    <span class="unread-dot" aria-hidden="true"></span>
+                  {:else if unreadBadge}
+                    <span class="unread-count" aria-hidden="true">{unreadBadge}</span>
+                  {/if}
                 </div>
               </div>
             {/if}
@@ -496,6 +515,35 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .unread-dot,
+  .unread-count {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: var(--accent);
+    box-shadow: 0 0 0 1.5px var(--sidebar-bg, var(--bg-primary));
+  }
+
+  .unread-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .unread-count {
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    border-radius: var(--radius-chip);
+    color: var(--accent-text);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 14px;
+    text-align: center;
   }
 
   .bookmark-editor {

@@ -322,6 +322,14 @@ extension MainWindowController {
             tab.isFormDirty = dirty
             tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
         }
+        context.engineFactory.notificationShownHandler = { [weak context] webView in
+            guard let (window, engine) = context?.windows.windowAndEngine(for: webView),
+                  window.tabManager.activeEngineTab !== engine,
+                  window.tabManager.tab(for: engine.id)?.hasUnreadNotification == false,
+                  let updated = window.updateRuntimeTab(id: engine.id, mutate: { $0.hasUnreadNotification = true })
+            else { return }
+            window.enqueueVisibleTabUpdate(updated)
+        }
 
         // Register handlers that have no DB/extension dependencies
         bridgeRouter.register(handler: ChromeBridgeHandler(
@@ -879,6 +887,9 @@ extension MainWindowController {
 
         processOutgoingContentViews(outgoingViews)
         nextView.isHidden = false
+        if tabManager.tab(for: engine.id)?.hasUnreadNotification == true {
+            enqueueVisibleTabUpdate(updateRuntimeTab(id: engine.id) { $0.hasUnreadNotification = false })
+        }
         // After outgoing views are hidden or removed, so the watcher check sees final visibility.
         context.engineFactory.reevaluateGeolocationWatchers()
         layoutSplitContent()

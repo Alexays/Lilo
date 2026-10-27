@@ -59,6 +59,8 @@
       "_comment": "Terminal tabs only: how long the last command took, in seconds." },
     { "name": "hasUnreadOutput",           "type": "bool",    "tsOptional": true, "tsDefault": "false",
       "_comment": "Terminal tabs only: output or a bell arrived while the tab was in the background." },
+    { "name": "hasUnreadNotification",     "type": "bool",    "tsOptional": true, "tsDefault": "false",
+      "_comment": "Web tabs only: the page posted a notification while the tab was not shown." },
     { "name": "awaitingInputSince",        "type": "double",  "tsOptional": true, "tsDefault": "0",
       "_comment": "When a terminal's running program rang the bell or asked for a notification with no input since, as an agent does when it waits for an answer, or a web page raised a dialog held until its tab shows, in milliseconds since 1970; 0 when it waits for nothing." }
   ]

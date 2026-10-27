@@ -45,6 +45,7 @@ export interface BridgeTabSnapshot {
 	terminalExitCode?: number;
 	terminalDuration?: number;
 	hasUnreadOutput?: boolean;
+	hasUnreadNotification?: boolean;
 	awaitingInputSince?: number;
 }
 
@@ -92,6 +93,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		terminalExitCode: data.terminalExitCode ?? 0,
 		terminalDuration: data.terminalDuration ?? 0,
 		hasUnreadOutput: data.hasUnreadOutput ?? false,
+		hasUnreadNotification: data.hasUnreadNotification ?? false,
 		awaitingInputSince: data.awaitingInputSince ?? 0,
 	};
 }
@@ -140,6 +142,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.terminalExitCode !== undefined) out.terminalExitCode = data.terminalExitCode;
 	if (data.terminalDuration !== undefined) out.terminalDuration = data.terminalDuration;
 	if (data.hasUnreadOutput !== undefined) out.hasUnreadOutput = data.hasUnreadOutput;
+	if (data.hasUnreadNotification !== undefined) out.hasUnreadNotification = data.hasUnreadNotification;
 	if (data.awaitingInputSince !== undefined) out.awaitingInputSince = data.awaitingInputSince;
 	return out;
 }

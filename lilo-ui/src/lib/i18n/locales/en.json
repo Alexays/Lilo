@@ -731,6 +731,8 @@
 		"terminalSucceeded": "Last command succeeded",
 		"terminalAttention": "Waiting for you",
 		"terminalUnread": "New output",
+		"unread": "Unread",
+		"unreadCount": "{count} unread",
 		"previewOpen": "Open",
 		"sleeping": "Asleep",
 		"pinned": "Pinned",

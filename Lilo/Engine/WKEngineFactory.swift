@@ -78,6 +78,10 @@ final class WKEngineFactory {
     var notificationAllowanceHandler: ((String) -> Bool)? {
         didSet { notificationBridge.allowanceHandler = notificationAllowanceHandler }
     }
+    /// Told of each notification a page posts. Set by MainWindowController.
+    var notificationShownHandler: ((WKWebView) -> Void)? {
+        didSet { notificationBridge.shownHandler = notificationShownHandler }
+    }
     /// Reports form-dirty state changes (webView, isDirty) to the window controller. Set by MainWindowController.
     var formDirtyHandler: ((WKWebView, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
@@ -124,6 +128,7 @@ final class WKEngineFactory {
         let bridge = NotificationBridge()
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
         bridge.allowanceHandler = notificationAllowanceHandler
+        bridge.shownHandler = notificationShownHandler
         bridge.tabIdResolver = { [weak self] in self?.tabIdByWebView.object(forKey: $0) as UUID? }
         return bridge
     }()

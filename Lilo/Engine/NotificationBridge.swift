@@ -20,6 +20,9 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     /// The tab a web view belongs to, carried by each notification so a click can bring it back.
     var tabIdResolver: ((WKWebView) -> UUID?)?
 
+    /// Told of each notification a page posts, with the web view that posted it.
+    var shownHandler: ((WKWebView) -> Void)?
+
     /// Notifications on screen by request identifier: the frame that posted each one and its id there.
     private struct Posted {
         weak var webView: WKWebView?
@@ -114,7 +117,10 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         let tag = (body["tag"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? UUID().uuidString
         let identifier = "web-\(origin)-\(tag)"
         var userInfo: [String: Any] = ["webNotification": identifier]
-        if let webView = message.webView, let tabId = tabIdResolver?(webView) { userInfo["webTabId"] = tabId.uuidString }
+        if let webView = message.webView {
+            if let tabId = tabIdResolver?(webView) { userInfo["webTabId"] = tabId.uuidString }
+            shownHandler?(webView)
+        }
         content.userInfo = userInfo
         if let pageId = body["id"] as? Int {
             posted = posted.filter { $0.value.webView != nil }

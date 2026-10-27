@@ -731,6 +731,8 @@
 		"terminalSucceeded": "La dernière commande a réussi",
 		"terminalAttention": "Attend votre réponse",
 		"terminalUnread": "Nouvelle sortie",
+		"unread": "Non lu",
+		"unreadCount": "Non lus : {count}",
 		"previewOpen": "Ouvrir",
 		"sleeping": "En veille",
 		"pinned": "Épinglé",

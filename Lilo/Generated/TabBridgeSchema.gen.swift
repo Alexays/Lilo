@@ -44,6 +44,7 @@ enum TabBridgeField: String, CaseIterable {
 	case terminalExitCode = "terminalExitCode"
 	case terminalDuration = "terminalDuration"
 	case hasUnreadOutput = "hasUnreadOutput"
+	case hasUnreadNotification = "hasUnreadNotification"
 	case awaitingInputSince = "awaitingInputSince"
 // swiftlint:enable redundant_string_enum_value
 
