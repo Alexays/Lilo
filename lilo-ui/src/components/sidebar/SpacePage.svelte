@@ -215,12 +215,15 @@
      the rest instead of squeezing the open-tab list to nothing. */
   .space-scroll {
     height: 100%;
-    overflow-y: auto;
+    overflow-y: scroll;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
     /* The tab list swaps spacers for rows as it scrolls; scroll anchoring would shift the
        position to compensate and pull the window away from where the user scrolled. */
     overflow-anchor: none;
+    /* `scroll` keeps the 4px scrollbar's gutter even with nothing to scroll (WebKit ignores
+       scrollbar-gutter here); it comes out of the 10px right pad so rows never shift and stay symmetric. */
+    --sidebar-right-pad: 6px;
     --fade-top: 0px;
     --fade-bottom: 0px;
     /* Fades the rows themselves, so the cue matches any space tint behind them. */
