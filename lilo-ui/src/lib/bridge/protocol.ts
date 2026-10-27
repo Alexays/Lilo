@@ -867,9 +867,16 @@ export interface BridgeEventPayloadMap {
 	permissionRequestClosed: { requestId: string };
 	extensionPermissionRequested: BridgeExtensionPermissionRequestPayload;
 	// getDisplayMedia tab-share picker: `origin` is the display host of the requesting page,
-	// `shareableTabIds` the tabs native can resolve to a live engine. `allowsSystem` false (an
-	// extension's chrome.desktopCapture offering tabs only) hides "share a screen or window".
-	tabSharePickerRequested: { requestId: string; origin: string; shareableTabIds: string[]; allowsSystem?: boolean };
+	// `shareableTabIds` the tabs native can resolve to a live engine, the requesting tab left out;
+	// `suggestedTabIds` a few of them to offer first. `allowsSystem` false (an extension's
+	// chrome.desktopCapture offering tabs only) hides "share a screen or window".
+	tabSharePickerRequested: {
+		requestId: string;
+		origin: string;
+		shareableTabIds: string[];
+		suggestedTabIds?: string[];
+		allowsSystem?: boolean;
+	};
 	// The requesting tab closed while its picker was open; native already cancelled the pick.
 	tabSharePickerDismissed: { requestId: string };
 	pipDockChanged: { active: boolean; title?: string };

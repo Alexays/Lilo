@@ -1295,9 +1295,14 @@
 	"tabShare": {
 		"title": "{origin} wants to share a tab",
 		"pickTab": "Choose a tab to share",
-		"currentTab": "Current tab",
+		"search": "Search tabs",
+		"suggested": "Suggested",
+		"playing": "Playing audio",
+		"share": "Share",
+		"keyHint": "Arrows to choose, Return to share",
 		"noTabs": "No open tabs to share",
-		"shareSystem": "Share a screen or window instead"
+		"noMatch": "No tab matches",
+		"shareSystem": "Window or screen…"
 	},
 	"tabSwitcher": {
 		"title": "Recent tabs",

@@ -1295,9 +1295,14 @@
 	"tabShare": {
 		"title": "{origin} veut partager un onglet",
 		"pickTab": "Choisissez un onglet à partager",
-		"currentTab": "Onglet actuel",
+		"search": "Rechercher un onglet",
+		"suggested": "Suggérés",
+		"playing": "Son en cours",
+		"share": "Partager",
+		"keyHint": "Flèches pour choisir, Entrée pour partager",
 		"noTabs": "Aucun onglet ouvert à partager",
-		"shareSystem": "Partager plutôt un écran ou une fenêtre"
+		"noMatch": "Aucun onglet ne correspond",
+		"shareSystem": "Fenêtre ou écran…"
 	},
 	"tabSwitcher": {
 		"title": "Onglets récents",

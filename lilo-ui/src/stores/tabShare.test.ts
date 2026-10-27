@@ -22,6 +22,7 @@ test("tab share request opens, resolves with the picked tab, and clears", async 
 		requestId: "req-1",
 		origin: "meet.example.com",
 		shareableTabIds: new Set(["tab-beta"]),
+		suggestedTabIds: [],
 		allowsSystem: true,
 	});
 
@@ -76,6 +77,7 @@ test("a second request while one is open is cancelled immediately", async () => 
 		requestId: "req-1",
 		origin: "meet.example.com",
 		shareableTabIds: new Set(["tab-beta"]),
+		suggestedTabIds: [],
 		allowsSystem: true,
 	});
 });
@@ -103,4 +105,44 @@ test("an extension offering tabs only hides the system choice", async () => {
 	receive({ event: "tabSharePickerRequested", requestId: "req-1", origin: "Recorder", shareableTabIds: [], allowsSystem: false });
 
 	assert.equal(store.getTabShareRequest()?.allowsSystem, false);
+});
+
+test("thumbnails are snapshotted one at a time, once each, and dropped with the picker", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabShare.svelte.ts");
+	const previewRequests = () => posted.filter((message) => message.action === "requestTabPreview").map((message) => message.payload.tabId);
+
+	store.initTabShareStore();
+	store.requestTabShareThumbnail("tab-a");
+	assert.deepEqual(previewRequests(), [], "nothing is snapshotted without a picker");
+
+	receive({
+		event: "tabSharePickerRequested",
+		requestId: "req-1",
+		origin: "meet.example.com",
+		shareableTabIds: ["tab-a", "tab-b"],
+		suggestedTabIds: ["tab-b"],
+	});
+	assert.deepEqual(store.getTabShareRequest()?.suggestedTabIds, ["tab-b"]);
+	store.requestTabShareThumbnail("tab-a");
+	store.requestTabShareThumbnail("tab-b");
+	store.requestTabShareThumbnail("tab-a");
+	assert.deepEqual(previewRequests(), ["tab-a"]);
+
+	// The sidebar's hover card shares the reply event: another tab's reply is not ours.
+	receive({ event: "tabPreviewReady", tabId: "tab-c", image: "data:image/jpeg;base64,c" });
+	assert.equal(store.getTabShareThumbnail("tab-c"), undefined);
+
+	receive({ event: "tabPreviewReady", tabId: "tab-a", image: "data:image/jpeg;base64,a" });
+	assert.equal(store.getTabShareThumbnail("tab-a"), "data:image/jpeg;base64,a");
+	assert.deepEqual(previewRequests(), ["tab-a", "tab-b"]);
+
+	receive({ event: "tabPreviewReady", tabId: "tab-b" });
+	assert.equal(store.getTabShareThumbnail("tab-b"), "", "a tab without a snapshot is recorded, not asked again");
+	store.requestTabShareThumbnail("tab-b");
+	assert.deepEqual(previewRequests(), ["tab-a", "tab-b"]);
+
+	store.resolveTabShare("cancel");
+	assert.equal(store.getTabShareThumbnail("tab-a"), undefined);
 });

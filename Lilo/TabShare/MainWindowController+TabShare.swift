@@ -60,13 +60,26 @@ extension MainWindowController {
         return engine
     }
 
+    /// One row of the picker's grid.
+    static let suggestedShareTabCount = 4
+
     /// Cancelling the calling task takes the picker off screen and returns `.cancel`.
     func presentTabSharePicker(origin: String, requester: WKWebView?, allowsSystem: Bool = true) async -> TabSharePickerChoice {
         let requestId = UUID().uuidString
         // Only tabs `liveEngineForSharing` can resolve: every current-space tab (revived on pick)
         // and the hidden-space tabs whose parked engine is still live.
+        // The requesting tab is left out: sharing a call's own tab shows the call back to itself.
+        let requesterTabId = requester.flatMap { context.windows.windowAndEngine(for: $0)?.engine.id }
         let shareableTabIds = Set(tabManager.openTabs.map(\.id)).union(context.browserState.parkedEngineTabIds)
-            .filter { id in context.browserState.durableTab(for: id).map { tabManager.protectingFolder(of: $0.tab)?.isLocked != true } ?? true }
+            .filter { id in
+                id != requesterTabId
+                    && context.browserState.durableTab(for: id).map { tabManager.protectingFolder(of: $0.tab)?.isLocked != true } ?? true
+            }
+        // Tabs playing sound first, then the most recently shown: what a call usually goes on to share.
+        let suggestedTabIds = shareableTabIds.compactMap { tabManager.tab(for: $0) }
+            .sorted { ($0.isAudioPlaying ? 1 : 0, $0.lastActiveAt ?? .distantPast) > ($1.isAudioPlaying ? 1 : 0, $1.lastActiveAt ?? .distantPast) }
+            .prefix(Self.suggestedShareTabCount)
+            .map(\.id.uuidString)
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 pendingTabSharePickerRequests[requestId] = (requester, continuation)
@@ -74,6 +87,7 @@ extension MainWindowController {
                     "requestId": requestId,
                     "origin": origin,
                     "shareableTabIds": shareableTabIds.map(\.uuidString),
+                    "suggestedTabIds": suggestedTabIds,
                     "allowsSystem": allowsSystem
                 ])
             }
