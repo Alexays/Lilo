@@ -8,6 +8,7 @@ import { installWorkerWebSocket } from './shared/web-socket.ts';
 import { installCredentialedFetch } from './shared/credentialed-fetch.ts';
 import { registrationsSettled } from './shared/chrome-leniency.ts';
 import { installWasmMimeCompat } from './shared/wasm-mime.ts';
+import { installCryptoKeyStorage } from './shared/crypto-key-storage.ts';
 import { skipEmptyImports } from './shared/empty-imports.ts';
 import { installWorkerClientMessages } from './shared/worker-messages.ts';
 import { installGapAPIs } from './shared/install-gap-apis.ts';
@@ -84,6 +85,10 @@ if (!(globalThis as any).__liloBackgroundPreludeInstalled) {
 
   preludeStage('wasm-mime', () => {
     installWasmMimeCompat(globalThis as any);
+  });
+
+  preludeStage('crypto-key-storage', () => {
+    installCryptoKeyStorage(globalThis as any, true);
   });
 
   preludeStage('worker-messages', () => {

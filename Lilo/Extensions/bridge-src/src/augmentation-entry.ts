@@ -9,6 +9,7 @@ import { recordErrorDiagnostics } from './shared/error-diagnostics.ts';
 import { installPageWorkerMessages } from './shared/worker-messages.ts';
 import { installNetworkInformation } from './shared/network-information.ts';
 import { acceptFrameMessaging } from './shared/frame-messaging.ts';
+import { installCryptoKeyStorage } from './shared/crypto-key-storage.ts';
 
 // Injected into every frame of an extension page; a web page framed there must not see the shims.
 const isExtensionOrigin = /^(webkit|chrome)-extension:/.test(String((globalThis as any).origin ?? ''));
@@ -42,6 +43,8 @@ if (isExtensionOrigin && !(globalThis as any).__liloAugmentationInstalled) {
   installWasmMimeCompat(globalThis as any);
   installCredentialedFetch(globalThis);
   installPageWorkerMessages(globalThis);
+  // The page reads the keys its worker stores, and stores its own as the worker reads them.
+  installCryptoKeyStorage(globalThis as any, false);
   // A page shown in a tab gets the tabs' user agent; extension code reads Chrome's, as in a popup.
   try {
     showChromeUserAgent(navigator);
