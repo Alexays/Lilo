@@ -232,6 +232,8 @@ final class WKWebViewTab: NSObject {
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
     /// it is set, and the exception unwinding through Swift corrupts the concurrency runtime.
     private(set) var isFrozen = false
+    /// Set once beforeunload ran ahead of the teardown: the page leaves without asking, and only once.
+    private var isLeaving = false
     /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
     /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
     var lentToExtensionAt: Date?
@@ -670,7 +672,7 @@ final class WKWebViewTab: NSObject {
         controller.url = url
     }
 
-    /// Stop media, halt loading, detach the view and close the page. Ends the engine for good.
+    /// Stop media, halt loading, detach the view and close the page through its handlers. Ends the engine for good.
     func teardown() {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
         isUnresponsive = false
@@ -691,9 +693,28 @@ final class WKWebViewTab: NSObject {
         webView.removeFromSuperview()
         // Something can hold the web view for minutes after its tab is gone, and the page keeps
         // running meanwhile: its content scripts then message a tab extensions no longer know.
-        // A suspended page runs nothing, and WebKit rejects most calls on it.
+        // A suspended page runs no handler and WebKit rejects most calls on it: it is woken first.
+        guard !isFrozen else {
+            if !isPageLost { resume { [self] in closePage() } }
+            return
+        }
+        closePage()
+    }
+
+    /// Runs the page's beforeunload handler ahead of a teardown the user cannot cancel, never asking to stay;
+    /// `ran` follows it, as the web process answers the script after the handler.
+    func runBeforeUnload(then ran: @escaping () -> Void) {
+        isLeaving = true
+        _ = tryClose()
+        webView.evaluateJavaScript("0", in: nil, in: .defaultClient) { _ in ran() }
+    }
+
+    /// Closes the page through its beforeunload, pagehide and unload handlers: `_close` alone fires no
+    /// beforeunload, where a site may write state back, such as its sign-in.
+    private func closePage() {
+        if !isLeaving { _ = tryClose() }
         let close = NSSelectorFromString("_close")
-        if !isFrozen, webView.responds(to: close) { webView.perform(close) }
+        if webView.responds(to: close) { webView.perform(close) }
     }
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }
@@ -1655,7 +1676,7 @@ extension WKWebViewTab: WKUIDelegate {
     ) {
         onMain { tab in
             // Like browsers, a page nobody looks at leaves without asking: the prompt would wait unseen.
-            if tab.agentDialogHandler?("beforeunload: left the page") == true || !tab.isOnScreen { return completionHandler(true) }
+            if tab.isLeaving || tab.agentDialogHandler?("beforeunload: left the page") == true || !tab.isOnScreen { return completionHandler(true) }
             JSDialogPresenter.runBeforeUnload(in: webView, completion: completionHandler)
         }
     }
@@ -1769,6 +1790,7 @@ extension WKWebViewTab: WKUIDelegate {
 
     /// Window frame (WKUIDelegatePrivate): unanswered, pages read a zero `outerWidth` and sites deriving zoom from it render at half
     /// resolution. The web process caches it until the window moves, so a detached or pre-window load falls back to any window or screen.
+    /// It spans only the page's width: sites read `outerWidth - innerWidth` over 160 as open devtools, which the sidebar would pass.
     @objc(_webView:getWindowFrameWithCompletionHandler:)
     func webView(_ webView: WKWebView, getWindowFrameWith completionHandler: @escaping (CGRect) -> Void) {
         let window = webView.window ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible }
@@ -1795,7 +1817,6 @@ extension WKWebViewTab: WKUIDelegate {
         Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: nil)
     }
 
-    /// It spans only the page's width: sites read `outerWidth - innerWidth` over 160 as open devtools, which the sidebar would pass.
     nonisolated private static let printEdgeHeight: CGFloat = 18
     nonisolated private static var printDateString: String {
         DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short)

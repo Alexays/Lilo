@@ -57,7 +57,9 @@ final class BrowserContextQuitSaveTests: XCTestCase {
         }
         engines[0].freeze()
 
-        await context.resumePagesBeforeQuit()
+        await withCheckedContinuation { done in
+            if !context.resumePagesBeforeQuit(completion: { done.resume() }) { done.resume() }
+        }
         context.closePagesBeforeQuit()
 
         let reader = context.engineFactory.createTab(configuration: .init(dataStore: context.profileManager.dataStore(for: profileId)))

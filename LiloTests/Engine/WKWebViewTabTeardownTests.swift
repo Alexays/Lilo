@@ -26,6 +26,33 @@ final class WKWebViewTabTeardownTests: XCTestCase {
         } catch {}
     }
 
+    func testTeardownRunsTheBeforeUnloadHandlerSuspendedPagesIncluded() async throws {
+        let page = Data("<script>addEventListener('beforeunload', (event) => event.isTrusted && localStorage.setItem(location.pathname, 'saved'))</script>".utf8)
+        let server = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: text/html"], page) }
+        let factory = WKEngineFactory()
+        let id = UUID()
+        let dataStore = factory.createDataStore(persistent: true, identifier: id.uuidString)
+        addTeardownBlock { try? await WKWebsiteDataStore.remove(forIdentifier: id) }
+        for (path, suspended) in [("/live", false), ("/suspended", true)] {
+            let tab = factory.createTab(configuration: .init(dataStore: dataStore))
+            tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)\(path)"))))
+            let loaded = await pollUntil { tab.wkWebView.url?.path == path && !tab.wkWebView.isLoading }
+            XCTAssertTrue(loaded)
+            if suspended { tab.freeze() }
+            tab.teardown()
+        }
+
+        let reader = factory.createTab(configuration: .init(dataStore: dataStore))
+        defer { reader.teardown() }
+        reader.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/reader"))))
+        var saved: [String: String] = [:]
+        let ran = await pollUntil {
+            saved = (try? await reader.wkWebView.evaluateJavaScript("({...localStorage})")) as? [String: String] ?? [:]
+            return saved["/live"] != nil && saved["/suspended"] != nil
+        }
+        XCTAssertTrue(ran, "every torn-down page ran its beforeunload handler, got \(saved)")
+    }
+
     func testFactoryEnablesPictureInPictureMediaPlaybackForContentTabs() throws {
         let tab = WKEngineFactory().createTab(configuration: WKEngineFactory.Configuration())
         defer { tab.teardown() }

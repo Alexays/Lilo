@@ -276,6 +276,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return reply
         }
         let clearsSiteData = browserContext.settingsStore?.clearSiteDataOnQuit == true
+        guard reply == .terminateLater || clearsSiteData else {
+            // Answered by WebKit's callback or a common-mode timer, never a Task: a terminate called from a
+            // main-queue block waits for its reply without draining that queue.
+            guard browserContext.resumePagesBeforeQuit(completion: { [weak self] in self?.replyToPendingTermination(sender) }) else { return reply }
+            terminationReplyPending = true
+            let timeout = Timer(timeInterval: 2, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.replyToPendingTermination(sender) }
+            }
+            RunLoop.main.add(timeout, forMode: .common)
+            return .terminateLater
+        }
         terminationReplyPending = true
         // Bounded: quit proceeds even if a download cancel, a data removal or a page resume never completes.
         Task { @MainActor in
@@ -285,7 +296,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Task { @MainActor in
             if reply == .terminateLater { await manager.pauseAllForQuit() }
             if clearsSiteData { await controller?.clearPersistentSiteData() }
-            await self.browserContext.resumePagesBeforeQuit()
+            await withCheckedContinuation { done in
+                if !self.browserContext.resumePagesBeforeQuit(completion: { done.resume() }) { done.resume() }
+            }
             self.replyToPendingTermination(sender)
         }
         return .terminateLater

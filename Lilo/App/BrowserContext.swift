@@ -340,23 +340,36 @@ final class BrowserContext {
         }
     }
 
-    /// Wakes every suspended page ahead of `closePagesBeforeQuit`: a suspended page runs no handler.
-    func resumePagesBeforeQuit() async {
-        for tabId in browserState.allTabIds() {
-            guard let engine = browserState.liveEngine(forTab: tabId), engine.isFrozen else { continue }
-            await withCheckedContinuation { done in engine.resume { done.resume() } }
+    /// Wakes every suspended page ahead of `closePagesBeforeQuit`, which cannot wait for the wake a teardown starts.
+    /// True while a page is still waking: `completion` then runs once, when the last one is live.
+    func resumePagesBeforeQuit(completion: @escaping () -> Void) -> Bool {
+        let suspended = browserState.allTabIds().compactMap { browserState.liveEngine(forTab: $0) }.filter(\.isFrozen)
+        // One more than the pages, released after the loop: a resume answering at once never ends the count early.
+        var waking = suspended.count + 1
+        for engine in suspended {
+            engine.resume {
+                waking -= 1
+                if waking == 0 { completion() }
+            }
         }
+        waking -= 1
+        return waking > 0
     }
 
     /// Closes every live page through its beforeunload, pagehide and unload handlers: a site writing its
     /// sign-in back to storage there would otherwise lose it when the quit kills the process.
     func closePagesBeforeQuit() {
-        for tabId in browserState.allTabIds() {
-            guard let engine = browserState.liveEngine(forTab: tabId) else { continue }
-            // Only beforeunload is left to answer, after the close: the page is gone by then.
-            _ = engine.tryClose()
-            engine.teardown()
+        let engines = browserState.allTabIds().compactMap { browserState.liveEngine(forTab: $0) }
+        // beforeunload first, waited for: its writes are then on their way before the exit stops the network
+        // process, which would drop them. A page still suspended runs it in its teardown, unwaited.
+        var running = 0
+        for engine in engines where !engine.isFrozen {
+            running += 1
+            engine.runBeforeUnload { running -= 1 }
         }
+        let deadline = Date().addingTimeInterval(0.5)
+        while running > 0, Date() < deadline { RunLoop.main.run(mode: .default, before: deadline) }
+        for engine in engines { engine.teardown() }
     }
 
     @discardableResult
