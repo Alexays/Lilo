@@ -31,7 +31,6 @@
     getUpdaterStatus,
     getWebsiteData,
     getZoomLevels,
-    setClearDataSheetOpen,
     setSetting,
   } from "../../stores/settings.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
@@ -69,6 +68,7 @@
     shortcuts: () => openSettingsSubpage("general", "shortcuts"),
     sites: () => openSettingsSubpage("privacy", "sites"),
     blockerSites: () => openSettingsSubpage("privacy", "blockerSites"),
+    clearData: () => openSettingsSubpage("privacy", "browsingData"),
     processManager: openProcessManager,
     diagnostics: openDiagnostics,
     designSystem: openDesignSystem,
@@ -336,8 +336,6 @@
         ariaLabel={title}
         onchange={(value) => setSetting("lifecyclePreset", value)}
       />
-    {:else if id === "clearData"}
-      <UiButton variant="danger" onclick={() => setClearDataSheetOpen(true)}>{t("settings.clearData.open")}</UiButton>
     {:else if id === "newSpace"}
       <UiButton onclick={openAddEditor}>{t("settings.items.newSpace.action")}</UiButton>
     {:else if id === "filterLists"}

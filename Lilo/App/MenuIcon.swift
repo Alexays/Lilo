@@ -18,7 +18,7 @@ enum MenuIcon: CaseIterable {
     case findPrevious, spelling, showSpelling, checkSpelling, spellWhileTyping, checkGrammar, autocorrect
     case substitutions, showSubstitutions, smartQuotes, smartDashes, textReplacement, transformations, speech, sidebar
     case fullScreen, reloadFromOrigin, stopLoading, zoomIn, zoomOut, actualSize, reader, translate, showChanges
-    case recentlyClosed, archivedTabs, recentlyVisited, history, nextSpace, previousSpace, previousTab, nextTab
+    case recentlyClosed, archivedTabs, recentlyVisited, history, clearBrowsingData, nextSpace, previousSpace, previousTab, nextTab
     case goToTab, moveToSpace, clearUnpinned, webInspector, inspectElement, console, viewSource, sources, profiling
     case processManager, loadExtension, featureFlags, designSystem, chromeDevtools, hitboxOverlay, nextWaitingTerminal
     case terminals, recentDownloads, help, shortcuts, onboarding, diagnostics, reportIssue, addExtension, manageExtensions
@@ -119,6 +119,7 @@ enum MenuIcon: CaseIterable {
         case .archivedTabs: "archivebox"
         case .recentlyVisited: "clock"
         case .history: "list.bullet"
+        case .clearBrowsingData: "trash"
         case .nextSpace: "arrow.right.square"
         case .previousSpace: "arrow.left.square"
         case .previousTab: "chevron.left.square"

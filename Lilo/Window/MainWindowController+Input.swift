@@ -66,6 +66,7 @@ extension MainWindowController {
         }
     }
     @objc func openSettings(_ sender: Any?) { bridgeRouter.send(event: "openSettings") }
+    @objc func clearBrowsingData(_ sender: Any?) { bridgeRouter.send(event: "openClearBrowsingData") }
     @objc func replayOnboarding(_ sender: Any?) { bridgeRouter.send(event: "startOnboarding") }
     @objc func openDesignSystem(_ sender: Any?) { bridgeRouter.send(event: "openDesignSystem") }
     @objc func openDiagnostics(_ sender: Any?) { bridgeRouter.send(event: "openDiagnostics") }

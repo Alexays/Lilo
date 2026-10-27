@@ -16,10 +16,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         "toggleBlockerAllowlist",
         "getContentBlockerStatus",
         "updateFilterLists",
-        "clearHistory",
-        "clearCookies",
-        "clearCache",
-        "clearSiteData",
+        "clearBrowsingData",
+        "getBrowsingDataSizes",
         "getWebsiteData",
         "removeWebsiteData",
         "getZoomLevels",
@@ -118,13 +116,66 @@ final class SettingsBridgeHandler: BridgeHandler {
         self.bridgeRouter = bridgeRouter
     }
 
-    private func withDataStore(action: String, success: String, _ op: (WKEngineDataStore) async -> Void) async {
-        guard let ds = dataStoreProvider() else {
-            bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: action, message: "No active profile data store".localized, level: "error")
-            return
+    /// Clears the chosen kinds of the window's profile in one pass, so the sizes and site lists are measured once afterwards.
+    private func clearBrowsingData(kinds: Set<String>, range: String) async {
+        let cutoff = Self.historyCutoff(for: range)
+        let since = cutoff ?? .distantPast
+        var failure: String?
+        if kinds.contains("history") {
+            if let historyStore = historyStoreProvider() {
+                do {
+                    try await Task.detached {
+                        if let cutoff { try historyStore.deleteEntries(since: cutoff) } else { try historyStore.clearAll() }
+                    }.value
+                } catch {
+                    failure = String(format: "Could not clear browsing history: %@".localized, error.localizedDescription)
+                }
+            } else {
+                failure = "No history store available".localized
+            }
         }
-        await op(ds)
-        bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: action, message: success.localized)
+        if !kinds.isDisjoint(with: ["cookies", "cache", "siteData"]) {
+            if let dataStore = dataStoreProvider() {
+                if kinds.contains("siteData") {
+                    await dataStore.removeAllData(modifiedSince: since)
+                    // Permissions carry no timestamp, so only an all-time clear drops them.
+                    if cutoff == nil {
+                        sitePermissionStore.clearAll()
+                        publishSitePermissions()
+                    }
+                } else {
+                    if kinds.contains("cookies") { await dataStore.removeCookies(modifiedSince: since) }
+                    if kinds.contains("cache") { await dataStore.removeCache(modifiedSince: since) }
+                }
+                await publishWebsiteData()
+            } else {
+                failure = "No active profile data store".localized
+            }
+        }
+        await publishBrowsingDataSizes()
+        bridgeRouter?.sendActionCompleted(
+            "settingsActionCompleted",
+            action: "clearBrowsingData",
+            message: failure ?? "Browsing data cleared".localized,
+            level: failure == nil ? "info" : "error"
+        )
+    }
+
+    /// Bytes per kind the clear-data page offers; a kind WebKit cannot measure is left out.
+    private func publishBrowsingDataSizes() async {
+        var sizes: [String: Any] = [:]
+        if let historyStore = historyStoreProvider(), let usage = try? await Task.detached(operation: { try historyStore.usage() }).value {
+            sizes["history"] = usage.bytes
+            sizes["historyEntries"] = usage.entries
+        }
+        if let dataSizes = await dataStoreProvider()?.dataSizes() {
+            var siteSizes: [String: Int64] = ["cache": 0, "cookies": 0, "storage": 0]
+            for (type, bytes) in dataSizes {
+                siteSizes[type == WKWebsiteDataTypeCookies ? "cookies" : type.contains("Cache") ? "cache" : "storage", default: 0] += bytes
+            }
+            sizes.merge(siteSizes) { $1 }
+        }
+        bridgeRouter?.send(event: "browsingDataSizesLoaded", data: sizes)
     }
 
     func handle(message: BridgeMessage) async -> Any? {
@@ -295,42 +346,11 @@ final class SettingsBridgeHandler: BridgeHandler {
                 publishSitePermissions()
             }
 
-        case "clearHistory":
-            guard let historyStore = historyStoreProvider() else {
-                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "clearHistory", message: "No history store available".localized, level: "error")
-                break
-            }
-            do {
-                if let since = Self.historyCutoff(for: message.string("range") ?? "all") {
-                    _ = try await Task.detached { try historyStore.deleteEntries(since: since) }.value
-                } else {
-                    try await Task.detached { try historyStore.clearAll() }.value
-                }
-                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "clearHistory", message: "Browsing history cleared".localized)
-            } catch {
-                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "clearHistory", message: String(format: "Could not clear browsing history: %@".localized, error.localizedDescription), level: "error")
-            }
+        case "clearBrowsingData":
+            await clearBrowsingData(kinds: Set(message.payload["kinds"] as? [String] ?? []), range: message.string("range", default: "all"))
 
-        case "clearCookies":
-            await withDataStore(action: "clearCookies", success: "Cookies cleared") { await $0.removeCookies(modifiedSince: Self.dataCutoff(for: message)) }
-            await publishWebsiteData()
-
-        case "clearCache":
-            await withDataStore(action: "clearCache", success: "Cache cleared") { await $0.removeCache(modifiedSince: Self.dataCutoff(for: message)) }
-            await publishWebsiteData()
-
-        case "clearSiteData":
-            // Permissions carry no timestamp, so only an all-time clear drops them.
-            let dataCutoff = Self.dataCutoff(for: message)
-            let clearsPermissions = dataCutoff == .distantPast
-            await withDataStore(action: "clearSiteData", success: clearsPermissions ? "Cookies, cache, and site permissions cleared" : "Cookies and cache cleared") {
-                await $0.removeAllData(modifiedSince: dataCutoff)
-                if clearsPermissions {
-                    sitePermissionStore.clearAll()
-                    publishSitePermissions()
-                }
-            }
-            await publishWebsiteData()
+        case "getBrowsingDataSizes":
+            await publishBrowsingDataSizes()
 
         case "getWebsiteData":
             await publishWebsiteData()
@@ -626,11 +646,6 @@ final class SettingsBridgeHandler: BridgeHandler {
             }
             return entries
         }
-    }
-
-    /// Cutoff date for clearing website data by range; `.distantPast` clears everything.
-    private static func dataCutoff(for message: BridgeMessage) -> Date {
-        historyCutoff(for: message.string("range", default: "all")) ?? .distantPast
     }
 
     /// Cutoff date for "clear history" ranges; `nil` means clear everything.

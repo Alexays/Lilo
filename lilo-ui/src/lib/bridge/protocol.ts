@@ -303,6 +303,17 @@ export interface BridgeWebsiteDataSnapshot {
 	kinds: ("cache" | "cookies" | "storage")[];
 }
 
+export type BridgeBrowsingDataKind = "history" | "cookies" | "cache" | "siteData";
+
+/** Bytes the window's profile stores, by kind; a kind left out could not be measured. */
+export interface BridgeBrowsingDataSizes {
+	history?: number;
+	historyEntries?: number;
+	cache?: number;
+	cookies?: number;
+	storage?: number;
+}
+
 export interface BridgeZoomLevelSnapshot {
 	host: string;
 	zoom: number;
@@ -674,10 +685,9 @@ export interface BridgeCommandPayloadMap {
 	revokeSitePermission: { id: string };
 	setSitePermission: { origin: string; type: string; allow: boolean };
 	toggleBlockerAllowlist: { host: string };
-	clearHistory: { range?: string };
-	clearCookies: { range?: string };
-	clearCache: { range?: string };
-	clearSiteData: { range?: string };
+	/** `siteData` clears every kind of site data, cookies and cache included, and with an all-time range the site permissions. */
+	clearBrowsingData: { kinds: BridgeBrowsingDataKind[]; range: string };
+	getBrowsingDataSizes: EmptyPayload;
 	getWebsiteData: EmptyPayload;
 	getTerminalOptions: EmptyPayload;
 	runInTerminal: { command: string; split: boolean };
@@ -825,6 +835,7 @@ export interface BridgeEventPayloadMap {
 	openHistory: EmptyPayload;
 	closeCommandBarAfterNavigation: EmptyPayload;
 	openSettings: EmptyPayload;
+	openClearBrowsingData: EmptyPayload;
 	openShortcuts: EmptyPayload;
 	openDesignSystem: EmptyPayload;
 	startOnboarding: EmptyPayload;
@@ -927,6 +938,7 @@ export interface BridgeEventPayloadMap {
 	};
 	settingsActionCompleted: BridgeSettingsActionStatusPayload;
 	websiteDataLoaded: { sites: BridgeWebsiteDataSnapshot[] };
+	browsingDataSizesLoaded: BridgeBrowsingDataSizes;
 	terminalOptions: BridgeTerminalOptions;
 	terminalCompletionResults: {
 		query: string;

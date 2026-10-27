@@ -244,6 +244,7 @@ export const createDemoHost = (
       }
     },
     emit,
+    historyCount: () => visited.length,
     locale,
     onChange: () => onChange?.(),
     shortcuts: native?.shortcuts ?? [],

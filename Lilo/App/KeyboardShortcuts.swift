@@ -85,6 +85,7 @@ enum KeyboardShortcuts {
         Action("tab.reopenClosed", "Reopen Last Closed Tab", "History", ["⇧⌘t"]),
         Action("history.archivedTabs", "Archived Tabs…", "History"),
         Action("history.show", "Show All History…", "History", ["⌘y"]),
+        Action("history.clearBrowsingData", "Clear Browsing Data…", "History", ["⇧⌘delete"]),
         Action("space.next", "Next Space", "Spaces", ["⌃⌘right"]),
         Action("space.previous", "Previous Space", "Spaces", ["⌃⌘left"])
     ] + (1...9).map { Action("space.select\($0)", String(format: "Space %d".localized, $0), "Spaces", ["⌃\($0)"]) } + [

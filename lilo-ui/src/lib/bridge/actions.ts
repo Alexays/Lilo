@@ -1,5 +1,6 @@
 import { postMessage as emit, type BridgeCommandPayloadMap } from "./index";
 import type {
+	BridgeBrowsingDataKind,
 	BridgeCommandName,
 	BridgeControlTabOrder,
 	BridgeMediaAction,
@@ -202,10 +203,9 @@ export const settingsActions = {
 	setSitePermission: (origin: string, type: string, allow: boolean): void =>
 		emit("setSitePermission", { origin, type, allow }),
 	toggleBlockerAllowlist: (host: string): void => emit("toggleBlockerAllowlist", { host }),
-	clearHistory: (range = "all"): void => emit("clearHistory", { range }),
-	clearCookies: (range = "all"): void => emit("clearCookies", { range }),
-	clearCache: (range = "all"): void => emit("clearCache", { range }),
-	clearSiteData: (range = "all"): void => emit("clearSiteData", { range }),
+	clearBrowsingData: (kinds: BridgeBrowsingDataKind[], range: string): void =>
+		emit("clearBrowsingData", { kinds, range }),
+	loadBrowsingDataSizes: emitEmpty("getBrowsingDataSizes"),
 	loadWebsiteData: emitEmpty("getWebsiteData"),
 	loadTerminalOptions: emitEmpty("getTerminalOptions"),
 	importTerminalTheme: emitEmpty("importTerminalTheme"),

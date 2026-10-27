@@ -115,6 +115,11 @@ export function initPanelsStore(): void {
 		openSettings();
 	});
 
+	on("openClearBrowsingData", () => {
+		openSettings("privacy");
+		openSettingsSubpage("privacy", "browsingData");
+	});
+
 	on("openDesignSystem", () => {
 		openDesignSystem();
 	});

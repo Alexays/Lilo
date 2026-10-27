@@ -325,6 +325,12 @@ export const demoMenus: DemoMenuItem[] = [
     separator,
     live("Recently Visited", "recentlyVisited", "No History"),
     command("Show All History…", "history", "history.show", "⌘Y"),
+    command(
+      "Clear Browsing Data…",
+      "clearBrowsingData",
+      "history.clearBrowsingData",
+      "⇧⌘⌫"
+    ),
   ]),
   submenu("Spaces", [
     command("Next Space", "nextSpace", "space.next", "⌃⌘→"),

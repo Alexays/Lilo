@@ -135,6 +135,7 @@ extension AppDelegate {
         historyMenu.addItem(.separator())
         dynamicMenus[.recentlyVisited] = submenu("Recently Visited".localized, in: historyMenu, icon: .recentlyVisited)
         historyMenu.add("Show All History…".localized, #selector(MainWindowController.openHistory(_:)), icon: .history, shortcut: "history.show")
+        historyMenu.add("Clear Browsing Data…".localized, #selector(MainWindowController.clearBrowsingData(_:)), icon: .clearBrowsingData, shortcut: "history.clearBrowsingData")
 
         // Space and tab shortcuts are matched by the window's key monitor: these menus only show them,
         // so the space list can be rebuilt on open.

@@ -1,4 +1,5 @@
 import type {
+  BridgeBrowsingDataKind,
   BridgeSitePermissionSnapshot,
   BridgeWebsiteDataSnapshot,
   BridgeZoomLevelSnapshot,
@@ -392,8 +393,7 @@ export function formatDownloadsFolderLabel(
   return parts.at(-1) ?? fallback;
 }
 
-export type BrowsingDataKind = "history" | "cookies" | "cache" | "siteData";
-export const BROWSING_DATA_KINDS: BrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
+export const BROWSING_DATA_KINDS: BridgeBrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
 
 export interface SiteSummary {
   /** Registrable domain when WebKit reports data for it, otherwise the bare host. */

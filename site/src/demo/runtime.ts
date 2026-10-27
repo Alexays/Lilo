@@ -451,6 +451,7 @@ export const startDemo = async (
     ["sidebar", () => host.dispatch("toggleSidebar", {})],
     ["split", () => host.dispatch("newSplitView", {})],
     ["history", () => host.emit("openHistory", {})],
+    ["clearBrowsingData", () => host.emit("openClearBrowsingData", {})],
     ["find", () => host.dispatch("showFindBar", {})],
     ["back", () => host.dispatch("goBack", {})],
     ["forward", () => host.dispatch("goForward", {})],
