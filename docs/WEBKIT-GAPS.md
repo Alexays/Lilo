@@ -147,6 +147,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** MultiPassword's offscreen document, which WebKit runs in its worker's process, never reached the worker, which then answered none of its popup's requests: the popup rendered nothing.
 - **Check:** Manual: depends on an earlier extension, not reduced to a minimal case. Repro: `make ext-smoke IDS=inomeogfingihgjfjlpeplalcfajhgai,cnlhokffphohmfcddnibpohmkdfafdli SHARDS=1` with the stand-in removed. Expected: MultiPassword's offscreen document finds the registration a tab opened at the same time finds. Actual: it finds none.
 
+
+### 93. `runtime.connect` throws when no context listens
+
+- **Gap:** `chrome.runtime.connect()` from a context of an extension none of whose other contexts has an `onConnect` listener throws `Invalid call to runtime.connect(). No runtime.onConnect listeners found.`. Chrome returns a port that disconnects with `Could not establish connection. Receiving end does not exist.` as `runtime.lastError`.
+- **Lilo:** the bridge catches that error and returns such a port: it takes messages until it disconnects, on the next task, and throws after ([runtime.ts] `unansweredPort`).
+- **Impact:** Keeper's worker connects to its own pages at startup, before any is open (webext-redux), and logged the error.
+- **Check:** `runtime.test.ts` ("hands out a port that disconnects with lastError when no context listens"). Repro: in a worker with no page open, `chrome.runtime.connect({ name: 'x' })`. Expected: a port whose `onDisconnect` fires with `lastError` set. Actual: the call throws.
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
