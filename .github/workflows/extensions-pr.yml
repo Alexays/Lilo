@@ -1,0 +1,68 @@
+# Extension smoke on the pull requests that touch extension support: the sentinel extensions of
+# LiloTests/Extensions/smoke-sentinels.txt against Chrome's recorded behavior (make ext-smoke-pr), in about 10 minutes.
+# The nightly run (extensions-nightly.yml) covers every listed extension. Store extensions are untrusted code: the job
+# holds no secret, and its token only reads the repository.
+
+name: Extensions on pull requests
+
+on:
+  pull_request:
+    paths:
+      - 'Lilo/Extensions/**'
+      - 'LiloTests/Extensions/**'
+      - 'scripts/ext-smoke.mjs'
+      - 'scripts/record-chrome-smoke.mjs'
+      - '.github/workflows/extensions-pr.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Extension smoke of the sentinels (macOS)
+    if: github.event.pull_request.draft == false
+    # The macOS 27 image whose default Xcode is 27 (the SDK Lilo builds against).
+    runs-on: xcode-27
+    # One Debug build and about 10 minutes of smoke.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: lilo-ui/package-lock.json
+      - run: xcodebuild -downloadComponent MetalToolchain
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .derived.noindex/xcode/SourcePackages
+          key: spm-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      - name: Extension smoke of the sentinels
+        id: smoke
+        run: make ext-smoke-pr
+      - name: Write the summary
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          {
+            echo "### Extension smoke: ${{ steps.smoke.outcome }}"
+            echo '```'
+            head -n 60 .derived.noindex/ext-smoke/report.txt 2>/dev/null || echo 'no report'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: extensions-pr-${{ github.sha }}
+          path: |
+            .derived.noindex/ext-smoke/report.txt
+            .derived.noindex/ext-smoke/*.log
+            .derived.noindex/ext-smoke/*.jsonl
+          include-hidden-files: true
+          if-no-files-found: ignore
