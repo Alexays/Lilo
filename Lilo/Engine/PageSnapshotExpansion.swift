@@ -1,8 +1,11 @@
-import Foundation
+import WebKit
 
 /// Grows a pinned page's inner scroller or viewport iframe to full height for the duration of a full-page capture.
 /// Frames coordinate via `postMessage` (a parent's only handle on a cross-origin child); never-navigating frames cannot take part.
 enum PageSnapshotExpansion {
+    /// The page sees neither the scripts' state nor their listener; window messages still reach it.
+    @MainActor static let world = WKContentWorld.world(name: "lilo-snapshot")
+
     /// Random per app run. A page can read this off an in-flight message and forge a request, but
     /// only while the user is taking a screenshot, and all it learns is the content height of a
     /// frame that same capture is about to render anyway.
@@ -142,7 +145,8 @@ enum PageSnapshotExpansion {
         offsets = [];
       }
 
-      window.addEventListener('message', function (event) {
+      // Restoring ends the capture: the listener goes with it, so idle pages carry nothing.
+      function onMessage(event) {
         var data = event.data;
         if (!data || data.liloSnapshot !== TOKEN || !data.request) return;
         function reply(height) {
@@ -150,9 +154,13 @@ enum PageSnapshotExpansion {
             event.source.postMessage({ liloSnapshot: TOKEN, reply: data.request, height: height }, '*');
           }
         }
-        if (data.request === 'expand') expand().then(reply, function () { reply(0); });
-        else { restore(); reply(0); }
-      }, true);
+        if (data.request === 'expand') return expand().then(reply, function () { reply(0); });
+        restore();
+        window.removeEventListener('message', onMessage, true);
+        delete window.__liloSnapshotReady;
+        reply(0);
+      }
+      window.addEventListener('message', onMessage, true);
     })();
     """
 
