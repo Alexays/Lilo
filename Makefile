@@ -482,9 +482,9 @@ site-fix: $(SITE_DEPS)
 site-test: site-generate
 	@npm --prefix site run test
 
-## Exercise the interactive website demo in a browser with production headers
+## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
-	@npm --prefix site run test:e2e
+	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
 
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:

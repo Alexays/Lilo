@@ -143,6 +143,12 @@ const pageLink = (url: string) => ({
 
 const fileURL = (name: string) => `${repoBase}/${name === "README.md" ? "blob" : "tree"}/main/${encodeURIComponent(name)}`;
 
+const dismissLinkMenu = (event: PointerEvent) => {
+  if (linkMenu.matches(":popover-open") && event.target instanceof Node && !linkMenu.contains(event.target)) {
+    linkMenu.hidePopover();
+  }
+};
+
 const linkMenuKey = (event: KeyboardEvent) => {
   if (event.key === "Escape" || event.key === "Tab") {
     event.preventDefault();
@@ -183,6 +189,8 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
 };
 
 </script>
+
+<svelte:window onpointerdown={dismissLinkMenu} />
 
 <div class="page" class:terminal-page={kind === "terminal"} style:zoom={zoom} style:height={`${100 / zoom}%`} style:--demo-minimum-font={`${minimumFont}px`} style:font-size={`max(14px, ${minimumFont}px)`}>
   {#if kind === "repo"}
@@ -251,8 +259,8 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
   {/if}
 </div>
 
-<!-- A popover keeps link actions above modal previews. -->
-<div class="page-link-menu" popover="auto" role="menu" aria-label={text.linkMenu} tabindex="-1" bind:this={linkMenu} style:left={`${menuPosition.x}px`} style:top={`${menuPosition.y}px`} onkeydown={linkMenuKey}>
+<!-- Manual dismissal prevents WebKit from closing the menu on the opening right-button release. -->
+<div class="page-link-menu" popover="manual" role="menu" aria-label={text.linkMenu} tabindex="-1" bind:this={linkMenu} style:left={`${menuPosition.x}px`} style:top={`${menuPosition.y}px`} onkeydown={linkMenuKey}>
   {#each linkActions as item (item.action)}<button type="button" role="menuitem" onclick={() => openLink(item.action)}>{item.label}</button>{/each}
 </div>
 
