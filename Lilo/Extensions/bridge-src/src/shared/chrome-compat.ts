@@ -4,7 +4,7 @@ import { tabGroupsAugmentation, tabsWithGroups, manifestPermissions, discardTab 
 import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns } from '../augmentation/webNavigation.ts';
 import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, runtimePatches, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { storageAreaPatches } from './storage-area.ts';
-import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
+import { answerAsChrome, lastErrorWithoutAnswer, listensProbe, noReceiver } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import {
   runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
@@ -202,13 +202,13 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   // them for it, and leaves out the empty ones WebKit reports to the others.
   const withheldURLs = !perms.has('tabs') && !chrome.runtime?.getManifest?.()?.optional_permissions?.includes('tabs');
   const groups = chrome.tabGroups === tabGroupsAugmentation ? tabsWithGroups : {};
-  const noReceiver = () => 'Could not establish connection. Receiving end does not exist.';
+  const unreceived = () => noReceiver;
   // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
   // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
   // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
   const pageNoAnswer = () => Promise.resolve(chrome.runtime.sendMessage(listensProbe)).catch(() => undefined)
     .then((listens) => listens === true || gapCall<boolean>('runtime', 'workerListensToMessages'))
-    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()), noReceiver);
+    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver), unreceived);
   // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
   // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
   // as listening: its page cannot listen yet (a tab opened on the popup hears tabs.onActivated's message at once).
@@ -225,8 +225,8 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         .some((url) => typeof url === 'string' && url.startsWith(base) && url.split('#')[0] !== own);
     };
     return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
-      async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
-      noReceiver,
+      async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver),
+      unreceived,
     );
   };
   const tabsPatch: Record<string, Patch> = {
@@ -294,7 +294,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
       },
       serve: (runtime) => {
         // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
-        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : noReceiver, page);
+        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : unreceived, page);
         return {
           // WebKit's lastError is null without an error, Chrome's undefined (eJOY tests it with typeof).
           get lastError() { return liloLastError() ?? runtime.lastError ?? undefined; },

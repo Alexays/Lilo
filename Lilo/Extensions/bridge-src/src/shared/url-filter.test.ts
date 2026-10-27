@@ -15,6 +15,7 @@ describe('UrlFilter', () => {
   it('compares urls without the fragment and hosts in lower case', () => {
     assert.equal(matchesUrlFilter(url, { urlSuffix: 'lang=fr' }), true);
     assert.equal(matchesUrlFilter(url, { hostEquals: 'docs.example.com' }), true);
+    assert.equal(matchesUrlFilter(url, { hostEquals: 'Docs.EXAMPLE.com', hostPrefix: 'DOCS', hostSuffix: 'Example.Com', hostContains: '.Example' }), true);
   });
 
   it('checks schemes, ports and regular expressions', () => {

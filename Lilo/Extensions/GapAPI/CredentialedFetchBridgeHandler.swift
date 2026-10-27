@@ -7,7 +7,13 @@ import WebKit
 /// Answers nil for a request WebKit sends as Chrome does, which the page then sends itself.
 @MainActor
 final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTaskDelegate {
-    let gapActions: Set<String> = ["fetch.credentialed"]
+    let gapActions: Set<String> = ["fetch.credentialed", "fetch.cancel"]
+
+    /// A request's answer, made and read on the main actor.
+    private struct Answer: @unchecked Sendable { let value: Any? }
+
+    /// Each request under way by its extension and request id, which an abort cancels, as Chrome stops the request.
+    private var running: [String: Task<Answer, Never>] = [:]
 
     private lazy var session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
@@ -18,6 +24,19 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
     }()
 
     func handle(_ call: GapCall) async -> Any? {
+        let key = call.string("requestId").map { "\(call.extensionId)\u{1f}\($0)" }
+        if call.action == "fetch.cancel" {
+            if let key { running.removeValue(forKey: key)?.cancel() }
+            return nil
+        }
+        let request = Task { Answer(value: await send(call)) }
+        if let key { running[key] = request }
+        let answer = await request.value
+        if let key, running[key] == request { running[key] = nil }
+        return answer.value
+    }
+
+    private func send(_ call: GapCall) async -> Any? {
         guard let context = call.context,
               var url = call.string("url").flatMap(URL.init(string:)), ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
               context.hasAccess(to: url) else { return nil }
@@ -105,7 +124,10 @@ extension WKHTTPCookieStore {
         return cookies.filter { cookie in
             let domain = cookie.domain.lowercased()
             let domainMatches = domain.hasPrefix(".") ? host == domain.dropFirst() || host.hasSuffix(domain) : host == domain
-            return domainMatches && path.hasPrefix(cookie.path) && (!cookie.isSecure || secure) && (cookie.expiresDate.map { $0 > now } ?? true)
+            // RFC 6265's path-match: `/foo` covers `/foo` and `/foo/x`, not `/foobar`.
+            let pathMatches = path == cookie.path || path.hasPrefix(cookie.path)
+                && (cookie.path.hasSuffix("/") || path.dropFirst(cookie.path.count).hasPrefix("/"))
+            return domainMatches && pathMatches && (!cookie.isSecure || secure) && (cookie.expiresDate.map { $0 > now } ?? true)
         }
     }
 }

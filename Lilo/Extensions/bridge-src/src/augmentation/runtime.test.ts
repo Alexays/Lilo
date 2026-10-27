@@ -280,6 +280,17 @@ describe("ports tabs.connect opens to the extension's own pages", () => {
     assert.deepEqual([shown, elsewhere, external].map((port) => port.disconnected), [false, false, false], 'a page lets go of none: WebKit would drop their queued messages');
   });
 
+  it("disconnect with lastError when no script of a web page listens, where WebKit throws", async () => {
+    (globalThis as any).chrome.runtime.getURL = (path: string) => `chrome-extension://own/${path}`;
+    const tabs = { get: (id: number) => Promise.resolve({ id, url: 'https://example.com/' }) };
+    const refuse = () => { throw new Error('Invalid call to tabs.connect(). No runtime.onConnect listeners found.'); };
+    const port: any = tabsConnect(refuse, () => tabs).call(tabs, 5, { name: 'content' });
+    assert.equal(port.name, 'content');
+    port.postMessage('ping');
+    const lastError = await new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
+    assert.deepEqual(lastError, { message: 'Could not establish connection. Receiving end does not exist.' });
+  });
+
   it('go to the page a tab shows, with what was posted meanwhile', async () => {
     const runtime = (globalThis as any).chrome.runtime;
     let page: any;

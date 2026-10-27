@@ -61,6 +61,18 @@ describe('credentialed fetch', () => {
     await assert.rejects(scope.fetch('https://example.com/', { credentials: 'include', signal: controller.signal }), { name: 'AbortError' });
   });
 
+  it('cancels the request in Lilo when aborted in flight, as Chrome stops it', async () => {
+    answer = new Promise(() => {});
+    const controller = new AbortController();
+    const response = scope.fetch('https://example.com/poll', { credentials: 'include', signal: controller.signal });
+    await new Promise((resolve) => setImmediate(resolve));
+    controller.abort();
+    await assert.rejects(response, { name: 'AbortError' });
+    const [sentRequest, cancel] = calls;
+    assert.equal(typeof sentRequest.requestId, 'string');
+    assert.deepEqual(cancel, { requestId: sentRequest.requestId });
+  });
+
   it('waits past the ipc timeout for a long poll', async () => {
     let release!: (value: unknown) => void;
     answer = new Promise((resolve) => { release = resolve; });
@@ -236,7 +248,7 @@ describe('credentialed XMLHttpRequest', () => {
     const ended = events(xhr);
     xhr.send();
     xhr.abort();
-    assert.deepEqual(await ended, ['readystatechange 4', 'abort 4', 'loadend 4']);
+    assert.deepEqual(await ended, ['loadstart 1', 'readystatechange 4', 'abort 4', 'loadend 4']);
     assert.equal(xhr.readyState, 0);
     assert.throws(() => xhr.send(), { name: 'InvalidStateError' });
   });
