@@ -53,6 +53,20 @@ final class WKWebViewTabTeardownTests: XCTestCase {
         XCTAssertTrue(ran, "every torn-down page ran its beforeunload handler, got \(saved)")
     }
 
+    func testAPageAnsweringAgainLeavesCoreImageCompositing() async {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { tab.teardown() }
+
+        tab.webViewWebProcessDidBecomeUnresponsive(tab.wkWebView)
+        await pollUntil { tab.isUnresponsive }
+        XCTAssertTrue(tab.wkWebView.layerUsesCoreImageFilters)
+
+        tab.webViewWebProcessDidBecomeResponsive(tab.wkWebView)
+        await pollUntil { !tab.isUnresponsive }
+        XCTAssertFalse(tab.wkWebView.layerUsesCoreImageFilters, "a live page composites directly, its video included")
+        XCTAssertTrue(tab.wkWebView.contentFilters.isEmpty)
+    }
+
     func testFactoryEnablesPictureInPictureMediaPlaybackForContentTabs() throws {
         let tab = WKEngineFactory().createTab(configuration: WKEngineFactory.Configuration())
         defer { tab.teardown() }

@@ -245,7 +245,8 @@ final class WKWebViewTab: NSObject {
     private(set) var isUnresponsive = false {
         didSet {
             guard isUnresponsive != oldValue else { return }
-            webView.layerUsesCoreImageFilters = true
+            // Off again once the page answers: a Core Image layer composites offscreen, which slows video down.
+            webView.layerUsesCoreImageFilters = isUnresponsive
             webView.contentFilters = isUnresponsive ? [
                 CIFilter(name: "CIGaussianBlur", parameters: [kCIInputRadiusKey: 6]),
                 CIFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: 0.3])
