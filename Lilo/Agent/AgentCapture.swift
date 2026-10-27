@@ -33,20 +33,35 @@ final class AgentCapture: NSObject {
                 if (a instanceof Error || typeof a.message === 'string') {
                   return `${a.name || 'Error'}: ${a.message}` + (typeof a.stack === 'string' && a.stack ? '\\n' + a.stack : '')
                 }
+                // Stops descending once the text is long enough: a huge object costs only what is kept of it.
+                let used = 0
+                const json = JSON.stringify(a, (key, value) => {
+                  if (used > 5000) return undefined
+                  used += key.length + (typeof value === 'string' ? value.length : 4)
+                  return Array.isArray(value) && value.length > 5000 ? value.slice(0, 5000) : value
+                })
                 // An object with no data of its own (a class instance) stringifies to "{}": its class says more.
-                const json = JSON.stringify(a)
                 return json && json !== '{}' ? json : `[object ${a.constructor?.name || 'Object'}]`
               } catch { return Object.prototype.toString.call(a) }
             }).join(' ')
             log.push({ level, text: text.slice(0, 5000), time: Date.now(), url: location.href })
             if (log.length > \(maxEntries)) log.shift()
           }
-          for (const level of ['log', 'info', 'warn', 'error', 'debug']) {
+          const wrapped = ['log', 'info', 'warn', 'error', 'debug'].map(level => {
             const original = console[level]
-            console[level] = function (...args) { push(level, args); return original.apply(this, args) }
+            const wrapper = console[level] = function (...args) { push(level, args); return original.apply(this, args) }
+            return { level, original, wrapper }
+          })
+          const onError = e => push('error', [e.error ?? e.message])
+          const onRejection = e => push('error', ['Unhandled rejection:', e.reason])
+          addEventListener('error', onError)
+          addEventListener('unhandledrejection', onRejection)
+          log.restore = () => {
+            for (const { level, original, wrapper } of wrapped) if (console[level] === wrapper) console[level] = original
+            removeEventListener('error', onError)
+            removeEventListener('unhandledrejection', onRejection)
+            delete window.__liloConsole
           }
-          addEventListener('error', e => push('error', [e.error ?? e.message]))
-          addEventListener('unhandledrejection', e => push('error', ['Unhandled rejection:', e.reason]))
         })()
         """
 
@@ -86,6 +101,7 @@ final class AgentCapture: NSObject {
         observations.forEach { $0.invalidate() }
         observations = []
         if usesResourceLoadDelegate { webView?.perform(Self.setDelegate, with: nil) }
+        webView?.evaluateJavaScript("window.__liloConsole?.restore()")
     }
 
     /// Console entries of the current document, oldest first.

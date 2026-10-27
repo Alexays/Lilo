@@ -51,6 +51,33 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertFalse(errors.text.contains("{}"), errors.text)
     }
 
+    func testAHugeObjectLogsOnlyItsStart() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+
+        _ = try await js("console.log({ items: Array.from({ length: 100000 }, (_, i) => ({ id: i, name: 'item ' + i })) }); 1", tab: tab)
+        let reply = await client.callTool("read_console_messages", ["tabId": tab, "pattern": "items"])
+
+        XCTAssertTrue(reply.text.hasPrefix(#"[log] {"items":[{"id":0,"name":"item 0"}"#), reply.text)
+        XCTAssertLessThan(reply.text.count, 6000)
+    }
+
+    func testStoppingTheCaptureLeavesThePageAsItWas() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+        let id = try XCTUnwrap(control.tabNumbers.first { $0.value == tab }?.key)
+        let webView = try engine(forTab: tab).wkWebView
+
+        try XCTUnwrap(control.captures[id]).stop()
+
+        let restored = await pollUntil(timeout: 5) {
+            (try? await webView.evaluateJavaScript("typeof window.__liloConsole")) as? String == "undefined"
+        }
+        XCTAssertTrue(restored)
+        let source = try await webView.evaluateJavaScript("Function.prototype.toString.call(console.log)") as? String
+        XCTAssertTrue(source?.contains("[native code]") == true, source ?? "")
+    }
+
     func testConsoleHookNotInstalledOnUserTabs() async throws {
         _ = try await agentTab(showing: Self.page)
         let user = try XCTUnwrap(window.tabManager.activeEngineTab)
