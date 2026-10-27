@@ -64,6 +64,7 @@ extension MainWindowController {
                 "microphoneMuted": tab.isMicrophoneMuted || controls.microphoneActive == false || !tab.isMicrophoneActive,
                 "hasCamera": tab.isCameraActive || controls.actions.contains("togglecamera"),
                 "cameraOff": controls.cameraActive == false || !tab.isCameraActive || engine.wkWebView.cameraCaptureState == .muted,
+                "muted": tab.isMuted,
                 "canHangUp": controls.actions.contains("hangup")
             ]
         }

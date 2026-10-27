@@ -563,8 +563,6 @@ export interface BridgeCommandPayloadMap {
 	returnTabHome: { id: string };
 	muteTab: { id: string };
 	unmuteTab: { id: string };
-	muteTabMicrophone: { id: string };
-	unmuteTabMicrophone: { id: string };
 	controlMedia: { id: string; action: BridgeMediaAction };
 	controlCall: { id: string; action: BridgeCallAction };
 	getMediaActivity: EmptyPayload;
@@ -1184,6 +1182,8 @@ export interface BridgeCallTab {
 	microphoneMuted: boolean;
 	hasCamera: boolean;
 	cameraOff: boolean;
+	/** The tab's own sound, muted in Lilo. */
+	muted: boolean;
 	/** The page registered a Media Session hangup handler. */
 	canHangUp: boolean;
 }

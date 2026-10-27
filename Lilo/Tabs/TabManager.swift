@@ -309,14 +309,6 @@ final class TabManager {
         delegate?.tabManager(self, didUpdateTab: updatedTab)
     }
 
-    func setTabMicrophoneMuted(id: UUID, muted: Bool) {
-        guard let updatedTab = mutateTab(id: id, { $0.isMicrophoneMuted = muted }) else { return }
-
-        engineHost.engine(for: id)?.setMicrophoneMuted(muted)
-
-        delegate?.tabManager(self, didUpdateTab: updatedTab)
-    }
-
     func tabIndex(for id: UUID) -> Int? {
         currentTabs.firstIndex(where: { $0.id == id })
     }

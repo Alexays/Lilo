@@ -778,6 +778,8 @@
 		"removeBookmark": "Remover favorito",
 		"newTab": "Nova aba",
 		"cameraInUse": "Câmera em uso",
+		"microphoneInUse": "Microfone em uso",
+		"microphoneMuted": "Microfone silenciado",
 		"muteMicrophone": "Silenciar microfone",
 		"unmuteMicrophone": "Ativar microfone",
 		"sharingScreen": "Compartilhando tela",

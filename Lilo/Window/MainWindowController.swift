@@ -731,7 +731,7 @@ extension MainWindowController: TabManager.Delegate {
         syncActiveBrowserState()
         publishActiveTab()
         enqueueVisibleTabUpdate(tab)
-        if context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
+        if context.mediaTabIds.contains(tab.id) || context.callTabIds.contains(tab.id) { context.mediaActivityChanged() }
         profileContext?.sessionPersistence?.scheduleSave()
     }
 }

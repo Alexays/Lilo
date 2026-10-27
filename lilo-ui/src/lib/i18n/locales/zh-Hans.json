@@ -778,6 +778,8 @@
 		"removeBookmark": "移除书签",
 		"newTab": "新建标签页",
 		"cameraInUse": "摄像头使用中",
+		"microphoneInUse": "麦克风使用中",
+		"microphoneMuted": "麦克风已静音",
 		"muteMicrophone": "静音麦克风",
 		"unmuteMicrophone": "取消麦克风静音",
 		"sharingScreen": "正在共享屏幕",

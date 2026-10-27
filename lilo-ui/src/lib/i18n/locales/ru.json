@@ -784,6 +784,8 @@
 		"removeBookmark": "Убрать закладку",
 		"newTab": "Новая вкладка",
 		"cameraInUse": "Камера используется",
+		"microphoneInUse": "Микрофон используется",
+		"microphoneMuted": "Микрофон выключен",
 		"muteMicrophone": "Выключить микрофон",
 		"unmuteMicrophone": "Включить микрофон",
 		"sharingScreen": "Демонстрация экрана",

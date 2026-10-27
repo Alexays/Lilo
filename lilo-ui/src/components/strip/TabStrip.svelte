@@ -9,7 +9,7 @@
   import StripPopover from "./StripPopover.svelte";
   import MediaCard from "../sidebar/MediaCard.svelte";
   import UpdateCard from "../sidebar/UpdateCard.svelte";
-  import { getMediaCardTab } from "../../stores/media.svelte";
+  import { getCallCardTab, getMediaCardTab } from "../../stores/media.svelte";
   import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
@@ -47,6 +47,8 @@
   // The address field itself shows only when it has something to say (a permission prompt), or while
   // the strip floats in for hidden tabs and the page toolbar that holds it is gone.
   const addressInActiveTab = $derived((editsAddress && getActiveUrlBarDrawer() !== null) || !isSidebarVisible());
+  let callOpen = $state(false);
+  let callButton: HTMLButtonElement | undefined = $state();
   let mediaOpen = $state(false);
   let mediaButton: HTMLButtonElement | undefined = $state();
   let updateOpen = $state(false);
@@ -281,6 +283,35 @@
   </div>
 
   <div class="trailing">
+    {#if getCallCardTab()}
+      {@const call = getCallCardTab()}
+      <!-- Like the media card, the call card opens from its icon; a muted microphone shows on it. -->
+      <button
+        bind:this={callButton}
+        class="strip-btn"
+        class:on={callOpen}
+        class:off={call?.microphoneMuted}
+        aria-label={call?.title}
+        aria-expanded={callOpen}
+        onclick={() => (callOpen = !callOpen)}
+      >
+        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M4 2.8C4 1.8 4.8 1 5.8 1H6.2C7.2 1 8 1.8 8 2.8V5.2C8 6.2 7.2 7 6.2 7H5.8C4.8 7 4 6.2 4 5.2V2.8Z" fill="currentColor" />
+          <path d="M2.6 5.2C2.6 7 4.1 8.4 6 8.4C7.9 8.4 9.4 7 9.4 5.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          <path d="M6 8.4V10.2M4.6 10.2H7.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          {#if call?.microphoneMuted}
+            <path d="M2 2L10 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+          {/if}
+        </svg>
+      </button>
+      {#if callOpen && callButton}
+        <StripPopover anchor={callButton} label={call?.title ?? ""} onclose={() => (callOpen = false)}>
+          {#await import("../sidebar/CallCard.svelte") then card}
+            <card.default />
+          {/await}
+        </StripPopover>
+      {/if}
+    {/if}
     {#if getMediaCardTab()}
       <!-- No room for the card in a strip: it opens from its icon. -->
       <button
@@ -603,6 +634,13 @@
   .strip-btn.on {
     background: var(--bg-hover);
     color: var(--text-primary);
+  }
+
+  /* The call card's own off state: the others are not hearing you, even with the card closed. */
+  .strip-btn.off,
+  .strip-btn.off:hover {
+    background: var(--danger);
+    color: var(--on-color);
   }
 
   .update-btn {
