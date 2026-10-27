@@ -159,7 +159,7 @@ test("settings open as a page with its navigation and an active pill in the top 
 	const pill = page.locator(".tab-strip .strip-settings");
 	await expect(pill.getByRole("tab", { name: "Settings" })).toHaveAttribute("aria-selected", "true");
 	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveCount(0);
-	await expect(page.locator(".ui-shell-frame .ui-shell-frame-nav .section-nav-button")).toHaveCount(8);
+	await expect(page.locator(".ui-shell-frame .ui-shell-frame-nav .section-nav-button")).toHaveCount(9);
 	await expect(page.locator(".strip-panels.open")).toHaveCount(0);
 	await expect(page.locator("html")).not.toHaveAttribute("data-strip-panel-open");
 
@@ -213,7 +213,7 @@ test("settings in the sidebar layout keep their navigation in the sidebar, with 
 	await bootChrome(page, initialWorld());
 	await receive(page, { event: "openSettings" });
 
-	await expect(page.locator(".sidebar .section-nav-button")).toHaveCount(8);
+	await expect(page.locator(".sidebar .section-nav-button")).toHaveCount(9);
 	await expect(page.locator(".ui-shell-frame")).toBeVisible();
 	await expect(page.locator(".ui-shell-frame-nav")).toHaveCount(0);
 	await expect(page.locator(".strip-settings")).toHaveCount(0);
