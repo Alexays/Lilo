@@ -1,6 +1,6 @@
 import { clamp } from "./math";
 
-type RGB = {
+export type RGB = {
 	r: number;
 	g: number;
 	b: number;
@@ -40,7 +40,7 @@ function expandHex(hex: string): string {
 		.join("");
 }
 
-function parseHexColor(input: string): RGB | null {
+export function parseHexColor(input: string): RGB | null {
 	const trimmed = input.trim().replace(/^#/, "");
 	const normalized = expandHex(trimmed);
 	if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {

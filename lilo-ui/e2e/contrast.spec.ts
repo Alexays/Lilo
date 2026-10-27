@@ -556,3 +556,19 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 		});
 	}
 }
+
+test("a dark glyph on transparency gets a plate on a dark Space, an opaque icon keeps its own background", async ({ page }) => {
+	const glyph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR4nGNgGAUYQE3F4z8+PGrAyDBgBAIAXBVkQdcEF9cAAAAASUVORK5CYII=";
+	const opaque = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGNQU/H4TwlmGDVg1IBRA4aLAQBkM5EQwEVXkAAAAABJRU5ErkJggg==";
+	const world = initialWorld();
+	world.spaces[0].color = "#363a75";
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab, index) =>
+		index === 0 ? { ...tab, faviconDataURL: glyph } : index === 1 ? { ...tab, faviconDataURL: opaque } : tab,
+	);
+	await page.emulateMedia({ colorScheme: "dark" });
+	await bootChrome(page, world);
+
+	const [first, second] = world.tabsBySpace[SPACE_1];
+	await expect(page.locator(`.tab-list [data-tab-id="${first.id}"] .site-favicon`)).toHaveClass(/has-plate/);
+	await expect(page.locator(`.tab-list [data-tab-id="${second.id}"] .site-favicon`)).not.toHaveClass(/has-plate/);
+});
