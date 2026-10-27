@@ -375,6 +375,27 @@ describe('runtime ports between extension pages and the worker', () => {
     assert.deepEqual(pageHeard, [{ state: 1 }]);
   });
 
+  it('keeps the name of a port connected with a null id first, as webext-redux connects', () => {
+    const opened: string[] = [];
+    const runtime: any = crossExtensionMessaging({ id: 'ponmlkjihgfedcbaponmlkjihgfedcba', connect: (info: any) => { opened.push(info.name); return channel().end(info.name); } });
+    assert.equal(runtime.connect(null, { name: 'chromex.port_name' }).name, 'chromex.port_name');
+    assert.equal(runtime.connect(undefined, { name: 'state' }).name, 'state');
+    assert.deepEqual(opened.map((name) => name.split('?')[0]), ['chromex.port_name', 'state']);
+  });
+
+  it('hands out a port that disconnects with lastError when no context listens, where WebKit throws', async () => {
+    const runtime: any = crossExtensionMessaging({
+      id: 'ponmlkjihgfedcbaponmlkjihgfedcba',
+      connect: () => { throw new Error('Invalid call to runtime.connect(). No runtime.onConnect listeners found.'); },
+    });
+    const port = runtime.connect({ name: 'chromex.port_name' });
+    assert.equal(port.name, 'chromex.port_name');
+    port.postMessage('before');
+    const lastError = await new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
+    assert.deepEqual(lastError, { message: 'Could not establish connection. Receiving end does not exist.' });
+    assert.throws(() => port.postMessage('after'), /disconnected port/);
+  });
+
   it('connects with its own onConnect listeners off WebKit event, so WebKit asks only the other processes', () => {
     const listeners = new Set<unknown>();
     const webKitOnConnect: any = Object.create({

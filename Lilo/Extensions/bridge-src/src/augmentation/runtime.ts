@@ -247,6 +247,39 @@ function sendExternal(args: any[]): unknown {
 }
 
 /**
+ * Chrome's port to an extension that has no onConnect listener anywhere: it posts until it disconnects, on the next
+ * task, with lastError set. WebKit throws from connect instead (WEBKIT-GAPS 93).
+ */
+function unansweredPort(name: string): object {
+  let closed = false;
+  const port = {
+    name,
+    onMessage: new ChromeEvent<[unknown, unknown]>(),
+    onDisconnect: new ChromeEvent<[unknown]>(),
+    postMessage() {
+      if (closed) throw new Error('Attempting to use a disconnected port object');
+    },
+    disconnect() { closed = true; },
+  };
+  setTimeout(() => {
+    if (closed) return;
+    closed = true;
+    withLastError(noReceiver, () => port.onDisconnect.dispatch(port));
+  });
+  return port;
+}
+
+/** WebKit's connect, or Chrome's port when no context listens. */
+function connectOrUnanswered(open: () => any, name: string): any {
+  try {
+    return open();
+  } catch (error) {
+    if (!String((error as Error)?.message).includes('No runtime.onConnect listeners found')) throw error;
+    return unansweredPort(name);
+  }
+}
+
+/**
  * chrome.runtime's connect and sendMessage, which Lilo relays to another extension's onConnectExternal and
  * onMessageExternal (WebKit has no cross-extension messaging); `sendLocal` sends the extension's own messages.
  */
@@ -258,13 +291,14 @@ export function crossExtensionMessaging(
   return {
     connect(...args: any[]) {
       if (otherExtension(args[0], runtime)) return connectExternal(args);
-      const [id, info] = typeof args[0] === 'string' ? args : [undefined, args[0]];
+      // Chrome takes a null or undefined id before the connect info, as webext-redux passes it (Keeper).
+      const [id, info] = typeof args[0] === 'string' ? args : [undefined, args.length > 1 && args[0] == null ? args[1] : args[0]];
       const name = typeof info?.name === 'string' ? info.name : '';
       const marked = { ...info, name: name + once };
       const open = () => (id === undefined ? runtime.connect(marked) : runtime.connect(id, marked));
       // WebKit disconnects the port when the first process answers with no receiver, as this context's own does
       // when it listens (WEBKIT-GAPS 60): it asks only the processes listening once the connect reaches it.
-      return messagesOnce(ownOnConnect ? ownOnConnect.unheard(open) : open(), name);
+      return connectOrUnanswered(() => messagesOnce(ownOnConnect ? ownOnConnect.unheard(open) : open(), name), name);
     },
     sendMessage(...args: any[]) {
       return toOtherExtension(args, runtime) ? sendExternal(args) : sendLocal(...args);
@@ -275,7 +309,9 @@ export function crossExtensionMessaging(
 /** WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay. */
 export const crossExtensionPatches: Record<string, Patch> = {
   connect: (original, self) => function (this: unknown, ...args: any[]) {
-    return otherExtension(args[0], self(this)) ? connectExternal(args) : original.apply(self(this), args);
+    if (otherExtension(args[0], self(this))) return connectExternal(args);
+    const info = typeof args[0] === 'string' || (args.length > 1 && args[0] == null) ? args[1] : args[0];
+    return connectOrUnanswered(() => original.apply(self(this), args), typeof info?.name === 'string' ? info.name : '');
   },
   sendMessage: (original, self) => function (this: unknown, ...args: any[]) {
     return toOtherExtension(args, self(this)) ? sendExternal(args) : original.apply(self(this), args);
