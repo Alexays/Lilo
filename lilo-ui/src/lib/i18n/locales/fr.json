@@ -245,6 +245,11 @@
 				"description": "Afficher des suggestions pendant la saisie. Ce que vous tapez est envoyé au moteur.",
 				"keywords": "autocomplétion saisie"
 			},
+			"preloadTopHit": {
+				"title": "Précharger le meilleur résultat",
+				"description": "Charger un site que vous visitez souvent pendant la saisie de son adresse. Utilise plus de mémoire et de données.",
+				"keywords": "prérendu rapide"
+			},
 			"searchEngines": {
 				"title": "Moteurs de recherche",
 				"description": "Ajouter, réordonner ou retirer des moteurs et leurs mots-clés.",

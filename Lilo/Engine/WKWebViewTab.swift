@@ -437,6 +437,20 @@ final class WKWebViewTab: NSObject {
         webView.load(URLRequest(url: url))
     }
 
+    /// Tells a delegate set mid-load what a page loading out of sight did so far, as if it had watched:
+    /// commit applies the site's settings, finish records the visit.
+    func replayPreloadedNavigation() {
+        guard let delegate else { return }
+        let url = currentURL
+        // First, while the tab still has no URL: the host change shows the site's cached icon, since
+        // WebKit offered the page's own before anyone listened.
+        delegate.tab(self, didUpdateURL: url)
+        delegate.tab(self, didNavigate: .started(url))
+        if hasCommittedContent { delegate.tab(self, didNavigate: .committed(url)) }
+        if hasCommittedContent, !isLoading { delegate.tab(self, didNavigate: .finished(url)) }
+        delegate.tab(self, didUpdateProgress: estimatedProgress)
+    }
+
     /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
     /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
     func loadCachedCopy(of url: URL) {

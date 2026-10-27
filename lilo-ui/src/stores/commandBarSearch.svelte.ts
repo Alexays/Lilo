@@ -359,7 +359,7 @@ function getInactiveOpenTabs(locked = getLockedFolderRoots()): TabState[] {
 }
 
 // A URL after its scheme and a leading "www.", lowercased.
-function addressOf(url = ""): string {
+export function addressOf(url = ""): string {
 	return url.toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\/(www\.)?/, "");
 }
 
@@ -599,7 +599,7 @@ function autofillResult(query: string, history: CommandResult[], tabs: TabState[
 	const target = normalizeURLForMatch(origin);
 	const openTab = tabs.find((tab) => tabMatchURL(tab) === target);
 	if (openTab) return toTabResult(openTab);
-	return createResult("autofill", "navigate", host, { typed: false }, {
+	return createResult("autofill", "navigate", host, { typed: false, visitCount: visits.get(host) }, {
 		subtitle: origin,
 		icon: ">",
 		hint: t("commandBar.hintGo"),

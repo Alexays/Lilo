@@ -245,6 +245,11 @@
 				"description": "Show suggestions as you type. What you type is sent to the search engine.",
 				"keywords": "autocomplete suggest typing"
 			},
+			"preloadTopHit": {
+				"title": "Preload top hit",
+				"description": "Load a site you visit often while you type its address. Uses more memory and data.",
+				"keywords": "prerender faster"
+			},
 			"searchEngines": {
 				"title": "Search engines",
 				"description": "Add, reorder, or remove engines and their keywords.",
