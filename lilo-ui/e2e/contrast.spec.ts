@@ -317,14 +317,31 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 		test("a danger button's label reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await openSettingsAt(page, "Privacy");
+			await page.evaluate(() => window.__lilo!.receive({ event: "openClearBrowsingData" }));
 			expect(await textContrast(page, ".ui-button.danger")).toBeGreaterThanOrEqual(4.5);
 		});
 
-		test("the clear-data sheet's confirm button reads", async ({ page }) => {
+		test("a confirm sheet's danger button reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await openSettingsAt(page, "Privacy");
-			await page.locator(".ui-button.danger").click();
+			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
+			await page.locator(".process-panel").waitFor();
+			await page.evaluate(() =>
+				window.__lilo!.receive({
+					event: "processSnapshotUpdated",
+					processes: [
+						{
+							id: "p1",
+							kind: "webContent",
+							pid: 100,
+							tabs: [{ id: "tab-alpha", spaceId: "space-1", title: "Alpha", url: "https://example.com/alpha", lifecycle: "active", isAudioPlaying: false, isMicrophoneActive: false, isCameraActive: false, isScreenSharing: false }],
+							metrics: { residentSizeBytes: 100_000_000 },
+							webProcessStateLabel: "",
+						},
+					],
+				}),
+			);
+			await page.locator(".process-panel .tab-row").first().click();
+			await page.locator(".process-panel .small-button.danger").click();
 			const confirm = page.locator(".sheet-btn-danger");
 			await expect(confirm).toBeVisible();
 			expect(await textContrast(page, ".sheet-btn-danger")).toBeGreaterThanOrEqual(4.5);
