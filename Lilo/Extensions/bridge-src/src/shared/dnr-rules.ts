@@ -237,6 +237,8 @@ const WEBKIT_HEADERS = new Set(('accept accept-charset accept-language accept-en
 const NON_WEBKIT_TYPES = new Set(['object', 'csp_report', 'webtransport', 'webbundle']);
 // Chrome takes them empty, excluding nothing; WebKit rejects the rule or fails to compile the whole update.
 const EXCLUSIONS = ['excludedInitiatorDomains', 'excludedDomains', 'excludedRequestMethods'];
+// Chrome files TRACE under "other", which WebKit rejects.
+const WEBKIT_METHODS = ['connect', 'delete', 'get', 'head', 'options', 'patch', 'post', 'put', 'trace'];
 
 function isRegExp(source: string): boolean {
   try {
@@ -276,6 +278,20 @@ export function webKitRule(rule: any): any {
   if (empty.length) {
     const condition = { ...result.condition };
     for (const key of empty) delete condition[key];
+    result = { ...result, condition };
+  }
+  // WebKit rejects the method "other", and fails every rule of the extension on one listing requestMethods beside
+  // excludedRequestDomains (WEBKIT-GAPS 94): those methods become the others excluded.
+  const { requestMethods, excludedRequestMethods, excludedRequestDomains } = result.condition ?? {};
+  const namesOther = (methods: unknown) => Array.isArray(methods) && methods.includes('other');
+  if (namesOther(requestMethods) || namesOther(excludedRequestMethods) || (Array.isArray(requestMethods) && excludedRequestDomains?.length)) {
+    const { requestMethods: _asked, excludedRequestMethods: _excluded, ...condition } = result.condition;
+    const named = Array.isArray(requestMethods) ? requestMethods.filter((method: string) => method !== 'other') : undefined;
+    if (named?.length === 0) return undefined;
+    const excluded = !named ? excludedRequestMethods.filter((method: string) => method !== 'other')
+      : excludedRequestDomains?.length ? WEBKIT_METHODS.filter((method) => !named.includes(method)) : undefined;
+    if (named && !excluded) condition.requestMethods = named;
+    if (excluded?.length) condition.excludedRequestMethods = excluded;
     result = { ...result, condition };
   }
   const redirect = rule.action?.redirect;

@@ -73,6 +73,16 @@ describe('rules WebKit rejects', () => {
     assert.equal(webKitRule(excluding), excluding);
   });
 
+  it('lists the other methods excluded beside excluded request domains, and leaves out "other"', () => {
+    const rule = { id: 4, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get', 'post'], excludedRequestDomains: ['com'] } };
+    assert.deepEqual(webKitRule(rule).condition, { urlFilter: 'a', excludedRequestDomains: ['com'], excludedRequestMethods: ['connect', 'delete', 'head', 'options', 'patch', 'put', 'trace'] });
+    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['get', 'other'] } }).condition, { urlFilter: 'a', requestMethods: ['get'] });
+    assert.deepEqual(webKitRule({ ...rule, condition: { urlFilter: 'a', excludedRequestMethods: ['other'] } }).condition, { urlFilter: 'a' });
+    assert.equal(webKitRule({ ...rule, condition: { urlFilter: 'a', requestMethods: ['other'] } }), undefined);
+    const plain = { ...rule, condition: { urlFilter: 'a', requestMethods: ['get'] } };
+    assert.equal(webKitRule(plain), plain);
+  });
+
   it('leaves what Chrome rejects too for WebKit to reject', () => {
     const invalid = { id: 1, action: { type: 'block' }, condition: { regexFilter: '(' } };
     assert.equal(webKitRule(invalid), invalid);

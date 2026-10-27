@@ -671,6 +671,23 @@ final class WebKitGapTests: XCTestCase {
         )
     }
 
+    func testRequestMethodsBesideExcludedRequestDomainsFailEveryRule() async throws {
+        let title = try await dnrOutcome("""
+        dnr.updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'lilo-gap', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })
+        """)
+        XCTAssertTrue(
+            title?.contains("Unable to load declarativeNetRequest rules") == true,
+            "WebKit now compiles requestMethods beside excludedRequestDomains (\(title ?? "nil")): drop the method rewrite of webKitRule (dnr-rules.ts)"
+        )
+        let other = try await dnrOutcome("""
+        dnr.updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'lilo-gap', excludedRequestMethods: ['other'] } }] })
+        """)
+        XCTAssertTrue(
+            other?.contains("can only contain trace, put, delete, get, post, patch, connect, head, and options") == true,
+            "WebKit now compiles the method \"other\" (\(other ?? "nil")): keep it in webKitRule (dnr-rules.ts)"
+        )
+    }
+
     func testRulesetOverWebKitsRuleCapDoesNotApply() async throws {
         // WebKit expands a rule into one content blocker rule per request domain, and compiles at most 150000.
         let domains = (0...150_000).map { "\"d\($0).example\"" }.joined(separator: ",")
