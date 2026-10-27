@@ -73,6 +73,25 @@ final class RealExtensionSmokeTests: XCTestCase {
         "bbejljcbaibhhacdpndojhkhckgdooff": "its popup's first request, which its worker forwards to its offscreen document, comes back with an error without a message, which the popup logs; in Chrome's recording it fails before reaching that document, with 'Could not establish connection'", // Aircall Dialer
         "kagjkiiecagemklhmhkabbalfpbianbe": "WebKit gives its worker browser.extension.getBackgroundPage, which Chrome leaves out of workers and nothing can remove (WEBKIT-GAPS.md, gap 87): its background check compares the result with window and fails to load", // AI Exporter
         "fgmbnmjmbjenlhbefngfibmjkpbcljaj": "its worker messages the popup's tab while it loads, which Lilo counts as listening (a tab opened on the popup hears tabs.onActivated at once): it gets the closed-port error where Chrome reports no receiver", // Highlight This
+        "gighmmpiobklfepjocnamgkkbiglidom": "two of its content script entries for its welcome page list adblock-functions.js: WebKit runs it twice in one world, and the second run fails to redeclare determineUserLanguage, which Chrome does not report", // AdBlock
+        "cfhdojbkjhnklbpkdaibdccddilifddb": "its options page reads its worker's answers as undefined (addonLocale.locale, features.devToolsPanel, its subscriptions), where Chrome's renders without an error", // Adblock Plus
+        "ecnphlgnajanjnkcmbpancdjoidceilk": "its options page renders nothing in 20 s, where Chrome's shows its settings", // Kami
+        "ihcjicgdanjaechkgeegckofjjedodee": "its cosmetic filters hide none of the test page's ads, which Chrome's hide; once its worker was idle, its popup over a blank tab shows less than half of Chrome's", // Malwarebytes Browser Guard
+        "fdpohaocaechififmbbbbbknoalclacl": "its welcome page finds no window holding it ('No matching window found'), where Chrome's does", // GoFullPage
+        "ekhagklcjbdpajgpjgmbionohlpdbjgc": "on the test page its content script fails to initialize translation: its worker creates its offscreen document twice ('Only a single offscreen document may be created')", // Zotero Connector
+        "flliilndjeohchalpbbcdekjklbdgfkk": "a message of its worker reaches no listener ('Could not establish connection'), which Chrome's recording does not log", // Avira Browser Safety
+        "nngceckbapebfimnlniiiahkandclblb": "it sets its icon and badge for a tab the test just closed, which WebKit fails with Tab not found; Chrome's recording makes no such call", // Bitwarden
+        "eppiocemhmnlbhjplcgkofciiegomcon": "its popup's error reporter (bugsnag) logs a failed request, which Chrome's does not", // Urban VPN Proxy
+        "pejdijmoenmkgeppbflobdenhhabjlaj": "a message of its worker reaches no listener ('Could not establish connection'), which Chrome's recording does not log", // iCloud Passwords
+        "hdhinadidafjejdhmfkjgnolgimiaplp": "over a blank tab its popup shows WebKit's wording of the scripting.executeScript error, where Chrome's shows 'Cannot access contents of the page'", // Read Aloud
+        "mmioliijnhnoblpgimnlajmefafdfilb": "the stream its tab capture gets is no MediaStream to AudioContext.createMediaStreamSource, so it cannot listen", // Shazam
+        "gomekmidlodglbbmalcneegieacbdmki": "its popup logs an object as an error ([object Object]), which Chrome's does not", // Avast Online Security & Privacy
+        "jabjbhgjaidecageckilhonbggakppme": "once its worker was idle, its popup reads its configuration as undefined (result.config.map)", // Gosplagin
+        "mpnlkmlkncncpgnnkmkgoobfpnjmblnk": "on the test page its content script reads its testing state as undefined (e.isInitialized)", // Norton Safe Search
+        "hkgfoiooedgoejojocmhlaklaeopbecg": "WebKit's MediaSession has no enterpictureinpicture action, which its content script sets on every page (autoPip.js)", // Picture-in-Picture Extension
+        "jjkchpdmjjdmalgembblgafllbpcjlei": "its worker reads supportedFeatures.features of an answer that is undefined", // Trellix Endpoint Security Web Control
+        "lgblnfidahcdcjddiepkckcfdhpknnjh": "its cosmetic filters hide none of the test page's ads, which Chrome's hide", // Stands AdBlocker
+        "mclkkofklkfljcocdinagocijmpgbhab": "over a blank tab its popup calls tabs.detectLanguage, which WebKit refuses for want of access", // Google Input Tools
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
@@ -99,8 +118,31 @@ final class RealExtensionSmokeTests: XCTestCase {
         "callobklhcbilhphinckomhgkigmfocg": "its worker reads chrome.enterprise.reportingPrivate, which Chrome gives this extension only and Lilo lacks; some runs never reach that read", // Endpoint Verification
         "amfojhdiedpdnlijjbhjnhokbnohfdfb": "its welcome page's content script can ask its worker to check a context menu entry before the worker's storage answer, which creates that entry, has come back", // eJOY AI Dictionary
         "blgcbajigpdfohpgcmbbfnphcgifjopc": "its Flutter build needs Chrome's ImageDecoder and Intl.v8BreakIterator, which WebKit lacks: it asks for a skwasm_heavy build its package does not ship", // ExpressKeys: Password Manager
-        "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab" // TxtAnalyser
+        "aaengkeeajpfabihmmmnkjpogmfkahjo": "a tab activation after the previous extension's tabs close can show it Lilo's new tab page, which it scripts and Chrome would refuse too; Chrome's recording activates no tab", // TxtAnalyser
+        "dcngeagmmhegagicpcmpinaoklddcgon": "in a full shard its popup shows no text in 40 s, alone it renders in 2 s; the cause is not yet known", // Web PKI
+        "hdokiejnpimakedhajhdlcegeplioahd": "some runs a call of its content script to Lilo is cut as the test page closes, which it logs ('Lilo is unreachable')", // LastPass
+        "bhlhnicpbhignbdhedgjhgdocnmhomnp": "some runs it scripts or messages a tab the test just closed (Tab not found); over a blank tab, WebKit refuses its tabs.captureVisibleTab", // ColorZilla
+        "cofdbpoegempjloogbagkncekinflcnj": "some runs it messages a tab the test just closed (Tab not found)" // DeepL
     ]
+
+    /// `page`'s answer to `script`, or nil after 5 s: a page whose process hangs never answers, and the run would stop there.
+    private func evaluate(_ script: String, in page: WKWebView?) async -> Any? {
+        guard let page else { return nil }
+        final class Once { var done = false }
+        let once = Once()
+        return await withCheckedContinuation { continuation in
+            let finish = { (value: Any?) in
+                guard !once.done else { return }
+                once.done = true
+                continuation.resume(returning: value)
+            }
+            page.evaluateJavaScript(script) { result, _ in finish(result) }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(5))
+                finish(nil)
+            }
+        }
+    }
 
     /// Opens `url` in a tab and reads its fingerprint (smoke-probes.js) every 250 ms, as Chrome's recording does, until it
     /// shows at least half of `expected`, Chrome's, or anything without one, for at most `timeout`; then closes the tab.
@@ -117,7 +159,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             browserContext.context.agentControl.attach(engine, to: nil)
             engine.agentDialogHandler = { _ in true }
             let page = engine.view as? WKWebView
-            tokens = Set((try? await page?.evaluateJavaScript("(\(probes)).fingerprint()") as? [String]) ?? [])
+            tokens = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
             if expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count {
                 return (tokens, true)
             }
@@ -208,6 +250,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         // The same probes and test page as Chrome's recording.
         let probes = try String(contentsOf: folder.appendingPathComponent("smoke-probes.js"), encoding: .utf8)
         let smokePage = try String(contentsOf: folder.appendingPathComponent("smoke-page.html"), encoding: .utf8)
+        // As a JavaScript string literal.
+        let originalPage = try XCTUnwrap(String(data: JSONSerialization.data(withJSONObject: smokePage, options: .fragmentsAllowed), encoding: .utf8))
         let html = Data(smokePage.utf8), image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
         let server = try await TinyHTTPServer { request in
             request.hasPrefix("GET / ") ? ("200 OK", ["Content-Type: text/html"], html) : ("200 OK", ["Content-Type: image/gif"], image)
@@ -316,7 +360,8 @@ final class RealExtensionSmokeTests: XCTestCase {
             let chrome: ChromeSmoke.Recording?
         }
         var idleQueue: [Idle] = [], idleBatch: [Idle] = [], quietSince = Date.distantFuture
-        let idleBatchSize = 20
+        // One at a time: a batch loaded together in the idle profile took gigabytes beside the extension the main pass runs.
+        let idleBatchSize = 1
         let advanceIdle = { (draining: Bool) in
             if idleBatch.isEmpty, idleQueue.count >= idleBatchSize || draining && !idleQueue.isEmpty {
                 idleBatch = Array(idleQueue.prefix(idleBatchSize))
@@ -372,7 +417,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                     // Chrome's recording opens the manifest's popup: one the extension set for the blank tab only has to show something.
                     if let path = popup?.url?.path, let defaultPopup, path != URL(string: defaultPopup, relativeTo: context.baseURL)?.path { expected = [] }
                     guard !matched else { continue }
-                    shown = Set((try? await popup?.evaluateJavaScript("(\(probes)).fingerprint()") as? [String]) ?? [])
+                    shown = Set(await self.evaluate("(\(probes)).fingerprint()", in: popup) as? [String] ?? [])
                     matched = expected.isEmpty ? !shown.isEmpty : expected.intersection(shown).count * 2 >= expected.count
                     if matched { outcome.time("idlePopup", since: clicked, chrome: chrome?.restartPopup?.ms) }
                 }
@@ -475,9 +520,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 let started = Date(), timeout: TimeInterval = chromePage.isEmpty && chromeMenus + chromeActionMenus == 0 ? 1 : 10
                 while Date().timeIntervalSince(started) < timeout {
                     try await Task.sleep(for: .milliseconds(250))
-                    changes = Set((try? await page.callAsyncJavaScript(
-                        "return (\(probes)).pageChanges(original)", arguments: ["original": smokePage], in: nil, contentWorld: .page
-                    ) as? [String]) ?? [])
+                    changes = Set(await evaluate("(\(probes)).pageChanges(\(originalPage))", in: page) as? [String] ?? [])
                     let adapter = window.tabManager.tabAdapter(for: tab.id)
                     menus = adapter.map { leaves(context.menuItems(for: $0)) } ?? 0
                     actionMenus = leaves(context.action(for: adapter)?.menuItems ?? [])
