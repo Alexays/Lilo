@@ -542,6 +542,7 @@
     font-size: var(--font-size-2xs);
     font-weight: var(--font-weight-semibold);
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "case";
     line-height: 14px;
     text-align: center;
   }
