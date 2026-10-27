@@ -259,7 +259,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
             openLittleWindow(url: url)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id), let url else { return }
+        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        if inBackground { noteBackgroundTab(created.id) }
+        guard let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
     }
 
