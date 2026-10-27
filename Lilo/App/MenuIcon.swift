@@ -21,7 +21,7 @@ enum MenuIcon: CaseIterable {
     case recentlyClosed, archivedTabs, recentlyVisited, history, clearBrowsingData, nextSpace, previousSpace, previousTab, nextTab
     case goToTab, moveToSpace, clearUnpinned, webInspector, inspectElement, console, viewSource, sources, profiling
     case processManager, loadExtension, featureFlags, designSystem, chromeDevtools, hitboxOverlay, nextWaitingTerminal
-    case terminals, recentDownloads, help, shortcuts, onboarding, diagnostics, reportIssue, addExtension, manageExtensions
+    case terminals, recentDownloads, help, shortcuts, onboarding, diagnostics, perfRecording, reportIssue, addExtension, manageExtensions
 
     var symbolName: String {
         switch self {
@@ -146,6 +146,7 @@ enum MenuIcon: CaseIterable {
         case .shortcuts: "keyboard"
         case .onboarding: "play.circle"
         case .diagnostics: "stethoscope"
+        case .perfRecording: "record.circle"
         case .reportIssue: "exclamationmark.bubble"
         case .addExtension: "plus.circle"
         case .manageExtensions: "slider.horizontal.3"

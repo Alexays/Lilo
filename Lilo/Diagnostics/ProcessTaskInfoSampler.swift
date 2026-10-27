@@ -30,6 +30,20 @@ enum ProcessTaskInfoSampler {
         (info.pti_total_user + info.pti_total_system) * UInt64(timebase.numer) / UInt64(timebase.denom)
     }
 
+    /// CPU, footprint, wakeups, disk I/O and energy in one syscall, for recorded performance sessions.
+    static func usage(pid: Int32) -> rusage_info_v6? {
+        var info = rusage_info_v6()
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V6, $0) }
+        }
+        return result == 0 ? info : nil
+    }
+
+    /// `ri_user_time`/`ri_system_time` count Mach ticks too.
+    static func cpuNanoseconds(_ usage: rusage_info_v6) -> UInt64 {
+        (usage.ri_user_time + usage.ri_system_time) * UInt64(timebase.numer) / UInt64(timebase.denom)
+    }
+
     private static let timebase: mach_timebase_info_data_t = {
         var timebase = mach_timebase_info_data_t()
         mach_timebase_info(&timebase)

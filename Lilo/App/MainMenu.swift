@@ -224,6 +224,7 @@ extension AppDelegate {
         helpMenu.add("Replay Onboarding".localized, #selector(MainWindowController.replayOnboarding(_:)), icon: .onboarding)
         helpMenu.addItem(.separator())
         helpMenu.add("Diagnostics".localized, #selector(MainWindowController.openDiagnostics(_:)), icon: .diagnostics)
+        helpMenu.add("Record Performance Session".localized, #selector(MainWindowController.togglePerfRecording(_:)), icon: .perfRecording)
         helpMenu.add("Report an Issue…".localized, #selector(MainWindowController.reportIssue(_:)), icon: .reportIssue)
         NSApp.helpMenu = helpMenu
 

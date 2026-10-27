@@ -736,6 +736,7 @@ export interface BridgeCommandPayloadMap {
 	clearExtensionDiagnostics: EmptyPayload;
 	copyExtensionDiagnostics: EmptyPayload;
 	copyDiagnosticsReport: EmptyPayload;
+	togglePerfRecording: EmptyPayload;
 	forceLifecycleTrim: EmptyPayload;
 	getDefaultBrowserStatus: EmptyPayload;
 	setDefaultBrowser: EmptyPayload;
@@ -935,7 +936,10 @@ export interface BridgeEventPayloadMap {
 		marks: BridgeStartupMetricMarkSnapshot[];
 		traces: BridgeStartupTraceSnapshot[];
 		lifecycleDiagnostics?: BridgeTabLifecycleDiagnostics;
+		/** Epoch milliseconds the running performance recording started at, or null. */
+		perfRecordingStartedAt?: number | null;
 	};
+	perfRecordingChanged: { startedAt: number | null };
 	settingsActionCompleted: BridgeSettingsActionStatusPayload;
 	websiteDataLoaded: { sites: BridgeWebsiteDataSnapshot[] };
 	browsingDataSizesLoaded: BridgeBrowsingDataSizes;

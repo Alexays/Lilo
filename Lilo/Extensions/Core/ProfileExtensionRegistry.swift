@@ -1294,7 +1294,7 @@ final class ProfileExtensionRegistry {
                         }
                         let sourceURL = try files.workingCopy(of: url)
                         let isDegraded = Self.prepareForWebKit(at: sourceURL, allowsUserScripts: allowed)
-                        let signpost = PerfSignposts.extensions.beginInterval("createExtension", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id, privacy: .public)")
+                        let signpost = PerfSignposts.extensions.beginInterval("createExtension", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id)")
                         let webExtension = try await WKWebExtension(resourceBaseURL: sourceURL)
                         PerfSignposts.extensions.endInterval("createExtension", signpost)
                         return (index, .success((webExtension, sourceURL.path, isDegraded)))
@@ -1312,7 +1312,7 @@ final class ProfileExtensionRegistry {
             do {
                 guard let result else { continue }
                 let (webExtension, sourcePath, isDegraded) = try result.get()
-                let signpost = PerfSignposts.extensions.beginInterval("activate", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id, privacy: .public)")
+                let signpost = PerfSignposts.extensions.beginInterval("activate", id: PerfSignposts.extensions.makeSignpostID(), "\(stored.id)")
                 defer { PerfSignposts.extensions.endInterval("activate", signpost) }
                 try await activate(
                     webExtension, id: stored.id, sourcePath: sourcePath, installPath: stored.path, isPreparationDegraded: isDegraded, stored: stored,

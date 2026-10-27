@@ -39,6 +39,7 @@
     "copyExtensionDiagnostics",
     "copyDiagnosticsReport",
     "forceLifecycleTrim",
+    "togglePerfRecording",
   ]);
 
   let _extensionDiagnostics = $state.raw<BridgeExtensionDiagnosticSnapshot[]>([]);
@@ -50,6 +51,14 @@
   let _tab = $state<Tab>("startup");
   let _logFilter = $state<LogFilter>("all");
   let _logQuery = $state("");
+  let _recordingStartedAt = $state<number | null>(null);
+  let _now = $state(Date.now());
+
+  const _recordingElapsed = $derived.by(() => {
+    if (_recordingStartedAt == null) return "";
+    const seconds = Math.max(0, Math.floor((_now - _recordingStartedAt) / 1000));
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  });
 
   const _extensions = $derived(getExtensions());
   const _timeFormat = $derived(
@@ -120,6 +129,10 @@
       _startupMarks = data.marks ?? [];
       _startupTraces = data.traces ?? [];
       _lifecycle = data.lifecycleDiagnostics ?? null;
+      _recordingStartedAt = data.perfRecordingStartedAt ?? null;
+    });
+    const offRecording = on("perfRecordingChanged", (data) => {
+      _recordingStartedAt = data.startedAt;
     });
     const offStatus = on("settingsActionCompleted", (data) => {
       if (DIAGNOSTIC_ACTIONS.has(data.action)) _status = data;
@@ -127,8 +140,17 @@
     return () => {
       offExtensions();
       offStartup();
+      offRecording();
       offStatus();
     };
+  });
+
+  // The elapsed time ticks only while a recording runs and the panel shows it.
+  $effect(() => {
+    if (_recordingStartedAt == null || !isDiagnosticsVisible()) return;
+    _now = Date.now();
+    const timer = setInterval(() => (_now = Date.now()), 1000);
+    return () => clearInterval(timer);
   });
 
   function handleWindowKeydown(e: KeyboardEvent): void {
@@ -156,6 +178,22 @@
   <div class="panel-shell diagnostics-panel" role="dialog" aria-label={t("diagnostics.title")}>
     <PanelHeader title={t("diagnostics.title")} onclose={closeActivePanel}>
       {#snippet actions()}
+        <button
+          class="hdr-ctl record-ctl"
+          class:recording={_recordingStartedAt != null}
+          type="button"
+          onclick={() => settingsActions.togglePerfRecording()}
+          use:tooltip={{ text: _recordingStartedAt == null ? t("diagnostics.recordSession") : t("diagnostics.stopRecording"), placement: "bottom" }}
+          aria-label={_recordingStartedAt == null ? t("diagnostics.recordSession") : t("diagnostics.stopRecording")}
+          aria-pressed={_recordingStartedAt != null}
+        >
+          {#if _recordingStartedAt == null}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5" /><circle cx="8" cy="8" r="2.5" fill="currentColor" stroke="none" /></svg>
+          {:else}
+            <span class="record-dot" aria-hidden="true"></span>
+            <span class="record-time">{_recordingElapsed}</span>
+          {/if}
+        </button>
         <button
           class="hdr-ctl"
           type="button"
@@ -335,6 +373,27 @@
   .hdr-ctl.small {
     width: 24px;
     height: 24px;
+  }
+
+  .record-ctl.recording {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    gap: 5px;
+    padding: 0 7px;
+    color: var(--text-primary);
+  }
+
+  .record-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+
+  .record-time {
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .diagnostics-tabs {

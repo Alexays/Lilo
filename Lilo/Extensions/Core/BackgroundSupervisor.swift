@@ -97,7 +97,7 @@ final class BackgroundSupervisor {
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
-            _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId, privacy: .public)")
+            _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
         }
         var timeout: Task<Void, Never>?
         let failure: String? = await withCheckedContinuation { continuation in
@@ -117,7 +117,7 @@ final class BackgroundSupervisor {
         timeout?.cancel()
         if let failure {
             if startsWorker {
-                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "failed")
+                PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "failed")
             }
             Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
             health[extensionId]?.failureReason = failure
@@ -136,7 +136,7 @@ final class BackgroundSupervisor {
         switch channel {
         case .open:
             if let context = context(extensionId) {
-                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "\(extensionId, privacy: .public)")
+                PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
             }
             health[extensionId]?.restartFailures = 0
             setFlag(\.failed, to: false, for: extensionId)
@@ -153,7 +153,7 @@ final class BackgroundSupervisor {
         guard health[extensionId] != nil,
               context(extensionId)?.webExtension.hasBackgroundContent == true,
               !isLoadInFlight(extensionId) else { return }
-        PerfSignposts.energy.emitEvent("workerWake", "\(extensionId, privacy: .public)")
+        PerfSignposts.energy.emitEvent("workerWake", "\(extensionId)")
         Task { @MainActor [weak self] in
             guard let self, !self.isLoadInFlight(extensionId) else { return }
             self.nudge(extensionId)
@@ -284,7 +284,7 @@ final class BackgroundSupervisor {
 
     // MARK: - Restarts
 
-    private static func backgroundWebView(of context: WKWebExtensionContext) -> WKWebView? {
+    static func backgroundWebView(of context: WKWebExtensionContext) -> WKWebView? {
         let selector = NSSelectorFromString("_backgroundWebView")
         guard context.responds(to: selector) else { return nil }
         return context.perform(selector)?.takeUnretainedValue() as? WKWebView

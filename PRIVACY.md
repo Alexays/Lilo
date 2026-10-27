@@ -29,6 +29,13 @@ Features that keep their own data, all on this Mac:
 - **Diagnostics** (Help > Diagnostics) are built on demand: "Copy report" puts startup metrics and
   tab lifecycle counts on your clipboard, for you to paste where you choose. Lilo sends no crash
   report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`.
+- **Performance recordings** (Help > Record Performance Session) are written to your Downloads
+  folder when you stop one, for you to share or delete: timings of Lilo's own work, CPU, memory,
+  energy and disk use of its processes, the names of menu commands you used, the ids of your
+  installed extensions, and your Mac's model and macOS version. They contain no URL, page title,
+  name or text you typed. Lilo also keeps the hang and crash diagnostics macOS hands it (MetricKit)
+  in its Application Support folder, to add them to the next recording; they never leave your Mac
+  otherwise.
 
 ## Import from other browsers
 
