@@ -86,6 +86,10 @@ final class WKEngineFactory {
     var formDirtyHandler: ((WKWebView, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
     }
+    /// Reports a page's Media Session call controls to the window controller. Set by MainWindowController.
+    var callControlsHandler: ((WKWebView, WKWebViewTab.CallControls) -> Void)? {
+        didSet { callControlsBridge.onChange = callControlsHandler }
+    }
 
     /// The compiled filter rules, split in parts when they exceed what one list may hold.
     private var contentRuleLists: [WKContentRuleList] = []
@@ -151,6 +155,12 @@ final class WKEngineFactory {
     private lazy var formDirtyBridge: FormDirtyBridge = {
         let bridge = FormDirtyBridge()
         bridge.onChange = formDirtyHandler
+        return bridge
+    }()
+
+    private lazy var callControlsBridge: CallControlsBridge = {
+        let bridge = CallControlsBridge()
+        bridge.onChange = callControlsHandler
         return bridge
     }()
 
@@ -855,6 +865,7 @@ final class WKEngineFactory {
         contentController.addScriptMessageHandler(serialBridge, contentWorld: world, name: SerialBridge.messageHandlerName)
         contentController.addScriptMessageHandler(eyeDropperBridge, contentWorld: world, name: EyeDropperBridge.messageHandlerName)
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
+        contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }

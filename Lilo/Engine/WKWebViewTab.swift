@@ -210,6 +210,8 @@ final class WKWebViewTab: NSObject {
     /// Last form-dirty state reported to the delegate; a committed navigation clears it, since the
     /// page that held the edits is gone.
     var isFormDirty = false
+    /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
+    var callControls = CallControls()
     private static let maxTrackedSubframes = 32
     private static let supportsIntegrityPolicy = ["_networkConnectionIntegrityPolicy", "_setNetworkConnectionIntegrityPolicy:"]
         .allSatisfy { WKWebpagePreferences.instancesRespond(to: NSSelectorFromString($0)) }
@@ -465,6 +467,10 @@ final class WKWebViewTab: NSObject {
 
     func setMicrophoneMuted(_ muted: Bool) {
         webView.setMicrophoneCaptureState(muted ? .muted : .active, completionHandler: nil)
+    }
+
+    func setCameraMuted(_ muted: Bool, completion: @escaping () -> Void) {
+        webView.setCameraCaptureState(muted ? .muted : .active, completionHandler: completion)
     }
 
     func applyPageBackgroundColor(_ color: NSColor) {
@@ -1259,6 +1265,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                 tab.isFormDirty = false
                 tab.delegate?.tab(tab, didUpdateFormDirty: false)
             }
+            tab.callControls = CallControls()
             // Clearing the crash-recency marker makes a later, unrelated termination count as a first failure
             // rather than tripping the died-twice guard.
             tab.lastContentTerminationAt = nil

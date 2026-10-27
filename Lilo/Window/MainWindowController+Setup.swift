@@ -322,6 +322,11 @@ extension MainWindowController {
             tab.isFormDirty = dirty
             tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
         }
+        context.engineFactory.callControlsHandler = { [weak context] webView, controls in
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }
+            tab.callControls = controls
+            if context.callTabIds.contains(tab.id) { context.mediaActivityChanged() }
+        }
         context.engineFactory.notificationShownHandler = { [weak context] webView in
             guard let (window, engine) = context?.windows.windowAndEngine(for: webView),
                   window.tabManager.activeEngineTab !== engine,

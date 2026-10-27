@@ -1358,7 +1358,7 @@ export const createDemoHost = (
         keepsAwake: false,
         tabIds: [],
       }),
-    getMediaActivity: () => emit("mediaActivity", { tabs: [] }),
+    getMediaActivity: () => emit("mediaActivity", { calls: [], tabs: [] }),
     getOnboardingState: () =>
       emit("onboardingState", { show: false, step: 0, usage: "browse" }),
     getProfileStats: () =>

@@ -1,6 +1,7 @@
 import { postMessage as emit, type BridgeCommandPayloadMap } from "./index";
 import type {
 	BridgeBrowsingDataKind,
+	BridgeCallAction,
 	BridgeCommandName,
 	BridgeControlTabOrder,
 	BridgeMediaAction,
@@ -306,6 +307,7 @@ export const terminalActions = {
 export const mediaActions = {
 	load: emitEmpty("getMediaActivity"),
 	control: (id: string, action: BridgeMediaAction): void => emit("controlMedia", { id, action }),
+	controlCall: (id: string, action: BridgeCallAction): void => emit("controlCall", { id, action }),
 };
 
 export const agentActions = {

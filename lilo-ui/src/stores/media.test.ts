@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { BridgeInitialStatePayload, BridgeMediaTab } from "../lib/bridge/protocol";
+import type { BridgeCallTab, BridgeInitialStatePayload, BridgeMediaTab } from "../lib/bridge/protocol";
 import { tab, treeItem } from "./testFixtures";
 import { freshStores, stubBridgeWindow } from "./testHarness";
 
@@ -9,8 +9,24 @@ type LiloWindow = {
 };
 
 function media(...tabs: Partial<BridgeMediaTab>[]): void {
+	activity(tabs, []);
+}
+
+function activity(tabs: Partial<BridgeMediaTab>[], calls: Partial<BridgeCallTab>[]): void {
 	(globalThis as unknown as LiloWindow).window.__lilo?.receive({
 		event: "mediaActivity",
+		calls: calls.map((entry) => ({
+			id: "",
+			spaceId: "space",
+			title: "",
+			faviconDataURL: "",
+			hasMicrophone: true,
+			microphoneMuted: false,
+			hasCamera: false,
+			cameraOff: true,
+			canHangUp: false,
+			...entry,
+		})),
 		tabs: tabs.map((entry) => ({
 			id: "",
 			spaceId: "space",
@@ -67,5 +83,18 @@ test("the card shows media playing in another tab, ahead of one paused from it",
 	media({ id: "paused", playing: false });
 	assert.equal(store.getMediaCardTab()?.id, "paused");
 	media({ id: "paused", playing: false }, { id: "music" }, { id: "shown" });
+	assert.equal(store.getMediaCardTab()?.id, "music");
+});
+
+test("a call keeps its card while shown and leaves its sound to it", async () => {
+	stubBridgeWindow();
+	const store = await loadMediaStore();
+
+	activity([{ id: "music" }], [{ id: "music" }]);
+	assert.equal(store.getCallCardTab()?.id, "music");
+	assert.equal(store.getMediaCardTab(), undefined);
+
+	activity([{ id: "music" }], [{ id: "shown" }]);
+	assert.equal(store.getCallCardTab()?.id, "shown");
 	assert.equal(store.getMediaCardTab()?.id, "music");
 });

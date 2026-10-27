@@ -25,3 +25,19 @@ final class FormDirtyBridge: NSObject, WKScriptMessageHandler {
         onChange?(webView, dirty)
     }
 }
+
+/// Call controls `WKWebViewTab.mediaControlModule` reports from a page's Media Session.
+@MainActor
+final class CallControlsBridge: NSObject, WKScriptMessageHandler {
+    static let messageHandlerName = "liloCall"
+    var onChange: ((WKWebView, WKWebViewTab.CallControls) -> Void)?
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.frameInfo.isMainFrame, let body = message.body as? [String: Any], let webView = message.webView else { return }
+        onChange?(webView, WKWebViewTab.CallControls(
+            microphoneActive: body["microphone"] as? Bool,
+            cameraActive: body["camera"] as? Bool,
+            actions: Set(WKWebViewTab.callActions.filter { body[$0] as? Bool == true })
+        ))
+    }
+}

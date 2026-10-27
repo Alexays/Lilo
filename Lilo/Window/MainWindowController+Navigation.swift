@@ -531,13 +531,14 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.lastCaptureStoppedAt = now
             }
         }
+        callUsageChanged(tabId: tab.id, usage: usage)
     }
 
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,
     /// back/forward), and each patch rewrites the chrome's sidebar state.
     func updateAndEmit(_ id: UUID, _ mutate: (inout Tab) -> Void) {
         guard let (old, new) = context.browserState.updateTab(id: id, mutate: mutate), old != new else { return }
-        if context.mediaTabs[id] != nil { context.mediaActivityChanged() }
+        if context.mediaTabs[id] != nil || context.callTabIds.contains(id) { context.mediaActivityChanged() }
         if isVisibleTab(new.id) {
             tabManager.noteTabUpdated(old: old, new: new)
         }
