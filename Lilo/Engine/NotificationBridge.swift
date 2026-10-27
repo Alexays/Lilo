@@ -206,8 +206,13 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      // Only a trustworthy origin can hold a stored allow; the others would pay an IPC for nothing.
-      if (isSecureContext && location.origin !== 'null') lilo.send('liloNotification', { type: 'query' });
+      // Only a top origin native deems trustworthy can hold a stored allow; the others would pay an IPC for nothing. A same-origin
+      // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
+      if (window.top !== window) {
+        try { setPermission(top.Notification.permission); } catch (e) {}
+      } else if (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+        lilo.send('liloNotification', { type: 'query' });
+      }
     }
     """#
 }

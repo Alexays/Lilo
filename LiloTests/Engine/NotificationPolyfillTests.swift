@@ -11,12 +11,12 @@ final class NotificationPolyfillTests: XCTestCase {
         }
     }
 
-    private func makeWebView(_ recorder: Recorder, baseURL: String = "https://example.com") async throws -> WKWebView {
+    private func makeWebView(_ recorder: Recorder, baseURL: String = "https://example.com", html: String = "<html></html>") async throws -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(recorder, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
         PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.loadHTMLString("<html></html>", baseURL: URL(string: baseURL))
+        webView.loadHTMLString(html, baseURL: URL(string: baseURL))
         _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }
         return webView
     }
@@ -45,15 +45,37 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertTrue(recorder.messages.contains { $0["type"] as? String == "close" })
     }
 
-    func testOnlyATrustworthyOriginQueriesItsStoredPermission() async throws {
-        for (baseURL, queries) in [("https://example.com", true), ("http://example.com", false)] {
-            let recorder = Recorder()
-            let webView = try await makeWebView(recorder, baseURL: baseURL)
-            // Posted after the document-start query, so its arrival means the query had its chance to arrive too.
-            _ = try await webView.evaluateJavaScript("new Notification('Hello'); 0")
-            _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
-            XCTAssertEqual(recorder.messages.contains { $0["type"] as? String == "query" }, queries, baseURL)
+    func testAnUntrustworthyOriginSendsNoQuery() async throws {
+        let recorder = Recorder()
+        let webView = try await makeWebView(recorder, baseURL: "http://example.com")
+        // Posted after the document-start query, so its arrival means the query had its chance to arrive too.
+        _ = try await webView.evaluateJavaScript("new Notification('Hello'); 0")
+        _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
+        XCTAssertFalse(recorder.messages.contains { $0["type"] as? String == "query" })
+    }
+
+    func testASameOriginSubframeTakesTheTopsPermissionWithoutQuerying() async throws {
+        let recorder = Recorder()
+        let webView = try await makeWebView(recorder)
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("notifySetPermission", ["granted"]), contentWorld: PageWorld.bridgeWorld)
+        let queries = { recorder.messages.filter { $0["type"] as? String == "query" }.count }
+        let before = queries()
+        _ = try await webView.evaluateJavaScript("""
+            const frame = document.createElement('iframe');
+            frame.srcdoc = '<p>frame</p>';
+            document.body.append(frame);
+            0
+            """)
+        var permission: String?
+        await pollUntil {
+            permission = (try? await webView.evaluateJavaScript("frames[0] && frames[0].Notification.permission")) as? String
+            return permission == "granted"
         }
+        XCTAssertEqual(permission, "granted")
+        // Posted after the frame's document start, as the query would have been.
+        _ = try await webView.evaluateJavaScript("new frames[0].Notification('Hello'); 0")
+        _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
+        XCTAssertEqual(queries(), before, "only the top frame asks")
     }
 
     func testATaggedNotificationReplacesTheEarlierOneWithItsTag() async throws {
