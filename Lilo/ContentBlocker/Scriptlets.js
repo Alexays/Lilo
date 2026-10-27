@@ -66,13 +66,17 @@
     forEach(obj, segs[0], function (o, k) { if (!ok && hasOwn.call(o, k)) ok = hasPath(o[k], segs.slice(1)); });
     return ok;
   }
-  // Prunes in place; true only when something was actually deleted.
+  // Prunes in place; true only when something was actually deleted. Paths come split into segments (see splitPaths).
   function pruneObject(obj, paths, needed) {
     if (!obj || typeof obj !== 'object') return false;
-    if (needed.length && !needed.every(function (p) { return hasPath(obj, p.split('.')); })) return false;
+    if (needed.length && !needed.every(function (segs) { return hasPath(obj, segs); })) return false;
     var changed = false;
-    for (var i = 0; i < paths.length; i++) { if (deletePath(obj, paths[i].split('.'))) changed = true; }
+    for (var i = 0; i < paths.length; i++) { if (deletePath(obj, paths[i])) changed = true; }
     return changed;
+  }
+  // Space-separated dotted paths, split once at registration rather than on every parse.
+  function splitPaths(raw) {
+    return (raw || '').split(/\s+/).filter(Boolean).map(function (path) { return path.split('.'); });
   }
   // Absolute URL for matching: URL/Request instances stringify to their href, relative URLs
   // resolve against the page so host patterns can match them.
@@ -778,18 +782,15 @@
   // ---------- scriptlet registry ----------
   var S = {
     'json-prune': function (rawPaths, rawNeeded) {
-      var paths = (rawPaths || '').split(/\s+/).filter(Boolean);
-      var needed = (rawNeeded || '').split(/\s+/).filter(Boolean);
+      var paths = splitPaths(rawPaths), needed = splitPaths(rawNeeded);
       if (paths.length) addParsePrune(paths, needed);
     },
     'json-prune-fetch-response': function (rawPaths, rawNeeded, a, b) {
-      var paths = (rawPaths || '').split(/\s+/).filter(Boolean);
-      var needed = (rawNeeded || '').split(/\s+/).filter(Boolean);
+      var paths = splitPaths(rawPaths), needed = splitPaths(rawNeeded);
       if (paths.length) addFetchRewriter(propsToMatchArg(a, b), { paths: paths, needed: needed });
     },
     'json-prune-xhr-response': function (rawPaths, rawNeeded, a, b) {
-      var paths = (rawPaths || '').split(/\s+/).filter(Boolean);
-      var needed = (rawNeeded || '').split(/\s+/).filter(Boolean);
+      var paths = splitPaths(rawPaths), needed = splitPaths(rawNeeded);
       if (paths.length) addXHRRewriter(propsToMatchArg(a, b), { paths: paths, needed: needed });
     },
     'set-constant': function (chain, value) { if (chain) defineChain(self, chain, coerce(value)); },
