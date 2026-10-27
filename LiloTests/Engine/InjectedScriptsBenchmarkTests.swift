@@ -43,7 +43,12 @@ final class InjectedScriptsBenchmarkTests: XCTestCase {
             ("page load, 30 frames", String(repeating: #"<iframe srcdoc="<p>ad</p>"></iframe>"#, count: 30)),
             ("page load, 3000 nodes", paragraphs)
         ]
-        var rows: [(String, [Double])] = pages.map { ($0.0, []) } + [("feed, busy ms", []), ("feed, ad posts hidden", [])]
+        // YouTube's own scriptlets wrap methods it calls constantly and rewrite its inline scripts.
+        let youtube = try XCTUnwrap(URL(string: "https://www.youtube.com/"))
+        let inlineScripts = String(repeating: "<script>var data = '\(String(repeating: "x", count: 100_000))';</script>", count: 30)
+        var rows: [(String, [Double])] = pages.map { ($0.0, []) } + [("feed, busy ms", []), ("feed, ad posts hidden", []),
+                                                                    ("youtube, 30 inline scripts", []), ("youtube, appendChild x20k", []),
+                                                                    ("youtube, stringify x20k", [])]
         for webView in [plain, bridges, lilo] {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800), styleMask: .borderless,
                                   backing: .buffered, defer: false)
@@ -62,6 +67,24 @@ final class InjectedScriptsBenchmarkTests: XCTestCase {
                 "[...document.querySelectorAll('section > div')].filter(post => getComputedStyle(post).display === 'none').length"
             )
             rows[pages.count + 1].1.append(try XCTUnwrap(hidden as? Double))
+            rows[pages.count + 2].1.append(try await trimmedMean { try await self.loadTime(of: inlineScripts, at: youtube, in: webView) })
+            var hot: [[Double]] = []
+            for _ in 0..<runs {
+                let times = try await webView.callAsyncJavaScript("""
+                    const box = document.createElement('div'), state = { context: { client: { clientName: 'WEB', userAgent: 'Mozilla/5.0' } }, ids: [1, 2, 3] };
+                    let start = performance.now();
+                    for (let i = 0; i < 20000; i++) box.appendChild(document.createElement('span'));
+                    const append = performance.now() - start;
+                    start = performance.now();
+                    for (let i = 0; i < 20000; i++) JSON.stringify(state);
+                    return [append, performance.now() - start];
+                    """, contentWorld: .page) as? [Double]
+                hot.append(try XCTUnwrap(times))
+            }
+            for (offset, column) in [0, 1].enumerated() {
+                let values = hot.map { $0[column] }.sorted().dropFirst().dropLast()
+                rows[pages.count + 3 + offset].1.append(values.reduce(0, +) / Double(values.count))
+            }
         }
 
         let sizes = [scripts.scriptlets, scripts.genericCosmetics, scripts.procedural].map { "\(($0?.utf16.count ?? 0) / 1000)K" }
