@@ -336,6 +336,11 @@
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab.",
 				"keywords": "pip video call floating"
 			},
+			"dockCallsInSidebar": {
+				"title": "Keep calls in the sidebar",
+				"description": "A tab using your camera, mic, or screen docks in the sidebar when you switch away, instead of a floating window.",
+				"keywords": "pip dock call sidebar floating"
+			},
 			"fullBandMicrophone": {
 				"title": "Full-quality mic with headphones",
 				"description": "With headphones, calls skip echo cancellation, which dulls your voice.",

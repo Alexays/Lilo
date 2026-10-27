@@ -336,6 +336,11 @@
 				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña.",
 				"keywords": "pip vídeo llamada flotante"
 			},
+			"dockCallsInSidebar": {
+				"title": "Mantener las llamadas en la barra lateral",
+				"description": "Una pestaña que usa tu cámara, micrófono o pantalla se acopla en la barra lateral al cambiar de pestaña, en lugar de una ventana flotante.",
+				"keywords": "pip acoplar llamada barra lateral flotante"
+			},
 			"fullBandMicrophone": {
 				"title": "Micrófono de calidad completa con auriculares",
 				"description": "Con auriculares, las llamadas omiten la cancelación de eco, que apaga tu voz.",

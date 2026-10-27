@@ -336,6 +336,11 @@
 				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba.",
 				"keywords": "pip vídeo chamada flutuante"
 			},
+			"dockCallsInSidebar": {
+				"title": "Manter chamadas na barra lateral",
+				"description": "Uma aba que usa sua câmera, microfone ou tela fica na barra lateral quando você sai dela, em vez de uma janela flutuante.",
+				"keywords": "pip acoplar chamada barra lateral flutuante"
+			},
 			"fullBandMicrophone": {
 				"title": "Microfone de alta qualidade com fones",
 				"description": "Com fones de ouvido, as chamadas dispensam o cancelamento de eco, que deixa a voz abafada.",

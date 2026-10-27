@@ -61,7 +61,7 @@ test("groups a section's settings in display order", () => {
   ]);
   assert.deepEqual(sectionGroups("media"), [
     { groupKey: "settings.groups.playback", settings: ["autoPictureInPicture", "autoplay"] },
-    { groupKey: "settings.groups.calls", settings: ["fullBandMicrophone", "autoDevices", "deviceSetup"] },
+    { groupKey: "settings.groups.calls", settings: ["dockCallsInSidebar", "fullBandMicrophone", "autoDevices", "deviceSetup"] },
   ]);
   assert.deepEqual(sectionGroups("terminal"), []);
 });
