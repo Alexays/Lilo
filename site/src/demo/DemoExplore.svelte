@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { LINE_ICONS } from "../../../lilo-ui/src/components/commandbar/commandBarIcons";
   import { demoFeatures } from "../lib/i18n.ts";
   import type { DemoFeatureId } from "../lib/i18n.ts";
   import { demoCopy } from "./world.ts";
@@ -28,7 +29,7 @@
 </script>
 
   <dialog class="explore-window" bind:this={dialog} aria-label={text.explore} oncancel={(event) => { event.preventDefault(); onclose(); }} onkeydown={(event) => { if (event.key === "Escape") { event.preventDefault(); onclose(); } }}>
-    <header><h2>{text.explore}</h2><button class="close" type="button" aria-label={text.previewClose} onclick={onclose}>×</button></header>
+    <header><h2>{text.explore}</h2><button class="close" type="button" aria-label={text.previewClose} onclick={onclose}><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d={LINE_ICONS.stop} /></svg></button></header>
     <div class="explore-body">
       <nav aria-label={text.explore}><input type="search" aria-label={text.exploreSearch} placeholder={text.exploreSearch} bind:value={query} />
         <div class="feature-list">{#each features as item (item.id)}<button type="button" class:selected={feature?.id === item.id} aria-pressed={feature?.id === item.id} onclick={() => { selected = item.id; }}><span>{item.title}</span>{#if item.mac}<small>macOS</small>{/if}</button>{/each}</div>
@@ -44,7 +45,7 @@
   header { display: flex; align-items: center; justify-content: space-between; flex: none; padding: 14px 18px; border-bottom: 1px solid var(--border); }
   h2 { margin: 0; font-size: 14px; font-weight: 600; }
   button { color: inherit; font: inherit; cursor: pointer; }
-  .close { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--bg-hover); color: var(--text-secondary); font-size: 18px; }
+  .close { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--bg-hover); color: var(--text-secondary); }
   .explore-body { display: flex; min-height: 0; flex: 1; }
   nav { display: flex; flex-direction: column; gap: 10px; width: 245px; flex: none; padding: 14px 10px 10px; box-sizing: border-box; border-right: 1px solid var(--border); background: var(--bg-hover); }
   input { width: 100%; flex: none; box-sizing: border-box; border: 1px solid var(--border); border-radius: 7px; padding: 7px 9px; background: var(--bg-primary); color: var(--text-primary); font: inherit; font-size: 11px; }

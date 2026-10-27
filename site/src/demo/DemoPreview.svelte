@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
+  import { LINE_ICONS } from "../../../lilo-ui/src/components/commandbar/commandBarIcons";
+  import SettingsIcon from "../../../lilo-ui/src/components/settings/SettingsIcon.svelte";
+  import SiteFavicon from "../../../lilo-ui/src/components/ui/SiteFavicon.svelte";
   import type { DemoHost } from "./host.ts";
   import { demoCopy, makeTab, pageNotes, pageProjects } from "./world.ts";
   import type { DemoLocale } from "./world.ts";
@@ -41,7 +44,7 @@
 </script>
 
 <dialog class="preview-window" class:little={mode === "little"} bind:this={dialog} aria-label={mode === "peek" ? "Peek" : text.previewLittle} oncancel={(event) => { event.preventDefault(); onclose(); }}>
-  <header><button class="close" type="button" aria-label={text.previewClose} onclick={onclose}>×</button><span class="preview-address">{new URL(tab.url).hostname}</span><button class="expand" type="button" aria-label={text.previewExpand} onclick={expand}>↗</button></header>
+  <header><button class="close" type="button" aria-label={text.previewClose} onclick={onclose}><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d={LINE_ICONS.stop} /></svg></button><span class="preview-address"><SiteFavicon src={host.faviconFor(tab.url)} url={tab.url} size={14} />{new URL(tab.url).hostname}</span><button class="expand" type="button" aria-label={text.previewExpand} onclick={expand}><SettingsIcon name="arrowOutOfBox" /></button></header>
   <div class="preview-page"><DemoPage {tab} {host} {locale} onnavigate={navigate} {onpreview} onpreviewclose={onclose} /></div>
 </dialog>
 
@@ -51,8 +54,8 @@
   .preview-window::backdrop { background: #00000028; }
   .preview-window.little { width: 560px; height: min(480px, calc(100% - 90px)); }
   header { display: flex; align-items: center; justify-content: space-between; flex: none; gap: 16px; height: 40px; padding: 0 12px; background: var(--bg-elevated); border-bottom: 1px solid var(--border); font: 11px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; }
-  header > button { width: 24px; height: 24px; border: 0; border-radius: 6px; background: var(--bg-hover); color: var(--text-secondary); font: inherit; font-size: 18px; cursor: pointer; }
-  .preview-address { color: var(--text-secondary); }
+  header > button { display: grid; place-items: center; flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: var(--bg-hover); color: var(--text-secondary); cursor: pointer; }
+  .preview-address { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--text-secondary); }
   .preview-page { flex: 1; min-height: 0; }
   button:focus-visible { outline: var(--focus-outline); outline-offset: 3px; }
 </style>

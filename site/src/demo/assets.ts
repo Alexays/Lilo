@@ -3,6 +3,7 @@ import type { BridgeEventPayloadMap } from "../../../lilo-ui/src/lib/bridge/prot
 export interface DemoAssets {
   appIcons: BridgeEventPayloadMap["appIconsLoaded"]["icons"];
   images: {
+    alexays: string;
     bitwarden: string;
     board: string;
     browser: string;
