@@ -236,6 +236,7 @@ export const settingsActions = {
 	clearExtensionDiagnostics: emitEmpty("clearExtensionDiagnostics"),
 	copyExtensionDiagnostics: emitEmpty("copyExtensionDiagnostics"),
 	copyDiagnosticsReport: emitEmpty("copyDiagnosticsReport"),
+	togglePerfRecording: emitEmpty("togglePerfRecording"),
 	forceLifecycleTrim: emitEmpty("forceLifecycleTrim"),
 	chooseDownloadsFolder: emitEmpty("chooseDownloadsFolder"),
 	loadDefaultBrowserStatus: emitEmpty("getDefaultBrowserStatus"),

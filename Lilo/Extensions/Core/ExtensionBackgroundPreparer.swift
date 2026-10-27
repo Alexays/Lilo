@@ -38,9 +38,9 @@ enum ExtensionBackgroundPreparer {
     /// The manifest is written at most once, and only when a step changed it. A folder whose stamp still matches
     /// Lilo's build, the sources given and the manifest, worker and ruleset files is left as it is.
     static func prepare(extensionURL: URL, preludeSource: String, compatSource: String? = nil) throws -> PreparationResult {
-        let signpost = PerfSignposts.extensions.beginInterval("prepare", id: PerfSignposts.extensions.makeSignpostID(), "\(extensionURL.lastPathComponent, privacy: .public)")
+        let signpost = PerfSignposts.extensions.beginInterval("prepare", id: PerfSignposts.extensions.makeSignpostID(), "\(extensionURL.lastPathComponent)")
         var stampMatched = false
-        defer { PerfSignposts.extensions.endInterval("prepare", signpost, "\(stampMatched ? "stamped" : "cold", privacy: .public)") }
+        defer { PerfSignposts.extensions.endInterval("prepare", signpost, "\(stampMatched ? "stamped" : "cold")") }
         var hasher = SHA256()
         hasher.update(data: Data(buildStamp.utf8))
         hasher.update(data: Data(preludeSource.utf8))

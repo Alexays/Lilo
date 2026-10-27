@@ -24,6 +24,19 @@ The copy button in the header (**Copy report**) copies the startup metrics and t
 
 **Develop > Process Manager** lists every WebKit process (WebContent, network, GPU, ...) with its memory and CPU use and the tabs it serves.
 
+### Recording a performance session
+
+The record button in the Diagnostics header (or **Help > Record Performance Session**) records until it is pressed again, 10 minutes at most, then writes `Lilo-perf-<date>.json` to Downloads and shows it in the Finder. It works in Release builds, without Xcode, so anyone can send one with a bug report.
+
+The file is a Chrome Trace Event trace: open it in [ui.perfetto.dev](https://ui.perfetto.dev). It holds every `PerfSignposts` interval and event (chrome actions as `bridge/handle`, page loads as `navigation/load`, menu actions and shortcuts as `input/menu`), main-thread hangs over 100 ms (`main/hang`), dropped frames (`frames/drop`, measured only while Lilo is frontmost), and twice a second the CPU, footprint, wakeups, disk I/O and energy of Lilo, its chrome, tab, extension, network and GPU processes. `metadata` describes the Mac and the session's size, and carries the hang, CPU and disk-write diagnostics macOS delivered through MetricKit, with call stacks. Pids, URLs and titles never appear in it.
+
+```bash
+make perf-summary FILE=~/Downloads/Lilo-perf-2026-10-27-142233.json
+make perf-compare BEFORE=before.json AFTER=after.json
+```
+
+`perf-summary` prints the costliest intervals, each hang with the intervals running on the main thread at the time, per-process averages and peaks, and event counts. A hang that no interval covers needs a stack: look for it in `metadata.metricKit` (`atos` with the release's dSYM), or reproduce it under Instruments. While a session records, the frame meter wakes the main thread every frame, so Lilo's own wakeups read about one per frame higher than at rest: measure idle energy with `make e2e-energy` instead.
+
 ## 4. Hitbox debug overlay
 
 **Develop > Show Hitbox Debug Overlay** (debug builds) visualizes the interactive zones the chrome overlay registers with the native event router. Use it when clicks land on the wrong layer (page instead of UI, or vice versa). The setting persists in `UserDefaults` across launches; select the menu item again to turn it off.

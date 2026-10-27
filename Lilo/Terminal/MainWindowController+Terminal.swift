@@ -543,7 +543,7 @@ extension BrowserContext {
                 let bridged = terminals as NSArray
                 sent[key] = bridged
                 let unchanged = sentTerminalActivity[key]?.isEqual(bridged) == true
-                PerfSignposts.energy.emitEvent("terminalActivity", "\(unchanged ? "skipped" : "sent", privacy: .public)")
+                PerfSignposts.energy.emitEvent("terminalActivity", "\(unchanged ? "skipped" : "sent")")
                 guard !unchanged else { continue }
                 router.send(event: "terminalActivity", data: ["terminals": terminals])
             }

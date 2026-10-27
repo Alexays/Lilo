@@ -238,7 +238,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
         // The bar cannot show steps finer than this; a load's start and end always ship.
         let fineStep = progress > 0 && progress < 1 && abs(progress - active.estimatedProgress) < 0.05
-        PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent", privacy: .public)")
+        PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent")")
         guard !fineStep else { return }
         updateAndEmit(tab.id) { t in t.estimatedProgress = progress }
     }

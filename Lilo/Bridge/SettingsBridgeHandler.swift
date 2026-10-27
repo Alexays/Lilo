@@ -31,6 +31,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         "clearExtensionDiagnostics",
         "copyExtensionDiagnostics",
         "copyDiagnosticsReport",
+        "togglePerfRecording",
         "forceLifecycleTrim",
         "chooseDownloadsFolder",
         "getDefaultBrowserStatus",
@@ -93,6 +94,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
     var onForgetDeviceSetup: (() -> Void)?
+    var onTogglePerfRecording: (() -> Void)?
     /// Settings records a shortcut for this action id, or stops recording (nil).
     var onRecordShortcut: ((String?) -> Void)?
 
@@ -394,6 +396,9 @@ final class SettingsBridgeHandler: BridgeHandler {
             let didCopy = copyToPasteboard(report)
             bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "copyDiagnosticsReport", message: (didCopy ? "Diagnostics report copied" : "Unable to copy diagnostics report").localized, level: didCopy ? "info" : "error")
 
+        case "togglePerfRecording":
+            onTogglePerfRecording?()
+
         case "forceLifecycleTrim":
             forceLifecycleTrimHandler()
             publishStartupMetrics()
@@ -547,6 +552,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         if let diagnostics = lifecycleDiagnosticsProvider() {
             snapshot["lifecycleDiagnostics"] = diagnostics.bridgeData
         }
+        snapshot["perfRecordingStartedAt"] = PerfRecorder.startedAt.map { $0.timeIntervalSince1970 * 1000 } as Any
         bridgeRouter?.send(event: "startupMetricsLoaded", data: snapshot)
     }
 

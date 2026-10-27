@@ -69,6 +69,7 @@ extension MainWindowController {
     @objc func replayOnboarding(_ sender: Any?) { bridgeRouter.send(event: "startOnboarding") }
     @objc func openDesignSystem(_ sender: Any?) { bridgeRouter.send(event: "openDesignSystem") }
     @objc func openDiagnostics(_ sender: Any?) { bridgeRouter.send(event: "openDiagnostics") }
+    @objc func togglePerfRecording(_ sender: Any?) { context.togglePerfRecording() }
     @objc func openProcessManager(_ sender: Any?) { bridgeRouter.send(event: "openProcessManager") }
     @objc func openDownloads(_ sender: Any?) { bridgeRouter.send(event: "openDownloads") }
     @objc func openFeatureFlags(_ sender: Any?) { bridgeRouter.send(event: "openConfig") }
@@ -463,6 +464,10 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(goForwardInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoForward == true }
         if action == #selector(stopLoadingCurrentPage(_:)) { return tabManager.activeTab?.isLoading == true }
         if action == #selector(showNextTab(_:)) || action == #selector(showPreviousTab(_:)) { return tabManager.currentTabs.count > 1 }
+        if action == #selector(togglePerfRecording(_:)) {
+            (item as? NSMenuItem)?.title = PerfRecorder.isRecording ? "Stop Performance Recording".localized : "Record Performance Session".localized
+            return true
+        }
         if action == #selector(toggleSidebarVisibility(_:)) {
             (item as? NSMenuItem)?.title = sidebarVisible ? "Hide Sidebar".localized : "Show Sidebar".localized
             return !sidebarCollapseLocked

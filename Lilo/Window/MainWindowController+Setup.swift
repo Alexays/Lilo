@@ -529,6 +529,7 @@ extension MainWindowController {
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
+        settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
         settingsHandler.onContentBlockerToggled = { [weak self] enabled in
             guard let self else { return }

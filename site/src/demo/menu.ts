@@ -409,6 +409,7 @@ export const demoMenus: DemoMenuItem[] = [
     command("Replay Onboarding", "onboarding"),
     separator,
     mac("Diagnostics"),
+    mac("Record Performance Session"),
     mac("Report an Issue…"),
   ]),
 ];

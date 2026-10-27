@@ -105,6 +105,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         StartupMetrics.mark("mainWindowControllerReady")
         mainWindowController?.showWindow(nil)
+        // Off the launch path: macOS delivers its payloads at most daily, so nothing waits on this.
+        DispatchQueue.main.async { MetricKitArchive.shared.start() }
         mainWindowController?.window?.makeKeyAndOrderFront(nil)
         StartupMetrics.mark("windowShown")
         // Writes the bundle's custom icon: kept off the path to the first window.

@@ -270,6 +270,7 @@ final class WKWebViewTab: NSObject {
     private var didReloadEmptyCommit = false
     /// Start of the current main-frame navigation, for the commit/finish timings in the log.
     private var navigationStartUptime: UInt64?
+    private var navigationSignpost: PerfSignpostState?
     /// Trust presented by the main host on its latest challenge; what "Visit Anyway" pins the exception to.
     private(set) var lastServerTrust: SecTrust?
     /// The next main-frame load runs without content rule lists: the error page's "Visit Anyway" on a blocked page.
@@ -1001,9 +1002,17 @@ final class WKWebViewTab: NSObject {
         delegate?.tab(self, didNavigate: .failed(failedURL, error))
     }
 
+    /// Closes the open page-load interval of a recorded session, with how it ended.
+    private func endNavigationSignpost(_ result: String) {
+        guard let navigationSignpost else { return }
+        PerfSignposts.navigation.endInterval("load", navigationSignpost, result)
+        self.navigationSignpost = nil
+    }
+
     /// Restores an on-screen page instead of leaving a blank view. A second death within a few seconds
     /// surfaces an error page rather than looping.
     private func recoverFromContentProcessTermination() {
+        endNavigationSignpost("processEnded")
         let now = Date()
         if !isPrivateBrowsing {
             Self.logger.error("""
@@ -1217,6 +1226,8 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         onMain { tab in
             tab.navigationStartUptime = DispatchTime.now().uptimeNanoseconds
+            tab.endNavigationSignpost("replaced")
+            tab.navigationSignpost = PerfSignposts.navigation.beginInterval("load", id: PerfSignposts.navigation.makeSignpostID(from: tab))
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
@@ -1239,6 +1250,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                 return
             }
             tab.lastCommittedNavigation = navigation
+            if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.consoleHook) }
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
@@ -1283,18 +1295,23 @@ extension WKWebViewTab: WKNavigationDelegate {
                     """)
             }
             tab.navigationStartUptime = nil
+            tab.endNavigationSignpost("finish")
             tab.delegate?.tab(tab, didNavigate: .finished(tab.currentURL))
             StartupMetrics.markOnce("firstContentFinished")
         }
     }
 
     nonisolated func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        guard !Self.shouldIgnoreNavigationFailure(error) else { return }
-        onMain { $0.handleCommittedNavigationFailure(error) }
+        onMain { tab in
+            tab.endNavigationSignpost("fail")
+            guard !Self.shouldIgnoreNavigationFailure(error) else { return }
+            tab.handleCommittedNavigationFailure(error)
+        }
     }
 
     nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         onMain { tab in
+            tab.endNavigationSignpost("fail")
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false
@@ -1317,6 +1334,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     @objc(_webView:webContentProcessDidTerminateWithReason:)
     nonisolated func webView(_ webView: WKWebView, webContentProcessDidTerminateWithReason reason: Int) {
         onMain { tab in
+            PerfSignposts.navigation.emitEvent("processEnded", Self.terminationReasonName(reason))
             if !tab.isPrivateBrowsing {
                 Self.logger.error("""
                     content process ended reason=\(Self.terminationReasonName(reason), privacy: .public) \
@@ -1389,7 +1407,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         let event = type == 0 ? "onReferenceFragmentUpdated" : "onHistoryStateUpdated"
         // The window and index lookups below are skipped when no extension listens.
         let ids = registry.gapEvents.listeners(among: registry.extensionIds(withPermission: "webNavigation"), namespace: "webNavigation", event: event)
-        PerfSignposts.energy.emitEvent("sameDocNav", "\(ids.isEmpty ? "dropped" : "delivered", privacy: .public)")
+        PerfSignposts.energy.emitEvent("sameDocNav", "\(ids.isEmpty ? "dropped" : "delivered")")
         guard !ids.isEmpty, let url = webView.url, let adapter = tabManager?.tabAdapter(for: id) else { return }
         let timeStamp = Date().timeIntervalSince1970 * 1000
         registry.emitPositioned("webNavigation", event, to: ids) { extensionId in

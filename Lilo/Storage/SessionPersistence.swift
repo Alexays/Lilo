@@ -139,7 +139,7 @@ final class SessionPersistence {
         pendingStatesBySpaceId.removeValue(forKey: spaceId)
         lastSnapshotsBySpaceId[spaceId] = repaired
         updateActiveTab?(state.activeTabId, spaceId)
-        PerfSignposts.energy.emitEvent("spaceSwitchSave", "\(unchanged ? "skipped" : "written", privacy: .public)")
+        PerfSignposts.energy.emitEvent("spaceSwitchSave", "\(unchanged ? "skipped" : "written")")
         if unchanged { return }
         tabDBPool.asyncWrite({ db in
             try SpaceTabStateStore.writeManyOn(db: db, states: [(spaceId: spaceId, state: state)])

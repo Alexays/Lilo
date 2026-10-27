@@ -1934,7 +1934,7 @@ final class RepositoryWatcher {
             }
             if newFolder { filter.readIgnored() }
             let relevant = paths.prefix(count).contains(where: filter.matters)
-            PerfSignposts.energy.emitEvent("changesEvent", "\(relevant ? "relevant" : "ignored", privacy: .public)")
+            PerfSignposts.energy.emitEvent("changesEvent", "\(relevant ? "relevant" : "ignored")")
             guard relevant else { return }
             let onChange = filter.onChange
             DispatchQueue.main.async { MainActor.assumeIsolated { onChange() } }
