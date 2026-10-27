@@ -1385,7 +1385,7 @@
 		"deny": "Refuser",
 		"allow": "Autoriser",
 		"allowOnce": "Autoriser une fois",
-		"alwaysAllowOn": "Toujours autoriser sur {site}",
+		"alwaysAllowOnSite": "Toujours autoriser sur ce site",
 		"permissions": {
 			"tabs": "Voir vos onglets ouverts",
 			"history": "Lire votre historique de navigation",

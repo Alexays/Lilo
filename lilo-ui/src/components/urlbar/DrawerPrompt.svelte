@@ -100,7 +100,18 @@
   /* An answer naming a long site wraps rather than run off the drawer: the site must stay readable. */
   .prompt-actions :global(.ui-button) {
     max-width: 100%;
+    padding-block: 4px;
+    text-align: end;
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+
+  /* The drawer is already painted --bg-hover: a secondary button in that same fill disappears. */
+  .prompt-actions :global(.ui-button:not(.primary, .ghost)) {
+    background: var(--text-primary-tint-10);
+  }
+
+  .prompt-actions :global(.ui-button:not(.primary, .ghost, :disabled):hover) {
+    background: var(--text-primary-tint-12);
   }
 </style>

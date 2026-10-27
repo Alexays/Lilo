@@ -1385,7 +1385,7 @@
 		"deny": "Deny",
 		"allow": "Allow",
 		"allowOnce": "Allow Once",
-		"alwaysAllowOn": "Always Allow on {site}",
+		"alwaysAllowOnSite": "Always Allow on This Site",
 		"permissions": {
 			"tabs": "See your open tabs",
 			"history": "Read your browsing history",

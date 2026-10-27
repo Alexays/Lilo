@@ -29,7 +29,7 @@
   icon={permissionRequestIcon(request)}
   dismissLabel={t("permissionPrompt.deny")}
   confirmLabel={t(agentAction ? "permissionPrompt.allowOnce" : "permissionPrompt.allow")}
-  alternateLabel={agentAction?.site && agentAction.kind !== "upload" ? t("permissionPrompt.alwaysAllowOn", { site: agentAction.site }) : undefined}
+  alternateLabel={agentAction?.site && agentAction.kind !== "upload" ? t("permissionPrompt.alwaysAllowOnSite") : undefined}
   ondismiss={() => respondToPermissionRequest(request, false)}
   onconfirm={() => respondToPermissionRequest(request, true)}
   onalternate={() => respondToPermissionRequest(request, true, agentAction?.site)}
