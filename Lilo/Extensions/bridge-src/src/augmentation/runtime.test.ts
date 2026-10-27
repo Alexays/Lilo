@@ -15,6 +15,7 @@ mockGapAPI((msg: any) => {
 
 const { runtimeAdditions, crossExtensionMessaging, crossExtensionPatches, externalEvents, onConnect, relayForContentScripts, tabsConnect } = await import('./runtime.ts');
 const { liloLastError } = await import('../shared/callbackify.ts');
+const { frameMark } = await import('../shared/message-answers.ts');
 
 describe('runtime.requestUpdateCheck', () => {
   it('resolves the promise with native status and version', async () => {
@@ -313,6 +314,18 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
       const calls = gapCalls.slice(from).filter((c) => c.namespace === 'runtime').map((c) => [c.method, c.params.portId]);
       assert.deepEqual(calls, [['portDecline', 'p.1'], ['portAccept', 'p.2'], ['portPost', 'p.2']]);
     });
+  });
+
+  it("give a frame's port its own name and sender when its extension page relays it", () => {
+    const webKitOnConnect: any = Object.create({ addListener() {}, removeListener() {} });
+    const event = onConnect(() => webKitOnConnect);
+    const ports: any[] = [];
+    event.addListener((port: any) => ports.push(port));
+    const page = `chrome-extension://${own}/offscreen.html`;
+    const frame = 'https://example.com/editor';
+    event.dispatch({ portId: 'f.1', name: `x${frameMark}${encodeURIComponent(frame)}`, sender: { id: own, url: page } });
+    assert.equal(ports[0].name, 'x');
+    assert.deepEqual(ports[0].sender, { id: own, url: frame, origin: 'https://example.com' });
   });
 });
 

@@ -4,7 +4,7 @@ import { bridgeEvents, gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent, GapWrappedEvent, reportGapListener } from '../shared/gap-event.ts';
-import { externalMark, messagesOnce, noReceiver, once, otherExtension } from '../shared/message-answers.ts';
+import { externalMark, framePort, messagesOnce, noReceiver, once, otherExtension } from '../shared/message-answers.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 interface UpdateCheckResult {
@@ -65,7 +65,8 @@ function receiveLocalPort(listeners: [(...args: any[]) => unknown, unknown[]][],
     gapCall('runtime', 'portDecline', { portId: info.portId }, 0).catch(() => {});
     return;
   }
-  const port = externalPort(tab < 0 ? info.name : info.name.slice(0, tab), info.sender, info.portId);
+  const { name, sender } = framePort(tab < 0 ? info.name : info.name.slice(0, tab), info.sender);
+  const port = externalPort(name, sender, info.portId);
   gapCall('runtime', 'portAccept', { portId: info.portId }, 0).catch(() => {});
   for (const [listener] of listeners) {
     try { listener(port); } catch (err) { console.error(`Error in event handler: ${String(err)}`); }

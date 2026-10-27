@@ -148,6 +148,17 @@ export const once = '?lilo';
 export const frameMark = '?liloFrame=';
 const served = new WeakMap<object, object>();
 
+/** The name and sender of a port a frame's content script opened through its extension page, else `name` and `sender`. */
+export function framePort(name: string, sender: any): { name: string; sender: unknown } {
+  // A frame's port comes through the extension page only: a content script could take its name from the web page.
+  const frame = fromOwnPage(sender) ? name.lastIndexOf(frameMark) : -1;
+  let url: string | undefined;
+  try {
+    if (frame >= 0) url = decodeURIComponent(name.slice(frame + frameMark.length));
+  } catch { /* a name of the extension's own */ }
+  return url === undefined ? { name, sender } : { name: name.slice(0, frame), sender: frameSender(sender, url) };
+}
+
 /**
  * WebKit delivers each message posted before the port connects twice or more (gap 43), so each carries its sender
  * and number and a repeat is dropped; a message the extension repeats gets a new number.
@@ -158,15 +169,8 @@ export function messagesOnce(port: any, name: string): object {
   const sender = Math.random();
   let sent = 0;
   const received = new Map<number, number>();
-  // A frame's port comes through the extension page only: a content script could take its name from the web page.
-  const frame = fromOwnPage(port.sender) ? name.lastIndexOf(frameMark) : -1;
-  let url: string | undefined;
-  try {
-    if (frame >= 0) url = decodeURIComponent(name.slice(frame + frameMark.length));
-  } catch { /* a name of the extension's own */ }
   const chromePort = {
-    name: url === undefined ? name : name.slice(0, frame),
-    sender: url !== undefined && port.sender ? frameSender(port.sender, url) : port.sender,
+    ...framePort(name, port.sender),
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage: (message: unknown) => port.postMessage({ [once]: [sender, ++sent], message }),
