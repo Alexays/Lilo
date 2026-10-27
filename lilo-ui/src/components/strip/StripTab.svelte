@@ -61,7 +61,18 @@
     data-roving
     onclick={activate}
   >
-    <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+    {#if tab.kind === "terminal"}
+      <!-- The sidebar's tile: a terminal reads apart from pages at a glance. -->
+      <span class="terminal-tile" class:asleep={!tab.terminalState} aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 4.5 3.5 3.5-3.5 3.5" /><path d="M8.5 11.5h4" /></svg>
+      </span>
+    {:else if tab.kind === "changes"}
+      <span class="changes-tile" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5 2.5v6M2 5.5h6" /><path d="M8.5 12h5" /></svg>
+      </span>
+    {:else}
+      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+    {/if}
     {#if site}
       <span class="strip-tab-site">
         {#if site.secure}
@@ -135,6 +146,40 @@
   .icon-only .strip-tab-main {
     justify-content: center;
     padding: 0;
+  }
+
+  /* The sidebar's tiles, in a 16px favicon's box. */
+  .terminal-tile,
+  .changes-tile {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-xs);
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+  }
+
+  .terminal-tile {
+    background: var(--terminal-tile-bg);
+    box-shadow: inset 0 0 0 1px var(--terminal-tile-border);
+    stroke: var(--terminal-tile-accent);
+  }
+
+  .terminal-tile.asleep {
+    opacity: 0.55;
+  }
+
+  .changes-tile {
+    border: 1.5px solid var(--accent);
+    stroke: var(--accent);
+  }
+
+  .terminal-tile path,
+  .changes-tile path {
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .strip-tab-site {

@@ -24,11 +24,13 @@
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
   import { sidebarActions } from "../../lib/bridge/actions";
   import { dndItem, dndZone } from "../../lib/dndEngine/action";
-  import { dndItemsForFolderTabs, dndItemsForSidebarItems, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
+  import { dndItemsForFolderTabs, dndItemsForSidebarItems, flipDurationForSidebarDndItem, type SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
+  import { translateFlip } from "../../lib/motion/translateFlip";
+  import { springEase } from "../../lib/motion/spring";
   import { tick } from "svelte";
   import { isShadowItem } from "../../lib/dndEngine/projection";
-  import { commitSidebarDrop, getZoneItems, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
+  import { commitSidebarDrop, getRecentlyDroppedId, getZoneItems, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { t } from "../../lib/i18n/state.svelte";
@@ -149,10 +151,12 @@
 {#snippet items(section: StripSection)}
   {@const zone = zoneRef(section)}
   {@const iconOnly = section !== "unpinned"}
-  {#each getZoneItems(zone, baseItems[section]) as item (item.id)}
+  {@const zoneItems = getZoneItems(zone, baseItems[section])}
+  {#each zoneItems as item (item.id)}
     <div
       class="strip-slot"
       class:icon-only={iconOnly}
+      animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
       use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
     >
       {#if isShadowItem(item)}
