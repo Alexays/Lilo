@@ -9,7 +9,7 @@ import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentati
 import {
   runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
 } from '../augmentation/runtime.ts';
-import { onAuthRequired } from '../augmentation/webRequest.ts';
+import { onAuthRequired, webRequestFrames } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
@@ -279,7 +279,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         handlerBehaviorChanged: (callback?: () => void) => callbackify(async () => {}, callback),
         onActionIgnored: webRequestOnActionIgnored,
       },
-      standIns: { onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
+      standIns: { ...webRequestFrames((name) => chrome.webRequest[name]), onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {

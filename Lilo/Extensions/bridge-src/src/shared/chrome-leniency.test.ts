@@ -85,6 +85,7 @@ describe('webRequest filters WebKit rejects', () => {
         if (ws) throw new Error(`Invalid call to addListener(). The 'urls' value is invalid, because '${ws}' is an invalid match pattern.`);
         added.push(filter);
       },
+      removeListener(_listener: unknown) {},
     };
     const event = install({ webRequest: { onBeforeRequest: Object.create(prototype) } }).webRequest.onBeforeRequest;
     return { event, added };
@@ -93,7 +94,8 @@ describe('webRequest filters WebKit rejects', () => {
   it('drops the unknown types and patterns', () => {
     const { event, added } = webRequestEvent();
     event.addListener(() => {}, { urls: ['<all_urls>', 'ws://*/*'], types: ['main_frame', 'webbundle'] });
-    assert.deepEqual(added, [{ urls: ['<all_urls>'], types: ['main_frame'] }]);
+    // WebKit reports a subframe's document as main_frame (WEBKIT-GAPS 95): Lilo asks for both and sorts them.
+    assert.deepEqual(added, [{ urls: ['<all_urls>'], types: ['main_frame', 'sub_frame'] }]);
   });
 
   it('registers nothing when no pattern is left', () => {
