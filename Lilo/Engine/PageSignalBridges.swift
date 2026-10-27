@@ -14,6 +14,8 @@ final class FormDirtyBridge: NSObject, WKScriptMessageHandler {
       var dirty = false;
       function report(v) { if (v !== dirty) { dirty = v; try { h.postMessage({ dirty: v }); } catch (e) {} } }
       document.addEventListener('input', function () { report(true); }, true);
+      // A subframe's form ending must not clear a main-frame form still being edited.
+      if (window !== window.top) return;
       document.addEventListener('reset', function () { report(false); }, true);
       document.addEventListener('submit', function () { report(false); }, true);
     })();
