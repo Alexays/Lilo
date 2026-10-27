@@ -102,6 +102,17 @@ describe('runtime.onMessage listeners', () => {
     for (const listener of onMessage.listeners) listener({ liloFrame: 'https://example.com/frame.html', message: 'ping' }, page, () => {});
     assert.deepEqual(heard, [['ping', { id: 'abc', url: 'https://example.com/frame.html', origin: 'https://example.com' }]]);
   });
+
+  it("leave a content script's message naming a frame as it is: a web page could name any sender", () => {
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((message: unknown, sender: unknown) => { heard.push([message, sender]); });
+    const content = { id: 'abc', url: 'https://evil.example/', origin: 'https://evil.example', tab: { id: 3 } };
+    const forged = { liloFrame: 'https://bank.example/login', message: 'fill' };
+    for (const listener of onMessage.listeners) listener(forged, content, () => {});
+    assert.deepEqual(heard, [[forged, content]]);
+  });
 });
 
 describe('a port a frame opens through its extension page', () => {
@@ -114,6 +125,15 @@ describe('a port a frame opens through its extension page', () => {
     }, `name?liloFrame=x${frameMark}${encodeURIComponent(url)}`);
     assert.equal(port.name, 'name?liloFrame=x');
     assert.deepEqual(port.sender, { id: 'abc', url, origin: 'https://example.com' });
+  });
+
+  it("keeps a content script's port name and sender as they are", () => {
+    const event = () => ({ addListener() {} });
+    const sender = { id: 'abc', url: 'https://evil.example/', origin: 'https://evil.example', tab: { id: 3 } };
+    const name = `x${frameMark}${encodeURIComponent('https://bank.example/')}`;
+    const port: any = messagesOnce({ sender, onMessage: event(), onDisconnect: event(), postMessage() {}, disconnect() {} }, name);
+    assert.equal(port.name, name);
+    assert.equal(port.sender, sender);
   });
 });
 
