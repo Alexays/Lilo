@@ -283,6 +283,12 @@ preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	log=$$(mktemp); TEST_RUNNER_LILO_PRELOAD_BENCH="$$out" $(TEST) -only-testing:LiloTests/TopHitPreloadBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
+## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
+port-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) ext-bridge-build
+	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
 ## Run the terminal throughput and lock-fairness benchmarks
 terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) -only-testing:LiloTests/TerminalBenchmarkTests
