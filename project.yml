@@ -96,6 +96,7 @@ targets:
           - "AppIcon.icon"
           - "Lilo.sdef"
           - "fr.lproj"
+          - "es.lproj"
       - path: Lilo/Resources/AppIcons
         type: folder
         buildPhase: resources

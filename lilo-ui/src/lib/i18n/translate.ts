@@ -3,11 +3,12 @@
 
 import en from "./locales/en.json";
 
-export type Locale = "en" | "fr";
+export type Locale = "en" | "fr" | "es";
 
 export const SUPPORTED_LOCALES = [
 	{ code: "en", label: "English" },
 	{ code: "fr", label: "Français" },
+	{ code: "es", label: "Español" },
 ] as const satisfies ReadonlyArray<{ code: Locale; label: string }>;
 
 type Messages = Record<string, unknown>;
@@ -18,6 +19,7 @@ export const catalogs: { en: Messages } & Partial<Record<Locale, Messages>> = { 
 
 export async function loadCatalog(locale: Locale): Promise<void> {
 	if (locale === "fr") catalogs.fr ??= (await import("./locales/fr.json")).default;
+	if (locale === "es") catalogs.es ??= (await import("./locales/es.json")).default;
 }
 
 export function isSupportedLocale(value: string): value is Locale {

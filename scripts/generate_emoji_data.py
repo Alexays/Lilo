@@ -23,6 +23,7 @@ TONES = "\U0001F3FB\U0001F3FC\U0001F3FD\U0001F3FE\U0001F3FF"
 LOCALES = {
     "en": {"a", "an", "and", "in", "of", "on", "the", "with"},
     "fr": {"a", "au", "aux", "avec", "d", "de", "des", "du", "en", "et", "l", "la", "le", "les", "sur", "un", "une"},
+    "es": {"a", "al", "con", "de", "del", "el", "en", "la", "las", "los", "un", "una", "y"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

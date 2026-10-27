@@ -210,6 +210,28 @@ test("a feature flag known only by its key keeps the key inside its row", async 
 	expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 });
 
+test.describe("in Spanish", () => {
+	test.use({ locale: "es-MX", viewport: { width: 600, height: 400 } });
+
+	test("a regional system language selects Spanish and the selector persists a new choice", async ({ page }) => {
+		await bootChrome(page, initialWorld());
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+
+		const language = page.getByRole("combobox", { name: "Idioma", exact: true });
+		await expect(language).toHaveValue("es");
+		await expect(language.locator("option:checked")).toHaveText("Español");
+		await expect(page.getByRole("button", { name: "Pestañas y espacios", exact: true })).toBeVisible();
+
+		await language.selectOption("en");
+		await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveValue("en");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "en")).toBe(true);
+
+		await page.getByRole("combobox", { name: "Language", exact: true }).selectOption("es");
+		await expect(page.getByRole("combobox", { name: "Idioma", exact: true })).toHaveValue("es");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "es")).toBe(true);
+	});
+});
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 

@@ -59,3 +59,14 @@ test("under French, search and names follow the French annotations, English keyw
   assert.equal(french.categories.flat().length, EMOJI_CATEGORIES.flat().length);
   assert.equal(await loadEmojiCatalog("en"), ENGLISH_EMOJI);
 });
+
+test("Spanish emoji names and searches preserve accents and English keywords", async () => {
+  const spanish = await loadEmojiCatalog("es");
+  const search = (query: string) => searchEmoji(spanish, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("es"), spanish);
+  assert.ok(search("corazón").includes("❤️"));
+  assert.ok(search("CORAZON").includes("❤️"));
+  assert.ok(search("cat").includes("🐱"));
+  assert.equal(emojiName(spanish, "🚀"), "cohete");
+  assert.equal(spanish.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
