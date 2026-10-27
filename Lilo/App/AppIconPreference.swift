@@ -5,19 +5,20 @@ import AppKit
 enum AppIconPreference {
     static let variants = ["classic", "night", "frost", "blueprint", "riso", "pixel", "neon", "graphite", "spring", "pride", "clay"]
 
+    private static let defaultVariant = "pixel"
     private static let cacheKey = "lilo.appIcon"
 
     @MainActor private static var swapView: DockIconSwapView?
     @MainActor private static var swapTimer: Timer?
 
     @MainActor static func apply(_ name: String) {
-        let variant = variants.contains(name) ? name : "classic"
+        let variant = variants.contains(name) ? name : defaultVariant
         let image = variant == "classic"
             ? nil
             : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
         let oldImage = NSApp.applicationIconImage
         // The download progress view owns the Dock tile while downloads run.
-        let animate = variant != UserDefaults.lilo.string(forKey: cacheKey) ?? "classic"
+        let animate = variant != (UserDefaults.lilo.string(forKey: cacheKey) ?? defaultVariant)
             && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             && !(NSApp.dockTile.contentView is DownloadDockProgressController.DockProgressView)
         UserDefaults.lilo.set(variant, forKey: cacheKey)
@@ -77,7 +78,8 @@ enum AppIconPreference {
     }
 
     @MainActor static func applyCachedAtLaunch() {
-        guard let cached = UserDefaults.lilo.string(forKey: cacheKey), cached != "classic", variants.contains(cached),
+        let cached = UserDefaults.lilo.string(forKey: cacheKey) ?? defaultVariant
+        guard cached != "classic", variants.contains(cached),
               let image = Bundle.main.url(forResource: cached, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
         else { return }
         NSApp.applicationIconImage = image

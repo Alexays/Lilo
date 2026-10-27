@@ -187,7 +187,7 @@ export function getAppIcons(): { id: string; dataURL: string }[] {
 
 /** The preview of the app icon chosen in the settings, once the previews are loaded. */
 export function getChosenAppIcon(): string | undefined {
-	return _appIcons.find((icon) => icon.id === getSetting("appIcon", "classic"))?.dataURL;
+	return _appIcons.find((icon) => icon.id === getSetting("appIcon", "pixel"))?.dataURL;
 }
 
 export function connectAgentClient(client: string): void {

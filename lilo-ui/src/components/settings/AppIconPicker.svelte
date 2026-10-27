@@ -4,7 +4,7 @@
   import { tooltip } from "../../lib/tooltip";
   import { getAppIcons, getSetting, setSetting } from "../../stores/settings.svelte";
 
-  const selected = $derived(getSetting("appIcon", "classic"));
+  const selected = $derived(getSetting("appIcon", "pixel"));
 
   $effect(() => {
     if (getAppIcons().length === 0) settingsActions.loadAppIcons();

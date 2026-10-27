@@ -2,6 +2,7 @@
 // ?world=default|empty|onboarding, &theme=light|dark (the system's otherwise), &open=settings|commandbar,
 // &tabs=left|right|top|bottom, &update=1 (a downloaded update waiting for a relaunch).
 import type { Page } from "@playwright/test";
+import pixelIcon from "../../Lilo/Resources/AppIcons/pixel.png?inline";
 import { installFakeHost, type FakeHostWorld } from "../e2e/fakeHost";
 import { LILO_SHORTCUT_KEYS } from "../e2e/fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
@@ -125,7 +126,10 @@ const settings: Record<string, string> = {
 // The answers the Swift side gives to what the surfaces ask for when they open.
 const replies: Record<string, () => Record<string, unknown>> = {
 	getSettings: () => ({ event: "settingsLoaded", settings }),
-	getAppIcons: () => ({ event: "appIconsLoaded", icons: [{ id: "classic", dataURL: appIcon() }] }),
+	getAppIcons: () => ({ event: "appIconsLoaded", icons: [
+		{ id: "classic", dataURL: appIcon() },
+		{ id: "pixel", dataURL: pixelIcon },
+	] }),
 	dismissUpdate: () => ({ event: "updateReady", version: null }),
 	scanImportSources: () => ({
 		event: "importSourcesLoaded",
