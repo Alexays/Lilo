@@ -367,6 +367,34 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(value, "every key landed", "read right after the call, with no wait")
     }
 
+    func testTypeWithNoTextFieldFocusedIsRefusedAndReachesNoShortcut() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0"><input id="f" style="position:absolute;left:20px;top:20px;width:200px;height:30px">
+            <script>window.keys = 0; document.addEventListener('keydown', () => keys++)</script></body>
+            """)
+
+        let typed = await client.callTool("computer", ["tabId": tab, "action": "type", "text": "c"])
+        let inserted = await client.callTool("computer", ["tabId": tab, "action": "insert_text", "text": "c"])
+
+        XCTAssertTrue(typed.isError && typed.text.contains("No text field has focus"), typed.text)
+        XCTAssertTrue(inserted.isError, inserted.text)
+        let keys = try await js("keys", tab: tab) as? Int
+        XCTAssertEqual(keys, 0, "no key reached the page")
+    }
+
+    func testAClickSaysWhatItLandedOn() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body style="margin:0"><button style="position:absolute;left:20px;top:20px;width:200px;height:60px">
+            <span>Save draft</span></button></body>
+            """)
+
+        let hit = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [120, 50]])
+        let missed = await client.callTool("computer", ["tabId": tab, "action": "left_click", "coordinate": [600, 400]])
+
+        XCTAssertEqual(hit.text, #"Clicked button "Save draft" at (120, 50)"#)
+        XCTAssertFalse(missed.text.contains("Save draft"), missed.text)
+    }
+
     func testAClickWaitsForTheRequestItStartedThenNamesOneStillRunning() async throws {
         let server = try await TinyHTTPServer { request in
             if request.hasPrefix("POST /post") { Thread.sleep(forTimeInterval: 1) }
@@ -482,7 +510,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
     func testTimeoutExtendsTheDeadlineOfAScript() async throws {
         let tab = try await newAgentTab()
         AgentMCP.toolDeadline = 1
-        defer { AgentMCP.toolDeadline = 60 }
+        defer { AgentMCP.toolDeadline = 55 }
 
         let reply = await client.callTool("javascript_tool", [
             "tabId": tab, "action": "javascript_exec", "text": "await new Promise(r => setTimeout(() => r('late'), 1500))", "timeout": 5
@@ -582,7 +610,7 @@ final class AgentComputerToolTests: AgentToolTestCase {
     func testCallPastTheDeadlineReportsAnError() async throws {
         let tab = try await newAgentTab()
         AgentMCP.toolDeadline = 1
-        defer { AgentMCP.toolDeadline = 60 }
+        defer { AgentMCP.toolDeadline = 55 }
 
         let reply = await client.callTool("javascript_tool", ["tabId": tab, "action": "javascript_exec", "text": "await new Promise(() => {})"])
 

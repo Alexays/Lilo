@@ -51,6 +51,9 @@
   }
   const nameFromContent = new Set(['button', 'link', 'heading', 'option', 'cell', 'columnheader', 'tab', 'menuitem', 'label',
     'listitem', 'checkbox', 'radio', 'switch', 'treeitem', 'tooltip'])
+  // Controls whose name says all they hold. Any other interactive element, like an app root that takes focus
+  // (role=group), still has its controls listed.
+  const leafRoles = new Set([...nameFromContent, 'textbox', 'searchbox', 'combobox', 'listbox', 'slider', 'spinbutton'])
   // Icon fonts (SF Symbols and the like) draw their glyphs from private-use code points: odd characters as text.
   const privateUse = /[\uE000-\uF8FF\u{F0000}-\u{FFFFD}\u{100000}-\u{10FFFD}]/gu
   const clip = (text, max = 100) => {
@@ -115,8 +118,7 @@
       const isInteractive = interactive(el)
       const shown = filter === 'interactive' ? isInteractive : r !== null || isInteractive
       if (shown) emit(filter === 'interactive' ? 0 : level, `${r ?? 'generic'} "${name(el)}" [${ref(el)}]${details(el)}`)
-      // An interactive element's name already holds its text.
-      if (isInteractive && filter === 'interactive') return
+      if (isInteractive && filter === 'interactive' && leafRoles.has(r)) return
       const childLevel = shown ? level + 1 : level
       for (const node of (el.shadowRoot ?? el).childNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) walk(node, childLevel)
@@ -132,16 +134,30 @@
     return header + lines.join('\n') + (truncated ? `\n[Output truncated at ${maxChars} characters: pass a refId to read one part, or a smaller depth]` : '')
   }
 
+  // Into open shadow roots, as read_page goes: web components hold many pickers and menus.
+  const elements = function* (root) {
+    for (const el of root.querySelectorAll('*')) {
+      yield el
+      if (el.shadowRoot) yield* elements(el.shadowRoot)
+    }
+  }
+
+  const controls = 'a[href], button, input, select, textarea, summary, label, [onclick], [contenteditable], ' +
+    '[role=button], [role=link], [role=menuitem], [role=tab], [role=checkbox], [role=radio], [role=switch], [role=option], [role=textbox]'
+  const ownText = el => [...el.childNodes].filter(node => node.nodeType === Node.TEXT_NODE).map(node => node.textContent).join(' ').trim()
+  // What an element is to a user, as read_page names it: the control it belongs to when there is one. Another
+  // element shows its own text only, not all a container holds.
+  const describe = el => {
+    if (!el) return 'nothing'
+    const control = el.closest(controls)
+    const target = control ?? el
+    const label = name(target) || clip(control ? control.innerText ?? '' : ownText(el), 60)
+    return `${role(target) ?? target.tagName.toLowerCase()}${label ? ` "${label}"` : ''}`
+  }
+
   const find = ({ query, limit = 20 }) => {
     const needle = String(query ?? '').toLowerCase()
     const matches = []
-    // Into open shadow roots, as read_page goes: web components hold many pickers and menus.
-    const elements = function* (root) {
-      for (const el of root.querySelectorAll('*')) {
-        yield el
-        if (el.shadowRoot) yield* elements(el.shadowRoot)
-      }
-    }
     for (const el of document.body ? elements(document.body) : []) {
       if (matches.length >= limit) break
       const r = role(el)
@@ -150,8 +166,65 @@
       if (!(line + details(el)).toLowerCase().includes(needle) || !shown(el)) continue
       matches.push(`${line} [${ref(el)}]${details(el)}`)
     }
+    if (matches.length) return matches
+    // Text a user sees that no named element holds, like a web component's placeholder: the control showing it.
+    const seen = new Set()
+    for (const el of document.body ? elements(document.body) : []) {
+      if (matches.length >= limit) break
+      const label = ownText(el) || el.getAttribute('placeholder') || ''
+      if (!label.toLowerCase().includes(needle) || !shown(el)) continue
+      const target = el.closest(controls) ?? el
+      if (seen.has(target)) continue
+      seen.add(target)
+      matches.push(`${role(target) ?? 'generic'} "${clip(label)}" [${ref(target)}]${details(target)}`)
+    }
     return matches
   }
+
+  // What a click at (x, y) lands on, into open shadow roots.
+  const hitAt = ({ x, y }) => {
+    let el = document.elementFromPoint(x, y)
+    for (let inner = el?.shadowRoot?.elementFromPoint(x, y); inner && inner !== el; inner = el.shadowRoot?.elementFromPoint(x, y)) el = inner
+    return describe(el)
+  }
+
+  const untyped = new Set(['button', 'submit', 'reset', 'image', 'checkbox', 'radio', 'range', 'file', 'hidden', 'color'])
+  // The text field keys would land in; null when none has focus and they would go to the page, its shortcuts included.
+  const focusedField = () => {
+    let el = document.activeElement
+    while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement
+    if (['IFRAME', 'FRAME'].includes(el?.tagName)) return { inFrame: true }
+    const typed = el?.tagName === 'TEXTAREA' || el?.tagName === 'INPUT' && !untyped.has(el.type) || el?.isContentEditable ||
+      ['textbox', 'searchbox', 'combobox'].includes(el?.getAttribute('role'))
+    return typed ? describe(el) : null
+  }
+
+  // innerText leaves out open shadow roots: their children are read as well.
+  const shows = needle => (document.body?.innerText ?? '').toLowerCase().includes(needle) ||
+    [...(document.body ? elements(document.body) : [])].some(el => el.shadowRoot &&
+      [...el.shadowRoot.children].some(child => (child.innerText ?? '').toLowerCase().includes(needle)))
+
+  // Checked every 250 ms until it holds or the time is up: what was seen, or null.
+  const waitFor = ({ text: wanted, selector, state = 'visible', timeoutMs = 10000 }) => new Promise(resolve => {
+    const started = Date.now()
+    const check = () => {
+      let seen = null
+      if (selector) {
+        const el = [...document.querySelectorAll(selector)].find(shown)
+        if (state === 'hidden') seen = el ? null : `${selector} is gone`
+        else if (el && (state !== 'enabled' || !el.disabled && el.getAttribute('aria-disabled') !== 'true')) {
+          seen = `${describe(el)} [${ref(el)}] is ${state === 'enabled' ? 'enabled' : 'shown'}`
+        }
+      } else {
+        const showing = shows(String(wanted).toLowerCase())
+        if (showing !== (state === 'hidden')) seen = `"${wanted}" ${showing ? 'shows' : 'is gone'}`
+      }
+      if (seen) return resolve(`${seen} after ${Date.now() - started} ms`)
+      if (Date.now() - started >= timeoutMs) return resolve(null)
+      setTimeout(check, 250)
+    }
+    check()
+  })
 
   const text = ({ maxChars = 50000 } = {}) => {
     const root = document.querySelector('article') ?? document.querySelector('main') ?? document.body
@@ -267,7 +340,7 @@
       else el.click()
     }
     if (clicks === 2) fire(MouseEvent, 'dblclick', { detail: 2 })
-    return `${right ? 'Right-clicked' : 'Clicked'} ${id} in its frame`
+    return `${right ? 'Right-clicked' : 'Clicked'} ${describe(el)} [${id}] in its frame`
   }
 
   // fetch() from this content world goes out as the page's own request: its origin, its CORS rules and
@@ -421,7 +494,7 @@
   const captureRestore = ({ x, y }) => instantScroll(x, y)
 
   window.__liloAgent = {
-    prefix: () => prefix, readPage, find, text, setValue, rect, scrollState, scrollBy, dropFile, act, request, consequential,
-    captureScroll, captureBox, captureRestore
+    prefix: () => prefix, readPage, find, hitAt, focusedField, waitFor, text, setValue, rect, scrollState, scrollBy, dropFile, act,
+    request, consequential, captureScroll, captureBox, captureRestore
   }
 })()

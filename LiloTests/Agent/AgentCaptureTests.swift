@@ -194,7 +194,7 @@ final class AgentCaptureTests: AgentToolTestCase {
         let tools = (await client.request("tools/list"))?["tools"] as? [[String: Any]] ?? []
 
         XCTAssertEqual(Set(tools.compactMap { $0["name"] as? String }), [
-            "tabs_context_mcp", "tabs_create_mcp", "tabs_close_mcp", "navigate", "computer", "read_page", "find", "form_input",
+            "tabs_context_mcp", "tabs_create_mcp", "tabs_close_mcp", "navigate", "computer", "read_page", "find", "wait_for", "form_input",
             "get_page_text", "javascript_tool", "read_console_messages", "read_network_requests", "resize_window", "file_upload",
             "upload_image", "gif_creator", "browser_batch", "list_connected_browsers", "select_browser", "switch_browser",
             "list_profiles", "switch_profile", "reset_profile", "fetch", "run",

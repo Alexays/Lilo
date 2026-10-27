@@ -66,6 +66,53 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertTrue(found.text.contains(#"button "Pick a day" [ref_"#), found.text)
     }
 
+    func testReadPageInteractiveListsTheControlsOfAFocusableAppRoot() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><div role="group" tabindex="0"><div contenteditable aria-label="Post text"></div>
+            <button>Post</button></div></body>
+            """)
+
+        let reply = await client.callTool("read_page", ["tabId": tab, "filter": "interactive"])
+
+        XCTAssertTrue(reply.text.contains(#"textbox "Post text""#), reply.text)
+        XCTAssertTrue(reply.text.contains(#"button "Post""#), reply.text)
+    }
+
+    func testFindReachesTextNoNamedElementHolds() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><comment-box></comment-box>
+            <script>document.querySelector('comment-box').attachShadow({ mode: 'open' }).innerHTML =
+              '<div onclick="this.dataset.open = 1"><span>Join the conversation</span></div>'</script></body>
+            """)
+
+        let found = await client.callTool("find", ["tabId": tab, "query": "join the conversation"])
+
+        XCTAssertTrue(found.text.contains(#""Join the conversation" [ref_"#), found.text)
+    }
+
+    func testWaitForSeesTextShowAndAButtonTurnEnabled() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><button id="post" disabled>Post</button>
+            <script>setTimeout(() => { document.body.append('Upload ready'); post.disabled = false }, 600)</script></body>
+            """)
+
+        let text = await client.callTool("wait_for", ["tabId": tab, "text": "upload ready"])
+        let enabled = await client.callTool("wait_for", ["tabId": tab, "selector": "#post", "state": "enabled"])
+
+        XCTAssertFalse(text.isError, text.text)
+        XCTAssertTrue(text.text.hasPrefix(#""upload ready" shows after"#), text.text)
+        XCTAssertTrue(enabled.text.hasPrefix(#"button "Post" [ref_"#), enabled.text)
+    }
+
+    func testWaitForSaysWhatNeverShowed() async throws {
+        let tab = try await agentTab(showing: Self.page)
+
+        let reply = await client.callTool("wait_for", ["tabId": tab, "text": "Never here", "timeout": 0.5])
+
+        XCTAssertTrue(reply.isError, reply.text)
+        XCTAssertTrue(reply.text.contains(#""Never here" does not show after 0.5 s"#), reply.text)
+    }
+
     func testRefsStayStableAcrossCalls() async throws {
         let tab = try await agentTab(showing: Self.page)
 

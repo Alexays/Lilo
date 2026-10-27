@@ -52,6 +52,18 @@ enum AgentTools {
         tool("find", "Find elements whose role, name or text contains `query`, case-insensitively. Returns up to 20 refs, of shown elements only.", [
             "query": prop("string", "Text to look for."), "tabId": prop("number", "The tab to search.")
         ], required: ["query", "tabId"]),
+        tool("wait_for", """
+            Wait until a text or an element shows, until it is gone, or until a control is enabled: an upload \
+            finishing, a reply appearing, a Post button turning active. Use it instead of sleeping or polling with \
+            javascript_tool. Checks the page (not its frames) every 250 ms.
+            """, [
+                "text": prop("string", "Text that must show, case-insensitively."),
+                "selector": prop("string", "A CSS selector, instead of text."),
+                "state": ["type": "string", "enum": ["visible", "hidden", "enabled"],
+                          "description": "visible (default): until it shows; hidden: until it is gone; enabled: until the selector's element shows, not disabled."],
+                "timeout": prop("number", "Seconds, 10 by default, up to 50."),
+                "tabId": prop("number", "The tab.")
+            ], required: ["tabId"]),
         tool("get_page_text", "Extract the visible text of the page, article or main content first.", [
             "tabId": prop("number", "The tab to read."), "max_chars": prop("number", "Maximum characters of output (default 50000).")
         ], required: ["tabId"]),
@@ -71,7 +83,7 @@ enum AgentTools {
             """, [
                 "action": ["type": "string", "enum": ["javascript_exec"], "description": "Always \"javascript_exec\"."],
                 "text": prop("string", "The JavaScript code to run."),
-                "timeout": prop("number", "Seconds before the call is stopped, 60 by default, up to 600: for a long fetch or wait. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications."),
+                "timeout": prop("number", "Seconds before the call is stopped, 55 by default, up to 600: for a long fetch or wait. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications."),
                 "tabId": prop("number", "The tab.")
             ], required: ["action", "text", "tabId"]),
         tool("fetch", """
@@ -159,7 +171,13 @@ enum AgentTools {
             let settled = await waitForLoad(engine, capture: control.captures[tab.id])
             try Task.checkCancellation()
             var reply = "Navigated to \(engine.currentURL?.absoluteString ?? "") - \(engine.currentTitle ?? "")"
-            if !settled { reply += "\nWarning: the page was still loading or changing 5 s after its load: take a screenshot before relying on it" }
+            if !settled {
+                // A live page (a feed, a chat) never holds still: worth a note, not a warning.
+                let complete = (try? await engine.wkWebView.callAsyncJavaScript("return document.readyState", contentWorld: AgentInput.world)) as? String == "complete"
+                reply += complete
+                    ? "\nNote: the page keeps changing on its own: wait_for what you need before acting on it"
+                    : "\nWarning: the page was still loading 5 s after its load: wait_for what you need, or take a screenshot, before relying on it"
+            }
             // A single-page app can hold or undo a navigation: the agent must not take the old page for the new one.
             if target != "reload", engine.currentURL == before, requested.map({ $0 != before }) ?? true {
                 reply += "\nWarning: the URL did not change, the tab still shows the page it showed before"
@@ -180,6 +198,24 @@ enum AgentTools {
         case "find":
             let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
             return [.text(try await findInFrames(engine, arguments["query"] as? String ?? ""))]
+        case "wait_for":
+            let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
+            let text = (arguments["text"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            let selector = (arguments["selector"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            let state = arguments["state"] as? String ?? "visible"
+            guard text != nil || selector != nil else { throw AgentToolError("text or selector is required") }
+            guard ["visible", "hidden", "enabled"].contains(state) else { throw AgentToolError("state is visible, hidden or enabled") }
+            guard state != "enabled" || selector != nil else { throw AgentToolError("enabled needs a selector") }
+            let seconds = min(max((arguments["timeout"] as? NSNumber)?.doubleValue ?? 10, 0), 50)
+            var options: [String: Any] = ["state": state, "timeoutMs": seconds * 1000]
+            options["text"] = text
+            options["selector"] = selector
+            guard let seen = try await page(engine, "waitFor", options) as? String else {
+                let what = selector ?? "\"\(text ?? "")\""
+                let goal = ["hidden": "still shows", "enabled": "is still missing or disabled"][state] ?? "does not show"
+                throw AgentToolError("\(what) \(goal) after \(String(format: "%g", seconds)) s")
+            }
+            return [.text(seen)]
         case "get_page_text":
             let (_, engine) = try control.agentTab(arguments["tabId"], session: session)
             return [.text(try await page(engine, "text", ["maxChars": arguments["max_chars"] ?? 50000]) as? String ?? "")]
@@ -436,7 +472,10 @@ enum AgentTools {
     }
 
     private static func scriptErrorMessage(_ error: Error) -> String {
-        (error as NSError).userInfo["WKJavaScriptExceptionMessage"] as? String ?? error.localizedDescription
+        let message = (error as NSError).userInfo["WKJavaScriptExceptionMessage"] as? String ?? error.localizedDescription
+        // WebKit's words when the document the script ran in went away.
+        guard message.contains("no longer reachable") else { return message }
+        return "The page navigated or reloaded while the script ran, which lost its result: read the page again"
     }
 
     /// Resolves true once the DOM held still for `quietMs`, false at `maxMs` or before the document completes.

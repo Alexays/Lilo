@@ -336,12 +336,14 @@ final class AgentControl {
     /// Asks the user before a click or Enter whose target sends, pays, buys, orders, deletes, transfers, publishes
     /// or signs up, and before a request the page's cookies sign. `target` locates the control for AgentPage.js's
     /// `consequential`; `kind` is "click", "enter" or "fetch", whose `label` is the request.
+    /// True when the user was asked and allowed it.
+    @discardableResult
     func approveConsequentialAction(
         _ kind: String, target: [String: Any] = [:], label: String? = nil, frame: WKFrameInfo?, engine: WKWebViewTab, session: AgentSession
-    ) async throws {
-        guard context?.settingsStore?.get(Self.asksBeforeActionsKey) != "false" else { return }
+    ) async throws -> Bool {
+        guard context?.settingsStore?.get(Self.asksBeforeActionsKey) != "false" else { return false }
         let site = engine.currentURL?.host() ?? ""
-        guard !alwaysAllowedSites.contains(where: { site == $0 || site.hasSuffix("." + $0) }) else { return }
+        guard !alwaysAllowedSites.contains(where: { site == $0 || site.hasSuffix("." + $0) }) else { return false }
         var found = label
         if found == nil {
             let answer = try await AgentTools.page(engine, "consequential", target, in: frame)
@@ -354,13 +356,17 @@ final class AgentControl {
                 }
             }
         }
-        guard let label = found else { return }
-        // Answered before the tool's own 60 s deadline, so the agent learns the user is needed.
+        guard let label = found else { return false }
+        // Answered before the tool's own deadline, so the agent learns the user is needed.
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
-        guard await askConsent(session.clientName, action: action, timeout: 45) == true else {
+        session.waitingForUser = true
+        let allowed = await askConsent(session.clientName, action: action, timeout: 45)
+        session.waitingForUser = false
+        guard allowed == true else {
             let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
             throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
         }
+        return true
     }
 
     /// Asks the user before a page receives one of their files, whatever the setting above: an agent could
@@ -370,7 +376,10 @@ final class AgentControl {
         let site = engine.currentURL?.host() ?? ""
         let path = (file.path as NSString).abbreviatingWithTildeInPath
         let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
-        guard await askConsent(session.clientName, action: action, timeout: 45) == true else {
+        session.waitingForUser = true
+        let allowed = await askConsent(session.clientName, action: action, timeout: 45)
+        session.waitingForUser = false
+        guard allowed == true else {
             throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
         }
         return file
@@ -414,10 +423,13 @@ final class AgentControl {
     }
 
     /// The same agent: its process, or a launcher it starts lilo-mcp through afresh each time (Claude's `disclaimer`),
-    /// known then by the code signing it was approved under.
-    private static func sameClient(_ one: AgentSession, _ other: AgentSession) -> Bool {
-        guard one.clientName == other.clientName else { return false }
-        return one.clientPID > 0 && one.clientPID == other.clientPID || !one.identity.isEmpty && one.identity == other.identity
+    /// known then by the code signing it was approved under. Signing alone needs the earlier launcher gone: two
+    /// conversations of one agent app, each in its own live process, sign alike yet keep their own tabs.
+    private static func sameClient(_ earlier: AgentSession, _ later: AgentSession) -> Bool {
+        guard earlier.clientName == later.clientName else { return false }
+        if earlier.clientPID > 0, earlier.clientPID == later.clientPID { return true }
+        return !earlier.identity.isEmpty && earlier.identity == later.identity
+            && !(earlier.clientPID > 0 && (kill(earlier.clientPID, 0) == 0 || errno == EPERM))
     }
 
     private func handOver(_ dropped: AgentSession, to session: AgentSession) {
@@ -431,6 +443,17 @@ final class AgentControl {
         context?.powerKeeper.terminalEnded(dropped.id)
     }
 
+    /// The agent's new lilo-mcp may connect before its old connection is gone: that one takes the tabs.
+    private func handToHeir(_ closed: AgentSession) -> Bool {
+        guard let heir = sessions.first(where: {
+            $0 !== closed && !$0.connection.isClosed && $0.isAuthorized && $0.folderId == nil && $0.isolatedSpaceId == nil && Self.sameClient(closed, $0)
+        }) else { return false }
+        handOver(closed, to: heir)
+        refreshControlledTabs()
+        publishActivity()
+        return true
+    }
+
     private func accept(_ connection: AgentConnection) {
         let session = AgentSession(connection: connection)
         sessions.append(session)
@@ -440,21 +463,18 @@ final class AgentControl {
             for request in session.requests.values { request.cancel() }
             session.authorization?.cancel()
             let keeps = session.isAuthorized && (session.folderId != nil || session.isolatedSpaceId != nil)
-            // The agent's new lilo-mcp may connect before this one is gone.
-            if keeps, let heir = self.sessions.first(where: {
-                $0 !== session && !$0.connection.isClosed && $0.isAuthorized && $0.folderId == nil && $0.isolatedSpaceId == nil && Self.sameClient($0, session)
-            }) {
-                self.handOver(session, to: heir)
-                self.refreshControlledTabs()
-                self.publishActivity()
-                return
-            }
+            if keeps, self.handToHeir(session) { return }
             // Lilo may drop a connection the bridge then makes again: its tabs, and what the agent set on them, wait.
             guard keeps, Self.reconnectGrace > .zero else {
                 return end(session)
             }
             Task { [weak self] in
-                try? await Task.sleep(for: Self.reconnectGrace)
+                let deadline = ContinuousClock.now + Self.reconnectGrace
+                while ContinuousClock.now < deadline {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    // Taken over already, or its launcher exited since and the agent's new connection takes the tabs.
+                    guard let self, self.sessions.contains(where: { $0 === session }), !self.handToHeir(session) else { return }
+                }
                 self?.end(session)
             }
         }
@@ -493,6 +513,8 @@ final class AgentSession {
     let id = UUID()
     /// Tool calls in flight, for the activity indicator.
     var activeCalls = 0
+    /// A call waits on the user's answer in Lilo: its progress notifications say so.
+    var waitingForUser = false
     /// The client's requests still running, by JSON-RPC id: `notifications/cancelled` or the connection
     /// closing cancels them.
     var requests: [AnyHashable: Task<Void, Never>] = [:]

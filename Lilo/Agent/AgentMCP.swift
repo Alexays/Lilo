@@ -5,8 +5,9 @@ import Foundation
 enum AgentMCP {
     static let supportedProtocolVersions = ["2024-11-05", "2025-03-26", "2025-06-18"]
 
-    /// Tool calls past this many seconds are stopped and answered with an error.
-    static var toolDeadline: TimeInterval = 60
+    /// Tool calls past this many seconds are stopped and answered with an error, before MCP clients give up at 60 s
+    /// with a bare timeout.
+    static var toolDeadline: TimeInterval = 55
     /// How often a long call tells a client that asked for progress that it still runs.
     static var progressInterval = Duration.seconds(10)
 
@@ -112,7 +113,8 @@ enum AgentMCP {
                         beats += 1
                         let elapsed = Int(Date().timeIntervalSince(startedAt))
                         let note: [String: Any] = ["jsonrpc": "2.0", "method": "notifications/progress", "params": [
-                            "progressToken": token, "progress": beats, "message": "\(name) still running after \(elapsed) s"
+                            "progressToken": token, "progress": beats,
+                            "message": session.waitingForUser ? "\(name) waiting for the user's approval in Lilo (\(elapsed) s)" : "\(name) still running after \(elapsed) s"
                         ]]
                         if let line = AgentConnection.line(note) { session.connection.send(line) }
                     }

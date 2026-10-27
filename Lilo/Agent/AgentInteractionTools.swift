@@ -15,7 +15,8 @@ enum AgentInteractionTools {
             Actions: left_click, right_click, double_click, triple_click, type, insert_text, key, screenshot, wait, \
             scroll, left_click_drag, zoom, scroll_to, hover. insert_text puts text at the caret in one go, as the text \
             system does, with no key presses and the clipboard left alone: the way for long or multi-line text in a \
-            rich editor; type sends real keys, for pages that listen to them.
+            rich editor; type sends real keys, for pages that listen to them. Both need a focused text field: click it \
+            first. key presses keys wherever the focus is. A click or hover says what it landed on.
             A click or Enter on a control that sends, pays, buys, orders, deletes, transfers, publishes or signs up \
             first waits up to 45 s for the user's approval in Lilo; refused or unanswered, it fails with [needs_user]: \
             ask the user to do it or allow it. A click or key returns once the requests it started end, up to 10 s, and \
@@ -98,7 +99,7 @@ enum AgentInteractionTools {
             round trip. `await tool(name, input)` returns that tool's text (JSON.parse it where the tool answers JSON) \
             and throws its error. The program runs in a blank page of its own, apart from your tabs, so it outlives \
             their navigations: reach a page with tool("javascript_tool", ...), tool("get_page_text", ...) and the like. \
-            At most 200 tool calls, and 60 s unless timeout says otherwise. Returns the program's return value, as \
+            At most 200 tool calls, and 55 s unless timeout says otherwise. Returns the program's return value, as \
             JSON for an object, and how many tools it called; images are left out. The tools it calls ask the user as \
             they would alone; its own code is not asked about, so never use it to do what the user denied.
             """, [
@@ -106,7 +107,7 @@ enum AgentInteractionTools {
                     The body of an async function: await and return work. For example: for (const u of urls) \
                     { await tool('navigate', {tabId: 1, url: u}); out.push(await tool('get_page_text', {tabId: 1})) } return out
                     """),
-                "timeout": AgentTools.prop("number", "Seconds before the run is stopped, 60 by default, up to 600. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications.")
+                "timeout": AgentTools.prop("number", "Seconds before the run is stopped, 55 by default, up to 600. Past 60 s your MCP client may stop waiting first, unless it takes progress notifications.")
             ], required: ["code"]),
         AgentTools.tool("list_profiles", """
             Lilo's profiles, each with its own cookies and sign-ins. Your tabs run in the one marked current: by default \
@@ -283,17 +284,19 @@ enum AgentInteractionTools {
         var frame: WKFrameInfo?
         if let ref = arguments["ref"] as? String { frame = try await AgentTools.frame(holding: ref, in: engine) }
         let text = arguments["text"] as? String ?? ""
+        if action == "type" || action == "insert_text" { try await requireTextField(engine) }
         let pressesEnter = action == "key" && text.split(separator: " ").contains { chord in
             chord.split(separator: "+").contains { ["return", "enter", "kp_enter"].contains($0.lowercased()) }
         } || action == "type" && text.contains(where: \.isNewline)
+        var allowed = false
         if pressesEnter {
-            try await control.approveConsequentialAction("enter", target: ["enter": true], frame: nil, engine: engine, session: session)
+            allowed = try await control.approveConsequentialAction("enter", target: ["enter": true], frame: nil, engine: engine, session: session)
         } else if ["left_click", "double_click", "triple_click"].contains(action) {
             if let ref = arguments["ref"] as? String {
-                try await control.approveConsequentialAction("click", target: ["ref": ref], frame: frame, engine: engine, session: session)
+                allowed = try await control.approveConsequentialAction("click", target: ["ref": ref], frame: frame, engine: engine, session: session)
             } else if let point = coordinate(arguments["coordinate"]) {
                 let css = ["x": point.x / engine.pageZoom, "y": point.y / engine.pageZoom]
-                try await control.approveConsequentialAction("click", target: css, frame: nil, engine: engine, session: session)
+                allowed = try await control.approveConsequentialAction("click", target: css, frame: nil, engine: engine, session: session)
             }
         }
         if action == "screenshot" || action == "zoom" { try await AgentDevTools.refuseTextLeaks(tabId: tab.id, control: control) }
@@ -306,14 +309,16 @@ enum AgentInteractionTools {
             if ["left_click", "double_click", "triple_click"].contains(action) { AgentCallSent.current?.write = true }
         case "left_click", "right_click", "double_click", "triple_click":
             let point = try await point(of: arguments, engine: engine)
+            // Named before the click, which may leave the page: a click that missed its target shows at once.
+            let hit = await hitAt(point, engine: engine)
             if action != "right_click" { AgentCallSent.current?.write = true }
             let clicks = ["double_click": 2, "triple_click": 3][action] ?? 1
             await AgentInput.click(webView, at: point, button: action == "right_click" ? .right : .left, clickCount: clicks, modifiers: modifiers)
-            reply = "Clicked at (\(Int(point.x)), \(Int(point.y)))"
+            reply = "\(action == "right_click" ? "Right-clicked" : "Clicked") \(hit)at (\(Int(point.x)), \(Int(point.y)))"
         case "hover":
             let point = try await point(of: arguments, engine: engine)
             AgentInput.move(webView, to: point)
-            reply = "Hovered at (\(Int(point.x)), \(Int(point.y)))"
+            reply = "Hovered \(await hitAt(point, engine: engine))at (\(Int(point.x)), \(Int(point.y)))"
         case "type":
             await AgentInput.type(webView, text: arguments["text"] as? String ?? "")
             reply = "Typed"
@@ -372,8 +377,30 @@ enum AgentInteractionTools {
                 }
             }
         }
+        if allowed { reply += " (the user allowed it in Lilo)" }
         if control.recordingTabs.contains(tab.id) { await recordFrame(engine, tabId: tab.id, control: control) }
         return [.text(reply)]
+    }
+
+    /// What the page shows at `point`, followed by a space, or nothing when the page cannot say.
+    private static func hitAt(_ point: CGPoint, engine: WKWebViewTab) async -> String {
+        let css = ["x": point.x / engine.pageZoom, "y": point.y / engine.pageZoom]
+        return ((try? await AgentTools.page(engine, "hitAt", css)) as? String).map { $0 + " " } ?? ""
+    }
+
+    /// Keys typed with no text field focused reach the page, whose shortcuts they may set off.
+    private static func requireTextField(_ engine: WKWebViewTab) async throws {
+        let field = try await AgentTools.page(engine, "focusedField", [:])
+        if field is String { return }
+        if (field as? [String: Any])?["inFrame"] != nil {
+            for (_, frame) in await AgentTools.subframes(of: engine) {
+                if (try? await AgentTools.page(engine, "focusedField", [:], in: frame)) is String { return }
+            }
+        }
+        throw AgentToolError("""
+            No text field has focus: the text would go to the page, where letters can trigger its shortcuts. Click the \
+            field first, then type; for keys meant for the page itself, use key.
+            """)
     }
 
     /// The program runs in a blank web view of its own: a runaway loop stalls only that page's process, killed

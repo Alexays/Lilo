@@ -385,6 +385,23 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertEqual(control.sessions.count, 1, "the dropped session gave way to the new one")
     }
 
+    func testAnotherLiveConversationOfTheSameAgentKeepsToItsOwnTabs() async throws {
+        AgentControl.reconnectGrace = .seconds(10)
+        _ = try await newAgentTab()
+        let first = try XCTUnwrap(control.sessions.first)
+        // Another Claude Code conversation: the same signed app, in a process of its own that still runs.
+        first.clientPID = 1
+        client.close()
+        await pollUntil(timeout: 5) { first.connection.isClosed }
+
+        let other = try AgentTestClient(path: socketURL)
+        defer { other.close() }
+        _ = await other.initialize(name: "Test Agent")
+
+        let context = await other.callTool("tabs_context_mcp", [:])
+        XCTAssertTrue(context.text.contains("No tab group exists yet"), context.text)
+    }
+
     func testAgentConnectingAgainBeforeItsOldConnectionClosesKeepsItsTabs() async throws {
         AgentControl.reconnectGrace = .seconds(10)
         let number = try await newAgentTab()

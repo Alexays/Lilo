@@ -54,6 +54,7 @@ final class AgentApprovalTests: AgentToolTestCase {
         let reply = try await click("Search", tab: tab)
 
         XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertFalse(reply.text.contains("allowed"), reply.text)
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty)
         let searched = await pollUntil(timeout: 5) { (try? await self.title(tab)) == "searched" }
         XCTAssertTrue(searched)
@@ -67,6 +68,8 @@ final class AgentApprovalTests: AgentToolTestCase {
 
         let result = try await reply.value
         XCTAssertFalse(result.isError, result.text)
+        XCTAssertTrue(result.text.hasPrefix(#"Clicked button "Place order""#), result.text)
+        XCTAssertTrue(result.text.hasSuffix("(the user allowed it in Lilo)"), result.text)
         let ordered = await pollUntil(timeout: 5) { (try? await self.title(tab)) == "ordered" }
         XCTAssertTrue(ordered)
     }
