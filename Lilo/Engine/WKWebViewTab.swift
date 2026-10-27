@@ -1772,7 +1772,12 @@ extension WKWebViewTab: WKUIDelegate {
     @objc(_webView:getWindowFrameWithCompletionHandler:)
     func webView(_ webView: WKWebView, getWindowFrameWith completionHandler: @escaping (CGRect) -> Void) {
         let window = webView.window ?? NSApp.mainWindow ?? NSApp.windows.first { $0.isVisible }
-        completionHandler(window?.frame ?? NSScreen.main?.visibleFrame ?? .zero)
+        guard var frame = window?.frame else { return completionHandler(NSScreen.main?.visibleFrame ?? .zero) }
+        if webView.bounds.width > 0 {
+            if let window = webView.window { frame.origin.x = window.convertToScreen(webView.convert(webView.bounds, to: nil)).minX }
+            frame.size.width = webView.bounds.width
+        }
+        completionHandler(frame)
     }
 
     // Printed-page header/footer (WKUIDelegatePrivate): the page title and source URL.
@@ -1790,6 +1795,7 @@ extension WKWebViewTab: WKUIDelegate {
         Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: nil)
     }
 
+    /// It spans only the page's width: sites read `outerWidth - innerWidth` over 160 as open devtools, which the sidebar would pass.
     nonisolated private static let printEdgeHeight: CGFloat = 18
     nonisolated private static var printDateString: String {
         DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short)
