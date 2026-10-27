@@ -154,7 +154,6 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** the bridge catches that error and returns such a port: it takes messages until it disconnects, on the next task, and throws after ([runtime.ts] `unansweredPort`).
 - **Impact:** Keeper's worker connects to its own pages at startup, before any is open (webext-redux), and logged the error.
 - **Check:** `runtime.test.ts` ("hands out a port that disconnects with lastError when no context listens"). Repro: in a worker with no page open, `chrome.runtime.connect({ name: 'x' })`. Expected: a port whose `onDisconnect` fires with `lastError` set. Actual: the call throws.
-### 60. A port nobody received yet disconnects when the first process answers
 
 ### 94. Request methods WebKit cannot take in a rule
 
@@ -170,10 +169,12 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** Dashlane keeps each frame's parent from webRequest: its answers to a page's iframe went to a frame that does not exist, and failed with `Could not establish connection. Receiving end does not exist.`.
 - **Check:** `webRequest.test.ts` ("reports a subframe document as sub_frame, its main frame parent as 0"). Repro: a page on `https://a.example/` with an `<iframe src="https://b.example/">`; log `onBeforeRequest`'s `type` and `parentFrameId` for the iframe. Expected: `sub_frame`, `0`. Actual: `main_frame`, a large number.
 
+### 60. A port nobody received yet disconnects when the first process answers
+
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
-- **Lilo:** a `chrome.runtime.connect` port is Lilo's at both ends, so while it connects, the context takes its `onConnect` listeners off WebKit's event and puts them back after: WebKit then asks only the other processes ([chrome-event.ts] `unheard`, [runtime.ts] `crossExtensionMessaging`). A port another context opens to it while its listeners are off misses it: in a stress run, a page connecting while the worker connected about once a millisecond lost 5 to 11 of 1000 ports. A `browser.runtime.connect` port stays WebKit's. Lilo's tabs enable element fullscreen, so an extension page in a tab runs in a process of its own; enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
+- **Lilo:** a `chrome.runtime.connect` between the extension's pages and worker goes through Lilo instead, as Chrome connects it: it reaches every other context listening to `onConnect`, waking a stopped worker, the opener's messages go to each of them and theirs to it, and it fails with `Receiving end does not exist.` only when none takes it; it disconnects when its opener or its last receiver goes, a page closing or a worker stopping, an idle one included, as Chrome's worker stops after 30 s ([runtime.ts] `localPort`, [RuntimeBridgeHandler.swift] `LocalPort`). Messages go as JSON, those of a turn in one call: in `make port-bench` a round trip takes about 0.24 ms against WebKit's 0.13, a burst of 2000 messages 3 ms against 24, and 100 messages of 100 KB 90 ms against 40. A content script has no channel to Lilo: its port stays WebKit's, and while it connects the content script takes its own `onConnect` listeners off WebKit's event so that WebKit asks only the other processes ([chrome-event.ts] `unheard`). A `browser.runtime.connect` port stays WebKit's.
 - **Impact:** without it, Postman Interceptor's worker answered its popup on a port it opens back, which failed when the popup was in a tab.
-- **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects`. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
+- **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects` for WebKit, `LocalPortTests` for Lilo. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
 
 ### 70. A port message can reach a worker before earlier calls' answers
 
@@ -566,6 +567,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 [action.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/action.ts
 [cookies.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/cookies.ts
 [runtime.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/runtime.ts
+[RuntimeBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/RuntimeBridgeHandler.swift
 [tabs.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/tabs.ts
 [webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
 [webRequest.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webRequest.ts

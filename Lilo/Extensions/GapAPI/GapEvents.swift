@@ -48,10 +48,11 @@ final class GapEvents {
             return GapEventEnvelope(seq: nextSeq, namespace: namespace, event: event, args: args)
         }
 
-        /// Queues the event, dropping the oldest past `undeliveredCap`.
+        /// Queues the event, dropping the oldest past `undeliveredCap` for a stopped worker: a connected one takes them as
+        /// they come, a burst of port messages included.
         mutating func enqueue(_ envelope: GapEventEnvelope) {
             undelivered.append(envelope)
-            if undelivered.count > GapEvents.undeliveredCap {
+            if port == nil, undelivered.count > GapEvents.undeliveredCap {
                 undelivered.removeFirst(undelivered.count - GapEvents.undeliveredCap)
             }
         }
@@ -65,7 +66,7 @@ final class GapEvents {
         var pending: [[String: Any]] = []
     }
 
-    /// Past this many undelivered events the oldest go, so a chatty producer under a long-dead worker
+    /// Past this many undelivered events for a stopped worker the oldest go, so a chatty producer under a long-dead worker
     /// cannot grow memory without bound.
     private nonisolated static let undeliveredCap = 256
     /// The tag of the context a message is for, which ipc.ts checks first.
@@ -170,6 +171,26 @@ final class GapEvents {
                     pages[id]?[index].pending.append(message)
                 }
                 unflushed.insert(id)
+            }
+        }
+        guard !flushScheduled, !unflushed.isEmpty else { return }
+        flushScheduled = true
+        Task { @MainActor [weak self] in self?.flush() }
+    }
+
+    /// Sends the event to some of the extension's contexts whatever they listen to: nil in `contexts` for its worker, waking it
+    /// if stopped unless `wakes` is false, else a page's channel.
+    func emit(_ namespace: String, _ event: String, args: [Any], to extensionId: String, contexts: Set<Int?>, wakes: Bool = true) {
+        let envelope = workers[extensionId, default: Worker()].envelope(namespace, event, args: args)
+        if contexts.contains(nil) {
+            workers[extensionId]?.enqueue(envelope)
+            if workers[extensionId]?.port != nil { unflushed.insert(extensionId) } else if wakes { wake(extensionId) }
+        }
+        if contexts.contains(where: { $0 != nil }), let indices = pages[extensionId]?.indices {
+            let message = envelope.dictionary
+            for index in indices where contexts.contains(pages[extensionId]?[index].channel) {
+                pages[extensionId]?[index].pending.append(message)
+                unflushed.insert(extensionId)
             }
         }
         guard !flushScheduled, !unflushed.isEmpty else { return }
@@ -328,6 +349,9 @@ final class GapEvents {
         workers[extensionId]?.port = nil
         workers[extensionId]?.sentThrough = 0
         workerChannel(extensionId, channel)
+        NotificationCenter.default.post(name: .extensionWorkerDidStop, object: self, userInfo: [
+            "extensionId": extensionId, "instance": workers[extensionId]?.instance as Any
+        ])
     }
 
     /// Sends what the worker has not been sent in one message; its delivery confirms all of it.
@@ -367,4 +391,7 @@ extension Notification.Name {
     static let extensionPageChannelDidClose = Notification.Name("fr.arouillard.lilo.extensionPageChannelDidClose")
     /// Object: the `GapEvents`. userInfo: "extensionId". A new worker instance connected: what the previous one held is gone.
     static let extensionWorkerDidStart = Notification.Name("fr.arouillard.lilo.extensionWorkerDidStart")
+    /// Object: the `GapEvents`. userInfo: "extensionId" and "instance" (String). The worker stopped, went idle (WebKit then
+    /// unloads it) or unloads with its extension.
+    static let extensionWorkerDidStop = Notification.Name("fr.arouillard.lilo.extensionWorkerDidStop")
 }

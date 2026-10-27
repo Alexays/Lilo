@@ -124,11 +124,11 @@ describe('runtime messaging to another extension', () => {
     const disconnected = new Promise((resolve) => port.onDisconnect.addListener(resolve));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    pushGapEvent({ namespace: 'runtime', event: 'portMessage', args: ['9', { state: 'on' }] });
+    pushGapEvent({ namespace: 'runtime', event: 'portMessages', args: ['9', JSON.stringify([{ state: 'on' }])] });
     pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: ['9'] });
     answer = undefined;
 
-    assert.deepEqual(gapCalls.filter((c) => c.method === 'portPost').map((c) => c.params), [{ portId: '9', message: 'first' }, { portId: '9', message: 'second' }]);
+    assert.deepEqual(gapCalls.filter((c) => c.method === 'portPost').map((c) => c.params), [{ portId: '9', json: '["first","second"]' }], 'what one turn posts goes in one call, as JSON');
     assert.deepEqual(heard, [{ state: 'on' }]);
     assert.equal(await disconnected, port);
     assert.throws(() => port.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
@@ -196,7 +196,7 @@ describe('runtime messages and ports from another extension', () => {
     assert.equal(received.name, 'tunnel');
     assert.deepEqual(received.sender, sender);
     assert.deepEqual(gapCalls.slice(-3).map((c) => [c.method, c.params]), [
-      ['portAccept', { portId: '12' }], ['portPost', { portId: '12', message: 'ready' }], ['portDisconnect', { portId: '12' }],
+      ['portAccept', { portId: '12' }], ['portPost', { portId: '12', json: '["ready"]' }], ['portDisconnect', { portId: '12' }],
     ], 'a page tells native it holds the port, which goes with the page');
   });
 
@@ -250,6 +250,60 @@ describe("the worker's relay of its content scripts' messages to another extensi
   });
 });
 
+describe("ports between the extension's pages and worker, which Lilo relays", () => {
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const own = 'ponmlkjihgfedcbaponmlkjihgfedcba';
+  const noReceiver = 'Could not establish connection. Receiving end does not exist.';
+
+  it('post at once and in order, before Lilo answers, and disconnect with lastError when none takes them', async () => {
+    answer = () => new Promise(() => {});
+    const runtime: any = crossExtensionMessaging({ id: own, connectNative() {}, connect() { throw new Error('WebKit connect'); } });
+    const from = gapCalls.length;
+    const port = runtime.connect({ name: 'state' });
+    port.postMessage('first');
+    port.postMessage('second');
+    await tick();
+    const calls = gapCalls.slice(from).filter((c) => c.namespace === 'runtime');
+    answer = undefined;
+    const portId = calls[0]?.params.portId;
+    assert.deepEqual(calls.map((c) => c.method), ['connect', 'portPost']);
+    assert.equal(calls[0].params.name, 'state');
+    assert.deepEqual(calls[1].params, { portId, json: '["first","second"]' });
+    const circular: any = {};
+    circular.self = circular;
+    assert.throws(() => port.postMessage(circular), TypeError, 'a message JSON cannot hold throws as it is posted');
+
+    const heard: unknown[] = [];
+    port.onMessage.addListener((message: unknown) => heard.push(message));
+    pushGapEvent({ namespace: 'runtime', event: 'portMessages', args: [portId, JSON.stringify([{ state: 1 }, { state: 2 }])] });
+    const lastError = new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
+    pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: [portId, noReceiver] });
+    assert.deepEqual(heard, [{ state: 1 }, { state: 2 }]);
+    assert.deepEqual(await lastError, { message: noReceiver });
+  });
+
+  it('take a port Lilo relays to each listener of the context, which posts back on it, and decline one with none', () => {
+    const webKitOnConnect: any = Object.create({ addListener() {}, removeListener() {} });
+    const event = onConnect(() => webKitOnConnect);
+    const from = gapCalls.length;
+    event.dispatch({ portId: 'p.1', name: 'state', sender: { id: own } });
+    const ports: any[] = [];
+    event.addListener((port: any) => ports.push(port));
+    event.addListener((port: any) => ports.push(port));
+    event.dispatch({ portId: 'p.2', name: 'state', sender: { id: own, url: `chrome-extension://${own}/popup.html` } });
+    assert.equal(ports.length, 2);
+    assert.equal(ports[0], ports[1], 'one port for the context, as Chrome');
+    assert.deepEqual(ports[0].sender, { id: own, url: `chrome-extension://${own}/popup.html` });
+    return tick().then(() => {
+      ports[0].postMessage('back');
+      return tick();
+    }).then(() => {
+      const calls = gapCalls.slice(from).filter((c) => c.namespace === 'runtime').map((c) => [c.method, c.params.portId]);
+      assert.deepEqual(calls, [['portDecline', 'p.1'], ['portAccept', 'p.2'], ['portPost', 'p.2']]);
+    });
+  });
+});
+
 describe("ports tabs.connect opens to the extension's own pages", () => {
   const fakePort = (name: string) => {
     const port: any = {
@@ -263,21 +317,24 @@ describe("ports tabs.connect opens to the extension's own pages", () => {
   };
   const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  it('reach only the page the tab shows, which other pages leave to it', () => {
+  it('reach only the page the tab shows, which declines the others to Lilo', () => {
     (globalThis as any).top = globalThis;
     (globalThis as any).location = { href: 'chrome-extension://own/popup.html' };
     const webKitOnConnect: any = Object.create({ addListener(this: any, listener: any) { this.listener = listener; }, removeListener() {} });
+    const event = onConnect(() => webKitOnConnect);
     const heard: string[] = [];
-    onConnect(() => webKitOnConnect).addListener((port: any) => heard.push(port.name));
-    const shown = fakePort('panel?liloTab=chrome-extension://own/popup.html?lilo');
-    const elsewhere = fakePort('panel?liloTab=chrome-extension://own/options.html?lilo');
+    event.addListener((port: any) => heard.push(port.name));
+    const from = gapCalls.length;
+    event.dispatch({ portId: 't.1', name: 'panel?liloTab=chrome-extension://own/popup.html', sender: {} });
+    event.dispatch({ portId: 't.2', name: 'panel?liloTab=chrome-extension://own/options.html', sender: {} });
     const external = fakePort('x?liloExternal=abcdefghijklmnopabcdefghijklmnop?lilo');
-    for (const port of [shown, elsewhere, external]) webKitOnConnect.listener(port);
+    webKitOnConnect.listener(external);
     delete (globalThis as any).top;
     delete (globalThis as any).location;
 
     assert.deepEqual(heard, ['panel']);
-    assert.deepEqual([shown, elsewhere, external].map((port) => port.disconnected), [false, false, false], 'a page lets go of none: WebKit would drop their queued messages');
+    assert.deepEqual(gapCalls.slice(from).filter((c) => c.namespace === 'runtime').map((c) => [c.method, c.params.portId]), [['portAccept', 't.1'], ['portDecline', 't.2']]);
+    assert.equal(external.disconnected, false, "a page leaves a content script's port to another extension to the worker");
   });
 
   it("disconnect with lastError when no script of a web page listens, where WebKit throws", async () => {

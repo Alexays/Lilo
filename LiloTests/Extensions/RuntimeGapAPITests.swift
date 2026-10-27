@@ -181,15 +181,15 @@ final class RuntimeGapAPITests: XCTestCase {
         let connected = await call("runtime", "connectExternal", ["id": target, "name": "vpn"], from: opener)
         let portId = try XCTUnwrap(connected.result as? String)
 
-        _ = await call("runtime", "portPost", ["portId": portId, "message": "on"], from: target)
-        let fromStranger = await call("runtime", "portPost", ["portId": portId, "message": "x"], from: stranger)
+        _ = await call("runtime", "portPost", ["portId": portId, "json": #"["on"]"#], from: target)
+        let fromStranger = await call("runtime", "portPost", ["portId": portId, "json": #"["x"]"#], from: stranger)
         _ = await call("runtime", "portDisconnect", ["portId": portId], from: opener)
-        let afterDisconnect = await call("runtime", "portPost", ["portId": portId, "message": "late"], from: target)
+        let afterDisconnect = await call("runtime", "portPost", ["portId": portId, "json": #"["late"]"#], from: target)
 
         let connect = try XCTUnwrap(queued("runtime.onConnectExternal", for: target).first?.args.first as? [String: Any])
         XCTAssertEqual(connect["name"] as? String, "vpn")
         XCTAssertEqual((connect["sender"] as? [String: Any])?["id"] as? String, opener)
-        XCTAssertEqual(queued("runtime.portMessage", for: opener).map { $0.args.last as? String }, ["on"])
+        XCTAssertEqual(queued("runtime.portMessages", for: opener).map { $0.args.last as? String }, [#"["on"]"#])
         XCTAssertEqual(queued("runtime.portDisconnect", for: target).map { $0.args.first as? String }, [portId])
         XCTAssertEqual(fromStranger.error, "Attempting to use a disconnected port object")
         XCTAssertEqual(afterDisconnect.error, "Attempting to use a disconnected port object")
@@ -207,7 +207,7 @@ final class RuntimeGapAPITests: XCTestCase {
         )
         let afterPageDecline = queued("runtime.portDisconnect", for: opener).count
         _ = await call("runtime", "portDecline", ["portId": portId], from: target)
-        let afterDecline = await call("runtime", "portPost", ["portId": portId, "message": "late"], from: opener)
+        let afterDecline = await call("runtime", "portPost", ["portId": portId, "json": #"["late"]"#], from: opener)
 
         XCTAssertEqual(afterPageDecline, 0, "a page without a listener leaves the port to the worker")
         XCTAssertEqual(queued("runtime.portDisconnect", for: opener).map { $0.args as? [String] }, [[portId, Self.noReceiver]])
@@ -243,8 +243,8 @@ final class RuntimeGapAPITests: XCTestCase {
 
         NotificationCenter.default.post(name: .extensionPageChannelDidClose, object: registry.gapEvents, userInfo: ["extensionId": opener, "channel": 8])
         NotificationCenter.default.post(name: .extensionPageChannelDidClose, object: registry.gapEvents, userInfo: ["extensionId": opener, "channel": 7])
-        let afterClose = await call("runtime", "portPost", ["portId": pagePort, "message": "late"], from: target)
-        let open = await call("runtime", "portPost", ["portId": workerPort, "message": "on"], from: target)
+        let afterClose = await call("runtime", "portPost", ["portId": pagePort, "json": #"["late"]"#], from: target)
+        let open = await call("runtime", "portPost", ["portId": workerPort, "json": #"["on"]"#], from: target)
 
         XCTAssertEqual(queued("runtime.portDisconnect", for: target).map { $0.args.first as? String }, [pagePort])
         XCTAssertEqual(afterClose.error, "Attempting to use a disconnected port object")

@@ -96,6 +96,7 @@
 		2DF5FE1C55A044E9A241E2AC /* ProcessManagerBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1416D1717B2EC3814C87DBD /* ProcessManagerBridgeHandlerTests.swift */; };
 		2E361ABD76B3D613730B94DC /* NetworkPathStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F62091A7E8E96CAC26A3CF /* NetworkPathStatus.swift */; };
 		2EE67E3DF384AFF54D8B80AD /* ReaderView.js in Resources */ = {isa = PBXBuildFile; fileRef = 162021612C2F338EA8CD1D92 /* ReaderView.js */; };
+		2F6C5584D488CE6CE8BB8675 /* LocalPortTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AA4167F274A99B830B26126 /* LocalPortTests.swift */; };
 		2FB28F4CC7639348C050AC78 /* LiloMCPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186820FBE2CCE8284CCF0B71 /* LiloMCPTests.swift */; };
 		2FBB3B61A13C73C49B510236 /* EngineFreezerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708C2473D269B2D836D39D22 /* EngineFreezerTests.swift */; };
 		2FFC247D82353835C6F12099 /* PowerHelperLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A55F8756E347FA1CD02ABA /* PowerHelperLink.swift */; };
@@ -786,6 +787,7 @@
 		39FF06F27008EF2D19F063DB /* PageSnapshotServiceFlatteningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageSnapshotServiceFlatteningTests.swift; sourceTree = "<group>"; };
 		3A11733A5F99B14D3EBD132D /* SystemLidActionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemLidActionsTests.swift; sourceTree = "<group>"; };
 		3A552C76FFE45FCB22E962E2 /* NotificationsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsBridgeHandler.swift; sourceTree = "<group>"; };
+		3AA4167F274A99B830B26126 /* LocalPortTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPortTests.swift; sourceTree = "<group>"; };
 		3ABC27298577426623E704DC /* ContentSettingsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSettingsBridgeHandler.swift; sourceTree = "<group>"; };
 		3AE50E8E127854FD0D0AD526 /* ExtensionBackgroundPreparerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionBackgroundPreparerTests.swift; sourceTree = "<group>"; };
 		3B439B798EAB8C06D971E750 /* chrome-smoke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "chrome-smoke.json"; sourceTree = "<group>"; };
@@ -1442,6 +1444,7 @@
 				B372698E19B945C1C6562A90 /* GapRouterStoreProviderTests.swift */,
 				A032514E234C2D7A8B1D1802 /* IdentityBridgeHandlerTests.swift */,
 				C0BAECBC1841DEECB4531AC5 /* IdleBridgeHandlerTests.swift */,
+				3AA4167F274A99B830B26126 /* LocalPortTests.swift */,
 				112A7F6D9131240AA2BD0EB4 /* ManagementBridgeHandlerTests.swift */,
 				E1F4CBD4121CDCA409DB864A /* NativeMessagingTests.swift */,
 				04E0966448D618E19E820E08 /* NotificationsBridgeHandlerTests.swift */,
@@ -2998,6 +3001,7 @@
 				20FB5D75995D13EBD415D4E1 /* LifecyclePolicyTests.swift in Sources */,
 				2FB28F4CC7639348C050AC78 /* LiloMCPTests.swift in Sources */,
 				E231D95F444D622E807ACE2F /* LittleWindowTests.swift in Sources */,
+				2F6C5584D488CE6CE8BB8675 /* LocalPortTests.swift in Sources */,
 				6B5B4CFFCAFF30B568622533 /* MainWindowControllerFocusTests.swift in Sources */,
 				C0698C2057F742A9BC3320E6 /* MainWindowControllerPowerModeTests.swift in Sources */,
 				C21CEE914A50DB9A19062C91 /* ManagementBridgeHandlerTests.swift in Sources */,
