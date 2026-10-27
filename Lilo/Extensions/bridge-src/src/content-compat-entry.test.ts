@@ -6,10 +6,10 @@ describe("a content script's world", () => {
     const prototype = { addListener(_listener: unknown) {}, removeListener(_listener: unknown) {}, hasListener() { return false; } };
     const onMessage = Object.create(prototype);
     const onChanged = Object.create({ addListener(_listener: unknown) {}, removeListener(_listener: unknown) {} });
-    (globalThis as any).chrome = {
-      runtime: Object.assign(Object.create({ sendMessage() {}, connect() {} }), { id: 'abc', onMessage }),
-      storage: { onChanged },
-    };
+    // As WebKit's: each namespace and event is a getter on its object's prototype.
+    const runtime = Object.create({ sendMessage() {}, connect() {}, get id() { return 'abc'; }, get onMessage() { return onMessage; } });
+    const storage = Object.create({ get onChanged() { return onChanged; } });
+    (globalThis as any).chrome = Object.create({ get runtime() { return runtime; }, get storage() { return storage; } });
     await import('./content-compat-entry.ts');
     const listener = () => {};
     assert.equal(onMessage.hasListeners(), false);

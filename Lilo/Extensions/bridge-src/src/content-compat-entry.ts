@@ -20,8 +20,14 @@ if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, 
 
 // Chrome's events have hasListeners, which WebKit's lack: the world counts each event's listeners on its prototype.
 const listeners = new WeakMap<object, Set<unknown>>();
-for (const namespace of Object.values((globalThis as any).chrome ?? {})) {
-  for (const event of Object.values(namespace ?? {})) {
+// WebKit's namespaces and events are getters on their object's prototype, which Object.values skips.
+const members = (object: any): unknown[] => {
+  if (object === null || typeof object !== 'object') return [];
+  const names = new Set([...Object.getOwnPropertyNames(object), ...Object.getOwnPropertyNames(Object.getPrototypeOf(object) ?? {})]);
+  return [...names].map((name) => { try { return object[name]; } catch { return undefined; } });
+};
+for (const namespace of members((globalThis as any).chrome)) {
+  for (const event of members(namespace)) {
     const prototype = event && typeof (event as any).addListener === 'function' ? Object.getPrototypeOf(event) : undefined;
     if (!prototype || 'hasListeners' in prototype) continue;
     const { addListener, removeListener } = prototype;
