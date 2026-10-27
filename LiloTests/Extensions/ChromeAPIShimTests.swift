@@ -279,6 +279,53 @@ final class ChromeAPIShimTests: XCTestCase {
         try controller.unload(context)
     }
 
+    /// A worker stores non-extractable keys in IndexedDB and uses them once read back, as 2FAS and Keeper do, with
+    /// no key reaching WebKit's clone (WEBKIT-GAPS.md, gap 80: the app's worker stalls there, the test host's does not).
+    func testPreparedWorkerStoresCryptoKeysInIndexedDB() async throws {
+        let url = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Keys", "version": "1.0", "background": {"service_worker": "sw.js"},
+             "action": {"default_title": "waiting"}}
+            """,
+            "sw.js": """
+            const subtle = crypto.subtle;
+            const request = (r) => new Promise((resolve, reject) => { r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+            const run = async () => {
+              const open = indexedDB.open('keys', 1);
+              open.onupgradeneeded = () => open.result.createObjectStore('keys');
+              const db = await request(open);
+              const signing = await subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign', 'verify']);
+              const wrapping = await subtle.generateKey({ name: 'AES-KW', length: 256 }, true, ['wrapKey', 'unwrapKey']);
+              const vault = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+              const unwrapped = await subtle.unwrapKey('raw', await subtle.wrapKey('raw', vault, wrapping, 'AES-KW'), wrapping,
+                'AES-KW', 'AES-GCM', false, ['encrypt', 'decrypt']);
+              const write = db.transaction('keys', 'readwrite');
+              write.objectStore('keys').put(signing.privateKey, 'signing');
+              write.objectStore('keys').put({ id: 'vault', value: unwrapped }, 'vault');
+              await new Promise((resolve) => { write.oncomplete = resolve; });
+              const read = db.transaction('keys').objectStore('keys');
+              const [key, { value }] = await Promise.all([request(read.get('signing')), request(read.get('vault'))]);
+              const data = new TextEncoder().encode('data'), iv = new Uint8Array(12), ecdsa = { name: 'ECDSA', hash: 'SHA-256' };
+              const signed = await subtle.verify(ecdsa, signing.publicKey, await subtle.sign(ecdsa, key, data), data);
+              const sealed = await subtle.encrypt({ name: 'AES-GCM', iv }, vault, data);
+              const opened = new TextDecoder().decode(await subtle.decrypt({ name: 'AES-GCM', iv }, value, sealed));
+              const exported = await subtle.exportKey('raw', value).then(() => 'exported', (error) => error.name);
+              return `${key instanceof CryptoKey} ${key.extractable} ${signed} ${opened} ${exported}`;
+            };
+            run().then((title) => chrome.action.setTitle({ title }), (error) => chrome.action.setTitle({ title: `${error}` }));
+            """
+        ])
+        // Loaded as the app loads it, in a profile's data store.
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (_, registry) = try browserContext.makeExtensionWindow()
+        try await registry.load(from: url)
+        let context = try XCTUnwrap(registry.loadedExtensions.last?.context)
+        await pollUntil(timeout: 10) { context.action(for: nil)?.label != "waiting" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "true false true data InvalidAccessError")
+    }
+
     /// A prepared worker's callbacks of Lilo's fixes, and of a message no one answers, see Chrome's
     /// error as chrome.runtime.lastError.
     func testPreparedWorkerCallbacksSeeLastError() async throws {
