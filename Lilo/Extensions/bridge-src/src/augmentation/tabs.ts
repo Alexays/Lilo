@@ -209,8 +209,6 @@ function asChromeTab(tab: any, details?: TabDetails | null): any {
   tab.autoDiscardable = true;
   if (details?.lastAccessed !== undefined) tab.lastAccessed = details.lastAccessed;
   if (tab.discarded) tab.status = 'unloaded';
-  // Before its first navigation commits, Chrome shows a tab's url as empty, beside the pending one.
-  if (tab.url === undefined && typeof tab.pendingUrl === 'string') tab.url = '';
   return tab;
 }
 

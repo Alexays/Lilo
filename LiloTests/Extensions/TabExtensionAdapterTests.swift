@@ -40,7 +40,7 @@ final class TabExtensionAdapterTests: XCTestCase {
         engineTab.teardown()
     }
 
-    func testANewTabHasOnlyAPendingURLUntilItsFirstNavigationCommits() async throws {
+    func testANewTabHasNoURLUntilItsFirstNavigationStarts() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("tab-url-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -54,11 +54,9 @@ final class TabExtensionAdapterTests: XCTestCase {
 
         XCTAssertNil(adapter.url(for: context), "Chrome reports no url before a tab's first navigation")
         engineTab.loadURL(url)
-        XCTAssertNil(adapter.url(for: context), "Chrome reports a tab's url once its first navigation commits")
-        XCTAssertEqual(adapter.pendingURL(for: context), url)
+        XCTAssertEqual(adapter.url(for: context), url)
         let committed = await pollUntil { engineTab.hasCommittedContent && !engineTab.isLoading }
         XCTAssertTrue(committed)
         XCTAssertEqual(adapter.url(for: context), url)
-        XCTAssertNil(adapter.pendingURL(for: context))
     }
 }
