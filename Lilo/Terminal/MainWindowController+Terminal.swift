@@ -47,6 +47,12 @@ extension MainWindowController {
     }
 
     func terminalStatusChanged(_ id: UUID, _ status: TerminalSession.Status) {
+        // The shell ended on its own (Control-D, `exit`): its tab goes, as in Terminal. A shell Lilo
+        // ends, for a closed tab or at quit, has left the host or ends with the app.
+        if status.state == .exited, !context.isTerminating, tabManager.terminalHost.view(for: id) != nil {
+            closeTabStateFirst(id: id)
+            return
+        }
         var savesDurableState = false
         var changed = false
         var wasAwaiting = false

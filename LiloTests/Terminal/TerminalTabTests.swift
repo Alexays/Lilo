@@ -264,6 +264,25 @@ final class TerminalTabTests: XCTestCase {
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: directory.path), [])
     }
 
+    func testATerminalWhoseShellExitsClosesItsTab() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        window.didCompleteSessionRestore = true
+        _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let terminal = try XCTUnwrap(window.createTerminalTab(cwd: NSTemporaryDirectory()))
+        let view = try XCTUnwrap(window.tabManager.terminalHost.view(for: terminal.id))
+        defer { window.tabManager.terminalHost.terminate(terminal.id) }
+
+        view.session.write(Array("exit\r".utf8))
+
+        await pollUntil(timeout: 20) { window.tabManager.tab(for: terminal.id) == nil }
+        XCTAssertNil(window.tabManager.tab(for: terminal.id), "Control-D or exit closes the tab, as in Terminal")
+        XCTAssertNil(window.tabManager.terminalHost.view(for: terminal.id))
+    }
+
     func testHostStartsAShellOnFirstUseAndEndsItWhenTheTabGoes() async throws {
         let host = TerminalHost()
         let tab = Tab(title: "tmp", kind: .terminal, cwd: NSTemporaryDirectory())
