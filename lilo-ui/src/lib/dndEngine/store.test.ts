@@ -407,3 +407,16 @@ test("DndEngineStore defers the drag-end notification past the current task", as
 	await new Promise((resolve) => setTimeout(resolve, 0));
 	assert.deepEqual(notifications, ["ended"]);
 });
+
+test("DndEngineStore keeps an item's new node when its old node unmounts after it", () => {
+	const store = new DndEngineStore();
+	const item = { id: "folder-a", kind: "folder" as const };
+	store.registerZone(elementRect(0, 0, 300, 32), { id: "pinned", axis: "horizontal", getItems: () => [item] });
+	const oldNode = elementRect(400, 0, 80, 32);
+	const newNode = elementRect(0, 0, 80, 32);
+	store.registerItem(oldNode, { item, zoneId: "today" });
+	store.registerItem(newNode, { item, zoneId: "pinned" });
+	store.unregisterItem(item.id, oldNode);
+
+	assert.deepEqual(store.getZoneSnapshot("pinned")?.items.map((entry) => entry.rect.left), [0]);
+});

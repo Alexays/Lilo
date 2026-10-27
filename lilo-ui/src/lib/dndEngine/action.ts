@@ -384,7 +384,7 @@ export function dndItem(
 				node.dataset.dndItemId = current.item.id;
 				return;
 			}
-			dndEngineStore.unregisterItem(current.item.id);
+			dndEngineStore.unregisterItem(current.item.id, node);
 			current = next;
 			node.dataset.dndItemId = current.item.id;
 			dndEngineStore.registerItem(node, current);
@@ -397,7 +397,7 @@ export function dndItem(
 				destroyDragPreview();
 				removeWindowPointerListeners();
 			}
-			dndEngineStore.unregisterItem(current.item.id);
+			dndEngineStore.unregisterItem(current.item.id, node);
 			node.removeEventListener("pointerdown", handlePointerDown);
 		},
 	};

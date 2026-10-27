@@ -151,7 +151,10 @@ export class DndEngineStore {
 		}
 	}
 
-	unregisterItem(id: string): void {
+	// An item moving between zones mounts its new node before the old one is torn down: the old
+	// node must not take the new one's entry with it, or the zone measures as empty.
+	unregisterItem(id: string, element: HTMLElement): void {
+		if (this.itemElements.get(id) !== element) return;
 		this.itemElements.delete(id);
 		if (!isShadowItem({ id })) {
 			this.invalidateLayoutSnapshot();
