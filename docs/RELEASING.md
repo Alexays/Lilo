@@ -72,6 +72,23 @@ They are secrets of the `release` environment, which only `v*` tags may deploy t
 | `APPLE_NOTARY_PASSWORD` | app-specific password for notarytool |
 | `SPARKLE_ED_PRIVATE_KEY` | Sparkle EdDSA private key that signs `appcast.xml` |
 | `HOMEBREW_TAP_TOKEN` | fine-grained token with `contents: write` on `Alexays/homebrew-tap`, used by `homebrew.yml` |
+| `DISCORD_WEBHOOK_URL` | incoming webhook URL for Lilo's Discord release channel, used by `discord.yml` |
+
+### Discord announcements (once)
+
+In the Discord channel that should receive release notes, open **Edit Channel > Integrations >
+Webhooks**, create a webhook named **Lilo Releases**, and copy its URL. In `Alexays/Lilo`, add it as
+the `DISCORD_WEBHOOK_URL` Actions secret under **Settings > Environments > release**.
+
+Publishing a stable `vX.Y.Z` GitHub release runs `.github/workflows/discord.yml`. It posts the published
+release's notes and a link to that release, so edits made to the draft are included. GitHub's
+reference-style compare links are converted for Discord. Notes longer than Discord's 4,096-character
+embed limit end with a link to the full changelog. Mentions in release notes do not ping members.
+Drafts, prereleases and the `ghostty-vt-*` tooling releases are skipped.
+
+The job fails if the secret is missing or Discord rejects the message. Rerunning it sends another
+announcement; editing the GitHub release does not send one. `make release-test` checks the formatting,
+release filtering and error handling without contacting Discord.
 
 ### Sparkle key (once)
 
@@ -105,3 +122,5 @@ Once Apple grants it:
 2. Publishing runs `.github/workflows/homebrew.yml`, which bumps the `lilo` cask of the
    `alexays/tap` Homebrew tap to the new version and the DMG's sha256, so
    `brew install --cask alexays/tap/lilo` and `brew upgrade` pick it up.
+3. Publishing also runs `.github/workflows/discord.yml`, which announces the release and its notes
+   in the Discord channel configured by `DISCORD_WEBHOOK_URL`.
