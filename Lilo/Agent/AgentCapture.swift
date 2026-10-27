@@ -140,10 +140,10 @@ final class AgentCapture: NSObject {
         indexByLoad[id] = requests.count
         requests.append(Request(id: nextRequestId, method: request.httpMethod ?? "GET", url: request.url?.absoluteString ?? "", startedAt: Date()))
         nextRequestId += 1
-        // One request in, one out: every index in flight moves down by one.
-        if requests.count > Self.maxEntries {
-            requests.removeFirst()
-            indexByLoad = indexByLoad.compactMapValues { $0 >= 1 ? $0 - 1 : nil }
+        // The oldest go a hundred at a time, so the indexes in flight move once per hundred requests, not on each.
+        if requests.count >= Self.maxEntries + 100 {
+            requests.removeFirst(100)
+            indexByLoad = indexByLoad.compactMapValues { $0 >= 100 ? $0 - 100 : nil }
         }
     }
 

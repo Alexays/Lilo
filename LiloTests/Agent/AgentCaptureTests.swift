@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -114,6 +115,29 @@ final class AgentCaptureTests: AgentToolTestCase {
 
         XCTAssertTrue(reply.text.contains("/api/data.png"), reply.text)
         XCTAssertFalse(reply.text.contains("/node_modules/"), reply.text)
+    }
+
+    func testTheNetworkLogDropsItsOldestAndKeepsTrackOfLoadsInFlight() {
+        final class Load: NSObject {
+            @objc let resourceLoadID: UInt64
+            init(_ id: UInt64) { resourceLoadID = id }
+        }
+        let webView = WKWebView()
+        let capture = AgentCapture(webView: webView)
+        defer { capture.stop() }
+        let count = AgentCapture.maxEntries + 150
+
+        for id in 0..<UInt64(count) {
+            capture.resourceLoad(webView, resourceLoad: Load(id), didSendRequest: URLRequest(url: URL(string: "https://example.com/\(id)")!))
+        }
+        capture.resourceLoad(webView, resourceLoad: Load(UInt64(count - 1)), didCompleteWithError: nil,
+                             response: HTTPURLResponse(url: URL(string: "https://example.com/")!, statusCode: 204, httpVersion: nil, headerFields: nil))
+
+        XCTAssertEqual(capture.requests.count, AgentCapture.maxEntries + 50)
+        XCTAssertEqual(capture.requests.first?.url, "https://example.com/100")
+        XCTAssertEqual(capture.requests.last?.status, 204)
+        XCTAssertNil(capture.indexByLoad[99])
+        XCTAssertEqual(capture.indexByLoad[100], 0)
     }
 
     func testInspectorRequestIdWithoutTheInspectorSaysSo() async throws {
