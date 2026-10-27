@@ -49,7 +49,7 @@ test("derives the avatar initial", () => {
   );
 });
 
-test("filters on name, id, description and version, case-insensitively", () => {
+test("filters on name, id, description and version, case-insensitively, sorted by name", () => {
   const other = {
     ...base,
     id: "xyz789",
@@ -59,8 +59,9 @@ test("filters on name, id, description and version, case-insensitively", () => {
   };
   const all = [base, other];
 
-  assert.deepEqual(filterExtensions(all, ""), all);
-  assert.deepEqual(filterExtensions(all, "  "), all);
+  assert.deepEqual(filterExtensions(all, ""), [other, base]);
+  assert.deepEqual(filterExtensions(all, "  "), [other, base]);
+  assert.deepEqual(all, [base, other], "the input keeps its order");
   assert.deepEqual(filterExtensions(all, "wappa"), [base]);
   assert.deepEqual(filterExtensions(all, "XYZ"), [other]);
   assert.deepEqual(filterExtensions(all, "password"), [other]);
