@@ -1,0 +1,3 @@
+/* Siri and Spotlight phrases of LiloShortcuts (LiloIntents.swift). */
+"Open a space in ${applicationName}" = "Abrir um espaço no ${applicationName}";
+"Get the current tab in ${applicationName}" = "Obter a aba atual no ${applicationName}";

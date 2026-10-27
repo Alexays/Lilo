@@ -59,4 +59,46 @@ final class LocalizationTests: XCTestCase {
             XCTAssertNil(defaults.persistentDomain(forName: domain)?["AppleLanguages"])
         }
     }
+
+    func testPortugueseSystemLanguagesUseTheBrazilianCatalog() {
+        for tag in ["pt", "pt-BR", "PT-br", "pt-PT", "pt-AO"] {
+            XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "pt-BR", tag)
+        }
+        XCTAssertEqual(Localization.resolveLocale(override: "pt-BR", preferredLanguages: ["es-ES"]), "pt-BR")
+        XCTAssertEqual(Localization.resolveLocale(override: "en", preferredLanguages: ["pt-BR"]), "en")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "pt-BR"]), "pt-BR")
+    }
+
+    func testPortugueseChoicePersistsForNativeAndSystemUI() {
+        let defaults = UserDefaults.lilo
+        let domain = "\(UserDefaults.testDomainPrefix)\(getpid())"
+        let previous = defaults.persistentDomain(forName: domain)
+        defer {
+            defaults.set(previous?["lilo.locale"], forKey: "lilo.locale")
+            defaults.set(previous?["AppleLanguages"], forKey: "AppleLanguages")
+        }
+
+        Localization.persistOverride("pt-BR")
+        XCTAssertEqual(defaults.string(forKey: "lilo.locale"), "pt-BR")
+        XCTAssertEqual(defaults.stringArray(forKey: "AppleLanguages"), ["pt-BR"])
+    }
+
+    func testGeneratedPortugueseMenusAndDialogsPreserveFormatArguments() {
+        XCTAssertEqual(NativeStrings.translate("New Tab", locale: "pt-BR"), "Nova aba")
+        XCTAssertEqual(NativeStrings.translate("Settings…", locale: "pt-BR"), "Ajustes…")
+        XCTAssertEqual(String(format: NativeStrings.translate("Space %d", locale: "pt-BR"), 3), "Espaço 3")
+        XCTAssertEqual(String(format: NativeStrings.translate("Install %@?", locale: "pt-BR"), "Example Extension"), "Instalar Example Extension?")
+    }
+
+    func testPortugueseSystemPromptsAndShortcutsAreBundled() throws {
+        #if !SWIFT_PACKAGE
+        let resources = try XCTUnwrap(Bundle.main.resourceURL)
+        let bundle = try XCTUnwrap(Bundle(url: resources.appendingPathComponent("pt-BR.lproj")))
+        XCTAssertEqual(bundle.localizedString(forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist"),
+                       "Este site solicita acesso à sua câmera.")
+        XCTAssertEqual(bundle.localizedString(forKey: "Open Space", value: nil, table: "Localizable"), "Abrir Espaço")
+        XCTAssertEqual(bundle.localizedString(forKey: "Open a space in ${applicationName}", value: nil, table: "AppShortcuts"),
+                       "Abrir um espaço no ${applicationName}")
+        #endif
+    }
 }

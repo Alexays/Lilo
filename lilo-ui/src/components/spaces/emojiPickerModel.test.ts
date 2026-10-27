@@ -83,3 +83,16 @@ test("Spanish emoji names and searches preserve accents and English keywords", a
   assert.equal(emojiName(spanish, "🚀"), "cohete");
   assert.equal(spanish.categories.flat().length, EMOJI_CATEGORIES.flat().length);
 });
+
+test("Portuguese emoji search ignores accents and retains English keywords", async () => {
+  const portuguese = await loadEmojiCatalog("pt-BR");
+  const search = (query: string) => searchEmoji(portuguese, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("pt-BR"), portuguese);
+  assert.equal(emojiName(portuguese, "🚀"), "foguete");
+  assert.equal(search("foguete")[0], "🚀");
+  assert.ok(search("coração").includes("❤️"));
+  assert.deepEqual(search("coração"), search("CORACAO"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.deepEqual(portuguese.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});

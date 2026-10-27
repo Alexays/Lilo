@@ -3,13 +3,14 @@
 
 import en from "./locales/en.json";
 
-export type Locale = "en" | "fr" | "es" | "zh-Hans";
+export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR";
 
 export const SUPPORTED_LOCALES = [
 	{ code: "en", label: "English" },
 	{ code: "fr", label: "Français" },
 	{ code: "es", label: "Español" },
 	{ code: "zh-Hans", label: "简体中文" },
+	{ code: "pt-BR", label: "Português (Brasil)" },
 ] as const satisfies ReadonlyArray<{ code: Locale; label: string }>;
 
 type Messages = Record<string, unknown>;
@@ -19,9 +20,10 @@ type Messages = Record<string, unknown>;
 export const catalogs: { en: Messages } & Partial<Record<Locale, Messages>> = { en };
 
 export async function loadCatalog(locale: Locale): Promise<void> {
-	if (locale === "fr") catalogs.fr ??= (await import("./locales/fr.json")).default;
-	if (locale === "es") catalogs.es ??= (await import("./locales/es.json")).default;
-	if (locale === "zh-Hans") catalogs["zh-Hans"] ??= (await import("./locales/zh-Hans.json")).default;
+	if (catalogs[locale]) return;
+	catalogs[locale] = (await (locale === "fr" ? import("./locales/fr.json")
+		: locale === "es" ? import("./locales/es.json")
+		: locale === "zh-Hans" ? import("./locales/zh-Hans.json") : import("./locales/pt-BR.json"))).default;
 }
 
 export function isSupportedLocale(value: string): value is Locale {
@@ -32,6 +34,7 @@ export function isSupportedLocale(value: string): value is Locale {
 export function resolveLocale(tag: string | null | undefined): Locale {
 	try {
 		const locale = new Intl.Locale(tag ?? "");
+		if (locale.language === "pt") return "pt-BR";
 		const code = locale.language === "zh" ? `zh-${locale.maximize().script}` : locale.language;
 		return isSupportedLocale(code) ? code : "en";
 	} catch {

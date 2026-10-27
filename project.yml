@@ -98,6 +98,7 @@ targets:
           - "fr.lproj"
           - "es.lproj"
           - "zh-Hans.lproj"
+          - "pt-BR.lproj"
       - path: Lilo/Resources/AppIcons
         type: folder
         buildPhase: resources
