@@ -666,6 +666,19 @@ describe("more scriptlets", () => {
 			assert.throws(() => readAs("first()"), ReferenceError);
 			assert.throws(() => readAs("second()"), ReferenceError);
 			assert.equal(readAs("other()"), 1);
+
+			// One verdict per rule and script: a hot property read again does not read the script's text again.
+			let textReads = 0;
+			const script = new HTMLScriptElement("first()");
+			Object.defineProperty(script, "textContent", {
+				get: () => {
+					textReads++;
+					return "first()";
+				}
+			});
+			(g.document as { currentScript: unknown }).currentScript = script;
+			for (let i = 0; i < 3; i++) assert.throws(() => sandbox.self.probe, ReferenceError);
+			assert.equal(textReads, 2);
 		} finally {
 			delete g.HTMLScriptElement;
 			delete g.document;

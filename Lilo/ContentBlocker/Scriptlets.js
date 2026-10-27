@@ -1025,13 +1025,21 @@
     'abort-current-script': function (prop, search) {
       if (!prop) return;
       var re = search ? toRegExp(search) : null;
+      // A hot property (`EventTarget.prototype.addEventListener`) is read thousands of times by one
+      // script: its verdict is kept, so a large inline script is not copied and searched on every read.
+      var verdicts = new WeakMap();
       // uBO semantics: abort only reads made by a <script> whose text (or src) matches the needle;
       // with no needle, any inline script.
       abortOnProperty(self, prop.split('.'), function () {
         var script = document.currentScript;
         if (!(script instanceof HTMLScriptElement)) return false;
         if (!re) return !script.src;
-        return re.test(script.textContent) || (!!script.src && re.test(script.src));
+        var verdict = verdicts.get(script);
+        if (verdict === undefined) {
+          verdict = re.test(script.textContent) || (!!script.src && re.test(script.src));
+          verdicts.set(script, verdict);
+        }
+        return verdict;
       }, null);
     },
     'no-setTimeout-if': function (search, delay) { neutralizeTimer('setTimeout', search, delay); },
