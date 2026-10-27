@@ -18,7 +18,7 @@
     isSiteDrawerOpen,
     setSiteDrawerOpen,
   } from "../../stores/urlBarDrawer.svelte";
-  import { blur, fly } from "svelte/transition";
+  import { restingBlur, restingFly } from "../../lib/motion/restingTransitions";
   import { cubicOut, quintOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { springEase } from "../../lib/motion/spring";
@@ -902,15 +902,15 @@
         {#key `${activeTabId}:${activeCwd}`}
         <span
           class="location"
-          in:fly|global={{ x: -3, y: 8, duration: prefersReducedMotion() ? 0 : 380, easing: springEase }}
-          out:fly={{ x: 5, y: -7, duration: prefersReducedMotion() ? 0 : 240, easing: cubicOut }}
+          in:restingFly|global={{ x: -3, y: 8, duration: prefersReducedMotion() ? 0 : 380, easing: springEase }}
+          out:restingFly={{ x: 5, y: -7, duration: prefersReducedMotion() ? 0 : 240, easing: cubicOut }}
         >
           <span
             class="location-line"
             bind:this={locationLineEl}
             bind:clientWidth={locationLineWidth}
-            in:blur|global={{ amount: 6, duration: prefersReducedMotion() ? 0 : 320, opacity: 0.16, easing: quintOut }}
-            out:blur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
+            in:restingBlur|global={{ amount: 6, duration: prefersReducedMotion() ? 0 : 320, opacity: 0.16, easing: quintOut }}
+            out:restingBlur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
           >
           <!-- Clipped from the left: the folder name at the end is the part that matters. -->
           <span class="location-path" style={locationFit.fontSize ? `font-size: ${locationFit.fontSize}px` : ""}><span><span class="location-parent">{locationFit.parent}</span><span class="location-name">{locationName}</span></span></span>

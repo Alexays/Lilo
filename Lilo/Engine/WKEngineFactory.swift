@@ -166,6 +166,8 @@ final class WKEngineFactory {
 
     /// getDisplayMedia tab-share surface; the window controller wires its picker and ferry.
     let tabShareBridge = TabShareBridge()
+    /// Microphone without echo cancellation behind headphones; `BrowserContext` wires its setting.
+    let microphoneBridge = MicrophoneBridge()
 
     /// Serves ferry frames to pages over lilo-capture://; the window controller wires its provider.
     let tabShareFrameSchemeHandler = TabShareFrameSchemeHandler()
@@ -867,6 +869,7 @@ final class WKEngineFactory {
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
         contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(microphoneBridge, contentWorld: world, name: MicrophoneBridge.messageHandlerName)
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }
         contentControllersByKey[key] = contentController
@@ -880,7 +883,8 @@ final class WKEngineFactory {
         // First, so the store shim below finds the store's transport.
         PageWorld.install([
             GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
-            TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
+            // After the tab-share module, so its getUserMedia hands Chrome's capture ids on to that one.
+            TabShareBridge.pageModule, MicrophoneBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
         ], on: contentController)
         contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
                                                      in: PageWorld.bridgeWorld))
@@ -921,7 +925,7 @@ final class WKEngineFactory {
         let list = tokens.split(separator: " ").filter { $0.utf8.allSatisfy(allowed.contains) }
         guard !list.isEmpty else { return "" }
         var count = 16
-        while count * 4 < list.count { count *= 2 }
+        while count * 16 < list.count { count *= 2 }
         var buckets = [[Substring]](repeating: [], count: count)
         for token in list {
             var hash: UInt32 = 2_166_136_261

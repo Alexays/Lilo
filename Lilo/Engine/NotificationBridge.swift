@@ -143,7 +143,7 @@ extension NotificationBridge {
     function () {
       const Native = window.Notification;
       if (typeof Native !== 'function') return;
-      const prototype = Native.prototype, fields = new WeakMap(), pending = create(null), shown = create(null);
+      const prototype = Native.prototype, fields = new WeakMap(), pending = create(null), shown = create(null), shownByTag = create(null);
       let nextId = 1;
       // WebKit's static `permission` is a read-only data property, not a getter.
       const setPermission = value => defineProperty(Notification, 'permission', { value, writable: false, enumerable: true, configurable: true });
@@ -172,6 +172,8 @@ extension NotificationBridge {
         fields.set(notification, values);
         attach(notification);
         shown[id] = notification;
+        // Native replaces the same tag's notification, which may have been dismissed in macOS without the page hearing of it.
+        if (values.tag) { delete shown[shownByTag[values.tag]]; shownByTag[values.tag] = id; }
         lilo.send('liloNotification', { type: 'show', id, title: values.title, body: values.body, icon: values.icon, tag: values.tag });
         return notification;
       }, 'Notification');
@@ -204,7 +206,13 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      lilo.send('liloNotification', { type: 'query' });
+      // Only a top origin native deems trustworthy can hold a stored allow; the others would pay an IPC for nothing. A same-origin
+      // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
+      if (window.top !== window) {
+        try { setPermission(top.Notification.permission); } catch (e) {}
+      } else if (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+        lilo.send('liloNotification', { type: 'query' });
+      }
     }
     """#
 }

@@ -14,6 +14,10 @@ export function setThemeContext(sidebarBg: string, prefersDark: boolean): void {
 	context = { sidebarBg, prefersDark };
 }
 
+export function themeSidebarBackground(): string {
+	return context.sidebarBg;
+}
+
 /** The inline style giving a folder row its guarded color and open background. */
 export function folderColorStyle(color: string | undefined): string {
 	const { sidebarBg, prefersDark } = context;

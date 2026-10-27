@@ -95,6 +95,22 @@ final class ExtensionPopupWebKitTests: XCTestCase {
         XCTAssertEqual(controller.popupCloseHandlersByWebViewId.count, 1)
     }
 
+    /// The opener's controller serves its tabs too: the popup's close bridge must not show them `window.webkit`.
+    func testThePopupCloseBridgeLeavesTheOpenersPagesNoWebkit() async throws {
+        let configuration = WKWebViewConfiguration()
+        _ = MainWindowController().createPopupWebView(
+            configuration: configuration,
+            requestedURL: URL(string: "chrome-extension://extension-id/popup.html")
+        )
+        let page = WKWebView(frame: .zero, configuration: configuration)
+
+        page.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !page.isLoading && page.url != nil }
+
+        let hasWebkit = try await page.evaluateJavaScript("'webkit' in window")
+        XCTAssertEqual(hasWebkit as? Bool, false)
+    }
+
     func testPermissionPromptFailsClosedWhenRegistryIsMissing() async throws {
         let delegate = try XCTUnwrap(delegate)
         let context = try await makeExtensionContext()

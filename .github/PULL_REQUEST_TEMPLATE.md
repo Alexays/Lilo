@@ -16,6 +16,6 @@
 - [ ] `make validate` passes locally
 - [ ] Tests added or updated for the change
 - [ ] A user-visible change has a release-note fragment (`make change`)
-- [ ] New user-facing strings are in both `en.json` and `fr.json`
+- [ ] New user-facing strings are in every catalog under `lilo-ui/src/lib/i18n/locales/`
 - [ ] `COMPATIBILITY.md` updated if extension behavior changed
 - [ ] No unrelated changes

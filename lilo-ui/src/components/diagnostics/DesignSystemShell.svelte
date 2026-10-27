@@ -184,7 +184,7 @@
               </div>
               <div class="sidebar-demo">
                 {#each demoTabs as tab, i (tab.id)}
-                  <TabItem {tab} isActive={i === 0} interactive={false} disableTooltip previewActions />
+                  <TabItem {tab} isActive={i === 0} interactive={false} disableTooltip />
                 {/each}
               </div>
             </article>
@@ -204,7 +204,7 @@
                 {#if !demoFolderCollapsed}
                   <div class="folder-demo-children">
                     {#each demoFolderChildTabs as tab (tab.id)}
-                      <TabItem {tab} isActive={false} interactive={false} disableTooltip previewActions />
+                      <TabItem {tab} isActive={false} interactive={false} disableTooltip />
                     {/each}
                   </div>
                 {/if}

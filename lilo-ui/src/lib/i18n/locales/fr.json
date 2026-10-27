@@ -139,6 +139,7 @@
 			"general": "Général",
 			"appearance": "Apparence",
 			"tabs": "Onglets et espaces",
+			"media": "Audio et vidéo",
 			"privacy": "Confidentialité",
 			"extensions": "Extensions",
 			"advanced": "Avancé",
@@ -152,7 +153,8 @@
 			"tabLayout": "Onglets",
 			"pages": "Pages",
 			"spaces": "Espaces",
-			"media": "Médias et appels",
+			"playback": "Lecture",
+			"calls": "Appels",
 			"contentBlocking": "Blocage de contenu",
 			"protection": "Protection",
 			"browsingData": "Données de navigation",
@@ -233,7 +235,7 @@
 			"language": {
 				"title": "Langue",
 				"description": "Langue de l'interface du navigateur.",
-				"keywords": "traduction anglais français"
+				"keywords": "traduction anglais français espagnol chinois simplifié portugais brésil russe"
 			},
 			"searchEngine": {
 				"title": "Moteur de recherche",
@@ -244,6 +246,11 @@
 				"title": "Suggestions de recherche",
 				"description": "Afficher des suggestions pendant la saisie. Ce que vous tapez est envoyé au moteur.",
 				"keywords": "autocomplétion saisie"
+			},
+			"preloadTopHit": {
+				"title": "Précharger le meilleur résultat",
+				"description": "Charger un site que vous visitez souvent pendant la saisie de son adresse. Utilise plus de mémoire et de données.",
+				"keywords": "prérendu rapide"
 			},
 			"searchEngines": {
 				"title": "Moteurs de recherche",
@@ -328,6 +335,16 @@
 				"title": "Picture-in-picture automatique",
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet.",
 				"keywords": "pip vidéo appel flottant"
+			},
+			"dockCallsInSidebar": {
+				"title": "Garder les appels dans la barre latérale",
+				"description": "Un onglet qui utilise votre caméra, votre micro ou votre écran se range dans la barre latérale quand vous le quittez, au lieu d'une fenêtre flottante.",
+				"keywords": "pip dock appel barre latérale flottant"
+			},
+			"fullBandMicrophone": {
+				"title": "Micro pleine qualité avec un casque",
+				"description": "Avec un casque, les appels se passent de l'annulation d'écho, qui étouffe votre voix.",
+				"keywords": "micro écho casque airpods"
 			},
 			"contentBlocker": {
 				"title": "Bloquer pubs et traqueurs",
@@ -761,6 +778,8 @@
 		"removeBookmark": "Retirer le favori",
 		"newTab": "Nouvel onglet",
 		"cameraInUse": "Caméra en cours d'utilisation",
+		"microphoneInUse": "Micro en cours d'utilisation",
+		"microphoneMuted": "Micro coupé",
 		"muteMicrophone": "Couper le microphone",
 		"unmuteMicrophone": "Réactiver le microphone",
 		"sharingScreen": "Partage d'écran en cours",

@@ -104,6 +104,19 @@ final class AgentPageToolsTests: AgentToolTestCase {
         XCTAssertTrue(enabled.text.hasPrefix(#"button "Post" [ref_"#), enabled.text)
     }
 
+    func testWaitForSeesTextChangeInsideAShadowRoot() async throws {
+        let tab = try await agentTab(showing: """
+            <!doctype html><body><div id="host"></div>
+            <script>const root = host.attachShadow({ mode: 'open' }); root.innerHTML = '<p>Loading</p>'
+            setTimeout(() => { root.firstChild.textContent = 'Sync done' }, 600)</script></body>
+            """)
+
+        let reply = await client.callTool("wait_for", ["tabId": tab, "text": "sync done"])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        XCTAssertTrue(reply.text.hasPrefix(#""sync done" shows after"#), reply.text)
+    }
+
     func testWaitForSaysWhatNeverShowed() async throws {
         let tab = try await agentTab(showing: Self.page)
 

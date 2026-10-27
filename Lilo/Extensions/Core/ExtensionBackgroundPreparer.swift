@@ -18,10 +18,9 @@ enum ExtensionBackgroundPreparer {
     private static let preludePath = "lilo-background-prelude.js"
     private static let publicSuffixListPath = "public-suffix-list.dat"
 
-    /// The bundled list behind chrome.publicSuffix, and the prelude line handing it to the worker.
-    private static let publicSuffixList: (data: Data, preludeLine: String)? = Bundle.appResourceURL("public-suffix-list", extension: "dat")
-        .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
-        .map { (Data($0.utf8), "globalThis.__liloPublicSuffixList = \(javaScriptStringLiteral($0));\n") }
+    /// The bundled list behind chrome.publicSuffix.
+    private static let publicSuffixList: Data? = Bundle.appResourceURL("public-suffix-list", extension: "dat")
+        .flatMap { try? Data(contentsOf: $0) }
 
     /// The prelude's gap modules, each with the manifest names (permissions or keys) whose namespaces it holds.
     private static let gapModules: [(needs: Set<String>, source: String)] = Bundle.appResourceURL("ChromeAPIGapModules", extension: "json")
@@ -31,7 +30,7 @@ enum ExtensionBackgroundPreparer {
 
     /// The list's rules, `*.` wildcards and `!` exceptions included.
     private static let publicSuffixRules = Set(
-        (publicSuffixList.flatMap { String(bytes: $0.data, encoding: .utf8) } ?? "").split(whereSeparator: \.isNewline).filter { !$0.hasPrefix("//") }.map(String.init)
+        (publicSuffixList.flatMap { String(bytes: $0, encoding: .utf8) } ?? "").split(whereSeparator: \.isNewline).filter { !$0.hasPrefix("//") }.map(String.init)
     )
 
     /// Both steps share one manifest parse; the content-script step sees the background patch in memory.
@@ -102,8 +101,9 @@ enum ExtensionBackgroundPreparer {
                 try verifyWriteTargetInside(extensionURL, target: target)
             }
             try FileManager.default.createDirectory(at: metadataDir, withIntermediateDirectories: true)
-            try writeIfChanged(publicSuffixList.data, to: listURL)
-            preludeSource = publicSuffixList.preludeLine + preludeSource
+            try writeIfChanged(publicSuffixList, to: listURL)
+            let literal = javaScriptStringLiteral(String(bytes: publicSuffixList, encoding: .utf8) ?? "")
+            preludeSource = "globalThis.__liloPublicSuffixList = \(literal);\n" + preludeSource
         }
         let result = try prepareBackground(extensionURL: extensionURL, manifest: &manifest, preludeSource: preludeSource)
         if let compatSource {

@@ -284,9 +284,11 @@ enum AgentTools {
     /// The tab's live subframes, once each, by the ref prefix their script took. A frame that went
     /// away, or navigated twice, is skipped.
     static func subframes(of engine: WKWebViewTab) async -> [(prefix: String, frame: WKFrameInfo)] {
+        let frames = engine.subframes
+        let probes = frames.map { frame in Task { try? await page(engine, "prefix", [:], in: frame) as? String } }
         var found: [(prefix: String, frame: WKFrameInfo)] = []
-        for frame in engine.subframes {
-            guard let prefix = try? await page(engine, "prefix", [:], in: frame) as? String, !prefix.isEmpty,
+        for (frame, probe) in zip(frames, probes) {
+            guard let prefix = await probe.value, !prefix.isEmpty,
                   !found.contains(where: { $0.prefix == prefix }) else { continue }
             found.append((prefix, frame))
         }

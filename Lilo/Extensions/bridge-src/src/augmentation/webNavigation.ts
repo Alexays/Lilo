@@ -1,5 +1,5 @@
 // Native reports tabs by window position and index, as only WebKit knows the integer tab id; it is resolved here.
-// onTabReplaced never fires: Lilo never swaps in a prerendered page. SW-safe: no window/document/webkit.
+// onTabReplaced never fires: a preloaded top hit joins its blank tab under the same id. SW-safe: no window/document/webkit.
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent } from '../shared/gap-event.ts';
 import { matchesUrlFilters, type UrlFilter } from '../shared/url-filter.ts';

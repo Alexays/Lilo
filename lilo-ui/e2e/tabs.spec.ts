@@ -57,7 +57,7 @@ test("closing a tab removes its row; restoring brings it back", async ({
 	).toHaveAttribute("aria-selected", "true");
 });
 
-test("the close button takes no room until the row is hovered", async ({
+test("the close button floats over the title without reflowing it", async ({
 	page,
 }) => {
 	await bootChrome(page, initialWorld());
@@ -65,15 +65,37 @@ test("the close button takes no room until the row is hovered", async ({
 	// tab-beta is inactive, so its close button is hidden until hover.
 	const row = page.locator('.tab-list [data-tab-id="tab-beta"]');
 	const title = row.locator(".tab-title");
-	const idleWidth = (await title.boundingBox())!.width;
+	const idle = (await title.boundingBox())!;
 
 	await row.hover();
 	await expect(row.locator(".close-btn")).toHaveClass(/visible/);
 
-	// Polled: the button expands through a width transition.
-	await expect
-		.poll(async () => (await title.boundingBox())!.width)
-		.toBeLessThan(idleWidth);
+	expect(await title.boundingBox()).toEqual(idle);
+	const close = (await row.locator(".close-btn").boundingBox())!;
+	expect(close.x + close.width).toBeLessThanOrEqual(idle.x + idle.width + 0.5);
+});
+
+test("a tab's sound and capture show on its favicon, and the sound badge mutes it", async ({
+	page,
+}) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((entry) =>
+		entry.id === "tab-beta" ? { ...entry, isAudioPlaying: true }
+		: entry.id === "tab-gamma" ? { ...entry, isAudioPlaying: true, isMicrophoneActive: true }
+		: entry,
+	);
+	await bootChrome(page, world);
+
+	const beta = page.locator('.tab-list [data-tab-id="tab-beta"]');
+	const gamma = page.locator('.tab-list [data-tab-id="tab-gamma"]');
+	// Capture wins the corner: a call's sound is muted from its card.
+	await expect(gamma.locator(".capture-pip.live")).toHaveCount(1);
+	await expect(gamma.locator(".sound-badge")).toHaveCount(0);
+
+	await beta.locator(".sound-badge").click();
+	const commands = await sentCommands(page);
+	expect(commands.find((c) => c.action === "muteTab")?.payload).toMatchObject({ id: "tab-beta" });
+	expect(commands.some((c) => c.action === "switchTab")).toBe(false);
 });
 
 test("the terminal button beside New Tab opens a terminal", async ({ page }) => {

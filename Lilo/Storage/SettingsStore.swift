@@ -166,6 +166,12 @@ final class SettingsStore {
     /// Auto-enter Picture-in-Picture when leaving a tab with active media (a call or playing video).
     var autoPictureInPicture: Bool { (get("autoPictureInPicture") ?? "true") == "true" }
 
+    /// While Lilo is in front, a left call docks in the sidebar rather than the floating panel.
+    var dockCallsInSidebar: Bool { (get("dockCallsInSidebar") ?? "true") == "true" }
+
+    /// With headphones on, pages get the microphone without echo cancellation (see `MicrophoneBridge`).
+    var fullBandMicrophone: Bool { (get("fullBandMicrophone") ?? "true") == "true" }
+
     /// Requests for a new window (New Window, a tab moved out, an extension window) open tabs in the
     /// current window instead.
     var singleWindow: Bool { self.get("singleWindow") == "true" }

@@ -21,6 +21,7 @@ to build it and send a change.
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Where code lives, the overlay and bridge, windows and shared state, the extension runtime, private WebKit API, glossary |
 | [DEBUGGING.md](DEBUGGING.md) | Inspectors, the diagnostics panel, logs, debug switches, energy measurement, common failures |
 | [I18N.md](I18N.md) | Translating the interface and native strings, adding a language |
+| [PRELOAD-TOP-HIT.md](PRELOAD-TOP-HIT.md) | Loading the command bar's top hit before Return: the confidence rule, what history and extensions see, the cost and the benchmark |
 | [WEBKIT-GAPS.md](WEBKIT-GAPS.md) | WebKit extension bugs and gaps Lilo works around, with their reproductions |
 | [RELEASING.md](RELEASING.md) | Version bump, signing, notarization, Sparkle and the publish checklist (maintainers) |
 

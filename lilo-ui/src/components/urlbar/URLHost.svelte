@@ -2,7 +2,7 @@
   import { quintOut, cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { springEase } from "../../lib/motion/spring";
-  import { blur, fly } from "svelte/transition";
+  import { restingBlur, restingFly } from "../../lib/motion/restingTransitions";
   import type { URLVisual } from "../../lib/urlVisual";
 
   interface Props {
@@ -146,20 +146,20 @@
     {#key visual.key}
       <span
         class="url-text-line"
-        in:fly={{ x: -3, y: 8, duration: prefersReducedMotion() ? 0 : 380, easing: springEase }}
-        out:fly={{ x: 5, y: -7, duration: prefersReducedMotion() ? 0 : 240, easing: cubicOut }}
+        in:restingFly={{ x: -3, y: 8, duration: prefersReducedMotion() ? 0 : 380, easing: springEase }}
+        out:restingFly={{ x: 5, y: -7, duration: prefersReducedMotion() ? 0 : 240, easing: cubicOut }}
       >
         <span
           class="url-text-content"
           class:feedback={visual.isFeedback}
           style={layout.fontSize ? `font-size: ${layout.fontSize}px` : ""}
-          in:blur={{
+          in:restingBlur={{
             amount: 6,
             duration: prefersReducedMotion() ? 0 : 320,
             opacity: 0.16,
             easing: quintOut,
           }}
-          out:blur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
+          out:restingBlur={{ amount: 4, duration: prefersReducedMotion() ? 0 : 200, opacity: 0.08 }}
         >
           <span
             bind:this={hostEl}

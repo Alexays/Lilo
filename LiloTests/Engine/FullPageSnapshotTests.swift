@@ -218,6 +218,12 @@ final class FullPageSnapshotTests: XCTestCase {
         XCTAssertEqual(inlineStyle, "height:100%;overflow-y:auto;")
         let height = (try? await tab.wkWebView.evaluateJavaScript("document.documentElement.scrollHeight")) as? NSNumber
         XCTAssertEqual(height?.doubleValue ?? 0, 600, accuracy: 1, "The document is still expanded")
+        let flag = try await tab.wkWebView.evaluateJavaScript("typeof window.__liloSnapshotReady") as? String
+        XCTAssertEqual(flag, "undefined", "The page sees the capture's state")
+        let installed = try await tab.wkWebView.evaluateJavaScript(
+            "typeof window.__liloSnapshotReady", in: nil, contentWorld: PageSnapshotExpansion.world
+        ) as? String
+        XCTAssertEqual(installed, "undefined", "The capture is still listening once restored")
     }
 
     func testTakeFullPageSnapshotReturnsNilForBlankTab() async {

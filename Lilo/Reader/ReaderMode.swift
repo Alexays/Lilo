@@ -15,9 +15,12 @@ enum ReaderMode {
             .joined(separator: "\n;\n")
     }()
 
+    /// Readability and the controls' listener live in their own world: the page sees neither.
+    @MainActor static let world = WKContentWorld.world(name: "lilo-reader")
+
     @MainActor
     static func apply(to webView: WKWebView) {
         guard !script.isEmpty else { return }
-        webView.evaluateJavaScript(script, in: nil, in: .page) { _ in }
+        webView.evaluateJavaScript(script, in: nil, in: world) { _ in }
     }
 }

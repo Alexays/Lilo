@@ -3,7 +3,6 @@
   import { tooltip } from "../../lib/tooltip";
   import { on, type BridgeDownloadSnapshot } from "../../lib/bridge";
   import { downloadActions } from "../../lib/bridge/actions";
-  import { copyText } from "../../lib/clipboard";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import DownloadsList from "./DownloadsList.svelte";
   import {
@@ -64,9 +63,6 @@
           break;
         case "showInFinder":
           downloadActions.showInFinder(dl.id);
-          break;
-        case "copyUrl":
-          void copyText(dl.url);
           break;
         case "deleteFile":
           downloadActions.removeFile(dl.id);

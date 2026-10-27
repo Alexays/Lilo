@@ -61,18 +61,28 @@
     data-roving
     onclick={activate}
   >
-    {#if tab.kind === "terminal"}
-      <!-- The sidebar's tile: a terminal reads apart from pages at a glance. -->
-      <span class="terminal-tile" class:asleep={!tab.terminalState} aria-hidden="true">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 4.5 3.5 3.5-3.5 3.5" /><path d="M8.5 11.5h4" /></svg>
-      </span>
-    {:else if tab.kind === "changes"}
-      <span class="changes-tile" aria-hidden="true">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5 2.5v6M2 5.5h6" /><path d="M8.5 12h5" /></svg>
-      </span>
-    {:else}
-      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
-    {/if}
+    <span class="strip-tab-icon">
+      {#if tab.kind === "terminal"}
+        <!-- The sidebar's tile: a terminal reads apart from pages at a glance. -->
+        <span class="terminal-tile" class:asleep={!tab.terminalState} aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 4.5 3.5 3.5-3.5 3.5" /><path d="M8.5 11.5h4" /></svg>
+        </span>
+      {:else if tab.kind === "changes"}
+        <span class="changes-tile" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5 2.5v6M2 5.5h6" /><path d="M8.5 12h5" /></svg>
+        </span>
+      {:else}
+        <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={16} radius={4} />
+      {/if}
+      {#if tab.isCameraActive || tab.isMicrophoneActive || tab.isScreenSharing}
+        <!-- The sidebar row's capture pip: red while the tab can hear or see you. -->
+        <span
+          class="capture-pip"
+          class:live={tab.isCameraActive || tab.isScreenSharing || (tab.isMicrophoneActive && !tab.isMicrophoneMuted)}
+          aria-hidden="true"
+        ></span>
+      {/if}
+    </span>
     {#if site}
       <span class="strip-tab-site">
         {#if site.secure}
@@ -146,6 +156,27 @@
   .icon-only .strip-tab-main {
     justify-content: center;
     padding: 0;
+  }
+
+  .strip-tab-icon {
+    position: relative;
+    flex: none;
+    display: grid;
+  }
+
+  .capture-pip {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+  }
+
+  .capture-pip.live {
+    background: var(--danger-vivid);
   }
 
   /* The sidebar's tiles, in a 16px favicon's box. */

@@ -59,3 +59,53 @@ test("under French, search and names follow the French annotations, English keyw
   assert.equal(french.categories.flat().length, EMOJI_CATEGORIES.flat().length);
   assert.equal(await loadEmojiCatalog("en"), ENGLISH_EMOJI);
 });
+
+test("Simplified Chinese emoji names and keywords load on demand, with English search still available", async () => {
+  const chinese = await loadEmojiCatalog("zh-Hans");
+  const search = (query: string) => searchEmoji(chinese, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("zh-Hans"), chinese);
+  assert.equal(search("火箭")[0], "🚀");
+  assert.ok(search("红心").includes("❤️"));
+  assert.ok(search("猫").includes("🐱"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.equal(emojiName(chinese, "🚀"), "火箭");
+  assert.ok(chinese.categories.flat().every((emoji) => emoji.name.length > 0));
+  assert.equal(chinese.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
+
+test("Spanish emoji names and searches preserve accents and English keywords", async () => {
+  const spanish = await loadEmojiCatalog("es");
+  const search = (query: string) => searchEmoji(spanish, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("es"), spanish);
+  assert.ok(search("corazón").includes("❤️"));
+  assert.ok(search("CORAZON").includes("❤️"));
+  assert.ok(search("cat").includes("🐱"));
+  assert.equal(emojiName(spanish, "🚀"), "cohete");
+  assert.equal(spanish.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
+
+test("Portuguese emoji search ignores accents and retains English keywords", async () => {
+  const portuguese = await loadEmojiCatalog("pt-BR");
+  const search = (query: string) => searchEmoji(portuguese, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("pt-BR"), portuguese);
+  assert.equal(emojiName(portuguese, "🚀"), "foguete");
+  assert.equal(search("foguete")[0], "🚀");
+  assert.ok(search("coração").includes("❤️"));
+  assert.deepEqual(search("coração"), search("CORACAO"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.deepEqual(portuguese.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});
+
+test("Russian emoji names and search load on demand and keep English search available", async () => {
+  const russian = await loadEmojiCatalog("ru");
+  const search = (query: string) => searchEmoji(russian, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("ru"), russian);
+  assert.equal(search("ракета")[0], "🚀");
+  assert.ok(search("сердце").includes("❤️"));
+  assert.ok(search("кошка").includes("🐱"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.equal(emojiName(russian, "🚀"), "ракета");
+  assert.ok(russian.categories.flat().every((emoji) => emoji.name.length > 0));
+  assert.equal(russian.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
