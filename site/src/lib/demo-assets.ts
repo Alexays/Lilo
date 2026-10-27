@@ -12,6 +12,7 @@ import pixel from "../../../Lilo/Resources/AppIcons/pixel.png";
 import pride from "../../../Lilo/Resources/AppIcons/pride.png";
 import riso from "../../../Lilo/Resources/AppIcons/riso.png";
 import spring from "../../../Lilo/Resources/AppIcons/spring.png";
+import alexays from "../assets/demo/alexays.jpg";
 import board from "../assets/demo/board.svg?url";
 import browser from "../assets/demo/browser.svg?url";
 import codex from "../assets/demo/codex.png?inline";
@@ -51,6 +52,7 @@ export const getDemoAssets = async (): Promise<DemoAssets> => ({
     }))
   ),
   images: {
+    alexays: await optimize(alexays, 64),
     bitwarden,
     board,
     browser,

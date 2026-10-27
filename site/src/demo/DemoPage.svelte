@@ -194,7 +194,7 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
 
 <div class="page" class:terminal-page={kind === "terminal"} style:zoom={zoom} style:height={`${100 / zoom}%`} style:--demo-minimum-font={`${minimumFont}px`} style:font-size={`max(14px, ${minimumFont}px)`}>
   {#if kind === "repo"}
-    <div class="repo-top"><img class="repo-mark" src={host.faviconFor(tab.url)} alt="" width="28" height="28" /><b>Alexays <span>/</span> Lilo</b><span class="repo-public">Public</span></div>
+    <div class="repo-top"><img class="repo-mark" src={host.assets?.images.alexays} alt="" width="28" height="28" /><b>Alexays <span>/</span> Lilo</b><span class="repo-public">Public</span></div>
     <nav class="repo-nav" aria-label="Lilo">
       <a class:current={repoSection === "code"} {...pageLink(repoBase)}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m7 5-5 5 5 5m6-10 5 5-5 5"/></svg>{text.code}</a>
       <a class:current={repoSection === "issues"} {...pageLink(`${repoBase}/issues`)}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v5m0 2v1"/></svg>Issues <span>3</span></a>
@@ -214,7 +214,7 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
           {#if repoSection === "code"}
             <div class="repo-toolbar"><span class="branch">main</span><span>MIT</span><button class="code-button" onclick={() => host.showNotice()}>{text.code}</button></div>
             <div class="file-list">
-              <div class="commit"><span class="avatar" aria-hidden="true"><SettingsIcon name="person" /></span><b>Alexays</b><span>fix(ui): a little more polish</span><small>268 commits</small></div>
+              <div class="commit"><img class="avatar" src={host.assets?.images.alexays} alt="" width="18" height="18" /><b>Alexays</b><span>fix(ui): a little more polish</span><small>268 commits</small></div>
               {#each files as name (name)}
                 <a {...pageLink(fileURL(name))}><span class="folder-icon"><SettingsIcon name={name === "README.md" ? "page" : "folder"} /></span><span>{name}</span><small>{name === "site" ? "Your internet, in bloom" : "A little better, every release"}</small></a>
               {/each}
@@ -284,11 +284,11 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
   .repo-toolbar { display: flex; gap: 15px; align-items: center; font-size: max(11px, var(--demo-minimum-font, 0px)); margin-bottom: 14px; } .branch { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; }
   .code-button { margin-left: auto; border: 0; border-radius: 6px; background: #347848; color: white; padding: 4px 14px; font-size: max(11px, var(--demo-minimum-font, 0px)); }
   .file-list { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .commit { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-hover); font-size: max(10px, var(--demo-minimum-font, 0px)); } .commit > span:not(.avatar) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .commit small { margin-left: auto; white-space: nowrap; font-size: max(9px, var(--demo-minimum-font, 0px)); } .avatar { display: inline-flex; align-items: center; justify-content: center; flex: none; background: var(--bg-active); color: var(--text-secondary); width: 18px; height: 18px; border-radius: 50%; }
+  .commit { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-hover); font-size: max(10px, var(--demo-minimum-font, 0px)); } .commit > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .commit small { margin-left: auto; white-space: nowrap; font-size: max(9px, var(--demo-minimum-font, 0px)); } .avatar { display: block; flex: none; width: 18px; height: 18px; border-radius: 50%; }
   .file-list > a { border: 0; border-top: 1px solid var(--border); padding: 7px 12px; width: 100%; display: flex; align-items: center; gap: 10px; color: var(--text-primary); background: none; text-align: left; font-size: max(11px, var(--demo-minimum-font, 0px)); }
   .file-list > a:hover { background: var(--bg-hover); } .file-list small { margin-left: auto; max-width: 48%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: var(--text-muted); font-size: max(9px, var(--demo-minimum-font, 0px)); }
-  .folder-icon { display: inline-flex; flex: none; color: #8194ae; } .folder-icon :global(svg), .repo-nav :global(.settings-icon-svg), .avatar :global(svg) { width: 16px; height: 16px; } .repo-topics, .repo-badges { display: flex; flex-wrap: wrap; gap: 5px; margin: 16px 0; } .repo-topics span, .repo-badges span { padding: 2px 9px; border-radius: 12px; background: var(--accent-tint-14); color: var(--accent-ink); font-size: max(10px, var(--demo-minimum-font, 0px)); }
+  .folder-icon { display: inline-flex; flex: none; color: #8194ae; } .folder-icon :global(svg), .repo-nav :global(.settings-icon-svg) { width: 16px; height: 16px; } .repo-topics, .repo-badges { display: flex; flex-wrap: wrap; gap: 5px; margin: 16px 0; } .repo-topics span, .repo-badges span { padding: 2px 9px; border-radius: 12px; background: var(--accent-tint-14); color: var(--accent-ink); font-size: max(10px, var(--demo-minimum-font, 0px)); }
   .repo-stat { font-size: max(11px, var(--demo-minimum-font, 0px)); color: var(--text-secondary); line-height: 2; } .readme { padding: 18px 20px 30px; margin-top: 20px; border: 1px solid var(--border); border-radius: 8px; } .readme h1 { font-size: max(24px, var(--demo-minimum-font, 0px)); } .readme p { font-size: max(13px, var(--demo-minimum-font, 0px)); }
   .flower { margin: 25px 0 20px; } .readme .flower { margin: 22px 0 10px; }
   .file-content { white-space: pre-wrap; font: 13px/1.8 ui-monospace, monospace; padding: 20px; background: var(--bg-hover); border-radius: 8px; } .back-link { border: 0; background: none; padding: 0; color: var(--accent-ink); }

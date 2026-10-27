@@ -1007,7 +1007,7 @@ export const createDemoHost = (
 
     const space = {
       color: "#d38d64",
-      icon: text().agents[0],
+      icon: "🤖",
       id: "playground-agents",
       isPrivate: false,
       name: text().agents,
