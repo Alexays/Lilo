@@ -91,6 +91,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         "jjkchpdmjjdmalgembblgafllbpcjlei": "its worker reads supportedFeatures.features of an answer that is undefined", // Trellix Endpoint Security Web Control
         "lgblnfidahcdcjddiepkckcfdhpknnjh": "its cosmetic filters hide none of the test page's ads, which Chrome's hide", // Stands AdBlocker
         "mclkkofklkfljcocdinagocijmpgbhab": "over a blank tab its popup calls tabs.detectLanguage, which WebKit refuses for want of access", // Google Input Tools
+        "mcbpblocgmgfnpjjppndjkmgjaogfceg": "over a blank tab its popup offers to capture it, where Chrome's recording opens the popup in a tab of its own, which it says it cannot capture", // FireShot
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
@@ -121,7 +122,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         "dcngeagmmhegagicpcmpinaoklddcgon": "in a full shard its popup shows no text in 40 s, alone it renders in 2 s; the cause is not yet known", // Web PKI
         "hdokiejnpimakedhajhdlcegeplioahd": "some runs a call of its content script to Lilo is cut as the test page closes, which it logs ('Lilo is unreachable')", // LastPass
         "bhlhnicpbhignbdhedgjhgdocnmhomnp": "some runs it scripts or messages a tab the test just closed (Tab not found); over a blank tab, WebKit refuses its tabs.captureVisibleTab", // ColorZilla
-        "cofdbpoegempjloogbagkncekinflcnj": "some runs it messages a tab the test just closed (Tab not found)" // DeepL
+        "cofdbpoegempjloogbagkncekinflcnj": "some runs it messages a tab the test just closed (Tab not found)", // DeepL
+        "cdonnmffkdaoajfknoeeecmchibpmkmg": "some runs it sets the icon and title of a tab the test just closed (No tab with id)", // Saladict
     ]
 
     /// `page`'s answer to `script`, or nil after 5 s: a page whose process hangs never answers, and the run would stop there.
