@@ -24,6 +24,7 @@ export const SETTINGS_NAV_GROUPS: { id: string; labelKey?: string; sections: Set
       { id: "general", labelKey: "settings.sections.general" },
       { id: "appearance", labelKey: "settings.sections.appearance" },
       { id: "tabs", labelKey: "settings.sections.tabs" },
+      { id: "media", labelKey: "settings.sections.media" },
       { id: "privacy", labelKey: "settings.sections.privacy" },
       { id: "extensions", labelKey: "settings.sections.extensions" },
     ],
@@ -143,7 +144,8 @@ export type SettingsGlyph =
   | "cylinder"
   | "text"
   | "command"
-  | "laptop";
+  | "laptop"
+  | "microphone";
 
 export interface SettingsGroupIcon {
   glyph: SettingsGlyph;
@@ -157,7 +159,8 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.otherAppLinks": { glyph: "arrowOutOfBox", tint: "indigo" },
   "settings.groups.search": { glyph: "magnifier", tint: "orange" },
   "settings.groups.downloads": { glyph: "folder", tint: "teal" },
-  "settings.groups.media": { glyph: "play", tint: "pink" },
+  "settings.groups.playback": { glyph: "play", tint: "pink" },
+  "settings.groups.calls": { glyph: "microphone", tint: "pink" },
   "settings.groups.lilo": { glyph: "petals", tint: "lilo" },
   "settings.groups.theme": { glyph: "halfCircle", tint: "purple" },
   "settings.groups.tabLayout": { glyph: "tabs", tint: "indigo" },
@@ -244,11 +247,11 @@ export const SETTINGS: SettingModel[] = [
   { id: "searchEngines", section: "general", groupKey: "settings.groups.search" },
   { id: "downloadsFolder", section: "general", groupKey: "settings.groups.downloads" },
   { id: "askDownloadLocation", section: "general", groupKey: "settings.groups.downloads" },
-  { id: "autoPictureInPicture", section: "general", groupKey: "settings.groups.media" },
-  { id: "autoplay", section: "general", groupKey: "settings.groups.media" },
-  { id: "fullBandMicrophone", section: "general", groupKey: "settings.groups.media" },
-  { id: "autoDevices", section: "general", groupKey: "settings.groups.media" },
-  { id: "deviceSetup", section: "general", groupKey: "settings.groups.media", requires: "autoDevices" },
+  { id: "autoPictureInPicture", section: "media", groupKey: "settings.groups.playback" },
+  { id: "autoplay", section: "media", groupKey: "settings.groups.playback" },
+  { id: "fullBandMicrophone", section: "media", groupKey: "settings.groups.calls" },
+  { id: "autoDevices", section: "media", groupKey: "settings.groups.calls" },
+  { id: "deviceSetup", section: "media", groupKey: "settings.groups.calls", requires: "autoDevices" },
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },
   { id: "autoUpdate", section: "general", groupKey: "settings.groups.lilo" },
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
