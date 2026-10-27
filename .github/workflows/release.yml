@@ -146,6 +146,16 @@ jobs:
             --password "$LILO_NOTARY_APP_PASSWORD"
           xcrun stapler staple build/Lilo.dmg
 
+      # Gatekeeper's verdict on what users download: the stapled DMG and the app inside it.
+      - name: Verify DMG
+        run: |
+          xcrun stapler validate build/Lilo.dmg
+          spctl -a -vvv -t open --context context:primary-signature build/Lilo.dmg
+          mount="$RUNNER_TEMP/lilo-dmg"
+          diskutil image attach --readOnly --mountOptions nobrowse --mountPoint "$mount" build/Lilo.dmg
+          spctl -a -vvv "$mount/Lilo.app"
+          diskutil eject "$mount"
+
       - name: Generate Sparkle appcast
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}

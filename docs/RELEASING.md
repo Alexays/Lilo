@@ -55,7 +55,7 @@ The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub
 3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
 4. Imports the Developer ID certificate into a temporary keychain.
 5. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-archive` (build, export signed with Developer ID, hardened runtime and a secure timestamp).
-6. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs the DMG and notarizes it, a single submission whose ticket also covers the app inside, and staples the DMG. The app itself is not stapled: a copy taken out of the DMG and first opened offline relies on Gatekeeper's online check, and Sparkle updates download the stapled DMG.
+6. Runs `make dmg`: the pinned [dmgbuild](https://github.com/dmgbuild/dmgbuild) packages `build/release/export/Lilo.app` with the installer window from `scripts/dmg/` (`settings.py` and the committed background, regenerated from `background.html` by `make dmg-background`). It then signs the DMG and notarizes it, a single submission whose ticket also covers the app inside, and staples the DMG. The app itself is not stapled: a copy taken out of the DMG and first opened offline relies on Gatekeeper's online check, and Sparkle updates download the stapled DMG. The job then checks the staple and has Gatekeeper (`spctl`) assess the DMG and the app on its read-only mount, so a release users would be refused never reaches the draft.
 7. Downloads Sparkle's tools (checked against a pinned sha256) and generates `appcast.xml` with `generate_appcast`, signed with `SPARKLE_ED_PRIVATE_KEY`. The app sets `SURequireSignedFeed`, so both the feed and the update archive must carry a valid EdDSA signature.
 8. Creates a **draft** GitHub release with the DMG and the appcast attached, its notes taken from the tag's `.changes/vX.Y.Z.md`. Installed copies read the appcast from the latest published release, so they see the update once the draft is published.
 
@@ -101,13 +101,7 @@ Once Apple grants it:
 
 ## Publish checklist
 
-1. Verify the DMG's app on a clean mount:
-   ```bash
-   xcrun stapler validate Lilo.dmg
-   spctl -a -vvv -t open --context context:primary-signature Lilo.dmg
-   spctl -a -vvv /Volumes/Lilo/Lilo.app
-   ```
-2. Publish the draft release.
-3. Publishing runs `.github/workflows/homebrew.yml`, which bumps the `lilo` cask of the
+1. Publish the draft release. CI already checked its DMG with `stapler` and `spctl`.
+2. Publishing runs `.github/workflows/homebrew.yml`, which bumps the `lilo` cask of the
    `alexays/tap` Homebrew tap to the new version and the DMG's sha256, so
    `brew install --cask alexays/tap/lilo` and `brew upgrade` pick it up.
