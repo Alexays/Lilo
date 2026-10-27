@@ -1,0 +1,3 @@
+kind: Changed
+body: Lilo's built-in page scripts do a little less work in every frame, and reader mode no longer leaves anything a page can detect.
+time: 2026-10-27T16:10:37.965856+01:00
