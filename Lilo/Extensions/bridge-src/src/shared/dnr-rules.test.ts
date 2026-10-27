@@ -335,7 +335,7 @@ describe('static rulesets', () => {
     assert.deepEqual(applied.map((rule: any) => rule.condition.regexFilter), [INERT_FILTER, 'a[0-9]']);
   });
 
-  it('keeps every enabled set under WebKit cap, the rules WebKit expands most turning inert', () => {
+  it('keeps every set under WebKit cap, the rules WebKit expands most turning inert', () => {
     const domains = (count: number, name: string) => Array.from({ length: count }, (_, i) => `${name}${i}.example`);
     const [first, second] = webKitStaticRulesets([
       JSON.stringify([block(1, { requestDomains: domains(70000, 'a') }), block(2, { urlFilter: 'ads' })]),
@@ -343,5 +343,17 @@ describe('static rulesets', () => {
     ]);
     assert.deepEqual(JSON.parse(first!).map((rule: any) => rule.condition.regexFilter === INERT_FILTER), [true, false]);
     assert.equal(second, null, 'the rest fits');
+  });
+
+  it('drops single rules past the cap, inert and blocking ones before the ones that allow', () => {
+    const allow = (id: number) => ({ id, action: { type: 'allow' }, condition: { urlFilter: `ok${id}` } });
+    const rules = Array.from({ length: 120003 }, (_, i) => (i < 2 ? allow(i + 1) : block(i + 1, { urlFilter: `ads${i}` })));
+    rules.push(block(120004, { regexFilter: '\\bads\\b' }));
+    const [prepared] = webKitStaticRulesets([JSON.stringify(rules)]);
+    const applied = JSON.parse(prepared!);
+    assert.equal(applied.length, 120000);
+    assert.deepEqual(applied.slice(0, 2), [allow(1), allow(2)]);
+    assert.equal(applied.at(-1).id, 120000, 'the last blocking rules of the file leave');
+    assert.deepEqual(webKitStaticRulesets([prepared!]), [null], 'preparing again changes nothing');
   });
 });

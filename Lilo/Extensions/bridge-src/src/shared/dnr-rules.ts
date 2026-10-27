@@ -318,7 +318,8 @@ const STATIC_WEBKIT_RULES = 150000 - 30000;
 
 /**
  * Each static ruleset as JSON in the form WebKit applies, or null where it needs no change or is no ruleset. Past
- * WebKit's cap for all of them together, the rules WebKit expands most turn inert so every set compiles.
+ * WebKit's cap for all of them together, the rules WebKit expands most turn inert, and once that is not enough, rules
+ * leave the sets: inert ones first, then blocking ones before the ones that let requests through, the last of a file first.
  */
 export function webKitStaticRulesets(sources: string[]): (string | null)[] {
   const rulesets = sources.map((source) => {
@@ -329,22 +330,30 @@ export function webKitStaticRulesets(sources: string[]): (string | null)[] {
       return undefined;
     }
   });
-  const prepared = rulesets.map((rules) => rules?.map((rule) => toWebKit(rule?.[STORED_RULE] ?? rule)));
+  const prepared: (any[] | undefined)[] = rulesets.map((rules) => rules?.map((rule) => toWebKit(rule?.[STORED_RULE] ?? rule)));
   const expansions = prepared.flatMap((rules, set) => (rules ?? []).map((rule, index) => {
     const condition = rule?.condition ?? {};
     const domains = typeof condition.regexFilter !== 'string' && Array.isArray(condition.requestDomains) ? condition.requestDomains.length : 1;
-    return { set, index, count: domains + (Array.isArray(condition.excludedRequestDomains) ? condition.excludedRequestDomains.length : 0) };
+    const count = domains + (Array.isArray(condition.excludedRequestDomains) ? condition.excludedRequestDomains.length : 0);
+    const blocking = rule?.action?.type === 'block' || rule?.action?.type === 'redirect';
+    const rank = count > 1 ? count + 1 : condition.regexFilter === INERT_FILTER ? 1.5 : blocking ? 1.25 : 1;
+    return { set, index, count, rank };
   }));
   let total = expansions.reduce((sum, { count }) => sum + count, 0);
   if (total > STATIC_WEBKIT_RULES) {
-    for (const { set, index, count } of expansions.sort((a, b) => b.count - a.count)) {
-      if (total <= STATIC_WEBKIT_RULES || count <= 1) break;
+    expansions.sort((a, b) => b.rank - a.rank || b.index - a.index);
+    for (const { set, index, count } of expansions) {
+      if (total <= STATIC_WEBKIT_RULES) break;
       const rule = prepared[set]![index];
-      prepared[set]![index] = { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: rule[STORED_RULE] ?? rule };
-      total -= count - 1;
+      // An inert rule still counts as one, and keeps the extension's own for testMatch and getDisabledRuleIds.
+      prepared[set]![index] = count > 1
+        ? { id: rule.id, action: { type: 'block' }, condition: { regexFilter: INERT_FILTER }, [STORED_RULE]: rule[STORED_RULE] ?? rule }
+        : undefined;
+      total -= count > 1 ? count - 1 : 1;
     }
+    for (const [set, rules] of prepared.entries()) prepared[set] = rules?.filter((rule) => rule !== undefined);
   }
-  return prepared.map((rules, set) => (rules?.some((rule, index) => rule !== rulesets[set]![index]) ? JSON.stringify(rules) : null));
+  return prepared.map((rules, set) => (rules && (rules.length !== rulesets[set]!.length || rules.some((rule, index) => rule !== rulesets[set]![index])) ? JSON.stringify(rules) : null));
 }
 
 // WebKit removes only the rule ids its last applied update left, and loads concurrent updates over
