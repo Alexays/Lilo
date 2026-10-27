@@ -1,5 +1,6 @@
 ---
 import type { Locale } from "../lib/i18n";
+import Flower from "./Flower.astro";
 import Install from "./Install.astro";
 import PixelBloom from "./PixelBloom.astro";
 
@@ -44,7 +45,19 @@ const headingId = home ? "home-heading" : `${id}-heading`;
             <span class="tag">{tag}</span>
           )}
         </div>
-        <h1 id={headingId}>{heading}</h1>
+        <h1 id={headingId}>
+          {home ? (
+            <>
+              {heading.slice(0, -1)}
+              <span class="hero-stop">
+                <span class="visually-hidden">{heading.slice(-1)}</span>
+                <Flower id={`hero-flower-${lang}`} class="bloom" />
+              </span>
+            </>
+          ) : (
+            heading
+          )}
+        </h1>
         <div class="hero-details">
           <div>
             <p class="hero-description">{description}</p>
@@ -90,6 +103,20 @@ const headingId = home ? "home-heading" : `${id}-heading`;
     font-weight: 500;
     line-height: 1;
     letter-spacing: -0.045em;
+  }
+  /* The home heading's full stop is the logo; the real one stays for screen readers. */
+  .hero-stop {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    margin-left: 0.06em;
+    vertical-align: -0.02em;
+    filter: drop-shadow(0 0.06em 0.12em rgb(121 92 235 / 0.28));
+  }
+  .hero-stop :global(svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
   .hero-details {
     display: grid;

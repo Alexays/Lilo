@@ -96,4 +96,19 @@ for (const lang of ["en", "fr"] as const) {
       await context.close();
     }
   });
+
+  test(`home heading ends with the logo, other pages keep plain text (${lang})`, async ({
+    page,
+  }) => {
+    await page.goto(home);
+    const heading = page.locator("#home-heading");
+    await expect(heading).toHaveText(
+      lang === "fr" ? "Votre internet, en fleur." : "Your internet, in bloom."
+    );
+    await expect(heading.locator(".hero-stop svg")).toBeVisible();
+
+    await page.goto(`${home}moving/`);
+    await expect(page.locator(".page-hero h1")).toBeVisible();
+    await expect(page.locator(".page-hero .hero-stop")).toHaveCount(0);
+  });
 }
