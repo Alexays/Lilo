@@ -1,3 +1,0 @@
-kind: Fixed
-body: Text an agent types no longer reaches a page's keyboard shortcuts when no field has focus, and two conversations of the same agent app no longer share their tabs.
-time: 2026-10-27T09:08:25.602784+01:00

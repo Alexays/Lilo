@@ -1,6 +1,6 @@
 SWIFT_VERSION = 6.0
-CURRENT_PROJECT_VERSION = 18
-MARKETING_VERSION = 0.5.0
+CURRENT_PROJECT_VERSION = 19
+MARKETING_VERSION = 0.6.0
 // Sparkle EdDSA public key (base64). Empty disables update checks, as in local builds.
 SPARKLE_PUBLIC_ED_KEY = YvWz9GUSPSl6HzwXHJ3+bNmenKa1y+luUBeT36dmjTI=
 
