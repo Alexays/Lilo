@@ -1,0 +1,56 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+// The 16 × 16 mark and palette from Resources/AppIcons/pixel.png, without its app-icon plate.
+const rows = [
+  ".bbbb......cccc.",
+  "bbbbbb....cccccc",
+  "bbbbbbb..ccccccc",
+  "bbbbbbbbcccccccc",
+  "bbbbbbbbcccccccc",
+  ".bbbbbbbccccccc.",
+  "..bbbbbbcccccc..",
+  "...bbbbbccccc...",
+  "...dddddeeeee...",
+  "..ddddddeeeeee..",
+  ".dddddddeeeeeee.",
+  "ddddddddeeeeeeee",
+  "ddddddddeeeeeeee",
+  "ddddddd..eeeeeee",
+  "dddddd....eeeeee",
+  ".dddd......eeee.",
+];
+
+const petals = [
+  ["b", "#e4d8ff"],
+  ["c", "#c4adff"],
+  ["d", "#9c80f6"],
+  ["e", "#6b4cf0"],
+];
+---
+
+<svg
+  class:list={["pixel-logo", className]}
+  viewBox="0 0 64 64"
+  width="64"
+  height="64"
+  aria-hidden="true"
+>
+  {petals.map(([letter, color], index) => (
+    <g class="pixel-petal" fill={color} style={`--petal: ${index}`}>
+      <path
+        d={rows
+          .flatMap((row, y) =>
+            [...row].flatMap((cell, x) =>
+              cell === letter ? [`M${x * 4} ${y * 4}h3.5v3.5h-3.5z`] : []
+            )
+          )
+          .join(" ")}
+      />
+    </g>
+  ))}
+</svg>

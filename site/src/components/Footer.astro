@@ -10,20 +10,14 @@ interface Props {
 
 const { lang } = Astro.props;
 const text = copy[lang];
-const otherLang = lang === "fr" ? "en" : "fr";
-
-const page =
-  Astro.url.pathname === "/404/"
-    ? ""
-    : Astro.url.pathname.replace(/^\/fr(?=\/)/u, "").slice(1);
 ---
 
 <footer class="foot">
-  <div class="wrap foot-frame">
+  <div class="wrap page-frame foot-frame">
     <div class="foot-main">
       <div class="foot-brand">
         <a class="logo" href={localizedPath(lang)} aria-label={text.home}>
-          <Flower id="footer-flower" />
+          <Flower id={`footer-flower-${lang}`} />
           Lilo
         </a>
         <p>{text.footerDescription}</p>
@@ -56,18 +50,23 @@ const page =
               </a>
             </li>
             <li>
+              <a href={localizedPath(lang, "ai-agents/")}>{text.aiAgents}</a>
+            </li>
+            <li>
+              <a href={localizedPath(lang, "changelog/")}>{text.changelog}</a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h2>{text.migrations}</h2>
+          <ul role="list">
+            <li>
               <a href={localizedPath(lang, "moving/")}>{text.movingTitle}</a>
             </li>
             <li>
               <a href={localizedPath(lang, "arc-alternative/")}>
                 {text.arcAlternative}
               </a>
-            </li>
-            <li>
-              <a href={localizedPath(lang, "ai-agents/")}>{text.aiAgents}</a>
-            </li>
-            <li>
-              <a href={localizedPath(lang, "changelog/")}>{text.changelog}</a>
             </li>
           </ul>
         </div>
@@ -93,16 +92,6 @@ const page =
         </div>
       </nav>
     </div>
-    <div class="foot-bottom">
-      <p>{text.footer}</p>
-      <a
-        href={localizedPath(otherLang, page)}
-        lang={otherLang}
-        hreflang={otherLang}
-      >
-        {otherLang === "fr" ? "Français" : "English"}
-      </a>
-    </div>
   </div>
 </footer>
 
@@ -112,22 +101,17 @@ const page =
     font-size: 14px;
     border-top: 1px solid var(--line);
   }
-  .foot-frame {
-    padding-left: max(24px, env(safe-area-inset-left, 0px));
-    padding-right: max(24px, env(safe-area-inset-right, 0px));
-    border-inline: 1px solid var(--line);
-  }
   .foot-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 64px;
-    padding-block: 56px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding-block: 64px max(64px, env(safe-area-inset-bottom, 0px));
   }
   .foot-brand {
     display: grid;
     align-content: start;
     justify-items: start;
-    gap: 16px;
+    gap: 20px;
   }
   .foot-brand .logo {
     color: var(--ink);
@@ -140,18 +124,19 @@ const page =
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-left: -12px;
+    margin-left: -8px;
   }
   .foot-links a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
+    width: 36px;
     min-height: 44px;
   }
   .foot-links :global(svg) {
     flex: none;
+    width: 20px;
+    height: 20px;
   }
   .foot-social-name {
     position: absolute;
@@ -167,36 +152,21 @@ const page =
     gap: 32px;
   }
   .foot-nav h2 {
-    color: var(--ink);
-    font: 600 13px/1.5 var(--sys);
-    letter-spacing: normal;
+    color: var(--ink-2);
+    font: 400 12px/20px var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   .foot-nav ul {
     display: grid;
-    gap: 4px;
+    gap: 8px;
     margin: 12px 0 0;
     padding: 0;
     list-style: none;
   }
   .foot-nav a {
     display: inline-block;
-    padding-block: 4px;
-  }
-  .foot-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    padding-block: 20px max(24px, env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid var(--line);
-    font-size: 12px;
-  }
-  .foot-bottom a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    font-size: 13px;
+    line-height: 24px;
   }
   .foot a {
     text-decoration: none;
@@ -204,16 +174,14 @@ const page =
   .foot a:hover {
     color: var(--accent);
   }
-  @media (max-width: 640px) {
-    .foot-main {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 36px;
-      padding-block: 36px;
+  @media (min-width: 640px) {
+    .foot-nav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .foot-bottom {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 8px;
+  }
+  @media (min-width: 1024px) {
+    .foot-main {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     }
   }
 </style>

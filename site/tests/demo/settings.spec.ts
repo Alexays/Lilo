@@ -13,7 +13,7 @@ const openDemo = async (page: Page) => {
 
 const menuCommand = async (page: Page, action: string) => {
   const menu = page
-    .locator(".mac-menu")
+    .locator("#browser-demo .mac-menu")
     .filter({ has: page.locator(`[data-action="${action}"]`) });
 
   await menu.locator(":scope > summary").click();
@@ -93,9 +93,9 @@ test("the full native shortcut catalog records, cancels and updates the Mac-menu
   await keys.click();
   await keys.press("Meta+Shift+u");
   await expect(keys).toHaveText("⇧⌘U");
-  await expect(page.locator('.mac-menu [data-action="newTab"] kbd')).toHaveText(
-    "⇧⌘U"
-  );
+  await expect(
+    page.locator('#browser-demo .mac-menu [data-action="newTab"] kbd')
+  ).toHaveText("⇧⌘U");
   await closeSettings(frame);
   await frame.locator(".sample-content").press("Meta+Shift+u");
   await expect(frame.locator(".command-bar-input")).toBeVisible();
@@ -177,7 +177,9 @@ test("terminal preferences update the live terminal renderer and survive reopeni
   page,
 }) => {
   const frame = await openDemo(page);
-  await page.locator(".demo-modes [data-action=terminal]").click();
+  await page
+    .locator("#browser-demo .demo-modes [data-action=terminal]")
+    .click();
 
   const terminal = frame.locator("section.terminal");
   const rows = terminal.locator(".xterm-rows");

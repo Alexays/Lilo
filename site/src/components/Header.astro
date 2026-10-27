@@ -14,11 +14,6 @@ const home = localizedPath(lang);
 const path = Astro.url.pathname;
 
 const links = [
-  [`${home}#native`, "WebKit"],
-  [`${home}#extensions`, "Extensions"],
-  [`${home}#privacy`, text.privacy],
-  [`${home}#build`, "Terminal"],
-  [`${home}#agents`, "Agents"],
   [`${home}moving/`, text.movingTitle],
   [
     "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
@@ -52,7 +47,7 @@ const links = [
         </svg>
       </button>
       <a class="logo" href={home} aria-label={text.home}>
-        <Flower id="header-flower" class="bloom" />
+        <Flower id={`header-flower-${lang}`} />
         Lilo
       </a>
     </div>
@@ -118,6 +113,24 @@ const links = [
   const menu = document.querySelector<HTMLButtonElement>(".menu-toggle");
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
   const systemTheme = matchMedia("(prefers-color-scheme: dark)");
+
+  const preferredLanguage = navigator.languages
+    .map((language) => language.split("-")[0].toLowerCase())
+    .find((language) => language === "fr" || language === "en");
+
+  // Explicit French URLs remain shareable regardless of the recipient's language.
+  if (root.lang === "en" && preferredLanguage === "fr") {
+    const alternate = document.querySelector<HTMLLinkElement>(
+      'link[rel="alternate"][hreflang="fr"]'
+    );
+
+    if (alternate) {
+      const target = new URL(alternate.href);
+      target.search = location.search;
+      target.hash = location.hash;
+      location.replace(target.pathname + target.search + target.hash);
+    }
+  }
 
   const getTheme = () =>
     root.dataset.theme ?? (systemTheme.matches ? "dark" : "light");
@@ -221,13 +234,14 @@ const links = [
     font-size: 20px;
   }
   .logo :global(svg) {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
   }
   nav {
     display: flex;
     gap: 4px;
     font-size: 14px;
+    font-weight: 500;
     color: var(--ink-2);
   }
   nav a {
@@ -235,7 +249,7 @@ const links = [
     align-items: center;
     min-height: 44px;
     padding: 8px 12px;
-    border-radius: 999px;
+    border-radius: 0;
     text-decoration: none;
     white-space: nowrap;
   }
@@ -257,15 +271,14 @@ const links = [
     height: 44px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
+    border-radius: 0;
     background: transparent;
     color: var(--ink-2);
     cursor: pointer;
   }
   .icon-button:hover,
   nav a:hover {
-    color: var(--ink);
-    background: color-mix(in srgb, var(--ink) 6%, transparent);
+    color: var(--accent);
   }
   .menu-toggle,
   .theme-toggle {
@@ -280,7 +293,7 @@ const links = [
   .theme-moon {
     display: var(--theme-moon);
   }
-  @media (max-width: 1100px) {
+  @media (max-width: 720px) {
     .site-header:not([data-ready]) {
       position: static;
     }
@@ -320,7 +333,6 @@ const links = [
     }
     .menu-toggle[aria-expanded="true"] {
       color: var(--accent);
-      background: color-mix(in srgb, var(--accent) 10%, transparent);
     }
   }
 </style>

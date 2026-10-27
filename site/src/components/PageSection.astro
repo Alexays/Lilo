@@ -1,0 +1,23 @@
+---
+interface Props {
+  id?: string;
+  layout?: string;
+}
+
+const { id, layout } = Astro.props;
+---
+
+<section class="band" id={id}>
+  <div class:list={["wrap", "page-frame", layout]}>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .band {
+    border-top: 1px solid var(--line);
+  }
+  .wrap {
+    padding-block: clamp(56px, 6.25vw, 80px);
+  }
+</style>

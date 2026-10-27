@@ -157,7 +157,7 @@ test("creating and deleting a tab folder confirms its content and Cancel preserv
   ).toBeFocused();
   await confirmation
     .getByRole("button", { exact: true, name: "Cancel" })
-    .click();
+    .press("Enter");
   await expect(folder).toBeVisible();
   await expect(notes).toBeVisible();
   await folder.click({ button: "right" });
@@ -166,7 +166,7 @@ test("creating and deleting a tab folder confirms its content and Cancel preserv
     .click();
   await confirmation
     .getByRole("button", { exact: true, name: "Delete" })
-    .click();
+    .press("Enter");
   await expect(folder).toHaveCount(0);
   await expect(notes).toHaveCount(0);
   await expect(page.locator('[data-tab-id="lilo"]')).toBeVisible();
@@ -176,7 +176,9 @@ test("extension context actions open the production details page", async ({
   page,
 }) => {
   await page.goto("/demo/");
-  await page.locator(".extension-icon").first().click({ button: "right" });
+  await page
+    .getByRole("button", { exact: true, name: "Dark Reader" })
+    .click({ button: "right" });
   const menu = page.locator(".native-menu");
   await expect(
     menu.getByRole("menuitem", { exact: true, name: "Unpin from Address Bar" })

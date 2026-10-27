@@ -1,0 +1,178 @@
+---
+import { copy } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+import GitHubIcon from "./GitHubIcon.astro";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const text = copy[lang];
+---
+
+<div class="install-panel">
+  <div class="install-actions">
+    <a
+      class="pill dark download-button"
+      href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
+    >
+      <span>{text.download}</span>
+      <small>macOS 26+</small>
+    </a>
+    <a class="pill soft source-link" href="https://github.com/Alexays/Lilo">
+      <GitHubIcon />
+      GitHub
+    </a>
+  </div>
+  <div class="brew-command">
+    <span aria-hidden="true">$</span>
+    <input
+      aria-label={text.homeInstallCommand}
+      value="brew install --cask alexays/tap/lilo"
+      readonly
+      spellcheck="false"
+    />
+    <!-- WebKit needs an explicit tab stop when macOS keyboard navigation is off. -->
+    <button
+      class="copy-command"
+      type="button"
+      tabindex="0"
+      aria-label={text.homeCopyCommand}
+      title={text.homeCopyCommand}
+      data-copied={text.homeCopied}
+      data-failed={text.homeCopyFailed}
+      hidden
+    >
+      <svg
+        aria-hidden="true"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <g class="copy-icon">
+          <rect x="8" y="8" width="12" height="12" rx="2" />
+          <path d="M15 4H6a2 2 0 0 0-2 2v9" />
+        </g>
+        <path class="check-icon" d="m5 12 4 4L19 6" />
+      </svg>
+    </button>
+  </div>
+  <span class="visually-hidden copy-status" aria-live="polite" />
+</div>
+
+<script>
+  for (const panel of document.querySelectorAll<HTMLElement>(
+    ".install-panel"
+  )) {
+    const button = panel.querySelector<HTMLButtonElement>(".copy-command");
+    const input = panel.querySelector<HTMLInputElement>("input");
+    const status = panel.querySelector<HTMLElement>(".copy-status");
+
+    if (button && input && status) {
+      button.hidden = false;
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(input.value);
+          button.dataset.state = "copied";
+          status.textContent = button.dataset.copied ?? "";
+        } catch {
+          delete button.dataset.state;
+          input.focus();
+          input.select();
+          status.textContent = button.dataset.failed ?? "";
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+  .install-panel {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+    width: 100%;
+    max-width: 520px;
+  }
+  .install-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .download-button {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+  }
+  .download-button small {
+    font-size: 11px;
+    font-weight: 400;
+  }
+  .source-link :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+  .pill.source-link {
+    background: var(--surface);
+  }
+  .brew-command {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 2px 2px 2px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font: 12px/1.5 var(--mono);
+  }
+  input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    text-overflow: ellipsis;
+  }
+  .copy-command {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+  .copy-command[hidden] {
+    display: none;
+  }
+  .copy-command:hover {
+    background: var(--paper);
+    color: var(--accent);
+  }
+  .check-icon,
+  [data-state="copied"] .copy-icon {
+    display: none;
+  }
+  [data-state="copied"] .check-icon {
+    display: block;
+    color: var(--accent);
+  }
+</style>
