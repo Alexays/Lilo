@@ -195,7 +195,7 @@ test("sample content and native-only actions never request an external website",
     }
   });
   const demo = await openDemo(page);
-  await demo.getByRole("link", { name: "↗ getlilo.app" }).click();
+  await demo.getByRole("link", { name: "getlilo.app" }).click();
   await expect(
     demo.getByRole("heading", { name: "A little space for your internet." })
   ).toBeVisible();
@@ -225,7 +225,7 @@ test("the second split pane owns its navigation and leaves the first pane intact
   await demo
     .locator(".sample-pane")
     .nth(1)
-    .getByRole("link", { name: "↗ getlilo.app" })
+    .getByRole("link", { name: "getlilo.app" })
     .click();
   await expect(
     demo

@@ -143,6 +143,12 @@ const pageLink = (url: string) => ({
 
 const fileURL = (name: string) => `${repoBase}/${name === "README.md" ? "blob" : "tree"}/main/${encodeURIComponent(name)}`;
 
+const dismissLinkMenu = (event: PointerEvent) => {
+  if (linkMenu.matches(":popover-open") && event.target instanceof Node && !linkMenu.contains(event.target)) {
+    linkMenu.hidePopover();
+  }
+};
+
 const linkMenuKey = (event: KeyboardEvent) => {
   if (event.key === "Escape" || event.key === "Tab") {
     event.preventDefault();
@@ -184,6 +190,8 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
 
 </script>
 
+<svelte:window onpointerdown={dismissLinkMenu} />
+
 <div class="page" class:terminal-page={kind === "terminal"} style:zoom={zoom} style:height={`${100 / zoom}%`} style:--demo-minimum-font={`${minimumFont}px`} style:font-size={`max(14px, ${minimumFont}px)`}>
   {#if kind === "repo"}
     <div class="repo-top"><img class="repo-mark" src={host.faviconFor(tab.url)} alt="" width="28" height="28" /><b>Alexays <span>/</span> Lilo</b><span class="repo-public">Public</span></div>
@@ -200,11 +208,11 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
             <label class="issue"><input type="checkbox" bind:checked={completed[index]} /><span class:done={completed[index]}>{issue}</span><small>#{index + 1}</small></label>
           {/each}
         {:else if file}
-          <a class="back-link" {...pageLink(repoBase)}>‹ {text.files}</a>
+          <a class="back-link" {...pageLink(repoBase)}>{text.files}</a>
           <h2>{file}</h2><pre class="file-content">{file === "README.md" ? `# Lilo\n\n${text.repoBody}` : `${file}/\n\n${text.repoReadme}\n\nSwift · Svelte · WebKit`}</pre>
         {:else}
           {#if repoSection === "code"}
-            <div class="repo-toolbar"><span class="branch">⑂ main⌄</span><span>MIT</span><button class="code-button" onclick={() => host.showNotice()}>〈〉 {text.code}⌄</button></div>
+            <div class="repo-toolbar"><span class="branch">main</span><span>MIT</span><button class="code-button" onclick={() => host.showNotice()}>{text.code}</button></div>
             <div class="file-list">
               <div class="commit"><span class="avatar" aria-hidden="true"><SettingsIcon name="person" /></span><b>Alexays</b><span>fix(ui): a little more polish</span><small>268 commits</small></div>
               {#each files as name (name)}
@@ -215,7 +223,7 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
           <article class="readme"><span class="eyebrow">{text.readme}</span><div class="flower"><Fleuron size={48} /></div><h1>{text.repoReadme}</h1><p>{text.repoBody}</p><div class="repo-badges"><span>WebKit</span><span>Swift</span><span>Svelte</span><span>MIT</span></div></article>
         {/if}
       </div>
-      <aside><h3>{text.about}</h3><p>{text.repoAbout}</p><a class="repo-home-link" {...pageLink("https://getlilo.app")}>↗ getlilo.app</a><div class="repo-topics"><span>macOS</span><span>webkit</span><span>open-source</span></div><p class="repo-stat">☆ 3 stars<br />⑂ 1 fork<br />♡ MIT license</p></aside>
+      <aside><h3>{text.about}</h3><p>{text.repoAbout}</p><a class="repo-home-link" {...pageLink("https://getlilo.app")}>getlilo.app</a><div class="repo-topics"><span>macOS</span><span>webkit</span><span>open-source</span></div><p class="repo-stat">3 stars<br />1 fork<br />MIT license</p></aside>
     </div>
   {:else if kind === "travel"}
     <div class="travel-cover"><span class="travel-site">SLOW TRAVEL</span><span class="sun" aria-hidden="true"></span><div class="hills" aria-hidden="true"></div><div class="travel-heading"><span>{text.articleMeta}</span><h1>{text.article}</h1><p>{text.articleSubtitle}</p></div></div>
@@ -223,7 +231,7 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
   {:else if kind === "notes"}
     <article class="notes"><span class="eyebrow">NOTES</span><h1>{text.notes}</h1><textarea aria-label={text.editor} bind:value={note} oninput={saveNote} placeholder={text.notePlaceholder}></textarea><small>{text.saved}</small></article>
   {:else if kind === "music"}
-    <article class="music"><div class="album" aria-hidden="true"><span>♫</span><small>AFTER HOURS</small></div><span class="eyebrow">RADIO</span><h1>{text.playlist}</h1><p>{text.playlistSubtitle}</p><button class="play-button" aria-label={playing ? text.pause : text.play} aria-pressed={playing} onclick={() => { playing = !playing; }}>{playing ? "Ⅱ" : "▶"}</button><ol>{#each [text.trackOne, text.trackTwo, text.trackThree] as title, index (index)}<li><button class:track-selected={track === index} onclick={() => { track = index; playing = true; }}><span>0{index + 1}</span><b>{title}</b><small>{["3:42", "4:18", "5:06"][index]}</small></button></li>{/each}</ol></article>
+    <article class="music"><div class="album" aria-hidden="true"><small>AFTER HOURS</small></div><span class="eyebrow">RADIO</span><h1>{text.playlist}</h1><p>{text.playlistSubtitle}</p><button class="play-button" aria-label={playing ? text.pause : text.play} aria-pressed={playing} onclick={() => { playing = !playing; }}>{#if playing}<svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="3" height="12" rx="1" /><rect x="12" y="4" width="3" height="12" rx="1" /></svg>{:else}<SettingsIcon name="play" />{/if}</button><ol>{#each [text.trackOne, text.trackTwo, text.trackThree] as title, index (index)}<li><button class:track-selected={track === index} onclick={() => { track = index; playing = true; }}><span>0{index + 1}</span><b>{title}</b><small>{["3:42", "4:18", "5:06"][index]}</small></button></li>{/each}</ol></article>
   {:else if kind === "board"}
     <article class="board"><span class="eyebrow">STUDIO / {text.projects}</span><h1>{text.board}</h1><p>{text.boardSubtitle}</p>{#each [text.issueOne, text.issueTwo, text.issueThree] as issue, index (index)}<label class="issue"><input type="checkbox" bind:checked={completed[index]} /><span class:done={completed[index]}>{issue}</span><small>{completed[index] ? text.done : text.todo}</small></label>{/each}</article>
   {:else if kind === "terminal"}
@@ -251,8 +259,8 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
   {/if}
 </div>
 
-<!-- A popover keeps link actions above modal previews. -->
-<div class="page-link-menu" popover="auto" role="menu" aria-label={text.linkMenu} tabindex="-1" bind:this={linkMenu} style:left={`${menuPosition.x}px`} style:top={`${menuPosition.y}px`} onkeydown={linkMenuKey}>
+<!-- Manual dismissal prevents WebKit from closing the menu on the opening right-button release. -->
+<div class="page-link-menu" popover="manual" role="menu" aria-label={text.linkMenu} tabindex="-1" bind:this={linkMenu} style:left={`${menuPosition.x}px`} style:top={`${menuPosition.y}px`} onkeydown={linkMenuKey}>
   {#each linkActions as item (item.action)}<button type="button" role="menuitem" onclick={() => openLink(item.action)}>{item.label}</button>{/each}
 </div>
 
@@ -292,8 +300,8 @@ else {visit(buildSearchURL(value, preferences.searchEngine));}
   .days button { background: var(--bg-hover); border: 1px solid transparent; border-radius: 9px; text-align: left; padding: 14px 10px; color: var(--text-primary); } .days button.selected { border-color: #bb9fbd; background: var(--accent-tint-14); } .days span { display: block; font: 9px/2 -apple-system, sans-serif; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); } .days b { font-size: max(13px, var(--demo-minimum-font, 0px)); font-weight: 500; }
   .notes, .board { max-width: 650px; margin: auto; padding: 60px 44px; } .notes textarea { display: block; width: 100%; min-height: 320px; resize: vertical; color: var(--text-primary); background: transparent; border: 0; border-top: 1px solid var(--border); padding: 22px 0; font: 18px/1.8 ui-serif, Georgia, serif; } .notes small { color: var(--text-muted); font-size: max(11px, var(--demo-minimum-font, 0px)); }
   .issue { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); padding: 16px 0; font-size: max(13px, var(--demo-minimum-font, 0px)); cursor: pointer; } .issue input { accent-color: var(--accent); width: 16px; height: 16px; } .issue small { margin-left: auto; color: var(--text-muted); font-size: max(10px, var(--demo-minimum-font, 0px)); } .issue .done { text-decoration: line-through; color: var(--text-secondary); }
-  .music { max-width: 480px; margin: auto; padding: 38px 36px; text-align: center; } .album { position: relative; display: grid; place-content: center; gap: 10px; width: 160px; aspect-ratio: 1; margin: 0 auto 25px; background: radial-gradient(ellipse at 70% 20%, #d8a8b9, transparent 60%), linear-gradient(145deg, #5e568b, #333b58 70%); color: #f1e8fa; border-radius: 8px; box-shadow: 0 16px 28px -14px #29203c80; } .album > span { font-size: max(50px, var(--demo-minimum-font, 0px)); } .album small { font-size: max(8px, var(--demo-minimum-font, 0px)); letter-spacing: 3px; } .music h1 { margin-bottom: 10px; font-size: max(27px, var(--demo-minimum-font, 0px)); } .music p { color: var(--text-secondary); font-size: max(12px, var(--demo-minimum-font, 0px)); }
-  .play-button { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); } .music ol { list-style: none; padding: 0; margin: 24px 0 0; } .music li button { display: flex; gap: 18px; align-items: center; width: 100%; border: 0; border-radius: 6px; padding: 12px; background: transparent; color: var(--text-secondary); font-size: max(12px, var(--demo-minimum-font, 0px)); } .music li button.track-selected { background: var(--bg-hover); color: var(--accent-ink); } .music li small { margin-left: auto; font-size: max(10px, var(--demo-minimum-font, 0px)); }
+  .music { max-width: 480px; margin: auto; padding: 38px 36px; text-align: center; } .album { position: relative; display: grid; place-content: center; gap: 10px; width: 160px; aspect-ratio: 1; margin: 0 auto 25px; background: radial-gradient(ellipse at 70% 20%, #d8a8b9, transparent 60%), linear-gradient(145deg, #5e568b, #333b58 70%); color: #f1e8fa; border-radius: 8px; box-shadow: 0 16px 28px -14px #29203c80; } .album small { font-size: max(8px, var(--demo-minimum-font, 0px)); letter-spacing: 3px; } .music h1 { margin-bottom: 10px; font-size: max(27px, var(--demo-minimum-font, 0px)); } .music p { color: var(--text-secondary); font-size: max(12px, var(--demo-minimum-font, 0px)); }
+  .play-button { display: inline-grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); } .music ol { list-style: none; padding: 0; margin: 24px 0 0; } .music li button { display: flex; gap: 18px; align-items: center; width: 100%; border: 0; border-radius: 6px; padding: 12px; background: transparent; color: var(--text-secondary); font-size: max(12px, var(--demo-minimum-font, 0px)); } .music li button.track-selected { background: var(--bg-hover); color: var(--accent-ink); } .music li small { margin-left: auto; font-size: max(10px, var(--demo-minimum-font, 0px)); }
   .start { display: grid; justify-items: center; text-align: center; max-width: 620px; margin: auto; padding: 65px 36px; } .start h1 { font-size: max(31px, var(--demo-minimum-font, 0px)); margin-bottom: 12px; } .start p { max-width: 46ch; color: var(--text-secondary); font-size: max(13px, var(--demo-minimum-font, 0px)); } .start .flower { margin-top: 0; }
   .search { display: flex; width: 100%; max-width: 430px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 12px; padding: 5px 8px 5px 16px; margin: 8px 0 30px; box-shadow: 0 4px 12px #00000005; } .search input { flex: 1; width: 0; padding: 7px 0; background: transparent; border: 0; color: var(--text-primary); font-size: max(12px, var(--demo-minimum-font, 0px)); } .search button { background: transparent; color: var(--text-secondary); border: 0; padding: 0 8px; }
   .quick-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; width: 100%; max-width: 430px; } .quick-links a { text-decoration: none; display: grid; justify-items: center; gap: 9px; border: 0; background: transparent; color: var(--text-secondary); font-size: max(10px, var(--demo-minimum-font, 0px)); } .quick-links i { display: grid; place-items: center; border-radius: 12px; width: 43px; height: 43px; background: var(--bg-hover); } .quick-links img { display: block; border-radius: 8px; } .settings-link { margin-top: 36px; font-size: max(11px, var(--demo-minimum-font, 0px)); background: none; color: var(--text-secondary); border: 0; padding: 8px; }

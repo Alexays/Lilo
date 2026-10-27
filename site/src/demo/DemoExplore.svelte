@@ -33,7 +33,7 @@
       <nav aria-label={text.explore}><input type="search" aria-label={text.exploreSearch} placeholder={text.exploreSearch} bind:value={query} />
         <div class="feature-list">{#each features as item (item.id)}<button type="button" class:selected={feature?.id === item.id} aria-pressed={feature?.id === item.id} onclick={() => { selected = item.id; }}><span>{item.title}</span>{#if item.mac}<small>macOS</small>{/if}</button>{/each}</div>
       </nav>
-      <div class="feature-detail">{#if feature}<span class="feature-index" aria-hidden="true">✳</span>{#if feature.mac}<span class="platform">{text.exploreMac}</span>{/if}<h3>{feature.title}</h3><p>{feature.description}</p>{#if feature.mac}<p class="platform-note">{text.exploreMacNote}</p>{/if}<button class="try-feature" type="button" onclick={() => onselect(feature.id)}>{feature.mac ? text.exploreSettings : text.exploreOpen}<span aria-hidden="true">↗</span></button>{:else}<p>{text.exploreEmpty}</p>{/if}</div>
+      <div class="feature-detail">{#if feature}{#if feature.mac}<span class="platform">{text.exploreMac}</span>{/if}<h3>{feature.title}</h3><p>{feature.description}</p>{#if feature.mac}<p class="platform-note">{text.exploreMacNote}</p>{/if}<button class="try-feature" type="button" onclick={() => onselect(feature.id)}>{feature.mac ? text.exploreSettings : text.exploreOpen}</button>{:else}<p>{text.exploreEmpty}</p>{/if}</div>
     </div>
   </dialog>
 
@@ -54,7 +54,6 @@
   .feature-list button.selected { background: var(--bg-selected); font-weight: 600; }
   small { flex: none; font-size: 8px; color: var(--text-muted); font-weight: 400; }
   .feature-detail { flex: 1; min-width: 0; overflow: auto; padding: 30px; }
-  .feature-index { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 24px; border-radius: 15px; background: var(--bg-hover); color: #9984c8; font-size: 40px; }
   h3 { font-size: 23px; line-height: 1.2; letter-spacing: -.5px; margin: 8px 0 15px; font-weight: 600; }
   p { margin: 0 0 18px; color: var(--text-secondary); line-height: 1.7; }
   .platform { color: var(--text-muted); font-size: 10px; }

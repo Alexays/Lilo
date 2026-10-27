@@ -15,6 +15,7 @@ make site-check         # Check lint, formatting, Astro templates and TypeScript
 make site-fix           # Fix lint and formatting with Ultracite
 make site-test          # Build, then test release notes, routes, links and metadata
 make site-e2e           # Test the interactive demo in Chromium with production headers
+make site-e2e SITE_E2E_ARGS='--browser=webkit tests/demo/links.spec.ts' # Check link actions in WebKit
 make site-deploy-check  # Check Cloudflare deployment without publishing
 ```
 

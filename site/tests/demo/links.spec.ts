@@ -84,7 +84,7 @@ test("link menus support keyboard navigation and work inside Peek and Little win
   const peek = frame.getByRole("dialog", { exact: true, name: "Peek" });
   await expect(peek.locator(".repo-top")).toBeVisible();
   await peek
-    .getByRole("link", { exact: true, name: "↗ getlilo.app" })
+    .getByRole("link", { exact: true, name: "getlilo.app" })
     .click({ button: "right" });
   await menu
     .getByRole("menuitem", { exact: true, name: "Open in Little Window" })
@@ -190,6 +190,40 @@ test("French link actions fit a narrow preview and support keyboard Peek", async
   ).toBe(true);
 });
 
+test("folder link menus stay open after releasing a right-click", async ({
+  page,
+}) => {
+  await page.goto("/#browser-demo");
+  const frame = page.frameLocator("#browser-demo iframe");
+  const folder = frame.locator('.file-list a[href$="/tree/main/.changes"]');
+  await folder.click({ button: "right" });
+  const menu = frame.getByRole("menu", { exact: true, name: "Link actions" });
+  await expect(menu).toBeVisible();
+
+  const littleAction = menu.getByRole("menuitem", {
+    exact: true,
+    name: "Open in Little Window",
+  });
+
+  await littleAction.hover();
+  await expect(menu).toBeVisible();
+  await frame.locator(".repo-top").click();
+  await expect(menu).toBeHidden();
+  await folder.click({ button: "right" });
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect(folder).toBeFocused();
+  await folder.click({ button: "right" });
+  await littleAction.click();
+
+  const little = frame.getByRole("dialog", {
+    exact: true,
+    name: "Little window",
+  });
+
+  await expect(little.locator(".file-content")).toContainText(".changes/");
+});
+
 test("repository files and folders support link actions and local navigation history", async ({
   page,
 }) => {
@@ -208,7 +242,7 @@ test("repository files and folders support link actions and local navigation his
     .getByRole("menuitem", { exact: true, name: "Open Link in New Tab" })
     .click();
   await expect(frame.locator(".file-content")).toContainText("docs/");
-  await frame.getByRole("link", { exact: true, name: "‹ Files" }).click();
+  await frame.getByRole("link", { exact: true, name: "Files" }).click();
   await expect(frame.locator(".file-list")).toBeVisible();
   await frame.getByRole("button", { exact: true, name: "Go back" }).click();
   await expect(frame.locator(".file-content")).toContainText("docs/");

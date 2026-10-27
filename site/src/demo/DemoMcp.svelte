@@ -77,7 +77,7 @@
     {/each}</ol>
   {/if}
   <div class="session-state" role="status" aria-live="polite">{session.status === "waiting" ? text.agentPermission : finalMessage}</div>
-  <div class="session-actions">{#if active}<button class="stop" type="button" onclick={() => agent.stop()}><span aria-hidden="true">■</span>{text.agentStop}</button>{:else}<button class="run" type="button" disabled={!ready || !enabled} onclick={() => { details = false; void agent.start(); }}>{session.status === "idle" ? text.agentRun : text.agentAgain}<span aria-hidden="true">↗</span></button>{/if}</div>
+  <div class="session-actions">{#if active}<button class="stop" type="button" onclick={() => agent.stop()}><span aria-hidden="true">■</span>{text.agentStop}</button>{:else}<button class="run" type="button" disabled={!ready || !enabled} onclick={() => { details = false; void agent.start(); }}>{session.status === "idle" ? text.agentRun : text.agentAgain}</button>{/if}</div>
   <details bind:open={details} inert={active}><summary>{text.agentDetails}<span aria-hidden="true">⌘</span></summary>{#if details}<DemoTools {host} {locale} />{/if}</details>
 </section>
 
