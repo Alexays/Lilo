@@ -403,7 +403,9 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             popover: popover,
             action: action
         )
-        popover.show(relativeTo: anchorRect, of: contentView, preferredEdge: .maxX)
+        // Below the button, as Chrome shows it: beside a button at the top of the window, AppKit pins the popover to the
+        // screen's top and its arrow lands in the rounded corner.
+        popover.show(relativeTo: anchorRect, of: contentView, preferredEdge: contentView.isFlipped ? .maxY : .minY)
 
         completionHandler(nil)
         // The completion starts WebKit's color scheme check, whose answer writes into the action even once it is freed
