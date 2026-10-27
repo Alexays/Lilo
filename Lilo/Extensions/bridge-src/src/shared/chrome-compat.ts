@@ -203,6 +203,8 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   const withheldURLs = !perms.has('tabs') && !chrome.runtime?.getManifest?.()?.optional_permissions?.includes('tabs');
   const groups = chrome.tabGroups === tabGroupsAugmentation ? tabsWithGroups : {};
   const unreceived = () => noReceiver;
+  // How long each look for a loading tab's content scripts waits: about half a second in all.
+  const TAB_LISTENER_WAITS = [20, 60, 150, 300];
   // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
   // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
   // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
@@ -212,22 +214,33 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
   // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
   // as listening: its page cannot listen yet (a tab opened on the popup hears tabs.onActivated's message at once).
-  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => function (this: unknown, tabId: unknown, _message: unknown, options?: unknown) {
+  // A message sent on a document's DOMContentLoaded reaches no content script yet (WEBKIT-GAPS 97): the probe goes again
+  // while the tab loads, and once one listens the message goes too, as nobody received it.
+  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => async function (this: unknown, tabId: unknown, message: unknown, options?: unknown) {
     const tabs = self(this) as any;
     const target = options !== null && typeof options === 'object' ? [options] : [];
+    const portClosed = 'The message port closed before a response was received.';
+    const tab = () => Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+    const listens = () => Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then((answer) => answer === true, () => false);
     const loadsOwnPage = async () => {
-      const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+      const shown = await tab();
       const base = chrome.runtime?.getURL?.('');
       const scope = globalThis as any;
       // Chrome never delivers a page's message to the page itself: its own tab does not count.
       const own = scope.top === scope && typeof scope.location?.href === 'string' ? scope.location.href.split('#')[0] : undefined;
-      return tab?.status === 'loading' && !!base && [tab.url, tab.pendingUrl]
+      return shown?.status === 'loading' && !!base && [shown.url, shown.pendingUrl]
         .some((url) => typeof url === 'string' && url.startsWith(base) && url.split('#')[0] !== own);
     };
-    return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
-      async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver),
-      unreceived,
-    );
+    if (await listens() || await loadsOwnPage()) return portClosed;
+    for (const [attempt, delay] of TAB_LISTENER_WAITS.entries()) {
+      // The first look also follows a tab that just completed: its document committed a moment ago.
+      if (attempt > 0 && (await tab())?.status !== 'loading') break;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      if (!await listens()) continue;
+      const response = await Promise.resolve(original.call(tabs, tabId, message, ...target)).catch(() => undefined);
+      return response === undefined ? portClosed : { response };
+    }
+    return noReceiver;
   };
   const tabsPatch: Record<string, Patch> = {
     ...tabPatches(withheldURLs),

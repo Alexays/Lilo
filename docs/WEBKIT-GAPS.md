@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95 and 96. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
 
 ---
 
@@ -175,6 +175,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** a tab in an extension's configuration cancels such a navigation and loads the page as the app does, in a web page's engine ([WKWebViewTab.swift] `policy(for:)`, [TabManager.swift] `load(_:inTab:)`). The page goes with a GET: a form an extension page posts to the web loses its body.
 - **Impact:** RSS Feed Reader's options page only redirects to its website, and stayed blank.
 - **Check:** `ExtensionPageNavigationTests`. Repro: open an extension page whose script runs `document.location = 'https://example.com/'`. Expected: the tab shows example.com. Actual: it stays on the extension page.
+
+### 97. A message sent on DOMContentLoaded misses the content scripts
+
+- **Gap:** WebKit reports a document's `webNavigation.onDOMContentLoaded` with its commit, and counts the document's content scripts a moment later: a `tabs.sendMessage` sent on that event reaches none, though they ran at `document_start`. Chrome's reaches them.
+- **Lilo:** when nobody answered a tab's message, the probe that tells whether a content script listens goes again for about half a second while the tab loads (and once for a tab that just completed); once one listens, the message goes again, as nobody received it, and its answer comes back ([chrome-compat.ts] `tabNoAnswer`). A tab nobody listens in gets its error that much later.
+- **Impact:** Requestly sends `clientPageLoaded` on `onDOMContentLoaded`: its content script never got it.
+- **Check:** `message-answers.test.ts` ("reach the content script of a loading tab that listens a moment after the message"). Repro: a worker sends `tabs.sendMessage(tabId, 'x')` from `webNavigation.onDOMContentLoaded` to a page whose `document_start` content script listens. Expected: the content script receives it. Actual: `Could not establish connection. Receiving end does not exist.`.
 
 ### 60. A port nobody received yet disconnects when the first process answers
 

@@ -139,6 +139,7 @@ describe('a port a frame opens through its extension page', () => {
 
 let contentListens = false;
 const probes: unknown[] = [];
+const lateMessages: unknown[] = [];
 
 // WebKit calls back with undefined both when nothing answers and when it answers no value; each
 // context has its own prototypes.
@@ -155,12 +156,16 @@ function install(page: boolean, answer: unknown): any {
   // The tab's content scripts listen, without responding, when the probe is answered.
   class Tabs {
     get(tabId: number) {
+      if (tabId === 6) return Promise.resolve({ id: 6, status: 'loading', url: 'https://example.com/' });
       return Promise.resolve({ id: tabId, status: tabId === 4 ? 'loading' : 'complete', url: tabId >= 4 ? 'chrome-extension://abc/popup.html' : 'https://example.com/' });
     }
-    sendMessage(_tabId: number, message: unknown, ...rest: unknown[]) {
+    sendMessage(tabId: number, message: unknown, ...rest: unknown[]) {
       const callback = typeof rest[rest.length - 1] === 'function' ? rest.pop() as (response: unknown) => void : undefined;
       probes.push(rest[0]);
-      const response = message === listensProbe && contentListens ? true : undefined;
+      // Tab 6's content script starts listening once its third probe came: it then answers the message.
+      if (tabId === 6) lateMessages.push(message);
+      const late = tabId === 6 && lateMessages.filter((sent) => sent === listensProbe).length >= 3;
+      const response = message === listensProbe ? (contentListens || late) || undefined : late ? 'pong' : undefined;
       if (!callback) return Promise.resolve(response);
       setTimeout(() => callback(response), 0);
     }
@@ -203,6 +208,13 @@ describe('sendMessage callbacks', () => {
 });
 
 describe('tabs.sendMessage promises', () => {
+  it("reach the content script of a loading tab that listens a moment after the message, as Chrome's do", async () => {
+    const worker = install(false, undefined);
+    lateMessages.length = 0;
+    assert.equal(await worker.tabs.sendMessage(6, 'ping'), 'pong');
+    assert.deepEqual(lateMessages.filter((sent) => sent !== listensProbe), ['ping', 'ping'], 'the message goes again once, after nobody received it');
+  });
+
   it("reject with Chrome's error when no content script listens, and resolve when one does", async () => {
     const worker = install(false, undefined);
     await assert.rejects(worker.tabs.sendMessage(3, 1), { message: 'Could not establish connection. Receiving end does not exist.' });

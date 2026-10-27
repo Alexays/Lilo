@@ -113,7 +113,7 @@ export const noReceiver = 'Could not establish connection. Receiving end does no
  */
 export function lastErrorWithoutAnswer(
   send: (...args: any[]) => any,
-  noAnswer: (this: unknown, ...args: any[]) => string | Promise<string>,
+  noAnswer: (this: unknown, ...args: any[]) => string | { response: unknown } | Promise<string | { response: unknown }>,
   rejects = false,
 ): (...args: any[]) => any {
   return function (this: unknown, ...args: any[]) {
@@ -124,15 +124,19 @@ export function lastErrorWithoutAnswer(
       const sent = args.slice(0, last);
       args[last] = function (this: unknown, response?: unknown) {
         if (response !== undefined || bridgeChrome()?.runtime?.lastError) return callback.call(this, response);
-        Promise.resolve(noAnswer.apply(self, sent)).then((message) => withLastError(message, () => callback.call(this)));
+        Promise.resolve(noAnswer.apply(self, sent)).then((answer) => (typeof answer === 'string'
+          ? withLastError(answer, () => callback.call(this))
+          : callback.call(this, answer.response)));
       };
       return send.apply(this, args);
     }
     const result = send.apply(this, args);
     if (!rejects || typeof result?.then !== 'function') return result;
     return result.then(async (response: unknown) => {
-      if (response === undefined && await noAnswer.apply(self, args) === noReceiver) throw new Error(noReceiver);
-      return response;
+      if (response !== undefined) return response;
+      const answer = await noAnswer.apply(self, args);
+      if (answer === noReceiver) throw new Error(noReceiver);
+      return typeof answer === 'string' ? response : answer.response;
     });
   };
 }
