@@ -176,7 +176,7 @@ export function installCryptoKeyStorage(scope: StoreScope, inWorker: boolean): v
     return adoptAll(this, key, extractable);
   });
 
-  // A key may be the stored value or one of its fields, as 2FAS (`put(key, id)`) and Keeper store theirs.
+  // A key may be the stored value, as 2FAS stores its own (`put(key, id)`), or one of its fields.
   const stored = (value: unknown) => {
     const found = value instanceof CryptoKey ? storedOf.get(value) : undefined;
     if (inWorker && value instanceof CryptoKey && !found) throw new DOMException(refused, 'DataCloneError');
