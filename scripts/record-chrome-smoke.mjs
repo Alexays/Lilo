@@ -226,7 +226,8 @@ async function capture(browser, id, manifest) {
     for (let still = opened; Date.now() - opened < timeout;) {
       await sleep(250);
       const session = await sessionOf(targetId);
-      const tokens = (session && await evaluate(`(${probes}).fingerprint().join(' ')`, session)) || '';
+      // Chrome's own error page (a blocked page) is no reference for what the extension shows.
+      const tokens = (session && await evaluate(`location.protocol === 'chrome-error:' ? '' : (${probes}).fingerprint().join(' ')`, session)) || '';
       if (tokens !== samples.at(-1)?.tokens) still = Date.now();
       samples.push({ at: Date.now() - opened, tokens });
       if (tokens && Date.now() - opened >= settleMinimum && Date.now() - still >= settleQuiet) break;
