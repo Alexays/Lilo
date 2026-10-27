@@ -30,7 +30,7 @@
   import { springEase } from "../../lib/motion/spring";
   import { tick } from "svelte";
   import { isShadowItem } from "../../lib/dndEngine/projection";
-  import { commitSidebarDrop, getRecentlyDroppedId, getZoneItems, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
+  import { commitSidebarDrop, getRecentlyDroppedId, getSidebarDrag, getZoneItems, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
   import { t } from "../../lib/i18n/state.svelte";
@@ -55,6 +55,20 @@
   // The same drop commit as the sidebar's lists: reorder, and move between favorites, pinned and today.
   type StripSection = "bookmarked" | "pinned" | "unpinned";
   const zoneRef = (section: StripSection): SidebarZoneRef => ({ id: `strip-root-${section}-${spaceId}`, section, parentFolderId: null });
+  // The sidebar's section colors: a drag shows which list the tab lands in.
+  const ZONE_COLORS: Record<StripSection, string> = { bookmarked: "var(--color-bookmark)", pinned: "var(--color-pin)", unpinned: "var(--accent)" };
+  const drag = $derived(getSidebarDrag());
+  // Only a change of list is worth a tint: a reorder within one already shows by its placeholder.
+  const crossedZoneId = $derived(drag?.target && drag.target.section !== drag.source.section ? drag.target.id : undefined);
+  /** The color a divider takes while the drag carries an item across it, from one side's list to the other's. */
+  function crossingColor(left: StripSection, right: StripSection): string | undefined {
+    const from = drag?.source.section;
+    const to = drag?.target?.section;
+    if (!from || !to || drag?.target?.parentFolderId) return undefined;
+    return (from === left && to === right) || (from === right && to === left) ? ZONE_COLORS[left] : undefined;
+  }
+  const pinnedDividerColor = $derived(crossingColor("bookmarked", "pinned"));
+  const todayDividerColor = $derived(crossingColor(view.rootItems.pinned.length ? "pinned" : "bookmarked", "unpinned"));
   const baseItems = $derived({
     bookmarked: dndItemsForFolderTabs(view.bookmarked),
     pinned: dndItemsForSidebarItems(view.rootItems.pinned, "pinned"),
@@ -180,6 +194,8 @@
   {@const zone = zoneRef(section)}
   <div
     class={section === "unpinned" ? "today-list" : "group"}
+    class:targeted={crossedZoneId === zone.id}
+    style:--zone-color={ZONE_COLORS[section]}
     use:dndZone={{
       id: zone.id,
       axis: "horizontal",
@@ -227,11 +243,11 @@
     {/if}
 
     {#if view.rootItems.pinned.length}
-      <span class="divider" aria-hidden="true"></span>
+      <span class="divider" class:lit={!!pinnedDividerColor} style:--zone-color={pinnedDividerColor} aria-hidden="true"></span>
       {@render zoneOf("pinned")}
     {/if}
 
-    <span class="divider" aria-hidden="true"></span>
+    <span class="divider" class:lit={!!todayDividerColor} style:--zone-color={todayDividerColor} aria-hidden="true"></span>
 
     {@render zoneOf("unpinned")}
     {#if settingsOpen}
@@ -375,7 +391,16 @@
     height: 18px;
     margin: 0 4px;
     flex: none;
+    border-radius: var(--radius-chip);
     background: var(--separator);
+    transition: background-color var(--motion-duration-fast) ease, width 160ms var(--motion-ease-spring);
+  }
+
+  /* The sidebar's pinned gate, turned on its side. */
+  .divider.lit {
+    width: 3px;
+    margin: 0 3px;
+    background: var(--zone-color);
   }
 
   /* Today's pills shrink to their icon, then the whole row scrolls sideways. */
@@ -464,11 +489,25 @@
     flex: 1;
   }
 
+  .group,
+  .today-list {
+    border-radius: var(--radius-sm);
+    transition: background-color var(--motion-duration-fast) ease, box-shadow var(--motion-duration-fast) ease;
+  }
+
+  /* The list a drop lands in, tinted inside its own box: an outer ring would be clipped by the scroller. */
+  .targeted {
+    background: color-mix(in srgb, var(--zone-color) 11%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--zone-color) 36%, transparent);
+  }
+
   .strip-placeholder {
     width: 100%;
     height: 32px;
     border-radius: var(--radius-sm);
-    background: var(--accent-tint-12);
+    box-sizing: border-box;
+    border: 1px solid color-mix(in srgb, var(--zone-color) 42%, transparent);
+    background: color-mix(in srgb, var(--zone-color) 12%, transparent);
   }
 
   /* The active pill's look, sized to its label. */
