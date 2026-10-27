@@ -723,7 +723,10 @@
 		"play": "Lecture",
 		"pause": "Pause",
 		"next": "Piste suivante",
-		"previous": "Piste précédente"
+		"previous": "Piste précédente",
+		"turnOffCamera": "Désactiver la caméra",
+		"turnOnCamera": "Activer la caméra",
+		"leaveCall": "Quitter l'appel"
 	},
 	"tabEditor": {
 		"title": "Modifier l'onglet",
@@ -1916,6 +1919,8 @@
 		"Pin Tab": "Épingler l'onglet",
 		"Unpin Tab": "Désépingler l'onglet",
 		"Unmute Tab": "Réactiver le son de l'onglet",
+		"Mute Microphone": "Couper le microphone",
+		"Unmute Microphone": "Réactiver le microphone",
 		"Close Other Tabs": "Fermer les autres onglets",
 		"Create Folder": "Créer un dossier",
 		"Create Folder from Tab": "Créer un dossier à partir de l'onglet",

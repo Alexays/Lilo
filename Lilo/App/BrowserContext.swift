@@ -52,9 +52,11 @@ final class BrowserContext {
     var sentTerminalActivity: [ObjectIdentifier: NSArray] = [:]
     /// Tabs playing media, or paused from the sidebar's media card, for that card.
     var mediaTabs: [UUID: MediaTab] = [:]
+    /// Tabs capturing the microphone or camera, for the sidebar's call card.
+    var callTabIds: Set<UUID> = []
     var mediaActivityPending = false
-    /// The media tabs last sent to each window, so an unchanged list costs no bridge message.
-    var sentMediaActivity: [ObjectIdentifier: NSArray] = [:]
+    /// The media and call tabs last sent to each window, so unchanged lists cost no bridge message.
+    var sentMediaActivity: [ObjectIdentifier: NSDictionary] = [:]
     let powerKeeper = PowerKeeper()
     var recentlyClosed = RecentlyClosedStack() {
         didSet { saveClosedTerminals() }

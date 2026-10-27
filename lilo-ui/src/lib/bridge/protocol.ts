@@ -566,6 +566,7 @@ export interface BridgeCommandPayloadMap {
 	muteTabMicrophone: { id: string };
 	unmuteTabMicrophone: { id: string };
 	controlMedia: { id: string; action: BridgeMediaAction };
+	controlCall: { id: string; action: BridgeCallAction };
 	getMediaActivity: EmptyPayload;
 	restoreClosedTab: EmptyPayload;
 	clearUnpinnedTabs: EmptyPayload;
@@ -893,7 +894,7 @@ export interface BridgeEventPayloadMap {
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
 	// Every started terminal this window may name, sent whenever one changes state.
 	terminalActivity: { terminals: BridgeTerminalSummary[] };
-	mediaActivity: { tabs: BridgeMediaTab[] };
+	mediaActivity: { tabs: BridgeMediaTab[]; calls: BridgeCallTab[] };
 	// Sent when a non-blank tab closes; restoreClosedTab reopens it. A Clear names the tabs it
 	// archived instead, for restoreArchivedTabs.
 	tabClosedUndoable: { title: string; count?: number; archivedIds?: string[] };
@@ -1158,6 +1159,7 @@ export interface BridgeAgentClient {
 }
 
 export type BridgeMediaAction = "play" | "pause" | "nexttrack" | "previoustrack";
+export type BridgeCallAction = "togglemicrophone" | "togglecamera" | "hangup";
 
 /** A tab playing media, or paused from the sidebar's media card. */
 export interface BridgeMediaTab {
@@ -1169,6 +1171,20 @@ export interface BridgeMediaTab {
 	muted: boolean;
 	/** The page registered Media Session next or previous track handlers. */
 	hasTrackControls: boolean;
+}
+
+/** A tab capturing the microphone or camera, for the sidebar's call card. */
+export interface BridgeCallTab {
+	id: string;
+	spaceId: string;
+	title: string;
+	faviconDataURL: string;
+	hasMicrophone: boolean;
+	microphoneMuted: boolean;
+	hasCamera: boolean;
+	cameraOff: boolean;
+	/** The page registered a Media Session hangup handler. */
+	canHangUp: boolean;
 }
 
 /** A started terminal of any window or Space, listed after `>`. Times are milliseconds since 1970, 0 when unset. */

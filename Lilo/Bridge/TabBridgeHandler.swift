@@ -96,6 +96,7 @@ final class TabBridgeHandler: BridgeHandler {
         "muteTabMicrophone",
         "unmuteTabMicrophone",
         "controlMedia",
+        "controlCall",
         "getMediaActivity",
         "restoreClosedTab",
         "clearUnpinnedTabs",
@@ -240,6 +241,9 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "controlMedia":
             if let id = message.uuid("id") { windowController?.controlMedia(tabId: id, action: message.string("action", default: "")) }
+
+        case "controlCall":
+            if let id = message.uuid("id") { windowController?.controlCall(tabId: id, action: message.string("action", default: "")) }
 
         case "getMediaActivity":
             // A loading window has nothing yet: forget what it was sent so it gets the list.

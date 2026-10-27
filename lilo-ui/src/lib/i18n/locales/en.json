@@ -723,7 +723,10 @@
 		"play": "Play",
 		"pause": "Pause",
 		"next": "Next track",
-		"previous": "Previous track"
+		"previous": "Previous track",
+		"turnOffCamera": "Turn off camera",
+		"turnOnCamera": "Turn on camera",
+		"leaveCall": "Leave call"
 	},
 	"tabEditor": {
 		"title": "Edit tab",
@@ -1916,6 +1919,8 @@
 		"Pin Tab": "Pin Tab",
 		"Unpin Tab": "Unpin Tab",
 		"Unmute Tab": "Unmute Tab",
+		"Mute Microphone": "Mute Microphone",
+		"Unmute Microphone": "Unmute Microphone",
 		"Close Other Tabs": "Close Other Tabs",
 		"Create Folder": "Create Folder",
 		"Create Folder from Tab": "Create Folder from Tab",

@@ -7,6 +7,7 @@
   import BottomBar from "./BottomBar.svelte";
   import PipDock from "./PipDock.svelte";
   import MediaCard from "./MediaCard.svelte";
+  import { getCallCardTab } from "../../stores/media.svelte";
   import { chromeActions } from "../../lib/bridge/actions";
   import {
     hasActivePanel,
@@ -146,6 +147,12 @@
 
     <!-- Fixed above the bottom bar: does NOT swipe -->
     <PipDock />
+    <!-- Loaded with the first call: it costs the chrome's first frame nothing. -->
+    {#if getCallCardTab()}
+      {#await import("./CallCard.svelte") then card}
+        <card.default />
+      {/await}
+    {/if}
     <MediaCard />
     {#if updateCardLoaded}
       {#await import("./UpdateCard.svelte") then card}
