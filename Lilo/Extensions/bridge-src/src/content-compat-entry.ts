@@ -18,6 +18,28 @@ installStaticChromeCompat(globalThis as any);
 const browser = (globalThis as any).browser;
 if (browser) Object.defineProperty(globalThis, 'browser', { get: () => browser, set() {}, configurable: true });
 
+// Chrome's events have hasListeners, which WebKit's lack: the world counts each event's listeners on its prototype.
+const listeners = new WeakMap<object, Set<unknown>>();
+for (const namespace of Object.values((globalThis as any).chrome ?? {})) {
+  for (const event of Object.values(namespace ?? {})) {
+    const prototype = event && typeof (event as any).addListener === 'function' ? Object.getPrototypeOf(event) : undefined;
+    if (!prototype || 'hasListeners' in prototype) continue;
+    const { addListener, removeListener } = prototype;
+    Object.defineProperties(prototype, {
+      addListener: { configurable: true, writable: true, value(this: object, listener: unknown, ...rest: unknown[]) {
+        const result = addListener.call(this, listener, ...rest);
+        if (typeof listener === 'function') (listeners.get(this) ?? listeners.set(this, new Set()).get(this)!).add(listener);
+        return result;
+      } },
+      removeListener: { configurable: true, writable: true, value(this: object, listener: unknown) {
+        listeners.get(this)?.delete(listener);
+        return removeListener.call(this, listener);
+      } },
+      hasListeners: { configurable: true, writable: true, value(this: object) { return (listeners.get(this)?.size ?? 0) > 0; } },
+    });
+  }
+}
+
 const onMessage = (globalThis as any).chrome?.runtime?.onMessage;
 if (onMessage) {
   answerAsChrome(onMessage);
