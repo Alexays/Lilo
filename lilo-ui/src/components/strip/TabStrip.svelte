@@ -170,6 +170,7 @@
     <div
       class="strip-slot"
       class:icon-only={iconOnly}
+      class:active={item.id === shownActiveId && item.kind !== "folder" && !isShadowItem(item) && view.tabsById.has(item.id) && !(addressInActiveTab && !iconOnly)}
       animate:translateFlip={{ duration: prefersReducedMotion() ? 0 : flipDurationForSidebarDndItem(item, { recentlyDraggedId: getRecentlyDroppedId(), itemCount: zoneItems.length }), easing: springEase }}
       use:dndItem={{ item, zoneId: zone.id, disabled: isShadowItem(item), onCancel: resetSidebarDrag }}
     >
@@ -448,7 +449,7 @@
   }
 
   /* A width, not just a flex basis: WebKit sizes a group on its slots' widths and would leave the active pill overflowing. */
-  .strip-slot:has(> :global(.strip-tab.active)) {
+  .strip-slot.active {
     flex: none;
     width: 260px;
   }
@@ -478,8 +479,8 @@
     background: var(--separator);
   }
 
-  .today-list .strip-slot:has(> :global(.strip-tab.active)) + .strip-slot::before,
-  .today-list .strip-slot:has(> :global(.strip-tab.active))::before,
+  .today-list .strip-slot.active + .strip-slot::before,
+  .today-list .strip-slot.active::before,
   .today-list .strip-slot:hover::before,
   .today-list .strip-slot:hover + .strip-slot::before {
     display: none;
