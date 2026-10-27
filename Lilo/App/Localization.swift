@@ -14,8 +14,17 @@ enum Localization {
             return override
         }
         for language in preferredLanguages {
-            let primary = language.lowercased().split(separator: "-").first.map(String.init) ?? ""
-            if NativeStrings.locales.contains(primary) { return primary }
+            let parts = language.lowercased().split(separator: "-")
+            let primary = parts.first.map(String.init) ?? ""
+            if primary == "zh" {
+                if let script = parts.first(where: { $0 == "hans" || $0 == "hant" }) {
+                    if script == "hans" { return "zh-Hans" }
+                } else if !parts.contains(where: { ["tw", "hk", "mo"].contains($0) }) {
+                    return "zh-Hans"
+                }
+            } else if NativeStrings.locales.contains(primary) {
+                return primary
+            }
         }
         return "en"
     }

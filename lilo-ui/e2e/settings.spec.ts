@@ -232,6 +232,57 @@ test.describe("in Spanish", () => {
 	});
 });
 
+test.describe("in Simplified Chinese", () => {
+	test.use({ locale: "zh-CN", viewport: { width: 600, height: 400 } });
+
+	test("the regional system language selects Chinese and the selector persists changes", async ({ page }) => {
+		await bootChrome(page, initialWorld());
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+
+		const language = page.getByRole("combobox", { name: "语言", exact: true });
+		await expect(language).toHaveValue("zh-Hans");
+		await expect(language.locator("option:checked")).toHaveText("简体中文");
+		await expectFieldsShowTheirText(language);
+		await expect(page.getByRole("button", { name: "标签页与空间", exact: true })).toBeVisible();
+
+		await language.selectOption("en");
+		await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveValue("en");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "en")).toBe(true);
+
+		await page.getByRole("combobox", { name: "Language", exact: true }).selectOption("zh-Hans");
+		await expect(page.getByRole("combobox", { name: "语言", exact: true })).toHaveValue("zh-Hans");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "zh-Hans")).toBe(true);
+	});
+
+	test("controls fit beside Chinese labels at the minimum window size", async ({ page }) => {
+		await bootChrome(page, initialWorld());
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+		for (const section of ["通用", "外观", "标签页与空间", "隐私", "终端", "AI 智能体", "高级"]) {
+			await page.getByRole("button", { name: section, exact: true }).click();
+			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
+			await expect(rows.first()).toBeVisible();
+			for (const row of await rows.all()) {
+				const title = row.locator(".ui-list-row-title");
+				const copy = (await row.locator(".ui-list-row-copy").boundingBox())!;
+				const action = (await row.locator(".ui-list-row-action").boundingBox())!;
+				const label = await title.textContent();
+				const overlaps = copy.x + copy.width > action.x && action.y < copy.y + copy.height && copy.y < action.y + action.height;
+				expect(overlaps, `${section}: "${label}"`).toBe(false);
+				expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth), `${section}: "${label}"`).toBe(true);
+			}
+		}
+	});
+});
+
+test("a saved Chinese choice overrides the system language when settings load", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => {
+		window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "zh-Hans" } });
+		window.__lilo!.receive({ event: "openSettings" });
+	});
+	await expect(page.getByRole("combobox", { name: "语言", exact: true })).toHaveValue("zh-Hans");
+});
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 
@@ -281,7 +332,8 @@ async function expectFieldsShowTheirText(fields: Locator): Promise<void> {
 			const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + parseFloat(style.borderLeftWidth) * 2;
 			return [context.measureText(text).width + padding, control.getBoundingClientRect().width];
 		});
-		expect(needed, await field.getAttribute("aria-label") ?? "").toBeLessThanOrEqual(width);
+		// Canvas and native controls round fractional glyph widths differently.
+		expect(needed, await field.getAttribute("aria-label") ?? "").toBeLessThanOrEqual(Math.ceil(width));
 	}
 }
 

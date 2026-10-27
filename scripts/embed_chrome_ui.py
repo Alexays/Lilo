@@ -8,10 +8,11 @@ output_path = os.path.join(root, "Lilo", "Generated", "ChromeUIAssets.swift")
 
 # Total-bundle budget: a runaway bundle fails the build in CI rather than silently bloating the
 # binary and slowing cold start.
-# Includes the Spanish message and emoji catalogs, both loaded on demand.
-max_embedded_bytes = 1_430_000
+# Includes the Spanish and Simplified Chinese message and emoji catalogs, both loaded on demand.
+max_embedded_bytes = 1_592_000
 # The part of it loaded before the chrome's first frame, which every launch parses.
-max_first_frame_bytes = 550_050
+# Includes script-aware locale resolution; the Chinese catalogs stay deferred.
+max_first_frame_bytes = 550_350
 
 mime_types = {
     ".html": "text/html",

@@ -42,6 +42,7 @@ export const ENGLISH_EMOJI = catalogOf(
 const LOCALE_NAMES: Partial<Record<Locale, () => Promise<{ EMOJI_NAMES: string }>>> = {
   fr: () => import("./emojiData.fr.gen"),
   es: () => import("./emojiData.es.gen"),
+  "zh-Hans": () => import("./emojiData.zh-Hans.gen"),
 };
 const catalogs = new Map<Locale, Promise<EmojiCatalog>>();
 

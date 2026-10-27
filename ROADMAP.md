@@ -25,7 +25,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Split view, page translation, tab sharing in screen-share calls (`getDisplayMedia`)
 - Multiple windows over shared Spaces, with per-window selection and windows restored on relaunch
 - Accessibility: VoiceOver across the sidebar tree, panels, Changes view and terminal, full keyboard reach, Reduce motion and Increase contrast
-- Localization (English, French, Spanish)
+- Localization (English, French, Spanish, Simplified Chinese)
 - Signed, notarized DMG, a Homebrew cask, and signed updates through Sparkle
 - AppleScript dictionary, Shortcuts actions and a Focus filter, bookmarks in Spotlight, Screen Time
 - Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, and an approval gate for consequential actions

@@ -60,6 +60,19 @@ test("under French, search and names follow the French annotations, English keyw
   assert.equal(await loadEmojiCatalog("en"), ENGLISH_EMOJI);
 });
 
+test("Simplified Chinese emoji names and keywords load on demand, with English search still available", async () => {
+  const chinese = await loadEmojiCatalog("zh-Hans");
+  const search = (query: string) => searchEmoji(chinese, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("zh-Hans"), chinese);
+  assert.equal(search("火箭")[0], "🚀");
+  assert.ok(search("红心").includes("❤️"));
+  assert.ok(search("猫").includes("🐱"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.equal(emojiName(chinese, "🚀"), "火箭");
+  assert.ok(chinese.categories.flat().every((emoji) => emoji.name.length > 0));
+  assert.equal(chinese.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
+
 test("Spanish emoji names and searches preserve accents and English keywords", async () => {
   const spanish = await loadEmojiCatalog("es");
   const search = (query: string) => searchEmoji(spanish, query).map((match) => match.emoji);
