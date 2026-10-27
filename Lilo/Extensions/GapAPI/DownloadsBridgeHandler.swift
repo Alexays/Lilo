@@ -40,7 +40,7 @@ final class DownloadsBridgeHandler: GapHandler {
 
     func handle(_ call: GapCall) async -> Any? {
         if call.action == "downloads.suggestFilename" {
-            let context = FilenameContext(extensionId: call.extensionId, pageChannel: call.int("pageChannel"))
+            let context = FilenameContext(registry: ObjectIdentifier(call.registry), extensionId: call.extensionId, pageChannel: call.int("pageChannel"))
             guard let requestId = call.string("requestId"), var request = Self.filenameRequests[requestId] else { return nil }
             guard request.awaiting.remove(context) != nil else { return nil }
             let conflictAction = call.string("conflictAction") ?? "uniquify"
@@ -226,8 +226,10 @@ final class DownloadsBridgeHandler: GapHandler {
 
     // MARK: - onDeterminingFilename
 
-    /// An extension's worker (no `pageChannel`) or one of its pages.
+    /// An extension's worker (no `pageChannel`) or one of its pages, in a profile: the same extension in another one
+    /// answers only its own downloads.
     private struct FilenameContext: Hashable {
+        let registry: ObjectIdentifier
         let extensionId: String
         let pageChannel: Int?
     }
@@ -251,7 +253,9 @@ final class DownloadsBridgeHandler: GapHandler {
     /// suggest, nil when none does. Without a listening context it answers at once and sends nothing.
     static func suggestFilename(for item: DownloadItem, registry: ProfileExtensionRegistry) async -> FilenameSuggestion? {
         let contexts = registry.extensionIds(withPermission: "downloads").flatMap { id in
-            registry.gapEvents.contexts(of: id, listeningTo: "downloads.onDeterminingFilename").map { FilenameContext(extensionId: id, pageChannel: $0) }
+            registry.gapEvents.contexts(of: id, listeningTo: "downloads.onDeterminingFilename").map {
+                FilenameContext(registry: ObjectIdentifier(registry), extensionId: id, pageChannel: $0)
+            }
         }
         guard !contexts.isEmpty else { return nil }
         var ids: [String] = []

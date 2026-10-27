@@ -3,6 +3,7 @@
 // goes through Lilo, which answers null when the extension may not access the host. Redirect "manual" stays WebKit's.
 // SW-safe: the worker has no XMLHttpRequest.
 import { gapCall } from './ipc.ts';
+import { fromBase64, toBase64 } from './base64.ts';
 
 interface Answer {
   status: number;
@@ -12,28 +13,30 @@ interface Answer {
   redirected: boolean;
 }
 
-function base64(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(binary);
-}
-
 // Statuses whose response has no body: Response throws when given one.
 const bodiless = new Set([101, 103, 204, 205, 304]);
+
+// Request ids, unique across the extension's contexts.
+const context = Math.random().toString(36).slice(2);
+let requests = 0;
 
 /** Lilo's response to `request`, null for a host the extension may not access. Rejects as fetch does. */
 async function sendThroughLilo(scope: any, request: Request): Promise<Response | null> {
   const signal = request.signal;
   if (signal.aborted) throw signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
-  const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : base64(new Uint8Array(await request.clone().arrayBuffer()));
+  const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : toBase64(new Uint8Array(await request.clone().arrayBuffer()));
   const headers: [string, string][] = [];
   request.headers.forEach((value, name) => headers.push([name, value]));
   if (!request.headers.has('user-agent')) headers.push(['User-Agent', scope.navigator?.userAgent ?? '']);
-  // No timeout: a long poll or a large download takes as long as it takes, as in Chrome.
-  const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect }, 0);
+  // No timeout: a long poll or a large download takes as long as it takes, as in Chrome. An abort stops it in Lilo too.
+  const requestId = `${context}-${++requests}`;
+  const call = gapCall<Answer | null>('fetch', 'credentialed', { url: request.url, method: request.method, headers, body, redirect: request.redirect, requestId }, 0);
   let onAbort = (): void => {};
   const aborted = new Promise<never>((_, reject) => {
-    onAbort = () => reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError'));
+    onAbort = () => {
+      gapCall('fetch', 'cancel', { requestId }).catch(() => {});
+      reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError'));
+    };
     signal.addEventListener('abort', onAbort, { once: true });
   });
   let answer: Answer | null;
@@ -43,9 +46,7 @@ async function sendThroughLilo(scope: any, request: Request): Promise<Response |
     signal.removeEventListener('abort', onAbort);
   }
   if (answer == null) return null;
-  const binary = atob(answer.body);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const bytes = fromBase64(answer.body);
   const response = new Response(bodiless.has(answer.status) ? null : bytes, { status: answer.status, headers: answer.headers });
   Object.defineProperties(response, { url: { value: answer.url }, redirected: { value: answer.redirected } });
   return response;
@@ -129,6 +130,8 @@ function routeCredentialedXHR(scope: any, origin: string): void {
     }
     state.phase = 'sent';
     state.controller = controller;
+    // In send, as Chrome fires it.
+    fire(this, 'loadstart');
     const timer = this.timeout > 0 ? setTimeout(() => { state.timedOut = true; controller.abort(); }, this.timeout) : undefined;
     // Reopened or aborted: the request it was is over.
     const current = () => requests.get(this) === state && state.phase === 'sent';
@@ -137,12 +140,11 @@ function routeCredentialedXHR(scope: any, origin: string): void {
       if (!response) {
         clearTimeout(timer);
         requests.delete(this);
+        // The extension heard loadstart in send(): WebKit's own, for the same request, does not reach it.
+        this.addEventListener('loadstart', (event: Event) => event.stopImmediatePropagation(), { capture: true, once: true });
         send.call(this, body);
         return;
       }
-      // Fired once Lilo answers, not in send(): WebKit's send fires its own for a host Lilo leaves to it.
-      fire(this, 'loadstart');
-      if (!current()) return;
       const bytes = await response.arrayBuffer();
       if (!current()) return;
       const type = response.headers.get('content-type') ?? '';
@@ -194,8 +196,6 @@ function routeCredentialedXHR(scope: any, origin: string): void {
       fire(this, 'load', bytes.byteLength, sized);
       fire(this, 'loadend', bytes.byteLength, sized);
     }).catch(() => {
-      if (!current()) return;
-      fire(this, 'loadstart');
       if (!current()) return;
       clearTimeout(timer);
       state.phase = 'done';

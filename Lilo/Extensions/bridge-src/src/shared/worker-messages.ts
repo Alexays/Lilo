@@ -7,12 +7,22 @@ type Envelope = { page: string; toWorker: boolean; data: unknown; url?: string; 
 /** A message on a transferred port, which BroadcastChannel cannot carry: each end relays its own real port. */
 type PortEnvelope = { port: string; toWorker: boolean; data: unknown };
 
+/** The real ends this context relays over each channel, by port id: one listener serves them all. */
+const relayed = new WeakMap<object, Map<string, { port: any; toWorker: boolean }>>();
+
 /** Relays `port` over `channel` as the page's end of `id` when `toWorker`, else as the worker's. */
 function relayPort(channel: any, port: any, id: string, toWorker: boolean): void {
+  let ends = relayed.get(channel);
+  if (!ends) {
+    const all = new Map<string, { port: any; toWorker: boolean }>();
+    relayed.set(channel, ends = all);
+    channel.addEventListener('message', ({ data }: { data: PortEnvelope }) => {
+      const end = typeof data?.port === 'string' ? all.get(data.port) : undefined;
+      if (end && data.toWorker !== end.toWorker) end.port.postMessage(data.data);
+    });
+  }
+  ends.set(id, { port, toWorker });
   port.onmessage = ({ data }: { data: unknown }) => channel.postMessage({ port: id, toWorker, data } satisfies PortEnvelope);
-  channel.addEventListener('message', ({ data }: { data: PortEnvelope }) => {
-    if (data?.port === id && data.toWorker !== toWorker) port.postMessage(data.data);
-  });
 }
 
 export function installPageWorkerMessages(scope: any): void {
@@ -55,11 +65,14 @@ export function installPageWorkerMessages(scope: any): void {
       channel.addEventListener('message', ({ data }: { data: { pong?: string } }) => {
         if (data?.pong === page && !settled) own().then((found) => settle(found ?? workerStandIn(scope, base)));
       });
+      // As Chrome's, it never resolves without a worker: the looks space out, to 3 s.
+      let delay = 100;
       const find = () => own().then((found) => {
         if (settled) return;
         if (found) return settle(found);
         channel.postMessage({ ping: page });
-        scope.setTimeout(find, 100);
+        scope.setTimeout(find, delay);
+        delay = Math.min(delay * 2, 3000);
       });
       find();
     }),

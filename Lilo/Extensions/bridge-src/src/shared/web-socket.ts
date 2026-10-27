@@ -2,17 +2,12 @@
 // gap 33), so this one runs over Lilo's URLSession. SW-safe: no window/document/webkit.
 import { bridgeEvents, gapCall } from './ipc.ts';
 import { reportGapListener } from './gap-event.ts';
+import { fromBase64, toBase64 } from './base64.ts';
 
 const CONNECTING = 0, OPEN = 1, CLOSING = 2, CLOSED = 3;
 const open = new Map<number, LiloWebSocket>();
 
 bridgeEvents.set('webSocket.onEvent', (event: any) => open.get(event?.id)?.receive(event));
-
-function base64(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return btoa(binary);
-}
 
 class LiloWebSocket extends EventTarget {
   static readonly CONNECTING = CONNECTING;
@@ -64,7 +59,7 @@ class LiloWebSocket extends EventTarget {
     const id = this.id;
     const bytes = async () => data instanceof Blob ? new Uint8Array(await data.arrayBuffer())
       : ArrayBuffer.isView(data) ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data as ArrayBufferLike);
-    this.sending = this.sending.then(async () => gapCall('webSocket', 'send', typeof data === 'string' ? { id, text: data } : { id, binary: base64(await bytes()) }))
+    this.sending = this.sending.then(async () => gapCall('webSocket', 'send', typeof data === 'string' ? { id, text: data } : { id, binary: toBase64(await bytes()) }))
       .catch(() => {});
   }
 
@@ -87,13 +82,7 @@ class LiloWebSocket extends EventTarget {
         this.protocol = event.protocol ?? '';
         this.fire(new Event('open'));
       } else if (event.type === 'message') {
-        let data: string | ArrayBuffer = event.text;
-        if (typeof data !== 'string') {
-          const binary = atob(event.binary ?? '');
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          data = bytes.buffer;
-        }
+        const data: string | ArrayBuffer = typeof event.text === 'string' ? event.text : fromBase64(event.binary ?? '').buffer;
         this.fire(new MessageEvent('message', { data: typeof data === 'string' || this.binaryType === 'arraybuffer' ? data : new Blob([data]), origin: this.origin }));
       } else if (event.type === 'error') {
         this.fire(new Event('error'));

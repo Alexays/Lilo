@@ -1,6 +1,8 @@
 // WebKit stalls a worker for good when it clones a CryptoKey into IndexedDB (WEBKIT-GAPS.md, gap 80). Its and its pages' keys
 // keep their material, so IndexedDB stores that instead and reads give back a stand-in crypto.subtle resolves. SW-safe.
 
+import { toBase64 } from './base64.ts';
+
 type Stored = {
   __liloCryptoKey: 1;
   type: string;
@@ -91,7 +93,7 @@ export function installCryptoKeyStorage(scope: StoreScope, inWorker: boolean): v
     return key!;
   };
   const fingerprint = ({ format, data, extractable, usages, algorithm }: Stored) => {
-    const material = data instanceof ArrayBuffer ? String.fromCharCode(...new Uint8Array(data)) : JSON.stringify(data);
+    const material = data instanceof ArrayBuffer ? toBase64(new Uint8Array(data)) : JSON.stringify(data);
     return JSON.stringify([format, extractable, usages, algorithm, material]);
   };
   // The real key behind a stand-in; anything else as given.

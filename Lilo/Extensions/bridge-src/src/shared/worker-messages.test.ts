@@ -9,9 +9,11 @@ class ExtendableMessageEvent extends MessageEvent<unknown> {
   waitUntil(_promise: Promise<unknown>) { throw new DOMException('Event is not trusted', 'InvalidStateError'); }
 }
 
-const channels: BroadcastChannel[] = [];
+const channels: Channel[] = [];
 class Channel extends BroadcastChannel {
+  listeners = 0;
   constructor(name: string) { super(name); channels.push(this); }
+  override addEventListener(...args: Parameters<BroadcastChannel['addEventListener']>) { this.listeners++; super.addEventListener(...args); }
 }
 
 function page(href: string, registrations: unknown[] = []) {
@@ -96,6 +98,21 @@ describe('worker messages', () => {
     assert.equal(await asked, 'again');
     port1.close();
     message.ports[0].close();
+  });
+
+  it('relays every transferred port through one listener per context', async () => {
+    const sw = worker();
+    const offscreen = page('chrome-extension://abc/offscreen.html');
+    const before = channels.map((channel) => channel.listeners);
+    for (let i = 0; i < 3; i++) {
+      const { port2 } = new MessageChannel();
+      const received = next(sw);
+      offscreen.worker('chrome-extension://abc/lilo-background-wrapper.js').postMessage({ id: i }, [port2]);
+      for (const port of (await received).ports) port.close();
+      port2.close();
+    }
+    const added = channels.map((channel, i) => channel.listeners - (before[i] ?? 0));
+    assert.deepEqual(added, [1, 1]);
   });
 
   it('resolves ready with the registration a page finds', async () => {

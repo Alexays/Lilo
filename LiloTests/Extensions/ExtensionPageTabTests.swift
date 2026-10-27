@@ -395,6 +395,24 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(cookies(fromXHR), ["lax=1", "plain=1", "strict=1"], "an extension page's XMLHttpRequest with withCredentials")
     }
 
+    /// A credentialed fetch sends a cookie to its path and the paths below it, never to a path it only starts (RFC 6265).
+    func testCredentialedFetchCookiesMatchPathsBySegment() async throws {
+        let cookie = { (path: String) in
+            try XCTUnwrap(HTTPCookie(properties: [.name: "c\(path)", .value: "1", .domain: "example.com", .path: path]))
+        }
+        let jar = try ["/", "/app", "/app/", "/application"].map(cookie)
+        let store = WKWebsiteDataStore.nonPersistent().httpCookieStore
+        let sent = { (path: String) async throws -> [String] in
+            await store.cookies(for: try XCTUnwrap(URL(string: "https://example.com\(path)")), in: jar).map(\.name).sorted()
+        }
+        let app = try await sent("/app")
+        let below = try await sent("/app/x")
+        let longer = try await sent("/applications")
+        XCTAssertEqual(app, ["c/", "c/app"])
+        XCTAssertEqual(below, ["c/", "c/app", "c/app/"])
+        XCTAssertEqual(longer, ["c/"])
+    }
+
     /// A credentialed fetch keeps Authorization across a same-origin redirect and drops it at a hop to another origin, as fetch does.
     func testCredentialedFetchesDropAuthorizationAtACrossOriginRedirect() async throws {
         let server = try await TinyHTTPServer { request in

@@ -47,12 +47,14 @@ function test(part: Part, filter: UrlFilter, value: string): boolean {
 function compileUrlFilter(filter: UrlFilter): (url: URL) => boolean {
   const urlMatches = filter.urlMatches === undefined ? undefined : new RegExp(filter.urlMatches);
   const originAndPathMatches = filter.originAndPathMatches === undefined ? undefined : new RegExp(filter.originAndPathMatches);
-  const { hostEquals, hostPrefix } = filter;
+  // Chrome lowercases the host criteria, which ignore case.
+  const lower = (value: string | undefined) => value?.toLowerCase();
+  const dotted = (value: string | undefined) => (value === undefined || value.startsWith('.') ? value : `.${value}`);
   const host: UrlFilter = {
-    hostContains: filter.hostContains,
-    hostEquals: hostEquals === undefined || hostEquals.startsWith('.') ? hostEquals : `.${hostEquals}`,
-    hostPrefix: hostPrefix === undefined || hostPrefix.startsWith('.') ? hostPrefix : `.${hostPrefix}`,
-    hostSuffix: filter.hostSuffix,
+    hostContains: lower(filter.hostContains),
+    hostEquals: dotted(lower(filter.hostEquals)),
+    hostPrefix: dotted(lower(filter.hostPrefix)),
+    hostSuffix: lower(filter.hostSuffix),
   };
   return (url) => {
     // Chrome matches the url* criteria against the URL without its fragment.

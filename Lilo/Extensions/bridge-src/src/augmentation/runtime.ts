@@ -4,7 +4,7 @@ import { bridgeEvents, gapCall } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent, GapWrappedEvent, reportGapListener } from '../shared/gap-event.ts';
-import { externalMark, messagesOnce, once, otherExtension } from '../shared/message-answers.ts';
+import { externalMark, messagesOnce, noReceiver, once, otherExtension } from '../shared/message-answers.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 interface UpdateCheckResult {
@@ -49,8 +49,6 @@ export const runtimeLifecycle = {
   onStartup: new GapChromeEvent<[]>('runtime', 'onStartup'),
 };
 
-const noReceiver = 'Could not establish connection. Receiving end does not exist.';
-
 const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
 
 /** Ends, before `once`, the name of the port tabs.connect opens to the extension's own page a tab shows, with its url. */
@@ -87,10 +85,11 @@ export const onConnect = (source: () => object) => new WrappedEvent<[any]>(sourc
  */
 export const tabsConnect: Patch = (original, self) => function (this: unknown, tabId: number, info?: { name?: string; frameId?: number; documentId?: string }) {
   const tabs: any = self(this);
-  const webKit = original.apply(tabs, info === undefined ? [tabId] : [tabId, info]);
+  const name = typeof info?.name === 'string' ? info.name : '';
+  // WebKit throws when no script of the tab listens, where Chrome's port disconnects (WEBKIT-GAPS 93).
+  const webKit = connectOrUnanswered(() => original.apply(tabs, info === undefined ? [tabId] : [tabId, info]), name);
   if (info?.documentId !== undefined || (info?.frameId ?? 0) !== 0) return webKit;
   const runtime = bridgeChrome().runtime;
-  const name = typeof info?.name === 'string' ? info.name : '';
   let end = webKit;
   let early: unknown[] | undefined = [];
   // WebKit's port went before tabs.get answered: its runtime.lastError, null without one.
