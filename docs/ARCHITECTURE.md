@@ -415,6 +415,7 @@ Main users:
 | `Lilo/Extensions/Core/ProfileExtensionRegistry.swift` | background web view launch for extension service workers |
 | `Lilo/Extensions/Core/BackgroundSupervisor.swift` | in-place restart of an extension service worker WebKit wrongly believes loaded |
 | `Lilo/Extensions/GapAPI/UserScriptsBridgeHandler.swift` | a tab's frame tree (`_frames:`) and frame identifiers (`WKFrameInfo._handle`) for `userScripts.execute` and user script message senders |
+| `Lilo/Window/MainWindowController+Setup.swift` | `_setRelatedWebView:`, so every window's chrome shares one web content process |
 | `Lilo/Window/OverlayWebView.swift` | `_simulateMouseMove:` / `_simulateMouseExit:` to drive page hover under the overlay |
 
 ## Testing

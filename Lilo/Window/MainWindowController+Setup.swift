@@ -34,8 +34,19 @@ extension MainWindowController {
         chromeWebView.addSubview(chromeInput.shield)
     }
 
+    /// The chrome keeps no data (its CSP loads nothing remote), so it need not open a store on disk. One store for
+    /// every window: WebKit shares a related web view's process only within the same store.
+    private static let chromeDataStore = WKWebsiteDataStore.nonPersistent()
+    /// The last chrome made, so the next window's chrome joins its process instead of launching and warming its own.
+    private static weak var lastChromeWebView: OverlayWebView?
+
     static func makeChromeWebView(frame: CGRect) -> OverlayWebView {
         let config = WKWebViewConfiguration()
+        config.websiteDataStore = chromeDataStore
+        let setRelatedWebView = NSSelectorFromString("_setRelatedWebView:")
+        if let lastChromeWebView, config.responds(to: setRelatedWebView) {
+            config.perform(setRelatedWebView, with: lastChromeWebView)
+        }
         config.userContentController = WKUserContentController()
         config.setURLSchemeHandler(ChromeUISchemeHandler(), forURLScheme: ChromeUISchemeHandler.scheme)
         WebInspectorSupport.prepare(configuration: config)
@@ -47,6 +58,7 @@ extension MainWindowController {
         }
         let webView = OverlayWebView(frame: frame, configuration: config)
         WebInspectorSupport.enable(for: webView)
+        lastChromeWebView = webView
         return webView
     }
 

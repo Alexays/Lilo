@@ -1,0 +1,3 @@
+kind: Changed
+body: 'New windows open faster and use less memory: their sidebar and toolbar share one process.'
+time: 2026-10-27T20:43:52.924374+01:00
