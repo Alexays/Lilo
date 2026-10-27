@@ -48,14 +48,21 @@ const shards = await Promise.all(Array.from({ length: shardCount }, (_, shard) =
   const output = [];
   child.stdout.on('data', (chunk) => output.push(chunk));
   child.stderr.on('data', (chunk) => output.push(chunk));
-  child.on('close', (status) => {
+  // On exit, not close: a process the tests started may hold xcodebuild's output open long after it ended.
+  child.on('exit', (status) => new Promise((settled) => {
+    if (child.stdout.readableEnded) return settled();
+    child.stdout.once('end', settled);
+    setTimeout(settled, 5000);
+  }).then(() => {
+    child.stdout.destroy();
+    child.stderr.destroy();
     rmSync(support, { recursive: true, force: true });
     writeFileSync(log, Buffer.concat(output));
     let results = [];
     try { results = readFileSync(report, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch { /* none written */ }
     console.log(`shard ${shard}: ${results.length}/${ids.length} extensions in ${Math.round((Date.now() - built) / 1000)} s, xcodebuild ${status}`);
     resolve({ shard, ids, results, status, log });
-  });
+  }));
 })));
 
 const byId = new Map(shards.flatMap(({ results }) => results.map((result) => [result.id, result])));
