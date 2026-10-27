@@ -25,7 +25,7 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
 
     enum FrameResult {
         case frame(seq: Int, chunk: TabShareEncoder.Chunk)
-        case samples(Data)
+        case samples(Data, rate: Double)
         case pending
         case gone
     }
@@ -95,8 +95,8 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
                 headers["X-Lilo-Desc"] = config.description.base64EncodedString()
             }
             respond(to: waiter.task, status: 200, body: chunk.data, headers: headers)
-        case .samples(let data):
-            respond(to: waiter.task, status: 200, body: data, headers: [:])
+        case .samples(let data, let rate):
+            respond(to: waiter.task, status: 200, body: data, headers: ["X-Lilo-Rate": "\(rate)"])
         case .pending:
             waiters[ObjectIdentifier(waiter.task)] = waiter
         case .gone:
@@ -111,7 +111,7 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
                   "Content-Length": "\(body.count)",
                   "Cache-Control": "no-store",
                   "Access-Control-Allow-Origin": "*",
-                  "Access-Control-Expose-Headers": "X-Lilo-Seq, X-Lilo-Key, X-Lilo-Codec, X-Lilo-Desc"
+                  "Access-Control-Expose-Headers": "X-Lilo-Seq, X-Lilo-Key, X-Lilo-Codec, X-Lilo-Desc, X-Lilo-Rate"
               ]) { current, _ in current }) else { return }
         task.didReceive(response)
         if !body.isEmpty { task.didReceive(body) }

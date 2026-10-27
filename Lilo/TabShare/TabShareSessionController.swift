@@ -26,8 +26,9 @@ final class TabShareSessionController {
         /// The screen stream's frame count at the last encode.
         var encodedScreenFrame = 0
         var audioTap: SystemAudioTap?
-        /// Samples captured since the shim's last audio pull.
+        /// Samples captured since the shim's last audio pull, and their rate.
         var pendingAudio = Data()
+        var pendingAudioRate: Double = 0
 
         init(token: String, engine: WKWebViewTab?, screen: ScreenCaptureStream?, requester: WKWebView, encoder: TabShareEncoder) {
             self.token = token
@@ -88,8 +89,8 @@ final class TabShareSessionController {
         if audio, WebViewPrivateAccessors(requester).pid("_gpuProcessIdentifier") != nil,
            let tap = SystemAudioTap(gpuPid: { [weak requester] in
                requester.flatMap { WebViewPrivateAccessors($0).pid("_gpuProcessIdentifier") }.map(pid_t.init)
-           }, onBlock: { [weak self] block in
-               DispatchQueue.main.async { self?.storeAudio(block, token: token) }
+           }, onBlock: { [weak self] block, rate in
+               DispatchQueue.main.async { self?.storeAudio(block, rate: rate, token: token) }
            }) {
             session.audioTap = tap
         }
@@ -137,14 +138,19 @@ final class TabShareSessionController {
         current.lastPullAt = .now
         guard !current.pendingAudio.isEmpty else { return .pending }
         defer { current.pendingAudio = Data() }
-        return .samples(current.pendingAudio)
+        return .samples(current.pendingAudio, rate: current.pendingAudioRate)
     }
 
-    private func storeAudio(_ block: Data, token: String) {
-        guard let current = sessions[token], let tap = current.audioTap else { return }
+    private func storeAudio(_ block: Data, rate: Double, token: String) {
+        guard let current = sessions[token] else { return }
+        // A new output device may run at another rate: samples at the old one cannot share a response with it.
+        if rate != current.pendingAudioRate {
+            current.pendingAudio = Data()
+            current.pendingAudioRate = rate
+        }
         current.pendingAudio.append(block)
         // A page that stopped pulling keeps the last second only (mono Float32).
-        let cap = Int(tap.sampleRate) * MemoryLayout<Float32>.size
+        let cap = Int(rate) * MemoryLayout<Float32>.size
         if current.pendingAudio.count > cap { current.pendingAudio = current.pendingAudio.suffix(cap) }
         onFrameStored?()
     }

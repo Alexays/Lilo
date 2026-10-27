@@ -115,8 +115,9 @@ lilo.on('nativeDisplay', function(id){
 // neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
 var refreshMs = 200;
 // Sound is scheduled this far ahead to absorb pull jitter; a block landing further ahead than the cap is dropped, so a
-// stalled page cannot build up latency.
-var audioLeadS = 0.03, audioMaxLeadS = 0.15;
+// stalled page cannot build up latency. The Mac's clock and the page's drift apart over a call: past twice the lead,
+// blocks play slightly fast (inaudibly) until it is back, rather than piling up into a drop.
+var audioLeadS = 0.04, audioMaxLeadS = 0.15, audioCatchUp = 1.005;
 function endSession(token, notifyNative){
   var s = active[token];
   if (!s) return;
@@ -189,19 +190,22 @@ function pumpAudio(token, url){
     if (!active[token]) return;
     if (r.status === 410) return;
     if (r.status !== 200) { setTimeout(function(){ pumpAudio(token, url); }, 250); return; }
+    var rate = parseFloat(r.headers.get('X-Lilo-Rate')) || 0;
     return r.arrayBuffer().then(function(data){
       var entry = active[token];
       if (!entry) return;
       var a = entry.audio, samples = new Float32Array(data), now = a.ctx.currentTime;
       if (a.next < now) a.next = now + audioLeadS;
-      if (samples.length && a.next - now <= audioMaxLeadS) {
-        var buffer = a.ctx.createBuffer(1, samples.length, a.rate);
+      var lead = a.next - now;
+      if (samples.length && lead <= audioMaxLeadS) {
+        var buffer = a.ctx.createBuffer(1, samples.length, rate || a.rate);
         buffer.copyToChannel(samples, 0);
         var source = a.ctx.createBufferSource();
         source.buffer = buffer;
+        if (lead > 2 * audioLeadS) source.playbackRate.value = audioCatchUp;
         source.connect(a.dest);
         source.start(a.next);
-        a.next += buffer.duration;
+        a.next += buffer.duration / source.playbackRate.value;
       }
       pumpAudio(token, url);
     });
