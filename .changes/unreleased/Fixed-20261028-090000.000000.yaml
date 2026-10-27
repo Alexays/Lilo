@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions get Chrome's wording for a missing tab or menu item ("No tab with id", "Receiving end does not exist"), which many test before retrying.
+time: 2026-10-28T09:00:00.000000+01:00

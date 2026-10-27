@@ -19,7 +19,7 @@ import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { GapChromeEvent, reportGapListener } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
-import { callbackify, installBridgeChrome, liloLastError } from './callbackify.ts';
+import { callbackify, installBridgeChrome, liloLastError, liloLastErrorMessage, withLastError } from './callbackify.ts';
 import { CHROME_CONSTANTS } from './chrome-constants.gen.ts';
 import { STATIC_CONSTANTS, addMissing, home } from './static-compat.ts';
 
@@ -101,7 +101,7 @@ function ownMembers(namespace: any): void {
   for (const name of Object.getOwnPropertyNames(target)) {
     const method = Object.getOwnPropertyDescriptor(target, name)?.value;
     if (typeof method !== 'function' || name === 'constructor' || Object.hasOwn(namespace, name)) continue;
-    const bound = pageClosed === undefined ? method.bind(namespace) : closingGuard(method, namespace);
+    const bound: Method & { __liloUnwrapped?: Method } = chromeMethod(method, namespace);
     // Bound too: Lilo calls it on what `chrome` hands out, a view WebKit's native methods do not take as `this`.
     if (method.__liloUnwrapped) bound.__liloUnwrapped = method.__liloUnwrapped.bind(namespace);
     Object.defineProperty(namespace, name, { value: bound, enumerable: true, configurable: true, writable: true });
@@ -121,20 +121,50 @@ function ownMembers(namespace: any): void {
 let pageClosed: boolean | undefined;
 const never = new Promise<never>(() => {});
 
-/** `method` on `namespace`, whose callback and promise settle no more once the page closed, as in Chrome. */
-function closingGuard(method: Method, namespace: object): Method {
+/** WebKit's runtime, whose lastError holds while one of its callbacks runs (Lilo's patches give their own). */
+let webKitRuntime: any;
+
+/** Chrome's words for an error of WebKit's from a call with `args`, if Chrome has its own (extensions test them). */
+function chromeError(message: string, args: any[]): string | undefined {
+  const call = /^Invalid call to ([\w.]+)\(\)\. (.+)$/.exec(message);
+  if (!call) return undefined;
+  const [, method, error] = call;
+  const details = args[0] !== null && typeof args[0] === 'object' ? args[0] : undefined;
+  if (error === 'Tab not found.') {
+    if (method === 'tabs.sendMessage') return noReceiver;
+    const tabId = typeof args[0] === 'number' ? args[0] : details?.tabId;
+    return typeof tabId === 'number' ? `No tab with id: ${tabId}.` : undefined;
+  }
+  if (error === 'Parent menu item not found.' && details?.parentId !== undefined) return `Cannot find menu item with id ${details.parentId}`;
+  if (error === 'Identifier is already used.' && details?.id !== undefined) return `Cannot create item with duplicate id ${details.id}`;
+  return undefined;
+}
+
+/**
+ * `method` on `namespace`, failing in Chrome's words where WebKit's differ; in a page, its callback and promise settle
+ * no more once the page closed, as in Chrome.
+ */
+function chromeMethod(method: Method, namespace: object): Method {
   return function (...args: any[]) {
     const last = args.length - 1;
     const callback = args[last];
     if (typeof callback === 'function') {
       args[last] = function (this: unknown, ...results: unknown[]) {
-        if (!pageClosed) return callback.apply(this, results);
+        if (pageClosed) return undefined;
+        const message = liloLastErrorMessage() ?? webKitRuntime?.lastError?.message;
+        const chrome = typeof message === 'string' ? chromeError(message, args) : undefined;
+        if (chrome === undefined) return callback.apply(this, results);
+        withLastError(chrome, () => callback.apply(this, results));
+        return undefined;
       };
     }
     const result = method.apply(namespace, args);
-    return result instanceof Promise
-      ? result.then((value) => (pageClosed ? never : value), (error) => (pageClosed ? never : Promise.reject(error)))
-      : result;
+    if (!(result instanceof Promise)) return result;
+    return result.then((value) => (pageClosed ? never : value), (error) => {
+      if (pageClosed) return never;
+      const chrome = error instanceof Error ? chromeError(error.message, args) : undefined;
+      return Promise.reject(chrome === undefined ? error : new Error(chrome));
+    });
   };
 }
 
@@ -192,6 +222,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   pageClosed = page ? false : undefined;
   trackPageListeners(page);
   const chrome = g.chrome;
+  webKitRuntime = chrome.runtime;
   const perms = manifestPermissions(chrome);
   const nativeMessaging = perms.has('nativeMessaging');
   // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is

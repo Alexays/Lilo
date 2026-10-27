@@ -220,6 +220,43 @@ describe('constants', () => {
   });
 });
 
+describe("WebKit's errors", () => {
+  class FailingRuntime extends Runtime {
+    error: { message: string } | null = null;
+    get lastError(): unknown { return this.error; }
+  }
+  const runtime = new FailingRuntime([]);
+  const notFound = (method: string) => `Invalid call to ${method}(). Tab not found.`;
+  // WebKit's runtime.lastError holds only while its callback runs.
+  const fail = (method: string, callback?: () => void) => {
+    if (!callback) return Promise.reject(new Error(notFound(method)));
+    runtime.error = { message: notFound(method) };
+    try { callback(); } finally { runtime.error = null; }
+    return undefined;
+  };
+  class Tabs {
+    get(_tabId: number, callback?: () => void) { return fail('tabs.get', callback); }
+    sendMessage(_tabId: number, _message: unknown, callback?: () => void) { return fail('tabs.sendMessage', callback); }
+  }
+  class Action { setBadgeText(_details: object, callback?: () => void) { return fail('action.setBadgeText', callback); } }
+
+  function chrome(): any {
+    (globalThis as any).chrome = { runtime, tabs: new Tabs(), action: new Action() };
+    installChromeCompat({});
+    return (globalThis as any).chrome;
+  }
+
+  it("read in Chrome's words, as lastError and as the rejection", async () => {
+    const api = chrome();
+    const read = (call: (callback: () => void) => void) => new Promise((resolve) => call(() => resolve(api.runtime.lastError?.message)));
+    assert.equal(await read((callback) => api.tabs.get(7, callback)), 'No tab with id: 7.');
+    await assert.rejects(api.tabs.get(7), { message: 'No tab with id: 7.' });
+    await assert.rejects(api.action.setBadgeText({ tabId: 8, text: 'a' }), { message: 'No tab with id: 8.' });
+    await assert.rejects(api.tabs.sendMessage(9, 'hi'), { message: 'Could not establish connection. Receiving end does not exist.' });
+    assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
+  });
+});
+
 describe('the view chrome hands out for WebKit own properties', () => {
   it('reads lastError undefined, not null, without an error', () => {
     class NullLastError extends Runtime { get lastError(): unknown { return null; } }

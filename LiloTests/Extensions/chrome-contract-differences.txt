@@ -5,7 +5,6 @@ alarms.get missing | WebKit resolves a missing alarm with null, Chrome with unde
 bookmarks.create and onCreated | Lilo's bookmark nodes lack syncing.
 bookmarks.get missing | Lilo's error message differs from Chrome's.
 bookmarks.getTree root shape | Lilo's folders lack dateAdded, folderType and syncing.
-contextMenus duplicate id | WebKit's error message differs from Chrome's.
 declarativeNetRequest invalid rule | WebKit's error message differs from Chrome's.
 management.getSelf shape | Lilo's ExtensionInfo lacks homepageUrl, isApp, mayDisable, optionsUrl and versionName, and adds disableReasons and icons.
 permissions.request outside a gesture | Lilo refuses a permission WebKit does not know and the manifest does not list (debugger) as not declared, without requiring a user gesture.
