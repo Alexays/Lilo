@@ -921,7 +921,7 @@ final class WKEngineFactory {
         let list = tokens.split(separator: " ").filter { $0.utf8.allSatisfy(allowed.contains) }
         guard !list.isEmpty else { return "" }
         var count = 16
-        while count * 4 < list.count { count *= 2 }
+        while count * 16 < list.count { count *= 2 }
         var buckets = [[Substring]](repeating: [], count: count)
         for token in list {
             var hash: UInt32 = 2_166_136_261
