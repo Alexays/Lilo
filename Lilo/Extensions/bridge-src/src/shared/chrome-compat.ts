@@ -135,6 +135,9 @@ function chromeError(message: string, args: any[]): string | undefined {
     const tabId = typeof args[0] === 'number' ? args[0] : details?.tabId;
     return typeof tabId === 'number' ? `No tab with id: ${tabId}.` : undefined;
   }
+  // tabs.remove and the calls taking several tabs name the one missing.
+  const missing = /^Tab '(\d+)' was not found\.$/.exec(error);
+  if (missing) return `No tab with id: ${missing[1]}.`;
   if (error === 'Parent menu item not found.' && details?.parentId !== undefined) return `Cannot find menu item with id ${details.parentId}`;
   if (error === 'Identifier is already used.' && details?.id !== undefined) return `Cannot create item with duplicate id ${details.id}`;
   return undefined;

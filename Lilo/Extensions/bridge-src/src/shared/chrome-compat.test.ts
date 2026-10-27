@@ -237,6 +237,7 @@ describe("WebKit's errors", () => {
   class Tabs {
     get(_tabId: number, callback?: () => void) { return fail('tabs.get', callback); }
     sendMessage(_tabId: number, _message: unknown, callback?: () => void) { return fail('tabs.sendMessage', callback); }
+    remove(tabIds: number[]) { return Promise.reject(new Error(`Invalid call to tabs.remove(). Tab '${tabIds[0]}' was not found.`)); }
   }
   class Action { setBadgeText(_details: object, callback?: () => void) { return fail('action.setBadgeText', callback); } }
 
@@ -252,6 +253,7 @@ describe("WebKit's errors", () => {
     assert.equal(await read((callback) => api.tabs.get(7, callback)), 'No tab with id: 7.');
     await assert.rejects(api.tabs.get(7), { message: 'No tab with id: 7.' });
     await assert.rejects(api.action.setBadgeText({ tabId: 8, text: 'a' }), { message: 'No tab with id: 8.' });
+    await assert.rejects(api.tabs.remove([10, 11]), { message: 'No tab with id: 10.' });
     await assert.rejects(api.tabs.sendMessage(9, 'hi'), { message: 'Could not establish connection. Receiving end does not exist.' });
     assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
   });
