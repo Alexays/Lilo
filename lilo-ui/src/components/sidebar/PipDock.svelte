@@ -6,6 +6,7 @@
 {#if isPipDockActive()}
   <div
     class="pip-dock"
+    data-native-surface
     title={getPipDockTitle()}
     use:reportInteractiveZone={{ id: "pip-dock" }}
   ></div>

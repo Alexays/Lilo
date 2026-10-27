@@ -370,10 +370,16 @@ export function tooltip(node: HTMLElement, params: TooltipParams) {
 
 		// A "top" tooltip is pulled above its anchor by its own height + 7px. If that
 		// would intrude into the reserved top band, flip it below the anchor instead.
+		// A native view (the PiP dock, as wide as the sidebar) paints over the chrome and would hide
+		// a tooltip above its anchor.
 		resolvedPlacement = placement;
 		if (placement === "top") {
-			const tooltipHeight = el.getBoundingClientRect().height;
-			if (rect.top - tooltipHeight - 6 < TOP_INSET) {
+			const top = rect.top - el.getBoundingClientRect().height - 6;
+			const covered = [...document.querySelectorAll("[data-native-surface]")].some((surface) => {
+				const s = surface.getBoundingClientRect();
+				return top < s.bottom && rect.top > s.top && rect.right > s.left && rect.left < s.right;
+			});
+			if (top < TOP_INSET || covered) {
 				resolvedPlacement = "bottom";
 			}
 		}
