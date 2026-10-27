@@ -246,6 +246,75 @@ final class TerminalSessionTests: XCTestCase {
         try await waitUntil { session.status.state == .succeeded }
     }
 
+    func testBashIntegrationPreservesPromptHooksAndReportsCommands() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo bash é dir \(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let config = directory.appendingPathComponent("bashrc")
+        try """
+            printf 'USER-BASHRC-LOADED\\n'
+            HISTFILE='\(directory.path)/history'
+            PS1='bash-test> '
+            PROMPT_COMMAND='printf "user-status:%s\\n" "$?"'
+            trap '[[ $BASH_COMMAND == false ]] && printf "user-debug-hook\\n"' DEBUG
+            source "$LILO_BASH_INTEGRATION"
+            """.write(to: config, atomically: true, encoding: .utf8)
+
+        for bash in ["/bin/bash", "/opt/homebrew/bin/bash", "/usr/local/bin/bash"] where FileManager.default.isExecutableFile(atPath: bash) {
+            let session = try launch([bash, "--rcfile", config.path, "-i"])
+            try await waitUntil(timeout: 5) { session.status.cwd != nil }
+            guard session.status.cwd != nil else { return }
+            XCTAssertTrue(screen(session).contains("USER-BASHRC-LOADED"))
+            XCTAssertEqual(session.status.finishedCommands, 0)
+
+            session.write(Array("false\n".utf8))
+            try await waitUntil { session.status.state == .failed && self.screen(session).contains("user-status:1") }
+            XCTAssertEqual(session.status.lastExitCode, 1)
+            XCTAssertEqual(session.status.command, "false")
+            XCTAssertTrue(screen(session).contains("user-debug-hook"))
+            XCTAssertEqual(session.status.finishedCommands, 1)
+
+            session.write(Array("sleep 30\n".utf8))
+            try await waitUntil { session.status.state == .busy && session.foregroundProgram() == "sleep" }
+            XCTAssertEqual(session.status.command, "sleep 30")
+            session.write([0x03])
+            try await waitUntil { session.status.lastExitCode == 130 }
+            XCTAssertNotNil(session.status.lastDuration)
+
+            session.write(Array("cd '\(directory.path)'\n".utf8))
+            try await waitUntil { session.status.cwd == directory.path }
+            XCTAssertEqual(session.status.state, .succeeded)
+            XCTAssertEqual(session.status.finishedCommands, 3)
+            let command = "shopt -oq posix; printf 'native-bash:%s' \"$?\""
+            session.write(Array((command + "\n").utf8))
+            try await waitUntil { self.screen(session).contains("native-bash:1") }
+            XCTAssertEqual(session.status.command, command)
+            session.terminate()
+        }
+    }
+
+    func testBashIntegrationKeepsLoginShellSemantics() async throws {
+        guard let bash = ["/opt/homebrew/bin/bash", "/usr/local/bin/bash"].first(where: {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }) else { throw XCTSkip("Automatic integration needs standard Bash; macOS Bash uses the manual hook") }
+        let previousHISTFILE = ProcessInfo.processInfo.environment["HISTFILE"]
+        let previousENV = ProcessInfo.processInfo.environment["ENV"]
+        setenv("HISTFILE", "/dev/null", 1)
+        setenv("ENV", "lilo-user-env", 1)
+        defer {
+            if let previousHISTFILE { setenv("HISTFILE", previousHISTFILE, 1) } else { unsetenv("HISTFILE") }
+            if let previousENV { setenv("ENV", previousENV, 1) } else { unsetenv("ENV") }
+        }
+        let session = try launch([bash, "--noprofile", "-il"])
+        try await waitUntil(timeout: 5) { session.status.cwd != nil }
+        guard session.status.cwd != nil else { return }
+
+        session.write(Array("shopt -q login_shell && [[ $ENV == lilo-user-env ]] && printf 'LOGIN-SHELL-PRESERVED\\n'\n".utf8))
+        try await waitUntil { session.status.finishedCommands == 1 }
+        XCTAssertEqual(session.status.lastExitCode, 0)
+        XCTAssertTrue(screen(session).components(separatedBy: "\n").contains { $0.trimmingCharacters(in: .whitespaces) == "LOGIN-SHELL-PRESERVED" })
+    }
+
     func testZshTypesThePrefilledCommandWithoutRunningIt() async throws {
         let userConfig = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-zdotdir-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: userConfig, withIntermediateDirectories: true)

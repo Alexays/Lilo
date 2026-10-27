@@ -68,6 +68,7 @@ final class TerminalSession: @unchecked Sendable {
     private let command: [String]
     private let reportsExitCode: Bool
     private let shellName: String
+    private let integratesBash: Bool
     private let initialCwd: String
     private let initialCommand: String?
     private let prefillCommand: String?
@@ -133,16 +134,24 @@ final class TerminalSession: @unchecked Sendable {
         self.prefillCommand = prefillCommand
         let account = getpwuid(getuid())
         let shell = account.map { String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
+        let executable = command?.first ?? shell
+        shellName = URL(fileURLWithPath: executable).lastPathComponent
+        let arguments = command.map { Array($0.dropFirst()) } ?? []
+        let interactive = command == nil || arguments.isEmpty || arguments.contains {
+            $0.hasPrefix("-") && !$0.hasPrefix("--") && $0.contains("i")
+        }
+        // Apple's Bash ignores ENV during POSIX startup; it needs the manual startup hook.
+        integratesBash = shellName == "bash" && executable != "/bin/bash" && interactive
+            && !arguments.contains("--posix") && Self.shellIntegrationDirectory != nil
         reportsExitCode = command != nil
         if let command {
-            self.command = command
+            self.command = integratesBash ? [command[0], "--posix"] + arguments : command
         } else {
             let user = account.map { String(cString: $0.pointee.pw_name) } ?? NSUserName()
             // login records the session and keeps our environment (-p) and cwd (-l); bash then
             // replaces itself with the user's shell as a login shell.
-            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'"]
+            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'\(integratesBash ? " --posix" : "")"]
         }
-        shellName = URL(fileURLWithPath: command?.first ?? shell).lastPathComponent
         var isDirectory: ObjCBool = false
         initialCwd = FileManager.default.fileExists(atPath: cwd, isDirectory: &isDirectory) && isDirectory.boolValue
             ? cwd : NSHomeDirectory()
@@ -747,6 +756,14 @@ final class TerminalSession: @unchecked Sendable {
         }
     }
 
+    private static var shellIntegrationDirectory: URL? {
+        #if SWIFT_PACKAGE
+        Bundle.module.url(forResource: "shell-integration", withExtension: nil, subdirectory: "Resources")
+        #else
+        Bundle.main.url(forResource: "shell-integration", withExtension: nil)
+        #endif
+    }
+
     private func environment() -> [String] {
         var environment = ProcessInfo.processInfo.environment
         environment["TERM"] = "xterm-256color"
@@ -763,17 +780,28 @@ final class TerminalSession: @unchecked Sendable {
             }
             environment["LANG"] = lang
         }
-        #if SWIFT_PACKAGE
-        let integration = Bundle.module.url(forResource: "shell-integration", withExtension: nil, subdirectory: "Resources")
-        #else
-        let integration = Bundle.main.url(forResource: "shell-integration", withExtension: nil)
-        #endif
-        if let integration {
+        if let integration = Self.shellIntegrationDirectory {
             // zsh reads $ZDOTDIR/.zshenv first; ours restores the user's ZDOTDIR before their config.
             if let original = environment["ZDOTDIR"] { environment["LILO_ORIG_ZDOTDIR"] = original }
             environment["ZDOTDIR"] = integration.appendingPathComponent("zsh").path
             if shellName == "zsh", let initialCommand { environment["LILO_INITIAL_COMMAND"] = initialCommand }
             if shellName == "zsh", let prefillCommand { environment["LILO_PREFILL_COMMAND"] = prefillCommand }
+            if shellName == "bash" { environment["LILO_BASH_INTEGRATION"] = integration.appendingPathComponent("bash/lilo.bash").path }
+            if integratesBash {
+                if let original = environment["ENV"] { environment["LILO_ORIG_ENV"] = original }
+                environment["ENV"] = environment["LILO_BASH_INTEGRATION"]
+                // The login bootstrap's flags belong to its wrapper, not to the user's shell.
+                let arguments = reportsExitCode ? command : []
+                environment["LILO_BASH_FLAGS"] = arguments.filter { $0 == "--norc" || $0 == "--noprofile" }.joined(separator: " ")
+                if let index = arguments.firstIndex(where: { $0 == "--rcfile" || $0 == "--init-file" }), arguments.indices.contains(index + 1) {
+                    environment["LILO_BASH_RCFILE"] = arguments[index + 1]
+                }
+                // POSIX startup otherwise chooses .sh_history; Bash history stays in .bash_history.
+                if environment["HISTFILE"] == nil {
+                    environment["HISTFILE"] = (environment["HOME"] ?? NSHomeDirectory()) + "/.bash_history"
+                    environment["LILO_BASH_UNEXPORT_HISTFILE"] = "1"
+                }
+            }
         }
         return environment.map { "\($0.key)=\($0.value)" }
     }
