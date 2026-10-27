@@ -10,6 +10,7 @@
         <string>fr</string>
         <string>es</string>
         <string>zh-Hans</string>
+        <string>pt-BR</string>
     </array>
     <key>CFBundleExecutable</key>
     <string>Lilo</string>

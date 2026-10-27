@@ -8,6 +8,7 @@ test("translate returns the string for the active locale", () => {
 	assert.equal(translate("en", "common.cancel"), "Cancel");
 	assert.equal(translate("fr", "common.cancel"), "Annuler");
 	assert.equal(translate("es", "common.cancel"), "Cancelar");
+	assert.equal(translate("pt-BR", "common.cancel"), "Cancelar");
 	assert.equal(translate("zh-Hans", "common.cancel"), "取消");
 });
 
@@ -54,6 +55,11 @@ test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to Englis
 	const cases: Array<[string | null | undefined, Locale]> = [
 		["fr-FR", "fr"],
 		["fr", "fr"],
+		["pt", "pt-BR"],
+		["pt-BR", "pt-BR"],
+		["PT-br", "pt-BR"],
+		["pt-PT", "pt-BR"],
+		["pt-AO", "pt-BR"],
 		["en-US", "en"],
 		["es", "es"],
 		["es-ES", "es"],
@@ -113,4 +119,14 @@ test("Spanish uses singular only for one and formats counts with Spanish separat
 	assert.equal(translate("es", "onboarding.import.count.tabs", { count: 0 }), "0 pestañas abiertas");
 	assert.equal(translate("es", "onboarding.import.count.tabs", { count: 1 }), "1 pestaña abierta");
 	assert.equal(translate("es", "onboarding.import.count.tabs", { count: 12345 }), "12.345 pestañas abiertas");
+});
+
+test("Brazilian Portuguese counts use local grouping and plural forms", () => {
+	assert.equal(translate("pt-BR", "onboarding.import.count.bookmarks", { count: 0 }), "0 favorito");
+	assert.equal(translate("pt-BR", "onboarding.import.count.bookmarks", { count: 1 }), "1 favorito");
+	assert.equal(translate("pt-BR", "onboarding.import.count.bookmarks", { count: 2 }), "2 favoritos");
+	assert.equal(translate("pt-BR", "onboarding.import.count.bookmarks", { count: 12345 }), "12.345 favoritos");
+	assert.equal(translate("pt-BR", "onboarding.import.count.bookmarks", { count: 1000000 }), "1.000.000 favoritos");
+	assert.equal(translate("pt-BR", "settings.extensionUpdates.updated", { count: 1 }), "1 atualizada");
+	assert.equal(translate("pt-BR", "settings.extensionUpdates.updated", { count: 2 }), "2 atualizadas");
 });

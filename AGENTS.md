@@ -23,7 +23,7 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 
 ## Gotchas
 
-- **Localization** - user-facing strings live in `lilo-ui/src/lib/i18n/locales/{en,fr,es,zh-Hans}.json`; add every key to **all catalogs** (the `make ui-test` parity check fails otherwise). Native AppKit strings use `.localized` under the `native` namespace. See [docs/I18N.md](docs/I18N.md).
+- **Localization** - user-facing strings live in `lilo-ui/src/lib/i18n/locales/*.json`; add every key to **all catalogs** (the `make ui-test` parity check fails otherwise). Native AppKit strings use `.localized` under the `native` namespace. See [docs/I18N.md](docs/I18N.md).
 - **Extension Gap APIs** - add one only when WebKit lacks the Chrome API *and* a real extension flow needs it. A Swift handler must be paired with JS augmentation, and [COMPATIBILITY.md](COMPATIBILITY.md) must be updated: it describes only what still differs from Chrome. See [CONTRIBUTING.md](CONTRIBUTING.md#add-a-chrome-gap-api).
 - **Page-world APIs** - anything a web page can see goes through `PageWorld` (handlers in its bridge world, modules patching WebKit's prototypes): a global, a page-world handler or a function printing its source flags Lilo as a bot. `PageWorldTests` fails on any such trace. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#page-world-apis).
 - **Private WebKit API** - guard every private selector with `responds(to:)` and degrade gracefully when it is missing; register new private delegate hooks in `PrivateDelegateSelectorTests`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#private-webkit-api).

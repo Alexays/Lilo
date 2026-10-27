@@ -22,6 +22,8 @@ enum Localization {
                 } else if !parts.contains(where: { ["tw", "hk", "mo"].contains($0) }) {
                     return "zh-Hans"
                 }
+            } else if primary == "pt" {
+                return "pt-BR"
             } else if NativeStrings.locales.contains(primary) {
                 return primary
             }
