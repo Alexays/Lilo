@@ -898,15 +898,19 @@ final class WKWebViewTab: NSObject {
         return .download
     }
 
+    /// `WKNavigationAction.buttonNumber` is a bitmask (left 1, right 2, middle 4), not `NSEvent.buttonNumber`'s index.
+    nonisolated static let middleButtonNumber = 1 << 2
+
     nonisolated static func shouldOpenLinkInBackgroundTab(
         url: URL?,
         isMainFrame: Bool,
         navigationType: WKNavigationType,
-        modifierFlags: NSEvent.ModifierFlags
+        modifierFlags: NSEvent.ModifierFlags,
+        buttonNumber: Int
     ) -> Bool {
         guard isMainFrame,
               navigationType == .linkActivated,
-              modifierFlags.contains(.command),
+              modifierFlags.contains(.command) || buttonNumber == middleButtonNumber,
               let scheme = url?.scheme?.lowercased()
         else { return false }
         return webSchemes.contains(scheme)
@@ -1150,7 +1154,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             url: url,
             isMainFrame: isMainFrame,
             navigationType: navigationAction.navigationType,
-            modifierFlags: navigationAction.modifierFlags
+            modifierFlags: navigationAction.modifierFlags,
+            buttonNumber: navigationAction.buttonNumber
         ) {
             delegate?.tab(self, didCreateNewTab: url, inBackground: true)
             return .cancel
