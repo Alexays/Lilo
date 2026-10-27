@@ -41,14 +41,15 @@ final class MediaCardRetentionTests: XCTestCase {
     }
 
     /// WebKit raises on a script reply to a suspended page: the media scripts must answer before a freeze.
+    /// Scripts answer in order, so a later one answering means they all have.
     private func scriptsSettled(_ engine: WKWebViewTab) async {
         await Task.yield()
-        _ = await engine.hasMediaTrackControls()
+        _ = try? await engine.wkWebView.evaluateJavaScript("0")
     }
 
     func testTabPausedFromCardFreezesOnlyAfterItsGrace() async throws {
         let engine = try await tabPausedFromCard()
-        XCTAssertNotNil(window.context.mediaTabs[engine.id], "the card keeps a tab paused from it")
+        XCTAssertTrue(window.context.mediaTabIds.contains(engine.id), "the card keeps a tab paused from it")
 
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(10 * 60))
         XCTAssertFalse(engine.isFrozen)
@@ -64,7 +65,7 @@ final class MediaCardRetentionTests: XCTestCase {
         window.tab(engine, didUpdateAudioPlaying: false)
         await scriptsSettled(engine)
 
-        XCTAssertNil(window.context.mediaTabs[engine.id], "a pause from the page takes the tab off the card")
+        XCTAssertFalse(window.context.mediaTabIds.contains(engine.id), "a pause from the page takes the tab off the card")
         window.context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(10 * 60))
         // Passes everywhere but sometimes on CI: the message says what kept the engine awake there.
         let state = window.context.browserState
