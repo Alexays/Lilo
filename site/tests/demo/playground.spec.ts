@@ -195,7 +195,7 @@ test("an MCP click navigates its sample tab and keeps the inspector open", async
 
   const output = result.content.map((item) => item.text).join("\n");
 
-  const ref = output.match(/\[(?<ref>ref_\d+)\] button "[^"]*Lilo"/u)?.groups
+  const ref = output.match(/\[(?<ref>ref_\d+)\] link "[^"]*Lilo"/u)?.groups
     ?.ref;
 
   if (!ref) {

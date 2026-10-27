@@ -11,9 +11,10 @@
     mode: "peek" | "little";
     url: string;
     onclose: () => void;
+    onpreview: (mode: "peek" | "little", url: string) => void;
   }
 
-  let { host, locale, mode, url, onclose }: Props = $props();
+  let { host, locale, mode, url, onclose, onpreview }: Props = $props();
   const text = $derived(demoCopy(locale));
   let tab = $state(untrack(() => makeTab(crypto.randomUUID(), host.snapshot().activeSpaceId, "Lilo", url)));
   let dialog: HTMLDialogElement | undefined = $state();
@@ -41,11 +42,11 @@
 
 <dialog class="preview-window" class:little={mode === "little"} bind:this={dialog} aria-label={mode === "peek" ? "Peek" : text.previewLittle} oncancel={(event) => { event.preventDefault(); onclose(); }}>
   <header><button class="close" type="button" aria-label={text.previewClose} onclick={onclose}>×</button><span class="preview-address">{new URL(tab.url).hostname}</span><button class="expand" type="button" aria-label={text.previewExpand} onclick={expand}>↗</button></header>
-  <div class="preview-page"><DemoPage {tab} {host} {locale} onnavigate={navigate} /></div>
+  <div class="preview-page"><DemoPage {tab} {host} {locale} onnavigate={navigate} {onpreview} onpreviewclose={onclose} /></div>
 </dialog>
 
 <style>
-  .preview-window { display: flex; flex-direction: column; width: min(820px, calc(100% - 100px)); height: calc(100% - 65px); padding: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 25px 80px #00000044; overflow: hidden; }
+  .preview-window { display: flex; flex-direction: column; width: min(820px, calc(100% - 100px)); height: calc(100% - 65px); margin: auto; padding: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 25px 80px #00000044; overflow: hidden; }
   .preview-window:not([open]) { display: none; }
   .preview-window::backdrop { background: #00000028; }
   .preview-window.little { width: 560px; height: min(480px, calc(100% - 90px)); }

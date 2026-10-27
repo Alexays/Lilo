@@ -3054,6 +3054,24 @@ export const createDemoHost = (
       addTab(entry.url, entry.title);
       publish();
     },
+    openLinkTab: (url: string, background = false) => {
+      const normalized = address(url);
+
+      if (!normalized) {
+        return;
+      }
+
+      const original = activeTab();
+      const previousRecent = recent;
+      addTab(normalized);
+
+      if (background && original) {
+        select(original);
+        recent = previousRecent;
+      }
+
+      publish();
+    },
     openPlayground,
     openPrivateSpace: () => {
       const existing = world.spaces.find(

@@ -71,9 +71,7 @@ test("Peek preserves the pinned page and can expand its preview into a tab", asy
   await page.goto("/#browser-demo");
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".repo-top")).toBeVisible();
-  await frame
-    .getByRole("button", { exact: true, name: "↗ getlilo.app" })
-    .click();
+  await frame.getByRole("link", { exact: true, name: "↗ getlilo.app" }).click();
   const peek = frame.getByRole("dialog", { exact: true, name: "Peek" });
   await expect(peek).toBeVisible();
   await expect(
