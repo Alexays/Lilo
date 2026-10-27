@@ -3,7 +3,7 @@
 
 import en from "./locales/en.json";
 
-export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR";
+export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru";
 
 export const SUPPORTED_LOCALES = [
 	{ code: "en", label: "English" },
@@ -11,6 +11,7 @@ export const SUPPORTED_LOCALES = [
 	{ code: "es", label: "Español" },
 	{ code: "zh-Hans", label: "简体中文" },
 	{ code: "pt-BR", label: "Português (Brasil)" },
+	{ code: "ru", label: "Русский" },
 ] as const satisfies ReadonlyArray<{ code: Locale; label: string }>;
 
 type Messages = Record<string, unknown>;
@@ -23,7 +24,8 @@ export async function loadCatalog(locale: Locale): Promise<void> {
 	if (catalogs[locale]) return;
 	catalogs[locale] = (await (locale === "fr" ? import("./locales/fr.json")
 		: locale === "es" ? import("./locales/es.json")
-		: locale === "zh-Hans" ? import("./locales/zh-Hans.json") : import("./locales/pt-BR.json"))).default;
+		: locale === "zh-Hans" ? import("./locales/zh-Hans.json")
+		: locale === "ru" ? import("./locales/ru.json") : import("./locales/pt-BR.json"))).default;
 }
 
 export function isSupportedLocale(value: string): value is Locale {

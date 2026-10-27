@@ -101,4 +101,46 @@ final class LocalizationTests: XCTestCase {
                        "Abrir um espaço no ${applicationName}")
         #endif
     }
+
+    func testNativeLocaleHonorsOverridesAndRegionalRussianTags() {
+        XCTAssertEqual(Localization.resolveLocale(override: "ru", preferredLanguages: ["fr-FR"]), "ru")
+        XCTAssertEqual(Localization.resolveLocale(override: "en", preferredLanguages: ["ru-RU"]), "en")
+        for tag in ["ru", "ru-RU", "ru-BY", "RU-KZ"] {
+            XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "ru", tag)
+        }
+        XCTAssertEqual(Localization.resolveLocale(override: "unknown", preferredLanguages: ["fr-CA"]), "fr")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "ru-RU"]), "ru")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: []), "en")
+    }
+
+    func testRussianNativeStringsAndSystemPromptsShipInTheApp() throws {
+        XCTAssertEqual(NativeStrings.translate("New Tab", locale: "ru"), "Новая вкладка")
+        XCTAssertEqual(NativeStrings.translate("Unknown test string", locale: "ru"), "Unknown test string")
+        XCTAssertEqual(String(format: NativeStrings.translate("Space %d", locale: "ru"), 3), "Пространство 3")
+        #if !SWIFT_PACKAGE
+        for resource in ["InfoPlist", "Localizable", "AppShortcuts"] {
+            let url = try XCTUnwrap(Bundle.main.url(
+                forResource: resource, withExtension: "strings", subdirectory: nil, localization: "ru"
+            ))
+            XCTAssertEqual(url.deletingLastPathComponent().lastPathComponent, "ru.lproj", resource)
+        }
+        #endif
+    }
+
+    func testRussianOverrideAlsoSelectsTheLanguageOfSystemPanels() {
+        let defaults = UserDefaults.lilo
+        let domain = "\(UserDefaults.testDomainPrefix)\(getpid())"
+        let previous = defaults.persistentDomain(forName: domain)
+        defer {
+            defaults.set(previous?["lilo.locale"], forKey: "lilo.locale")
+            defaults.set(previous?["AppleLanguages"], forKey: "AppleLanguages")
+        }
+
+        Localization.persistOverride("ru")
+        XCTAssertEqual(defaults.persistentDomain(forName: domain)?["lilo.locale"] as? String, "ru")
+        XCTAssertEqual(defaults.persistentDomain(forName: domain)?["AppleLanguages"] as? [String], ["ru"])
+
+        Localization.persistOverride("")
+        XCTAssertNil(defaults.persistentDomain(forName: domain)?["AppleLanguages"])
+    }
 }

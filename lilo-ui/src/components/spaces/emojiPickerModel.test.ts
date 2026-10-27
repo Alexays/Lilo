@@ -96,3 +96,16 @@ test("Portuguese emoji search ignores accents and retains English keywords", asy
   assert.deepEqual(portuguese.categories.map((category) => category.map((entry) => entry.emoji)),
     ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
 });
+
+test("Russian emoji names and search load on demand and keep English search available", async () => {
+  const russian = await loadEmojiCatalog("ru");
+  const search = (query: string) => searchEmoji(russian, query).map((match) => match.emoji);
+  assert.equal(await loadEmojiCatalog("ru"), russian);
+  assert.equal(search("ракета")[0], "🚀");
+  assert.ok(search("сердце").includes("❤️"));
+  assert.ok(search("кошка").includes("🐱"));
+  assert.ok(search("rocket").includes("🚀"));
+  assert.equal(emojiName(russian, "🚀"), "ракета");
+  assert.ok(russian.categories.flat().every((emoji) => emoji.name.length > 0));
+  assert.equal(russian.categories.flat().length, EMOJI_CATEGORIES.flat().length);
+});
