@@ -8,6 +8,7 @@ test("translate returns the string for the active locale", () => {
 	assert.equal(translate("en", "common.cancel"), "Cancel");
 	assert.equal(translate("fr", "common.cancel"), "Annuler");
 	assert.equal(translate("es", "common.cancel"), "Cancelar");
+	assert.equal(translate("zh-Hans", "common.cancel"), "取消");
 });
 
 test("translate falls back to English for an untranslated key", () => {
@@ -58,6 +59,17 @@ test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to Englis
 		["es-ES", "es"],
 		["es-MX", "es"],
 		["ES-419", "es"],
+		["zh", "zh-Hans"],
+		["zh-CN", "zh-Hans"],
+		["zh-SG", "zh-Hans"],
+		["zh-Hans", "zh-Hans"],
+		["ZH-HANS-CN", "zh-Hans"],
+		["zh-Hans-HK", "zh-Hans"],
+		["zh-Hant", "en"],
+		["zh-TW", "en"],
+		["zh-HK", "en"],
+		["zh-MO", "en"],
+		["zh-Hant-CN", "en"],
 		["de-DE", "en"],
 		["", "en"],
 		[null, "en"],
@@ -85,9 +97,16 @@ test("every catalog exposes the same keys and placeholders as English", () => {
 		for (const [key, source] of english) {
 			const value = catalog.get(key);
 			assert.equal(typeof value, "string", `${code}.${key} must be a string`);
+			assert.ok((value as string).trim(), `${code}.${key} must not be empty`);
 			assert.deepEqual(placeholders(value as string), placeholders(source as string), `${code}.${key} must preserve placeholders`);
 		}
 	}
+});
+
+test("Simplified Chinese uses the same plural form for all counts and groups digits", () => {
+	assert.equal(translate("zh-Hans", "onboarding.import.count.tabs", { count: 0 }), "0 个打开的标签页");
+	assert.equal(translate("zh-Hans", "onboarding.import.count.tabs", { count: 1 }), "1 个打开的标签页");
+	assert.equal(translate("zh-Hans", "onboarding.import.count.tabs", { count: 12345 }), "12,345 个打开的标签页");
 });
 
 test("Spanish uses singular only for one and formats counts with Spanish separators", () => {
