@@ -1,5 +1,7 @@
 // webRequest.onAuthRequired for a proxy's challenge, which WebKit never reports: Lilo pushes it and takes the
-// listeners' blocking or asyncBlocking answer. SW-safe: no window/document/webkit.
+// listeners' blocking or asyncBlocking answer; WebKit's other events with Chrome's frames. SW-safe: no window/document/webkit.
+import { WrappedEvent } from '../shared/chrome-event.ts';
+import { addLeniently } from '../shared/chrome-leniency.ts';
 import { gapCall } from '../shared/ipc.ts';
 import { GapWrappedEvent, reportGapListener, reportGapListenerRemoved } from '../shared/gap-event.ts';
 import { tabAt, type TabPosition } from './tabs.ts';
@@ -101,3 +103,57 @@ export const onAuthRequired = (source: () => object) => new AuthRequiredEvent(
   (listener) => (details: any) => listener(details, () => {}),
   (listeners, raw) => { void receiveAuth(listeners, raw); },
 );
+
+/** The subframes each tab's requests came from since its main frame last loaded. */
+const subframes = new Map<number, Set<number>>();
+
+/**
+ * Chrome's frames in WebKit's details: WebKit reports a subframe's document as a main_frame request, and its main frame,
+ * 0 elsewhere, by its own id as a parent (WEBKIT-GAPS 95). A parent none of the tab's subframes is its main frame.
+ */
+function chromeFrames(details: any): any {
+  const { tabId, frameId, parentFrameId, type } = details ?? {};
+  if (typeof tabId !== 'number' || tabId < 0 || typeof frameId !== 'number') return details;
+  if (frameId === 0) {
+    if (type === 'main_frame') subframes.delete(tabId);
+    return details;
+  }
+  let known = subframes.get(tabId);
+  if (!known) subframes.set(tabId, known = new Set());
+  known.add(frameId);
+  const parent = typeof parentFrameId === 'number' && parentFrameId > 0 && !known.has(parentFrameId) ? 0 : parentFrameId;
+  return parent === parentFrameId && type !== 'main_frame' ? details : { ...details, parentFrameId: parent, type: type === 'main_frame' ? 'sub_frame' : type };
+}
+
+const FRAME_TYPES = ['main_frame', 'sub_frame'];
+
+/** WebKit's webRequest event `name` with Chrome's frames, its filter's frame types matched on them. */
+class ChromeFramesEvent extends WrappedEvent<[any, ...unknown[]]> {
+  private readonly filtered = new Map<(...args: any[]) => unknown, (...args: any[]) => unknown>();
+
+  override addListener(listener: (...args: any[]) => unknown, filter?: any, ...rest: unknown[]): void {
+    if (this.filtered.has(listener)) return;
+    const types: unknown = filter?.types;
+    const framed = Array.isArray(types) && types.some((type) => FRAME_TYPES.includes(type)) ? types : undefined;
+    const own = framed ? (details: any, ...args: unknown[]) => (framed.includes(details?.type) ? listener(details, ...args) : undefined) : listener;
+    addLeniently(framed ? { ...filter, types: [...new Set([...framed, ...FRAME_TYPES])] } : filter, (asked) => {
+      super.addListener(own, asked, ...rest);
+      this.filtered.set(listener, own);
+    });
+  }
+
+  override removeListener(listener: (...args: any[]) => unknown): void {
+    const own = this.filtered.get(listener);
+    if (!own) return;
+    this.filtered.delete(listener);
+    super.removeListener(own);
+  }
+
+  override hasListener(listener: (...args: any[]) => unknown): boolean {
+    return this.filtered.has(listener);
+  }
+}
+
+export const webRequestFrames = (source: (name: string) => object) => Object.fromEntries([
+  'onBeforeRequest', 'onBeforeSendHeaders', 'onSendHeaders', 'onHeadersReceived', 'onBeforeRedirect', 'onResponseStarted', 'onCompleted', 'onErrorOccurred',
+].map((name) => [name, new ChromeFramesEvent(() => source(name), (listener) => (details: any, ...rest: unknown[]) => listener(chromeFrames(details), ...rest))]));

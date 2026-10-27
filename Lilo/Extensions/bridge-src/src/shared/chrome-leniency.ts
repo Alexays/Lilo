@@ -151,9 +151,31 @@ export function removePageListeners(): void {
 }
 
 /**
- * Retries only a listener rejected for resource types or URL patterns WebKit does not know (and never reports); a
- * filter left empty matches nothing, so it is skipped. A non-function listener is ignored, as in Chrome.
+ * Runs `add` with `filter`, and again without each resource type or URL pattern WebKit rejects as unknown (and never
+ * reports); a filter left empty matches nothing, so nothing is added.
  */
+export function addLeniently(filter: any, add: (filter: any) => unknown): unknown {
+  for (;;) {
+    try {
+      return add(filter);
+    } catch (error) {
+      const message = String((error as Error)?.message);
+      const type = unknownResourceType.exec(message)?.[1];
+      const pattern = invalidMatchPattern.exec(message)?.[1];
+      if (type && filter?.types?.includes(type)) {
+        filter = { ...filter, types: filter.types.filter((t: string) => t !== type) };
+        if (filter.types.length === 0) return undefined;
+      } else if (pattern && filter?.urls?.includes(pattern)) {
+        filter = { ...filter, urls: filter.urls.filter((url: string) => url !== pattern) };
+        if (filter.urls.length === 0) return undefined;
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+/** Adds a listener leniently, or through its event's stand-in. A non-function listener is ignored, as in Chrome. */
 export const chromeEvent: NamespaceCompat = {
   add: {
     hasListeners(this: object) { return eventStandIns.get(this)?.hasListeners() ?? (eventListeners.get(this)?.size ?? 0) > 0; },
@@ -164,30 +186,14 @@ export const chromeEvent: NamespaceCompat = {
       const standIn = eventStandIns.get(this);
       if (standIn) return (standIn.addListener as (...a: unknown[]) => void)(...args);
       if (pageEvents === null) return undefined;
-      let filter = args[1];
-      for (;;) {
-        try {
-          const result = original.apply(this, args[1] === filter ? args : [args[0], filter, ...args.slice(2)]);
-          let listeners = eventListeners.get(this);
-          if (!listeners) eventListeners.set(this, (listeners = new Set()));
-          listeners.add(args[0]);
-          pageEvents?.add(this);
-          return result;
-        } catch (error) {
-          const message = String((error as Error)?.message);
-          const type = unknownResourceType.exec(message)?.[1];
-          const pattern = invalidMatchPattern.exec(message)?.[1];
-          if (type && filter?.types?.includes(type)) {
-            filter = { ...filter, types: filter.types.filter((t: string) => t !== type) };
-            if (filter.types.length === 0) return undefined;
-          } else if (pattern && filter?.urls?.includes(pattern)) {
-            filter = { ...filter, urls: filter.urls.filter((url: string) => url !== pattern) };
-            if (filter.urls.length === 0) return undefined;
-          } else {
-            throw error;
-          }
-        }
-      }
+      return addLeniently(args[1], (filter) => {
+        const result = original.apply(this, args[1] === filter ? args : [args[0], filter, ...args.slice(2)]);
+        let listeners = eventListeners.get(this);
+        if (!listeners) eventListeners.set(this, (listeners = new Set()));
+        listeners.add(args[0]);
+        pageEvents?.add(this);
+        return result;
+      });
     },
     removeListener: (original) => function (this: any, listener: any) {
       if (typeof listener !== 'function') return undefined;
