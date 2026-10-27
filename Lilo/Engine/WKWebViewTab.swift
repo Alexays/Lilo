@@ -371,10 +371,11 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Resume a frozen engine. Idempotent; no-op if never frozen or if the page is lost.
-    func resume() {
-        guard isFrozen, !isPageLost else { return }
+    /// `completion` runs once WebKit has the page live again.
+    func resume(completion: @escaping () -> Void = {}) {
+        guard isFrozen, !isPageLost else { return completion() }
         isFrozen = false
-        freezer.resume(webView)
+        freezer.resume(webView, completion: completion)
     }
 
     /// Resumes the page ahead of a call WebKit refuses on a suspended one. False when the page is lost:

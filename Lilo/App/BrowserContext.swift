@@ -340,6 +340,25 @@ final class BrowserContext {
         }
     }
 
+    /// Wakes every suspended page ahead of `closePagesBeforeQuit`: a suspended page runs no handler.
+    func resumePagesBeforeQuit() async {
+        for tabId in browserState.allTabIds() {
+            guard let engine = browserState.liveEngine(forTab: tabId), engine.isFrozen else { continue }
+            await withCheckedContinuation { done in engine.resume { done.resume() } }
+        }
+    }
+
+    /// Closes every live page through its beforeunload, pagehide and unload handlers: a site writing its
+    /// sign-in back to storage there would otherwise lose it when the quit kills the process.
+    func closePagesBeforeQuit() {
+        for tabId in browserState.allTabIds() {
+            guard let engine = browserState.liveEngine(forTab: tabId) else { continue }
+            // Only beforeunload is left to answer, after the close: the page is gone by then.
+            _ = engine.tryClose()
+            engine.teardown()
+        }
+    }
+
     @discardableResult
     func discardEngine(_ engine: WKWebViewTab) -> Any? {
         let state = engine.interactionState

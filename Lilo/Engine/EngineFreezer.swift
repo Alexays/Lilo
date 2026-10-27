@@ -62,9 +62,9 @@ final class CompositeFreezer {
         Self.suspendedWebViews.add(webView)
     }
 
-    func resume(_ webView: WKWebView) {
+    func resume(_ webView: WKWebView, completion: @escaping () -> Void = {}) {
         // Same IPC channel as the script below, so the page is live again before it runs.
-        WebViewPrivateAccessors(webView).invoke("_resumePage:") { _ in }
+        if !WebViewPrivateAccessors(webView).invoke("_resumePage:", completion: { _ in completion() }) { completion() }
         Self.suspendedWebViews.remove(webView)
         WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("resume"), in: nil, in: PageWorld.bridgeWorld)
     }

@@ -271,11 +271,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             busyCommands: browserContext.terminalHost.busyCommands,
             systemInitiated: quitReason.map { [kAELogOut, kAEReallyLogOut, kAEShowRestartDialog, kAEShowShutdownDialog, kAERestart, kAEShutDown].contains($0) } ?? false
         )
-        if reply == .terminateCancel { browserContext.isQuitting = false }
+        if reply == .terminateCancel {
+            browserContext.isQuitting = false
+            return reply
+        }
         let clearsSiteData = browserContext.settingsStore?.clearSiteDataOnQuit == true
-        guard reply == .terminateLater || (reply == .terminateNow && clearsSiteData) else { return reply }
         terminationReplyPending = true
-        // Bounded: quit proceeds even if a download cancel or a data removal never completes.
+        // Bounded: quit proceeds even if a download cancel, a data removal or a page resume never completes.
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(5))
             self.replyToPendingTermination(sender)
@@ -283,6 +285,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Task { @MainActor in
             if reply == .terminateLater { await manager.pauseAllForQuit() }
             if clearsSiteData { await controller?.clearPersistentSiteData() }
+            await self.browserContext.resumePagesBeforeQuit()
             self.replyToPendingTermination(sender)
         }
         return .terminateLater
@@ -298,6 +301,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         browserContext.isTerminating = true
         browserContext.windows.windows.forEach { $0.saveSessionBeforeQuit() }
         browserContext.saveSpaceStatesBeforeQuit()
+        // After the saves, which read each page's navigation state; early, so what the pages write as they
+        // close reaches the network process before it syncs storage at the app's exit.
+        browserContext.closePagesBeforeQuit()
         browserContext.writeClosedTerminals()
         browserContext.writeTabArchive()
         for profile in browserContext.profileContexts.allContexts { profile.history.flushPendingWrites() }
