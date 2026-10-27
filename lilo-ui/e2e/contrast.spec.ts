@@ -317,14 +317,31 @@ for (const colorScheme of ["light", "dark"] as const) {
 
 		test("a danger button's label reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await openSettingsAt(page, "Privacy");
+			await page.evaluate(() => window.__lilo!.receive({ event: "openClearBrowsingData" }));
 			expect(await textContrast(page, ".ui-button.danger")).toBeGreaterThanOrEqual(4.5);
 		});
 
-		test("the clear-data sheet's confirm button reads", async ({ page }) => {
+		test("a confirm sheet's danger button reads", async ({ page }) => {
 			await bootChrome(page, initialWorld());
-			await openSettingsAt(page, "Privacy");
-			await page.locator(".ui-button.danger").click();
+			await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
+			await page.locator(".process-panel").waitFor();
+			await page.evaluate(() =>
+				window.__lilo!.receive({
+					event: "processSnapshotUpdated",
+					processes: [
+						{
+							id: "p1",
+							kind: "webContent",
+							pid: 100,
+							tabs: [{ id: "tab-alpha", spaceId: "space-1", title: "Alpha", url: "https://example.com/alpha", lifecycle: "active", isAudioPlaying: false, isMicrophoneActive: false, isCameraActive: false, isScreenSharing: false }],
+							metrics: { residentSizeBytes: 100_000_000 },
+							webProcessStateLabel: "",
+						},
+					],
+				}),
+			);
+			await page.locator(".process-panel .tab-row").first().click();
+			await page.locator(".process-panel .small-button.danger").click();
 			const confirm = page.locator(".sheet-btn-danger");
 			await expect(confirm).toBeVisible();
 			expect(await textContrast(page, ".sheet-btn-danger")).toBeGreaterThanOrEqual(4.5);
@@ -539,3 +556,32 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 		});
 	}
 }
+
+test("a dark glyph on transparency sits on a chip on a dark Space, an opaque icon keeps its own background", async ({ page }) => {
+	const glyph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR4nGNgGAUYQE3F4z8+PGrAyDBgBAIAXBVkQdcEF9cAAAAASUVORK5CYII=";
+	const opaque = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGNQU/H4TwlmGDVg1IBRA4aLAQBkM5EQwEVXkAAAAABJRU5ErkJggg==";
+	const world = initialWorld();
+	world.spaces[0].color = "#363a75";
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab, index) =>
+		index === 0 ? { ...tab, faviconDataURL: glyph } : index === 1 ? { ...tab, faviconDataURL: opaque } : tab,
+	);
+	await page.emulateMedia({ colorScheme: "dark" });
+	await bootChrome(page, world);
+
+	const [first, second] = world.tabsBySpace[SPACE_1];
+	await expect(page.locator(`.tab-list [data-tab-id="${first.id}"] .site-favicon`)).toHaveClass(/has-chip/);
+	await expect(page.locator(`.tab-list [data-tab-id="${second.id}"] .site-favicon`)).not.toHaveClass(/has-chip/);
+});
+
+test("a colored glyph on a light Space keeps no chip, even under the contrast floor", async ({ page }) => {
+	const orange = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANElEQVR4nGNgGLTg61KV/8iYbI0kGURIM0FDKDKAWM04DRkGBgx8LBBrCF7N+AwiWiPdAQAzuTLAHZyC9gAAAABJRU5ErkJggg==";
+	const world = initialWorld();
+	world.spaces[0].color = "#e2daf1";
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab, index) => (index === 0 ? { ...tab, faviconDataURL: orange } : tab));
+	await page.emulateMedia({ colorScheme: "light" });
+	await bootChrome(page, world);
+
+	const favicon = page.locator(`.tab-list [data-tab-id="${world.tabsBySpace[SPACE_1][0].id}"] .site-favicon`);
+	await expect(favicon.locator("img")).toHaveJSProperty("complete", true);
+	await expect(favicon).not.toHaveClass(/has-chip/);
+});

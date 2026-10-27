@@ -1,12 +1,5 @@
 import AppKit
 
-/// A tab on the sidebar's media card.
-/// A tab paused from it (`Tab.pausedFromCardAt`) stays there, ready to play again, until it plays or closes.
-struct MediaTab {
-    /// The page registered Media Session next or previous track handlers.
-    var hasTrackControls = false
-}
-
 extension BrowserContext {
     /// Sends every window its media tabs when they changed, once per main-thread turn.
     func mediaActivityChanged() {
@@ -43,7 +36,7 @@ extension MainWindowController {
     }
 
     func mediaSummaries() -> [[String: Any]] {
-        shownTabs(context.mediaTabs.keys).map { tab, spaceId in
+        shownTabs(context.mediaTabIds).map { tab, spaceId in
             [
                 "id": tab.id.uuidString,
                 "spaceId": spaceId.uuidString,
@@ -51,7 +44,7 @@ extension MainWindowController {
                 "faviconDataURL": tab.faviconDataURL ?? "",
                 "playing": tab.isAudioPlaying,
                 "muted": tab.isMuted,
-                "hasTrackControls": context.mediaTabs[tab.id]?.hasTrackControls ?? false
+                "hasTrackControls": context.browserState.liveEngine(forTab: tab.id)?.callControls.hasTrackControls ?? false
             ]
         }
     }
@@ -82,22 +75,16 @@ extension MainWindowController {
     func mediaPlaybackChanged(_ engine: WKWebViewTab, isPlaying: Bool) {
         let id = engine.id
         if isPlaying {
-            if context.mediaTabs[id] == nil { context.mediaTabs[id] = MediaTab() }
-            Task { [weak self] in
-                let hasTrackControls = await engine.hasMediaTrackControls()
-                guard let self, context.mediaTabs[id] != nil else { return }
-                context.mediaTabs[id]?.hasTrackControls = hasTrackControls
-                context.mediaActivityChanged()
-            }
+            context.mediaTabIds.insert(id)
         } else if tabManager.tab(for: id)?.pausedFromCardAt == nil {
-            context.mediaTabs[id] = nil
+            context.mediaTabIds.remove(id)
         }
         context.mediaActivityChanged()
     }
 
     /// `action` is play, pause, nexttrack or previoustrack.
     func controlMedia(tabId: UUID, action: String) {
-        guard context.mediaTabs[tabId] != nil, let engine = context.browserState.liveEngine(forTab: tabId) else { return }
+        guard context.mediaTabIds.contains(tabId), let engine = context.browserState.liveEngine(forTab: tabId) else { return }
         if action == "pause" { context.browserState.updateTab(id: tabId) { $0.pausedFromCardAt = Date() } }
         engine.controlMedia(action)
     }

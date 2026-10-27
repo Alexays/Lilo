@@ -1,0 +1,10 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "Этот сайт запрашивает доступ к камере.";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "Этот сайт запрашивает доступ к микрофону.";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "Этот сайт запрашивает доступ к вашей геопозиции.";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "Lilo подключается к устройствам в локальной сети, например к роутеру или принтеру, когда вы открываете их страницы.";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "Этот сайт запрашивает доступ к распознаванию речи для преобразования ваших слов в текст.";

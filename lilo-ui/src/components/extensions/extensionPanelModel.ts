@@ -46,18 +46,25 @@ export function displayInitial(ext: ExtensionLike): string {
   return value ? value.charAt(0).toUpperCase() : "?";
 }
 
+const nameCollator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+
+/** The rows matching `query`, by display name so enabling or disabling one never moves it. */
 export function filterExtensions<T extends ExtensionLike>(
   extensions: T[],
   query: string,
 ): T[] {
   const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return extensions;
-  return extensions.filter(
-    (ext) =>
-      resolveDisplayName(ext).toLowerCase().includes(trimmed) ||
-      ext.id.toLowerCase().includes(trimmed) ||
-      ext.description.toLowerCase().includes(trimmed) ||
-      ext.version.toLowerCase().includes(trimmed),
+  const matches = trimmed
+    ? extensions.filter(
+        (ext) =>
+          resolveDisplayName(ext).toLowerCase().includes(trimmed) ||
+          ext.id.toLowerCase().includes(trimmed) ||
+          ext.description.toLowerCase().includes(trimmed) ||
+          ext.version.toLowerCase().includes(trimmed),
+      )
+    : extensions.slice();
+  return matches.sort(
+    (a, b) => nameCollator.compare(resolveDisplayName(a), resolveDisplayName(b)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
   );
 }
 

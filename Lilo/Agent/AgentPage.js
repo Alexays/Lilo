@@ -199,15 +199,37 @@
     return typed ? describe(el) : null
   }
 
-  // innerText leaves out open shadow roots: their children are read as well.
-  const shows = needle => (document.body?.innerText ?? '').toLowerCase().includes(needle) ||
-    [...(document.body ? elements(document.body) : [])].some(el => el.shadowRoot &&
-      [...el.shadowRoot.children].some(child => (child.innerText ?? '').toLowerCase().includes(needle)))
-
-  // Checked every 250 ms until it holds or the time is up: what was seen, or null.
+  // Checked now, then after the DOM changes, at most every 100 ms: what was seen, or null once the time is up.
+  // A timer coalesces the changes rather than a frame: frames stop in a hidden tab.
   const waitFor = ({ text: wanted, selector, state = 'visible', timeoutMs = 10000 }) => new Promise(resolve => {
     const started = Date.now()
+    const needle = String(wanted).toLowerCase()
+    let pending = null
+    const observer = new MutationObserver(() => { pending ??= setTimeout(check, 100) })
+    const watched = new WeakSet()
+    const watch = root => {
+      if (watched.has(root)) return
+      watched.add(root)
+      observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true })
+    }
+    // innerText leaves out open shadow roots: their children are read, and their changes watched, as well.
+    const shows = () => {
+      let found = (document.body?.innerText ?? '').toLowerCase().includes(needle)
+      for (const el of document.body ? elements(document.body) : []) {
+        if (!el.shadowRoot) continue
+        watch(el.shadowRoot)
+        found ||= [...el.shadowRoot.children].some(child => (child.innerText ?? '').toLowerCase().includes(needle))
+      }
+      return found
+    }
+    const finish = result => {
+      observer.disconnect()
+      clearTimeout(timer)
+      clearTimeout(pending)
+      resolve(result)
+    }
     const check = () => {
+      pending = null
       let seen = null
       if (selector) {
         const el = [...document.querySelectorAll(selector)].find(shown)
@@ -216,13 +238,13 @@
           seen = `${describe(el)} [${ref(el)}] is ${state === 'enabled' ? 'enabled' : 'shown'}`
         }
       } else {
-        const showing = shows(String(wanted).toLowerCase())
+        const showing = shows()
         if (showing !== (state === 'hidden')) seen = `"${wanted}" ${showing ? 'shows' : 'is gone'}`
       }
-      if (seen) return resolve(`${seen} after ${Date.now() - started} ms`)
-      if (Date.now() - started >= timeoutMs) return resolve(null)
-      setTimeout(check, 250)
+      if (seen) finish(`${seen} after ${Date.now() - started} ms`)
     }
+    watch(document)
+    const timer = setTimeout(() => finish(null), timeoutMs)
     check()
   })
 

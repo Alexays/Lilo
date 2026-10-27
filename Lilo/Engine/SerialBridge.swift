@@ -342,11 +342,6 @@ extension SerialBridge {
         for (let i = 0; i < bytes.length; i += 32768) text += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
         return btoa(text);
       };
-      const fromBase64 = text => {
-        const binary = atob(text), bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return bytes;
-      };
       class SerialPort extends EventTarget {
         #info; #readable = null; #writable = null; #controller = null; #closing = false;
         constructor(token, info) {
@@ -395,7 +390,7 @@ extension SerialBridge {
           delete ports[this.#info.id];
         }
         static receive(port, data) {
-          if (port.#controller) { try { port.#controller.enqueue(fromBase64(data)); } catch (e) {} }
+          if (port.#controller) { try { port.#controller.enqueue(Uint8Array.fromBase64(data)); } catch (e) {} }
         }
         static end(port) {
           if (port.#closing) return;

@@ -270,7 +270,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
             openLittleWindow(url: url)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id), let url else { return }
+        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        if inBackground { noteBackgroundTab(created.id) }
+        guard let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
     }
 
@@ -549,7 +551,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     /// back/forward), and each patch rewrites the chrome's sidebar state.
     func updateAndEmit(_ id: UUID, _ mutate: (inout Tab) -> Void) {
         guard let (old, new) = context.browserState.updateTab(id: id, mutate: mutate), old != new else { return }
-        if context.mediaTabs[id] != nil || context.callTabIds.contains(id) { context.mediaActivityChanged() }
+        if context.mediaTabIds.contains(id) || context.callTabIds.contains(id) { context.mediaActivityChanged() }
         if isVisibleTab(new.id) {
             tabManager.noteTabUpdated(old: old, new: new)
         }

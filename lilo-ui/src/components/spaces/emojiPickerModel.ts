@@ -41,6 +41,10 @@ export const ENGLISH_EMOJI = catalogOf(
 // Each its own chunk, aligned line for line with EMOJI_GROUPS; English ships with the picker.
 const LOCALE_NAMES: Partial<Record<Locale, () => Promise<{ EMOJI_NAMES: string }>>> = {
   fr: () => import("./emojiData.fr.gen"),
+  es: () => import("./emojiData.es.gen"),
+  "zh-Hans": () => import("./emojiData.zh-Hans.gen"),
+  "pt-BR": () => import("./emojiData.pt-BR.gen"),
+  ru: () => import("./emojiData.ru.gen"),
 };
 const catalogs = new Map<Locale, Promise<EmojiCatalog>>();
 

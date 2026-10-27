@@ -437,6 +437,20 @@ final class WKWebViewTab: NSObject {
         webView.load(URLRequest(url: url))
     }
 
+    /// Tells a delegate set mid-load what a page loading out of sight did so far, as if it had watched:
+    /// commit applies the site's settings, finish records the visit.
+    func replayPreloadedNavigation() {
+        guard let delegate else { return }
+        let url = currentURL
+        // First, while the tab still has no URL: the host change shows the site's cached icon, since
+        // WebKit offered the page's own before anyone listened.
+        delegate.tab(self, didUpdateURL: url)
+        delegate.tab(self, didNavigate: .started(url))
+        if hasCommittedContent { delegate.tab(self, didNavigate: .committed(url)) }
+        if hasCommittedContent, !isLoading { delegate.tab(self, didNavigate: .finished(url)) }
+        delegate.tab(self, didUpdateProgress: estimatedProgress)
+    }
+
     /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
     /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
     func loadCachedCopy(of url: URL) {
@@ -898,15 +912,19 @@ final class WKWebViewTab: NSObject {
         return .download
     }
 
+    /// `WKNavigationAction.buttonNumber` is a bitmask (left 1, right 2, middle 4), not `NSEvent.buttonNumber`'s index.
+    nonisolated static let middleButtonNumber = 1 << 2
+
     nonisolated static func shouldOpenLinkInBackgroundTab(
         url: URL?,
         isMainFrame: Bool,
         navigationType: WKNavigationType,
-        modifierFlags: NSEvent.ModifierFlags
+        modifierFlags: NSEvent.ModifierFlags,
+        buttonNumber: Int
     ) -> Bool {
         guard isMainFrame,
               navigationType == .linkActivated,
-              modifierFlags.contains(.command),
+              modifierFlags.contains(.command) || buttonNumber == middleButtonNumber,
               let scheme = url?.scheme?.lowercased()
         else { return false }
         return webSchemes.contains(scheme)
@@ -1150,7 +1168,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             url: url,
             isMainFrame: isMainFrame,
             navigationType: navigationAction.navigationType,
-            modifierFlags: navigationAction.modifierFlags
+            modifierFlags: navigationAction.modifierFlags,
+            buttonNumber: navigationAction.buttonNumber
         ) {
             delegate?.tab(self, didCreateNewTab: url, inBackground: true)
             return .cancel

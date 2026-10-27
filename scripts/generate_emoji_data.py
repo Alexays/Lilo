@@ -23,6 +23,10 @@ TONES = "\U0001F3FB\U0001F3FC\U0001F3FD\U0001F3FE\U0001F3FF"
 LOCALES = {
     "en": {"a", "an", "and", "in", "of", "on", "the", "with"},
     "fr": {"a", "au", "aux", "avec", "d", "de", "des", "du", "en", "et", "l", "la", "le", "les", "sur", "un", "une"},
+    "es": {"a", "al", "con", "de", "del", "el", "en", "la", "las", "los", "un", "una", "y"},
+    "zh-Hans": set(),
+    "pt-BR": {"a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "na", "nas", "no", "nos", "o", "os", "um", "uma"},
+    "ru": {"в", "во", "для", "и", "из", "к", "на", "о", "от", "по", "с", "со", "у"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,6 +46,10 @@ def words(text):
 
 def annotations(locale):
     names, keywords = {}, {}
+    # CLDR's base Portuguese annotations use Brazilian Portuguese.
+    locale = "pt" if locale == "pt-BR" else locale
+    # CLDR's base Chinese catalog uses Simplified Chinese; its filename is zh.xml.
+    locale = "zh" if locale == "zh-Hans" else locale
     for kind in ("annotations", "annotationsDerived"):
         for node in ET.fromstring(fetch(CLDR_URL.format(kind=kind, locale=locale))).iter("annotation"):
             cp = node.get("cp", "").replace("\uFE0F", "")

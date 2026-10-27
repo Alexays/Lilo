@@ -57,12 +57,12 @@ final class PageTranslator {
                 do {
                     for start in stride(from: 0, to: texts.count, by: Self.chunkSize) {
                         let chunk = try await Self.translate(texts[start..<min(start + Self.chunkSize, texts.count)], with: session)
-                        guard let webView else { return }
-                        _ = try await webView.callAsyncJavaScript(
+                        // The page navigated or was restored: the rest has nowhere to go.
+                        guard let webView, try await webView.callAsyncJavaScript(
                             Self.applyScript,
                             arguments: ["ids": chunk.ids, "texts": chunk.texts],
                             contentWorld: Self.world
-                        )
+                        ) as? Bool == true else { return }
                     }
                 } catch {
                     Self.logger.error("page translation failed: \(error.localizedDescription, privacy: .public)")
@@ -104,11 +104,12 @@ final class PageTranslator {
 
     private static let applyScript = """
     const state = window.__liloTranslation;
-    if (!state) return;
+    if (!state) return false;
     ids.forEach((id, i) => {
       const original = state.originals[id];
       state.nodes[id].nodeValue = original.match(/^\\s*/)[0] + texts[i] + original.match(/\\s*$/)[0];
     });
+    return true;
     """
 
     private static let restoreScript = """

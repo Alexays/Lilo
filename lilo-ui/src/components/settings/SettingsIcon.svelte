@@ -33,6 +33,9 @@
   {:else if name === "tabs"}
     <rect x="3.4" y="6.2" width="10.4" height="10.4" rx="2.6" />
     <path d="M6.4 3.4h7.6a2.6 2.6 0 0 1 2.6 2.6v7.6" />
+  {:else if name === "media"}
+    <circle cx="10" cy="10" r="7" />
+    <path d="M8.6 7.4v5.2l4.1-2.6Z" />
   {:else if name === "privacy"}
     <path d="M10 2.8 4.8 5v4.4c0 3.2 2 5.8 5.2 7.8 3.2-2 5.2-4.6 5.2-7.8V5L10 2.8Z" />
     <path d="m7.8 10 1.5 1.5 3-3.2" />
@@ -137,6 +140,10 @@
     <path d="M4 8.4h12" />
     <path d="M4 11.8h12" />
     <path d="M4 15.2h7.4" />
+  {:else if name === "microphone"}
+    <rect x="7.6" y="3" width="4.8" height="8.4" rx="2.4" />
+    <path d="M5 9.6a5 5 0 0 0 10 0" />
+    <path d="M10 14.6v2.4" />
   {:else if name === "laptop"}
     <rect x="4.4" y="4.6" width="11.2" height="8" rx="1.4" />
     <path d="M2.6 15.4h14.8" />

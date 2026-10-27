@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -106,6 +107,22 @@ final class MenuValidationTests: XCTestCase {
 
         XCTAssertTrue(window.validateUserInterfaceItem(item))
         XCTAssertEqual(item.title, "Show Reader".localized)
+    }
+
+    func testTheReaderLeavesThePageNoGlobal() async throws {
+        let webView = WKWebView()
+        let paragraph = "<p>" + String(repeating: "A sentence long enough to read as an article, with commas, and more. ", count: 12) + "</p>"
+        webView.loadHTMLString("<article><h1>Title</h1>\(paragraph)\(paragraph)\(paragraph)</article>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
+
+        ReaderMode.apply(to: webView)
+
+        let shown = await pollUntil(timeout: 5) {
+            ((try? await webView.evaluateJavaScript("!!document.getElementById('lilo-reader')")) as? Bool) == true
+        }
+        XCTAssertTrue(shown)
+        let readability = try await webView.evaluateJavaScript("typeof Readability")
+        XCTAssertEqual(readability as? String, "undefined")
     }
 
     func testDuplicateTabOpensTheCopyRightBelowTheOriginal() throws {

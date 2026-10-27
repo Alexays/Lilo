@@ -219,19 +219,27 @@ extension MainWindowController {
         func add(_ title: String, _ icon: MenuIcon, _ action: String) {
             menu.addItem(title.localized, icon: icon) { self.bridgeRouter?.send(event: "downloadMenuAction", data: ["id": downloadId, "action": action]) }
         }
+        // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
+        func addCopyURL() {
+            menu.addItem("Copy URL".localized, icon: .copyLink) {
+                guard let item = try? self.context.downloadManager.store?.fetch(id: Int64(downloadId)) else { return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(item.url, forType: .string)
+            }
+        }
 
         switch state {
         case "inProgress", "paused":
-            add("Copy URL", .copyLink, "copyUrl")
+            addCopyURL()
             add("Cancel", .cancel, "cancel")
         case "interrupted":
             add("Retry", .retry, "retry")
-            add("Copy URL", .copyLink, "copyUrl")
+            addCopyURL()
             menu.addItem(.separator())
             add("Remove from List", .removeFromList, "removeFromList")
         default: // complete
             if fileMissing {
-                add("Copy URL", .copyLink, "copyUrl")
+                addCopyURL()
                 menu.addItem(.separator())
                 add("Remove from List", .removeFromList, "removeFromList")
             } else {
@@ -245,7 +253,7 @@ extension MainWindowController {
                     }
                 }
                 menu.addItem(.separator())
-                add("Copy URL", .copyLink, "copyUrl")
+                addCopyURL()
                 add("Delete File", .delete, "deleteFile")
                 add("Remove from List", .removeFromList, "removeFromList")
             }

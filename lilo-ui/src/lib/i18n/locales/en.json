@@ -139,6 +139,7 @@
 			"general": "General",
 			"appearance": "Appearance",
 			"tabs": "Tabs and spaces",
+			"media": "Audio and video",
 			"privacy": "Privacy",
 			"extensions": "Extensions",
 			"advanced": "Advanced",
@@ -152,7 +153,8 @@
 			"tabLayout": "Tabs",
 			"pages": "Pages",
 			"spaces": "Spaces",
-			"media": "Media and calls",
+			"playback": "Playback",
+			"calls": "Calls",
 			"contentBlocking": "Content blocking",
 			"protection": "Protection",
 			"browsingData": "Browsing data",
@@ -233,7 +235,7 @@
 			"language": {
 				"title": "Language",
 				"description": "Language used across the browser interface.",
-				"keywords": "locale translation english french"
+				"keywords": "locale translation english french spanish chinese simplified portuguese brazil russian"
 			},
 			"searchEngine": {
 				"title": "Search engine",
@@ -244,6 +246,11 @@
 				"title": "Search suggestions",
 				"description": "Show suggestions as you type. What you type is sent to the search engine.",
 				"keywords": "autocomplete suggest typing"
+			},
+			"preloadTopHit": {
+				"title": "Preload top hit",
+				"description": "Load a site you visit often while you type its address. Uses more memory and data.",
+				"keywords": "prerender faster"
 			},
 			"searchEngines": {
 				"title": "Search engines",
@@ -328,6 +335,16 @@
 				"title": "Auto picture-in-picture",
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab.",
 				"keywords": "pip video call floating"
+			},
+			"dockCallsInSidebar": {
+				"title": "Keep calls in the sidebar",
+				"description": "A tab using your camera, mic, or screen docks in the sidebar when you switch away, instead of a floating window.",
+				"keywords": "pip dock call sidebar floating"
+			},
+			"fullBandMicrophone": {
+				"title": "Full-quality mic with headphones",
+				"description": "With headphones, calls skip echo cancellation, which dulls your voice.",
+				"keywords": "mic echo airpods"
 			},
 			"contentBlocker": {
 				"title": "Block ads and trackers",

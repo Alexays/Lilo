@@ -51,7 +51,8 @@ final class BrowserContext {
     /// The terminals last sent to each window, so an unchanged list costs no bridge message.
     var sentTerminalActivity: [ObjectIdentifier: NSArray] = [:]
     /// Tabs playing media, or paused from the sidebar's media card, for that card.
-    var mediaTabs: [UUID: MediaTab] = [:]
+    /// A tab paused from it (`Tab.pausedFromCardAt`) stays there, ready to play again, until it plays or closes.
+    var mediaTabIds: Set<UUID> = []
     /// Tabs capturing the microphone or camera, for the sidebar's call card.
     var callTabIds: Set<UUID> = []
     var mediaActivityPending = false
@@ -210,6 +211,7 @@ final class BrowserContext {
         startupSnapshot = bootstrap.startupSnapshot
         settingsStore = SettingsStore(dbPool: dbManager.globalPool)
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
+        engineFactory.microphoneBridge.isEnabled = { [weak self] in self?.settingsStore.fullBandMicrophone ?? false }
         if let loadError = settingsStore.initialLoadError {
             showDegradedDatabaseAlert(
                 subject: "settings",

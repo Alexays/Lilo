@@ -668,6 +668,8 @@ export interface BridgeCommandPayloadMap {
 
 	searchHistory: { query: string };
 	searchSuggestions: { query: string; engine: string };
+	/** The command bar's top hit to load out of sight; an empty `url` drops it. */
+	preloadTopHit: { url: string };
 	deleteHistoryEntry: { url: string; query: string };
 
 	omniboxInputStarted: { sessionId: string; query: string };
@@ -1001,7 +1003,6 @@ export interface BridgeEventPayloadMap {
 			| "open"
 			| "quickLook"
 			| "showInFinder"
-			| "copyUrl"
 			| "deleteFile"
 			| "removeFromList"
 			| "cancel"

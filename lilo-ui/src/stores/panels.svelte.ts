@@ -12,6 +12,7 @@ export type SettingsSectionId =
 	| "general"
 	| "appearance"
 	| "tabs"
+	| "media"
 	| "privacy"
 	| "extensions"
 	| "terminal"

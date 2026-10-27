@@ -248,6 +248,11 @@ extension MainWindowController {
         requestedURL?.scheme?.lowercased() == "chrome-extension"
     }
 
+    /// The close handler lives in its own world: one in the page world gives every page of the controller `window.webkit`.
+    private static let popupCloseWorld = WKContentWorld.world(name: "lilo-popup-close")
+    /// Random per launch: the event an extension page's window.close dispatches for `popupCloseWorld` to post.
+    private static let popupCloseEvent = "lilo-close-" + UUID().uuidString
+
     func installPopupCloseBridge(on userContentController: WKUserContentController) {
         guard !Self.popupCloseBridgeControllers.contains(userContentController) else { return }
         Self.popupCloseBridgeControllers.add(userContentController)
@@ -262,11 +267,7 @@ extension MainWindowController {
 
                 const closePopup = () => {
                     window.__liloPageClosing?.();
-                    try {
-                        window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
-                    } catch (error) {
-                        console.error('Failed to close popup natively', error);
-                    }
+                    document.dispatchEvent(new CustomEvent('\#(Self.popupCloseEvent)'));
                 };
 
                 window.close = closePopup;
@@ -276,9 +277,22 @@ extension MainWindowController {
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true
         )
+        let relayScript = WKUserScript(
+            source: #"""
+            if (/^(webkit|chrome)-extension:$/.test(location.protocol)) {
+                document.addEventListener('\#(Self.popupCloseEvent)', () => {
+                    window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
+                });
+            }
+            """#,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true,
+            in: Self.popupCloseWorld
+        )
 
-        userContentController.removeScriptMessageHandler(forName: "liloPopupHost")
+        userContentController.removeScriptMessageHandler(forName: "liloPopupHost", contentWorld: Self.popupCloseWorld)
         userContentController.addUserScript(nativeCloseScript)
-        userContentController.add(PopupCloseScriptHandler(windows: context.windows), name: "liloPopupHost")
+        userContentController.addUserScript(relayScript)
+        userContentController.add(PopupCloseScriptHandler(windows: context.windows), contentWorld: Self.popupCloseWorld, name: "liloPopupHost")
     }
 }

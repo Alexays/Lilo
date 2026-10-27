@@ -37,17 +37,17 @@ final class PageSnapshotService {
         // Injected only now, so browsing a page leaves no capture machinery behind. A subframe that
         // has gone away since it was recorded just throws WKErrorJavaScriptInvalidFrameTarget.
         for frame in subframes as [WKFrameInfo?] + [nil] {
-            _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.installJS, in: frame, contentWorld: .page)
+            _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.installJS, in: frame, contentWorld: PageSnapshotExpansion.world)
         }
         _ = try? await webView.callAsyncJavaScript(
-            PageSnapshotExpansion.expandJS, arguments: [:], in: nil, contentWorld: .page
+            PageSnapshotExpansion.expandJS, arguments: [:], in: nil, contentWorld: PageSnapshotExpansion.world
         )
         let image = await scrollAndStitch()
         // Scroll capture first: it restores the scroll position against the still-expanded layout.
         _ = try? await webView.evaluateJavaScript(
             PageScrollCapture.endJS, in: nil, contentWorld: PageScrollCapture.world
         )
-        _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.restoreJS)
+        _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.restoreJS, in: nil, contentWorld: PageSnapshotExpansion.world)
         return image
     }
 

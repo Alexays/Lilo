@@ -65,7 +65,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage blocker-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench script-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare perf-summary perf-compare perf-summary-test \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -269,6 +269,18 @@ blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 blocker-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@out="$(abspath $(or $(OUT),build/blocker-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_BENCH="$$out" $(TEST) -only-testing:LiloTests/ContentBlockerBenchmarkTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report what the injected scripts cost a page: load with frames, a growing feed (TABLES=filter tables the app built; OUT=build/script-bench.txt)
+script-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/script-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_SCRIPT_BENCH="$$out" TEST_RUNNER_LILO_SCRIPT_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
+		$(TEST) -only-testing:LiloTests/InjectedScriptsBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report Enter to first paint of a page whose server pauses, with and without a top-hit preload (OUT=build/preload-bench.txt)
+preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/preload-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PRELOAD_BENCH="$$out" $(TEST) -only-testing:LiloTests/TopHitPreloadBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Run the terminal throughput and lock-fairness benchmarks

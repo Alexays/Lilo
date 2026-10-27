@@ -25,7 +25,7 @@ test("formats the downloads label", () => {
 test("sections follow the navigation order with advanced last", () => {
   assert.deepEqual(
     SETTINGS_SECTIONS.map((section) => section.id),
-    ["general", "appearance", "tabs", "privacy", "extensions", "terminal", "agents", "advanced"],
+    ["general", "appearance", "tabs", "media", "privacy", "extensions", "terminal", "agents", "advanced"],
   );
 });
 
@@ -55,10 +55,13 @@ test("groups a section's settings in display order", () => {
   assert.deepEqual(sectionGroups("general"), [
     { groupKey: "settings.groups.browser", settings: ["defaultBrowser", "importBrowsers", "language"] },
     { groupKey: "settings.groups.otherAppLinks", settings: ["externalLinkDefault", "externalLinkRules"] },
-    { groupKey: "settings.groups.search", settings: ["searchEngine", "searchSuggestions", "searchEngines"] },
+    { groupKey: "settings.groups.search", settings: ["searchEngine", "searchSuggestions", "preloadTopHit", "searchEngines"] },
     { groupKey: "settings.groups.downloads", settings: ["downloadsFolder", "askDownloadLocation"] },
-    { groupKey: "settings.groups.media", settings: ["autoPictureInPicture", "autoplay", "autoDevices", "deviceSetup"] },
     { groupKey: "settings.groups.lilo", settings: ["appUpdates", "autoUpdate", "shortcuts"] },
+  ]);
+  assert.deepEqual(sectionGroups("media"), [
+    { groupKey: "settings.groups.playback", settings: ["autoPictureInPicture", "autoplay"] },
+    { groupKey: "settings.groups.calls", settings: ["dockCallsInSidebar", "fullBandMicrophone", "autoDevices", "deviceSetup"] },
   ]);
   assert.deepEqual(sectionGroups("terminal"), []);
 });

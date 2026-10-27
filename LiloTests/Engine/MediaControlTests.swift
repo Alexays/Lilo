@@ -14,11 +14,14 @@ final class MediaControlTests: XCTestCase {
     """
 
     func testControlsGoToThePageMediaSessionHandlers() async throws {
-        let tab = try await loadedTab(Self.sessionPage)
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab(Self.sessionPage, factory: factory)
         defer { tab.teardown() }
 
-        let hasTrackControls = await tab.hasMediaTrackControls()
-        XCTAssertTrue(hasTrackControls)
+        let reportedTracks = await pollUntil(timeout: 5) { reported?.hasTrackControls == true }
+        XCTAssertTrue(reportedTracks)
         for action in ["pause", "play", "nexttrack", "previoustrack", "unknown"] { tab.controlMedia(action) }
 
         let met = await pollUntil(timeout: 5) {
@@ -56,11 +59,19 @@ final class MediaControlTests: XCTestCase {
     }
 
     func testAPageWithoutTrackHandlersOffersNoTrackControls() async throws {
-        let tab = try await loadedTab("<p>no session</p>")
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("""
+        <script>
+        for (const action of ['play', 'pause', 'hangup']) navigator.mediaSession.setActionHandler(action, () => {});
+        </script>
+        """, factory: factory)
         defer { tab.teardown() }
 
-        let hasTrackControls = await tab.hasMediaTrackControls()
-        XCTAssertFalse(hasTrackControls)
+        let reportedHangUp = await pollUntil(timeout: 5) { reported?.actions == ["hangup"] }
+        XCTAssertTrue(reportedHangUp)
+        XCTAssertEqual(reported?.hasTrackControls, false)
     }
 
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
