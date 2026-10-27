@@ -45,7 +45,7 @@ let idleTimer: ReturnType<typeof setTimeout> | undefined;
 // Lilo sends an event again on the worker's next port when it never learned it arrived.
 let lastSeq = 0;
 // Tells this worker from the next one on each port it opens: Lilo closes a stopped worker's sockets.
-const instance = Math.random().toString(36).slice(2);
+export const instance = Math.random().toString(36).slice(2);
 /** The events that reach the worker while its top-level code runs, dispatched once it is ready. */
 const held: unknown[] = [];
 let started: Promise<void> | undefined;

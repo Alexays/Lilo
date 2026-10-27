@@ -49,12 +49,12 @@ final class GapEvents {
         }
 
         /// Queues the event, dropping the oldest past `undeliveredCap` for a stopped worker: a connected one takes them as
-        /// they come, a burst of port messages included.
+        /// they come, a burst of port messages included. A port's events stay, as a port that lost its onConnect would hang.
         mutating func enqueue(_ envelope: GapEventEnvelope) {
             undelivered.append(envelope)
-            if port == nil, undelivered.count > GapEvents.undeliveredCap {
-                undelivered.removeFirst(undelivered.count - GapEvents.undeliveredCap)
-            }
+            guard port == nil, undelivered.count > GapEvents.undeliveredCap,
+                  let oldest = undelivered.firstIndex(where: { !GapEvents.portEvents.contains("\($0.namespace).\($0.event)") }) else { return }
+            undelivered.remove(at: oldest)
         }
     }
 
@@ -69,6 +69,7 @@ final class GapEvents {
     /// Past this many undelivered events for a stopped worker the oldest go, so a chatty producer under a long-dead worker
     /// cannot grow memory without bound.
     private nonisolated static let undeliveredCap = 256
+    private nonisolated static let portEvents: Set<String> = ["runtime.onConnect", "runtime.onConnectExternal", "runtime.portMessages", "runtime.portDisconnect"]
     /// The tag of the context a message is for, which ipc.ts checks first.
     private nonisolated static let channelKey = "liloChannel"
 

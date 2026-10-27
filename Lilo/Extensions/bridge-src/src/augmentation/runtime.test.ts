@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mockGapAPI, pushGapEvent } from '../shared/ipc.testkit.ts';
+import { closeGapChannel, mockGapAPI, pushGapEvent } from '../shared/ipc.testkit.ts';
 
 const gapCalls: Array<{ namespace: string; method: string; params?: any }> = [];
 let nextResult: unknown;
@@ -264,6 +264,8 @@ describe("the worker's relay of its content scripts' messages to another extensi
 
 describe("ports between the extension's pages and worker, which Lilo relays", () => {
   const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+  // Lilo runs each port event as a task, which Node may run after a timer.
+  const until = async (done: () => boolean) => { while (!done()) await tick(); };
   const own = 'ponmlkjihgfedcbaponmlkjihgfedcba';
   const noReceiver = 'Could not establish connection. Receiving end does not exist.';
 
@@ -295,7 +297,7 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
     assert.deepEqual(heard, [{ state: 1 }, 'then', { state: 2 }, 'then']);
   });
 
-  it('take a port Lilo relays to each listener of the context, which posts back on it, and decline one with none', () => {
+  it('take a port Lilo relays to each listener of the context, which posts back on it, and decline one with none', async () => {
     const webKitOnConnect: any = Object.create({ addListener() {}, removeListener() {} });
     const event = onConnect(() => webKitOnConnect);
     const from = gapCalls.length;
@@ -304,6 +306,7 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
     event.addListener((port: any) => ports.push(port));
     event.addListener((port: any) => ports.push(port));
     event.dispatch({ portId: 'p.2', name: 'state', sender: { id: own, url: `chrome-extension://${own}/popup.html` } });
+    await until(() => ports.length === 2);
     assert.equal(ports.length, 2);
     assert.equal(ports[0], ports[1], 'one port for the context, as Chrome');
     assert.deepEqual(ports[0].sender, { id: own, url: `chrome-extension://${own}/popup.html` });
@@ -316,7 +319,20 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
     });
   });
 
-  it("give a frame's port its own name and sender when its extension page relays it", () => {
+  it('disconnect the ports of this context once its channel to Lilo closes', async () => {
+    const webKitOnConnect: any = Object.create({ addListener() {}, removeListener() {} });
+    const event = onConnect(() => webKitOnConnect);
+    const ports: any[] = [];
+    event.addListener((port: any) => ports.push(port));
+    event.dispatch({ portId: 'c.1', name: 'state', sender: { id: own } });
+    await until(() => ports.length === 1);
+    const disconnected = new Promise((resolve) => ports[0].onDisconnect.addListener(() => resolve(liloLastError())));
+    closeGapChannel();
+    assert.equal(await disconnected, undefined);
+    assert.throws(() => ports[0].postMessage('late'), /disconnected port/);
+  });
+
+  it("give a frame's port its own name and sender when its extension page relays it", async () => {
     const webKitOnConnect: any = Object.create({ addListener() {}, removeListener() {} });
     const event = onConnect(() => webKitOnConnect);
     const ports: any[] = [];
@@ -324,6 +340,7 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
     const page = `chrome-extension://${own}/offscreen.html`;
     const frame = 'https://example.com/editor';
     event.dispatch({ portId: 'f.1', name: `x${frameMark}${encodeURIComponent(frame)}`, sender: { id: own, url: page } });
+    await until(() => ports.length === 1);
     assert.equal(ports[0].name, 'x');
     assert.deepEqual(ports[0].sender, { id: own, url: frame, origin: 'https://example.com' });
   });
@@ -341,8 +358,10 @@ describe("ports tabs.connect opens to the extension's own pages", () => {
     return port;
   };
   const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+  // Lilo runs each port event as a task, which Node may run after a timer.
+  const until = async (done: () => boolean) => { while (!done()) await tick(); };
 
-  it('reach only the page the tab shows, which declines the others to Lilo', () => {
+  it('reach only the page the tab shows, which declines the others to Lilo', async () => {
     (globalThis as any).top = globalThis;
     (globalThis as any).location = { href: 'chrome-extension://own/popup.html' };
     const webKitOnConnect: any = Object.create({ addListener(this: any, listener: any) { this.listener = listener; }, removeListener() {} });
@@ -354,6 +373,7 @@ describe("ports tabs.connect opens to the extension's own pages", () => {
     event.dispatch({ portId: 't.2', name: 'panel?liloTab=chrome-extension://own/options.html', sender: {} });
     const external = fakePort('x?liloExternal=abcdefghijklmnopabcdefghijklmnop?lilo');
     webKitOnConnect.listener(external);
+    await until(() => gapCalls.slice(from).filter((c) => c.namespace === 'runtime').length === 2);
     delete (globalThis as any).top;
     delete (globalThis as any).location;
 

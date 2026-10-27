@@ -168,7 +168,9 @@ final class RuntimeBridgeHandler: GapHandler {
             }
             localPorts[key] = LocalPort(
                 id: portId, extensionId: call.extensionId, opener: opener, receivers: receivers,
-                workerInstance: opener == nil ? events.workerInstance(of: call.extensionId) : nil, registry: call.registry
+                // The running worker's, which goes with its end; one that starts later gets the port as it accepts it.
+                workerInstance: opener == nil || receivers.contains(nil) ? events.workerInstance(of: call.extensionId) : nil,
+                registry: call.registry
             )
             events.emit("runtime", "onConnect", args: [["portId": portId, "name": call.string("name") ?? "", "sender": sender]],
                         to: call.extensionId, contexts: receivers)
@@ -178,8 +180,16 @@ final class RuntimeBridgeHandler: GapHandler {
             let key = Self.key(call.string("portId"), call.extensionId, call.registry)
             let context = call.int("pageChannel")
             guard localPorts[key]?.receivers.contains(context) == true else { return nil }
+            if context == nil {
+                // A worker that stopped since took the port with it.
+                let current = events.workerInstance(of: call.extensionId)
+                guard call.string("instance").map({ $0 == current }) ?? true else {
+                    leave(key, context: nil)
+                    return nil
+                }
+                localPorts[key]?.workerInstance = current
+            }
             localPorts[key]?.taken = true
-            if context == nil { localPorts[key]?.workerInstance = events.workerInstance(of: call.extensionId) }
             return nil
 
         case "runtime.portDecline" where localPorts[Self.key(call.string("portId"), call.extensionId, call.registry)] != nil:
@@ -203,7 +213,13 @@ final class RuntimeBridgeHandler: GapHandler {
             return nil
 
         case "runtime.portAccept":
-            if let id = call.string("portId"), ports[id]?.target == call.extensionId, let channel = call.int("pageChannel") {
+            guard let id = call.string("portId") else { return nil }
+            guard ports[id] != nil else {
+                // The port went before this context took it (its opener, or the worker it was first sent to): its end here goes too.
+                events.emit("runtime", "portDisconnect", args: [id], to: call.extensionId, contexts: [call.int("pageChannel")], wakes: false)
+                return nil
+            }
+            if ports[id]?.target == call.extensionId, let channel = call.int("pageChannel") {
                 ports[id]?.targetChannels.insert(channel)
             }
             return nil
