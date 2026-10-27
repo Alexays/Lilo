@@ -127,6 +127,7 @@ describe('runtime messaging to another extension', () => {
     pushGapEvent({ namespace: 'runtime', event: 'portMessages', args: ['9', JSON.stringify([{ state: 'on' }])] });
     pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: ['9'] });
     answer = undefined;
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     assert.deepEqual(gapCalls.filter((c) => c.method === 'portPost').map((c) => c.params), [{ portId: '9', json: '["first","second"]' }], 'what one turn posts goes in one call, as JSON');
     assert.deepEqual(heard, [{ state: 'on' }]);
@@ -274,12 +275,13 @@ describe("ports between the extension's pages and worker, which Lilo relays", ()
     assert.throws(() => port.postMessage(circular), TypeError, 'a message JSON cannot hold throws as it is posted');
 
     const heard: unknown[] = [];
-    port.onMessage.addListener((message: unknown) => heard.push(message));
+    // Each message runs as a task of its own, as in Chrome: a microtask the first schedules runs before the second.
+    port.onMessage.addListener((message: unknown) => { heard.push(message); queueMicrotask(() => heard.push('then')); });
     pushGapEvent({ namespace: 'runtime', event: 'portMessages', args: [portId, JSON.stringify([{ state: 1 }, { state: 2 }])] });
     const lastError = new Promise((resolve) => port.onDisconnect.addListener(() => resolve(liloLastError())));
     pushGapEvent({ namespace: 'runtime', event: 'portDisconnect', args: [portId, noReceiver] });
-    assert.deepEqual(heard, [{ state: 1 }, { state: 2 }]);
     assert.deepEqual(await lastError, { message: noReceiver });
+    assert.deepEqual(heard, [{ state: 1 }, 'then', { state: 2 }, 'then']);
   });
 
   it('take a port Lilo relays to each listener of the context, which posts back on it, and decline one with none', () => {

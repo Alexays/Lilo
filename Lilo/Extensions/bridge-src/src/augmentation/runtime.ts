@@ -176,12 +176,33 @@ async function senderInfo(): Promise<Record<string, unknown>> {
  */
 const externalPorts = new Map<string, (message?: { data: unknown }, error?: string) => void>();
 // Messages come as their JSON, which native relays without reading: Chrome serializes a port's messages as JSON too.
+// Chrome runs each port message as a task of its own, so what a listener schedules runs before the next message: Lilo,
+// which receives them batched, does too. A disconnect follows the messages before it.
+const portTasks: Array<() => void> = [];
+let taskChannel: MessageChannel | undefined;
+function asTask(task: () => void): void {
+  if (typeof MessageChannel !== 'function') return task();
+  if (!taskChannel) {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => {
+      portTasks.shift()?.();
+      // An open channel would keep a process that has nothing else to do running.
+      if (portTasks.length === 0 && taskChannel === channel) {
+        taskChannel = undefined;
+        channel.port1.close();
+      }
+    };
+    taskChannel = channel;
+  }
+  portTasks.push(task);
+  taskChannel.port2.postMessage(null);
+}
+// Not even the first runs in the event's task: the port's onConnect, which Lilo may send in the same message, has one of its own.
 bridgeEvents.set('runtime.portMessages', (portId: string, json: string) => {
-  const receive = externalPorts.get(portId);
-  if (!receive || typeof json !== 'string') return;
-  for (const data of JSON.parse(json)) receive({ data });
+  if (typeof json !== 'string') return;
+  for (const data of JSON.parse(json)) asTask(() => externalPorts.get(portId)?.({ data }));
 });
-bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => externalPorts.get(portId)?.(undefined, error));
+bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => asTask(() => externalPorts.get(portId)?.(undefined, error)));
 
 /**
  * A port native relays to another extension, by the id `opened` gives (a connecting extension's port, at once); a
@@ -194,9 +215,19 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
   let portId: string | undefined;
   let closed = false;
   let sending: Promise<unknown>;
-  // What is posted in one turn goes as JSON in as few calls as fit BATCH_LENGTH each.
+  // What is posted until the next task goes as JSON in as few calls as fit BATCH_LENGTH each: the answers to a burst of
+  // messages, each its own task, go together.
   let queued: string[][] = [];
   let queuedLength = 0;
+  const flush = () => {
+    if (queued.length === 0) return;
+    const batches = queued;
+    queued = [];
+    sending = sending.then(() => {
+      if (!portId) return;
+      for (const batch of batches) gapCall('runtime', 'portPost', { portId, json: `[${batch.join(',')}]` }, 0).catch(() => {});
+    });
+  };
   const receive = (message?: { data: unknown }, error?: string) => {
     if (message) return closed ? undefined : port.onMessage.dispatch(message.data, port);
     closed = true;
@@ -222,17 +253,16 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
         queued.at(-1)!.push(json);
         queuedLength += json.length;
       }
-      if (!first) return;
-      sending = sending.then(() => {
-        const batches = queued;
-        queued = [];
-        if (!portId) return;
-        for (const batch of batches) gapCall('runtime', 'portPost', { portId, json: `[${batch.join(',')}]` }, 0).catch(() => {});
-      });
+      // During a burst, what answers its messages waits for them all; otherwise it goes when this task's microtasks do.
+      if (first) {
+        if (portTasks.length > 0) asTask(flush);
+        else queueMicrotask(flush);
+      }
     },
     disconnect() {
       if (closed) return;
       closed = true;
+      flush();
       sending = sending.then(() => {
         if (!portId) return;
         externalPorts.delete(portId);
