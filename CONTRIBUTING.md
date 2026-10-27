@@ -145,7 +145,7 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make release-status` | pending release notes, changelog and app version consistency |
-| `make release-test` | release preparation and Sparkle build number synchronization tests (CI runs them; `make validate` does not) |
+| `make release-test` | release preparation, Sparkle build number synchronization and Discord announcement tests (CI runs them; `make validate` does not) |
 | `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
 | `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |

@@ -70,7 +70,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare perf-summary perf-compare perf-summary-test \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-test
+	changie change release-status release-version release-discord release-test
 
 ## List the targets
 help:
@@ -187,9 +187,13 @@ release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@$(MAKE) --no-print-directory site-generate
 
-## Test app version and Sparkle build number synchronization
+## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
+release-discord:
+	@python3 scripts/release_discord.py
+
+## Test release preparation, version synchronization and Discord announcements
 release-test: $(CHANGIE)
-	@CHANGIE='$(CHANGIE)' python3 scripts/release_test.py
+	@CHANGIE='$(CHANGIE)' python3 -B -m unittest discover -s scripts -p 'release*_test.py'
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)
