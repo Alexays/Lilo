@@ -84,7 +84,7 @@ final class BrowserContext {
         }
         return controller
     }()
-    private(set) lazy var agentControl = AgentControl(context: self)
+    lazy var agentControl = AgentControl(context: self)
     let appSupportDirectory: String
     private let makeProfileId: @MainActor () -> UUID
 

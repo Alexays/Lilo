@@ -269,6 +269,7 @@ extension MainWindowController {
 
         browserRuntimeCoordinator.applyRuntimeProjection(from: changes, currentSpaceOnly: true)
         emitBrowserChange(changes)
+        context.agentControl.refreshControlledTabs()
 
         guard let sourceState = changes.states.first(where: { $0.spaceId == sourceSpaceId }),
               let targetState = changes.states.first(where: { $0.spaceId == targetSpaceId }) else {

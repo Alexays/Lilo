@@ -47,6 +47,7 @@ class AgentToolTestCase: XCTestCase {
         AgentControl.reconnectGrace = .zero
         AgentTools.settleQuiet = (dom: .milliseconds(20), network: .milliseconds(50))
         control = AgentControl(context: context, socketURL: socketURL)
+        context.agentControl = control
         control.setEnabled(true)
         client = try AgentTestClient(path: socketURL)
         _ = await client.initialize(name: "Test Agent")

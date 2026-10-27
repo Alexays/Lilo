@@ -486,6 +486,8 @@ final class MainWindowController: NSWindowController {
         discardCollapsedFolderEngines(after: command)
         // Activation lays the split out through showContentView; other commands can form or break one.
         if case .activateTab = command {} else if tabManager.activeSplit != splitPanes.split { layoutSplitContent() }
+        // A tab the user moves out of an agent's folder goes back to normal, its fixed viewport included.
+        if case .activateTab = command {} else { context.agentControl.refreshControlledTabs() }
         return changes
     }
 

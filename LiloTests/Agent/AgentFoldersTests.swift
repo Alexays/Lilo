@@ -264,12 +264,29 @@ final class AgentFoldersTests: AgentToolTestCase {
             spaceId: try XCTUnwrap(agentsSpaceId), kind: .tab, itemId: try tabId(of: number), parentFolderId: nil, section: .unpinned, insert: .index(0)
         ))
 
-        let answered = engine.agentDialogHandler?("alert(x) dismissed")
-        let tabs = try await availableTabs()
-
-        XCTAssertEqual(answered, false, "a tab no agent drives answers no dialog by itself")
-        XCTAssertTrue(tabs.isEmpty)
+        XCTAssertNil(engine.agentDialogHandler, "a tab no agent drives answers no dialog by itself")
         XCTAssertFalse(engine.isAgentControlled)
+        let tabs = try await availableTabs()
+        XCTAssertTrue(tabs.isEmpty)
+    }
+
+    func testAFolderTheUserMovesToTheirSpaceFillsTheWindowAgainWithoutAnAgentCall() async throws {
+        let number = try await newAgentTab()
+        await switchToUserProfile()
+        _ = await client.callTool("resize_window", ["tabId": number, "width": 2000, "height": 400])
+        let engine = try engine(forTab: number)
+        let agentsSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: tabId(of: number)))
+        let folderId = try XCTUnwrap(control.agentFolder(for: XCTUnwrap(control.sessions.first), create: false).folderId)
+        window.switchToSpace(agentsSpace)
+
+        try window.moveToSpace(.folder, id: folderId, targetSpaceId: space.id)
+        XCTAssertTrue(engine === (try self.engine(forTab: number)), "the page moves with its engine within its profile")
+        window.switchToSpace(space.id)
+        window.activateTabStateFirst(id: try tabId(of: number))
+
+        XCTAssertFalse(engine.isAgentControlled)
+        XCTAssertNil(engine.agentViewport)
+        XCTAssertEqual(engine.view.frame, window.contentContainerView.bounds, "the page keeps the agent's viewport and runs past the window")
     }
 
     func testAgentLeavesAViewShownInAnotherWindowWhereItIs() async throws {
