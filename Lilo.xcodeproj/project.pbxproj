@@ -432,6 +432,7 @@
 		B9047DBE8E71E4932B1EDCDB /* ChromeInputCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0446E557B73B38C0A986B42F /* ChromeInputCoordinator.swift */; };
 		B9A5DAEA0B07415B34E29432 /* CaptureBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98539D73D9D0AF62B001E724 /* CaptureBridgeHandler.swift */; };
 		B9ECEACFB8360FFB6362D83C /* JSDialogPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56DCD2782B9C38E7799E0D3 /* JSDialogPresenter.swift */; };
+		BAA8B0FF2C4947C3AAD5F750 /* CertificateRejectionReasonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEFBD55F4EF1951246FF18C6 /* CertificateRejectionReasonTests.swift */; };
 		BABA4012886AFD636CAB981D /* ExtensionManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC3C84ED5DAB2601F259A69 /* ExtensionManifest.swift */; };
 		BB46F90F8F880376E09F13D2 /* HitboxDebugOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB06D0954FAE8692A6F6686 /* HitboxDebugOverlayTests.swift */; };
 		BBF9B8A805B80DBB61A3E17B /* ChromeDragRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80EED497CE2A72BE4910CD9A /* ChromeDragRoutingTests.swift */; };
@@ -1180,6 +1181,7 @@
 		DE7E43A224B337727C1D71B6 /* ExtensionPageTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPageTabTests.swift; sourceTree = "<group>"; };
 		DE864D3FF8865FB6179D8C03 /* ChromeInteractionRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeInteractionRouting.swift; sourceTree = "<group>"; };
 		DEF6F9CA5924443C5AF9BCBC /* ChromiumReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumReader.swift; sourceTree = "<group>"; };
+		DEFBD55F4EF1951246FF18C6 /* CertificateRejectionReasonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateRejectionReasonTests.swift; sourceTree = "<group>"; };
 		DF5F4AFB0C021C061B8906E5 /* BridgeEventRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeEventRecorder.swift; sourceTree = "<group>"; };
 		E0D6E27C75E2D74D14974B13 /* I18nBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = I18nBridgeHandler.swift; sourceTree = "<group>"; };
 		E14371EF9A67A0183B9C68E5 /* ExtensionSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSettingsStore.swift; sourceTree = "<group>"; };
@@ -2355,6 +2357,7 @@
 			children = (
 				7255217EB185C803E3EE0B1E /* AppleScriptSupportTests.swift */,
 				91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */,
+				DEFBD55F4EF1951246FF18C6 /* CertificateRejectionReasonTests.swift */,
 				55B565E0D10F787EA3146788 /* ChromeCaptureMachineTests.swift */,
 				80EED497CE2A72BE4910CD9A /* ChromeDragRoutingTests.swift */,
 				E7D1A6B922678BFBD5170970 /* ChromeEventRoutingTests.swift */,
@@ -2931,6 +2934,7 @@
 				E3D68CC883CFE9934755CAB0 /* CaptureBridgeHandlerTests.swift in Sources */,
 				E4946CE59D787E9A51D8277E /* CaptureRetentionIntegrationTests.swift in Sources */,
 				7184FE5D8274DC0CF5F15450 /* CaptureUsageObserverTests.swift in Sources */,
+				BAA8B0FF2C4947C3AAD5F750 /* CertificateRejectionReasonTests.swift in Sources */,
 				4FAD83E623DB0DCABEEE7E70 /* ChromeAPIShimTests.swift in Sources */,
 				1B50DD3203AF350D47E74161 /* ChromeCaptureMachineTests.swift in Sources */,
 				F7B9EE05E7EBA9F1779B1607 /* ChromeContractTests.swift in Sources */,

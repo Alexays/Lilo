@@ -98,7 +98,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.hasNavigationError = isError
                 t.navigationErrorCode = isError ? nsError.code : 0
                 t.navigationErrorDomain = isError ? nsError.domain : ""
-                t.navigationErrorDescription = isError ? nsError.localizedDescription : ""
+                t.navigationErrorDescription = isError
+                    ? Self.certificateRejectionReason(nsError, trust: tab.lastServerTrust) ?? nsError.localizedDescription : ""
                 t.navigationErrorURL = isError ? (url ?? resolvedURL)?.absoluteString ?? "" : ""
             }
         }
@@ -217,6 +218,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
     static func leafCertificateFingerprint(_ trust: SecTrust) -> String? {
         guard let leaf = (SecTrustCopyCertificateChain(trust) as? [SecCertificate])?.first else { return nil }
         return SHA256.hash(data: SecCertificateCopyData(leaf) as Data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// macOS's reason for rejecting a failed navigation's certificate, naming the certificates it blames.
+    static func certificateRejectionReason(_ error: NSError, trust: SecTrust?) -> String? {
+        guard error.domain == NSURLErrorDomain, (-1204 ... -1200).contains(error.code), let trust else { return nil }
+        // Local checks only: this runs on the main thread, and the network process has already fetched what it could.
+        SecTrustSetNetworkFetchAllowed(trust, false)
+        var reason: CFError?
+        guard !SecTrustEvaluateWithError(trust, &reason), let reason else { return nil }
+        return (reason as Error).localizedDescription
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
