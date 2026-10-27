@@ -93,7 +93,8 @@
     use:dndZone={{
       id: zone.id,
       axis: "horizontal",
-      meta: { section, spaceId, parentFolderId: folder.id },
+      // A chip never shows its rows: like a collapsed folder, it keeps the row's placeholder still and takes the tab last.
+      meta: { section, spaceId, parentFolderId: folder.id, isCollapsed: true },
       getItems: () => [],
       canResolve: ({ point, zone: snapshot, dragSource }) =>
         dragSource.kind === "tab" && !folder.isLocked && Math.abs(point.x - (snapshot.rect.left + snapshot.rect.width / 2)) < snapshot.rect.width * 0.3,

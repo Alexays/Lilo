@@ -1,0 +1,3 @@
+kind: Fixed
+body: Dragging a tab onto a folder in the top or bottom tab strip no longer makes the strip jump under the pointer.
+time: 2026-10-27T09:08:04.59929+01:00

@@ -115,6 +115,30 @@ test("dragging a pill after the next one reorders the strip", async ({ page }) =
 	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "commitSidebarDrop")).toBe(true);
 });
 
+test("a pill aimed at a pinned folder chip keeps the row still and drops into the folder", async ({ page }) => {
+	const world = folderWorld();
+	world.treeItemsBySpace[SPACE_1] = world.treeItemsBySpace[SPACE_1].map((item) =>
+		item.itemId === "folder-docs" || item.itemId === "tab-alpha" ? { ...item, section: "pinned" } : item);
+	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
+	const pill = (await page.locator('.strip-tab[data-tab-id="tab-beta"]').boundingBox())!;
+	const chip = page.locator(".strip-folder", { hasText: "Docs" });
+	const y = pill.y + pill.height / 2;
+
+	await page.mouse.move(pill.x + 10, y);
+	await page.mouse.down();
+	await page.mouse.move(pill.x - 30, y, { steps: 8 });
+	const chipBox = (await chip.boundingBox())!;
+	await page.mouse.move(chipBox.x + chipBox.width / 2, y, { steps: 8 });
+	await expect(chip).toHaveClass(/drop-target/);
+	// The placeholder stays in the row: the chip must not slide out from under the pointer.
+	await expect(page.locator('.tab-strip [data-dnd-item-id="dnd-shadow:tab-beta"]')).toHaveCount(1);
+	expect((await chip.boundingBox())!.x).toBe(chipBox.x);
+	await page.mouse.up();
+
+	const drop = (await sentCommands(page)).find((c) => c.action === "commitSidebarDrop");
+	expect(drop?.payload).toMatchObject({ id: "tab-beta", section: "pinned", parentFolderId: "folder-docs" });
+});
+
 test("the bottom dock opens its popovers upward", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "bottom" }, ".tab-strip");
 	const chip = page.locator(".space-chip");

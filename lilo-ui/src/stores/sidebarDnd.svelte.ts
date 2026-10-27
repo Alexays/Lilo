@@ -40,7 +40,9 @@ dndEngineStore.subscribe(() => {
 	hadActiveDrag = isActive;
 	const snapshot = snapshotFrom(dndEngineStore.activeDrag);
 	heldPlaceholder = snapshot?.placeholder ?? null;
-	scheduleAutoExpand(snapshot?.intoCollapsedFolder ? snapshot.target?.parentFolderId ?? null : null);
+	// A tab strip's folder chip has nowhere to open.
+	const opensInPlace = snapshot?.target && dndEngineStore.zones.get(snapshot.target.id)?.axis === "vertical";
+	scheduleAutoExpand(snapshot?.intoCollapsedFolder && opensInPlace ? snapshot.target?.parentFolderId ?? null : null);
 	publishDragActive();
 });
 
