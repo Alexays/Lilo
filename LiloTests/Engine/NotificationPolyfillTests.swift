@@ -55,4 +55,25 @@ final class NotificationPolyfillTests: XCTestCase {
             XCTAssertEqual(recorder.messages.contains { $0["type"] as? String == "query" }, queries, baseURL)
         }
     }
+
+    func testATaggedNotificationReplacesTheEarlierOneWithItsTag() async throws {
+        let recorder = Recorder()
+        let webView = try await makeWebView(recorder)
+
+        _ = try await webView.evaluateJavaScript("""
+            window.log = [];
+            new Notification('First', { tag: 't' }).onclick = () => log.push('first');
+            new Notification('Second', { tag: 't' }).onclick = () => log.push('second');
+            0
+            """)
+        _ = await pollUntil { recorder.messages.filter { $0["type"] as? String == "show" }.count == 2 }
+        let ids = recorder.messages.filter { $0["type"] as? String == "show" }.compactMap { $0["id"] as? Int }
+        XCTAssertEqual(ids.count, 2)
+
+        for id in ids {
+            _ = try? await webView.evaluateJavaScript(PageWorld.push("notifyClick", [id]), contentWorld: PageWorld.bridgeWorld)
+        }
+        let log = try await webView.evaluateJavaScript("log.join(',')") as? String
+        XCTAssertEqual(log, "second")
+    }
 }

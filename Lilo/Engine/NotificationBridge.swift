@@ -143,7 +143,7 @@ extension NotificationBridge {
     function () {
       const Native = window.Notification;
       if (typeof Native !== 'function') return;
-      const prototype = Native.prototype, fields = new WeakMap(), pending = create(null), shown = create(null);
+      const prototype = Native.prototype, fields = new WeakMap(), pending = create(null), shown = create(null), shownByTag = create(null);
       let nextId = 1;
       // WebKit's static `permission` is a read-only data property, not a getter.
       const setPermission = value => defineProperty(Notification, 'permission', { value, writable: false, enumerable: true, configurable: true });
@@ -172,6 +172,8 @@ extension NotificationBridge {
         fields.set(notification, values);
         attach(notification);
         shown[id] = notification;
+        // Native replaces the same tag's notification, which may have been dismissed in macOS without the page hearing of it.
+        if (values.tag) { delete shown[shownByTag[values.tag]]; shownByTag[values.tag] = id; }
         lilo.send('liloNotification', { type: 'show', id, title: values.title, body: values.body, icon: values.icon, tag: values.tag });
         return notification;
       }, 'Notification');
