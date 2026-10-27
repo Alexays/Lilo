@@ -736,8 +736,9 @@ final class ProfileExtensionRegistry {
         context.baseURL = URL(string: "chrome-extension://\(extensionId)")!
 
         #if DEBUG
-        // Attaching Web Inspector to extension internals must stay out of release builds.
-        context.isInspectable = true
+        // Attaching Web Inspector to extension internals must stay out of release builds. WebKit never unloads an
+        // inspectable worker: the extension smoke turns it off to unload workers as a release build does.
+        context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
         context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background"
         #endif
 

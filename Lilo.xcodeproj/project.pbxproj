@@ -142,6 +142,7 @@
 		3FAFDF85520ACB8FDF903A5B /* HTTPAuthChallengeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8F1E42E289763066BBD2A3 /* HTTPAuthChallengeHandler.swift */; };
 		3FE769CAC98DB5F8AD166EC0 /* StartupMetricsExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430AA3E569230AA218A08FD5 /* StartupMetricsExportTests.swift */; };
 		3FF7CE5C5A36E9D5645F5F74 /* MainWindowController+Setup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C9F24B09CEDB92BE19E1825 /* MainWindowController+Setup.swift */; };
+		406DBA7BDAD3AF98FD2AB992 /* smoke-probes.js in Resources */ = {isa = PBXBuildFile; fileRef = 919CA9E629FDB10D67535409 /* smoke-probes.js */; };
 		406F47EF6114907927D741F5 /* PageSignalBridges.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3ACCD8248F8F453C8D7993F /* PageSignalBridges.swift */; };
 		410062A023F652230701D9D0 /* StateSyncBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9ABE2BA2C2EFACE9D7FBA5 /* StateSyncBridgeHandlerTests.swift */; };
 		419E68A8E890C2970F10FE35 /* ExtensionLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D8452792228C102FF9E9860 /* ExtensionLifecycleTests.swift */; };
@@ -163,6 +164,7 @@
 		4AFC6C43B9A8221A438046A5 /* BookmarkSpotlightIndexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EA6C4BB38824ACC3E73DA9 /* BookmarkSpotlightIndexer.swift */; };
 		4B0F88DE8E4A358363EC8C11 /* CaptureUsageObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3297016A31B3CA367E235C07 /* CaptureUsageObserver.swift */; };
 		4B2443EF1236B9F8867E3111 /* MenuIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13965ECB8EC158753CB9C3FD /* MenuIcon.swift */; };
+		4B28861F19FB55DF94585309 /* smoke-page.html in Resources */ = {isa = PBXBuildFile; fileRef = 8B1D757D11A080D7579E1ED7 /* smoke-page.html */; };
 		4B5E639E0B036FA2729D245F /* DeviceGapAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2DEE2C9CA17BFDCCDC68024 /* DeviceGapAPITests.swift */; };
 		4C53B26F0FC0147D3C4E7CA6 /* TabLifecycleCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CA6916762B455944115350 /* TabLifecycleCoordinatorTests.swift */; };
 		4D827F64FC6F2577A7EB2FB4 /* ExtensionInfoBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D02923CCFCF1FAA7CB8BEC6 /* ExtensionInfoBuilderTests.swift */; };
@@ -243,6 +245,7 @@
 		6BE314A84C635FC3B8D020F3 /* ExtensionSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E14371EF9A67A0183B9C68E5 /* ExtensionSettingsStore.swift */; };
 		6BF3C918CA40586067DA6711 /* TerminalView+Input.swift in Sources */ = {isa = PBXBuildFile; fileRef = 043A1D71DAA1B90B87A4A3B7 /* TerminalView+Input.swift */; };
 		6CE8E4421DB75ED58F33F4F8 /* WKEngineDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F22EEF1510FE5D0F019589A /* WKEngineDataStore.swift */; };
+		6CFE70015E000916C6801BA0 /* smoke-sentinels.txt in Resources */ = {isa = PBXBuildFile; fileRef = 25070794B4BCDF01CE236E9C /* smoke-sentinels.txt */; };
 		6D2760EEAB4C0AE879F77390 /* BackgroundSupervisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A999EE18A124B5BB2C3A479 /* BackgroundSupervisor.swift */; };
 		6D5ECB151A2EFF18664F8770 /* PageSnapshotExpansion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1134CBF5CABB9D4D77282B9A /* PageSnapshotExpansion.swift */; };
 		6D744B160B5BCC1E2828BC16 /* BuildIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2FC4FD4EE6A9E10207D978B /* BuildIdentity.swift */; };
@@ -767,6 +770,7 @@
 		24395920E5020A85C239D981 /* WKWebViewTabLoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabLoggingTests.swift; sourceTree = "<group>"; };
 		247B5AAC229B657C0AE75AF8 /* ContextMenuBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextMenuBuilderTests.swift; sourceTree = "<group>"; };
 		249217E9C1F9A274BAABFE48 /* MainWindowController+TabClosing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+TabClosing.swift"; sourceTree = "<group>"; };
+		25070794B4BCDF01CE236E9C /* smoke-sentinels.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "smoke-sentinels.txt"; sourceTree = "<group>"; };
 		2521868A0E2897106F9F72A7 /* MainWindowController+TabArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+TabArchive.swift"; sourceTree = "<group>"; };
 		25AD58D14FCE14EFCD3D7CD1 /* PerfRecorderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerfRecorderTests.swift; sourceTree = "<group>"; };
 		26FC433BB1995D1405AE72C7 /* NotificationPolyfillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPolyfillTests.swift; sourceTree = "<group>"; };
@@ -1015,6 +1019,7 @@
 		8A86C2389EAAC79694C75E7A /* ChromeEventRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeEventRouter.swift; sourceTree = "<group>"; };
 		8A9A1EB4864923DD3FA44D2C /* ExtensionUpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionUpdateCheckerTests.swift; sourceTree = "<group>"; };
 		8AADFAEC6923FB6A863318F4 /* WindowRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRegistryTests.swift; sourceTree = "<group>"; };
+		8B1D757D11A080D7579E1ED7 /* smoke-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "smoke-page.html"; sourceTree = "<group>"; };
 		8B2EA92D5B4E41E9FCED4D14 /* ExtensionPopupWebKitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPopupWebKitTests.swift; sourceTree = "<group>"; };
 		8B38EC438C7FA8FF4C00D009 /* WebInspectorSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebInspectorSupport.swift; sourceTree = "<group>"; };
 		8BEDB2F809344EB7640D8C79 /* TerminalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalThemeTests.swift; sourceTree = "<group>"; };
@@ -1035,6 +1040,7 @@
 		90FDF211B183C09E0574C812 /* AgentSocketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSocketTests.swift; sourceTree = "<group>"; };
 		9106EF60CBC6AD48FB25741C /* InFlightDownloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InFlightDownloads.swift; sourceTree = "<group>"; };
 		9150C2D6070742D02D55202D /* AgentScreenshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentScreenshot.swift; sourceTree = "<group>"; };
+		919CA9E629FDB10D67535409 /* smoke-probes.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "smoke-probes.js"; sourceTree = "<group>"; };
 		91C30864516C6565D3FC915A /* WKSecurityOrigin+PermissionKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKSecurityOrigin+PermissionKey.swift"; sourceTree = "<group>"; };
 		91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureRetentionIntegrationTests.swift; sourceTree = "<group>"; };
 		91CB9B4A20A46E812A25F931 /* BrowsingDataBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowsingDataBridgeHandler.swift; sourceTree = "<group>"; };
@@ -1509,6 +1515,9 @@
 				5EB779EF73598ABBDB5152BF /* RuntimeGapAPITests.swift */,
 				56D7CB14DA66713EBFEFE3D2 /* SessionsBridgeHandlerTests.swift */,
 				77A5D3FA5FF4EE4B7BC08FEF /* SidePanelTests.swift */,
+				8B1D757D11A080D7579E1ED7 /* smoke-page.html */,
+				919CA9E629FDB10D67535409 /* smoke-probes.js */,
+				25070794B4BCDF01CE236E9C /* smoke-sentinels.txt */,
 				FA1702BA302E414AE132A83C /* TabExtensionAdapterTests.swift */,
 				1BC8B54B27EE31F4E4E253D9 /* TabGroupsBridgeHandlerTests.swift */,
 				192F249447CEFFF16CE54581 /* top-extensions.json */,
@@ -2641,6 +2650,9 @@
 				903549B3D1355E612B6EA0CB /* chrome-smoke.json in Resources */,
 				B5D56FDEC90A987A3ADB51DD /* chrome-surface-gaps.txt in Resources */,
 				F8118229E0A9DB7A6A9A99F2 /* chrome-surface.json in Resources */,
+				4B28861F19FB55DF94585309 /* smoke-page.html in Resources */,
+				406DBA7BDAD3AF98FD2AB992 /* smoke-probes.js in Resources */,
+				6CFE70015E000916C6801BA0 /* smoke-sentinels.txt in Resources */,
 				B0F170F35F54931B5913836D /* top-extensions.json in Resources */,
 				FEBA762EEA9295ED45EF343C /* top-manifest-errors.txt in Resources */,
 				1C765783C6ECFF521E9CBED9 /* top-manifests.json in Resources */,
