@@ -1,0 +1,164 @@
+---
+import type { Locale } from "../lib/i18n";
+import Install from "./Install.astro";
+import PixelBloom from "./PixelBloom.astro";
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  description: string;
+  tag: string;
+  id?: string;
+  note?: string;
+  link?: { href: string; label: string };
+  // Forwarded Astro slots exist even when the page did not supply their content.
+  hasAnnouncement?: boolean;
+  hasPreview?: boolean;
+}
+
+const {
+  lang,
+  heading,
+  description,
+  tag,
+  id = "hero",
+  note,
+  link,
+  hasAnnouncement = false,
+  hasPreview = false,
+} = Astro.props;
+
+const home = Astro.url.pathname === "/" || Astro.url.pathname === "/fr/";
+const headingId = home ? "home-heading" : `${id}-heading`;
+---
+
+<section class="page-hero" id={id} aria-labelledby={headingId}>
+  <div class="wrap page-frame hero-frame">
+    <div class="hero-intro">
+      <PixelBloom />
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          {hasAnnouncement ? (
+            <slot name="announcement" />
+          ) : (
+            <span class="tag">{tag}</span>
+          )}
+        </div>
+        <h1 id={headingId}>{heading}</h1>
+        <div class="hero-details">
+          <div>
+            <p class="hero-description">{description}</p>
+            {note && <p class="hero-note">{note}</p>}
+            {link && (
+              <a class="hero-link" href={link.href}>
+                {link.label}
+              </a>
+            )}
+          </div>
+          <div class="hero-install">
+            <Install lang={lang} />
+          </div>
+        </div>
+      </div>
+    </div>
+    {hasPreview && (
+      <div class="hero-preview">
+        <slot name="preview" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero-frame {
+    padding-inline: 0;
+  }
+  .hero-intro {
+    position: relative;
+    isolation: isolate;
+    padding-block: 56px 48px;
+    padding-inline: max(var(--page-gutter), env(safe-area-inset-left, 0px))
+      max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  }
+  .hero-content {
+    position: relative;
+  }
+  h1 {
+    max-width: 17ch;
+    margin-top: 32px;
+    font-size: 48px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+  .hero-details {
+    display: grid;
+    gap: 32px;
+    margin-top: 40px;
+  }
+  .hero-description {
+    max-width: 46ch;
+    color: var(--ink-2);
+    font-size: 18px;
+    line-height: 32px;
+    text-wrap: pretty;
+  }
+  .hero-install {
+    min-width: 0;
+    width: 100%;
+    max-width: 520px;
+  }
+  .hero-preview {
+    padding: var(--page-gutter);
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--tint) 30%, var(--paper));
+  }
+  @media (min-width: 640px) {
+    .hero-intro {
+      padding-top: 80px;
+    }
+    h1 {
+      font-size: 60px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .hero-intro {
+      padding-block: 96px 56px;
+    }
+    h1 {
+      font-size: 72px;
+    }
+    .hero-details {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: end;
+      gap: 40px;
+      margin-top: 48px;
+    }
+    .hero-install {
+      justify-self: end;
+    }
+  }
+  @media (min-width: 1280px) {
+    h1 {
+      font-size: 96px;
+    }
+  }
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+  }
+  .hero-link {
+    display: inline-block;
+    margin-top: 12px;
+    color: var(--accent);
+    font-size: 14px;
+    text-underline-offset: 4px;
+  }
+  .hero-note {
+    margin-top: 12px;
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+</style>

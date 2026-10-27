@@ -1,0 +1,58 @@
+---
+import changelog from "../../../CHANGELOG.md?raw";
+import { parseChangelog } from "../lib/changelog";
+import { copy, localizedPath } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const text = copy[lang];
+const [latest] = parseChangelog(changelog);
+---
+
+<a
+  class="release-link"
+  href={localizedPath(lang, `changelog/#v${latest.version}`)}
+>
+  <span class="release-version">
+    v{latest.version} · {text.homeBeta}
+  </span>{" "}
+  <span class="release-label">{text.homeReleaseNotes}</span>
+</a>
+
+<style>
+  .release-link {
+    display: inline-flex;
+    align-items: stretch;
+    max-width: 100%;
+    min-height: 34px;
+    overflow: clip;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .release-link:hover {
+    color: var(--accent);
+  }
+  .release-version {
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding: 7px 10px;
+    background: var(--brand);
+    color: var(--on-brand);
+    font: 12px/1.5 var(--mono);
+  }
+  .release-label {
+    display: flex;
+    align-items: center;
+    padding: 7px 12px;
+    line-height: 1.4;
+  }
+</style>

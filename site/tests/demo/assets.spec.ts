@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { FrameLocator, Page } from "@playwright/test";
 
 const openSettings = async (page: Page) => {
-  const menu = page.locator(".mac-menu").first();
+  const menu = page.locator("#browser-demo .mac-menu").first();
   await menu.locator(":scope > summary").click();
   await menu.locator("[data-action=settings]").click();
 };
@@ -41,7 +41,7 @@ for (const french of [false, true]) {
     await expect(
       frame.locator(".tab-item .site-favicon.is-fallback")
     ).toHaveCount(0);
-    await expect(page.locator(".menu-flower svg")).toBeVisible();
+    await expect(page.locator("#browser-demo .menu-flower svg")).toBeVisible();
     await openSettings(page);
     await frame
       .locator(".section-nav-button", {
@@ -71,7 +71,7 @@ for (const french of [false, true]) {
     await page
       .locator("#browser-demo")
       .screenshot({ path: info.outputPath("native-icons.png") });
-    await page.locator(".demo-modes [data-action=mcp]").click();
+    await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
     await expect(frame.locator(".codex-mark")).toBeVisible();
     await expect.poll(() => imagesLoaded(frame)).toBe(true);
     await openSettings(page);

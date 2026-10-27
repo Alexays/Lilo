@@ -1,10 +1,14 @@
 ---
 import Demo from "../components/Demo.astro";
 import ExtensionStore from "../components/ExtensionStore.astro";
-import Flower from "../components/Flower.astro";
+import FeatureDemo from "../components/FeatureDemo.astro";
+import PageSection from "../components/PageSection.astro";
+import ReleaseLink from "../components/ReleaseLink.astro";
 import Layout from "../layouts/Layout.astro";
+import { copy } from "../lib/i18n";
 
 const lang = "en";
+const text = copy[lang];
 
 const schema = [
   {
@@ -72,822 +76,609 @@ const schema = [
   title="Lilo Browser: a WebKit browser for Mac with Spaces and Chrome extensions"
   description="Lilo Browser is a free, open-source, private by default Arc alternative for Mac that is not Chromium: native WebKit that runs Chrome extensions, with terminal tabs and an MCP server for AI agents."
   schema={schema}
+  hero={{
+    heading: text.homeHeading,
+    description: text.homeDescription,
+    tag: text.homeBeta,
+  }}
 >
-  <main id="main-content">
-    <div class="top">
-      <div class="wrap" id="hero">
-        <div class="hero-copy">
-          <Flower id="hero-flower" class="mark bloom" />
-          <span class="beta">Public beta</span>
-          <h1>
-            <span class="kicker">Lilo, the WebKit browser for Mac</span>
-            <span class="visually-hidden">: </span>
-            Your internet,
-            <br />
-            <span>in bloom.</span>
-          </h1>
-          <p class="sub">
-            Light on your Mac, quick on the web, private by default. Free and
-            open source.
-            <br />
-            Not another Chromium fork: native WebKit that still runs your Chrome
-            extensions, terminals beside your pages, and a browser your AI
-            agents can drive.
-          </p>
-          <div class="cta">
-            <a
-              class="pill dark"
-              href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-            >
-              Download for Mac
-            </a>
-            <a class="pill soft" href="https://github.com/Alexays/Lilo">
-              Star on GitHub
-            </a>
-          </div>
-          <span class="brew">brew install --cask alexays/tap/lilo</span>
-          <span class="move-in">
-            Moving in takes five minutes.{" "}
-            <a href="/moving/">See the moving guide</a>
-          </span>
-          <span class="move-in">
-            Lilo is in beta: expect rough edges, and{" "}
-            <a href="https://github.com/Alexays/Lilo/issues">
-              tell us what breaks
-            </a>
-            . <a href="https://discord.gg/NyJRAapk76">Join us on Discord</a> to
-            share feedback and get help.
-          </span>
-        </div>
+  <ReleaseLink lang={lang} slot="announcement" />
+  <Demo lang={lang} slot="preview" />
 
-        <Demo lang={lang} />
+  <PageSection id="native" layout="native">
+    <div>
+      <div class="head" style="margin-bottom:32px">
+        <span class="tag">Made for the Mac</span>
+        <h2>Built on WebKit. Not on a second Chrome.</h2>
+        <p>
+          Lilo uses the engine already inside macOS, written in Swift. No
+          Chromium bundled, no Electron, and your Chrome extensions still
+          install from the Chrome Web Store. Your Mac spends its energy on your
+          pages.
+        </p>
+      </div>
+      <div class="claims">
+        <div class="claim">
+          <span class="ic" style="background:#9bd3b4">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="m15.5 8.5-2 5-5 2 2-5z" />
+            </svg>
+          </span>
+          <div>
+            <h3>The engine Safari uses</h3>
+            <p>
+              Apple tunes WebKit for Apple silicon, video decoding and
+              sandboxing. Lilo gets every macOS update for free.
+            </p>
+          </div>
+        </div>
+        <div class="claim">
+          <span class="ic" style="background:#f4bb8c">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="2.5" y="7" width="17" height="10" rx="2.5" />
+              <path d="M21.5 10.5v3" />
+              <path d="m11.5 9-2 3h3l-2 3" />
+            </svg>
+          </span>
+          <div>
+            <h3>Easy on the battery</h3>
+            <p>
+              Idle tabs freeze, then sleep. Background Spaces stop working when
+              you are not looking at them.
+            </p>
+          </div>
+        </div>
+        <div class="claim">
+          <span class="ic" style="background:#92a8ff">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+              <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
+              <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" />
+            </svg>
+          </span>
+          <div>
+            <h3>Light on memory</h3>
+            <p>
+              Tab memory follows how much RAM your Mac really has, and gives it
+              back under pressure.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
+    <div class="bench" id="bench">
+      <h3>Energy and memory</h3>
+      <div class="soon">
+        <b>Measurements coming soon</b>
+        <span>
+          Lilo, Safari and Chrome with the same 20 tabs for 30 minutes on the
+          same Mac. The method ships with the numbers.
+        </span>
+      </div>
+    </div>
+  </PageSection>
 
-    <section class="band" id="native">
-      <div class="wrap native">
+  <PageSection id="extensions" layout="ext">
+    <div class="head" style="margin:0">
+      <span class="tag">Chrome extensions</span>
+      <h2>The Chrome Web Store, with an "Add to Lilo" button.</h2>
+      <p>
+        Browse the store you know and install in one click. Lilo runs Manifest
+        V3 extensions on WebKit, keeps them updated, and gives each profile its
+        own set.
+      </p>
+      <div class="cats">
+        <span>Password managers</span>
+        <span>Ad blockers</span>
+        <span>Dark mode</span>
+        <span>Dev tools</span>
+        <span>Writing helpers</span>
+        <span>Price trackers</span>
+      </div>
+    </div>
+    <ExtensionStore lang={lang} />
+  </PageSection>
+
+  <PageSection id="privacy" layout="privacy">
+    <div class="head" style="margin:0">
+      <span class="tag">Private by design</span>
+      <h2>What you do in Lilo stays on your Mac.</h2>
+      <p>
+        No account, no telemetry, no analytics. The project runs no server, so
+        there is nowhere for your browsing to go. And every line is open for you
+        to check.
+      </p>
+      <p class="opt">
+        On by default: Global Privacy Control (macOS 27). One switch away in
+        Settings: HTTPS-Only mode.
+      </p>
+    </div>
+    <div class="shields">
+      <div class="shield">
+        <span class="sic" style="background:#9bd3b4">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        </span>
         <div>
-          <div class="head" style="margin-bottom:32px">
-            <span class="tag">Made for the Mac</span>
-            <h2>Built on WebKit. Not on a second Chrome.</h2>
-            <p>
-              Lilo uses the engine already inside macOS, written in Swift. No
-              Chromium bundled, no Electron, and your Chrome extensions still
-              install from the Chrome Web Store. Your Mac spends its energy on
-              your pages.
-            </p>
-          </div>
-          <div class="claims">
-            <div class="claim">
-              <span class="ic" style="background:#9bd3b4">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="22"
-                  height="22"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="m15.5 8.5-2 5-5 2 2-5z" />
-                </svg>
-              </span>
-              <div>
-                <h3>The engine Safari uses</h3>
-                <p>
-                  Apple tunes WebKit for Apple silicon, video decoding and
-                  sandboxing. Lilo gets every macOS update for free.
-                </p>
-              </div>
-            </div>
-            <div class="claim">
-              <span class="ic" style="background:#f4bb8c">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="22"
-                  height="22"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="2.5" y="7" width="17" height="10" rx="2.5" />
-                  <path d="M21.5 10.5v3" />
-                  <path d="m11.5 9-2 3h3l-2 3" />
-                </svg>
-              </span>
-              <div>
-                <h3>Easy on the battery</h3>
-                <p>
-                  Idle tabs freeze, then sleep. Background Spaces stop working
-                  when you are not looking at them.
-                </p>
-              </div>
-            </div>
-            <div class="claim">
-              <span class="ic" style="background:#92a8ff">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="22"
-                  height="22"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="6" y="6" width="12" height="12" rx="2" />
-                  <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
-                  <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" />
-                </svg>
-              </span>
-              <div>
-                <h3>Light on memory</h3>
-                <p>
-                  Tab memory follows how much RAM your Mac really has, and gives
-                  it back under pressure.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="bench" id="bench">
-          <h3>Energy and memory</h3>
-          <div class="soon">
-            <b>Measurements coming soon</b>
-            <span>
-              Lilo, Safari and Chrome with the same 20 tabs for 30 minutes on
-              the same Mac. The method ships with the numbers.
-            </span>
-          </div>
+          <h3>Trackers blocked out of the box</h3>
+          <p>
+            Ads, trackers and cookie banners are filtered with community lists
+            kept up to date, and sites embedded in others can't follow you from
+            one to the next. Nothing to install.
+          </p>
         </div>
       </div>
-    </section>
-
-    <section class="band" id="extensions">
-      <div class="wrap ext">
-        <div class="head" style="margin:0">
-          <span class="tag">Chrome extensions</span>
-          <h2>The Chrome Web Store, with an "Add to Lilo" button.</h2>
+      <div class="shield">
+        <span class="sic" style="background:#92a8ff">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="8" height="16" rx="2" />
+            <rect x="13" y="4" width="8" height="16" rx="2" />
+          </svg>
+        </span>
+        <div>
+          <h3>Sign-ins kept apart</h3>
           <p>
-            Browse the store you know and install in one click. Lilo runs
-            Manifest V3 extensions on WebKit, keeps them updated, and gives each
-            profile its own set.
+            Each Space can have its own profile, with its own cookies and
+            storage. Private Spaces forget everything when they close.
           </p>
-          <div class="cats">
-            <span>Password managers</span>
-            <span>Ad blockers</span>
-            <span>Dark mode</span>
-            <span>Dev tools</span>
-            <span>Writing helpers</span>
-            <span>Price trackers</span>
-          </div>
-        </div>
-        <ExtensionStore lang={lang} />
-      </div>
-    </section>
-
-    <section class="band" id="privacy">
-      <div class="wrap privacy">
-        <div class="head" style="margin:0">
-          <span class="tag">Private by design</span>
-          <h2>What you do in Lilo stays on your Mac.</h2>
-          <p>
-            No account, no telemetry, no analytics. The project runs no server,
-            so there is nowhere for your browsing to go. And every line is open
-            for you to check.
-          </p>
-          <p class="opt">
-            On by default: Global Privacy Control (macOS 27). One switch away in
-            Settings: HTTPS-Only mode.
-          </p>
-        </div>
-        <div class="shields">
-          <div class="shield">
-            <span class="sic" style="background:#9bd3b4">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-            </span>
-            <div>
-              <h3>Trackers blocked out of the box</h3>
-              <p>
-                Ads, trackers and cookie banners are filtered with community
-                lists kept up to date, and sites embedded in others can't follow
-                you from one to the next. Nothing to install.
-              </p>
-            </div>
-          </div>
-          <div class="shield">
-            <span class="sic" style="background:#92a8ff">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="3" y="4" width="8" height="16" rx="2" />
-                <rect x="13" y="4" width="8" height="16" rx="2" />
-              </svg>
-            </span>
-            <div>
-              <h3>Sign-ins kept apart</h3>
-              <p>
-                Each Space can have its own profile, with its own cookies and
-                storage. Private Spaces forget everything when they close.
-              </p>
-            </div>
-          </div>
-          <div class="shield">
-            <span class="sic" style="background:#f4bb8c">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="5" y="10" width="14" height="10" rx="2" />
-                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-              </svg>
-            </span>
-            <div>
-              <h3>Agents on a short leash</h3>
-              <p>
-                Agents never see your private tabs, and Lilo asks you before one
-                sends, pays, deletes or publishes anything.
-              </p>
-            </div>
-          </div>
-          <div class="shield">
-            <span class="sic" style="background:#c3a5ea">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" />
-              </svg>
-            </span>
-            <div>
-              <h3>Apple's engine and sandbox</h3>
-              <p>
-                Pages run in WebKit's sandboxed processes and get Apple's
-                security fixes with every macOS update.
-              </p>
-            </div>
-          </div>
-          <div class="shield">
-            <span class="sic" style="background:#f5d77a">
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M8 6h12M8 12h12M8 18h12" />
-                <path d="M4 6h.01M4 12h.01M4 18h.01" />
-              </svg>
-            </span>
-            <div>
-              <h3>Every request, listed</h3>
-              <p>
-                Besides the pages you open, Lilo talks to a handful of services
-                (filter lists, updates). Each one is
-                <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md#requests-lilo-makes-on-its-own">
-                  listed, with how to turn it off
-                </a>
-                .
-              </p>
-            </div>
-          </div>
         </div>
       </div>
-    </section>
-
-    <section class="band" id="move">
-      <div class="wrap">
-        <div class="head">
-          <span class="tag">Built for how you browse</span>
-          <h2>Everything in its Space.</h2>
+      <div class="shield">
+        <span class="sic" style="background:#f4bb8c">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="10" width="14" height="10" rx="2" />
+            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+          </svg>
+        </span>
+        <div>
+          <h3>Agents on a short leash</h3>
           <p>
-            The sidebar you know, with the details that make it yours. Move in
-            from Safari, Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet,
-            Chromium, Firefox or Zen in five minutes, straight from your Mac.{" "}
-            <a href="/moving/">How moving works</a>
+            Agents never see your private tabs, and Lilo asks you before one
+            sends, pays, deletes or publishes anything.
           </p>
-        </div>
-        <div class="move">
-          <div class="mv" style="background:#b39df4">
-            <h3>Spaces with their own sign-ins</h3>
-            <p>
-              Work and Perso side by side in one window, each with its cookies
-              and extensions. Swipe between them.
-            </p>
-            <div class="keys">
-              <kbd>⌃1</kbd>
-              <kbd>⌃2</kbd>
-            </div>
-          </div>
-          <div class="mv" style="background:#92a8ff">
-            <h3>Tabs on any edge</h3>
-            <p>
-              Left like Arc, right to keep the page first, or one strip on top
-              or bottom like Safari. Drag the sidebar to another edge to move
-              it.
-            </p>
-          </div>
-          <div class="mv" style="background:#9ac7eb">
-            <h3>Peek</h3>
-            <p>
-              Links from your pinned tabs open over the page. Keep reading,
-              expand it to a tab, or put it in a split.
-            </p>
-            <div class="keys">
-              <kbd>⇧ click</kbd>
-            </div>
-          </div>
-          <div class="mv" style="background:#f0a8c8">
-            <h3>Little window</h3>
-            <p>
-              A quick window from any app, for one link or one search. Send it
-              to a Space when it turns into something.
-            </p>
-            <div class="keys">
-              <kbd>⌘⌥N</kbd>
-            </div>
-          </div>
-          <div class="mv" style="background:#9bd3b4">
-            <h3>Tabs that tidy themselves</h3>
-            <p>
-              Unpinned tabs you stopped using are archived after 12 hours, or
-              when you choose. Find them again in a keystroke.
-            </p>
-            <div class="keys">
-              <kbd>⌘⇧K</kbd>
-            </div>
-          </div>
-          <div class="mv" style="background:#f4bb8c">
-            <h3>Command bar</h3>
-            <p>
-              Tabs, history, bookmarks and every action in one field, ranked by
-              what you use. Open a result in a split or a Peek.
-            </p>
-            <div class="keys">
-              <kbd>⌘T</kbd>
-              <kbd>⌥↩</kbd>
-            </div>
-          </div>
-          <div class="mv" style="background:#e8d98f">
-            <h3>Your shortcuts</h3>
-            <p>
-              Every shortcut can be remapped. Start from a preset, conflicts are
-              flagged as you type.
-            </p>
-          </div>
-          <div class="mv" style="background:#8fd5cf">
-            <h3>Links land in the right Space</h3>
-            <p>
-              Links opened from Mail or Slack follow your rules: this domain to
-              Work, the rest to the Little window.
-            </p>
-          </div>
-          <div class="mv" style="background:#c3a5ea">
-            <h3>Split view</h3>
-            <p>
-              Up to four tabs side by side, a terminal next to your docs,
-              restored exactly as you left them.
-            </p>
-          </div>
         </div>
       </div>
-    </section>
-
-    <section class="band" id="build">
-      <div class="wrap build">
-        <div class="head" style="margin:0">
-          <span class="tag">For people who build</span>
-          <h2>Your terminal lives in the sidebar.</h2>
+      <div class="shield">
+        <span class="sic" style="background:#c3a5ea">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" />
+          </svg>
+        </span>
+        <div>
+          <h3>Apple's engine and sandbox</h3>
           <p>
-            Terminal tabs sit next to your docs and your localhost, on a Metal
-            renderer built on libghostty. Split one beside a page, and the
-            sidebar shows its branch and pending changes at a glance.
+            Pages run in WebKit's sandboxed processes and get Apple's security
+            fixes with every macOS update.
           </p>
-          <div class="feat-list">
-            <div>
-              <b>Stays awake while it works.</b> A long build or an agent run
-              keeps your Mac awake, even with the lid closed, then lets it sleep
-              when the command ends.
-            </div>
-            <div>
-              <b>Tells you when it's done.</b> A finished or waiting command
-              lights up its Space, so you can browse while it runs.
-            </div>
-            <div>
-              <b>Review before you commit.</b> The changes view shows every diff
-              of the repo, images included.
-            </div>
-            <div>
-              <b>Talks to your tools.</b> AppleScript, Shortcuts and Focus
-              filters, plus Web Serial for boards like Arduino and ESP.
-            </div>
-          </div>
-        </div>
-        <div
-          class="termcard"
-          role="img"
-          aria-label="Terminal tab running make validate, with its branch, pending changes and an awake indicator."
-        >
-          <div class="tc-head">
-            <span class="tc-path">
-              ~/Projects/<b>lilo</b>
-            </span>
-            <span class="tc-git">
-              main <em>+717</em> <s>-78</s>
-            </span>
-          </div>
-          <div class="tc-body">
-            <div>
-              <b>~/lilo</b> make validate
-            </div>
-            <div class="dim">ui-lint ok, ui-test 412 passed</div>
-            <div class="dim">swiftlint 0 violations</div>
-            <div>
-              xcodebuild test <span class="spin">running</span>
-            </div>
-          </div>
-          <div class="awake">
-            <i></i>
-            <span>
-              <b>Awake, lid closed</b>
-              <small>While make validate works</small>
-            </span>
-            <div class="sleep-action">Let sleep</div>
-          </div>
         </div>
       </div>
-    </section>
-
-    <section class="band" id="agents">
-      <div class="wrap agents">
-        <div class="head" style="margin:0">
-          <span class="tag">For AI agents</span>
-          <h2>Your agents get their own Space.</h2>
+      <div class="shield">
+        <span class="sic" style="background:#f5d77a">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M8 6h12M8 12h12M8 18h12" />
+            <path d="M4 6h.01M4 12h.01M4 18h.01" />
+          </svg>
+        </span>
+        <div>
+          <h3>Every request, listed</h3>
           <p>
-            Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any
-            MCP client open tabs, click, type, and read pages, the console and
-            the network, in a real browser beside you.
-          </p>
-          <div class="ag-list">
-            <div>
-              <span>
-                <b>Their own Space.</b> Agents open tabs in a folder of the
-                Agents Space, signed in nowhere by default. Your keyboard, your
-                mouse and your tabs stay yours.
-              </span>
-            </div>
-            <div>
-              <span>
-                <b>You say yes first.</b> Lilo asks before an agent sends, pays,
-                deletes or publishes. Each agent is approved once, and none ever
-                sees a private Space.
-              </span>
-            </div>
-            <div>
-              <span>
-                <b>One click to connect.</b> In Settings, Connect adds Lilo to
-                Claude Code, Claude Desktop, Codex or Cursor. Any other client
-                copies the configuration.
-              </span>
-            </div>
-          </div>
-          <div class="ag-cta">
-            <a class="pill dark" href="/ai-agents/">
-              How agents work
+            Besides the pages you open, Lilo talks to a handful of services
+            (filter lists, updates). Each one is
+            <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md#requests-lilo-makes-on-its-own">
+              listed, with how to turn it off
             </a>
-            <span>No AI inside Lilo: bring the agent you already use.</span>
-          </div>
-        </div>
-        <div
-          class="window agwin"
-          role="img"
-          aria-label='Lilo with the Agents Space open. Claude Code works in its own folder, on a checkout page, and the address bar asks: Claude Code wants to click "Pay now" in Checkout (shop.test). Always Allow on shop.test, Deny, or Allow Once.'
-        >
-          <div class="sb">
-            <div class="chrome-row">
-              <div class="lights">
-                <i></i>
-                <i></i>
-                <i></i>
-              </div>
-              <div class="navs">
-                <span>&#9707;</span>
-                <span>&#8249;</span>
-                <span>&#8250;</span>
-                <span>&#8635;</span>
-              </div>
-            </div>
-            <div class="addr ask">
-              <span>
-                <b>shop.test</b>/checkout
-              </span>
-              <div class="ask-msg">
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="m5 3.6 9.4 5.2-4 1.2 2.6 4.6-1.8 1-2.6-4.6-3 2.8Z" />
-                </svg>
-                <span>
-                  <b>Claude Code</b> wants to click "Pay now" in Checkout
-                  (shop.test).
-                </span>
-              </div>
-              <div class="ask-acts">
-                <span>Always Allow on shop.test</span>
-                <div>
-                  <span>Deny</span>
-                  <span>Allow Once</span>
-                </div>
-              </div>
-            </div>
-            <div class="shead">
-              &#129302; Agents<em>&#9788;</em>
-            </div>
-            <div class="row-item">
-              <span class="fi"></span>
-              <span class="tt">Checkout bug</span>
-            </div>
-            <div class="row-item in on agent">
-              <span class="fav" style="background:#d97757">
-                S
-              </span>
-              <span class="tt">Checkout</span>
-              <span class="who">agent</span>
-            </div>
-            <div class="row-item in">
-              <span class="fav" style="background:#d97757">
-                S
-              </span>
-              <span class="tt">Order history</span>
-            </div>
-            <div class="spacebar">
-              <i>&#127968;</i>
-              <i>&#128188;</i>
-              <i class="on">&#129302;</i>
-            </div>
-          </div>
-          <div class="view">
-            <div class="pay">
-              <small>shop.test</small>
-              <b class="ttl">Checkout</b>
-              <div class="ln">
-                <span>Linen tote</span>
-                <span>$48.00</span>
-              </div>
-              <div class="card">Test card, 4242</div>
-              <div class="ln tot">
-                <span>Total</span>
-                <span>$48.00</span>
-              </div>
-              <div class="go">
-                Pay now
-                <span class="cur">
-                  <svg viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M3 2l12 6.6-5.2 1.5 3.2 5.6-2.3 1.3-3.2-5.6L3.6 15Z" />
-                  </svg>
-                  <span>Claude Code</span>
-                </span>
-              </div>
-            </div>
-          </div>
+            .
+          </p>
         </div>
       </div>
-    </section>
+    </div>
+  </PageSection>
 
-    <section class="band" id="faq">
-      <div class="wrap faq">
-        <div class="head" style="margin:0">
-          <span class="tag">Questions</span>
-          <h2>Good to know.</h2>
-        </div>
-        <div class="faq-list">
-          <details>
-            <summary>Is Lilo free?</summary>
-            <p>
-              Yes. Lilo is free and open source under the{" "}
-              <a href="https://github.com/Alexays/Lilo/blob/main/LICENSE">
-                MIT license
-              </a>
-              . There is no paid tier and no account to create.
-            </p>
-          </details>
-          <details>
-            <summary>Who makes Lilo, and will it last?</summary>
-            <p>
-              Alexays, who has also maintained the open-source Waybar since
-              2018. The part that keeps you safe is not his alone: WebKit ships
-              with macOS, so Apple's security fixes reach Lilo with every macOS
-              update. The code is MIT licensed, so it stays yours to run and
-              fork whatever happens, and no company can switch it off. What
-              comes next is in the{" "}
-              <a href="https://github.com/Alexays/Lilo/blob/main/ROADMAP.md">
-                roadmap
-              </a>
-              , and you can back the work on{" "}
-              <a href="https://github.com/sponsors/Alexays">GitHub Sponsors</a>.
-            </p>
-          </details>
-          <details>
-            <summary>Can I put my tabs on top, like Safari or Chrome?</summary>
-            <p>
-              Yes. Tabs go on any edge of the window: left, right, top or
-              bottom. Spaces, pinned tabs and folders come along. Switch anytime
-              in Settings, from the command bar, or by dragging the sidebar to
-              another edge.
-            </p>
-          </details>
-          <details>
-            <summary>What is Lilo built on?</summary>
-            <p>
-              WebKit, the engine Safari uses, in an app written in Swift and
-              AppKit, with its sidebar and settings in Svelte. No Chromium is
-              bundled. On top of it, Lilo runs Chrome extensions from the Chrome
-              Web Store.
-            </p>
-          </details>
-          <details>
-            <summary>Which extensions work?</summary>
-            <p>
-              Manifest V3 extensions from the Chrome Web Store install with one
-              click and keep updating. Manifest V2 extensions and blocking{" "}
-              <code>webRequest</code> are not supported, and a few extensions
-              rely on other features only Chrome has. The{" "}
-              <a href="https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md">
-                compatibility notes
-              </a>{" "}
-              list exactly what differs.
-            </p>
-          </details>
-          <details>
-            <summary>
-              Do Netflix, Spotify and other streaming services work?
-            </summary>
-            <p>
-              Lilo plays protected video and music through Apple's FairPlay, the
-              same system Safari uses, so services that support Safari, like
-              Netflix, Prime Video, Disney+, Apple TV+ and Spotify, should play
-              as they do there. YouTube streams in 4K HDR. Widevine is not
-              available in WebKit, so a service that requires it plays at lower
-              quality or not at all, and offline downloads in the browser are
-              not supported.
-            </p>
-          </details>
-          <details>
-            <summary>Can I bring my stuff from another browser?</summary>
-            <p>
-              Yes. Lilo imports bookmarks, history and sign-ins from Safari,
-              Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium,
-              Firefox and Zen, open tabs where the browser keeps them, and
-              offers to reinstall your Chrome Web Store extensions.{" "}
-              <a href="/moving/">See what comes with you</a>.
-            </p>
-          </details>
-          <details>
-            <summary>What about my passwords?</summary>
-            <p>
-              Lilo keeps no passwords itself and never reads them from other
-              browsers. Setup offers the manager you already use, such as
-              NordPass, Bitwarden, 1Password, Proton Pass, Dashlane or
-              KeePassXC. iCloud Passwords comes as soon as Apple approves it.
-            </p>
-          </details>
-          <details>
-            <summary>Is there sync, or a mobile app?</summary>
-            <p>
-              No, by design: Lilo has no account and no server, so there is
-              nothing to sync through. It is a Mac app only. Your password
-              manager keeps syncing your passwords everywhere, and importing
-              changes nothing in your other browser, so its own sync to your
-              phone keeps working.
-            </p>
-          </details>
-          <details>
-            <summary>Does Lilo have AI built in?</summary>
-            <p>
-              No. If you turn it on, the agents you already use, like Claude
-              Code, Codex or Cursor, can drive Lilo over a local MCP server, in
-              their own Space. Each agent is approved once, never sees your
-              private Spaces, and Lilo asks you before it sends, pays or deletes
-              anything.{" "}
-              <a href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">
-                How agents work
-              </a>
-              .
-            </p>
-          </details>
-          <details>
-            <summary>Where is my data?</summary>
-            <p>
-              On your Mac, kept apart per profile. No account, no telemetry, and
-              the project runs no server, so nothing you do is sent to us.{" "}
-              <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md">
-                Read the privacy notes
-              </a>
-              .
-            </p>
-          </details>
-          <details>
-            <summary>Is Lilo related to the Lilo search engine?</summary>
-            <p>
-              No. Lilo Browser is an independent, open-source web browser for
-              Mac. The Lilo search engine at lilo.org is a separate project with
-              no link to it. In Lilo, you pick your search engine in Settings.
-            </p>
-          </details>
-          <details>
-            <summary>Why only on Mac?</summary>
-            <p>
-              Lilo is built on the WebKit engine that ships with macOS and
-              written in Swift. That is what keeps it light and easy on the
-              battery. It needs macOS 26 or later.
-            </p>
-          </details>
-          <details>
-            <summary>How can I help?</summary>
-            <p>
-              Star the repo, report what breaks, send a pull request, or back
-              the work on{" "}
-              <a href="https://github.com/sponsors/Alexays">GitHub Sponsors</a>.
-              The whole interface is a Svelte layer you can change and rebuild
-              in seconds.
-            </p>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <section class="band">
-      <div class="wrap end">
-        <span class="tag">MIT licensed</span>
-        <Flower id="end-flower" class="mark small-mark" />
-        <h2>Open source, for good.</h2>
+  <PageSection id="move">
+    <div class="head">
+      <span class="tag">Built for how you browse</span>
+      <h2>Everything in its Space.</h2>
+      <p>
+        The sidebar you know, with the details that make it yours. Move in from
+        Safari, Chrome, Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium,
+        Firefox or Zen in five minutes, straight from your Mac.{" "}
+        <a href="/moving/">How moving works</a>
+      </p>
+    </div>
+    <div class="move">
+      <div class="mv" style="background:#b39df4">
+        <h3>Spaces with their own sign-ins</h3>
         <p>
-          Read it, fork it, change the sidebar in Svelte and rebuild in seconds.
-          Your browser stays yours.
+          Work and Perso side by side in one window, each with its cookies and
+          extensions. Swipe between them.
         </p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-            style="padding:14px 22px"
-          >
-            Download for Mac
-          </a>
-          <a
-            class="pill soft"
-            href="https://github.com/Alexays/Lilo"
-            style="padding:14px 22px;background:color-mix(in srgb, var(--tint) 30%, var(--surface))"
-          >
-            Star on GitHub
-          </a>
+        <div class="keys">
+          <kbd>⌃1</kbd>
+          <kbd>⌃2</kbd>
         </div>
       </div>
-    </section>
-  </main>
+      <div class="mv" style="background:#92a8ff">
+        <h3>Tabs on any edge</h3>
+        <p>
+          Left like Arc, right to keep the page first, or one strip on top or
+          bottom like Safari. Drag the sidebar to another edge to move it.
+        </p>
+      </div>
+      <div class="mv" style="background:#9ac7eb">
+        <h3>Peek</h3>
+        <p>
+          Links from your pinned tabs open over the page. Keep reading, expand
+          it to a tab, or put it in a split.
+        </p>
+        <div class="keys">
+          <kbd>⇧ click</kbd>
+        </div>
+      </div>
+      <div class="mv" style="background:#f0a8c8">
+        <h3>Little window</h3>
+        <p>
+          A quick window from any app, for one link or one search. Send it to a
+          Space when it turns into something.
+        </p>
+        <div class="keys">
+          <kbd>⌘⌥N</kbd>
+        </div>
+      </div>
+      <div class="mv" style="background:#9bd3b4">
+        <h3>Tabs that tidy themselves</h3>
+        <p>
+          Unpinned tabs you stopped using are archived after 12 hours, or when
+          you choose. Find them again in a keystroke.
+        </p>
+        <div class="keys">
+          <kbd>⌘⇧K</kbd>
+        </div>
+      </div>
+      <div class="mv" style="background:#f4bb8c">
+        <h3>Command bar</h3>
+        <p>
+          Tabs, history, bookmarks and every action in one field, ranked by what
+          you use. Open a result in a split or a Peek.
+        </p>
+        <div class="keys">
+          <kbd>⌘T</kbd>
+          <kbd>⌥↩</kbd>
+        </div>
+      </div>
+      <div class="mv" style="background:#e8d98f">
+        <h3>Your shortcuts</h3>
+        <p>
+          Every shortcut can be remapped. Start from a preset, conflicts are
+          flagged as you type.
+        </p>
+      </div>
+      <div class="mv" style="background:#8fd5cf">
+        <h3>Links land in the right Space</h3>
+        <p>
+          Links opened from Mail or Slack follow your rules: this domain to
+          Work, the rest to the Little window.
+        </p>
+      </div>
+      <div class="mv" style="background:#c3a5ea">
+        <h3>Split view</h3>
+        <p>
+          Up to four tabs side by side, a terminal next to your docs, restored
+          exactly as you left them.
+        </p>
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="build" layout="build">
+    <div class="head" style="margin:0">
+      <span class="tag">For people who build</span>
+      <h2>Your terminal lives in the sidebar.</h2>
+      <p>
+        Terminal tabs sit next to your docs and your localhost, on a Metal
+        renderer built on libghostty. Split one beside a page, and the sidebar
+        shows its branch and pending changes at a glance.
+      </p>
+      <div class="feat-list">
+        <div>
+          <b>Stays awake while it works.</b> A long build or an agent run keeps
+          your Mac awake, even with the lid closed, then lets it sleep when the
+          command ends.
+        </div>
+        <div>
+          <b>Tells you when it's done.</b> A finished or waiting command lights
+          up its Space, so you can browse while it runs.
+        </div>
+        <div>
+          <b>Review before you commit.</b> The changes view shows every diff of
+          the repo, images included.
+        </div>
+        <div>
+          <b>Talks to your tools.</b> AppleScript, Shortcuts and Focus filters,
+          plus Web Serial for boards like Arduino and ESP.
+        </div>
+      </div>
+    </div>
+    <FeatureDemo lang={lang} mode="terminal" />
+  </PageSection>
+
+  <PageSection id="agents" layout="agents">
+    <div class="head" style="margin:0">
+      <span class="tag">For AI agents</span>
+      <h2>Your agents get their own Space.</h2>
+      <p>
+        Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any MCP
+        client open tabs, click, type, and read pages, the console and the
+        network, in a real browser beside you.
+      </p>
+      <div class="ag-list">
+        <div>
+          <span>
+            <b>Their own Space.</b> Agents open tabs in a folder of the Agents
+            Space, signed in nowhere by default. Your keyboard, your mouse and
+            your tabs stay yours.
+          </span>
+        </div>
+        <div>
+          <span>
+            <b>You say yes first.</b> Lilo asks before an agent sends, pays,
+            deletes or publishes. Each agent is approved once, and none ever
+            sees a private Space.
+          </span>
+        </div>
+        <div>
+          <span>
+            <b>One click to connect.</b> In Settings, Connect adds Lilo to
+            Claude Code, Claude Desktop, Codex or Cursor. Any other client
+            copies the configuration.
+          </span>
+        </div>
+      </div>
+      <div class="ag-cta">
+        <a class="pill dark" href="/ai-agents/">
+          How agents work
+        </a>
+        <span>No AI inside Lilo: bring the agent you already use.</span>
+      </div>
+    </div>
+    <FeatureDemo lang={lang} mode="mcp" />
+  </PageSection>
+
+  <PageSection id="faq" layout="faq">
+    <div class="head" style="margin:0">
+      <span class="tag">Questions</span>
+      <h2>Good to know.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Is Lilo free?</summary>
+        <p>
+          Yes. Lilo is free and open source under the{" "}
+          <a href="https://github.com/Alexays/Lilo/blob/main/LICENSE">
+            MIT license
+          </a>
+          . There is no paid tier and no account to create.
+        </p>
+      </details>
+      <details>
+        <summary>Who makes Lilo, and will it last?</summary>
+        <p>
+          Alexays, who has also maintained the open-source Waybar since 2018.
+          The part that keeps you safe is not his alone: WebKit ships with
+          macOS, so Apple's security fixes reach Lilo with every macOS update.
+          The code is MIT licensed, so it stays yours to run and fork whatever
+          happens, and no company can switch it off. What comes next is in the{" "}
+          <a href="https://github.com/Alexays/Lilo/blob/main/ROADMAP.md">
+            roadmap
+          </a>
+          , and you can back the work on{" "}
+          <a href="https://github.com/sponsors/Alexays">GitHub Sponsors</a>.
+        </p>
+      </details>
+      <details>
+        <summary>Can I put my tabs on top, like Safari or Chrome?</summary>
+        <p>
+          Yes. Tabs go on any edge of the window: left, right, top or bottom.
+          Spaces, pinned tabs and folders come along. Switch anytime in
+          Settings, from the command bar, or by dragging the sidebar to another
+          edge.
+        </p>
+      </details>
+      <details>
+        <summary>What is Lilo built on?</summary>
+        <p>
+          WebKit, the engine Safari uses, in an app written in Swift and AppKit,
+          with its sidebar and settings in Svelte. No Chromium is bundled. On
+          top of it, Lilo runs Chrome extensions from the Chrome Web Store.
+        </p>
+      </details>
+      <details>
+        <summary>Which extensions work?</summary>
+        <p>
+          Manifest V3 extensions from the Chrome Web Store install with one
+          click and keep updating. Manifest V2 extensions and blocking{" "}
+          <code>webRequest</code> are not supported, and a few extensions rely
+          on other features only Chrome has. The{" "}
+          <a href="https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md">
+            compatibility notes
+          </a>{" "}
+          list exactly what differs.
+        </p>
+      </details>
+      <details>
+        <summary>
+          Do Netflix, Spotify and other streaming services work?
+        </summary>
+        <p>
+          Lilo plays protected video and music through Apple's FairPlay, the
+          same system Safari uses, so services that support Safari, like
+          Netflix, Prime Video, Disney+, Apple TV+ and Spotify, should play as
+          they do there. YouTube streams in 4K HDR. Widevine is not available in
+          WebKit, so a service that requires it plays at lower quality or not at
+          all, and offline downloads in the browser are not supported.
+        </p>
+      </details>
+      <details>
+        <summary>Can I bring my stuff from another browser?</summary>
+        <p>
+          Yes. Lilo imports bookmarks, history and sign-ins from Safari, Chrome,
+          Brave, Edge, Vivaldi, Opera, Arc, Dia, Comet, Chromium, Firefox and
+          Zen, open tabs where the browser keeps them, and offers to reinstall
+          your Chrome Web Store extensions.{" "}
+          <a href="/moving/">See what comes with you</a>.
+        </p>
+      </details>
+      <details>
+        <summary>What about my passwords?</summary>
+        <p>
+          Lilo keeps no passwords itself and never reads them from other
+          browsers. Setup offers the manager you already use, such as NordPass,
+          Bitwarden, 1Password, Proton Pass, Dashlane or KeePassXC. iCloud
+          Passwords comes as soon as Apple approves it.
+        </p>
+      </details>
+      <details>
+        <summary>Is there sync, or a mobile app?</summary>
+        <p>
+          No, by design: Lilo has no account and no server, so there is nothing
+          to sync through. It is a Mac app only. Your password manager keeps
+          syncing your passwords everywhere, and importing changes nothing in
+          your other browser, so its own sync to your phone keeps working.
+        </p>
+      </details>
+      <details>
+        <summary>Does Lilo have AI built in?</summary>
+        <p>
+          No. If you turn it on, the agents you already use, like Claude Code,
+          Codex or Cursor, can drive Lilo over a local MCP server, in their own
+          Space. Each agent is approved once, never sees your private Spaces,
+          and Lilo asks you before it sends, pays or deletes anything.{" "}
+          <a href="https://github.com/Alexays/Lilo/blob/main/docs/AI-AGENTS.md">
+            How agents work
+          </a>
+          .
+        </p>
+      </details>
+      <details>
+        <summary>Where is my data?</summary>
+        <p>
+          On your Mac, kept apart per profile. No account, no telemetry, and the
+          project runs no server, so nothing you do is sent to us.{" "}
+          <a href="https://github.com/Alexays/Lilo/blob/main/PRIVACY.md">
+            Read the privacy notes
+          </a>
+          .
+        </p>
+      </details>
+      <details>
+        <summary>Is Lilo related to the Lilo search engine?</summary>
+        <p>
+          No. Lilo Browser is an independent, open-source web browser for Mac.
+          The Lilo search engine at lilo.org is a separate project with no link
+          to it. In Lilo, you pick your search engine in Settings.
+        </p>
+      </details>
+      <details>
+        <summary>Why only on Mac?</summary>
+        <p>
+          Lilo is built on the WebKit engine that ships with macOS and written
+          in Swift. That is what keeps it light and easy on the battery. It
+          needs macOS 26 or later.
+        </p>
+      </details>
+      <details>
+        <summary>How can I help?</summary>
+        <p>
+          Star the repo, report what breaks, send a pull request, or back the
+          work on{" "}
+          <a href="https://github.com/sponsors/Alexays">GitHub Sponsors</a>. The
+          whole interface is a Svelte layer you can change and rebuild in
+          seconds.
+        </p>
+      </details>
+    </div>
+  </PageSection>
 </Layout>

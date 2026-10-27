@@ -1,0 +1,78 @@
+---
+import type { Locale } from "../lib/i18n";
+import Install from "./Install.astro";
+import PixelBloom from "./PixelBloom.astro";
+
+interface Props {
+  lang: Locale;
+  heading: string;
+  description: string;
+}
+
+const { lang, heading, description } = Astro.props;
+---
+
+<section class="page-end" id="open-source" aria-labelledby="closing-heading">
+  <div class="wrap page-frame end-frame">
+    <PixelBloom />
+    <div class="end-content">
+      <h2 id="closing-heading">{heading}</h2>
+      <p>{description}</p>
+      <Install lang={lang} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .page-end {
+    border-top: 1px solid var(--line);
+  }
+  .end-frame {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-inline: 0;
+    background: #b39df4;
+    color: #1a1a2e;
+  }
+  .end-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+    padding-block: 80px;
+    padding-inline: max(var(--page-gutter), env(safe-area-inset-left, 0px))
+      max(var(--page-gutter), env(safe-area-inset-right, 0px));
+    text-align: left;
+  }
+  .end-frame :global(.pixel-bloom) {
+    opacity: 0.55;
+  }
+  h2 {
+    max-width: 14ch;
+    font-size: 48px;
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+  p {
+    max-width: 44ch;
+    color: #35304e;
+    font-size: 18px;
+    line-height: 32px;
+    text-wrap: pretty;
+  }
+  @media (min-width: 640px) {
+    h2 {
+      font-size: 60px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .end-content {
+      padding-block: 112px;
+    }
+    h2 {
+      font-size: 72px;
+    }
+  }
+</style>
