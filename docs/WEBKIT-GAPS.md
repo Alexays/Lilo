@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89 and 92. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92 and 94. Every other gap is fully worked around.
 
 ---
 
@@ -155,6 +155,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** Keeper's worker connects to its own pages at startup, before any is open (webext-redux), and logged the error.
 - **Check:** `runtime.test.ts` ("hands out a port that disconnects with lastError when no context listens"). Repro: in a worker with no page open, `chrome.runtime.connect({ name: 'x' })`. Expected: a port whose `onDisconnect` fires with `lastError` set. Actual: the call throws.
 ### 60. A port nobody received yet disconnects when the first process answers
+
+### 94. Request methods WebKit cannot take in a rule
+
+- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
+- **Lilo:** beside excluded request domains, the methods a rule lists become the other methods it excludes, `trace` among them; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule excluding methods, where Chrome's `other` would not.
+- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates.
+- **Check:** `testRequestMethodsBesideExcludedRequestDomainsFailEveryRule`. Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })`. Expected: applies. Actual: rejects with `Unable to load declarativeNetRequest rules.`, and every later update too.
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
 - **Lilo:** a `chrome.runtime.connect` port is Lilo's at both ends, so while it connects, the context takes its `onConnect` listeners off WebKit's event and puts them back after: WebKit then asks only the other processes ([chrome-event.ts] `unheard`, [runtime.ts] `crossExtensionMessaging`). A port another context opens to it while its listeners are off misses it: in a stress run, a page connecting while the worker connected about once a millisecond lost 5 to 11 of 1000 ports. A `browser.runtime.connect` port stays WebKit's. Lilo's tabs enable element fullscreen, so an extension page in a tab runs in a process of its own; enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
