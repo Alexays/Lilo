@@ -107,7 +107,7 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
+    <string>Pixel</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 Alexis Rouillard. MIT License.</string>
     <key>NSCameraUsageDescription</key>

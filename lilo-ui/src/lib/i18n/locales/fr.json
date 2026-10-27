@@ -202,7 +202,7 @@
 		"items": {
 			"appIcon": {
 				"title": "Icône de l'app",
-				"description": "Seule Classique suit les styles d'icône sombre, teinté et transparent de macOS."
+				"description": "Choisissez l'icône affichée dans le Dock et le Finder."
 			},
 			"passwordManager": {
 				"title": "Ajouter un gestionnaire de mots de passe",

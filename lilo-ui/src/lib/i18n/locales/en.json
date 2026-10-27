@@ -202,7 +202,7 @@
 		"items": {
 			"appIcon": {
 				"title": "App icon",
-				"description": "Only Classic follows the macOS dark, tinted and clear icon styles."
+				"description": "Choose the icon shown in the Dock and Finder."
 			},
 			"passwordManager": {
 				"title": "Add a password manager",

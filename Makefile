@@ -70,7 +70,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-test
+	changie change release-status release-version release-test app-icons
 
 ## List the targets
 help:
@@ -135,6 +135,16 @@ swiftlint: $(SWIFTLINT)
 ## Regenerate Lilo.xcodeproj from project.yml
 project-sync: $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) $(XCODEGEN)
 	@'$(XCODEGEN)' generate --spec project.yml
+
+## Regenerate the bundled app icons from the original artwork
+app-icons:
+	@set -eu; for size in 16 32 64 128 256 512; do \
+		sips -s format png -z $$size $$size Lilo/Resources/AppIcons/pixel.png \
+			--out Lilo/Resources/AppIcons.xcassets/Pixel.appiconset/pixel-$$size.png >/dev/null; \
+	done
+	@cp Lilo/Resources/AppIcons/pixel.png Lilo/Resources/AppIcons.xcassets/Pixel.appiconset/pixel-1024.png
+	@"$(shell xcode-select -p)/../Applications/Icon Composer.app/Contents/Executables/ictool" Lilo/Resources/AppIcon.icon \
+		--export-image --output-file Lilo/Resources/AppIcons/classic.png --platform macOS --rendition Default --width 1024 --height 1024 --scale 1
 
 $(SWIFTLINT):
 	@set -eu; work=$$(mktemp -d); trap 'rm -rf "$$work"' EXIT; \
@@ -502,10 +512,10 @@ site-playground-deps: $(SITE_DEPS)
 site-audit: $(SITE_DEPS)
 	@npm --prefix site audit
 
-## Export the built Mac app's classic icon and Codex's app icon for the website (macOS; CODEX_ICON=path)
+## Export the classic Icon Composer artwork and Codex's app icon for the website (macOS; CODEX_ICON=path)
 site-demo-icons:
 	@mkdir -p site/src/assets/demo
-	@sips -s format png -z 256 256 .derived.noindex/xcode/Build/Products/Debug/Lilo.app/Contents/Resources/AppIcon.icns --out site/src/assets/demo/lilo-classic.png
+	@sips -s format png -z 256 256 Lilo/Resources/AppIcons/classic.png --out site/src/assets/demo/lilo-classic.png
 	@sips -s format png -z 128 128 '$(or $(CODEX_ICON),/Applications/ChatGPT.app/Contents/Resources/app.icns)' --out site/src/assets/demo/codex.png
 
 ## Check the Cloudflare deployment without publishing

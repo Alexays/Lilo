@@ -27,8 +27,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: fr.arouillard.lilo$(LILO_BUNDLE_ID_SUFFIX)
         PRODUCT_NAME: Lilo
         LILO_APP_NAME: Lilo
-        # Icon Composer file: actool turns it into Assets.car (Liquid Glass appearances) plus AppIcon.icns.
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: Pixel
         # libghostty-vt bundles C++ (simdutf, highway).
         OTHER_LDFLAGS: $(inherited) -lc++
 
@@ -93,7 +92,7 @@ targets:
       - path: Lilo/Resources
         buildPhase: resources
         includes:
-          - "AppIcon.icon"
+          - "AppIcons.xcassets"
           - "Lilo.sdef"
           - "fr.lproj"
       - path: Lilo/Resources/AppIcons

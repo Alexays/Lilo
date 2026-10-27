@@ -6,7 +6,7 @@ app = defines["app"]  # noqa: F821 (injected by dmgbuild)
 format = "UDZO"
 files = [app]
 symlinks = {"Applications": "/Applications"}
-icon = os.path.join(app, "Contents/Resources/AppIcon.icns")
+icon = os.path.join(app, "Contents/Resources/Pixel.icns")
 # Relative to the repository root, where make runs; dmgbuild folds background@2x.png
 # in as the Retina image of a multi-resolution TIFF.
 background = "scripts/dmg/background.png"

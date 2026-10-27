@@ -1,7 +1,7 @@
 import AppKit
 
 /// User-selectable app icon: macOS has no alternate-icon API, so a variant is set on the Dock tile and on the bundle itself.
-/// Only `classic` follows the system's dark, tinted and clear styles. Cached so launch can re-apply it after a reinstall wipes it.
+/// Pixel is the bundle's primary icon. Alternatives are cached so launch can re-apply them after a reinstall wipes them.
 enum AppIconPreference {
     static let variants = ["classic", "night", "frost", "blueprint", "riso", "pixel", "neon", "graphite", "spring", "pride", "clay"]
 
@@ -13,9 +13,9 @@ enum AppIconPreference {
 
     @MainActor static func apply(_ name: String) {
         let variant = variants.contains(name) ? name : defaultVariant
-        let image = variant == "classic"
+        let image = variant == defaultVariant
             ? nil
-            : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
+            : image(for: variant)
         let oldImage = NSApp.applicationIconImage
         // The download progress view owns the Dock tile while downloads run.
         let animate = variant != (UserDefaults.lilo.string(forKey: cacheKey) ?? defaultVariant)
@@ -35,10 +35,7 @@ enum AppIconPreference {
 
     /// 128 px PNG data URLs for the settings grid, built once from the bundled images.
     @MainActor static let previews: [[String: String]] = variants.compactMap { variant in
-        let image = variant == "classic"
-            ? Bundle.main.image(forResource: "AppIcon")
-            : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
-        guard let image else { return nil }
+        guard let image = image(for: variant) else { return nil }
         let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 128, pixelsHigh: 128, bitsPerSample: 8, samplesPerPixel: 4,
                                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
         guard let rep else { return nil }
@@ -79,8 +76,7 @@ enum AppIconPreference {
 
     @MainActor static func applyCachedAtLaunch() {
         let cached = UserDefaults.lilo.string(forKey: cacheKey) ?? defaultVariant
-        guard cached != "classic", variants.contains(cached),
-              let image = Bundle.main.url(forResource: cached, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
+        guard cached != defaultVariant, variants.contains(cached), let image = image(for: cached)
         else { return }
         NSApp.applicationIconImage = image
         // The bundle's custom icon (its `Icon\r` file) survives relaunches; only a reinstall wipes it, and
@@ -88,6 +84,10 @@ enum AppIconPreference {
         if !FileManager.default.fileExists(atPath: Bundle.main.bundlePath + "/Icon\r") {
             NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
         }
+    }
+
+    @MainActor private static func image(for variant: String) -> NSImage? {
+        Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
     }
 }
 
@@ -105,7 +105,7 @@ private final class DockIconSwapView: NSView {
     init(from old: NSImage?, to new: NSImage?) {
         self.old = old
         self.new = new
-        newDrawn = new ?? Bundle.main.image(forResource: "AppIcon")
+        newDrawn = new ?? Bundle.main.image(forResource: "Pixel")
         super.init(frame: NSRect(x: 0, y: 0, width: 128, height: 128))
     }
 
