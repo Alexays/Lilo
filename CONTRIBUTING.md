@@ -239,13 +239,13 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 
 ### Add or change a user-facing string
 
-Every string is translated into English and French.
+Every string is translated into English, French and Spanish.
 
-1. Add the key under the right namespace in both `lilo-ui/src/lib/i18n/locales/en.json` and
-   `fr.json`.
+1. Add the key under the right namespace in every catalog under `lilo-ui/src/lib/i18n/locales/`
+   (`en.json`, `fr.json` and `es.json`).
 2. In Svelte, use `t("namespace.key")`. In AppKit, write the English string with `.localized`
-   and add an `"English": "Français"` row under the `native` namespace of both catalogs.
-3. `make ui-test` fails if a key is missing from either catalog.
+   and add a row under the `native` namespace of every catalog (identity in English, translation in the others).
+3. `make ui-test` fails if a key is missing from any catalog or its placeholders differ from English.
 
 [docs/I18N.md](docs/I18N.md) covers plurals, placeholders and adding a language.
 

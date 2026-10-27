@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import en from "./locales/en.json" with { type: "json" };
-import fr from "./locales/fr.json" with { type: "json" };
+import { catalogs, loadCatalog, SUPPORTED_LOCALES } from "./translate";
+
+for (const { code } of SUPPORTED_LOCALES) await loadCatalog(code);
 
 const appRoot = new URL("../../../../Lilo/", import.meta.url).pathname;
 const literal = String.raw`"((?:[^"\\\n]|\\.)*)"`;
@@ -26,7 +27,7 @@ function swiftFiles(dir: string): string[] {
 	});
 }
 
-test("every native string Lilo localizes has an en and a fr entry", () => {
+test("every native string Lilo localizes has an entry in every catalog", () => {
 	const keys = new Map<string, string>();
 	for (const file of swiftFiles(appRoot)) {
 		const source = readFileSync(file, "utf8");
@@ -41,15 +42,20 @@ test("every native string Lilo localizes has an en and a fr entry", () => {
 			}
 		}
 	}
-	const missing = [...keys]
-		.filter(([key]) => !(key in en.native) || !(key in fr.native))
-		.map(([key, file]) => `${file}: ${JSON.stringify(key)}`);
-	assert.deepEqual(missing, [], "add these strings to the native namespace of en.json and fr.json");
+	for (const { code } of SUPPORTED_LOCALES) {
+		const native = catalogs[code]?.native as Record<string, string>;
+		const missing = [...keys]
+			.filter(([key]) => !(key in native))
+			.map(([key, file]) => `${file}: ${JSON.stringify(key)}`);
+		assert.deepEqual(missing, [], `add these strings to the native namespace of ${code}.json`);
+	}
 });
 
-test("a French menu title keeps the ellipsis of its English one", () => {
-	const mismatched = Object.entries(fr.native as Record<string, string>)
-		.filter(([key, value]) => key.endsWith("\u2026") !== value.endsWith("\u2026"))
-		.map(([key, value]) => `${JSON.stringify(key)}: ${JSON.stringify(value)}`);
-	assert.deepEqual(mismatched, []);
+test("translated menu titles keep the ellipsis of their English ones", () => {
+	for (const { code } of SUPPORTED_LOCALES) {
+		const mismatched = Object.entries(catalogs[code]?.native as Record<string, string>)
+			.filter(([key, value]) => key.endsWith("\u2026") !== value.endsWith("\u2026"))
+			.map(([key, value]) => `${JSON.stringify(key)}: ${JSON.stringify(value)}`);
+		assert.deepEqual(mismatched, [], code);
+	}
 });
