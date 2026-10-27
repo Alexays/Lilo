@@ -55,7 +55,7 @@ test("groups a section's settings in display order", () => {
   assert.deepEqual(sectionGroups("general"), [
     { groupKey: "settings.groups.browser", settings: ["defaultBrowser", "importBrowsers", "language"] },
     { groupKey: "settings.groups.otherAppLinks", settings: ["externalLinkDefault", "externalLinkRules"] },
-    { groupKey: "settings.groups.search", settings: ["searchEngine", "searchSuggestions", "searchEngines"] },
+    { groupKey: "settings.groups.search", settings: ["searchEngine", "searchSuggestions", "preloadTopHit", "searchEngines"] },
     { groupKey: "settings.groups.downloads", settings: ["downloadsFolder", "askDownloadLocation"] },
     { groupKey: "settings.groups.media", settings: ["autoPictureInPicture", "autoplay", "autoDevices", "deviceSetup"] },
     { groupKey: "settings.groups.lilo", settings: ["appUpdates", "autoUpdate", "shortcuts"] },

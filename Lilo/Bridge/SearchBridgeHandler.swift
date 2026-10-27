@@ -19,12 +19,14 @@ final class SearchBridgeHandler: BridgeHandler {
         "searchHistory",
         "getRecentHistory",
         "searchSuggestions",
+        "preloadTopHit",
         "deleteHistoryEntry"
     ]
 
     private let historyStoreProvider: () -> HistoryStore?
     private let suggestionsEnabledProvider: () -> Bool
     private let preconnect: (URL) -> Void
+    private let preloadTopHit: (URL?) -> Void
     private var lastEnginePreconnect: (engine: String, at: Date)?
     private weak var bridgeRouter: BridgeRouter?
     /// One suggestion fetch at a time, then the newest query typed meanwhile: on a slow link, cancelling
@@ -40,11 +42,13 @@ final class SearchBridgeHandler: BridgeHandler {
         historyStoreProvider: @escaping () -> HistoryStore?,
         bridgeRouter: BridgeRouter,
         suggestionsEnabledProvider: @escaping () -> Bool,
-        preconnect: @escaping (URL) -> Void
+        preconnect: @escaping (URL) -> Void,
+        preloadTopHit: @escaping (URL?) -> Void
     ) {
         self.historyStoreProvider = historyStoreProvider
         self.bridgeRouter = bridgeRouter; self.suggestionsEnabledProvider = suggestionsEnabledProvider
         self.preconnect = preconnect
+        self.preloadTopHit = preloadTopHit
     }
 
     func handle(message: BridgeMessage) async -> Any? {
@@ -95,6 +99,10 @@ final class SearchBridgeHandler: BridgeHandler {
                 }
                 self?.inFlightSuggestionsTask = nil
             }
+
+        // An empty URL drops the preload: the top hit changed to a row not worth one, or the bar closed.
+        case "preloadTopHit":
+            preloadTopHit(message.url("url"))
 
         case "deleteHistoryEntry":
             guard let url = message.string("url"), let store = historyStoreProvider() else { break }

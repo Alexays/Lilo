@@ -288,6 +288,7 @@ export const searchActions = {
 		emit("deleteHistoryEntry", { url, query }),
 	searchSuggestions: (query: string, engine: string): void =>
 		emit("searchSuggestions", { query, engine }),
+	preloadTopHit: (url: string): void => emit("preloadTopHit", { url }),
 };
 
 export const terminalActions = {

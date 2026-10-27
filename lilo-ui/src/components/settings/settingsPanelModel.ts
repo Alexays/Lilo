@@ -48,6 +48,7 @@ export type SettingId =
   | "language"
   | "searchEngine"
   | "searchSuggestions"
+  | "preloadTopHit"
   | "askDownloadLocation"
   | "searchEngines"
   | "downloadsFolder"
@@ -199,6 +200,7 @@ export type SettingsGroupKey = keyof typeof SETTINGS_GROUP_ICONS;
 /** Boolean settings: stored key and the value an unset key means. */
 export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback: boolean }>> = {
   searchSuggestions: { key: "searchSuggestions", fallback: true },
+  preloadTopHit: { key: "preloadTopHit", fallback: true },
   askDownloadLocation: { key: "askDownloadLocation", fallback: false },
   autoPictureInPicture: { key: "autoPictureInPicture", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
@@ -236,6 +238,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "externalLinkRules", section: "general", groupKey: "settings.groups.otherAppLinks" },
   { id: "searchEngine", section: "general", groupKey: "settings.groups.search" },
   { id: "searchSuggestions", section: "general", groupKey: "settings.groups.search" },
+  { id: "preloadTopHit", section: "general", groupKey: "settings.groups.search" },
   { id: "searchEngines", section: "general", groupKey: "settings.groups.search" },
   { id: "downloadsFolder", section: "general", groupKey: "settings.groups.downloads" },
   { id: "askDownloadLocation", section: "general", groupKey: "settings.groups.downloads" },

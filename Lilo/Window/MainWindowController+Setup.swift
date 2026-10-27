@@ -407,7 +407,12 @@ extension MainWindowController {
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             bridgeRouter: bridgeRouter,
             suggestionsEnabledProvider: { settingsStore.searchSuggestions },
-            preconnect: { [weak self] url in self?.tabManager.activeEngineTab?.preconnect(to: url) }
+            preconnect: { [weak self] url in self?.tabManager.activeEngineTab?.preconnect(to: url) },
+            // Low Power Mode or a hot Mac: no page loads on a guess.
+            preloadTopHit: { [weak self] url in
+                guard let self else { return }
+                tabManager.preloadTopHit(context.hiddenSpaceLifecycle.isConstrainedPower ? nil : url)
+            }
         ))
 
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
