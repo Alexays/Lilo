@@ -1302,7 +1302,13 @@
 		"keyHint": "Arrows to choose, Return to share",
 		"noTabs": "No open tabs to share",
 		"noMatch": "No tab matches",
-		"shareSystem": "Window or screen…"
+		"shareSystem": "Window or screen…",
+		"shareAudio": "Share audio too",
+		"systemAudio": {
+			"undetermined": "macOS will ask once. The call's voices are never shared.",
+			"denied": "Allow Lilo in Privacy & Security, Screen & System Audio Recording.",
+			"unsupported": "The Mac's sound can't be shared without echoing the call."
+		}
 	},
 	"tabSwitcher": {
 		"title": "Recent tabs",

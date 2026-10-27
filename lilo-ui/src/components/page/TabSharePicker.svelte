@@ -86,6 +86,24 @@
     expanded.clear();
   });
 
+  // Present only when the page asked for sound.
+  const audio = $derived(request?.audio ?? null);
+  let systemAudioChoice = $state<boolean | null>(null);
+  $effect(() => {
+    if (!request) systemAudioChoice = null;
+  });
+  const systemAudioBlocked = $derived(audio?.system === "denied" || audio?.system === "unsupported");
+  const systemAudioOn = $derived(!!audio && !systemAudioBlocked && (systemAudioChoice ?? audio.systemOn));
+  const systemAudioNote = $derived(
+    !audio || !request?.allowsSystem
+      ? ""
+      : systemAudioBlocked
+        ? t(`tabShare.systemAudio.${audio.system}`)
+        : systemAudioOn && audio.system === "undetermined"
+          ? t("tabShare.systemAudio.undetermined")
+          : "",
+  );
+
   let panelEl = $state<HTMLDivElement>();
   let listEl = $state<HTMLDivElement>();
 
@@ -170,7 +188,7 @@
       return;
     }
     if (e.key !== "Tab" || !panelEl) return;
-    const controls = [...panelEl.querySelectorAll<HTMLElement>("input, button:not(:disabled)")];
+    const controls = [...panelEl.querySelectorAll<HTMLElement>("input:not(:disabled), button:not(:disabled)")];
     if (controls.length === 0) return;
     e.preventDefault();
     const index = controls.indexOf(document.activeElement as HTMLElement);
@@ -229,15 +247,30 @@
             />
           </label>
           {#if request.allowsSystem}
-            <button class="tab-share-btn" onclick={() => resolveTabShare("system")}>
+            <button class="tab-share-btn" onclick={() => resolveTabShare("system", undefined, systemAudioOn)}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="1.5" y="2" width="11" height="7.5" rx="1.3" stroke="currentColor" stroke-width="1.2" />
                 <path d="M5 12h4M7 9.5V12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
               </svg>
               {t("tabShare.shareSystem")}
             </button>
+            {#if audio}
+              <label class="tab-share-sound" class:disabled={systemAudioBlocked}>
+                <input
+                  type="checkbox"
+                  checked={systemAudioOn}
+                  disabled={systemAudioBlocked}
+                  aria-describedby={systemAudioNote ? "tab-share-system-note" : undefined}
+                  onchange={(event) => (systemAudioChoice = event.currentTarget.checked)}
+                />
+                {t("tabShare.shareAudio")}
+              </label>
+            {/if}
           {/if}
         </div>
+        {#if systemAudioNote}
+          <p class="tab-share-note" id="tab-share-system-note">{systemAudioNote}</p>
+        {/if}
       </header>
 
       <div class="tab-share-list" bind:this={listEl}>
@@ -548,6 +581,31 @@
   }
 
   .tab-share-hint {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+
+  .tab-share-sound {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .tab-share-sound input {
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .tab-share-sound.disabled {
+    color: var(--text-muted);
+    cursor: default;
+  }
+
+  .tab-share-note {
+    margin: 0;
     font-size: var(--font-size-xs);
     color: var(--text-muted);
   }

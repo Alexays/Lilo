@@ -114,6 +114,8 @@
     <string>This website requests access to your camera.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>This website requests access to your microphone.</string>
+    <key>NSAudioCaptureUsageDescription</key>
+    <string>Lilo shares the sound of your Mac when a call asks for it with your screen.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Lilo connects to devices on your local network when you open their pages, such as a router or printer.</string>
     <key>NSSpeechRecognitionUsageDescription</key>

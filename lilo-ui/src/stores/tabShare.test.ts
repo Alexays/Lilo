@@ -24,6 +24,7 @@ test("tab share request opens, resolves with the picked tab, and clears", async 
 		shareableTabIds: new Set(["tab-beta"]),
 		suggestedTabIds: [],
 		allowsSystem: true,
+		audio: null,
 	});
 
 	store.resolveTabShare("tab", "tab-beta");
@@ -79,6 +80,7 @@ test("a second request while one is open is cancelled immediately", async () => 
 		shareableTabIds: new Set(["tab-beta"]),
 		suggestedTabIds: [],
 		allowsSystem: true,
+		audio: null,
 	});
 });
 
@@ -145,4 +147,34 @@ test("thumbnails are snapshotted one at a time, once each, and dropped with the 
 
 	store.resolveTabShare("cancel");
 	assert.equal(store.getTabShareThumbnail("tab-a"), undefined);
+});
+
+test("a page asking for sound gets the screen toggle state; only a window or screen pick carries it", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabShare.svelte.ts");
+	const audio = { system: "undetermined", systemOn: false };
+
+	store.initTabShareStore();
+	receive({ event: "tabSharePickerRequested", requestId: "req-1", origin: "meet.example.com", shareableTabIds: ["tab-a"], audio });
+	assert.deepEqual(store.getTabShareRequest()?.audio, audio);
+
+	store.resolveTabShare("system", undefined, true);
+	assert.deepEqual(posted.at(-1)?.payload, { requestId: "req-1", choice: "system", audio: true });
+
+	// A tab is shared without sound, as Chrome does with tab audio off.
+	receive({ event: "tabSharePickerRequested", requestId: "req-2", origin: "meet.example.com", shareableTabIds: ["tab-a"], audio });
+	store.resolveTabShare("tab", "tab-a", true);
+	assert.deepEqual(posted.at(-1)?.payload, { requestId: "req-2", choice: "tab", tabId: "tab-a" });
+});
+
+test("a page not asking for sound sends no toggle", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabShare.svelte.ts");
+
+	store.initTabShareStore();
+	receive({ event: "tabSharePickerRequested", requestId: "req-1", origin: "meet.example.com", shareableTabIds: [] });
+	store.resolveTabShare("system", undefined, true);
+	assert.deepEqual(posted.at(-1)?.payload, { requestId: "req-1", choice: "system" });
 });

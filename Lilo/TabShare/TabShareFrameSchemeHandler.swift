@@ -2,16 +2,19 @@ import WebKit
 
 /// Serves tab-share frames over `lilo-capture://` as H.264, long-polled: parked until a newer frame (410 when the session ends).
 /// Pulling keeps backpressure page-side and avoids base64 through evaluateJavaScript; `key=1` waits for a keyframe with its decoder config.
+/// `frames/audio` serves a screen share's mono Float32 samples captured since the previous pull, the same way.
 @MainActor
 final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
     static let scheme = "lilo-capture"
 
-    // https pages block subresources on non-secure schemes, so every frame fetch would fail. The registration is global (once, on a
-    // throwaway pool); WKProcessPool is deprecated but the only entry point, hence the lookup by name.
+    // https pages block subresources on non-secure schemes, so every frame fetch would fail, and a page's connect-src would block
+    // (and report) them too. The registrations are global (once, on a throwaway pool); WKProcessPool is deprecated but the only
+    // entry point, hence the lookup by name.
     private static let secureSchemeRegistration: Void = {
-        let selector = NSSelectorFromString("_registerURLSchemeAsSecure:")
-        if let pool = (NSClassFromString("WKProcessPool") as? NSObject.Type)?.init(), pool.responds(to: selector) {
-            pool.perform(selector, with: scheme)
+        guard let pool = (NSClassFromString("WKProcessPool") as? NSObject.Type)?.init() else { return }
+        for name in ["_registerURLSchemeAsSecure:", "_registerURLSchemeAsBypassingContentSecurityPolicy:"] {
+            let selector = NSSelectorFromString(name)
+            if pool.responds(to: selector) { pool.perform(selector, with: scheme) }
         }
     }()
 
@@ -22,12 +25,15 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
 
     enum FrameResult {
         case frame(seq: Int, chunk: TabShareEncoder.Chunk)
+        case samples(Data)
         case pending
         case gone
     }
 
     /// Resolves (token, afterSeq, wantsKey, pulling web view) against the live session. Set by `BrowserContext`.
     var frameProvider: ((String, Int, Bool, WKWebView) -> FrameResult)?
+    /// Resolves (token, pulling web view) to the samples captured since the last pull. Set by `BrowserContext`.
+    var audioProvider: ((String, WKWebView) -> FrameResult)?
 
     private struct Waiter {
         let task: any WKURLSchemeTask
@@ -35,6 +41,7 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
         let token: String
         let afterSeq: Int
         let wantsKey: Bool
+        let isAudio: Bool
     }
 
     private var waiters: [ObjectIdentifier: Waiter] = [:]
@@ -73,11 +80,14 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
         }
         let afterSeq = queryItems.first(where: { $0.name == "seq" })?.value.flatMap(Int.init) ?? 0
         let wantsKey = queryItems.contains { $0.name == "key" && $0.value == "1" }
-        respond(to: Waiter(task: task, webView: webView, token: token, afterSeq: afterSeq, wantsKey: wantsKey))
+        respond(to: Waiter(task: task, webView: webView, token: token, afterSeq: afterSeq, wantsKey: wantsKey, isAudio: components.path == "/audio"))
     }
 
     private func respond(to waiter: Waiter) {
-        switch frameProvider?(waiter.token, waiter.afterSeq, waiter.wantsKey, waiter.webView) ?? .gone {
+        let result = waiter.isAudio
+            ? audioProvider?(waiter.token, waiter.webView)
+            : frameProvider?(waiter.token, waiter.afterSeq, waiter.wantsKey, waiter.webView)
+        switch result ?? .gone {
         case .frame(let seq, let chunk):
             var headers = ["X-Lilo-Seq": "\(seq)", "X-Lilo-Key": chunk.config == nil ? "0" : "1"]
             if let config = chunk.config {
@@ -85,6 +95,8 @@ final class TabShareFrameSchemeHandler: NSObject, WKURLSchemeHandler {
                 headers["X-Lilo-Desc"] = config.description.base64EncodedString()
             }
             respond(to: waiter.task, status: 200, body: chunk.data, headers: headers)
+        case .samples(let data):
+            respond(to: waiter.task, status: 200, body: data, headers: [:])
         case .pending:
             waiters[ObjectIdentifier(waiter.task)] = waiter
         case .gone:

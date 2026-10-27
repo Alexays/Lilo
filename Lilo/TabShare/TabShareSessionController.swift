@@ -25,6 +25,9 @@ final class TabShareSessionController {
         var degradedCadence = false
         /// The screen stream's frame count at the last encode.
         var encodedScreenFrame = 0
+        var audioTap: SystemAudioTap?
+        /// Samples captured since the shim's last audio pull.
+        var pendingAudio = Data()
 
         init(token: String, engine: WKWebViewTab?, screen: ScreenCaptureStream?, requester: WKWebView, encoder: TabShareEncoder) {
             self.token = token
@@ -75,19 +78,28 @@ final class TabShareSessionController {
         return start(Session(token: UUID().uuidString, engine: engine, screen: nil, requester: requester, encoder: TabShareEncoder(width: width, height: height)), surface: "browser")
     }
 
-    /// Starts a session ferrying a started screen stream, which the session stops when it ends.
-    func start(screen: ScreenCaptureStream, requester: WKWebView) -> [String: Any] {
+    /// Starts a session ferrying a started screen stream, which the session stops when it ends. With `audio`, it also
+    /// ferries what the Mac plays, less Lilo's pages; none when the GPU process pid is out of reach, as it would echo.
+    func start(screen: ScreenCaptureStream, requester: WKWebView, audio: Bool = false) -> [String: Any] {
         let session = Session(token: UUID().uuidString, engine: nil, screen: screen, requester: requester, encoder: TabShareEncoder(width: screen.width, height: screen.height))
         // The token, not the session: the session holds the stream, which holds this closure.
         let token = session.token
         screen.onStop = { [weak self] in self?.stop(token: token) }
+        if audio, WebViewPrivateAccessors(requester).pid("_gpuProcessIdentifier") != nil,
+           let tap = SystemAudioTap(gpuPid: { [weak requester] in
+               requester.flatMap { WebViewPrivateAccessors($0).pid("_gpuProcessIdentifier") }.map(pid_t.init)
+           }, onBlock: { [weak self] block in
+               DispatchQueue.main.async { self?.storeAudio(block, token: token) }
+           }) {
+            session.audioTap = tap
+        }
         return start(session, surface: screen.surface)
     }
 
     private func start(_ session: Session, surface: String) -> [String: Any] {
         sessions[session.token] = session
         startTimer(session, framesPerSecond: Self.framesPerSecond)
-        return [
+        var reply: [String: Any] = [
             "mode": "tab",
             "surface": surface,
             "token": session.token,
@@ -95,6 +107,11 @@ final class TabShareSessionController {
             "height": session.encoder.height,
             "frameURL": "\(TabShareFrameSchemeHandler.scheme)://frames/frame?token=\(session.token)"
         ]
+        if let tap = session.audioTap {
+            reply["sampleRate"] = tap.sampleRate
+            reply["audioURL"] = "\(TabShareFrameSchemeHandler.scheme)://frames/audio?token=\(session.token)"
+        }
+        return reply
     }
 
     /// Scheme-handler read: newest frame after `afterSeq`, pending when none yet, gone when the
@@ -114,10 +131,29 @@ final class TabShareSessionController {
         return .frame(seq: current.seq, chunk: chunk)
     }
 
+    /// Scheme-handler read of the samples captured since the last pull, pending when none yet.
+    func audio(token: String, puller: WKWebView) -> TabShareFrameSchemeHandler.FrameResult {
+        guard let current = sessions[token], current.requester === puller, current.audioTap != nil else { return .gone }
+        current.lastPullAt = .now
+        guard !current.pendingAudio.isEmpty else { return .pending }
+        defer { current.pendingAudio = Data() }
+        return .samples(current.pendingAudio)
+    }
+
+    private func storeAudio(_ block: Data, token: String) {
+        guard let current = sessions[token], let tap = current.audioTap else { return }
+        current.pendingAudio.append(block)
+        // A page that stopped pulling keeps the last second only (mono Float32).
+        let cap = Int(tap.sampleRate) * MemoryLayout<Float32>.size
+        if current.pendingAudio.count > cap { current.pendingAudio = current.pendingAudio.suffix(cap) }
+        onFrameStored?()
+    }
+
     func stop(token: String) {
         guard let ended = sessions.removeValue(forKey: token) else { return }
         ended.timer?.cancel()
         ended.screen?.stop()
+        ended.audioTap?.stop()
         let engineId = ended.engine?.id
         let stillShared = engineId.map(isSharing(engineId:)) == true
         if !stillShared { ended.engine?.isTabShareSource = false }
