@@ -64,7 +64,7 @@ extension MainWindowController {
     static let suggestedShareTabCount = 4
 
     /// Cancelling the calling task takes the picker off screen and returns `.cancel`.
-    func presentTabSharePicker(origin: String, requester: WKWebView?, allowsSystem: Bool = true) async -> TabSharePickerChoice {
+    func presentTabSharePicker(origin: String, requester: WKWebView?, allowsSystem: Bool = true, wantsAudio: Bool = false) async -> TabSharePickerChoice {
         let requestId = UUID().uuidString
         // Only tabs `liveEngineForSharing` can resolve: every current-space tab (revived on pick)
         // and the hidden-space tabs whose parked engine is still live.
@@ -80,16 +80,25 @@ extension MainWindowController {
             .sorted { ($0.isAudioPlaying ? 1 : 0, $0.lastActiveAt ?? .distantPast) > ($1.isAudioPlaying ? 1 : 0, $1.lastActiveAt ?? .distantPast) }
             .prefix(Self.suggestedShareTabCount)
             .map(\.id.uuidString)
+        var data: [String: Any] = [
+            "requestId": requestId,
+            "origin": origin,
+            "shareableTabIds": shareableTabIds.map(\.uuidString),
+            "suggestedTabIds": suggestedTabIds,
+            "allowsSystem": allowsSystem
+        ]
+        if wantsAudio {
+            // Screen sound must leave out Lilo's GPU process, which plays every page and so the call itself.
+            let excludable = requester.map { WebViewPrivateAccessors($0).pid("_gpuProcessIdentifier") != nil } ?? false
+            data["audio"] = [
+                "system": excludable ? SystemAudioAccess.current.rawValue : "unsupported",
+                "systemOn": context.settingsStore.get(Self.systemAudioSetting) != "false"
+            ]
+        }
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
-                pendingTabSharePickerRequests[requestId] = (requester, continuation)
-                bridgeRouter.send(event: "tabSharePickerRequested", data: [
-                    "requestId": requestId,
-                    "origin": origin,
-                    "shareableTabIds": shareableTabIds.map(\.uuidString),
-                    "suggestedTabIds": suggestedTabIds,
-                    "allowsSystem": allowsSystem
-                ])
+                pendingTabSharePickerRequests[requestId] = (requester, wantsAudio, continuation)
+                bridgeRouter.send(event: "tabSharePickerRequested", data: data)
             }
         } onCancel: {
             Task { @MainActor [weak self] in self?.dismissTabSharePicker(requestId: requestId) }
@@ -102,8 +111,15 @@ extension MainWindowController {
         bridgeRouter.send(event: "tabSharePickerDismissed", data: ["requestId": requestId])
     }
 
+    static let systemAudioSetting = "tabShareSystemAudio"
+
+    /// Remembers the screen sound toggle for the next share.
     func resolveTabSharePicker(requestId: String, choice: TabSharePickerChoice) {
-        pendingTabSharePickerRequests.removeValue(forKey: requestId)?.continuation.resume(returning: choice)
+        guard let pending = pendingTabSharePickerRequests.removeValue(forKey: requestId) else { return }
+        if pending.wantsAudio, case .system(let audio) = choice {
+            context.settingsStore.set(Self.systemAudioSetting, value: String(audio))
+        }
+        pending.continuation.resume(returning: choice)
     }
 
     /// Cancels the picks a closing tab is waiting on and takes their picker off screen.

@@ -138,8 +138,8 @@ final class BrowserContext {
     private func installTabShareRouting() {
         let windows = windows
         let bridge = engineFactory.tabShareBridge
-        bridge.pickerPresenter = { origin, requester in
-            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester) ?? .cancel
+        bridge.pickerPresenter = { origin, requester, wantsAudio in
+            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester, wantsAudio: wantsAudio) ?? .cancel
         }
         bridge.sessionStarter = { tabId, requester in
             windows.window(for: requester)?.startTabShare(tabId: tabId, requester: requester)
@@ -149,6 +149,18 @@ final class BrowserContext {
         }
         let capture = engineFactory.captureHandler
         let screenPicker = ScreenContentPicker()
+        bridge.screenStarter = { requester in
+            guard windows.window(for: requester) != nil,
+                  let filter = await screenPicker.pick(allowing: [.singleDisplay, .singleWindow]) else { return nil }
+            // The pick consents to the picture only: sound has its own grant, asked once. Refused, the share has no sound.
+            let audio = await SystemAudioAccess.request()
+            let screen = ScreenCaptureStream(filter: filter)
+            guard (try? await screen.start()) != nil, let window = windows.window(for: requester) else {
+                screen.stop()
+                return nil
+            }
+            return window.tabShareSessions.start(screen: screen, requester: requester, audio: audio)
+        }
         capture.picker = { title, sources in
             let modes: SCContentSharingPickerMode = [
                 sources.contains("screen") ? .singleDisplay : [],
@@ -184,6 +196,14 @@ final class BrowserContext {
         engineFactory.tabShareFrameSchemeHandler.frameProvider = { token, afterSeq, wantsKey, puller in
             for window in windows.windows {
                 let result = window.tabShareSessions.frame(token: token, afterSeq: afterSeq, wantsKey: wantsKey, puller: puller)
+                if case .gone = result { continue }
+                return result
+            }
+            return .gone
+        }
+        engineFactory.tabShareFrameSchemeHandler.audioProvider = { token, puller in
+            for window in windows.windows {
+                let result = window.tabShareSessions.audio(token: token, puller: puller)
                 if case .gone = result { continue }
                 return result
             }

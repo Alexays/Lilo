@@ -1,5 +1,6 @@
 import { on } from "../lib/bridge";
 import { tabActions, tabShareActions } from "../lib/bridge/actions";
+import type { BridgeTabShareAudio } from "../lib/bridge/protocol";
 
 interface TabShareRequest {
 	requestId: string;
@@ -7,6 +8,8 @@ interface TabShareRequest {
 	shareableTabIds: Set<string>;
 	suggestedTabIds: string[];
 	allowsSystem: boolean;
+	/** Present when the page asked for sound. */
+	audio: BridgeTabShareAudio | null;
 }
 
 // A snapshot with no reply by then counts as lost, so one dropped reply can't stall the rest.
@@ -61,8 +64,10 @@ export function initTabShareStore(): void {
 			shareableTabIds: new Set(data.shareableTabIds),
 			suggestedTabIds: data.suggestedTabIds ?? [],
 			allowsSystem: data.allowsSystem !== false,
+			audio: data.audio ?? null,
 		};
 	});
+
 	on("tabSharePickerDismissed", (data) => {
 		if (_request?.requestId === data.requestId) clear();
 	});
@@ -86,15 +91,18 @@ export function requestTabShareThumbnail(tabId: string): void {
 	pump();
 }
 
+/** `audio` is the window or screen's "Share audio too" toggle, sent only when the page asked for sound; a tab shares no sound. */
 export function resolveTabShare(
 	choice: "tab" | "system" | "cancel",
 	tabId?: string,
+	audio = false,
 ): void {
 	if (!_request) return;
 	tabShareActions.resolve({
 		requestId: _request.requestId,
 		choice,
 		...(choice === "tab" && tabId ? { tabId } : {}),
+		...(_request.audio && choice === "system" ? { audio } : {}),
 	});
 	clear();
 }
