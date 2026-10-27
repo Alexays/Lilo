@@ -178,8 +178,8 @@ final class GapEvents {
         Task { @MainActor [weak self] in self?.flush() }
     }
 
-    /// Sends the event to some of the extension's contexts whatever they listen to: nil in `contexts` for its worker, waking it
-    /// if stopped unless `wakes` is false, else a page's channel.
+    /// Sends the event now to some of the extension's contexts whatever they listen to: nil in `contexts` for its worker, waking
+    /// it if stopped unless `wakes` is false, else a page's channel. Their earlier events go first.
     func emit(_ namespace: String, _ event: String, args: [Any], to extensionId: String, contexts: Set<Int?>, wakes: Bool = true) {
         let envelope = workers[extensionId, default: Worker()].envelope(namespace, event, args: args)
         if contexts.contains(nil) {
@@ -190,12 +190,10 @@ final class GapEvents {
             let message = envelope.dictionary
             for index in indices where contexts.contains(pages[extensionId]?[index].channel) {
                 pages[extensionId]?[index].pending.append(message)
-                unflushed.insert(extensionId)
             }
         }
-        guard !flushScheduled, !unflushed.isEmpty else { return }
-        flushScheduled = true
-        Task { @MainActor [weak self] in self?.flush() }
+        // A port's messages come batched: waiting for the end of the turn would only add a hop to each round trip.
+        send(to: extensionId)
     }
 
     /// Sends `message` now over the extension's open channels, its running worker's and its pages': a stopped worker misses it.
@@ -232,13 +230,16 @@ final class GapEvents {
         flushScheduled = false
         let ids = unflushed
         unflushed = []
-        for id in ids {
-            deliver(to: id)
-            for index in pages[id]?.indices ?? 0..<0 {
-                guard let page = pages[id]?[index], !page.pending.isEmpty else { continue }
-                pages[id]?[index].pending = []
-                page.port.sendMessage(["events": page.pending, Self.channelKey: owners[ObjectIdentifier(page.port)] ?? 0]) { _ in }
-            }
+        ids.forEach(send(to:))
+    }
+
+    /// Sends what the extension's connected worker and its pages have pending.
+    private func send(to extensionId: String) {
+        deliver(to: extensionId)
+        for index in pages[extensionId]?.indices ?? 0..<0 {
+            guard let page = pages[extensionId]?[index], !page.pending.isEmpty else { continue }
+            pages[extensionId]?[index].pending = []
+            page.port.sendMessage(["events": page.pending, Self.channelKey: owners[ObjectIdentifier(page.port)] ?? 0]) { _ in }
         }
     }
 
