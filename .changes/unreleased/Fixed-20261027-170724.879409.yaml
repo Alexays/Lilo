@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'A tab an extension sees open has no url until its page commits, only a pending one, as in Chrome: extensions such as Dashlane no longer message a page that is not there yet.'
-time: 2026-10-27T17:07:24.879409+01:00
