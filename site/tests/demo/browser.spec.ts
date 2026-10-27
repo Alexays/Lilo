@@ -1,6 +1,19 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+test("the former live query keeps the demo on local example pages", async ({
+  page,
+}) => {
+  await page.goto("/?live=1#browser-demo");
+  const demo = page.frameLocator("#browser-demo iframe");
+  await expect(demo.locator(".repo-top")).toBeVisible();
+  await expect(demo.locator(".live-website")).toHaveCount(0);
+  await expect(page.locator("#browser-demo iframe")).not.toHaveAttribute(
+    "src",
+    /live=1/u
+  );
+});
+
 const openDemo = async (page: Page, french = false) => {
   await page.goto(`${french ? "/fr/" : "/"}#browser-demo`);
   const demo = page.frameLocator("#browser-demo iframe");
@@ -182,7 +195,7 @@ test("sample content and native-only actions never request an external website",
     }
   });
   const demo = await openDemo(page);
-  await demo.getByRole("button", { name: "↗ getlilo.app" }).click();
+  await demo.getByRole("link", { name: "↗ getlilo.app" }).click();
   await expect(
     demo.getByRole("heading", { name: "A little space for your internet." })
   ).toBeVisible();
@@ -212,7 +225,7 @@ test("the second split pane owns its navigation and leaves the first pane intact
   await demo
     .locator(".sample-pane")
     .nth(1)
-    .getByRole("button", { name: "↗ getlilo.app" })
+    .getByRole("link", { name: "↗ getlilo.app" })
     .click();
   await expect(
     demo
@@ -269,14 +282,14 @@ test("diagnostics that require native processes do not start a polling panel", a
   ).toHaveCount(0);
 });
 
-test("Reload resets the current sample page and advertised history shortcuts stay in the demo", async ({
+test("Reload keeps the current sample URL and history shortcuts stay in the demo", async ({
   page,
 }) => {
   const demo = await openDemo(page);
-  await demo.getByRole("button", { name: /README.md/u }).click();
+  await demo.getByRole("link", { name: /README.md/u }).click();
   await expect(demo.locator(".file-content")).toBeVisible();
   await demo.getByRole("button", { exact: true, name: "Reload" }).click();
-  await expect(demo.locator(".file-list")).toBeVisible();
+  await expect(demo.locator(".file-content")).toContainText("# Lilo");
   await demo.locator("body").press("Meta+l");
   await demo.locator(".command-bar-input").fill("https://getlilo.app");
   await demo.locator(".command-bar-input").press("Enter");
@@ -284,7 +297,7 @@ test("Reload resets the current sample page and advertised history shortcuts sta
   await expect(
     demo.getByRole("button", {
       exact: true,
-      name: "Address bar: github.com/Alexays/Lilo",
+      name: "Address bar: github.com/Alexays/Lilo/blob/main/README.md",
     })
   ).toBeVisible();
   await demo.locator("body").press("Meta+]");

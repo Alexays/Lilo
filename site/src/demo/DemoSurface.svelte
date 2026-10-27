@@ -396,7 +396,7 @@ export const requestFolderDeletion = (id: string) => {
     {#each panes as tab (tab.id)}
       <div class="sample-pane" class:split-pane={panes.length > 1} class:split-focused={panes.length > 1 && snapshot.activeTabId === tab.id} class:agent-controlled={snapshot.agentControl?.tabId === tab.id} data-sample-tab={tab.id} style={paneStyle(tab.id)} role="region" aria-label={tab.title} tabindex="-1" onpointerdown={() => activatePane(tab.id)} onfocusin={() => activatePane(tab.id)}>
         {#key reloads[tab.id] ?? 0}
-          <DemoPage {tab} {host} settings={snapshot.settings} locale={locale as DemoLocale} onpeek={(url) => showPreview("peek", url)} />
+          <DemoPage {tab} {host} settings={snapshot.settings} locale={locale as DemoLocale} onpreview={showPreview} />
         {/key}
         {#if snapshot.agentControl?.tabId === tab.id}
           <div class="agent-frame" aria-hidden="true"><span>{text.agentControls}</span></div>
@@ -462,7 +462,7 @@ export const requestFolderDeletion = (id: string) => {
 {/if}
 
 {#if exploring}<DemoExplore locale={locale as DemoLocale} onclose={() => { exploring = false; }} onselect={(id) => { exploring = false; onfeature(id); }} />{/if}
-{#if preview}<DemoPreview bind:this={previewWindow} {host} locale={locale as DemoLocale} mode={preview.mode} url={preview.url} onclose={() => { preview = null; }} />{/if}
+{#if preview}{#key preview}<DemoPreview bind:this={previewWindow} {host} locale={locale as DemoLocale} mode={preview.mode} url={preview.url} onpreview={showPreview} onclose={() => { preview = null; }} />{/key}{/if}
 
 <style>
   :global(::highlight(demo-find-results)) { background: #f4d97a; color: #242033; }

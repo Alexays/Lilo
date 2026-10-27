@@ -39,6 +39,8 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 ## Demo playground
 
+The demo uses interactive local example pages. Entered addresses stay inside the sample experience and do not load external websites. Shift-click a page link to Peek; Command-click or middle-click opens a background tab. Right-click a link for Peek, Split View, a Little window, new or background tabs, and Copy Link.
+
 Terminal mode loads xterm.js and just-bash's browser engine on demand. Commands use a shared virtual filesystem; working directories, environment variables, history and output persist per terminal tab. Try `ls`, `cat README.md`, or `printf '# Hello from Lilo\n' > README.md` to update the workspace beside the terminal. Pipes, redirection and common text utilities work. Native executables and network commands are unavailable. Execution, memory, output and history are bounded; Ctrl+C cancels a command. Reloading or resetting discards the session.
 
 MCP mode opens a visibly labeled local Codex session beside a project page. Run makes real MCP calls to read the current checklist, click unfinished tasks, type an update and request permission before publishing. The coral cursor and controlled-tab frame match Lilo's native presentation, and Allow Once, Always Allow and Deny use the production approval drawer. Stop, hiding the demo, closing Details and switching modes cancel pending work. Turning agent access off in Settings disables the local tools too.

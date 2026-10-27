@@ -4,6 +4,34 @@ import { test } from "node:test";
 import type { AnyBridgeEventEnvelope } from "../../../lilo-ui/src/lib/bridge/protocol";
 import { createDemoHost } from "../../src/demo/host.ts";
 
+test("background links preserve the selection, split and recent-tab order", () => {
+  const host = createDemoHost("en");
+  host.dispatch("splitURL", {
+    side: "right",
+    targetTabId: host.snapshot().activeTabId,
+    url: "https://notes.example.com/split",
+  });
+  const before = host.snapshot();
+  const recent = host.recentTabRows().map((tab) => tab.id);
+  host.openLinkTab("https://radio.example.com/background", true);
+  const after = host.snapshot();
+  assert.equal(after.activeTabId, before.activeTabId);
+  assert.deepEqual(after.splitIds, before.splitIds);
+  assert.equal(after.tabs.length, before.tabs.length + 1);
+  assert.deepEqual(
+    host
+      .recentTabRows()
+      .filter((tab) => recent.includes(tab.id))
+      .map((tab) => tab.id),
+    recent
+  );
+  host.openLinkTab("https://notes.example.com/foreground");
+  assert.equal(host.activeTab()?.url, "https://notes.example.com/foreground");
+  const count = host.snapshot().tabs.length;
+  host.openLinkTab("file:///private/example.txt", true);
+  assert.equal(host.snapshot().tabs.length, count);
+});
+
 test("new tabs, closing the last tab, and restore keep a usable selection", () => {
   const host = createDemoHost("en");
   const original = host.snapshot().activeTabId;
