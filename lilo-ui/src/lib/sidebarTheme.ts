@@ -139,7 +139,7 @@ function fromOklab(lightness: number, a: number, b: number): RGB {
 	};
 }
 
-function relativeLuminance(color: RGB): number {
+export function relativeLuminance(color: RGB): number {
 	return (
 		0.2126 * linearize(color.r) +
 		0.7152 * linearize(color.g) +

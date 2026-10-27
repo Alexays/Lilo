@@ -1,9 +1,11 @@
 <script lang="ts" module>
-  import { contrastRatio, parseHexColor, type RGB } from "../../lib/sidebarTheme";
+  import { contrastRatio, parseHexColor, relativeLuminance, type RGB } from "../../lib/sidebarTheme";
 
   const SAMPLE_SIZE = 16;
-  // Under this contrast with the sidebar, a glyph drawn on transparency gets a plate behind it.
-  const PLATE_CONTRAST = 2;
+  // A dark glyph drawn on transparency, under this contrast with a dark sidebar, sits on a chip.
+  const CHIP_CONTRAST = 2;
+  // The luminance under which a sidebar counts as dark, as in ensureContrast.
+  const DARK_SIDEBAR_LUMINANCE = 0.18;
   // Per source: the average color of a glyph on transparency, null for an icon with its own background.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a cache filled before loadedSource changes
   const glyphColors = new Map<string, RGB | null>();
@@ -31,7 +33,7 @@
       coverage += alpha;
       if (alpha >= 250) opaque++;
     }
-    // A mostly opaque icon is its own plate.
+    // A mostly opaque icon brings its own background.
     if (coverage === 0 || opaque > SAMPLE_SIZE * SAMPLE_SIZE * 0.85) return null;
     return { r: r / coverage, g: g / coverage, b: b / coverage };
   }
@@ -57,11 +59,17 @@
   const imageSource = $derived(src?.trim() || "");
   const imageFailed = $derived(failedSource !== "" && failedSource === imageSource);
   let loadedSource = $state("");
-  const needsPlate = $derived.by(() => {
+  const needsChip = $derived.by(() => {
     if (loadedSource !== imageSource) return false;
     const glyph = glyphColors.get(imageSource);
     const background = parseHexColor(themeSidebarBackground());
-    return !!glyph && !!background && contrastRatio(glyph, background) < PLATE_CONTRAST;
+    if (!glyph || !background) return false;
+    const backgroundLuminance = relativeLuminance(background);
+    return (
+      backgroundLuminance < DARK_SIDEBAR_LUMINANCE &&
+      relativeLuminance(glyph) <= backgroundLuminance &&
+      contrastRatio(glyph, background) < CHIP_CONTRAST
+    );
   });
 
   const fallbackGlyph = $derived.by((): string => {
@@ -92,7 +100,7 @@
 <div
   class="site-favicon"
   class:is-fallback={!imageSource || imageFailed}
-  class:has-plate={needsPlate}
+  class:has-chip={needsChip}
   style={`--favicon-size:${size}px; --favicon-radius:${radius}px; --favicon-hue:${fallbackHue};`}
   aria-hidden="true"
 >
@@ -145,9 +153,9 @@
       0 1px 1px color-mix(in srgb, black 8%, transparent);
   }
 
-  .site-favicon.has-plate {
+  .site-favicon.has-chip {
     padding: calc(var(--favicon-size) / 10);
-    background: color-mix(in srgb, var(--sidebar-contrast) 88%, transparent);
+    background: color-mix(in srgb, var(--sidebar-contrast) 14%, transparent);
   }
 
   .site-favicon-image {
