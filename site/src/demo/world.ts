@@ -117,7 +117,7 @@ export const sampleWorld = (
   const spaces: BridgeSpaceSnapshot[] = [
     {
       color: "#7868d8",
-      icon: "🪻",
+      icon: text.personal[0],
       id: "home",
       isPrivate: false,
       name: text.personal,
@@ -126,7 +126,7 @@ export const sampleWorld = (
     },
     {
       color: "#4e7bbf",
-      icon: "💼",
+      icon: text.work[0],
       id: "work",
       isPrivate: false,
       name: text.work,
@@ -135,7 +135,7 @@ export const sampleWorld = (
     },
     {
       color: "#b36a91",
-      icon: "🎧",
+      icon: text.music[0],
       id: "music",
       isPrivate: false,
       name: text.music,

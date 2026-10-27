@@ -84,7 +84,7 @@ test("link menus support keyboard navigation and work inside Peek and Little win
   const peek = frame.getByRole("dialog", { exact: true, name: "Peek" });
   await expect(peek.locator(".repo-top")).toBeVisible();
   await peek
-    .getByRole("link", { exact: true, name: "↗ getlilo.app" })
+    .getByRole("link", { exact: true, name: "getlilo.app" })
     .click({ button: "right" });
   await menu
     .getByRole("menuitem", { exact: true, name: "Open in Little Window" })
@@ -242,7 +242,7 @@ test("repository files and folders support link actions and local navigation his
     .getByRole("menuitem", { exact: true, name: "Open Link in New Tab" })
     .click();
   await expect(frame.locator(".file-content")).toContainText("docs/");
-  await frame.getByRole("link", { exact: true, name: "‹ Files" }).click();
+  await frame.getByRole("link", { exact: true, name: "Files" }).click();
   await expect(frame.locator(".file-list")).toBeVisible();
   await frame.getByRole("button", { exact: true, name: "Go back" }).click();
   await expect(frame.locator(".file-content")).toContainText("docs/");

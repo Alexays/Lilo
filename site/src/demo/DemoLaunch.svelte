@@ -19,8 +19,8 @@
 </script>
 
 <article class="launch-page">
-  <header><span class="project-icon" aria-hidden="true">↗</span><span>Studio</span><span class="crumb" aria-hidden="true">/</span><span>{text.agentProject}</span></header>
-  <div class="project-cover" aria-hidden="true"><span>✳</span></div>
+  <header><span>Studio</span><span class="crumb" aria-hidden="true">/</span><span>{text.agentProject}</span></header>
+  <div class="project-cover" aria-hidden="true"></div>
   <div class="project-body">
     <span class="eyebrow">Studio / 01</span>
     <h1>{text.agentProject}</h1>
@@ -33,7 +33,7 @@
     <section class="project-update">
       <label for={`update-${tabId}`}>{text.agentUpdate}</label>
       <textarea id={`update-${tabId}`} aria-label={text.agentUpdate} bind:value={project.update} oninput={() => { project.published = false; }} rows="4" spellcheck="false"></textarea>
-      <div class="publish-row"><span class="published" role="status">{#if project.published}<span aria-hidden="true">✓</span> {text.agentPublished}{/if}</span><button type="button" data-agent-approval disabled={!complete || !project.update.trim() || project.published} onclick={() => { project.published = true; }}>{text.agentPublish}<span aria-hidden="true">↗</span></button></div>
+      <div class="publish-row"><span class="published" role="status">{#if project.published}<span aria-hidden="true">✓</span> {text.agentPublished}{/if}</span><button type="button" data-agent-approval disabled={!complete || !project.update.trim() || project.published} onclick={() => { project.published = true; }}>{text.agentPublish}</button></div>
     </section>
   </div>
 </article>
@@ -41,10 +41,8 @@
 <style>
   .launch-page { min-height: 100%; font: 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
   header { display: flex; gap: 9px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 11px; }
-  .project-icon { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; background: #d977571a; color: #c86d50; font-size: 15px; }
   .crumb { color: var(--text-muted); }
   .project-cover { position: relative; height: 95px; overflow: hidden; background: color-mix(in srgb, #b7c3ad 24%, var(--bg-primary)); }
-  .project-cover span { position: absolute; right: 30px; top: -20px; color: #a0b494; font-size: 140px; line-height: 1; transform: rotate(-12deg); }
   .project-body { max-width: 620px; margin: 0 auto; padding: 24px; }
   .eyebrow { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
   h1 { margin: 6px 0 24px; font-size: 26px; font-weight: 650; line-height: 1.2; letter-spacing: -.7px; }

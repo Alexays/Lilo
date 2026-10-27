@@ -1007,7 +1007,7 @@ export const createDemoHost = (
 
     const space = {
       color: "#d38d64",
-      icon: "🤖",
+      icon: text().agents[0],
       id: "playground-agents",
       isPrivate: false,
       name: text().agents,
@@ -2105,7 +2105,7 @@ export const createDemoHost = (
         archiveAfterHours: 12,
         color: payload.color || "#7868d8",
         colorMode: payload.colorMode ?? "fixed",
-        icon: payload.icon || "🌐",
+        icon: payload.icon || (payload.name || text().newSpace)[0],
         id: idFor("space"),
         isPrivate: payload.isPrivate === true,
         name: payload.name || text().newSpace,
@@ -2532,7 +2532,7 @@ export const createDemoHost = (
           target = existing ?? {
             archiveAfterHours: 12,
             color: targetProfile.color,
-            icon: "🌐",
+            icon: profile.name[0],
             id: idFor("space"),
             isPrivate: false,
             name: profile.name,
@@ -3085,7 +3085,7 @@ export const createDemoHost = (
       } else {
         commands.createSpace?.({
           color: "#3f4656",
-          icon: "🔒",
+          icon: "P",
           isPrivate: true,
           name: nativeCopy(settings.locale === "fr" ? "fr" : "en")("Private"),
         });
