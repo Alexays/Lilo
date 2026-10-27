@@ -174,8 +174,9 @@ enum AgentInteractionTools {
             }
             for index in urls.indices { urls[index] = try await control.approveUpload(urls[index], engine: engine, session: session) }
             engine.pendingAgentUploads = urls
-            if let ref = arguments["ref"] as? String, let frame = try await AgentTools.frame(holding: ref, in: engine) {
-                _ = try await AgentTools.page(engine, "act", ["ref": ref, "action": "left_click"], in: frame)
+            // The input itself is clicked, not the point it sits at: sites hide it under their own button.
+            if let ref = arguments["ref"] as? String {
+                _ = try await AgentTools.page(engine, "act", ["ref": ref, "action": "left_click"], in: try await AgentTools.frame(holding: ref, in: engine))
             } else {
                 await AgentInput.click(engine.wkWebView, at: try await point(of: arguments, engine: engine))
             }

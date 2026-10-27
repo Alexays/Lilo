@@ -118,6 +118,31 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertNil(window.window?.attachedSheet)
     }
 
+    func testFileUploadFillsAnInputHiddenUnderItsButton() async throws {
+        let tab = try await agentTab(showing: """
+        <!doctype html><body>
+        <div style="position:absolute;left:20px;top:20px;width:40px;height:40px">
+        <input type="file" id="file" style="width:0.1px;height:0.1px;opacity:0;position:absolute;left:20px;top:20px">
+        <div role="button" aria-label="Add media" style="position:absolute;inset:0;background:#08f"></div>
+        </div></body>
+        """)
+        let file = FileManager.default.temporaryDirectory.appending(path: "agent-upload-\(UUID().uuidString.prefix(6)).txt")
+        try Data("hello".utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let found = await client.callTool("find", ["tabId": tab, "query": "file"]).text
+        let ref = try XCTUnwrap(found.range(of: #"ref_\d+"#, options: .regularExpression).map { String(found[$0]) }, found)
+
+        let upload = Task { await client.callTool("file_upload", ["tabId": tab, "ref": ref, "paths": [file.path]]) }
+        let asked = await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
+        XCTAssertTrue(asked, "the user allows the file first")
+        control.answerConsent(try XCTUnwrap(control.pendingConsentAnswers.keys.first), granted: true)
+        let reply = await upload.value
+
+        XCTAssertFalse(reply.isError, reply.text)
+        let filled = await pollUntil { (try? await self.js("document.getElementById('file').files[0]?.name", tab: tab)) as? String == file.lastPathComponent }
+        XCTAssertTrue(filled)
+    }
+
     func testADeniedUploadNeedsTheUserAndLeavesTheInputEmpty() async throws {
         let tab = try await agentTab(showing: Self.page)
         let file = FileManager.default.temporaryDirectory.appending(path: "agent-upload-\(UUID().uuidString.prefix(6)).png")
