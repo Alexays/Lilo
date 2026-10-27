@@ -11,6 +11,7 @@ import {
 import { getActiveTab, getOpenTabs, getTabs, isBlankTab, type TabState } from "./tabs.svelte";
 import { onSidebarApplied, type SidebarAppliedEvent } from "./sidebar.svelte";
 import { getPagedSpaces } from "./pager.svelte";
+import { closeDesignSystemShell, closeSettingsShell } from "./panels.svelte";
 import {
 	type CommandResult,
 	type CommandSection,
@@ -482,9 +483,12 @@ export function closeCommandBar(): void {
 	_dismissBlankTabId = "";
 }
 
+// A navigation has to land on the page: the settings and design system shells cover it.
 function closeCommandBarAfterNavigation(): void {
 	_executed = true;
 	closeCommandBar();
+	closeSettingsShell();
+	closeDesignSystemShell();
 }
 
 export function setQuery(query: string, autofill = true): void {

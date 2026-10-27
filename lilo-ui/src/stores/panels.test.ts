@@ -59,3 +59,20 @@ test("settings drill-in pages and search reset on section changes and reopen", a
 	panels.openSettings();
 	assert.equal(panels.getSettingsSubpage(), null);
 });
+
+test("a link opened from another app closes the shell covering the page", async () => {
+	stubBridgeWindow({ document: true });
+	const loadStore = await freshStores();
+	const panels = await loadStore("/src/stores/panels.svelte.ts");
+	const commandBar = await loadStore("/src/stores/commandBar.svelte.ts");
+	commandBar.initCommandBarStore();
+	const { receive } = (globalThis as { window: { __lilo: { receive(msg: Record<string, unknown>): void } } }).window.__lilo;
+
+	panels.openSettings();
+	receive({ event: "closeCommandBarAfterNavigation" });
+	assert.equal(panels.isSettingsShellOpen(), false);
+
+	panels.openDesignSystem();
+	receive({ event: "closeCommandBarAfterNavigation" });
+	assert.equal(panels.isDesignSystemShellOpen(), false);
+});
