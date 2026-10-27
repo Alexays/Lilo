@@ -215,6 +215,7 @@
   // A Proxy over a native function, which prints as that function: JSC prints any Proxy as
   // `function ProxyObject()`, so Function.prototype.toString maps a wrapper to what it wraps.
   var nativeOf = null;
+  var inboundEdits = Object.create(null), domBypassTargets = Object.create(null);
   function wrapNative(fn, apply) {
     if (!nativeOf) {
       nativeOf = new WeakMap();
@@ -355,6 +356,18 @@
       }[m[1]];
     }
     var steps = parsed.steps;
+    // A path of plain keys reads straight down: matching runs on every call of a hot method (JSON.stringify).
+    var plain = steps.every(function (step) { return !step.filter && !step.deep && !/^(\*|\[-?\]|\{-\})$/.test(step.key); });
+    if (plain) {
+      return function (node) {
+        var v = node;
+        for (var s = 0; s < steps.length; s++) {
+          if (!v || typeof v !== 'object' || isUnsafeKey(steps[s].key)) return negate;
+          v = v[steps[s].key];
+        }
+        return test(v) !== negate;
+      };
+    }
     return function (node) {
       var found = evalSteps(steps, [[{ $: node }, '$']]), hit = false;
       for (var i = 0; i < found.length && !hit; i++) hit = test(found[i][0][found[i][1]]);
@@ -378,7 +391,10 @@
     }
     var steps = parsed.steps;
     return {
-      matches: function (root) { return evalSteps(steps, [[{ $: root }, '$']]).length > 0; },
+      matches: function (root) {
+        if (steps[0].filter && !steps[0].filter(root)) return false;
+        return evalSteps(steps, [[{ $: root }, '$']]).length > 0;
+      },
       // The edited root, undefined once removed itself.
       apply: function (root) {
         var holder = { $: root }, nodes = evalSteps(steps, [[holder, '$']]);
@@ -1251,19 +1267,28 @@
     // window, so its pristine copy cannot bypass the scriptlets.
     'trusted-prevent-dom-bypass': function (method, target) {
       if (!method) return;
+      // One wrapper per method, however many rules name it (YouTube has two on appendChild), applied in their order.
+      var targets = domBypassTargets[method];
+      if (targets) { targets.push(target); return; }
+      targets = domBypassTargets[method] = [target];
       proxyApply(method, function (fn, thisArg, args) {
         var r = Reflect.apply(fn, thisArg, args);
         for (var i = 0; i < args.length; i++) {
+          var el = args[i], win;
           try {
-            var el = args[i], win = el && el.contentWindow;
+            win = el && el.contentWindow;
             if (!win || String(win) !== '[object Window]') continue;
             var href = win.location.href;
             if (href !== 'about:blank' && href !== location.href) continue;
-            if (!target) { Object.defineProperty(el, 'contentWindow', { value: self }); continue; }
-            var parts = target.split('.'), mine = self, theirs = win, j = 0;
-            for (; j < parts.length - 1; j++) { mine = mine[parts[j]]; theirs = theirs[parts[j]]; }
-            theirs[parts[j]] = mine[parts[j]];
-          } catch (e) {}
+          } catch (e) { continue; }
+          for (var t = 0; t < targets.length; t++) {
+            try {
+              if (!targets[t]) { Object.defineProperty(el, 'contentWindow', { value: self }); continue; }
+              var parts = targets[t].split('.'), mine = self, theirs = win, j = 0;
+              for (; j < parts.length - 1; j++) { mine = mine[parts[j]]; theirs = theirs[parts[j]]; }
+              theirs[parts[j]] = mine[parts[j]];
+            } catch (e) {}
+          }
         }
         return r;
       });
@@ -1273,12 +1298,19 @@
       var path = method ? compileJSONPath(query, true) : null;
       var pos = parseInt(argPos, 10);
       if (!path || isNaN(pos)) return;
+      // One wrapper per method and argument, however many rules edit it (YouTube has six on JSON.stringify); the
+      // latest rule runs first, as it would from the outermost of nested wrappers.
+      var key = method + ' ' + pos, paths = inboundEdits[key];
+      if (paths) { paths.unshift(path); return; }
+      paths = inboundEdits[key] = [path];
       proxyApply(method, function (fn, thisArg, args) {
         var i = pos >= 0 ? pos : args.length + pos;
-        var obj = args[i];
-        if (i >= 0 && i < args.length && obj && typeof obj === 'object') {
+        if (i < 0 || i >= args.length) return Reflect.apply(fn, thisArg, args);
+        for (var p = 0; p < paths.length; p++) {
+          var obj = args[i];
+          if (!obj || typeof obj !== 'object') break;
           try {
-            if (path.matches(obj)) args[i] = path.apply(nativeJSONParse(nativeJSONStringify(obj)));
+            if (paths[p].matches(obj)) args[i] = paths[p].apply(nativeJSONParse(nativeJSONStringify(obj)));
           } catch (e) {}
         }
         return Reflect.apply(fn, thisArg, args);

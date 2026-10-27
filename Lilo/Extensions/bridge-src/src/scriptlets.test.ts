@@ -386,19 +386,19 @@ describe("YouTube request scriptlets", () => {
 		assert.deepEqual(delays, [17, 17000, 1000]);
 	});
 
-	test("trusted-prevent-dom-bypass hands an inserted blank frame the page's own method", () => {
+	test("trusted-prevent-dom-bypass hands an inserted blank frame the page's own methods, one per rule", () => {
 		const Node = { prototype: { appendChild: (el: unknown) => el } };
-		const sandbox = run({ [HOST]: [["trusted-prevent-dom-bypass", ["Node.prototype.appendChild", "fetch"]]] }, HOST, "", [], undefined, {
-			Node
-		});
+		const rules = [["trusted-prevent-dom-bypass", ["Node.prototype.appendChild", "fetch"]], ["trusted-prevent-dom-bypass", ["Node.prototype.appendChild", "Request"]]];
+		const sandbox = run({ [HOST]: rules }, HOST, "", [], undefined, { Node });
 		const frame = (href: string) => ({
-			contentWindow: { fetch: "pristine", location: { href }, toString: () => "[object Window]" }
+			contentWindow: { fetch: "pristine", Request: "pristine", location: { href }, toString: () => "[object Window]" }
 		});
 		const blank = frame("about:blank");
 		const elsewhere = frame("https://other.example/");
 		Node.prototype.appendChild(blank);
 		Node.prototype.appendChild(elsewhere);
 		assert.equal(blank.contentWindow.fetch, sandbox.self.fetch);
+		assert.equal(blank.contentWindow.Request, sandbox.self.Request);
 		assert.equal(elsewhere.contentWindow.fetch, "pristine");
 	});
 });
