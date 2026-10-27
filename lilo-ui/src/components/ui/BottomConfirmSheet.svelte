@@ -97,6 +97,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 30;
+    container: confirm-sheet / inline-size;
   }
 
   .confirm-sheet-layer.visible {
@@ -150,6 +151,26 @@
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
+  }
+
+  /* Past the sidebar's widest (480px), a bottom sheet lands far from the action: center it as a dialog. */
+  @container confirm-sheet (min-width: 560px) {
+    .confirm-sheet-layer.visible .confirm-sheet-backdrop {
+      background: var(--dialog-backdrop-tint);
+    }
+
+    .confirm-sheet {
+      inset-block: 0;
+      height: fit-content;
+      margin-block: auto;
+      padding: 20px;
+      transform: scale(0.96);
+      transition: transform var(--motion-duration-normal) var(--motion-ease-organic), opacity var(--motion-duration-normal) var(--motion-ease-organic);
+    }
+
+    .confirm-sheet.visible {
+      transform: none;
+    }
   }
 
   .confirm-sheet-copy {
