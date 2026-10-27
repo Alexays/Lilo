@@ -67,6 +67,13 @@ export function permissionsPatches(declared: () => Set<string>, declaredOrigins:
   return {
     contains: (original) => function (this: unknown, request: Permissions, callback?: (result: boolean) => void) {
       return callbackify(async () => {
+        // Chrome's pattern contains <all_urls> when it matches all of one of its schemes' URLs: an extension holding
+        // *://*/* holds it (uBO Lite's forks turn their cosmetic filters on from it). WebKit wants every scheme.
+        if (request?.origins?.includes('<all_urls>')) {
+          const allOf = async (scheme: string) => Boolean(await original.call(this, { origins: [`${scheme}://*/*`] }).catch(() => false));
+          if (!(await allOf('https') || await allOf('http'))) return false;
+          request = { ...request, origins: request.origins.filter((origin) => origin !== '<all_urls>') };
+        }
         const forLilo = notRequired(request, declared());
         const { result, unknown } = await withoutUnknownPermissions(withoutNames(request, forLilo), (known) => original.call(this, known));
         const asked = [...forLilo, ...unknown].filter((name) => !isDeclared(name));

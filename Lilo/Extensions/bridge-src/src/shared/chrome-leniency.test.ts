@@ -57,6 +57,24 @@ describe('permissions with names WebKit does not know', () => {
   });
 });
 
+describe('permissions.contains for <all_urls>', () => {
+  const granted = new Set(['https://*/*']);
+  const { permissions } = install({
+    permissions: Object.create({
+      contains: async ({ origins = [] }: { origins?: string[] }) => origins.every((origin) => granted.has(origin)),
+    }),
+  });
+
+  it('holds it with all of one scheme, as Chrome', async () => {
+    assert.equal(await permissions.contains({ origins: ['<all_urls>'] }), true);
+    assert.equal(await permissions.contains({ origins: ['<all_urls>', 'https://*/*'] }), true);
+    assert.equal(await permissions.contains({ origins: ['<all_urls>', 'http://a.example/*'] }), false);
+    granted.clear();
+    granted.add('https://a.example/*');
+    assert.equal(await permissions.contains({ origins: ['<all_urls>'] }), false);
+  });
+});
+
 describe('webRequest filters WebKit rejects', () => {
   function webRequestEvent() {
     const added: unknown[] = [];
