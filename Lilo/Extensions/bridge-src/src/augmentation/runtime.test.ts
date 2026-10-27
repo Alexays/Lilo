@@ -228,7 +228,17 @@ describe('browser.runtime messaging to another extension', () => {
     assert.equal(port.name, 'vpn');
     assert.deepEqual(gapCalls.at(-1), { namespace: 'runtime', method: 'connectExternal', params: { id: other, name: 'vpn' } });
     assert.deepEqual(sendMessage.call(webKit, 'hi'), ['webkit', 'hi']);
-    assert.deepEqual(connect.call(webKit, { name: 'own' }), ['webkit', { name: 'own' }]);
+    assert.deepEqual(connect.call(webKit, { name: 'own' }), ['webkit', { name: 'own' }], "a content script's port stays WebKit's");
+  });
+
+  it("connects a page or the worker to the extension's other contexts through Lilo, as chrome.runtime.connect", async () => {
+    const page = { ...webKit, connectNative() {} };
+    const connect = crossExtensionPatches.connect(own, () => page);
+    const from = gapCalls.length;
+    const port = connect.call(page, { name: 'state' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(port.name, 'state');
+    assert.deepEqual(gapCalls.slice(from).filter((c) => c.namespace === 'runtime').map((c) => [c.method, c.params.name]), [['connect', 'state']]);
   });
 });
 

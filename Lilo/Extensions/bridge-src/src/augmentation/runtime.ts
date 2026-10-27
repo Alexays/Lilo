@@ -391,12 +391,18 @@ export function crossExtensionMessaging(
   };
 }
 
-/** WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay. */
+/**
+ * WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay, and a
+ * page's or the worker's port to Lilo, as chrome.runtime.connect's (webextension-polyfill uses this one).
+ */
 export const crossExtensionPatches: Record<string, Patch> = {
   connect: (original, self) => function (this: unknown, ...args: any[]) {
-    if (otherExtension(args[0], self(this))) return connectExternal(args);
+    const runtime: any = self(this);
+    if (otherExtension(args[0], runtime)) return connectExternal(args);
     const info = typeof args[0] === 'string' || (args.length > 1 && args[0] == null) ? args[1] : args[0];
-    return connectOrUnanswered(() => original.apply(self(this), args), typeof info?.name === 'string' ? info.name : '');
+    const name = typeof info?.name === 'string' ? info.name : '';
+    if (typeof runtime.connectNative === 'function') return localPort(name);
+    return connectOrUnanswered(() => original.apply(runtime, args), name);
   },
   sendMessage: (original, self) => function (this: unknown, ...args: any[]) {
     return toOtherExtension(args, self(this)) ? sendExternal(args) : original.apply(self(this), args);
