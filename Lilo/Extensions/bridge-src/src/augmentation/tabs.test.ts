@@ -188,6 +188,13 @@ describe("Chrome's Tab objects", () => {
     assert.equal(webKit.onUpdated.listeners.size, 0);
   });
 
+  it('show the url of a tab whose first navigation has not committed as empty, beside the pending one, as Chrome', async () => {
+    nextResult = details();
+    const pending = { id: 11, index: 0, windowId: 1, title: '', status: 'loading', pendingUrl: 'https://a.example/' };
+    const { chrome } = install(['tabs'], () => [{ ...pending }]);
+    assert.deepEqual(await chrome.tabs.query({}), [{ ...pending, url: '', ...chromeFields, lastAccessed: 5 }]);
+  });
+
   it("read the withheld url and title from Lilo for an extension that holds tabs, an empty tab as Chrome's new tab page", async () => {
     nextResult = details();
     const { chrome, webKit, withheld } = install(['tabs']);

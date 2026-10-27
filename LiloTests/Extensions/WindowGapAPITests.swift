@@ -63,6 +63,16 @@ final class WindowGapAPITests: XCTestCase {
         return (tab.id, try XCTUnwrap(registry.tabPosition(of: adapter, extensionId: extensionId)))
     }
 
+    /// Opens `url` in a new active tab with a page committed at it: extensions see no url of a tab before that.
+    private func openCommittedTab(_ url: String) async throws -> (id: UUID, position: [String: Int]) {
+        let tab = try openTab(url)
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id) as? WKWebViewTab)
+        engine.wkWebView.loadHTMLString("<p>page</p>", baseURL: URL(string: url))
+        let committed = await pollUntil { engine.hasCommittedContent && !engine.isLoading }
+        XCTAssertTrue(committed, "the page at \(url) committed")
+        return tab
+    }
+
     private func queued(_ name: String) -> [[String: Any]] {
         registry.gapEvents.undelivered(to: extensionId)
             .filter { "\($0.namespace).\($0.event)" == name }
@@ -77,7 +87,7 @@ final class WindowGapAPITests: XCTestCase {
     // MARK: - permissions host access requests
 
     func testAHostAccessRequestIsOfferedUntilTheTabLeavesItsOrigin() async throws {
-        let tab = try openTab("https://other.test/page")
+        let tab = try await openCommittedTab("https://other.test/page")
 
         let added = await call("permissions", "addHostAccessRequest", ["tab": tab.position])
         XCTAssertNil(added.error)
@@ -90,8 +100,8 @@ final class WindowGapAPITests: XCTestCase {
     }
 
     func testAHostAccessRequestFailsAsChromeDoes() async throws {
-        let allowed = try openTab("https://allowed.test/")
-        let other = try openTab("https://other.test/")
+        let allowed = try await openCommittedTab("https://allowed.test/")
+        let other = try await openCommittedTab("https://other.test/")
 
         let hasAccess = await call("permissions", "addHostAccessRequest", ["tab": allowed.position])
         let invalid = await call("permissions", "addHostAccessRequest", ["tab": other.position, "pattern": "bad"])
@@ -102,7 +112,7 @@ final class WindowGapAPITests: XCTestCase {
     }
 
     func testAcceptingAHostAccessRequestGrantsTheSite() async throws {
-        let tab = try openTab("https://other.test/page")
+        let tab = try await openCommittedTab("https://other.test/page")
         _ = await call("permissions", "addHostAccessRequest", ["tab": tab.position])
 
         await registry.access.acceptHostAccessRequest(extensionId: extensionId, on: registry.delegate.windowAdapter?.activeAdapter)
@@ -254,8 +264,8 @@ final class WindowGapAPITests: XCTestCase {
     // MARK: - cookies.getPartitionKey
 
     func testPartitionKeyOfAMainFrameIsItsSite() async throws {
-        let allowed = try openTab("https://allowed.test/page")
-        let other = try openTab("https://other.test/")
+        let allowed = try await openCommittedTab("https://allowed.test/page")
+        let other = try await openCommittedTab("https://other.test/")
 
         let key = await call("cookies", "getPartitionKey", ["tab": allowed.position])
         let refused = await call("cookies", "getPartitionKey", ["tab": other.position])

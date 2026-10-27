@@ -46,11 +46,13 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
         return webView
     }
 
-    /// A new tab has no url until its first navigation starts, as Chrome reports none before it.
-    func url(for context: WKWebExtensionContext) -> URL? {
+    /// The url extensions see: a new tab has none until its first navigation commits, as in Chrome, where it is pending.
+    var extensionURL: URL? {
         guard let engineTab else { return tabManager?.tab(for: tabId)?.url }
-        return engineTab.hasCommittedContent || engineTab.isLoading ? engineTab.currentURL : nil
+        return engineTab.hasCommittedContent ? engineTab.currentURL : nil
     }
+
+    func url(for context: WKWebExtensionContext) -> URL? { extensionURL }
 
     func title(for context: WKWebExtensionContext) -> String? {
         engineTab?.currentTitle ?? tabManager?.tab(for: tabId)?.title
@@ -81,7 +83,10 @@ final class TabExtensionAdapter: NSObject, WKWebExtensionTab {
     // MARK: - State
 
     func isLoadingComplete(for context: WKWebExtensionContext) -> Bool { !(engineTab?.isLoading ?? false) }
-    func pendingURL(for context: WKWebExtensionContext) -> URL? { engineTab?.provisionalURL }
+    func pendingURL(for context: WKWebExtensionContext) -> URL? {
+        guard let engineTab else { return nil }
+        return engineTab.provisionalURL ?? (!engineTab.hasCommittedContent && engineTab.isLoading ? engineTab.currentURL : nil)
+    }
     func size(for context: WKWebExtensionContext) -> CGSize { engineTab?.view.bounds.size ?? .zero }
     func zoomFactor(for context: WKWebExtensionContext) -> Double { Double((engineTab?.view as? WKWebView)?.pageZoom ?? 1.0) }
 
