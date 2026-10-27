@@ -17,8 +17,15 @@ export const listensProbe = { liloListens: true } as const;
 const isProbe = (message: unknown) => (message as typeof listensProbe | undefined)?.liloListens === true;
 /** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
 const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
-/** A content script's message the extension page at the top of its frame sends for it (frame-messaging.ts), with its url. */
-const frameUrl = (message: unknown) => (message as { liloFrame?: unknown } | undefined)?.liloFrame;
+/** Whether `sender` is one of the extension's own pages: the relay at the top of a frame, never a content script. */
+const fromOwnPage = (sender: any) => typeof sender?.url === 'string' && sender.url.startsWith(`chrome-extension://${sender.id}/`);
+
+/**
+ * A content script's message the extension page at the top of its frame sends for it (frame-messaging.ts), with its
+ * url. Only that page's: a content script relaying a web page's data would let the page name any sender.
+ */
+const frameUrl = (message: unknown, sender: unknown) =>
+  (fromOwnPage(sender) ? (message as { liloFrame?: unknown } | undefined)?.liloFrame : undefined);
 
 /** The sender Chrome gives a content script of a frame no tab shows: here the extension page's, with the frame's url. */
 function frameSender(sender: any, url: string): unknown {
@@ -47,7 +54,7 @@ function answeringListener(listener: Listener): Listener {
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
       if (isProbe(message) || isExternal(message)) return undefined;
-      const url = frameUrl(message);
+      const url = frameUrl(message, sender);
       const framed = typeof url === 'string';
       const result = listener.call(
         this,
@@ -96,7 +103,8 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
   }
 }
 
-const noReceiver = 'Could not establish connection. Receiving end does not exist.';
+/** Chrome's lastError for a message or port no context received. */
+export const noReceiver = 'Could not establish connection. Receiving end does not exist.';
 
 /**
  * WebKit answers alike when no listener exists and when listeners do not respond, so `noAnswer`, called with the
@@ -146,7 +154,8 @@ export function messagesOnce(port: any, name: string): object {
   const sender = Math.random();
   let sent = 0;
   const received = new Map<number, number>();
-  const frame = name.lastIndexOf(frameMark);
+  // A frame's port comes through the extension page only: a content script could take its name from the web page.
+  const frame = fromOwnPage(port.sender) ? name.lastIndexOf(frameMark) : -1;
   let url: string | undefined;
   try {
     if (frame >= 0) url = decodeURIComponent(name.slice(frame + frameMark.length));
