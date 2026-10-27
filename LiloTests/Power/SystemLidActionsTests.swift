@@ -89,7 +89,8 @@ final class SystemLidActionsTests: XCTestCase {
 
     func testTargetsLeaveLiloAppleAppsAndKeptAppsAlone() {
         let running = NSWorkspace.shared.runningApplications
-        let kept = Set(running.compactMap(\.bundleIdentifier).filter { !$0.hasPrefix("com.apple.") }.prefix(1))
+        // Settings offers regular apps, not their accessory helpers.
+        let kept = Set(running.filter { $0.activationPolicy == .regular }.compactMap(\.bundleIdentifier).filter { !$0.hasPrefix("com.apple.") }.prefix(1))
 
         let pids = Set(AppFreezer.targets(keeping: kept).map(\.pid))
 
