@@ -283,6 +283,59 @@ test("a saved Chinese choice overrides the system language when settings load", 
 	await expect(page.getByRole("combobox", { name: "语言", exact: true })).toHaveValue("zh-Hans");
 });
 
+test.describe("in Russian", () => {
+	test.use({ locale: "ru-RU", viewport: { width: 600, height: 400 } });
+
+	test("the regional system language selects Russian and language changes persist", async ({ page }) => {
+		await bootChrome(page, initialWorld());
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+
+		const language = page.getByRole("combobox", { name: "Язык", exact: true });
+		await expect(language).toHaveValue("ru");
+		await expect(language.locator("option:checked")).toHaveText("Русский");
+		await expectFieldsShowTheirText(language);
+
+		await language.selectOption("en");
+		await expect(page.getByRole("combobox", { name: "Language", exact: true })).toHaveValue("en");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "en")).toBe(true);
+
+		await page.getByRole("combobox", { name: "Language", exact: true }).selectOption("ru");
+		await expect(page.getByRole("combobox", { name: "Язык", exact: true })).toHaveValue("ru");
+		expect((await sentCommands(page)).some((command) => command.action === "setSetting" && command.payload.key === "locale" && command.payload.value === "ru")).toBe(true);
+	});
+
+	test("controls fit beside Russian labels at the minimum window size", async ({ page }) => {
+		await bootChrome(page, initialWorld());
+		await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+		for (const section of ["Основные", "Оформление", "Вкладки и пространства", "Аудио и видео", "Конфиденциальность", "Терминал", "ИИ-агенты", "Дополнительно"]) {
+			await page.getByRole("button", { name: section, exact: true }).click();
+			const rows = page.locator(".ui-shell-frame .ui-list-row:has(.ui-list-row-action)");
+			await expect(rows.first()).toBeVisible();
+			for (const row of await rows.all()) {
+				const title = row.locator(".ui-list-row-title");
+				const copy = (await row.locator(".ui-list-row-copy").boundingBox())!;
+				const action = (await row.locator(".ui-list-row-action").boundingBox())!;
+				const box = (await row.boundingBox())!;
+				const controls = await row.locator(".ui-list-row-action > *").evaluateAll((els) => Math.max(...els.map((el) => el.getBoundingClientRect().right)));
+				const label = await title.textContent();
+				const overlaps = copy.x + copy.width > action.x && action.y < copy.y + copy.height && copy.y < action.y + action.height;
+				expect(overlaps, `${section}: "${label}"`).toBe(false);
+				expect(controls, `${section}: "${label}"`).toBeLessThanOrEqual(box.x + box.width + 1);
+				expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth), `${section}: "${label}"`).toBe(true);
+			}
+		}
+	});
+});
+
+test("a saved Russian choice overrides the system language when settings load", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => {
+		window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "ru" } });
+		window.__lilo!.receive({ event: "openSettings" });
+	});
+	await expect(page.getByRole("combobox", { name: "Язык", exact: true })).toHaveValue("ru");
+});
+
 test.describe("in French", () => {
 	test.use({ locale: "fr-FR" });
 
@@ -303,7 +356,7 @@ test.describe("in French", () => {
 	});
 });
 
-for (const [locale, megabytes, percent] of [["en-US", "10 MB", "20%"], ["fr-FR", "10 Mo", "20 %"]]) {
+for (const [locale, megabytes, percent, terminal] of [["en-US", "10 MB", "20%", "Terminal"], ["fr-FR", "10 Mo", "20 %", "Terminal"], ["ru-RU", "10 МБ", "20 %", "Терминал"]]) {
 	test.describe(locale, () => {
 		test.use({ locale });
 
@@ -311,7 +364,7 @@ for (const [locale, megabytes, percent] of [["en-US", "10 MB", "20%"], ["fr-FR",
 			await bootChrome(page, initialWorld());
 			await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
 			await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { terminalLidClosed: "true" } }));
-			await page.locator(".section-nav-button").filter({ hasText: "Terminal" }).click();
+			await page.locator(".section-nav-button").filter({ hasText: terminal }).click();
 
 			const texts = await page.locator(".ui-shell-frame select option").allTextContents();
 			expect(texts.map((text) => text.replace(/\s/g, " ").trim())).toContain(megabytes);

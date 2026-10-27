@@ -11,6 +11,7 @@
         <string>es</string>
         <string>zh-Hans</string>
         <string>pt-BR</string>
+        <string>ru</string>
     </array>
     <key>CFBundleExecutable</key>
     <string>Lilo</string>
