@@ -293,6 +293,10 @@ ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 ext-nightly:
 	@$(MAKE) --no-print-directory ext-smoke TOP=$(or $(TOP),500)
 
+## ext-smoke of the sentinel extensions in LiloTests/Extensions/smoke-sentinels.txt, as a pull request touching extension support runs it
+ext-smoke-pr:
+	@$(MAKE) --no-print-directory ext-smoke SHARDS=2 IDS="$$(grep -v '^#' LiloTests/Extensions/smoke-sentinels.txt | cut -d' ' -f1 | paste -sd, -)"
+
 ## Rebuild top-extensions.json from the Chrome Web Store user counts (TOP=500)
 top-extensions:
 	@node scripts/top-extensions.mjs $(or $(TOP),500)

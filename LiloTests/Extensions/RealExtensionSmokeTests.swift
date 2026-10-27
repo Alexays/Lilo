@@ -80,7 +80,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         "fdpohaocaechififmbbbbbknoalclacl": "its welcome page finds no window holding it ('No matching window found'), where Chrome's does", // GoFullPage
         "ekhagklcjbdpajgpjgmbionohlpdbjgc": "on the test page its content script fails to initialize translation: its worker creates its offscreen document twice ('Only a single offscreen document may be created')", // Zotero Connector
         "flliilndjeohchalpbbcdekjklbdgfkk": "a message of its worker reaches no listener ('Could not establish connection'), which Chrome's recording does not log", // Avira Browser Safety
-        "nngceckbapebfimnlniiiahkandclblb": "it sets its icon and badge for a tab the test just closed, which WebKit fails with Tab not found; Chrome's recording makes no such call", // Bitwarden
         "eppiocemhmnlbhjplcgkofciiegomcon": "its popup's error reporter (bugsnag) logs a failed request, which Chrome's does not", // Urban VPN Proxy
         "pejdijmoenmkgeppbflobdenhhabjlaj": "a message of its worker reaches no listener ('Could not establish connection'), which Chrome's recording does not log", // iCloud Passwords
         "hdhinadidafjejdhmfkjgnolgimiaplp": "over a blank tab its popup shows WebKit's wording of the scripting.executeScript error, where Chrome's shows 'Cannot access contents of the page'", // Read Aloud
@@ -332,10 +331,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             return Array(diagnostics.compactMap { $0["level"] as? String == "error" ? $0["message"] as? String : nil }
                 .map { String($0.prefix(500)) }.filter { seen.insert($0).inserted }.suffix(10))
         }
-        // A recording of Chrome's own error page (ERR_BLOCKED_BY_CLIENT) is no reference: only showing something counts.
+        // A recording of Chrome's own error page (ERR_BLOCKED_BY_CLIENT), or of three words at most (a loader still
+        // showing, as Keeper's "missing ksjsui string"), is no reference: only showing something counts.
         let tokens = { (render: ChromeSmoke.Render?) -> Set<String> in
             let words = Set(render?.tokens.split(separator: " ").map(String.init) ?? [])
-            return words.isSuperset(of: ["blocked", "chromium", "err", "client"]) ? [] : words
+            return words.count <= 3 || words.isSuperset(of: ["blocked", "chromium", "err", "client"]) ? [] : words
         }
         let mismatch = { (page: String, shown: Set<String>, expected: Set<String>) in
             "\(page) shows \(expected.intersection(shown).count) of Chrome's \(expected.count) words and controls (missing: "
@@ -347,6 +347,9 @@ final class RealExtensionSmokeTests: XCTestCase {
                 // A request for a file the package lacks fails in Chrome too, which reports no extension error for it.
                 .filter { ($0 as NSError).domain != WKWebExtension.errorDomain || ($0 as NSError).code != WKWebExtension.Error.resourceNotFound.rawValue }
                 .map(\.localizedDescription)
+                // WebKit records its refusal of a connect nobody listens to, which the bridge answers with Chrome's port
+                // (WEBKIT-GAPS 93): the extension never sees it.
+                .filter { !$0.contains("No runtime.onConnect listeners found") }
                 // WebKit keeps only the leading text of a console.error, so a Chrome error starting with it is the same.
                 .filter { error in
                     let error = normalized(error)
@@ -425,7 +428,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                     matched = expected.isEmpty ? !shown.isEmpty : expected.intersection(shown).count * 2 >= expected.count
                     if matched { outcome.time("idlePopup", since: clicked, chrome: chrome?.restartPopup?.ms) }
                 }
-                if !restarted { outcome.problems.append("once idle, its worker does not start again from the toolbar button") }
+                // Lilo sees a worker run only once it calls Lilo: one WebKit woke for a popup that works needs nothing more.
+                if !restarted && !matched { outcome.problems.append("once idle, its worker does not start again from the toolbar button") }
                 if shown.isEmpty {
                     outcome.problems.append("once its worker was idle, the popup renders nothing")
                 } else if !matched {
