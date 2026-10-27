@@ -1001,7 +1001,6 @@ export interface BridgeEventPayloadMap {
 			| "open"
 			| "quickLook"
 			| "showInFinder"
-			| "copyUrl"
 			| "deleteFile"
 			| "removeFromList"
 			| "cancel"
