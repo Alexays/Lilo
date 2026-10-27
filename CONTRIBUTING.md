@@ -27,6 +27,7 @@ extensions.
 | Changie | 1.26.0 (downloaded by Make) | release notes and app versioning |
 | SwiftLint, XcodeGen | 0.65.0 and 2.46.0 (downloaded by Make) | `make validate` and `make project-sync` |
 | Zig | 0.16.x (`brew install zig`) | only `make vt-build-source`, which compiles libghostty-vt instead of downloading it |
+| Fish | 4.x, optional (`brew install fish`) | Fish terminal integration tests; CI installs it |
 
 Python 3 comes with Xcode. No Apple Developer account is needed.
 

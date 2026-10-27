@@ -148,6 +148,7 @@ jobs:
           key: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
       - run: make swiftlint
+      - run: brew install fish
       # swift-test builds Debug itself.
       - run: make swift-test RESULT_BUNDLE=build/swift-test.xcresult
       - run: make swift-test-slow RESULT_BUNDLE=build/swift-test-slow.xcresult

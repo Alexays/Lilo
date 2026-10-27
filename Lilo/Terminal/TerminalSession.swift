@@ -123,7 +123,7 @@ final class TerminalSession: @unchecked Sendable {
     private let quietCheckPending = Atomic<Bool>(false)
 
     /// `command` defaults to the user's login shell; the shell runs `initialCommand` at its first prompt.
-    /// zsh types `prefillCommand` at its first prompt without running it. `restored` is the terminal
+    /// zsh and Fish type `prefillCommand` at their first prompt without running it. `restored` is the terminal
     /// decoded from the screen and history a previous session saved.
     init(
         cwd: String, cols: UInt16 = 80, rows: UInt16 = 24, command: [String]? = nil, initialCommand: String? = nil,
@@ -315,8 +315,8 @@ final class TerminalSession: @unchecked Sendable {
         parse.name = "lilo.terminal.parse"
         parse.qualityOfService = .userInitiated
         parse.start()
-        // zsh takes it from the environment at its first prompt (see .zshrc); other shells read it as typed input.
-        if let initialCommand, shellName != "zsh" { write(Array((initialCommand + "\r").utf8)) }
+        // Integrated shells take it from the environment at their first prompt; others read it as typed input.
+        if let initialCommand, shellName != "zsh", shellName != "fish" { write(Array((initialCommand + "\r").utf8)) }
     }
 
     /// Queues what the user typed or pasted for the shell; it answers a program waiting for input.
@@ -772,8 +772,17 @@ final class TerminalSession: @unchecked Sendable {
             // zsh reads $ZDOTDIR/.zshenv first; ours restores the user's ZDOTDIR before their config.
             if let original = environment["ZDOTDIR"] { environment["LILO_ORIG_ZDOTDIR"] = original }
             environment["ZDOTDIR"] = integration.appendingPathComponent("zsh").path
-            if shellName == "zsh", let initialCommand { environment["LILO_INITIAL_COMMAND"] = initialCommand }
-            if shellName == "zsh", let prefillCommand { environment["LILO_PREFILL_COMMAND"] = prefillCommand }
+            if shellName == "zsh" || shellName == "fish" {
+                if let initialCommand { environment["LILO_INITIAL_COMMAND"] = initialCommand }
+                if let prefillCommand { environment["LILO_PREFILL_COMMAND"] = prefillCommand }
+            }
+            if shellName == "fish", initialCommand != nil || prefillCommand != nil {
+                // Fish discovers vendor_conf.d through XDG_DATA_DIRS; the snippet restores it before user config.
+                environment["LILO_FISH_INTEGRATION"] = "1"
+                environment["LILO_ORIG_XDG_DATA_DIRS"] = environment["XDG_DATA_DIRS"]
+                let directories = environment["XDG_DATA_DIRS"] ?? ""
+                environment["XDG_DATA_DIRS"] = integration.path + ":" + (directories.isEmpty ? "/usr/local/share:/usr/share" : directories)
+            }
         }
         return environment.map { "\($0.key)=\($0.value)" }
     }

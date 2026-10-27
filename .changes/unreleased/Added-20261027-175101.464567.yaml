@@ -1,0 +1,3 @@
+kind: Added
+body: Fish terminal tabs run requested commands after startup and offer the last program at the prompt when restored.
+time: 2026-10-27T17:51:01.464567+02:00

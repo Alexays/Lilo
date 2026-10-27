@@ -101,6 +101,7 @@ Most Arc alternatives are Chromium with a new sidebar. Lilo keeps the sidebar an
 
 - **Terminal tabs**: libghostty-vt terminals on a Metal renderer, beside your pages
   (`Cmd+D` beside, `Cmd+Shift+D` below), with the branch and pending changes in the sidebar.
+  zsh and Fish integrate command status and offer the last program at the prompt after a restore.
 - **Changes view**: every diff of the repository, images included.
 - **Stays awake while it works**: a long command keeps the Mac awake, even with the lid closed,
   then lets it sleep.

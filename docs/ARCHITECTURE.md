@@ -27,7 +27,7 @@ A technical deep-dive into Lilo's internals: where code lives, how the interface
 | `Lilo/Power/` | Keep-awake and lid-closed power management, the privileged helper's protocol and its bridge handler |
 | `Lilo/Profiles/` | Profile model and manager, cached per-profile context (stores and extension registry) |
 | `Lilo/Reader/` | Reader mode: the vendored Readability.js and the reader view it renders into |
-| `Lilo/Resources/` | App icons, the AppleScript dictionary (`Lilo.sdef`), French system prompts (`fr.lproj`), zsh shell integration for terminal tabs |
+| `Lilo/Resources/` | App icons, the AppleScript dictionary (`Lilo.sdef`), French system prompts (`fr.lproj`), zsh and Fish shell integration for terminal tabs |
 | `Lilo/Screenshots/` | Page capture and its hand-off to the capture card and the editor (both in `lilo-ui/src/components/screenshot/`), the screenshot bridge handler and image codec |
 | `Lilo/Sessions/` | A window's session restore, and its tab create, close and reopen |
 | `Lilo/Spaces/` | Space model and manager, and a window's space create, delete, move and switch |

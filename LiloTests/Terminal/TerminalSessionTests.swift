@@ -225,6 +225,121 @@ final class TerminalSessionTests: XCTestCase {
         try await waitUntil { session.status.cwd == directory.path }
     }
 
+    func testFishIntegrationPreservesConfigurationAndRestoresCommands() async throws {
+        guard let fish = ["/opt/homebrew/bin/fish", "/usr/local/bin/fish"].first(where: {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }) else { throw XCTSkip("Fish is not installed") }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo fish é #%; dir \(UUID().uuidString)")
+        let config = directory.appendingPathComponent("fish")
+        let data = directory.appendingPathComponent("data")
+        let vendor = data.appendingPathComponent("fish/vendor_conf.d")
+        try FileManager.default.createDirectory(at: config, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: vendor, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try "printf 'USER-VENDOR-LOADED\\n'\n".write(to: vendor.appendingPathComponent("user.fish"), atomically: true, encoding: .utf8)
+        try """
+            set -g fish_greeting
+            function fish_prompt
+                printf 'fish-test:%s> ' $status
+            end
+            function user_preexec --on-event fish_preexec
+                printf 'user-command:%s\\n' "$argv[1]"
+            end
+            function user_postexec --on-event fish_postexec
+                printf 'user-status:%s\\n' $status
+            end
+            status is-login; and printf 'USER-LOGIN-LOADED\\n'
+            printf 'user-data-dirs:%s\\n' "$XDG_DATA_DIRS"
+            set -q XDG_DATA_DIRS; or printf 'USER-DATA-DIRS-UNSET\\n'
+            if set -q LILO_INITIAL_COMMAND; or set -q LILO_PREFILL_COMMAND
+                printf 'LEAKED-LILO-COMMAND\\n'
+            end
+            """.write(to: config.appendingPathComponent("config.fish"), atomically: true, encoding: .utf8)
+        let previous = ["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_DATA_DIRS"].map { ($0, ProcessInfo.processInfo.environment[$0]) }
+        defer {
+            for (key, value) in previous {
+                if let value { setenv(key, value, 1) } else { unsetenv(key) }
+            }
+        }
+        setenv("XDG_CONFIG_HOME", directory.path, 1)
+        setenv("XDG_DATA_HOME", data.path, 1)
+        let dataDirs = data.path + ":/example/share"
+        setenv("XDG_DATA_DIRS", dataDirs, 1)
+
+        let session = try launch([fish, "--login", "--private", "-i"])
+        try await waitUntil(timeout: 5) { self.screen(session).contains("fish-test:0>") }
+        XCTAssertTrue(screen(session).contains("USER-VENDOR-LOADED"))
+        XCTAssertTrue(screen(session).contains("USER-LOGIN-LOADED"))
+        XCTAssertTrue(screen(session).contains("user-data-dirs:\(dataDirs)"))
+        XCTAssertEqual(session.status.finishedCommands, 0)
+
+        session.write(Array("false\n".utf8))
+        try await waitUntil(timeout: 5) { session.status.state == .failed && self.screen(session).contains("fish-test:1>") }
+        XCTAssertEqual(try XCTUnwrap(session.status.lastExitCode), 1)
+        XCTAssertEqual(session.status.command, "false")
+        XCTAssertTrue(screen(session).contains("user-command:false"))
+        XCTAssertTrue(screen(session).contains("user-status:1"))
+        XCTAssertEqual(session.status.finishedCommands, 1)
+
+        let command = "printf '%s\\n' 'hello; é %'"
+        session.write(Array((command + "\n").utf8))
+        try await waitUntil { session.status.finishedCommands == 2 }
+        XCTAssertEqual(session.status.command, command)
+        XCTAssertEqual(session.status.state, .succeeded)
+
+        session.write(Array("sleep 30\n".utf8))
+        try await waitUntil { session.status.state == .busy && session.foregroundProgram() == "sleep" }
+        XCTAssertEqual(session.status.command, "sleep 30")
+        session.write([0x03])
+        try await waitUntil { session.status.lastExitCode == 130 }
+        XCTAssertNotNil(session.status.lastDuration)
+
+        session.write(Array("cd '\(directory.path)'\n".utf8))
+        try await waitUntil { session.status.cwd == directory.path }
+        XCTAssertEqual(session.status.state, .succeeded)
+        XCTAssertEqual(session.status.finishedCommands, 4)
+
+        for directories in [dataDirs, ""] {
+            setenv("XDG_DATA_DIRS", directories, 1)
+            let script = try launch([fish, "--private", "-c", "printf 'script-data-dirs:%s' \"$XDG_DATA_DIRS\"; false"])
+            try await waitUntil { script.status.state == .exited }
+            XCTAssertEqual(script.status.exitCode, 1)
+            XCTAssertEqual(script.status.finishedCommands, 0)
+            XCTAssertTrue(screen(script).contains("script-data-dirs:\(directories)"))
+            XCTAssertFalse(screen(script).contains("USER-DATA-DIRS-UNSET"))
+        }
+
+        for directories: String? in [nil, dataDirs, ""] {
+            if let directories { setenv("XDG_DATA_DIRS", directories, 1) } else { unsetenv("XDG_DATA_DIRS") }
+            let initial = TerminalSession(
+                cwd: directory.path, cols: 200, rows: 50, command: [fish, "--private", "-i"],
+                initialCommand: "printf 'initial-command-ran\\n'"
+            )
+            sessions.append(initial)
+            try initial.start()
+            try await waitUntil(timeout: 5) { initial.status.finishedCommands == 1 }
+            XCTAssertTrue(screen(initial).contains("initial-command-ran"))
+            XCTAssertFalse(screen(initial).contains("LEAKED-LILO-COMMAND"))
+            XCTAssertEqual(screen(initial).contains("USER-DATA-DIRS-UNSET"), directories == nil)
+            XCTAssertTrue(screen(initial).contains("user-data-dirs:\(directories ?? "")"))
+            XCTAssertEqual(initial.status.state, .succeeded)
+        }
+
+        let prefillCommand = "printf '%s\\n' restored-command-ran"
+        let prefilled = TerminalSession(
+            cwd: directory.path, cols: 200, rows: 50, command: [fish, "--private", "-i"], prefillCommand: prefillCommand
+        )
+        sessions.append(prefilled)
+        try prefilled.start()
+        try await waitUntil(timeout: 5) { self.screen(prefilled).hasSuffix("fish-test:0> " + prefillCommand) }
+        XCTAssertEqual(prefilled.status.finishedCommands, 0)
+        XCTAssertFalse(screen(prefilled).contains("LEAKED-LILO-COMMAND"))
+        prefilled.write(Array("\n".utf8))
+        try await waitUntil { prefilled.status.finishedCommands == 1 }
+        XCTAssertEqual(prefilled.status.command, prefillCommand)
+        XCTAssertEqual(prefilled.status.state, .succeeded)
+    }
+
     func testZshRunsTheInitialCommandAtItsFirstPrompt() async throws {
         let userConfig = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-zdotdir-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: userConfig, withIntermediateDirectories: true)
