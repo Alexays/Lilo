@@ -1131,6 +1131,14 @@ extension WKWebViewTab: WKNavigationDelegate {
             Self.logger.warning("[nav-policy] chrome-extension subframe url=\(url?.absoluteString ?? "nil", privacy: .private)")
         }
 
+        // A tab in an extension's configuration loads only that extension's pages: WebKit drops the page's own navigation to
+        // the web, which Chrome follows (WEBKIT-GAPS 96). The tab goes there as the app takes it, in a web page's engine.
+        if isMainFrame, navigationAction.targetFrame != nil, extensionHost != nil, let url,
+           url.scheme == "http" || url.scheme == "https", let tabManager {
+            DispatchQueue.main.async { [weak tabManager, id] in tabManager?.load(url, inTab: id) }
+            return .cancel
+        }
+
         if Self.shouldOpenLinkInBackgroundTab(
             url: url,
             isMainFrame: isMainFrame,

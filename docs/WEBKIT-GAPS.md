@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94 and 95. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95 and 96. Every other gap is fully worked around.
 
 ---
 
@@ -168,6 +168,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Lilo:** its stand-ins of WebKit's webRequest events report such a request as `sub_frame`, and a parent that none of the tab's subframes seen since its main frame loaded is as `0`; a filter on frame types asks WebKit for both and matches the fixed type ([webRequest.ts] `chromeFrames`). A frame whose parent frame loaded before the context listened gets `0` as its parent.
 - **Impact:** Dashlane keeps each frame's parent from webRequest: its answers to a page's iframe went to a frame that does not exist, and failed with `Could not establish connection. Receiving end does not exist.`.
 - **Check:** `webRequest.test.ts` ("reports a subframe document as sub_frame, its main frame parent as 0"). Repro: a page on `https://a.example/` with an `<iframe src="https://b.example/">`; log `onBeforeRequest`'s `type` and `parentFrameId` for the iframe. Expected: `sub_frame`, `0`. Actual: `main_frame`, a large number.
+
+### 96. An extension page cannot send its tab to the web
+
+- **Gap:** a web view built with an extension's configuration loads only that extension's pages: an extension page's own `location` change or link to an `http(s)` page is allowed by the navigation policy, then never starts, and the tab stays on the extension page without an error. Chrome navigates the tab to the web page.
+- **Lilo:** a tab in an extension's configuration cancels such a navigation and loads the page as the app does, in a web page's engine ([WKWebViewTab.swift] `policy(for:)`, [TabManager.swift] `load(_:inTab:)`). The page goes with a GET: a form an extension page posts to the web loses its body.
+- **Impact:** RSS Feed Reader's options page only redirects to its website, and stayed blank.
+- **Check:** `ExtensionPageNavigationTests`. Repro: open an extension page whose script runs `document.location = 'https://example.com/'`. Expected: the tab shows example.com. Actual: it stays on the extension page.
 
 ### 60. A port nobody received yet disconnects when the first process answers
 
@@ -567,6 +574,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 [action.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/action.ts
 [cookies.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/cookies.ts
 [runtime.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/runtime.ts
+[TabManager.swift]: ../Lilo/Tabs/TabManager.swift
 [RuntimeBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/RuntimeBridgeHandler.swift
 [tabs.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/tabs.ts
 [webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
