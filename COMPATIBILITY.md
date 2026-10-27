@@ -236,8 +236,7 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Root cause:** WebKit does not expose Apple Pay or the Payment Request API to a third-party
   WKWebView host on macOS. There is no app-side remedy; sites fall back to card entry.
 
-### AirPods audio quality during WebRTC calls
-- **Symptom:** AirPods switch to HFP (hands-free, 16kHz) mode during Google Meet/WebRTC calls, degrading audio quality
-- **Root cause:** macOS Bluetooth stack switches to HFP when any app requests microphone access from AirPods; this happens at the OS level
-- **Chrome comparison:** Chrome ships its own libwebrtc audio stack and manages audio devices differently, partially mitigating this
-- **Fix:** Not possible at the WKWebView app layer; would require a custom WebRTC stack or macOS-level audio routing override (not exposed by Apple)
+### Microphone quality on speakers during calls
+- **Symptom:** On speakers, a call's microphone sounds duller and quieter than in Chrome: nothing above 12 kHz reaches the page.
+- **Root cause:** With echo cancellation on (the default, and what call sites ask for), WebKit runs the microphone through Apple's voice processing, which caps it at 12 kHz and lowers the voice; Chrome cancels echo in software on the full-band signal. WebKit exposes neither `noiseSuppression` nor `autoGainControl` apart, and does not apply `echoCancellation` to a live track.
+- **Lilo's handling:** With headphones on, `MicrophoneBridge` asks WebKit for the microphone without echo cancellation, and ends those tracks when the output leaves headphones so the page reopens one with it (setting: Full-quality mic with headphones). On speakers, matching Chrome would take a software echo canceller of Lilo's own.

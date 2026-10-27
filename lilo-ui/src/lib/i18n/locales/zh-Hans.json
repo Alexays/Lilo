@@ -334,6 +334,11 @@
 				"description": "切换到其他标签页时，将通话或正在播放的视频放入悬浮窗口。",
 				"keywords": "画中画 视频 通话 悬浮"
 			},
+			"fullBandMicrophone": {
+				"title": "戴耳机时使用完整音质麦克风",
+				"description": "戴耳机时，通话不使用回声消除，以免声音发闷。",
+				"keywords": "麦克风 回声 耳机 airpods"
+			},
 			"contentBlocker": {
 				"title": "拦截广告和跟踪器",
 				"description": "从下次载入网页时生效。",

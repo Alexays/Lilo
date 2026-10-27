@@ -334,6 +334,11 @@
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab.",
 				"keywords": "pip video call floating"
 			},
+			"fullBandMicrophone": {
+				"title": "Full-quality mic with headphones",
+				"description": "With headphones, calls skip echo cancellation, which dulls your voice.",
+				"keywords": "mic echo airpods"
+			},
 			"contentBlocker": {
 				"title": "Block ads and trackers",
 				"description": "Applies from the next page load.",

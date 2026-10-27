@@ -57,7 +57,7 @@ test("groups a section's settings in display order", () => {
     { groupKey: "settings.groups.otherAppLinks", settings: ["externalLinkDefault", "externalLinkRules"] },
     { groupKey: "settings.groups.search", settings: ["searchEngine", "searchSuggestions", "preloadTopHit", "searchEngines"] },
     { groupKey: "settings.groups.downloads", settings: ["downloadsFolder", "askDownloadLocation"] },
-    { groupKey: "settings.groups.media", settings: ["autoPictureInPicture", "autoplay", "autoDevices", "deviceSetup"] },
+    { groupKey: "settings.groups.media", settings: ["autoPictureInPicture", "autoplay", "fullBandMicrophone", "autoDevices", "deviceSetup"] },
     { groupKey: "settings.groups.lilo", settings: ["appUpdates", "autoUpdate", "shortcuts"] },
   ]);
   assert.deepEqual(sectionGroups("terminal"), []);

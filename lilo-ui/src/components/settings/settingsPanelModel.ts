@@ -54,6 +54,7 @@ export type SettingId =
   | "downloadsFolder"
   | "autoPictureInPicture"
   | "autoplay"
+  | "fullBandMicrophone"
   | "autoDevices"
   | "deviceSetup"
   | "appUpdates"
@@ -203,6 +204,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   preloadTopHit: { key: "preloadTopHit", fallback: true },
   askDownloadLocation: { key: "askDownloadLocation", fallback: false },
   autoPictureInPicture: { key: "autoPictureInPicture", fallback: true },
+  fullBandMicrophone: { key: "fullBandMicrophone", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
@@ -244,6 +246,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "askDownloadLocation", section: "general", groupKey: "settings.groups.downloads" },
   { id: "autoPictureInPicture", section: "general", groupKey: "settings.groups.media" },
   { id: "autoplay", section: "general", groupKey: "settings.groups.media" },
+  { id: "fullBandMicrophone", section: "general", groupKey: "settings.groups.media" },
   { id: "autoDevices", section: "general", groupKey: "settings.groups.media" },
   { id: "deviceSetup", section: "general", groupKey: "settings.groups.media", requires: "autoDevices" },
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },

@@ -334,6 +334,11 @@
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet.",
 				"keywords": "pip vidéo appel flottant"
 			},
+			"fullBandMicrophone": {
+				"title": "Micro pleine qualité avec un casque",
+				"description": "Avec un casque, les appels se passent de l'annulation d'écho, qui étouffe votre voix.",
+				"keywords": "micro écho casque airpods"
+			},
 			"contentBlocker": {
 				"title": "Bloquer pubs et traqueurs",
 				"description": "S'applique dès le prochain chargement de page.",

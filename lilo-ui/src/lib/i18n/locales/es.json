@@ -334,6 +334,11 @@
 				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña.",
 				"keywords": "pip vídeo llamada flotante"
 			},
+			"fullBandMicrophone": {
+				"title": "Micrófono de calidad completa con auriculares",
+				"description": "Con auriculares, las llamadas omiten la cancelación de eco, que apaga tu voz.",
+				"keywords": "micrófono eco auriculares airpods"
+			},
 			"contentBlocker": {
 				"title": "Bloquear anuncios y rastreadores",
 				"description": "Se aplica al volver a cargar la página.",
