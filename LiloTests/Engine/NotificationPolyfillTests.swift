@@ -11,12 +11,12 @@ final class NotificationPolyfillTests: XCTestCase {
         }
     }
 
-    private func makeWebView(_ recorder: Recorder) async throws -> WKWebView {
+    private func makeWebView(_ recorder: Recorder, baseURL: String = "https://example.com") async throws -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(recorder, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
         PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.loadHTMLString("<html></html>", baseURL: URL(string: "https://example.com"))
+        webView.loadHTMLString("<html></html>", baseURL: URL(string: baseURL))
         _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }
         return webView
     }
@@ -43,5 +43,16 @@ final class NotificationPolyfillTests: XCTestCase {
         _ = try await webView.evaluateJavaScript("window.m = new Notification('Bye'); m.close(); 0")
         _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "close" } }
         XCTAssertTrue(recorder.messages.contains { $0["type"] as? String == "close" })
+    }
+
+    func testOnlyATrustworthyOriginQueriesItsStoredPermission() async throws {
+        for (baseURL, queries) in [("https://example.com", true), ("http://example.com", false)] {
+            let recorder = Recorder()
+            let webView = try await makeWebView(recorder, baseURL: baseURL)
+            // Posted after the document-start query, so its arrival means the query had its chance to arrive too.
+            _ = try await webView.evaluateJavaScript("new Notification('Hello'); 0")
+            _ = await pollUntil { recorder.messages.contains { $0["type"] as? String == "show" } }
+            XCTAssertEqual(recorder.messages.contains { $0["type"] as? String == "query" }, queries, baseURL)
+        }
     }
 }

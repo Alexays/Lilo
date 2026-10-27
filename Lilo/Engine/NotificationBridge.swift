@@ -204,7 +204,8 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      lilo.send('liloNotification', { type: 'query' });
+      // Only a trustworthy origin can hold a stored allow; the others would pay an IPC for nothing.
+      if (isSecureContext && location.origin !== 'null') lilo.send('liloNotification', { type: 'query' });
     }
     """#
 }
