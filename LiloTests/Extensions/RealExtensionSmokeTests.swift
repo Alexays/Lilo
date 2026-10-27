@@ -92,6 +92,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         "lgblnfidahcdcjddiepkckcfdhpknnjh": "its cosmetic filters hide none of the test page's ads, which Chrome's hide", // Stands AdBlocker
         "mclkkofklkfljcocdinagocijmpgbhab": "over a blank tab its popup calls tabs.detectLanguage, which WebKit refuses for want of access", // Google Input Tools
         "mcbpblocgmgfnpjjppndjkmgjaogfceg": "over a blank tab its popup offers to capture it, where Chrome's recording opens the popup in a tab of its own, which it says it cannot capture", // FireShot
+        "dgjbaljgolmlcmmklmmeafecikidmjpi": "its first start registers its cosmetic filters in basic mode: the optimal mode it sets meanwhile meets its own registration still running, which WebKit's slower resource loads while it compiles 50 rulesets keep longer than Chrome's; its next start registers them", // Adblock Ad Blocker Pro
     ]
 
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
