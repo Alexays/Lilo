@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 /// Shell commands offered in the command bar after ">": the user's history, most recent first, then
@@ -19,6 +20,11 @@ actor TerminalCompletions {
         if let zdotdir = ProcessInfo.processInfo.environment["ZDOTDIR"] {
             files.insert(URL(fileURLWithPath: zdotdir).appendingPathComponent(".zsh_history"), at: 0)
         }
+        let dataHome = ProcessInfo.processInfo.environment["XDG_DATA_HOME"].map { URL(fileURLWithPath: $0) }
+            ?? home.appendingPathComponent(".local/share")
+        let fishHistory = dataHome.appendingPathComponent("fish/fish_history")
+        let shell = getpwuid(getuid()).map { String(cString: $0.pointee.pw_shell) }
+        if shell?.hasSuffix("/fish") == true { files.insert(fishHistory, at: 0) } else { files.append(fishHistory) }
         return TerminalCompletions(historyFiles: files)
     }()
 
@@ -73,7 +79,9 @@ actor TerminalCompletions {
         history = []
         for file in historyFiles {
             guard let data = try? Data(contentsOf: file) else { continue }
-            for command in Self.parseHistory(data, zsh: file.lastPathComponent.contains("zsh")).reversed()
+            let commands = file.lastPathComponent == "fish_history"
+                ? Self.parseFishHistory(data) : Self.parseHistory(data, zsh: file.lastPathComponent.contains("zsh"))
+            for command in commands.reversed()
             where history.count < Self.historyLimit && seen.insert(command).inserted {
                 history.append(command)
             }
@@ -109,6 +117,22 @@ actor TerminalCompletions {
             if !command.isEmpty { commands.append(command) }
         }
         return commands
+    }
+
+    /// Fish's YAML-like format escapes only backslashes and newlines; completions stay single-line.
+    private static func parseFishHistory(_ data: Data) -> [String] {
+        data.split(separator: 0x0A).compactMap { slice in
+            guard let line = String(bytes: slice, encoding: .utf8), line.hasPrefix("- cmd: ") else { return nil }
+            var characters = line.dropFirst(7).makeIterator()
+            var command = ""
+            while let character = characters.next() {
+                if character == "\\" {
+                    guard characters.next() == "\\" else { return nil }
+                }
+                command.append(character)
+            }
+            return command.isEmpty ? nil : command
+        }
     }
 
     private func refreshPrograms() {
@@ -157,7 +181,8 @@ actor TerminalCompletions {
         let path = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
             DispatchQueue.global(qos: .utility).async {
                 let process = Process()
-                process.executableURL = URL(fileURLWithPath: ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh")
+                let shell = getpwuid(getuid()).map { String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
+                process.executableURL = URL(fileURLWithPath: shell)
                 process.arguments = ["-l", "-c", "printf %s \"$PATH\""]
                 let output = Pipe()
                 process.standardOutput = output

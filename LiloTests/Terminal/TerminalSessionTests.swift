@@ -5,10 +5,21 @@ import XCTest
 @MainActor
 final class TerminalSessionTests: XCTestCase {
     private var sessions: [TerminalSession] = []
+    private var fishDirectory: URL?
+    private var fishPreviousEnvironment: [String: String] = [:]
+    private let fishEnvironmentKeys = ["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_DATA_DIRS", "XDG_CACHE_HOME"]
 
     override func tearDown() async throws {
         sessions.forEach { $0.terminate() }
         sessions = []
+        if let fishDirectory {
+            for key in fishEnvironmentKeys {
+                if let previous = fishPreviousEnvironment[key] { setenv(key, previous, 1) } else { unsetenv(key) }
+            }
+            try? FileManager.default.removeItem(at: fishDirectory)
+            self.fishDirectory = nil
+            fishPreviousEnvironment = [:]
+        }
     }
 
     func testPromptOffersTheMenuAProgramWaitsOn() async throws {
@@ -246,75 +257,6 @@ final class TerminalSessionTests: XCTestCase {
         try await waitUntil { session.status.state == .succeeded }
     }
 
-    func testBashIntegrationPreservesPromptHooksAndReportsCommands() async throws {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("lilo bash é dir \(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        let config = directory.appendingPathComponent("bashrc")
-        try """
-            printf 'USER-BASHRC-LOADED\\n'
-            HISTFILE='\(directory.path)/history'
-            PS1='bash-test> '
-            PROMPT_COMMAND='printf "user-status:%s\\n" "$?"'
-            trap '[[ $BASH_COMMAND == false ]] && printf "user-debug-hook\\n"' DEBUG
-            source "$LILO_BASH_INTEGRATION"
-            """.write(to: config, atomically: true, encoding: .utf8)
-
-        for bash in ["/bin/bash", "/opt/homebrew/bin/bash", "/usr/local/bin/bash"] where FileManager.default.isExecutableFile(atPath: bash) {
-            let session = try launch([bash, "--rcfile", config.path, "-i"])
-            try await waitUntil(timeout: 5) { session.status.cwd != nil }
-            guard session.status.cwd != nil else { return }
-            XCTAssertTrue(screen(session).contains("USER-BASHRC-LOADED"))
-            XCTAssertEqual(session.status.finishedCommands, 0)
-
-            session.write(Array("false\n".utf8))
-            try await waitUntil { session.status.state == .failed && self.screen(session).contains("user-status:1") }
-            XCTAssertEqual(session.status.lastExitCode, 1)
-            XCTAssertEqual(session.status.command, "false")
-            XCTAssertTrue(screen(session).contains("user-debug-hook"))
-            XCTAssertEqual(session.status.finishedCommands, 1)
-
-            session.write(Array("sleep 30\n".utf8))
-            try await waitUntil { session.status.state == .busy && session.foregroundProgram() == "sleep" }
-            XCTAssertEqual(session.status.command, "sleep 30")
-            session.write([0x03])
-            try await waitUntil { session.status.lastExitCode == 130 }
-            XCTAssertNotNil(session.status.lastDuration)
-
-            session.write(Array("cd '\(directory.path)'\n".utf8))
-            try await waitUntil { session.status.cwd == directory.path }
-            XCTAssertEqual(session.status.state, .succeeded)
-            XCTAssertEqual(session.status.finishedCommands, 3)
-            let command = "shopt -oq posix; printf 'native-bash:%s' \"$?\""
-            session.write(Array((command + "\n").utf8))
-            try await waitUntil { self.screen(session).contains("native-bash:1") }
-            XCTAssertEqual(session.status.command, command)
-            session.terminate()
-        }
-    }
-
-    func testBashIntegrationKeepsLoginShellSemantics() async throws {
-        guard let bash = ["/opt/homebrew/bin/bash", "/usr/local/bin/bash"].first(where: {
-            FileManager.default.isExecutableFile(atPath: $0)
-        }) else { throw XCTSkip("Automatic integration needs standard Bash; macOS Bash uses the manual hook") }
-        let previousHISTFILE = ProcessInfo.processInfo.environment["HISTFILE"]
-        let previousENV = ProcessInfo.processInfo.environment["ENV"]
-        setenv("HISTFILE", "/dev/null", 1)
-        setenv("ENV", "lilo-user-env", 1)
-        defer {
-            if let previousHISTFILE { setenv("HISTFILE", previousHISTFILE, 1) } else { unsetenv("HISTFILE") }
-            if let previousENV { setenv("ENV", previousENV, 1) } else { unsetenv("ENV") }
-        }
-        let session = try launch([bash, "--noprofile", "-il"])
-        try await waitUntil(timeout: 5) { session.status.cwd != nil }
-        guard session.status.cwd != nil else { return }
-
-        session.write(Array("shopt -q login_shell && [[ $ENV == lilo-user-env ]] && printf 'LOGIN-SHELL-PRESERVED\\n'\n".utf8))
-        try await waitUntil { session.status.finishedCommands == 1 }
-        XCTAssertEqual(session.status.lastExitCode, 0)
-        XCTAssertTrue(screen(session).components(separatedBy: "\n").contains { $0.trimmingCharacters(in: .whitespaces) == "LOGIN-SHELL-PRESERVED" })
-    }
-
     func testZshTypesThePrefilledCommandWithoutRunningIt() async throws {
         let userConfig = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-zdotdir-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: userConfig, withIntermediateDirectories: true)
@@ -336,6 +278,81 @@ final class TerminalSessionTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(500))
         XCTAssertFalse(screen(session).components(separatedBy: "\n").contains { $0.trimmingCharacters(in: .whitespaces) == "prefill-ran" }, "typed, not run")
         XCTAssertEqual(session.status.finishedCommands, 0)
+    }
+
+    func testFishStartsWithTheUsersConfigurationAndAcceptsCommands() async throws {
+        let fish = try prepareFish()
+        let directory = try XCTUnwrap(fishDirectory)
+        let session = try launch([fish, "--private", "--login", "--interactive"])
+        try await waitUntil { session.status.cwd != nil && self.screen(session).contains("fish-test>") }
+        guard session.status.cwd != nil else { return }
+        XCTAssertTrue(screen(session).contains("USER-FISH-LOGIN"))
+        XCTAssertTrue(screen(session).contains("USER-VENDOR-LOADED"))
+        XCTAssertTrue(screen(session).contains("xdg:\(directory.path)/vendor"))
+        XCTAssertFalse(screen(session).contains("LEAKED-STARTUP-COMMAND"))
+        XCTAssertEqual(session.status.finishedCommands, 0)
+
+        session.write(Array("true\n".utf8))
+        try await waitUntil { session.status.state == .succeeded }
+        session.write(Array("false\n".utf8))
+        try await waitUntil { session.status.state == .failed && self.screen(session).contains("user-status:1") }
+        XCTAssertEqual(session.status.lastExitCode, 1)
+        XCTAssertEqual(session.status.command, "false")
+        XCTAssertEqual(session.status.finishedCommands, 2)
+
+        session.write(Array("sleep 30\n".utf8))
+        try await waitUntil { session.status.state == .busy && session.foregroundProgram() == "sleep" }
+        XCTAssertEqual(session.status.command, "sleep 30")
+        session.write([0x03])
+        try await waitUntil { session.status.lastExitCode == 130 }
+        XCTAssertNotNil(session.status.lastDuration)
+
+        session.write(Array("cd '\(directory.path)'\n".utf8))
+        try await waitUntil { session.status.cwd == directory.path }
+        XCTAssertEqual(session.status.finishedCommands, 4)
+        session.write(Array("exit\n".utf8))
+        try await waitUntil { session.status.state == .exited }
+    }
+
+    func testFishRunsTheInitialCommandAtItsFirstPrompt() async throws {
+        let fish = try prepareFish()
+        unsetenv("XDG_DATA_DIRS")
+        let command = "printf 'ran:%s\\n' (set -q LILO_INITIAL_COMMAND; and echo leaked; or echo unset)"
+        let session = TerminalSession(
+            cwd: NSTemporaryDirectory(), cols: 200, rows: 50, command: [fish, "--private", "--interactive"],
+            initialCommand: command
+        )
+        sessions.append(session)
+        try session.start()
+
+        try await waitUntil { self.screen(session).contains("ran:unset") && session.status.finishedCommands == 1 }
+        XCTAssertFalse(screen(session).contains("LEAKED-STARTUP-COMMAND"))
+        XCTAssertEqual(session.status.state, .succeeded)
+        XCTAssertEqual(session.status.command, command)
+        session.write(Array("set -q XDG_DATA_DIRS; or printf 'XDG-RESTORED\\n'\n".utf8))
+        try await waitUntil { self.screen(session).components(separatedBy: "\n").contains("XDG-RESTORED") }
+    }
+
+    func testFishTypesThePrefilledCommandWithoutRunningIt() async throws {
+        let fish = try prepareFish()
+        let command = "printf 'prefill-ran\\n'"
+        let session = TerminalSession(
+            cwd: NSTemporaryDirectory(), cols: 200, rows: 50, command: [fish, "--private", "--interactive"],
+            prefillCommand: command
+        )
+        sessions.append(session)
+        try session.start()
+
+        try await waitUntil { self.screen(session).contains(command) }
+        XCTAssertEqual(session.status.finishedCommands, 0)
+        XCTAssertFalse(screen(session).components(separatedBy: "\n").contains("prefill-ran"))
+        XCTAssertFalse(screen(session).contains("LEAKED-STARTUP-COMMAND"))
+
+        session.write([0x0D])
+        try await waitUntil { session.status.finishedCommands == 1 }
+        XCTAssertTrue(screen(session).components(separatedBy: "\n").contains("prefill-ran"))
+        XCTAssertEqual(session.status.command, command)
+        XCTAssertEqual(session.status.state, .succeeded)
     }
 
     func testRestoredTerminalKeepsTheLastSessionAboveTheNewShell() async throws {
@@ -497,6 +514,42 @@ final class TerminalSessionTests: XCTestCase {
         }
         XCTAssertEqual(session.status.state, .exited)
         XCTAssertNil(session.status.exitCode, "login reports success whatever the shell returned")
+    }
+
+    private func prepareFish() throws -> String {
+        guard let executable = ["/opt/homebrew/bin/fish", "/usr/local/bin/fish", "/usr/bin/fish"].first(where: {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }) else { throw XCTSkip("Run make fish-test-deps to install Fish for the integration tests") }
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lilo fish é \(UUID().uuidString)").resolvingSymlinksInPath()
+        fishDirectory = directory
+        let environment = ProcessInfo.processInfo.environment
+        for key in fishEnvironmentKeys { fishPreviousEnvironment[key] = environment[key] }
+        setenv("XDG_CONFIG_HOME", directory.path, 1)
+        setenv("XDG_DATA_HOME", directory.appendingPathComponent("data").path, 1)
+        setenv("XDG_DATA_DIRS", directory.appendingPathComponent("vendor").path, 1)
+        setenv("XDG_CACHE_HOME", directory.appendingPathComponent("cache").path, 1)
+        let config = directory.appendingPathComponent("fish/config.fish")
+        let vendor = directory.appendingPathComponent("vendor/fish/vendor_conf.d/user.fish")
+        for file in [config, vendor] {
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        }
+        try "printf 'USER-VENDOR-LOADED\\n'\n".write(to: vendor, atomically: true, encoding: .utf8)
+        try """
+            status is-login; and printf 'USER-FISH-LOGIN\\n'
+            printf 'xdg:%s\\n' "$XDG_DATA_DIRS"
+            if set -q LILO_INITIAL_COMMAND; or set -q LILO_PREFILL_COMMAND
+                printf 'LEAKED-STARTUP-COMMAND\\n'
+            end
+            set -g fish_greeting
+            function fish_prompt
+                printf 'fish-test> '
+            end
+            function user_postexec --on-event fish_postexec
+                printf 'user-status:%s\\n' $status
+            end
+            """.write(to: config, atomically: true, encoding: .utf8)
+        return executable
     }
 
     private func launch(_ command: [String], cwd: String = NSTemporaryDirectory()) throws -> TerminalSession {

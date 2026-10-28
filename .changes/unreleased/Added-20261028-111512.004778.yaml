@@ -1,0 +1,3 @@
+kind: Added
+body: Terminal tabs now support Fish alongside zsh, including automatic startup, initial commands, and restored command-line prefills.
+time: 2026-10-28T11:15:12.004778+02:00

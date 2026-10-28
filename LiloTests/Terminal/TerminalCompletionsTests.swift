@@ -27,6 +27,31 @@ final class TerminalCompletionsTests: XCTestCase {
         XCTAssertEqual(TerminalCompletions.parseHistory(data, zsh: false), ["git status", "make"])
     }
 
+    func testFishHistoryOffersCommandsWithoutMetadataOrMultilineEntries() async throws {
+        let history = directory.appendingPathComponent("fish_history")
+        try #"""
+            - cmd: echo café
+              when: 1700000000
+              paths:
+                - /example/project
+            - cmd: printf '\\n'
+              when: 1700000001
+            - cmd: echo first\necho second
+              when: 1700000002
+            - cmd: git status
+              when: 1700000003
+            """#.write(to: history, atomically: true, encoding: .utf8)
+        let completions = TerminalCompletions(historyFiles: [history], pathDirectories: [])
+
+        let recent = await completions.complete("")
+
+        XCTAssertEqual(recent, [
+            .init(command: "git status", source: .history),
+            .init(command: #"printf '\n'"#, source: .history),
+            .init(command: "echo café", source: .history),
+        ])
+    }
+
     func testHistoryComesFirstMostRecentFirstThenPrograms() async throws {
         let history = directory.appendingPathComponent(".zsh_history")
         try ": 1:0;echo old\n: 2:0;git status\n: 3:0;echo new\n: 4:0;echo old\n".write(to: history, atomically: true, encoding: .utf8)

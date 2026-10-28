@@ -166,6 +166,9 @@ Heavier checks, run when your change touches their area:
 
 ### Where tests go
 
+Fish terminal integration tests run against a real Fish shell. `make fish-test-deps` installs it
+with Homebrew; CI runs this before the Swift tests. Without Fish, local runs skip those tests.
+
 - **Swift**: `LiloTests/` mirrors the source tree, so the tests of `Lilo/<Folder>/X.swift` go in
   `LiloTests/<Folder>/XTests.swift`. Shared helpers (temporary databases and browser contexts,
   fixtures, async polling) live in `LiloTests/Support/`.

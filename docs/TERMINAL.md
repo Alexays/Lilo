@@ -1,22 +1,15 @@
-# Terminal shell integration
+# Terminal shells
 
-Lilo uses shell integration to report the current directory, running command, exit status and
-duration. It also marks commands in the terminal's history for prompt navigation and output
-selection. The hooks run when a command starts or a prompt appears; they do no work at idle.
+Lilo starts the login shell configured for your macOS account. zsh and Fish 4 or later are
+integrated automatically, with the same terminal-tab behavior. No startup-file edits are needed.
 
-Integration loads automatically for zsh and standard Bash, including Homebrew Bash. Lilo keeps
-the shell's login behavior and reads its usual startup files before adding the hooks.
+- Your normal shell configuration, prompt, key bindings, and history are kept.
+- Fish history is offered in the command bar alongside programs on your login shell's PATH.
+- A terminal opened with a command accepts it at the first prompt, as if you typed it.
+- A restored terminal offers its last command at the prompt. It runs only when you press Return.
+- Command results, duration, directory changes, prompt navigation, and output selection work
+  with either shell.
 
-## macOS Bash
-
-Apple's `/bin/bash` ignores the startup mechanism standard Bash uses. Add this at the end of
-`~/.bash_profile` for login shells, or `~/.bashrc` for non-login shells:
-
-```bash
-if [[ -n ${LILO_BASH_INTEGRATION:-} ]]; then
-    source "$LILO_BASH_INTEGRATION"
-fi
-```
-
-Lilo provides the path when launching Bash. The hook supports macOS's Bash 3.2, keeps existing
-prompt commands and DEBUG traps, and can be sourced more than once without duplicating hooks.
+Fish loads Lilo's startup snippet through its vendor configuration mechanism. The snippet
+restores the original environment before your configuration runs, preserves your event handlers,
+and does no work at idle.

@@ -1,3 +1,0 @@
-kind: Added
-body: Bash terminal tabs now report running commands, command results and timing, and the current directory. Standard Bash sets up automatically; macOS Bash needs a startup hook as described in the terminal documentation.
-time: 2026-10-27T17:14:36.369344+02:00

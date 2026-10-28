@@ -21,7 +21,7 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Tab lifecycle and memory management, process manager and diagnostics
 - Downloads (speed/ETA, quarantine, notifications), find in page, share menu, QR codes
 - Privacy controls (GPC, HTTPS-Only, clear browsing data, website data manager)
-- Terminal tabs (libghostty-vt core, native Metal renderer, zsh and Bash shell integration), a Changes view of the working tree's diff, and keep-awake while a command runs
+- Terminal tabs (libghostty-vt core, native Metal renderer, zsh and Fish shell integration), a Changes view of the working tree's diff, and keep-awake while a command runs
 - Split view, page translation, tab sharing in screen-share calls (`getDisplayMedia`)
 - Multiple windows over shared Spaces, with per-window selection and windows restored on relaunch
 - Accessibility: VoiceOver across the sidebar tree, panels, Changes view and terminal, full keyboard reach, Reduce motion and Increase contrast

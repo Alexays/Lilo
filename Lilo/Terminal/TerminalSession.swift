@@ -68,10 +68,10 @@ final class TerminalSession: @unchecked Sendable {
     private let command: [String]
     private let reportsExitCode: Bool
     private let shellName: String
-    private let integratesBash: Bool
     private let initialCwd: String
     private let initialCommand: String?
     private let prefillCommand: String?
+    private var acceptsFishInitialCommand = false
     /// The terminal starts from a snapshot of the last session's screen and history.
     private let restoredContent: Bool
     private var windowSize: winsize
@@ -124,7 +124,7 @@ final class TerminalSession: @unchecked Sendable {
     private let quietCheckPending = Atomic<Bool>(false)
 
     /// `command` defaults to the user's login shell; the shell runs `initialCommand` at its first prompt.
-    /// zsh types `prefillCommand` at its first prompt without running it. `restored` is the terminal
+    /// zsh and fish type `prefillCommand` at their first prompt without running it. `restored` is the terminal
     /// decoded from the screen and history a previous session saved.
     init(
         cwd: String, cols: UInt16 = 80, rows: UInt16 = 24, command: [String]? = nil, initialCommand: String? = nil,
@@ -134,23 +134,19 @@ final class TerminalSession: @unchecked Sendable {
         self.prefillCommand = prefillCommand
         let account = getpwuid(getuid())
         let shell = account.map { String(cString: $0.pointee.pw_shell) } ?? "/bin/zsh"
-        let executable = command?.first ?? shell
-        shellName = URL(fileURLWithPath: executable).lastPathComponent
-        let arguments = command.map { Array($0.dropFirst()) } ?? []
-        let interactive = command == nil || arguments.isEmpty || arguments.contains {
-            $0.hasPrefix("-") && !$0.hasPrefix("--") && $0.contains("i")
-        }
-        // Apple's Bash ignores ENV during POSIX startup; it needs the manual startup hook.
-        integratesBash = shellName == "bash" && executable != "/bin/bash" && interactive
-            && !arguments.contains("--posix") && Self.shellIntegrationDirectory != nil
+        shellName = URL(fileURLWithPath: command?.first ?? shell).lastPathComponent
+        acceptsFishInitialCommand = shellName == "fish" && initialCommand != nil
+        // Lilo's hooks carry the command line too; fish's built-in marks would duplicate them.
+        let fishArguments = shellName == "fish" ? ["--features=no-mark-prompt"] : []
         reportsExitCode = command != nil
         if let command {
-            self.command = integratesBash ? [command[0], "--posix"] + arguments : command
+            self.command = fishArguments.isEmpty ? command : [command[0]] + fishArguments + command.dropFirst()
         } else {
             let user = account.map { String(cString: $0.pointee.pw_name) } ?? NSUserName()
             // login records the session and keeps our environment (-p) and cwd (-l); bash then
             // replaces itself with the user's shell as a login shell.
-            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'\(integratesBash ? " --posix" : "")"]
+            let arguments = fishArguments.isEmpty ? "" : " " + fishArguments.joined(separator: " ")
+            self.command = ["/usr/bin/login", "-flp", user, "/bin/bash", "--noprofile", "--norc", "-c", "exec -l '\(shell)'\(arguments)"]
         }
         var isDirectory: ObjCBool = false
         initialCwd = FileManager.default.fileExists(atPath: cwd, isDirectory: &isDirectory) && isDirectory.boolValue
@@ -186,6 +182,11 @@ final class TerminalSession: @unchecked Sendable {
         terminal.onBell = { [weak self] in self?.noteAwaitingInput() }
         terminal.onPrompt = { [unowned self] event in
             shellReportsPrompts.store(true, ordering: .relaxed)
+            if case .promptStart = event, acceptsFishInitialCommand {
+                acceptsFishInitialCommand = false
+                // Fish must accept the line through its reader, after pending terminal queries.
+                send([0x0D])
+            }
             updateStatus { status in
                 guard status.state != .exited else { return }
                 switch event {
@@ -324,8 +325,8 @@ final class TerminalSession: @unchecked Sendable {
         parse.name = "lilo.terminal.parse"
         parse.qualityOfService = .userInitiated
         parse.start()
-        // zsh takes it from the environment at its first prompt (see .zshrc); other shells read it as typed input.
-        if let initialCommand, shellName != "zsh" { write(Array((initialCommand + "\r").utf8)) }
+        // Integrated shells accept it at their first prompt; other shells read it as typed input.
+        if let initialCommand, !["zsh", "fish"].contains(shellName) { write(Array((initialCommand + "\r").utf8)) }
     }
 
     /// Queues what the user typed or pasted for the shell; it answers a program waiting for input.
@@ -756,14 +757,6 @@ final class TerminalSession: @unchecked Sendable {
         }
     }
 
-    private static var shellIntegrationDirectory: URL? {
-        #if SWIFT_PACKAGE
-        Bundle.module.url(forResource: "shell-integration", withExtension: nil, subdirectory: "Resources")
-        #else
-        Bundle.main.url(forResource: "shell-integration", withExtension: nil)
-        #endif
-    }
-
     private func environment() -> [String] {
         var environment = ProcessInfo.processInfo.environment
         environment["TERM"] = "xterm-256color"
@@ -780,27 +773,23 @@ final class TerminalSession: @unchecked Sendable {
             }
             environment["LANG"] = lang
         }
-        if let integration = Self.shellIntegrationDirectory {
+        #if SWIFT_PACKAGE
+        let integration = Bundle.module.url(forResource: "shell-integration", withExtension: nil, subdirectory: "Resources")
+        #else
+        let integration = Bundle.main.url(forResource: "shell-integration", withExtension: nil)
+        #endif
+        if let integration {
             // zsh reads $ZDOTDIR/.zshenv first; ours restores the user's ZDOTDIR before their config.
             if let original = environment["ZDOTDIR"] { environment["LILO_ORIG_ZDOTDIR"] = original }
             environment["ZDOTDIR"] = integration.appendingPathComponent("zsh").path
-            if shellName == "zsh", let initialCommand { environment["LILO_INITIAL_COMMAND"] = initialCommand }
-            if shellName == "zsh", let prefillCommand { environment["LILO_PREFILL_COMMAND"] = prefillCommand }
-            if shellName == "bash" { environment["LILO_BASH_INTEGRATION"] = integration.appendingPathComponent("bash/lilo.bash").path }
-            if integratesBash {
-                if let original = environment["ENV"] { environment["LILO_ORIG_ENV"] = original }
-                environment["ENV"] = environment["LILO_BASH_INTEGRATION"]
-                // The login bootstrap's flags belong to its wrapper, not to the user's shell.
-                let arguments = reportsExitCode ? command : []
-                environment["LILO_BASH_FLAGS"] = arguments.filter { $0 == "--norc" || $0 == "--noprofile" }.joined(separator: " ")
-                if let index = arguments.firstIndex(where: { $0 == "--rcfile" || $0 == "--init-file" }), arguments.indices.contains(index + 1) {
-                    environment["LILO_BASH_RCFILE"] = arguments[index + 1]
-                }
-                // POSIX startup otherwise chooses .sh_history; Bash history stays in .bash_history.
-                if environment["HISTFILE"] == nil {
-                    environment["HISTFILE"] = (environment["HOME"] ?? NSHomeDirectory()) + "/.bash_history"
-                    environment["LILO_BASH_UNEXPORT_HISTFILE"] = "1"
-                }
+            if shellName == "fish" {
+                if let original = environment["XDG_DATA_DIRS"] { environment["LILO_ORIG_XDG_DATA_DIRS"] = original }
+                let directories = environment["XDG_DATA_DIRS"] ?? "/usr/local/share:/usr/share"
+                environment["XDG_DATA_DIRS"] = integration.path + ":" + directories
+            }
+            if ["zsh", "fish"].contains(shellName) {
+                if let initialCommand { environment["LILO_INITIAL_COMMAND"] = initialCommand }
+                if let prefillCommand { environment["LILO_PREFILL_COMMAND"] = prefillCommand }
             }
         }
         return environment.map { "\($0.key)=\($0.value)" }
