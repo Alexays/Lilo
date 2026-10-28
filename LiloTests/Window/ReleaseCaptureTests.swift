@@ -150,7 +150,10 @@ final class ReleaseCaptureTests: XCTestCase {
                 throw CocoaError(.featureUnsupported, userInfo: [NSLocalizedDescriptionKey: "Unavailable native menu action: \(name)"])
             }
             try await hold(350)
-        case "key": await AgentInput.key(try webView(step.surface ?? ""), chord: try XCTUnwrap(step.chord))
+        case "key":
+            let chord = try XCTUnwrap(step.chord)
+            guard AuthoredReleaseScenario.keyChords.contains(chord) else { throw CocoaError(.featureUnsupported) }
+            await AgentInput.key(try webView(step.surface ?? ""), chord: chord)
         case "click", "type":
             let target = try XCTUnwrap(step.target)
             if target.surface == "native" {
@@ -268,6 +271,19 @@ final class ReleaseCaptureTests: XCTestCase {
     }
 
     private func contextSetting(_ key: String) -> String? { fixture.context.settingsStore.get(key) }
+
+    func testPointerMovementUpdatesBrowserHover() async throws {
+        _ = try await open("notes.html")
+        let chrome = controller.chromeWebView
+        let point = try await controlPoint(".nav-btn", in: chrome, text: "")
+        try await moveCursor(to: point, in: chrome)
+        let entered = await pollUntil { (try? await chrome.evaluateJavaScript("document.querySelectorAll('.nav-btn:hover').length === 1")) as? Bool == true }
+        XCTAssertTrue(entered)
+        let page = try XCTUnwrap(controller.tabManager.activeEngineTab?.wkWebView)
+        try await moveCursor(to: CGPoint(x: 400, y: 200), in: page)
+        let exited = await pollUntil { (try? await chrome.evaluateJavaScript("document.querySelectorAll('.nav-btn:hover').length === 0")) as? Bool == true }
+        XCTAssertTrue(exited)
+    }
 
     func testPeek() async throws {
         let tab = try await open("guide.html")
@@ -389,7 +405,17 @@ final class ReleaseCaptureTests: XCTestCase {
         CATransaction.flush()
     }
 
+    private func clearHover() {
+        var views: [WKWebView] = [controller.chromeWebView]
+        if let page = controller.tabManager.activeEngineTab?.wkWebView { views.append(page) }
+        views += controller.pagePopups.values.map { $0.engine.wkWebView }
+        for view in views where view.window != nil {
+            AgentInput.mouseEvent(.mouseMoved, view, at: CGPoint(x: -20, y: -20), clickCount: 0, modifiers: [])
+        }
+    }
+
     private func glide(to target: CGPoint) async throws {
+        clearHover()
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.6
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -429,6 +455,7 @@ final class ReleaseCaptureTests: XCTestCase {
         let local = CGPoint(x: point.x, y: view.isFlipped ? point.y : view.bounds.height - point.y)
         let windowPoint = view.convert(local, to: controller.window?.contentView)
         try await glide(to: CGPoint(x: windowPoint.x, y: 720 - windowPoint.y))
+        AgentInput.mouseEvent(.mouseMoved, view, at: point, clickCount: 0, modifiers: [])
     }
 
     private func click(_ selector: String, in view: WKWebView, modifiers: NSEvent.ModifierFlags = [], text: String = "", right: Bool = false, count: Int = 1) async throws {

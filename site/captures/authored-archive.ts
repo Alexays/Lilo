@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { z } from "zod";
 
-import { parseChangelog } from "../src/lib/changelog.ts";
+import { parseChangelog, sourceReleaseNotes } from "../src/lib/changelog.ts";
 import {
   editorialCopySchema,
   featureID,
@@ -138,10 +138,7 @@ export const releaseIdentity = (
       .filter((n) => n.endsWith(".json"))
       .map((n) => n.slice(0, -5))
       .toSorted(),
-    notes: release.body
-      .split("\n")
-      .filter((l) => l.startsWith("- "))
-      .map((l) => l.slice(2)),
+    notes: sourceReleaseNotes(release.body),
     version,
   };
 };

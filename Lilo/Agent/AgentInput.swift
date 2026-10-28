@@ -137,7 +137,7 @@ enum AgentInput {
         let named = namedKeys[key.lowercased()]
         let characters = text.isEmpty ? named?.characters ?? (key.count == 1 ? key : "") : text
         pressKey(webView, characters: characters, ignoringModifiers: characters.lowercased(),
-                 keyCode: keyCode ?? named?.keyCode ?? keyCodes[key.lowercased()] ?? 0, modifiers: modifiers, types: [down ? .keyDown : .keyUp])
+                 keyCode: keyCode ?? named?.keyCode ?? self.keyCode(for: key), modifiers: modifiers, types: [down ? .keyDown : .keyUp])
     }
 
     /// Presses chords like `"cmd+a"`, `"Return"` or `"Backspace Backspace"`: space separated, modifiers joined by `+`.
@@ -201,6 +201,11 @@ enum AgentInput {
         let modifiers: NSEvent.ModifierFlags
     }
 
+    // AppKit interprets shortcut key codes using the active keyboard layout.
+    static func keyCode(for key: String) -> UInt16 {
+        KeyboardShortcuts.keyStroke(key.lowercased())?.keyCode ?? keyCodes[key.lowercased()] ?? 0
+    }
+
     private static func parseChord(_ token: String) -> KeyPress? {
         var parts = token.split(separator: "+", omittingEmptySubsequences: false).map(String.init)
         // "cmd++" ends with an empty part: the key itself is "+".
@@ -212,7 +217,7 @@ enum AgentInput {
         guard keyName.count == 1 else { return nil }
         let base = keyName.lowercased()
         let characters = modifiers.contains(.shift) && !modifiers.contains(.command) ? keyName.uppercased() : base
-        return KeyPress(characters: characters, ignoringModifiers: base, keyCode: keyCodes[base] ?? 0, modifiers: modifiers)
+        return KeyPress(characters: characters, ignoringModifiers: base, keyCode: keyCode(for: base), modifiers: modifiers)
     }
 
     /// Sends `down` then `up` until the page has seen the press: WebKit drops pointer events that come

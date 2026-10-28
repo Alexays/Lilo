@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parseChangelog } from "./changelog.ts";
+import { parseChangelog, sourceReleaseNotes } from "./changelog.ts";
 
 const translatedText = z.strictObject({
   en: z.string().trim().min(1),
@@ -60,12 +60,7 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
       );
     }
 
-    const notes = new Set(
-      release.body
-        .split("\n")
-        .filter((line) => line.startsWith("- "))
-        .map((line) => line.slice(2))
-    );
+    const notes = new Set(sourceReleaseNotes(release.body));
 
     const ids = new Set(story.highlights.map((highlight) => highlight.id));
 

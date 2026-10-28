@@ -14,6 +14,7 @@ import {
   validateScenario,
   validateEditorial,
 } from "../captures/authored-model.ts";
+import { sourceReleaseNotes } from "../src/lib/changelog.ts";
 
 const notes = ["Tabs show unread counts.", "Improves background storage."];
 
@@ -270,4 +271,28 @@ test("authored menu actions cannot launch shells or inspect host processes", () 
       /menu|action|Invalid/u
     );
   }
+});
+
+test("authored keys cannot trigger global app or terminal shortcuts", () => {
+  for (const chord of ["cmd+q", "ctrl+shift+t", "cmd+v"]) {
+    assert.throws(() =>
+      scenarioSchema.parse({
+        ...scenario(),
+        steps: [...scenario().steps, { chord, surface: "chrome", type: "key" }],
+      })
+    );
+  }
+});
+
+test("selection coverage includes every continuation of a release note", () => {
+  assert.deepEqual(
+    sourceReleaseNotes(
+      "### Added\n\n- A visible improvement.\n  Including its important second detail.\n\n- Another feature.\n\n### Fixed\n\n- A reliability fix.\n"
+    ),
+    [
+      "A visible improvement.\nIncluding its important second detail.",
+      "Another feature.",
+      "A reliability fix.",
+    ]
+  );
 });
