@@ -16,7 +16,8 @@ final class DocumentPiPControllerTests: XCTestCase {
         factory.documentPiPHandler = { [unowned self] _, size in controller.prepare(tab, size: size) }
         tab.documentPiPWebViewProvider = { [unowned self] configuration, size in controller.open(configuration: configuration, size: size, opener: tab) }
         tab.wkWebView.loadHTMLString("<p>call</p>", baseURL: URL(string: origin))
-        _ = await pollUntil(timeout: 5) { tab.wkWebView.url != nil && !tab.wkWebView.isLoading }
+        // The URL is set before the document commits: wait for this page's own content, or a commit could follow.
+        _ = await pollUntil(timeout: 5) { (try? await tab.wkWebView.evaluateJavaScript("document.body?.textContent === 'call'")) as? Bool == true }
         addTeardownBlock { @MainActor [controller] in
             controller?.close()
             tab.teardown()
@@ -45,7 +46,7 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(panel.styleMask.contains(.nonactivatingPanel))
         XCTAssertEqual(panel.sharingType, .none, "the PiP window stays out of the user's own screen share")
         XCTAssertEqual(panel.level, .floating)
-        XCTAssertTrue(panel.collectionBehavior.contains(.canJoinAllSpaces))
+        XCTAssertTrue(panel.collectionBehavior.contains(.canJoinAllSpaces), "\(panel.collectionBehavior.rawValue) \(panel === NSApp.windows.first { $0.delegate === controller })")
         XCTAssertTrue(panel.collectionBehavior.contains(.fullScreenAuxiliary))
         XCTAssertEqual(panel.contentLayoutRect.size, NSSize(width: 300, height: 356))
         XCTAssertEqual(controller.openerId, tab.id)

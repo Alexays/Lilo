@@ -43,7 +43,8 @@ final class DocumentPictureInPictureTests: XCTestCase {
         let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 800, height: 600), configuration: configuration)
         webView.uiDelegate = host
         webView.loadHTMLString("<p>call</p>", baseURL: URL(string: origin))
-        _ = await pollUntil(timeout: 5) { webView.url != nil && !webView.isLoading }
+        // The URL is set before the document commits: wait for this page's own content, or a commit could follow.
+        _ = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("document.body?.textContent === 'call'")) as? Bool == true }
         return webView
     }
 
