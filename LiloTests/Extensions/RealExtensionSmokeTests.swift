@@ -152,13 +152,15 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Opens `url` in a tab and reads its fingerprint (smoke-probes.js) every 250 ms, as Chrome's recording does, until it
     /// shows at least half of `expected`, Chrome's, or anything without one, for at most `timeout`; then closes the tab.
     /// Returns the last fingerprint and whether it matched.
-    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool) {
+    /// `closed` when the page closed its own tab, as a popup does that finds itself in one (NordPass, Zoom to Fill).
+    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool, closed: Bool) {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
         defer { window.closeTabStateFirst(id: tab.id, undoable: false) }
         let opened = Date()
         var tokens: Set<String> = []
         while Date().timeIntervalSince(opened) < timeout {
             try await Task.sleep(for: .milliseconds(250))
+            if !window.tabManager.openTabs.contains(where: { $0.id == tab.id }) { return (tokens, false, true) }
             guard let engine = window.tabManager.engineTab(for: tab.id) else { continue }
             // As pageText: on screen, as a popup, and unattended.
             browserContext.context.agentControl.attach(engine, to: nil)
@@ -166,10 +168,10 @@ final class RealExtensionSmokeTests: XCTestCase {
             let page = engine.view as? WKWebView
             tokens = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
             if expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count {
-                return (tokens, true)
+                return (tokens, true, false)
             }
         }
-        return (tokens, false)
+        return (tokens, false, false)
     }
 
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
@@ -518,8 +520,11 @@ final class RealExtensionSmokeTests: XCTestCase {
                 let expected = tokens(chrome?.popup)
                 let opened = Date()
                 popupOpened = opened
-                let (shown, matched) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
-                if shown.isEmpty && chrome?.popupText != false {
+                let (shown, matched, closed) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
+                // A popup closing the tab it was opened in shows in its own popup, which the idle check opens.
+                if closed {
+                    outcome.details.append("its popup closes the tab it is opened in")
+                } else if shown.isEmpty && chrome?.popupText != false {
                     outcome.problems.append("the popup renders nothing")
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the popup", shown, expected))
@@ -576,8 +581,10 @@ final class RealExtensionSmokeTests: XCTestCase {
             if let optionsURL = context.optionsPageURL, chrome == nil || chrome?.options != nil {
                 let expected = tokens(chrome?.options)
                 let opened = Date()
-                let (shown, matched) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
-                if shown.isEmpty {
+                let (shown, matched, closed) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
+                if closed {
+                    outcome.details.append("its options page closes its own tab")
+                } else if shown.isEmpty {
                     outcome.problems.append("the options page renders nothing")
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the options page", shown, expected))
