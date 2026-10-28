@@ -910,6 +910,7 @@ extension MainWindowController {
         engine.restoreFromAutoPictureInPicture()  // a tab auto-PiP'd on leaving comes back inline
         floatingTabPanel.dismiss(hosting: engine.id)
         if tabDock.engineId == engine.id { tabDock.undock() }
+        if documentPiP.openerId == engine.id { placeDocumentPiP() }
         chromeInput.setContentView(nextView)
         let retainedSplitViews = splitPanes.retainedViews(forTabId: engine.id)
         let outgoingViews = contentContainerView.subviews.filter { view in view !== nextView && !retainedSplitViews.contains { $0 === view } }
@@ -949,6 +950,11 @@ extension MainWindowController {
         // A tab-share source stays attached under the active view (retained below): the ferry
         // needs the full-size page layout, which a panel-sized reparent would destroy.
         if engine.isTabShareSource || engine.isAgentControlled { return false }
+        // Its page's own PiP window stands in for the whole page.
+        if documentPiP.openerId == engine.id {
+            placeDocumentPiP()
+            return false
+        }
         guard context.settingsStore.autoPictureInPicture else { return false }
         if engine.hasActiveCapture, !engine.shouldRetainForWebInspector, NSApp.isActive {
             dockInCallTab(engine)

@@ -54,6 +54,14 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     }
 
     /// `window.resizeTo` sizes the whole window, as the page reads it from `outerWidth` and `outerHeight`.
+    /// Takes the panel off screen while the PiP window shows in the sidebar dock.
+    func hidePanel() {
+        panel?.orderOut(nil)
+    }
+
+    /// The screen of the floating panel, while it shows.
+    var panelScreen: NSScreen? { panel?.isVisible == true ? panel?.screen : nil }
+
     func resize(to size: NSSize) {
         guard size.width > 0, size.height > 0, let panel else { return }
         panel.setFrame(NSRect(origin: panel.frame.origin, size: size), display: true)

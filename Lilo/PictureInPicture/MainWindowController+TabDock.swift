@@ -14,16 +14,22 @@ extension MainWindowController {
         // Every undock path funnels here, so the chrome slot can never outlive the native view.
         tabDock.onDockCleared = { [weak self] in self?.setPipDockActive(false) }
         tabDock.onReturnToTab = { [weak self] engineId in
+            if self?.documentPiP.openerId == engineId { self?.documentPiP.close() }
             self?.tabDock.undock()
             // The dock outlives space switches: its tab may live in another space.
             self?.switchToRecentTab(engineId)
         }
-        tabDock.onDismiss = { [weak self] _ in
+        tabDock.onDismiss = { [weak self] engineId in
+            if self?.documentPiP.openerId == engineId { self?.documentPiP.close() }
             // The call keeps running detached; a PiP-able video may still surface it.
             self?.tabDock.undock()?.autoEnterPictureInPictureIfEligible()
         }
         tabDock.onSlotLost = { [weak self] engine in
             self?.floatingTabPanel.float(engine)
+        }
+        tabDock.onPictureInPictureSlotLost = { [weak self] in self?.documentPiP.float() }
+        documentPiP.onClosed = { [weak self] openerId in
+            if self?.tabDock.pictureInPictureOpenerId == openerId { self?.tabDock.undock() }
         }
     }
 
@@ -49,6 +55,7 @@ extension MainWindowController {
     /// App resigned active or the window occluded: the dock is invisible there, so the call moves
     /// to the always-on-top panel (the reason that panel exists).
     func moveDockedCallToPanel() {
+        if tabDock.pictureInPictureOpenerId != nil { placeDocumentPiP() }
         guard tabDock.isDocking, let engine = tabDock.undock() else { return }
         setPipDockActive(false)
         floatingTabPanel.float(engine)
@@ -57,6 +64,7 @@ extension MainWindowController {
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user
     /// put the panel on another screen, where it stays visible next to the window.
     func moveFloatingCallToDock() {
+        placeDocumentPiP()
         // Nil until bootstrap: the launch window comes on screen, and foregrounds, before settings load.
         guard context.settingsStore?.dockCallsInSidebar == true,
               let engineId = floatingTabPanel.hostedEngineId,
@@ -67,7 +75,7 @@ extension MainWindowController {
         dockInCallTab(engine)
     }
 
-    private func setPipDockActive(_ active: Bool, title: String = "") {
+    func setPipDockActive(_ active: Bool, title: String = "") {
         bridgeRouter.send(event: "pipDockChanged", data: active ? ["active": true, "title": title] : ["active": false])
     }
 }

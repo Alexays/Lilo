@@ -6,7 +6,7 @@ extension MainWindowController {
     @objc func clearUnpinnedTabs(_ sender: Any?) {
         guard let spaceId = tabManager.currentSpaceId,
               let unpinned = context.browserState.spaceTabState(forSpace: spaceId)?.tree.unpinned else { return }
-        let shown = context.browserState.displayedTabIds.union([tabManager.activeTabId, tabDock.engineId, floatingTabPanel.hostedEngineId].compactMap { $0 })
+        let shown = context.browserState.displayedTabIds.union([tabManager.activeTabId, tabDock.engineId, floatingTabPanel.hostedEngineId, documentPiP.openerId].compactMap { $0 })
         var archivedIds: [String] = []
         var lastTitle = ""
         for (index, node) in unpinned.enumerated() {

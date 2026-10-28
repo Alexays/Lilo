@@ -209,7 +209,9 @@ extension MainWindowController {
         }
         engine.documentPiPWebViewProvider = { [weak self, weak engine] configuration, size in
             guard let self, let engine else { return nil }
-            return documentPiP.open(configuration: configuration, size: size, opener: engine)
+            let webView = documentPiP.open(configuration: configuration, size: size, opener: engine)
+            placeDocumentPiP()
+            return webView
         }
     }
 

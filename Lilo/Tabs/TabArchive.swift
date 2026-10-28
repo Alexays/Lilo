@@ -104,7 +104,7 @@ extension BrowserContext {
         }
         var shown = browserState.displayedTabIds
         for window in windows.windows {
-            for id in [window.tabManager.activeTabId, window.tabDock.engineId, window.floatingTabPanel.hostedEngineId] {
+            for id in [window.tabManager.activeTabId, window.tabDock.engineId, window.floatingTabPanel.hostedEngineId, window.documentPiP.openerId] {
                 if let id { shown.insert(id) }
             }
         }

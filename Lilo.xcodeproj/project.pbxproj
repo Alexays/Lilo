@@ -426,6 +426,7 @@
 		AB643863EAC4DE0AAA9725F1 /* DocumentPiPControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B45064E061C0179A0E09E79D /* DocumentPiPControllerTests.swift */; };
 		AB9C2E3DF98EB2A5C29C2703 /* AgentScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A921DB41852DA4D2D6F6DE48 /* AgentScreenshotTests.swift */; };
 		AC67E2FED9DB2F2C2F91C83B /* IdentityBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4595B45175C3E57FAD9378B1 /* IdentityBridgeHandler.swift */; };
+		AC94D6E35E9EF5D65A40EE52 /* MainWindowController+DocumentPiP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8313C9333B9A2BFADFF9DB18 /* MainWindowController+DocumentPiP.swift */; };
 		ACB88CEE3EFCAC4DAE10AD07 /* WKBackendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5C05BC369876063A855749 /* WKBackendTests.swift */; };
 		ADA245153EE5B8FE65EBA139 /* BrowserProcessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707DD0D47F5895FF57D2EE35 /* BrowserProcessSnapshot.swift */; };
 		ADA84B1F561E87C606957FBF /* ChromeAPIBackgroundPrelude.js in Resources */ = {isa = PBXBuildFile; fileRef = 3BB8ACFFF948B01F3F7036FF /* ChromeAPIBackgroundPrelude.js */; };
@@ -1022,6 +1023,7 @@
 		81AB35095009F1E4C0876C0F /* ExtensionDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDiagnostics.swift; sourceTree = "<group>"; };
 		821356C64400352E495C9091 /* ProxyBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyBridgeHandler.swift; sourceTree = "<group>"; };
 		824B18855F3600C939A2E78D /* TabLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabLayout.swift; sourceTree = "<group>"; };
+		8313C9333B9A2BFADFF9DB18 /* MainWindowController+DocumentPiP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+DocumentPiP.swift"; sourceTree = "<group>"; };
 		838BAD15BCCF8242CA383725 /* NSColor+CSSHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+CSSHex.swift"; sourceTree = "<group>"; };
 		83E598FF1398FBF1ADFB7DBB /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
 		83E64EF16A83BCC08DBB41C1 /* BrowserImportScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserImportScannerTests.swift; sourceTree = "<group>"; };
@@ -1436,6 +1438,7 @@
 			children = (
 				E0597C73354C06382A05C80A /* DocumentPiPController.swift */,
 				49FDF64515A5A6AA694D292F /* FloatingTabPanelController.swift */,
+				8313C9333B9A2BFADFF9DB18 /* MainWindowController+DocumentPiP.swift */,
 				6F6ED6D5C416BB6186B04F06 /* MainWindowController+TabDock.swift */,
 				552F286BB712D9077DE2C288 /* TabDockController.swift */,
 			);
@@ -2881,6 +2884,7 @@
 				E1D3664F3220E70D07BA2354 /* MainWindowController+Changes.swift in Sources */,
 				1D282EE56062F8B5B3C61982 /* MainWindowController+ContextMenus.swift in Sources */,
 				8562F03E55327B6A1B1415E5 /* MainWindowController+DisplayedTabs.swift in Sources */,
+				AC94D6E35E9EF5D65A40EE52 /* MainWindowController+DocumentPiP.swift in Sources */,
 				A87A301DC8739DDB6C4FAA7C /* MainWindowController+Downloads.swift in Sources */,
 				C021EC20C0D26BED33B71869 /* MainWindowController+Extensions.swift in Sources */,
 				F7D88088F0B54DE9BB6B9DA2 /* MainWindowController+Input.swift in Sources */,

@@ -829,6 +829,7 @@ extension MainWindowController: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         // AppKit closes the windows after applicationWillTerminate: saving now would hit closed databases.
         guard !context.isTerminating else { return }
+        documentPiP.close()
         saveWindowFrame()
         if let work = pendingActiveTabPersistWork {
             pendingActiveTabPersistWork = nil
