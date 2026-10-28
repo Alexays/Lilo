@@ -220,6 +220,82 @@ describe('constants', () => {
   });
 });
 
+describe("WebKit's errors", () => {
+  class FailingRuntime extends Runtime {
+    error: { message: string } | null = null;
+    get lastError(): unknown { return this.error; }
+    getURL(path: string) { return `chrome-extension://own/${path}`; }
+  }
+  const runtime = new FailingRuntime([]);
+  const notFound = (method: string) => `Invalid call to ${method}(). Tab not found.`;
+  // WebKit's runtime.lastError holds only while its callback runs.
+  const fail = (method: string, callback?: () => void) => {
+    if (!callback) return Promise.reject(new Error(notFound(method)));
+    runtime.error = { message: notFound(method) };
+    try { callback(); } finally { runtime.error = null; }
+    return undefined;
+  };
+  class Tabs {
+    get(_tabId: number, callback?: () => void) { return fail('tabs.get', callback); }
+    sendMessage(_tabId: number, _message: unknown, callback?: () => void) { return fail('tabs.sendMessage', callback); }
+    remove(tabIds: number[]) { return Promise.reject(new Error(`Invalid call to tabs.remove(). Tab '${tabIds[0]}' was not found.`)); }
+  }
+  class Action { setBadgeText(_details: object, callback?: () => void) { return fail('action.setBadgeText', callback); } }
+  class Scripting { executeScript() { return Promise.reject(new Error('Invalid call to scripting.executeScript(). This extension does not have access to this tab.')); } }
+
+  function chrome(): any {
+    (globalThis as any).chrome = { runtime, tabs: new Tabs(), action: new Action(), scripting: new Scripting() };
+    installChromeCompat({});
+    return (globalThis as any).chrome;
+  }
+
+  it("read in Chrome's words, as lastError and as the rejection", async () => {
+    const api = chrome();
+    const read = (call: (callback: () => void) => void) => new Promise((resolve) => call(() => resolve(api.runtime.lastError?.message)));
+    assert.equal(await read((callback) => api.tabs.get(7, callback)), 'No tab with id: 7.');
+    await assert.rejects(api.tabs.get(7), { message: 'No tab with id: 7.' });
+    await assert.rejects(api.action.setBadgeText({ tabId: 8, text: 'a' }), { message: 'No tab with id: 8.' });
+    await assert.rejects(api.tabs.remove([10, 11]), { message: 'No tab with id: 10.' });
+    await assert.rejects(api.scripting.executeScript({ target: { tabId: 1 }, func: () => {} }), { message: /^Cannot access contents of the page\./ });
+    await assert.rejects(api.tabs.sendMessage(9, 'hi'), { message: 'Could not establish connection. Receiving end does not exist.' });
+    assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
+  });
+
+  it("settle never a closed tab's page message, as Chrome runs nothing more of a closed page", async () => {
+    const closed = 'Invalid call to runtime.sendMessage(). Tab not found.';
+    class ClosingRuntime extends FailingRuntime {
+      sendMessage(_message: unknown, callback?: () => void) {
+        if (!callback) return Promise.reject(new Error(closed));
+        this.error = { message: closed };
+        try { callback(); } finally { this.error = null; }
+        return undefined;
+      }
+    }
+    (globalThis as any).chrome = { runtime: new ClosingRuntime([]) };
+    installChromeCompat({}, true);
+    const api = (globalThis as any).chrome;
+    let settled = false;
+    api.runtime.sendMessage('hi', () => { settled = true; });
+    api.runtime.sendMessage('hi').then(() => { settled = true; }, () => { settled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(settled, false);
+  });
+
+  it('log no unchecked lastError a callback may have read through browser', () => {
+    const api = chrome();
+    const logged: unknown[] = [];
+    const { error } = console;
+    console.error = (...args: unknown[]) => { logged.push(args[0]); };
+    try {
+      // `browser.runtime` is WebKit's own, whose lastError Lilo cannot see being read.
+      api.tabs.get(7, () => runtime.lastError);
+    } finally {
+      console.error = error;
+    }
+    assert.deepEqual(logged, []);
+  });
+});
+
 describe('the view chrome hands out for WebKit own properties', () => {
   it('reads lastError undefined, not null, without an error', () => {
     class NullLastError extends Runtime { get lastError(): unknown { return null; } }

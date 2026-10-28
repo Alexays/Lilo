@@ -1,18 +1,19 @@
 import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { createGapEventsFromNames } from '../shared/gap-event.ts';
+import { ChromeEvent } from '../shared/chrome-event.ts';
 
 export const notificationsAugmentation = {
   create(
-    notificationId: string | object,
+    notificationId: string | object | null | undefined,
     options?: object,
     callback?: (id: string) => void
   ) {
-    // Chrome API allows create(options, cb) or create(id, options, cb)
+    // Chrome API allows create(options, cb) or create(id, options, cb), where an undefined or null id is omitted.
     const [id, opts, cb] =
-      typeof notificationId === 'string'
-        ? [notificationId, options ?? {}, callback]
-        : ['', notificationId, options as unknown as ((id: string) => void) | undefined];
+      typeof notificationId === 'object' && notificationId !== null
+        ? ['', notificationId, options as unknown as ((id: string) => void) | undefined]
+        : [notificationId ?? '', options ?? {}, callback];
     return callbackify(
       // No timeout: the first create waits on the system permission prompt.
       () => gapCall<{ notificationId: string }>('notifications', 'create', { notificationId: id, ...opts }, 0)
@@ -57,6 +58,7 @@ export const notificationsAugmentation = {
   },
 
   // onClicked/onClosed/onButtonClicked fire from native (AppDelegate). onPermissionLevelChanged has
-  // no native hook, so it stays an inert listener for feature detection.
-  ...createGapEventsFromNames('notifications', ['onClicked', 'onClosed', 'onButtonClicked', 'onPermissionLevelChanged']),
+  // no native hook, so it stays an inert local event for feature detection.
+  ...createGapEventsFromNames('notifications', ['onClicked', 'onClosed', 'onButtonClicked']),
+  onPermissionLevelChanged: new ChromeEvent<['granted' | 'denied']>(),
 };

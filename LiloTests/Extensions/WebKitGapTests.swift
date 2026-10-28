@@ -430,6 +430,50 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertTrue(injected, "WebKit no longer injects into open pages, as Chrome: drop the note in COMPATIBILITY.md (scripting and tabs)")
     }
 
+    func testContentScriptRunsOncePerCoveringGrantedPattern() async throws {
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Gap", "version": "1.0",
+            "content_scripts": [["matches": ["https://www.example.com/*"], "js": ["content.js"]]]
+        ]
+        let folder = try writeExtension(manifest, files: ["content.js": "document.documentElement.dataset.runs = String(Number(document.documentElement.dataset.runs ?? 0) + 1);"])
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        for pattern in ["*://*.example.com/*", "https://www.example.com/*"] {
+            context.setPermissionStatus(.grantedExplicitly, for: try WKWebExtension.MatchPattern(string: pattern))
+        }
+        try controller.load(context)
+        let configuration = WKWebViewConfiguration()
+        configuration.webExtensionController = controller
+        let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
+        page.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://www.example.com/"))
+        await pollUntil { (try? await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'")) as? String != "0" }
+        try await Task.sleep(for: .milliseconds(300))
+
+        let runs = try await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'") as? String
+        XCTAssertEqual(runs, "2", "WebKit runs a content script once however many granted patterns cover its page: ExtensionAccess can grant overlapping patterns again")
+    }
+
+    func testAFileTwoContentScriptEntriesListRunsTwice() async throws {
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Gap", "version": "1.0",
+            "content_scripts": [
+                ["matches": ["https://www.example.com/*"], "js": ["content.js"], "run_at": "document_start"],
+                ["matches": ["https://www.example.com/*"], "js": ["content.js"], "run_at": "document_idle"]
+            ]
+        ]
+        let folder = try writeExtension(manifest, files: ["content.js": "document.documentElement.dataset.runs = String(Number(document.documentElement.dataset.runs ?? 0) + 1);"])
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        context.setPermissionStatus(.grantedExplicitly, for: try WKWebExtension.MatchPattern(string: "https://www.example.com/*"))
+        try controller.load(context)
+        let configuration = WKWebViewConfiguration()
+        configuration.webExtensionController = controller
+        let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
+        page.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://www.example.com/"))
+        await pollUntil { (try? await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'")) as? String == "2" }
+
+        let runs = try await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'") as? String
+        XCTAssertEqual(runs, "2", "WebKit runs a file once per document as Chrome: drop the deduplication of prepareContentScriptCompat")
+    }
+
     func testRefusedNativeConnectionSetsNoLastError() async throws {
         let refusing = RefusingNativeHosts()
         controller.delegate = refusing
@@ -668,6 +712,23 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertTrue(
             title?.contains("does not have a unique ID") == true,
             "WebKit now removes rules a pending update adds (\(title ?? "nil")): drop the update queue of dnr-rules.ts"
+        )
+    }
+
+    func testRequestMethodsBesideExcludedRequestDomainsFailEveryRule() async throws {
+        let title = try await dnrOutcome("""
+        dnr.updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'lilo-gap', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })
+        """)
+        XCTAssertTrue(
+            title?.contains("Unable to load declarativeNetRequest rules") == true,
+            "WebKit now compiles requestMethods beside excludedRequestDomains (\(title ?? "nil")): drop the method rewrite of webKitRule (dnr-rules.ts)"
+        )
+        let other = try await dnrOutcome("""
+        dnr.updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'lilo-gap', excludedRequestMethods: ['other'] } }] })
+        """)
+        XCTAssertTrue(
+            other?.contains("can only contain trace, put, delete, get, post, patch, connect, head, and options") == true,
+            "WebKit now compiles the method \"other\" (\(other ?? "nil")): keep it in webKitRule (dnr-rules.ts)"
         )
     }
 
@@ -921,7 +982,7 @@ final class WebKitGapTests: XCTestCase {
 
         XCTAssertEqual(
             context.action(for: nil)?.label, "disconnected",
-            "WebKit now waits for every process before it disconnects a port nobody received yet: Postman Interceptor can leave the intermittent list"
+            "WebKit now waits for every process before it disconnects a port nobody received yet: drop unheard (runtime.ts crossExtensionMessaging)"
         )
     }
 }

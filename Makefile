@@ -284,6 +284,12 @@ preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	log=$$(mktemp); TEST_RUNNER_LILO_PRELOAD_BENCH="$$out" $(TEST) -only-testing:LiloTests/TopHitPreloadBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
+## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
+port-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) ext-bridge-build
+	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
 ## Run the terminal throughput and lock-fairness benchmarks
 terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) -only-testing:LiloTests/TerminalBenchmarkTests
@@ -303,6 +309,10 @@ ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
 ext-nightly:
 	@$(MAKE) --no-print-directory ext-smoke TOP=$(or $(TOP),500)
+
+## ext-smoke of the sentinel extensions in LiloTests/Extensions/smoke-sentinels.txt, as a pull request touching extension support runs it
+ext-smoke-pr:
+	@$(MAKE) --no-print-directory ext-smoke SHARDS=2 IDS="$$(grep -v '^#' LiloTests/Extensions/smoke-sentinels.txt | cut -d' ' -f1 | paste -sd, -)"
 
 ## Rebuild top-extensions.json from the Chrome Web Store user counts (TOP=500)
 top-extensions:

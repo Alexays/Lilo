@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension page closing as it sends a message no longer reports "Tab not found" errors, as Chrome runs nothing more of a closed page (Immersive Translate, Wappalyzer, Table Capture).
+time: 2026-10-28T14:00:00.000000+01:00

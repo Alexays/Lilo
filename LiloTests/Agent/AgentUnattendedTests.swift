@@ -44,7 +44,7 @@ final class AgentUnattendedTests: AgentToolTestCase {
         let choose = try XCTUnwrap(context.downloadManager.chooseDestination)
         let proposed = URL(fileURLWithPath: "/tmp/report.csv")
 
-        let chosen = await choose(proposed, try engine(forTab: tab).wkWebView)
+        let chosen = await choose(proposed, try engine(forTab: tab).wkWebView, false)
         let console = await client.callTool("read_console_messages", ["tabId": tab])
 
         XCTAssertEqual(chosen, proposed)

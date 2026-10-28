@@ -2,7 +2,7 @@
 // onTabReplaced never fires: a preloaded top hit joins its blank tab under the same id. SW-safe: no window/document/webkit.
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent } from '../shared/gap-event.ts';
-import { matchesUrlFilters, type UrlFilter } from '../shared/url-filter.ts';
+import { compileUrlFilters, type UrlFilter } from '../shared/url-filter.ts';
 import { tabAt, type TabPosition } from './tabs.ts';
 import { bridgeChrome, callbackify } from '../shared/callbackify.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
@@ -26,11 +26,11 @@ interface CreatedNavigationTarget {
 
 function tabResolvingEvent<Raw extends { url: string }>(name: string, details: (raw: Raw) => Promise<any>): ChromeEvent<[any]> {
   const event = new GapChromeEvent<[any]>('webNavigation', name);
-  const filters = new Map<Listener, UrlFilter[] | undefined>();
+  const filters = new Map<Listener, ((url: URL) => boolean) | undefined>();
   const add = event.addListener.bind(event);
   const remove = event.removeListener.bind(event);
   (event as any).addListener = (listener: Listener, filter?: { url?: UrlFilter[] }) => {
-    filters.set(listener, filter?.url);
+    filters.set(listener, compileUrlFilters(filter?.url));
     add(listener);
   };
   event.removeListener = (listener: Listener) => {
@@ -38,8 +38,9 @@ function tabResolvingEvent<Raw extends { url: string }>(name: string, details: (
     remove(listener);
   };
   const fire = (details: any) => {
-    for (const [listener, urls] of [...filters]) {
-      if (!matchesUrlFilters(details.url, urls)) continue;
+    const url = URL.canParse(details.url) ? new URL(details.url) : undefined;
+    for (const [listener, matches] of [...filters]) {
+      if (matches && !(url && matches(url))) continue;
       try {
         listener(details);
       } catch (err) {

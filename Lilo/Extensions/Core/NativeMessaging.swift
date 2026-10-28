@@ -131,19 +131,19 @@ enum NativeMessaging {
     /// Peels complete length-prefixed frames off `buffer`, stopping at the first header over `maxMessageBytes`, after which the
     /// caller must disconnect.
     static func extractFrames(from buffer: Data) -> (payloads: [Data], remainder: Data, oversizeError: Bool) {
-        var buffer = buffer
         var payloads: [Data] = []
-        while buffer.count >= 4 {
-            let header = [UInt8](buffer.prefix(4))
-            let length = Int(header[0]) | (Int(header[1]) << 8) | (Int(header[2]) << 16) | (Int(header[3]) << 24)
-            guard length >= 0, length <= maxMessageBytes else {
-                return (payloads, buffer, true)
-            }
-            guard buffer.count >= 4 + length else { break }
-            payloads.append(Data(buffer.dropFirst(4).prefix(length)))
-            buffer = Data(buffer.dropFirst(4 + length))
+        var offset = buffer.startIndex
+        var oversizeError = false
+        while buffer.endIndex - offset >= 4 {
+            let length = Int(buffer[offset]) | (Int(buffer[offset + 1]) << 8)
+                | (Int(buffer[offset + 2]) << 16) | (Int(buffer[offset + 3]) << 24)
+            guard length <= maxMessageBytes else { oversizeError = true; break }
+            guard buffer.endIndex - offset - 4 >= length else { break }
+            payloads.append(buffer.subdata(in: offset + 4 ..< offset + 4 + length))
+            offset += 4 + length
         }
-        return (payloads, buffer, false)
+        let remainder = offset == buffer.startIndex ? buffer : buffer.subdata(in: offset ..< buffer.endIndex)
+        return (payloads, remainder, oversizeError)
     }
 
     /// A host that neither replies nor exits within this is disconnected, so the reply fails instead of

@@ -2,7 +2,7 @@ import Security
 import XCTest
 @testable import Lilo
 
-/// chrome.identity token cache: per profile and extension, expiring, and never removed for another extension.
+/// chrome.identity: a token cache per profile and extension, never removed for another one, and hidden web auth flows.
 @MainActor
 final class IdentityBridgeHandlerTests: XCTestCase {
     private let service = BuildIdentity.appIdentifier + ".identity"
@@ -83,5 +83,25 @@ final class IdentityBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(kept?["token"] as? String, "other", "only the token named goes")
         XCTAssertNotNil(cleared as? BridgeError)
         XCTAssertEqual(neighbors?["token"] as? String, "mine", "another extension's identical token stays")
+    }
+
+    func testANonInteractiveFlowResolvesWhenItReachesTheRedirectUnaided() async throws {
+        let redirect = "https://\(caller.lowercased()).chromiumapp.org/cb#access_token=made-up"
+
+        let result = try await send("identity.launchWebAuthFlow", ["url": redirect, "interactive": false], as: caller)
+
+        XCTAssertEqual(result as? String, redirect)
+    }
+
+    func testANonInteractiveFlowFailsWhereTheUserWouldHaveToAct() async throws {
+        let page = "data:text/html,sign-in"
+
+        let loaded = try await send("identity.launchWebAuthFlow", ["url": page], as: caller)
+        let timedOut = try await send("identity.launchWebAuthFlow", [
+            "url": page, "abortOnLoadForNonInteractive": false, "timeoutMsForNonInteractive": 100
+        ], as: caller)
+
+        XCTAssertEqual((loaded as? BridgeError)?.message, "User interaction required.", "the page loaded without redirecting")
+        XCTAssertEqual((timedOut as? BridgeError)?.message, "User interaction required.", "no redirect within the timeout")
     }
 }

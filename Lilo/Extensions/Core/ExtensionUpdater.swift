@@ -38,6 +38,9 @@ final class ExtensionUpdater {
     var statusChanged = false
     /// When each extension last called `runtime.requestUpdateCheck`.
     private var lastRequestedChecks: [String: Date] = [:]
+    /// The update of each extension under way and the version it installs, which another update of it waits for: two
+    /// would swap the same folder.
+    private var updatesInFlight: [String: (latest: String?, task: Task<Bool, Never>)] = [:]
 
     init(registry: ProfileExtensionRegistry) {
         self.registry = registry
@@ -279,11 +282,16 @@ final class ExtensionUpdater {
 
     /// Downloads (once per `latest`, the version the update service named), verifies and swaps in the new package under the same
     /// id, keeping its storage. An update adding access disables the extension and asks first (a decline is remembered per
-    /// version); a package that fails to load rolls back.
+    /// version); a package that fails to load rolls back. An update of the extension already under way is waited for: one to
+    /// the same version takes its result, one to another version runs after it, as Chrome queues them.
     @discardableResult
     private func applyUpdate(extensionId: String, currentVersion: String, latest: String?, userInitiated: Bool = false) async -> Bool {
+        if let running = updatesInFlight[extensionId] {
+            let applied = await running.task.value
+            guard latest != nil, latest != running.latest else { return applied }
+        }
         guard let registry, let directory = registry.files.directory else { return false }
-        return await registry.files.whileWriting {
+        let update = Task { await registry.files.whileWriting {
             let permanent = directory.appendingPathComponent(extensionId, isDirectory: true)
             let key = "\(extensionId)@\(latest ?? UUID().uuidString)"
             let extracted: URL
@@ -361,7 +369,11 @@ final class ExtensionUpdater {
                 Self.logger.error("extension update failed \(extensionId, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 return false
             }
-        }
+        } }
+        updatesInFlight[extensionId] = (latest, update)
+        let applied = await update.value
+        if updatesInFlight[extensionId]?.task == update { updatesInFlight[extensionId] = nil }
+        return applied
     }
 
     /// The extracted package `key` names, downloaded unless an update already did. Its caller releases its use.

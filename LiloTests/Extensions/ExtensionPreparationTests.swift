@@ -96,6 +96,40 @@ final class ExtensionPreparationTests: XCTestCase {
         XCTAssertEqual(js, ["_lilo/lilo-content-compat.js", "vendor.js"], "compat must appear exactly once")
     }
 
+    /// As Chrome, a file runs once per document: an entry leaves out the files another entry already runs there, and
+    /// keeps its own list for getManifest.
+    func testContentScriptsLeaveOutFilesAnotherEntryRunsFirst() throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try writeManifest(#"""
+        {"content_scripts":[
+          {"matches":["http://*/*","https://*/*"],"js":["polyfill.js","functions.js","loader.js"],"run_at":"document_start","all_frames":true},
+          {"matches":["http://*/*","https://*/*"],"js":["polyfill.js","rightclick.js"],"run_at":"document_idle","all_frames":true},
+          {"matches":["https://getadblock.com/*"],"js":["polyfill.js","functions.js","site.js"],"run_at":"document_start","all_frames":true},
+          {"matches":["https://getadblock.com/*"],"js":["functions.js"],"run_at":"document_start","all_frames":true,"world":"MAIN"},
+          {"matches":["https://*/*"],"js":["polyfill.js","excluding.js"],"run_at":"document_start","exclude_matches":["https://a.com/*"]},
+          {"matches":["https://a.com/*"],"js":["polyfill.js","excluding.js","a.js"],"run_at":"document_idle"}
+        ]}
+        """#, to: dir)
+
+        try prepareCompat(dir)
+        try prepareCompat(dir)
+
+        let scripts = try readContentScripts(dir)
+        XCTAssertEqual(scripts.map { $0["js"] as? [String] ?? [] }, [
+            ["_lilo/lilo-content-compat.js", "polyfill.js", "functions.js", "loader.js"],
+            ["_lilo/lilo-content-compat.js", "rightclick.js"],
+            ["_lilo/lilo-content-compat.js", "site.js"],
+            ["functions.js"],
+            ["_lilo/lilo-content-compat.js", "excluding.js"],
+            ["_lilo/lilo-content-compat.js", "excluding.js", "a.js"]
+        ], "a file another entry runs first in the same world and frames goes, unless that entry excludes pages")
+        XCTAssertEqual(scripts.map { $0["lilo_js"] as? [String] }, [
+            nil, ["polyfill.js", "rightclick.js"], ["polyfill.js", "functions.js", "site.js"], nil,
+            ["polyfill.js", "excluding.js"], ["polyfill.js", "excluding.js", "a.js"]
+        ])
+    }
+
     func testSkipsCssOnlyContentScripts() throws {
         let dir = makeTempDir()
         defer { try? FileManager.default.removeItem(at: dir) }
@@ -146,5 +180,39 @@ final class ExtensionPreparationTests: XCTestCase {
         try prepareCompat(dir)
 
         XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("manifest.json"), encoding: .utf8), original)
+    }
+
+    // MARK: - Frame key
+
+    private func frameKey(_ dir: URL) -> String? {
+        try? String(contentsOf: dir.appendingPathComponent("_lilo/frame-key"), encoding: .utf8)
+    }
+
+    func testWritesTheFrameKeyIntoTheCompatAndForExtensionPages() throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try writeManifest(#"{"content_scripts":[{"js":["vendor.js"],"matches":["<all_urls>"]}],"web_accessible_resources":[{"resources":["images/*"],"matches":["<all_urls>"]}]}"#, to: dir)
+
+        try prepareCompat(dir, compatSource: #"const k="__LILO_FRAME_KEY__";"#)
+
+        let key = try XCTUnwrap(frameKey(dir))
+        XCTAssertTrue(key.range(of: "^[0-9a-f]{64}$", options: .regularExpression) != nil)
+        XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8), #"const k="\#(key)";"#)
+    }
+
+    /// A web page that could load the key, or the compat holding it, could message as the extension's content scripts.
+    func testWritesNoFrameKeyWhereWebPagesCanLoadLilosFiles() throws {
+        for resources in [#"[{"resources":["*.js"],"matches":["<all_urls>"]}]"#, #"["/*"]"#, #"[{"resources":["_LILO/*"],"matches":["https://example.com/*"]}]"#] {
+            let dir = makeTempDir()
+            defer { try? FileManager.default.removeItem(at: dir) }
+            try writeManifest(#"{"web_accessible_resources":\#(resources)}"#, to: dir)
+            try FileManager.default.createDirectory(at: dir.appendingPathComponent("_lilo"), withIntermediateDirectories: true)
+            try "stale".write(to: dir.appendingPathComponent("_lilo/frame-key"), atomically: true, encoding: .utf8)
+
+            try prepareCompat(dir, compatSource: #"const k="__LILO_FRAME_KEY__";"#)
+
+            XCTAssertNil(frameKey(dir), resources)
+            XCTAssertEqual(try String(contentsOf: dir.appendingPathComponent("_lilo/lilo-content-compat.js"), encoding: .utf8), #"const k="__LILO_FRAME_KEY__";"#)
+        }
     }
 }

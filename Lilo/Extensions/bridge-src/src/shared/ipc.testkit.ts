@@ -8,6 +8,12 @@ let respond: (call: Call) => unknown = () => null;
 const portListeners: Array<(message: unknown) => void> = [];
 /** The tag ipc.ts names its context with, which Lilo stamps on what it sends. */
 let channelTag: unknown;
+let disconnectLatest = () => {};
+
+/** Lilo lets the channel go, as WebKit disconnects a port; the next call opens another. */
+export function closeGapChannel(): void {
+  disconnectLatest();
+}
 
 /** Lilo pushes `envelope` on the channel, which a gap call or listener opened. */
 export function pushGapEvent(envelope: { namespace: string; event: string; args?: unknown[] }): void {
@@ -24,6 +30,8 @@ export function mockGapAPI(respondWith: (call: Call) => unknown): void {
   respond = respondWith;
   const connectNative = () => {
     const listeners: Array<(message: unknown) => void> = [];
+    const disconnects: Array<() => void> = [];
+    disconnectLatest = () => disconnects.forEach((listener) => listener());
     return {
       onMessage: {
         addListener: (listener: (message: unknown) => void) => {
@@ -31,7 +39,7 @@ export function mockGapAPI(respondWith: (call: Call) => unknown): void {
           portListeners.push(listener);
         },
       },
-      onDisconnect: { addListener() {} },
+      onDisconnect: { addListener: (listener: () => void) => { disconnects.push(listener); } },
       disconnect() {},
       postMessage(message: any) {
         if (message?.role) channelTag = message.tag;

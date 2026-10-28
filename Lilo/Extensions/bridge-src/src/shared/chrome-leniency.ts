@@ -4,6 +4,7 @@ import { bridgeChrome, callbackify, withLastError } from './callbackify.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { CHANNEL_HOST, gapCall } from './ipc.ts';
 import type { NamespaceCompat, Patch } from './chrome-compat.ts';
+import { chromeManifest, contentCompat, withoutContentCompat } from './static-compat.ts';
 
 const unknownPermission = /'([^']+)' is not a valid permission/;
 const invalidPattern = /'([^']+)' is not a valid pattern/;
@@ -67,6 +68,13 @@ export function permissionsPatches(declared: () => Set<string>, declaredOrigins:
   return {
     contains: (original) => function (this: unknown, request: Permissions, callback?: (result: boolean) => void) {
       return callbackify(async () => {
+        // Chrome's pattern contains <all_urls> when it matches all of one of its schemes' URLs: an extension holding
+        // *://*/* holds it (uBO Lite's forks turn their cosmetic filters on from it). WebKit wants every scheme.
+        if (request?.origins?.includes('<all_urls>')) {
+          const allOf = async (scheme: string) => Boolean(await original.call(this, { origins: [`${scheme}://*/*`] }).catch(() => false));
+          if (!(await allOf('https') || await allOf('http'))) return false;
+          request = { ...request, origins: request.origins.filter((origin) => origin !== '<all_urls>') };
+        }
         const forLilo = notRequired(request, declared());
         const { result, unknown } = await withoutUnknownPermissions(withoutNames(request, forLilo), (known) => original.call(this, known));
         const asked = [...forLilo, ...unknown].filter((name) => !isDeclared(name));
@@ -144,9 +152,31 @@ export function removePageListeners(): void {
 }
 
 /**
- * Retries only a listener rejected for resource types or URL patterns WebKit does not know (and never reports); a
- * filter left empty matches nothing, so it is skipped. A non-function listener is ignored, as in Chrome.
+ * Runs `add` with `filter`, and again without each resource type or URL pattern WebKit rejects as unknown (and never
+ * reports); a filter left empty matches nothing, so nothing is added.
  */
+export function addLeniently(filter: any, add: (filter: any) => unknown): unknown {
+  for (;;) {
+    try {
+      return add(filter);
+    } catch (error) {
+      const message = String((error as Error)?.message);
+      const type = unknownResourceType.exec(message)?.[1];
+      const pattern = invalidMatchPattern.exec(message)?.[1];
+      if (type && filter?.types?.includes(type)) {
+        filter = { ...filter, types: filter.types.filter((t: string) => t !== type) };
+        if (filter.types.length === 0) return undefined;
+      } else if (pattern && filter?.urls?.includes(pattern)) {
+        filter = { ...filter, urls: filter.urls.filter((url: string) => url !== pattern) };
+        if (filter.urls.length === 0) return undefined;
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+/** Adds a listener leniently, or through its event's stand-in. A non-function listener is ignored, as in Chrome. */
 export const chromeEvent: NamespaceCompat = {
   add: {
     hasListeners(this: object) { return eventStandIns.get(this)?.hasListeners() ?? (eventListeners.get(this)?.size ?? 0) > 0; },
@@ -157,30 +187,14 @@ export const chromeEvent: NamespaceCompat = {
       const standIn = eventStandIns.get(this);
       if (standIn) return (standIn.addListener as (...a: unknown[]) => void)(...args);
       if (pageEvents === null) return undefined;
-      let filter = args[1];
-      for (;;) {
-        try {
-          const result = original.apply(this, args[1] === filter ? args : [args[0], filter, ...args.slice(2)]);
-          let listeners = eventListeners.get(this);
-          if (!listeners) eventListeners.set(this, (listeners = new Set()));
-          listeners.add(args[0]);
-          pageEvents?.add(this);
-          return result;
-        } catch (error) {
-          const message = String((error as Error)?.message);
-          const type = unknownResourceType.exec(message)?.[1];
-          const pattern = invalidMatchPattern.exec(message)?.[1];
-          if (type && filter?.types?.includes(type)) {
-            filter = { ...filter, types: filter.types.filter((t: string) => t !== type) };
-            if (filter.types.length === 0) return undefined;
-          } else if (pattern && filter?.urls?.includes(pattern)) {
-            filter = { ...filter, urls: filter.urls.filter((url: string) => url !== pattern) };
-            if (filter.urls.length === 0) return undefined;
-          } else {
-            throw error;
-          }
-        }
-      }
+      return addLeniently(args[1], (filter) => {
+        const result = original.apply(this, args[1] === filter ? args : [args[0], filter, ...args.slice(2)]);
+        let listeners = eventListeners.get(this);
+        if (!listeners) eventListeners.set(this, (listeners = new Set()));
+        listeners.add(args[0]);
+        pageEvents?.add(this);
+        return result;
+      });
     },
     removeListener: (original) => function (this: any, listener: any) {
       if (typeof listener !== 'function') return undefined;
@@ -274,10 +288,28 @@ const nullTabIdAsNone: Patch = (original) => function (this: unknown, details: a
   return original.call(this, details?.tabId === null ? { ...details, tabId: undefined } : details, ...rest);
 };
 
-export const actionPatches: Record<string, Patch> = Object.fromEntries([
-  'setIcon', 'setTitle', 'getTitle', 'setPopup', 'getPopup', 'setBadgeText', 'getBadgeText',
-  'setBadgeBackgroundColor', 'getBadgeBackgroundColor', 'setBadgeTextColor', 'getBadgeTextColor',
-].map((name) => [name, nullTabIdAsNone]));
+/**
+ * Chrome's setBadgeText takes no text: a tab's badge then shows the global text again, the global one none. WebKit
+ * requires it, and keeps no tab's text apart from the global one.
+ */
+const badgeTextOptional: Patch = (original, self) => function (this: unknown, details: any, ...rest: unknown[]) {
+  if (details === null || typeof details !== 'object' || typeof details.text === 'string') return original.call(this, details, ...rest);
+  const target = self(this) as any;
+  const callback = typeof rest.at(-1) === 'function' ? rest.pop() as () => void : undefined;
+  const tabId = details.tabId ?? undefined;
+  return callbackify(async () => {
+    const text = tabId === undefined ? '' : await target.getBadgeText({});
+    return original.call(target, { ...details, tabId, text: text ?? '' });
+  }, callback);
+};
+
+export const actionPatches: Record<string, Patch> = {
+  ...Object.fromEntries([
+    'setIcon', 'setTitle', 'getTitle', 'setPopup', 'getPopup', 'getBadgeText',
+    'setBadgeBackgroundColor', 'getBadgeBackgroundColor', 'setBadgeTextColor', 'getBadgeTextColor',
+  ].map((name) => [name, nullTabIdAsNone])),
+  setBadgeText: (original, self) => badgeTextOptional(nullTabIdAsNone(original, self), self),
+};
 
 /** Chrome's getMessage answers whatever its `this`; WebKit's returns undefined off its namespace. */
 export const i18nPatches: Record<string, Patch> = {
@@ -286,19 +318,10 @@ export const i18nPatches: Record<string, Patch> = {
   },
 };
 
-/**
- * The manifest names Lilo's wrapper as the worker WebKit registers, and keeps the extension's own in `lilo_service_worker`
- * (ExtensionBackgroundPreparer): extensions compare it with their worker's location (webext-detect-page).
- */
+/** The manifest as the extension wrote it (chromeManifest). */
 export const runtimePatches: Record<string, Patch> = {
   getManifest: (original, self) => function (this: unknown, ...args: unknown[]) {
-    const manifest = original.apply(self(this), args);
-    const background = manifest?.background;
-    if (typeof background?.lilo_service_worker === 'string') {
-      background.service_worker = background.lilo_service_worker;
-      delete background.lilo_service_worker;
-    }
-    return manifest;
+    return chromeManifest(original.apply(self(this), args));
   },
 };
 
@@ -313,18 +336,12 @@ export async function registrationsSettled(): Promise<void> {
   while (registering.size) await Promise.allSettled(registering);
 }
 
-/** The compat ExtensionBackgroundPreparer writes into every extension, which each isolated-world script runs first. */
-const contentCompat = '_lilo/lilo-content-compat.js';
 
 /** `js` led by the compat, except in the MAIN world, where it would leak into the page. */
 const withContentCompat = (js: string[], world: unknown) => {
   const own = js.filter((file) => file !== contentCompat);
   return world === 'MAIN' ? own : [contentCompat, ...own];
 };
-
-const withoutContentCompat = (script: any) => (Array.isArray(script?.js) && script.js.includes(contentCompat)
-  ? { ...script, js: script.js.filter((file: string) => file !== contentCompat) }
-  : script);
 
 /** Each registration's scripts get the compat, as the manifest's do; `prepare` may need the current registrations. */
 const registration = (prepare: (scripts: any, namespace: any) => unknown = (scripts) => scripts): Patch => (original, self) => function (this: unknown, ...args: any[]) {

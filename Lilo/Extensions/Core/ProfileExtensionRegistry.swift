@@ -270,10 +270,21 @@ final class ProfileExtensionRegistry {
 
     /// Pending permission request handlers awaiting UI resolution, keyed by requestId.
     internal var pendingPermissionRequests: [String: (Bool) -> Void] = [:]
+    /// The window each pending request's prompt is shown in, held weakly.
+    let permissionPromptWindows = NSMapTable<NSString, MainWindowController>.strongToWeakObjects()
 
     func resolvePermissionRequest(id: String, granted: Bool) {
+        permissionPromptWindows.removeObject(forKey: id as NSString)
         guard let handler = pendingPermissionRequests.removeValue(forKey: id) else { return }
         handler(granted)
+    }
+
+    /// Denies the requests whose prompt `window` shows, once it can no longer answer them, and returns their ids.
+    @discardableResult
+    func denyPermissionRequests(shownIn window: MainWindowController) -> [String] {
+        let ids = pendingPermissionRequests.keys.filter { permissionPromptWindows.object(forKey: $0 as NSString) === window }
+        for id in ids { resolvePermissionRequest(id: id, granted: false) }
+        return ids
     }
 
     /// Answers the gap calls of this profile's workers; the page transport shares it.
@@ -730,8 +741,9 @@ final class ProfileExtensionRegistry {
         context.baseURL = URL(string: "chrome-extension://\(extensionId)")!
 
         #if DEBUG
-        // Attaching Web Inspector to extension internals must stay out of release builds.
-        context.isInspectable = true
+        // Attaching Web Inspector to extension internals must stay out of release builds. WebKit never unloads an
+        // inspectable worker: the extension smoke turns it off to unload workers as a release build does.
+        context.isInspectable = ProcessInfo.processInfo.environment["LILO_EXTENSIONS_NOT_INSPECTABLE"] == nil
         context.inspectionName = "\(webExtension.displayName ?? extensionId) - Background"
         #endif
 

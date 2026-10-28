@@ -79,9 +79,10 @@ final class DownloadStore {
         }
     }
 
-    /// Search with optional filters: state, url (substring), filename (substring), id.
+    /// Search with Chrome's DownloadQuery filters: any of `states`, every `query` term in the url or the
+    /// destination path (a "-term" in neither), the exact `url` and destination path `filename`, and `id`.
     /// Returns items newest-first, limited to `limit` (default 1000). Safe off the main actor.
-    nonisolated func search(state: DownloadState? = nil, query: String? = nil,
+    nonisolated func search(states: [DownloadState] = [], query: [String] = [],
                             url: String? = nil, filename: String? = nil,
                             id: Int64? = nil, limit: Int = 1000) throws -> [DownloadItem] {
         try dbPool.read { db in
@@ -91,24 +92,24 @@ final class DownloadStore {
                 sql += " AND id = ?"
                 args.append(id)
             }
-            if let state {
-                sql += " AND state = ?"
-                args.append(state.rawValue)
+            if !states.isEmpty {
+                sql += " AND state IN (\(Array(repeating: "?", count: states.count).joined(separator: ",")))"
+                for state in states { args.append(state.rawValue) }
             }
-            // Free-text query: matches if url OR filename contains the term
-            if let query {
-                sql += " AND (url LIKE ? ESCAPE '\\' OR filename LIKE ? ESCAPE '\\')"
-                args.append(Self.containsPattern(query))
-                args.append(Self.containsPattern(query))
-            } else {
-                if let url {
-                    sql += " AND url LIKE ? ESCAPE '\\'"
-                    args.append(Self.containsPattern(url))
-                }
-                if let filename {
-                    sql += " AND filename LIKE ? ESCAPE '\\'"
-                    args.append(Self.containsPattern(filename))
-                }
+            for term in query where !term.isEmpty && term != "-" {
+                let excluded = term.hasPrefix("-")
+                let pattern = Self.containsPattern(excluded ? String(term.dropFirst()) : term)
+                sql += " AND \(excluded ? "NOT " : "")(url LIKE ? ESCAPE '\\' OR destinationPath LIKE ? ESCAPE '\\')"
+                args.append(pattern)
+                args.append(pattern)
+            }
+            if let url {
+                sql += " AND url = ?"
+                args.append(url)
+            }
+            if let filename {
+                sql += " AND destinationPath = ?"
+                args.append(filename)
             }
             sql += " ORDER BY startedAt DESC LIMIT ?"
             args.append(limit)

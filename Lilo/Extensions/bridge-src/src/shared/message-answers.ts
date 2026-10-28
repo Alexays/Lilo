@@ -17,6 +17,22 @@ export const listensProbe = { liloListens: true } as const;
 const isProbe = (message: unknown) => (message as typeof listensProbe | undefined)?.liloListens === true;
 /** A content script's message to another extension, which only the worker's relay hears (runtime.ts). */
 const isExternal = (message: unknown) => typeof (message as { liloExternal?: unknown } | undefined)?.liloExternal === 'string';
+/** Whether `sender` is one of the extension's own pages: the relay at the top of a frame, never a content script. */
+const fromOwnPage = (sender: any) => typeof sender?.url === 'string' && sender.url.startsWith(`chrome-extension://${sender.id}/`);
+
+/**
+ * A content script's message the extension page at the top of its frame sends for it (frame-messaging.ts), with its
+ * url. Only that page's: a content script relaying a web page's data would let the page name any sender.
+ */
+const frameUrl = (message: unknown, sender: unknown) =>
+  (fromOwnPage(sender) ? (message as { liloFrame?: unknown } | undefined)?.liloFrame : undefined);
+
+/** The sender Chrome gives a content script of a frame no tab shows: here the extension page's, with the frame's url. */
+function frameSender(sender: any, url: string): unknown {
+  let origin: string | undefined;
+  try { origin = new URL(url).origin; } catch { /* the page's sender keeps its origin */ }
+  return { ...sender, url, ...(origin && { origin }) };
+}
 
 let workerScript: string | undefined;
 
@@ -38,7 +54,14 @@ function answeringListener(listener: Listener): Listener {
   if (!wrapper) {
     wrapper = function (this: unknown, message, sender, sendResponse) {
       if (isProbe(message) || isExternal(message)) return undefined;
-      const result = listener.call(this, message, chromeSender(sender), (response?: unknown) => sendResponse(response === undefined ? null : response));
+      const url = frameUrl(message, sender);
+      const framed = typeof url === 'string';
+      const result = listener.call(
+        this,
+        framed ? (message as { message?: unknown }).message : message,
+        framed ? frameSender(sender, url) : chromeSender(sender),
+        (response?: unknown) => sendResponse(response === undefined ? null : response),
+      );
       return typeof (result as PromiseLike<unknown>)?.then === 'function'
         ? Promise.resolve(result).then((response) => (response === undefined ? null : response))
         : result;
@@ -80,7 +103,8 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
   }
 }
 
-const noReceiver = 'Could not establish connection. Receiving end does not exist.';
+/** Chrome's lastError for a message or port no context received. */
+export const noReceiver = 'Could not establish connection. Receiving end does not exist.';
 
 /**
  * WebKit answers alike when no listener exists and when listeners do not respond, so `noAnswer`, called with the
@@ -89,7 +113,7 @@ const noReceiver = 'Could not establish connection. Receiving end does not exist
  */
 export function lastErrorWithoutAnswer(
   send: (...args: any[]) => any,
-  noAnswer: (this: unknown, ...args: any[]) => string | Promise<string>,
+  noAnswer: (this: unknown, ...args: any[]) => string | { response: unknown } | Promise<string | { response: unknown }>,
   rejects = false,
 ): (...args: any[]) => any {
   return function (this: unknown, ...args: any[]) {
@@ -100,15 +124,19 @@ export function lastErrorWithoutAnswer(
       const sent = args.slice(0, last);
       args[last] = function (this: unknown, response?: unknown) {
         if (response !== undefined || bridgeChrome()?.runtime?.lastError) return callback.call(this, response);
-        Promise.resolve(noAnswer.apply(self, sent)).then((message) => withLastError(message, () => callback.call(this)));
+        Promise.resolve(noAnswer.apply(self, sent)).then((answer) => (typeof answer === 'string'
+          ? withLastError(answer, () => callback.call(this))
+          : callback.call(this, answer.response)));
       };
       return send.apply(this, args);
     }
     const result = send.apply(this, args);
     if (!rejects || typeof result?.then !== 'function') return result;
     return result.then(async (response: unknown) => {
-      if (response === undefined && await noAnswer.apply(self, args) === noReceiver) throw new Error(noReceiver);
-      return response;
+      if (response !== undefined) return response;
+      const answer = await noAnswer.apply(self, args);
+      if (answer === noReceiver) throw new Error(noReceiver);
+      return typeof answer === 'string' ? response : answer.response;
     });
   };
 }
@@ -116,7 +144,44 @@ export function lastErrorWithoutAnswer(
 // Ends the name of a port Lilo opens whose both ends are Lilo's: only such a port carries numbered messages,
 // which a port of browser.runtime would not read.
 export const once = '?lilo';
+/** Ends, before `once`, the name of a port a frame's content script opens through its extension page, with its url encoded. */
+export const frameMark = '?liloFrame=';
 const served = new WeakMap<object, object>();
+
+/** Chrome's error for a message posted on a disconnected port, which extensions test before reconnecting. */
+export const disconnectedPort = 'Attempting to use a disconnected port object';
+const chromePortPrototypes = new WeakSet<object>();
+
+/** `port`, whose postMessage, as every WebKit port's of its prototype, fails in Chrome's words once disconnected. */
+export function portErrorsAsChrome<T>(port: T): T {
+  const prototype = port !== null && typeof port === 'object' ? Object.getPrototypeOf(port) : null;
+  if (!prototype || chromePortPrototypes.has(prototype) || typeof prototype.postMessage !== 'function') return port;
+  chromePortPrototypes.add(prototype);
+  const { postMessage } = prototype;
+  Object.defineProperty(prototype, 'postMessage', {
+    configurable: true, writable: true,
+    value(this: unknown, ...args: unknown[]) {
+      try {
+        return postMessage.apply(this, args);
+      } catch (error) {
+        if (error instanceof Error && error.message.endsWith('The port is disconnected.')) throw new Error(disconnectedPort);
+        throw error;
+      }
+    },
+  });
+  return port;
+}
+
+/** The name and sender of a port a frame's content script opened through its extension page, else `name` and `sender`. */
+export function framePort(name: string, sender: any): { name: string; sender: unknown } {
+  // A frame's port comes through the extension page only: a content script could take its name from the web page.
+  const frame = fromOwnPage(sender) ? name.lastIndexOf(frameMark) : -1;
+  let url: string | undefined;
+  try {
+    if (frame >= 0) url = decodeURIComponent(name.slice(frame + frameMark.length));
+  } catch { /* a name of the extension's own */ }
+  return url === undefined ? { name, sender } : { name: name.slice(0, frame), sender: frameSender(sender, url) };
+}
 
 /**
  * WebKit delivers each message posted before the port connects twice or more (gap 43), so each carries its sender
@@ -125,12 +190,12 @@ const served = new WeakMap<object, object>();
 export function messagesOnce(port: any, name: string): object {
   const known = served.get(port);
   if (known) return known;
+  portErrorsAsChrome(port);
   const sender = Math.random();
   let sent = 0;
   const received = new Map<number, number>();
   const chromePort = {
-    name,
-    sender: port.sender,
+    ...framePort(name, port.sender),
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage: (message: unknown) => port.postMessage({ [once]: [sender, ++sent], message }),
@@ -167,8 +232,9 @@ export function relayExternalMessaging(runtime: any): void {
   const { sendMessage, connect } = target;
   // Each content script entry carries its own copy of the compat: the first one relays for all.
   if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
-  const relayed = function (this: unknown, ...args: any[]) {
-    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(this, args);
+  // Called on runtime, never on this: an extension may call them detached, as Chrome's.
+  const relayed = function (...args: any[]) {
+    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(runtime, args);
     const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
     const sent = Promise.resolve(sendMessage.call(runtime, { liloExternal: args[0], message: args[1] })).then((answer: any) => {
       if (!answer || 'error' in answer) throw new Error(answer?.error ?? noReceiver);
@@ -180,8 +246,8 @@ export function relayExternalMessaging(runtime: any): void {
   };
   Object.defineProperty(target, 'sendMessage', { value: Object.assign(relayed, { __liloRelays: true }), configurable: true, writable: true });
   Object.defineProperty(target, 'connect', {
-    value(this: unknown, ...args: any[]) {
-      if (!otherExtension(args[0], runtime)) return connect.apply(this, args);
+    value(...args: any[]) {
+      if (!otherExtension(args[0], runtime)) return portErrorsAsChrome(connect.apply(runtime, args));
       const name = typeof args[1]?.name === 'string' ? args[1].name : '';
       return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name);
     },

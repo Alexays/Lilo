@@ -49,11 +49,60 @@ final class CookieChangeTracker: NSObject, WKHTTPCookieStoreObserver {
         var read: Int
     }
 
+    /// The store as of the last read, updated in place off the main actor; the first read only takes the baseline.
+    private actor Snapshot {
+        private var cookies: [Key: Entry] = [:]
+        private var reads = 0
+
+        /// What changed since the last read.
+        func diff(_ all: [HTTPCookie]) -> [Change] {
+            reads += 1
+            let reporting = reads > 1
+            var changes: [Change] = []
+            var found = 0
+            for cookie in all {
+                var hasher = Hasher()
+                hasher.combine(cookie.value)
+                hasher.combine(cookie.expiresDate)
+                hasher.combine(cookie.isSecure)
+                hasher.combine(cookie.isHTTPOnly)
+                hasher.combine(cookie.sameSitePolicy)
+                let fingerprint = hasher.finalize()
+                let key = Key(name: cookie.name, domain: cookie.domain, path: cookie.path)
+                guard let index = cookies.index(forKey: key) else {
+                    cookies[key] = Entry(cookie: cookie, fingerprint: fingerprint, read: reads)
+                    found += 1
+                    if reporting { changes.append(Change(cookie: cookie, removed: false, cause: "explicit")) }
+                    continue
+                }
+                let old = cookies.values[index]
+                if old.read != reads { found += 1 }
+                cookies.values[index].read = reads
+                guard old.fingerprint != fingerprint else { continue }
+                cookies.values[index].cookie = cookie
+                cookies.values[index].fingerprint = fingerprint
+                if reporting {
+                    changes.append(Change(cookie: old.cookie, removed: true, cause: "overwrite"))
+                    changes.append(Change(cookie: cookie, removed: false, cause: "explicit"))
+                }
+            }
+            if cookies.count > found {
+                let now = Date()
+                let gone = cookies.filter { $0.value.read != reads }
+                for (key, entry) in gone {
+                    cookies.removeValue(forKey: key)
+                    guard reporting else { continue }
+                    let expired = entry.cookie.expiresDate.map { $0 <= now } ?? false
+                    changes.append(Change(cookie: entry.cookie, removed: true, cause: expired ? "expired" : "explicit"))
+                }
+            }
+            return changes
+        }
+    }
+
     private let store: WKHTTPCookieStore
     private let report: ([Change]) -> Void
-    /// The store as of the last read, updated in place; the first read only takes the baseline.
-    private var cookies: [Key: Entry] = [:]
-    private var reads = 0
+    private let snapshot = Snapshot()
     /// Changes arriving while a read runs share the next one, so a page load's burst of Set-Cookie
     /// headers costs a couple of reads, while changes an extension makes one after another each show.
     private var reading = false
@@ -91,53 +140,11 @@ final class CookieChangeTracker: NSObject, WKHTTPCookieStoreObserver {
         current = Task {
             repeat {
                 stale = false
-                apply(await store.allCookies())
+                let all = await store.allCookies()
+                let changes = await snapshot.diff(all)
+                if !changes.isEmpty, !stopped { report(changes) }
             } while stale && !stopped
             reading = false
         }
-    }
-
-    private func apply(_ all: [HTTPCookie]) {
-        reads += 1
-        let reporting = reads > 1 && !stopped
-        var changes: [Change] = []
-        var found = 0
-        for cookie in all {
-            var hasher = Hasher()
-            hasher.combine(cookie.value)
-            hasher.combine(cookie.expiresDate)
-            hasher.combine(cookie.isSecure)
-            hasher.combine(cookie.isHTTPOnly)
-            hasher.combine(cookie.sameSitePolicy)
-            let fingerprint = hasher.finalize()
-            let key = Key(name: cookie.name, domain: cookie.domain, path: cookie.path)
-            guard let index = cookies.index(forKey: key) else {
-                cookies[key] = Entry(cookie: cookie, fingerprint: fingerprint, read: reads)
-                found += 1
-                if reporting { changes.append(Change(cookie: cookie, removed: false, cause: "explicit")) }
-                continue
-            }
-            let old = cookies.values[index]
-            if old.read != reads { found += 1 }
-            cookies.values[index].read = reads
-            guard old.fingerprint != fingerprint else { continue }
-            cookies.values[index].cookie = cookie
-            cookies.values[index].fingerprint = fingerprint
-            if reporting {
-                changes.append(Change(cookie: old.cookie, removed: true, cause: "overwrite"))
-                changes.append(Change(cookie: cookie, removed: false, cause: "explicit"))
-            }
-        }
-        if cookies.count > found {
-            let now = Date()
-            let gone = cookies.filter { $0.value.read != reads }
-            for (key, entry) in gone {
-                cookies.removeValue(forKey: key)
-                guard reporting else { continue }
-                let expired = entry.cookie.expiresDate.map { $0 <= now } ?? false
-                changes.append(Change(cookie: entry.cookie, removed: true, cause: expired ? "expired" : "explicit"))
-            }
-        }
-        if !changes.isEmpty { report(changes) }
     }
 }

@@ -9,18 +9,26 @@ export function liloLastError(): { message: string } | undefined {
   return lastError;
 }
 
+/** The message of the Lilo callback's runtime.lastError, without checking it. */
+export function liloLastErrorMessage(): string | undefined {
+  return lastError?.message;
+}
+
 /**
  * Runs `callback` with `message` as chrome.runtime.lastError, then logs it as Chrome does when the
- * callback did not read it.
+ * callback did not read it, unless `logsUnchecked` is false.
  */
-export function withLastError(message: string, callback: () => void): void {
+export function withLastError(message: string, callback: () => void, logsUnchecked = true): void {
+  // Nested in another's callback, it stands for the outer lastError, which holds again after it but logs no more.
+  const outer = lastError;
   lastError = { message };
   lastErrorRead = false;
   try {
     callback();
   } finally {
-    if (!lastErrorRead) console.error(`Unchecked runtime.lastError: ${message}`);
-    lastError = undefined;
+    if (!lastErrorRead && logsUnchecked) console.error(`Unchecked runtime.lastError: ${message}`);
+    lastError = outer;
+    lastErrorRead = true;
   }
 }
 
@@ -39,9 +47,15 @@ export function bridgeChrome(): any {
   return installedChrome ?? (globalThis as any).chrome;
 }
 
+/** Logs a callback's exception in Chrome's words: V8 prefixes a thrown non-Error with "Uncaught". */
+function reportCallbackError(error: unknown): void {
+  // One string: WebKit reports only the first argument of a console.error.
+  console.error(`Error handling response: ${error instanceof Error ? '' : 'Uncaught '}${String(error)}`);
+}
+
 /**
  * Chrome's dual callback/Promise pattern: with a callback, an error goes to chrome.runtime.lastError and the callback
- * gets undefined. Exceptions thrown from callbacks are swallowed, as Chrome's native APIs do.
+ * gets undefined, and runs with the global object as `this`. An exception thrown from a callback is logged, as Chrome does.
  */
 export function callbackify<T>(
   impl: () => Promise<T>,
@@ -50,11 +64,11 @@ export function callbackify<T>(
   const promise = impl();
   if (callback) {
     promise.then((result: T) => {
-      try { callback(result); } catch { /* Chrome silently swallows callback throws */ }
+      try { callback.call(globalThis, result); } catch (error) { reportCallbackError(error); }
     }, (err: unknown) => {
       try {
-        withLastError(err instanceof Error ? err.message : String(err), () => callback(undefined as unknown as T));
-      } catch { /* Chrome silently swallows callback throws */ }
+        withLastError(err instanceof Error ? err.message : String(err), () => callback.call(globalThis, undefined as unknown as T));
+      } catch (error) { reportCallbackError(error); }
     });
     return undefined;
   }

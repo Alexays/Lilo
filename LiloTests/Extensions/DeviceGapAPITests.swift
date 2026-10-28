@@ -3,7 +3,7 @@ import IOKit.pwr_mgt
 import XCTest
 @testable import Lilo
 
-/// chrome.power, chrome.system.* and chrome.tts through the engine factory's gap router, as an
+/// chrome.power, chrome.system.*, chrome.mdns and chrome.tts through the engine factory's gap router, as an
 /// extension page or worker calls them.
 @MainActor
 final class DeviceGapAPITests: XCTestCase {
@@ -150,6 +150,38 @@ final class DeviceGapAPITests: XCTestCase {
         NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: NSApp)
         XCTAssertEqual(events("system.display", "onDisplayChanged", to: extensionId).count, 1)
         XCTAssertEqual(events("system.display", "onDisplayChanged", to: unrelated).count, 0)
+    }
+
+    func testNetworkInterfacesListTheAddressesOfTheInterfacesUp() async throws {
+        let extensionId = try await loadExtension(named: "network", permissions: ["system.network"])
+        let unrelated = try await loadExtension(named: "unrelated", permissions: ["system.cpu"])
+
+        let interfacesResult = await call("system.network", "getNetworkInterfaces", from: extensionId).result
+        let interfaces = try XCTUnwrap(interfacesResult as? [[String: Any]])
+        for interface in interfaces {
+            let name = try XCTUnwrap(interface["name"] as? String)
+            let address = try XCTUnwrap(interface["address"] as? String)
+            let prefixLength = try XCTUnwrap(interface["prefixLength"] as? Int)
+            XCTAssertFalse(name.hasPrefix("lo"), "loopback is left out")
+            XCTAssertFalse(address.contains("%"), "a link-local address goes without its scope")
+            XCTAssertTrue((0...(address.contains(":") ? 128 : 32)).contains(prefixLength))
+        }
+
+        let (_, error) = await call("system.network", "getNetworkInterfaces", from: unrelated)
+        XCTAssertEqual(error, "Permission 'system.network' is required for system.network.getNetworkInterfaces")
+    }
+
+    // MARK: - mdns
+
+    func testForceDiscoveryNeedsTheMdnsPermissionAndAnswersAtOnce() async throws {
+        let extensionId = try await loadExtension(named: "mdns", permissions: ["mdns"])
+        let unrelated = try await loadExtension(named: "unrelated", permissions: ["system.network"])
+
+        let (result, error) = await call("mdns", "forceDiscovery", from: extensionId)
+        XCTAssertNil(error)
+        XCTAssertNil(result)
+        let refused = await call("mdns", "forceDiscovery", from: unrelated).error
+        XCTAssertEqual(refused, "Permission 'mdns' is required for mdns.forceDiscovery")
     }
 
     // MARK: - tts

@@ -76,7 +76,7 @@ final class ExtensionAccess {
                   webExtension.optionalPermissionMatchPatterns.contains(where: { $0.matches(pattern) }) else { continue }
             patterns.insert(pattern)
         }
-        context.grantedPermissionMatchPatterns = Dictionary(uniqueKeysWithValues: patterns.map { ($0, distantFuture) })
+        context.grantedPermissionMatchPatterns = Dictionary(uniqueKeysWithValues: Self.outermost(patterns).map { ($0, distantFuture) })
         let webStore = ["*://chromewebstore.google.com/*", "*://chrome.google.com/webstore/*"]
             .compactMap { try? WKWebExtension.MatchPattern(string: $0) }
         context.deniedPermissionMatchPatterns = Dictionary(uniqueKeysWithValues: webStore.map { ($0, distantFuture) })
@@ -97,7 +97,7 @@ final class ExtensionAccess {
         guard let context = context(extensionId) else { return }
         let webExtension = context.webExtension
         let current = states[extensionId] ?? ExtensionStorage.AccessState()
-        let granted = Self.grantedMatchPatterns(requested: Self.baseMatchPatterns(for: webExtension), allowedHosts: current.hosts)
+        let granted = Self.outermost(Self.grantedMatchPatterns(requested: Self.baseMatchPatterns(for: webExtension), allowedHosts: current.hosts))
         var state = current
         state.optionalPermissions = context.grantedPermissions.keys
             .filter { webExtension.optionalPermissions.contains($0) && !webExtension.requestedPermissions.contains($0) }
@@ -126,6 +126,19 @@ final class ExtensionAccess {
         })
     }
 
+    /// The patterns no other one covers, each for its whole host, as Chrome's host access ignores paths. WebKit runs
+    /// a content script once per granted pattern covering its page (WEBKIT-GAPS 99), so the grants must not overlap.
+    static func outermost(_ patterns: Set<WKWebExtension.MatchPattern>) -> Set<WKWebExtension.MatchPattern> {
+        let hostWide = Set(patterns.map { pattern in
+            guard !pattern.matchesAllURLs, pattern.path != "/*", let scheme = pattern.scheme, let host = pattern.host else { return pattern }
+            return (try? WKWebExtension.MatchPattern(scheme: scheme, host: host, path: "/*")) ?? pattern
+        })
+        // Of two patterns covering each other, the first in description order stays.
+        return hostWide.filter { pattern in
+            !hostWide.contains { $0 != pattern && $0.matches(pattern) && (!pattern.matches($0) || $0.description < pattern.description) }
+        }
+    }
+
     /// The match patterns granted without asking, as Chrome grants them at install: host permissions,
     /// content-script and `externally_connectable` matches. Optional host permissions stay behind
     /// `permissions.request`.
@@ -138,7 +151,9 @@ final class ExtensionAccess {
     /// What `new` would be granted at load beyond what `old` is: its added manifest permissions, and
     /// the granted match patterns no old one already covers. Chrome's permission-increase check.
     static func addedAccess(from old: WKWebExtension, to new: WKWebExtension) -> (permissions: [String], matchPatterns: [String]) {
-        let permissions = new.requestedPermissions.subtracting(old.requestedPermissions).map(\.rawValue).sorted()
+        // The manifest's own list: `requestedPermissions` drops the ones only Lilo's Gap APIs implement.
+        let permissions = Set(new.manifest["permissions"] as? [String] ?? [])
+            .subtracting(old.manifest["permissions"] as? [String] ?? []).sorted()
         let oldPatterns = baseMatchPatterns(for: old)
         let patterns = baseMatchPatterns(for: new)
             .filter { pattern in !oldPatterns.contains { $0.matches(pattern) } }

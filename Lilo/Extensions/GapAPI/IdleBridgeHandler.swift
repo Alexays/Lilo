@@ -1,4 +1,5 @@
 import AppKit
+import CoreGraphics
 import IOKit
 
 /// chrome.idle gap bridge using IOKit HID idle time.
@@ -17,6 +18,8 @@ final class IdleBridgeHandler: GapHandler {
     private let registriesProvider: (() -> [ProfileExtensionRegistry])?
     nonisolated(unsafe) private var pollTimer: Timer?
     nonisolated(unsafe) private var observers: [Any] = []
+    /// Screen lock and unlock observers, registered only while an extension listens.
+    nonisolated(unsafe) private var lockObservers: [Any] = []
     /// The state each listener was last told, or took as its baseline.
     private var lastStates: [Listener: String] = [:]
 
@@ -33,8 +36,7 @@ final class IdleBridgeHandler: GapHandler {
         observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged].map { name in
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.schedulePolling(for: self.audience)
+                    self?.update()
                 }
             }
         }
@@ -43,20 +45,21 @@ final class IdleBridgeHandler: GapHandler {
     deinit {
         pollTimer?.invalidate()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
+        lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
     }
 
-    var isPolling: Bool { pollTimer != nil }
+    var isPolling: Bool { pollTimer != nil || !lockObservers.isEmpty }
 
     func handle(_ call: GapCall) async -> Any? {
         let listener = Listener(registry: ObjectIdentifier(call.registry), extensionId: call.extensionId)
         switch call.action {
         case "idle.queryState":
             let threshold = Self.clampInterval(call.double("detectionIntervalInSeconds") ?? detectionIntervals[listener] ?? Self.defaultInterval)
-            return idleSeconds() >= threshold ? "idle" : "active"
+            return Self.screenIsLocked ? "locked" : idleSeconds() >= threshold ? "idle" : "active"
 
         case "idle.setDetectionInterval":
             detectionIntervals[listener] = Self.clampInterval(call.double("intervalInSeconds") ?? Self.defaultInterval)
-            schedulePolling(for: audience)
+            update()
             return nil
 
         default:
@@ -64,7 +67,7 @@ final class IdleBridgeHandler: GapHandler {
         }
     }
 
-    // MARK: - onStateChanged polling
+    // MARK: - onStateChanged
 
     /// The extensions holding the idle permission that listen to onStateChanged, in every profile.
     private var audience: [(listener: Listener, registry: ProfileExtensionRegistry)] {
@@ -74,32 +77,36 @@ final class IdleBridgeHandler: GapHandler {
         }
     }
 
-    /// Polls at the shortest detection interval of `audience`, or stops while it is empty.
-    private func schedulePolling(for audience: [(listener: Listener, registry: ProfileExtensionRegistry)]) {
-        guard let interval = audience.map({ detectionIntervals[$0.listener] ?? Self.defaultInterval }).min() else {
-            pollTimer?.invalidate()
-            pollTimer = nil
+    /// Tells each listener its state when it changed, then waits for the next possible change: an active
+    /// listener's threshold, any input while one is idle, the unlock while locked. Stops while nobody listens.
+    private func update(locked knownLock: Bool? = nil) {
+        pollTimer?.invalidate()
+        pollTimer = nil
+        let audience = audience
+        guard !audience.isEmpty else {
+            lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+            lockObservers = []
             lastStates = [:]
             return
         }
-        guard pollTimer?.timeInterval != interval else { return }
-        pollTimer?.invalidate()
-        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.poll() }
+        if lockObservers.isEmpty {
+            lockObservers = [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)].map { name, isLock in
+                DistributedNotificationCenter.default().addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.update(locked: isLock) }
+                }
+            }
         }
-        timer.tolerance = interval * 0.5  // off the hot path; presence detection tolerates slack
-        RunLoop.main.add(timer, forMode: .common)
-        pollTimer = timer
-    }
-
-    private func poll() {
-        let audience = audience
-        schedulePolling(for: audience)
-        guard !audience.isEmpty else { return }
-        let idle = idleSeconds()
+        let locked = knownLock ?? Self.screenIsLocked
+        let idle = locked ? 0 : idleSeconds()
         var states: [Listener: String] = [:]
+        var nextCheck = Double.infinity
         for (listener, registry) in audience {
-            let state = idle >= detectionIntervals[listener] ?? Self.defaultInterval ? "idle" : "active"
+            let threshold = detectionIntervals[listener] ?? Self.defaultInterval
+            let state = locked ? "locked" : idle >= threshold ? "idle" : "active"
+            if !locked {
+                // Only a poll sees the input that ends idle; active lasts at least until the threshold.
+                nextCheck = min(nextCheck, state == "idle" ? 1 : threshold - idle)
+            }
             states[listener] = state
             // The first sample only sets the baseline.
             if let previous = lastStates[listener], previous != state {
@@ -107,6 +114,14 @@ final class IdleBridgeHandler: GapHandler {
             }
         }
         lastStates = states
+        guard nextCheck.isFinite else { return }
+        // Capped so an unreachable threshold cannot overflow the timer's fire date.
+        let timer = Timer(timeInterval: min(nextCheck, 86_400), repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.update() }
+        }
+        timer.tolerance = 1
+        RunLoop.main.add(timer, forMode: .common)
+        pollTimer = timer
     }
 
     /// Chrome rejects detection intervals below 15s; clamp so a 0/negative value can't make
@@ -116,6 +131,11 @@ final class IdleBridgeHandler: GapHandler {
     }
 
     // MARK: - State Detection
+
+    /// The session's lock state, under an undocumented but long-stable CGSession key.
+    private static var screenIsLocked: Bool {
+        (CGSessionCopyCurrentDictionary() as? [String: Any])?["CGSSessionScreenIsLocked"] as? Bool == true
+    }
 
     private func idleSeconds() -> Double {
         let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"))

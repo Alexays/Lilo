@@ -152,22 +152,21 @@ final class DownloadStoreTests: XCTestCase {
         try store.insert(&a)
         try store.insert(&b)
 
-        let completed = try store.search(state: .complete)
+        let completed = try store.search(states: [.complete])
         XCTAssertEqual(completed.count, 1)
         XCTAssertEqual(completed.first?.state, .complete)
     }
 
-    func testSearchByFilename() throws {
+    func testSearchByFilenameMatchesTheWholeDestinationPath() throws {
         var a = makeItem(url: "https://example.com/report.pdf")
-        a.filename = "report.pdf"
-        var b = makeItem(url: "https://example.com/photo.jpg")
-        b.filename = "photo.jpg"
+        a.destinationPath = "/tmp/report.pdf"
+        var b = makeItem(url: "https://example.com/report.pdf.zip")
+        b.destinationPath = "/tmp/report.pdf.zip"
         try store.insert(&a)
         try store.insert(&b)
 
-        let results = try store.search(filename: "report")
-        XCTAssertEqual(results.count, 1)
-        XCTAssertEqual(results.first?.filename, "report.pdf")
+        XCTAssertEqual(try store.search(filename: "/tmp/report.pdf").map(\.id), [a.id])
+        XCTAssertEqual(try store.search(filename: "report.pdf").map(\.id), [], "Chrome's filename is the absolute path")
     }
 
     func testMarkFileMissing() throws {
@@ -178,27 +177,54 @@ final class DownloadStoreTests: XCTestCase {
         XCTAssertEqual(fetched?.fileMissing, true)
     }
 
-    func testSearchByURLFindsOnlyTheMatchingDownload() throws {
+    func testSearchByURLFindsOnlyThatExactURL() throws {
         var a = makeItem(url: "https://files.example.com/archive.tar.gz")
-        var b = makeItem(url: "https://other.example/readme.txt")
+        var b = makeItem(url: "https://files.example.com/archive.tar.gz.sig")
         try store.insert(&a)
         try store.insert(&b)
-        let results = try store.search(url: "files.example.com")
-        XCTAssertEqual(results.count, 1)
-        XCTAssertEqual(results.first?.url, "https://files.example.com/archive.tar.gz")
+        XCTAssertEqual(try store.search(url: "https://files.example.com/archive.tar.gz").map(\.id), [a.id])
+        XCTAssertEqual(try store.search(url: "files.example.com").map(\.id), [])
+    }
+
+    func testSearchQueryNeedsEveryTermAndNoExcludedOne() throws {
+        var report = makeItem(url: "https://example.com/q3/report.pdf")
+        report.destinationPath = "/tmp/Downloads/report.pdf"
+        var draft = makeItem(url: "https://example.com/q3/report-draft.pdf")
+        draft.destinationPath = "/tmp/Downloads/report-draft.pdf"
+        var photo = makeItem(url: "https://example.com/photo.jpg")
+        photo.destinationPath = "/tmp/Downloads/photo.jpg"
+        try store.insert(&report)
+        try store.insert(&draft)
+        try store.insert(&photo)
+
+        XCTAssertEqual(Set(try store.search(query: ["q3", "PDF"]).map(\.id)), [report.id, draft.id], "terms match the url or the path, any case")
+        XCTAssertEqual(try store.search(query: ["report", "-draft"]).map(\.id), [report.id])
+        XCTAssertEqual(try store.search(query: ["downloads", "-q3"]).map(\.id), [photo.id], "a term may match the folder")
+        XCTAssertEqual(try store.search(query: ["report"], url: "https://example.com/q3/report.pdf").map(\.id), [report.id], "url still filters with a query")
+    }
+
+    func testSearchFiltersBeforeTheLimit() throws {
+        var paused = makeItem()
+        paused.state = .paused
+        paused.startedAt = Date(timeIntervalSinceNow: -60)
+        var done = makeItem()
+        done.state = .complete
+        try store.insert(&paused)
+        try store.insert(&done)
+
+        XCTAssertEqual(try store.search(states: [.inProgress, .paused], limit: 1).map(\.id), [paused.id], "the newer complete row does not take the only slot")
     }
 
     func testSearchTreatsLikeWildcardsAsLiterals() throws {
         var literal = makeItem(url: "https://example.com/100%25.zip")
-        literal.filename = "report_2024.pdf"
+        literal.destinationPath = "/tmp/report_2024.pdf"
         var other = makeItem(url: "https://example.com/1000.zip")
-        other.filename = "reportX2024.pdf"
+        other.destinationPath = "/tmp/reportX2024.pdf"
         try store.insert(&literal)
         try store.insert(&other)
 
-        XCTAssertEqual(try store.search(filename: "report_2024").map(\.id), [literal.id])
-        XCTAssertEqual(try store.search(url: "100%").map(\.id), [literal.id])
-        XCTAssertEqual(try store.search(query: "_2024").map(\.id), [literal.id])
+        XCTAssertEqual(try store.search(query: ["report_2024"]).map(\.id), [literal.id])
+        XCTAssertEqual(try store.search(query: ["100%"]).map(\.id), [literal.id])
     }
 
     func testSearchReportsResumeDataPresenceWithoutTheBlob() throws {
@@ -210,7 +236,7 @@ final class DownloadStoreTests: XCTestCase {
         try store.insert(&resumable)
         try store.insert(&plain)
 
-        let byId = try Dictionary(uniqueKeysWithValues: store.search(state: .interrupted).map { ($0.id!, $0) })
+        let byId = try Dictionary(uniqueKeysWithValues: store.search(states: [.interrupted]).map { ($0.id!, $0) })
         XCTAssertEqual(byId[resumable.id!]?.hasResumeData, true)
         XCTAssertNil(byId[resumable.id!]?.resumeData)
         XCTAssertEqual(byId[resumable.id!]?.canResume, true)

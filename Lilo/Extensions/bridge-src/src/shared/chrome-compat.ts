@@ -4,12 +4,12 @@ import { tabGroupsAugmentation, tabsWithGroups, manifestPermissions, discardTab 
 import { webNavigationAugmentation, webNavigationPatches, webNavigationStandIns } from '../augmentation/webNavigation.ts';
 import { actionPatches, alarmsPatches, chromeEvent, contextMenusPatches, i18nPatches, nativeMessagingAsChrome, permissionsPatches, removePageListeners, runtimePatches, scriptingPatches, trackPageListeners } from './chrome-leniency.ts';
 import { storageAreaPatches } from './storage-area.ts';
-import { answerAsChrome, lastErrorWithoutAnswer, listensProbe } from './message-answers.ts';
+import { answerAsChrome, lastErrorWithoutAnswer, listensProbe, noReceiver } from './message-answers.ts';
 import { cookiesOnChanged, cookiesPatches, getPartitionKey } from '../augmentation/cookies.ts';
 import {
   runtimeAdditions, runtimeLifecycle, onConnect, onConnectNative, crossExtensionMessaging, crossExtensionPatches, externalEvents, relayForContentScripts, tabsConnect,
 } from '../augmentation/runtime.ts';
-import { onAuthRequired } from '../augmentation/webRequest.ts';
+import { onAuthRequired, webRequestFrames } from '../augmentation/webRequest.ts';
 import { chromePageQuery, currentTabOfThisPage, tabsAdditions, onBoundsChanged, tabPatches, tabStandIns, windowPatches } from '../augmentation/tabs.ts';
 import { permissionsAdditions } from '../augmentation/permissions.ts';
 import { getContexts } from '../augmentation/offscreen.ts';
@@ -19,7 +19,7 @@ import { gapModules } from './gap-modules.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { GapChromeEvent, reportGapListener } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
-import { callbackify, installBridgeChrome, liloLastError } from './callbackify.ts';
+import { callbackify, installBridgeChrome, liloLastError, liloLastErrorMessage, withLastError } from './callbackify.ts';
 import { CHROME_CONSTANTS } from './chrome-constants.gen.ts';
 import { STATIC_CONSTANTS, addMissing, home } from './static-compat.ts';
 
@@ -101,7 +101,7 @@ function ownMembers(namespace: any): void {
   for (const name of Object.getOwnPropertyNames(target)) {
     const method = Object.getOwnPropertyDescriptor(target, name)?.value;
     if (typeof method !== 'function' || name === 'constructor' || Object.hasOwn(namespace, name)) continue;
-    const bound = pageClosed === undefined ? method.bind(namespace) : closingGuard(method, namespace);
+    const bound: Method & { __liloUnwrapped?: Method } = chromeMethod(method, namespace);
     // Bound too: Lilo calls it on what `chrome` hands out, a view WebKit's native methods do not take as `this`.
     if (method.__liloUnwrapped) bound.__liloUnwrapped = method.__liloUnwrapped.bind(namespace);
     Object.defineProperty(namespace, name, { value: bound, enumerable: true, configurable: true, writable: true });
@@ -117,24 +117,71 @@ function ownMembers(namespace: any): void {
   }
 }
 
+/**
+ * WebKit's failure of a page's message once Lilo closed its tab, before the page itself goes: Chrome runs nothing more of
+ * a closed page, so the call settles never.
+ */
+const closedTab = 'Invalid call to runtime.sendMessage(). Tab not found.';
+
 /** Whether the page called a window.close() that succeeded; undefined in a worker. */
 let pageClosed: boolean | undefined;
 const never = new Promise<never>(() => {});
 
-/** `method` on `namespace`, whose callback and promise settle no more once the page closed, as in Chrome. */
-function closingGuard(method: Method, namespace: object): Method {
+/** WebKit's runtime, whose lastError holds while one of its callbacks runs (Lilo's patches give their own). */
+let webKitRuntime: any;
+
+/** Chrome's words for an error of WebKit's from a call with `args`, if Chrome has its own (extensions test them). */
+function chromeError(message: string, args: any[]): string | undefined {
+  const call = /^Invalid call to ([\w.]+)\(\)\. (.+)$/.exec(message);
+  if (!call) return undefined;
+  const [, method, error] = call;
+  const details = args[0] !== null && typeof args[0] === 'object' ? args[0] : undefined;
+  if (error === 'Tab not found.') {
+    if (method === 'tabs.sendMessage') return noReceiver;
+    const tabId = typeof args[0] === 'number' ? args[0] : details?.tabId;
+    return typeof tabId === 'number' ? `No tab with id: ${tabId}.` : undefined;
+  }
+  // tabs.remove and the calls taking several tabs name the one missing.
+  const missing = /^Tab '(\d+)' was not found\.$/.exec(error);
+  if (missing) return `No tab with id: ${missing[1]}.`;
+  // Chrome names the page to an extension that may read tab urls: the extensions that test it test the start.
+  if (error === 'This extension does not have access to this tab.' && /^(scripting|tabs)\.(executeScript|insertCSS|removeCSS)$/.test(method)) {
+    return 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.';
+  }
+  if (error === 'Parent menu item not found.' && details?.parentId !== undefined) return `Cannot find menu item with id ${details.parentId}`;
+  if (error === 'Identifier is already used.' && details?.id !== undefined) return `Cannot create item with duplicate id ${details.id}`;
+  return undefined;
+}
+
+/**
+ * `method` on `namespace`, failing in Chrome's words where WebKit's differ; in a page, its callback and promise settle
+ * no more once the page closed, as in Chrome.
+ */
+function chromeMethod(method: Method, namespace: object): Method {
   return function (...args: any[]) {
     const last = args.length - 1;
     const callback = args[last];
     if (typeof callback === 'function') {
       args[last] = function (this: unknown, ...results: unknown[]) {
-        if (!pageClosed) return callback.apply(this, results);
+        if (pageClosed) return undefined;
+        const lilo = liloLastErrorMessage();
+        const message = lilo ?? webKitRuntime?.lastError?.message;
+        if (pageClosed !== undefined && message === closedTab) return undefined;
+        const chrome = typeof message === 'string' ? chromeError(message, args) : undefined;
+        if (chrome === undefined) return callback.apply(this, results);
+        // WebKit's own lastError holds too, which `browser.runtime.lastError` reads unseen (AdBlock's callbacks): its
+        // errors go unlogged, as those Lilo leaves in WebKit's words.
+        withLastError(chrome, () => callback.apply(this, results), lilo !== undefined);
+        return undefined;
       };
     }
     const result = method.apply(namespace, args);
-    return result instanceof Promise
-      ? result.then((value) => (pageClosed ? never : value), (error) => (pageClosed ? never : Promise.reject(error)))
-      : result;
+    if (!(result instanceof Promise)) return result;
+    return result.then((value) => (pageClosed ? never : value), (error) => {
+      if (pageClosed || pageClosed !== undefined && error?.message === closedTab) return never;
+      const chrome = error instanceof Error ? chromeError(error.message, args) : undefined;
+      return Promise.reject(chrome === undefined ? error : new Error(chrome));
+    });
   };
 }
 
@@ -192,6 +239,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   pageClosed = page ? false : undefined;
   trackPageListeners(page);
   const chrome = g.chrome;
+  webKitRuntime = chrome.runtime;
   const perms = manifestPermissions(chrome);
   const nativeMessaging = perms.has('nativeMessaging');
   // Chrome has runtime.onUserScriptMessage and onUserScriptConnect with the permission, also while chrome.userScripts is
@@ -202,28 +250,45 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   // them for it, and leaves out the empty ones WebKit reports to the others.
   const withheldURLs = !perms.has('tabs') && !chrome.runtime?.getManifest?.()?.optional_permissions?.includes('tabs');
   const groups = chrome.tabGroups === tabGroupsAugmentation ? tabsWithGroups : {};
-  const noReceiver = () => 'Could not establish connection. Receiving end does not exist.';
+  const unreceived = () => noReceiver;
+  // How long each look for a loading tab's content scripts waits: about half a second in all.
+  const TAB_LISTENER_WAITS = [20, 60, 150, 300];
   // A page's message goes to the worker and the other pages (an offscreen document): Chrome's error then depends on
   // whether one listens, which their answer to the probe tells, or Lilo for a worker that may not run yet. Its promise
   // rejects when nothing does. A worker's goes to pages, mostly not open: its promise resolves.
   const pageNoAnswer = () => Promise.resolve(chrome.runtime.sendMessage(listensProbe)).catch(() => undefined)
     .then((listens) => listens === true || gapCall<boolean>('runtime', 'workerListensToMessages'))
-    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver()), noReceiver);
+    .then((listens) => (listens ? 'The message port closed before a response was received.' : noReceiver), unreceived);
   // Asked when nobody answered a tab's message: its content scripts, and the extension's own pages it shows, which
   // WebKit delivers it to as Chrome, answer the probe once one listens. A tab still loading one of those pages counts
   // as listening: its page cannot listen yet (a tab opened on the popup hears tabs.onActivated's message at once).
-  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => function (this: unknown, tabId: unknown, _message: unknown, options?: unknown) {
+  // A message sent on a document's DOMContentLoaded reaches no content script yet (WEBKIT-GAPS 97): the probe goes again
+  // while the tab loads, and once one listens the message goes too, as nobody received it.
+  const tabNoAnswer = (original: Method, self: (that: unknown) => object) => async function (this: unknown, tabId: unknown, message: unknown, options?: unknown) {
     const tabs = self(this) as any;
     const target = options !== null && typeof options === 'object' ? [options] : [];
+    const portClosed = 'The message port closed before a response was received.';
+    const tab = () => Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+    const listens = () => Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then((answer) => answer === true, () => false);
     const loadsOwnPage = async () => {
-      const tab = await Promise.resolve((tabs.get?.__liloUnwrapped ?? tabs.get)?.call(tabs, tabId)).catch(() => undefined);
+      const shown = await tab();
       const base = chrome.runtime?.getURL?.('');
-      return tab?.status === 'loading' && !!base && [tab.url, tab.pendingUrl].some((url) => typeof url === 'string' && url.startsWith(base));
+      const scope = globalThis as any;
+      // Chrome never delivers a page's message to the page itself: its own tab does not count.
+      const own = scope.top === scope && typeof scope.location?.href === 'string' ? scope.location.href.split('#')[0] : undefined;
+      return shown?.status === 'loading' && !!base && [shown.url, shown.pendingUrl]
+        .some((url) => typeof url === 'string' && url.startsWith(base) && url.split('#')[0] !== own);
     };
-    return Promise.resolve(original.call(tabs, tabId, listensProbe, ...target)).then(
-      async (listens) => (listens === true || await loadsOwnPage() ? 'The message port closed before a response was received.' : noReceiver()),
-      noReceiver,
-    );
+    if (await listens() || await loadsOwnPage()) return portClosed;
+    for (const [attempt, delay] of TAB_LISTENER_WAITS.entries()) {
+      // The first look also follows a tab that just completed: its document committed a moment ago.
+      if (attempt > 0 && (await tab())?.status !== 'loading') break;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      if (!await listens()) continue;
+      const response = await Promise.resolve(original.call(tabs, tabId, message, ...target)).catch(() => undefined);
+      return response === undefined ? portClosed : { response };
+    }
+    return noReceiver;
   };
   const tabsPatch: Record<string, Patch> = {
     ...tabPatches(withheldURLs),
@@ -234,6 +299,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   tabsPatch.query = (original, self) => chromePageQuery(query(original, self), self);
   const getCurrent = tabsPatch.getCurrent;
   tabsPatch.getCurrent = (original, self) => currentTabOfThisPage(getCurrent(original, self), self);
+  const runtimeOnConnect = onConnect(() => chrome.runtime.onConnect);
   const compat: Record<string, NamespaceCompat> = {
     // WebKit does not expose badge colors to Swift, so the color calls are bridged onto its chrome.action.
     action: { replace: action, add: { onUserSettingsChanged: actionOnUserSettingsChanged }, patch: actionPatches },
@@ -274,13 +340,13 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
         handlerBehaviorChanged: (callback?: () => void) => callbackify(async () => {}, callback),
         onActionIgnored: webRequestOnActionIgnored,
       },
-      standIns: { onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
+      standIns: { ...webRequestFrames((name) => chrome.webRequest[name]), onAuthRequired: onAuthRequired(() => chrome.webRequest.onAuthRequired) },
     },
     i18n: { add: { detectLanguage }, patch: i18nPatches },
     runtime: {
       patch: { ...runtimePatches, ...crossExtensionPatches },
       // WebKit's own: an extension may replace globalThis.chrome (Proton Pass).
-      standIns: { ...runtimeLifecycle, onConnect: onConnect(() => chrome.runtime.onConnect), ...externalEvents(() => chrome.runtime) },
+      standIns: { ...runtimeLifecycle, onConnect: runtimeOnConnect, ...externalEvents(() => chrome.runtime) },
       add: {
         getContexts,
         ...runtimeAdditions,
@@ -289,12 +355,12 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
       },
       serve: (runtime) => {
         // Only through chrome: browser.runtime.lastError stays WebKit's (Touch VPN reads it).
-        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : noReceiver, page);
+        const sendLocal = lastErrorWithoutAnswer((...args: any[]) => runtime.sendMessage(...args), page ? pageNoAnswer : unreceived, page);
         return {
           // WebKit's lastError is null without an error, Chrome's undefined (eJOY tests it with typeof).
           get lastError() { return liloLastError() ?? runtime.lastError ?? undefined; },
           ...(nativeMessaging ? nativeMessagingAsChrome(runtime) : {}),
-          ...crossExtensionMessaging(runtime, sendLocal),
+          ...crossExtensionMessaging(runtime, sendLocal, runtimeOnConnect),
         };
       },
     },

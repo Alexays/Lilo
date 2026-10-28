@@ -292,6 +292,7 @@ final class WKEngineFactory {
         router.register(handler: proxyHandler)
         router.register(handler: PowerBridgeHandler())
         router.register(handler: SystemBridgeHandler(registriesProvider: allRegistries))
+        router.register(handler: LocalNetworkBridgeHandler(registriesProvider: allRegistries))
         router.register(handler: TtsBridgeHandler(registriesProvider: allRegistries))
         router.register(handler: TabsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) }))
         router.register(handler: DebuggerBridgeHandler.shared)

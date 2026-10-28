@@ -344,8 +344,8 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertTrue(read, "the popup's page in a tab reads that tab")
     }
 
-    /// A credentialed fetch to a host the extension may access carries the site's SameSite=Lax and Strict cookies, as
-    /// in Chrome, where WebKit leaves them out of an extension's request (ChatGPT's side panel read signed out).
+    /// A credentialed fetch or XMLHttpRequest to a host the extension may access carries the site's SameSite=Lax and
+    /// Strict cookies, as in Chrome, where WebKit leaves them out of an extension's request (ChatGPT's side panel read signed out).
     func testCredentialedFetchesCarryTheSiteCookiesAsInChrome() async throws {
         let server = try await TinyHTTPServer { request in
             if request.hasPrefix("GET /set ") {
@@ -376,12 +376,75 @@ final class ExtensionPageTabTests: XCTestCase {
         let echo = "http://127.0.0.1:\(server.port)/echo"
         let fromPage = try await page.callAsyncJavaScript("return await fetch(url, { credentials: 'include', cache: 'no-store' }).then((r) => r.text(), (e) => 'fails ' + e)", arguments: ["url": echo], in: nil, contentWorld: .page)
         let fromWorker = try await page.callAsyncJavaScript("return await chrome.runtime.sendMessage(url)", arguments: ["url": echo], in: nil, contentWorld: .page)
+        let fromXHR = try await page.callAsyncJavaScript("""
+            return await new Promise((resolve) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('GET', url);
+              xhr.withCredentials = true;
+              xhr.onload = () => resolve(xhr.responseText);
+              xhr.onerror = () => resolve('fails');
+              xhr.send();
+            })
+            """, arguments: ["url": echo], in: nil, contentWorld: .page)
         let siteTab = try XCTUnwrap(window.tabManager.engineTab(for: site.id)?.view as? WKWebView)
         let fromSite = try await siteTab.callAsyncJavaScript("return await fetch('/echo', { cache: 'no-store' }).then((r) => r.text())", arguments: [:], in: nil, contentWorld: .page)
         let cookies = { (echoed: Any?) in Set(((echoed as? String) ?? "").replacingOccurrences(of: "Cookie: ", with: "").components(separatedBy: "; ")) }
         XCTAssertEqual(cookies(fromSite), ["lax=1", "plain=1", "strict=1"])
         XCTAssertEqual(cookies(fromPage), ["lax=1", "plain=1", "strict=1"], "an extension page's fetch")
         XCTAssertEqual(cookies(fromWorker), ["lax=1", "plain=1", "strict=1"], "the worker's fetch")
+        XCTAssertEqual(cookies(fromXHR), ["lax=1", "plain=1", "strict=1"], "an extension page's XMLHttpRequest with withCredentials")
+    }
+
+    /// A credentialed fetch sends a cookie to its path and the paths below it, never to a path it only starts (RFC 6265).
+    func testCredentialedFetchCookiesMatchPathsBySegment() async throws {
+        let cookie = { (path: String) in
+            try XCTUnwrap(HTTPCookie(properties: [.name: "c\(path)", .value: "1", .domain: "example.com", .path: path]))
+        }
+        let jar = try ["/", "/app", "/app/", "/application"].map(cookie)
+        let store = WKWebsiteDataStore.nonPersistent().httpCookieStore
+        let sent = { (path: String) async throws -> [String] in
+            await store.cookies(for: try XCTUnwrap(URL(string: "https://example.com\(path)")), in: jar).map(\.name).sorted()
+        }
+        let app = try await sent("/app")
+        let below = try await sent("/app/x")
+        let longer = try await sent("/applications")
+        XCTAssertEqual(app, ["c/", "c/app"])
+        XCTAssertEqual(below, ["c/", "c/app", "c/app/"])
+        XCTAssertEqual(longer, ["c/"])
+    }
+
+    /// A credentialed fetch keeps Authorization across a same-origin redirect and drops it at a hop to another origin, as fetch does.
+    func testCredentialedFetchesDropAuthorizationAtACrossOriginRedirect() async throws {
+        let server = try await TinyHTTPServer { request in
+            let lines = request.split(separator: "\r\n")
+            let port = lines.first { $0.lowercased().hasPrefix("host:") }?.split(separator: ":").last ?? ""
+            if request.hasPrefix("GET /away ") { return ("302 Found", ["Location: http://127.0.0.1:\(port)/echo"], Data()) }
+            if request.hasPrefix("GET /near ") { return ("302 Found", ["Location: /echo"], Data()) }
+            let authorization = lines.first { $0.lowercased().hasPrefix("authorization:") }.map(String.init) ?? "none"
+            return ("200 OK", ["Content-Type: text/plain"], Data(authorization.utf8))
+        }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("authorization")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        for (name, content) in [
+            "manifest.json": #"{"manifest_version": 3, "name": "Auth", "version": "1.0", "description": "d", "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"]}"#,
+            "page.html": "<title>page</title>"
+        ] {
+            try content.write(to: extDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        try await registry.load(from: extDir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        let pageTab = try XCTUnwrap(window.createTabStateFirst(url: context.baseURL.appendingPathComponent("page.html")))
+        _ = await pollUntil { window.tabManager.engineTab(for: pageTab.id)?.currentTitle == "page" }
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: pageTab.id)?.view as? WKWebView)
+        let fetch = "return await fetch(url, { credentials: 'include', cache: 'no-store', headers: { Authorization: 'Bearer t' } }).then((r) => r.text(), (e) => 'fails ' + e)"
+
+        let near = try await page.callAsyncJavaScript(fetch, arguments: ["url": "http://localhost:\(server.port)/near"], in: nil, contentWorld: .page)
+        let away = try await page.callAsyncJavaScript(fetch, arguments: ["url": "http://localhost:\(server.port)/away"], in: nil, contentWorld: .page)
+
+        XCTAssertEqual((near as? String)?.lowercased(), "authorization: bearer t")
+        XCTAssertEqual(away as? String, "none")
     }
 
     /// A window always has an active tab, as in Chrome: Dashlane's popup read `[0].url` of `tabs.query({active, currentWindow})`
@@ -482,6 +545,39 @@ final class ExtensionPageTabTests: XCTestCase {
 
         await pollUntil { context.action(for: nil)?.label != "waiting" }
         XCTAssertEqual(context.action(for: nil)?.label, "2 1", "the worker gets both requests once, the page one answer")
+    }
+
+    /// A worker listening to onConnect connects back to the page that connected to it, in a tab of another process, as
+    /// Postman Interceptor does: WebKit would disconnect that port on the worker's own process's answer (WEBKIT-GAPS.md, gap 60).
+    func testAWorkerListeningToOnConnectConnectsBackToAPageInATab() async throws {
+        let (window, registry, id) = try await loadClosingExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Ports", "version": "1.0", "action": {"default_title": "waiting"}, "background": {"service_worker": "worker.js"}}"#,
+            "worker.js": """
+                chrome.runtime.onConnect.addListener(() => {
+                    const back = chrome.runtime.connect({ name: 'back' });
+                    back.onDisconnect.addListener(() => chrome.action.setTitle({ title: 'disconnected' }));
+                    back.postMessage('heard');
+                });
+                chrome.runtime.onMessage.addListener((message) => { chrome.action.setTitle({ title: message }); });
+                """,
+            "page.html": "<script src='page.js'></script>",
+            // Busy past the connection back, so the worker's own process answers first.
+            "page.js": """
+                chrome.runtime.connect({ name: 'popup' });
+                chrome.runtime.onConnect.addListener((port) => port.onMessage.addListener((message) => chrome.runtime.sendMessage(message)));
+                for (const end = Date.now() + 1000; Date.now() < end;) {}
+                """
+        ])
+        let context = try XCTUnwrap(registry.context(for: id))
+
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "chrome-extension://\(id)/page.html")))
+
+        await pollUntil { context.action(for: nil)?.label != "waiting" }
+        try await Task.sleep(for: .milliseconds(300))
+        let page = window.tabManager.engineTab(for: tab.id)?.view as? WKWebView
+        let background = context.value(forKey: "_backgroundWebView") as? WKWebView
+        XCTAssertNotEqual(page?.value(forKey: "_webProcessIdentifier") as? Int, background?.value(forKey: "_webProcessIdentifier") as? Int)
+        XCTAssertEqual(context.action(for: nil)?.label, "heard", "the page gets the worker's message on the port it opened back")
     }
 
     /// WebKit's own executeScript, under way on a tab that closes itself, ends without taking the app

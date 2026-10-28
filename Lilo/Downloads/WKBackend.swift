@@ -11,8 +11,10 @@ final class WKBackend: NSObject {
     weak var webView: WKWebView?
     var downloadsFolderProvider: () -> URL? = { nil }
     /// Set when the user wants to pick where each download goes: gets the proposed file and returns
-    /// the chosen one, or nil to cancel the download.
-    var chooseDestination: ((URL, WKWebView?) async -> URL?)?
+    /// the chosen one, or nil to cancel the download. With `prompts`, it asks whatever the user's setting.
+    var chooseDestination: ((URL, WKWebView?, _ prompts: Bool) async -> URL?)?
+    /// chrome.downloads.onDeterminingFilename for a download about to start, nil when no extension suggests a name.
+    var suggestFilename: ((WKDownload, DownloadItem) async -> FilenameSuggestion?)?
     var store: DownloadStore? {
         get { flight.store }
         set { flight.store = newValue }
@@ -127,9 +129,30 @@ final class WKBackend: NSObject {
         if let id = activeDownloads[download] { unquarantined[id] = nil }
     }
 
-    private func destination(for proposed: URL, from webView: WKWebView?) async -> URL? {
+    private func destination(for proposed: URL, from webView: WKWebView?, prompts: Bool) async -> URL? {
         guard let chooseDestination else { return proposed }
-        return await chooseDestination(proposed, webView)
+        return await chooseDestination(proposed, webView, prompts)
+    }
+
+    /// Where the extensions' suggestion puts `item`, else its proposed destination, and whether the user picks the file:
+    /// the suggested one is taken and the suggestion says "prompt".
+    private func suggestedDestination(for download: WKDownload, item: DownloadItem, in directory: URL) async -> (url: URL, prompts: Bool) {
+        var item = item
+        item.profileId = store?.profileId
+        guard let suggestion = await suggestFilename?(download, item) else { return (URL(fileURLWithPath: item.destinationPath), false) }
+        let target = directory.appendingPathComponent(suggestion.filename)
+        try? FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        guard FileManager.default.fileExists(atPath: target.path) else { return (target, false) }
+        switch suggestion.conflictAction {
+        case "overwrite":
+            // WebKit fails a download whose destination exists.
+            try? FileManager.default.removeItem(at: target)
+            return (target, false)
+        case "prompt":
+            return (target, true)
+        default:
+            return (Self.resolveDestination(for: suggestion.filename, in: directory), false)
+        }
     }
 
     /// Resolves a filename to a non-conflicting path in the given directory.
@@ -141,7 +164,7 @@ final class WKBackend: NSObject {
             let name = destination.deletingPathExtension().lastPathComponent
             let ext = destination.pathExtension
             let newName = ext.isEmpty ? "\(name) (\(counter))" : "\(name) (\(counter)).\(ext)"
-            finalURL = directory.appendingPathComponent(newName)
+            finalURL = destination.deletingLastPathComponent().appendingPathComponent(newName)
             counter += 1
         }
         return finalURL
@@ -156,17 +179,21 @@ extension WKBackend: WKDownloadDelegate {
     ) async -> URL? {
         let dir = await MainActor.run { resolvedDownloadsFolder(downloadsFolderProvider()) }
         let proposedURL = Self.resolveDestination(for: suggestedFilename, in: dir)
-        guard let finalURL = await destination(for: proposedURL, from: await download.webView) else {
+        var item = DownloadItem(id: nil, url: response.url?.absoluteString ?? "",
+            filename: suggestedFilename, destinationPath: proposedURL.path,
+            bytesReceived: 0, totalBytes: response.expectedContentLength,
+            state: .inProgress, startedAt: Date(), fileMissing: false)
+        item.mimeType = response.mimeType
+        let suggested = await suggestedDestination(for: download, item: item, in: dir)
+        guard let finalURL = await destination(for: suggested.url, from: await download.webView, prompts: suggested.prompts) else {
             await MainActor.run { onDropped?(download) }
             return nil
         }
+        item.filename = finalURL.lastPathComponent
+        item.destinationPath = finalURL.path
 
-        let tracked: Bool = await MainActor.run {
-            var item = DownloadItem(id: nil, url: response.url?.absoluteString ?? "",
-                filename: finalURL.lastPathComponent, destinationPath: finalURL.path,
-                bytesReceived: 0, totalBytes: response.expectedContentLength,
-                state: .inProgress, startedAt: Date(), fileMissing: false)
-            item.mimeType = response.mimeType
+        let tracked: Bool = await MainActor.run { [item] in
+            var item = item
             guard (try? store?.insert(&item)) != nil, let id = item.id else {
                 // Returning nil from decideDestination makes WebKit cancel silently, so leave a trail.
                 Self.logger.error("download dropped before tracking (store nil or insert failed), WebKit will cancel: \(finalURL.lastPathComponent, privacy: .private) from \(response.url?.absoluteString ?? "nil", privacy: .private)")

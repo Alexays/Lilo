@@ -1,0 +1,3 @@
+kind: Fixed
+body: Extensions that clear their own data with browsingData no longer erase every site's cookies and storage
+time: 2026-10-26T21:35:32.419258+01:00

@@ -80,6 +80,97 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertEqual(firstId, b.id)
     }
 
+    func testSearchMatchesChromesQueryFilenameAndInProgressState() async throws {
+        var paused = DownloadItem(
+            id: nil, url: "https://example.com/q3/report.pdf", filename: "report.pdf",
+            destinationPath: "/tmp/report.pdf", bytesReceived: 10, totalBytes: 100,
+            state: .paused, startedAt: Date(timeIntervalSinceNow: -60), fileMissing: false
+        )
+        var draft = paused
+        draft.url = "https://example.com/q3/report-draft.pdf"
+        draft.destinationPath = "/tmp/report-draft.pdf"
+        draft.state = .complete
+        draft.startedAt = Date()
+        try store.insert(&paused)
+        try store.insert(&draft)
+
+        func ids(_ payload: [String: Any]) async -> [Int64]? {
+            (await handler.handle(makeBridgeMessage(action: "downloads.search", payload: payload)) as? [[String: Any]])?
+                .compactMap { $0["id"] as? Int64 }
+        }
+
+        let inProgress = await ids(["state": "in_progress", "limit": 1])
+        let query = await ids(["query": ["q3", "-draft"]])
+        let byPath = await ids(["filename": "/tmp/report-draft.pdf", "query": ["report"]])
+        let byBasename = await ids(["filename": "report-draft.pdf"])
+        XCTAssertEqual(inProgress, [paused.id!], "a paused download is in_progress, and the limit applies after the state")
+        XCTAssertEqual(query, [paused.id!])
+        XCTAssertEqual(byPath, [draft.id!])
+        XCTAssertEqual(byBasename, [])
+    }
+
+    func testDownloadRejectsAFilenameOutsideTheDownloadsFolder() async {
+        for filename in ["", "/tmp/x.txt", "../x.txt", "a/../x.txt", "a//x.txt", "./x.txt", "a/", ".hidden"] {
+            let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: ["url": "data:text/plain,x", "filename": filename]))
+            XCTAssertEqual((result as? BridgeError)?.message, "Invalid filename", filename)
+        }
+    }
+
+    func testDownloadIntoASubfolderCreatesIt() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("gap-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+
+        let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: ["url": "data:text/plain,x", "filename": "reports/2026/x.txt"]))
+        let id = try XCTUnwrap(result as? Int64)
+        await manager.cancel(id: id)
+
+        var isDirectory: ObjCBool = false
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("reports/2026").path, isDirectory: &isDirectory))
+        XCTAssertTrue(isDirectory.boolValue)
+        XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("reports/2026/x.txt").path)
+    }
+
+    func testAnExtensionsSuggestionRenamesTheDownloadIntoASubfolder() async throws {
+        let (folder, registry, extensionId) = try await downloadsFolderAndExtension()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        registry.gapEvents.listen(["downloads.onDeterminingFilename"], extensionId: extensionId)
+        let handler = try XCTUnwrap(self.handler)
+
+        let download = Task {
+            await handler.handle(makeBridgeMessage(action: "downloads.download", payload: [
+                "url": "data:text/plain,x", "filename": "x.txt", "extensionId": extensionId
+            ]), registry: registry) as? Int64
+        }
+        _ = await pollUntil { !Self.determiningFilenameEvents(in: registry, to: extensionId).isEmpty }
+        let event = try XCTUnwrap(Self.determiningFilenameEvents(in: registry, to: extensionId).first)
+        let requestId = try XCTUnwrap(event.args.last as? String)
+        _ = await handler.handle(makeBridgeMessage(action: "downloads.suggestFilename", payload: [
+            "requestId": requestId, "filename": "sorted/x.txt", "extensionId": extensionId
+        ]), registry: registry)
+        let downloaded = await download.value
+        let id = try XCTUnwrap(downloaded)
+        await manager.cancel(id: id)
+
+        XCTAssertEqual((event.args.first as? [String: Any])?["filename"] as? String, "x.txt", "Chrome names the file without its folder")
+        XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("downloads/sorted/x.txt").path)
+    }
+
+    func testWithoutAListenerTheDownloadKeepsItsNameAndNothingIsSent() async throws {
+        let (folder, registry, extensionId) = try await downloadsFolderAndExtension()
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: [
+            "url": "data:text/plain,x", "filename": "x.txt", "extensionId": extensionId
+        ]), registry: registry)
+        let id = try XCTUnwrap(result as? Int64)
+        await manager.cancel(id: id)
+
+        XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("downloads/x.txt").path)
+        XCTAssertTrue(Self.determiningFilenameEvents(in: registry, to: extensionId).isEmpty)
+    }
+
     func testEraseReturnsRemovedIds() async throws {
         var item = DownloadItem(
             id: nil, url: "https://example.com/c.zip", filename: "c.zip",
@@ -224,6 +315,26 @@ final class DownloadsGapAPITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// A temporary folder holding the downloads folder, now the manager's, and a registry with one loaded extension that
+    /// holds the downloads permission.
+    private func downloadsFolderAndExtension() async throws -> (folder: URL, registry: ProfileExtensionRegistry, extensionId: String) {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("gap-downloads-\(UUID().uuidString)")
+        let downloads = folder.appendingPathComponent("downloads")
+        let source = folder.appendingPathComponent("extension")
+        try FileManager.default.createDirectory(at: downloads, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: source, withIntermediateDirectories: true)
+        manager.downloadsFolderProvider = { downloads }
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Downloads", "version": "1.0", "permissions": ["downloads"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: source.appendingPathComponent("manifest.json"))
+        let registry = try makeTestExtensionRegistry(in: folder)
+        try await registry.load(from: source)
+        return (folder, registry, try XCTUnwrap(registry.loadedExtensions.first?.id))
+    }
+
+    private static func determiningFilenameEvents(in registry: ProfileExtensionRegistry, to extensionId: String) -> [GapEventEnvelope] {
+        registry.gapEvents.undelivered(to: extensionId).filter { $0.namespace == "downloads" && $0.event == "onDeterminingFilename" }
+    }
 
     private func makeBridgeMessage(action: String, payload: [String: Any]) -> BridgeMessage {
         BridgeMessage(dictionary: ["action": action, "payload": payload])!
