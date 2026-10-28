@@ -39,6 +39,9 @@ const text = copy[lang];
             <span class="foot-social-name">Discord</span>
           </a>
         </div>
+        <p class="foot-credit">
+          {text.madeBy} <a href="https://arouillard.fr/">Alexis Rouillard</a>
+        </p>
       </div>
       <nav class="foot-nav" aria-label={text.footerNavigation}>
         <div>
@@ -170,6 +173,9 @@ const text = copy[lang];
   .foot-nav a {
     display: inline-block;
     line-height: 24px;
+  }
+  .foot-credit a {
+    color: var(--ink);
   }
   .foot a {
     text-decoration: none;

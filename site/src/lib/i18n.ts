@@ -107,6 +107,7 @@ export const copy = {
     keepaDescription: "Amazon price tracker",
     languageNote: "",
     latest: "Latest release",
+    madeBy: "Made with ❤️ by",
     migrations: "Migrations",
     moving: "Moving",
     movingClosingDescription:
@@ -248,6 +249,7 @@ export const copy = {
     keepaDescription: "Suivi des prix Amazon",
     languageNote: "Les notes détaillées sont rédigées en anglais.",
     latest: "Dernière version",
+    madeBy: "Fait avec ❤️ par",
     migrations: "Migrations",
     moving: "Changer de navigateur",
     movingClosingDescription:
