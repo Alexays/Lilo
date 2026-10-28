@@ -210,8 +210,9 @@ extension MainWindowController {
         engine.documentPiPWebViewProvider = { [weak self, weak engine] configuration, size in
             guard let self, let engine else { return nil }
             let webView = documentPiP.open(configuration: configuration, size: size, opener: engine)
-            if awaitingDocumentPiPId == engine.id {
-                awaitingDocumentPiPId = nil
+            context.browserState.pictureInPictureOpenerIds.insert(engine.id)
+            if awaitingDocumentPiP === engine {
+                awaitingDocumentPiP = nil
                 documentPiP.wasAutoEntered = true
             }
             placeDocumentPiP()

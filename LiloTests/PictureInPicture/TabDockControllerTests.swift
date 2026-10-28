@@ -103,6 +103,33 @@ final class TabDockControllerTests: XCTestCase {
         XCTAssertNil(controller.pictureInPictureOpenerId)
     }
 
+    func testDockingATabOverADockedPiPHandsThePiPBack() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        var pipLost = false
+        controller.onPictureInPictureSlotLost = { pipLost = true }
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+
+        controller.dock(WKWebViewTab(configuration: WKWebViewConfiguration()), logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertTrue(pipLost, "the PiP window floats instead of vanishing while its page thinks it shows")
+    }
+
+    func testDockingAPiPOverADockedTabHandsTheTabBack() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        var lostEngine: WKWebViewTab?
+        controller.onSlotLost = { lostEngine = $0 }
+        controller.dock(engine, logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
+
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertTrue(lostEngine === engine, "the docked call goes to the floating panel")
+    }
+
     func testMovingBetweenDockAndPanelKeepsTheSameWebViewWithoutReloading() async throws {
         let controller = TabDockController()
         controller.sidebarWidth = 240

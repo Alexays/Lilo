@@ -5,7 +5,7 @@ import WebKit
 /// that snaps to the corners of its screen and remembers its corner per screen. One per browser window; a new
 /// window replaces the previous one.
 @MainActor
-final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
+final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate, NSWindowDelegate {
     private(set) var webView: WKWebView?
     private(set) var openerId: UUID?
     /// Opened by Lilo when its tab was left rather than by the page: returning to the tab closes it.
@@ -21,11 +21,13 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     private static let defaultSize = NSSize(width: 400, height: 300)
     static let screenMargin: CGFloat = 16
 
-    /// Lets `engine`'s next `window.open` become its PiP window. Never in an agent tab, whose popups open as tabs.
-    func prepare(_ engine: WKWebViewTab, size: NSSize) -> Bool {
-        guard !engine.isAgentControlled else { return false }
+    /// Lets `engine`'s next blank `window.open` become its PiP window: after a user activation, as in Chrome, or in
+    /// answer to Lilo's automatic opening. Never in an agent tab, whose popups open as tabs.
+    func prepare(_ engine: WKWebViewTab, size: NSSize, userActivated: Bool, automatic: Bool) -> Bool {
+        guard userActivated || automatic, !engine.isAgentControlled else { return false }
         engine.pendingDocumentPiPSize = size
-        // Opening automatically on a tab switch carries no user gesture; createWebViewWith turns this off again.
+        // The page's `window.open` comes after this round trip, past its gesture, and the automatic opening has none:
+        // the next PiP window, commit or teardown turns this off again.
         engine.wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         return true
     }
@@ -37,6 +39,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         let contentSize = size.width > 0 && size.height > 0 ? size : Self.defaultSize
         let webView = WKWebView(frame: NSRect(origin: .zero, size: contentSize), configuration: configuration)
         webView.uiDelegate = self
+        webView.navigationDelegate = self
         self.webView = webView
         self.opener = opener
         openerId = opener.id
@@ -47,7 +50,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         if let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main {
             let saved = UserDefaults.standard.string(forKey: Self.frameKey(for: screen)).map(NSRectFromString)
             let origin = saved?.origin ?? NSPoint(x: screen.visibleFrame.maxX, y: screen.visibleFrame.minY)
-            panel.setFrame(Self.snappedFrame(NSRect(origin: origin, size: contentSize), in: screen.visibleFrame), display: false)
+            let size = Self.cappedSize(contentSize, in: screen.visibleFrame)
+            panel.setFrame(Self.snappedFrame(NSRect(origin: origin, size: size), in: screen.visibleFrame), display: false)
         }
         float()
         return webView
@@ -71,9 +75,9 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     /// `window.resizeTo` sizes the whole window, as the page reads it from `outerWidth` and `outerHeight`; the
     /// panel keeps its corner.
     func resize(to size: NSSize) {
-        guard size.width > 0, size.height > 0, let panel else { return }
-        let resized = NSRect(origin: panel.frame.origin, size: size)
-        panel.setFrame(panel.screen.map { Self.snappedFrame(resized, in: $0.visibleFrame) } ?? resized, display: true)
+        guard size.width > 0, size.height > 0, let panel, let visibleFrame = panel.screen?.visibleFrame else { return }
+        let resized = NSRect(origin: panel.frame.origin, size: Self.cappedSize(size, in: visibleFrame))
+        panel.setFrame(Self.snappedFrame(resized, in: visibleFrame), display: true)
     }
 
     /// The user let go of the panel: it snaps to the nearest corner, remembered for that screen.
@@ -116,6 +120,11 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         )
     }
 
+    /// At most half the screen each way, as a PiP window is a companion to the page, never a cover over the screen.
+    static func cappedSize(_ size: NSSize, in visibleFrame: NSRect) -> NSSize {
+        NSSize(width: max(160, min(size.width, visibleFrame.width / 2)), height: max(120, min(size.height, visibleFrame.height / 2)))
+    }
+
     static func frameKey(for screen: NSScreen) -> String { "LiloDocumentPiPFrame." + screen.localizedName }
 
     private func makePanel() -> NSPanel {
@@ -144,6 +153,19 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         content.onClose = { [weak self] in self?.close() }
         content.onMoveEnded = { [weak self] in self?.endMove() }
         return panel
+    }
+
+    /// The page fills its PiP window from its own document: like Chrome, the window never loads another page.
+    nonisolated func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
+    ) {
+        MainActor.assumeIsolated {
+            let url = navigationAction.request.url
+            let blank = url == nil || url?.absoluteString == "about:blank"
+            decisionHandler(navigationAction.targetFrame?.isMainFrame == false || blank ? .allow : .cancel)
+        }
     }
 
     nonisolated func webViewDidClose(_ webView: WKWebView) {

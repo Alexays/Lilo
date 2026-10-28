@@ -13,7 +13,9 @@ final class DocumentPiPControllerTests: XCTestCase {
         factory = WKEngineFactory()
         controller = DocumentPiPController()
         let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: persistent, identifier: nil)))
-        factory.documentPiPHandler = { [unowned self] _, size in controller.prepare(tab, size: size) }
+        factory.documentPiPHandler = { [unowned self] _, size, activated in
+            controller.prepare(tab, size: size, userActivated: activated, automatic: false)
+        }
         tab.documentPiPWebViewProvider = { [unowned self] configuration, size in controller.open(configuration: configuration, size: size, opener: tab) }
         tab.wkWebView.loadHTMLString("<p>call</p>", baseURL: URL(string: origin))
         // The URL is set before the document commits: wait for this page's own content, or a commit could follow.
@@ -25,11 +27,20 @@ final class DocumentPiPControllerTests: XCTestCase {
         return tab
     }
 
+    /// Asked as from a click: `evaluateJavaScript` runs with a user gesture, which a page needs to open its PiP window.
     private func requestWindow(_ tab: WKWebViewTab, width: Int = 300, height: Int = 356) async throws -> String? {
-        try await tab.wkWebView.callAsyncJavaScript("""
-            try { window.__pip = await documentPictureInPicture.requestWindow({ width: \(width), height: \(height) }); return 'open'; }
-            catch (e) { return e.name; }
-            """, contentWorld: .page) as? String
+        _ = try await tab.wkWebView.evaluateJavaScript("""
+            window.__state = undefined;
+            documentPictureInPicture.requestWindow({ width: \(width), height: \(height) })
+              .then(w => { window.__pip = w; window.__state = 'open'; }, e => { window.__state = e.name; });
+            true
+            """)
+        var state: String?
+        _ = await pollUntil(timeout: 5) {
+            state = (try? await tab.wkWebView.evaluateJavaScript("window.__state")) as? String
+            return state != nil
+        }
+        return state
     }
 
     private var panel: NSPanel? { controller.webView?.window as? NSPanel }
@@ -62,13 +73,65 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(resized, "\(String(describing: panel?.frame.size))")
     }
 
-    func testAPageWithoutAGestureStillOpensItsWindow() async throws {
+    func testAPageWithoutAGestureIsRefused() async throws {
         let tab = await makeTab()
 
-        WebViewPrivateAccessors(tab.wkWebView).evaluateWithoutUserGesture("documentPictureInPicture.requestWindow({ width: 300, height: 300 })")
+        WebViewPrivateAccessors(tab.wkWebView).evaluateWithoutUserGesture(
+            "documentPictureInPicture.requestWindow({ width: 300, height: 300 }).catch(e => { window.refused = e.name; })")
 
-        let opened = await pollUntil(timeout: 5) { self.controller.webView != nil }
-        XCTAssertTrue(opened, "the automatic opening has no user gesture")
+        let refused = await pollUntil(timeout: 5) {
+            (try? await tab.wkWebView.evaluateJavaScript("window.refused")) as? String == "NotAllowedError"
+        }
+        XCTAssertTrue(refused, "only Lilo's automatic opening needs no gesture: a page never opens a window over everything on its own")
+        XCTAssertNil(controller.webView)
+    }
+
+    func testTheWindowSizeIsCappedToHalfTheScreen() async throws {
+        let tab = await makeTab()
+        _ = try await requestWindow(tab, width: 5000, height: 5000)
+        let panel = try XCTUnwrap(panel)
+        panel.alphaValue = 0
+        let visible = try XCTUnwrap(panel.screen?.visibleFrame)
+        XCTAssertLessThanOrEqual(panel.frame.width, visible.width / 2)
+        XCTAssertLessThanOrEqual(panel.frame.height, visible.height / 2)
+
+        _ = try await tab.wkWebView.evaluateJavaScript("window.__pip.resizeTo(5000, 5000); true")
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        XCTAssertLessThanOrEqual(panel.frame.width, visible.width / 2)
+        XCTAssertLessThanOrEqual(panel.frame.height, visible.height / 2)
+    }
+
+    func testThePiPWindowCannotLoadAnotherSite() async throws {
+        let tab = await makeTab()
+        _ = try await requestWindow(tab)
+        let popup = try XCTUnwrap(controller.webView)
+
+        _ = try await tab.wkWebView.evaluateJavaScript("window.__pip.location = 'https://example.org/'; true")
+        try await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNotEqual(popup.url?.host, "example.org", "the page fills its PiP window, it never shows another site in it")
+    }
+
+    func testAPendingRequestDoesNotOutliveANavigation() async throws {
+        let tab = await makeTab()
+        XCTAssertTrue(controller.prepare(tab, size: NSSize(width: 300, height: 300), userActivated: true, automatic: false))
+
+        tab.wkWebView.loadHTMLString("<p>next</p>", baseURL: URL(string: "https://example.org/"))
+        _ = await pollUntil(timeout: 5) { (try? await tab.wkWebView.evaluateJavaScript("document.body?.textContent === 'next'")) as? Bool == true }
+
+        XCTAssertNil(tab.pendingDocumentPiPSize)
+        XCTAssertFalse(tab.wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically, "the next page gets the popup blocker back")
+    }
+
+    func testOnlyABlankMainFrameOpenTakesThePendingRequest() async throws {
+        let tab = await makeTab()
+        XCTAssertTrue(controller.prepare(tab, size: NSSize(width: 300, height: 300), userActivated: true, automatic: false))
+
+        _ = try await tab.wkWebView.evaluateJavaScript("window.open('https://example.org/ad', '_blank'); true")
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        XCTAssertNil(controller.webView, "a link or another frame's popup never lands in the PiP window")
     }
 
     func testClosingFromLiloFiresPagehideInThePage() async throws {
@@ -150,7 +213,9 @@ final class DocumentPiPControllerTests: XCTestCase {
         let call = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let engine = try XCTUnwrap(window.tabManager.engineTab(for: call.id))
         // As setupBridgeEarly wires it for every window.
-        context.engineFactory.documentPiPHandler = { _, size in window.documentPiP.prepare(engine, size: size) }
+        context.engineFactory.documentPiPHandler = { [weak context] webView, size, activated in
+            context.map { MainWindowController.prepareDocumentPiP(in: $0, webView: webView, size: size, userActivated: activated) } ?? false
+        }
         engine.wkWebView.loadHTMLString(html + "<p>call</p>", baseURL: URL(string: "https://call.example/"))
         _ = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("document.body?.textContent === 'call'")) as? Bool == true }
         addTeardownBlock { @MainActor in
@@ -158,6 +223,24 @@ final class DocumentPiPControllerTests: XCTestCase {
             browserContext.tearDown()
         }
         return (browserContext, window, engine)
+    }
+
+    func testLeavingACallTabBySwitchingSpacesStillOpensItsPiP() async throws {
+        let (browserContext, window, engine) = try await makeWindowTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => documentPictureInPicture.requestWindow({ width: 300, height: 300 }));
+        </script>
+        """)
+        engine.callControls.hasPictureInPictureAction = true
+        let profileId = try XCTUnwrap(window.tabManager.profileId)
+        let other = try browserContext.context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        window.switchToSpace(other.id)
+
+        window.autoEnterDocumentPiP(engine)
+
+        // A parked page answers slowly under load: the default timeout.
+        let opened = await pollUntil { window.documentPiP.webView != nil }
+        XCTAssertTrue(opened, "a space switch parks the call tab before its page answers")
     }
 
     func testReturningToTheTabClosesAnAutoEnteredPiPOnly() async throws {
@@ -187,7 +270,7 @@ final class DocumentPiPControllerTests: XCTestCase {
         let opened = await pollUntil(timeout: 5) { window.documentPiP.webView != nil }
         XCTAssertTrue(opened)
         XCTAssertTrue(window.documentPiP.wasAutoEntered)
-        XCTAssertNil(window.awaitingDocumentPiPId)
+        XCTAssertNil(window.awaitingDocumentPiP)
     }
 
     func testNoWindowWithinTheDelayStopsWaiting() async throws {
@@ -197,9 +280,9 @@ final class DocumentPiPControllerTests: XCTestCase {
         engine.callControls.hasPictureInPictureAction = true
 
         window.autoEnterDocumentPiP(engine)
-        XCTAssertEqual(window.awaitingDocumentPiPId, engine.id)
+        XCTAssertTrue(window.awaitingDocumentPiP === engine)
 
-        let gaveUp = await pollUntil(timeout: MainWindowController.documentPiPFallbackDelay + 2) { window.awaitingDocumentPiPId == nil }
+        let gaveUp = await pollUntil(timeout: MainWindowController.documentPiPFallbackDelay + 2) { window.awaitingDocumentPiP == nil }
         XCTAssertTrue(gaveUp, "after the delay Lilo falls back to the whole page")
         XCTAssertNil(window.documentPiP.webView)
     }

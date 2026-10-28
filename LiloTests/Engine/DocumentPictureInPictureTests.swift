@@ -25,11 +25,13 @@ final class DocumentPictureInPictureTests: XCTestCase {
     private var bridge: DocumentPiPBridge!
     private var host: PopupHost!
     private var prepared: [NSSize] = []
+    private var activations: [Bool] = []
 
     private func makeWebView(origin: String = "https://example.com/", allow: Bool = true, before: String? = nil) async -> WKWebView {
         bridge = DocumentPiPBridge()
-        bridge.onPrepare = { [unowned self] _, size in
+        bridge.onPrepare = { [unowned self] _, size, activated in
             prepared.append(size)
+            activations.append(activated)
             return allow
         }
         host = PopupHost()
@@ -89,6 +91,16 @@ final class DocumentPictureInPictureTests: XCTestCase {
         XCTAssertEqual(outcome?.first as? String, "AbortError", "the replaced request opens nothing")
         XCTAssertEqual(outcome?.last as? Bool, true)
         XCTAssertEqual(host.popups.count, 1, "never two PiP windows")
+    }
+
+    func testARequestWithoutUserActivationSaysSo() async throws {
+        let webView = await makeWebView()
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("documentPictureInPicture.requestWindow({ width: 300, height: 300 })")
+
+        let asked = await pollUntil(timeout: 5) { !self.activations.isEmpty }
+        XCTAssertTrue(asked)
+        XCTAssertEqual(activations, [false], "native refuses a page that opens its PiP window on its own")
     }
 
     func testRequestWindowRejectsWithNotAllowedErrorWhenNativeRefuses() async throws {

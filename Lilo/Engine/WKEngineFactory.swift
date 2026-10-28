@@ -90,8 +90,9 @@ final class WKEngineFactory {
     var callControlsHandler: ((WKWebView, WKWebViewTab.CallControls) -> Void)? {
         didSet { callControlsBridge.onChange = callControlsHandler }
     }
-    /// Whether a page may open a Document Picture-in-Picture window of the given size. Set by MainWindowController.
-    var documentPiPHandler: ((WKWebView, NSSize) -> Bool)? {
+    /// Whether a page, with or without a user activation, may open a Document Picture-in-Picture window of the given
+    /// size. Set by MainWindowController.
+    var documentPiPHandler: ((WKWebView, NSSize, Bool) -> Bool)? {
         didSet { documentPiPBridge.onPrepare = documentPiPHandler }
     }
 

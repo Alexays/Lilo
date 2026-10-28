@@ -347,9 +347,8 @@ extension MainWindowController {
             tab.callControls = controls
             tab.delegate?.tab(tab, didUpdateCallControls: controls)
         }
-        context.engineFactory.documentPiPHandler = { [weak context] webView, size in
-            guard let (window, engine) = context?.windows.windowAndEngine(for: webView) else { return false }
-            return window.documentPiP.prepare(engine, size: size)
+        context.engineFactory.documentPiPHandler = { [weak context] webView, size, activated in
+            context.map { Self.prepareDocumentPiP(in: $0, webView: webView, size: size, userActivated: activated) } ?? false
         }
         context.engineFactory.notificationShownHandler = { [weak context] webView in
             guard let (window, engine) = context?.windows.windowAndEngine(for: webView),
@@ -910,7 +909,7 @@ extension MainWindowController {
         engine.restoreFromAutoPictureInPicture()  // a tab auto-PiP'd on leaving comes back inline
         floatingTabPanel.dismiss(hosting: engine.id)
         if tabDock.engineId == engine.id { tabDock.undock() }
-        if awaitingDocumentPiPId == engine.id { awaitingDocumentPiPId = nil }
+        if awaitingDocumentPiP === engine { awaitingDocumentPiP = nil }
         if documentPiP.openerId == engine.id {
             if documentPiP.wasAutoEntered { documentPiP.close() } else { placeDocumentPiP() }
         }

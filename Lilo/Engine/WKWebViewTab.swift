@@ -307,6 +307,13 @@ final class WKWebViewTab: NSObject {
     var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
     /// Closes the PiP window this page opened: it never outlives the page, which leaves on a commit or a teardown.
     var documentPiPCloser: (() -> Void)?
+
+    /// A PiP request whose `window.open` never came must not outlive the page: no popup blocking, and its next
+    /// popup taken for the PiP window.
+    func cancelPendingDocumentPiP() {
+        pendingDocumentPiPSize = nil
+        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+    }
     /// Called while building the context menu to inject extension-contributed menu items.
     /// Set by TabManager when the extension registry is active.
     var extensionContextMenuItemsProvider: (@MainActor () -> [NSMenuItem])?
@@ -707,6 +714,7 @@ final class WKWebViewTab: NSObject {
     func teardown() {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
         documentPiPCloser?()
+        cancelPendingDocumentPiP()
         isUnresponsive = false
         cancelRegionSelection()
         // A suspended page is neither loading nor playing (freeze paused its media).
@@ -1295,6 +1303,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             }
             tab.lastCommittedNavigation = navigation
             tab.documentPiPCloser?()
+            tab.cancelPendingDocumentPiP()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.consoleHook) }
             tab.hasCommittedContent = true
@@ -1653,9 +1662,11 @@ extension WKWebViewTab: WKUIDelegate {
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
         MainActor.assumeIsolated {
-            if let size = pendingDocumentPiPSize {
-                pendingDocumentPiPSize = nil
-                webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+            // Only the shim's own blank open from the main frame: never a link or another frame's popup.
+            let url = navigationAction.request.url
+            if let size = pendingDocumentPiPSize, navigationAction.sourceFrame.isMainFrame,
+               url == nil || url?.absoluteString.isEmpty == true || url?.absoluteString == "about:blank" {
+                cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.

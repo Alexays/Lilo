@@ -74,7 +74,12 @@ final class TabDockController {
     }
 
     func dock(_ engine: WKWebViewTab, logicalSize: NSSize, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
-        if self.engine !== engine { _ = undock() }
+        if pictureInPictureView != nil {
+            undock()
+            onPictureInPictureSlotLost?()
+        } else if self.engine !== engine {
+            _ = undock()
+        }
         controls.passesClicksThrough = false
         self.engine = engine
         self.logicalSize = logicalSize.width > 100 && logicalSize.height > 100 ? logicalSize : NSSize(width: 1280, height: 800)
@@ -91,7 +96,12 @@ final class TabDockController {
 
     /// Docks a Document Picture-in-Picture window of `openerId`'s page; its own controls stay clickable.
     func dockPictureInPicture(_ view: NSView, openerId: UUID, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
-        if pictureInPictureView !== view { _ = undock() }
+        if let docked = engine {
+            undock()
+            onSlotLost?(docked)
+        } else if pictureInPictureView !== view {
+            undock()
+        }
         pictureInPictureView = view
         pictureInPictureOpenerId = openerId
         self.chromeView = chromeView

@@ -1,5 +1,6 @@
 import AppKit
 import OSLog
+import WebKit
 
 extension MainWindowController {
     static let documentPiPFallbackDelay: TimeInterval = 1.5
@@ -7,12 +8,24 @@ extension MainWindowController {
 
     /// Leaving a call tab whose page offers its own PiP window: asks the page for it, and shows the whole page in
     /// the dock or the panel instead when no window comes within `documentPiPFallbackDelay`.
+    /// Whether the page of `webView` may open its PiP window now: with a user activation, or answering Lilo's
+    /// automatic opening.
+    static func prepareDocumentPiP(in context: BrowserContext, webView: WKWebView, size: NSSize, userActivated: Bool) -> Bool {
+        if let (window, engine) = context.windows.windowAndEngine(for: webView) {
+            return window.documentPiP.prepare(engine, size: size, userActivated: userActivated, automatic: window.awaitingDocumentPiP === engine)
+        }
+        // A call tab left by a space switch is parked before its page answers the automatic opening.
+        guard let window = context.windows.windows.first(where: { $0.awaitingDocumentPiP?.wkWebView === webView }),
+              let engine = window.awaitingDocumentPiP else { return false }
+        return window.documentPiP.prepare(engine, size: size, userActivated: userActivated, automatic: true)
+    }
+
     func autoEnterDocumentPiP(_ engine: WKWebViewTab) {
-        awaitingDocumentPiPId = engine.id
+        awaitingDocumentPiP = engine
         engine.enterDocumentPictureInPicture()
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.documentPiPFallbackDelay) { [weak self, weak engine] in
-            guard let self, let engine, awaitingDocumentPiPId == engine.id else { return }
-            awaitingDocumentPiPId = nil
+            guard let self, let engine, awaitingDocumentPiP === engine else { return }
+            awaitingDocumentPiP = nil
             guard tabManager.activeOpenTabId != engine.id else { return }
             if !engine.isPrivateBrowsing { Self.documentPiPLogger.info("document pip fallback host=\(engine.currentURL?.host ?? "nil", privacy: .private)") }
             popOutWholePage(engine)

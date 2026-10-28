@@ -7,13 +7,14 @@ import WebKit
 final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let messageHandlerName = "liloDocumentPiP"
 
-    /// Whether the tab of `webView` may open a PiP window of the requested size (zero for "any"); when it may,
-    /// its next `window.open` must become that window.
-    var onPrepare: ((WKWebView, NSSize) -> Bool)?
+    /// Whether the tab of `webView` may open a PiP window of the requested size (zero for "any"), and whether the
+    /// page had a user activation; when it may, its next `window.open` must become that window.
+    var onPrepare: ((WKWebView, NSSize, Bool) -> Bool)?
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) async -> (Any?, String?) {
         guard message.frameInfo.isMainFrame, let webView = message.webView, let body = message.body as? [String: Any],
-              onPrepare?(webView, NSSize(width: body["width"] as? Double ?? 0, height: body["height"] as? Double ?? 0)) == true else {
+              onPrepare?(webView, NSSize(width: body["width"] as? Double ?? 0, height: body["height"] as? Double ?? 0),
+                         body["activated"] as? Bool == true) == true else {
             return (nil, "NotAllowedError: Picture-in-Picture is not available in this tab")
         }
         return (true, nil)
@@ -24,6 +25,9 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
     function () {
       if (window.top !== window || 'documentPictureInPicture' in window) return;
       const open = window.open, round = Math.round, max = Math.max;
+      // Captured before the page can fake them: the native side only lets a page with a user activation open its window.
+      const activation = getOwnPropertyDescriptor(Navigator.prototype, 'userActivation');
+      const isActive = typeof UserActivation === 'function' ? getOwnPropertyDescriptor(UserActivation.prototype, 'isActive') : undefined;
       let current = null, generation = 0;
       const domError = error => {
         const text = String(error && error.message || error), match = /^(\w+): (.*)$/.exec(text);
@@ -35,7 +39,8 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
           const width = max(0, round(Number(options && options.width) || 0)), height = max(0, round(Number(options && options.height) || 0));
           const request = ++generation;
           if (current) { const previous = current; current = null; try { previous.close(); } catch (e) {} }
-          return lilo.post('liloDocumentPiP', { width, height }).then(() => {
+          const activated = !!(activation && activation.get && isActive && isActive.get && apply(isActive.get, apply(activation.get, navigator, []), []));
+          return lilo.post('liloDocumentPiP', { width, height, activated }).then(() => {
             if (request !== generation) throw new DOMException('A newer request replaced this one.', 'AbortError');
             const win = apply(open, window, ['', '_blank', 'popup,width=' + (width || 400) + ',height=' + (height || 300)]);
             if (!win) throw new DOMException('The Picture-in-Picture window could not open.', 'NotAllowedError');

@@ -200,7 +200,7 @@ final class MainWindowController: NSWindowController {
     let tabDock = TabDockController()
     let documentPiP = DocumentPiPController()
     /// The call tab asked for its PiP window on being left, until the window opens or the fallback runs.
-    var awaitingDocumentPiPId: UUID?
+    weak var awaitingDocumentPiP: WKWebViewTab?
     /// getDisplayMedia tab-share frame ferry (one session at a time).
     let tabShareSessions = TabShareSessionController()
     /// Pages awaiting a tab-share picker choice from the chrome UI, keyed by request id.
