@@ -183,6 +183,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** Requestly sends `clientPageLoaded` on `onDOMContentLoaded`: its content script never got it.
 - **Check:** `message-answers.test.ts` ("reach the content script of a loading tab that listens a moment after the message"). Repro: a worker sends `tabs.sendMessage(tabId, 'x')` from `webNavigation.onDOMContentLoaded` to a page whose `document_start` content script listens. Expected: the content script receives it. Actual: `Could not establish connection. Receiving end does not exist.`.
 
+### 98. WebKit's errors use their own words
+
+- **Gap:** WebKit fails a call as `Invalid call to tabs.get(). Tab not found.`, `Tab '12' was not found.`, `This extension does not have access to this tab.`, `Parent menu item not found.`, `Identifier is already used.` and, on a disconnected port, `The port is disconnected.`. Chrome says `No tab with id: 12.`, `Could not establish connection. Receiving end does not exist.` (tabs.sendMessage), `Cannot access contents of the page. ...`, `Cannot find menu item with id X`, `Cannot create item with duplicate id X` and `Attempting to use a disconnected port object`.
+- **Lilo:** every method `chrome` hands out fails in Chrome's words, both as `runtime.lastError` and as the rejection ([chrome-compat.ts] `chromeError`, `chromeMethod`); WebKit's ports throw Chrome's error once disconnected ([message-answers.ts] `portErrorsAsChrome`).
+- **Impact:** in the top 1000, 124 extensions test "Receiving end does not exist" (and inject their content script when they read it), 53 "No tab with id", 30 "Cannot access contents of", 22 "duplicate id" and 18 "disconnected port".
+- **Check:** `chrome-compat.test.ts` ("WebKit's errors"), `message-answers.test.ts` ("WebKit's ports"); Contract `contextMenus duplicate id`. Repro: `chrome.tabs.get(987654)`. Expected: rejects with `No tab with id: 987654.`. Actual: `Invalid call to tabs.get(). Tab not found.`.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
