@@ -204,6 +204,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** without it, AdBlock's welcome page threw redeclaring `determineUserLanguage`, which two of its entries list.
 - **Check:** `testAFileTwoContentScriptEntriesListRunsTwice` for WebKit, `testContentScriptsLeaveOutFilesAnotherEntryRunsFirst` for Lilo. Repro: two entries matching `https://www.example.com/*` both list `content.js`, at `document_start` and `document_idle`. Expected: it runs once. Actual: twice.
 
+### 101. A paravirtual GPU cannot read an extension page's canvas back
+
+- **Gap:** on a virtual machine's paravirtual GPU, as GitHub's macOS runners have, WebKit cannot read back a canvas it draws on the GPU: `getImageData` throws `InvalidStateError` and `toBlob` answers `null`. Chrome reads it back there.
+- **Lilo:** tabs draw their canvases in memory, in the page's own process, in a virtual machine (`kern.hv_vmm_present`, [WKFeatureFlags.swift] `graphicsOverrides`). Extension pages and workers keep WebKit's drawing: setting any preference on the extension controller's configuration, even reading it, makes WebKit put the extension's tab pages in its worker's process.
+- **Impact:** on a virtual machine, GoFullPage's popup gets no blob of its capture and opens no capture page, and AdGuard's worker draws no icons. A Mac with its own GPU is not affected.
+- **Check:** the smoke's `LILO_GRAPHICS` line (canvas readback in a tab) and GoFullPage's feature check, which expects the gap on a paravirtual GPU only. Repro: on a virtual machine, an extension page draws on a canvas and calls `toBlob`. Expected: a blob. Actual: `null`.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
@@ -627,6 +634,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 [ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
 [ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
 [ExtensionAccess.swift]: ../Lilo/Extensions/Core/ExtensionAccess.swift
+[WKFeatureFlags.swift]: ../Lilo/Engine/WKFeatureFlags.swift
 [TabExtensionAdapter.swift]: ../Lilo/Extensions/Core/TabExtensionAdapter.swift
 [CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift

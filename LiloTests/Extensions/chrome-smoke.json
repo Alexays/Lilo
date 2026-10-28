@@ -4648,6 +4648,7 @@
    "name": "Brisk Teaching - AI that Works Where Teachers Work",
    "version": "1.0.428",
    "page": [
+    "added:plasmo-csui",
     "hidden:ad-banner",
     "hidden:ad-container",
     "hidden:adsbygoogle",

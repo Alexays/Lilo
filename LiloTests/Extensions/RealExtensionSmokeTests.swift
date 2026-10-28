@@ -675,6 +675,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         var command: (id: String, check: String)?
         var click = false
         var shows: ((MainWindowController) -> Bool)?
+        /// Why what its toolbar button opens fails on a paravirtual GPU (WEBKIT-GAPS.md), where the check expects that.
+        var paravirtualGap: String?
     }
 
     /// Holds once the ad the page requests again at each evaluation fails: the page may load before
@@ -729,7 +731,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "edacconmaakjimmfgnblocblbcdcpbko", name: "Session Buddy", check: "true", click: true,
                 shows: { window in window.tabManager.openTabs.contains { $0.url?.host == "edacconmaakjimmfgnblocblbcdcpbko" } }),
         Feature(id: "fdpohaocaechififmbbbbbknoalclacl", name: "GoFullPage", check: "true", click: true,
-                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } })
+                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } },
+                paravirtualGap: "its popup's canvas.toBlob answers null there (gap 101)")
     ]
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
@@ -756,6 +759,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             print("LILO_GRAPHICS metal \(MTLCreateSystemDefaultDevice()?.name ?? "none"), canvas \(readback), snapshot \(snapshot)")
             window.closeTabStateFirst(id: probe.id, undoable: false)
         }
+        let paravirtualGPU = MTLCreateSystemDefaultDevice()?.name.contains("Paravirtual") ?? true
         // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
         let only = ProcessInfo.processInfo.environment["LILO_SMOKE_FEATURES"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
         for feature in Self.features where only?.contains(feature.name) ?? true {
@@ -811,7 +815,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             }
             if let shows = feature.shows {
                 let shown = await pollUntil(timeout: 30) { shows(window) }
-                if !shown { XCTFail("\(feature.name) opens what its toolbar button opens: \(await diagnosis())") }
+                if let gap = feature.paravirtualGap, paravirtualGPU {
+                    if shown { XCTFail("\(feature.name) now opens what its toolbar button opens on a paravirtual GPU: drop its gap (\(gap))") }
+                } else if !shown {
+                    XCTFail("\(feature.name) opens what its toolbar button opens: \(await diagnosis())")
+                }
             }
             let checked = await holds(feature.check)
             if !checked { XCTFail("\(feature.name) does its part on the page: \(await diagnosis())") }

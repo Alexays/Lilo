@@ -1,5 +1,4 @@
 import Foundation
-import Metal
 import WebKit
 
 /// WebKit's experimental and internal-debug feature flags behind `about:config`, via private API. The enumerators are class methods
@@ -34,10 +33,13 @@ enum WKFeatureFlags {
         "CSSDPropertyEnabled"
     ]
     /// A virtual machine's paravirtual GPU cannot read a canvas back (getImageData throws InvalidStateError, as on GitHub's macOS
-    /// runners): canvases draw in memory, in the page's own process, there and wherever Metal finds no GPU.
-    private static let graphicsOverrides: [String: Bool] = MTLCreateSystemDefaultDevice().map({ $0.name.contains("Paravirtual") }) ?? true
-        ? ["CanvasUsesAcceleratedDrawing": false, "UseGPUProcessForCanvasRenderingEnabled": false]
-        : [:]
+    /// runners): canvases draw in memory, in the page's own process, there. A sysctl tells a virtual machine, where creating a
+    /// Metal device would block the main thread.
+    private static let graphicsOverrides: [String: Bool] = {
+        var present: Int32 = 0, size = MemoryLayout<Int32>.size
+        guard sysctlbyname("kern.hv_vmm_present", &present, &size, nil, 0) == 0, present == 1 else { return [:] }
+        return ["CanvasUsesAcceleratedDrawing": false, "UseGPUProcessForCanvasRenderingEnabled": false]
+    }()
     /// WebKit's own Screen Time client is off, as in Safari: Lilo's `STWebpageController` is the single one.
     private static let baselineOverrides: [String: Bool] =
         Dictionary(uniqueKeysWithValues: defaultsOn.map { ($0, true) })
