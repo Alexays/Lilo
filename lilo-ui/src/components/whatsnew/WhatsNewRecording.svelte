@@ -61,6 +61,6 @@
 <style>
   .release-recording { position: relative; margin: var(--space-12) 0 0; overflow: hidden; border-radius: var(--radius-lg); border: 1px solid var(--separator); background: var(--bg-secondary); }
   img { display: block; width: 100%; height: auto; }
-  button { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgb(255 255 255 / 24%); border-radius: 50%; background: rgb(20 19 31 / 84%); color: white; cursor: pointer; }
+  button { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-chip); background: var(--bg-elevated); color: var(--text-primary); cursor: pointer; box-shadow: var(--shadow-control); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 </style>

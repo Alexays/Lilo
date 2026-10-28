@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { parseReleaseStories } from "../src/lib/release-stories.ts";
+import { nativeInputDigest } from "./native-inputs.ts";
 import { checkNativeArchive } from "./native-proof.ts";
 
 export const captureArchiveState = (
@@ -114,7 +115,13 @@ const main = () => {
         );
 
         if (record.schemaVersion === 2) {
-          checkNativeArchive(directory, version);
+          checkNativeArchive(
+            directory,
+            version,
+            true,
+            "",
+            nativeInputDigest(`${site}/..`)
+          );
         }
       }
 

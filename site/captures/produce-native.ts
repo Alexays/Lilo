@@ -15,9 +15,9 @@ import sharp from "sharp";
 import { z } from "zod";
 
 import { parseChangelog } from "../src/lib/changelog.ts";
+import { nativeInputDigest } from "./native-inputs.ts";
 import {
   checkNativeArchive,
-  digest,
   encodeNativeProof,
   nativeScenarios,
   nativePlanSchema,
@@ -52,7 +52,7 @@ if (!release) {
 const output = path.join(root, "site/src/assets/releases", version);
 
 if (existsSync(output) && process.env.LILO_CAPTURE_REPLACE !== "1") {
-  checkNativeArchive(output, version);
+  checkNativeArchive(output, version, true, "", nativeInputDigest(root));
   process.stdout.write(
     `Keeping quality-approved native media for ${version}\n`
   );
@@ -150,8 +150,21 @@ if (!process.env.LILO_CAPTURE_FRAMES) {
 const stage = mkdtempSync(path.join(work, "approved-"));
 
 try {
-  await encodeNativeProof(frames, stage, version, true);
-  const archive = checkNativeArchive(stage, version, false);
+  await encodeNativeProof(
+    frames,
+    stage,
+    version,
+    true,
+    nativeInputDigest(root)
+  );
+
+  const archive = checkNativeArchive(
+    stage,
+    version,
+    false,
+    "",
+    nativeInputDigest(root)
+  );
 
   const reviewSchema = z.strictObject({
     passed: z.boolean(),
@@ -202,13 +215,6 @@ try {
 
   // oxlint-enable eslint/no-await-in-loop
   archive.plan = plan;
-  archive.fixtureDigest = digest(
-    ["guide.html", "notes.html", "call.html"]
-      .map((name) =>
-        readFileSync(path.join(root, "site/captures/fixtures", name), "utf-8")
-      )
-      .join("\0")
-  );
   archive.visualReview = {
     archiveDigest: nativeArchiveDigest(archive.recordings),
     passed: true,
@@ -218,7 +224,7 @@ try {
     path.join(stage, "capture.json"),
     `${JSON.stringify(archive, null, 2)}\n`
   );
-  checkNativeArchive(stage, version);
+  checkNativeArchive(stage, version, true, "", nativeInputDigest(root));
   const backup = `${output}.previous`;
 
   if (existsSync(backup)) {

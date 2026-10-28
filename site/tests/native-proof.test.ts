@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -10,9 +11,11 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
+import { nativeInputDigest } from "../captures/native-inputs.ts";
 import type { NativeManifest } from "../captures/native-proof.ts";
 import {
   checkNativeArchive,
@@ -33,11 +36,12 @@ const sample = (): NativeManifest => ({
     (name, i) => ({ atMs: 1000 + i * 1000, name, passed: true })
   ),
   durationMs: 6000,
-  frames: Array.from({ length: 90 }, (_, i) => ({
+  frames: Array.from({ length: 180 }, (_, i) => ({
     atMs: i * 33,
     file: `frame-${String(i).padStart(4, "0")}.png`,
   })),
   height: 720,
+  inputDigest: "a".repeat(64),
   scenario: "peek",
   source: "native",
   width: 1120,
@@ -74,7 +78,7 @@ test("native timeline rejects slideshow timing, failed semantics, and another bu
         ...good,
         durationMs: 15_000,
         frames: Array.from({ length: 450 }, (_, i) => ({
-          atMs: i * 33,
+          atMs: Math.round((i * 1000) / 30),
           file: `frame-${String(i).padStart(4, "0")}.png`,
         })),
       },
@@ -114,7 +118,7 @@ test("native timeline rejects slideshow timing, failed semantics, and another bu
         },
         "0.9.0"
       ),
-    /motion|timestamp/u
+    /motion|timestamp|sampling/u
   );
   assert.throws(
     () => validateNativeTimeline({ ...good, checkpoints: [] }, "0.9.0"),
@@ -167,11 +171,131 @@ test("native archive fails closed without a completed visual review", () => {
   }
 });
 
+test("motion sampling covers the whole clip and its final hold", () => {
+  const good = sample();
+
+  const sparse = Array.from({ length: 82 }, (_, i) => ({
+    atMs: i < 25 ? i * 33 : 792 + (i - 24) * 90,
+    file: `frame-${String(i).padStart(4, "0")}.png`,
+  }));
+
+  assert.throws(
+    () => validateNativeTimeline({ ...good, frames: sparse }, "0.9.0"),
+    /sampling|gap|coverage/u
+  );
+  assert.throws(
+    () => validateNativeTimeline({ ...good, durationMs: 9000 }, "0.9.0"),
+    /sampling|gap|coverage/u
+  );
+});
+
+test("same-version recordings must match the expected capture inputs", () => {
+  assert.throws(
+    () => validateNativeTimeline(sample(), "0.9.0", "b".repeat(64)),
+    /inputs/u
+  );
+});
+
+test("capture fingerprints follow source and fixture edits while excluding generated media", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "native-inputs-"));
+
+  try {
+    assert.equal(spawnSync("git", ["init", "-q"], { cwd: root }).status, 0);
+
+    const put = (name: string, content: string) => {
+      const file = path.join(root, name);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, content);
+    };
+
+    put("Lilo/Window.swift", "native source");
+    put("lilo-ui/src/App.svelte", "interface source");
+    put("site/captures/fixtures/guide.html", "fixture");
+    let previous = nativeInputDigest(root);
+    put("Lilo/Generated/ChromeUIAssets.swift", "generated release metadata");
+    put("site/src/assets/releases/0.9.0/capture.json", "approved media");
+    assert.equal(nativeInputDigest(root), previous);
+
+    for (const name of [
+      "Lilo/Window.swift",
+      "lilo-ui/src/App.svelte",
+      "site/captures/fixtures/guide.html",
+    ]) {
+      put(name, "changed source");
+      const current = nativeInputDigest(root);
+      assert.notEqual(current, previous);
+      previous = current;
+    }
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+  }
+});
+
+test("release preparation stops after failed recapture even when an older archive is valid", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "release-recapture-"));
+
+  try {
+    const makefile = readFileSync(
+      fileURLToPath(new URL("../../Makefile", import.meta.url)),
+      "utf-8"
+    );
+
+    const start =
+      makefile.lastIndexOf("\n", makefile.indexOf(" latest --remove-prefix")) +
+      1;
+
+    const end = makefile.indexOf(
+      "\n\t@$(MAKE) --no-print-directory site-generate",
+      start
+    );
+
+    assert.ok(start > 0 && end > start);
+    const recipe = makefile.slice(start, end);
+    mkdirSync(path.join(root, "site/src/content/releases"), {
+      recursive: true,
+    });
+    mkdirSync(path.join(root, "site/src/assets/releases/0.9.0"), {
+      recursive: true,
+    });
+    writeFileSync(
+      path.join(root, "site/src/content/releases/0.9.0.json"),
+      "{}"
+    );
+
+    const archive = path.join(
+      root,
+      "site/src/assets/releases/0.9.0/capture.json"
+    );
+
+    writeFileSync(archive, "previous valid archive");
+    writeFileSync(
+      path.join(root, "changie"),
+      "#!/bin/sh\nprintf '0.9.0\\n'\n",
+      { mode: 0o700 }
+    );
+    writeFileSync(
+      path.join(root, "Makefile"),
+      `CHANGIE := ${path.join(root, "changie")}\ntest:\n${recipe}\nsite-release-capture:\n\t@false\nrelease-media-check:\n\t@test -f site/src/assets/releases/0.9.0/capture.json\n`
+    );
+
+    const result = spawnSync("make", ["test", "RECAPTURE=1"], {
+      cwd: root,
+      encoding: "utf-8",
+    });
+
+    assert.notEqual(result.status, 0, "Failed recapture must stop preparation");
+    assert.equal(readFileSync(archive, "utf-8"), "previous valid archive");
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+  }
+});
+
 test("maintenance releases need no media, while required native highlights fail closed", () => {
   const root = mkdtempSync(path.join(tmpdir(), "native-release-gate-"));
   const stories = path.join(root, "site/src/content/releases");
 
   try {
+    assert.equal(spawnSync("git", ["init", "-q"], { cwd: root }).status, 0);
     assert.equal(checkRequiredReleaseMedia(root, "0.9.0"), null);
     mkdirSync(stories, { recursive: true });
     const story = path.join(stories, "0.9.0.json");
@@ -304,6 +428,10 @@ test("a failed scenario preserves the previous archive; changed media invalidate
     assert.throws(
       () => checkNativeArchive(output, "0.9.0", true, "43"),
       /another app build/u
+    );
+    assert.throws(
+      () => checkNativeArchive(output, "0.9.0", true, "42", "b".repeat(64)),
+      /inputs/u
     );
     archive.visualReview.reviews.peek.passed = false;
     writeFileSync(path.join(output, "capture.json"), JSON.stringify(archive));

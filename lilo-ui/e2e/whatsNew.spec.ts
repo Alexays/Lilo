@@ -81,6 +81,10 @@ test("bundled recordings wait for explicit playback with Reduce Motion and stop 
 	const pixels = async () => createHash("sha256").update(await image.screenshot()).digest("hex");
 	const firstFrame = await pixels();
 	await expect.poll(pixels, { timeout: 3000 }).not.toBe(firstFrame);
+	await expect(button).toHaveAttribute("aria-pressed", "false", { timeout: 17000 });
+	await page.keyboard.press("Enter");
+	await expect(button).toHaveAttribute("aria-pressed", "true");
+	await expect.poll(pixels, { timeout: 1500 }).toBe(firstFrame);
 	await page.keyboard.press("Escape");
 	await expect(page.getByRole("dialog")).toHaveCount(0);
 	await openWhatsNew(page);

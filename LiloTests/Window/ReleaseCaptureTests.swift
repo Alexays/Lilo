@@ -22,9 +22,12 @@ final class ReleaseCaptureTests: XCTestCase {
     override func setUp() async throws {
         guard let path = ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_OUT"],
               let pages = ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_FIXTURES"] else { throw XCTSkip("Use make release-media-record") }
+        guard (CGSessionCopyCurrentDictionary() as? [String: Any])?["CGSSessionScreenIsLocked"] as? Bool != true else {
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSLocalizedDescriptionKey: "Unlock macOS before recording native release media"])
+        }
         output = URL(fileURLWithPath: path, isDirectory: true)
         previousApplication = NSWorkspace.shared.frontmostApplication
-        activity = ProcessInfo.processInfo.beginActivity(options: .userInitiated, reason: "Recording native release demonstrations")
+        activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .idleDisplaySleepDisabled], reason: "Recording native release demonstrations")
         let pagesURL = URL(fileURLWithPath: pages, isDirectory: true)
         let identityPath = try XCTUnwrap(ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_IDENTITY"])
         var imported: CFArray?
@@ -118,7 +121,7 @@ final class ReleaseCaptureTests: XCTestCase {
         try await click("#peek-link", in: page, modifiers: .shift)
         let reopened = await pollUntil { self.controller.pagePopups.values.first?.engine.currentTitle == "Field notes" }
         try recorder.checkpoint("peek-reopened", passed: reopened)
-        try await hold(1300)
+        try await hold(2100)
         try await recorder.finish(scenario: "peek")
     }
 
@@ -142,7 +145,7 @@ final class ReleaseCaptureTests: XCTestCase {
         controller.bridgeRouter.send(event: "openCommandBar", data: ["newTab": false])
         let command = await pollUntil { (try? await self.controller.chromeWebView.evaluateJavaScript("!!document.querySelector('.command-bar-input')")) as? Bool == true }
         try recorder.checkpoint("command-bar-available", passed: command)
-        try await hold(1100)
+        try await hold(2500)
         await AgentInput.key(controller.chromeWebView, chord: "Escape")
         try await hold(750)
         try await recorder.finish(scenario: "address-bar")
@@ -177,7 +180,7 @@ final class ReleaseCaptureTests: XCTestCase {
         try await click(".share-row .call-btn", in: controller.chromeWebView)
         let stopped = await pollUntil { self.controller.tabShareSessions.tabShare(requestedBy: requester) == nil }
         try recorder.checkpoint("share-stopped", passed: stopped)
-        try await hold(650)
+        try await hold(1400)
         try await recorder.finish(scenario: "tab-share")
     }
 

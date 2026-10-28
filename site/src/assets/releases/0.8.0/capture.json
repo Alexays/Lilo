@@ -4,128 +4,131 @@
       "appBuild": "21",
       "appVersion": "0.8.0",
       "captureTool": "ScreenCaptureKit.currentProcess",
-      "capturedAt": "2026-10-28T21:01:42Z",
+      "capturedAt": "2026-10-28T21:41:23Z",
       "checkpoints": [
         {
-          "atMs": 1613,
+          "atMs": 1612,
           "name": "peek-open",
           "passed": true
         },
         {
-          "atMs": 4788,
+          "atMs": 4731,
           "name": "source-preserved",
           "passed": true
         },
         {
-          "atMs": 5908,
+          "atMs": 5827,
           "name": "peek-reopened",
           "passed": true
         }
       ],
-      "durationMs": 7358,
+      "durationMs": 8045,
       "height": 720,
+      "inputDigest": "dd36c97b9be1bfb3a9315fc8c6336e492e0dfe768d9f22e3f675d3592d9664be",
       "scenario": "peek",
       "source": "native",
       "width": 1120,
-      "frames": 214,
+      "frames": 234,
       "poster": "peek-native.png",
-      "posterDigest": "73c393f28a5fa445897e394cd779b253ac9a776b9435e594e893d99db882e008",
+      "posterDigest": "8d95fd5b2365240b79942525be1fb435e2cc018b8cd26c5aea4c08e26a499d29",
       "quality": {
-        "decodedFrames": 94,
+        "decodedFrames": 92,
         "passed": true,
-        "uniqueFrames": 92
+        "uniqueFrames": 90
       },
       "recording": "peek-native.webp",
-      "recordingDigest": "de90c97e105c0b31f6defb27968f5b2eb3cd400a0b867b0c6ab0ade7c6e8d20c",
-      "sourceDigest": "0d23bf947f8da3de059d1b4b86ef1dd998042f8a9f030304b195d3a16a18e214"
+      "recordingDigest": "e3df91218073cfa047be97a90ada7eaa6f9ee5a51bd29831549b28f186cd3230",
+      "sourceDigest": "2d72a8af4bf961ae4b2ab5bdcfeadb9d5d5d83220bb40eaca0a3be05286cc697"
     },
     "address-bar": {
       "appBuild": "21",
       "appVersion": "0.8.0",
       "captureTool": "ScreenCaptureKit.currentProcess",
-      "capturedAt": "2026-10-28T21:04:59Z",
+      "capturedAt": "2026-10-28T21:41:15Z",
       "checkpoints": [
         {
-          "atMs": 4747,
+          "atMs": 4718,
           "name": "address-hidden",
           "passed": true
         },
         {
-          "atMs": 5680,
+          "atMs": 5647,
           "name": "command-bar-available",
           "passed": true
         }
       ],
-      "durationMs": 7614,
+      "durationMs": 9055,
       "height": 720,
+      "inputDigest": "dd36c97b9be1bfb3a9315fc8c6336e492e0dfe768d9f22e3f675d3592d9664be",
       "scenario": "address-bar",
       "source": "native",
       "width": 1120,
-      "frames": 221,
+      "frames": 263,
       "poster": "address-bar-native.png",
-      "posterDigest": "3f480df8fda7860395d2375b079232e662011346d815d61ec35f643a19349ea9",
+      "posterDigest": "58ef02a8c05b7445e723ab6d7af4a016a496ef9bca99789374cfddd0e0dfb52c",
       "quality": {
-        "decodedFrames": 124,
+        "decodedFrames": 129,
         "passed": true,
-        "uniqueFrames": 119
+        "uniqueFrames": 116
       },
       "recording": "address-bar-native.webp",
-      "recordingDigest": "d09b29034b6719c53b4c16c6d77cbb5fbb5a4d7a4872374b0fd566d29bce71b0",
-      "sourceDigest": "df731ad93a01d274a82e1c4d5817e0e47a7184d085ba5b6b407be1b11a75bf69"
+      "recordingDigest": "eab26475b84c925a541d58cc61861c28cf2e21cadc8617f125d6102f0b3f13c6",
+      "sourceDigest": "1cd5a31563831f41a0cbb5162294780da518b055bba5f330e965aca0ea153e62"
     },
     "tab-share": {
       "appBuild": "21",
       "appVersion": "0.8.0",
       "captureTool": "ScreenCaptureKit.currentProcess",
-      "capturedAt": "2026-10-28T21:10:14Z",
+      "capturedAt": "2026-10-28T21:41:36Z",
       "checkpoints": [
         {
-          "atMs": 1619,
+          "atMs": 1598,
           "name": "picker-open",
           "passed": true
         },
         {
-          "atMs": 4501,
+          "atMs": 4415,
           "name": "tab-shared",
           "passed": true
         },
         {
-          "atMs": 4549,
+          "atMs": 4439,
           "name": "stream-delivered",
           "passed": true
         },
         {
-          "atMs": 6919,
+          "atMs": 6782,
           "name": "shown-tab-active",
           "passed": true
         },
         {
-          "atMs": 8028,
+          "atMs": 7870,
           "name": "share-switched",
           "passed": true
         },
         {
-          "atMs": 10120,
+          "atMs": 9932,
           "name": "share-stopped",
           "passed": true
         }
       ],
-      "durationMs": 10881,
+      "durationMs": 11440,
       "height": 720,
+      "inputDigest": "dd36c97b9be1bfb3a9315fc8c6336e492e0dfe768d9f22e3f675d3592d9664be",
       "scenario": "tab-share",
       "source": "native",
       "width": 1120,
-      "frames": 317,
+      "frames": 334,
       "poster": "tab-share-native.png",
-      "posterDigest": "32b6ce437519240afd74ac2738c43a39bd7d977a0e30fb78d15a7f133d5ccf4b",
+      "posterDigest": "a035b7e2dc04c2d487e5d1e211d5020eadb53e52c075d313aae30c2835431db4",
       "quality": {
-        "decodedFrames": 200,
+        "decodedFrames": 203,
         "passed": true,
-        "uniqueFrames": 200
+        "uniqueFrames": 203
       },
       "recording": "tab-share-native.webp",
-      "recordingDigest": "5a5bcd19bb411cd58acd307d745147ff44e3340052de4df3bf554681c65d74d4",
-      "sourceDigest": "1cfd35520db36be20727d3c265758f2408ba7144fd8f6f0b00677d866b53fea9"
+      "recordingDigest": "d88e17d2ed884ac45d529092331eac36f8ac0b4441cc8d9905235217df3f8db6",
+      "sourceDigest": "d432736ee3e5bd4688b2359ac9c0c5219450aad82de00cc9cfa68ffecb3b7677"
     }
   },
   "release": "0.8.0",
@@ -138,23 +141,22 @@
           "While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in.",
           "The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered."
         ],
-        "reason": "New tab-sharing controls and picker improvements are covered by the picker, live sharing, switch, and stop runner.",
+        "reason": "New visible tab-sharing controls and picker improvements, covered by the picker, live sharing, switch, and stop runner.",
         "scenario": "tab-share"
       },
       {
         "notes": [
           "Hide the address bar from Settings > Appearance while keeping the command bar and permission requests available."
         ],
-        "reason": "New address-bar visibility setting is covered by Settings > Appearance > Hidden and the command bar runner.",
+        "reason": "New address-bar visibility option, covered by Settings > Appearance > Hidden and the command bar runner.",
         "scenario": "address-bar"
       }
     ],
     "unsupportedImportantFeatures": [],
     "version": "0.8.0"
   },
-  "fixtureDigest": "1fc0d8e205c8a262a0a4f7843e003e828381fe5db4f5bb5bffb53a6d055d2c40",
   "visualReview": {
-    "archiveDigest": "870450eba24ac67764db441304bd54a062f75ff6c559d4fd2b00e504685e873b",
+    "archiveDigest": "764e9185a165b9cf98bc6ca4ca563719ddc52e871c859fc0218a60f40886c52e",
     "passed": true,
     "reviews": {
       "peek": {

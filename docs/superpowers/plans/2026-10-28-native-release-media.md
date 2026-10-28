@@ -60,6 +60,6 @@
 
 ### Task 4: Verify, document, and review
 
-- [ ] Run make validate and focused browser tests; inspect actual recording previews.
+- [x] Run make validate and focused browser tests; inspect actual recording previews.
 - [x] Document commands, one-time capture setup, proof scope, failure behavior, and future scenario authoring.
 - [x] Add a release note, review the full diff with a fresh reviewer, resolve material findings, and report verified outputs.

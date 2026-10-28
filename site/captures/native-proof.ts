@@ -14,6 +14,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import sharp from "sharp";
 import { z } from "zod";
 
+import { nativeInputDigest } from "./native-inputs.ts";
 import { encodeRecording } from "./recording.ts";
 
 export const nativeScenarios = ["peek", "address-bar", "tab-share"] as const;
@@ -56,6 +57,7 @@ export const nativeManifestSchema = z.strictObject({
     .min(30)
     .max(450),
   height: z.number().int().positive().max(1440),
+  inputDigest: z.string().regex(/^[a-f0-9]{64}$/u),
   scenario: z.enum(nativeScenarios),
   source: z.literal("native"),
   width: z.number().int().positive().max(1920),
@@ -95,7 +97,6 @@ export const nativePlanSchema = z.strictObject({
 });
 
 const nativeArchiveSchema = z.object({
-  fixtureDigest: z.string().optional(),
   plan: nativePlanSchema.optional(),
   recordings: z.record(z.enum(nativeScenarios), recordingSchema),
   release: z.string(),
@@ -128,6 +129,7 @@ export const nativeArchiveDigest = (
           scenario,
           m.appVersion,
           m.appBuild,
+          m.inputDigest,
           m.sourceDigest,
           m.posterDigest,
           m.recordingDigest,
@@ -145,7 +147,8 @@ export const nativeArchiveDigest = (
 
 export const validateNativeTimeline = (
   input: NativeManifest,
-  version: string
+  version: string,
+  expectedInputs = ""
 ) => {
   const manifest = nativeManifestSchema.parse(input);
 
@@ -153,8 +156,13 @@ export const validateNativeTimeline = (
     throw new Error("Capture app version does not match the release");
   }
 
+  if (expectedInputs && manifest.inputDigest !== expectedInputs) {
+    throw new Error(
+      "Native capture inputs changed; record the current sources again"
+    );
+  }
+
   let previous = -1;
-  let smoothIntervals = 0;
   const names = new Set<string>();
 
   for (const frame of manifest.frames) {
@@ -166,16 +174,33 @@ export const validateNativeTimeline = (
       throw new Error("Invalid or repeated frame timestamp/file");
     }
 
-    if (previous >= 0 && frame.atMs - previous <= 67) {
-      smoothIntervals += 1;
+    if (previous >= 0 && frame.atMs - previous > 100) {
+      throw new Error("Native sampling gap exceeds 100 ms");
     }
 
     previous = frame.atMs;
     names.add(frame.file);
   }
 
-  if (manifest.frames[0].atMs > 100 || smoothIntervals < 24) {
-    throw new Error("Recording has insufficient continuous motion samples");
+  if (manifest.frames[0].atMs > 100 || manifest.durationMs - previous > 100) {
+    throw new Error("Native sampling does not cover the whole timeline");
+  }
+
+  for (
+    let start = manifest.frames[0].atMs;
+    start < manifest.durationMs;
+    start += 1000
+  ) {
+    const end = Math.min(start + 1000, manifest.durationMs);
+
+    if (
+      manifest.frames.filter((f) => f.atMs >= start && f.atMs < end).length <
+      Math.floor(((end - start) * 24) / 1000)
+    ) {
+      throw new Error(
+        "Native sampling falls below 24 fps in a timeline segment"
+      );
+    }
   }
 
   const passed = new Set(
@@ -205,7 +230,8 @@ export const encodeNativeProof = async (
   framesDirectory: string,
   output: string,
   version: string,
-  replace = false
+  replace = false,
+  expectedInputs = ""
 ) => {
   if (!/^\d+\.\d+\.\d+$/u.test(version)) {
     throw new Error("Use RELEASE=x.y.z");
@@ -229,7 +255,8 @@ export const encodeNativeProof = async (
         JSON.parse(
           readFileSync(path.join(directory, "manifest.json"), "utf-8")
         ),
-        version
+        version,
+        expectedInputs
       );
 
       if (manifest.scenario !== scenario) {
@@ -357,7 +384,8 @@ export const checkNativeArchive = (
   directory: string,
   version: string,
   requireVisualReview = true,
-  expectedBuild = ""
+  expectedBuild = "",
+  expectedInputs = ""
 ) => {
   const unparsed = JSON.parse(
     readFileSync(path.join(directory, "capture.json"), "utf-8")
@@ -398,7 +426,8 @@ export const checkNativeArchive = (
       JSON.parse(
         readFileSync(path.join(directory, `${scenario}-source.json`), "utf-8")
       ),
-      version
+      version,
+      expectedInputs
     );
 
     if (expectedBuild && manifest.appBuild !== expectedBuild) {
@@ -480,7 +509,13 @@ export const checkRequiredReleaseMedia = (
     throw new Error("Missing app build identity");
   }
 
-  return checkNativeArchive(directory, version, true, build);
+  return checkNativeArchive(
+    directory,
+    version,
+    true,
+    build,
+    nativeInputDigest(root)
+  );
 };
 
 if (
@@ -494,7 +529,9 @@ if (
     process.env.LILO_CAPTURE_OUTPUT ||
     path.join(root, "site/src/assets/releases", version);
 
-  if (process.argv[2] === "check") {
+  if (process.argv[2] === "fingerprint") {
+    process.stdout.write(nativeInputDigest(root));
+  } else if (process.argv[2] === "check") {
     checkRequiredReleaseMedia(
       root,
       version,
@@ -505,7 +542,8 @@ if (
       process.env.LILO_CAPTURE_FRAMES ?? "",
       output,
       version,
-      process.env.LILO_CAPTURE_REPLACE === "1"
+      process.env.LILO_CAPTURE_REPLACE === "1",
+      nativeInputDigest(root)
     );
   }
 }

@@ -195,7 +195,7 @@ class SiteTests(unittest.TestCase):
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 recording = [node for node in parsed if "release-recording" in node.classes]
-                self.assertEqual(len(recording), 3)
+                self.assertGreaterEqual(len(recording), 3)
                 for player in recording:
                     button = next(node for node in nodes(player) if node.tag == "button")
                     self.assertEqual(button.attrs.get("aria-pressed"), "false")

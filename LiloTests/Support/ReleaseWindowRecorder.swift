@@ -73,6 +73,9 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
     @MainActor
     func finish(scenario: String) async throws {
         guard let stream else { throw CocoaError(.fileReadUnknown) }
+        guard (CGSessionCopyCurrentDictionary() as? [String: Any])?["CGSSessionScreenIsLocked"] as? Bool != true else {
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSLocalizedDescriptionKey: "macOS locked during native capture; release media remains blocked"])
+        }
         let durationMs = elapsedMs
         try await stream.stopCapture()
         self.stream = nil
@@ -80,6 +83,7 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
         if let failure { throw failure }
         let manifest: [String: Any] = [
             "scenario": scenario, "source": "native", "captureTool": "ScreenCaptureKit.currentProcess",
+            "inputDigest": try XCTUnwrap(ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_INPUT_DIGEST"]),
             "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
             "appBuild": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
             "capturedAt": ISO8601DateFormatter().string(from: Date()),

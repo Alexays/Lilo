@@ -187,7 +187,7 @@ release-status: $(CHANGIE)
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
-	@release=$$('$(CHANGIE)' latest --remove-prefix); \
+	@set -e; release=$$('$(CHANGIE)' latest --remove-prefix); \
 	if [ -f "site/src/content/releases/$$release.json" ]; then \
 		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
 		$(MAKE) --no-print-directory release-media-check RELEASE="$$release"; \
@@ -536,7 +536,7 @@ site-e2e: site-generate
 ## Select release highlights, record native proofs, and publish only quality-approved media (RELEASE=x.y.z)
 release-media-proof: $(SITE_DEPS)
 	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' \
-	LILO_CAPTURE_FRAMES='$(if $(FRAMES),$(abspath $(FRAMES)),)' node site/captures/produce-native.ts
+	LILO_CAPTURE_FRAMES='$(if $(FRAMES),$(abspath $(FRAMES)),)' caffeinate -di node site/captures/produce-native.ts
 
 ## Test native media quality and release gates
 release-media-test: $(SITE_DEPS)
@@ -553,8 +553,10 @@ release-media-check: $(SITE_DEPS)
 	LILO_CAPTURE_VERSION="$$release" LILO_CAPTURE_OUTPUT='$(if $(OUT),$(abspath $(OUT)),)' node site/captures/native-proof.ts check
 
 ## Record native release scenarios in an isolated test window (OUT=build/release-media-frames)
-release-media-record: vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
-	@TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(abspath $(or $(OUT),build/release-media-frames))' \
+release-media-record: $(SITE_DEPS) vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
+	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(abspath $(or $(OUT),build/release-media-frames))' \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_FIXTURES='$(CURDIR)/site/captures/fixtures' \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_IDENTITY='$(CURDIR)/build/release-capture-fixture.p12' \
 	$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),LiloTests/ReleaseCaptureTests) -parallel-testing-enabled NO
