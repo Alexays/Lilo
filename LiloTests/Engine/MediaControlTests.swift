@@ -125,23 +125,21 @@ final class MediaControlTests: XCTestCase {
         let tab = try await loadedTab("<p>call</p>", factory: factory)
         defer { tab.teardown() }
 
-        // Two peers connected in the page, as a call whose page registers no Media Session action (Meet's companion mode).
+        // A connected peer in a page that registers no Media Session action (Meet's companion mode). The test sets the
+        // connection state itself: ICE between two local peers never completes on the CI runners.
         _ = try await tab.wkWebView.callAsyncJavaScript("""
             const a = new RTCPeerConnection(), b = new RTCPeerConnection();
-            a.onicecandidate = e => e.candidate && b.addIceCandidate(e.candidate);
-            b.onicecandidate = e => e.candidate && a.addIceCandidate(e.candidate);
             a.createDataChannel('call');
-            await a.setLocalDescription(await a.createOffer());
-            await b.setRemoteDescription(a.localDescription);
-            await b.setLocalDescription(await b.createAnswer());
-            await a.setRemoteDescription(b.localDescription);
+            await b.setRemoteDescription(await a.createOffer());
+            Object.defineProperty(b, 'connectionState', { value: 'connected', configurable: true });
+            b.dispatchEvent(new Event('connectionstatechange'));
             window.peers = [a, b];
             """, contentWorld: .page)
 
         let connected = await pollUntil(timeout: 10) { reported?.hasLiveConnection == true }
         XCTAssertTrue(connected, "a connected peer is a call, with or without camera and microphone")
 
-        _ = try await tab.wkWebView.evaluateJavaScript("window.peers.forEach(p => p.close()); true")
+        _ = try await tab.wkWebView.evaluateJavaScript("delete window.peers[1].connectionState; window.peers.forEach(p => p.close()); true")
 
         let ended = await pollUntil(timeout: 10) { reported?.hasLiveConnection == false }
         XCTAssertTrue(ended, "the call ends with its connections")
