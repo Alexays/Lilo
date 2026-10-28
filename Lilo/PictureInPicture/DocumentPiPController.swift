@@ -131,7 +131,9 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
 
     /// At most half the screen each way, as a PiP window is a companion to the page, never a cover over the screen.
     static func cappedSize(_ size: NSSize, in visibleFrame: NSRect) -> NSSize {
-        NSSize(width: max(160, min(size.width, visibleFrame.width / 2)), height: max(120, min(size.height, visibleFrame.height / 2)))
+        // Whole points: AppKit rounds a window frame, which would land half a point past an odd screen's half.
+        NSSize(width: max(160, min(size.width, (visibleFrame.width / 2).rounded(.down))),
+               height: max(120, min(size.height, (visibleFrame.height / 2).rounded(.down))))
     }
 
     /// Per display, not per model name: two monitors of one model each keep their own corner.
