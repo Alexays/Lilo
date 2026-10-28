@@ -1,4 +1,5 @@
 import AppKit
+import Metal
 import WebKit
 import XCTest
 @testable import Lilo
@@ -729,6 +730,18 @@ final class RealExtensionSmokeTests: XCTestCase {
             if request.hasPrefix("GET /data.json ") { return ("200 OK", ["Content-Type: application/json"], json) }
             if request.hasPrefix("GET /video ") { return ("200 OK", ["Content-Type: text/html"], video) }
             return ("200 OK", ["Content-Type: image/gif"], image)
+        }
+        // The machine's graphics, which the feature checks drawing on a canvas depend on: CI's runners are virtual machines.
+        if let probe = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))),
+           let probePage = window.tabManager.engineTab(for: probe.id)?.view as? WKWebView {
+            _ = await pollUntil(timeout: 10) { !probePage.isLoading }
+            let readback = await evaluate("""
+            (() => { const canvas = Object.assign(document.createElement('canvas'), { width: 4, height: 4 }), context = canvas.getContext('2d');
+              context.fillStyle = 'red'; context.fillRect(0, 0, 4, 4);
+              try { return 'readback ' + context.getImageData(0, 0, 1, 1).data[0]; } catch (error) { return 'readback ' + error.name; } })()
+            """, in: probePage) as? String ?? "unread"
+            print("LILO_GRAPHICS metal \(MTLCreateSystemDefaultDevice()?.name ?? "none"), canvas \(readback)")
+            window.closeTabStateFirst(id: probe.id, undoable: false)
         }
         // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
         let only = ProcessInfo.processInfo.environment["LILO_SMOKE_FEATURES"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
