@@ -177,7 +177,7 @@ describe('the declarativeNetRequest namespace', () => {
     assert.equal(await dnr.updateDynamicRules({ removeRuleIds: [2, 3] }), undefined);
     await dnr.updateDynamicRules({});
     await dnr.updateDynamicRules({ removeRuleIds: [1, 2] });
-    assert.deepEqual(updates, [{ removeRuleIds: [1, 2], addRules: [] }]);
+    assert.deepEqual(updates, [{ removeRuleIds: [1], addRules: [] }]);
   });
 
   it('keeps the rules an update removes and adds back as they are, as a worker replacing all its rules at each start does', async () => {
@@ -218,7 +218,7 @@ describe('the declarativeNetRequest namespace', () => {
       dnr.updateDynamicRules({ removeRuleIds: [3], addRules: [block(3), block(4)] }),
     ]);
     assert.deepEqual(results, [undefined, undefined, undefined]);
-    assert.deepEqual(updates, [{ removeRuleIds: [1, 2, 3], addRules: [block(3), block(4)] }]);
+    assert.deepEqual(updates, [{ removeRuleIds: [1], addRules: [block(3), block(4)] }]);
     assert.deepEqual(ids(), [3, 4]);
 
     const running = dnr.updateDynamicRules({ addRules: [block(5)] });
@@ -309,6 +309,126 @@ describe('the declarativeNetRequest namespace', () => {
     changed = false;
     await dnr.updateStaticRules({ rulesetId: 'on', enableRuleIds: [3] });
     assert.equal(toggles.length, 1, 'a disabled ruleset and an unchanged file need no compile');
+  });
+});
+
+describe('session rules', () => {
+  // WebKit's dynamic rules, which outlive a launch, and what native keeps of the run, which does not.
+  let held: any[] = [];
+  let claimed = false;
+  let ids: number[] = [];
+  let updates: any[] = [];
+
+  function launch() {
+    claimed = false;
+    ids = [];
+    updates = [];
+    mockGapAPI(({ namespace, method, params }) => {
+      if (namespace !== 'declarativeNetRequest' || method !== 'sessionRules') return null;
+      if (params.claim) [claimed, ids] = [true, []];
+      else if (params.ids) ids = params.ids;
+      return { claimed, ids };
+    });
+    const prototype = {
+      async updateDynamicRules(options: { addRules?: any[]; removeRuleIds?: number[] }) {
+        updates.push(options);
+        const kept = held.filter((rule) => !options.removeRuleIds?.includes(rule.id));
+        for (const rule of options.addRules ?? []) {
+          if (kept.some((other) => other.id === rule.id)) throw new Error(`Rule with id ${rule.id} does not have a unique ID.`);
+          if (rule.condition?.urlFilter === 'invalid') throw new Error(`Rule with id ${rule.id} is invalid.`);
+          kept.push(rule);
+        }
+        held = kept;
+      },
+      // Rules come back from WebKit with their keys in another order.
+      async getDynamicRules() { return held.map((rule) => Object.fromEntries(Object.entries(JSON.parse(JSON.stringify(rule))).reverse())); },
+      async updateSessionRules() { throw new Error('WebKit keeps session rules in memory'); },
+      async getSessionRules() { return []; },
+      async getMatchedRules() {
+        return { rulesMatchedInfo: held.map((rule) => ({ rule: { ruleId: rule.id, rulesetId: '_dynamic' }, tabId: 1, timeStamp: 0 })) };
+      },
+    };
+    (globalThis as any).chrome = { runtime: { getManifest: () => ({}) }, declarativeNetRequest: Object.create(prototype) };
+    installChromeCompat({});
+    return (globalThis as any).chrome.declarativeNetRequest;
+  }
+  const block = (id: number, urlFilter = `ads${id}`) => ({ id, action: { type: 'block' }, condition: { urlFilter } });
+
+  it('lets a relaunch find the session rules its worker adds back as they were, with nothing to compile', async () => {
+    held = [];
+    let dnr = launch();
+    await dnr.updateDynamicRules({ addRules: [block(1, 'dynamic')] });
+    await dnr.updateSessionRules({ addRules: [block(1), block(2)] });
+    assert.deepEqual(await dnr.getSessionRules(), [block(1), block(2)]);
+    assert.deepEqual(await dnr.getDynamicRules(), [block(1, 'dynamic')], 'a session rule shares no id with a dynamic one');
+
+    dnr = launch();
+    assert.deepEqual(await dnr.getSessionRules(), [], 'a new run starts with no session rule, as in Chrome');
+    await dnr.updateSessionRules({ addRules: [block(1), block(2)] });
+    assert.equal(updates.length, 0, 'the rules WebKit compiled last run are the same');
+    assert.deepEqual(await dnr.getSessionRules(), [block(1), block(2)]);
+    await dnr.updateSessionRules({ removeRuleIds: [2], addRules: [block(2, 'changed')] });
+    assert.equal(updates.length, 1);
+    assert.deepEqual(updates[0].removeRuleIds.length, 1, 'only the changed rule is replaced');
+    assert.deepEqual(await dnr.getSessionRules({ ruleIds: [2] }), [block(2, 'changed')]);
+  });
+
+  it('drops the session rules of a run whose worker does not add them back', async (t) => {
+    held = [];
+    let dnr = launch();
+    await dnr.updateSessionRules({ addRules: [block(1)] });
+    await dnr.updateDynamicRules({ addRules: [block(1, 'dynamic')] });
+
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    (globalThis as any).ServiceWorkerGlobalScope = function ServiceWorkerGlobalScope() {};
+    t.after(() => delete (globalThis as any).ServiceWorkerGlobalScope);
+    dnr = launch();
+    t.mock.timers.tick(30000);
+    for (let i = 0; i < 20; i++) await new Promise((resolve) => setImmediate(resolve));
+    assert.deepEqual(held.map((rule) => rule.condition.urlFilter), ['dynamic']);
+    assert.deepEqual(await dnr.getSessionRules(), []);
+  });
+
+  it('compiles nothing for a worker clearing its session rules at start, then adding them back one by one', async (t) => {
+    held = [];
+    let dnr = launch();
+    await dnr.updateSessionRules({ addRules: [block(1), block(2), block(3)] });
+
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    (globalThis as any).ServiceWorkerGlobalScope = function ServiceWorkerGlobalScope() {};
+    t.after(() => delete (globalThis as any).ServiceWorkerGlobalScope);
+    dnr = launch();
+    await dnr.updateSessionRules({ removeRuleIds: (await dnr.getSessionRules()).map((rule: any) => rule.id) });
+    await dnr.updateSessionRules({ removeRuleIds: [1, 2, 3] });
+    await dnr.updateSessionRules({ addRules: [block(1), block(2)] });
+    assert.deepEqual(await dnr.getSessionRules(), [block(1), block(2)]);
+    await dnr.updateSessionRules({ addRules: [block(3)] });
+    t.mock.timers.tick(30000);
+    for (let i = 0; i < 20; i++) await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(updates.length, 0, 'the rules WebKit compiled last run are the same');
+    assert.deepEqual(await dnr.getSessionRules(), [block(1), block(2), block(3)]);
+  });
+
+  it('fails alone a call adding an id already held, and names a rule WebKit rejects by its own id', async () => {
+    held = [];
+    const dnr = launch();
+    const outcomes = await Promise.allSettled([
+      dnr.updateSessionRules({ addRules: [block(1)] }),
+      dnr.updateSessionRules({ addRules: [block(1)] }),
+      dnr.updateSessionRules({ addRules: [block(2)] }),
+    ]);
+    assert.deepEqual(outcomes.map((outcome) => outcome.status), ['fulfilled', 'rejected', 'fulfilled']);
+    assert.match((outcomes[1] as PromiseRejectedResult).reason.message, /id 1 does not have a unique ID/);
+    await assert.rejects(dnr.updateSessionRules({ addRules: [block(7, 'invalid')] }), { message: 'Rule with id 7 is invalid.' });
+    assert.deepEqual((await dnr.getSessionRules()).map((rule: any) => rule.id), [1, 2]);
+  });
+
+  it('reports a matched session rule under the session ruleset and its own id', async () => {
+    held = [];
+    const dnr = launch();
+    await dnr.updateSessionRules({ addRules: [block(5)] });
+    const { rulesMatchedInfo } = await dnr.getMatchedRules();
+    assert.deepEqual(rulesMatchedInfo.map((info: any) => info.rule), [{ ruleId: 5, rulesetId: '_session' }]);
   });
 });
 

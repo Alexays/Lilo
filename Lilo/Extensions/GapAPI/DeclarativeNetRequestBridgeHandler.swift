@@ -1,17 +1,33 @@
 import Foundation
+import WebKit
 
 /// chrome.declarativeNetRequest's disabled static rules, which WebKit lacks: they turn inert in the
 /// extension's ruleset files (ExtensionBackgroundPreparer), off the main thread and one call at a time.
+/// Also remembers the session rules each context set this run, which WebKit holds as dynamic ones (dnr-rules.ts).
 @MainActor
 final class DeclarativeNetRequestBridgeHandler: GapHandler {
     let gapActions: Set<String> = [
         "declarativeNetRequest.getDisabledRuleIds",
-        "declarativeNetRequest.updateStaticRules"
+        "declarativeNetRequest.updateStaticRules",
+        "declarativeNetRequest.sessionRules"
     ]
 
     private var lastCall: Task<Void, Never>?
+    /// In memory only, as Chrome's session rules: a relaunch or a reloaded context starts unclaimed, with no id of its own.
+    private let claimedSessionRules = NSHashTable<WKWebExtensionContext>.weakObjects()
+    private let sessionRuleIds = NSMapTable<WKWebExtensionContext, NSArray>.weakToStrongObjects()
 
     func handle(_ call: GapCall) async -> Any? {
+        if call.action == "declarativeNetRequest.sessionRules" {
+            guard let context = call.context else { return BridgeError("Extension not found") }
+            if call.bool("claim") {
+                claimedSessionRules.add(context)
+                sessionRuleIds.removeObject(forKey: context)
+            } else if let ids = call.payload["ids"] as? [Int] {
+                sessionRuleIds.setObject(ids as NSArray, forKey: context)
+            }
+            return ["claimed": claimedSessionRules.contains(context), "ids": sessionRuleIds.object(forKey: context) ?? []]
+        }
         guard let rulesetId = call.string("rulesetId") else { return BridgeError("rulesetId must be a string") }
         guard let context = call.context,
               let sourcePath = call.registry.loadedExtensions.first(where: { $0.id == call.extensionId })?.sourcePath else {

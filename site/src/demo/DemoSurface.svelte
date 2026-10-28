@@ -47,7 +47,7 @@ export const minimize = () => { windowState = "minimized"; };
 export const closeWindow = () => { windowState = "closed"; };
 export const hasPreview = () => preview !== null;
 export const openAsTab = () => { previewWindow?.expand(); };
-export const reload = () => { reloads = { ...reloads, [snapshot.activeTabId]: (reloads[snapshot.activeTabId] ?? 0) + 1 }; };
+export const reload = (tabId = snapshot.activeTabId) => { reloads = { ...reloads, [tabId]: (reloads[tabId] ?? 0) + 1 }; };
 export const showFeatures = () => { exploring = true; };
 export const showPreview = (mode: "peek" | "little", url: string) => { preview = { mode, url }; };
 

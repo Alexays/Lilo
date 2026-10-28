@@ -57,9 +57,10 @@ DEBUG_TEAM_ID := $(or $(LILO_DEBUG_TEAM_ID),$(LILO_TEAM_ID))
 DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SIGN_IDENTITY="$(or $(LILO_DEBUG_CODE_SIGN_IDENTITY),Apple Development)" CODE_SIGN_STYLE=Manual)
 # The test host is its own app: its camera, microphone and keychain grants and its background
 # permission never touch the installed Lilo's, and a stable signature keeps them across builds.
-# One run at a time per machine, whatever the worktree: each already fills every performance core, and
-# concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
-TEST := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
+# One run at a time per machine, whatever the worktree and whichever test host: each already fills every
+# performance core, and concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
+TEST_LOCK := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock
+TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
 # CI (which sets CI) runs a failed test once more and lists it in the job summary; locally a flake fails.
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
@@ -303,7 +304,7 @@ ext-bridge-test: $(BRIDGE_DEPS)
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
 ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
+	@$(TEST_LOCK) node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
 ext-nightly:

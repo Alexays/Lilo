@@ -404,7 +404,7 @@ final class WKEngineFactory {
 
     /// A shared pool keeping a spare WebContent process launched, so cross-site navigations and new views skip the spawn (the default
     /// pool has it off, fixed at creation). Looked up by name since WKProcessPool is deprecated; nil when the SPI is missing.
-    private static let contentProcessPool: NSObject? = {
+    static let contentProcessPool: NSObject? = {
         guard let poolClass: AnyObject = NSClassFromString("WKProcessPool") else { return nil }
         let selector = NSSelectorFromString("_processPoolWithConfiguration:")
         guard poolClass.responds(to: selector),

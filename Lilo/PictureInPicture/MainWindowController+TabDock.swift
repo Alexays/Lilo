@@ -57,7 +57,8 @@ extension MainWindowController {
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user
     /// put the panel on another screen, where it stays visible next to the window.
     func moveFloatingCallToDock() {
-        guard context.settingsStore.dockCallsInSidebar,
+        // Nil until bootstrap: the launch window comes on screen, and foregrounds, before settings load.
+        guard context.settingsStore?.dockCallsInSidebar == true,
               let engineId = floatingTabPanel.hostedEngineId,
               let engine = tabManager.engineTab(for: engineId),
               engine.hasActiveCapture, !engine.isTabShareSource,

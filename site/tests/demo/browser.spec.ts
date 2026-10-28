@@ -26,7 +26,7 @@ const openDemo = async (page: Page, french = false) => {
 };
 
 const menuCommand = async (page: Page, menu: number, action: string) => {
-  const item = page.locator(".mac-menu").nth(menu);
+  const item = page.locator("#browser-demo .mac-menu").nth(menu);
   await item.locator(":scope > summary").click();
 
   if (action === "find") {
@@ -99,7 +99,7 @@ test("notes remain edited when switching tabs and reset restores the sample worl
   await expect(demo.getByRole("textbox", { name: "Your notes" })).toHaveValue(
     "A note that stays in this demo."
   );
-  await page.locator(".demo-tools [data-action='reset']").click();
+  await page.locator("#browser-demo .demo-tools [data-action='reset']").click();
   await expect(
     demo.getByRole("treeitem", { exact: true, name: "Alexays / Lilo, Pinned" })
   ).toHaveAttribute("aria-selected", "true");
@@ -324,13 +324,17 @@ test("fullscreen preserves the interactive settings window", async ({
   page,
 }) => {
   const demo = await openDemo(page);
-  await page.locator(".demo-tools [data-action='fullscreen']").click();
+  await page
+    .locator("#browser-demo .demo-tools [data-action='fullscreen']")
+    .click();
   await expect
     .poll(() => page.evaluate(() => document.fullscreenElement?.id))
     .toBe("browser-demo");
   await menuCommand(page, 0, "settings");
   await expect(demo.locator(".ui-shell-frame")).toBeVisible();
-  await page.locator(".demo-tools [data-action='fullscreen']").click();
+  await page
+    .locator("#browser-demo .demo-tools [data-action='fullscreen']")
+    .click();
   await expect
     .poll(() => page.evaluate(() => document.fullscreenElement))
     .toBeNull();
