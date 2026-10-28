@@ -246,3 +246,21 @@ test("Italian regional tags, translations and count forms use the selected catal
 		assert.equal(translate("it", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Korean regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["ko", "ko-KR", "KO-kr"]) {
+		assert.equal(resolveLocale(tag), "ko", tag);
+	}
+	assert.equal(translate("ko", "common.cancel"), "취소");
+	for (const [count, expected] of [
+		[0, "열린 탭 0개"],
+		[1, "열린 탭 1개"],
+		[2, "열린 탭 2개"],
+		[5, "열린 탭 5개"],
+		[21, "열린 탭 21개"],
+		[12345, "열린 탭 12,345개"],
+		[1.5, "열린 탭 1.5개"],
+	] as const) {
+		assert.equal(translate("ko", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});

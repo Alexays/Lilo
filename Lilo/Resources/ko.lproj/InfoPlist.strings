@@ -1,0 +1,12 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "이 웹사이트에서 카메라에 접근하려고 합니다.";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "이 웹사이트에서 마이크에 접근하려고 합니다.";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "이 웹사이트에서 사용자의 위치에 접근하려고 합니다.";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "라우터나 프린터 같은 로컬 네트워크 기기의 페이지를 열거나 확장 프로그램이 해당 기기를 검색할 때 Lilo가 연결합니다.";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "이 웹사이트에서 사용자의 말을 텍스트로 변환하기 위해 음성 인식을 요청합니다.";
+/* Shown by macOS when sharing system audio with a screen. */
+"NSAudioCaptureUsageDescription" = "통화에서 화면과 함께 오디오 공유를 요청하면 Lilo가 Mac의 사운드를 공유합니다.";

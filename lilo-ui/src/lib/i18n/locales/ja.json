@@ -236,7 +236,7 @@
 			"language": {
 				"title": "言語",
 				"description": "ブラウザ全体の表示言語。",
-				"keywords": "言語 ロケール 翻訳 英語 フランス語 スペイン語 中国語 簡体字 ポルトガル語 ブラジル ロシア語 japanese 日本語 ukrainian українська german deutsch italian italiano"
+				"keywords": "言語 ロケール 翻訳 英語 フランス語 スペイン語 中国語 簡体字 ポルトガル語 ブラジル ロシア語 japanese 日本語 ukrainian українська german deutsch italian italiano korean 한국어"
 			},
 			"searchEngine": {
 				"title": "検索エンジン",

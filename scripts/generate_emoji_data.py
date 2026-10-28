@@ -31,6 +31,7 @@ LOCALES = {
     "de": {"auf", "das", "der", "die", "ein", "eine", "im", "in", "mit", "und", "von"},
     "ja": set(),
     "it": {"a", "al", "con", "da", "di", "e", "il", "in", "la", "le", "un", "una"},
+    "ko": set(),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
