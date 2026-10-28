@@ -18,6 +18,9 @@ final class ReleaseCaptureTests: XCTestCase {
     private var output: URL!
     private var activity: NSObjectProtocol?
     private var previousApplication: NSRunningApplication?
+    private var authoredScenario: AuthoredReleaseScenario?
+    private var authoredDigest: String?
+    private var previousMenu: NSMenu?
 
     override func setUp() async throws {
         guard let path = ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_OUT"],
@@ -29,6 +32,12 @@ final class ReleaseCaptureTests: XCTestCase {
         previousApplication = NSWorkspace.shared.frontmostApplication
         activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .idleDisplaySleepDisabled], reason: "Recording native release demonstrations")
         let pagesURL = URL(fileURLWithPath: pages, isDirectory: true)
+        if let file = ProcessInfo.processInfo.environment["LILO_RELEASE_SCENARIO_FILE"], !file.isEmpty {
+            let data = try Data(contentsOf: URL(fileURLWithPath: file))
+            authoredScenario = try JSONDecoder().decode(AuthoredReleaseScenario.self, from: data)
+            authoredDigest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        }
+        let authoredPages = Dictionary(uniqueKeysWithValues: (authoredScenario?.fixtures ?? []).map { ($0.name, Data((authoredScenario?.fixtures ?? []).reduce($0.html) { html, page in html.replacingOccurrences(of: "{{fixture:\(page.name)}}", with: page.name) }.utf8)) })
         let identityPath = try XCTUnwrap(ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_IDENTITY"])
         var imported: CFArray?
         let status = SecPKCS12Import(try Data(contentsOf: URL(fileURLWithPath: identityPath)) as CFData, [kSecImportExportPassphrase as String: "fixture-only", kSecImportToMemoryOnly as String: true] as CFDictionary, &imported)
@@ -42,8 +51,9 @@ final class ReleaseCaptureTests: XCTestCase {
         sec_protocol_options_set_local_identity(tls.securityProtocolOptions, sec_identity_create(identity)!)
         server = try await TinyHTTPServer(tls: tls) { request in
             let name = request.split(separator: " ").dropFirst().first.map(String.init) ?? ""
-            guard ["/guide.html", "/notes.html", "/call.html"].contains(name),
-                  let data = try? Data(contentsOf: pagesURL.appendingPathComponent(String(name.dropFirst()))) else {
+            let filename = String(name.dropFirst())
+            let data = authoredPages[filename] ?? (["/guide.html", "/notes.html", "/call.html"].contains(name) ? try? Data(contentsOf: pagesURL.appendingPathComponent(filename)) : nil)
+            guard let data else {
                 return ("404 Not Found", ["Content-Type: text/plain"], Data("Not found".utf8))
             }
             return ("200 OK", ["Content-Type: text/html; charset=utf-8"], data)
@@ -53,6 +63,7 @@ final class ReleaseCaptureTests: XCTestCase {
         context.settingsStore.set("onboardingCompleted", value: "true")
         context.settingsStore.didPromptDefaultBrowser = true
         context.settingsStore.set("addressPlacement", value: "page")
+        for setting in authoredScenario?.settings ?? [] { context.settingsStore.set(setting.key, value: setting.value) }
         controller = MainWindowController(context: context)
         context.windows.add(controller)
         controller.window?.setContentSize(NSSize(width: 1120, height: 720))
@@ -68,7 +79,11 @@ final class ReleaseCaptureTests: XCTestCase {
         let profile = try context.profileManager.createProfile(name: "Studio")
         let space = try context.spaceManager.createSpace(name: "Studio", profileId: profile.id)
         controller.switchToSpace(space.id)
-        controller.applyTabLayout(TabLayout(position: .left, address: .page), animated: false)
+        controller.applyTabLayout(authoredScenario == nil ? TabLayout(position: .left, address: .page) : controller.tabLayout, animated: false)
+        if authoredScenario != nil {
+            previousMenu = NSApp.mainMenu
+            (NSApp.delegate as? AppDelegate)?.setupMainMenu()
+        }
         controller.didCompleteSessionRestore = true
         controller.loadChromeUI()
         controller.window?.makeKeyAndOrderFront(nil)
@@ -90,6 +105,8 @@ final class ReleaseCaptureTests: XCTestCase {
 
     override func tearDown() async throws {
         await recorder?.cancel()
+        if let previousMenu { NSApp.mainMenu = previousMenu }
+        previousMenu = nil
         controller?.teardownTabShare()
         controller?.pagePopups.values.forEach { $0.close() }
         fixture?.tearDown()
@@ -100,6 +117,158 @@ final class ReleaseCaptureTests: XCTestCase {
         previousApplication = nil
         try await super.tearDown()
     }
+
+    func testAuthoredScenario() async throws {
+        guard let scenario = authoredScenario else { throw XCTSkip("Use SCENARIO=file.json") }
+        guard scenario.id.range(of: "^[a-z][a-z0-9-]{0,47}$", options: .regularExpression) != nil else { throw CocoaError(.fileReadCorruptFile) }
+        var tabs: [String: UUID] = [:]
+        do {
+            for tab in scenario.tabs { tabs[tab.id] = try await open(tab.page).id }
+            try await begin(scenario.id, scenarioDigest: authoredDigest)
+            for step in scenario.steps { try await perform(step, tabs: tabs) }
+            try await recorder.finish(scenario: scenario.id)
+        } catch {
+            var diagnostic: [String: Any] = ["error": error.localizedDescription, "menus": menuActions(NSApp.mainMenu)]
+            diagnostic["chrome"] = try? await controller.chromeWebView.evaluateJavaScript("document.body.outerHTML.slice(0,16000)")
+            if let page = controller.tabManager.activeEngineTab?.wkWebView {
+                diagnostic["page"] = try? await page.evaluateJavaScript("document.body.innerText.slice(0,6000)")
+            }
+            let directory = output.appendingPathComponent(scenario.id)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try JSONSerialization.data(withJSONObject: diagnostic, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("diagnostics.json"))
+            throw error
+        }
+    }
+
+    private func perform(_ step: AuthoredReleaseScenario.Step, tabs: [String: UUID]) async throws {
+        switch step.type {
+        case "hold": try await hold(try XCTUnwrap(step.durationMs))
+        case "menu":
+            let name = try XCTUnwrap(step.selector)
+            let action = NSSelectorFromString(name)
+            guard menuActions(NSApp.mainMenu).contains(name), controller.responds(to: action), controller.tryToPerform(action, with: nil) else {
+                throw CocoaError(.featureUnsupported, userInfo: [NSLocalizedDescriptionKey: "Unavailable native menu action: \(name)"])
+            }
+            try await hold(350)
+        case "key": await AgentInput.key(try webView(step.surface ?? ""), chord: try XCTUnwrap(step.chord))
+        case "click", "type":
+            let target = try XCTUnwrap(step.target)
+            if target.surface == "native" {
+                guard step.type == "click" else { throw CocoaError(.featureUnsupported) }
+                let button = try XCTUnwrap(nativeButton(target))
+                let point = button.convert(CGPoint(x: button.bounds.midX, y: button.bounds.midY), to: controller.window?.contentView)
+                try await glide(to: CGPoint(x: point.x, y: 720 - point.y))
+                button.performClick(nil)
+            } else {
+                let view = try webView(target.surface)
+                var modifiers: NSEvent.ModifierFlags = []
+                for name in step.modifiers ?? [] {
+                    switch name { case "shift": modifiers.insert(.shift); case "command": modifiers.insert(.command); case "option": modifiers.insert(.option); case "control": modifiers.insert(.control); default: throw CocoaError(.fileReadCorruptFile) }
+                }
+                try await click(resolve(target.selector, tabs: tabs), in: view, modifiers: modifiers, text: resolve(target.text, tabs: tabs), right: step.button == "right", count: step.count ?? 1)
+                if step.type == "type" {
+                    if step.replace == true { await AgentInput.key(view, chord: "cmd+a") }
+                    await AgentInput.type(view, text: resolve(try XCTUnwrap(step.text), tabs: tabs))
+                }
+            }
+        case "drag":
+            let from = try XCTUnwrap(step.from), to = try XCTUnwrap(step.to)
+            guard from.surface == to.surface, from.surface != "native" else { throw CocoaError(.featureUnsupported) }
+            let view = try webView(from.surface)
+            let start = try await controlPoint(resolve(from.selector, tabs: tabs), in: view, text: resolve(from.text, tabs: tabs))
+            let end = try await controlPoint(resolve(to.selector, tabs: tabs), in: view, text: resolve(to.text, tabs: tabs))
+            try await moveCursor(to: start, in: view)
+            AgentInput.mouseEvent(.leftMouseDown, view, at: start, clickCount: 1, modifiers: [])
+            let duration = try XCTUnwrap(step.durationMs)
+            for index in 1...24 {
+                let t = CGFloat(index) / 24
+                let eased = t * t * (3 - 2 * t)
+                let point = CGPoint(x: start.x + (end.x - start.x) * eased, y: start.y + (end.y - start.y) * eased)
+                let local = CGPoint(x: point.x, y: view.isFlipped ? point.y : view.bounds.height - point.y)
+                let windowPoint = view.convert(local, to: controller.window?.contentView)
+                placeCursor(CGPoint(x: windowPoint.x, y: 720 - windowPoint.y))
+                AgentInput.mouseEvent(.leftMouseDragged, view, at: point, clickCount: 1, modifiers: [])
+                try await hold(duration / 24)
+            }
+            AgentInput.mouseEvent(.leftMouseUp, view, at: end, clickCount: 1, modifiers: [])
+            try await hold(250)
+        case "assert":
+            let predicate = try XCTUnwrap(step.predicate)
+            let passed = await pollUntil(timeout: 3) { (try? await self.check(predicate, tabs: tabs)) == true }
+            try recorder.checkpoint(try XCTUnwrap(step.id), passed: passed)
+        default: throw CocoaError(.featureUnsupported)
+        }
+    }
+
+    private func webView(_ surface: String) throws -> WKWebView {
+        switch surface {
+        case "chrome": return controller.chromeWebView
+        case "page": return try XCTUnwrap(controller.tabManager.activeEngineTab?.wkWebView)
+        case "peek": return try XCTUnwrap(controller.pagePopups.values.first?.engine.wkWebView)
+        default: throw CocoaError(.featureUnsupported)
+        }
+    }
+
+    private func resolve(_ value: String, tabs: [String: UUID]) -> String {
+        var result = value
+        for (name, id) in tabs { result = result.replacingOccurrences(of: "{{tab:\(name)}}", with: id.uuidString) }
+        for page in authoredScenario?.fixtures ?? [] { result = result.replacingOccurrences(of: "{{fixture:\(page.name)}}", with: "https://localhost:\(server.port)/\(page.name)") }
+        return result
+    }
+
+    private func menuActions(_ menu: NSMenu?) -> [String] {
+        (menu?.items ?? []).flatMap { item -> [String] in
+            let own = item.action.map { [NSStringFromSelector($0)] } ?? []
+            return own + menuActions(item.submenu)
+        }
+    }
+
+    private func nativeButton(_ target: AuthoredReleaseScenario.Target) -> NSButton? {
+        guard let root = controller.window?.contentView else { return nil }
+        return descendants(root).compactMap { $0 as? NSButton }.first { button in
+            (target.selector == "button" || button.identifier?.rawValue == target.selector || button.toolTip == target.selector)
+                && (target.text.isEmpty || button.title == target.text || button.toolTip == target.text || button.accessibilityLabel() == target.text)
+                && !button.isHiddenOrHasHiddenAncestor
+        }
+    }
+
+    private func check(_ predicate: AuthoredReleaseScenario.Predicate, tabs: [String: UUID]) async throws -> Bool {
+        switch predicate.kind {
+        case "selected-tab": return controller.tabManager.activeOpenTabId == tabs[predicate.tab ?? ""]
+        case "shared-tab":
+            let engines = controller.tabShareSessions.sharedEngines
+            return predicate.tab == "" ? engines.isEmpty : engines.contains { $0.id == tabs[predicate.tab ?? ""] }
+        case "peek-count": return controller.pagePopups.count == predicate.equals
+        case "setting": return contextSetting(predicate.key ?? "") == predicate.value?.json as? String
+        default: break
+        }
+        let target = try XCTUnwrap(predicate.target)
+        if target.surface == "native" {
+            guard ["visible", "absent"].contains(predicate.kind) else { throw CocoaError(.featureUnsupported) }
+            let button = nativeButton(target)
+            if predicate.kind == "absent" { return button == nil }
+            return button != nil
+        }
+        if target.surface == "peek", controller.pagePopups.isEmpty { return predicate.kind == "absent" }
+        let view = try webView(target.surface)
+        let result = try await view.callAsyncJavaScript("""
+            const matches = [...document.querySelectorAll(selector)].filter(e => !text || e.textContent.trim() === text);
+            const e = matches[0];
+            if (kind === 'count') return matches.length === expectedCount;
+            const r = e?.getBoundingClientRect(), style = e && getComputedStyle(e);
+            const visible = !!e && r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0;
+            if (kind === 'visible') return visible;
+            if (kind === 'absent') return !visible;
+            if (!e) return false;
+            if (kind === 'text') return e.textContent.includes(includes);
+            if (kind === 'attribute') return e.getAttribute(name) === value;
+            if (kind === 'property') return comparison === 'greater' ? e[name] > value : e[name] === value;
+            return false;
+            """, arguments: ["selector": resolve(target.selector, tabs: tabs), "text": resolve(target.text, tabs: tabs), "kind": predicate.kind, "includes": predicate.includes ?? "", "expectedCount": predicate.equals ?? 0, "name": predicate.name ?? "", "value": predicate.value?.json ?? NSNull(), "comparison": predicate.comparison ?? "equals"], in: nil, contentWorld: .page)
+        return result as? Bool == true
+    }
+
+    private func contextSetting(_ key: String) -> String? { fixture.context.settingsStore.get(key) }
 
     func testPeek() async throws {
         let tab = try await open("guide.html")
@@ -197,9 +366,9 @@ final class ReleaseCaptureTests: XCTestCase {
         return tab
     }
 
-    private func begin(_ scenario: String) async throws {
+    private func begin(_ scenario: String, scenarioDigest: String? = nil) async throws {
         try await hold(400)
-        recorder = try ReleaseWindowRecorder(directory: output.appendingPathComponent(scenario))
+        recorder = try ReleaseWindowRecorder(directory: output.appendingPathComponent(scenario), scenarioDigest: scenarioDigest)
         try await recorder.start(window: XCTUnwrap(controller.window))
     }
 
@@ -232,7 +401,7 @@ final class ReleaseCaptureTests: XCTestCase {
         try await hold(650)
     }
 
-    private func click(_ selector: String, in view: WKWebView, modifiers: NSEvent.ModifierFlags = [], text: String = "") async throws {
+    private func controlPoint(_ selector: String, in view: WKWebView, text: String) async throws -> CGPoint {
         let settled = await pollUntil(timeout: 3) { (try? await view.evaluateJavaScript("document.getAnimations().filter(a => a.effect?.getComputedTiming().iterations !== Infinity).every(a => a.playState !== 'running')")) as? Bool == true }
         XCTAssertTrue(settled, "The control must stop moving before the pointer approaches")
         let rect = try await view.callAsyncJavaScript("""
@@ -254,14 +423,22 @@ final class ReleaseCaptureTests: XCTestCase {
             return {x: r.x + r.width / 2, y: r.y + r.height / 2};
             """, arguments: ["selector": selector, "text": text], in: nil, contentWorld: .page)
         let values = try XCTUnwrap(rect as? [String: Double])
-        let point = CGPoint(x: try XCTUnwrap(values["x"]), y: try XCTUnwrap(values["y"]))
+        return CGPoint(x: try XCTUnwrap(values["x"]), y: try XCTUnwrap(values["y"]))
+    }
+
+    private func moveCursor(to point: CGPoint, in view: WKWebView) async throws {
         let local = CGPoint(x: point.x, y: view.isFlipped ? point.y : view.bounds.height - point.y)
         let windowPoint = view.convert(local, to: controller.window?.contentView)
         try await glide(to: CGPoint(x: windowPoint.x, y: 720 - windowPoint.y))
+    }
+
+    private func click(_ selector: String, in view: WKWebView, modifiers: NSEvent.ModifierFlags = [], text: String = "", right: Bool = false, count: Int = 1) async throws {
+        let point = try await controlPoint(selector, in: view, text: text)
+        try await moveCursor(to: point, in: view)
         try await hold(140)
-        AgentInput.mouseEvent(.leftMouseDown, view, at: point, clickCount: 1, modifiers: modifiers)
+        AgentInput.mouseEvent(right ? .rightMouseDown : .leftMouseDown, view, at: point, clickCount: count, modifiers: modifiers)
         try await hold(80)
-        AgentInput.mouseEvent(.leftMouseUp, view, at: point, clickCount: 1, modifiers: modifiers)
+        AgentInput.mouseEvent(right ? .rightMouseUp : .leftMouseUp, view, at: point, clickCount: count, modifiers: modifiers)
         try await hold(180)
     }
 }

@@ -27,7 +27,7 @@ export interface ReleaseEditorial {
 export interface ReleaseEditorialCopy {
 	headline: string;
 	description: string;
-	highlights: { illustration: ReleaseIllustration; title: string; description: string; media?: ReleaseRecording }[];
+	highlights: { illustration?: ReleaseIllustration; title: string; description: string; media?: ReleaseRecording }[];
 }
 
 export interface ReleaseNotes {

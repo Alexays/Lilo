@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
 
@@ -8,7 +9,20 @@ test("0.8.0 shares the approved native feature recordings", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/changelog/#v0.8.0");
   const release = page.locator("#v0\\.8\\.0");
-  await expect(release.locator(".release-recording")).toHaveCount(2);
+
+  const archive = JSON.parse(
+    readFileSync(
+      new URL("../src/assets/releases/0.8.0/capture.json", import.meta.url),
+      "utf-8"
+    )
+  );
+
+  const count =
+    archive.schemaVersion === 3 ? archive.plan.highlights.length : 2;
+
+  expect(count).toBeGreaterThan(0);
+
+  await expect(release.locator(".release-recording")).toHaveCount(count);
 
   // oxlint-disable no-await-in-loop -- Each player must be scrolled and operated sequentially.
   for (const player of await release.locator(".release-recording").all()) {

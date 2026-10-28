@@ -11,7 +11,7 @@ const storySchema = z.strictObject({
   capture: z
     .strictObject({
       highlight: z.string().min(1),
-      scenario: z.enum(["peek", "address-bar", "tab-share"]),
+      scenario: z.string().regex(/^[a-z][a-z0-9-]{0,47}$/u),
       source: z.enum(["demo", "native"]).default("demo"),
     })
     .optional(),
@@ -28,7 +28,7 @@ const storySchema = z.strictObject({
         capture: z
           .strictObject({
             highlight: z.string().min(1),
-            scenario: z.enum(["peek", "address-bar", "tab-share"]),
+            scenario: z.string().regex(/^[a-z][a-z0-9-]{0,47}$/u),
             source: z.literal("native"),
           })
           .optional(),

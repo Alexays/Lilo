@@ -47,6 +47,22 @@ const sample = (): NativeManifest => ({
   width: 1120,
 });
 
+test("authored feature IDs use their own required semantic checkpoints", () => {
+  const manifest = {
+    ...sample(),
+    checkpoints: [{ atMs: 1500, name: "badge-visible", passed: true }],
+    scenario: "unread-badges",
+  };
+
+  assert.doesNotThrow(() =>
+    validateNativeTimeline(manifest, "0.9.0", "", ["badge-visible"])
+  );
+  assert.throws(
+    () => validateNativeTimeline(manifest, "0.9.0", "", ["badge-cleared"]),
+    /checkpoints/u
+  );
+});
+
 test("continuous native recordings preserve more than 64 frames", async () => {
   const colors = await Promise.all(
     ["red", "blue"].map((background) =>

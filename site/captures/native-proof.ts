@@ -19,9 +19,11 @@ import { encodeRecording } from "./recording.ts";
 
 export const nativeScenarios = ["peek", "address-bar", "tab-share"] as const;
 
-export type NativeScenario = (typeof nativeScenarios)[number];
+export type NativeScenario = string;
 
-const checkpoints: Record<NativeScenario, string[]> = {
+type LegacyScenario = (typeof nativeScenarios)[number];
+
+const checkpoints = {
   "address-bar": ["address-hidden", "command-bar-available"],
   peek: ["peek-open", "source-preserved", "peek-reopened"],
   "tab-share": [
@@ -32,7 +34,7 @@ const checkpoints: Record<NativeScenario, string[]> = {
     "share-switched",
     "share-stopped",
   ],
-};
+} satisfies Record<LegacyScenario, string[]>;
 
 export const nativeManifestSchema = z.strictObject({
   appBuild: z.string().min(1),
@@ -58,28 +60,41 @@ export const nativeManifestSchema = z.strictObject({
     .max(450),
   height: z.number().int().positive().max(1440),
   inputDigest: z.string().regex(/^[a-f0-9]{64}$/u),
-  scenario: z.enum(nativeScenarios),
+  scenario: z.string().regex(/^[a-z][a-z0-9-]{0,47}$/u),
+  scenarioDigest: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/u)
+    .optional(),
   source: z.literal("native"),
   width: z.number().int().positive().max(1920),
 });
 
 export type NativeManifest = z.infer<typeof nativeManifestSchema>;
 
-const recordingSchema = nativeManifestSchema.omit({ frames: true }).extend({
-  frames: z.number().int().min(30).max(450),
-  poster: z.string(),
-  posterDigest: z.string().length(64),
-  quality: z.strictObject({
-    decodedFrames: z.number().int().min(24),
-    passed: z.literal(true),
-    uniqueFrames: z.number().int().min(24),
-  }),
-  recording: z.string(),
-  recordingDigest: z.string().length(64),
-  sourceDigest: z.string().length(64),
-});
+export const recordingSchema = nativeManifestSchema
+  .omit({ frames: true })
+  .extend({
+    frames: z.number().int().min(30).max(450),
+    poster: z.string(),
+    posterDigest: z.string().length(64),
+    quality: z.strictObject({
+      decodedFrames: z.number().int().min(24),
+      passed: z.literal(true),
+      uniqueFrames: z.number().int().min(24),
+    }),
+    recording: z.string(),
+    recordingDigest: z.string().length(64),
+    sourceDigest: z.string().length(64),
+  });
 
-type NativeRecording = z.infer<typeof recordingSchema>;
+export type NativeRecording = z.infer<typeof recordingSchema>;
+
+export interface NativeScenarioSpec {
+  id: string;
+  checkpoints: string[];
+  posterCheckpoint: string;
+  scenarioDigest?: string;
+}
 
 export const nativePlanSchema = z.strictObject({
   highlights: z
@@ -145,23 +160,7 @@ export const nativeArchiveDigest = (
     )
   );
 
-export const validateNativeTimeline = (
-  input: NativeManifest,
-  version: string,
-  expectedInputs = ""
-) => {
-  const manifest = nativeManifestSchema.parse(input);
-
-  if (manifest.appVersion !== version) {
-    throw new Error("Capture app version does not match the release");
-  }
-
-  if (expectedInputs && manifest.inputDigest !== expectedInputs) {
-    throw new Error(
-      "Native capture inputs changed; record the current sources again"
-    );
-  }
-
+const validateNativeSampling = (manifest: NativeManifest) => {
   let previous = -1;
   const names = new Set<string>();
 
@@ -203,22 +202,56 @@ export const validateNativeTimeline = (
     }
   }
 
+  // A 15-second, 30 fps native window uses 363 million pixels; only one movie is decoded at a time.
+  if (manifest.width * manifest.height * manifest.frames.length > 400_000_000) {
+    throw new Error("Recording exceeds the decoded pixel budget");
+  }
+};
+
+export const validateNativeTimeline = (
+  input: NativeManifest,
+  version: string,
+  expectedInputs = "",
+  requiredCheckpoints?: readonly string[],
+  expectedScenario = ""
+) => {
+  const manifest = nativeManifestSchema.parse(input);
+
+  if (manifest.appVersion !== version) {
+    throw new Error("Capture app version does not match the release");
+  }
+
+  if (expectedInputs && manifest.inputDigest !== expectedInputs) {
+    throw new Error(
+      "Native capture inputs changed; record the current sources again"
+    );
+  }
+
+  if (expectedScenario && manifest.scenarioDigest !== expectedScenario) {
+    throw new Error("Native scenario changed since capture");
+  }
+
+  validateNativeSampling(manifest);
+
   const passed = new Set(
     manifest.checkpoints
       .filter((c) => c.passed && c.atMs < manifest.durationMs)
       .map((c) => c.name)
   );
 
+  const legacy = nativeScenarios.find((id) => id === manifest.scenario);
+
+  const required =
+    requiredCheckpoints ?? (legacy ? checkpoints[legacy] : undefined);
+
   if (
+    !required?.length ||
+    new Set(manifest.checkpoints.map((c) => c.name)).size !==
+      manifest.checkpoints.length ||
     manifest.checkpoints.some((c) => !c.passed) ||
-    !checkpoints[manifest.scenario].every((name) => passed.has(name))
+    !required.every((name) => passed.has(name))
   ) {
     throw new Error("Native feature checkpoints did not pass");
-  }
-
-  // A 15-second, 30 fps native window uses 363 million pixels; only one movie is decoded at a time.
-  if (manifest.width * manifest.height * manifest.frames.length > 400_000_000) {
-    throw new Error("Recording exceeds the decoded pixel budget");
   }
 
   return manifest;
@@ -231,7 +264,8 @@ export const encodeNativeProof = async (
   output: string,
   version: string,
   replace = false,
-  expectedInputs = ""
+  expectedInputs = "",
+  authored?: readonly NativeScenarioSpec[]
 ) => {
   if (!/^\d+\.\d+\.\d+$/u.test(version)) {
     throw new Error("Use RELEASE=x.y.z");
@@ -248,7 +282,20 @@ export const encodeNativeProof = async (
   try {
     const recordings: Record<string, NativeRecording> = {};
 
-    for (const scenario of nativeScenarios) {
+    const specs: readonly NativeScenarioSpec[] =
+      authored ??
+      nativeScenarios.map((id) => ({
+        checkpoints: checkpoints[id],
+        id,
+        posterCheckpoint: {
+          "address-bar": "address-hidden",
+          peek: "peek-open",
+          "tab-share": "picker-open",
+        }[id],
+      }));
+
+    for (const spec of specs) {
+      const scenario = spec.id;
       const directory = path.join(framesDirectory, scenario);
 
       const manifest = validateNativeTimeline(
@@ -256,7 +303,9 @@ export const encodeNativeProof = async (
           readFileSync(path.join(directory, "manifest.json"), "utf-8")
         ),
         version,
-        expectedInputs
+        expectedInputs,
+        spec.checkpoints,
+        spec.scenarioDigest
       );
 
       if (manifest.scenario !== scenario) {
@@ -273,11 +322,7 @@ export const encodeNativeProof = async (
         (manifest.frames.at(-1)?.atMs ?? 0) + 100
       );
 
-      const posterCheckpoint = {
-        "address-bar": "address-hidden",
-        peek: "peek-open",
-        "tab-share": "picker-open",
-      }[scenario];
+      const { posterCheckpoint } = spec;
 
       const posterAt =
         (manifest.checkpoints.find((c) => c.name === posterCheckpoint)?.atMs ??

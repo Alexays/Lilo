@@ -188,10 +188,8 @@ release-status: $(CHANGIE)
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@set -e; release=$$('$(CHANGIE)' latest --remove-prefix); \
-	if [ -f "site/src/content/releases/$$release.json" ]; then \
-		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
-		$(MAKE) --no-print-directory release-media-check RELEASE="$$release"; \
-	fi
+	$(MAKE) --no-print-directory release-media-proof RELEASE="$$release"; \
+	$(MAKE) --no-print-directory release-media-check RELEASE="$$release"
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -536,11 +534,11 @@ site-e2e: site-generate
 ## Select release highlights, record native proofs, and publish only quality-approved media (RELEASE=x.y.z)
 release-media-proof: $(SITE_DEPS)
 	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' \
-	LILO_CAPTURE_FRAMES='$(if $(FRAMES),$(abspath $(FRAMES)),)' caffeinate -di node site/captures/produce-native.ts
+	caffeinate -di node site/captures/produce-native.ts
 
 ## Test native media quality and release gates
 release-media-test: $(SITE_DEPS)
-	@node --test site/tests/native-proof.test.ts
+	@node --test site/tests/native-proof.test.ts site/tests/authored-*.test.ts
 
 ## Encode all native proof scenarios (RELEASE=x.y.z FRAMES=directory OUT=directory)
 release-media-encode: $(SITE_DEPS)
@@ -550,16 +548,17 @@ release-media-encode: $(SITE_DEPS)
 ## Fail release preparation when native media has not passed quality and visual checks
 release-media-check: $(SITE_DEPS)
 	@release='$(RELEASE)'; if [ -z "$$release" ]; then release=$$(python3 -c 'import json; print(json.load(open("lilo-ui/package.json"))["version"])'); fi; \
-	LILO_CAPTURE_VERSION="$$release" LILO_CAPTURE_OUTPUT='$(if $(OUT),$(abspath $(OUT)),)' node site/captures/native-proof.ts check
+	LILO_CAPTURE_VERSION="$$release" LILO_CAPTURE_OUTPUT='$(if $(OUT),$(abspath $(OUT)),)' node site/captures/authored-archive.ts
 
 ## Record native release scenarios in an isolated test window (OUT=build/release-media-frames)
 release-media-record: $(SITE_DEPS) vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
 	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(abspath $(or $(OUT),build/release-media-frames))' \
+	TEST_RUNNER_LILO_RELEASE_SCENARIO_FILE='$(if $(SCENARIO),$(abspath $(SCENARIO)),)' \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_FIXTURES='$(CURDIR)/site/captures/fixtures' \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_IDENTITY='$(CURDIR)/build/release-capture-fixture.p12' \
-	$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),LiloTests/ReleaseCaptureTests) -parallel-testing-enabled NO
+	$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),$(if $(SCENARIO),LiloTests/ReleaseCaptureTests/testAuthoredScenario,LiloTests/ReleaseCaptureTests)) -parallel-testing-enabled NO
 
 build/release-capture-fixture.p12:
 	@mkdir -p build

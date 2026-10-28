@@ -39,7 +39,8 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
         let path = Self.assetPath(for: url)
         if path.hasPrefix("release-media/") {
             let name = (path as NSString).lastPathComponent
-            guard ["tab-share-native.png", "tab-share-native.webp", "address-bar-native.png", "address-bar-native.webp"].contains(name),
+            guard path == "release-media/\(name)",
+                  name.range(of: "^[a-z][a-z0-9-]{0,47}-native\\.(png|webp)$", options: .regularExpression) != nil,
                   let file = Bundle.main.url(forResource: name, withExtension: nil, subdirectory: "release-media"),
                   let data = try? Data(contentsOf: file) else {
                 urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))

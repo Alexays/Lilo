@@ -13,9 +13,11 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
     private var frames: [[String: Any]] = []
     private var failure: Error?
     private var checkpoints: [[String: Any]] = []
+    private let scenarioDigest: String?
 
-    init(directory: URL) throws {
+    init(directory: URL, scenarioDigest: String? = nil) throws {
         self.directory = directory
+        self.scenarioDigest = scenarioDigest
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
@@ -81,7 +83,7 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
         self.stream = nil
         let (frames, failure) = queue.sync { (self.frames, self.failure) }
         if let failure { throw failure }
-        let manifest: [String: Any] = [
+        var manifest: [String: Any] = [
             "scenario": scenario, "source": "native", "captureTool": "ScreenCaptureKit.currentProcess",
             "inputDigest": try XCTUnwrap(ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_INPUT_DIGEST"]),
             "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
@@ -89,6 +91,7 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
             "capturedAt": ISO8601DateFormatter().string(from: Date()),
             "width": 1120, "height": 720, "durationMs": durationMs, "frames": frames, "checkpoints": checkpoints
         ]
+        if let scenarioDigest { manifest["scenarioDigest"] = scenarioDigest }
         try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("manifest.json"), options: .atomic)
     }
 

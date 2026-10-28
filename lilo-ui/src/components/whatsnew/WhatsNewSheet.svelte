@@ -106,7 +106,7 @@
           <div class="release-highlights">
             {#each editorial.highlights as highlight, index (index)}
               <article class="release-highlight" class:recorded={!!highlight.media}>
-                {#if !highlight.media}<WhatsNewArt kind={highlight.illustration} />{/if}
+                {#if !highlight.media && highlight.illustration}<WhatsNewArt kind={highlight.illustration} />{/if}
                 <div>
                   <h3>{highlight.title}</h3>
                   <p>{highlight.description}</p>

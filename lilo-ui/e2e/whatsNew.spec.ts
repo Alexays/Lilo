@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
@@ -62,7 +63,11 @@ test("bundled recordings wait for explicit playback with Reduce Motion and stop 
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	const notes = structuredClone(release);
 	if (!notes.editorial?.en) throw new Error("Missing test release copy");
-	notes.editorial.en.highlights[0].media = { poster: "/release-media/tab-share-native.png", recording: "/release-media/tab-share-native.webp", durationMs: 15000, width: 1120, height: 720 };
+	const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
+	const archive = JSON.parse(readFileSync(new URL(`../../site/src/assets/releases/${version}/capture.json`, import.meta.url), "utf8"));
+	const scenario = archive.schemaVersion === 3 ? archive.plan.highlights[0].id : "tab-share";
+	const media = archive.recordings[scenario];
+	notes.editorial.en.highlights[0].media = { poster: `/release-media/${media.poster}`, recording: `/release-media/${media.recording}`, durationMs: media.durationMs, width: media.width, height: media.height };
 	const requested: string[] = [];
 	page.on("request", request => requested.push(request.url()));
 	await bootReleaseChrome(page, initialWorld(), undefined, notes);
@@ -73,7 +78,7 @@ test("bundled recordings wait for explicit playback with Reduce Motion and stop 
 	await expect(image).toHaveJSProperty("naturalWidth", 1120);
 	const button = player.getByRole("button");
 	await expect(button).toHaveAttribute("aria-pressed", "false");
-	expect(requested.some(url => url.endsWith("/release-media/tab-share-native.webp"))).toBe(false);
+	expect(requested.some(url => url.endsWith(`/release-media/${media.recording}`))).toBe(false);
 	await button.focus();
 	await page.keyboard.press("Enter");
 	await expect(button).toHaveAttribute("aria-pressed", "true");

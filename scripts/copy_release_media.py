@@ -3,6 +3,7 @@
 import hashlib
 import json
 import pathlib
+import re
 import shutil
 
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -13,8 +14,12 @@ target.mkdir(parents=True, exist_ok=True)
 manifest = source / "capture.json"
 archive = json.loads(manifest.read_text()) if manifest.exists() else {}
 wanted = set()
-if archive.get("schemaVersion") == 2 and archive.get("release") == version and archive.get("visualReview", {}).get("passed") is True:
-    for scenario in ("tab-share", "address-bar"):
+approved = archive.get("approval", {}).get("passed") is True if archive.get("schemaVersion") == 3 else archive.get("visualReview", {}).get("passed") is True
+if archive.get("schemaVersion") in (2, 3) and archive.get("release") == version and approved:
+    scenarios = [highlight["id"] for highlight in archive["plan"]["highlights"]] if archive["schemaVersion"] == 3 else ("tab-share", "address-bar")
+    for scenario in scenarios:
+        if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", scenario):
+            raise ValueError("Unsafe release media filename")
         entry = archive["recordings"][scenario]
         for extension, digest in (("png", "posterDigest"), ("webp", "recordingDigest")):
             name = f"{scenario}-native.{extension}"

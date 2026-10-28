@@ -74,6 +74,7 @@ export const captureSourceDigest = (root: string) => {
   return hash.digest("hex");
 };
 
+// oxlint-disable-next-line eslint/complexity -- Historical import and current automatic capture are distinct compatibility paths.
 const main = () => {
   const version = process.env.LILO_CAPTURE_VERSION ?? "";
 
@@ -82,6 +83,24 @@ const main = () => {
   }
 
   const site = fileURLToPath(new URL("../", import.meta.url));
+
+  const currentVersion = JSON.parse(
+    readFileSync(`${site}/../lilo-ui/package.json`, "utf-8")
+  ).version;
+
+  if (version === currentVersion) {
+    const result = spawnSync(
+      "make",
+      ["release-media-proof", `RELEASE=${version}`],
+      { cwd: `${site}/..`, env: process.env, stdio: "inherit" }
+    );
+
+    if (result.status !== 0) {
+      throw new Error("Automatic release media failed; release blocked");
+    }
+
+    return;
+  }
 
   const story = parseReleaseStories(
     readFileSync(`${site}/../CHANGELOG.md`, "utf-8"),
