@@ -42,7 +42,7 @@ const shards = await Promise.all(Array.from({ length: shardCount }, (_, shard) =
   mkdirSync(join(support, 'Downloads'));
   const child = spawn('xcodebuild', ['test-without-building', ...xcodebuild, ...tests, '-resultBundlePath', join(out, `shard-${shard}.xcresult`)], {
     cwd: root,
-    env: { ...process.env, TEST_RUNNER_LILO_EXTENSIONS_NOT_INSPECTABLE: '1', TEST_RUNNER_LILO_SMOKE_IDS: ids.join(','), TEST_RUNNER_LILO_SMOKE_REPORT: report, TEST_RUNNER_LILO_APP_SUPPORT_DIR: support },
+    env: { ...process.env, TEST_RUNNER_LILO_EXTENSIONS_NOT_INSPECTABLE: '1', TEST_RUNNER_LILO_SMOKE_IDS: ids.join(','), TEST_RUNNER_LILO_SMOKE_REPORT: report, TEST_RUNNER_LILO_APP_SUPPORT_DIR: support, ...(process.env.CI ? { TEST_RUNNER_LILO_SMOKE_ON_CI: '1' } : {}) },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const output = [];

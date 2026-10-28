@@ -55,6 +55,7 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions of top-extensions.json that do not run cleanly yet, by id, with what breaks them. A
     /// newly broken extension fails the test, and so does a listed one that now runs cleanly.
     static let knownFailures: [String: String] = [
+        "fdjamakpfbbddfjaooikfcpapjohcfmg": "its worker's carbon trackEvent command fails in every run (a is not a function), which Chrome's does not; the cause is not yet known", // Dashlane
         "gjjbmfigjpgnehjioicaalopaikcnheo": "Chrome too: its worker reads settings its backend did not send", // Dark Theme
         "adlpodnneegcnbophopdmhedicjbcgco": "Chrome too: its worker reads settings its backend did not send", // Troywell VPN
         "lieogkinebikhdchceieedcigeafdkid": "Chrome too: its worker fails at startup without the Eagle app (with another error)", // Eagle
@@ -98,6 +99,8 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
+        "nngceckbapebfimnlniiiahkandclblb": "some runs its badge update meets a tab the smoke closed meanwhile (No tab with id)", // Bitwarden
+        "npnbdojkgkbcdfdjlfdmplppdphlhhcf": "on GitHub's macOS runners its popup and page widgets stay empty, where its worker's getImageData fails; it passes on a Mac", // ProWritingAid
         "cdjkkeofanojcdolaakkckkmfcjejlij": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): some runs its status thread starts before the script defining WEBSOCKET_CONNECTED", // GIS NR plugin
         "gejiddohjgogedgjnonbofjigllpkmbf": "as 1Password's: the popup's tab activates while its WebAssembly core starts, so its context menu update fails", // 1Password Nightly
         "ofpnmcalabcbjgholdjcjblkibolbppb": "some runs its worker removes and recreates its quick-action menu from concurrent events, racing itself", // Monica
@@ -355,6 +358,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                 // WebKit records its refusal of a connect nobody listens to, which the bridge answers with Chrome's port
                 // (WEBKIT-GAPS 93): the extension never sees it.
                 .filter { !$0.contains("No runtime.onConnect listeners found") }
+                // GitHub's macOS runners fail a worker's OffscreenCanvas getImageData (Stylus, AdGuard), which a Mac does not.
+                .filter { ProcessInfo.processInfo.environment["LILO_SMOKE_ON_CI"] == nil || !$0.hasPrefix("InvalidStateError: The object is in an invalid state.") }
                 // WebKit keeps only the leading text of a console.error, so a Chrome error starting with it is the same.
                 .filter { error in
                     let error = normalized(error)
