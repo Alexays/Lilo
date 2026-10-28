@@ -28,6 +28,7 @@ extension MainWindowController {
             self?.floatingTabPanel.float(engine)
         }
         tabDock.onPictureInPictureSlotLost = { [weak self] in self?.documentPiP.float() }
+        documentPiP.onReturnToTab = { [weak self] openerId in self?.switchToRecentTab(openerId) }
         documentPiP.onClosed = { [weak self] openerId in
             if self?.tabDock.pictureInPictureOpenerId == openerId { self?.tabDock.undock() }
         }

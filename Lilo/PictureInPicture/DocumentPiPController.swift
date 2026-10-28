@@ -1,8 +1,9 @@
 import AppKit
 import WebKit
 
-/// Hosts the Document Picture-in-Picture window a page opened: its popup web view, in an always-on-top panel.
-/// One per browser window; a new window replaces the previous one.
+/// Hosts the Document Picture-in-Picture window a page opened: its popup web view, in an always-on-top panel
+/// that snaps to the corners of its screen and remembers its corner per screen. One per browser window; a new
+/// window replaces the previous one.
 @MainActor
 final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     private(set) var webView: WKWebView?
@@ -10,12 +11,15 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     /// Opened by Lilo when its tab was left rather than by the page: returning to the tab closes it.
     var wasAutoEntered = false
     var onClosed: ((UUID) -> Void)?
+    /// The hover bar's back button: the window shows the opener's tab, in whatever space it lives.
+    var onReturnToTab: ((UUID) -> Void)?
 
     private weak var opener: WKWebViewTab?
     private var panel: NSPanel?
+    private let content = PiPContentView()
 
     private static let defaultSize = NSSize(width: 400, height: 300)
-    private static let screenMargin: CGFloat = 24
+    static let screenMargin: CGFloat = 16
 
     /// Lets `engine`'s next `window.open` become its PiP window. Never in an agent tab, whose popups open as tabs.
     func prepare(_ engine: WKWebViewTab, size: NSSize) -> Bool {
@@ -26,7 +30,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         return true
     }
 
-    /// The popup WebKit hands back to the page as its PiP window, shown in the floating panel.
+    /// The popup WebKit hands back to the page as its PiP window, shown in the floating panel at the corner it
+    /// last had on the screen under the pointer.
     func open(configuration: WKWebViewConfiguration, size: NSSize, opener: WKWebViewTab) -> WKWebView {
         close()
         let contentSize = size.width > 0 && size.height > 0 ? size : Self.defaultSize
@@ -36,24 +41,25 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         self.opener = opener
         openerId = opener.id
         opener.documentPiPCloser = { [weak self] in self?.close() }
+        let panel = panel ?? makePanel()
+        self.panel = panel
+        let mouse = NSEvent.mouseLocation
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main {
+            let saved = UserDefaults.standard.string(forKey: Self.frameKey(for: screen)).map(NSRectFromString)
+            let origin = saved?.origin ?? NSPoint(x: screen.visibleFrame.maxX, y: screen.visibleFrame.minY)
+            panel.setFrame(Self.snappedFrame(NSRect(origin: origin, size: contentSize), in: screen.visibleFrame), display: false)
+        }
         float()
-        panel?.setContentSize(contentSize)
         return webView
     }
 
     /// Shows the PiP window in the floating panel.
     func float() {
-        guard let webView else { return }
-        let panel = panel ?? makePanel()
-        self.panel = panel
-        guard let contentView = panel.contentView else { return }
-        webView.frame = contentView.bounds
-        webView.autoresizingMask = [.width, .height]
-        if webView.superview !== contentView { contentView.addSubview(webView) }
+        guard let webView, let panel else { return }
+        content.host(webView)
         panel.orderFrontRegardless()
     }
 
-    /// `window.resizeTo` sizes the whole window, as the page reads it from `outerWidth` and `outerHeight`.
     /// Takes the panel off screen while the PiP window shows in the sidebar dock.
     func hidePanel() {
         panel?.orderOut(nil)
@@ -62,9 +68,26 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
     /// The screen of the floating panel, while it shows.
     var panelScreen: NSScreen? { panel?.isVisible == true ? panel?.screen : nil }
 
+    /// `window.resizeTo` sizes the whole window, as the page reads it from `outerWidth` and `outerHeight`; the
+    /// panel keeps its corner.
     func resize(to size: NSSize) {
         guard size.width > 0, size.height > 0, let panel else { return }
-        panel.setFrame(NSRect(origin: panel.frame.origin, size: size), display: true)
+        let resized = NSRect(origin: panel.frame.origin, size: size)
+        panel.setFrame(panel.screen.map { Self.snappedFrame(resized, in: $0.visibleFrame) } ?? resized, display: true)
+    }
+
+    /// The user let go of the panel: it snaps to the nearest corner, remembered for that screen.
+    func endMove() {
+        guard let panel, let screen = panel.screen else { return }
+        let snapped = Self.snappedFrame(panel.frame, in: screen.visibleFrame)
+        panel.setFrame(snapped, display: true, animate: true)
+        UserDefaults.standard.set(NSStringFromRect(snapped), forKey: Self.frameKey(for: screen))
+    }
+
+    func returnToTab() {
+        guard let openerId else { return }
+        close()
+        onReturnToTab?(openerId)
     }
 
     /// Closes the PiP window: the page gets `pagehide` on it, and `documentPictureInPicture.window` goes back to null.
@@ -82,11 +105,25 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         onClosed?(openerId)
     }
 
+    /// `frame` moved to the corner of `visibleFrame` nearest its center, `screenMargin` inside.
+    static func snappedFrame(_ frame: NSRect, in visibleFrame: NSRect) -> NSRect {
+        let left = frame.midX < visibleFrame.midX, bottom = frame.midY < visibleFrame.midY
+        return NSRect(
+            x: left ? visibleFrame.minX + screenMargin : visibleFrame.maxX - screenMargin - frame.width,
+            y: bottom ? visibleFrame.minY + screenMargin : visibleFrame.maxY - screenMargin - frame.height,
+            width: frame.width,
+            height: frame.height
+        )
+    }
+
+    static func frameKey(for screen: NSScreen) -> String { "LiloDocumentPiPFrame." + screen.localizedName }
+
     private func makePanel() -> NSPanel {
-        // Non-activating: muting the call from the PiP window leaves the app the user works in at the front.
-        let panel = NSPanel(
+        // Borderless: the page fills the window, Lilo's controls show over it on hover. Non-activating: muting the
+        // call from the PiP window leaves the app the user works in at the front.
+        let panel = PiPPanel(
             contentRect: NSRect(origin: .zero, size: Self.defaultSize),
-            styleMask: [.titled, .closable, .resizable, .utilityWindow, .nonactivatingPanel],
+            styleMask: [.borderless, .resizable, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -95,17 +132,18 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.contentMinSize = NSSize(width: 160, height: 120)
         // Out of the user's own screen share: the others see what is shared, not the call's controls.
         panel.sharingType = .none
         panel.delegate = self
-        if let visible = NSScreen.main?.visibleFrame {
-            panel.setFrameOrigin(NSPoint(x: visible.maxX - Self.defaultSize.width - Self.screenMargin, y: visible.minY + Self.screenMargin))
-        }
+        panel.contentView = content
+        content.onReturnToTab = { [weak self] in self?.returnToTab() }
+        content.onClose = { [weak self] in self?.close() }
+        content.onMoveEnded = { [weak self] in self?.endMove() }
         return panel
-    }
-
-    func windowWillClose(_ notification: Notification) {
-        close()
     }
 
     nonisolated func webViewDidClose(_ webView: WKWebView) {
@@ -122,11 +160,115 @@ final class DocumentPiPController: NSObject, WKUIDelegate, NSWindowDelegate {
         }
     }
 
-    /// `window.resizeTo` of the PiP window (WKUIDelegatePrivate); Lilo keeps the window where it placed it.
+    /// `window.resizeTo` of the PiP window (WKUIDelegatePrivate); Lilo keeps the window at its corner.
     @objc(_webView:setWindowFrame:)
     nonisolated func webView(_ webView: WKWebView, setWindowFrame frame: CGRect) {
         MainActor.assumeIsolated {
             if webView === self.webView { resize(to: frame.size) }
         }
     }
+}
+
+/// Borderless panels refuse key status by default; the PiP page needs it for its controls' keyboard handling.
+private final class PiPPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+}
+
+/// Rounded host of the PiP page, with Lilo's back and close buttons in a bar shown while the pointer is over it.
+/// The bar also drags the window: the page takes every other click.
+private final class PiPContentView: NSView {
+    var onReturnToTab: (() -> Void)?
+    var onClose: (() -> Void)?
+    var onMoveEnded: (() -> Void)?
+
+    private let bar = PiPHoverBar()
+    private var trackingArea: NSTrackingArea?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.cornerRadius = 10
+        layer?.masksToBounds = true
+        layer?.backgroundColor = NSColor.black.cgColor
+        bar.isHidden = true
+        bar.onReturnToTab = { [weak self] in self?.onReturnToTab?() }
+        bar.onClose = { [weak self] in self?.onClose?() }
+        bar.onMoveEnded = { [weak self] in self?.onMoveEnded?() }
+        addSubview(bar)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    func host(_ webView: NSView) {
+        webView.frame = bounds
+        webView.autoresizingMask = [.width, .height]
+        if webView.superview !== self { addSubview(webView, positioned: .below, relativeTo: bar) }
+    }
+
+    override func layout() {
+        super.layout()
+        bar.frame = NSRect(x: 0, y: bounds.maxY - PiPHoverBar.height, width: bounds.width, height: PiPHoverBar.height)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea { removeTrackingArea(trackingArea) }
+        // Always: the panel never activates the app, so it is rarely in a key window.
+        let area = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) { bar.isHidden = false }
+    override func mouseExited(with event: NSEvent) { bar.isHidden = true }
+}
+
+private final class PiPHoverBar: NSView {
+    static let height: CGFloat = 28
+
+    var onReturnToTab: (() -> Void)?
+    var onClose: (() -> Void)?
+    var onMoveEnded: (() -> Void)?
+
+    private lazy var returnButton = button("arrow.uturn.backward", label: "Back to tab".localized, action: #selector(returnPressed))
+    private lazy var closeButton = button("xmark", label: "Close".localized, action: #selector(closePressed))
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
+        addSubview(returnButton)
+        addSubview(closeButton)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError() }
+
+    private func button(_ symbol: String, label: String, action: Selector) -> NSButton {
+        let button = NSButton()
+        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
+        button.isBordered = false
+        button.bezelStyle = .regularSquare
+        button.contentTintColor = .white
+        button.toolTip = label
+        button.target = self
+        button.action = action
+        return button
+    }
+
+    override func layout() {
+        super.layout()
+        returnButton.frame = NSRect(x: 6, y: 4, width: 20, height: 20)
+        closeButton.frame = NSRect(x: bounds.maxX - 26, y: 4, width: 20, height: 20)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        // Runs the drag to its end, so the panel snaps once the user lets go.
+        window?.performDrag(with: event)
+        onMoveEnded?()
+    }
+
+    @objc private func returnPressed() { onReturnToTab?() }
+    @objc private func closePressed() { onClose?() }
 }

@@ -203,4 +203,60 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(gaveUp, "after the delay Lilo falls back to the whole page")
         XCTAssertNil(window.documentPiP.webView)
     }
+
+    // MARK: - Placement and controls
+
+    func testSnapPicksTheNearestCorner() {
+        let visible = NSRect(x: 0, y: 0, width: 1440, height: 900)
+
+        let bottomRight = DocumentPiPController.snappedFrame(NSRect(x: 1200, y: 40, width: 200, height: 120), in: visible)
+        let topLeft = DocumentPiPController.snappedFrame(NSRect(x: 40, y: 700, width: 200, height: 120), in: visible)
+
+        XCTAssertEqual(bottomRight, NSRect(x: 1224, y: 16, width: 200, height: 120))
+        XCTAssertEqual(topLeft, NSRect(x: 16, y: 764, width: 200, height: 120))
+    }
+
+    func testSnapKeepsTheFrameInsideTheScreen() {
+        let visible = NSRect(x: 0, y: 25, width: 1440, height: 875)
+
+        let snapped = DocumentPiPController.snappedFrame(NSRect(x: 1400, y: 10, width: 300, height: 200), in: visible)
+
+        XCTAssertTrue(visible.contains(snapped), "\(snapped)")
+    }
+
+    func testTheFrameIsRestoredPerScreen() async throws {
+        let screen = try XCTUnwrap(NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main)
+        let key = DocumentPiPController.frameKey(for: screen)
+        UserDefaults.standard.removeObject(forKey: key)
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+        let tab = await makeTab()
+        _ = try await requestWindow(tab, width: 300, height: 300)
+        let panel = try XCTUnwrap(panel)
+        panel.alphaValue = 0
+        let visible = screen.visibleFrame
+        XCTAssertEqual(panel.frame.maxX, visible.maxX - 16, "first time: bottom right")
+        XCTAssertEqual(panel.frame.minY, visible.minY + 16)
+
+        panel.setFrameOrigin(NSPoint(x: visible.minX + 40, y: visible.maxY - 340))
+        controller.endMove()
+        controller.close()
+        _ = try await requestWindow(tab, width: 300, height: 300)
+
+        let reopened = try XCTUnwrap(self.panel)
+        XCTAssertEqual(reopened.frame.minX, visible.minX + 16, "back where the user left it, on this screen")
+        XCTAssertEqual(reopened.frame.maxY, visible.maxY - 16)
+    }
+
+    func testReturnToTabClosesThePiPAndActivatesTheOpener() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        let opener = try XCTUnwrap(window.tabManager.tab(for: engine.id)?.id)
+        _ = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        XCTAssertNotEqual(window.tabManager.activeOpenTabId, opener)
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+
+        window.documentPiP.returnToTab()
+
+        XCTAssertNil(window.documentPiP.webView)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, opener)
+    }
 }
