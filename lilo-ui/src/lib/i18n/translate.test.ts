@@ -228,3 +228,21 @@ test("Japanese regional tags, translations and count forms use the selected cata
 		assert.equal(translate("ja", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Italian regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["it", "it-IT", "IT-ch"]) {
+		assert.equal(resolveLocale(tag), "it", tag);
+	}
+	assert.equal(translate("it", "common.cancel"), "Annulla");
+	for (const [count, expected] of [
+		[0, "0 schede aperte"],
+		[1, "1 scheda aperta"],
+		[2, "2 schede aperte"],
+		[5, "5 schede aperte"],
+		[21, "21 schede aperte"],
+		[12345, "12.345 schede aperte"],
+		[1.5, "1,5 schede aperte"],
+	] as const) {
+		assert.equal(translate("it", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
