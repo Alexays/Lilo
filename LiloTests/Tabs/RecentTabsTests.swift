@@ -82,6 +82,22 @@ final class RecentTabsTests: XCTestCase {
         XCTAssertEqual(Array(rowIds(window).prefix(2)), [c, b].map(\.uuidString), "the Space switch's own tab never comes between them")
     }
 
+    func testABackgroundTabComesRightAfterTheCurrentTab() throws {
+        let window = makeWindow()
+        window.switchToSpace(work.id)
+        let a = try openTab("a", in: window)
+        let b = try openTab("b", in: window)
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: b))
+
+        window.tab(engine, didCreateNewTab: URL(string: "https://background.example"), inBackground: true)
+
+        let rows = rowIds(window)
+        XCTAssertEqual(rows.count, 3)
+        XCTAssertEqual(rows[0], b.uuidString)
+        XCTAssertNotEqual(rows[1], a.uuidString, "the new tab comes before the tabs already visited")
+        XCTAssertEqual(window.recentTabRows()[1]["leftAt"] as? Double, 0, "a background tab was never shown")
+    }
+
     func testClosedTabsAndPrivateAndAgentsSpacesAreLeftOut() throws {
         let window = makeWindow()
         let context = browserContext.context

@@ -1,7 +1,7 @@
-<!-- A call in any tab, shown or not: jump to it, toggle its microphone and camera, leave it. Above the media card. -->
+<!-- A call in any tab, shown or not: jump to it, toggle its microphone, camera and sound, leave it. Above the media card. -->
 <script lang="ts">
   import SiteFavicon from "../ui/SiteFavicon.svelte";
-  import { mediaActions, terminalActions } from "../../lib/bridge/actions";
+  import { mediaActions, tabActions, terminalActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { getCallCardTab } from "../../stores/media.svelte";
@@ -10,6 +10,7 @@
   const call = $derived(getCallCardTab());
   // During a call, the Mute Tab shortcut toggles the call's microphone.
   const muteKeys = $derived(shortcutKeys("tab.mute"));
+  const soundLabel = $derived(t(call?.muted ? "tabItem.unmute" : "tabItem.mute"));
 </script>
 
 {#if call}
@@ -59,6 +60,24 @@
           </svg>
         </button>
       {/if}
+      <button
+        class="call-btn"
+        aria-label={soundLabel}
+        aria-pressed={call.muted}
+        use:tooltip={soundLabel}
+        onclick={() => tabActions.setMuted(call.id, !call.muted)}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          {#if call.muted}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.5" />
+            <path d="M8.5 4.5L10.5 6.5M10.5 4.5L8.5 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+          {:else}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" />
+            <path d="M8 4.5C8.83 5 8.83 7 8 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            <path d="M9.5 3.5C11 4.5 11 7.5 9.5 8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+          {/if}
+        </svg>
+      </button>
       {#if call.canHangUp}
         <button
           class="call-btn hang-up"

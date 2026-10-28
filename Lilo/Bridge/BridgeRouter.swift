@@ -240,11 +240,11 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
             script = "const { \(arguments.keys.sorted().joined(separator: ", ")) } = JSON.parse(payload); \(script)"
             arguments = ["payload": payload]
         }
-        chromeWebView?.callAsyncJavaScript(script, arguments: arguments, in: nil, in: .page) { result in
-            if case .failure(let error) = result {
-                Self.logger.error("chrome JS call failed: \(error)")
-            }
-            MainActor.assumeIsolated { completion() }
+        // Without a user gesture: a state push must not hand the chrome a transient activation it can spend.
+        guard let chromeWebView else { return }
+        WebViewPrivateAccessors(chromeWebView).callAsyncWithoutUserGesture(script, arguments: arguments) { error in
+            if let error { Self.logger.error("chrome JS call failed: \(error)") }
+            completion()
         }
     }
 

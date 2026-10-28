@@ -171,7 +171,7 @@ final class MainWindowController: NSWindowController {
     /// The spaces this window showed, most recent first: a deleted space hands the window back to them.
     var recentSpaceIds: [UUID] = []
     /// The tabs this window showed, most recent first, each with when it was left.
-    var recentTabs: [(id: UUID, leftAt: Date)] = []
+    var recentTabs: [(id: UUID, leftAt: Date?)] = []
     /// The modifiers held when the recent tabs switcher opened; nil while it is closed.
     var tabSwitcherModifiers: NSEvent.ModifierFlags?
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
@@ -731,7 +731,7 @@ extension MainWindowController: TabManager.Delegate {
         syncActiveBrowserState()
         publishActiveTab()
         enqueueVisibleTabUpdate(tab)
-        if context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
+        if context.mediaTabIds.contains(tab.id) || context.callTabIds.contains(tab.id) { context.mediaActivityChanged() }
         profileContext?.sessionPersistence?.scheduleSave()
     }
 }

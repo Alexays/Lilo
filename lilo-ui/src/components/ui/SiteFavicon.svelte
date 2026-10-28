@@ -1,4 +1,47 @@
+<script lang="ts" module>
+  import { contrastRatio, parseHexColor, relativeLuminance, type RGB } from "../../lib/sidebarTheme";
+
+  const SAMPLE_SIZE = 16;
+  // A dark glyph drawn on transparency, under this contrast with a dark sidebar, sits on a chip.
+  const CHIP_CONTRAST = 2;
+  // The luminance under which a sidebar counts as dark, as in ensureContrast.
+  const DARK_SIDEBAR_LUMINANCE = 0.18;
+  // Per source: the average color of a glyph on transparency, null for an icon with its own background.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a cache filled before loadedSource changes
+  const glyphColors = new Map<string, RGB | null>();
+  let sampler: CanvasRenderingContext2D | null = null;
+
+  function glyphColor(image: HTMLImageElement): RGB | null {
+    sampler ??= Object.assign(document.createElement("canvas"), { width: SAMPLE_SIZE, height: SAMPLE_SIZE }).getContext("2d", {
+      willReadFrequently: true,
+    });
+    if (!sampler) return null;
+    sampler.clearRect(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+    sampler.drawImage(image, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+    let pixels: Uint8ClampedArray;
+    try {
+      pixels = sampler.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
+    } catch {
+      return null;
+    }
+    let r = 0, g = 0, b = 0, coverage = 0, opaque = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const alpha = pixels[i + 3];
+      r += pixels[i] * alpha;
+      g += pixels[i + 1] * alpha;
+      b += pixels[i + 2] * alpha;
+      coverage += alpha;
+      if (alpha >= 250) opaque++;
+    }
+    // A mostly opaque icon brings its own background.
+    if (coverage === 0 || opaque > SAMPLE_SIZE * SAMPLE_SIZE * 0.85) return null;
+    return { r: r / coverage, g: g / coverage, b: b / coverage };
+  }
+</script>
+
 <script lang="ts">
+  import { themeSidebarBackground } from "../../stores/theme.svelte";
+
   interface Props {
     src?: string;
     title?: string;
@@ -15,6 +58,19 @@
 
   const imageSource = $derived(src?.trim() || "");
   const imageFailed = $derived(failedSource !== "" && failedSource === imageSource);
+  let loadedSource = $state("");
+  const needsChip = $derived.by(() => {
+    if (loadedSource !== imageSource) return false;
+    const glyph = glyphColors.get(imageSource);
+    const background = parseHexColor(themeSidebarBackground());
+    if (!glyph || !background) return false;
+    const backgroundLuminance = relativeLuminance(background);
+    return (
+      backgroundLuminance < DARK_SIDEBAR_LUMINANCE &&
+      relativeLuminance(glyph) <= backgroundLuminance &&
+      contrastRatio(glyph, background) < CHIP_CONTRAST
+    );
+  });
 
   const fallbackGlyph = $derived.by((): string => {
     for (const candidate of [url, title, imageSource]) {
@@ -44,6 +100,7 @@
 <div
   class="site-favicon"
   class:is-fallback={!imageSource || imageFailed}
+  class:has-chip={needsChip}
   style={`--favicon-size:${size}px; --favicon-radius:${radius}px; --favicon-hue:${fallbackHue};`}
   aria-hidden="true"
 >
@@ -56,6 +113,13 @@
       height={size}
       draggable="false"
       ondragstart={(event) => event.preventDefault()}
+      onload={(event) => {
+        if (!glyphColors.has(imageSource)) {
+          if (glyphColors.size >= 512) glyphColors.clear();
+          glyphColors.set(imageSource, glyphColor(event.currentTarget as HTMLImageElement));
+        }
+        loadedSource = imageSource;
+      }}
       onerror={() => {
         failedSource = imageSource;
       }}
@@ -87,6 +151,11 @@
       inset 0 0 0 1px
         color-mix(in srgb, hsl(var(--favicon-hue) 28% 40%) 12%, white 76%),
       0 1px 1px color-mix(in srgb, black 8%, transparent);
+  }
+
+  .site-favicon.has-chip {
+    padding: calc(var(--favicon-size) / 10);
+    background: color-mix(in srgb, var(--sidebar-contrast) 14%, transparent);
   }
 
   .site-favicon-image {

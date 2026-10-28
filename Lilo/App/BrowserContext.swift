@@ -211,6 +211,7 @@ final class BrowserContext {
         startupSnapshot = bootstrap.startupSnapshot
         settingsStore = SettingsStore(dbPool: dbManager.globalPool)
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
+        engineFactory.microphoneBridge.isEnabled = { [weak self] in self?.settingsStore.fullBandMicrophone ?? false }
         if let loadError = settingsStore.initialLoadError {
             showDegradedDatabaseAlert(
                 subject: "settings",

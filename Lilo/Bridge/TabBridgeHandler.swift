@@ -93,8 +93,6 @@ final class TabBridgeHandler: BridgeHandler {
         "returnTabHome",
         "muteTab",
         "unmuteTab",
-        "muteTabMicrophone",
-        "unmuteTabMicrophone",
         "controlMedia",
         "controlCall",
         "getMediaActivity",
@@ -235,9 +233,6 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "muteTab", "unmuteTab":
             if let id = message.uuid("id") { tabManager.setTabMuted(id: id, muted: message.action == "muteTab") }
-
-        case "muteTabMicrophone", "unmuteTabMicrophone":
-            if let id = message.uuid("id") { tabManager.setTabMicrophoneMuted(id: id, muted: message.action == "muteTabMicrophone") }
 
         case "controlMedia":
             if let id = message.uuid("id") { windowController?.controlMedia(tabId: id, action: message.string("action", default: "")) }

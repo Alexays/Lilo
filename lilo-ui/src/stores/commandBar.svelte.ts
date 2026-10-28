@@ -12,10 +12,12 @@ import { getActiveTab, getOpenTabs, getTabs, isBlankTab, type TabState } from ".
 import { onSidebarApplied, type SidebarAppliedEvent } from "./sidebar.svelte";
 import { getPagedSpaces } from "./pager.svelte";
 import { closeDesignSystemShell, closeSettingsShell } from "./panels.svelte";
+import { getSetting } from "./settings.svelte";
 import {
 	type CommandResult,
 	type CommandSection,
 	type SearchableEntry,
+	addressOf,
 	computeResults as _computeResults,
 	getLocalHostCompletion,
 	normalizeSearchSuggestions,
@@ -76,6 +78,10 @@ let _archivedTabsRequested = false;
 // The tab a Cmd+M picks a Space for, and the query to return to when the pick is cancelled.
 let _moveTabId = $state("");
 let _queryBeforeMove = "";
+// The top hit the host loads out of sight, so Enter shows it rather than starts it; "" for none.
+let _preloadURL = "";
+// Visits (tabs and bookmarks count two) a site needs before a guess at it is worth a page load.
+const PRELOAD_MIN_VISITS = 3;
 
 export const isCommandBarOpen = (): boolean => _open;
 export const getQuery = (): string => _query;
@@ -274,6 +280,22 @@ function computeResults(options: { pinSelection?: boolean } = {}): void {
 	_sections = output.sections;
 	_selectedIndex = output.selectedIndex;
 	_activeScope = output.activeScope;
+
+	// Only a site the user goes to often and is typing the address of: never a search, a typed URL
+	// history does not know, a tab to switch to, or a page found by its title.
+	const top = output.results[0];
+	const query = parsed.query.toLowerCase();
+	const preloadURL =
+		_open && getSetting("preloadTopHit", "true") === "true" && !_omniboxSessionId && !_moveTabId &&
+		parsed.scope === "all" && parsed.type !== "action" && !!query &&
+		(top?.kind === "history" || top?.id === "autofill") &&
+		Number(top.payload.visitCount) >= PRELOAD_MIN_VISITS &&
+		/^https?:\/\//i.test(top.url ?? "") && addressOf(top.url).startsWith(query)
+			? top.url!
+			: "";
+	if (preloadURL === _preloadURL) return;
+	_preloadURL = preloadURL;
+	searchActions.preloadTopHit(preloadURL);
 }
 
 function clearOmniboxSession(cancel: boolean): void {
@@ -468,6 +490,11 @@ export function closeCommandBar(): void {
 	_moveTabId = "";
 	_queryBeforeMove = "";
 	clearSuggestTimer();
+	// After an Enter's navigate, which swapped the preload in if it opened it: what is left goes.
+	if (_preloadURL) {
+		_preloadURL = "";
+		searchActions.preloadTopHit("");
+	}
 	if (closeBlankTab) {
 		if (_dismissBlankTabId) {
 			closeTrackedBlankTab();

@@ -19,7 +19,8 @@ export default defineConfig({
 	projects: [
 		{
 			name: "chromium",
-			use: { ...devices["Desktop Chrome"] },
+			// Headless Chromium hides scrollbars; the app's WebKit keeps their gutter, which the sidebar's layout counts on.
+			use: { ...devices["Desktop Chrome"], launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } },
 		},
 	],
 	webServer: {

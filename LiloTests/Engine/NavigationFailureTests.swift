@@ -34,7 +34,8 @@ final class NavigationFailureTests: XCTestCase {
                 url: URL(string: "https://example.com/page"),
                 isMainFrame: true,
                 navigationType: .linkActivated,
-                modifierFlags: [.command]
+                modifierFlags: [.command],
+                buttonNumber: 1
             )
         )
     }
@@ -45,7 +46,20 @@ final class NavigationFailureTests: XCTestCase {
                 url: URL(string: "https://example.com/page"),
                 isMainFrame: true,
                 navigationType: .linkActivated,
-                modifierFlags: []
+                modifierFlags: [],
+                buttonNumber: 1
+            )
+        )
+    }
+
+    func testMiddleClickMainFrameLinkOpensBackgroundTab() {
+        XCTAssertTrue(
+            WKWebViewTab.shouldOpenLinkInBackgroundTab(
+                url: URL(string: "https://example.com/page"),
+                isMainFrame: true,
+                navigationType: .linkActivated,
+                modifierFlags: [],
+                buttonNumber: WKWebViewTab.middleButtonNumber
             )
         )
     }
@@ -56,7 +70,8 @@ final class NavigationFailureTests: XCTestCase {
                 url: URL(string: "https://example.com/frame"),
                 isMainFrame: false,
                 navigationType: .linkActivated,
-                modifierFlags: [.command]
+                modifierFlags: [.command],
+                buttonNumber: 1
             )
         )
     }

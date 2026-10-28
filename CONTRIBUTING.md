@@ -139,7 +139,7 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | Command | Runs |
 |---------|------|
 | `make ui-lint` | ESLint and svelte-check over `lilo-ui/` |
-| `make ui-test` | UI unit tests, including the en/fr catalog parity check |
+| `make ui-test` | UI unit tests, including the catalog key and placeholder parity checks |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
@@ -240,13 +240,13 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 
 ### Add or change a user-facing string
 
-Every string is translated into English and French.
+Every string is translated into English, French, Spanish, Simplified Chinese, Brazilian Portuguese and Russian.
 
-1. Add the key under the right namespace in both `lilo-ui/src/lib/i18n/locales/en.json` and
-   `fr.json`.
+1. Add the key under the right namespace in every catalog under `lilo-ui/src/lib/i18n/locales/`
+   (`en.json`, `fr.json`, `es.json`, `zh-Hans.json`, `pt-BR.json`, `ru.json`).
 2. In Svelte, use `t("namespace.key")`. In AppKit, write the English string with `.localized`
-   and add an `"English": "Français"` row under the `native` namespace of both catalogs.
-3. `make ui-test` fails if a key is missing from either catalog.
+   and add an `"English": "Français"` row under the `native` namespace of every catalog.
+3. `make ui-test` fails if a key is missing from any catalog.
 
 [docs/I18N.md](docs/I18N.md) covers plurals, placeholders and adding a language.
 

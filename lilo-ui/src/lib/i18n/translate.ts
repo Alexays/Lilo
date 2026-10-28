@@ -3,11 +3,15 @@
 
 import en from "./locales/en.json";
 
-export type Locale = "en" | "fr";
+export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru";
 
 export const SUPPORTED_LOCALES = [
 	{ code: "en", label: "English" },
 	{ code: "fr", label: "Français" },
+	{ code: "es", label: "Español" },
+	{ code: "zh-Hans", label: "简体中文" },
+	{ code: "pt-BR", label: "Português (Brasil)" },
+	{ code: "ru", label: "Русский" },
 ] as const satisfies ReadonlyArray<{ code: Locale; label: string }>;
 
 type Messages = Record<string, unknown>;
@@ -17,17 +21,27 @@ type Messages = Record<string, unknown>;
 export const catalogs: { en: Messages } & Partial<Record<Locale, Messages>> = { en };
 
 export async function loadCatalog(locale: Locale): Promise<void> {
-	if (locale === "fr") catalogs.fr ??= (await import("./locales/fr.json")).default;
+	if (catalogs[locale]) return;
+	catalogs[locale] = (await (locale === "fr" ? import("./locales/fr.json")
+		: locale === "es" ? import("./locales/es.json")
+		: locale === "zh-Hans" ? import("./locales/zh-Hans.json")
+		: locale === "ru" ? import("./locales/ru.json") : import("./locales/pt-BR.json"))).default;
 }
 
 export function isSupportedLocale(value: string): value is Locale {
 	return SUPPORTED_LOCALES.some((entry) => entry.code === value);
 }
 
-/** Map a BCP-47 tag ("fr-FR", "en-US") to a supported locale, defaulting to English. */
+/** Map a BCP-47 tag to a supported locale, defaulting to English. */
 export function resolveLocale(tag: string | null | undefined): Locale {
-	const primary = (tag ?? "").toLowerCase().split("-")[0];
-	return isSupportedLocale(primary) ? primary : "en";
+	try {
+		const locale = new Intl.Locale(tag ?? "");
+		if (locale.language === "pt") return "pt-BR";
+		const code = locale.language === "zh" ? `zh-${locale.maximize().script}` : locale.language;
+		return isSupportedLocale(code) ? code : "en";
+	} catch {
+		return "en";
+	}
 }
 
 // Flattened once per catalog object so t() is a single Map lookup.

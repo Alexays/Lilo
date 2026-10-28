@@ -130,7 +130,7 @@
     align-items: center;
     gap: 8px;
     width: 100%;
-    height: 30px;
+    height: 28px;
     padding: 0 8px;
     border: 0;
     border-radius: var(--radius-md);

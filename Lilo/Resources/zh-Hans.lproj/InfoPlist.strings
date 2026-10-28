@@ -1,0 +1,10 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "此网站请求访问你的摄像头。";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "此网站请求访问你的麦克风。";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "此网站请求访问你的位置。";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "当你打开路由器、打印机等本地网络设备的网页时，Lilo 会连接到这些设备。";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "此网站请求使用语音识别，将你说的话转换为文字。";

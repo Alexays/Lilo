@@ -22,6 +22,7 @@ function activity(tabs: Partial<BridgeMediaTab>[], calls: Partial<BridgeCallTab>
 			faviconDataURL: "",
 			hasMicrophone: true,
 			microphoneMuted: false,
+			muted: false,
 			hasCamera: false,
 			cameraOff: true,
 			canHangUp: false,

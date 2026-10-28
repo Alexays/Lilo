@@ -83,8 +83,6 @@ export const tabActions = {
 	returnHome: emitId("returnTabHome"),
 	setMuted: (id: string, muted: boolean): void =>
 		emit(muted ? "muteTab" : "unmuteTab", { id }),
-	setMicrophoneMuted: (id: string, muted: boolean): void =>
-		emit(muted ? "muteTabMicrophone" : "unmuteTabMicrophone", { id }),
 	showContextMenu: (id: string, x: number, y: number, width: number, height: number): void =>
 		emit("showTabContextMenu", { id, x, y, width, height }),
 	navigate: (url: string, typed?: boolean): void => emit("navigate", { url, typed }),
@@ -288,6 +286,7 @@ export const searchActions = {
 		emit("deleteHistoryEntry", { url, query }),
 	searchSuggestions: (query: string, engine: string): void =>
 		emit("searchSuggestions", { query, engine }),
+	preloadTopHit: (url: string): void => emit("preloadTopHit", { url }),
 };
 
 export const terminalActions = {

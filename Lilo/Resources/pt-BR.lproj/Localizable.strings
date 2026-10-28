@@ -1,0 +1,10 @@
+/* Shortcuts actions and the Focus filter (LiloIntents.swift), keyed by their English text. */
+"Space" = "Espaço";
+"Open URL in Lilo" = "Abrir URL no Lilo";
+"Get Current Tab" = "Obter aba atual";
+"The address of the tab shown in the front Lilo window." = "O endereço da aba exibida na janela do Lilo em primeiro plano.";
+"Open Space" = "Abrir Espaço";
+"Set Lilo Space" = "Definir Espaço do Lilo";
+"Shows this space in Lilo while the Focus is on." = "Mostra este espaço no Lilo enquanto o Foco está ativado.";
+"No space" = "Nenhum espaço";
+"Current Tab" = "Aba atual";

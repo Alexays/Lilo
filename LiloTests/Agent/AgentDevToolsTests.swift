@@ -169,6 +169,18 @@ final class AgentDevToolsTests: AgentToolTestCase {
         XCTAssertEqual(printsAsPrint, false)
     }
 
+    func testEmulateReachesTheNewPageAfterAProfileSwitch() async throws {
+        let tab = try await agentTab(showing: "<p>x</p>")
+        _ = await client.callTool("emulate", ["tabId": tab, "media": "print"])
+        await switchToUserProfile()
+
+        let reply = await client.callTool("emulate", ["tabId": tab, "deviceScaleFactor": 3])
+
+        XCTAssertFalse(reply.isError, reply.text)
+        let ratio = try await js("devicePixelRatio", tab: tab) as? NSNumber
+        XCTAssertEqual(ratio, 3, "the tab's engine in the new profile is the one emulated")
+    }
+
     func testEmulationStaysOffUserTabs() async throws {
         let user = try XCTUnwrap(window.tabManager.activeEngineTab)
         let ratio = try await user.wkWebView.evaluateJavaScript("devicePixelRatio") as? NSNumber
