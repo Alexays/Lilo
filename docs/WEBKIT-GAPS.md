@@ -197,6 +197,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** without it, RoEarn (10 covering patterns on www.roblox.com), RoSeal and TubeBuddy threw on their pages, and other extensions showed their UI or ran their listeners twice.
 - **Check:** `testContentScriptRunsOncePerCoveringGrantedPattern` for WebKit, `testContentScriptRunsOnceUnderOverlappingGrants` for Lilo. Repro: grant `*://*.example.com/*` and `https://www.example.com/*`, with a content script matching the latter. Expected: it runs once on `https://www.example.com/`. Actual: twice.
 
+### 100. A file two content script entries list runs twice
+
+- **Gap:** WebKit runs a content script file for each manifest entry that lists it, so a file two entries cover a page with runs twice in one world, and a top-level `const`, `let` or `class` in it throws `Can't create duplicate variable`. Chrome runs a file once per document, however many entries list it, whatever their run times.
+- **Lilo:** an entry leaves out each file another entry runs first in every frame it runs in: same world, an earlier or equal run time, matches covering its own and frames at least as wide, without globs or excludes. Its own list stays in `lilo_js`, which getManifest shows ([ExtensionBackgroundPreparer.swift] `prepareContentScriptCompat`, [static-compat.ts] `chromeManifest`). A file `registerContentScripts` also lists still runs twice.
+- **Impact:** without it, AdBlock's welcome page threw redeclaring `determineUserLanguage`, which two of its entries list.
+- **Check:** `testAFileTwoContentScriptEntriesListRunsTwice` for WebKit, `testContentScriptsLeaveOutFilesAnotherEntryRunsFirst` for Lilo. Repro: two entries matching `https://www.example.com/*` both list `content.js`, at `document_start` and `document_idle`. Expected: it runs once. Actual: twice.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.

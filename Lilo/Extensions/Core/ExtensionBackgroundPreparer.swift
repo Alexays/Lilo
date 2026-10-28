@@ -496,6 +496,7 @@ enum ExtensionBackgroundPreparer {
     }
 
     private static let contentCompatPath = "_lilo/lilo-content-compat.js"
+    private static let originalScriptsKey = "lilo_js"
     /// The key a content script shows the extension page it relays its messages through (frame-messaging.ts), which
     /// extension pages read from this file and content scripts from the compat, written over `frameKeyPlaceholder`.
     private static let frameKeyPath = "_lilo/frame-key"
@@ -507,14 +508,22 @@ enum ExtensionBackgroundPreparer {
     private static func prepareContentScriptCompat(extensionURL: URL, manifest: inout [String: Any], compatSource: String) throws {
         var contentScripts = manifest["content_scripts"] as? [[String: Any]] ?? []
         var changed = false
+        // The extension's own lists, kept in `lilo_js` once changed: getManifest shows them (chromeManifest).
+        let own = contentScripts.map { ($0[originalScriptsKey] ?? $0["js"]) as? [String] ?? [] }
         for index in contentScripts.indices {
-            guard let js = contentScripts[index]["js"] as? [String], !js.isEmpty else { continue }
-            var updated = js
-            updated.removeAll { $0 == contentCompatPath }
-            if (contentScripts[index]["world"] as? String)?.uppercased() != "MAIN" {
-                updated.insert(contentCompatPath, at: 0)
-            }
-            guard updated != js else { continue }
+            let js = contentScripts[index]["js"] as? [String] ?? []
+            let isMain = (contentScripts[index]["world"] as? String)?.uppercased() == "MAIN"
+            let files = own[index].filter { $0 != contentCompatPath }
+            // Chrome runs a file once per document, however many entries list it; WebKit runs it for each (WEBKIT-GAPS 100).
+            var kept = files.enumerated().filter { position, file in
+                !files[..<position].contains(file) && !contentScripts.indices.contains { other in
+                    other != index && own[other].contains(file) && injectsFirst(contentScripts[other], other, over: contentScripts[index], index)
+                }
+            }.map(\.element)
+            if kept.isEmpty && isMain { kept = files }
+            let updated = isMain || own[index].isEmpty ? kept : [contentCompatPath] + kept
+            contentScripts[index][originalScriptsKey] = kept == files ? nil : own[index]
+            guard updated != js || kept != files else { continue }
             contentScripts[index]["js"] = updated
             changed = true
         }
@@ -539,6 +548,38 @@ enum ExtensionBackgroundPreparer {
         try writeIfChanged(Data(source.utf8), to: compatURL)
 
         if changed { manifest["content_scripts"] = contentScripts }
+    }
+
+    /// Whether `first` runs its files in every frame `later` runs its in, no later than it: Chrome then skips those
+    /// files in `later`. Only patterns, frames and run times are compared; an entry narrowed by globs or excludes
+    /// covers nothing.
+    private static func injectsFirst(_ first: [String: Any], _ firstIndex: Int, over later: [String: Any], _ laterIndex: Int) -> Bool {
+        let order = ["document_start": 0, "document_end": 1, "document_idle": 2]
+        let time = { (entry: [String: Any]) in order[entry["run_at"] as? String ?? "document_idle"] ?? 2 }
+        let world = { (entry: [String: Any]) in (entry["world"] as? String)?.uppercased() ?? "ISOLATED" }
+        let flag = { (entry: [String: Any], key: String) in entry[key] as? Bool ?? false }
+        guard world(first) == world(later), (time(first), firstIndex) < (time(later), laterIndex),
+              ["exclude_matches", "include_globs", "exclude_globs"].allSatisfy({ (first[$0] as? [Any] ?? []).isEmpty }),
+              ["all_frames", "match_about_blank", "match_origin_as_fallback"].allSatisfy({ flag(first, $0) || !flag(later, $0) }),
+              let covering = first["matches"] as? [String], let covered = later["matches"] as? [String], !covered.isEmpty
+        else { return false }
+        return covered.allSatisfy { pattern in covering.contains { patternCovers($0, pattern) } }
+    }
+
+    /// Whether every URL `pattern` matches, `outer` matches too; it errs towards not covering.
+    private static func patternCovers(_ outer: String, _ pattern: String) -> Bool {
+        if outer == "<all_urls>" { return true }
+        func parts(_ pattern: String) -> (scheme: String, host: String, path: String)? {
+            guard let schemeEnd = pattern.range(of: "://") else { return nil }
+            let rest = pattern[schemeEnd.upperBound...]
+            guard let slash = rest.firstIndex(of: "/") else { return nil }
+            return (String(pattern[..<schemeEnd.lowerBound]), String(rest[..<slash]), String(rest[slash...]))
+        }
+        guard let outer = parts(outer), let inner = parts(pattern) else { return false }
+        let scheme = outer.scheme == inner.scheme || outer.scheme == "*" && ["http", "https", "*"].contains(inner.scheme)
+        let host = outer.host == "*" || outer.host == inner.host
+            || outer.host.hasPrefix("*.") && (inner.host == outer.host.dropFirst(2) || inner.host.hasSuffix(outer.host.dropFirst(1)))
+        return scheme && host && wildcardMatches(Array(outer.path), Array(inner.path))
     }
 
     /// Whether a web_accessible_resources pattern of `manifest` covers `path`, with or without its leading slash,

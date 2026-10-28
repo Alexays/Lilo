@@ -452,6 +452,28 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertEqual(runs, "2", "WebKit runs a content script once however many granted patterns cover its page: ExtensionAccess can grant overlapping patterns again")
     }
 
+    func testAFileTwoContentScriptEntriesListRunsTwice() async throws {
+        let manifest: [String: Any] = [
+            "manifest_version": 3, "name": "Gap", "version": "1.0",
+            "content_scripts": [
+                ["matches": ["https://www.example.com/*"], "js": ["content.js"], "run_at": "document_start"],
+                ["matches": ["https://www.example.com/*"], "js": ["content.js"], "run_at": "document_idle"]
+            ]
+        ]
+        let folder = try writeExtension(manifest, files: ["content.js": "document.documentElement.dataset.runs = String(Number(document.documentElement.dataset.runs ?? 0) + 1);"])
+        let context = WKWebExtensionContext(for: try await WKWebExtension(resourceBaseURL: folder))
+        context.setPermissionStatus(.grantedExplicitly, for: try WKWebExtension.MatchPattern(string: "https://www.example.com/*"))
+        try controller.load(context)
+        let configuration = WKWebViewConfiguration()
+        configuration.webExtensionController = controller
+        let page = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
+        page.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://www.example.com/"))
+        await pollUntil { (try? await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'")) as? String == "2" }
+
+        let runs = try await page.evaluateJavaScript("document.documentElement.dataset.runs ?? '0'") as? String
+        XCTAssertEqual(runs, "2", "WebKit runs a file once per document as Chrome: drop the deduplication of prepareContentScriptCompat")
+    }
+
     func testRefusedNativeConnectionSetsNoLastError() async throws {
         let refusing = RefusingNativeHosts()
         controller.delegate = refusing

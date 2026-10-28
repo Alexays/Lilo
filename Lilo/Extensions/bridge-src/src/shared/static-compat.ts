@@ -95,7 +95,8 @@ export const withoutContentCompat = (script: any) => (Array.isArray(script?.js) 
 /**
  * The manifest as the extension wrote it: ExtensionBackgroundPreparer names Lilo's wrapper as the worker, keeping the
  * extension's own in `lilo_service_worker` (webext-detect-page compares it with the worker's location), and leads each
- * content script entry with the compat (Lightning Autofill derives a key from its content scripts).
+ * content script entry with the compat and drops the files another entry runs first (Lightning Autofill derives a key
+ * from its content scripts).
  */
 export function chromeManifest(manifest: any): any {
   const background = manifest?.background;
@@ -103,7 +104,10 @@ export function chromeManifest(manifest: any): any {
     background.service_worker = background.lilo_service_worker;
     delete background.lilo_service_worker;
   }
-  if (Array.isArray(manifest?.content_scripts)) manifest.content_scripts = manifest.content_scripts.map(withoutContentCompat);
+  if (Array.isArray(manifest?.content_scripts)) {
+    // `lilo_js` keeps the files before ExtensionBackgroundPreparer dropped those another entry runs first.
+    manifest.content_scripts = manifest.content_scripts.map(({ lilo_js: own, ...script }: any) => (Array.isArray(own) ? { ...script, js: own } : withoutContentCompat(script)));
+  }
   return manifest;
 }
 

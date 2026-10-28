@@ -96,6 +96,40 @@ final class ExtensionPreparationTests: XCTestCase {
         XCTAssertEqual(js, ["_lilo/lilo-content-compat.js", "vendor.js"], "compat must appear exactly once")
     }
 
+    /// As Chrome, a file runs once per document: an entry leaves out the files another entry already runs there, and
+    /// keeps its own list for getManifest.
+    func testContentScriptsLeaveOutFilesAnotherEntryRunsFirst() throws {
+        let dir = makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try writeManifest(#"""
+        {"content_scripts":[
+          {"matches":["http://*/*","https://*/*"],"js":["polyfill.js","functions.js","loader.js"],"run_at":"document_start","all_frames":true},
+          {"matches":["http://*/*","https://*/*"],"js":["polyfill.js","rightclick.js"],"run_at":"document_idle","all_frames":true},
+          {"matches":["https://getadblock.com/*"],"js":["polyfill.js","functions.js","site.js"],"run_at":"document_start","all_frames":true},
+          {"matches":["https://getadblock.com/*"],"js":["functions.js"],"run_at":"document_start","all_frames":true,"world":"MAIN"},
+          {"matches":["https://*/*"],"js":["polyfill.js","excluding.js"],"run_at":"document_start","exclude_matches":["https://a.com/*"]},
+          {"matches":["https://a.com/*"],"js":["polyfill.js","excluding.js","a.js"],"run_at":"document_idle"}
+        ]}
+        """#, to: dir)
+
+        try prepareCompat(dir)
+        try prepareCompat(dir)
+
+        let scripts = try readContentScripts(dir)
+        XCTAssertEqual(scripts.map { $0["js"] as? [String] ?? [] }, [
+            ["_lilo/lilo-content-compat.js", "polyfill.js", "functions.js", "loader.js"],
+            ["_lilo/lilo-content-compat.js", "rightclick.js"],
+            ["_lilo/lilo-content-compat.js", "site.js"],
+            ["functions.js"],
+            ["_lilo/lilo-content-compat.js", "excluding.js"],
+            ["_lilo/lilo-content-compat.js", "excluding.js", "a.js"]
+        ], "a file another entry runs first in the same world and frames goes, unless that entry excludes pages")
+        XCTAssertEqual(scripts.map { $0["lilo_js"] as? [String] }, [
+            nil, ["polyfill.js", "rightclick.js"], ["polyfill.js", "functions.js", "site.js"], nil,
+            ["polyfill.js", "excluding.js"], ["polyfill.js", "excluding.js", "a.js"]
+        ])
+    }
+
     func testSkipsCssOnlyContentScripts() throws {
         let dir = makeTempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

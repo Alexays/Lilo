@@ -1,0 +1,3 @@
+kind: Fixed
+body: A content script file that several of an extension's manifest entries list runs once per page, as in Chrome (AdBlock's welcome page threw redeclaring its functions).
+time: 2026-10-28T11:00:00.000000+01:00
