@@ -75,7 +75,7 @@ final class AgentCapture: NSObject {
     /// When a request last started or ended, for a page that only goes quiet once its network does.
     private(set) var lastNetworkActivity = ContinuousClock.now
     private var nextRequestId = 1
-    private weak var webView: WKWebView?
+    private(set) weak var webView: WKWebView?
     private var observations: [NSKeyValueObservation] = []
 
     private static let setDelegate = NSSelectorFromString("_setResourceLoadDelegate:")

@@ -242,8 +242,9 @@ extension AgentControl {
         guard !engine.isPrivateBrowsing || space.id == session.isolatedSpaceId else {
             throw AgentToolError("Tab \(number) is a private tab: agents never read or act on private browsing")
         }
-        // A replacement engine (its page was lost) starts unflagged: the refresh only acts on changes.
-        if !engine.isAgentControlled { controlledTabIds.remove(tab.id) }
+        // A replacement engine (its page was lost, its folder moved to another profile) has none of the
+        // agent's hooks, though it inherits the tab's flag: the refresh only acts on changes.
+        if !engine.isAgentControlled || captures[tab.id]?.webView !== engine.wkWebView { controlledTabIds.remove(tab.id) }
         refreshControlledTabs()
         attach(engine, to: host)
         session.actedOn[tab.id] = Date()
