@@ -255,10 +255,6 @@ final class BrowserContext {
             }, monitorSystem: true)
         }
         powerKeeper.apply(PowerKeeper.Settings(get: settingsStore.get))
-        if settingsStore.get("agentControlEnabled") == "true" {
-            agentControl.setEnabled(true)
-            AgentClientConfig.repairMovedConfigs(home: FileManager.default.homeDirectoryForCurrentUser)
-        }
         powerKeeper.onChange = { [weak self] state in
             // Browser agents hold the Mac like quiet commands: the popover names them beside the terminals.
             let holding = (self?.agentControl.sessions ?? []).filter { state.working.contains($0.id) }
@@ -289,6 +285,11 @@ final class BrowserContext {
         spaceManager.loadSpaces(startupSnapshot.spaces)
         spaceManager.delegate = self
         restoreTabArchive()
+        // Last: an agent may connect at once, and its calls need the profiles and spaces loaded above.
+        if settingsStore.get("agentControlEnabled") == "true" {
+            agentControl.setEnabled(true)
+            AgentClientConfig.repairMovedConfigs(home: FileManager.default.homeDirectoryForCurrentUser)
+        }
     }
 
     /// At launch, and when the blocker is turned on in a session that launched with it off (nothing
