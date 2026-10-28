@@ -443,6 +443,16 @@ final class RealExtensionSmokeTests: XCTestCase {
                 let errors = unexpected(Array((idleRegistry.context(for: id) ?? context).errors.dropFirst(errorCount)), (chrome?.errors ?? []).map(normalized))
                 outcome.problems += errors.map { "once its worker was idle, error: \($0)" }
                 if !outcome.problems.isEmpty && outcome.details.isEmpty { outcome.details = errorsOf(idleRegistry, id) }
+                // What a popup that went another way than Chrome's saw as its tab.
+                if !matched, let popup = idleWindow.tabManager.tabAdapter(for: blank.id).flatMap({ (idleRegistry.context(for: id) ?? context).action(for: $0)?.popupWebView }) {
+                    _ = await self.evaluate("""
+                    chrome.tabs.query({ active: true, currentWindow: true }).then(
+                      (tabs) => { window.__liloSmokeTabs = JSON.stringify(tabs.map(({ id, url, status }) => ({ id, url, status }))); },
+                      (error) => { window.__liloSmokeTabs = error.message; }), 0
+                    """, in: popup)
+                    try await Task.sleep(for: .milliseconds(500))
+                    outcome.details.append("the popup's active tab: \(await self.evaluate("window.__liloSmokeTabs ?? 'unanswered'", in: popup) as? String ?? "unread")")
+                }
                 idleRegistry.delegate.closeOpenActionPopups(reason: "idle check", extensionId: id)
                 await idleRegistry.unload(extensionId: id)
             }
