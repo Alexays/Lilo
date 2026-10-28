@@ -112,7 +112,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         opener?.setWindowOcclusionDetection(true)
         opener = nil
         webView.uiDelegate = nil
-        webView.perform(NSSelectorFromString("_close"))
+        let close = NSSelectorFromString("_close")
+        if webView.responds(to: close) { webView.perform(close) }
         webView.removeFromSuperview()
         panel?.orderOut(nil)
         onClosed?(openerId, replacing)
