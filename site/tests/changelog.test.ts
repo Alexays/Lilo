@@ -106,8 +106,17 @@ test("release stories can use a recording from installed Lilo", () => {
 
   assert.equal(
     parseReleaseStories(storyHistory, [native]).get(native.version)?.capture
-      .source,
+      ?.source,
     "native"
+  );
+});
+
+test("release stories can omit the recording", () => {
+  const { capture: _capture, ...story } = exampleStory();
+
+  assert.equal(
+    parseReleaseStories(storyHistory, [story]).get(story.version)?.capture,
+    undefined
   );
 });
 

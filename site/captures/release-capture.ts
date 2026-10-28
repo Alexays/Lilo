@@ -90,7 +90,13 @@ const main = () => {
     ]
   ).get(version);
 
-  const source = story?.capture.source ?? "demo";
+  if (story && !story.capture) {
+    process.stdout.write(`No recording for ${version}\n`);
+
+    return;
+  }
+
+  const source = story?.capture?.source ?? "demo";
 
   const state = captureArchiveState(
     `${site}/src/assets/releases/${version}`,

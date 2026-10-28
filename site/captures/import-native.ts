@@ -61,7 +61,7 @@ export const importNativeCapture = async (
     ]
   ).get(version);
 
-  if (story?.capture.source !== "native") {
+  if (story?.capture?.source !== "native") {
     throw new Error("The release story must select a native capture");
   }
 

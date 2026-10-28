@@ -35,8 +35,8 @@ without new fragments leaves both versions alone. `Lilo/Info.plist` and the Abou
 
 For a release with visual highlights, add its translated story to
 `site/src/content/releases/<version>.json`. Each highlight names the release notes
-it describes. `make release-version` runs the story's capture scenario when its
-media is missing, then builds the website. Demo stories record local sample pages
+it describes. A story may omit its `capture` and show no recording. Otherwise
+`make release-version` runs the story's capture scenario when its media is missing, then builds the website. Demo stories record local sample pages
 in English and French and both appearances. Native stories use reviewed frames
 from installed Lilo; `make site-release-import` encodes their WebP and poster.
 The pilot uses a real native Peek capture on public pages. Optional actions appear

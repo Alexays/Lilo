@@ -47,7 +47,7 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
 
-Stories choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
+A story without `capture` shows its highlights with no recording. Stories with one choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
 
 ```sh
 make site-release-capture RELEASE=x.y.z

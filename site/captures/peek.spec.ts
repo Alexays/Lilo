@@ -26,7 +26,7 @@ const story = parseReleaseStories(
   ]
 ).get(version);
 
-if (story?.capture.scenario !== "peek") {
+if (story?.capture?.scenario !== "peek") {
   throw new Error(`No Peek capture scenario for release ${version}`);
 }
 

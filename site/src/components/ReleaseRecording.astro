@@ -8,11 +8,12 @@ import type { Locale } from "../lib/i18n";
 import type { ReleaseStory } from "../lib/release-stories";
 
 interface Props {
+  capture: NonNullable<ReleaseStory["capture"]>;
   lang: Locale;
   story: ReleaseStory;
 }
 
-const { lang, story } = Astro.props;
+const { capture, lang, story } = Astro.props;
 const text = copy[lang];
 
 const posters = import.meta.glob<{ default: ImageMetadata }>(
@@ -45,9 +46,9 @@ const duration = metadata.data.durationMs;
 
 const media = (appearance: "light" | "dark") => {
   const variant =
-    story.capture.source === "native" ? "native" : `${lang}-${appearance}`;
+    capture.source === "native" ? "native" : `${lang}-${appearance}`;
 
-  const path = `${prefix}/${story.capture.scenario}-${variant}`;
+  const path = `${prefix}/${capture.scenario}-${variant}`;
   const poster = posters[`${path}.png`]?.default;
   const recording = recordings[`${path}.webp`];
 
