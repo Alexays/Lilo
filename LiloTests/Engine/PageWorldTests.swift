@@ -8,7 +8,7 @@ import XCTest
 final class PageWorldTests: XCTestCase {
     /// Globals Lilo adds to WebKit's own, each a Chrome API pages use. A new one needs that reason too.
     private static let addedGlobals: Set<String> = ["EyeDropper", "Serial", "SerialPort"]
-    private static let addedMembers: Set<String> = ["Navigator.prototype.serial"]
+    private static let addedMembers: Set<String> = ["Navigator.prototype.serial", "window.documentPictureInPicture"]
 
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
     /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
