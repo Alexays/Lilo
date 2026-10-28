@@ -18,6 +18,15 @@ test('GapChromeEvent sends the first event at once, then the rest of the task in
   assert.deepEqual(calls.slice(1), [{ namespace: 'events', method: 'listen', params: { events: ['bookmarks.onCreated', 'bookmarks.onRemoved'] } }]);
 });
 
+test("a page's onConnect listener goes at once, even after another listener", async () => {
+  const calls: unknown[] = [];
+  mockGapAPI((msg) => { calls.push(msg); });
+  new GapChromeEvent('history', 'onTitleChanged').addListener(() => {});
+  new GapChromeEvent('runtime', 'onConnect').addListener(() => {});
+  assert.deepEqual(calls.slice(-1), [{ namespace: 'events', method: 'listen', params: { events: ['runtime.onConnect'] } }]);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+});
+
 test('the worker reports the listeners its top-level code adds in one call, even none, once it has run', async () => {
   const calls: unknown[] = [];
   mockGapAPI((msg) => { calls.push(msg); });

@@ -46,18 +46,23 @@ function sendBatch(evenEmpty: boolean): void {
   answerBatch(events.length > 0 || evenEmpty ? listen(events, batchAnswered) : Promise.resolve());
 }
 
+// A port opened before native knows a page's listener fails as unreceived: these go at once, as its first listener. The
+// worker's top-level listeners stay one report, as native takes an unreported worker for one listening to all.
+const reportedAtOnce = new Set(typeof (globalThis as any).ServiceWorkerGlobalScope === 'function' ? [] : ['runtime.onConnect', 'runtime.onConnectExternal']);
+
 /**
  * Native only queues, and wakes the worker for, events a context listens to. A page's first listener is sent at
  * once, so an event emitted right after it is not filtered out; the rest batch until the task ends.
  */
 export function reportGapListener(name: string): void {
   if (reports.has(name)) return;
-  if (unreportedListeners) {
+  if (unreportedListeners && !reportedAtOnce.has(name)) {
     unreportedListeners.push(name);
     reports.set(name, batchAnswered);
     return;
   }
   reports.set(name, listen([name]));
+  if (unreportedListeners) return;
   startBatch();
   setTimeout(() => sendBatch(false), 0);
 }
