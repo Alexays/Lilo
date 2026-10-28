@@ -385,7 +385,12 @@ final class AgentFrameView: NSView {
         let shown = page.bounds.intersection(page.convert(container.bounds, from: container))
         guard !shown.isEmpty, let layer, let pageLayer = page.layer else { return }
         frame = shown
-        // A page wider or taller than its container has its own rounded corners cut off: round the part shown.
+        // A page wider or taller than its container has its own rounded corners cut off: round the part
+        // shown. A mask renders offscreen, so a page shown whole goes without.
+        guard shown != page.bounds else {
+            pageLayer.mask = nil
+            return
+        }
         let mask = pageLayer.mask ?? CALayer()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
