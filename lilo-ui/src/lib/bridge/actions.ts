@@ -22,12 +22,6 @@ type IdCommandName = {
 const emitEmpty = (action: OptionalPayloadCommandName) => () => emit(action);
 const emitId = (action: IdCommandName) => (id: string) => emit(action, { id });
 
-export const whatsNewActions = {
-	requestAutomatic: emitEmpty("requestWhatsNew"),
-	presented: (version: string): void => emit("whatsNewPresented", { version }),
-	dismiss: emitEmpty("dismissWhatsNew"),
-};
-
 export const chromeActions = {
 	// `at` is the chrome's own clock, so the host dates the mark when it happened, not when it got it.
 	startupMark: (event: string): void =>

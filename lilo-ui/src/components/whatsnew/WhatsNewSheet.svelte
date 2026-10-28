@@ -1,5 +1,9 @@
 <script module lang="ts">
   import type { ReleaseNotes } from "./releaseNotes";
+  import sheetCatalog from "../../lib/i18n/locales/en.json?raw";
+  import { catalogs } from "../../lib/i18n/translate";
+
+  catalogs.en = { ...catalogs.en, whatsNew: JSON.parse(sheetCatalog).whatsNew };
 
   const releaseResource: Promise<ReleaseNotes | null> = fetch("/release-notes.json")
     .then(async (response) => response.ok ? await response.json() as ReleaseNotes : null)
@@ -8,10 +12,9 @@
 
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { whatsNewActions } from "../../lib/bridge/actions";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
-  import type { WhatsNewRequest } from "../../stores/whatsNew.svelte";
+  import { acknowledgeWhatsNew, type WhatsNewRequest } from "../../stores/whatsNew.svelte";
   import WhatsNewArt from "./WhatsNewArt.svelte";
 
   let { request, onclose }: { request: WhatsNewRequest; onclose: () => void } = $props();
@@ -38,7 +41,7 @@
       opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       dialog.showModal();
       heading.focus({ preventScroll: true });
-      whatsNewActions.presented(request.version);
+      acknowledgeWhatsNew(request.version);
     })();
     return () => {
       cancelled = true;

@@ -119,3 +119,17 @@ The reviewer left inherited website changes and the existing Helsinki daylight-s
 The decisions above add a small optional bundle and event-driven integration points. They introduce no polling, remote content, idle task, or new dependency. A wrong bundle allowance would cost about 17 KB of uncompressed embedded assets; a mistake in the release-resource selection would show unavailable notes or stale claims, covered by exact-version tests. The two demo compatibility changes keep the shared UI's menu/probe contract; they do not include the public-site redesign. Focused Make arguments preserve the default full checks and the machine-wide native test lock.
 
 Final checks after the review fixes: `TZ=UTC make validate` passed, including the complete native suite, UI lint/unit checks, website checks, SwiftLint, bridge checks, and release status. `make e2e E2E_ARGS='whatsNew.spec.ts tabShare.spec.ts screenshotTools.spec.ts --workers=2'` passed all 31 tests. The focused AppKit/presentation suites passed all 14 tests. The final embedded bundle is 1,306,527 bytes; its first frame is 545,914 bytes, below the unchanged 546,000-byte cap. No Important or Critical review findings remain, and no Minor findings were deferred.
+
+## Pull request integration
+
+The user requested a new branch and pull request. A clean managed worktree based on upstream `7fccebb` contains only this feature's commits; the earlier website commits and the original checkout's uncommitted work remain separate.
+
+Current upstream ships six languages. The sheet's controls, native Help entry, authored example highlights and build-time editorial selection now cover every supported locale. Existing catalog-parity tests and an expanded authored-highlight test failed before those translations were added; all 498 UI unit tests then passed. Four additional browser cases exercise Spanish, Brazilian Portuguese, Russian and Simplified Chinese.
+
+Upstream replaced the clear-data confirmation store with a browsing-data settings page. The old store dependency was removed; required onboarding, recovery, site-permission and screen-sharing decisions still retain priority.
+
+The port initially exceeded upstream's 551,000-byte first-frame cap by 535 bytes. English dialog messages now load with the lazy sheet through a standard raw JSON import; the app build selects only that namespace, while the shared website's standard raw import remains valid. The bridge callbacks also live with the deferred store. Final measured size is 550,880 bytes for the first frame and 1,998,642 bytes total. Both current upstream caps (551,000 and 2,018,500 bytes) remain unchanged. Other locales continue using the existing lazy catalog loader, and the manual unavailable-notes fallback has its English messages even if the notes resource fails.
+
+The Xcode project was regenerated through `make project-sync`. Browser tests passed 35/35, including the original modal regressions and four new locale cases. Screenshots show the authored 0.6.0 example in both appearances and the current 0.7.0 notes-only layout in English/light and French/dark. The current release has no curated registry entry and correctly avoids older feature claims.
+
+Final PR-port validation: ordinary `make validate` passed without a timezone override (2,343 native tests passed, 6 skipped; all UI, website, bridge, lint and release checks passed). The existing upstream DST regression is fixed in this base. All 498 UI unit tests and 35 focused browser tests passed.

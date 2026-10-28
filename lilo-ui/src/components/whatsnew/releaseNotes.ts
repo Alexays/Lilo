@@ -1,3 +1,5 @@
+import type { Locale } from "../../lib/i18n/translate";
+
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
 export type ReleaseIllustration = "unread" | "calls";
 
@@ -23,7 +25,7 @@ export interface ReleaseNotes {
 	version: string;
 	date: string;
 	groups: { kind: ReleaseKind; entries: string[] }[];
-	editorial?: Partial<Record<"en" | "fr", ReleaseEditorialCopy | null>> | null;
+	editorial?: Partial<Record<Locale, ReleaseEditorialCopy | null>> | null;
 }
 
 export function parseReleaseNotes(markdown: string, version: string): ReleaseNotes {

@@ -45,14 +45,14 @@ onboarding without an additional update introduction.
 
 To add visual highlights, add the exact version to
 `lilo-ui/src/components/whatsnew/releaseHighlights.json`. Its headline, introduction and up to
-three highlights reference keys under `whatsNew.releases` in **both** shared English/French
-catalogs. Use a benefit-led heading and one or two sentences per highlight. The static local
+three highlights reference keys under `whatsNew.releases` in **every** shared language
+catalog. Use a benefit-led heading and one or two sentences per highlight. The static local
 illustrations live in `WhatsNewArt.svelte`; a new illustration also needs a recognized identifier
 in `releaseNotes.ts`. Keep illustrations decorative and communicate the change in the copy.
 
 Without an entry for that version, the sheet opens the complete notes in a compact maintenance
 layout. An older version's highlights are never reused. The complete notes retain their original
-English text, labelled as such in French. The sheet reads its bundled `release-notes.json` on
+English text, labelled as such in the other languages. The sheet reads its bundled `release-notes.json` on
 opening; it makes no request to the public website or update feed.
 
 Run `make ui-preview`, then open `/preview/?open=whatsnew` to inspect the installed release.

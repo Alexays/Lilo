@@ -1,22 +1,20 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { whatsNewActions } from "../../lib/bridge/actions";
   import { getCrashRecoverySeq, getDegradedSpaceName } from "../../stores/banners.svelte";
   import { getOnboarding } from "../../stores/onboarding.svelte";
-  import { isClearDataSheetOpen } from "../../stores/settings.svelte";
   import { getTabShareRequest } from "../../stores/tabShare.svelte";
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
-  import { closeWhatsNew, getWhatsNewRequest, initWhatsNewStore } from "../../stores/whatsNew.svelte";
+  import { closeWhatsNew, getWhatsNewRequest, initWhatsNewStore, requestAutomaticWhatsNew } from "../../stores/whatsNew.svelte";
 
   const request = $derived(getWhatsNewRequest());
   const drawer = $derived(getActiveUrlBarDrawer());
   const blocked = $derived(getOnboarding().visible || getCrashRecoverySeq() > 0 || getDegradedSpaceName() !== null
-    || getTabShareRequest() !== null || isClearDataSheetOpen()
+    || getTabShareRequest() !== null
     || (drawer !== null && drawer.kind !== "site" && drawer.kind !== "defaultBrowser"));
   const shown = $derived(request && !blocked ? request : null);
   let sheet = $state<Promise<typeof import("./WhatsNewSheet.svelte")> | null>(null);
 
-  onMount(() => { initWhatsNewStore(); whatsNewActions.requestAutomatic(); });
+  onMount(() => { initWhatsNewStore(); requestAutomaticWhatsNew(); });
 
   $effect(() => {
     if (!shown || sheet) return;

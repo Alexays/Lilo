@@ -163,6 +163,24 @@ test("a maintenance release opens all of its notes without older feature claims"
 	await expect(dialog.locator(".release-highlight")).toHaveCount(0);
 });
 
+for (const [locale, title, continueLabel] of [
+	["es", "Novedades de Lilo", "Volver a navegar"],
+	["pt-BR", "Novidades do Lilo", "Voltar à navegação"],
+	["ru", "Что нового в Lilo", "Вернуться к просмотру"],
+	["zh-Hans", "Lilo 更新内容", "继续浏览"],
+]) {
+	test(`the maintenance sheet follows the ${locale} app language`, async ({ page }) => {
+		await bootReleaseChrome(page, initialWorld(), undefined, { ...release, editorial: null });
+		await page.evaluate((locale) => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale } }), locale);
+		await openWhatsNew(page);
+		const dialog = page.getByRole("dialog", { name: title });
+		await expect(dialog).toBeVisible();
+		await expect(dialog.getByRole("listitem")).toHaveCount(3);
+		await dialog.getByRole("button", { name: continueLabel }).click();
+		await expect(dialog).toHaveCount(0);
+	});
+}
+
 for (const automatic of [true, false]) {
 	test(`a screen-sharing decision keeps its priority over ${automatic ? "automatic" : "manual"} highlights`, async ({ page }) => {
 		await bootReleaseChrome(page);
