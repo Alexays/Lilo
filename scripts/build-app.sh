@@ -32,6 +32,7 @@ Artifacts:
   build/<config>/archive/Lilo.xcarchive   (Developer ID signing only)
   build/<config>/export/Lilo.app
   build/<config>/dist/Lilo-<config>.zip
+  build/release/dist/Lilo-dSYMs.zip       (the symbols of that exact build, for crash reports)
 EOF
 }
 
@@ -56,6 +57,7 @@ ARCHIVE_PATH="$OUT_DIR/archive/Lilo.xcarchive"
 EXPORT_DIR="$OUT_DIR/export"
 APP="$EXPORT_DIR/Lilo.app"
 ZIP="$OUT_DIR/dist/Lilo-$CONFIG.zip"
+DSYMS="$OUT_DIR/dist/Lilo-dSYMs.zip"
 
 TEAM_ID="${LILO_TEAM_ID:-}"
 IDENTITY="${LILO_CODE_SIGN_IDENTITY:-Developer ID Application}"
@@ -211,6 +213,11 @@ if [ "$NOTARIZE" = true ]; then
 fi
 
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
+# Kept from this very build: a crash report only symbolicates against the dSYM whose UUID matches its binary.
+if [ "$CONFIG" = "release" ]; then
+    rm -f "$DSYMS"
+    (cd "$(dirname "$BUILT_APP")" && zip -qry "$DSYMS" Lilo.app.dSYM LiloPowerHelper.dSYM)
+fi
 
 if [ "$INSTALL" = true ]; then
     # A release shares its identity and data with the DMG's copy: one copy, in its place, so macOS never
@@ -239,6 +246,7 @@ echo "Signing: $SIGNING_LABEL"
 [ "$SIGNING" = "distribution" ] && echo "Archive: $ARCHIVE_PATH"
 echo "Exported app: $APP"
 echo "Distribution zip: $ZIP"
+[ "$CONFIG" = "release" ] && echo "Symbols: $DSYMS"
 echo "Notarization: $NOTARIZATION"
 if [ "$INSTALL" = true ]; then
     echo "Installed app: $INSTALLED"
