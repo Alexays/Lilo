@@ -7,8 +7,8 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(Localization.resolveLocale(override: "en", preferredLanguages: ["es-ES"]), "en")
         XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["es-MX"]), "es")
         XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ES-419"]), "es")
-        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "es-ES"]), "es")
-        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE"]), "en")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA", "es-ES"]), "es")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA"]), "en")
         XCTAssertEqual(Localization.resolveLocale(override: "zh-Hans", preferredLanguages: ["fr-FR"]), "zh-Hans")
         XCTAssertEqual(Localization.resolveLocale(override: "en", preferredLanguages: ["zh-CN"]), "en")
         for tag in ["zh", "zh-CN", "zh-SG", "zh-Hans", "ZH-HANS-CN", "zh-Hans-HK"] {
@@ -18,7 +18,7 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "en", tag)
         }
         XCTAssertEqual(Localization.resolveLocale(override: "unknown", preferredLanguages: ["fr-CA"]), "fr")
-        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "zh-CN"]), "zh-Hans")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA", "zh-CN"]), "zh-Hans")
         XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: []), "en")
     }
 
@@ -66,7 +66,7 @@ final class LocalizationTests: XCTestCase {
         }
         XCTAssertEqual(Localization.resolveLocale(override: "pt-BR", preferredLanguages: ["es-ES"]), "pt-BR")
         XCTAssertEqual(Localization.resolveLocale(override: "en", preferredLanguages: ["pt-BR"]), "en")
-        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "pt-BR"]), "pt-BR")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA", "pt-BR"]), "pt-BR")
     }
 
     func testPortugueseChoicePersistsForNativeAndSystemUI() {
@@ -109,7 +109,7 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "ru", tag)
         }
         XCTAssertEqual(Localization.resolveLocale(override: "unknown", preferredLanguages: ["fr-CA"]), "fr")
-        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["de-DE", "ru-RU"]), "ru")
+        XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA", "ru-RU"]), "ru")
         XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: []), "en")
     }
 

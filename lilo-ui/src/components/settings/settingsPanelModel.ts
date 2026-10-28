@@ -330,7 +330,7 @@ export function sectionGroups(
 }
 
 function normalizeSearchText(text: string): string {
-  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/ß/g, "ss").replace(/ı/g, "i");
 }
 
 /** Every whitespace-separated query term must appear somewhere in the haystack. */

@@ -22,7 +22,7 @@ export interface EmojiCatalog {
 /** The skin tone modifiers, by the index the setting stores; 0 is the default yellow. */
 export const SKIN_TONES = ["", "\u{1F3FB}", "\u{1F3FC}", "\u{1F3FD}", "\u{1F3FE}", "\u{1F3FF}"];
 
-const fold = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae");
+const fold = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/ß/g, "ss").replace(/ı/g, "i");
 const wordsOf = (text: string) => fold(text).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 
 function catalogOf(categories: EmojiEntry[][]): EmojiCatalog {
@@ -46,6 +46,7 @@ const LOCALE_NAMES: Partial<Record<Locale, () => Promise<{ EMOJI_NAMES: string }
   "pt-BR": () => import("./emojiData.pt-BR.gen"),
   ru: () => import("./emojiData.ru.gen"),
   "uk": () => import("./emojiData.uk.gen"),
+  "de": () => import("./emojiData.de.gen"),
 };
 const catalogs = new Map<Locale, Promise<EmojiCatalog>>();
 

@@ -122,3 +122,19 @@ test("Ukrainian emoji names load on demand and retain English search", async () 
   assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
     ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
 });
+
+test("German emoji names load on demand and retain English search", async () => {
+  const catalog = await loadEmojiCatalog("de");
+  assert.equal(await loadEmojiCatalog("de"), catalog);
+  assert.equal(emojiName(catalog, "🚀"), "Rakete");
+  assert.ok(searchEmoji(catalog, "Straße").some((entry) => entry.emoji === "🚸"));
+  assert.deepEqual(searchEmoji(catalog, "Straße"), searchEmoji(catalog, "STRASSE"));
+  assert.ok(searchEmoji(catalog, "schnellstraße").some((entry) => entry.emoji === "🛣️"));
+  assert.deepEqual(searchEmoji(catalog, "schnellstraße"), searchEmoji(catalog, "SCHNELLSTRASSE"));
+  assert.ok(searchEmoji(catalog, "Rakete").some((entry) => entry.emoji === "🚀"));
+  assert.ok(searchEmoji(catalog, "Herz").some((entry) => entry.emoji === "❤️"));
+  assert.ok(searchEmoji(catalog, "rocket").some((entry) => entry.emoji === "🚀"));
+  assert.ok(catalog.categories.flat().every((entry) => entry.name.length > 0));
+  assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});

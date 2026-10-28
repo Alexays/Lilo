@@ -28,6 +28,7 @@ LOCALES = {
     "pt-BR": {"a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "na", "nas", "no", "nos", "o", "os", "um", "uma"},
     "ru": {"в", "во", "для", "и", "из", "к", "на", "о", "от", "по", "с", "со", "у"},
     "uk": {"в", "для", "з", "зі", "й", "на", "у", "і"},
+    "de": {"auf", "das", "der", "die", "ein", "eine", "im", "in", "mit", "und", "von"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +43,7 @@ def fetch(url):
 # Folds as the picker's fold() does: no case, no accents, ligatures spelled out.
 def words(text):
     folded = "".join(c for c in unicodedata.normalize("NFD", text.lower()) if not unicodedata.combining(c))
-    return re.findall(r"[^\W_]+", folded.replace("œ", "oe").replace("æ", "ae"))
+    return re.findall(r"[^\W_]+", folded.replace("œ", "oe").replace("æ", "ae").replace("ß", "ss").replace("ı", "i"))
 
 
 def annotations(locale):

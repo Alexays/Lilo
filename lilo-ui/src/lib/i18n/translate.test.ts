@@ -81,7 +81,7 @@ test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to Englis
 		["zh-HK", "en"],
 		["zh-MO", "en"],
 		["zh-Hant-CN", "en"],
-		["de-DE", "en"],
+		["ar-SA", "en"],
 		["", "en"],
 		[null, "en"],
 		[undefined, "en"],
@@ -190,5 +190,23 @@ test("Ukrainian regional tags, translations and count forms use the selected cat
 		[1.5, "1,5 відкритої вкладки"],
 	] as const) {
 		assert.equal(translate("uk", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("German regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["de", "de-DE", "DE-at", "de-CH"]) {
+		assert.equal(resolveLocale(tag), "de", tag);
+	}
+	assert.equal(translate("de", "common.cancel"), "Abbrechen");
+	for (const [count, expected] of [
+		[0, "0 offene Tabs"],
+		[1, "1 offener Tab"],
+		[2, "2 offene Tabs"],
+		[5, "5 offene Tabs"],
+		[21, "21 offene Tabs"],
+		[12345, "12.345 offene Tabs"],
+		[1.5, "1,5 offene Tabs"],
+	] as const) {
+		assert.equal(translate("de", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });

@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Idioma",
 				"description": "Idioma usado na interface do navegador.",
-				"keywords": "idioma tradução inglês francês espanhol português brasil chinês simplificado russo ukrainian українська"
+				"keywords": "idioma tradução inglês francês espanhol português brasil chinês simplificado russo ukrainian українська german deutsch"
 			},
 			"searchEngine": {
 				"title": "Buscador",
