@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Language",
 				"description": "Language used across the browser interface.",
-				"keywords": "locale translation english french spanish chinese simplified portuguese brazil russian"
+				"keywords": "locale translation english french spanish chinese simplified portuguese brazil russian ukrainian українська"
 			},
 			"searchEngine": {
 				"title": "Search engine",

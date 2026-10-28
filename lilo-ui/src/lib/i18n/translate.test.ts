@@ -110,7 +110,7 @@ test("every catalog exposes the same keys and placeholders as English", () => {
 			assert.equal(typeof value, typeof source, `${code}.${key}`);
 			const plural = typeof source === "object" && source !== null;
 			if (plural) {
-				const expected = code === "ru"
+				const expected = new Intl.PluralRules(code).resolvedOptions().pluralCategories.includes("few")
 					? new Intl.PluralRules(code).resolvedOptions().pluralCategories
 					: Object.keys(source);
 				assert.deepEqual(Object.keys(value as object).sort(), expected.sort(), `${code}.${key}`);
@@ -166,4 +166,29 @@ test("Russian counts use one, few, many and fractional forms with local number f
 		assert.equal(translate("ru", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected);
 	}
 	assert.equal(translate("ru", "settings.extensionUpdates.available", { count: 22 }), "Доступно 22 обновления");
+});
+
+test("Ukrainian regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["uk", "uk-UA", "UK-ua"]) {
+		assert.equal(resolveLocale(tag), "uk", tag);
+	}
+	assert.equal(translate("uk", "common.cancel"), "Скасувати");
+	for (const [count, expected] of [
+		[0, "0 відкритих вкладок"],
+		[1, "1 відкрита вкладка"],
+		[2, "2 відкриті вкладки"],
+		[5, "5 відкритих вкладок"],
+		[11, "11 відкритих вкладок"],
+		[12, "12 відкритих вкладок"],
+		[14, "14 відкритих вкладок"],
+		[21, "21 відкрита вкладка"],
+		[22, "22 відкриті вкладки"],
+		[25, "25 відкритих вкладок"],
+		[101, "101 відкрита вкладка"],
+		[112, "112 відкритих вкладок"],
+		[12345, "12 345 відкритих вкладок"],
+		[1.5, "1,5 відкритої вкладки"],
+	] as const) {
+		assert.equal(translate("uk", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
 });
