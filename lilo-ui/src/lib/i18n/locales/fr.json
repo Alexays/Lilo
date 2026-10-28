@@ -2164,6 +2164,16 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v090": {
+				"headline": "Retrouvez votre chemin.",
+				"description": "Votre historique, vos appels et huit nouvelles langues.",
+				"historyTitle": "Tout votre historique, jour par jour.",
+				"historyDescription": "Appuyez sur ⌘Y : les visites de chaque jour regroupées par site, filtrées par période, site ou terminal, et faciles à nettoyer.",
+				"pipTitle": "Gardez votre appel en vue.",
+				"pipDescription": "La vue compacte de Google Meet vous suit dans une fenêtre flottante quand vous quittez l'onglet de l'appel.",
+				"languagesTitle": "Lilo parle votre langue.",
+				"languagesDescription": "L'allemand, le japonais, l'italien, le coréen, le chinois traditionnel, le polonais, le turc et le néerlandais rejoignent la liste."
+			},
 			"v080": {
 				"headline": "Partagez exactement ce qu'il faut.",
 				"description": "Vos appels et vos pages gagnent un peu d'espace.",

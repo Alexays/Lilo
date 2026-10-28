@@ -2175,6 +2175,16 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v090": {
+				"headline": "Geri dönmek artık kolay.",
+				"description": "Geçmişiniz, görüşmeleriniz ve sekiz yeni dil.",
+				"historyTitle": "Tüm geçmişiniz, gün gün.",
+				"historyDescription": "⌘Y'ye basın: her günün ziyaretleri siteye göre gruplanır; döneme, siteye veya terminale göre süzülür ve kolayca temizlenir.",
+				"pipTitle": "Görüşmeniz hep göz önünde.",
+				"pipDescription": "Görüşme sekmesinden ayrıldığınızda Google Meet'in kompakt görünümü yüzen bir pencerede sizi izler.",
+				"languagesTitle": "Lilo sizin dilinizi konuşuyor.",
+				"languagesDescription": "Almanca, Japonca, İtalyanca, Korece, Geleneksel Çince, Lehçe, Türkçe ve Felemenkçe listeye katıldı."
+			},
 			"v080": {
 				"headline": "Tam istediğinizi paylaşın.",
 				"description": "Aramalar ve sayfalar için biraz daha geniş alan.",

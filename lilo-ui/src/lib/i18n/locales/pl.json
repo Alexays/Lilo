@@ -2197,6 +2197,16 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v090": {
+				"headline": "Łatwo wrócić.",
+				"description": "Twoja historia, Twoje rozmowy i osiem nowych języków.",
+				"historyTitle": "Cała historia, dzień po dniu.",
+				"historyDescription": "Naciśnij ⌘Y: wizyty z każdego dnia pogrupowane według witryn, filtrowane według okresu, witryny lub terminala i łatwe do wyczyszczenia.",
+				"pipTitle": "Miej rozmowę na oku.",
+				"pipDescription": "Kompaktowy widok Google Meet podąża za Tobą w pływającym oknie, gdy opuszczasz kartę rozmowy.",
+				"languagesTitle": "Lilo mówi w Twoim języku.",
+				"languagesDescription": "Dochodzą niemiecki, japoński, włoski, koreański, chiński tradycyjny, polski, turecki i niderlandzki."
+			},
 			"v080": {
 				"headline": "Udostępniaj dokładnie to, co chcesz.",
 				"description": "Więcej przestrzeni dla rozmów i stron.",

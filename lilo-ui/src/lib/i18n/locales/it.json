@@ -2175,6 +2175,16 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v090": {
+				"headline": "Ritrova la strada.",
+				"description": "La tua cronologia, le tue chiamate e otto nuove lingue.",
+				"historyTitle": "Tutta la tua cronologia, giorno per giorno.",
+				"historyDescription": "Premi ⌘Y: le visite di ogni giorno raggruppate per sito, filtrate per periodo, sito o terminale, e facili da ripulire.",
+				"pipTitle": "Tieni d'occhio la chiamata.",
+				"pipDescription": "La vista compatta di Google Meet ti segue in una finestra mobile quando lasci il pannello della chiamata.",
+				"languagesTitle": "Lilo parla la tua lingua.",
+				"languagesDescription": "Tedesco, giapponese, italiano, coreano, cinese tradizionale, polacco, turco e olandese si aggiungono alla lista."
+			},
 			"v080": {
 				"headline": "Condividi esattamente ciò che vuoi.",
 				"description": "Più spazio per le chiamate e le pagine.",

@@ -32,6 +32,30 @@
     <rect x="22" y="29" width="84" height="43" rx="4" fill="color-mix(in srgb, var(--success) 18%, var(--bg-elevated))" />
     <g stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round"><path d="M30 39h44m-44 8h58m-58 8h36" /></g>
     <g fill="none" stroke="var(--success)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M64 61v8m-3-5 3-3 3 3" /></g>
+  {:else if kind === "history"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="14" y="12" width="100" height="66" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="22" y="19" width="22" height="4" rx="2" fill="var(--text-secondary)" /><rect x="48" y="19" width="26" height="4" rx="2" fill="var(--separator)" />
+    <rect x="20" y="28" width="88" height="14" rx="4" fill="var(--accent-tint-14)" />
+    <circle cx="28" cy="35" r="3.5" fill="var(--accent)" /><rect x="35" y="33" width="26" height="4" rx="2" fill="var(--text-secondary)" />
+    <rect x="80" y="31.5" width="16" height="7" rx="3.5" fill="var(--accent)" /><path d="m101 33 2 2-2 2" fill="none" stroke="var(--text-secondary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    <g fill="var(--separator)"><rect x="35" y="49" width="40" height="4" rx="2" /><rect x="35" y="61" width="32" height="4" rx="2" /></g>
+    <circle cx="28" cy="51" r="3.5" fill="var(--success)" /><circle cx="28" cy="63" r="3.5" fill="var(--warning)" />
+    <g fill="var(--text-secondary)"><rect x="92" y="49" width="12" height="4" rx="2" opacity="0.6" /><rect x="92" y="61" width="12" height="4" rx="2" opacity="0.6" /></g>
+  {:else if kind === "pip"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
+    <rect x="12" y="12" width="84" height="58" rx="6" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round" opacity="0.6"><path d="M20 24h40m-40 8h56m-56 8h32" /></g>
+    <rect x="62" y="40" width="54" height="40" rx="7" fill="var(--terminal-tile-bg)" stroke="var(--separator)" />
+    <circle cx="89" cy="55" r="7" fill="var(--success)" />
+    <g fill="none" stroke="var(--terminal-tile-text)" stroke-width="1.2" stroke-linecap="round" opacity="0.85"><rect x="73" y="67" width="4" height="7" rx="2" /><path d="M85 68h6v6h-6zm6 2 3-1.5v5l-3-1.5" /></g>
+    <rect x="99" y="67.5" width="10" height="6" rx="3" fill="var(--danger-deep)" />
+  {:else if kind === "languages"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="14" y="16" width="50" height="26" rx="10" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="64" y="34" width="50" height="26" rx="10" fill="var(--accent)" />
+    <rect x="26" y="52" width="44" height="24" rx="10" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g font-family="inherit" font-size="11" text-anchor="middle"><text x="39" y="33" fill="var(--text-primary)">Hallo</text><text x="89" y="51" fill="var(--accent-text)">Ciao</text><text x="48" y="68" fill="var(--text-primary)">こんにちは</text></g>
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

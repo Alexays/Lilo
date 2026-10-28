@@ -2175,6 +2175,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v090": {
+				"headline": "Finde zurück.",
+				"description": "Dein Verlauf, deine Anrufe und acht neue Sprachen.",
+				"historyTitle": "Dein ganzer Verlauf, Tag für Tag.",
+				"historyDescription": "Drück ⌘Y: Die Besuche jedes Tages nach Website gruppiert, nach Zeitraum, Website oder Terminal gefiltert und schnell aufgeräumt.",
+				"pipTitle": "Behalte deinen Anruf im Blick.",
+				"pipDescription": "Die kompakte Ansicht von Google Meet folgt dir in einem schwebenden Fenster, wenn du den Tab des Anrufs verlässt.",
+				"languagesTitle": "Lilo spricht deine Sprache.",
+				"languagesDescription": "Deutsch, Japanisch, Italienisch, Koreanisch, traditionelles Chinesisch, Polnisch, Türkisch und Niederländisch kommen dazu."
+			},
 			"v080": {
 				"headline": "Teile genau das, was du möchtest.",
 				"description": "Mehr Freiraum für Anrufe und Webseiten.",

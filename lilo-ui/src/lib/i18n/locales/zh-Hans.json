@@ -2175,6 +2175,16 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v090": {
+				"headline": "轻松找回来时的路。",
+				"description": "历史记录、通话，以及八种新语言。",
+				"historyTitle": "完整的历史记录，按天浏览。",
+				"historyDescription": "按 ⌘Y：每天的访问按网站分组，可按时间段、网站或终端筛选，清理也很方便。",
+				"pipTitle": "通话始终在眼前。",
+				"pipDescription": "离开通话标签页时，Google Meet 的紧凑视图会以浮动窗口跟随你。",
+				"languagesTitle": "Lilo 说你的语言。",
+				"languagesDescription": "新增德语、日语、意大利语、韩语、繁体中文、波兰语、土耳其语和荷兰语。"
+			},
 			"v080": {
 				"headline": "只共享你想共享的内容。",
 				"description": "通话和网页都多了一点空间。",

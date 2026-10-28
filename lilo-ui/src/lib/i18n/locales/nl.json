@@ -2175,6 +2175,16 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v090": {
+				"headline": "Vind je weg terug.",
+				"description": "Je geschiedenis, je gesprekken en acht nieuwe talen.",
+				"historyTitle": "Je hele geschiedenis, dag voor dag.",
+				"historyDescription": "Druk op ⌘Y: de bezoeken van elke dag gegroepeerd per site, te filteren op periode, site of terminal en snel op te ruimen.",
+				"pipTitle": "Houd je gesprek in beeld.",
+				"pipDescription": "De compacte weergave van Google Meet volgt je in een zwevend venster als je het tabblad van het gesprek verlaat.",
+				"languagesTitle": "Lilo spreekt jouw taal.",
+				"languagesDescription": "Duits, Japans, Italiaans, Koreaans, traditioneel Chinees, Pools, Turks en Nederlands komen erbij."
+			},
 			"v080": {
 				"headline": "Deel precies wat je wilt.",
 				"description": "Meer ruimte voor gesprekken en pagina’s.",

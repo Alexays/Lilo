@@ -2164,6 +2164,16 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v090": {
+				"headline": "Find your way back.",
+				"description": "Your history, your calls, and eight new languages.",
+				"historyTitle": "Your whole history, day by day.",
+				"historyDescription": "Press ⌘Y: each day's visits grouped by site, filtered by period, site or terminal, and easy to clean up.",
+				"pipTitle": "Keep your call in view.",
+				"pipDescription": "Google Meet's compact view follows you in a floating window when you leave the call tab.",
+				"languagesTitle": "Lilo speaks your language.",
+				"languagesDescription": "German, Japanese, Italian, Korean, Traditional Chinese, Polish, Turkish and Dutch join the list."
+			},
 			"v080": {
 				"headline": "Share just what you mean to.",
 				"description": "Calls and pages get a little more room to breathe.",

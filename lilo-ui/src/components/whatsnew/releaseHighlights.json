@@ -1,4 +1,25 @@
 {
+	"0.9.0": {
+		"headlineKey": "whatsNew.releases.v090.headline",
+		"descriptionKey": "whatsNew.releases.v090.description",
+		"highlights": [
+			{
+				"illustration": "history",
+				"titleKey": "whatsNew.releases.v090.historyTitle",
+				"descriptionKey": "whatsNew.releases.v090.historyDescription"
+			},
+			{
+				"illustration": "pip",
+				"titleKey": "whatsNew.releases.v090.pipTitle",
+				"descriptionKey": "whatsNew.releases.v090.pipDescription"
+			},
+			{
+				"illustration": "languages",
+				"titleKey": "whatsNew.releases.v090.languagesTitle",
+				"descriptionKey": "whatsNew.releases.v090.languagesDescription"
+			}
+		]
+	},
 	"0.8.0": {
 		"headlineKey": "whatsNew.releases.v080.headline",
 		"descriptionKey": "whatsNew.releases.v080.description",

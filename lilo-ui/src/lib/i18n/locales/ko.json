@@ -2175,6 +2175,16 @@
 			"chat": "팀 채팅"
 		},
 		"releases": {
+			"v090": {
+				"headline": "다시 찾아가기 쉽게.",
+				"description": "방문 기록, 통화, 그리고 새로운 8개 언어.",
+				"historyTitle": "모든 방문 기록을 하루 단위로.",
+				"historyDescription": "⌘Y를 누르면 하루의 방문이 사이트별로 묶이고, 기간·사이트·터미널로 걸러 손쉽게 정리할 수 있습니다.",
+				"pipTitle": "통화를 항상 눈앞에.",
+				"pipDescription": "통화 탭을 떠나면 Google Meet의 간단한 보기가 떠 있는 윈도우로 따라옵니다.",
+				"languagesTitle": "Lilo가 당신의 언어로.",
+				"languagesDescription": "독일어, 일본어, 이탈리아어, 한국어, 중국어(번체), 폴란드어, 튀르키예어, 네덜란드어가 추가되었습니다."
+			},
 			"v080": {
 				"headline": "원하는 것만 정확하게 공유하세요.",
 				"description": "통화와 페이지에 여유 공간이 더 생겼습니다.",
