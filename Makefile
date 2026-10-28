@@ -65,11 +65,11 @@ TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.t
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
-.PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
+.PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare perf-summary perf-compare perf-summary-test \
-	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
+	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
 
@@ -186,6 +186,10 @@ release-status: $(CHANGIE)
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
+	@release=$$('$(CHANGIE)' latest --remove-prefix); \
+	if [ -f "site/src/content/releases/$$release.json" ]; then \
+		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
+	fi
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -493,7 +497,7 @@ site-dev-stop: $(SITE_DEPS)
 
 ## Preview the built website with Cloudflare's headers and redirects on localhost:8788
 site-preview: site-generate
-	@npm --prefix site run preview
+	@npm --prefix site run preview -- --port $(or $(SITE_PREVIEW_PORT),8788)
 
 ## Compare the website with a disposable native Debug session (no personal profiles or preferences)
 site-native-preview: app
@@ -523,6 +527,22 @@ site-test: site-generate
 ## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
+
+## Capture a prepared release's recording and posters (RELEASE=x.y.z; RECAPTURE=1 replaces archived media)
+site-release-capture: $(SITE_DEPS)
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:release
+
+## Encode reviewed native Lilo frames (FRAMES=/path/to/manifest.json; RECAPTURE=1 replaces archived media)
+site-release-import: $(SITE_DEPS)
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(FRAMES)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' npm --prefix site run capture:import
+
+# Playwright owns this foreground server; it leaves the maintainer's dev server alone.
+site-capture-server: $(SITE_DEPS)
+	@ASTRO_DEV_BACKGROUND=0 npm --prefix site run dev -- --port 8791 --ignore-lock
+
+## Install the release recording encoder at the website's pinned Sharp version
+site-capture-deps:
+	@npm --prefix site install --save-dev --save-exact sharp@0.35.5
 
 ## Update the website's dependencies and lockfile after changing package.json
 site-lock:

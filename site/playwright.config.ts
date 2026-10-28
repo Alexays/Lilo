@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   fullyParallel: true,
   retries: 0,
-  testDir: "./tests/demo",
+  testDir: "./tests",
   testMatch: "*.spec.ts",
   use: {
     ...devices["Desktop Chrome"],

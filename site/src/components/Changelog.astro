@@ -4,7 +4,9 @@ import Layout from "../layouts/Layout.astro";
 import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
+import { parseReleaseStories } from "../lib/release-stories";
 import PageSection from "./PageSection.astro";
+import ReleaseStory from "./ReleaseStory.astro";
 
 interface Props {
   lang: Locale;
@@ -13,6 +15,16 @@ interface Props {
 const { lang } = Astro.props;
 const text = copy[lang];
 const releases = parseChangelog(changelog);
+
+const stories = parseReleaseStories(
+  changelog,
+  Object.values(
+    import.meta.glob("../content/releases/*.json", {
+      eager: true,
+      import: "default",
+    })
+  )
+);
 
 if (releases.length === 0) {
   throw new Error("No published Changie releases found in CHANGELOG.md");
@@ -62,7 +74,19 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
             {text.releaseLink}
           </a>
         </header>
-        <div class="release-body" lang="en" set:html={release.html} />
+        <div class="release-content">
+          {stories.has(release.version) ? (
+            <>
+              <ReleaseStory lang={lang} story={stories.get(release.version)!} />
+              <details class="release-details">
+                <summary>{text.releaseAllChanges}</summary>
+                <div class="release-body" lang="en" set:html={release.html} />
+              </details>
+            </>
+          ) : (
+            <div class="release-body" lang="en" set:html={release.html} />
+          )}
+        </div>
       </article>
     ))}
   </PageSection>
@@ -113,6 +137,23 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
   .release-body {
     font-size: 16px;
     overflow-wrap: anywhere;
+  }
+  .release-content {
+    min-width: 0;
+  }
+  .release-details {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .release-details summary {
+    width: fit-content;
+    padding-block: 10px;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .release-details[open] .release-body {
+    margin-top: 20px;
   }
   .release-body :global(h3) {
     margin-block: 28px 12px;

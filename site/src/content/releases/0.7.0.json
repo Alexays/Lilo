@@ -1,0 +1,73 @@
+{
+  "version": "0.7.0",
+  "title": {
+    "en": "Less tab hopping.",
+    "fr": "Moins d'allers-retours."
+  },
+  "introduction": {
+    "en": "Keep a link or a call close while you carry on browsing. Lilo also speaks four more languages.",
+    "fr": "Gardez un lien ou un appel à portée de main pendant que vous naviguez. Lilo parle aussi quatre langues de plus."
+  },
+  "capture": {
+    "scenario": "peek",
+    "source": "native",
+    "highlight": "peek"
+  },
+  "highlights": [
+    {
+      "id": "peek",
+      "action": {
+        "href": {
+          "en": "/#browser-demo",
+          "fr": "/fr/#browser-demo"
+        },
+        "label": {
+          "en": "Explore the demo",
+          "fr": "Explorer la démo"
+        }
+      },
+      "title": {
+        "en": "Have a look. Keep your place.",
+        "fr": "Un coup d'œil, sans perdre le fil."
+      },
+      "body": {
+        "en": "Shift-click a link to open Peek over the page. Close it and pick up where you left off.",
+        "fr": "Cliquez sur un lien en maintenant Maj pour l'ouvrir dans un aperçu. Fermez-le et reprenez votre lecture."
+      },
+      "notes": [
+        "Try Peek, background tabs, Split View and Little windows from links in the website demo's local example pages."
+      ]
+    },
+    {
+      "id": "calls",
+      "title": {
+        "en": "Your call stays close.",
+        "fr": "Votre appel reste à portée de main."
+      },
+      "body": {
+        "en": "For supported calls, mute your microphone, turn off your camera or leave from the sidebar. You can keep reading in another tab. During a call, ⇧⌘M mutes your microphone.",
+        "fr": "Pour les appels compatibles, coupez le micro, éteignez la caméra ou quittez l'appel depuis la barre latérale, tout en lisant un autre onglet. Pendant un appel, ⇧⌘M coupe le micro."
+      },
+      "notes": [
+        "A call card in the sidebar mutes the microphone, turns the camera off and leaves the call of a Meet-like tab from anywhere, and ⇧⌘M mutes the call's microphone during a call."
+      ]
+    },
+    {
+      "id": "languages",
+      "title": {
+        "en": "Hola. 你好. Olá. Привет.",
+        "fr": "Hola. 你好. Olá. Привет."
+      },
+      "body": {
+        "en": "Spanish, Simplified Chinese, Brazilian Portuguese and Russian now cover Lilo's interface, menus and dialogs. Shortcuts actions and emoji search are translated too.",
+        "fr": "L'interface, les menus et les boîtes de dialogue sont désormais disponibles en espagnol, chinois simplifié, portugais du Brésil et russe. Les actions de l'app Raccourcis et la recherche d'émojis sont traduites aussi."
+      },
+      "notes": [
+        "Use Lilo in Spanish, including the browser interface, native menus and dialogs, setup, Shortcuts and emoji search.",
+        "Use Lilo in Simplified Chinese, including menus, dialogs, system prompts, Shortcuts and emoji search.",
+        "Brazilian Portuguese across the browser interface, native menus and dialogs, system prompts, Shortcuts, and emoji search.",
+        "Add Russian across the browser interface, native menus and dialogs, system prompts, Shortcuts, and emoji search."
+      ]
+    }
+  ]
+}

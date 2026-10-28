@@ -16,6 +16,7 @@ export const parseChangelog = (markdown: string) => {
         .trim();
 
       return {
+        body,
         date: heading[2],
         html: marked.parse(`${body}\n\n${references}`, { async: false }),
         version: heading[1],

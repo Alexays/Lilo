@@ -15,11 +15,14 @@ make site-check         # Check lint, formatting, Astro templates and TypeScript
 make site-fix           # Fix lint and formatting with Ultracite
 make site-test          # Build, then test release notes, routes, links and metadata
 make site-e2e           # Test the interactive demo in Chromium with production headers
+make site-release-capture RELEASE=0.7.0 # Capture missing release screenshots from the demo
 make site-e2e SITE_E2E_ARGS='--browser=webkit tests/demo/links.spec.ts' # Check link actions in WebKit
 make site-deploy-check  # Check Cloudflare deployment without publishing
 ```
 
 `make validate` includes the website checks and tests. After changing dependencies in `site/package.json`, run `make site-lock` to update its lockfile.
+
+The focused changelog checks use their own preview on port 8792, so they never test another worktree's running preview: `make site-e2e SITE_E2E_ARGS='--config=playwright.changelog.config.ts'`. For a separate manual preview, use `make site-preview SITE_PREVIEW_PORT=8792` after the tests finish.
 
 The site uses [Ultracite](https://www.ultracite.ai/providers/oxlint) with Oxlint’s core, Astro and anti-slop presets and Oxfmt’s formatting preset. `oxfmt.config.ts` enables Astro formatting with `@astrojs/compiler-rs`. Oxlint checks scripts in Astro files; `astro check` checks the templates and TypeScript; `svelte-check` checks Svelte components. They run through `make site-check`, including in CI. The check command exposes the website’s packages through `NODE_PATH` so Astro’s editor integration can inspect shared Svelte sources outside `site/` without adding Astro dependencies to the native UI package. Generated output and dependencies are ignored.
 
@@ -39,6 +42,34 @@ The Undici override patches the HTTP clients used by Miniflare and guarded-fetch
 - `public/` holds static assets, `robots.txt`, `llms.txt`, and Cloudflare's `_headers` and `_redirects`.
 
 The build runs `generate.py` after Astro to derive a Markdown copy of each page, `llms-full.txt`, and FAQ structured data matching the visible questions and answers. These outputs live in `dist/` and are not committed. Both `/llms.txt` and `/llms-full.txt` are included in the deployed site. Edit the Astro sources, then rebuild.
+
+## Release stories and recordings
+
+The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
+
+Stories choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
+
+```sh
+make site-release-capture RELEASE=x.y.z
+```
+
+For `source: "demo"`, the command saves four PNG posters, four animated WebP recordings and `capture.json` under `src/assets/releases/<version>/`. Its record includes the duration, source revision and UI/demo source digest. Run it from a checkout whose app version matches the story.
+
+The 0.7.0 pilot uses `source: "native"`: actual installed Lilo 0.7.0, build 20, opening MDN's public CSS and StyleSheet pages in Peek. Public pages were inspected with Lilo MCP; the native window was captured with computer use in a separate private recording space. MCP-controlled tabs deliberately disable native Peek, and MCP screenshots capture only page contents. Keep personal tabs, history suggestions and account details out of recorded frames.
+
+Native capture keeps the browser's actual language and appearance in one shared recording. Its manifest lists `appVersion`, `appBuild`, `capturedAt`, canonical public `pages`, a `poster` filename, and `frames` containing each image's `file` and `delay` in milliseconds. Use simple filenames beside the manifest. Review the frames, then encode them:
+
+```sh
+make site-release-import RELEASE=0.7.0 FRAMES=/tmp/lilo-capture/manifest.json RECAPTURE=1
+```
+
+The importer normalizes the frame canvas and writes `peek-native.png`, `peek-native.webp` and `capture.json`. It verifies the app version, filenames, frame timing and archive replacement flag before writing. Provenance records the installed app version/build, capture tool, public URLs and source-frame digest. It does not attribute an installed browser to the current worktree. Review and commit these outputs with the story. Astro optimizes posters and serves recordings unchanged; Sharp is a pinned direct development dependency.
+
+The recording plays once when half the player is visible. One small icon over the image provides play, stop and replay, with translated accessible labels. Reduce Motion shows the poster until explicit playback. Scrolling away, hiding the page or changing appearance restores the poster. Reading highlights and full notes works without JavaScript.
+
+Each highlight can define an optional `action` with translated `label` and `href` fields. It appears with the feature text, outside the recording. Highlights for installed features can omit it; no demo action is added automatically.
+
+Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. For a native story, use `site-release-import` with reviewed window frames. Missing native media stops release preparation with that instruction. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
 
 ## Demo playground
 
