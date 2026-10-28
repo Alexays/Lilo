@@ -653,6 +653,34 @@ final class ChromeAPIShimTests: XCTestCase {
 
         XCTAssertEqual(context.action(for: nil)?.label, "me@example.com")
     }
+
+    /// A content script whose page its host permission and its own matches both cover runs once, as in Chrome.
+    func testContentScriptRunsOnceUnderOverlappingGrants() async throws {
+        let server = try await TinyHTTPServer(index: "<p>page</p>")
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let folder = try writeExtension([
+            "manifest.json": """
+            {"manifest_version": 3, "name": "Counter", "version": "1.0", "action": {}, "background": {"service_worker": "sw.js"},
+             "host_permissions": ["*://127.0.0.1/*"],
+             "content_scripts": [{"matches": ["http://127.0.0.1/*", "http://127.0.0.1/p*"], "js": ["content.js"]}]}
+            """,
+            "content.js": """
+            document.documentElement.dataset.runs = String(Number(document.documentElement.dataset.runs ?? 0) + 1);
+            setTimeout(() => chrome.runtime.sendMessage(document.documentElement.dataset.runs), 300);
+            """,
+            "sw.js": "chrome.runtime.onMessage.addListener((runs) => { chrome.action.setTitle({ title: runs }); });"
+        ])
+        try await registry.load(from: folder)
+        let id = try XCTUnwrap(registry.loadedExtensions.first?.id)
+        let context = try XCTUnwrap(registry.context(for: id))
+        _ = await registry.backgrounds.load(id)
+        _ = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        await pollUntil(timeout: 15) { context.action(for: nil)?.label != "Counter" }
+
+        XCTAssertEqual(context.action(for: nil)?.label, "1")
+    }
 }
 
 @MainActor

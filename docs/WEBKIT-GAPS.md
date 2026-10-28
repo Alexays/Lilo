@@ -190,6 +190,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** in the top 1000, 124 extensions test "Receiving end does not exist" (and inject their content script when they read it), 53 "No tab with id", 30 "Cannot access contents of", 22 "duplicate id" and 18 "disconnected port".
 - **Check:** `chrome-compat.test.ts` ("WebKit's errors"), `message-answers.test.ts` ("WebKit's ports"); Contract `contextMenus duplicate id`. Repro: `chrome.tabs.get(987654)`. Expected: rejects with `No tab with id: 987654.`. Actual: `Invalid call to tabs.get(). Tab not found.`.
 
+### 99. A content script runs once per granted pattern covering its page
+
+- **Gap:** WebKit injects a content script once for each granted match pattern that covers its page, whatever its path, so a page that both an extension's host permission and a content script's own matches cover runs that script twice in one world. A file declaring a top-level `const`, `let` or `class` then throws `Can't create duplicate variable`, and any other runs twice. Chrome runs it once.
+- **Lilo:** the context is granted only the patterns no other one covers, each widened to its whole host, as Chrome's host access ignores paths ([ExtensionAccess.swift] `outermost`).
+- **Impact:** without it, RoEarn (10 covering patterns on www.roblox.com), RoSeal and TubeBuddy threw on their pages, and other extensions showed their UI or ran their listeners twice.
+- **Check:** `testContentScriptRunsOncePerCoveringGrantedPattern` for WebKit, `testContentScriptRunsOnceUnderOverlappingGrants` for Lilo. Repro: grant `*://*.example.com/*` and `https://www.example.com/*`, with a content script matching the latter. Expected: it runs once on `https://www.example.com/`. Actual: twice.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
@@ -612,6 +619,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 [worker-messages.ts]: ../Lilo/Extensions/bridge-src/src/shared/worker-messages.ts
 [ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
 [ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
+[ExtensionAccess.swift]: ../Lilo/Extensions/Core/ExtensionAccess.swift
 [TabExtensionAdapter.swift]: ../Lilo/Extensions/Core/TabExtensionAdapter.swift
 [CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
