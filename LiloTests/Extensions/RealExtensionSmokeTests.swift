@@ -290,6 +290,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 // JavaScriptCore quotes the call of something that is not a function.
                 .replacingOccurrences(of: #"\. \(In '.*?', '.*?' is [^)]*\)"#, with: "", options: .regularExpression)
                 .replacingOccurrences(of: #" ?\([^()]*:\d+(:\d+)?\)$"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: #"^".*" cannot be parsed as a URL\.$"#, with: "Failed to construct 'URL': Invalid URL", options: .regularExpression)
                 .replacingOccurrences(of: "Load failed", with: "Failed to fetch")
                 // A plain object logged or thrown: JavaScriptCore converts it to a string, V8 names its class.
                 .replacingOccurrences(of: "[object Object]", with: "Object")
