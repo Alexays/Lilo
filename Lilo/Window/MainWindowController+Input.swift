@@ -316,6 +316,7 @@ extension MainWindowController {
                 && (target == nil || (target is NSPanel && !(target is NSSavePanel)
                     && target?.sheetParent == nil && NSApp.modalWindow == nil)))
         else { return false }
+        if isShowingWhatsNew { return false }
         if event.type == .flagsChanged {
             // Pushes Command-key state to the chrome so the hover-link pill can flag "open in background tab".
             let down = event.modifierFlags.contains(.command)

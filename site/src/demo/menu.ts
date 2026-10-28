@@ -411,6 +411,7 @@ export const demoMenus: DemoMenuItem[] = [
   ]),
   submenu("Help", [
     command("Lilo Help", "help"),
+    mac("What’s New"),
     command("Keyboard Shortcuts", "shortcuts", "help.shortcuts", "⌘/"),
     command("Replay Onboarding", "onboarding"),
     separator,

@@ -1,0 +1,148 @@
+import { expect, test, type Page } from "@playwright/test";
+import { bootChrome, type FakeHostWorld } from "./fakeHost";
+import { initialWorld } from "./fixtures";
+import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
+
+const release: ReleaseNotes = {
+	version: "0.6.0", date: "2026-01-15",
+	groups: [
+		{ kind: "Added", entries: ["Unread counts on tabs and favorites.", "More reliable calls."] },
+		{ kind: "Fixed", entries: ["Restore your saved session."] },
+	],
+	editorial: {
+		en: {
+			headline: "A little more in the loop.", description: "A few improvements.",
+			highlights: [
+				{ illustration: "unread", title: "Catch what you missed.", description: "Unread counts on your tabs." },
+				{ illustration: "calls", title: "Stay in the conversation.", description: "Smoother video calls." },
+			],
+		},
+		fr: {
+			headline: "Toujours dans la boucle.", description: "De petites améliorations.",
+			highlights: [{ illustration: "unread", title: "Ne manquez plus un message.", description: "Les messages non lus dans vos onglets." }],
+		},
+	},
+};
+
+async function bootReleaseChrome(page: Page, world: FakeHostWorld = initialWorld(), ready?: string, notes = release) {
+	// Keep interaction tests stable when the real release's bundled resource changes.
+	let resourceReads = 0;
+	await page.route("**/release-notes.json", (route) => { resourceReads++; return route.fulfill({ json: notes }); });
+	await bootChrome(page, world, ready);
+	return () => resourceReads;
+}
+
+async function openWhatsNew(page: Page, automatic = false, version = "0.6.0") {
+	await page.evaluate(({ automatic, version }) => window.__lilo!.receive({ event: "openWhatsNew", automatic, version }), { automatic, version });
+}
+
+test("the sheet presents installed highlights, all changes and one acknowledgment", async ({ page }) => {
+	const resourceReads = await bootReleaseChrome(page);
+	await openWhatsNew(page, true);
+	const dialog = page.getByRole("dialog", { name: "A little more in the loop." });
+	await expect(dialog).toBeVisible();
+	await expect(dialog.getByRole("heading", { name: "Catch what you missed." })).toBeVisible();
+	await expect(dialog.getByRole("heading", { name: "Stay in the conversation." })).toBeVisible();
+	await openWhatsNew(page, true);
+	await expect(page.getByRole("dialog")).toHaveCount(1);
+	await expect.poll(() => page.evaluate(() => window.__sentCommands!.filter((item) => item.action === "whatsNewPresented").length)).toBe(1);
+	await dialog.locator("summary").click();
+	await expect(dialog.getByRole("listitem")).toHaveCount(3);
+	await expect(dialog.getByText("Added", { exact: true })).toBeVisible();
+	await dialog.getByRole("button", { name: "Back to browsing" }).click();
+	await expect(dialog).toHaveCount(0);
+	await expect.poll(() => page.evaluate(() => window.__sentCommands!.some((item) => item.action === "dismissWhatsNew"))).toBe(true);
+	await openWhatsNew(page);
+	await expect(dialog).toBeVisible();
+	expect(resourceReads()).toBe(1);
+});
+
+test("Escape closes the sheet and focus stays inside until it closes", async ({ page }) => {
+	await bootReleaseChrome(page);
+	// A real chrome control is the return target; the native host separately owns page/terminal focus.
+	const focusTarget = page.locator('.tab-item[data-tab-id="tab-beta"]').first();
+	await focusTarget.focus();
+	await openWhatsNew(page);
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
+	for (const key of ["Tab", "Tab", "Tab", "Tab", "Shift+Tab"]) {
+		await page.keyboard.press(key);
+		await expect.poll(() => dialog.evaluate((node) => node.contains(document.activeElement))).toBe(true);
+	}
+	await page.keyboard.press("Escape");
+	await expect(dialog).toHaveCount(0);
+	await expect(focusTarget).toBeFocused();
+});
+
+test("automatic highlights wait for startup recovery to be dismissed", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await page.evaluate(() => window.__lilo!.receive({ event: "sessionRestoreDegraded", spaceName: "Sample space" }));
+	await openWhatsNew(page, true);
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await page.getByRole("button", { name: "Close", exact: true }).click();
+	await expect(page.getByRole("dialog")).toBeVisible();
+});
+
+test("a mismatched release suppresses automatic highlights and manual opening is truthful", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await openWhatsNew(page, true, "9.0.0");
+	await expect.poll(() => page.evaluate(() => window.__sentCommands!.some((item) => item.action === "dismissWhatsNew"))).toBe(true);
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await openWhatsNew(page, false, "9.0.0");
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
+	await expect(dialog.getByText("Lilo 9.0.0", { exact: true })).toBeVisible();
+	await expect(dialog.getByRole("heading", { name: "Catch what you missed." })).toHaveCount(0);
+	await expect(dialog.getByText("Release notes aren’t available in this build.")).toBeVisible();
+});
+
+for (const tabPosition of ["left", "right", "top", "bottom"] as const) {
+	test(`the ${tabPosition} layout keeps French dismissal reachable in a short window`, async ({ page }) => {
+		await page.setViewportSize({ width: 780, height: 470 });
+		await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+		await bootReleaseChrome(page, { ...initialWorld(), tabPosition }, tabPosition === "top" || tabPosition === "bottom" ? ".tab-strip .strip-tab" : undefined);
+		await page.evaluate(() => window.__lilo!.receive({ event: "settingsLoaded", settings: { locale: "fr" } }));
+		await openWhatsNew(page);
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByRole("button", { name: "Reprendre la navigation" })).toBeVisible();
+		const button = dialog.getByRole("button", { name: "Reprendre la navigation" });
+		const bounds = await button.boundingBox();
+		expect(bounds!.y).toBeGreaterThanOrEqual(0);
+		expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(470);
+		await dialog.locator("summary").click();
+		await expect(dialog.getByRole("listitem")).toHaveCount(3);
+		await expect(button).toBeVisible();
+		await button.click();
+		await expect(dialog).toHaveCount(0);
+	});
+}
+
+test("a hidden sidebar still centers the sheet in the available content", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await page.evaluate(() => window.__lilo!.receive({ event: "sidebarVisibilityChanged", visible: false, width: 260 }));
+	await openWhatsNew(page);
+	const dialog = page.getByRole("dialog");
+	await expect(dialog).toBeVisible();
+	const sheet = await dialog.locator(".whats-new-sheet").boundingBox();
+	expect(sheet!.x + sheet!.width / 2).toBeCloseTo(page.viewportSize()!.width / 2, 0);
+	await dialog.getByRole("button", { name: "Close" }).click();
+	await expect(dialog).toHaveCount(0);
+});
+
+test("a maintenance release opens all of its notes without older feature claims", async ({ page }) => {
+	await bootReleaseChrome(page, initialWorld(), undefined, { ...release, editorial: null });
+	await openWhatsNew(page, true);
+	const dialog = page.getByRole("dialog");
+	await expect(dialog.getByRole("listitem")).toHaveCount(3);
+	await expect(dialog.locator("details")).toHaveAttribute("open", "");
+	await expect(dialog.locator(".release-highlight")).toHaveCount(0);
+});
+
+test("a pending site permission keeps its priority over automatic highlights", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await page.evaluate(() => window.__lilo!.receive({ event: "permissionRequest", requestId: "request-camera", tabId: "tab-alpha", type: "camera", origin: "meet.example.com" }));
+	await openWhatsNew(page, true);
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await page.locator(".url-drawer.open").getByRole("button", { name: "Allow", exact: true }).click();
+	await expect(page.getByRole("dialog")).toBeVisible();
+});

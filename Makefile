@@ -238,9 +238,9 @@ ui-lint: $(UI_DEPS)
 ui-test: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run test
 
-## Run the chrome UI end-to-end tests (Playwright)
+## Run the chrome UI end-to-end tests (Playwright; E2E_ARGS narrows the run)
 e2e: $(UI_DEPS)
-	@npm --prefix $(UI_DIR) run test:e2e || { echo 'If Chromium is missing, install it with: npx --prefix $(UI_DIR) playwright install chromium' >&2; exit 1; }
+	@npm --prefix $(UI_DIR) run test:e2e -- $(E2E_ARGS) || { echo 'If Chromium is missing, install it with: npx --prefix $(UI_DIR) playwright install chromium' >&2; exit 1; }
 
 # Not part of e2e: it takes about three minutes and drives the app with System Events keystrokes.
 ## Leave a Release build idle with tabs and a hidden terminal; fail on idle git, worker or snapshot work (IDLE=45 TABS=3 TERMINAL=1)
@@ -249,9 +249,9 @@ e2e-energy:
 
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
-## Run Swift unit tests (LiloTests) but the slow ones
+## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER=LiloTests/Class narrows the run)
 swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@$(TEST) -only-testing:LiloTests -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 

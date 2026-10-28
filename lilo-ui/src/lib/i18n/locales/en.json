@@ -1784,6 +1784,7 @@
 		"Start Speaking": "Start Speaking",
 		"Stop Speaking": "Stop Speaking",
 		"Lilo Help": "Lilo Help",
+		"What’s New": "What’s New",
 		"Report an Issue…": "Report an Issue…",
 		"Recently Visited": "Recently Visited",
 		"No History": "No History",
@@ -2102,6 +2103,29 @@
 		"Agent Tabs": "Agent Tabs",
 		"QR code for %@": "QR code for %@",
 		"Secure Connection": "Secure Connection"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "What’s new in Lilo",
+		"description": "A few small improvements for your everyday browsing.",
+		"allChanges": "Everything in this update",
+		"changes": { "one": "{count} change", "other": "{count} changes" },
+		"originalNotes": "Original release notes.",
+		"unavailable": "Release notes aren’t available in this build.",
+		"reopen": "Always here in Help → What’s New.",
+		"continue": "Back to browsing",
+		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
+		"art": { "inbox": "Inbox", "chat": "Team chat" },
+		"releases": {
+			"v060": {
+				"headline": "A little more in the loop.",
+				"description": "A few things to make your everyday browsing feel better.",
+				"unreadTitle": "Catch what you missed.",
+				"unreadDescription": "Unread counts and notification dots now live right on your tabs and favorites.",
+				"callsTitle": "Stay in the conversation.",
+				"callsDescription": "Calls stay smooth through a brief page freeze, and keep going with Keep Awake."
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "All permissions",

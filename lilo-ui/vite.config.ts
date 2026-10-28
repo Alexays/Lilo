@@ -35,8 +35,8 @@ function cspPlugin(): Plugin {
 	};
 }
 
-// The catalogs' `native` namespace holds AppKit strings, compiled into Swift by
-// generate_native_strings.py; the web UI never reads it, so it stays out of the bundle.
+// Native strings compile into Swift; release headlines travel with the optional local notes.
+// Neither belongs in the chrome's first frame.
 function stripNativeStringsPlugin(): Plugin {
 	return {
 		name: "strip-native-strings",
@@ -45,6 +45,7 @@ function stripNativeStringsPlugin(): Plugin {
 			if (!/\/i18n\/locales\/[a-z]+\.json$/.test(id)) return null;
 			const catalog = JSON.parse(code);
 			delete catalog.native;
+			if (catalog.whatsNew) delete catalog.whatsNew.releases;
 			return { code: JSON.stringify(catalog), map: null };
 		},
 	};

@@ -22,6 +22,30 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
         XCTAssertNotNil(ChromeUIAssets.assets[ChromeUISchemeHandler.assetPath(for: ChromeUISchemeHandler.indexURL)])
     }
 
+    @MainActor
+    func testBundledReleaseNotesAreReadableFromTheChromeOrigin() async throws {
+        let configuration = WKWebViewConfiguration()
+        configuration.setURLSchemeHandler(ChromeUISchemeHandler(), forURLScheme: ChromeUISchemeHandler.scheme)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let navigation = ChromeResourceNavigation()
+        webView.navigationDelegate = navigation
+        defer { webView.stopLoading(); webView.navigationDelegate = nil }
+        webView.load(URLRequest(url: ChromeUISchemeHandler.indexURL))
+        let loaded = await pollUntil(timeout: 5) { navigation.finished }
+        XCTAssertTrue(loaded)
+        do {
+            let version = try await webView.callAsyncJavaScript("""
+                const response = await fetch('/release-notes.json');
+                if (!response.ok) throw new Error(`Release resource status: ${response.status}`);
+                return (await response.json()).version;
+                """, arguments: [:], in: nil, contentWorld: .page)
+            XCTAssertEqual(version as? String, Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+        } catch {
+            let error = error as NSError
+            XCTFail("\(error.domain) \(error.code): \(error.userInfo)")
+        }
+    }
+
     func testServesThePasswordManagerIconsFromTheAppBundle() {
         let handler = ChromeUISchemeHandler()
         let icon = RecordingSchemeTask("lilo-chrome://ui/password-managers/nngceckbapebfimnlniiiahkandclblb.png")
@@ -34,6 +58,12 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
         XCTAssertNotNil(missing.error)
         XCTAssertNil(missing.response)
     }
+}
+
+@MainActor
+private final class ChromeResourceNavigation: NSObject, WKNavigationDelegate {
+    var finished = false
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { finished = true }
 }
 
 private final class RecordingSchemeTask: NSObject, WKURLSchemeTask {

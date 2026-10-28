@@ -13,11 +13,17 @@ export interface ReleaseEditorial {
 	highlights: ReleaseHighlight[];
 }
 
+export interface ReleaseEditorialCopy {
+	headline: string;
+	description: string;
+	highlights: { illustration: ReleaseIllustration; title: string; description: string }[];
+}
+
 export interface ReleaseNotes {
 	version: string;
 	date: string;
 	groups: { kind: ReleaseKind; entries: string[] }[];
-	editorial?: ReleaseEditorial | null;
+	editorial?: Partial<Record<"en" | "fr", ReleaseEditorialCopy | null>> | null;
 }
 
 export function parseReleaseNotes(markdown: string, version: string): ReleaseNotes {
@@ -71,4 +77,16 @@ export function releaseHighlightsForVersion(registry: unknown, version: string):
 		if (highlights.length === 3) break;
 	}
 	return highlights.length ? { headlineKey: entry.headlineKey.trim(), descriptionKey: entry.descriptionKey.trim(), highlights } : null;
+}
+
+export function localizeReleaseEditorial(editorial: ReleaseEditorial | null, catalog: unknown): ReleaseEditorialCopy | null {
+	if (!editorial) return null;
+	const text = (path: string): string => {
+		const value = path.split(".").reduce<unknown>((node, segment) => record(node) ? node[segment] : undefined, catalog);
+		return typeof value === "string" ? value : "";
+	};
+	const headline = text(editorial.headlineKey), description = text(editorial.descriptionKey);
+	const highlights = editorial.highlights.map((item) => ({ illustration: item.illustration, title: text(item.titleKey), description: text(item.descriptionKey) }))
+		.filter((item) => item.title && item.description);
+	return headline && description && highlights.length ? { headline, description, highlights } : null;
 }
