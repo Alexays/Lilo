@@ -743,7 +743,10 @@
 		"previous": "上一首",
 		"turnOffCamera": "关闭摄像头",
 		"turnOnCamera": "开启摄像头",
-		"leaveCall": "离开通话"
+		"leaveCall": "离开通话",
+		"sharing": "正在共享 {title}",
+		"shareThisTab": "共享此标签页",
+		"stopSharing": "停止共享"
 	},
 	"tabEditor": {
 		"title": "编辑标签页",

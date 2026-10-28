@@ -1,20 +1,28 @@
-<!-- A call in any tab, shown or not: jump to it, toggle its microphone, camera and sound, leave it. Above the media card. -->
+<!-- A call in any tab, shown or not: jump to it, toggle its microphone, camera and sound, leave it, and steer the
+     tab it shares. Above the media card. -->
 <script lang="ts">
   import SiteFavicon from "../ui/SiteFavicon.svelte";
-  import { mediaActions, tabActions, terminalActions } from "../../lib/bridge/actions";
+  import { mediaActions, tabActions, tabShareActions, terminalActions } from "../../lib/bridge/actions";
   import { t } from "../../lib/i18n/state.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { getCallCardTab } from "../../stores/media.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import { getActiveTab, tabDisplayTitle } from "../../stores/tabs.svelte";
 
   const call = $derived(getCallCardTab());
   // During a call, the Mute Tab shortcut toggles the call's microphone.
   const muteKeys = $derived(shortcutKeys("tab.mute"));
   const soundLabel = $derived(t(call?.muted ? "tabItem.unmute" : "tabItem.mute"));
+  const activeTab = $derived(getActiveTab());
+  // The shown page can take over the share, unless it is the call itself, what is already shared, or a terminal.
+  const canShareShown = $derived(
+    !!call?.share && !!activeTab?.url && activeTab.kind !== "terminal" && activeTab.id !== call.id && activeTab.id !== call.share.tabId,
+  );
 </script>
 
 {#if call}
   <div class="call-card">
+  <div class="call-row">
     <!-- revealTerminal reveals any tab, switching Space when it is elsewhere. -->
     <button class="call-tab" use:tooltip={t("mediaCard.show")} onclick={() => terminalActions.reveal(call.id)}>
       <SiteFavicon src={call.faviconDataURL} title={call.title} />
@@ -92,18 +100,92 @@
       {/if}
     </div>
   </div>
+  {#if call.share}
+    {@const share = call.share}
+    <div class="call-row share-row">
+      <button class="call-tab share-tab" use:tooltip={t("mediaCard.show")} onclick={() => terminalActions.reveal(share.tabId)}>
+        <span class="live-dot" aria-hidden="true"></span>
+        <span class="call-title">{t("mediaCard.sharing", { title: tabDisplayTitle(share.title) })}</span>
+      </button>
+      {#if canShareShown && activeTab}
+        {@const shown = activeTab}
+        <button class="share-instead" onclick={() => tabShareActions.shareInstead(share.token, shown.id)}>
+          {t("mediaCard.shareThisTab")}
+        </button>
+      {/if}
+      <button
+        class="call-btn"
+        aria-label={t("mediaCard.stopSharing")}
+        use:tooltip={t("mediaCard.stopSharing")}
+        onclick={() => tabShareActions.stop(share.token)}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <rect x="2.5" y="2.5" width="7" height="7" rx="1.4" />
+        </svg>
+      </button>
+    </div>
+  {/if}
+  </div>
 {/if}
 
 <style>
   .call-card {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 2px;
     flex-shrink: 0;
     margin: 0 var(--sidebar-right-pad, 10px) 6px 10px;
     padding: 4px;
     border-radius: var(--radius-sm);
     background: var(--text-primary-tint-10);
+  }
+
+  .call-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .share-row {
+    padding-top: 2px;
+    border-top: 1px solid var(--separator);
+  }
+
+  .share-tab {
+    color: var(--text-secondary);
+  }
+
+  /* The share is live: the others see this tab right now. */
+  .live-dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    margin: 0 4px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+
+  .share-instead {
+    flex-shrink: 0;
+    height: 22px;
+    padding: 0 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-text);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  .share-instead:hover {
+    background: var(--accent-hover);
+  }
+
+  .share-instead:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
   }
 
   .call-tab {

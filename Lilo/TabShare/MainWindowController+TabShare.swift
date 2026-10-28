@@ -17,16 +17,33 @@ extension MainWindowController {
         tabShareSessions.onSessionEnded = { [weak self] token, engineId in
             guard let self else { return }
             context.engineFactory.captureHandler.sessionEnded(token: token)
-            guard let engineId else { return }
-            let engine = tabManager.engineTab(for: engineId) ?? context.browserState.liveEngine(forTab: engineId)
-            // Detach a share-retained background view; the visible tab keeps its view, and a tab
-            // still in a real call (hasActiveCapture with the share flag already cleared) keeps
-            // rendering for its own capture machinery.
-            guard let engine, !engine.hasActiveCapture,
-                  engine.view.superview === contentContainerView,
-                  tabManager.activeOpenTabId != engineId else { return }
-            engine.view.removeFromSuperview()
+            if let engineId { releaseShareSourceView(engineId: engineId) }
         }
+        tabShareSessions.onSourceReleased = { [weak self] engineId in self?.releaseShareSourceView(engineId: engineId) }
+        tabShareSessions.onSharesChanged = { [weak self] in self?.context.mediaActivityChanged() }
+    }
+
+    /// Detaches a share-retained background view; the visible tab keeps its view, and a tab still in
+    /// a real call (hasActiveCapture with the share flag already cleared) keeps rendering for its own
+    /// capture machinery.
+    private func releaseShareSourceView(engineId: UUID) {
+        let engine = tabManager.engineTab(for: engineId) ?? context.browserState.liveEngine(forTab: engineId)
+        guard let engine, !engine.hasActiveCapture,
+              engine.view.superview === contentContainerView,
+              tabManager.activeOpenTabId != engineId else { return }
+        engine.view.removeFromSuperview()
+    }
+
+    /// Shares `tabId` instead in the tab session `token`, from any window, without ending it.
+    func shareTabInstead(token: String, tabId: UUID) {
+        guard let owner = context.windows.windows.first(where: { $0.tabShareSessions.hasSession(token: token) }),
+              let engine = owner.liveEngineForSharing(tabId: tabId) else { return }
+        if engine.view.window == nil { owner.attachBelowContent(engine) }
+        owner.tabShareSessions.switchSource(token: token, to: engine)
+    }
+
+    func stopTabShare(token: String) {
+        context.windows.windows.forEach { $0.tabShareSessions.stop(token: token) }
     }
 
     func startTabShare(tabId: UUID, requester: WKWebView) -> [String: Any]? {
@@ -43,7 +60,7 @@ extension MainWindowController {
         for engine in tabShareSessions.sharedEngines where engine.view.window == nil { attachBelowContent(engine) }
     }
 
-    private func attachBelowContent(_ engine: WKWebViewTab) {
+    fileprivate func attachBelowContent(_ engine: WKWebViewTab) {
         engine.view.frame = contentContainerView.bounds
         engine.view.autoresizingMask = [.width, .height]
         engine.view.isHidden = false
@@ -53,7 +70,7 @@ extension MainWindowController {
     /// The picker lists tabs of every hydrated space, so resolution must reach beyond the current
     /// space: the TabManager path also revives a discarded current-space engine; a hidden-space tab
     /// is shareable when its parked engine is still live (the floating panel keeps it rendering).
-    private func liveEngineForSharing(tabId: UUID) -> WKWebViewTab? {
+    fileprivate func liveEngineForSharing(tabId: UUID) -> WKWebViewTab? {
         if let engine = tabManager.ensureLiveEngine(forTabId: tabId) { return engine }
         guard let engine = context.browserState.liveEngine(forTab: tabId) else { return nil }
         engine.resume()
