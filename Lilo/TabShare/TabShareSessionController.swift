@@ -236,7 +236,10 @@ final class TabShareSessionController {
         config.snapshotWidth = NSNumber(value: Double(current.encoder.width) / backingScale)
         webView.takeSnapshot(with: config) { [weak self] image, _ in
             guard let self, self.sessions[current.token] === current else { return }
-            guard let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            // The snapshot rep's own sRGB image: NSImage.cgImage redraws it for the window's screen, a
+            // half-float copy in the display profile on an EDR screen that costs ~16 ms per frame.
+            guard let cgImage = image?.representations.first?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                ?? image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
                 if forceKey { current.forceKey = true }
                 self.registerFailure(token: current.token)
                 return
