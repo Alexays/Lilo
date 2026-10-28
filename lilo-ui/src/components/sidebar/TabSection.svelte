@@ -970,6 +970,7 @@
       <div class="new-tab-line" bind:this={newTabLineEl}>
         <button
           class="new-tab-row"
+          use:tooltip={{ text: t("tabSection.newTab"), shortcut: shortcutKeys("tab.new") }}
           onclick={toggleNewTab}
         >
           {@render newTabRowBody()}
