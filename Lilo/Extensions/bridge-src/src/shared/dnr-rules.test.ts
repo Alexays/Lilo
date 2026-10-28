@@ -475,6 +475,13 @@ describe('static rulesets', () => {
     assert.equal(second, null, 'the rest fits');
   });
 
+  it("takes the rules past the cap from the sets the manifest leaves off first (AdGuard's 53 sets, one on)", () => {
+    const set = (count: number, name: string) => JSON.stringify(Array.from({ length: count }, (_, i) => block(i + 1, { urlFilter: `${name}${i}` })));
+    const [on, off] = webKitStaticRulesets([set(80000, 'on'), set(80000, 'off')], [true, false]);
+    assert.equal(on, null, 'the set the manifest turns on keeps every rule');
+    assert.equal(JSON.parse(off!).length, 40000);
+  });
+
   it('drops single rules past the cap, inert and blocking ones before the ones that allow', () => {
     const allow = (id: number) => ({ id, action: { type: 'allow' }, condition: { urlFilter: `ok${id}` } });
     const rules = Array.from({ length: 120003 }, (_, i) => (i < 2 ? allow(i + 1) : block(i + 1, { urlFilter: `ads${i}` })));

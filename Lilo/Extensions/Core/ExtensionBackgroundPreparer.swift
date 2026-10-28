@@ -353,7 +353,7 @@ enum ExtensionBackgroundPreparer {
         context?.evaluateScript(staticRulesScript)
         let sources = urls.map { (try? String(contentsOf: $0, encoding: .utf8)) ?? "" }
         guard let prepared = context?.objectForKeyedSubscript("LiloStaticRules")?.objectForKeyedSubscript("webKitStaticRulesets")?
-            .call(withArguments: [sources])?.toArray(), prepared.count == urls.count else { return }
+            .call(withArguments: [sources, rulesets.map(\.enabled)])?.toArray(), prepared.count == urls.count else { return }
         for (url, ruleset) in zip(urls, prepared) {
             guard let ruleset = ruleset as? String else { continue }
             try verifyWriteTargetInside(extensionURL, target: url)
@@ -388,13 +388,14 @@ enum ExtensionBackgroundPreparer {
     }
 
     /// The manifest's static rulesets, by id, at the paths Lilo may write.
-    static func staticRulesets(extensionURL: URL, manifest: [String: Any]) -> [(id: String?, url: URL)] {
+    static func staticRulesets(extensionURL: URL, manifest: [String: Any]) -> [(id: String?, url: URL, enabled: Bool)] {
         let resources = (manifest["declarative_net_request"] as? [String: Any])?["rule_resources"] as? [[String: Any]] ?? []
         return resources.compactMap { resource in
             guard var path = (resource["path"] as? String)?[...] else { return nil }
             if path.hasPrefix("./") { path = path.dropFirst(2) }
             while path.hasPrefix("/") { path = path.dropFirst() }
-            return isSafeRelativeExtensionPath(String(path)) ? (resource["id"] as? String, extensionURL.appendingPathComponent(String(path))) : nil
+            guard isSafeRelativeExtensionPath(String(path)) else { return nil }
+            return (resource["id"] as? String, extensionURL.appendingPathComponent(String(path)), resource["enabled"] as? Bool ?? false)
         }
     }
 
@@ -458,7 +459,7 @@ enum ExtensionBackgroundPreparer {
     }
 
     /// chrome.declarativeNetRequest.getDisabledRuleIds.
-    static func disabledStaticRuleIds(extensionURL: URL, rulesets: [(id: String?, url: URL)], rulesetId: String) throws -> [Int] {
+    static func disabledStaticRuleIds(extensionURL: URL, rulesets: [(id: String?, url: URL, enabled: Bool)], rulesetId: String) throws -> [Int] {
         guard rulesets.contains(where: { $0.id == rulesetId }) else {
             throw StaticRulesError.invalidRulesetId(rulesetId)
         }
@@ -467,7 +468,7 @@ enum ExtensionBackgroundPreparer {
 
     /// chrome.declarativeNetRequest.updateStaticRules: a disabled rule turns inert in its ruleset's file, which WebKit
     /// reads on its next compile. Returns whether the file changed.
-    static func updateStaticRules(extensionURL: URL, rulesets: [(id: String?, url: URL)], rulesetId: String, disable: [Int], enable: [Int]) throws -> Bool {
+    static func updateStaticRules(extensionURL: URL, rulesets: [(id: String?, url: URL, enabled: Bool)], rulesetId: String, disable: [Int], enable: [Int]) throws -> Bool {
         guard let url = rulesets.first(where: { $0.id == rulesetId })?.url else { throw StaticRulesError.invalidRulesetId(rulesetId) }
         var state = readDisabledStaticRules(extensionURL: extensionURL)
         let saved = state[rulesetId] ?? [:]

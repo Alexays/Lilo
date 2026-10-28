@@ -336,8 +336,9 @@ const STATIC_WEBKIT_RULES = 150000 - 30000;
  * Each static ruleset as JSON in the form WebKit applies, or null where it needs no change or is no ruleset. Past
  * WebKit's cap for all of them together, the rules WebKit expands most turn inert, and once that is not enough, rules
  * leave the sets: inert ones first, then blocking ones before the ones that let requests through, the last of a file first.
+ * The sets `enabled` marks, which the manifest turns on, keep their rules until every other set gave its own.
  */
-export function webKitStaticRulesets(sources: string[]): (string | null)[] {
+export function webKitStaticRulesets(sources: string[], enabled: boolean[] = []): (string | null)[] {
   const rulesets = sources.map((source) => {
     try {
       const rules = JSON.parse(source.replace(/^\uFEFF/, ''));
@@ -353,11 +354,11 @@ export function webKitStaticRulesets(sources: string[]): (string | null)[] {
     const count = domains + (Array.isArray(condition.excludedRequestDomains) ? condition.excludedRequestDomains.length : 0);
     const blocking = rule?.action?.type === 'block' || rule?.action?.type === 'redirect';
     const rank = count > 1 ? count + 1 : condition.regexFilter === INERT_FILTER ? 1.5 : blocking ? 1.25 : 1;
-    return { set, index, count, rank };
+    return { set, index, count, rank, kept: enabled[set] === true };
   }));
   let total = expansions.reduce((sum, { count }) => sum + count, 0);
   if (total > STATIC_WEBKIT_RULES) {
-    expansions.sort((a, b) => b.rank - a.rank || b.index - a.index);
+    expansions.sort((a, b) => Number(a.kept) - Number(b.kept) || b.rank - a.rank || b.index - a.index);
     for (const { set, index, count } of expansions) {
       if (total <= STATIC_WEBKIT_RULES) break;
       const rule = prepared[set]![index];
