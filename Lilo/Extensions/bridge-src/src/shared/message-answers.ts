@@ -106,6 +106,9 @@ export function answerAsChrome(onMessage: any, onListen?: () => void): void {
 /** Chrome's lastError for a message or port no context received. */
 export const noReceiver = 'Could not establish connection. Receiving end does not exist.';
 
+/** WebKit's failure of a page's message once Lilo closed its tab, before the page itself goes. */
+export const closedTabMessage = 'Invalid call to runtime.sendMessage(). Tab not found.';
+
 /**
  * WebKit answers alike when no listener exists and when listeners do not respond, so `noAnswer`, called with the
  * message's arguments, picks Chrome's runtime.lastError for the case; with `rejects`, the promise fails as Chrome's
@@ -123,7 +126,10 @@ export function lastErrorWithoutAnswer(
     if (typeof callback === 'function') {
       const sent = args.slice(0, last);
       args[last] = function (this: unknown, response?: unknown) {
-        if (response !== undefined || bridgeChrome()?.runtime?.lastError) return callback.call(this, response);
+        const lastError = bridgeChrome()?.runtime?.lastError;
+        // A page's message WebKit fails once Lilo closed its tab: Chrome runs nothing more of a closed page.
+        if (rejects && lastError?.message === closedTabMessage) return undefined;
+        if (response !== undefined || lastError) return callback.call(this, response);
         Promise.resolve(noAnswer.apply(self, sent)).then((answer) => (typeof answer === 'string'
           ? withLastError(answer, () => callback.call(this))
           : callback.call(this, answer.response)));
@@ -132,7 +138,7 @@ export function lastErrorWithoutAnswer(
     }
     const result = send.apply(this, args);
     if (!rejects || typeof result?.then !== 'function') return result;
-    return result.then(async (response: unknown) => {
+    return result.catch((error: unknown) => ((error as Error)?.message === closedTabMessage ? new Promise(() => {}) : Promise.reject(error))).then(async (response: unknown) => {
       if (response !== undefined) return response;
       const answer = await noAnswer.apply(self, args);
       if (answer === noReceiver) throw new Error(noReceiver);
@@ -233,8 +239,24 @@ export function relayExternalMessaging(runtime: any): void {
   // Each content script entry carries its own copy of the compat: the first one relays for all.
   if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
   // Called on runtime, never on this: an extension may call them detached, as Chrome's.
+  // A message WebKit fails as its tab closes, which Chrome never answers: the page goes.
+  const local = (args: any[]) => {
+    const last = args.length - 1;
+    const callback = args[last];
+    if (typeof callback === 'function') {
+      args[last] = function (this: unknown, ...results: unknown[]) {
+        if (runtime.lastError?.message === closedTabMessage) return undefined;
+        return callback.apply(this, results);
+      };
+      return sendMessage.apply(runtime, args);
+    }
+    const result = sendMessage.apply(runtime, args);
+    return typeof result?.catch === 'function'
+      ? result.catch((error: unknown) => ((error as Error)?.message === closedTabMessage ? new Promise(() => {}) : Promise.reject(error)))
+      : result;
+  };
   const relayed = function (...args: any[]) {
-    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(runtime, args);
+    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return local(args);
     const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
     const sent = Promise.resolve(sendMessage.call(runtime, { liloExternal: args[0], message: args[1] })).then((answer: any) => {
       if (!answer || 'error' in answer) throw new Error(answer?.error ?? noReceiver);

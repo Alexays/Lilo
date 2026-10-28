@@ -580,6 +580,29 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(context.action(for: nil)?.label, "heard", "the page gets the worker's message on the port it opened back")
     }
 
+    /// Chrome runs nothing more of a content script once its tab closes: no callback of a message it sent, and so no
+    /// unchecked lastError, though WebKit fails the messages it still sends meanwhile (Immersive Translate).
+    func testAContentScriptOfAClosedTabReportsNothing() async throws {
+        let server = try await TinyHTTPServer(index: "<title>Page</title>")
+        let (window, registry, id) = try await loadClosingExtension([
+            "manifest.json": #"{"manifest_version": 3, "name": "Messaging", "version": "1.0", "host_permissions": ["http://127.0.0.1/*"], "action": {"default_title": "waiting"}, "background": {"service_worker": "worker.js"}, "content_scripts": [{"matches": ["http://127.0.0.1/*"], "js": ["content.js"]}]}"#,
+            "worker.js": "chrome.runtime.onMessage.addListener((message, sender, sendResponse) => { chrome.action.setTitle({ title: 'heard' }); sendResponse(1); });",
+            "content.js": """
+                const send = () => chrome.runtime.sendMessage('ping', () => { if (chrome.runtime.lastError) return; setTimeout(send, 0); });
+                send();
+                """
+        ])
+        let context = try XCTUnwrap(registry.context(for: id))
+
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/")))
+        let heard = await pollUntil { context.action(for: nil)?.label == "heard" }
+        XCTAssertTrue(heard, "the content script messages the worker")
+        window.closeTabStateFirst(id: tab.id, undoable: false)
+
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertEqual(context.errors.map(\.localizedDescription), [])
+    }
+
     /// WebKit's own executeScript, under way on a tab that closes itself, ends without taking the app
     /// down: Lilo closes such a page and never suspends it (WEBKIT-GAPS.md, gap 5).
     func testExecuteScriptOnATabThatClosesItselfEnds() async throws {

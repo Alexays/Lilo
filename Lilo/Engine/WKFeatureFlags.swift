@@ -32,9 +32,19 @@ enum WKFeatureFlags {
         "CSSTextTransformMathAutoEnabled",
         "CSSDPropertyEnabled"
     ]
+    /// A virtual machine's paravirtual GPU cannot read a canvas back (getImageData throws InvalidStateError, as on GitHub's macOS
+    /// runners): canvases draw in memory, in the page's own process, there. A sysctl tells a virtual machine, where creating a
+    /// Metal device would block the main thread.
+    private static let graphicsOverrides: [String: Bool] = {
+        var present: Int32 = 0, size = MemoryLayout<Int32>.size
+        guard sysctlbyname("kern.hv_vmm_present", &present, &size, nil, 0) == 0, present == 1 else { return [:] }
+        return ["CanvasUsesAcceleratedDrawing": false, "UseGPUProcessForCanvasRenderingEnabled": false]
+    }()
     /// WebKit's own Screen Time client is off, as in Safari: Lilo's `STWebpageController` is the single one.
     private static let baselineOverrides: [String: Bool] =
-        Dictionary(uniqueKeysWithValues: defaultsOn.map { ($0, true) }).merging(["ScreenTimeEnabled": false]) { $1 }
+        Dictionary(uniqueKeysWithValues: defaultsOn.map { ($0, true) })
+            .merging(["ScreenTimeEnabled": false]) { $1 }
+            .merging(graphicsOverrides) { $1 }
 
     /// Canonical `_WKFeature` objects keyed by their stable feature key. Built once.
     private static let featureObjects: [String: NSObject] = {

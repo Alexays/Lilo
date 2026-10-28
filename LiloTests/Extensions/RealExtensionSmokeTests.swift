@@ -1,4 +1,5 @@
 import AppKit
+import Metal
 import WebKit
 import XCTest
 @testable import Lilo
@@ -153,25 +154,29 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// shows at least half of `expected`, Chrome's, or anything without one, for at most `timeout`; then closes the tab.
     /// Returns the last fingerprint and whether it matched.
     /// `closed` when the page closed its own tab, as a popup does that finds itself in one (NordPass, Zoom to Fill).
-    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool, closed: Bool) {
+    /// The page stays open as long as Chrome's recording keeps it: 5 s at least, then until its fingerprint held 2 s, so
+    /// what the extension still exchanges as it settles ends as in Chrome. `matchedAfter` is when it first matched.
+    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool, closed: Bool, matchedAfter: TimeInterval?) {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
         defer { window.closeTabStateFirst(id: tab.id, undoable: false) }
         let opened = Date()
-        var tokens: Set<String> = []
+        var tokens: Set<String> = [], matchedAfter: TimeInterval?, still = opened
+        let matches = { (tokens: Set<String>) in expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count }
         while Date().timeIntervalSince(opened) < timeout {
             try await Task.sleep(for: .milliseconds(250))
-            if !window.tabManager.openTabs.contains(where: { $0.id == tab.id }) { return (tokens, false, true) }
+            if !window.tabManager.openTabs.contains(where: { $0.id == tab.id }) { return (tokens, false, true, nil) }
             guard let engine = window.tabManager.engineTab(for: tab.id) else { continue }
             // As pageText: on screen, as a popup, and unattended.
             browserContext.context.agentControl.attach(engine, to: nil)
             engine.agentDialogHandler = { _ in true }
             let page = engine.view as? WKWebView
-            tokens = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
-            if expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count {
-                return (tokens, true, false)
-            }
+            let sampled = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
+            if sampled != tokens { still = Date() }
+            tokens = sampled
+            if matchedAfter == nil, matches(tokens) { matchedAfter = Date().timeIntervalSince(opened) }
+            if matchedAfter != nil, Date().timeIntervalSince(opened) >= 5, Date().timeIntervalSince(still) >= 2 { break }
         }
-        return (tokens, false, false)
+        return (tokens, matchedAfter != nil, false, matchedAfter)
     }
 
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
@@ -220,7 +225,10 @@ final class RealExtensionSmokeTests: XCTestCase {
 
         /// Reported, never failed: past 5 s, or past 3 times Chrome's time and a second more.
         func time(_ step: String, since start: Date, chrome: Int?) {
-            let ms = Int(Date().timeIntervalSince(start) * 1000)
+            time(step, ms: Int(Date().timeIntervalSince(start) * 1000), chrome: chrome)
+        }
+
+        func time(_ step: String, ms: Int, chrome: Int?) {
             timings[step] = ms
             if ms > 5000 || chrome.map({ ms > 3 * $0 && ms - $0 > 1000 }) == true {
                 slow.append("\(step) \(ms) ms" + (chrome.map { " (Chrome \($0) ms)" } ?? ""))
@@ -526,12 +534,13 @@ final class RealExtensionSmokeTests: XCTestCase {
             let popupURL = ((context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String)
                 .flatMap { $0.isEmpty ? nil : URL(string: $0, relativeTo: context.baseURL) }
             var popupOpened: Date?
+            var phases: [(name: String, count: Int)] = [("the worker's start", 0)]
             if let popupURL {
+                phases.append(("the popup", context.errors.count))
                 // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
                 let expected = tokens(chrome?.popup)
-                let opened = Date()
-                popupOpened = opened
-                let (shown, matched, closed) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
+                popupOpened = Date()
+                let (shown, matched, closed, matchedAfter) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
                 // A popup closing the tab it was opened in shows in its own popup, which the idle check opens.
                 if closed {
                     outcome.details.append("its popup closes the tab it is opened in")
@@ -540,13 +549,14 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the popup", shown, expected))
                 }
-                if matched { outcome.time("popup", since: opened, chrome: chrome?.popup?.ms) }
+                if let matchedAfter { outcome.time("popup", ms: Int(matchedAfter * 1000), chrome: chrome?.popup?.ms) }
             }
             let chromePage = Set(chrome?.page ?? [])
             // WebKit hands Lilo only the items for every context and the toolbar button's: the page's own context menu
             // gets the others from WebKit, out of the test's reach.
             let chromeMenus = chrome?.menus?.filter { $0.split(separator: ",").contains("all") }.count ?? 0
             let chromeActionMenus = chrome?.menus?.filter { !Set($0.split(separator: ",")).isDisjoint(with: ["action", "browser_action", "page_action"]) }.count ?? 0
+            phases.append(("the test page", context.errors.count))
             if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0 || context.webExtension.manifest["content_scripts"] != nil {
                 // Chrome's recording opens the test page once the popup settled, 5 s after it opened at least: an extension
                 // setting up its cosmetic filtering after its first start (SBlock, Stop Ads Now) is done by then. Without a
@@ -589,10 +599,10 @@ final class RealExtensionSmokeTests: XCTestCase {
                 }
                 window.closeTabStateFirst(id: tab.id, undoable: false)
             }
+            phases.append(("the options page", context.errors.count))
             if let optionsURL = context.optionsPageURL, chrome == nil || chrome?.options != nil {
                 let expected = tokens(chrome?.options)
-                let opened = Date()
-                let (shown, matched, closed) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
+                let (shown, matched, closed, matchedAfter) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
                 if closed {
                     outcome.details.append("its options page closes its own tab")
                 } else if shown.isEmpty {
@@ -600,9 +610,16 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the options page", shown, expected))
                 }
-                if matched { outcome.time("options", since: opened, chrome: chrome?.options?.ms) }
+                if let matchedAfter { outcome.time("options", ms: Int(matchedAfter * 1000), chrome: chrome?.options?.ms) }
             }
-            outcome.problems += unexpected(context.errors, (chrome?.errors ?? []).map(normalized)).map { "error: \($0)" }
+            // Each error with the step it came in, to tell a page's last exchanges from its start.
+            let steps = phases + [("the end", context.errors.count)]
+            let step = { (index: Int) in steps.last { $0.count <= index }?.name ?? "the start" }
+            let mainErrors = unexpected(context.errors, (chrome?.errors ?? []).map(normalized))
+            outcome.problems += mainErrors.map { message in
+                let index = context.errors.firstIndex { $0.localizedDescription == message } ?? 0
+                return "error: \(message) (in \(step(index)))"
+            }
             if !outcome.problems.isEmpty { outcome.details = errorsOf(registry, id) }
             await registry.unload(extensionId: id)
             // Each extension starts with no page open, as in a new Chrome profile: WebKit injects content
@@ -658,6 +675,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         var command: (id: String, check: String)?
         var click = false
         var shows: ((MainWindowController) -> Bool)?
+        /// Why what its toolbar button opens fails on a paravirtual GPU (WEBKIT-GAPS.md), where the check expects that.
+        var paravirtualGap: String?
     }
 
     /// Holds once the ad the page requests again at each evaluation fails: the page may load before
@@ -712,7 +731,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "edacconmaakjimmfgnblocblbcdcpbko", name: "Session Buddy", check: "true", click: true,
                 shows: { window in window.tabManager.openTabs.contains { $0.url?.host == "edacconmaakjimmfgnblocblbcdcpbko" } }),
         Feature(id: "fdpohaocaechififmbbbbbknoalclacl", name: "GoFullPage", check: "true", click: true,
-                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } })
+                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } },
+                paravirtualGap: "its popup's canvas.toBlob answers null there (gap 101)")
     ]
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
@@ -725,6 +745,21 @@ final class RealExtensionSmokeTests: XCTestCase {
             if request.hasPrefix("GET /video ") { return ("200 OK", ["Content-Type: text/html"], video) }
             return ("200 OK", ["Content-Type: image/gif"], image)
         }
+        // The machine's graphics, which the feature checks drawing on a canvas depend on: CI's runners are virtual machines.
+        if let probe = window.createTabStateFirst(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))),
+           let probePage = window.tabManager.engineTab(for: probe.id)?.view as? WKWebView {
+            _ = await pollUntil(timeout: 10) { !probePage.isLoading }
+            let readback = await evaluate("""
+            (() => { const canvas = Object.assign(document.createElement('canvas'), { width: 4, height: 4 }), context = canvas.getContext('2d');
+              context.fillStyle = 'red'; context.fillRect(0, 0, 4, 4);
+              try { return 'readback ' + context.getImageData(0, 0, 1, 1).data[0]; } catch (error) { return 'readback ' + error.name; } })()
+            """, in: probePage) as? String ?? "unread"
+            let snapshot: String
+            do { snapshot = "\(try await probePage.takeSnapshot(configuration: nil).size)" } catch { snapshot = "\(error.localizedDescription)" }
+            print("LILO_GRAPHICS metal \(MTLCreateSystemDefaultDevice()?.name ?? "none"), canvas \(readback), snapshot \(snapshot)")
+            window.closeTabStateFirst(id: probe.id, undoable: false)
+        }
+        let paravirtualGPU = MTLCreateSystemDefaultDevice()?.name.contains("Paravirtual") ?? true
         // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
         let only = ProcessInfo.processInfo.environment["LILO_SMOKE_FEATURES"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
         for feature in Self.features where only?.contains(feature.name) ?? true {
@@ -765,15 +800,32 @@ final class RealExtensionSmokeTests: XCTestCase {
                 button.representedObject = feature.id
                 window.openExtensionFromMenu(button)
             }
+            // What a failing check saw, to tell an extension's failure from the machine's.
+            let diagnosis = { () async -> String in
+                let state = await self.evaluate("""
+                JSON.stringify({ url: location.href, title: document.title, videos: document.querySelectorAll('video').length,
+                  controllers: document.querySelectorAll('vsc-controller').length, text: document.body?.innerText.slice(0, 120) })
+                """, in: page) as? String ?? "unread"
+                let worker = registry.lifecycle.worker(of: feature.id).map { "\($0)" } ?? "none"
+                let errors = context.errors.suffix(4).map { String($0.localizedDescription.prefix(160)) }
+                // Lilo's console relay names the page each message came from.
+                let consoles = (registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == feature.id }?["pageDiagnostics"] as? [[String: Any]] ?? [])
+                    .suffix(4).map { "\($0["source"] ?? "?"): \(String(describing: $0["message"] ?? "").prefix(200))" }
+                return "page \(state), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors), consoles \(consoles)"
+            }
             if let shows = feature.shows {
                 let shown = await pollUntil(timeout: 30) { shows(window) }
-                XCTAssertTrue(shown, "\(feature.name) opens what its toolbar button opens")
+                if let gap = feature.paravirtualGap, paravirtualGPU {
+                    if shown { XCTFail("\(feature.name) now opens what its toolbar button opens on a paravirtual GPU: drop its gap (\(gap))") }
+                } else if !shown {
+                    XCTFail("\(feature.name) opens what its toolbar button opens: \(await diagnosis())")
+                }
             }
             let checked = await holds(feature.check)
-            XCTAssertTrue(checked, "\(feature.name) does its part on the page")
+            if !checked { XCTFail("\(feature.name) does its part on the page: \(await diagnosis())") }
             if feature.menu, let adapter = window.tabManager.tabAdapter(for: tab.id) {
                 let added = await pollUntil(timeout: 10) { !context.menuItems(for: adapter).isEmpty }
-                XCTAssertTrue(added, "\(feature.name) adds its context menu entry")
+                if !added { XCTFail("\(feature.name) adds its context menu entry: \(await diagnosis())") }
             }
             if let (commandId, after) = feature.command {
                 let command = try XCTUnwrap(context.commands.first { $0.id == commandId })
