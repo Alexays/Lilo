@@ -12,13 +12,16 @@ test("the day splits at 6, 11, 17 and 21", () => {
   );
 });
 
-test("the next day part starts at its local hour across daylight-saving changes", () => {
+test("the next change of day part is the next start hour, tomorrow morning after 21", () => {
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 16, 30)), 30 * 60 * 1000);
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 22, 0)), 8 * 3600 * 1000);
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 3, 0)), 3 * 3600 * 1000);
+});
+
+test("the next day-part boundary accounts for clock changes", () => {
   const previousTZ = process.env.TZ;
   try {
     for (const [timezone, now, expected] of [
-      ["UTC", "2026-10-25T16:30:00Z", 30 * 60 * 1000],
-      ["UTC", "2026-10-25T22:00:00Z", 8 * 3600 * 1000],
-      ["UTC", "2026-10-25T03:00:00Z", 3 * 3600 * 1000],
       ["Europe/Helsinki", "2026-10-25T00:00:00Z", 4 * 3600 * 1000],
       ["Europe/Helsinki", "2026-10-24T19:00:00Z", 9 * 3600 * 1000],
       ["Europe/Helsinki", "2026-03-29T00:00:00Z", 3 * 3600 * 1000],

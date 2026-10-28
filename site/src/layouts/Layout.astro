@@ -1,7 +1,11 @@
 ---
+import type { ComponentProps } from "astro/types";
+
 import config from "../../../Xcode/Configs/Base.xcconfig?raw";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+import PageEnd from "../components/PageEnd.astro";
+import PageHero from "../components/PageHero.astro";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
 
@@ -16,11 +20,28 @@ interface Props {
   lang: Locale;
   title: string;
   description: string;
+  hero: Omit<
+    ComponentProps<typeof PageHero>,
+    "lang" | "hasAnnouncement" | "hasPreview"
+  >;
+  closing?: Omit<ComponentProps<typeof PageEnd>, "lang">;
   schema?: Schema[];
   noindex?: boolean;
 }
 
-const { lang, title, description, schema = [], noindex = false } = Astro.props;
+const {
+  lang,
+  title,
+  description,
+  hero,
+  closing = {
+    description: copy[Astro.props.lang].homeClosingDescription,
+    heading: copy[Astro.props.lang].homeClosingHeading,
+  },
+  schema = [],
+  noindex = false,
+} = Astro.props;
+
 const path = Astro.url.pathname;
 const englishPath = path.replace(/^\/fr(?=\/)/u, "");
 const canonical = new URL(path, Astro.site).href;
@@ -103,7 +124,14 @@ const jsonLD = JSON.stringify({
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link
       rel="preload"
-      href="/fonts/nunito-latin-wght.woff2"
+      href="/fonts/inter-latin-wght-e868cdf4.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/geist-mono-latin-wght-181a2944.woff2"
       as="font"
       type="font/woff2"
       crossorigin
@@ -117,7 +145,25 @@ const jsonLD = JSON.stringify({
       {copy[lang].skip}
     </a>
     <Header lang={lang} />
-    <slot />
+    <main
+      id="main-content"
+      class:list={[
+        "site-content",
+        { "home-page": path === "/" || path === "/fr/" },
+      ]}
+    >
+      <PageHero
+        lang={lang}
+        {...hero}
+        hasAnnouncement={Astro.slots.has("announcement")}
+        hasPreview={Astro.slots.has("preview")}
+      >
+        <slot name="announcement" slot="announcement" />
+        <slot name="preview" slot="preview" />
+      </PageHero>
+      <slot />
+      <PageEnd lang={lang} {...closing} />
+    </main>
     <Footer lang={lang} />
   </body>
 </html>

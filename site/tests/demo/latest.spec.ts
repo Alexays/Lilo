@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 const menuCommand = async (page: Page, menu: number, action: string) => {
-  const item = page.locator(".mac-menu").nth(menu);
+  const item = page.locator("#browser-demo .mac-menu").nth(menu);
   await item.locator(":scope > summary").click();
   await item.locator(`[data-action="${action}"]`).click();
 };
@@ -106,7 +106,9 @@ for (const french of [false, true]) {
       })
       .click();
     await expect(frame.locator("html")).toHaveAttribute("data-address", "tabs");
-    await page.locator(".demo-modes [data-action=browser]").click();
+    await page
+      .locator("#browser-demo .demo-modes [data-action=browser]")
+      .click();
     await expect(frame.locator(".repo-top")).toBeVisible();
     await expect(frame.locator(".notice")).toHaveCount(0);
   });

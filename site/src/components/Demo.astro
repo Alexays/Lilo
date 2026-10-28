@@ -8,11 +8,33 @@ import Flower from "./Flower.astro";
 
 interface Props {
   lang: Locale;
+  id?: string;
+  mode?: "browser" | "terminal" | "mcp";
+  autoplay?: boolean;
+  deferred?: boolean;
+  minimal?: boolean;
 }
 
-const { lang } = Astro.props;
+const {
+  lang,
+  id = "browser-demo",
+  mode: initialMode = "browser",
+  autoplay = false,
+  deferred = false,
+  minimal = false,
+} = Astro.props;
+
 const text = copy[lang];
 const messages = demoMessages[lang];
+
+const title = {
+  browser: text.demoWindow,
+  mcp: text.demoAgentWindow,
+  terminal: text.demoTerminalWindow,
+}[initialMode];
+
+const viewportId = id === "browser-demo" ? "demo-viewport" : `${id}-viewport`;
+const url = `/demo/?lang=${lang}${initialMode === "browser" ? "" : `&mode=${initialMode}`}${autoplay ? "&autoplay=1" : ""}`;
 
 // SAFETY: these raw imports are the repository's native localization catalogs.
 const { native } = JSON.parse(lang === "fr" ? nativeFrench : nativeEnglish) as {
@@ -47,9 +69,10 @@ const modes = [
 
 <div
   class="demo-shell"
-  id="browser-demo"
+  id={id}
+  data-initial-mode={initialMode}
   role="group"
-  aria-label={text.demoWindow}
+  aria-label={title}
   data-menu-locale={lang}
   data-mac-english={demoMessages.en.exploreMacNote}
   data-mac-french={demoMessages.fr.exploreMacNote}
@@ -57,172 +80,191 @@ const modes = [
   data-exit-french={copy.fr.demoExitFullscreen}
 >
   <div class="demo-menubar">
-    <nav class="mac-menubar" aria-label="Lilo" role="menubar">
-      <span class="menu-flower" aria-hidden="true">
-        <Flower id={`demo-menu-flower-${lang}`} />
-      </span>
-      {demoMenus.map((menu, index) => (
-        <details class="mac-menu" data-menu={menu.label}>
-          <summary
-            role="menuitem"
-            aria-haspopup="menu"
-            aria-expanded="false"
-            tabindex={index === 0 ? 0 : -1}
-          >
-            <span data-menu-label={menu.label}>{menuLabel(menu.label)}</span>
-          </summary>
-          <div
-            class="menu-items"
-            role="menu"
-            aria-label={menuLabel(menu.label)}
-            data-menu-name={menu.label}
-          >
-            {menu.children?.map((item) =>
-              "separator" in item ? (
-                <hr
-                  role="separator"
-                  data-developer-only={item.developerOnly || undefined}
-                  data-terminal-only={item.terminalOnly || undefined}
-                  hidden={item.developerOnly}
-                />
-              ) : item.dynamic === "spaces" ? (
-                <div
-                  data-menu-list="spaces"
-                  role="group"
-                  aria-label={menuLabel("Spaces")}
-                  data-menu-name="Spaces"
-                />
-              ) : item.children ? (
-                <details class="menu-submenu" data-submenu={item.label}>
-                  <summary
-                    role="menuitem"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                    tabindex="-1"
-                  >
-                    <span class="menu-label" data-menu-label={item.label}>
-                      {menuLabel(item.label)}
-                    </span>
-                    <span class="submenu-arrow" aria-hidden="true">
-                      ›
-                    </span>
-                  </summary>
-                  <div
-                    class="menu-items"
-                    role="menu"
-                    aria-label={menuLabel(item.label)}
-                    data-menu-name={item.label}
-                    data-menu-list={item.dynamic}
-                    data-empty-label={
-                      item.emptyLabel ? menuLabel(item.emptyLabel) : undefined
-                    }
-                    data-empty-key={item.emptyLabel}
-                  >
-                    {item.children.map((child) =>
-                      "separator" in child ? (
-                        <hr role="separator" />
-                      ) : child.dynamic === "extensions" ? (
-                        <div
-                          data-menu-list="extensions"
-                          data-native-label={messages.exploreMacNote}
-                          role="group"
-                          aria-label={menuLabel("Extensions")}
-                          data-menu-name="Extensions"
-                        />
-                      ) : (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          tabindex="-1"
-                          data-action={child.action}
-                          data-shortcut={child.shortcutId}
-                          data-native-only={child.macOnly || undefined}
-                          disabled
-                          title={
-                            child.macOnly ? messages.exploreMacNote : undefined
-                          }
-                        >
-                          <span
-                            class="menu-label"
-                            data-menu-label={child.label}
-                          >
-                            {menuLabel(child.label)}
-                          </span>
-                          {child.macOnly && (
-                            <span class="menu-note" aria-hidden="true">
-                              Mac
-                            </span>
-                          )}
-                          <kbd aria-hidden="true">{child.keys}</kbd>
-                        </button>
-                      )
-                    )}
-                  </div>
-                </details>
-              ) : (
-                <button
-                  type="button"
-                  role={
-                    item.action === "bookmark" ? "menuitemcheckbox" : "menuitem"
-                  }
-                  aria-checked={
-                    item.action === "bookmark" ? "false" : undefined
-                  }
-                  tabindex="-1"
-                  data-action={item.action}
-                  data-shortcut={item.shortcutId}
-                  data-native-only={item.macOnly || undefined}
-                  data-alternate={item.alternate || undefined}
-                  data-developer-only={item.developerOnly || undefined}
-                  data-default-label={menuLabel(item.label)}
-                  data-label-key={item.label}
-                  data-alternate-key={menuAlternates.get(item.action ?? "")}
-                  data-alternate-label={menuLabel(
-                    menuAlternates.get(item.action ?? "") ?? item.label
-                  )}
-                  disabled={item.action !== "fullscreen"}
-                  hidden={item.developerOnly || Boolean(item.alternate)}
-                  title={item.macOnly ? messages.exploreMacNote : undefined}
-                >
-                  <span class="menu-label" data-menu-label={item.label}>
-                    {menuLabel(item.label)}
-                  </span>
-                  {item.macOnly && (
-                    <span class="menu-note" aria-hidden="true">
-                      Mac
-                    </span>
-                  )}
-                  <kbd aria-hidden="true">{item.keys}</kbd>
-                </button>
-              )
-            )}
-          </div>
-        </details>
-      ))}
-    </nav>
-    <div class="demo-modes" role="group" aria-label={text.demoWindow}>
-      {modes.map((mode) => (
+    {minimal ? (
+      <div class="demo-brand">
+        <Flower id={`${id}-brand-flower-${lang}`} />
+        <span>Lilo</span>
+      </div>
+    ) : (
+      <>
+        <nav class="mac-menubar" aria-label="Lilo" role="menubar">
+          <span class="menu-flower" aria-hidden="true">
+            <Flower id={`${id}-menu-flower-${lang}`} />
+          </span>
+          {demoMenus.map((menu, index) => (
+            <details class="mac-menu" data-menu={menu.label}>
+              <summary
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                tabindex={index === 0 ? 0 : -1}
+              >
+                <span data-menu-label={menu.label}>
+                  {menuLabel(menu.label)}
+                </span>
+              </summary>
+              <div
+                class="menu-items"
+                role="menu"
+                aria-label={menuLabel(menu.label)}
+                data-menu-name={menu.label}
+              >
+                {menu.children?.map((item) =>
+                  "separator" in item ? (
+                    <hr
+                      role="separator"
+                      data-developer-only={item.developerOnly || undefined}
+                      data-terminal-only={item.terminalOnly || undefined}
+                      hidden={item.developerOnly}
+                    />
+                  ) : item.dynamic === "spaces" ? (
+                    <div
+                      data-menu-list="spaces"
+                      role="group"
+                      aria-label={menuLabel("Spaces")}
+                      data-menu-name="Spaces"
+                    />
+                  ) : item.children ? (
+                    <details class="menu-submenu" data-submenu={item.label}>
+                      <summary
+                        role="menuitem"
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        tabindex="-1"
+                      >
+                        <span class="menu-label" data-menu-label={item.label}>
+                          {menuLabel(item.label)}
+                        </span>
+                        <span class="submenu-arrow" aria-hidden="true">
+                          ›
+                        </span>
+                      </summary>
+                      <div
+                        class="menu-items"
+                        role="menu"
+                        aria-label={menuLabel(item.label)}
+                        data-menu-name={item.label}
+                        data-menu-list={item.dynamic}
+                        data-empty-label={
+                          item.emptyLabel
+                            ? menuLabel(item.emptyLabel)
+                            : undefined
+                        }
+                        data-empty-key={item.emptyLabel}
+                      >
+                        {item.children.map((child) =>
+                          "separator" in child ? (
+                            <hr role="separator" />
+                          ) : child.dynamic === "extensions" ? (
+                            <div
+                              data-menu-list="extensions"
+                              data-native-label={messages.exploreMacNote}
+                              role="group"
+                              aria-label={menuLabel("Extensions")}
+                              data-menu-name="Extensions"
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              tabindex="-1"
+                              data-action={child.action}
+                              data-shortcut={child.shortcutId}
+                              data-native-only={child.macOnly || undefined}
+                              disabled
+                              title={
+                                child.macOnly
+                                  ? messages.exploreMacNote
+                                  : undefined
+                              }
+                            >
+                              <span
+                                class="menu-label"
+                                data-menu-label={child.label}
+                              >
+                                {menuLabel(child.label)}
+                              </span>
+                              {child.macOnly && (
+                                <span class="menu-note" aria-hidden="true">
+                                  Mac
+                                </span>
+                              )}
+                              <kbd aria-hidden="true">{child.keys}</kbd>
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </details>
+                  ) : (
+                    <button
+                      type="button"
+                      role={
+                        item.action === "bookmark"
+                          ? "menuitemcheckbox"
+                          : "menuitem"
+                      }
+                      aria-checked={
+                        item.action === "bookmark" ? "false" : undefined
+                      }
+                      tabindex="-1"
+                      data-action={item.action}
+                      data-shortcut={item.shortcutId}
+                      data-native-only={item.macOnly || undefined}
+                      data-alternate={item.alternate || undefined}
+                      data-developer-only={item.developerOnly || undefined}
+                      data-default-label={menuLabel(item.label)}
+                      data-label-key={item.label}
+                      data-alternate-key={menuAlternates.get(item.action ?? "")}
+                      data-alternate-label={menuLabel(
+                        menuAlternates.get(item.action ?? "") ?? item.label
+                      )}
+                      disabled={item.action !== "fullscreen"}
+                      hidden={item.developerOnly || Boolean(item.alternate)}
+                      title={item.macOnly ? messages.exploreMacNote : undefined}
+                    >
+                      <span class="menu-label" data-menu-label={item.label}>
+                        {menuLabel(item.label)}
+                      </span>
+                      {item.macOnly && (
+                        <span class="menu-note" aria-hidden="true">
+                          Mac
+                        </span>
+                      )}
+                      <kbd aria-hidden="true">{item.keys}</kbd>
+                    </button>
+                  )
+                )}
+              </div>
+            </details>
+          ))}
+        </nav>
+        <div class="demo-modes" role="group" aria-label={text.demoWindow}>
+          {modes.map((mode) => (
+            <button
+              type="button"
+              data-action={mode.action}
+              aria-pressed={mode.action === initialMode}
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
+      </>
+    )}
+    <div class="demo-tools">
+      {!minimal && (
         <button
           type="button"
-          data-action={mode.action}
-          aria-pressed={mode.action === "browser"}
+          data-action="explore"
+          aria-label={text.demoExplore}
+          title={text.demoExplore}
         >
-          {mode.label}
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15.5 8.5-2 5-5 2 2-5Z" />
+          </svg>
         </button>
-      ))}
-    </div>
-    <div class="demo-tools">
-      <button
-        type="button"
-        data-action="explore"
-        aria-label={text.demoExplore}
-        title={text.demoExplore}
-      >
-        <svg aria-hidden="true" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="9" />
-          <path d="m15.5 8.5-2 5-5 2 2-5Z" />
-        </svg>
-      </button>
+      )}
       <button
         type="button"
         data-action="reset"
@@ -239,7 +281,7 @@ const modes = [
         data-enter-label={text.demoFullscreen}
         data-exit-label={text.demoExitFullscreen}
         aria-label={text.demoFullscreen}
-        aria-controls="demo-viewport"
+        aria-controls={viewportId}
         aria-expanded="false"
         title={text.demoFullscreen}
       >
@@ -252,11 +294,12 @@ const modes = [
       </button>
     </div>
   </div>
-  <div class="demo-viewport" id="demo-viewport">
+  <div class="demo-viewport" id={viewportId}>
     <div class="demo-desktop">
       <iframe
-        src={`/demo/?lang=${lang}`}
-        title={text.demoWindow}
+        src={deferred ? undefined : url}
+        data-src={deferred ? url : undefined}
+        title={title}
         loading="lazy"
         allow="fullscreen"
       ></iframe>
@@ -566,16 +609,19 @@ const modes = [
     }
   };
 
-  const demo = document.querySelector<HTMLElement>("#browser-demo");
-  const frame = demo?.querySelector<HTMLIFrameElement>("iframe");
-  const viewport = demo?.querySelector<HTMLElement>(".demo-viewport");
-  const desktop = demo?.querySelector<HTMLElement>(".demo-desktop");
+  for (const demo of document.querySelectorAll<HTMLElement>(".demo-shell")) {
+    const frame = demo.querySelector<HTMLIFrameElement>("iframe");
+    const viewport = demo.querySelector<HTMLElement>(".demo-viewport");
+    const desktop = demo.querySelector<HTMLElement>(".demo-desktop");
 
-  const expand = demo?.querySelector<HTMLButtonElement>(
-    ".demo-tools [data-action='fullscreen']"
-  );
+    const expand = demo.querySelector<HTMLButtonElement>(
+      ".demo-tools [data-action='fullscreen']"
+    );
 
-  if (demo && frame && viewport && desktop && expand) {
+    if (!(frame && viewport && desktop && expand)) {
+      continue;
+    }
+
     type DemoMessage =
       | string
       | { type: "lilo-demo:menu-command"; action: string; id: string };
@@ -725,7 +771,8 @@ const modes = [
         button.setAttribute(
           "aria-pressed",
           String(
-            button.dataset.action === (action === "reset" ? "browser" : action)
+            button.dataset.action ===
+              (action === "reset" ? demo.dataset.initialMode : action)
           )
         );
       }
@@ -1264,6 +1311,11 @@ const modes = [
     new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting;
+
+        if (visible && !frame.hasAttribute("src") && frame.dataset.src) {
+          frame.src = frame.dataset.src;
+        }
+
         syncVisibility();
       },
       { threshold: 0 }
@@ -1291,7 +1343,6 @@ const modes = [
 
 <style>
   .demo-shell {
-    max-width: 1080px;
     margin: 0 auto;
     overflow: hidden;
     border-radius: 14px;
@@ -1325,6 +1376,17 @@ const modes = [
     align-items: center;
     gap: 1px;
     min-width: 0;
+  }
+  .demo-brand {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .demo-brand :global(svg) {
+    width: 18px;
+    height: 18px;
   }
   .demo-modes,
   .demo-tools {

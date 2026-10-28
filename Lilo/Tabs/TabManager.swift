@@ -98,7 +98,16 @@ final class TabManager {
         return engineHost.engine(for: activeTab.id)
     }
 
-    var activeOpenTabId: UUID? { activeTab?.id }
+    /// `activeTab?.id` without building the tab, as WebKit asks for each tab an extension queries: the runtime
+    /// overlay changes neither whether a tab is closed nor its space.
+    var activeOpenTabId: UUID? {
+        guard let id = activeTabId else { return nil }
+        if let store = browserStateStore, let spaceId = store.owningSpaceId(forTab: id),
+           let stored = store.space(id: spaceId)?.spaceTab.storedTab(id) {
+            return !stored.isClosed && currentSpaceId.map { $0 == spaceId } != false ? id : nil
+        }
+        return activeTab?.id
+    }
 
     /// The split the active tab belongs to, if any: all its panes are on screen.
     var activeSplit: SplitGroup? {

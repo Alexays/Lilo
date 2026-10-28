@@ -1,16 +1,58 @@
-/* Layout: Lilo's own world. The page wears the active Space's pastel, like Lilo's sidebar does; the product window is the hero; proof sections follow as plain bands. */
 @font-face {
-  font-family: "Nunito";
+  font-family: "Inter";
   font-style: normal;
   font-display: swap;
-  font-weight: 200 1000;
-  src: url(/fonts/nunito-latin-wght.woff2) format("woff2");
+  font-weight: 400 700;
+  src: url(/fonts/inter-latin-wght-e868cdf4.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400 700;
+  src: url(/fonts/inter-latin-wght-italic-91753f8d.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  font-weight: 400 700;
+  size-adjust: 107.7766%;
+  ascent-override: 89.885%;
+  descent-override: 22.3806%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 600;
+  src: url(/fonts/geist-mono-latin-wght-181a2944.woff2) format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Geist Mono";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400 600;
+  src: url(/fonts/geist-mono-latin-wght-italic-89a9b6ed.woff2) format("woff2");
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
 }
 :root {
+  --page-gutter: 16px;
   --tint: #b39df4;
   --paper: #f7f4fc;
   --ink: #1a1a2e;
@@ -24,14 +66,21 @@
   --brand-text: linear-gradient(135deg, #795ceb, #6a4be0 55%, #4a2fc8);
   --agents: #d97757;
   --good: #15803d;
-  --round: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, sans-serif;
-  --sys:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial,
-    sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --sys: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --theme-sun: block;
   --theme-moon: none;
   color-scheme: light;
+}
+@media (min-width: 640px) {
+  :root {
+    --page-gutter: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --page-gutter: 40px;
+  }
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -74,24 +123,32 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 400 16px/1.55 var(--sys);
+  font: 400 16px/1.5 var(--sys);
+  font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
 }
 .wrap {
-  max-width: 1180px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
 }
+.page-frame {
+  border-inline: 1px solid var(--line);
+}
+
 h1,
 h2,
 h3 {
-  font-family: var(--round);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: var(--sys);
+  font-weight: 500;
+  letter-spacing: -0.04em;
   margin: 0;
   text-wrap: balance;
+}
+h3 {
+  letter-spacing: -0.015em;
 }
 p {
   margin: 0;
@@ -111,12 +168,6 @@ a {
   color: var(--ink-2);
 }
 
-/* Tinted top: the whole hero wears the Space color */
-.top {
-  background: color-mix(in srgb, var(--tint) 30%, var(--paper));
-  transition: background 0.5s cubic-bezier(0.16, 0.84, 0.32, 1);
-  padding-bottom: 72px;
-}
 .site-header,
 .foot {
   background: color-mix(
@@ -131,7 +182,7 @@ a {
   display: flex;
   align-items: center;
   gap: 9px;
-  font: 900 22px/1 var(--round);
+  font: 600 22px/1 var(--sys);
   text-decoration: none;
 }
 .logo svg {
@@ -155,8 +206,10 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 16px;
-  border-radius: 999px;
+  min-height: 46px;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 8px;
   font: 600 15px/1 var(--sys);
   text-decoration: none;
   border: 0;
@@ -165,46 +218,10 @@ a {
 .pill.dark {
   background: var(--brand);
   color: var(--on-brand);
-  box-shadow: 0 8px 20px -8px rgba(74, 47, 200, 0.6);
 }
 .pill.soft {
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   color: var(--ink);
-}
-.hero-copy {
-  text-align: center;
-  padding-block: 36px 40px;
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-}
-.mark {
-  width: clamp(88px, 11vw, 128px);
-  height: auto;
-  filter: drop-shadow(0 18px 30px rgba(74, 47, 200, 0.35));
-}
-.small-mark {
-  width: 72px;
-}
-.hero-copy h1 {
-  font-size: clamp(42px, 7.2vw, 88px);
-  line-height: 0.98;
-}
-.hero-copy h1 span {
-  background: var(--brand-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.hero-copy h1 .kicker {
-  display: block;
-  margin-bottom: 14px;
-  font-size: clamp(16px, 1.8vw, 19px);
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: 0;
-  background: none;
-  color: var(--ink-2);
 }
 .visually-hidden {
   position: absolute;
@@ -213,10 +230,6 @@ a {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-.move-in {
-  font-size: 14px;
-  color: var(--ink-2);
 }
 .beta {
   font-size: 12px;
@@ -228,33 +241,6 @@ a {
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
-.move-in a {
-  color: var(--accent);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.hero-copy .sub {
-  font-size: clamp(17px, 2vw, 20px);
-  color: var(--ink-2);
-  max-width: 36em;
-}
-.hero-copy .cta {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.hero-copy .cta .pill {
-  padding: 14px 22px;
-  font-size: 16px;
-}
-.brew {
-  font: 13px var(--mono);
-  color: var(--ink-2);
-}
-
-/* Product window: mirrors Lilo's real chrome (tinted frame, white sidebar text, inset content) */
 .window {
   --frame: color-mix(in srgb, var(--tint) 46%, #2b2531);
   max-width: 1080px;
@@ -450,11 +436,7 @@ a {
   flex: 1;
   min-width: 0;
 }
-/* Bands */
-.band {
-  padding-block: 96px;
-  border-top: 1px solid var(--line);
-}
+/* Section content */
 .head {
   display: grid;
   gap: 14px;
@@ -462,8 +444,8 @@ a {
   margin-bottom: 44px;
 }
 .head h2 {
-  font-size: clamp(32px, 4.6vw, 54px);
-  line-height: 1.02;
+  font-size: clamp(36px, 4.6vw, 60px);
+  line-height: 1;
 }
 .head p {
   color: var(--ink-2);
@@ -493,7 +475,7 @@ a {
   border-radius: 12px;
   display: grid;
   place-items: center;
-  font: 900 18px/1 var(--round);
+  font: 600 18px/1 var(--sys);
   color: #1a1a2e;
 }
 .claim h3 {
@@ -646,7 +628,7 @@ a {
   cursor: pointer;
   list-style: none;
   padding: 18px 36px 18px 0;
-  font: 700 18px/1.3 var(--round);
+  font: 500 18px/1.4 var(--sys);
   position: relative;
 }
 .faq-list summary::-webkit-details-marker {
@@ -683,7 +665,7 @@ a {
 /* Builders */
 .build {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 48px;
   align-items: center;
 }
@@ -736,7 +718,7 @@ a {
   padding-block: 10px;
 }
 .matrix tbody th {
-  font: 700 16px/1.3 var(--round);
+  font: 500 16px/1.4 var(--sys);
 }
 .matrix td.n {
   color: var(--ink-2);
@@ -844,7 +826,7 @@ a {
 /* Agents */
 .agents {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 48px;
   align-items: center;
 }
@@ -989,7 +971,7 @@ a {
 .pay .ttl {
   display: block;
   margin: 0;
-  font: 800 22px/1.1 var(--round);
+  font: 500 22px/1.1 var(--sys);
   color: #1f2328;
 }
 .pay .ln {
@@ -1053,21 +1035,27 @@ a {
   white-space: nowrap;
 }
 
-/* Open source end */
-.end {
-  text-align: center;
-  display: grid;
-  justify-items: center;
-  gap: 20px;
-}
-.end h2 {
-  font-size: clamp(36px, 6vw, 72px);
-  line-height: 1;
-}
-.end p {
-  color: var(--ink-2);
-  font-size: 18px;
-  max-width: 34em;
+@media (min-width: 960px) {
+  .build > .head,
+  .agents > .head {
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 40px;
+  }
+  .build > .head > :is(.tag, h2, p),
+  .agents > .head > :is(.tag, h2, p) {
+    grid-column: 1;
+  }
+  .build .feat-list,
+  .agents .ag-list {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    margin-top: 0;
+  }
+  .agents .ag-cta {
+    grid-column: 1 / -1;
+  }
 }
 @media (max-width: 900px) {
   .native,
@@ -1099,7 +1087,6 @@ a {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .top,
   .window,
   .faq-list summary::after {
     transition: none;

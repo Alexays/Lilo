@@ -1,0 +1,3 @@
+kind: Fixed
+body: Ad blockers that use session rules, like uBlock Origin Lite and AdGuard, no longer recompile all their filters at every launch, which took seconds of CPU.
+time: 2026-10-28T01:02:02.098795+01:00

@@ -38,6 +38,30 @@ def inline_text(node):
 
 
 class SiteTests(unittest.TestCase):
+    def test_every_public_page_uses_the_shared_top_sections_and_bottom(self):
+        for page in PAGES + ["404.html"]:
+            with self.subTest(page=page):
+                parsed = tree(DIST / page)
+                main = next(node for node in parsed if node.tag == "main")
+                content = [node for node in main.children
+                           if isinstance(node, Node) and node.tag not in {"script", "style"}]
+                self.assertTrue(all(node.tag == "section" for node in content),
+                                f"Unframed content in {page}")
+                sections = [node for node in main.children
+                            if isinstance(node, Node) and node.tag == "section"]
+                self.assertEqual(sum("page-hero" in node.classes for node in parsed), 1)
+                self.assertEqual(sum("page-end" in node.classes for node in parsed), 1)
+                self.assertIn("page-hero", sections[0].classes)
+                self.assertIn("page-end", sections[-1].classes)
+                for section in sections:
+                    frames = [node for node in section.children
+                              if isinstance(node, Node) and "page-frame" in node.classes]
+                    self.assertEqual(len(frames), 1)
+                    frame = frames[0]
+                    self.assertIn("wrap", frame.classes)
+                    self.assertIn("page-frame", frame.classes)
+                    self.assertNotIn("style", frame.attrs)
+
     def test_page_landmarks_and_navigation(self):
         for page in PAGES + ["404.html"]:
             with self.subTest(page=page):
@@ -55,10 +79,9 @@ class SiteTests(unittest.TestCase):
                 self.assertEqual(len(navigation), 1)
                 links = [node.attrs["href"] for node in nodes(navigation[0]) if node.tag == "a"]
                 home = "/fr/" if page.startswith("fr/") else "/"
-                self.assertEqual(links, [home + "#" + section for section in
-                                        ["native", "extensions", "privacy", "build", "agents"]]
-                                 + [home + "moving/", "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
-                                    home + "changelog/"])
+                self.assertEqual(links, [home + "moving/",
+                                         "https://github.com/Alexays/Lilo/blob/main/docs/README.md",
+                                         home + "changelog/"])
 
     def test_routes_language_alternates_and_markdown_copies(self):
         sitemap = ET.parse(DIST / "sitemap.xml")
@@ -147,7 +170,7 @@ class SiteTests(unittest.TestCase):
     def test_astro_bundles_header_and_keeps_demo_on_home_pages(self):
         shared = {node.attrs["src"] for node in tree(DIST / "changelog/index.html")
                   if node.tag == "script" and "src" in node.attrs}
-        self.assertEqual(len(shared), 1)
+        self.assertEqual(len(shared), 3)
         for page in PAGES:
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
@@ -162,7 +185,7 @@ class SiteTests(unittest.TestCase):
                 sources = {node.attrs["src"] for node in scripts}
                 self.assertTrue(shared.issubset(sources))
                 if page in ["index.html", "fr/index.html"]:
-                    self.assertEqual(len(scripts), 2)
+                    self.assertEqual(len(scripts), 4)
                 else:
                     self.assertEqual(sources, shared)
         self.assertFalse((DIST / "app.js").exists())
