@@ -183,6 +183,18 @@ host.postMessage = (message) => {
 	if (reply) setTimeout(() => window.__lilo?.receive(reply()), 0);
 };
 
+// The native window frame: the Space color around the page, which sits inset with rounded corners (WindowFrameView).
+const frame = document.createElement("style");
+frame.textContent = `
+	html:root { background: var(--sidebar-bg); }
+	body::before {
+		content: ""; position: fixed; z-index: -1;
+		inset: var(--chrome-content-top) var(--chrome-content-right) var(--chrome-content-bottom) var(--chrome-content-left-visible);
+		border-radius: var(--chrome-overlay-boundary-radius); background: #fff;
+	}
+	@media (prefers-color-scheme: dark) { body::before { background: #1e1e1e; } }`;
+document.head.append(frame);
+
 await import("../src/main");
 
 // The overlays' chunk loads after the first frame, and with it the listeners for what follows.
