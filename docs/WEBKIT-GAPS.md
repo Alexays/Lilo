@@ -239,6 +239,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** without Lilo's relay, ProWritingAid's offscreen prefetch frame logs the error at each worker start.
 - **Check:** Manual: not reduced to a test. Repro: an offscreen document frames a web page whose all-frames content script calls `chrome.runtime.sendMessage`. Expected: the worker hears it. Actual: `runtime.lastError` "Tab not found".
 
+### 102. A stopped page logs the lastError of callbacks WebKit no longer runs
+
+- **Gap:** once a closed tab's page stopped, WebKit runs none of its callbacks (`callWithArguments` returns on `activeDOMObjectsAreStopped`), yet `WebExtensionAPIRuntimeBase::reportError` still logs each one's lastError as unchecked, since nothing read it. The content script's messages the tab still sent fail with "Tab not found", so its context records `Unchecked runtime.lastError: Invalid call to runtime.sendMessage(). Tab not found.`. Chrome runs nothing more of a closed tab's page and logs nothing.
+- **Lilo:** a content script's message relay reads the lastError of each callback it runs, so that log comes only from a callback WebKit did not run, and the world's `console.error` drops it ([content-compat-entry.ts]).
+- **Impact:** Immersive Translate and Adblock Ad Blocker Pro, whose content scripts message their worker in a loop, logged the error whenever their tab closed.
+- **Check:** `testAContentScriptOfAClosedTabReportsNothing`. Repro: a content script calls `chrome.runtime.sendMessage('ping', callback)` again from each callback, then its tab closes. Expected: no error. Actual: `Unchecked runtime.lastError: Invalid call to runtime.sendMessage(). Tab not found.`.
+
 ## Pages and web views
 
 ### 5. A suspended web view crashes WebKit's in-flight `scripting.executeScript`

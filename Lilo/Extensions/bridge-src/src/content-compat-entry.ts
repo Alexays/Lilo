@@ -2,7 +2,7 @@
 // APIs WebKit omits there (chrome.storage.managed) are installed here, before the extension's own content scripts.
 import { chromeManifest, home, installStaticChromeCompat } from './shared/static-compat.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
-import { answerAsChrome, relayExternalMessaging } from './shared/message-answers.ts';
+import { answerAsChrome, closedTabMessage, relayExternalMessaging } from './shared/message-answers.ts';
 import { relayFrameMessaging } from './shared/frame-messaging.ts';
 
 // ExtensionBackgroundPreparer writes the extension's frame key over it: it must stay a single string literal.
@@ -56,6 +56,14 @@ if (onMessage) {
 const runtime = (globalThis as any).chrome?.runtime;
 if (runtime && !Object.hasOwn(globalThis, '__liloRuntime')) {
   relayExternalMessaging(runtime);
+  // The relay reads the lastError of each message's callback it runs: WebKit still logs it unchecked for a callback it
+  // no longer runs, once the page of a closed tab stopped. Chrome runs nothing more of that page.
+  const { error } = console;
+  const unchecked = `Unchecked runtime.lastError: ${closedTabMessage}`;
+  console.error = function (this: unknown, ...args: unknown[]) {
+    if (args.length === 1 && args[0] instanceof Error && args[0].message === unchecked) return;
+    error.apply(this, args);
+  };
   relayFrameMessaging(globalThis, runtime, frameKey);
   const { getManifest } = home(runtime);
   if (typeof getManifest === 'function') {
