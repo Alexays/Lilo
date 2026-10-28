@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension page's runtime.sendMessage no longer fails with "Tab not found" when its tab closes as it sends (Wappalyzer, Lightning Autofill), as Chrome runs nothing more of a closed page.
+time: 2026-10-28T18:00:00.000000+01:00

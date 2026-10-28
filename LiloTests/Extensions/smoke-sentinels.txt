@@ -35,4 +35,3 @@ mdnleldcmiljblolnjhpnblkcekpdkpa Requestly: Intercept & Modify HTTP Requests (ta
 pnjaodmkngahhkoihejjehlcdlnohgmp RSS Feed Reader (an options page that navigates to the web)
 pcblbflgdkdfdjpjifeppkljdnaekohj Brisk Teaching - AI that Works Where Teachers Work (hasListeners in content scripts)
 aabcgdmkeabbnleenpncegpcngjpnjkc Easy Auto Refresh (tabs whose url WebKit leaves empty)
-nlmmgnhgdeffjkdckmikfpnddkbbfkkk Lightning Autofill (getManifest content scripts, a closing options page's messages)

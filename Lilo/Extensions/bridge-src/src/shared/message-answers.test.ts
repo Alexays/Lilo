@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { answerAsChrome, frameMark, listensProbe, messagesOnce, relayExternalMessaging } from './message-answers.ts';
+import { answerAsChrome, closedTabMessage, frameMark, lastErrorWithoutAnswer, listensProbe, messagesOnce, relayExternalMessaging } from './message-answers.ts';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
+import { bridgeChrome, installBridgeChrome } from './callbackify.ts';
 
 // As WebKit's: listeners on a prototype every event shares, called with the sender's sendResponse.
 class Event {
@@ -345,5 +346,23 @@ describe("WebKit's ports", () => {
     const wrapped: any = messagesOnce(port, 'state');
     assert.throws(() => wrapped.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
     assert.throws(() => new Port().postMessage(), { message: 'Attempting to use a disconnected port object' }, 'every port of its prototype');
+  });
+});
+
+describe("a closing page's message", () => {
+  it('settles never once WebKit fails it for the tab Lilo closed, as Chrome runs nothing more of a closed page', async () => {
+    const saved = bridgeChrome();
+    installBridgeChrome({ runtime: { lastError: { message: closedTabMessage } } });
+    try {
+      let called = false;
+      lastErrorWithoutAnswer((_message: unknown, callback: () => void) => callback(), () => 'unused', true)('hi', () => { called = true; });
+      const promised = lastErrorWithoutAnswer(() => Promise.reject(new Error(closedTabMessage)), () => 'unused', true)('hi');
+      const settled = await Promise.race([promised.then(() => 'resolved', () => 'rejected'), new Promise((resolve) => setTimeout(() => resolve('pending'), 20))]);
+      assert.equal(called, false);
+      assert.equal(settled, 'pending');
+      await assert.rejects(lastErrorWithoutAnswer(() => Promise.reject(new Error('other')), () => 'unused', true)('hi'), { message: 'other' });
+    } finally {
+      installBridgeChrome(saved);
+    }
   });
 });
