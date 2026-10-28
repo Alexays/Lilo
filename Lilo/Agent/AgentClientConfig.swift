@@ -10,7 +10,7 @@ enum AgentClientConfig {
         init?(clientName: String) {
             switch clientName.lowercased() {
             case "claude-code": self = .claudeCode
-            case "claude-ai": self = .claudeDesktop
+            case "claude-ai", _ where clientName.lowercased().hasPrefix("local-agent-mode-"): self = .claudeDesktop
             case "codex", "codex-mcp-client": self = .codex
             case "cursor", "cursor-vscode": self = .cursor
             default: return nil

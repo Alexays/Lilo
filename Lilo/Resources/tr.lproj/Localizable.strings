@@ -1,0 +1,10 @@
+/* Shortcuts actions and the Focus filter (LiloIntents.swift), keyed by their English text. */
+"Space" = "Alan";
+"Open URL in Lilo" = "URL'yi Lilo'da Aç";
+"Get Current Tab" = "Geçerli Sekmeyi Al";
+"The address of the tab shown in the front Lilo window." = "Öndeki Lilo penceresinde gösterilen sekmenin adresi.";
+"Open Space" = "Alan Aç";
+"Set Lilo Space" = "Lilo Alanını Ayarla";
+"Shows this space in Lilo while the Focus is on." = "Odak açıkken Lilo'da bu alanı gösterir.";
+"No space" = "Alan yok";
+"Current Tab" = "Geçerli Sekme";

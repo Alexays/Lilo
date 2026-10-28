@@ -27,6 +27,10 @@
     ? new Intl.DateTimeFormat(getLocale(), { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${release.date}T00:00:00Z`)) : "");
   let dialog: HTMLDialogElement;
   let heading: HTMLHeadingElement;
+  // Matches the leave animation below.
+  const CLOSE_MS = 160;
+  let closing = $state(false);
+  let closeTimer: ReturnType<typeof setTimeout> | undefined;
 
   onMount(() => {
     let cancelled = false;
@@ -45,14 +49,23 @@
     })();
     return () => {
       cancelled = true;
+      clearTimeout(closeTimer);
       dialog.close();
       if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   });
 
+  function close(): void {
+    if (closing) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { onclose(); return; }
+    closing = true;
+    // A timer, not animationend: reduced power turns the animation off.
+    closeTimer = setTimeout(onclose, CLOSE_MS);
+  }
+
   function handleKeydown(event: KeyboardEvent): void {
     event.stopPropagation();
-    if (event.key === "Escape") { event.preventDefault(); onclose(); return; }
+    if (event.key === "Escape") { event.preventDefault(); close(); return; }
     if (event.key !== "Tab") return;
     const controls = [...dialog.querySelectorAll<HTMLElement>("button:not([disabled]), summary")];
     const index = controls.indexOf(document.activeElement as HTMLElement);
@@ -65,10 +78,11 @@
 <dialog
   bind:this={dialog}
   class="whats-new"
+  class:closing
   aria-labelledby={titleId}
   tabindex="-1"
-  oncancel={(event) => { event.preventDefault(); onclose(); }}
-  onclick={(event) => { if (event.target === dialog) onclose(); }}
+  oncancel={(event) => { event.preventDefault(); close(); }}
+  onclick={(event) => { if (event.target === dialog) close(); }}
   onkeydown={handleKeydown}
   use:reportInteractiveZone={{ id: "whats-new" }}
 >
@@ -80,7 +94,7 @@
             <span class="release-version">{t("whatsNew.version", { version: request.version })}</span>
             {#if date}<span>{date}</span>{/if}
           </div>
-          <button type="button" class="release-close" aria-label={t("common.close")} onclick={onclose}>
+          <button type="button" class="release-close" aria-label={t("common.close")} onclick={close}>
             <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6m0-6-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
           </button>
           <h2 bind:this={heading} id={titleId} tabindex="-1">{editorial?.headline ?? t("whatsNew.title")}</h2>
@@ -119,7 +133,7 @@
 
       <footer>
         <span>{t("whatsNew.reopen")}</span>
-        <button type="button" class="release-continue" onclick={onclose}>{t("whatsNew.continue")}</button>
+        <button type="button" class="release-continue" onclick={close}>{t("whatsNew.continue")}</button>
       </footer>
     </section>
   </div>
@@ -140,7 +154,11 @@
     color: var(--text-primary);
     overflow: hidden;
   }
-  .whats-new::backdrop { background: var(--chrome-overlay-backdrop-tint); }
+  .whats-new::backdrop {
+    background: var(--chrome-overlay-backdrop-tint);
+    animation: release-fade-in var(--motion-duration-normal) var(--motion-ease-standard) both;
+  }
+  .whats-new.closing::backdrop { animation: release-fade-out 160ms var(--motion-ease-standard) both; }
   .whats-new-stage {
     position: absolute;
     top: var(--chrome-content-top);
@@ -167,6 +185,7 @@
     pointer-events: auto;
     animation: release-arrive var(--motion-duration-normal) var(--motion-ease-organic) both;
   }
+  .whats-new.closing .whats-new-sheet { animation: release-leave 160ms var(--motion-ease-standard) both; pointer-events: none; }
   .whats-new-body { min-height: 0; padding: var(--space-24) var(--space-24) 0; overflow-y: auto; overscroll-behavior: contain; }
   header { position: relative; padding-bottom: var(--space-20); }
   .release-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-8); padding-right: var(--space-24); color: var(--text-secondary); font-size: var(--font-size-xs); }
@@ -193,6 +212,9 @@
   .release-continue:hover { background: var(--accent-hover); }
   button:focus-visible, summary:focus-visible { outline: var(--focus-outline); outline-offset: 2px; }
   @keyframes release-arrive { from { opacity: 0; transform: translateY(6px) scale(0.985); } }
-  @media (prefers-reduced-motion: reduce) { .whats-new-sheet { animation: none; } }
+  @keyframes release-leave { to { opacity: 0; transform: translateY(4px) scale(0.985); } }
+  @keyframes release-fade-in { from { opacity: 0; } }
+  @keyframes release-fade-out { to { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .whats-new-sheet, .whats-new::backdrop { animation: none; } }
   @media (max-height: 520px) { .whats-new-stage { padding: var(--space-12); } }
 </style>

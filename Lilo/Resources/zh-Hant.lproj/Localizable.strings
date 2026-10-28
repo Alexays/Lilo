@@ -1,0 +1,10 @@
+/* Shortcuts actions and the Focus filter (LiloIntents.swift), keyed by their English text. */
+"Space" = "空間";
+"Open URL in Lilo" = "在 Lilo 中開啟 URL";
+"Get Current Tab" = "取得目前分頁";
+"The address of the tab shown in the front Lilo window." = "最前方 Lilo 視窗中所顯示分頁的網址。";
+"Open Space" = "開啟空間";
+"Set Lilo Space" = "設定 Lilo 空間";
+"Shows this space in Lilo while the Focus is on." = "專注模式開啟時，在 Lilo 中顯示此空間。";
+"No space" = "無空間";
+"Current Tab" = "目前分頁";

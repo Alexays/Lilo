@@ -236,7 +236,7 @@
 			"language": {
 				"title": "语言",
 				"description": "浏览器界面使用的语言。",
-				"keywords": "语言 翻译 英语 法语 西班牙语 中文 简体中文 葡萄牙语 巴西 俄语 ukrainian українська"
+				"keywords": "语言 翻译 英语 法语 西班牙语 中文 简体中文 葡萄牙语 巴西 俄语 ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {
 				"title": "搜索引擎",
@@ -1328,6 +1328,7 @@
 		"pickTab": "选取要共享的标签页",
 		"search": "搜索标签页",
 		"suggested": "建议",
+		"currentSpace": "当前空间",
 		"playing": "正在播放音频",
 		"share": "共享",
 		"keyHint": "用方向键选择，按 Return 共享",

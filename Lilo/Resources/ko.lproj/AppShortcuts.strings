@@ -1,0 +1,3 @@
+/* Siri and Spotlight phrases of LiloShortcuts (LiloIntents.swift). */
+"Open a space in ${applicationName}" = "${applicationName}에서 스페이스 열기";
+"Get the current tab in ${applicationName}" = "${applicationName}에서 현재 탭 가져오기";

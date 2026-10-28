@@ -20,7 +20,7 @@ extension AgentControl {
         guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
         var space = agentsSpace(in: profileId)
         if space == nil {
-            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#d97757", profileId: profileId)
+            let created = try spaces.createSpace(name: "Agents", icon: "🤖", color: "#795ceb", profileId: profileId)
             let ids = settings.agentsSpaceIds.filter { spaces.space(with: $0) != nil } + [created.id]
             settings.set(Self.agentsSpaceKey, value: ids.map(\.uuidString).joined(separator: ","))
             space = created
@@ -63,7 +63,7 @@ extension AgentControl {
         let (space, host) = try agentSpace(for: session)
         if let id = session.folderId, tabFolder(id, in: space.id) != nil { return (id, space, host) }
         guard create, let commander = host ?? context?.windows.activeWindow else { return (nil, space, host) }
-        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#d97757")
+        let folder = TabFolder(spaceId: space.id, name: folderName(for: session), color: "#795ceb")
         _ = try commander.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))
         session.folderId = folder.id
         return (folder.id, space, host)
@@ -77,7 +77,7 @@ extension AgentControl {
         guard create else { return nil }
         guard let commander = context.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
         let space = try spaces.createSpace(
-            name: folderName(for: session), icon: "🕶️", color: "#d97757", profileId: try agentsProfileId(), isPrivate: true
+            name: folderName(for: session), icon: "🕶️", color: "#795ceb", profileId: try agentsProfileId(), isPrivate: true
         )
         context.browserState.storeSpace(id: space.id, snapshot: commander.restoredSpaceSnapshot(for: space))
         session.isolatedSpaceId = space.id

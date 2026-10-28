@@ -118,7 +118,7 @@
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
-    <div class="space-content" style={`--space-row-reserve: ${spaceRowEndWidth ? spaceRowEndWidth + 8 : 0}px;`}>
+    <div class="space-content" class:page-buttons={!isAddressVisible()} style={`--space-row-reserve: ${spaceRowEndWidth ? spaceRowEndWidth + 8 : 0}px;`}>
       <!-- Over the Space header but outside the pages: it does not swipe, it is about the page and the Mac. -->
       <div class="space-row-end" bind:clientWidth={spaceRowEndWidth}>
         <KeepAwakeIndicator />
@@ -205,6 +205,11 @@
     height: var(--page-toolbar-height);
   }
 
+  /* Without the address under it, the header shares the lights' compact 40pt line. */
+  :global(html[data-tab-position='left'][data-address='hidden']) .sidebar-header {
+    height: var(--page-toolbar-height);
+  }
+
   .compact-header .sidebar-header :global(.nav-controls) {
     flex: none;
     margin-left: auto;
@@ -240,9 +245,14 @@
 
   /* Like the address bar, the page's buttons show on hover; only the extensions stay out. */
   .space-content:has(:global(.space-label:hover), .space-row-end:hover, .space-row-end:focus-within) :global(.url-actions-reveal) {
-    max-width: 120px;
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+
+  /* They land on the name's edit pencil, which the whole name already stands for. */
+  .page-buttons :global(.space-edit-icon) {
+    display: none;
   }
 
   .space-track {

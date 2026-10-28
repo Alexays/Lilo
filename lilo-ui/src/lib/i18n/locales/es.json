@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Idioma",
 				"description": "Idioma de la interfaz del navegador.",
-				"keywords": "idioma traducción inglés francés español portugués brasil ruso ukrainian українська"
+				"keywords": "idioma traducción inglés francés español portugués brasil ruso ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {
 				"title": "Buscador",
@@ -1328,6 +1328,7 @@
 		"pickTab": "Elige una pestaña para compartir",
 		"search": "Buscar pestañas",
 		"suggested": "Sugeridas",
+		"currentSpace": "Espacio actual",
 		"playing": "Reproduciendo audio",
 		"share": "Compartir",
 		"keyHint": "Flechas para elegir, Retorno para compartir",

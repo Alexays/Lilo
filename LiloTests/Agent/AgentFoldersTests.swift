@@ -287,6 +287,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertFalse(engine.isAgentControlled)
         XCTAssertNil(engine.agentViewport)
         XCTAssertEqual(engine.view.frame, window.contentContainerView.bounds, "the page keeps the agent's viewport and runs past the window")
+        XCTAssertEqual(engine.view.layer?.cornerRadius, 0, "the window frame rounds a page that fills it")
     }
 
     func testAgentLeavesAViewShownInAnotherWindowWhereItIs() async throws {
