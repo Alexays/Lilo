@@ -103,6 +103,24 @@ final class TabDockControllerTests: XCTestCase {
         XCTAssertNil(controller.pictureInPictureOpenerId)
     }
 
+    func testReplacingADockedPiPKeepsTheSlot() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        var cleared = 0
+        controller.onDockCleared = { cleared += 1 }
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
+        let next = NSView()
+        let nextOpener = UUID()
+
+        controller.dockPictureInPicture(next, openerId: nextOpener, in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertEqual(cleared, 0, "tearing the chrome slot down and up again could float the new PiP window")
+        XCTAssertEqual(controller.pictureInPictureOpenerId, nextOpener)
+        XCTAssertEqual(next.frame.size, NSSize(width: 228, height: 300))
+    }
+
     func testDockingATabOverADockedPiPHandsThePiPBack() {
         let controller = TabDockController()
         controller.sidebarWidth = 240

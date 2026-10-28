@@ -1384,7 +1384,11 @@ extension WKWebViewTab: WKNavigationDelegate {
     // WebKit calls the reason-carrying variant below when it is implemented and this one otherwise,
     // never both; this stays as the fallback should the private selector ever go away.
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        onMain { $0.recoverFromContentProcessTermination() }
+        onMain { tab in
+            // The PiP window shares the page's process: it would stay blank over everything.
+            tab.documentPiPCloser?()
+            tab.recoverFromContentProcessTermination()
+        }
     }
 
     // Same event with the reason (WKNavigationDelegatePrivate): the app's own lifecycle trimming

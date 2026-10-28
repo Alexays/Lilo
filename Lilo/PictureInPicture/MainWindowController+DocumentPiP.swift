@@ -37,10 +37,12 @@ extension MainWindowController {
     /// another screen stays there.
     func placeDocumentPiP() {
         guard let webView = documentPiP.webView, let openerId = documentPiP.openerId else { return }
-        let panelScreen = documentPiP.panelScreen
+        // Shown counts split panes and other windows: beside its own page, the PiP window floats.
+        let isShown = tabManager.activeOpenTabId == openerId || context.browserState.displayedTabIds.contains(openerId)
+        let movedToScreen = documentPiP.movedToScreen
         if let contentView = window?.contentView, NSApp.isActive, window?.isVisible == true, tabLayout.position.isVertical,
-           context.settingsStore?.dockCallsInSidebar == true, tabManager.activeOpenTabId != openerId,
-           panelScreen == nil || panelScreen == window?.screen {
+           context.settingsStore?.dockCallsInSidebar == true, !isShown,
+           movedToScreen == nil || movedToScreen == window?.screen {
             documentPiP.hidePanel()
             tabDock.sidebarWidth = sidebarWidth
             tabDock.sidebarOnRight = tabLayout.position == .right
@@ -48,7 +50,7 @@ extension MainWindowController {
             tabDock.dockPictureInPicture(webView, openerId: openerId, in: contentView, above: chromeWebView, chromeView: chromeWebView)
             setPipDockActive(true, title: tabManager.engineTab(for: openerId)?.currentTitle ?? "")
         } else {
-            if tabDock.pictureInPictureOpenerId == openerId { tabDock.undock() }
+            if tabDock.pictureInPictureOpenerId != nil { tabDock.undock() }
             documentPiP.float()
         }
     }

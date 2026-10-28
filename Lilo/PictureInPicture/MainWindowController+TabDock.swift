@@ -29,9 +29,10 @@ extension MainWindowController {
         }
         tabDock.onPictureInPictureSlotLost = { [weak self] in self?.documentPiP.float() }
         documentPiP.onReturnToTab = { [weak self] openerId in self?.switchToRecentTab(openerId) }
-        documentPiP.onClosed = { [weak self] openerId in
+        documentPiP.onClosed = { [weak self] openerId, replaced in
             self?.context.browserState.pictureInPictureOpenerIds.remove(openerId)
-            if self?.tabDock.pictureInPictureOpenerId == openerId { self?.tabDock.undock() }
+            // A replacement is placed right after, docked over this one's slot or floating.
+            if !replaced, self?.tabDock.pictureInPictureOpenerId == openerId { self?.tabDock.undock() }
         }
     }
 

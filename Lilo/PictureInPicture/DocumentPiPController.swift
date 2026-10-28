@@ -10,11 +10,14 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     private(set) var openerId: UUID?
     /// Opened by Lilo when its tab was left rather than by the page: returning to the tab closes it.
     var wasAutoEntered = false
-    var onClosed: ((UUID) -> Void)?
+    /// The opener's id, and whether a new PiP window replaces this one (the dock then keeps its slot).
+    var onClosed: ((UUID, Bool) -> Void)?
     /// The hover bar's back button: the window shows the opener's tab, in whatever space it lives.
     var onReturnToTab: ((UUID) -> Void)?
 
     private weak var opener: WKWebViewTab?
+    /// The screen the user dragged the panel to, while it stays open: it then stays there rather than docking.
+    private(set) var movedToScreen: NSScreen?
     private var panel: NSPanel?
     private let content = PiPContentView()
 
@@ -35,7 +38,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     /// The popup WebKit hands back to the page as its PiP window, shown in the floating panel at the corner it
     /// last had on the screen under the pointer.
     func open(configuration: WKWebViewConfiguration, size: NSSize, opener: WKWebViewTab) -> WKWebView {
-        close()
+        close(replacing: true)
         let contentSize = size.width > 0 && size.height > 0 ? size : Self.defaultSize
         let webView = WKWebView(frame: NSRect(origin: .zero, size: contentSize), configuration: configuration)
         webView.uiDelegate = self
@@ -69,9 +72,6 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         panel?.orderOut(nil)
     }
 
-    /// The screen of the floating panel, while it shows.
-    var panelScreen: NSScreen? { panel?.isVisible == true ? panel?.screen : nil }
-
     /// `window.resizeTo` sizes the whole window, as the page reads it from `outerWidth` and `outerHeight`; the
     /// panel keeps its corner.
     func resize(to size: NSSize) {
@@ -86,6 +86,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         let snapped = Self.snappedFrame(panel.frame, in: screen.visibleFrame)
         panel.setFrame(snapped, display: true, animate: true)
         UserDefaults.standard.set(NSStringFromRect(snapped), forKey: Self.frameKey(for: screen))
+        movedToScreen = screen
     }
 
     func returnToTab() {
@@ -96,17 +97,22 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
 
     /// Closes the PiP window: the page gets `pagehide` on it, and `documentPictureInPicture.window` goes back to null.
     func close() {
+        close(replacing: false)
+    }
+
+    private func close(replacing: Bool) {
         guard let webView, let openerId else { return }
         self.webView = nil
         self.openerId = nil
         wasAutoEntered = false
+        movedToScreen = nil
         opener?.documentPiPCloser = nil
         opener = nil
         webView.uiDelegate = nil
         webView.perform(NSSelectorFromString("_close"))
         webView.removeFromSuperview()
         panel?.orderOut(nil)
-        onClosed?(openerId)
+        onClosed?(openerId, replacing)
     }
 
     /// `frame` moved to the corner of `visibleFrame` nearest its center, `screenMargin` inside.
@@ -125,7 +131,15 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         NSSize(width: max(160, min(size.width, visibleFrame.width / 2)), height: max(120, min(size.height, visibleFrame.height / 2)))
     }
 
-    static func frameKey(for screen: NSScreen) -> String { "LiloDocumentPiPFrame." + screen.localizedName }
+    /// Per display, not per model name: two monitors of one model each keep their own corner.
+    static func frameKey(for screen: NSScreen) -> String {
+        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue(),
+              let identifier = CFUUIDCreateString(nil, uuid) as String? else {
+            return "LiloDocumentPiPFrame." + screen.localizedName
+        }
+        return "LiloDocumentPiPFrame." + identifier
+    }
 
     private func makePanel() -> NSPanel {
         // Borderless: the page fills the window, Lilo's controls show over it on hover. Non-activating: muting the

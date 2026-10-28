@@ -57,10 +57,22 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(panel.styleMask.contains(.nonactivatingPanel))
         XCTAssertEqual(panel.sharingType, .none, "the PiP window stays out of the user's own screen share")
         XCTAssertEqual(panel.level, .floating)
-        XCTAssertTrue(panel.collectionBehavior.contains(.canJoinAllSpaces), "\(panel.collectionBehavior.rawValue) \(panel === NSApp.windows.first { $0.delegate === controller })")
-        XCTAssertTrue(panel.collectionBehavior.contains(.fullScreenAuxiliary))
         XCTAssertEqual(panel.contentLayoutRect.size, NSSize(width: 300, height: 356))
         XCTAssertEqual(controller.openerId, tab.id)
+    }
+
+    func testThePanelJoinsEverySpaceAndFullScreenApps() {
+        let opener = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let controller = DocumentPiPController()
+        defer { controller.close(); opener.teardown() }
+
+        let webView = controller.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: opener)
+
+        // Read before the run loop turns: the test host makes every window transient on each app update.
+        let behavior = webView.window?.collectionBehavior ?? []
+        webView.window?.alphaValue = 0
+        XCTAssertTrue(behavior.contains(.canJoinAllSpaces), "\(behavior.rawValue)")
+        XCTAssertTrue(behavior.contains(.fullScreenAuxiliary))
     }
 
     func testResizeToResizesThePanel() async throws {
@@ -153,7 +165,7 @@ final class DocumentPiPControllerTests: XCTestCase {
         _ = try await requestWindow(tab)
         let panel = try XCTUnwrap(panel)
         var closedFor: UUID?
-        controller.onClosed = { closedFor = $0 }
+        controller.onClosed = { id, _ in closedFor = id }
 
         _ = try await tab.wkWebView.evaluateJavaScript("window.__pip.close(); true")
 
@@ -191,6 +203,25 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertFalse(popup.configuration.websiteDataStore.isPersistent)
     }
 
+    func testACrashedOpenerClosesItsPiP() async throws {
+        let tab = await makeTab()
+        _ = try await requestWindow(tab)
+
+        tab.webViewWebContentProcessDidTerminate(tab.wkWebView)
+
+        let closed = await pollUntil(timeout: 5) { self.controller.webView == nil }
+        XCTAssertTrue(closed, "a PiP window of a dead page would stay blank over everything")
+    }
+
+    func testTheRememberedCornerBelongsToTheDisplayNotItsModelName() throws {
+        let screen = try XCTUnwrap(NSScreen.main)
+        let number = try XCTUnwrap(screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)
+        let uuid = try XCTUnwrap(CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue())
+        let identifier = try XCTUnwrap(CFUUIDCreateString(nil, uuid) as String?)
+
+        XCTAssertEqual(DocumentPiPController.frameKey(for: screen), "LiloDocumentPiPFrame." + identifier, "two monitors of one model are two displays")
+    }
+
     func testAgentTabsAreRefused() async throws {
         let tab = await makeTab()
         tab.isAgentControlled = true
@@ -225,22 +256,19 @@ final class DocumentPiPControllerTests: XCTestCase {
         return (browserContext, window, engine)
     }
 
-    func testLeavingACallTabBySwitchingSpacesStillOpensItsPiP() async throws {
-        let (browserContext, window, engine) = try await makeWindowTab("""
-        <script>
-        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => documentPictureInPicture.requestWindow({ width: 300, height: 300 }));
-        </script>
-        """)
-        engine.callControls.hasPictureInPictureAction = true
+    func testACallTabParkedByASpaceSwitchCanStillAnswerTheAutomaticOpening() async throws {
+        let (browserContext, window, engine) = try await makeWindowTab("")
         let profileId = try XCTUnwrap(window.tabManager.profileId)
         let other = try browserContext.context.spaceManager.createSpace(name: "Other", profileId: profileId)
         window.switchToSpace(other.id)
+        XCTAssertNil(browserContext.context.windows.windowAndEngine(for: engine.wkWebView), "parked: no window shows it")
+        window.awaitingDocumentPiP = engine
 
-        window.autoEnterDocumentPiP(engine)
+        let allowed = MainWindowController.prepareDocumentPiP(
+            in: browserContext.context, webView: engine.wkWebView, size: NSSize(width: 300, height: 300), userActivated: false)
 
-        // A parked page answers slowly under load: the default timeout.
-        let opened = await pollUntil { window.documentPiP.webView != nil }
-        XCTAssertTrue(opened, "a space switch parks the call tab before its page answers")
+        XCTAssertTrue(allowed, "a space switch parks the call tab before its page answers")
+        XCTAssertEqual(engine.pendingDocumentPiPSize, NSSize(width: 300, height: 300))
     }
 
     func testReturningToTheTabClosesAnAutoEnteredPiPOnly() async throws {
@@ -271,6 +299,24 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(opened)
         XCTAssertTrue(window.documentPiP.wasAutoEntered)
         XCTAssertNil(window.awaitingDocumentPiP)
+    }
+
+    func testAPageAnsweringAfterTheUserCameBackOpensNothing() async throws {
+        let (_, window, engine) = try await makeWindowTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => setTimeout(() => {
+          documentPictureInPicture.requestWindow({ width: 300, height: 300 }).catch(e => { window.late = e.name; });
+        }, 300));
+        </script>
+        """)
+        engine.callControls.hasPictureInPictureAction = true
+
+        window.autoEnterDocumentPiP(engine)
+        window.showContentView(for: engine)
+
+        let answered = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("window.late")) as? String == "NotAllowedError" }
+        XCTAssertTrue(answered, "the user is back on the call: a late answer opens no window over it")
+        XCTAssertNil(window.documentPiP.webView)
     }
 
     func testNoWindowWithinTheDelayStopsWaiting() async throws {

@@ -99,8 +99,9 @@ final class TabDockController {
         if let docked = engine {
             undock()
             onSlotLost?(docked)
-        } else if pictureInPictureView !== view {
-            undock()
+        } else if let previous = pictureInPictureView, previous !== view {
+            // A PiP window replacing another keeps the slot: no teardown for the chrome to report late.
+            previous.removeFromSuperview()
         }
         pictureInPictureView = view
         pictureInPictureOpenerId = openerId
