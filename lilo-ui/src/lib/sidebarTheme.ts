@@ -111,7 +111,7 @@ function linearize(channel: number): number {
 }
 
 // OKLab, with Bjorn Ottosson's matrices.
-function toOklab(color: RGB): [number, number, number] {
+export function toOklab(color: RGB): [number, number, number] {
 	const [r, g, b] = [linearize(color.r), linearize(color.g), linearize(color.b)];
 	const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
 	const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);

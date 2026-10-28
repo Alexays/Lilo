@@ -327,6 +327,7 @@
                         url={bookmark.url}
                         size={18}
                         radius={5}
+                        asleep={bookmark.isClosed}
                       />
                     {/if}
                   </div>
@@ -553,11 +554,6 @@
 
   .bookmark-tile.editing {
     box-shadow: 0 0 0 2px var(--accent);
-  }
-
-  .bookmark-tile.closed .bookmark-icon-inner {
-    filter: grayscale(1);
-    opacity: 0.55;
   }
 
   @media (prefers-reduced-motion: reduce) {

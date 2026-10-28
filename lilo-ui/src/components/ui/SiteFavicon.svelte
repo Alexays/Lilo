@@ -1,9 +1,13 @@
 <script lang="ts" module>
-  import { contrastRatio, parseHexColor, relativeLuminance, type RGB } from "../../lib/sidebarTheme";
+  import { contrastRatio, parseHexColor, relativeLuminance, toOklab, type RGB } from "../../lib/sidebarTheme";
 
   const SAMPLE_SIZE = 16;
-  // A dark glyph drawn on transparency, under this contrast with a dark sidebar, sits on a chip.
-  const CHIP_CONTRAST = 2;
+  // A glyph on transparency under this contrast with a dark sidebar, and close to its hue, gets help.
+  const GLYPH_CONTRAST = 2;
+  // OKLab (a, b) distance from which a glyph's hue alone sets it apart from the sidebar.
+  const HUE_SEPARATION = 0.15;
+  // OKLab chroma under which a glyph is monochrome: it takes the text color, a colored one keeps its brand on a chip.
+  const MONOCHROME_CHROMA = 0.04;
   // The luminance under which a sidebar counts as dark, as in ensureContrast.
   const DARK_SIDEBAR_LUMINANCE = 0.18;
   // Per source: the average color of a glyph on transparency, null for an icon with its own background.
@@ -48,9 +52,10 @@
     url?: string;
     size?: number;
     radius?: number;
+    asleep?: boolean;
   }
 
-  let { src, title = "", url = "", size = 16, radius = 4 }: Props = $props();
+  let { src, title = "", url = "", size = 16, radius = 4, asleep = false }: Props = $props();
 
   // Which source failed to decode, rather than a boolean reset by an effect: a new src clears
   // the fallback on its own, and every favicon in the sidebar saves an effect.
@@ -59,18 +64,19 @@
   const imageSource = $derived(src?.trim() || "");
   const imageFailed = $derived(failedSource !== "" && failedSource === imageSource);
   let loadedSource = $state("");
-  const needsChip = $derived.by(() => {
-    if (loadedSource !== imageSource) return false;
-    const glyph = glyphColors.get(imageSource);
+  const glyph = $derived(loadedSource === imageSource ? glyphColors.get(imageSource) ?? null : null);
+  const treatment = $derived.by((): "none" | "chip" | "recolor" => {
     const background = parseHexColor(themeSidebarBackground());
-    if (!glyph || !background) return false;
-    const backgroundLuminance = relativeLuminance(background);
-    return (
-      backgroundLuminance < DARK_SIDEBAR_LUMINANCE &&
-      relativeLuminance(glyph) <= backgroundLuminance &&
-      contrastRatio(glyph, background) < CHIP_CONTRAST
-    );
+    if (asleep || !glyph || !background) return "none";
+    if (relativeLuminance(background) >= DARK_SIDEBAR_LUMINANCE || contrastRatio(glyph, background) >= GLYPH_CONTRAST) return "none";
+    const [, glyphA, glyphB] = toOklab(glyph);
+    const [, sidebarA, sidebarB] = toOklab(background);
+    if (Math.hypot(glyphA - sidebarA, glyphB - sidebarB) >= HUE_SEPARATION) return "none";
+    return Math.hypot(glyphA, glyphB) < MONOCHROME_CHROMA ? "recolor" : "chip";
   });
+  // A glyph on transparency sleeps as a silhouette in the muted text color; an opaque icon greys out.
+  const silhouette = $derived(asleep && glyph !== null);
+  const maskColor = $derived(silhouette ? "var(--text-muted)" : treatment === "recolor" ? "var(--text-primary)" : "");
 
   const fallbackGlyph = $derived.by((): string => {
     for (const candidate of [url, title, imageSource]) {
@@ -100,8 +106,11 @@
 <div
   class="site-favicon"
   class:is-fallback={!imageSource || imageFailed}
-  class:has-chip={needsChip}
-  style={`--favicon-size:${size}px; --favicon-radius:${radius}px; --favicon-hue:${fallbackHue};`}
+  class:has-chip={treatment === "chip"}
+  class:is-masked={maskColor !== ""}
+  class:is-asleep={asleep && !silhouette}
+  style={`--favicon-size:${size}px; --favicon-radius:${radius}px; --favicon-hue:${fallbackHue};` +
+    (maskColor ? ` --favicon-mask:url(${JSON.stringify(imageSource)}); --favicon-mask-color:${maskColor};` : "")}
   aria-hidden="true"
 >
   {#if imageSource && !imageFailed}
@@ -156,6 +165,21 @@
   .site-favicon.has-chip {
     padding: calc(var(--favicon-size) / 10);
     background: color-mix(in srgb, var(--sidebar-contrast) 14%, transparent);
+  }
+
+  /* The glyph's own shape filled with one color; the image stays in place for its load events. */
+  .site-favicon.is-masked {
+    background: var(--favicon-mask-color);
+    mask: var(--favicon-mask) center / contain no-repeat;
+  }
+
+  .site-favicon.is-masked .site-favicon-image {
+    visibility: hidden;
+  }
+
+  .site-favicon.is-asleep {
+    filter: grayscale(1);
+    opacity: 0.55;
   }
 
   .site-favicon-image {

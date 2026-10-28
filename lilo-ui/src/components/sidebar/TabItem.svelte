@@ -529,6 +529,7 @@
           url={tab.url}
           size={16}
           radius={4}
+          asleep={tab.isClosed}
         />
       </div>
     {/if}
@@ -702,7 +703,8 @@
     font-style: italic;
   }
 
-  .tab-item.closed .tab-icon {
+  /* A favicon greys itself out: a glyph on transparency sleeps as a silhouette instead. */
+  .tab-item.closed .tab-icon:not(:has(.site-favicon)) {
     filter: grayscale(1);
     opacity: 0.55;
   }

@@ -557,7 +557,40 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff"]) {
 	}
 }
 
-test("a dark glyph on transparency sits on a chip on a dark Space, an opaque icon keeps its own background", async ({ page }) => {
+test("a black glyph takes the text color on a dark Space, a saturated one set apart by its hue is left alone", async ({ page }) => {
+	const black = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR42mNgGAWM6AKCgoL/8Wl4//49ih4mSl0wasBgMGAUMDAAALBxBBDHDMzWAAAAAElFTkSuQmCC";
+	const purple = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR42mNgGAWM6AJxih/+49Ow6L4Aih4mSl0wasBgMGAUMDAAANfxBBBBVUnEAAAAAElFTkSuQmCC";
+	const world = initialWorld();
+	world.spaces[0].color = "#363a75";
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab, index) =>
+		index === 0 ? { ...tab, faviconDataURL: black } : index === 1 ? { ...tab, faviconDataURL: purple } : tab,
+	);
+	await page.emulateMedia({ colorScheme: "dark" });
+	await bootChrome(page, world);
+
+	const [first, second] = world.tabsBySpace[SPACE_1];
+	await expect(page.locator(`.tab-list [data-tab-id="${first.id}"] .site-favicon`)).toHaveClass(/is-masked/);
+	const saturated = page.locator(`.tab-list [data-tab-id="${second.id}"] .site-favicon`);
+	await expect(saturated.locator("img")).toHaveJSProperty("complete", true);
+	await expect(saturated).not.toHaveClass(/has-chip|is-masked/);
+});
+
+test("a sleeping glyph shows as a silhouette, a sleeping opaque icon greys out", async ({ page }) => {
+	const purple = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAJ0lEQVR42mNgGAWM6AJxih/+49Ow6L4Aih4mSl0wasBgMGAUMDAAANfxBBBBVUnEAAAAAElFTkSuQmCC";
+	const opaque = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGNQU/H4TwlmGDVg1IBRA4aLAQBkM5EQwEVXkAAAAABJRU5ErkJggg==";
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = world.tabsBySpace[SPACE_1].map((tab) =>
+		tab.id === "tab-home" ? { ...tab, isClosed: true, faviconDataURL: purple } : tab.id === "tab-wiki" ? { ...tab, isClosed: true, faviconDataURL: opaque } : tab,
+	);
+	await bootChrome(page, world);
+
+	await expect(page.locator('[data-tab-id="tab-home"] .site-favicon')).toHaveClass(/is-masked/);
+	const greyed = page.locator(".bookmark-tile .site-favicon").first();
+	await expect(greyed).toHaveClass(/is-asleep/);
+	await expect(greyed).not.toHaveClass(/is-masked/);
+});
+
+test("a dark colored glyph on transparency sits on a chip on a dark Space, an opaque icon keeps its own background", async ({ page }) => {
 	const glyph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGklEQVR4nGNgGAUYQE3F4z8+PGrAyDBgBAIAXBVkQdcEF9cAAAAASUVORK5CYII=";
 	const opaque = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGNQU/H4TwlmGDVg1IBRA4aLAQBkM5EQwEVXkAAAAABJRU5ErkJggg==";
 	const world = initialWorld();
