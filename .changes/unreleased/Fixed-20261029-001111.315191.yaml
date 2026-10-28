@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fix a rare crash in a terminal that prints for a long time.
+time: 2026-10-29T00:11:11.315191+01:00
