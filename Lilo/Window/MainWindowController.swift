@@ -228,6 +228,7 @@ final class MainWindowController: NSWindowController {
     var sidebarWidth: CGFloat = MainWindowController.defaultSidebarWidth
     var sidebarExpandedWidth: CGFloat = MainWindowController.defaultSidebarWidth
     var sidebarVisible = true
+    var toolbarVisible = true
     var tabLayout = TabLayout.cached
     var sidebarOverlayVisible = false
     var sidebarCollapseLocked = false

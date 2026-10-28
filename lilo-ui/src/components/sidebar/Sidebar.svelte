@@ -113,7 +113,7 @@
       <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
       <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    {#if isAddressVisible() && !(isSidebarVisible() && isAddressInPageToolbar())}
+    {#if isAddressVisible() && !isAddressInPageToolbar()}
       <URLDisplay />
     {/if}
 

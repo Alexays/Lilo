@@ -10,7 +10,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
-        for key in ["cachedSidebarWidth", "cachedSidebarVisible", "cachedTabPosition", "cachedAddressPlacement"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
+        for key in ["cachedSidebarWidth", "cachedSidebarVisible", "cachedToolbarVisible", "cachedTabPosition", "cachedAddressPlacement"] { savedDefaults[key] = UserDefaults.lilo.object(forKey: key) }
         browserContext = try await TemporaryBrowserContext()
     }
 
@@ -94,6 +94,50 @@ final class WindowChromeLayoutTests: XCTestCase {
             layOut(window, position)
             XCTAssertEqual(window.contentEdges(), .uniform(8), "\(position)")
         }
+    }
+
+    func testTheAddressToolbarHidesApartFromTheTabs() throws {
+        let window = try makeSizedWindow()
+        layOut(window, .left, address: .page)
+        let sidebar = window.contentEdges().left
+
+        window.toggleToolbar()
+        XCTAssertEqual(window.contentEdges(), ContentEdges(left: sidebar, right: 8, top: 8, bottom: 8), "the sidebar stays")
+        XCTAssertEqual(window.window?.toolbarStyle, .unified, "the lights go back to the sidebar's 52pt header")
+        window.toggleToolbar()
+        window.toggleSidebar()
+        XCTAssertEqual(window.contentEdges(), ContentEdges(left: 8, right: 8, top: 40, bottom: 8), "the toolbar stays")
+        XCTAssertTrue(window.areTrafficLightsVisible(), "on the toolbar's line")
+
+        layOut(window, .top, address: .page)
+        XCTAssertEqual(window.contentEdges().top, 40, "the address row without the strip")
+        window.toggleSidebar()
+        window.toggleToolbar()
+        XCTAssertEqual(window.contentEdges().top, 40, "the strip without the address row")
+        window.toggleToolbar()
+    }
+
+    func testTheTabsOwnToolbarGoesWithThem() throws {
+        let window = try makeSizedWindow()
+        for position in [TabPosition.right, .bottom] {
+            layOut(window, position, address: .page)
+            let edges = window.contentEdges()
+            window.toggleToolbar()
+            XCTAssertTrue(window.toolbarVisible, "\(position): it holds the traffic lights")
+            XCTAssertEqual(window.contentEdges(), edges, "\(position)")
+        }
+    }
+
+    func testMovingToAnAddressToolbarShowsIt() throws {
+        let window = try makeSizedWindow()
+        layOut(window, .left, address: .page)
+        window.toggleToolbar()
+
+        window.applyTabLayout(.default, animated: false)
+        window.applyTabLayout(TabLayout(position: .left, address: .page), animated: false)
+
+        XCTAssertTrue(window.toolbarVisible)
+        XCTAssertEqual(window.contentEdges().top, 40)
     }
 
     func testFullScreenKeepsTheToolbarRow() throws {

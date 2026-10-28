@@ -108,6 +108,7 @@ extension AppDelegate {
 
         let viewMenu = submenu("View".localized, in: mainMenu)
         viewMenu.add("Hide Sidebar".localized, #selector(MainWindowController.toggleSidebarVisibility(_:)), icon: .sidebar, shortcut: "sidebar.toggle")
+        viewMenu.add("Hide Toolbar".localized, #selector(MainWindowController.toggleToolbarVisibility(_:)), icon: .toolbar, shortcut: "toolbar.toggle")
         viewMenu.add("Enter Full Screen".localized, #selector(NSWindow.toggleFullScreen(_:)), icon: .fullScreen, shortcut: "window.fullScreen")
         viewMenu.addItem(.separator())
         viewMenu.add("Reload Page".localized, #selector(MainWindowController.reloadCurrentPage(_:)), icon: .reload, shortcut: "page.reload")

@@ -1,0 +1,3 @@
+kind: Added
+body: With the address in a toolbar over the page, tabs on the left or the top, View > Hide Toolbar (Option-Command-T) hides that toolbar on its own, and hiding the sidebar or the tab strip now leaves the toolbar in place.
+time: 2026-10-28T20:02:18.972465+01:00

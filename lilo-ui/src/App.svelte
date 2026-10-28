@@ -28,7 +28,7 @@
     showSidebarOverlay,
   } from "./stores/ui.svelte";
   import { reportInteractiveZone } from "./lib/actions/interactiveZone";
-  import { getAddressPlacement, getTabPosition, hasPageToolbar, isVerticalLayout } from "./stores/tabLayout.svelte";
+  import { getTabPosition, hasPageToolbar, isPageToolbarShown, isVerticalLayout } from "./stores/tabLayout.svelte";
   import { isLiftingTabs } from "./stores/tabEdgeDrag.svelte";
   import { createFrameScheduler } from "./lib/motion/frameScheduler";
   import { clearAllHover } from "./lib/hoverClear";
@@ -319,10 +319,10 @@
     use:reportInteractiveZone={{ id: "content-inset-zone", active: !isSidebarVisible() || (!hasPageToolbar() && isVerticalLayout()) }}
   ></div>
 
-  {#if isSidebarVisible() && (hasPageToolbar() || (getTabPosition() === "top" && getAddressPlacement() === "page"))}
+  {#if isPageToolbarShown()}
     <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
     {#await import("./components/page/PageToolbar.svelte") then toolbar}
-      <toolbar.default row={getTabPosition() === "top"} />
+      <toolbar.default row={getTabPosition() === "top" && isSidebarVisible()} />
     {/await}
   {/if}
 

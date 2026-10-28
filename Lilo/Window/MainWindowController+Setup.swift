@@ -73,7 +73,10 @@ extension MainWindowController {
         let sidebarWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: sidebarWidthRange) : defaultSidebarWidth
         let bgColor = UserDefaults.lilo.string(forKey: cachedWindowBgColorKey) ?? ""
         webView.configuration.userContentController.addUserScript(
-            buildBootstrapScript(sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor, tabLayout: .cached)
+            buildBootstrapScript(
+                sidebarWidth: sidebarWidth, windowBackgroundColor: bgColor,
+                tabLayout: TabLayout.cached.shown(toolbarVisible: UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true)
+            )
         )
         webView.load(URLRequest(url: ChromeUISchemeHandler.indexURL))
         _preloadedWebView = webView
@@ -85,6 +88,7 @@ extension MainWindowController {
         let cachedBgColor = UserDefaults.lilo.string(forKey: Self.cachedWindowBgColorKey)
 
         sidebarVisible = UserDefaults.lilo.object(forKey: "cachedSidebarVisible") as? Bool ?? true
+        toolbarVisible = UserDefaults.lilo.object(forKey: "cachedToolbarVisible") as? Bool ?? true
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
         sidebarWidth = fittedSidebarWidth
@@ -97,12 +101,16 @@ extension MainWindowController {
         // The window shows before the database opens, laid out from the UserDefaults mirror.
         if let settings = context.settingsStore {
             let dbVisible = settings.sidebarVisible
+            let dbToolbarVisible = settings.toolbarVisible
             let dbWidth = CGFloat(settings.sidebarWidth).clamped(to: Self.sidebarWidthRange)
-            if sidebarVisible != dbVisible || sidebarExpandedWidth != dbWidth {
+            if sidebarVisible != dbVisible || toolbarVisible != dbToolbarVisible || sidebarExpandedWidth != dbWidth {
                 sidebarVisible = dbVisible
+                toolbarVisible = dbToolbarVisible
                 sidebarExpandedWidth = dbWidth
                 UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
+                UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
                 UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
+                applyTitlebarStyle()
                 applySidebarLayout(animated: false, syncTrafficLights: true)
             }
             let dbLayout = settings.tabLayout
@@ -719,6 +727,7 @@ extension MainWindowController {
             "activeTabId": tabManager.activeOpenTabId?.uuidString ?? "",
             "sidebarWidth": sidebarExpandedWidth,
             "sidebarVisible": sidebarVisible,
+            "toolbarVisible": toolbarVisible,
             "trafficLightsVisible": areTrafficLightsVisible(),
             "tabPosition": tabLayout.position.rawValue,
             "addressPlacement": tabLayout.address.rawValue,
@@ -755,7 +764,7 @@ extension MainWindowController {
         controller.addUserScript(Self.buildBootstrapScript(
             sidebarWidth: sidebarExpandedWidth,
             windowBackgroundColor: storedWindowBackgroundColor ?? "",
-            tabLayout: tabLayout
+            tabLayout: shownTabLayout
         ))
     }
 
@@ -800,23 +809,27 @@ extension MainWindowController {
 extension MainWindowController {
     // MARK: - Content Frame
 
+    var shownTabLayout: TabLayout { tabLayout.shown(toolbarVisible: toolbarVisible) }
+
     /// Right and bottom always keep a toolbar over the page: the traffic lights stay top-left.
     var hasPageToolbar: Bool {
         switch tabLayout.position {
-        case .left: tabLayout.address == .page
+        case .left: shownTabLayout.address == .page
         case .right, .bottom: true
         case .top: false
         }
     }
 
-    /// Where the page sits, side panel excluded. Hidden tabs leave the page every edge; an overlay floats over it.
+    /// Where the page sits, side panel excluded. Hidden tabs leave the page every edge but the address's own
+    /// toolbar, which hides on its own; an overlay floats over it.
     func pageEdges() -> ContentEdges {
         var edges = ContentEdges.uniform(Self.contentInset)
+        if tabLayout.canHideToolbar && toolbarVisible { edges.top = Self.pageToolbarHeight }
         guard sidebarVisible else { return edges }
         switch tabLayout.position {
         case .left: edges.left += sidebarWidth
         case .right: edges.right += sidebarWidth
-        case .top: edges.top = Self.topStripHeight + (tabLayout.address == .page ? Self.pageToolbarHeight : 0)
+        case .top: edges.top = Self.topStripHeight + (shownTabLayout.address == .page ? Self.pageToolbarHeight : 0)
         case .bottom: edges.bottom = Self.bottomDockHeight + Self.bottomDockMargin * 2
         }
         if hasPageToolbar { edges.top = Self.pageToolbarHeight }

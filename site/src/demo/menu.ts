@@ -291,6 +291,7 @@ export const demoMenus: DemoMenuItem[] = [
   ]),
   submenu("View", [
     command("Hide Sidebar", "sidebar", "sidebar.toggle", "⇧⌘S"),
+    command("Hide Toolbar", "toolbar", "toolbar.toggle", "⌥⌘T"),
     command("Enter Full Screen", "fullscreen", "window.fullScreen", "⌃⌘F"),
     separator,
     command("Reload Page", "reload", "page.reload", "⌘R"),

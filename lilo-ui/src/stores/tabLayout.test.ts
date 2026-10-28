@@ -53,6 +53,32 @@ test("a hidden address stays hidden on every edge, including the right", async (
 	}
 });
 
+test("on the left and the top the address toolbar hides apart from the tabs, taking the address along", async () => {
+	stubBridgeWindow({ document: true });
+	const dataset = stubRoot();
+	const store = await (await freshStores())("/src/stores/tabLayout.svelte.ts");
+	store.initTabLayoutStore();
+
+	for (const position of ["left", "top"]) {
+		store.applyTabLayoutInitialState({ tabPosition: position, addressPlacement: "page", toolbarVisible: true });
+		assert.equal(store.canHideToolbar(), true, position);
+		assert.equal(store.isPageToolbarShown(), true, position);
+
+		receive({ event: "toolbarVisibilityChanged", visible: false });
+		assert.equal(store.isPageToolbarShown(), false, position);
+		assert.equal(store.isAddressVisible(), false, position);
+		assert.equal(store.hasPageToolbar(), false, position);
+		assert.equal(dataset.address, "hidden", position);
+		assert.equal(store.getAddressPlacement(), "page", "the setting stays");
+		receive({ event: "toolbarVisibilityChanged", visible: true });
+		assert.equal(dataset.address, "page", position);
+	}
+
+	store.applyTabLayoutInitialState({ tabPosition: "right", addressPlacement: "page", toolbarVisible: false });
+	assert.equal(store.canHideToolbar(), false, "the right's toolbar holds the traffic lights");
+	assert.equal(store.isAddressVisible(), true);
+});
+
 test("a waiting request temporarily reveals a hidden address", async () => {
 	stubBridgeWindow({ document: true });
 	stubRoot();

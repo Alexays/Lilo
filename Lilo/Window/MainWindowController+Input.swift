@@ -211,6 +211,7 @@ extension MainWindowController {
         bridgeRouter.send(event: "toggleCommandBar", data: ["prefill": tabManager.visibleActiveTab?.url?.absoluteString ?? "", "selectAll": true])
     }
     @objc func toggleSidebarVisibility(_ sender: Any?) { toggleSidebar() }
+    @objc func toggleToolbarVisibility(_ sender: Any?) { toggleToolbar() }
     @objc func showNextTab(_ sender: Any?) { switchToAdjacentTab(forward: true) }
     @objc func showPreviousTab(_ sender: Any?) { switchToAdjacentTab(forward: false) }
     /// A page picked in the History menu loads in the current tab.
@@ -367,6 +368,7 @@ extension MainWindowController {
         case "history.forward": goForwardInHistory(nil)
         case "tab.reopenClosed": _ = restoreClosedTabStateFirst()
         case "sidebar.toggle": toggleSidebar()
+        case "toolbar.toggle": toggleToolbar()
         case "tabs.positionLeft": setTabPosition(.left)
         case "tabs.positionRight": setTabPosition(.right)
         case "tabs.positionTop": setTabPosition(.top)
@@ -476,6 +478,10 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(toggleSidebarVisibility(_:)) {
             (item as? NSMenuItem)?.title = sidebarVisible ? "Hide Sidebar".localized : "Show Sidebar".localized
             return !sidebarCollapseLocked
+        }
+        if action == #selector(toggleToolbarVisibility(_:)) {
+            (item as? NSMenuItem)?.title = toolbarVisible ? "Hide Toolbar".localized : "Show Toolbar".localized
+            return tabLayout.canHideToolbar
         }
         if action == #selector(toggleMuteCurrentTab(_:)), let call = shownCallTab {
             let muted = call.isMicrophoneMuted || context.browserState.liveEngine(forTab: call.id)?.callControls.microphoneActive == false

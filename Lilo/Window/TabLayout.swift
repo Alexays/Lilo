@@ -30,6 +30,14 @@ struct TabLayout: Equatable {
         self.address = address
     }
 
+    /// On the left and the top, the toolbar holds only the address: it hides apart from the tabs.
+    var canHideToolbar: Bool { address == .page && (position == .left || position == .top) }
+
+    /// The layout as drawn: a hidden toolbar takes its address along.
+    func shown(toolbarVisible: Bool) -> TabLayout {
+        canHideToolbar && !toolbarVisible ? TabLayout(position: position, address: .hidden) : self
+    }
+
     /// An address nobody chose follows the position. On the right a visible address sits above the
     /// page: the sidebar's first line is the toolbar's, with no room for it.
     init(position: TabPosition, storedAddress: String?) {

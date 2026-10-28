@@ -5,12 +5,12 @@
   import { chromeActions } from "../../lib/bridge/actions";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { getTabPosition, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
-  import { areTrafficLightsVisible } from "../../stores/ui.svelte";
+  import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
 
   let { row = false }: { row?: boolean } = $props();
 
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
-  const besideTrafficLights = $derived(!row && getTabPosition() !== "left" && areTrafficLightsVisible());
+  const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
 
   // The address text centers on its field: the room its trailing buttons take on the right (capture,
   // pinned extensions) is mirrored on the left, measured since that cluster grows and shrinks.
@@ -60,11 +60,12 @@
   {#if besideTrafficLights}
     <div class="lights-spacer"></div>
   {/if}
-  <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. -->
+  <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. Without
+       the tabs, it holds their toggle too. -->
   {#if !row}
-    <NavControls show="history" />
+    <NavControls show={isSidebarVisible() ? "history" : "all"} />
   {/if}
-  {#if isAddressInPageToolbar() || row}
+  {#if isAddressInPageToolbar()}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>
   {/if}
 </div>
