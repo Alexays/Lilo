@@ -499,6 +499,11 @@ final class ProfileExtensionRegistry {
         config.webViewConfiguration.websiteDataStore = profileDataStore
         // Workers, popups and panels WebKit creates read Chrome in their user agent, as extensions expect.
         config.webViewConfiguration.applicationNameForUserAgent = ChromeMasquerade.chromeApplicationName
+        // Without a pool, each extension's views get one of their own, which lists every installed font on the main thread as it
+        // starts its first process: about 15 ms per extension at launch.
+        if let pool = WKEngineFactory.contentProcessPool, config.webViewConfiguration.responds(to: NSSelectorFromString("setProcessPool:")) {
+            config.webViewConfiguration.setValue(pool, forKey: "processPool")
+        }
         cookieStore = profileDataStore.httpCookieStore
 
         // WebKit snapshots the configuration at controller-creation time: set everything up first.
