@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
+import { createHash } from "node:crypto";
 
 const release: ReleaseNotes = {
 	version: "0.6.0", date: "2026-01-15",
@@ -55,6 +56,35 @@ test("the sheet presents installed highlights, all changes and one acknowledgmen
 	await openWhatsNew(page);
 	await expect(dialog).toBeVisible();
 	expect(resourceReads()).toBe(1);
+});
+
+test("bundled recordings wait for explicit playback with Reduce Motion and stop on close", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const notes = structuredClone(release);
+	if (!notes.editorial?.en) throw new Error("Missing test release copy");
+	notes.editorial.en.highlights[0].media = { poster: "/release-media/tab-share-native.png", recording: "/release-media/tab-share-native.webp", durationMs: 15000, width: 1120, height: 720 };
+	const requested: string[] = [];
+	page.on("request", request => requested.push(request.url()));
+	await bootReleaseChrome(page, initialWorld(), undefined, notes);
+	await openWhatsNew(page);
+	const player = page.locator(".whats-new .release-recording");
+	await player.scrollIntoViewIfNeeded();
+	const image = player.locator("img");
+	await expect(image).toHaveJSProperty("naturalWidth", 1120);
+	const button = player.getByRole("button");
+	await expect(button).toHaveAttribute("aria-pressed", "false");
+	expect(requested.some(url => url.endsWith("/release-media/tab-share-native.webp"))).toBe(false);
+	await button.focus();
+	await page.keyboard.press("Enter");
+	await expect(button).toHaveAttribute("aria-pressed", "true");
+	await expect(image).toHaveJSProperty("complete", true);
+	const pixels = async () => createHash("sha256").update(await image.screenshot()).digest("hex");
+	const firstFrame = await pixels();
+	await expect.poll(pixels, { timeout: 3000 }).not.toBe(firstFrame);
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await openWhatsNew(page);
+	await expect(page.locator(".whats-new .release-recording button")).toHaveAttribute("aria-pressed", "false");
 });
 
 test("Escape closes the sheet and focus stays inside until it closes", async ({ page }) => {

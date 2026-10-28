@@ -1,5 +1,10 @@
 {
   "version": "0.8.0",
+  "capture": {
+    "highlight": "tab-share",
+    "scenario": "tab-share",
+    "source": "native"
+  },
   "title": {
     "en": "Share the right tab.",
     "fr": "Partagez le bon onglet."
@@ -27,6 +32,11 @@
     },
     {
       "id": "address-bar",
+      "capture": {
+        "highlight": "address-bar",
+        "scenario": "address-bar",
+        "source": "native"
+      },
       "title": {
         "en": "More room for the page.",
         "fr": "Plus de place pour la page."

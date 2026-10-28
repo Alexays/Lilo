@@ -195,18 +195,18 @@ class SiteTests(unittest.TestCase):
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 recording = [node for node in parsed if "release-recording" in node.classes]
-                self.assertEqual(len(recording), 1)
-                player = recording[0]
-                button = next(node for node in nodes(player) if node.tag == "button")
-                self.assertEqual(button.attrs.get("aria-pressed"), "false")
-                self.assertTrue(button.attrs.get("aria-label"))
-                self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
-                self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
-                for image in (node for node in nodes(player) if node.tag == "img"):
-                    animation = image.attrs.get("data-recording", "")
-                    self.assertTrue(animation.endswith(".webp"))
-                    self.assertTrue((DIST / animation.lstrip("/")).is_file())
-                    self.assertNotEqual(image.attrs["src"], animation)
+                self.assertEqual(len(recording), 3)
+                for player in recording:
+                    button = next(node for node in nodes(player) if node.tag == "button")
+                    self.assertEqual(button.attrs.get("aria-pressed"), "false")
+                    self.assertTrue(button.attrs.get("aria-label"))
+                    self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
+                    self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
+                    for image in (node for node in nodes(player) if node.tag == "img"):
+                        animation = image.attrs.get("data-recording", "")
+                        self.assertTrue(animation.endswith(".webp"))
+                        self.assertTrue((DIST / animation.lstrip("/")).is_file())
+                        self.assertNotEqual(image.attrs["src"], animation)
                 highlight = next(node for node in parsed if node.attrs.get("id") == "v0.7.0-peek")
                 action = next(node for node in nodes(highlight) if "recording-action" in node.classes)
                 self.assertEqual(action.parent, highlight)

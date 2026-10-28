@@ -2114,6 +2114,9 @@
 		"Secure Connection": "Beveiligde verbinding"
 	},
 	"whatsNew": {
+		"recordingPlay": "Demonstratie afspelen",
+		"recordingStop": "Stoppen",
+		"recordingReplay": "Opnieuw afspelen",
 		"version": "Lilo {version}",
 		"title": "Nieuw in Lilo",
 		"description": "Een paar kleine verbeteringen voor dagelijks surfen.",

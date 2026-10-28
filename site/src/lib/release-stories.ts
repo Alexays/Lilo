@@ -11,7 +11,7 @@ const storySchema = z.strictObject({
   capture: z
     .strictObject({
       highlight: z.string().min(1),
-      scenario: z.literal("peek"),
+      scenario: z.enum(["peek", "address-bar", "tab-share"]),
       source: z.enum(["demo", "native"]).default("demo"),
     })
     .optional(),
@@ -25,6 +25,13 @@ const storySchema = z.strictObject({
           })
           .optional(),
         body: translatedText,
+        capture: z
+          .strictObject({
+            highlight: z.string().min(1),
+            scenario: z.enum(["peek", "address-bar", "tab-share"]),
+            source: z.literal("native"),
+          })
+          .optional(),
         id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
         notes: z.array(z.string().min(1)).min(1),
         title: translatedText,
@@ -70,6 +77,10 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
     }
 
     for (const highlight of story.highlights) {
+      if (highlight.capture && highlight.capture.highlight !== highlight.id) {
+        throw new Error(`Recording must belong to highlight ${highlight.id}`);
+      }
+
       if (!highlight.notes.every((note) => notes.has(note))) {
         throw new Error(
           `Highlight ${highlight.id} is not sourced from release ${story.version}`

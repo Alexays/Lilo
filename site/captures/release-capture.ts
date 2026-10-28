@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { parseReleaseStories } from "../src/lib/release-stories.ts";
+import { checkNativeArchive } from "./native-proof.ts";
 
 export const captureArchiveState = (
   directory: string,
@@ -105,6 +106,18 @@ const main = () => {
 
   if (process.env.LILO_CAPTURE_REPLACE !== "1") {
     if (state === "complete") {
+      if (source === "native") {
+        const directory = `${site}/src/assets/releases/${version}`;
+
+        const record = JSON.parse(
+          readFileSync(`${directory}/capture.json`, "utf-8")
+        );
+
+        if (record.schemaVersion === 2) {
+          checkNativeArchive(directory, version);
+        }
+      }
+
       process.stdout.write(`Keeping archived captures for ${version}\n`);
 
       return;
@@ -120,9 +133,24 @@ const main = () => {
   const require = createRequire(import.meta.url);
 
   if (source === "native") {
-    throw new Error(
-      "Native recordings need reviewed window frames; use make site-release-import RELEASE=x.y.z FRAMES=/path/to/manifest.json RECAPTURE=1"
+    const result = spawnSync(
+      "make",
+      [
+        "release-media-proof",
+        `RELEASE=${version}`,
+        ...(process.env.LILO_CAPTURE_REPLACE === "1" ? ["RECAPTURE=1"] : []),
+      ],
+      { cwd: `${site}/..`, stdio: "inherit" }
     );
+
+    if (result.error || result.status !== 0) {
+      throw (
+        result.error ??
+        new Error("Native capture quality checks failed; release blocked")
+      );
+    }
+
+    return;
   }
 
   const result = spawnSync(

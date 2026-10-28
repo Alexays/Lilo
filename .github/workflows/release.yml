@@ -67,12 +67,14 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+            lilo-ui/public/release-media
+          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'lilo-ui/releaseNotesPlugin.ts', '.changes/v*.md', 'site/src/assets/releases/**', 'scripts/copy_release_media.py', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - name: Setup Node
-        if: steps.ui-cache.outputs.cache-hit != 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
+      - name: Require approved release media before signing secrets are loaded
+        run: make release-media-check
       # Before any secret is in reach: no install script runs. The bridge bundles are committed, and checked against
       # bridge-src by CI on main.
       - name: Build the UI

@@ -15,6 +15,19 @@ function bundledRelease(): string {
 		const catalog = JSON.parse(readFileSync(new URL(`./src/lib/i18n/locales/${locale}.json`, import.meta.url), "utf8"));
 		release.editorial[locale] = localizeReleaseEditorial(editorial, catalog);
 	}
+	let archive;
+	try { archive = JSON.parse(readFileSync(new URL(`../site/src/assets/releases/${version}/capture.json`, import.meta.url), "utf8")); } catch { /* The capture build precedes the media archive. */ }
+	if (archive?.schemaVersion === 2 && archive.release === version && archive.visualReview?.passed === true) {
+		for (const copy of Object.values(release.editorial)) {
+			for (const highlight of copy?.highlights ?? []) {
+				const scenario = highlight.illustration === "share" ? "tab-share" : highlight.illustration === "address" ? "address-bar" : "";
+				const media = archive.recordings?.[scenario];
+				if (media?.quality?.passed && Number.isFinite(media.durationMs) && media.durationMs > 0 && media.durationMs <= 15_000) {
+					highlight.media = { poster: `/release-media/${scenario}-native.png`, recording: `/release-media/${scenario}-native.webp`, durationMs: media.durationMs, width: media.width, height: media.height };
+				}
+			}
+		}
+	}
 	return JSON.stringify(release);
 }
 

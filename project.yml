@@ -119,6 +119,10 @@ targets:
       - path: lilo-ui/public/password-managers
         type: folder
         buildPhase: resources
+      - path: lilo-ui/public/release-media
+        type: folder
+        buildPhase: resources
+        optional: true
 
   LiloPowerHelper:
     type: tool

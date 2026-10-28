@@ -58,6 +58,25 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
         XCTAssertNotNil(missing.error)
         XCTAssertNil(missing.response)
     }
+
+    @MainActor
+    func testReleaseRecordingsAreAvailableOfflineFromTheChromeOrigin() throws {
+        let release = try XCTUnwrap(ChromeUIAssets.assets["release-notes.json"])
+        let data = Data(release.text.description.utf8)
+        let notes = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let editorial = notes["editorial"] as? [String: [String: Any]]
+        let highlights = editorial?["en"]?["highlights"] as? [[String: Any]] ?? []
+        for highlight in highlights {
+            guard let media = highlight["media"] as? [String: Any], let path = media["recording"] as? String else { continue }
+            let task = RecordingSchemeTask("lilo-chrome://ui\(path)")
+            ChromeUISchemeHandler().webView(WKWebView(), start: task)
+            XCTAssertEqual(task.response?.mimeType, "image/webp")
+            XCTAssertEqual(task.data.prefix(4), Data("RIFF".utf8))
+        }
+        let traversal = RecordingSchemeTask("lilo-chrome://ui/release-media/../Info.plist")
+        ChromeUISchemeHandler().webView(WKWebView(), start: traversal)
+        XCTAssertNotNil(traversal.error)
+    }
 }
 
 @MainActor

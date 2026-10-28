@@ -1,0 +1,909 @@
+{
+  "appBuild": "21",
+  "appVersion": "0.8.0",
+  "captureTool": "ScreenCaptureKit.currentProcess",
+  "capturedAt": "2026-10-28T21:04:59Z",
+  "checkpoints": [
+    {
+      "atMs": 4747,
+      "name": "address-hidden",
+      "passed": true
+    },
+    {
+      "atMs": 5680,
+      "name": "command-bar-available",
+      "passed": true
+    }
+  ],
+  "durationMs": 7549,
+  "frames": [
+    {
+      "atMs": 0,
+      "file": "frame-0000.png"
+    },
+    {
+      "atMs": 33,
+      "file": "frame-0001.png"
+    },
+    {
+      "atMs": 68,
+      "file": "frame-0002.png"
+    },
+    {
+      "atMs": 101,
+      "file": "frame-0003.png"
+    },
+    {
+      "atMs": 135,
+      "file": "frame-0004.png"
+    },
+    {
+      "atMs": 169,
+      "file": "frame-0005.png"
+    },
+    {
+      "atMs": 203,
+      "file": "frame-0006.png"
+    },
+    {
+      "atMs": 237,
+      "file": "frame-0007.png"
+    },
+    {
+      "atMs": 271,
+      "file": "frame-0008.png"
+    },
+    {
+      "atMs": 304,
+      "file": "frame-0009.png"
+    },
+    {
+      "atMs": 339,
+      "file": "frame-0010.png"
+    },
+    {
+      "atMs": 373,
+      "file": "frame-0011.png"
+    },
+    {
+      "atMs": 407,
+      "file": "frame-0012.png"
+    },
+    {
+      "atMs": 443,
+      "file": "frame-0013.png"
+    },
+    {
+      "atMs": 476,
+      "file": "frame-0014.png"
+    },
+    {
+      "atMs": 510,
+      "file": "frame-0015.png"
+    },
+    {
+      "atMs": 543,
+      "file": "frame-0016.png"
+    },
+    {
+      "atMs": 578,
+      "file": "frame-0017.png"
+    },
+    {
+      "atMs": 612,
+      "file": "frame-0018.png"
+    },
+    {
+      "atMs": 645,
+      "file": "frame-0019.png"
+    },
+    {
+      "atMs": 679,
+      "file": "frame-0020.png"
+    },
+    {
+      "atMs": 712,
+      "file": "frame-0021.png"
+    },
+    {
+      "atMs": 748,
+      "file": "frame-0022.png"
+    },
+    {
+      "atMs": 782,
+      "file": "frame-0023.png"
+    },
+    {
+      "atMs": 817,
+      "file": "frame-0024.png"
+    },
+    {
+      "atMs": 851,
+      "file": "frame-0025.png"
+    },
+    {
+      "atMs": 883,
+      "file": "frame-0026.png"
+    },
+    {
+      "atMs": 917,
+      "file": "frame-0027.png"
+    },
+    {
+      "atMs": 951,
+      "file": "frame-0028.png"
+    },
+    {
+      "atMs": 985,
+      "file": "frame-0029.png"
+    },
+    {
+      "atMs": 1019,
+      "file": "frame-0030.png"
+    },
+    {
+      "atMs": 1053,
+      "file": "frame-0031.png"
+    },
+    {
+      "atMs": 1087,
+      "file": "frame-0032.png"
+    },
+    {
+      "atMs": 1122,
+      "file": "frame-0033.png"
+    },
+    {
+      "atMs": 1157,
+      "file": "frame-0034.png"
+    },
+    {
+      "atMs": 1188,
+      "file": "frame-0035.png"
+    },
+    {
+      "atMs": 1224,
+      "file": "frame-0036.png"
+    },
+    {
+      "atMs": 1259,
+      "file": "frame-0037.png"
+    },
+    {
+      "atMs": 1293,
+      "file": "frame-0038.png"
+    },
+    {
+      "atMs": 1328,
+      "file": "frame-0039.png"
+    },
+    {
+      "atMs": 1362,
+      "file": "frame-0040.png"
+    },
+    {
+      "atMs": 1396,
+      "file": "frame-0041.png"
+    },
+    {
+      "atMs": 1427,
+      "file": "frame-0042.png"
+    },
+    {
+      "atMs": 1463,
+      "file": "frame-0043.png"
+    },
+    {
+      "atMs": 1495,
+      "file": "frame-0044.png"
+    },
+    {
+      "atMs": 1531,
+      "file": "frame-0045.png"
+    },
+    {
+      "atMs": 1562,
+      "file": "frame-0046.png"
+    },
+    {
+      "atMs": 1603,
+      "file": "frame-0047.png"
+    },
+    {
+      "atMs": 1633,
+      "file": "frame-0048.png"
+    },
+    {
+      "atMs": 1667,
+      "file": "frame-0049.png"
+    },
+    {
+      "atMs": 1701,
+      "file": "frame-0050.png"
+    },
+    {
+      "atMs": 1735,
+      "file": "frame-0051.png"
+    },
+    {
+      "atMs": 1769,
+      "file": "frame-0052.png"
+    },
+    {
+      "atMs": 1803,
+      "file": "frame-0053.png"
+    },
+    {
+      "atMs": 1840,
+      "file": "frame-0054.png"
+    },
+    {
+      "atMs": 1871,
+      "file": "frame-0055.png"
+    },
+    {
+      "atMs": 1905,
+      "file": "frame-0056.png"
+    },
+    {
+      "atMs": 1938,
+      "file": "frame-0057.png"
+    },
+    {
+      "atMs": 1972,
+      "file": "frame-0058.png"
+    },
+    {
+      "atMs": 2009,
+      "file": "frame-0059.png"
+    },
+    {
+      "atMs": 2045,
+      "file": "frame-0060.png"
+    },
+    {
+      "atMs": 2078,
+      "file": "frame-0061.png"
+    },
+    {
+      "atMs": 2110,
+      "file": "frame-0062.png"
+    },
+    {
+      "atMs": 2147,
+      "file": "frame-0063.png"
+    },
+    {
+      "atMs": 2181,
+      "file": "frame-0064.png"
+    },
+    {
+      "atMs": 2215,
+      "file": "frame-0065.png"
+    },
+    {
+      "atMs": 2246,
+      "file": "frame-0066.png"
+    },
+    {
+      "atMs": 2279,
+      "file": "frame-0067.png"
+    },
+    {
+      "atMs": 2316,
+      "file": "frame-0068.png"
+    },
+    {
+      "atMs": 2349,
+      "file": "frame-0069.png"
+    },
+    {
+      "atMs": 2384,
+      "file": "frame-0070.png"
+    },
+    {
+      "atMs": 2421,
+      "file": "frame-0071.png"
+    },
+    {
+      "atMs": 2454,
+      "file": "frame-0072.png"
+    },
+    {
+      "atMs": 2487,
+      "file": "frame-0073.png"
+    },
+    {
+      "atMs": 2521,
+      "file": "frame-0074.png"
+    },
+    {
+      "atMs": 2554,
+      "file": "frame-0075.png"
+    },
+    {
+      "atMs": 2589,
+      "file": "frame-0076.png"
+    },
+    {
+      "atMs": 2623,
+      "file": "frame-0077.png"
+    },
+    {
+      "atMs": 2657,
+      "file": "frame-0078.png"
+    },
+    {
+      "atMs": 2689,
+      "file": "frame-0079.png"
+    },
+    {
+      "atMs": 2724,
+      "file": "frame-0080.png"
+    },
+    {
+      "atMs": 2758,
+      "file": "frame-0081.png"
+    },
+    {
+      "atMs": 2788,
+      "file": "frame-0082.png"
+    },
+    {
+      "atMs": 2824,
+      "file": "frame-0083.png"
+    },
+    {
+      "atMs": 2859,
+      "file": "frame-0084.png"
+    },
+    {
+      "atMs": 2895,
+      "file": "frame-0085.png"
+    },
+    {
+      "atMs": 2929,
+      "file": "frame-0086.png"
+    },
+    {
+      "atMs": 2964,
+      "file": "frame-0087.png"
+    },
+    {
+      "atMs": 2998,
+      "file": "frame-0088.png"
+    },
+    {
+      "atMs": 3029,
+      "file": "frame-0089.png"
+    },
+    {
+      "atMs": 3062,
+      "file": "frame-0090.png"
+    },
+    {
+      "atMs": 3098,
+      "file": "frame-0091.png"
+    },
+    {
+      "atMs": 3131,
+      "file": "frame-0092.png"
+    },
+    {
+      "atMs": 3169,
+      "file": "frame-0093.png"
+    },
+    {
+      "atMs": 3201,
+      "file": "frame-0094.png"
+    },
+    {
+      "atMs": 3235,
+      "file": "frame-0095.png"
+    },
+    {
+      "atMs": 3268,
+      "file": "frame-0096.png"
+    },
+    {
+      "atMs": 3303,
+      "file": "frame-0097.png"
+    },
+    {
+      "atMs": 3337,
+      "file": "frame-0098.png"
+    },
+    {
+      "atMs": 3370,
+      "file": "frame-0099.png"
+    },
+    {
+      "atMs": 3408,
+      "file": "frame-0100.png"
+    },
+    {
+      "atMs": 3441,
+      "file": "frame-0101.png"
+    },
+    {
+      "atMs": 3473,
+      "file": "frame-0102.png"
+    },
+    {
+      "atMs": 3507,
+      "file": "frame-0103.png"
+    },
+    {
+      "atMs": 3541,
+      "file": "frame-0104.png"
+    },
+    {
+      "atMs": 3576,
+      "file": "frame-0105.png"
+    },
+    {
+      "atMs": 3610,
+      "file": "frame-0106.png"
+    },
+    {
+      "atMs": 3647,
+      "file": "frame-0107.png"
+    },
+    {
+      "atMs": 3681,
+      "file": "frame-0108.png"
+    },
+    {
+      "atMs": 3714,
+      "file": "frame-0109.png"
+    },
+    {
+      "atMs": 3748,
+      "file": "frame-0110.png"
+    },
+    {
+      "atMs": 3785,
+      "file": "frame-0111.png"
+    },
+    {
+      "atMs": 3817,
+      "file": "frame-0112.png"
+    },
+    {
+      "atMs": 3853,
+      "file": "frame-0113.png"
+    },
+    {
+      "atMs": 3887,
+      "file": "frame-0114.png"
+    },
+    {
+      "atMs": 3921,
+      "file": "frame-0115.png"
+    },
+    {
+      "atMs": 3956,
+      "file": "frame-0116.png"
+    },
+    {
+      "atMs": 3991,
+      "file": "frame-0117.png"
+    },
+    {
+      "atMs": 4023,
+      "file": "frame-0118.png"
+    },
+    {
+      "atMs": 4057,
+      "file": "frame-0119.png"
+    },
+    {
+      "atMs": 4092,
+      "file": "frame-0120.png"
+    },
+    {
+      "atMs": 4126,
+      "file": "frame-0121.png"
+    },
+    {
+      "atMs": 4160,
+      "file": "frame-0122.png"
+    },
+    {
+      "atMs": 4197,
+      "file": "frame-0123.png"
+    },
+    {
+      "atMs": 4230,
+      "file": "frame-0124.png"
+    },
+    {
+      "atMs": 4264,
+      "file": "frame-0125.png"
+    },
+    {
+      "atMs": 4298,
+      "file": "frame-0126.png"
+    },
+    {
+      "atMs": 4332,
+      "file": "frame-0127.png"
+    },
+    {
+      "atMs": 4366,
+      "file": "frame-0128.png"
+    },
+    {
+      "atMs": 4402,
+      "file": "frame-0129.png"
+    },
+    {
+      "atMs": 4436,
+      "file": "frame-0130.png"
+    },
+    {
+      "atMs": 4470,
+      "file": "frame-0131.png"
+    },
+    {
+      "atMs": 4502,
+      "file": "frame-0132.png"
+    },
+    {
+      "atMs": 4534,
+      "file": "frame-0133.png"
+    },
+    {
+      "atMs": 4568,
+      "file": "frame-0134.png"
+    },
+    {
+      "atMs": 4602,
+      "file": "frame-0135.png"
+    },
+    {
+      "atMs": 4636,
+      "file": "frame-0136.png"
+    },
+    {
+      "atMs": 4670,
+      "file": "frame-0137.png"
+    },
+    {
+      "atMs": 4703,
+      "file": "frame-0138.png"
+    },
+    {
+      "atMs": 4737,
+      "file": "frame-0139.png"
+    },
+    {
+      "atMs": 4774,
+      "file": "frame-0140.png"
+    },
+    {
+      "atMs": 4811,
+      "file": "frame-0141.png"
+    },
+    {
+      "atMs": 4843,
+      "file": "frame-0142.png"
+    },
+    {
+      "atMs": 4880,
+      "file": "frame-0143.png"
+    },
+    {
+      "atMs": 4911,
+      "file": "frame-0144.png"
+    },
+    {
+      "atMs": 4944,
+      "file": "frame-0145.png"
+    },
+    {
+      "atMs": 4981,
+      "file": "frame-0146.png"
+    },
+    {
+      "atMs": 5016,
+      "file": "frame-0147.png"
+    },
+    {
+      "atMs": 5051,
+      "file": "frame-0148.png"
+    },
+    {
+      "atMs": 5086,
+      "file": "frame-0149.png"
+    },
+    {
+      "atMs": 5118,
+      "file": "frame-0150.png"
+    },
+    {
+      "atMs": 5151,
+      "file": "frame-0151.png"
+    },
+    {
+      "atMs": 5188,
+      "file": "frame-0152.png"
+    },
+    {
+      "atMs": 5220,
+      "file": "frame-0153.png"
+    },
+    {
+      "atMs": 5255,
+      "file": "frame-0154.png"
+    },
+    {
+      "atMs": 5286,
+      "file": "frame-0155.png"
+    },
+    {
+      "atMs": 5321,
+      "file": "frame-0156.png"
+    },
+    {
+      "atMs": 5355,
+      "file": "frame-0157.png"
+    },
+    {
+      "atMs": 5396,
+      "file": "frame-0158.png"
+    },
+    {
+      "atMs": 5431,
+      "file": "frame-0159.png"
+    },
+    {
+      "atMs": 5465,
+      "file": "frame-0160.png"
+    },
+    {
+      "atMs": 5499,
+      "file": "frame-0161.png"
+    },
+    {
+      "atMs": 5535,
+      "file": "frame-0162.png"
+    },
+    {
+      "atMs": 5566,
+      "file": "frame-0163.png"
+    },
+    {
+      "atMs": 5600,
+      "file": "frame-0164.png"
+    },
+    {
+      "atMs": 5638,
+      "file": "frame-0165.png"
+    },
+    {
+      "atMs": 5669,
+      "file": "frame-0166.png"
+    },
+    {
+      "atMs": 5704,
+      "file": "frame-0167.png"
+    },
+    {
+      "atMs": 5741,
+      "file": "frame-0168.png"
+    },
+    {
+      "atMs": 5775,
+      "file": "frame-0169.png"
+    },
+    {
+      "atMs": 5812,
+      "file": "frame-0170.png"
+    },
+    {
+      "atMs": 5847,
+      "file": "frame-0171.png"
+    },
+    {
+      "atMs": 5880,
+      "file": "frame-0172.png"
+    },
+    {
+      "atMs": 5916,
+      "file": "frame-0173.png"
+    },
+    {
+      "atMs": 5947,
+      "file": "frame-0174.png"
+    },
+    {
+      "atMs": 5982,
+      "file": "frame-0175.png"
+    },
+    {
+      "atMs": 6014,
+      "file": "frame-0176.png"
+    },
+    {
+      "atMs": 6048,
+      "file": "frame-0177.png"
+    },
+    {
+      "atMs": 6083,
+      "file": "frame-0178.png"
+    },
+    {
+      "atMs": 6116,
+      "file": "frame-0179.png"
+    },
+    {
+      "atMs": 6150,
+      "file": "frame-0180.png"
+    },
+    {
+      "atMs": 6184,
+      "file": "frame-0181.png"
+    },
+    {
+      "atMs": 6221,
+      "file": "frame-0182.png"
+    },
+    {
+      "atMs": 6254,
+      "file": "frame-0183.png"
+    },
+    {
+      "atMs": 6289,
+      "file": "frame-0184.png"
+    },
+    {
+      "atMs": 6322,
+      "file": "frame-0185.png"
+    },
+    {
+      "atMs": 6357,
+      "file": "frame-0186.png"
+    },
+    {
+      "atMs": 6391,
+      "file": "frame-0187.png"
+    },
+    {
+      "atMs": 6425,
+      "file": "frame-0188.png"
+    },
+    {
+      "atMs": 6458,
+      "file": "frame-0189.png"
+    },
+    {
+      "atMs": 6495,
+      "file": "frame-0190.png"
+    },
+    {
+      "atMs": 6529,
+      "file": "frame-0191.png"
+    },
+    {
+      "atMs": 6563,
+      "file": "frame-0192.png"
+    },
+    {
+      "atMs": 6596,
+      "file": "frame-0193.png"
+    },
+    {
+      "atMs": 6630,
+      "file": "frame-0194.png"
+    },
+    {
+      "atMs": 6665,
+      "file": "frame-0195.png"
+    },
+    {
+      "atMs": 6699,
+      "file": "frame-0196.png"
+    },
+    {
+      "atMs": 6731,
+      "file": "frame-0197.png"
+    },
+    {
+      "atMs": 6766,
+      "file": "frame-0198.png"
+    },
+    {
+      "atMs": 6796,
+      "file": "frame-0199.png"
+    },
+    {
+      "atMs": 6833,
+      "file": "frame-0200.png"
+    },
+    {
+      "atMs": 6868,
+      "file": "frame-0201.png"
+    },
+    {
+      "atMs": 6900,
+      "file": "frame-0202.png"
+    },
+    {
+      "atMs": 6935,
+      "file": "frame-0203.png"
+    },
+    {
+      "atMs": 6969,
+      "file": "frame-0204.png"
+    },
+    {
+      "atMs": 7007,
+      "file": "frame-0205.png"
+    },
+    {
+      "atMs": 7040,
+      "file": "frame-0206.png"
+    },
+    {
+      "atMs": 7074,
+      "file": "frame-0207.png"
+    },
+    {
+      "atMs": 7105,
+      "file": "frame-0208.png"
+    },
+    {
+      "atMs": 7142,
+      "file": "frame-0209.png"
+    },
+    {
+      "atMs": 7176,
+      "file": "frame-0210.png"
+    },
+    {
+      "atMs": 7209,
+      "file": "frame-0211.png"
+    },
+    {
+      "atMs": 7244,
+      "file": "frame-0212.png"
+    },
+    {
+      "atMs": 7277,
+      "file": "frame-0213.png"
+    },
+    {
+      "atMs": 7312,
+      "file": "frame-0214.png"
+    },
+    {
+      "atMs": 7345,
+      "file": "frame-0215.png"
+    },
+    {
+      "atMs": 7379,
+      "file": "frame-0216.png"
+    },
+    {
+      "atMs": 7414,
+      "file": "frame-0217.png"
+    },
+    {
+      "atMs": 7447,
+      "file": "frame-0218.png"
+    },
+    {
+      "atMs": 7481,
+      "file": "frame-0219.png"
+    },
+    {
+      "atMs": 7514,
+      "file": "frame-0220.png"
+    }
+  ],
+  "height": 720,
+  "scenario": "address-bar",
+  "source": "native",
+  "width": 1120
+}

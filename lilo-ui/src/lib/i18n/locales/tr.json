@@ -2114,6 +2114,9 @@
 		"Secure Connection": "Güvenli Bağlantı"
 	},
 	"whatsNew": {
+		"recordingPlay": "Tanıtımı oynat",
+		"recordingStop": "Durdur",
+		"recordingReplay": "Yeniden oynat",
 		"version": "Lilo {version}",
 		"title": "Lilo'daki yenilikler",
 		"description": "Günlük gezintinizi kolaylaştıran birkaç küçük iyileştirme.",

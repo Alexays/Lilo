@@ -2,11 +2,40 @@ import { createHash } from "node:crypto";
 
 import { expect, test } from "@playwright/test";
 
+test("0.8.0 shares the approved native feature recordings", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/changelog/#v0.8.0");
+  const release = page.locator("#v0\\.8\\.0");
+  await expect(release.locator(".release-recording")).toHaveCount(2);
+
+  // oxlint-disable no-await-in-loop -- Each player must be scrolled and operated sequentially.
+  for (const player of await release.locator(".release-recording").all()) {
+    await player.scrollIntoViewIfNeeded();
+    await expect(player.locator("img:visible")).toHaveJSProperty(
+      "complete",
+      true
+    );
+    await expect(player.locator(".recording-toggle")).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    await player.locator(".recording-toggle").click();
+    await expect(player.locator(".recording-toggle")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await player.locator(".recording-toggle").click();
+  }
+  // oxlint-enable no-await-in-loop
+});
+
 test("recordings finish and restart their frames on cached replay", async ({
   page,
 }) => {
   await page.goto("/changelog/#v0.7.0");
-  const player = page.locator(".release-recording");
+  const player = page.locator("#v0\\.7\\.0 .release-recording");
   const button = player.locator(".recording-toggle");
   const image = player.locator("img:visible");
   await player.scrollIntoViewIfNeeded();
@@ -65,7 +94,7 @@ for (const language of ["en", "fr"] as const) {
   }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto(`${path}#v0.7.0`);
-    const capture = page.locator(".capture");
+    const capture = page.locator("#v0\\.7\\.0 .capture");
     await capture.scrollIntoViewIfNeeded();
     await expect(capture.locator(".capture-dark")).toBeVisible();
     await expect(capture.locator(".capture-light")).toBeHidden();
@@ -130,7 +159,7 @@ for (const language of ["en", "fr"] as const) {
     const requests: string[] = [];
     page.on("request", (request) => requests.push(request.url()));
     await page.goto(`${path}#v0.7.0`);
-    const player = page.locator(".release-recording");
+    const player = page.locator("#v0\\.7\\.0 .release-recording");
     await player.scrollIntoViewIfNeeded();
     const button = player.locator(".recording-toggle");
     const image = player.locator("img:visible");
@@ -174,7 +203,7 @@ for (const language of ["en", "fr"] as const) {
       reducedMotion: "no-preference",
     });
     await page.goto(`${path}#v0.7.0`);
-    const player = page.locator(".release-recording");
+    const player = page.locator("#v0\\.7\\.0 .release-recording");
     const button = player.locator(".recording-toggle");
     await player.scrollIntoViewIfNeeded();
     await expect(button).toHaveAttribute("aria-pressed", "true");

@@ -2114,6 +2114,9 @@
 		"Secure Connection": "安全な接続"
 	},
 	"whatsNew": {
+		"recordingPlay": "デモを再生",
+		"recordingStop": "停止",
+		"recordingReplay": "もう一度再生",
 		"version": "Lilo {version}",
 		"title": "Lilo の新機能",
 		"description": "毎日のブラウジングを少し快適にする改善です。",

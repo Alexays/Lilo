@@ -2114,6 +2114,9 @@
 		"Secure Connection": "보안 연결"
 	},
 	"whatsNew": {
+		"recordingPlay": "데모 재생",
+		"recordingStop": "중지",
+		"recordingReplay": "다시 재생",
 		"version": "Lilo {version}",
 		"title": "Lilo의 새로운 기능",
 		"description": "일상적인 인터넷 사용을 위한 작은 개선사항입니다.",

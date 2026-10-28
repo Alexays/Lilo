@@ -16,6 +16,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { acknowledgeWhatsNew, type WhatsNewRequest } from "../../stores/whatsNew.svelte";
   import WhatsNewArt from "./WhatsNewArt.svelte";
+  import WhatsNewRecording from "./WhatsNewRecording.svelte";
 
   let { request, onclose }: { request: WhatsNewRequest; onclose: () => void } = $props();
   const titleId = $props.id();
@@ -104,11 +105,12 @@
         {#if editorial}
           <div class="release-highlights">
             {#each editorial.highlights as highlight, index (index)}
-              <article class="release-highlight">
-                <WhatsNewArt kind={highlight.illustration} />
+              <article class="release-highlight" class:recorded={!!highlight.media}>
+                {#if !highlight.media}<WhatsNewArt kind={highlight.illustration} />{/if}
                 <div>
                   <h3>{highlight.title}</h3>
                   <p>{highlight.description}</p>
+                  {#if highlight.media}<WhatsNewRecording media={highlight.media} title={highlight.title} />{/if}
                 </div>
               </article>
             {/each}
@@ -140,6 +142,7 @@
 </dialog>
 
 <style>
+  .release-highlight.recorded { grid-template-columns: minmax(0, 1fr); }
   .whats-new {
     position: fixed;
     inset: 0;

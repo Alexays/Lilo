@@ -19,7 +19,10 @@ const { lang, story } = Astro.props;
       <section
         class:list={[
           "release-highlight",
-          { lead: highlight.id === story.capture?.highlight },
+          {
+            lead:
+              highlight.id === story.capture?.highlight || !!highlight.capture,
+          },
         ]}
         id={`v${story.version}-${highlight.id}`}
         lang={lang}
@@ -52,6 +55,13 @@ const { lang, story } = Astro.props;
         )}
         {story.capture && highlight.id === story.capture.highlight && (
           <ReleaseRecording capture={story.capture} lang={lang} story={story} />
+        )}
+        {highlight.capture && (
+          <ReleaseRecording
+            capture={highlight.capture}
+            lang={lang}
+            story={story}
+          />
         )}
       </section>
     ))}

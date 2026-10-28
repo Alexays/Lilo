@@ -45,6 +45,27 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 ## Release stories and recordings
 
+### Automated native proof
+
+```sh
+make release-media-proof RELEASE=0.8.0
+make release-media-check RELEASE=0.8.0
+```
+
+The first proof selects the sharing/address-bar highlights from the prepared notes with the authenticated local `codex exec`, then records Peek, Settings > Appearance > Address > Hidden, and real tab sharing (pick, deliver, switch, stop). Peek is a reference recorded with the current 0.8.0 build; it is not advertised as new in 0.8.0. This milestone has three known native runners. Creating arbitrary future runners automatically remains a later step; unsupported selected features stop the job.
+
+Run on macOS with Xcode and a GUI session. The opt-in XCTest host builds production Lilo code, opens only temporary browser storage, serves made-up local HTTPS pages, and records its own window through `SCShareableContent.currentProcess`. Fixture TLS keys stay in process memory; no trust root is installed. The capture host temporarily takes foreground focus and restores the previous application afterward, so unattended production runs belong on a dedicated capture worker. No user profiles or other application windows enter the stream.
+
+Encoding preserves media timestamps, native transitions and an explicit final hold, with lossless WebP and a still poster. Feature checkpoints, frame density, real image changes, geometry, duration, decoded frame count, size, and file digests must pass. A separate read-only Codex invocation reviews chronological native frames and timing for each scenario. A failed or incomplete visual review blocks publication; existing approved media is preserved. Frames and review diagnostics remain under `build/release-media/<version>/` for investigation.
+
+Successful media is archived under `src/assets/releases/<version>/` with a version 2 `capture.json` and source manifests. The website and in-app sheet consume this same archive. The app copies only its current release's share/address posters and recordings as binary resources, read from the local chrome origin. They do not enter the text embed or require network access. Normal validation/builds never record or invoke an agent.
+
+`make release-version` invokes native production for missing required captures. `make release`, `make release-notarize`, `make release-archive`, and the release workflow require approved media before packaging/signing. Failed checks stop the release; there is no poster fallback for required recordings. The release workflow checks artifacts before importing signing credentials.
+
+Development commands are `make release-media-record OUT=...`, `make release-media-encode RELEASE=0.8.0 FRAMES=... OUT=...`, and `make release-media-test`. To repeat encoding and visual review using existing source frames, pass `FRAMES=...` to `release-media-proof`. `RECAPTURE=1` explicitly replaces an existing archive. Historical 0.7.0 media remains unchanged.
+
+### Existing demo and legacy recordings
+
 The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
 
 A story without `capture` shows its highlights with no recording. Stories with one choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
@@ -69,7 +90,7 @@ The recording plays once when half the player is visible. One small icon over th
 
 Each highlight can define an optional `action` with translated `label` and `href` fields. It appears with the feature text, outside the recording. Highlights for installed features can omit it; no demo action is added automatically.
 
-Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. For a native story, use `site-release-import` with reviewed window frames. Missing native media stops release preparation with that instruction. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
+Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. `site-release-import` remains available for the historical native pilot. Current native stories use the automated proof above. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
 
 ## Demo playground
 

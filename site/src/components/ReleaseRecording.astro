@@ -35,14 +35,34 @@ const records = import.meta.glob<unknown>("../assets/releases/*/capture.json", {
 const prefix = `../assets/releases/${story.version}`;
 
 const metadata = z
-  .object({ durationMs: z.number().int().positive().max(30_000) })
+  .object({
+    durationMs: z.number().int().positive().max(30_000).optional(),
+    recordings: z
+      .record(
+        z.string(),
+        z.object({ durationMs: z.number().int().positive().max(30_000) })
+      )
+      .optional(),
+  })
   .safeParse(records[`${prefix}/capture.json`]);
 
 if (!metadata.success) {
   throw new Error(`Missing recording duration for release ${story.version}`);
 }
 
-const duration = metadata.data.durationMs;
+const duration =
+  metadata.data.recordings?.[capture.scenario]?.durationMs ??
+  metadata.data.durationMs;
+
+if (!duration) {
+  throw new Error(`Missing recording duration for ${capture.scenario}`);
+}
+
+const alternative =
+  capture.scenario === "peek"
+    ? text.releasePeekImage
+    : (story.highlights.find((highlight) => highlight.id === capture.highlight)
+        ?.title[lang] ?? story.title[lang]);
 
 const media = (appearance: "light" | "dark") => {
   const variant =
@@ -75,7 +95,7 @@ const dark = media("dark");
     class="capture-light"
     src={light.poster}
     data-recording={light.recording}
-    alt={text.releasePeekImage}
+    alt={alternative}
     widths={[560, 1120, 2240]}
     sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1280px) 65vw, 870px"
     loading="lazy"
@@ -85,7 +105,7 @@ const dark = media("dark");
     class="capture-dark"
     src={dark.poster}
     data-recording={dark.recording}
-    alt={text.releasePeekImage}
+    alt={alternative}
     widths={[560, 1120, 2240]}
     sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1280px) 65vw, 870px"
     loading="lazy"

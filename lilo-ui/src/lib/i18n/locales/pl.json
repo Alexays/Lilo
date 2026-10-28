@@ -2134,6 +2134,9 @@
 		"Secure Connection": "Bezpieczne połączenie"
 	},
 	"whatsNew": {
+		"recordingPlay": "Odtwórz pokaz",
+		"recordingStop": "Zatrzymaj",
+		"recordingReplay": "Odtwórz ponownie",
 		"version": "Lilo {version}",
 		"title": "Co nowego w Lilo",
 		"description": "Kilka drobnych usprawnień codziennego przeglądania.",

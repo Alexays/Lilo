@@ -37,10 +37,10 @@ For a release with visual highlights, add its translated story to
 `site/src/content/releases/<version>.json`. Each highlight names the release notes
 it describes. A story may omit its `capture` and show no recording. Otherwise
 `make release-version` runs the story's capture scenario when its media is missing, then builds the website. Demo stories record local sample pages
-in English and French and both appearances. Native stories use reviewed frames
-from installed Lilo; `make site-release-import` encodes their WebP and poster.
-The pilot uses a real native Peek capture on public pages. Optional actions appear
-with the feature text. Review the recordings and copy with the prepared notes, and commit the
+in English and French and both appearances. Native stories run `make release-media-proof`
+to capture the current build and require automated quality approval. The historical
+0.7.0 pilot retains its manually imported Peek recording. Optional actions appear
+with the feature text. Commit the
 versioned assets and their `capture.json` source record together. Existing captures
 are preserved; normal website builds and `make validate` do not recapture them.
 See [the website guide](../site/README.md#release-stories-and-recordings) for
@@ -51,6 +51,10 @@ Review the generated notes and version changes, then commit them together. The i
 Edit a prepared release's file and run `make release-version` to regenerate the changelog.
 
 ### In-app highlights
+
+Native release media is generated with `make release-media-proof RELEASE=x.y.z` before tagging. The first proof covers Peek and 0.8.0's sharing/address features; unsupported future selections fail until their native runner exists. Generation uses the local authenticated Codex CLI and an isolated GUI test host. See [native media tooling](../site/README.md#automated-native-proof).
+
+Required media must pass native assertions, encoding checks, digest checks, and independent visual review. A failed check blocks preparation and final packaging instead of substituting a poster. Generation stays outside `make validate`; signing jobs only verify previously generated artifacts. Current-release media ships locally in the app and is shared with the website's archive.
 
 The app bundles the prepared notes matching its marketing version during `make ui-build` and
 shows them once after an update. **Help > What’s New** reopens them. New installations finish
@@ -85,7 +89,7 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
 1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
-2. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`, before any secret is in reach. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
+2. Verifies required native media and its visual approval before any signing credentials are imported. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
 3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
 4. Imports the Developer ID certificate into a temporary keychain.
 5. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-archive` (build, export signed with Developer ID, hardened runtime and a secure timestamp).
