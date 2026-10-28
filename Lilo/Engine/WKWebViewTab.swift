@@ -221,6 +221,7 @@ final class WKWebViewTab: NSObject {
     private static let maxTrackedSubframes = 32
     private static let supportsIntegrityPolicy = ["_networkConnectionIntegrityPolicy", "_setNetworkConnectionIntegrityPolicy:"]
         .allSatisfy { WKWebpagePreferences.instancesRespond(to: NSSelectorFromString($0)) }
+    private static let supportsContentBlockersToggle = WKWebpagePreferences.instancesRespond(to: NSSelectorFromString("_setContentBlockersEnabled:"))
     /// `_WKWebsiteNetworkConnectionIntegrityPolicySanitizeLookalikeCharacters`, which WebKit maps to
     /// link decoration filtering.
     private static let linkDecorationFilteringPolicy: UInt = 1 << 8
@@ -1168,7 +1169,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             // WKWebpagePreferences._setContentBlockersEnabled:; holds through redirects, so their target page loads unfiltered too.
             if bypassesContentBlockersOnce, navigationAction.targetFrame?.isMainFrame != false {
                 bypassesContentBlockersOnce = false
-                preferences.setValue(false, forKey: "contentBlockersEnabled")
+                if Self.supportsContentBlockersToggle { preferences.setValue(false, forKey: "contentBlockersEnabled") }
             }
             decisionHandler(policy(for: navigationAction), preferences)
         }
