@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension worker that answers a page on a port of its own, as Postman Interceptor does, now reaches that page when it is open in a tab
-time: 2026-10-26T19:48:58.12496+01:00

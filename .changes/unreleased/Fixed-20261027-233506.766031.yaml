@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions that message a page as soon as it loads (Requestly) now reach their content script, as in Chrome.
-time: 2026-10-27T23:35:06.766031+01:00

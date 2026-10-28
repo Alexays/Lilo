@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension with more static rules than WebKit applies keeps every rule of the rulesets its manifest turns on, which the rulesets it leaves off now give up first (AdGuard blocked no ads).
-time: 2026-10-28T15:00:00.000000+01:00

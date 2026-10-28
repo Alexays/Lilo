@@ -1,3 +1,0 @@
-kind: Fixed
-body: Content scripts can ask an event whether it has listeners (hasListeners), as in Chrome (Brisk Teaching).
-time: 2026-10-27T23:46:51.984921+01:00

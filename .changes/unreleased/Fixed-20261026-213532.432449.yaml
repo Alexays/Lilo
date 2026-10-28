@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Extensions behave more like in Chrome: proxy sign-ins prompt at once when no extension answers, sockets keep their messages while idle, downloads land in the subfolders they name, idle detection reports a locked screen, and Stylus, Language Learning with Netflix and other extensions no longer fail at startup'
-time: 2026-10-26T21:35:32.432449+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions get Chrome's wording for a disconnected port and for a page they may not script ("Attempting to use a disconnected port object", "Cannot access contents of the page"), which they test before reconnecting or asking for access.
-time: 2026-10-28T02:00:00.000000+01:00

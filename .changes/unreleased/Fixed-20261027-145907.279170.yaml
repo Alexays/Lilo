@@ -1,3 +1,0 @@
-kind: Fixed
-body: Control-D or exit in a terminal closes its tab instead of leaving it open on the ended shell
-time: 2026-10-27T14:59:07.27917+01:00

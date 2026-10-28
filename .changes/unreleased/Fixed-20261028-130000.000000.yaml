@@ -1,3 +1,0 @@
-kind: Fixed
-body: action.setBadgeText takes no text, as in Chrome, where a tab's badge then shows the global text again (Jungle Scout).
-time: 2026-10-28T13:00:00.000000+01:00

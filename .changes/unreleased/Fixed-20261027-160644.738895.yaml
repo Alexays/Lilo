@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Ad blockers built on uBO Lite (Adblock Ad Blocker Pro and others) apply their rules again: a rule limited to some request methods no longer stops every other rule from loading, and their cosmetic filters turn on as in Chrome.'
-time: 2026-10-27T16:06:44.738895+01:00

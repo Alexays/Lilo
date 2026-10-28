@@ -1,3 +1,0 @@
-kind: Changed
-body: Tab rows show playing sound and microphone, camera or screen capture as a badge on the favicon, click the sound badge to mute, and the close button no longer shifts the title. The call card can mute the call's sound, and the top and bottom tab strips open it from a microphone icon.
-time: 2026-10-27T23:42:05.44623+01:00

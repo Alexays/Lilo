@@ -1,3 +1,0 @@
-kind: Added
-body: 'Record a performance session from Help > Diagnostics: Lilo saves a trace of its timings, hangs, dropped frames and per-process CPU, memory and energy to Downloads, ready to open in Perfetto or attach to a bug report.'
-time: 2026-10-27T13:45:28.661786+01:00

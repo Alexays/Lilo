@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension that checks runtime.lastError through browser, as AdBlock does for its context menus, no longer gets "Unchecked runtime.lastError" errors reported against it.
-time: 2026-10-28T12:00:00.000000+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'An extension''s popup and other pages keep their connection to its background: Lilo relays these ports as Chrome does, so a popup no longer opens blank when WebKit dropped its port (Okta), and port messages are faster in bursts.'
-time: 2026-10-27T19:50:15.033511+01:00

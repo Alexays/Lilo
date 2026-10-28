@@ -1,3 +1,0 @@
-kind: Fixed
-body: A link opened in a background tab comes right after the current tab in Control-Tab, instead of last.
-time: 2026-10-27T16:21:17.367041+01:00
