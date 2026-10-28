@@ -75,6 +75,21 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(behavior.contains(.fullScreenAuxiliary))
     }
 
+    func testWhatThePageMovesIntoItsWindowStaysThere() async throws {
+        let tab = await makeTab()
+        _ = try await requestWindow(tab)
+        let popup = try XCTUnwrap(controller.webView)
+
+        // As Meet does as soon as its window opens: its call UI moves into the PiP document.
+        _ = try await tab.wkWebView.evaluateJavaScript("window.__pip.document.body.innerHTML = '<p id=moved>call</p>'; true")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+
+        let shown = try await popup.evaluateJavaScript("document.getElementById('moved')?.textContent ?? 'gone'") as? String
+        let current = try await tab.wkWebView.evaluateJavaScript("documentPictureInPicture.window === window.__pip") as? Bool
+        XCTAssertEqual(shown, "call", "the PiP window shows what the page put in it, not a fresh blank document")
+        XCTAssertEqual(current, true, "the page still sees its window open")
+    }
+
     func testResizeToResizesThePanel() async throws {
         let tab = await makeTab()
         _ = try await requestWindow(tab)
@@ -254,6 +269,61 @@ final class DocumentPiPControllerTests: XCTestCase {
             browserContext.tearDown()
         }
         return (browserContext, window, engine)
+    }
+
+    func testThePiPOpenerKeepsRenderingWhileItsWindowIsHidden() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        let accessors = WebViewPrivateAccessors(engine.wkWebView)
+
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+        XCTAssertEqual(accessors.bool("_windowOcclusionDetectionEnabled"), false, "its page draws the PiP window: never throttled as hidden")
+
+        window.documentPiP.close()
+        XCTAssertEqual(accessors.bool("_windowOcclusionDetectionEnabled"), true)
+    }
+
+    func testLeavingThePiPOpenerKeepsItsViewAttached() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        window.contentContainerView.addSubview(engine.view)
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+
+        window.processOutgoingContentViews([engine.view])
+
+        XCTAssertTrue(engine.view.superview === window.contentContainerView, "a page removed from the window stops rendering, its PiP window turns white")
+        XCTAssertFalse(engine.view.isHidden)
+    }
+
+    func testClosingThePiPOfALeftTabDetachesItsView() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        _ = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        XCTAssertNotEqual(window.tabManager.activeOpenTabId, engine.id)
+        window.contentContainerView.addSubview(engine.view)
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+
+        window.documentPiP.close()
+
+        XCTAssertNil(engine.view.superview, "without its PiP window, a background tab leaves the window again")
+    }
+
+    func testLeavingTheAppFromACallTabOpensItsPiPAndComingBackClosesIt() async throws {
+        let (_, window, engine) = try await makeWindowTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => documentPictureInPicture.requestWindow({ width: 300, height: 300 }));
+        </script>
+        """)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, window.tabManager.tab(for: engine.id)?.id)
+        engine.callControls.hasPictureInPictureAction = true
+        engine.isTabShareSource = true   // an ongoing capture, as a call's camera or microphone
+
+        window.moveDockedCallToPanel()
+
+        let opened = await pollUntil(timeout: 5) { window.documentPiP.webView != nil }
+        XCTAssertTrue(opened, "switching apps away from a call opens its PiP window")
+        XCTAssertTrue(window.documentPiP.wasAutoEntered)
+
+        window.moveFloatingCallToDock()
+
+        XCTAssertNil(window.documentPiP.webView, "back in Lilo on the call tab: the call shows in the tab again")
     }
 
     func testACallTabParkedByASpaceSwitchCanStillAnswerTheAutomaticOpening() async throws {

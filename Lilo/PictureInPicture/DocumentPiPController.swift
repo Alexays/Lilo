@@ -47,6 +47,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         self.opener = opener
         openerId = opener.id
         opener.documentPiPCloser = { [weak self] in self?.close() }
+        // The page draws its PiP window: a hidden or covered browser window must not throttle it.
+        opener.setWindowOcclusionDetection(false)
         let panel = panel ?? makePanel()
         self.panel = panel
         let mouse = NSEvent.mouseLocation
@@ -107,6 +109,7 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
         wasAutoEntered = false
         movedToScreen = nil
         opener?.documentPiPCloser = nil
+        opener?.setWindowOcclusionDetection(true)
         opener = nil
         webView.uiDelegate = nil
         webView.perform(NSSelectorFromString("_close"))

@@ -263,7 +263,7 @@ extension AgentControl {
     /// rate though nobody sees it: what the agent measures in it is not the throttling of a hidden page.
     func attach(_ engine: WKWebViewTab, to host: MainWindowController?) {
         let parked = engine.view.window === parkingWindow
-        setOcclusionDetection(false, on: engine)
+        engine.setWindowOcclusionDetection(false)
         if let host {
             guard engine.view.window == nil || parked else { return }
             engine.fitView(in: host.contentContainerView.bounds)
@@ -274,13 +274,6 @@ extension AgentControl {
             engine.view.isHidden = false
             parkingWindow.contentView?.addSubview(engine.view)
         }
-    }
-
-    func setOcclusionDetection(_ enabled: Bool, on engine: WKWebViewTab) {
-        let selector = NSSelectorFromString("_setWindowOcclusionDetectionEnabled:")
-        guard engine.wkWebView.responds(to: selector) else { return }
-        typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
-        unsafeBitCast(engine.wkWebView.method(for: selector), to: Setter.self)(engine.wkWebView, selector, enabled)
     }
 
     /// The name of the agent driving `tabId`, as people know it.
@@ -324,7 +317,7 @@ extension AgentControl {
             guard let engine else { continue }
             guard isControlled else {
                 // Undo resize_window, and stop rendering a page nobody looks at any more.
-                setOcclusionDetection(true, on: engine)
+                engine.setWindowOcclusionDetection(true)
                 AgentFrameView.remove(from: engine.wkWebView)
                 if engine.view.window === parkingWindow { engine.view.removeFromSuperview() }
                 engine.agentViewport = nil

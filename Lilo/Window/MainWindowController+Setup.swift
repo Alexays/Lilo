@@ -1005,15 +1005,18 @@ extension MainWindowController {
 
             if popOutBackgroundedTab(outgoingEngine) { continue }
 
-            // Tab-share sources and agent tabs stay in-window like inspector-retained views: WebKit keeps
-            // rendering a covered view, which is what the frame ferry snapshots.
-            guard outgoingEngine.shouldRetainForWebInspector || outgoingEngine.isTabShareSource || outgoingEngine.isAgentControlled else {
+            // Tab-share sources, agent tabs and the page of a PiP window (open or on its way) stay in-window like
+            // inspector-retained views: WebKit keeps rendering a covered view, which the frame ferry snapshots and
+            // the PiP window's page needs to draw it.
+            let drawsPiP = documentPiP.openerId == outgoingEngine.id || awaitingDocumentPiP === outgoingEngine
+            guard outgoingEngine.shouldRetainForWebInspector || outgoingEngine.isTabShareSource || outgoingEngine.isAgentControlled || drawsPiP else {
                 view.removeFromSuperview()
                 continue
             }
 
-            // WebKit renders a covered visible view at full rate, so only an open inspector or a share keeps it shown.
-            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled
+            // WebKit renders a covered visible view at full rate, so only an open inspector, a share, an agent or a
+            // PiP window keeps it shown.
+            view.isHidden = !outgoingEngine.isWebInspectorVisible && !outgoingEngine.isTabShareSource && !outgoingEngine.isAgentControlled && !drawsPiP
             if !outgoingEngine.isWebInspectorVisible { outgoingEngine.fitView(in: contentContainerView.bounds) }
         }
     }
