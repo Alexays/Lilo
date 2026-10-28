@@ -74,6 +74,31 @@ test("Escape closes the sheet and focus stays inside until it closes", async ({ 
 	await expect(focusTarget).toBeFocused();
 });
 
+test("Escape leaves the settings surface underneath the dialog open", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await expect(page.locator(".ui-shell-frame")).toBeVisible();
+	await openWhatsNew(page);
+	await expect(page.getByRole("dialog")).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await expect(page.locator(".ui-shell-frame")).toBeVisible();
+});
+
+test("Escape leaves the screenshot save menu underneath the dialog open", async ({ page }) => {
+	await bootReleaseChrome(page);
+	await page.evaluate(() => window.__lilo!.receive({ event: "screenshotCapturing" }));
+	await page.locator('.screenshot-panel [aria-label="Save options"]').waitFor();
+	await page.evaluate(() => window.__lilo!.receive({ event: "screenshotCaptured", id: "sample", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'/%3E", filename: "sample.png" }));
+	await page.locator('.screenshot-panel [aria-label="Save options"]').click();
+	await expect(page.locator(".save-menu")).toBeVisible();
+	await openWhatsNew(page);
+	await expect(page.locator("dialog[open]")).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(page.locator("dialog[open]")).toHaveCount(0);
+	await expect(page.locator(".save-menu")).toBeVisible();
+});
+
 test("automatic highlights wait for startup recovery to be dismissed", async ({ page }) => {
 	await bootReleaseChrome(page);
 	await page.evaluate(() => window.__lilo!.receive({ event: "sessionRestoreDegraded", spaceName: "Sample space" }));
@@ -138,11 +163,33 @@ test("a maintenance release opens all of its notes without older feature claims"
 	await expect(dialog.locator(".release-highlight")).toHaveCount(0);
 });
 
-test("a pending site permission keeps its priority over automatic highlights", async ({ page }) => {
-	await bootReleaseChrome(page);
-	await page.evaluate(() => window.__lilo!.receive({ event: "permissionRequest", requestId: "request-camera", tabId: "tab-alpha", type: "camera", origin: "meet.example.com" }));
-	await openWhatsNew(page, true);
-	await expect(page.getByRole("dialog")).toHaveCount(0);
-	await page.locator(".url-drawer.open").getByRole("button", { name: "Allow", exact: true }).click();
-	await expect(page.getByRole("dialog")).toBeVisible();
-});
+for (const automatic of [true, false]) {
+	test(`a screen-sharing decision keeps its priority over ${automatic ? "automatic" : "manual"} highlights`, async ({ page }) => {
+		await bootReleaseChrome(page);
+		await openWhatsNew(page);
+		await expect(page.locator("dialog[open]")).toBeVisible();
+		await page.getByRole("button", { name: "Back to browsing" }).click();
+		await page.evaluate(() => window.__lilo!.receive({ event: "tabSharePickerRequested", requestId: "request-share", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] }));
+		await expect(page.locator(".tab-share-panel")).toBeVisible();
+		await openWhatsNew(page, automatic);
+		await page.evaluate(() => new Promise(requestAnimationFrame));
+		await expect(page.locator("dialog[open]")).toHaveCount(0);
+		await page.keyboard.press("Escape");
+		await expect(page.locator(".tab-share-panel")).toHaveCount(0);
+		await expect(page.locator("dialog[open]")).toBeVisible();
+	});
+
+	test(`a pending site permission keeps its priority over ${automatic ? "automatic" : "manual"} highlights`, async ({ page }) => {
+		await bootReleaseChrome(page);
+		await openWhatsNew(page);
+		await expect(page.getByRole("dialog")).toBeVisible();
+		await page.getByRole("dialog").getByRole("button", { name: "Back to browsing" }).click();
+		await expect(page.getByRole("dialog")).toHaveCount(0);
+		await page.evaluate(() => window.__lilo!.receive({ event: "permissionRequest", requestId: "request-camera", tabId: "tab-alpha", type: "camera", origin: "meet.example.com" }));
+		await openWhatsNew(page, automatic);
+		await page.evaluate(() => new Promise(requestAnimationFrame));
+		await expect(page.getByRole("dialog")).toHaveCount(0);
+		await page.locator(".url-drawer.open").getByRole("button", { name: "Allow", exact: true }).click();
+		await expect(page.getByRole("dialog")).toBeVisible();
+	});
+}

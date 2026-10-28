@@ -4,6 +4,24 @@ import XCTest
 
 @MainActor
 final class WhatsNewPresentationTests: XCTestCase {
+    func testAHiddenWindowDoesNotConsumeTheAnnouncement() async throws {
+        let fixture = try await TemporaryBrowserContext()
+        defer { fixture.tearDown() }
+        let controller = MainWindowController(context: fixture.context)
+        fixture.context.windows.add(controller)
+        XCTAssertFalse(try XCTUnwrap(controller.window).isVisible)
+        controller.whatsNewRequested = true
+        controller.whatsNewUIReady = true
+        let key = "whatsNewHighestPresentedVersion"
+        let previousMarker = UserDefaults.lilo.object(forKey: key)
+        UserDefaults.lilo.removeObject(forKey: key)
+        defer { UserDefaults.lilo.set(previousMarker, forKey: key) }
+
+        controller.acknowledgeWhatsNew(version: try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String))
+
+        XCTAssertNil(UserDefaults.lilo.object(forKey: key))
+    }
+
     func testTheMountedDialogOwnsAndRestoresNativeFocus() async throws {
         let fixture = try await TemporaryBrowserContext()
         defer { fixture.tearDown() }

@@ -763,6 +763,7 @@ extension MainWindowController: NSWindowDelegate {
     func windowDidBecomeKey(_ notification: Notification) {
         context.windows.noteActive(self)
         presentPendingWhatsNew()
+        acknowledgeVisibleWhatsNew()
         // A tab another window took and has let go of since comes back without a click.
         if let placeholderTabId, context.windows.displayingWindow(ofTab: placeholderTabId) == nil {
             reclaimDisplayedTab(placeholderTabId)

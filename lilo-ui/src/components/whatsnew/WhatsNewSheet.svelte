@@ -48,6 +48,8 @@
   });
 
   function handleKeydown(event: KeyboardEvent): void {
+    event.stopPropagation();
+    if (event.key === "Escape") { event.preventDefault(); onclose(); return; }
     if (event.key !== "Tab") return;
     const controls = [...dialog.querySelectorAll<HTMLElement>("button:not([disabled]), summary")];
     const index = controls.indexOf(document.activeElement as HTMLElement);

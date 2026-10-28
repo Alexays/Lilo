@@ -269,8 +269,12 @@ extension AppDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         guard let kind = dynamicMenus.first(where: { $0.value === menu })?.key else { return }
-        defer { menu.showItemImages() }
         let controller = NSApp.mainWindow?.windowController as? MainWindowController ?? mainWindowController
+        defer {
+            menu.showItemImages()
+            menu.autoenablesItems = controller?.isShowingWhatsNew != true
+            if controller?.isShowingWhatsNew == true { menu.items.forEach { $0.isEnabled = false } }
+        }
         switch kind {
         case .extensions: break
         case .recentlyVisited: return updateRecentHistory(in: menu)

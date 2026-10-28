@@ -39,7 +39,12 @@ extension MainWindowController {
         isShowingWhatsNew = true
         contentContainerView?.setAccessibilityHidden(true)
         focusChrome()
-        context.whatsNew.acknowledge(version: version)
+        acknowledgeVisibleWhatsNew()
+    }
+
+    func acknowledgeVisibleWhatsNew() {
+        guard isShowingWhatsNew, whatsNewUIReady, let window, window.isVisible, window.isKeyWindow else { return }
+        context.whatsNew.acknowledge(version: whatsNewVersion)
     }
 
     func dismissWhatsNew() {
@@ -62,10 +67,4 @@ extension MainWindowController {
     }
 
     func windowDidEndSheet(_ notification: Notification) { presentPendingWhatsNew() }
-}
-
-extension MainWindowController: NSMenuItemValidation {
-    func validateMenuItem(_ item: NSMenuItem) -> Bool {
-        !isShowingWhatsNew || item.action == #selector(showWhatsNew(_:))
-    }
 }

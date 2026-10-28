@@ -81,7 +81,7 @@
 
 **Interfaces:**
 - The deferred store captures `openWhatsNew` before the lazy view exists and makes duplicate opens idempotent. A native readiness flag holds early Help requests until WhatsNewHost installs the listener.
-- `WhatsNewHost` requests automatic eligibility once after mount and holds automatic requests behind onboarding/recovery/permission state. It imports the sheet only when needed, and the sheet reads its bundled JSON resource on opening.
+- `WhatsNewHost` requests automatic eligibility once after mount and holds both automatic and manual requests behind onboarding/recovery/permission state. It imports the sheet only when needed, and the sheet reads its bundled JSON resource on opening.
 - `WhatsNewSheet` consumes Task 1 content and Task 2 bridge actions. A native HTML dialog supplies inert background controls and keyboard cycling inside the existing chrome web view; the registered full-window hit zone captures pointer input.
 - Missing notes suppress automatic presentation; manual opening displays the localized fallback. Missing highlights expand the complete notes by default. No raw HTML rendering is used.
 
@@ -91,8 +91,8 @@
 - [x] Inspect the production chrome preview in light/dark and French at a short size. Adjust only demonstrated issues.
 - [x] Document optional exact-version highlight authoring and add the release fragment with the pinned Changie tool from the Makefile.
 - [x] Run `make project-sync`, `make validate`, and, if the known local DST fixture still fails, `TZ=UTC make validate`. Report any remaining baseline failure by name.
-- [ ] Obtain one independent whole-change review, fix substantive findings, and rerun only checks justified by those fixes.
-- [ ] Commit only this feature’s files, approved design/plan, regenerated project, and release fragment using Conventional Commits. Leave inherited website edits untouched.
+- [x] Obtain one independent whole-change review, fix substantive findings, and rerun only checks justified by those fixes.
+- [x] Commit only this feature’s files, approved design/plan, regenerated project, and release fragment using Conventional Commits. Leave inherited website edits untouched.
 
 ## Execution
 
@@ -107,3 +107,15 @@ The user explicitly approved this design and requested implementation. Execute n
 - Compiled the selected release's translated highlight text into that resource, keeping historical headline keys out of the startup catalogs. The cost is a small build-time resolver.
 - Added the native Help label to the demo's menu mirror as a Mac-only item, as required by its parity gate. Public changelog pages are untouched.
 - Made the readiness probe passive in the website demo, preventing an unsolicited unavailable-action notice. Only that compatibility line is included from the host file; its inherited edit remains outside this change.
+
+## Final review and verification
+
+An independent whole-change review identified four Important issues: AppKit's existing menu validation was bypassed, Escape could reach background surfaces, manual requests could cover required prompts, and dynamic closure menu items remained enabled behind the dialog. Each issue was reproduced by a failing regression and fixed in one pass. A separate native regression confirmed the reviewer's unverified hidden-window acknowledgment race; the durable marker now waits for a visible key window, with event-driven acknowledgment on activation and readiness cleared on chrome reload.
+
+Native regression coverage uses actual AppKit menu updates and native responder/accessibility ownership without activating test windows. Browser coverage includes Escape over Settings and screenshot save menus, and automatic/manual requests queued behind site permissions and screen-sharing decisions.
+
+The reviewer left inherited website changes and the existing Helsinki daylight-saving fixture outside this feature's review. The inherited edits remain untouched. The fixture retains its original assertion; full validation uses `TZ=UTC`, and the local-time failure must be reported. Independent code review and the implementer's fresh test execution provide the two forms of evidence; the reviewer did not duplicate the test run.
+
+The decisions above add a small optional bundle and event-driven integration points. They introduce no polling, remote content, idle task, or new dependency. A wrong bundle allowance would cost about 17 KB of uncompressed embedded assets; a mistake in the release-resource selection would show unavailable notes or stale claims, covered by exact-version tests. The two demo compatibility changes keep the shared UI's menu/probe contract; they do not include the public-site redesign. Focused Make arguments preserve the default full checks and the machine-wide native test lock.
+
+Final checks after the review fixes: `TZ=UTC make validate` passed, including the complete native suite, UI lint/unit checks, website checks, SwiftLint, bridge checks, and release status. `make e2e E2E_ARGS='whatsNew.spec.ts tabShare.spec.ts screenshotTools.spec.ts --workers=2'` passed all 31 tests. The focused AppKit/presentation suites passed all 14 tests. The final embedded bundle is 1,306,527 bytes; its first frame is 545,914 bytes, below the unchanged 546,000-byte cap. No Important or Critical review findings remain, and no Minor findings were deferred.
