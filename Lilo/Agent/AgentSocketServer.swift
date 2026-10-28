@@ -7,10 +7,11 @@ import os
 @MainActor
 final class AgentSocketServer {
     enum SocketError: LocalizedError {
-        case pathTooLong, system(String, Int32)
+        case pathTooLong, inUse, system(String, Int32)
         var errorDescription: String? {
             switch self {
             case .pathTooLong: "Agent socket path is too long"
+            case .inUse: "Another Lilo already serves agents on this socket"
             case .system(let call, let code): "\(call) failed: \(String(cString: strerror(code)))"
             }
         }
@@ -21,6 +22,8 @@ final class AgentSocketServer {
     private let onConnection: (AgentConnection) -> Void
     private var listener: Int32 = -1
     private var source: DispatchSourceRead?
+    /// The bound socket file, so stop never unlinks a socket another Lilo bound at the same path since.
+    private var boundFile: (device: dev_t, inode: ino_t)?
 
     init(path: URL, onConnection: @escaping (AgentConnection) -> Void) {
         self.path = path
@@ -30,8 +33,6 @@ final class AgentSocketServer {
     func start() throws {
         guard listener < 0 else { return }
         try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
-        // A socket left by a crash would make bind fail.
-        unlink(path.path)
         var address = sockaddr_un()
         address.sun_family = sa_family_t(AF_UNIX)
         let bytes = Array(path.path.utf8)
@@ -40,12 +41,24 @@ final class AgentSocketServer {
             buffer.copyBytes(from: bytes)
             buffer[bytes.count] = 0
         }
+        // A socket that still accepts belongs to a running Lilo on the same data folder: taking it over would send
+        // that Lilo's agents here. Only a socket left by a crash, which refuses connections, is replaced.
+        let probe = socket(AF_UNIX, SOCK_STREAM, 0)
+        guard probe >= 0 else { throw SocketError.system("socket", errno) }
+        let live = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(probe, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+        } == 0
+        Darwin.close(probe)
+        guard !live else { throw SocketError.inUse }
+        unlink(path.path)
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard fd >= 0 else { throw SocketError.system("socket", errno) }
         let bound = withUnsafePointer(to: &address) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
         }
         guard bound == 0 else { let code = errno; Darwin.close(fd); throw SocketError.system("bind", code) }
+        var file = stat()
+        if stat(path.path, &file) == 0 { boundFile = (file.st_dev, file.st_ino) }
         // The peer uid check on accept is the real gate; the mode keeps other users from even connecting.
         guard chmod(path.path, 0o600) == 0, listen(fd, 16) == 0 else {
             let code = errno; Darwin.close(fd); unlink(path.path); throw SocketError.system("listen", code)
@@ -63,7 +76,11 @@ final class AgentSocketServer {
         source?.cancel()
         source = nil
         listener = -1
-        unlink(path.path)
+        var file = stat()
+        if let boundFile, stat(path.path, &file) == 0, file.st_dev == boundFile.device, file.st_ino == boundFile.inode {
+            unlink(path.path)
+        }
+        boundFile = nil
     }
 
     private func acceptConnection() {
