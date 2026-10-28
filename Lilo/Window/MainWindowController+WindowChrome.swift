@@ -72,6 +72,13 @@ extension MainWindowController {
 
     func applyTabLayout(_ layout: TabLayout, animated: Bool) {
         guard layout != tabLayout else { return }
+        // Moving to an address in its own toolbar shows that toolbar, whatever was hidden before.
+        if layout.canHideToolbar && !tabLayout.canHideToolbar && !toolbarVisible {
+            toolbarVisible = true
+            context.settingsStore?.toolbarVisible = true
+            UserDefaults.lilo.set(true, forKey: "cachedToolbarVisible")
+            bridgeRouter?.send(event: "toolbarVisibilityChanged", data: ["visible": true])
+        }
         tabLayout = layout
         applyTitlebarStyle()
         applySidebarLayout(animated: animated, syncTrafficLights: true)
@@ -81,7 +88,7 @@ extension MainWindowController {
     /// The unified style centers the lights in the sidebar's 52pt header; the compact one centers them at 20pt,
     /// on the line of a 40pt page toolbar or strip.
     func applyTitlebarStyle() {
-        window?.toolbarStyle = tabLayout == .default ? .unified : .unifiedCompact
+        window?.toolbarStyle = tabLayout.position == .left && !hasPageToolbar ? .unified : .unifiedCompact
     }
 
     /// The setting is app-wide: every window moves, and the next launch paints the new layout first.
@@ -126,6 +133,18 @@ extension MainWindowController {
         }
     }
 
+    func toggleToolbar() {
+        guard tabLayout.canHideToolbar else { return }
+
+        toolbarVisible.toggle()
+        context.settingsStore.toolbarVisible = toolbarVisible
+        UserDefaults.lilo.set(toolbarVisible, forKey: "cachedToolbarVisible")
+        applyTitlebarStyle()
+        applySidebarLayout(animated: true, syncTrafficLights: true)
+
+        bridgeRouter.send(event: "toolbarVisibilityChanged", data: ["visible": toolbarVisible])
+    }
+
     func toggleSidebar() {
         guard !sidebarCollapseLocked else { return }
 
@@ -141,7 +160,8 @@ extension MainWindowController {
     /// A floating overlay covers the lights' top-left corner only when it comes from the left or the top.
     func areTrafficLightsVisible() -> Bool {
         let overlayCoversLights = sidebarOverlayVisible && (tabLayout.position == .left || tabLayout.position == .top)
-        return window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || overlayCoversLights)
+        let toolbarHoldsLights = tabLayout.canHideToolbar && toolbarVisible
+        return window?.styleMask.contains(.fullScreen) != true && (sidebarVisible || overlayCoversLights || toolbarHoldsLights)
     }
 
     func showActiveTabSecurityInfo() {

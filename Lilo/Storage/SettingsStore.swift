@@ -89,6 +89,11 @@ final class SettingsStore {
         set { set("sidebarVisible", value: newValue ? "true" : "false") }
     }
 
+    var toolbarVisible: Bool {
+        get { (get("toolbarVisible") ?? "true") == "true" }
+        set { set("toolbarVisible", value: newValue ? "true" : "false") }
+    }
+
     var tabLayout: TabLayout {
         TabLayout(storedPosition: get("tabPosition"), storedAddress: get("addressPlacement"))
     }

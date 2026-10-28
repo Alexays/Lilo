@@ -38,6 +38,22 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
+test("with tabs on the left the sidebar and the address toolbar hide one without the other", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "left", addressPlacement: "page" });
+	await expect(page.locator(".page-toolbar .url-display")).toBeVisible();
+
+	await receive(page, { event: "sidebarVisibilityChanged", visible: false, width: 260 });
+	await expect(page.locator(".page-toolbar .url-display")).toBeVisible();
+	await expect(page.locator(".page-toolbar .lights-spacer")).toHaveCount(1);
+	await expect(page.locator(".sidebar .url-display")).toHaveCount(0);
+
+	await receive(page, { event: "sidebarVisibilityChanged", visible: true, width: 260 });
+	await receive(page, { event: "toolbarVisibilityChanged", visible: false });
+	await expect(page.locator(".page-toolbar")).toHaveCount(0);
+	await expect(page.locator(".sidebar-layout")).not.toHaveClass(/compact-header/);
+	await expect(page.locator(".url-display")).toHaveCount(0);
+});
+
 test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "right" });
 	await receive(page, { event: "openSettings" });

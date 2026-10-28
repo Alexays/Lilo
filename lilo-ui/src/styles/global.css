@@ -324,6 +324,11 @@ html[data-tabs-hidden] {
   --tabs-bottom: var(--content-inset);
 }
 
+/* On the left and the top, the address's own toolbar stays over the page without the tabs. */
+html[data-tabs-hidden][data-address='page']:is([data-tab-position='left'], [data-tab-position='top']) {
+  --tabs-top: var(--page-toolbar-height);
+}
+
 html[data-booting='true'] .space-track {
   scroll-behavior: auto;
 }

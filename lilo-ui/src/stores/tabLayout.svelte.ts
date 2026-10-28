@@ -3,9 +3,11 @@ import { setSetting } from "./settings.svelte";
 import { getActiveUrlBarDrawer } from "./urlBarDrawer.svelte";
 import { tick } from "svelte";
 import { prefersReducedMotion } from "../lib/motion/reducedMotion";
+import { isSidebarVisible } from "./ui.svelte";
 
 let _position = $state<TabPosition>("left");
 let _address = $state<AddressPlacement>("tabs");
+let _toolbarVisible = $state(true);
 
 /** Right and bottom keep a toolbar over the page for the traffic lights, so the address goes there. */
 function defaultAddress(position: TabPosition): AddressPlacement {
@@ -23,7 +25,7 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 		if (typeof document === "undefined") return;
 		const root = document.documentElement;
 		root.dataset.tabPosition = position;
-		root.dataset.address = address;
+		root.dataset.address = shownAddress();
 	};
 	// A new edge morphs the tabs there (global.css names them), while the native page slides alongside.
 	const morph = applied && position !== _position && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
@@ -38,7 +40,8 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 	void transition.finished.finally(() => clearTimeout(deadline));
 }
 
-export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement">): void {
+export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement" | "toolbarVisible">): void {
+	_toolbarVisible = data.toolbarVisible ?? true;
 	const position = data.tabPosition ?? "left";
 	const address = data.addressPlacement ?? defaultAddress(position);
 	apply(position, position === "right" && address === "tabs" ? "page" : address);
@@ -51,6 +54,20 @@ export function canPlaceAddressWithTabs(): boolean {
 
 export function initTabLayoutStore(): void {
 	on("tabLayoutChanged", ({ position, address }) => apply(position, address));
+	on("toolbarVisibilityChanged", ({ visible }) => {
+		_toolbarVisible = visible;
+		if (typeof document !== "undefined") document.documentElement.dataset.address = shownAddress();
+	});
+}
+
+/** On the left and the top, the toolbar holds only the address: it hides apart from the tabs. */
+export function canHideToolbar(): boolean {
+	return _address === "page" && (_position === "left" || _position === "top");
+}
+
+/** The address as drawn: a hidden toolbar takes it along, as if the setting hid it. */
+function shownAddress(): AddressPlacement {
+	return canHideToolbar() && !_toolbarVisible ? "hidden" : _address;
 }
 
 export function getTabPosition(): TabPosition {
@@ -63,7 +80,7 @@ export function getAddressPlacement(): AddressPlacement {
 
 /** Requests must remain answerable even when the address is hidden. */
 export function isAddressVisible(): boolean {
-	return _address !== "hidden" || getActiveUrlBarDrawer() !== null;
+	return shownAddress() !== "hidden" || getActiveUrlBarDrawer() !== null;
 }
 
 export function isVerticalLayout(): boolean {
@@ -72,11 +89,16 @@ export function isVerticalLayout(): boolean {
 
 /** A row over the page's width: always on the right and bottom, where it keeps the traffic lights. */
 export function hasPageToolbar(): boolean {
-	return _position === "right" || _position === "bottom" || (_position === "left" && _address === "page");
+	return _position === "right" || _position === "bottom" || (_position === "left" && shownAddress() === "page");
+}
+
+/** The tabs' own toolbar goes with them; the address's own one, on the left and the top, stays on its own. */
+export function isPageToolbarShown(): boolean {
+	return canHideToolbar() ? _toolbarVisible : hasPageToolbar() && isSidebarVisible();
 }
 
 export function isAddressInPageToolbar(): boolean {
-	return hasPageToolbar() && _address === "page";
+	return isPageToolbarShown() && shownAddress() === "page";
 }
 
 /** The side a row's tooltip or card opens toward: away from the sidebar. */

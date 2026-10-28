@@ -16,7 +16,7 @@ enum MenuIcon: CaseIterable {
     case checkForUpdates, extensions, newLittleWindow, newTerminalBeside, newTerminalBelow, openLocation, openAsTab, savePage
     case share, qrCode, screenshot, captureArea, captureVisible, captureFullPage, print, copyMarkdown, find, findNext
     case findPrevious, spelling, showSpelling, checkSpelling, spellWhileTyping, checkGrammar, autocorrect
-    case substitutions, showSubstitutions, smartQuotes, smartDashes, textReplacement, transformations, speech, sidebar
+    case substitutions, showSubstitutions, smartQuotes, smartDashes, textReplacement, transformations, speech, sidebar, toolbar
     case fullScreen, reloadFromOrigin, stopLoading, zoomIn, zoomOut, actualSize, reader, translate, showChanges
     case recentlyClosed, archivedTabs, recentlyVisited, history, clearBrowsingData, nextSpace, previousSpace, previousTab, nextTab
     case goToTab, moveToSpace, clearUnpinned, webInspector, inspectElement, console, viewSource, sources, profiling
@@ -107,6 +107,7 @@ enum MenuIcon: CaseIterable {
         case .transformations: "textformat"
         case .speech: "waveform"
         case .sidebar: "sidebar.left"
+        case .toolbar: "menubar.rectangle"
         case .fullScreen: "arrow.up.left.and.arrow.down.right"
         case .reloadFromOrigin: "arrow.clockwise.circle"
         case .stopLoading: "xmark"

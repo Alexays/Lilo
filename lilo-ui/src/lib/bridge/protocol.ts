@@ -468,6 +468,7 @@ export interface BridgeInitialStatePayload {
 	activeTabId: string;
 	sidebarWidth: number;
 	sidebarVisible: boolean;
+	toolbarVisible?: boolean;
 	trafficLightsVisible?: boolean;
 	tabPosition?: TabPosition;
 	addressPlacement?: AddressPlacement;
@@ -837,6 +838,7 @@ export interface BridgeEventPayloadMap {
 	screenshotSaved: { path: string };
 	screenshotError: { message: string };
 	sidebarVisibilityChanged: { visible: boolean; width: number };
+	toolbarVisibilityChanged: { visible: boolean };
 	windowChromeStateChanged: { trafficLightsVisible: boolean };
 	/** The dominant color of this window's wallpaper and a small JPEG data URL of it; empty when it can't be read. */
 	wallpaperColorChanged: { color: string; thumbnail?: string };

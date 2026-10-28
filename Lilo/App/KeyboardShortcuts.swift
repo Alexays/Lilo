@@ -63,6 +63,7 @@ enum KeyboardShortcuts {
         Action("find.previous", "Find Previous", "Edit", ["⇧⌘g"]),
         Action("spelling.check", "Check Document Now", "Edit", ["⌘;"]),
         Action("sidebar.toggle", "Toggle Sidebar", "View", ["⇧⌘s"]),
+        Action("toolbar.toggle", "Toggle Toolbar", "View", ["⌥⌘t"]),
         // No default keys: ⌃⌘ with the arrows already switches Spaces.
         Action("tabs.positionLeft", "Move Tabs to the Left", "View"),
         Action("tabs.positionRight", "Move Tabs to the Right", "View"),
