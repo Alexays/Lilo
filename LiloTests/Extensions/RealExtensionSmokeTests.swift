@@ -400,6 +400,17 @@ final class RealExtensionSmokeTests: XCTestCase {
                 try await Task.sleep(for: .seconds(3))
                 for tab in idleWindow.tabManager.openTabs where tab.id != blank.id { idleWindow.closeTabStateFirst(id: tab.id, undoable: false) }
                 idleWindow.activateTabStateFirst(id: blank.id)
+                // Chrome's recording opens the popup once before its worker stops, and a popup's first opening may show
+                // something else than the next ones (1VPN's upgrade offer): the idle check's popup is a second one too.
+                for entry in idleBatch {
+                    let button = NSMenuItem()
+                    button.representedObject = entry.outcome.id
+                    idleWindow.openExtensionFromMenu(button)
+                    try await Task.sleep(for: .seconds(5))
+                    idleRegistry.delegate.closeOpenActionPopups(reason: "idle check", extensionId: entry.outcome.id)
+                }
+                for tab in idleWindow.tabManager.openTabs where tab.id != blank.id { idleWindow.closeTabStateFirst(id: tab.id, undoable: false) }
+                idleWindow.activateTabStateFirst(id: blank.id)
                 quietSince = Date()
             }
             guard !idleBatch.isEmpty else { return }
