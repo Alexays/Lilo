@@ -117,6 +117,12 @@ function ownMembers(namespace: any): void {
   }
 }
 
+/**
+ * WebKit's failure of a page's message once Lilo closed its tab, before the page itself goes: Chrome runs nothing more of
+ * a closed page, so the call settles never.
+ */
+const closedTab = 'Invalid call to runtime.sendMessage(). Tab not found.';
+
 /** Whether the page called a window.close() that succeeded; undefined in a worker. */
 let pageClosed: boolean | undefined;
 const never = new Promise<never>(() => {});
@@ -160,6 +166,7 @@ function chromeMethod(method: Method, namespace: object): Method {
         if (pageClosed) return undefined;
         const lilo = liloLastErrorMessage();
         const message = lilo ?? webKitRuntime?.lastError?.message;
+        if (pageClosed !== undefined && message === closedTab) return undefined;
         const chrome = typeof message === 'string' ? chromeError(message, args) : undefined;
         if (chrome === undefined) return callback.apply(this, results);
         // WebKit's own lastError holds too, which `browser.runtime.lastError` reads unseen (AdBlock's callbacks): its
@@ -171,7 +178,7 @@ function chromeMethod(method: Method, namespace: object): Method {
     const result = method.apply(namespace, args);
     if (!(result instanceof Promise)) return result;
     return result.then((value) => (pageClosed ? never : value), (error) => {
-      if (pageClosed) return never;
+      if (pageClosed || pageClosed !== undefined && error?.message === closedTab) return never;
       const chrome = error instanceof Error ? chromeError(error.message, args) : undefined;
       return Promise.reject(chrome === undefined ? error : new Error(chrome));
     });

@@ -261,6 +261,26 @@ describe("WebKit's errors", () => {
     assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
   });
 
+  it("settle never a closed tab's page message, as Chrome runs nothing more of a closed page", async () => {
+    const closed = 'Invalid call to runtime.sendMessage(). Tab not found.';
+    class ClosingRuntime extends FailingRuntime {
+      sendMessage(_message: unknown, callback?: () => void) {
+        if (!callback) return Promise.reject(new Error(closed));
+        this.error = { message: closed };
+        try { callback(); } finally { this.error = null; }
+        return undefined;
+      }
+    }
+    (globalThis as any).chrome = { runtime: new ClosingRuntime([]) };
+    installChromeCompat({}, true);
+    const api = (globalThis as any).chrome;
+    let settled = false;
+    api.runtime.sendMessage('hi', () => { settled = true; });
+    api.runtime.sendMessage('hi').then(() => { settled = true; }, () => { settled = true; });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(settled, false);
+  });
+
   it('log no unchecked lastError a callback may have read through browser', () => {
     const api = chrome();
     const logged: unknown[] = [];
