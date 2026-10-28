@@ -177,9 +177,10 @@
     visibility: hidden;
   }
 
+  /* An opaque icon greys out darker than the sidebar's tiles, so its own marks (LinkedIn's "in") stay legible on it. */
   .site-favicon.is-asleep {
-    filter: grayscale(1);
-    opacity: 0.55;
+    filter: grayscale(1) brightness(0.7) contrast(1.3);
+    opacity: 0.8;
   }
 
   .site-favicon-image {
