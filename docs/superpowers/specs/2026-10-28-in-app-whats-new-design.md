@@ -1,13 +1,13 @@
 # In-app What’s New
 
 Date: 2026-10-28
-Status: Proposed for approval
+Status: Approved by the user on 2026-10-28
 
 ## Intent
 
 Make an update feel worth noticing. People should leave knowing one or two useful things that changed, with the full release notes available when they want detail. The experience should feel like a small, friendly moment in Lilo and return them to their restored browsing session.
 
-The user chose automatic presentation once after an update, then chose the compact welcome sheet (option A in the visual comparison). The remaining behavior below is the proposed design, rather than additional decisions the user has already approved.
+The user chose automatic presentation once after an update, chose the compact welcome sheet (option A in the visual comparison), and approved this design for implementation.
 
 ## Approaches considered
 
@@ -93,4 +93,4 @@ Baseline before implementation: `make validate` currently exposes an existing da
 
 ## Approval
 
-The requested decision is approval of this compact-sheet design, including the proposed lifecycle and original-language complete notes. Product implementation begins after approval, followed by an implementation plan.
+The user approved the compact-sheet design, including its lifecycle and original-language complete notes, and requested implementation.

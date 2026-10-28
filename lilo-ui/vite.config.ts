@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { releaseNotesPlugin } from "./releaseNotesPlugin";
 
 function cspPlugin(): Plugin {
 	return {
@@ -61,6 +62,7 @@ export default defineConfig({
 		}),
 		cspPlugin(),
 		stripNativeStringsPlugin(),
+		releaseNotesPlugin(),
 	],
 	build: {
 		outDir: "../build/chrome-ui",
