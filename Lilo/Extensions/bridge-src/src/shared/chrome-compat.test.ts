@@ -260,6 +260,20 @@ describe("WebKit's errors", () => {
     await assert.rejects(api.tabs.sendMessage(9, 'hi'), { message: 'Could not establish connection. Receiving end does not exist.' });
     assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
   });
+
+  it('log no unchecked lastError a callback may have read through browser', () => {
+    const api = chrome();
+    const logged: unknown[] = [];
+    const { error } = console;
+    console.error = (...args: unknown[]) => { logged.push(args[0]); };
+    try {
+      // `browser.runtime` is WebKit's own, whose lastError Lilo cannot see being read.
+      api.tabs.get(7, () => runtime.lastError);
+    } finally {
+      console.error = error;
+    }
+    assert.deepEqual(logged, []);
+  });
 });
 
 describe('the view chrome hands out for WebKit own properties', () => {

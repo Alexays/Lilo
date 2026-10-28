@@ -16,9 +16,9 @@ export function liloLastErrorMessage(): string | undefined {
 
 /**
  * Runs `callback` with `message` as chrome.runtime.lastError, then logs it as Chrome does when the
- * callback did not read it.
+ * callback did not read it, unless `logsUnchecked` is false.
  */
-export function withLastError(message: string, callback: () => void): void {
+export function withLastError(message: string, callback: () => void, logsUnchecked = true): void {
   // Nested in another's callback, it stands for the outer lastError, which holds again after it but logs no more.
   const outer = lastError;
   lastError = { message };
@@ -26,7 +26,7 @@ export function withLastError(message: string, callback: () => void): void {
   try {
     callback();
   } finally {
-    if (!lastErrorRead) console.error(`Unchecked runtime.lastError: ${message}`);
+    if (!lastErrorRead && logsUnchecked) console.error(`Unchecked runtime.lastError: ${message}`);
     lastError = outer;
     lastErrorRead = true;
   }

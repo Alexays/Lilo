@@ -158,10 +158,13 @@ function chromeMethod(method: Method, namespace: object): Method {
     if (typeof callback === 'function') {
       args[last] = function (this: unknown, ...results: unknown[]) {
         if (pageClosed) return undefined;
-        const message = liloLastErrorMessage() ?? webKitRuntime?.lastError?.message;
+        const lilo = liloLastErrorMessage();
+        const message = lilo ?? webKitRuntime?.lastError?.message;
         const chrome = typeof message === 'string' ? chromeError(message, args) : undefined;
         if (chrome === undefined) return callback.apply(this, results);
-        withLastError(chrome, () => callback.apply(this, results));
+        // WebKit's own lastError holds too, which `browser.runtime.lastError` reads unseen (AdBlock's callbacks): its
+        // errors go unlogged, as those Lilo leaves in WebKit's words.
+        withLastError(chrome, () => callback.apply(this, results), lilo !== undefined);
         return undefined;
       };
     }
