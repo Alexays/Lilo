@@ -804,7 +804,10 @@ final class RealExtensionSmokeTests: XCTestCase {
                 """, in: page) as? String ?? "unread"
                 let worker = registry.lifecycle.worker(of: feature.id).map { "\($0)" } ?? "none"
                 let errors = context.errors.suffix(4).map { String($0.localizedDescription.prefix(160)) }
-                return "page \(state), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors)"
+                // Lilo's console relay names the page each message came from.
+                let consoles = (registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == feature.id }?["pageDiagnostics"] as? [[String: Any]] ?? [])
+                    .suffix(4).map { "\($0["source"] ?? "?"): \(String(describing: $0["message"] ?? "").prefix(200))" }
+                return "page \(state), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors), consoles \(consoles)"
             }
             if let shows = feature.shows {
                 let shown = await pollUntil(timeout: 30) { shows(window) }
