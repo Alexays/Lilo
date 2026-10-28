@@ -12,10 +12,27 @@ test("the day splits at 6, 11, 17 and 21", () => {
   );
 });
 
-test("the next change of day part is the next start hour, tomorrow morning after 21", () => {
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 16, 30)), 30 * 60 * 1000);
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 22, 0)), 8 * 3600 * 1000);
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 3, 0)), 3 * 3600 * 1000);
+test("the next day part starts at its local hour across daylight-saving changes", () => {
+  const previousTZ = process.env.TZ;
+  try {
+    for (const [timezone, now, expected] of [
+      ["UTC", "2026-10-25T16:30:00Z", 30 * 60 * 1000],
+      ["UTC", "2026-10-25T22:00:00Z", 8 * 3600 * 1000],
+      ["UTC", "2026-10-25T03:00:00Z", 3 * 3600 * 1000],
+      ["Europe/Helsinki", "2026-10-25T00:00:00Z", 4 * 3600 * 1000],
+      ["Europe/Helsinki", "2026-10-24T19:00:00Z", 9 * 3600 * 1000],
+      ["Europe/Helsinki", "2026-03-29T00:00:00Z", 3 * 3600 * 1000],
+      ["Europe/Helsinki", "2026-03-28T20:00:00Z", 7 * 3600 * 1000],
+      ["America/New_York", "2026-11-01T05:00:00Z", 6 * 3600 * 1000],
+      ["America/New_York", "2026-03-08T06:00:00Z", 4 * 3600 * 1000],
+    ] as const) {
+      process.env.TZ = timezone;
+      assert.equal(msUntilNextDayPart(new Date(now)), expected, `${timezone}: ${now}`);
+    }
+  } finally {
+    if (previousTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTZ;
+  }
 });
 
 test("a fixed Space keeps its color whatever the context", () => {
