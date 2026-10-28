@@ -58,6 +58,7 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdatePermissionUsage usage: WebPermissionUsageState)
         func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool)
+        func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
         /// The page waits on a dialog held until its tab is shown, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
@@ -168,7 +169,7 @@ final class WKWebViewTab: NSObject {
         view.frame = NSRect(x: x, y: y, width: size.width, height: size.height)
     }
 
-    private var effectivePermissionUsageState: WebPermissionUsageState {
+    var effectivePermissionUsageState: WebPermissionUsageState {
         var state = permissionUsageState
         state.usesScreen = state.usesScreen || isTabShareSource
         return state
@@ -356,6 +357,9 @@ final class WKWebViewTab: NSObject {
         let usage = effectivePermissionUsageState
         return usage.usesCamera || usage.usesMicrophone || usage.usesScreen
     }
+
+    /// A call, captured or not: a page offering a hangup is in one without mic or camera (Meet's companion mode).
+    var isInCall: Bool { hasActiveCapture || callControls.actions.contains("hangup") }
 
     /// Active media on the page: an ongoing capture (call) or audible playback.
     private var hasActiveMedia: Bool {
@@ -1091,6 +1095,7 @@ extension WKWebViewTab.Delegate {
     ) { completion(nil) }
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
+    func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
@@ -1292,7 +1297,10 @@ extension WKWebViewTab: WKNavigationDelegate {
                 tab.isFormDirty = false
                 tab.delegate?.tab(tab, didUpdateFormDirty: false)
             }
-            tab.callControls = CallControls()
+            if tab.callControls != CallControls() {
+                tab.callControls = CallControls()
+                tab.delegate?.tab(tab, didUpdateCallControls: tab.callControls)
+            }
             // Clearing the crash-recency marker makes a later, unrelated termination count as a first failure
             // rather than tripping the died-twice guard.
             tab.lastContentTerminationAt = nil

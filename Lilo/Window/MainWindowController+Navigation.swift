@@ -544,7 +544,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.lastCaptureStoppedAt = now
             }
         }
-        callUsageChanged(tabId: tab.id, usage: usage)
+        callUsageChanged(tab)
+    }
+
+    func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {
+        updateAndEmit(tab.id) { $0.hasHangupControl = controls.actions.contains("hangup") }
+        callUsageChanged(tab)
+        if context.callTabIds.contains(tab.id) || context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
     }
 
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,

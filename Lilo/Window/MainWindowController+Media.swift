@@ -137,10 +137,11 @@ extension MainWindowController {
         }
     }
 
-    func callUsageChanged(tabId: UUID, usage: WKWebViewTab.WebPermissionUsageState) {
-        let inCall = usage.usesMicrophone || usage.usesCamera
-        guard inCall != context.callTabIds.contains(tabId) else { return }
-        if inCall { context.callTabIds.insert(tabId) } else { context.callTabIds.remove(tabId) }
+    func callUsageChanged(_ engine: WKWebViewTab) {
+        let usage = engine.effectivePermissionUsageState
+        let inCall = usage.usesMicrophone || usage.usesCamera || engine.callControls.actions.contains("hangup")
+        guard inCall != context.callTabIds.contains(engine.id) else { return }
+        if inCall { context.callTabIds.insert(engine.id) } else { context.callTabIds.remove(engine.id) }
         context.mediaActivityChanged()
     }
 }

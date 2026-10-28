@@ -406,6 +406,7 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         let microphone = UUID()
         let camera = UUID()
         let screen = UUID()
+        let companion = UUID()
         let coordinator = TabLifecycleCoordinator(policy: .background)
 
         var microphoneTab = makeTab(id: microphone)
@@ -414,19 +415,22 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         cameraTab.isCameraActive = true
         var screenTab = makeTab(id: screen)
         screenTab.isScreenSharing = true
+        var companionTab = makeTab(id: companion)
+        companionTab.hasHangupControl = true
 
         let retained = coordinator.retainedEngineIds(
             tabs: [
                 makeTab(id: normal),
                 microphoneTab,
                 cameraTab,
-                screenTab
+                screenTab,
+                companionTab
             ],
-            availableEngineIds: [normal, microphone, camera, screen],
+            availableEngineIds: [normal, microphone, camera, screen, companion],
             preferredTabId: normal
         )
 
-        XCTAssertEqual(retained, [microphone, camera, screen])
+        XCTAssertEqual(retained, [microphone, camera, screen, companion], "a call without capture, like Meet's companion mode, is kept too")
     }
 
     func testLifecycleStatesExposeActiveRestoringLoadedAndDiscardedTabs() {

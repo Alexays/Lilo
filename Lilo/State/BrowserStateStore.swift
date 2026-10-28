@@ -743,7 +743,7 @@ final class BrowserStateStore {
     func freezeAllEngines() -> [WKWebViewTab] {
         var frozen: [WKWebViewTab] = []
         for snapshot in spaces.values {
-            for engine in snapshot.engines.values where !engine.isFrozen && !engine.isAgentControlled && !engine.hasActiveCapture {
+            for engine in snapshot.engines.values where !engine.isFrozen && !engine.isAgentControlled && !engine.isInCall {
                 engine.freeze()
                 frozen.append(engine)
             }
