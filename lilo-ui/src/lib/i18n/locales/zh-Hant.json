@@ -236,7 +236,7 @@
 			"language": {
 				"title": "語言",
 				"description": "整個瀏覽器介面使用的語言。",
-				"keywords": "語系 翻譯 英文 法文 西班牙文 簡體中文 葡萄牙文 巴西 俄文 traditional chinese 繁體中文 ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 polish polski"
+				"keywords": "語系 翻譯 英文 法文 西班牙文 簡體中文 葡萄牙文 巴西 俄文 traditional chinese 繁體中文 ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 polish polski turkish türkçe"
 			},
 			"searchEngine": {
 				"title": "搜尋引擎",

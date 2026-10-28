@@ -307,3 +307,21 @@ test("Polish regional tags, translations and count forms use the selected catalo
 		assert.equal(translate("pl", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Turkish regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["tr", "tr-TR", "TR-tr"]) {
+		assert.equal(resolveLocale(tag), "tr", tag);
+	}
+	assert.equal(translate("tr", "common.cancel"), "Vazgeç");
+	for (const [count, expected] of [
+		[0, "0 açık sekme"],
+		[1, "1 açık sekme"],
+		[2, "2 açık sekme"],
+		[5, "5 açık sekme"],
+		[21, "21 açık sekme"],
+		[12345, "12.345 açık sekme"],
+		[1.5, "1,5 açık sekme"],
+	] as const) {
+		assert.equal(translate("tr", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});

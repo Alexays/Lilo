@@ -34,6 +34,7 @@ LOCALES = {
     "ko": set(),
     "zh-Hant": set(),
     "pl": {"do", "i", "na", "w", "z", "ze"},
+    "tr": {"bir", "da", "de", "ile", "ve"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

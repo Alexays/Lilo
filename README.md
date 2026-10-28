@@ -1,6 +1,6 @@
 <div align="center">
 
-**English** · [Français](docs/readme/README_fr.md) · [Español](docs/readme/README_es.md) · [简体中文](docs/readme/README_zh-Hans.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [Русский](docs/readme/README_ru.md) · [Українська](docs/readme/README_uk.md) · [Deutsch](docs/readme/README_de.md) · [日本語](docs/readme/README_ja.md) · [Italiano](docs/readme/README_it.md) · [한국어](docs/readme/README_ko.md) · [繁體中文](docs/readme/README_zh-Hant.md) · [Polski](docs/readme/README_pl.md)
+**English** · [Français](docs/readme/README_fr.md) · [Español](docs/readme/README_es.md) · [简体中文](docs/readme/README_zh-Hans.md) · [Português (Brasil)](docs/readme/README_pt-BR.md) · [Русский](docs/readme/README_ru.md) · [Українська](docs/readme/README_uk.md) · [Deutsch](docs/readme/README_de.md) · [日本語](docs/readme/README_ja.md) · [Italiano](docs/readme/README_it.md) · [한국어](docs/readme/README_ko.md) · [繁體中文](docs/readme/README_zh-Hant.md) · [Polski](docs/readme/README_pl.md) · [Türkçe](docs/readme/README_tr.md)
 
 # Lilo
 
