@@ -275,6 +275,24 @@
       transform 260ms var(--motion-ease-spring);
   }
 
+  /* On the Space row there is no address to cover: the buttons stay out, in line. */
+  :global(.actions-only) .url-actions,
+  :global(.actions-only) .url-actions-reveal {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  :global(.actions-only) .url-actions-reveal {
+    margin-right: 4px;
+  }
+
+  /* Idle, they wear the extension icons' discreet face and wake up with them on hover. */
+  :global(.actions-only:not(:hover, :focus-within)) .url-action-btn:not(.active, .copied) {
+    background: color-mix(in srgb, var(--text-primary) 8%, transparent) !important;
+  }
+
   .url-blocker-btn {
     color: var(--success-vivid);
     background: color-mix(in srgb, var(--success) 20%, var(--bg-active)) !important;

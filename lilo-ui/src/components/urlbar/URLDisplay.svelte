@@ -40,6 +40,9 @@
   } from "../../lib/urlProgress";
   import type { ToastVariant, URLVisual } from "../../lib/urlVisual";
 
+  // With the address hidden, only the page's buttons stay, on the Space row.
+  let { actionsOnly = false }: { actionsOnly?: boolean } = $props();
+
   const TOAST_DURATION_MS = 1440;
   const DETAILS_DELAY_MS = 400;
   const CHROME_WEB_STORE_DETAIL_PATH = /\/detail(?:\/[^/]+)?\/([a-p]{32})(?:[/?#]|$)/i;
@@ -768,6 +771,7 @@
   });
 
   $effect(() => {
+    if (actionsOnly) return;
     const tabId = activeTabId;
     const isLoading = activeTabLoading;
     const rawProgress = Math.max(0, Math.min(1, activeTabProgress));
@@ -850,6 +854,50 @@
   });
 </script>
 
+{#snippet permissionsButton()}
+  {#if captureActive}
+    <button
+      type="button"
+      class="permissions-btn"
+      class:active={isSiteDrawerOpen()}
+      aria-label={t("sitePermissions.manage")}
+      use:tooltip={{ text: t("sitePermissions.manage"), placement: "bottom" }}
+      aria-expanded={isSiteDrawerOpen()}
+      onclick={toggleSiteDrawer}
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M1.4 3.4h9.2M1.4 8.6h9.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="4.2" cy="3.4" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
+        <circle cx="7.8" cy="8.6" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+    </button>
+  {/if}
+{/snippet}
+
+{#snippet actions()}
+  <URLToast
+    {toastVisible}
+    {toastVariant}
+    canInstall={chromeWebStoreExtensionId !== null}
+    isInstalled={chromeWebStoreExtensionInstalled}
+    blockerActive={blockerEnabled && !urlVisual.isPlaceholder}
+    isAllowlisted={isBlockerAllowlisted(urlVisual.host)}
+    blockedCount={getTrackersBlocked()}
+    onInstall={installChromeWebStoreExtension}
+    onCopy={copyURL}
+    onToggleBlocker={(e) => { e.stopPropagation(); settingsActions.toggleBlockerAllowlist(urlVisual.host); }}
+  />
+{/snippet}
+
+{#if actionsOnly}
+  <!-- Keeps the bar's class: the screenshot and extension menus hang from it. -->
+  <div class="url-trigger actions-only">
+    {@render permissionsButton()}
+    {#if !showsLocation}
+      {@render actions()}
+    {/if}
+  </div>
+{:else}
 <div
   class="url-display"
   role="search"
@@ -878,23 +926,7 @@
       }}
       aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
     >
-      {#if captureActive}
-        <button
-          type="button"
-          class="permissions-btn"
-          class:active={isSiteDrawerOpen()}
-          aria-label={t("sitePermissions.manage")}
-          use:tooltip={{ text: t("sitePermissions.manage"), placement: "bottom" }}
-          aria-expanded={isSiteDrawerOpen()}
-          onclick={toggleSiteDrawer}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1.4 3.4h9.2M1.4 8.6h9.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-            <circle cx="4.2" cy="3.4" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
-            <circle cx="7.8" cy="8.6" r="1.5" fill="var(--bg-primary)" stroke="currentColor" stroke-width="1.2"/>
-          </svg>
-        </button>
-      {/if}
+      {@render permissionsButton()}
 
       {#if showsLocation && !toastVisible}
         <span class="location-shell">
@@ -941,18 +973,7 @@
       {/if}
 
       {#if !showsLocation}
-      <URLToast
-        {toastVisible}
-        {toastVariant}
-        canInstall={chromeWebStoreExtensionId !== null}
-        isInstalled={chromeWebStoreExtensionInstalled}
-        blockerActive={blockerEnabled && !urlVisual.isPlaceholder}
-        isAllowlisted={isBlockerAllowlisted(urlVisual.host)}
-        blockedCount={getTrackersBlocked()}
-        onInstall={installChromeWebStoreExtension}
-        onCopy={copyURL}
-        onToggleBlocker={(e) => { e.stopPropagation(); settingsActions.toggleBlockerAllowlist(urlVisual.host); }}
-      />
+        {@render actions()}
       {/if}
 
       <URLProgress
@@ -976,6 +997,7 @@
     />
   {/if}
 </div>
+{/if}
 
 <style>
   .url-display {
@@ -1015,6 +1037,14 @@
     cursor: pointer;
     text-align: left;
     outline: none;
+  }
+
+  .url-trigger.actions-only {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    cursor: default;
   }
 
   .url-trigger:focus-visible {

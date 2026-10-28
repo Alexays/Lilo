@@ -8,13 +8,13 @@ test("the unfolded keep-awake label leaves the Space name readable in a narrow s
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "keepAwakeChanged", keepsAwake: true, agents: [], tabIds: [], holdsLidClosed: true, helperStatus: "enabled",
 	}));
-	await expect(page.locator(".keep-awake-slot .pill.expanded")).toBeVisible();
+	await expect(page.locator(".space-row-end .pill.expanded")).toBeVisible();
 	// The label unfolds over 240ms.
 	await page.waitForTimeout(400);
 
 	const name = (await page.locator(".space-pane").first().locator(".space-name").boundingBox())!;
 	expect(name.width).toBeGreaterThanOrEqual(48);
-	const label = page.locator(".keep-awake-slot .pill .text");
+	const label = page.locator(".space-row-end .pill .text");
 	await expect(label).toHaveCSS("text-overflow", "ellipsis");
 });
 
@@ -23,7 +23,7 @@ test("a click outside the popover closes it and gives focus back to the chip", a
 	await page.evaluate(() => window.__lilo!.receive({
 		event: "keepAwakeChanged", keepsAwake: true, agents: [], tabIds: [], holdsLidClosed: false, helperStatus: "enabled",
 	}));
-	const pill = page.locator(".keep-awake-slot .pill");
+	const pill = page.locator(".space-row-end .pill");
 	await expect(pill).toBeVisible();
 	await pill.focus();
 	await page.keyboard.press("Enter");

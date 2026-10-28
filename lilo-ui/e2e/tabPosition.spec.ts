@@ -25,6 +25,8 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 		await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: "hidden" }, strip ? ".tab-strip .strip-tab" : undefined);
 		await expect(page.locator(".url-display")).toHaveCount(0);
 		await expect(page.locator(".page-toolbar")).toHaveCount(position === "right" || position === "bottom" ? 1 : 0);
+		// The page's buttons move up to the Space row.
+		await expect(page.locator(".space-row-end .url-screenshot-btn")).toHaveCount(strip ? 0 : 1);
 
 		await receive(page, { event: "toggleCommandBar", prefill: "https://example.com", selectAll: true });
 		await expect(page.getByRole("combobox", { name: "Search or enter address" })).toHaveValue("https://example.com");
