@@ -111,8 +111,8 @@ lilo.on('nativeDisplay', function(id){
   var p = nativePending[id];
   if (p && !p.promise) p.promise = apply(originals.getDisplayMedia, devices, [p.constraints]);
 });
-// Static content paints nothing, so the canvas track would emit no frames: the encoder could
-// neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
+// The track emits a frame only on requestFrame, and none for an unchanged canvas: on static content
+// the encoder could neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
 var refreshMs = 200;
 // Sound is scheduled this far ahead to absorb pull jitter; a block landing further ahead than the cap is dropped, so a
 // stalled page cannot build up latency. The Mac's clock and the page's drift apart over a call: past twice the lead,
@@ -143,6 +143,7 @@ function configure(entry, codec, desc){
   entry.decoder = new Decoder({
     output: function(frame){
       entry.ctx.drawImage(frame, 0, 0, entry.canvas.width, entry.canvas.height);
+      entry.track.requestFrame();
       if (entry.last) entry.last.close();
       entry.last = frame;
       entry.drawnAt = performance.now();
@@ -220,7 +221,8 @@ function ferryStream(res, actx){
   var ctx = canvas.getContext('2d');
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, res.width, res.height);
-  var stream = canvas.captureStream(30);
+  // One captured frame per decoded or repainted one: a 30 fps capture samples the canvas on its own clock.
+  var stream = canvas.captureStream(0);
   var audio = null;
   if (actx && res.audioURL) {
     // Never connected to the context's destination: the share's sound must not play back locally.
@@ -239,12 +241,13 @@ function ferryStream(res, actx){
     t.getSettings = function(){ var settings = nativeSettings(); settings.displaySurface = res.surface; return settings; };
   });
   var entry = {
-    canvas: canvas, ctx: ctx, stream: stream, nativeStops: nativeStops,
+    canvas: canvas, ctx: ctx, stream: stream, track: stream.getVideoTracks()[0], nativeStops: nativeStops,
     decoder: null, desc: null, needKey: true, last: null, drawnAt: 0, audio: audio
   };
   entry.refresh = setInterval(function(){
     if (entry.last && performance.now() - entry.drawnAt >= refreshMs) {
       entry.ctx.drawImage(entry.last, 0, 0, entry.canvas.width, entry.canvas.height);
+      entry.track.requestFrame();
       entry.drawnAt = performance.now();
     }
   }, refreshMs);

@@ -77,6 +77,7 @@ final class BrowserContext {
     var hiddenSpacePreloadProfileIds: Set<UUID> = []
     let profileContexts: ProfileContextCache
     let windows: WindowRegistry
+    private(set) lazy var whatsNew = WhatsNewState()
     /// Created on first use: no folder can be unlocked before then, so nothing needs relocking.
     private(set) lazy var folderAutoLock = FolderAutoLock(context: self)
     /// One per app: the system device and display observers must not repeat per window. Created by the

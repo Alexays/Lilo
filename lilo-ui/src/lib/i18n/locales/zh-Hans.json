@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "与标签页放在一起",
-			"page": "网页上方"
+			"page": "网页上方",
+			"hidden": "隐藏"
 		},
 		"themeSystem": "系统",
 		"themeLight": "浅色",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "地址",
-				"description": "与标签页放在一起，或放在网页上方的栏中。",
-				"keywords": "地址栏 URL 工具栏 位置",
-				"lockedRight": "标签页位于右侧时，地址会保留在网页上方。"
+				"description": "与标签页放在一起、显示在网页上方或隐藏。可使用命令栏输入地址。",
+				"keywords": "地址栏 URL 工具栏 位置 隐藏",
+				"lockedRight": "标签页位于右侧时，可将地址显示在网页上方或隐藏。"
 			},
 			"theme": {
 				"title": "主题",
@@ -1794,6 +1795,7 @@
 		"Start Speaking": "开始朗读",
 		"Stop Speaking": "停止朗读",
 		"Lilo Help": "Lilo 帮助",
+		"What’s New": "更新内容",
 		"Report an Issue…": "报告问题…",
 		"Recently Visited": "最近访问",
 		"No History": "没有历史记录",
@@ -2112,6 +2114,40 @@
 		"Agent Tabs": "智能体标签页",
 		"QR code for %@": "%@ 的二维码",
 		"Secure Connection": "安全连接"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "Lilo 更新内容",
+		"description": "让日常浏览更顺手的一些小改进。",
+		"allChanges": "本次更新的全部内容",
+		"changes": {
+			"one": "{count} 项更改",
+			"other": "{count} 项更改"
+		},
+		"originalNotes": "原始版本说明（英文）。",
+		"unavailable": "此构建版本暂未提供版本说明。",
+		"reopen": "随时可从「帮助 → 更新内容」再次查看。",
+		"continue": "继续浏览",
+		"kinds": {
+			"Breaking": "重大变更",
+			"Added": "新增功能",
+			"Changed": "改进",
+			"Fixed": "修复"
+		},
+		"art": {
+			"inbox": "收件箱",
+			"chat": "团队聊天"
+		},
+		"releases": {
+			"v060": {
+				"headline": "随时掌握新消息。",
+				"description": "一些小改进，让日常浏览更舒心。",
+				"unreadTitle": "看看错过了什么。",
+				"unreadDescription": "标签页和收藏项现在会直接显示未读数量和通知圆点。",
+				"callsTitle": "保持畅聊。",
+				"callsDescription": "页面短暂卡顿时，通话依然流畅；开启保持唤醒后，通话也能继续进行。"
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "所有权限",

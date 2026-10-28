@@ -7,7 +7,7 @@ enum TabPosition: String, CaseIterable {
 }
 
 enum AddressPlacement: String {
-    case tabs, page
+    case tabs, page, hidden
 
     /// Right and bottom keep a toolbar over the page for the traffic lights, so the address goes there.
     static func `default`(for position: TabPosition) -> AddressPlacement {
@@ -30,11 +30,11 @@ struct TabLayout: Equatable {
         self.address = address
     }
 
-    /// An address nobody chose follows the position. On the right it always sits above the page: the
-    /// sidebar's first line is the toolbar's, with no room for it.
+    /// An address nobody chose follows the position. On the right a visible address sits above the
+    /// page: the sidebar's first line is the toolbar's, with no room for it.
     init(position: TabPosition, storedAddress: String?) {
-        let stored = position == .right ? nil : storedAddress.flatMap(AddressPlacement.init(rawValue:))
-        self.init(position: position, address: stored ?? .default(for: position))
+        let address = storedAddress.flatMap(AddressPlacement.init(rawValue:)) ?? .default(for: position)
+        self.init(position: position, address: position == .right && address == .tabs ? .page : address)
     }
 
     init(storedPosition: String?, storedAddress: String?) {

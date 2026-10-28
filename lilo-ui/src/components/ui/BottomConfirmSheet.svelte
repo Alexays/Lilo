@@ -47,6 +47,7 @@
   // Capture phase, so Escape dismisses the sheet before the surface hosting it sees the key.
   // Tab cycles through the sheet's controls: it is modal, the panel behind it is out of reach.
   function handleWindowKeydown(event: KeyboardEvent): void {
+    if (event.target instanceof Element && event.target.closest("dialog[open]")) return;
     if (!visible) return;
     if (event.key === 'Tab' && layerEl) {
       const controls = [...layerEl.querySelectorAll<HTMLElement>('.confirm-sheet button:not([disabled]), .confirm-sheet input:not([disabled]), .confirm-sheet select')];

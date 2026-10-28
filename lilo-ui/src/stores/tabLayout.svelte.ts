@@ -1,5 +1,6 @@
 import { on, type AddressPlacement, type BridgeInitialStatePayload, type TabPosition } from "../lib/bridge";
 import { setSetting } from "./settings.svelte";
+import { getActiveUrlBarDrawer } from "./urlBarDrawer.svelte";
 import { tick } from "svelte";
 import { prefersReducedMotion } from "../lib/motion/reducedMotion";
 
@@ -39,12 +40,13 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 
 export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement">): void {
 	const position = data.tabPosition ?? "left";
-	apply(position, (position !== "right" && data.addressPlacement) || defaultAddress(position));
+	const address = data.addressPlacement ?? defaultAddress(position);
+	apply(position, position === "right" && address === "tabs" ? "page" : address);
 }
 
-/** On the right the address always sits above the page: the sidebar's first line is the toolbar's. */
-export function isAddressLocked(): boolean {
-	return _position === "right";
+/** The right sidebar's first line is the toolbar's, leaving no room for an address. */
+export function canPlaceAddressWithTabs(): boolean {
+	return _position !== "right";
 }
 
 export function initTabLayoutStore(): void {
@@ -57,6 +59,11 @@ export function getTabPosition(): TabPosition {
 
 export function getAddressPlacement(): AddressPlacement {
 	return _address;
+}
+
+/** Requests must remain answerable even when the address is hidden. */
+export function isAddressVisible(): boolean {
+	return _address !== "hidden" || getActiveUrlBarDrawer() !== null;
 }
 
 export function isVerticalLayout(): boolean {

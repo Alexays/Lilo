@@ -476,9 +476,9 @@ for (const color of ["#4a90d9", "#fff4cc", "#20242e", "#ff00ff", "#00c000"]) {
 			expect(await textContrast(page, ".page-hang .report")).toBeGreaterThanOrEqual(4.5);
 
 			await receive({ event: "tabSharePickerRequested", requestId: "r", origin: "meet.example.com", shareableTabIds: ["tab-alpha"] });
-			await page.locator(".tab-share-current").waitFor();
-			expect(await cssColor(page, ".tab-share-current", "backgroundColor")).toBe(spaceAccent);
-			expect(await textContrast(page, ".tab-share-current")).toBeGreaterThanOrEqual(4.5);
+			await page.locator(".tab-share-btn.primary").waitFor();
+			expect(await cssColor(page, ".tab-share-btn.primary", "backgroundColor")).toBe(spaceAccent);
+			expect(await textContrast(page, ".tab-share-btn.primary")).toBeGreaterThanOrEqual(4.5);
 		});
 
 		test(`a copied capture's card reads on a ${color} Space in ${colorScheme} mode`, async ({ page }) => {

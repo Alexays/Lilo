@@ -278,7 +278,7 @@ final class TabShareSessionController {
         config.snapshotWidth = NSNumber(value: Double(current.encoder.width) / backingScale)
         webView.takeSnapshot(with: config) { [weak self] image, _ in
             guard let self, self.sessions[current.token] === current else { return }
-            guard let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            guard let cgImage = image?.snapshotPixels else {
                 if forceKey { current.forceKey = true }
                 self.registerFailure(token: current.token)
                 return

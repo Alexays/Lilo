@@ -332,8 +332,10 @@ Git-generated merge commits are exempt. Temporary `fixup!`, `squash!` and `amend
 allowed locally; autosquash them before merging, since CI rejects them. Local hooks can be
 bypassed, so CI also checks every non-merge commit introduced by a PR and the PR title.
 
-Code, comments, commit messages and everything on GitHub are written in English. User-facing copy
-is translated, see [Add or change a user-facing string](#add-or-change-a-user-facing-string).
+Code, comments, commit messages, issues and pull request descriptions are written in English.
+User-facing copy and the README are translated; see
+[Add or change a user-facing string](#add-or-change-a-user-facing-string) and
+[README translations](docs/I18N.md#readme-translations).
 
 ## License of contributions
 

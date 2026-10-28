@@ -459,7 +459,7 @@ interface BridgeExtensionPermissionRequestPayload {
 }
 
 export type TabPosition = "left" | "right" | "top" | "bottom";
-export type AddressPlacement = "tabs" | "page";
+export type AddressPlacement = "tabs" | "page" | "hidden";
 
 export interface BridgeInitialStatePayload {
 	tabs: BridgeTabSnapshot[];
@@ -723,6 +723,9 @@ export interface BridgeCommandPayloadMap {
 	checkForUpdates: EmptyPayload;
 	installUpdate: EmptyPayload;
 	dismissUpdate: EmptyPayload;
+	requestWhatsNew: EmptyPayload;
+	whatsNewPresented: { version: string };
+	dismissWhatsNew: EmptyPayload;
 	unlockDeveloperTools: EmptyPayload;
 	setAutomaticUpdates: { enabled: boolean };
 	getShortcuts: EmptyPayload;
@@ -984,6 +987,7 @@ export interface BridgeEventPayloadMap {
 	updaterStatus: BridgeUpdaterStatus;
 	/** The downloaded update waiting for a relaunch; null once dismissed. */
 	updateReady: { version: string | null };
+	openWhatsNew: { version: string; automatic: boolean };
 	shortcutsLoaded: { groups: BridgeShortcutGroup[]; controlTabOrder: BridgeControlTabOrder };
 	/** Each bound action's first keys as the menus show them ("⇧⌘T"), by action id ("tab.reopenClosed"). */
 	shortcutKeys: { keys: Record<string, string> };

@@ -1,0 +1,18 @@
+{
+	"0.6.0": {
+		"headlineKey": "whatsNew.releases.v060.headline",
+		"descriptionKey": "whatsNew.releases.v060.description",
+		"highlights": [
+			{
+				"illustration": "unread",
+				"titleKey": "whatsNew.releases.v060.unreadTitle",
+				"descriptionKey": "whatsNew.releases.v060.unreadDescription"
+			},
+			{
+				"illustration": "calls",
+				"titleKey": "whatsNew.releases.v060.callsTitle",
+				"descriptionKey": "whatsNew.releases.v060.callsDescription"
+			}
+		]
+	}
+}

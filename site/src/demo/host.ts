@@ -2878,6 +2878,7 @@ export const createDemoHost = (
     "updateExtensionPopupAnchor",
     "updateWindowBackground",
     "ready",
+    "requestWhatsNew",
     "initialStateApplied",
     "startupMark",
     "chromeVisualReady",

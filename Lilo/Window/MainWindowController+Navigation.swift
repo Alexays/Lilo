@@ -616,6 +616,7 @@ extension MainWindowController: WKNavigationDelegate {
     /// user script posts `ready` on every main-frame load); resetting these lets handleChromeReady
     /// re-dispatch the full initial state exactly like a first boot.
     func reloadChromeUI() {
+        whatsNewUIReady = false
         didReceiveChromeReady = false
         hasDispatchedChromeInitialState = false
         bridgeRouter?.resetInFlightCall()

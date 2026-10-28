@@ -1,0 +1,3 @@
+kind: Fixed
+body: A tab shared from a Mac's built-in Retina screen reaches the call at 30 frames per second instead of 15, and costs a fraction of the CPU it did.
+time: 2026-10-28T13:17:51.548924+01:00

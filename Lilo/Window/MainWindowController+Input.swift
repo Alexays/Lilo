@@ -316,6 +316,7 @@ extension MainWindowController {
                 && (target == nil || (target is NSPanel && !(target is NSSavePanel)
                     && target?.sheetParent == nil && NSApp.modalWindow == nil)))
         else { return false }
+        if isShowingWhatsNew { return false }
         if event.type == .flagsChanged {
             // Pushes Command-key state to the chrome so the hover-link pill can flag "open in background tab".
             let down = event.modifierFlags.contains(.command)
@@ -460,6 +461,7 @@ extension MainWindowController {
 extension MainWindowController: NSUserInterfaceValidations {
     func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
         let action = item.action
+        if isShowingWhatsNew && action != #selector(showWhatsNew(_:)) { return false }
 
         if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { $0.peekView?.superview != nil } }

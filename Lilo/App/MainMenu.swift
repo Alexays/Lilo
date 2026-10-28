@@ -220,6 +220,7 @@ extension AppDelegate {
 
         let helpMenu = submenu("Help".localized, in: mainMenu)
         helpMenu.add("Lilo Help".localized, #selector(MainWindowController.openHelp(_:)), icon: .help)
+        helpMenu.add("What’s New".localized, #selector(MainWindowController.showWhatsNew(_:)), icon: .whatsNew)
         helpMenu.add("Keyboard Shortcuts".localized, #selector(MainWindowController.openShortcuts(_:)), icon: .shortcuts, shortcut: "help.shortcuts")
         helpMenu.add("Replay Onboarding".localized, #selector(MainWindowController.replayOnboarding(_:)), icon: .onboarding)
         helpMenu.addItem(.separator())
@@ -268,8 +269,12 @@ extension AppDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         guard let kind = dynamicMenus.first(where: { $0.value === menu })?.key else { return }
-        defer { menu.showItemImages() }
         let controller = NSApp.mainWindow?.windowController as? MainWindowController ?? mainWindowController
+        defer {
+            menu.showItemImages()
+            menu.autoenablesItems = controller?.isShowingWhatsNew != true
+            if controller?.isShowingWhatsNew == true { menu.items.forEach { $0.isEnabled = false } }
+        }
         switch kind {
         case .extensions: break
         case .recentlyVisited: return updateRecentHistory(in: menu)

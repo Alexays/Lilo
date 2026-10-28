@@ -73,9 +73,9 @@ test("a request slides a hidden sidebar out so it can be answered", async ({ pag
 	await expect(page.locator(".url-drawer-clip")).toContainText("Claude");
 });
 
-for (const [position, address] of [["left", "tabs"], ["left", "page"], ["right", "page"], ["top", "tabs"], ["top", "page"], ["bottom", "tabs"], ["bottom", "page"]] as const) {
+for (const [position, address] of [["left", "tabs"], ["left", "page"], ["left", "hidden"], ["right", "page"], ["right", "hidden"], ["top", "tabs"], ["top", "page"], ["top", "hidden"], ["bottom", "tabs"], ["bottom", "page"], ["bottom", "hidden"]] as const) {
 	for (const mode of ["", ", the tabs hidden", ", in full screen with the tabs hidden"]) {
-		test(`an agent's request can be answered with the tabs ${position}, the address in the ${address}${mode}`, async ({ page }) => {
+		test(`an agent's request can be answered with the tabs ${position}, the address ${address === "hidden" ? "hidden" : `in the ${address}`}${mode}`, async ({ page }) => {
 			const strip = position === "top" || position === "bottom";
 			await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: address }, strip ? ".tab-strip .strip-tab" : undefined);
 			await page.mouse.move(600, 300);
@@ -90,6 +90,7 @@ for (const [position, address] of [["left", "tabs"], ["left", "page"], ["right",
 			await expect(allow).toBeInViewport({ ratio: 1 });
 			await allow.click();
 			await expect.poll(() => sentCommands(page).then((all) => all.some((m) => m.action === "agentControlResponse"))).toBe(true);
+			if (address === "hidden") await expect(page.locator(".url-display")).toHaveCount(0);
 		});
 	}
 }

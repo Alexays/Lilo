@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "Avec les onglets",
-			"page": "Au-dessus de la page"
+			"page": "Au-dessus de la page",
+			"hidden": "Masquée"
 		},
 		"themeSystem": "Système",
 		"themeLight": "Clair",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "Adresse",
-				"description": "Avec les onglets, ou dans une barre au-dessus de la page.",
-				"keywords": "barre adresse url barre d outils",
-				"lockedRight": "Avec les onglets à droite, l'adresse reste au-dessus de la page."
+				"description": "Avec les onglets, au-dessus de la page ou masquée. Utilisez la barre de commandes pour saisir une adresse.",
+				"keywords": "barre adresse url barre d outils masquer masquée cacher",
+				"lockedRight": "Avec les onglets à droite, affichez l'adresse au-dessus de la page ou masquez-la."
 			},
 			"theme": {
 				"title": "Thème",
@@ -1794,6 +1795,7 @@
 		"Start Speaking": "Commencer la lecture",
 		"Stop Speaking": "Arrêter la lecture",
 		"Lilo Help": "Aide Lilo",
+		"What’s New": "Nouveautés",
 		"Report an Issue…": "Signaler un problème…",
 		"Recently Visited": "Visités récemment",
 		"No History": "Aucun historique",
@@ -2112,6 +2114,29 @@
 		"Agent Tabs": "Onglets des agents",
 		"QR code for %@": "Code QR de %@",
 		"Secure Connection": "Connexion sécurisée"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "Les nouveautés de Lilo",
+		"description": "De petites améliorations pour votre navigation au quotidien.",
+		"allChanges": "Tout dans cette mise à jour",
+		"changes": { "one": "{count} changement", "other": "{count} changements" },
+		"originalNotes": "Notes de version originales, en anglais.",
+		"unavailable": "Les notes de version ne sont pas disponibles dans cette version de développement.",
+		"reopen": "À retrouver dans Aide → Nouveautés.",
+		"continue": "Reprendre la navigation",
+		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
+		"art": { "inbox": "Réception", "chat": "Messages" },
+		"releases": {
+			"v060": {
+				"headline": "Toujours dans la boucle.",
+				"description": "De petites attentions pour une navigation plus agréable au quotidien.",
+				"unreadTitle": "Ne manquez plus un message.",
+				"unreadDescription": "Vos onglets et favoris affichent désormais le nombre de messages non lus ou un point de notification.",
+				"callsTitle": "Gardez le fil de la conversation.",
+				"callsDescription": "Les appels restent fluides si une page se fige brièvement et continuent avec le maintien en éveil."
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "Toutes les permissions",

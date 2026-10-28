@@ -1,0 +1,3 @@
+kind: Changed
+body: A shared tab reaches the call one frame per change, at a steady 30 frames per second while it scrolls, instead of being sampled on its own clock.
+time: 2026-10-28T14:17:44.152688+01:00

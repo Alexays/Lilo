@@ -78,8 +78,12 @@ final class TabShareEncoder: @unchecked Sendable {
             let frame = CGRect(x: 0, y: 0, width: width, height: height)
             let scale = min(frame.width / CGFloat(image.width), frame.height / CGFloat(image.height))
             let fitted = CGSize(width: CGFloat(image.width) * scale, height: CGFloat(image.height) * scale)
-            context.setFillColor(gray: 0, alpha: 1)
-            context.fill(frame)
+            if fitted.width < frame.width || fitted.height < frame.height {
+                context.setFillColor(gray: 0, alpha: 1)
+                context.fill(frame)
+            }
+            // A plain copy: blending over the opaque frame writes the same bytes at twice the cost.
+            context.setBlendMode(.copy)
             context.draw(image, in: CGRect(origin: CGPoint(x: (frame.width - fitted.width) / 2, y: (frame.height - fitted.height) / 2), size: fitted))
         }
         CVPixelBufferUnlockBaseAddress(pixelBuffer, [])

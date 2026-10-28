@@ -15,7 +15,7 @@
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getActiveTabId, type TabState } from "../../stores/tabs.svelte";
-  import { getAddressPlacement } from "../../stores/tabLayout.svelte";
+  import { getAddressPlacement, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { closeSettingsShell, isDownloadsVisible, isSettingsShellOpen, openDownloadsPanel } from "../../stores/panels.svelte";
@@ -46,7 +46,7 @@
   const editsAddress = $derived(getAddressPlacement() === "tabs");
   // The address field itself shows only when it has something to say (a permission prompt), or while
   // the strip floats in for hidden tabs and the page toolbar that holds it is gone.
-  const addressInActiveTab = $derived((editsAddress && getActiveUrlBarDrawer() !== null) || !isSidebarVisible());
+  const addressInActiveTab = $derived(isAddressVisible() && ((getAddressPlacement() !== "page" && getActiveUrlBarDrawer() !== null) || !isSidebarVisible()));
   let callOpen = $state(false);
   let callButton: HTMLButtonElement | undefined = $state();
   let mediaOpen = $state(false);

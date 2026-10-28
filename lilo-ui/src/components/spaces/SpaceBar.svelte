@@ -72,9 +72,9 @@
 </div>
 
 <style>
-  /* Room for the keep-awake pill the sidebar lays over this row. */
+  /* Room for the buttons and the keep-awake pill the sidebar lays over this row. */
   .space-label {
-    padding: 4px calc(var(--sidebar-right-pad, 10px) + var(--keep-awake-reserve, 0px)) 4px 10px;
+    padding: 4px calc(var(--sidebar-right-pad, 10px) + var(--space-row-reserve, 0px)) 4px 10px;
     flex-shrink: 0;
   }
 

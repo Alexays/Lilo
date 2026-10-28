@@ -54,6 +54,49 @@ final class AgentSocketTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: socketURL.path))
     }
 
+    func testASecondLiloLeavesALiveSocketToTheFirst() async throws {
+        let second = AgentSocketServer(path: socketURL) { _ in XCTFail("the second Lilo took the socket") }
+
+        XCTAssertThrowsError(try second.start())
+        second.stop()
+        let client = try AgentTestClient(path: socketURL)
+        let result = await client.initialize()
+
+        XCTAssertNotNil(result, "the first Lilo still serves its socket")
+    }
+
+    func testASocketLeftByACrashIsReplaced() throws {
+        control.setEnabled(false)
+        let path = socketURL.path
+        let stale = socket(AF_UNIX, SOCK_STREAM, 0)
+        var address = sockaddr_un()
+        address.sun_family = sa_family_t(AF_UNIX)
+        withUnsafeMutableBytes(of: &address.sun_path) { $0.copyBytes(from: Array(path.utf8)) }
+        let bound = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(stale, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+        }
+        XCTAssertEqual(bound, 0)
+        Darwin.close(stale)
+
+        control.setEnabled(true)
+
+        XCTAssertNoThrow(try AgentTestClient(path: socketURL))
+    }
+
+    func testStoppingLeavesASocketAnotherLiloBoundSinceAlone() throws {
+        let path = URL(fileURLWithPath: "/tmp/lilo-agent-\(UUID().uuidString.prefix(8)).sock")
+        let first = AgentSocketServer(path: path) { _ in }
+        try first.start()
+        unlink(path.path)
+        let second = AgentSocketServer(path: path) { _ in }
+        try second.start()
+        defer { second.stop() }
+
+        first.stop()
+
+        XCTAssertNoThrow(try AgentTestClient(path: path), "the second Lilo's socket is still there")
+    }
+
     func testMalformedJSONReturnsParseError() async throws {
         let client = try AgentTestClient(path: socketURL)
         client.sendRaw(Data("{nope\n".utf8))

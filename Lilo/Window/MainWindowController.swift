@@ -18,6 +18,8 @@ private final class LiloWindow: NSWindow {
     /// An agent tab this window does not show never takes the keyboard: WebKit asks for it when an
     /// agent click focuses a field, and granting it would pull focus from what the user is typing in.
     override func makeFirstResponder(_ responder: NSResponder?) -> Bool {
+        if let controller = windowController as? MainWindowController, controller.isShowingWhatsNew,
+           responder is NSView, !controller.contains(responder: responder) { return false }
         if let view = responder as? NSView,
            let webView = sequence(first: view, next: \.superview).lazy.compactMap({ $0 as? WKWebView }).first,
            let controller = windowController as? MainWindowController,
@@ -260,6 +262,14 @@ final class MainWindowController: NSWindowController {
     var pendingActiveTabPersistWork: DispatchWorkItem?
     /// Last chrome-state visibility sent over the bridge, used to skip no-op windowChromeStateChanged sends.
     var lastSentTrafficLightsVisible: Bool?
+
+    // MARK: - What's New
+
+    var pendingWhatsNewAutomatic: Bool?
+    var whatsNewUIReady = false
+    var whatsNewRequested = false
+    var isShowingWhatsNew = false
+    weak var whatsNewReturnResponder: NSResponder?
 
     // MARK: - Extensions
 
@@ -752,6 +762,8 @@ extension MainWindowController: NSWindowDelegate {
 
     func windowDidBecomeKey(_ notification: Notification) {
         context.windows.noteActive(self)
+        presentPendingWhatsNew()
+        acknowledgeVisibleWhatsNew()
         // A tab another window took and has let go of since comes back without a click.
         if let placeholderTabId, context.windows.displayingWindow(ofTab: placeholderTabId) == nil {
             reclaimDisplayedTab(placeholderTabId)

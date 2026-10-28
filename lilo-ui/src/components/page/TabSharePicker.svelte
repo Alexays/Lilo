@@ -169,6 +169,7 @@
   // A modal: Tab cycles through the picker's controls instead of reaching the sidebar behind it.
   // Capture phase, so Escape cancels the picker alone, not the panel or bar under it.
   function handleKeydown(e: KeyboardEvent) {
+    if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();

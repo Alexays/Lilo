@@ -45,7 +45,7 @@ enum AgentScreenshot {
 
         if !fullPage, ref == nil, selector == nil {
             viewSize = webView.bounds.size
-            guard let shot = await engine.takeSnapshot()?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            guard let shot = await engine.takeSnapshot()?.snapshotPixels else {
                 throw AgentToolError("The tab could not be captured")
             }
             // The snapshot comes at the page's device pixel ratio; at 1x its pixels are the coordinates clicks take.
@@ -97,7 +97,7 @@ enum AgentScreenshot {
                 if viewport.contains(rect) {
                     // On screen: the very pixels the user sees, backdrop filters and video included.
                     let region = rect.offsetBy(dx: -viewport.minX, dy: -viewport.minY)
-                    guard let shot = await engine.takeRegionSnapshot(rect: region)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                    guard let shot = await engine.takeRegionSnapshot(rect: region)?.snapshotPixels else {
                         throw AgentToolError("The tab could not be captured")
                     }
                     let pixels = (width: Int((viewSize.width * scale).rounded()), height: Int((viewSize.height * scale).rounded()))
@@ -179,7 +179,7 @@ enum AgentScreenshot {
         // A BOOL argument: perform(_:with:) would pass an object pointer instead.
         typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
         unsafeBitCast(configuration.method(for: option), to: Setter.self)(configuration, option, true)
-        return try? await webView.takeSnapshot(configuration: configuration).cgImage(forProposedRect: nil, context: nil, hints: nil)
+        return (try? await webView.takeSnapshot(configuration: configuration))?.snapshotPixels
     }
 
     /// The scale under the pixel budget, and under the inline limit for an image returned inline.

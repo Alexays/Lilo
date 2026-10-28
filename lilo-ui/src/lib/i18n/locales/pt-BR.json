@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "Junto às abas",
-			"page": "Acima da página"
+			"page": "Acima da página",
+			"hidden": "Oculto"
 		},
 		"themeSystem": "Sistema",
 		"themeLight": "Claro",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "Endereço",
-				"description": "Junto às abas ou em uma barra acima da página.",
-				"keywords": "endereço barra url ferramentas local",
-				"lockedRight": "Com as abas à direita, o endereço fica acima da página."
+				"description": "Junto às abas, acima da página ou oculto. Use a barra de comandos para digitar um endereço.",
+				"keywords": "endereço barra url ferramentas local ocultar oculto esconder",
+				"lockedRight": "Com as abas à direita, mostre o endereço acima da página ou oculte-o."
 			},
 			"theme": {
 				"title": "Tema",
@@ -1794,6 +1795,7 @@
 		"Start Speaking": "Começar a falar",
 		"Stop Speaking": "Parar de falar",
 		"Lilo Help": "Ajuda do Lilo",
+		"What’s New": "Novidades",
 		"Report an Issue…": "Relatar um problema…",
 		"Recently Visited": "Visitadas recentemente",
 		"No History": "Nenhum histórico",
@@ -2112,6 +2114,40 @@
 		"Agent Tabs": "Abas de agentes",
 		"QR code for %@": "Código QR para %@",
 		"Secure Connection": "Conexão segura"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "Novidades do Lilo",
+		"description": "Pequenas melhorias para sua navegação no dia a dia.",
+		"allChanges": "Tudo nesta atualização",
+		"changes": {
+			"one": "{count} alteração",
+			"other": "{count} alterações"
+		},
+		"originalNotes": "Notas de versão originais, em inglês.",
+		"unavailable": "As notas de versão não estão disponíveis nesta compilação.",
+		"reopen": "Sempre em Ajuda → Novidades.",
+		"continue": "Voltar à navegação",
+		"kinds": {
+			"Breaking": "Mudanças importantes",
+			"Added": "Novidades",
+			"Changed": "Melhorias",
+			"Fixed": "Correções"
+		},
+		"art": {
+			"inbox": "Caixa de entrada",
+			"chat": "Conversa da equipe"
+		},
+		"releases": {
+			"v060": {
+				"headline": "Fique um pouco mais por dentro.",
+				"description": "Pequenos detalhes para deixar sua navegação diária mais agradável.",
+				"unreadTitle": "Veja o que você perdeu.",
+				"unreadDescription": "Contadores de mensagens não lidas e pontos de notificação agora aparecem nas abas e nos favoritos.",
+				"callsTitle": "Continue na conversa.",
+				"callsDescription": "As chamadas continuam fluidas durante um breve travamento da página e seguem com a função para manter o Lilo ativo."
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "Todas as permissões",
