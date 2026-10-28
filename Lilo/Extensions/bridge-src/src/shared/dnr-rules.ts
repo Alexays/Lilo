@@ -410,8 +410,10 @@ const updateRules = (getRules: string): Patch => (original, self) => {
               if (removed.has(id) && sameJSON(current.get(id), rule)) removed.delete(id);
               else addRules.push(toWebKit(rule));
             }
-            if (addRules.length || [...removed].some((id) => current.has(id))) {
-              result = await original.call(namespace, { removeRuleIds: [...removed], addRules });
+            // Only ids it holds: the session rules WebKit holds among them are not the extension's dynamic rules.
+            const removeRuleIds = [...removed].filter((id) => current.has(id));
+            if (addRules.length || removeRuleIds.length) {
+              result = await original.call(namespace, { removeRuleIds, addRules });
             }
             for (const call of calls) call.resolve(result);
             return;
@@ -437,16 +439,147 @@ const updateRules = (getRules: string): Patch => (original, self) => {
   };
 };
 
-const getRules: Patch = (original, self) => function (this: unknown, filter?: any, callback?: (rules: unknown[]) => void) {
-  if (typeof filter === 'function') [filter, callback] = [undefined, filter];
-  return callbackify(async () => fromWebKit(await original.call(self(this), ...(filter === undefined ? [] : [filter]))), callback);
-};
+// WebKit keeps session rules in memory, so each launch compiles every rule of the extension without them, then again
+// once the worker adds them back (WEBKIT-GAPS 84): WebKit holds them as dynamic rules, under ids counted down from the
+// largest and marked with the extension's id, which a relaunch finds compiled. Until this run of the context claims them
+// all, native keeps the ids it set: the others stay applied but unseen, and one added back as it was is kept as it is.
+const SESSION_RULE = 'liloSessionRule';
+const MAX_RULE_ID = 2 ** 31 - 1;
+const isSessionRule = (rule: any) => Number.isInteger(rule?.[SESSION_RULE]);
+
+const webKitCall = (namespace: any, name: string, ...args: unknown[]): Promise<any> =>
+  (namespace[name].__liloUnwrapped ?? namespace[name]).apply(namespace, args);
+
+/** Whether this run claimed every held session rule, else the ids it set, after storing `change`. Without native, claimed. */
+const sessionState = (change: { claim?: boolean; ids?: number[] } = {}) =>
+  gapCall<{ claimed: boolean; ids: number[] }>('declarativeNetRequest', 'sessionRules', change).catch(() => ({ claimed: true, ids: [] }));
+
+/** Every dynamic rule WebKit holds, and the session rules among them by the extension's id, with their WebKit id. */
+async function heldSessionRules(namespace: any): Promise<{ held: any[]; session: Map<number, { webKitId: number; rule: any }> }> {
+  const held = await webKitCall(namespace, 'getDynamicRules');
+  const session = new Map<number, { webKitId: number; rule: any }>();
+  for (const rule of held.filter(isSessionRule)) {
+    const { [SESSION_RULE]: _id, ...own } = rule[STORED_RULE] ?? rule;
+    session.set(rule[SESSION_RULE], { webKitId: rule.id, rule: { ...own, id: rule[SESSION_RULE] } });
+  }
+  return { held, session };
+}
+
+/** Applies the calls in order onto the session rules this run has, each failing alone on a repeated id as in Chrome. */
+async function updateSessionRules(namespace: any, calls: PendingUpdate[]): Promise<void> {
+  const { held, session } = await heldSessionRules(namespace);
+  const { claimed, ids } = await sessionState();
+  const own = new Set(ids);
+  const ours = (id: number) => claimed || own.has(id);
+  let wanted = new Map<number, any>([...session].filter(([id]) => ours(id)).map(([id, { rule }]) => [id, rule]));
+  const applied: PendingUpdate[] = [];
+  for (const call of calls) {
+    const { removeRuleIds = [], addRules = [] } = call.options ?? {};
+    if (!Array.isArray(removeRuleIds) || !Array.isArray(addRules)) {
+      call.reject(new TypeError('removeRuleIds and addRules must be arrays'));
+      continue;
+    }
+    const next = new Map(wanted);
+    for (const id of removeRuleIds) next.delete(id);
+    const repeated = addRules.find((rule, index) => !Number.isInteger(rule?.id) || next.has(rule.id) || addRules.findIndex((other) => other?.id === rule.id) !== index);
+    if (repeated) {
+      call.reject(new Error(Number.isInteger(repeated?.id) ? `Rule with id ${repeated.id} does not have a unique ID.` : 'Each rule needs an integer id.'));
+      continue;
+    }
+    for (const rule of addRules) next.set(rule.id, rule);
+    wanted = next;
+    applied.push(call);
+  }
+  if (!applied.length) return;
+  // One the last run left stays until released, as removing it would compile twice to add it back as it was.
+  const removeRuleIds = [...session]
+    .filter(([id, { rule }]) => (wanted.has(id) ? !sameJSON(wanted.get(id), rule) : ours(id)))
+    .map(([, { webKitId }]) => webKitId);
+  const used = new Set<number>(held.map((rule: any) => rule.id));
+  let free = MAX_RULE_ID;
+  const addRules: any[] = [];
+  for (const [id, rule] of wanted) {
+    if (sameJSON(session.get(id)?.rule, rule)) continue;
+    while (used.has(free)) free--;
+    used.add(free);
+    addRules.push({ ...toWebKit({ ...rule, id: free }), [SESSION_RULE]: id });
+  }
+  try {
+    if (removeRuleIds.length || addRules.length) await webKitCall(namespace, 'updateDynamicRules', { removeRuleIds, addRules });
+  } catch (error) {
+    if (applied.length > 1) {
+      // A failed update applies nothing: each call runs alone, for its own error to reach it.
+      for (const call of applied) await updateSessionRules(namespace, [call]);
+      return;
+    }
+    // WebKit names the rule by the id it holds it under.
+    const ownIds = new Map(addRules.map((rule) => [rule.id, rule[SESSION_RULE]]));
+    applied[0].reject(new Error(String((error as Error)?.message ?? error).replace(/\d+/g, (id) => String(ownIds.get(Number(id)) ?? id))));
+    return;
+  }
+  if (!claimed) await sessionState({ ids: [...wanted.keys()] });
+  for (const call of applied) call.resolve(undefined);
+}
+
+/** Drops the session rules a previous run left that this run did not set, then claims the rest. */
+export function releaseSessionRules(namespace: any): Promise<void> {
+  return queued(async () => {
+    const { claimed, ids } = await sessionState();
+    if (claimed) return;
+    const own = new Set(ids);
+    const left = [...(await heldSessionRules(namespace)).session].filter(([id]) => !own.has(id)).map(([, { webKitId }]) => webKitId);
+    if (left.length) await webKitCall(namespace, 'updateDynamicRules', { removeRuleIds: left, addRules: [] });
+    await sessionState({ claim: true });
+  });
+}
 
 export const declarativeNetRequestPatches: Record<string, Patch> = {
   updateDynamicRules: updateRules('getDynamicRules'),
-  updateSessionRules: updateRules('getSessionRules'),
-  getDynamicRules: getRules,
-  getSessionRules: getRules,
+  updateSessionRules: (_original, self) => {
+    let batch: PendingUpdate[] | undefined;
+    return function (this: unknown, options: any, callback?: () => void) {
+      const namespace: any = self(this);
+      return callbackify(() => new Promise((resolve, reject) => {
+        if (batch) {
+          batch.push({ options, resolve, reject });
+          return;
+        }
+        const calls = [{ options, resolve, reject }];
+        batch = calls;
+        queued(() => {
+          batch = undefined;
+          return updateSessionRules(namespace, calls);
+        });
+      }), callback);
+    };
+  },
+  getDynamicRules: (original, self) => function (this: unknown, filter?: any, callback?: (rules: unknown[]) => void) {
+    if (typeof filter === 'function') [filter, callback] = [undefined, filter];
+    return callbackify(async () => fromWebKit((await original.call(self(this), ...(filter === undefined ? [] : [filter]))).filter((rule: any) => !isSessionRule(rule))), callback);
+  },
+  getSessionRules: (_original, self) => function (this: unknown, filter?: any, callback?: (rules: unknown[]) => void) {
+    if (typeof filter === 'function') [filter, callback] = [undefined, filter];
+    const namespace = self(this);
+    return callbackify(async () => {
+      const { claimed, ids } = await sessionState();
+      const own = new Set(ids);
+      const rules = [...(await heldSessionRules(namespace)).session].filter(([id]) => claimed || own.has(id)).map(([, { rule }]) => rule);
+      return Array.isArray(filter?.ruleIds) ? rules.filter((rule) => filter.ruleIds.includes(rule.id)) : rules;
+    }, callback);
+  },
+  getMatchedRules: (original, self) => function (this: unknown, filter?: any, callback?: (details: unknown) => void) {
+    if (typeof filter === 'function') [filter, callback] = [undefined, filter];
+    const namespace = self(this);
+    return callbackify(async () => {
+      const details = await original.call(namespace, ...(filter === undefined ? [] : [filter]));
+      if (!Array.isArray(details?.rulesMatchedInfo)) return details;
+      const ownIds = new Map([...(await heldSessionRules(namespace)).session].map(([id, { webKitId }]) => [webKitId, id]));
+      const rulesMatchedInfo = details.rulesMatchedInfo.map((info: any) => (info?.rule?.rulesetId === '_dynamic' && ownIds.has(info.rule.ruleId)
+        ? { ...info, rule: { ...info.rule, ruleId: ownIds.get(info.rule.ruleId), rulesetId: '_session' } }
+        : info));
+      return { ...details, rulesMatchedInfo };
+    }, callback);
+  },
   // WebKit counts each id against the 50 enabled rulesets, also one already as asked, and a count
   // below zero wraps around: it gets only the rulesets that change.
   updateEnabledRulesets: (original, self) => function (this: unknown, options: any, callback?: () => void) {
