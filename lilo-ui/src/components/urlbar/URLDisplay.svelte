@@ -259,7 +259,7 @@
 
   function handleClick() {
     closeDetails();
-    openCommandBar(activeTabURL, "default", false, true);
+    openCommandBar(activeTabURL, false, true);
   }
 
   function toggleSiteDrawer(e: MouseEvent) {

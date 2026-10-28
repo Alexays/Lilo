@@ -138,7 +138,7 @@ export function finishOnboarding(): void {
 		// Completion marks the invite as prompted: hidden here, it never shows once the card is gone.
 		hideDefaultBrowserInvite();
 		// Native holds the blank tab's command bar while the onboarding shows.
-		if (isBlankTab(getActiveTab()) && !isCommandBarOpen()) openCommandBar("", "default", true);
+		if (isBlankTab(getActiveTab()) && !isCommandBarOpen()) openCommandBar("", true);
 	}
 	state.visible = false;
 }

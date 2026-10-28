@@ -45,7 +45,7 @@ const video = (visitCount: number) => ({
 
 test("a site visited often preloads while its address is typed, and is dropped when the bar closes", async () => {
 	const { bar, receive, preloads } = await withBar();
-	bar.openCommandBar("", "default", true);
+	bar.openCommandBar("", true);
 	bar.setQuery("vid");
 	receive({ event: "historyResults", query: "vid", results: [video(12)] });
 

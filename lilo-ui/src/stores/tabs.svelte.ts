@@ -93,7 +93,7 @@ export function initTabStore(): void {
 			tabActions.close(active.id);
 			closeCommandBar();
 		} else {
-			openCommandBar("", "default", true);
+			openCommandBar("", true);
 		}
 	});
 }
@@ -107,6 +107,6 @@ function handleStateChangedSideEffects(
 	}
 
 	if (isBlankTab(getActiveTab(data.changedSpaceId))) {
-		openCommandBar("", "default", true);
+		openCommandBar("", true);
 	}
 }

@@ -9,9 +9,11 @@
   import ScreenshotPanel from "../screenshot/ScreenshotPanel.svelte";
   import ProcessManagerPanel from "../diagnostics/ProcessManagerPanel.svelte";
   import SettingsPanel from "../settings/SettingsPanel.svelte";
+  import HistoryNav from "../history/HistoryNav.svelte";
   import {
     getActivePanel,
     isDesignSystemShellOpen,
+    isHistoryShellOpen,
     isSettingsShellOpen,
   } from "../../stores/panels.svelte";
   import { isVerticalLayout } from "../../stores/tabLayout.svelte";
@@ -19,7 +21,7 @@
   let { active = false }: { active?: boolean } = $props();
   const activePanel = $derived(getActivePanel());
   const openPanel = $derived(
-    isSettingsShellOpen() ? "settings" : isDesignSystemShellOpen() ? "designSystem" : activePanel,
+    isSettingsShellOpen() ? "settings" : isDesignSystemShellOpen() ? "designSystem" : isHistoryShellOpen() ? "history" : activePanel,
   );
   let panelEl: HTMLDivElement | undefined = $state();
 
@@ -39,6 +41,9 @@
 <div class="sidebar-panel" class:active bind:this={panelEl}>
   {#if isSettingsShellOpen() && isVerticalLayout()}
     <SettingsPanel />
+  {/if}
+  {#if isHistoryShellOpen() && isVerticalLayout()}
+    <HistoryNav />
   {/if}
   {#if isDesignSystemShellOpen()}
     <DesignSystemPanel />

@@ -4,6 +4,7 @@
 <script lang="ts">
   import CommandBar from "./commandbar/CommandBar.svelte";
   import SettingsShell from "./settings/SettingsShell.svelte";
+  import HistoryShell from "./history/HistoryShell.svelte";
   import OnboardingShell from "./onboarding/OnboardingShell.svelte";
   import CrashRecoveryBanner from "./banners/CrashRecoveryBanner.svelte";
   import SessionRestoreDegradedBanner from "./banners/SessionRestoreDegradedBanner.svelte";
@@ -32,6 +33,7 @@
 
 <CommandBar />
 <SettingsShell />
+<HistoryShell />
 <OnboardingShell />
 <WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from

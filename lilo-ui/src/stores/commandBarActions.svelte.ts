@@ -14,6 +14,7 @@ import {
 import {
 	openAddEditor,
 	openDownloadsPanel,
+	openHistoryPage,
 	openProcessManager,
 	openSettings,
 } from "./panels.svelte";
@@ -54,6 +55,7 @@ const ACTION_HANDLERS: Record<CommandActionId, () => void> = {
 	togglePinActiveTab: () => tabActions.togglePinActive(),
 	duplicateActiveTab: () => tabActions.duplicateActive(),
 	showDownloads: openDownloadsPanel,
+	showHistory: () => openHistoryPage(),
 	openPasswordsApp: () => tabActions.openPasswordsApp(),
 	reopenClosedTab: () => tabActions.restoreClosed(),
 	clearUnpinnedTabs: () => tabActions.clearUnpinned(),
@@ -95,6 +97,8 @@ export function executeResult(
 		tabActions.restoreArchived([result.payload.id as string]);
 	} else if (result.kind === "clearArchive") {
 		tabActions.clearArchived();
+	} else if (result.kind === "showAllHistory") {
+		openHistoryPage({ query: result.payload.query as string });
 	} else if (result.kind === "tab") {
 		optimisticallyActivateTab(result.payload.tabId as string);
 		tabActions.switchTo(result.payload.tabId as string);

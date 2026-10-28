@@ -26,7 +26,7 @@
   function activate() {
     closeSettingsShell();
     if (active && editsAddress) {
-      openCommandBar(tab.url ?? "", "default", false, true);
+      openCommandBar(tab.url ?? "", false, true);
       return;
     }
     optimisticallyActivateTab(tab.id);

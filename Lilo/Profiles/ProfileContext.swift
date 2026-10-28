@@ -38,8 +38,11 @@ final class ProfileContext {
             tabShare: tabShare,
             extensionsBaseDirectory: URL(fileURLWithPath: dbManager.appSupportDirectory)
         )
-        history.onChange = { [weak registry = extensions] change in
-            Task { @MainActor in if let registry { HistoryBridgeHandler.emit(change, to: registry) } }
+        history.onChange = { [weak registry = extensions, profileId] change in
+            Task { @MainActor in
+                if let registry { HistoryBridgeHandler.emit(change, to: registry) }
+                NotificationCenter.default.post(name: .historyChanged, object: profileId)
+            }
         }
     }
 }

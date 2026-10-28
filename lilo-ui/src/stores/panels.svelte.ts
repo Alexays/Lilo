@@ -1,5 +1,5 @@
 import { on } from "../lib/bridge";
-import type { SpaceColorMode } from "../lib/bridge/protocol";
+import type { BridgeHistoryFilter, SpaceColorMode } from "../lib/bridge/protocol";
 import {
 	DEFAULT_ACCENT_COLOR,
 	DEFAULT_SPACE_ICON,
@@ -27,7 +27,7 @@ export type DesignSystemSectionId =
 	| "controls"
 	| "patterns";
 
-type ShellKind = "settings" | "designSystem";
+type ShellKind = "settings" | "designSystem" | "history";
 
 const _shell = $state<{
 	activeSurface: ShellKind | null;
@@ -135,6 +135,10 @@ export function initPanelsStore(): void {
 
 	on("openDownloads", () => {
 		openDownloadsPanel();
+	});
+
+	on("openHistory", (data) => {
+		openHistoryPage({ query: data?.query ?? "", host: data?.host, openedFrom: data?.openedFrom });
 	});
 
 	on("openExtensions", () => {
@@ -323,4 +327,21 @@ export function setActiveDesignSystemSection(section: DesignSystemSectionId): vo
 
 export function closeDesignSystemShell(): void {
 	if (isDesignSystemShellOpen()) _shell.activeSurface = null;
+}
+
+/** Loads the History page with its first open: nothing of it weighs on the chrome's first frame. */
+export function openHistoryPage(filter: Partial<BridgeHistoryFilter> = {}): void {
+	void import("./history.svelte").then((history) => history.openHistory(filter));
+}
+
+export function isHistoryShellOpen(): boolean {
+	return _shell.activeSurface === "history";
+}
+
+export function openHistoryShell(): void {
+	openShell("history");
+}
+
+export function closeHistoryShell(): void {
+	if (isHistoryShellOpen()) _shell.activeSurface = null;
 }

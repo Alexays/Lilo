@@ -67,8 +67,8 @@ export const chromeActions = {
 };
 
 export const tabActions = {
-	create: (url?: string, typed?: boolean): void =>
-		url ? emit("createTab", { url, typed }) : emit("createTab"),
+	create: (url?: string, typed?: boolean, background?: boolean): void =>
+		url ? emit("createTab", background ? { url, typed, background } : { url, typed }) : emit("createTab"),
 	close: emitId("closeTab"),
 	switchTo: emitId("switchTab"),
 	switchToRecent: emitId("switchToRecentTab"),
@@ -289,6 +289,15 @@ export const searchActions = {
 	searchSuggestions: (query: string, engine: string): void =>
 		emit("searchSuggestions", { query, engine }),
 	preloadTopHit: (url: string): void => emit("preloadTopHit", { url }),
+};
+
+export const historyActions = {
+	loadPage: (payload: BridgeCommandPayloadMap["loadHistoryPage"]): void => emit("loadHistoryPage", payload),
+	loadSidebar: emitEmpty("loadHistorySidebar"),
+	deleteRows: (payload: BridgeCommandPayloadMap["deleteHistoryRows"]): void => emit("deleteHistoryRows", payload),
+	deleteSite: (host: string): void => emit("deleteHistorySite", { host }),
+	close: emitEmpty("closeHistoryPage"),
+	showRowMenu: (payload: BridgeCommandPayloadMap["showHistoryRowMenu"]): void => emit("showHistoryRowMenu", payload),
 };
 
 export const terminalActions = {

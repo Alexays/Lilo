@@ -9,6 +9,8 @@
   import { BROWSING_DATA_KINDS } from "./settingsPanelModel";
   import UiButton from "../ui/UiButton.svelte";
   import UiInsetList from "../ui/UiInsetList.svelte";
+  import UiLinkRow from "../ui/UiLinkRow.svelte";
+  import { openHistoryPage } from "../../stores/panels.svelte";
   import UiListRow from "../ui/UiListRow.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
 
@@ -124,6 +126,10 @@
   </span>
   <UiButton variant="danger" busy={clearing} disabled={selected.length === 0} onclick={clear}>{t("common.clear")}</UiButton>
 </div>
+
+<UiInsetList>
+  <UiLinkRow title={t("settings.manageHistory")} description={t("settings.manageHistoryDesc")} onclick={() => openHistoryPage()} />
+</UiInsetList>
 
 <style>
   .browsing-data-summary {

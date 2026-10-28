@@ -260,6 +260,8 @@ extension AppDelegate {
             item.toolTip = entry.url
             menu.addItem(item)
         }
+        menu.addItem(.separator())
+        menu.add("Show All History…".localized, #selector(MainWindowController.openHistory(_:)), icon: .history)
     }
 
     /// No dynamic menu answers a shortcut (the window's key monitor matches those), so key-equivalent
