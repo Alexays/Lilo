@@ -135,14 +135,16 @@ final class TabDockController {
         // Bounds-based scaling: with the frame at slot size and the bounds at logical size, AppKit
         // renders the subtree at slotWidth/logicalWidth scale with exact slot-aligned geometry
         // (a sublayerTransform would scale about the layer's center anchor and overflow the slot).
-        let scale = width / logicalSize.width
+        // Fill the slot, cropping the overflowing axis evenly: a page band shorter than the slot would leave
+        // transparent strips that cut into the rounded corners.
+        let scale = max(width / logicalSize.width, slotRect.height / logicalSize.height)
+        let visible = NSSize(width: width / scale, height: slotRect.height / scale)
         scaledHost.frame = container.bounds
         scaledHost.bounds = NSRect(
-            x: 0,
-            // Center the visible band vertically; a page taller than the slot crops evenly.
-            y: (logicalSize.height - container.bounds.height / scale) / 2,
-            width: logicalSize.width,
-            height: container.bounds.height / scale
+            x: (logicalSize.width - visible.width) / 2,
+            y: (logicalSize.height - visible.height) / 2,
+            width: visible.width,
+            height: visible.height
         )
         engine?.view.frame = NSRect(origin: .zero, size: logicalSize)
     }
