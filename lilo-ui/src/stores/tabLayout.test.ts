@@ -39,6 +39,37 @@ test("a layout change from the host moves the chrome", async () => {
 	assert.equal(store.hasPageToolbar(), false, "on top the address row joins the strip instead");
 });
 
+test("a hidden address stays hidden on every edge, including the right", async () => {
+	stubBridgeWindow({ document: true });
+	const dataset = stubRoot();
+	const store = await (await freshStores())("/src/stores/tabLayout.svelte.ts");
+
+	for (const position of ["left", "right", "top", "bottom"]) {
+		store.applyTabLayoutInitialState({ tabPosition: position, addressPlacement: "hidden" });
+		assert.equal(store.getAddressPlacement(), "hidden", position);
+		assert.equal(store.isAddressVisible(), false, position);
+		assert.equal(dataset.address, "hidden", position);
+		assert.equal(store.hasPageToolbar(), position === "right" || position === "bottom", "only navigation keeps its row");
+	}
+});
+
+test("a waiting request temporarily reveals a hidden address", async () => {
+	stubBridgeWindow({ document: true });
+	stubRoot();
+	const load = await freshStores();
+	const store = await load("/src/stores/tabLayout.svelte.ts");
+	const drawers = await load("/src/stores/urlBarDrawer.svelte.ts");
+	drawers.initUrlBarDrawerStore();
+	store.applyTabLayoutInitialState({ addressPlacement: "hidden" });
+
+	receive({ event: "agentControlRequested", requestId: "a1", clientName: "Agent", executable: "", profileName: "" });
+	assert.equal(store.isAddressVisible(), true);
+
+	drawers.respondToPermissionRequest(drawers.getActiveUrlBarDrawer(), false);
+	assert.equal(store.isAddressVisible(), false);
+	assert.equal(store.getAddressPlacement(), "hidden", "answering keeps the preference");
+});
+
 test("a morph to a new edge that never finishes is skipped, so the chrome is never left frozen", async (t) => {
 	stubBridgeWindow({ document: true });
 	const dataset = stubRoot();

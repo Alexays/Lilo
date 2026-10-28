@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "与标签页放在一起",
-			"page": "网页上方"
+			"page": "网页上方",
+			"hidden": "隐藏"
 		},
 		"themeSystem": "系统",
 		"themeLight": "浅色",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "地址",
-				"description": "与标签页放在一起，或放在网页上方的栏中。",
-				"keywords": "地址栏 URL 工具栏 位置",
-				"lockedRight": "标签页位于右侧时，地址会保留在网页上方。"
+				"description": "与标签页放在一起、显示在网页上方或隐藏。可使用命令栏输入地址。",
+				"keywords": "地址栏 URL 工具栏 位置 隐藏",
+				"lockedRight": "标签页位于右侧时，可将地址显示在网页上方或隐藏。"
 			},
 			"theme": {
 				"title": "主题",

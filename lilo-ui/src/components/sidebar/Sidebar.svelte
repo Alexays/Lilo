@@ -22,12 +22,12 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
   let spaceContentEl: HTMLDivElement | undefined = $state();
-  let keepAwakeWidth = $state(0);
+  let spaceRowEndWidth = $state(0);
   const spaces = $derived(getPagedSpaces());
   const visualIndex = $derived(getSpacePagerVirtualIndex());
   const isOverlayPanelOpen = $derived(
@@ -113,15 +113,18 @@
       <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
       <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    {#if !(isSidebarVisible() && isAddressInPageToolbar())}
+    {#if isAddressVisible() && !(isSidebarVisible() && isAddressInPageToolbar())}
       <URLDisplay />
     {/if}
 
     <!-- Space content: native horizontal scroll with snap paging -->
-    <div class="space-content" style={`--keep-awake-reserve: ${keepAwakeWidth ? keepAwakeWidth + 8 : 0}px;`}>
-      <!-- Over the Space header but outside the pages: it does not swipe, it is about the Mac. -->
-      <div class="keep-awake-slot" bind:clientWidth={keepAwakeWidth}>
+    <div class="space-content" style={`--space-row-reserve: ${spaceRowEndWidth ? spaceRowEndWidth + 8 : 0}px;`}>
+      <!-- Over the Space header but outside the pages: it does not swipe, it is about the page and the Mac. -->
+      <div class="space-row-end" bind:clientWidth={spaceRowEndWidth}>
         <KeepAwakeIndicator />
+        {#if !isAddressVisible()}
+          <URLDisplay actionsOnly />
+        {/if}
       </div>
       <div class="space-track" bind:this={spaceContentEl}>
         <div class="space-slider">
@@ -219,16 +222,27 @@
     flex: 1;
     min-height: 0;
     position: relative;
-    /* Keeps the keep-awake chip's z-index local, so the URL bar's details card covers it. */
+    /* Keeps the Space row's z-index local, so the URL bar's details card covers it. */
     isolation: isolate;
   }
 
   /* Centred on the Space header's row, aligned with its right edge. */
-  .keep-awake-slot {
+  .space-row-end {
     position: absolute;
-    top: 8px;
+    top: 4px;
+    height: 28px;
     right: calc(var(--sidebar-right-pad, 10px) + 6px);
     z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Like the address bar, the page's buttons show on hover; only the extensions stay out. */
+  .space-content:has(:global(.space-label:hover), .space-row-end:hover, .space-row-end:focus-within) :global(.url-actions-reveal) {
+    max-width: 120px;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .space-track {

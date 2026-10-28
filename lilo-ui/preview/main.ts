@@ -1,6 +1,6 @@
 // The chrome UI in any browser, against the e2e fake host seeded with a sample world (make ui-preview).
 // ?world=default|empty|onboarding, &theme=light|dark (the system's otherwise), &open=settings|commandbar,
-// &tabs=left|right|top|bottom, &update=1 (a downloaded update waiting for a relaunch).
+// &tabs=left|right|top|bottom, &address=tabs|page|hidden, &update=1 (a downloaded update waiting for a relaunch).
 import type { Page } from "@playwright/test";
 import { installFakeHost, type FakeHostWorld } from "../e2e/fakeHost";
 import { LILO_SHORTCUT_KEYS } from "../e2e/fixtures";
@@ -166,6 +166,8 @@ const page = { addInitScript: async <T>(script: (arg: T) => void, arg: T) => scr
 const world = worldName === "default" ? defaultWorld() : emptyWorld();
 const tabs = params.get("tabs");
 if (tabs === "left" || tabs === "right" || tabs === "top" || tabs === "bottom") world.tabPosition = tabs;
+const address = params.get("address");
+if (address === "tabs" || address === "page" || address === "hidden") world.addressPlacement = address;
 await installFakeHost(page as unknown as Page, world);
 
 const host = window.webkit!.messageHandlers!.lilo!;

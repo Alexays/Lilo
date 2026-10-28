@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "Junto às abas",
-			"page": "Acima da página"
+			"page": "Acima da página",
+			"hidden": "Oculto"
 		},
 		"themeSystem": "Sistema",
 		"themeLight": "Claro",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "Endereço",
-				"description": "Junto às abas ou em uma barra acima da página.",
-				"keywords": "endereço barra url ferramentas local",
-				"lockedRight": "Com as abas à direita, o endereço fica acima da página."
+				"description": "Junto às abas, acima da página ou oculto. Use a barra de comandos para digitar um endereço.",
+				"keywords": "endereço barra url ferramentas local ocultar oculto esconder",
+				"lockedRight": "Com as abas à direita, mostre o endereço acima da página ou oculte-o."
 			},
 			"theme": {
 				"title": "Tema",

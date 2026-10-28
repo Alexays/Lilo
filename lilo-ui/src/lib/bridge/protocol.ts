@@ -454,7 +454,7 @@ interface BridgeExtensionPermissionRequestPayload {
 }
 
 export type TabPosition = "left" | "right" | "top" | "bottom";
-export type AddressPlacement = "tabs" | "page";
+export type AddressPlacement = "tabs" | "page" | "hidden";
 
 export interface BridgeInitialStatePayload {
 	tabs: BridgeTabSnapshot[];
