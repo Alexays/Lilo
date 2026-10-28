@@ -148,6 +148,30 @@ export const once = '?lilo';
 export const frameMark = '?liloFrame=';
 const served = new WeakMap<object, object>();
 
+/** Chrome's error for a message posted on a disconnected port, which extensions test before reconnecting. */
+export const disconnectedPort = 'Attempting to use a disconnected port object';
+const chromePortPrototypes = new WeakSet<object>();
+
+/** `port`, whose postMessage, as every WebKit port's of its prototype, fails in Chrome's words once disconnected. */
+export function portErrorsAsChrome<T>(port: T): T {
+  const prototype = port !== null && typeof port === 'object' ? Object.getPrototypeOf(port) : null;
+  if (!prototype || chromePortPrototypes.has(prototype) || typeof prototype.postMessage !== 'function') return port;
+  chromePortPrototypes.add(prototype);
+  const { postMessage } = prototype;
+  Object.defineProperty(prototype, 'postMessage', {
+    configurable: true, writable: true,
+    value(this: unknown, ...args: unknown[]) {
+      try {
+        return postMessage.apply(this, args);
+      } catch (error) {
+        if (error instanceof Error && error.message.endsWith('The port is disconnected.')) throw new Error(disconnectedPort);
+        throw error;
+      }
+    },
+  });
+  return port;
+}
+
 /** The name and sender of a port a frame's content script opened through its extension page, else `name` and `sender`. */
 export function framePort(name: string, sender: any): { name: string; sender: unknown } {
   // A frame's port comes through the extension page only: a content script could take its name from the web page.
@@ -166,6 +190,7 @@ export function framePort(name: string, sender: any): { name: string; sender: un
 export function messagesOnce(port: any, name: string): object {
   const known = served.get(port);
   if (known) return known;
+  portErrorsAsChrome(port);
   const sender = Math.random();
   let sent = 0;
   const received = new Map<number, number>();
@@ -221,7 +246,7 @@ export function relayExternalMessaging(runtime: any): void {
   Object.defineProperty(target, 'sendMessage', { value: Object.assign(relayed, { __liloRelays: true }), configurable: true, writable: true });
   Object.defineProperty(target, 'connect', {
     value(this: unknown, ...args: any[]) {
-      if (!otherExtension(args[0], runtime)) return connect.apply(this, args);
+      if (!otherExtension(args[0], runtime)) return portErrorsAsChrome(connect.apply(this, args));
       const name = typeof args[1]?.name === 'string' ? args[1].name : '';
       return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name);
     },

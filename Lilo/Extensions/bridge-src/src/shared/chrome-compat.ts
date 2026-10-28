@@ -138,6 +138,10 @@ function chromeError(message: string, args: any[]): string | undefined {
   // tabs.remove and the calls taking several tabs name the one missing.
   const missing = /^Tab '(\d+)' was not found\.$/.exec(error);
   if (missing) return `No tab with id: ${missing[1]}.`;
+  // Chrome names the page to an extension that may read tab urls: the extensions that test it test the start.
+  if (error === 'This extension does not have access to this tab.' && /^(scripting|tabs)\.(executeScript|insertCSS|removeCSS)$/.test(method)) {
+    return 'Cannot access contents of the page. Extension manifest must request permission to access the respective host.';
+  }
   if (error === 'Parent menu item not found.' && details?.parentId !== undefined) return `Cannot find menu item with id ${details.parentId}`;
   if (error === 'Identifier is already used.' && details?.id !== undefined) return `Cannot create item with duplicate id ${details.id}`;
   return undefined;

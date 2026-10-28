@@ -317,3 +317,18 @@ describe("a content script's messages to another extension", () => {
     assert.deepEqual(opened, [{ name: `tunnel?liloExternal=${other}?lilo` }, { name: 'own' }]);
   });
 });
+
+describe("WebKit's ports", () => {
+  it("fail in Chrome's words once disconnected, through Lilo's wrapper or not", () => {
+    class Port {
+      name = 'state';
+      onMessage = { addListener() {} };
+      onDisconnect = { addListener() {} };
+      postMessage() { throw new Error('Invalid call to port.postMessage(). The port is disconnected.'); }
+    }
+    const port = new Port();
+    const wrapped: any = messagesOnce(port, 'state');
+    assert.throws(() => wrapped.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
+    assert.throws(() => new Port().postMessage(), { message: 'Attempting to use a disconnected port object' }, 'every port of its prototype');
+  });
+});

@@ -4,7 +4,7 @@ import { bridgeEvents, channelClosed, gapCall, instance } from '../shared/ipc.ts
 import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent, GapWrappedEvent, reportGapListener } from '../shared/gap-event.ts';
-import { externalMark, framePort, messagesOnce, noReceiver, once, otherExtension } from '../shared/message-answers.ts';
+import { disconnectedPort, externalMark, framePort, messagesOnce, noReceiver, once, otherExtension, portErrorsAsChrome } from '../shared/message-answers.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 interface UpdateCheckResult {
@@ -81,7 +81,7 @@ function receiveLocalPort(listeners: [(...args: any[]) => unknown, unknown[]][],
  */
 export const onConnect = (source: () => object) => new GapWrappedEvent<[any]>('runtime.onConnect', source, (listener) => (port: any) => {
   const name = port?.name;
-  if (typeof name !== 'string' || !name.endsWith(once)) return listener(port);
+  if (typeof name !== 'string' || !name.endsWith(once)) return listener(portErrorsAsChrome(port));
   const plain = name.slice(0, -once.length);
   const external = plain.lastIndexOf(externalMark);
   if (external >= 0) {
@@ -114,7 +114,7 @@ export const tabsConnect: Patch = (original, self) => function (this: unknown, t
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage(message: unknown) {
-      if (closed) throw new Error('Attempting to use a disconnected port object');
+      if (closed) throw new Error(disconnectedPort);
       early?.push(message);
       end.postMessage(message);
     },
@@ -257,7 +257,7 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
     onDisconnect: new ChromeEvent<[unknown]>(),
     // Each call goes once the port has its id, in order over the channel: none waits for the answer to the one before.
     postMessage(message: unknown) {
-      if (closed) throw new Error('Attempting to use a disconnected port object');
+      if (closed) throw new Error(disconnectedPort);
       // Serialized now, so a message JSON cannot hold throws here, as in Chrome.
       const json = JSON.stringify(message === undefined ? null : message);
       const first = queued.length === 0;
@@ -355,7 +355,7 @@ function unansweredPort(name: string): object {
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage() {
-      if (closed) throw new Error('Attempting to use a disconnected port object');
+      if (closed) throw new Error(disconnectedPort);
     },
     disconnect() { closed = true; },
   };
@@ -370,7 +370,7 @@ function unansweredPort(name: string): object {
 /** WebKit's connect, or Chrome's port when no context listens. */
 function connectOrUnanswered(open: () => any, name: string): any {
   try {
-    return open();
+    return portErrorsAsChrome(open());
   } catch (error) {
     if (!String((error as Error)?.message).includes('No runtime.onConnect listeners found')) throw error;
     return unansweredPort(name);

@@ -224,6 +224,7 @@ describe("WebKit's errors", () => {
   class FailingRuntime extends Runtime {
     error: { message: string } | null = null;
     get lastError(): unknown { return this.error; }
+    getURL(path: string) { return `chrome-extension://own/${path}`; }
   }
   const runtime = new FailingRuntime([]);
   const notFound = (method: string) => `Invalid call to ${method}(). Tab not found.`;
@@ -240,9 +241,10 @@ describe("WebKit's errors", () => {
     remove(tabIds: number[]) { return Promise.reject(new Error(`Invalid call to tabs.remove(). Tab '${tabIds[0]}' was not found.`)); }
   }
   class Action { setBadgeText(_details: object, callback?: () => void) { return fail('action.setBadgeText', callback); } }
+  class Scripting { executeScript() { return Promise.reject(new Error('Invalid call to scripting.executeScript(). This extension does not have access to this tab.')); } }
 
   function chrome(): any {
-    (globalThis as any).chrome = { runtime, tabs: new Tabs(), action: new Action() };
+    (globalThis as any).chrome = { runtime, tabs: new Tabs(), action: new Action(), scripting: new Scripting() };
     installChromeCompat({});
     return (globalThis as any).chrome;
   }
@@ -254,6 +256,7 @@ describe("WebKit's errors", () => {
     await assert.rejects(api.tabs.get(7), { message: 'No tab with id: 7.' });
     await assert.rejects(api.action.setBadgeText({ tabId: 8, text: 'a' }), { message: 'No tab with id: 8.' });
     await assert.rejects(api.tabs.remove([10, 11]), { message: 'No tab with id: 10.' });
+    await assert.rejects(api.scripting.executeScript({ target: { tabId: 1 }, func: () => {} }), { message: /^Cannot access contents of the page\./ });
     await assert.rejects(api.tabs.sendMessage(9, 'hi'), { message: 'Could not establish connection. Receiving end does not exist.' });
     assert.equal(await read((callback) => api.tabs.sendMessage(9, 'hi', callback)), 'Could not establish connection. Receiving end does not exist.');
   });
