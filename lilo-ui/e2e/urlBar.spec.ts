@@ -20,7 +20,19 @@ test("the hovered bar's buttons hide the address under them", async ({ page }) =
 	const blank = await gapBetweenButtons(page, "https://a.io");
 	const long = await gapBetweenButtons(page, "https://a-very-long-subdomain.with.many.labels.example-domain-name.co.uk/a/long/path");
 
-	expect(long.equals(blank)).toBe(true);
+	// Renders of the same background can differ by a shade; an address showing through differs by far more.
+	const maxDifference = await page.evaluate(async (strips) => {
+		const decoded = await Promise.all(
+			strips.map(async (base64) => {
+				const bitmap = await createImageBitmap(new Blob([Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))], { type: "image/png" }));
+				const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext("2d")!;
+				context.drawImage(bitmap, 0, 0);
+				return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+			}),
+		);
+		return decoded[0].reduce((max, value, index) => Math.max(max, Math.abs(value - decoded[1][index])), 0);
+	}, [blank.toString("base64"), long.toString("base64")]);
+	expect(maxDifference).toBeLessThanOrEqual(2);
 });
 
 test("the details card gives way to the command bar opened over a resting pointer", async ({ page }) => {
