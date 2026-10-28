@@ -201,7 +201,7 @@ final class MainWindowController: NSWindowController {
     /// getDisplayMedia tab-share frame ferry (one session at a time).
     let tabShareSessions = TabShareSessionController()
     /// Pages awaiting a tab-share picker choice from the chrome UI, keyed by request id.
-    var pendingTabSharePickerRequests: [String: (requester: WKWebView?, continuation: CheckedContinuation<TabSharePickerChoice, Never>)] = [:]
+    var pendingTabSharePickerRequests: [String: (requester: WKWebView?, wantsAudio: Bool, continuation: CheckedContinuation<TabSharePickerChoice, Never>)] = [:]
     /// Opaque native frame between the content web view and the chrome overlay. Click-through.
     var windowFrameView: WindowFrameView?
 

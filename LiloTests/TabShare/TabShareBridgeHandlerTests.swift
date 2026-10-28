@@ -34,7 +34,13 @@ final class TabShareBridgeHandlerTests: XCTestCase {
         await handle(["requestId": "r3", "choice": "system"], into: &resolutions)
         await handle(["requestId": "r4", "choice": "bogus"], into: &resolutions)
 
-        guard case .system = resolutions[0].1 else { return XCTFail("expected .system") }
+        XCTAssertEqual(resolutions[0].1, .system(audio: false))
         guard case .cancel = resolutions[1].1 else { return XCTFail("expected .cancel") }
+    }
+
+    func testCarriesTheScreenSoundToggle() async {
+        var resolutions: [(String, TabSharePickerChoice)] = []
+        await handle(["requestId": "r5", "choice": "system", "audio": true], into: &resolutions)
+        XCTAssertEqual(resolutions.first?.1, .system(audio: true))
     }
 }

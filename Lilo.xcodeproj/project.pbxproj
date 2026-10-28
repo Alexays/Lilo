@@ -466,6 +466,7 @@
 		BFF602BC40EFF06E0F888682 /* CookiesBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C3E625BBD1D105CB1EC87B /* CookiesBridgeHandler.swift */; };
 		C00D8CDC067CCD0C298C7052 /* SidePanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77A5D3FA5FF4EE4B7BC08FEF /* SidePanelTests.swift */; };
 		C021EC20C0D26BED33B71869 /* MainWindowController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF1B068EE38071BDC4C8801 /* MainWindowController+Extensions.swift */; };
+		C02C84C9486B8B0E5699D6F7 /* SystemAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C850FA86B9233A3D0BA139 /* SystemAudioTap.swift */; };
 		C0698C2057F742A9BC3320E6 /* MainWindowControllerPowerModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E807867BF68ACB54326B758C /* MainWindowControllerPowerModeTests.swift */; };
 		C1382419D14894DC7DABD390 /* DeclarativeNetRequestBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3329D370080C742FB09D280 /* DeclarativeNetRequestBridgeHandler.swift */; };
 		C16F11445772195F3A52E510 /* FontSettingsBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160716B6CD17524C433E53CA /* FontSettingsBridgeHandler.swift */; };
@@ -974,6 +975,7 @@
 		736ACF6B00681014E3F04757 /* AgentPageToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentPageToolsTests.swift; sourceTree = "<group>"; };
 		738233DF5971122B5779F7EE /* SpaceTabStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceTabStateStore.swift; sourceTree = "<group>"; };
 		73A55F8756E347FA1CD02ABA /* PowerHelperLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerHelperLink.swift; sourceTree = "<group>"; };
+		73C850FA86B9233A3D0BA139 /* SystemAudioTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemAudioTap.swift; sourceTree = "<group>"; };
 		73DBA5E9D7053C5BE3D531AD /* BrowserImportScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserImportScanner.swift; sourceTree = "<group>"; };
 		74003A2B490526EB4362581C /* FilterListServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterListServiceTests.swift; sourceTree = "<group>"; };
 		75229D94443E8838EE532205 /* DownloadDestinationChoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadDestinationChoiceTests.swift; sourceTree = "<group>"; };
@@ -1971,6 +1973,7 @@
 			children = (
 				3D478A3354B6B8FADAE26AE3 /* MainWindowController+TabShare.swift */,
 				35EC083831FA1D9DD747B556 /* ScreenCaptureStream.swift */,
+				73C850FA86B9233A3D0BA139 /* SystemAudioTap.swift */,
 				C6B3D09E24A5709704E36983 /* TabShareBridge.swift */,
 				FD7D1D02B3E5CCCD8E1A6F3E /* TabShareBridgeHandler.swift */,
 				5B3B9EA1B93450FD316461DC /* TabShareEncoder.swift */,
@@ -2947,6 +2950,7 @@
 				9CA0E1AEC7A7DC585C9F5ACA /* SplitLayout.swift in Sources */,
 				A709BC82F5507A4AF5DF8E39 /* StartupMetrics.swift in Sources */,
 				B40D5C7C968C67A32BA4109C /* StateSyncBridgeHandler.swift in Sources */,
+				C02C84C9486B8B0E5699D6F7 /* SystemAudioTap.swift in Sources */,
 				DB692D4081B04969B02106B2 /* SystemBridgeHandler.swift in Sources */,
 				74962E71D81E6CA299C1CBF8 /* SystemLidActions.swift in Sources */,
 				F410A705F97C17079A8592C4 /* SystemMediaDevices.swift in Sources */,

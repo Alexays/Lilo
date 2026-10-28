@@ -1326,9 +1326,20 @@
 	"tabShare": {
 		"title": "{origin} 想要共享标签页",
 		"pickTab": "选取要共享的标签页",
-		"currentTab": "当前标签页",
+		"search": "搜索标签页",
+		"suggested": "建议",
+		"playing": "正在播放音频",
+		"share": "共享",
+		"keyHint": "用方向键选择，按 Return 共享",
 		"noTabs": "没有可共享的打开标签页",
-		"shareSystem": "改为共享屏幕或窗口"
+		"noMatch": "没有匹配的标签页",
+		"shareSystem": "窗口或屏幕…",
+		"shareAudio": "同时共享声音",
+		"systemAudio": {
+			"undetermined": "macOS 只会询问一次。通话中的声音永远不会被共享。",
+			"denied": "请在“隐私与安全性”的“录屏与系统录音”中允许 Lilo。",
+			"unsupported": "无法在不产生通话回声的情况下共享 Mac 的声音。"
+		}
 	},
 	"tabSwitcher": {
 		"title": "最近使用的标签页",

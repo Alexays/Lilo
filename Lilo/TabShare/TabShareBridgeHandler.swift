@@ -22,7 +22,7 @@ final class TabShareBridgeHandler: BridgeHandler {
             }
             resolve(requestId, .tab(tabId))
         case "system":
-            resolve(requestId, .system)
+            resolve(requestId, .system(audio: message.bool("audio")))
         default:
             resolve(requestId, .cancel)
         }

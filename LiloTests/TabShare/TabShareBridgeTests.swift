@@ -20,15 +20,15 @@ final class TabShareBridgeTests: XCTestCase {
             return ["mode": "tab", "token": "t", "width": 640, "height": 360]
         }
 
-        bridge.pickerPresenter = { _, _ in .cancel }
+        bridge.pickerPresenter = { _, _, _ in .cancel }
         var reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "cancel")
 
-        bridge.pickerPresenter = { _, _ in .system }
+        bridge.pickerPresenter = { _, _, _ in .system(audio: false) }
         reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "system")
 
-        bridge.pickerPresenter = { _, _ in .tab(tabId) }
+        bridge.pickerPresenter = { _, _, _ in .tab(tabId) }
         reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertEqual(reply["token"] as? String, "t")
@@ -37,10 +37,39 @@ final class TabShareBridgeTests: XCTestCase {
 
     func testPickedTabWithoutLiveEngineCancels() async {
         let bridge = TabShareBridge()
-        bridge.pickerPresenter = { _, _ in .tab(UUID()) }
+        bridge.pickerPresenter = { _, _, _ in .tab(UUID()) }
         bridge.sessionStarter = { _, _ in nil }
         let reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "cancel")
+    }
+
+    func testScreenWithSoundGoesThroughTheFerryAndWithoutStaysNative() async {
+        let bridge = TabShareBridge()
+        var ferried = 0
+        bridge.screenStarter = { _ in
+            ferried += 1
+            return ["mode": "tab", "token": "s", "audioURL": "lilo-capture://frames/audio?token=s"]
+        }
+        let requester = WKWebView(frame: .zero)
+
+        bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
+        var reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
+        XCTAssertEqual(reply["mode"] as? String, "tab")
+        XCTAssertEqual(ferried, 1)
+
+        // The page did not ask for sound: WebKit's own capture costs less than the ferry.
+        reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: false)
+        XCTAssertEqual(reply["mode"] as? String, "system")
+
+        bridge.pickerPresenter = { _, _, _ in .system(audio: false) }
+        reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
+        XCTAssertEqual(reply["mode"] as? String, "system")
+        XCTAssertEqual(ferried, 1)
+
+        bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
+        bridge.screenStarter = { _ in nil }
+        reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
+        XCTAssertEqual(reply["mode"] as? String, "cancel", "a cancelled system picker cancels the share")
     }
 }
 
@@ -78,6 +107,15 @@ final class TabShareSessionControllerTests: XCTestCase {
         XCTAssertFalse(engine.isTabShareSource)
         XCTAssertFalse(controller.isSharing(engineId: engine.id))
         XCTAssertEqual(endedWith, [engine.id])
+    }
+
+    func testATabShareCarriesNoSound() {
+        let controller = TabShareSessionController()
+        let requester = WKWebView(frame: .zero)
+        let reply = controller.start(engine: WKWebViewTab(configuration: WKWebViewConfiguration()), requester: requester)
+        XCTAssertNil(reply["audioURL"])
+        guard case .gone = controller.audio(token: reply["token"] as? String ?? "", puller: requester) else { return XCTFail("expected gone") }
+        controller.stopAll()
     }
 
     func testStopWithForeignTokenIsIgnored() {

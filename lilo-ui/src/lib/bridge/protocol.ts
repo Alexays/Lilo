@@ -4,6 +4,11 @@ export type EmptyPayload = Record<string, never>;
 
 /** A capture to save or copy: native writes its own PNG of capture `id` (cropped to `crop`), or
  * the editor's flattened `dataURL` when there are annotations to bake in. */
+export interface BridgeTabShareAudio {
+	system: "granted" | "denied" | "undetermined" | "unsupported";
+	systemOn: boolean;
+}
+
 export interface ScreenshotExport {
 	id: string;
 	dataURL?: string;
@@ -616,6 +621,8 @@ export interface BridgeCommandPayloadMap {
 		requestId: string;
 		choice: "tab" | "system" | "cancel";
 		tabId?: string;
+		// The window or screen's "Share audio too" toggle, sent when the page asked for sound.
+		audio?: boolean;
 	};
 	allowCertificateException: { host: string };
 	loadBypassingContentBlocker: EmptyPayload;
@@ -885,9 +892,18 @@ export interface BridgeEventPayloadMap {
 	permissionRequestClosed: { requestId: string };
 	extensionPermissionRequested: BridgeExtensionPermissionRequestPayload;
 	// getDisplayMedia tab-share picker: `origin` is the display host of the requesting page,
-	// `shareableTabIds` the tabs native can resolve to a live engine. `allowsSystem` false (an
-	// extension's chrome.desktopCapture offering tabs only) hides "share a screen or window".
-	tabSharePickerRequested: { requestId: string; origin: string; shareableTabIds: string[]; allowsSystem?: boolean };
+	// `shareableTabIds` the tabs native can resolve to a live engine, the requesting tab left out;
+	// `suggestedTabIds` a few of them to offer first. `allowsSystem` false (an extension's
+	// chrome.desktopCapture offering tabs only) hides "share a screen or window". `audio` is present when the
+	// page asked for sound: whether the Mac's sound can be captured, and the toggle's remembered state.
+	tabSharePickerRequested: {
+		requestId: string;
+		origin: string;
+		shareableTabIds: string[];
+		suggestedTabIds?: string[];
+		allowsSystem?: boolean;
+		audio?: BridgeTabShareAudio;
+	};
 	// The requesting tab closed while its picker was open; native already cancelled the pick.
 	tabSharePickerDismissed: { requestId: string };
 	pipDockChanged: { active: boolean; title?: string };

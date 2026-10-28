@@ -1326,9 +1326,20 @@
 	"tabShare": {
 		"title": "{origin} quiere compartir una pestaña",
 		"pickTab": "Elige una pestaña para compartir",
-		"currentTab": "Pestaña actual",
+		"search": "Buscar pestañas",
+		"suggested": "Sugeridas",
+		"playing": "Reproduciendo audio",
+		"share": "Compartir",
+		"keyHint": "Flechas para elegir, Retorno para compartir",
 		"noTabs": "No hay pestañas abiertas para compartir",
-		"shareSystem": "Compartir una pantalla o ventana en su lugar"
+		"noMatch": "Ninguna pestaña coincide",
+		"shareSystem": "Ventana o pantalla…",
+		"shareAudio": "Compartir también el sonido",
+		"systemAudio": {
+			"undetermined": "macOS lo pedirá una vez. Las voces de la llamada nunca se comparten.",
+			"denied": "Permite Lilo en Privacidad y seguridad, Grabación de pantalla y audio del sistema.",
+			"unsupported": "El sonido del Mac no se puede compartir sin que la llamada se escuche en eco."
+		}
 	},
 	"tabSwitcher": {
 		"title": "Pestañas recientes",

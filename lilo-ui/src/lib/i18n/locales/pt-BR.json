@@ -1326,9 +1326,20 @@
 	"tabShare": {
 		"title": "{origin} quer compartilhar uma aba",
 		"pickTab": "Escolha uma aba para compartilhar",
-		"currentTab": "Aba atual",
+		"search": "Buscar abas",
+		"suggested": "Sugeridas",
+		"playing": "Reproduzindo áudio",
+		"share": "Compartilhar",
+		"keyHint": "Setas para escolher, Return para compartilhar",
 		"noTabs": "Nenhuma aba aberta para compartilhar",
-		"shareSystem": "Compartilhar uma tela ou janela"
+		"noMatch": "Nenhuma aba corresponde",
+		"shareSystem": "Janela ou tela…",
+		"shareAudio": "Compartilhar o som também",
+		"systemAudio": {
+			"undetermined": "O macOS vai pedir uma vez. As vozes da chamada nunca são compartilhadas.",
+			"denied": "Permita o Lilo em Privacidade e Segurança, Gravação de Tela e Áudio do Sistema.",
+			"unsupported": "O som do Mac não pode ser compartilhado sem eco da chamada."
+		}
 	},
 	"tabSwitcher": {
 		"title": "Abas recentes",

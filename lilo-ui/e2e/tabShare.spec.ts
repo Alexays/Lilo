@@ -27,15 +27,37 @@ test("picking a tab resolves the request with that tab's id", async ({
 	await expect(picker.locator(".tab-share-title")).toContainText(
 		"meet.example.com",
 	);
-	// The active tab row carries the localized current-tab hint.
-	await expect(
-		picker.locator('[data-share-tab-id="tab-alpha"] .tab-share-current'),
-	).toBeVisible();
-
 	// Tabs native cannot resolve to a live engine are not offered.
 	await expect(picker.locator('[data-share-tab-id="tab-gamma"]')).toHaveCount(0);
 
-	await picker.locator('[data-share-tab-id="tab-beta"]').click();
+	// A click selects a card; Share sends it.
+	const beta = picker.locator('[data-share-tab-id="tab-beta"]');
+	await beta.click();
+	await expect(beta).toHaveAttribute("aria-pressed", "true");
+	await expect(picker).toBeVisible();
+	await picker.locator(".tab-share-btn.primary").click();
+
+	await expect(picker).toHaveCount(0);
+	const commands = await sentCommands(page);
+	expect(commands.find((c) => c.action === "tabShare.resolve")?.payload).toEqual(
+		{ requestId: "req-1", choice: "tab", tabId: "tab-beta" },
+	);
+});
+
+test("the first card is selected from the start, so Return shares it", async ({
+	page,
+}) => {
+	await bootChrome(page, initialWorld());
+
+	await page.evaluate(
+		(msg) => window.__lilo!.receive(msg),
+		{ ...requestPicker("req-1", "meet.example.com"), suggestedTabIds: ["tab-beta"] },
+	);
+	const picker = page.locator(".tab-share-backdrop");
+	await expect(picker.locator(".tab-share-search input")).toBeFocused();
+	await expect(picker.locator('[data-share-tab-id="tab-beta"]')).toHaveAttribute("aria-pressed", "true");
+
+	await page.keyboard.press("Enter");
 
 	await expect(picker).toHaveCount(0);
 	const commands = await sentCommands(page);
@@ -71,7 +93,7 @@ test("Tab keeps focus inside the picker", async ({ page }) => {
 		{ ...requestPicker("req-1", "meet.example.com"), allowsSystem: true },
 	);
 	const picker = page.locator(".tab-share-panel");
-	await expect(picker).toBeFocused();
+	await expect(picker.locator(".tab-share-search input")).toBeFocused();
 
 	for (let i = 0; i < 5; i++) {
 		await page.keyboard.press("Tab");
@@ -141,6 +163,6 @@ test.describe("in French", () => {
 			{ ...requestPicker("req-1", "meet.example.com"), shareableTabIds: ["tab-alpha", "tab-blank"] },
 		);
 
-		await expect(page.locator('[data-share-tab-id="tab-blank"] .tab-share-row-title')).toHaveText("Nouvel onglet");
+		await expect(page.locator('[data-share-tab-id="tab-blank"] .tab-share-card-title')).toHaveText("Nouvel onglet");
 	});
 });
