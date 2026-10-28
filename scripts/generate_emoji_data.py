@@ -33,6 +33,7 @@ LOCALES = {
     "it": {"a", "al", "con", "da", "di", "e", "il", "in", "la", "le", "un", "una"},
     "ko": set(),
     "zh-Hant": set(),
+    "pl": {"do", "i", "na", "w", "z", "ze"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

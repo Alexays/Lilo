@@ -282,3 +282,28 @@ test("Traditional Chinese regional tags, translations and count forms use the se
 		assert.equal(translate("zh-Hant", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Polish regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["pl", "pl-PL", "PL-pl"]) {
+		assert.equal(resolveLocale(tag), "pl", tag);
+	}
+	assert.equal(translate("pl", "common.cancel"), "Anuluj");
+	for (const [count, expected] of [
+		[0, "0 otwartych kart"],
+		[1, "1 otwarta karta"],
+		[2, "2 otwarte karty"],
+		[5, "5 otwartych kart"],
+		[11, "11 otwartych kart"],
+		[12, "12 otwartych kart"],
+		[14, "14 otwartych kart"],
+		[21, "21 otwartych kart"],
+		[22, "22 otwarte karty"],
+		[25, "25 otwartych kart"],
+		[101, "101 otwartych kart"],
+		[112, "112 otwartych kart"],
+		[12345, "12 345 otwartych kart"],
+		[1.5, "1,5 otwartej karty"],
+	] as const) {
+		assert.equal(translate("pl", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
