@@ -91,8 +91,10 @@
     padding: 0 var(--sidebar-right-pad, 10px) 8px 10px;
   }
 
+  /* minmax(0, ...) so a long label ellipsizes instead of widening every row past the panel. */
   .section-nav {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-content: start;
     min-height: 0;
     overflow-y: auto;
@@ -101,6 +103,7 @@
 
   .section-nav-group {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 2px;
   }
 
