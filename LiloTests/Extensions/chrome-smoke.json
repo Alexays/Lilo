@@ -1,5 +1,5 @@
 {
- "chrome": "156.0.8078.47",
+ "chrome": "156.0.8078.73",
  "extensions": {
   "efaidnbmnnnibpcajpcglclefindmkaj": {
    "name": "Adobe Acrobat: PDF edit, convert, sign tools",
@@ -106,10 +106,10 @@
   },
   "cfhdojbkjhnklbpkdaibdccddilifddb": {
    "name": "Adblock Plus - free ad blocker",
-   "version": "4.48.0",
+   "version": "4.49.0",
    "popup": {
     "tokens": "upgrade there nothing to block on this page number of items blocked in total interested abp mobile want support enjoying the extension rate stay connected with us having trouble using button#1 button#2 button#3 button#4 button#5 button#6 link#1",
-    "ms": 811
+    "ms": 762
    },
    "popupText": true,
    "menus": [
@@ -117,29 +117,27 @@
    ],
    "options": {
     "tokens": "adblock plus settings general allowlisted websites advanced help log in about premium customize and enhance your adblocking experience learn more upgrade determine what shows hides on block cookie consent pop ups new browse without having to see notifications enhanced distraction control take of browser the way you want say goodbye newsletter floating videos site survey requests with free features basic corner video boxes prompts asking pay subscribe install shop recommended items additional tracking protect privacy from known entities that may track online activity across visit push stop allow could social media icons prevent networks building profile based browsing habits acceptable ads are non annoying comply strict ad standard they generate revenue for content creators do not interfere viewing show only third party language filter lists add or remove languages english easylist change list notify me available tip select need selecting will slow down blocker therefore speed link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 input#1 input#2",
-    "ms": 257
+    "ms": 252
    },
-   "workerRestartMs": 52,
+   "workerRestartMs": 32,
    "restartPopup": {
-    "tokens": "upgrade there nothing to block on this page number of items blocked in total interested abp mobile want support enjoying the extension stay connected with us having trouble using link#1 link#2 link#3 button#1 button#2 button#3 button#4 button#5 button#6",
-    "ms": 569
+    "tokens": "upgrade there nothing to block on this page number of items blocked in total interested abp mobile want support enjoying the extension stay connected with us having trouble using get help link#1 link#2 button#1 button#2 button#3 button#4 button#5 button#6",
+    "ms": 1259
    },
    "errors": [
-    "Unchecked runtime.lastError: No tab with id: 1526397822.",
-    "Unchecked runtime.lastError: No tab with id: 1733275237.",
     "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
     "Executing inline event handler violates the following Content Security Policy directive 'script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' http://localhost:* http://127.0.0.1:*'. Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...') is required to enable inline execution. Note that hashes do not apply to event handlers, style attributes and javascript: navigations unless the 'unsafe-hashes' keyword is present. The action has been blocked.",
     "TypeError: Cannot read properties of undefined (reading 'toLocaleString')",
     "Error: Failed to initialize Premium",
-    "Unchecked runtime.lastError: No tab with id: 1070224291."
+    "Unchecked runtime.lastError: No tab with id: 1109772832."
    ]
   },
   "kbfnbcaeplbcioakkpcpgfkobkghlhen": {
    "name": "Grammarly: AI Writing Assistant and Grammar Checker App",
-   "version": "14.1342.0",
+   "version": "14.1343.0",
    "popup": {
     "tokens": "grammarly is active but key features are missing sign up now to unlock the following personal dictionary save and access your documents get weekly writing statistics tips opens new tab already have an account in link#1 link#2 link#3",
-    "ms": 759
+    "ms": 7181
    },
    "popupText": true,
    "page": [
@@ -147,18 +145,17 @@
     "attribute:body@data-gr-ext-installed",
     "attribute:body@data-new-gr-c-s-check-loaded"
    ],
-   "workerRestartMs": 140,
+   "workerRestartMs": 90,
    "restartPopup": {
     "tokens": "grammarly is active but key features are missing sign up now to unlock the following personal dictionary save and access your documents get weekly writing statistics tips opens new tab already have an account in link#1 link#2 link#3",
-    "ms": 506
+    "ms": 253
    },
    "errors": [
-    "grm ERROR [tracing.otel] ░░ [flushOtel] forceFlush failed Object",
+    "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyExtensionMode\"",
+    "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyEnrollmentToken\"",
     "grm ERROR [Cookies] ░░ failed to read a CSRFToken cookie Error: Condition was not met after 5 tries. Errors: ''",
     "grm ERROR [universal.bg.mise.service] ░░ Failed to get Iterable client access token 401:{\"reason\":\"authentication_error\"}",
     "grm ERROR [universal.bg.sideEffects.iterable] ░░ SideEffect getting Iterable client access token failed: bgFirstStart 401:{\"reason\":\"authentication_error\"}",
-    "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyExtensionMode\"",
-    "grm ERROR [extension-api.managed-storage.chrome] ░░ Manage storage timeout to get \"GrammarlyEnrollmentToken\"",
     "grm ERROR [knowledgeHub.bgService] ░░ User institution id is not defined"
    ]
   },
@@ -194,19 +191,19 @@
   },
   "ddkjiahejlhfcafbddmgiahcphecmpfh": {
    "name": "uBlock Origin Lite",
-   "version": "2026.1021.1354",
+   "version": "2026.1026.1812",
    "popup": {
     "tokens": "not website",
-    "ms": 600
+    "ms": 497
    },
    "popupText": true,
    "options": {
     "tokens": "settings filter lists custom filters about default filtering mode the will be overridden by per website modes you can adjust on any given according to whichever works best that each has its advantages and disadvantages basic network from selected does not require permission read modify data websites optimal advanced plus specific extended requires broad all complete generic may cause higher web page resources usage behavior automatically reload when changing show number of blocked requests toolbar icon enable strict blocking navigation potentially undesirable sites offered option proceed pop up active matching close unwanted browser tabs created developer enables access features suitable for technical users backup back your file or restore reset button#1 button#2 button#3 button#4 button#5 button#6 button#7 input#1 input#2 input#3 input#4 input#5 input#6 input#7 input#8",
-    "ms": 259
+    "ms": 252
    },
    "restartPopup": {
     "tokens": "not website",
-    "ms": 252
+    "ms": 253
    },
    "errors": []
   },
@@ -785,7 +782,7 @@
   },
   "eimadpbcbfnmbkopoojfekhnkhdbieeh": {
    "name": "Dark Reader",
-   "version": "4.9.133",
+   "version": "4.9.134",
    "popup": {
     "tokens": "loading please wait dark reader eimadpbcbfnmbkopoojfekhnkhdbieeh this page is protected by browser on off configure automation filter site list more light mode brightness contrast sepia grayscale only for celebrates years support our work pay using invert listed not add to academy engraved let al bayan nile tarikh american typewriter andale mono apple braille chancery color emoji sd gothic neo select font text stroke dynamic static theme generation all settings help news mobile reduce eye strain when reading your phone or tablet simply scan the qr code install learn toggling enabled default websites detect website toggle keyboard shortcut set active hours activate after sunset at location use system scheme extension link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 input#1 input#2 input#3 input#4 input#5 input#6",
     "ms": 252
@@ -800,12 +797,12 @@
    ],
    "options": {
     "tokens": "loading please wait dark reader eimadpbcbfnmbkopoojfekhnkhdbieeh this page is protected by browser on off configure automation filter site list more light mode brightness contrast sepia grayscale only for celebrates years support our work pay using invert listed not add to academy engraved let al bayan nile tarikh american typewriter andale mono apple braille chancery color emoji sd gothic neo select font text stroke dynamic static theme generation all settings help news mobile may fixing google docs and turkish translation in chrome dec firefox fixes upcoming performance improvements read reduce eye strain when reading your phone or tablet simply scan the qr code install learn toggling enabled default websites detect website toggle keyboard shortcut set active hours activate after sunset at location use system scheme extension link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12 link#13 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 input#1 input#2 input#3 input#4 input#5 input#6",
-    "ms": 251
+    "ms": 1663
    },
-   "workerRestartMs": 32,
+   "workerRestartMs": 29,
    "restartPopup": {
     "tokens": "loading please wait dark reader about this page is protected by browser on off configure automation filter site list more light mode brightness contrast sepia grayscale only for celebrates years support our work pay using invert listed not add to academy engraved let al bayan nile tarikh american typewriter andale mono apple braille chancery color emoji sd gothic neo select font text stroke dynamic static theme generation all settings help news mobile may fixing google docs and turkish translation in chrome dec firefox fixes upcoming performance improvements read reduce eye strain when reading your phone or tablet simply scan the qr code install learn toggling enabled default websites detect website toggle keyboard shortcut set active hours activate after sunset at location use system scheme extension link#1 link#2 link#3 link#4 link#5 link#6 link#7 link#8 link#9 link#10 link#11 link#12 link#13 button#1 button#2 button#3 button#4 button#5 button#6 button#7 button#8 button#9 button#10 button#11 button#12 button#13 button#14 button#15 button#16 button#17 button#18 button#19 button#20 input#1 input#2 input#3 input#4 input#5 input#6",
-    "ms": 250
+    "ms": 253
    },
    "errors": [
     "Unrecognized Content-Security-Policy directive 'navigate-to'."
@@ -4649,9 +4646,22 @@
   },
   "pcblbflgdkdfdjpjifeppkljdnaekohj": {
    "name": "Brisk Teaching - AI that Works Where Teachers Work",
-   "version": "1.0.427",
+   "version": "1.0.428",
    "page": [
-    "added:plasmo-csui"
+    "hidden:ad-banner",
+    "hidden:ad-container",
+    "hidden:adsbygoogle",
+    "hidden:banner",
+    "hidden:body",
+    "hidden:copy",
+    "hidden:div-gpt-ad-1234567890-0",
+    "hidden:doubleclick",
+    "hidden:heading",
+    "hidden:login",
+    "hidden:password",
+    "hidden:submit",
+    "hidden:text",
+    "hidden:username"
    ],
    "errors": []
   },

@@ -534,7 +534,9 @@ final class RealExtensionSmokeTests: XCTestCase {
             let popupURL = ((context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String)
                 .flatMap { $0.isEmpty ? nil : URL(string: $0, relativeTo: context.baseURL) }
             var popupOpened: Date?
+            var phases: [(name: String, count: Int)] = [("the worker's start", 0)]
             if let popupURL {
+                phases.append(("the popup", context.errors.count))
                 // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
                 let expected = tokens(chrome?.popup)
                 popupOpened = Date()
@@ -554,6 +556,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             // gets the others from WebKit, out of the test's reach.
             let chromeMenus = chrome?.menus?.filter { $0.split(separator: ",").contains("all") }.count ?? 0
             let chromeActionMenus = chrome?.menus?.filter { !Set($0.split(separator: ",")).isDisjoint(with: ["action", "browser_action", "page_action"]) }.count ?? 0
+            phases.append(("the test page", context.errors.count))
             if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0 || context.webExtension.manifest["content_scripts"] != nil {
                 // Chrome's recording opens the test page once the popup settled, 5 s after it opened at least: an extension
                 // setting up its cosmetic filtering after its first start (SBlock, Stop Ads Now) is done by then. Without a
@@ -596,6 +599,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 }
                 window.closeTabStateFirst(id: tab.id, undoable: false)
             }
+            phases.append(("the options page", context.errors.count))
             if let optionsURL = context.optionsPageURL, chrome == nil || chrome?.options != nil {
                 let expected = tokens(chrome?.options)
                 let (shown, matched, closed, matchedAfter) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
@@ -608,7 +612,14 @@ final class RealExtensionSmokeTests: XCTestCase {
                 }
                 if let matchedAfter { outcome.time("options", ms: Int(matchedAfter * 1000), chrome: chrome?.options?.ms) }
             }
-            outcome.problems += unexpected(context.errors, (chrome?.errors ?? []).map(normalized)).map { "error: \($0)" }
+            // Each error with the step it came in, to tell a page's last exchanges from its start.
+            let steps = phases + [("the end", context.errors.count)]
+            let step = { (index: Int) in steps.last { $0.count <= index }?.name ?? "the start" }
+            let mainErrors = unexpected(context.errors, (chrome?.errors ?? []).map(normalized))
+            outcome.problems += mainErrors.map { message in
+                let index = context.errors.firstIndex { $0.localizedDescription == message } ?? 0
+                return "error: \(message) (in \(step(index)))"
+            }
             if !outcome.problems.isEmpty { outcome.details = errorsOf(registry, id) }
             await registry.unload(extensionId: id)
             // Each extension starts with no page open, as in a new Chrome profile: WebKit injects content
@@ -740,7 +751,9 @@ final class RealExtensionSmokeTests: XCTestCase {
               context.fillStyle = 'red'; context.fillRect(0, 0, 4, 4);
               try { return 'readback ' + context.getImageData(0, 0, 1, 1).data[0]; } catch (error) { return 'readback ' + error.name; } })()
             """, in: probePage) as? String ?? "unread"
-            print("LILO_GRAPHICS metal \(MTLCreateSystemDefaultDevice()?.name ?? "none"), canvas \(readback)")
+            let snapshot: String
+            do { snapshot = "\(try await probePage.takeSnapshot(configuration: nil).size)" } catch { snapshot = "\(error.localizedDescription)" }
+            print("LILO_GRAPHICS metal \(MTLCreateSystemDefaultDevice()?.name ?? "none"), canvas \(readback), snapshot \(snapshot)")
             window.closeTabStateFirst(id: probe.id, undoable: false)
         }
         // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
