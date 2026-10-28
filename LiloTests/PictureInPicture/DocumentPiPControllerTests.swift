@@ -57,7 +57,9 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertTrue(panel.styleMask.contains(.nonactivatingPanel))
         XCTAssertEqual(panel.sharingType, .none, "the PiP window stays out of the user's own screen share")
         XCTAssertEqual(panel.level, .floating)
-        XCTAssertEqual(panel.contentLayoutRect.size, NSSize(width: 300, height: 356))
+        // The size the page asked for, within half of this screen (a CI display is small).
+        let visible = try XCTUnwrap(panel.screen?.visibleFrame)
+        XCTAssertEqual(panel.contentLayoutRect.size, DocumentPiPController.cappedSize(NSSize(width: 300, height: 356), in: visible))
         XCTAssertEqual(controller.openerId, tab.id)
     }
 
@@ -96,7 +98,9 @@ final class DocumentPiPControllerTests: XCTestCase {
 
         _ = try await tab.wkWebView.evaluateJavaScript("window.__pip.resizeTo(320, 400); true")
 
-        let resized = await pollUntil(timeout: 5) { self.panel?.frame.size == NSSize(width: 320, height: 400) }
+        let visible = try XCTUnwrap(panel?.screen?.visibleFrame)
+        let expected = DocumentPiPController.cappedSize(NSSize(width: 320, height: 400), in: visible)
+        let resized = await pollUntil(timeout: 5) { self.panel?.frame.size == expected }
         XCTAssertTrue(resized, "\(String(describing: panel?.frame.size))")
     }
 
