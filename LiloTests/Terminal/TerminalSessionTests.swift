@@ -7,7 +7,7 @@ final class TerminalSessionTests: XCTestCase {
     private var sessions: [TerminalSession] = []
     private var fishDirectory: URL?
     private var fishPreviousEnvironment: [String: String] = [:]
-    private let fishEnvironmentKeys = ["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_DATA_DIRS", "XDG_CACHE_HOME"]
+    private let fishEnvironmentKeys = ["XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_DATA_DIRS", "XDG_CACHE_HOME", "HISTFILE"]
 
     override func tearDown() async throws {
         sessions.forEach { $0.terminate() }
@@ -315,8 +315,7 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertNotNil(session.status.lastDuration)
 
         session.write(Array("cd '\(directory.path)'\n".utf8))
-        try await waitUntil { session.status.cwd == directory.path }
-        XCTAssertEqual(session.status.finishedCommands, 4)
+        try await waitUntil { session.status.cwd == directory.path && session.status.finishedCommands == 4 }
         session.write(Array("exit\n".utf8))
         try await waitUntil { session.status.state == .exited }
     }
@@ -625,6 +624,8 @@ final class TerminalSessionTests: XCTestCase {
         setenv("XDG_DATA_HOME", directory.appendingPathComponent("data").path, 1)
         setenv("XDG_DATA_DIRS", directory.appendingPathComponent("vendor").path, 1)
         setenv("XDG_CACHE_HOME", directory.appendingPathComponent("cache").path, 1)
+        // Fish seeds an empty history from Bash even when its XDG folders are isolated.
+        setenv("HISTFILE", directory.appendingPathComponent("bash_history").path, 1)
         let config = directory.appendingPathComponent("fish/config.fish")
         let vendor = directory.appendingPathComponent("vendor/fish/vendor_conf.d/user.fish")
         for file in [config, vendor] {
