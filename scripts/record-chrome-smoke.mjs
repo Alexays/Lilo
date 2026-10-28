@@ -251,7 +251,8 @@ async function capture(browser, id, manifest) {
   const { targetId: page } = await send('Target.createTarget', { url: pageURL });
   await sleep(pageSettle);
   const pageSession = await sessionOf(page);
-  const changes = pageSession && await evaluate(`(${probes}).pageChanges(${JSON.stringify(smokePage)})`, pageSession);
+  // Chrome's own error page, as a blocked test page, is no reference for what the extension changes.
+  const changes = pageSession && await evaluate(`location.protocol === 'chrome-error:' ? [] : (${probes}).pageChanges(${JSON.stringify(smokePage)})`, pageSession);
   if (changes?.length) recording.page = changes;
   await send('Target.closeTarget', { targetId: page }).catch(() => {});
   const menus = workerSession && await evaluate(`globalThis.__liloSmokeMenus?.(${JSON.stringify(pageURL.replace(/:\d+/, ''))})`, workerSession);

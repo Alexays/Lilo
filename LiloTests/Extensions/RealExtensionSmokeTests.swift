@@ -282,7 +282,8 @@ final class RealExtensionSmokeTests: XCTestCase {
                     with: "The message port closed before a response was received."
                 )
                 // V8's and JavaScriptCore's wording of a property read or destructured on undefined or null, of a missing variable and of one declared twice.
-                .replacingOccurrences(of: #"Cannot read properties of (undefined|null) \(reading '([^']+)'\)"#, with: "$1.$2", options: .regularExpression)
+                .replacingOccurrences(of: #"Cannot (?:read|set) properties of (undefined|null) \((?:reading|setting) '([^']+)'\)"#, with: "$1.$2", options: .regularExpression)
+                .replacingOccurrences(of: #"(undefined|null) is not an object \(evaluating '(?:.*\.)?([\w$]+) = .*'\)"#, with: "$1.$2", options: .regularExpression)
                 .replacingOccurrences(of: #"(undefined|null) is not an object \(evaluating '(?:[^']*\.)?([^'.]+)'\)"#, with: "$1.$2", options: .regularExpression)
                 .replacingOccurrences(of: #"Can't find variable: (\S+)"#, with: "$1 is not defined", options: .regularExpression)
                 .replacingOccurrences(of: #"Can't create duplicate variable: '([^']+)'"#, with: "Identifier '$1' has already been declared", options: .regularExpression)
@@ -495,10 +496,12 @@ final class RealExtensionSmokeTests: XCTestCase {
             // Resolved as WebKit and Chrome open it: a query or fragment stays one.
             let popupURL = ((context.webExtension.manifest["action"] as? [String: Any])?["default_popup"] as? String)
                 .flatMap { $0.isEmpty ? nil : URL(string: $0, relativeTo: context.baseURL) }
+            var popupOpened: Date?
             if let popupURL {
                 // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
                 let expected = tokens(chrome?.popup)
                 let opened = Date()
+                popupOpened = opened
                 let (shown, matched) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
                 if shown.isEmpty && chrome?.popupText != false {
                     outcome.problems.append("the popup renders nothing")
@@ -513,6 +516,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             let chromeMenus = chrome?.menus?.filter { $0.split(separator: ",").contains("all") }.count ?? 0
             let chromeActionMenus = chrome?.menus?.filter { !Set($0.split(separator: ",")).isDisjoint(with: ["action", "browser_action", "page_action"]) }.count ?? 0
             if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0 || context.webExtension.manifest["content_scripts"] != nil {
+                // Chrome's recording opens the test page once the popup settled, 5 s after it opened at least: an extension
+                // setting up its cosmetic filtering after its first start (SBlock, Stop Ads Now) is done by then.
+                if !chromePage.isEmpty, let popupOpened, case let wait = 5 - Date().timeIntervalSince(popupOpened), wait > 0 {
+                    try await Task.sleep(for: .seconds(wait))
+                }
                 let tab = try XCTUnwrap(window.createTabStateFirst(url: pageURL))
                 let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
                 browserContext.context.agentControl.attach(engine, to: nil)
