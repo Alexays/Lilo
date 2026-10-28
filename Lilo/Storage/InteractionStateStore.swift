@@ -128,6 +128,8 @@ enum InteractionStateCodec {
     static func decode(_ data: Data) -> Any? {
         guard let unarchiver = try? NSKeyedUnarchiver(forReadingFrom: data) else { return nil }
         unarchiver.requiresSecureCoding = false
+        // A corrupt or outdated archive would otherwise raise an exception that `try?` does not catch.
+        unarchiver.decodingFailurePolicy = .setErrorAndReturn
         defer { unarchiver.finishDecoding() }
         return unarchiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey)
     }
