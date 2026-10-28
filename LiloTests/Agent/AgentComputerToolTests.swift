@@ -339,6 +339,18 @@ final class AgentComputerToolTests: AgentToolTestCase {
         XCTAssertEqual(try engine(forTab: tab).pageZoom, 0.8, accuracy: 0.001)
     }
 
+    func testAViewportSmallerThanTheWindowRoundsThePageLikeItsFrame() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("resize_window", ["tabId": tab, "width": 375, "height": 400])
+
+        window.switchToSpace(try XCTUnwrap(agentsSpaceId))
+        window.activateTabStateFirst(id: try engine(forTab: tab).id)
+
+        let layer = try XCTUnwrap(try engine(forTab: tab).view.layer)
+        XCTAssertEqual(layer.cornerRadius, WindowFrameView.contentCornerRadius)
+        XCTAssertTrue(layer.masksToBounds)
+    }
+
     func testHoverReachesThePage() async throws {
         let tab = try await agentTab(showing: """
             <!doctype html><body style="margin:0"><div id="t" style="width:200px;height:200px"></div>

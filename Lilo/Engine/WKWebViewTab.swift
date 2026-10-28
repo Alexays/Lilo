@@ -158,8 +158,13 @@ final class WKWebViewTab: NSObject {
         guard let size = agentViewport else {
             view.frame = bounds
             view.autoresizingMask = [.width, .height]
+            view.layer?.cornerRadius = 0
             return
         }
+        // Centered in the stage, the page sits away from the window frame's corner bites: it rounds its own.
+        view.wantsLayer = true
+        view.layer?.cornerRadius = WindowFrameView.contentCornerRadius
+        view.layer?.masksToBounds = true
         let narrower = size.width < bounds.width, shorter = size.height < bounds.height
         var mask: NSView.AutoresizingMask = narrower ? [.minXMargin, .maxXMargin] : .maxXMargin
         mask.formUnion(shorter ? [.minYMargin, .maxYMargin] : .minYMargin)
