@@ -174,3 +174,15 @@ test("Korean emoji names load on demand and retain English search", async () => 
   assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
     ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
 });
+
+test("Traditional Chinese emoji names load on demand and retain English search", async () => {
+  const catalog = await loadEmojiCatalog("zh-Hant");
+  assert.equal(await loadEmojiCatalog("zh-Hant"), catalog);
+  assert.equal(emojiName(catalog, "🚀"), "火箭");
+  assert.ok(searchEmoji(catalog, "火箭").some((entry) => entry.emoji === "🚀"));
+  assert.ok(searchEmoji(catalog, "愛心").some((entry) => entry.emoji === "❤️"));
+  assert.ok(searchEmoji(catalog, "rocket").some((entry) => entry.emoji === "🚀"));
+  assert.ok(catalog.categories.flat().every((entry) => entry.name.length > 0));
+  assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});

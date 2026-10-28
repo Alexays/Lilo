@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Мова",
 				"description": "Мова всього інтерфейсу браузера.",
-				"keywords": "мова локаль переклад англійська французька іспанська китайська спрощена португальська бразильська російська ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어"
+				"keywords": "мова локаль переклад англійська французька іспанська китайська спрощена португальська бразильська російська ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文"
 			},
 			"searchEngine": {
 				"title": "Пошукова система",

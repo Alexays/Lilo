@@ -101,6 +101,7 @@ targets:
           - "pt-BR.lproj"
           - "ru.lproj"
           - "uk.lproj"
+          - "zh-Hant.lproj"
           - "ko.lproj"
           - "it.lproj"
           - "ja.lproj"

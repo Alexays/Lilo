@@ -76,11 +76,11 @@ test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to Englis
 		["zh-Hans", "zh-Hans"],
 		["ZH-HANS-CN", "zh-Hans"],
 		["zh-Hans-HK", "zh-Hans"],
-		["zh-Hant", "en"],
-		["zh-TW", "en"],
-		["zh-HK", "en"],
-		["zh-MO", "en"],
-		["zh-Hant-CN", "en"],
+		["zh-Hant", "zh-Hant"],
+		["zh-TW", "zh-Hant"],
+		["zh-HK", "zh-Hant"],
+		["zh-MO", "zh-Hant"],
+		["zh-Hant-CN", "zh-Hant"],
 		["ar-SA", "en"],
 		["", "en"],
 		[null, "en"],
@@ -262,5 +262,23 @@ test("Korean regional tags, translations and count forms use the selected catalo
 		[1.5, "열린 탭 1.5개"],
 	] as const) {
 		assert.equal(translate("ko", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Traditional Chinese regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "ZH-HANT-TW", "zh-Hant-CN"]) {
+		assert.equal(resolveLocale(tag), "zh-Hant", tag);
+	}
+	assert.equal(translate("zh-Hant", "common.cancel"), "取消");
+	for (const [count, expected] of [
+		[0, "0 個已開啟的分頁"],
+		[1, "1 個已開啟的分頁"],
+		[2, "2 個已開啟的分頁"],
+		[5, "5 個已開啟的分頁"],
+		[21, "21 個已開啟的分頁"],
+		[12345, "12,345 個已開啟的分頁"],
+		[1.5, "1.5 個已開啟的分頁"],
+	] as const) {
+		assert.equal(translate("zh-Hant", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });

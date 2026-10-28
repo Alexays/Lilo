@@ -1,0 +1,12 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "此網站要求取用相機。";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "此網站要求取用麥克風。";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "此網站要求取用你的位置。";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "當你開啟區域網路裝置（例如路由器或印表機）的網頁，或延伸功能尋找這些裝置時，Lilo 會與其連線。";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "此網站要求使用語音辨識，將你說的話轉成文字。";
+/* Shown by macOS when sharing system audio with a screen. */
+"NSAudioCaptureUsageDescription" = "當通話要求同時分享螢幕與聲音時，Lilo 會分享 Mac 的聲音。";

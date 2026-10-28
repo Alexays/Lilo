@@ -15,7 +15,7 @@ final class LocalizationTests: XCTestCase {
             XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "zh-Hans", tag)
         }
         for tag in ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "zh-Hant-CN"] {
-            XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "en", tag)
+            XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: [tag]), "zh-Hant", tag)
         }
         XCTAssertEqual(Localization.resolveLocale(override: "unknown", preferredLanguages: ["fr-CA"]), "fr")
         XCTAssertEqual(Localization.resolveLocale(override: nil, preferredLanguages: ["ar-SA", "zh-CN"]), "zh-Hans")

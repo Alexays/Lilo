@@ -242,7 +242,7 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 Every user-facing string is translated into every supported language.
 
 1. Add the key under the right namespace in every catalog under `lilo-ui/src/lib/i18n/locales/`
-   (`en.json`, `fr.json`, `es.json`, `zh-Hans.json`, `pt-BR.json`, `ru.json`, `uk.json`, `de.json`, `ja.json`, `it.json`, `ko.json`).
+   (`en.json`, `fr.json`, `es.json`, `zh-Hans.json`, `pt-BR.json`, `ru.json`, `uk.json`, `de.json`, `ja.json`, `it.json`, `ko.json`, `zh-Hant.json`).
 2. In Svelte, use `t("namespace.key")`. In AppKit, write the English string with `.localized`
    and add an `"English": "Français"` row under the `native` namespace of every catalog.
 3. `make ui-test` fails if a key is missing from any catalog.

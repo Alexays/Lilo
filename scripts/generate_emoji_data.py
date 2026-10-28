@@ -32,6 +32,7 @@ LOCALES = {
     "ja": set(),
     "it": {"a", "al", "con", "da", "di", "e", "il", "in", "la", "le", "un", "una"},
     "ko": set(),
+    "zh-Hant": set(),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +56,7 @@ def annotations(locale):
     locale = "pt" if locale == "pt-BR" else locale
     # CLDR's base Chinese catalog uses Simplified Chinese; its filename is zh.xml.
     locale = "zh" if locale == "zh-Hans" else locale
+    locale = "zh_Hant" if locale == "zh-Hant" else locale
     for kind in ("annotations", "annotationsDerived"):
         for node in ET.fromstring(fetch(CLDR_URL.format(kind=kind, locale=locale))).iter("annotation"):
             cp = node.get("cp", "").replace("\uFE0F", "")
