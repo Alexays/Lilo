@@ -529,7 +529,7 @@ site-test: site-generate
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
 
-.PHONY: release-media-record release-media-test release-media-encode release-media-check release-media-proof
+.PHONY: release-media-publish-check ui-capture-build release-media-record release-media-test release-media-encode release-media-check release-media-proof
 
 ## Select release highlights, record native proofs, and publish only quality-approved media (RELEASE=x.y.z)
 release-media-proof: $(SITE_DEPS)
@@ -545,13 +545,22 @@ release-media-encode: $(SITE_DEPS)
 	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(abspath $(FRAMES))' \
 	LILO_CAPTURE_OUTPUT='$(abspath $(or $(OUT),build/release-media-proof/$(RELEASE)))' LILO_CAPTURE_REPLACE='$(RECAPTURE)' node site/captures/native-proof.ts
 
+## Verify current release approval and historical native assets before website publication
+release-media-publish-check: $(SITE_DEPS)
+	@node site/captures/publication.ts
+
 ## Fail release preparation when native media has not passed quality and visual checks
 release-media-check: $(SITE_DEPS)
 	@release='$(RELEASE)'; if [ -z "$$release" ]; then release=$$(python3 -c 'import json; print(json.load(open("lilo-ui/package.json"))["version"])'); fi; \
 	LILO_CAPTURE_VERSION="$$release" LILO_CAPTURE_OUTPUT='$(if $(OUT),$(abspath $(OUT)),)' node site/captures/authored-archive.ts
 
+# Rebuilding a rejected archive must not consume that archive as a UI build dependency.
+ui-capture-build: $(UI_DEPS)
+	@LILO_CAPTURE_BUILD=1 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+
 ## Record native release scenarios in an isolated test window (OUT=build/release-media-frames)
-release-media-record: $(SITE_DEPS) vt-build $(UI_STAMP) $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
+release-media-record: $(SITE_DEPS) vt-build ui-capture-build $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
 	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
 	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(abspath $(or $(OUT),build/release-media-frames))' \

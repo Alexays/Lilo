@@ -56,7 +56,7 @@ final class ReleaseCaptureTests: XCTestCase {
             guard let data else {
                 return ("404 Not Found", ["Content-Type: text/plain"], Data("Not found".utf8))
             }
-            return ("200 OK", ["Content-Type: text/html; charset=utf-8"], data)
+            return ("200 OK", ["Content-Type: text/html; charset=utf-8", "Content-Security-Policy: default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'"], data)
         }
         fixture = try await TemporaryBrowserContext()
         let context = fixture.context
@@ -146,7 +146,7 @@ final class ReleaseCaptureTests: XCTestCase {
         case "menu":
             let name = try XCTUnwrap(step.selector)
             let action = NSSelectorFromString(name)
-            guard menuActions(NSApp.mainMenu).contains(name), controller.responds(to: action), controller.tryToPerform(action, with: nil) else {
+            guard AuthoredReleaseScenario.menuActions.contains(name), menuActions(NSApp.mainMenu).contains(name), controller.responds(to: action), controller.tryToPerform(action, with: nil) else {
                 throw CocoaError(.featureUnsupported, userInfo: [NSLocalizedDescriptionKey: "Unavailable native menu action: \(name)"])
             }
             try await hold(350)
@@ -255,8 +255,7 @@ final class ReleaseCaptureTests: XCTestCase {
             const matches = [...document.querySelectorAll(selector)].filter(e => !text || e.textContent.trim() === text);
             const e = matches[0];
             if (kind === 'count') return matches.length === expectedCount;
-            const r = e?.getBoundingClientRect(), style = e && getComputedStyle(e);
-            const visible = !!e && r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0;
+            const visible = \(AuthoredReleaseScenario.renderedVisibilitySource);
             if (kind === 'visible') return visible;
             if (kind === 'absent') return !visible;
             if (!e) return false;
@@ -440,5 +439,27 @@ final class ReleaseCaptureTests: XCTestCase {
         try await hold(80)
         AgentInput.mouseEvent(right ? .rightMouseUp : .leftMouseUp, view, at: point, clickCount: count, modifiers: modifiers)
         try await hold(180)
+    }
+}
+
+
+@MainActor
+final class AuthoredReleaseVisibilityTests: XCTestCase {
+    func testVisibilityRequiresBothViewportAxesAndVisibleAncestors() async throws {
+        let view = WKWebView(frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+        view.loadHTMLString("""
+            <title>Visibility</title><style>.sample{position:absolute;top:20px;left:20px;width:30px;height:30px}</style>
+            <div id="shown" class="sample">Visible</div>
+            <div id="left" class="sample" style="left:-400px">Left</div>
+            <div id="right" class="sample" style="left:600px">Right</div>
+            <div id="below" class="sample" style="top:600px">Below</div>
+            <section style="opacity:0"><div id="transparent" class="sample">Hidden</div></section>
+            """, baseURL: nil)
+        let ready = await pollUntil { (try? await view.evaluateJavaScript("document.title === 'Visibility' && !!document.querySelector('#transparent')")) as? Bool == true }
+        XCTAssertTrue(ready)
+        for (id, expected) in [("shown", true), ("left", false), ("right", false), ("below", false), ("transparent", false)] {
+            let visible = try await view.callAsyncJavaScript("const e = document.getElementById(id); return \(AuthoredReleaseScenario.renderedVisibilitySource);", arguments: ["id": id], in: nil, contentWorld: .page)
+            XCTAssertEqual(visible as? Bool, expected, id)
+        }
     }
 }

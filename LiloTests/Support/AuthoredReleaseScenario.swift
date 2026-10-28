@@ -1,6 +1,20 @@
 import Foundation
 
 struct AuthoredReleaseScenario: Decodable {
+    static let menuActions: Set<String> = ["openSettings:", "openLocation:", "showWhatsNew:", "toggleSidebarVisibility:", "toggleToolbarVisibility:", "showFindBar:", "newTab:", "closeCurrentTab:", "pinCurrentTab:", "bookmarkCurrentTab:", "toggleReader:", "newSplitView:", "closeSplitView:", "showNextTab:", "showPreviousTab:"]
+
+    static let renderedVisibilitySource = """
+        ((e) => {
+            const r = e?.getBoundingClientRect();
+            if (!r || r.width <= 0 || r.height <= 0 || r.right <= 0 || r.left >= innerWidth || r.bottom <= 0 || r.top >= innerHeight) return false;
+            for (let node = e; node; node = node.parentElement) {
+                const style = getComputedStyle(node);
+                if (style.display === 'none' || style.visibility === 'hidden' || style.contentVisibility === 'hidden' || Number(style.opacity) <= 0) return false;
+            }
+            return true;
+        })(e)
+        """
+
     struct Fixture: Decodable { let name: String; let html: String }
     struct Tab: Decodable { let id: String; let page: String }
     struct Setting: Decodable { let key: String; let value: String }

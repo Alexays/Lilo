@@ -3,6 +3,7 @@
 import hashlib
 import json
 import pathlib
+import os
 import re
 import shutil
 
@@ -12,7 +13,7 @@ source = root / "site/src/assets/releases" / version
 target = root / "lilo-ui/public/release-media"
 target.mkdir(parents=True, exist_ok=True)
 manifest = source / "capture.json"
-archive = json.loads(manifest.read_text()) if manifest.exists() else {}
+archive = json.loads(manifest.read_text()) if manifest.exists() and os.environ.get("LILO_CAPTURE_BUILD") != "1" else {}
 wanted = set()
 approved = archive.get("approval", {}).get("passed") is True if archive.get("schemaVersion") == 3 else archive.get("visualReview", {}).get("passed") is True
 if archive.get("schemaVersion") in (2, 3) and archive.get("release") == version and approved:

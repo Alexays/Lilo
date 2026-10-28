@@ -10,7 +10,7 @@
     "build": "astro build && python3 generate.py",
     "check": "ultracite check && NODE_PATH=./node_modules astro check && svelte-check --tsconfig ./tsconfig.json",
     "test": "node --test tests/*.test.ts tests/demo/*.test.ts && python3 -B -m unittest discover -s tests",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "node captures/publication.ts && npm run build && wrangler deploy",
     "deploy:check": "wrangler deploy --dry-run",
     "fix": "ultracite fix",
     "test:e2e": "playwright test"

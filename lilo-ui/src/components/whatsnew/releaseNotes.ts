@@ -30,6 +30,22 @@ export interface ReleaseEditorialCopy {
 	highlights: { illustration?: ReleaseIllustration; title: string; description: string; media?: ReleaseRecording }[];
 }
 
+export interface GeneratedReleaseArchive {
+	content: Record<string, { headline: string; description: string; highlights: { id: string; title: string; description: string }[] }>;
+	recordings: Record<string, ReleaseRecording & { quality: { passed: boolean } }>;
+}
+
+export function generatedReleaseEditorial(archive: GeneratedReleaseArchive, locale: string): ReleaseEditorialCopy | null {
+	const copy = archive.content[locale];
+	if (!copy) throw new Error(`Missing approved release translation: ${locale}`);
+	if (!copy.highlights.length) return null;
+	return { headline: copy.headline, description: copy.description, highlights: copy.highlights.map(highlight => {
+		const media = archive.recordings[highlight.id];
+		if (!media?.quality?.passed) throw new Error(`Missing approved media: ${highlight.id}`);
+		return { title: highlight.title, description: highlight.description, media: { poster: `/release-media/${media.poster}`, recording: `/release-media/${media.recording}`, durationMs: media.durationMs, width: media.width, height: media.height } };
+	}) };
+}
+
 export interface ReleaseNotes {
 	version: string;
 	date: string;

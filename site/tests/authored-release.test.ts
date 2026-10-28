@@ -72,6 +72,7 @@ const scenario = (): AuthoredScenario => ({
       },
       type: "assert",
     },
+    { durationMs: 2100, type: "hold" },
   ],
   tabs: [{ id: "inbox", page: "inbox.html" }],
 });
@@ -249,4 +250,24 @@ test("native scenario structured output uses unions accepted by the strict autho
   const schema = JSON.stringify(z.toJSONSchema(scenarioSchema));
   assert.doesNotMatch(schema, /"oneOf":/u);
   assert.match(schema, /"anyOf":/u);
+});
+
+test("a scenario must hold after its final semantic checkpoint", () => {
+  const input = scenario();
+  input.steps.pop();
+  assert.throws(() => validateScenario(input, "unread-counts"), /final|hold/u);
+});
+
+test("authored menu actions cannot launch shells or inspect host processes", () => {
+  for (const selector of ["newTerminalTab:", "openProcessManager:"]) {
+    const input = scenario();
+    assert.throws(
+      () =>
+        scenarioSchema.parse({
+          ...input,
+          steps: [...input.steps, { selector, type: "menu" }],
+        }),
+      /menu|action|Invalid/u
+    );
+  }
 });

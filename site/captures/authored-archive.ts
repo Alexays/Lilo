@@ -152,7 +152,6 @@ export const parseApprovedArtifact = (
   const { approval: inputApproval, ...data } = raw;
   const artifact = artifactSchema.parse(data);
   const approval = approvalSchema.parse(inputApproval);
-
   const ids = artifact.plan.highlights.map((h) => h.id).toSorted();
 
   if (
@@ -248,6 +247,12 @@ export const checkAuthoredArchive = (
       scenarioCheckpoints(scenario),
       artifact.scenarioDigests[id]
     );
+
+    const finalCheckpoint = manifest.checkpoints.at(-1);
+
+    if (!finalCheckpoint || manifest.durationMs - finalCheckpoint.atMs < 2000) {
+      throw new Error("Native final state needs a measured two-second hold");
+    }
 
     if (
       manifest.scenario !== id ||

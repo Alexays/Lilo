@@ -100,6 +100,7 @@ const recipe: AuthoredScenario = {
       },
       type: "assert",
     },
+    { durationMs: 2100, type: "hold" },
   ],
   tabs: [{ id: "inbox", page: "inbox.html" }],
 };
@@ -113,7 +114,7 @@ test("new-feature archives bind recipe bytes, translated content, native media a
     mkdirSync(directory);
     const bytes = `${JSON.stringify(recipe)}\n`;
 
-    const frames = Array.from({ length: 90 }, (_, i) => ({
+    const frames = Array.from({ length: 180 }, (_, i) => ({
       atMs: i * 33,
       file: `frame-${String(i).padStart(4, "0")}.png`,
     }));
@@ -139,9 +140,9 @@ test("new-feature archives bind recipe bytes, translated content, native media a
       capturedAt: "2026-10-29T12:00:00Z",
       checkpoints: [
         { atMs: 1000, name: "badge-shown", passed: true },
-        { atMs: 2000, name: "badge-cleared", passed: true },
+        { atMs: 3900, name: "badge-cleared", passed: true },
       ],
-      durationMs: 3000,
+      durationMs: 6000,
       frames,
       height: 24,
       inputDigest: identity.inputDigest,
@@ -205,7 +206,6 @@ test("new-feature archives bind recipe bytes, translated content, native media a
 
     save();
     assert.equal(checkAuthoredArchive(out, identity).release, "0.9.0");
-
     const story = storyFromArchive(checkAuthoredArchive(out, identity));
 
     const stories = parseReleaseStories(
@@ -217,7 +217,6 @@ test("new-feature archives bind recipe bytes, translated content, native media a
       stories.get("0.9.0")?.highlights[0].capture?.scenario,
       "unread-counts"
     );
-
     archive.content.fr.headline = "Altered copy";
     save();
     assert.throws(

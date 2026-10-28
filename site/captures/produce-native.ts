@@ -11,9 +11,11 @@ import {
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { format } from "oxfmt";
 import sharp from "sharp";
 import type { z } from "zod";
 
+import formatOptions from "../oxfmt.config.ts";
 import {
   artifactDigest,
   checkAuthoredArchive,
@@ -194,7 +196,18 @@ try {
         }
 
         const scenarioPath = path.join(attemptDir, "scenario.json");
-        const bytes = `${JSON.stringify(scenario, null, 2)}\n`;
+
+        const formatted = await format(
+          "scenario.json",
+          JSON.stringify(scenario),
+          formatOptions
+        );
+
+        if (formatted.errors.length) {
+          throw new Error("Unable to format authored scenario");
+        }
+
+        const bytes = formatted.code;
         writeFileSync(scenarioPath, bytes);
 
         const authorReview = await agent(
@@ -317,10 +330,20 @@ try {
     source: "native",
   };
 
-  writeFileSync(
-    path.join(stage, "capture.json"),
-    `${JSON.stringify({ ...artifact, approval: { digest: artifactDigest(artifact), passed: true, reviews } }, null, 2)}\n`
+  const formatted = await format(
+    "capture.json",
+    JSON.stringify({
+      ...artifact,
+      approval: { digest: artifactDigest(artifact), passed: true, reviews },
+    }),
+    formatOptions
   );
+
+  if (formatted.errors.length) {
+    throw new Error("Unable to format approved release archive");
+  }
+
+  writeFileSync(path.join(stage, "capture.json"), formatted.code);
   // Re-read source identity after every agent and native process to reject changes during production.
   publishAuthoredArchive(stage, output, releaseIdentity(root, version));
   process.stdout.write(

@@ -37,7 +37,24 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
             let version = try await webView.callAsyncJavaScript("""
                 const response = await fetch('/release-notes.json');
                 if (!response.ok) throw new Error(`Release resource status: ${response.status}`);
-                return (await response.json()).version;
+                const notes = await response.json();
+                for (const highlight of notes.editorial?.en?.highlights ?? []) {
+                    const media = highlight.media;
+                    if (!media) continue;
+                    const recording = await fetch(media.recording);
+                    if (!recording.ok) throw new Error('Offline recording unavailable');
+                    const blob = await recording.blob();
+                    for (let replay = 0; replay < 2; replay++) {
+                        const url = URL.createObjectURL(blob);
+                        try {
+                            const image = new Image();
+                            image.src = url;
+                            await image.decode();
+                            if (image.naturalWidth !== media.width || image.naturalHeight !== media.height) throw new Error('Offline recording failed to decode');
+                        } finally { URL.revokeObjectURL(url); }
+                    }
+                }
+                return notes.version;
                 """, arguments: [:], in: nil, contentWorld: .page)
             XCTAssertEqual(version as? String, Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
         } catch {

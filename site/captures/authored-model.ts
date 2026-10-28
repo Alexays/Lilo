@@ -146,7 +146,23 @@ export const stepSchema = z.union([
     type: z.literal("key"),
   }),
   z.strictObject({
-    selector: z.string().regex(/^[a-z][a-zA-Z0-9]*:$/u),
+    selector: z.enum([
+      "openSettings:",
+      "openLocation:",
+      "showWhatsNew:",
+      "toggleSidebarVisibility:",
+      "toggleToolbarVisibility:",
+      "showFindBar:",
+      "newTab:",
+      "closeCurrentTab:",
+      "pinCurrentTab:",
+      "bookmarkCurrentTab:",
+      "toggleReader:",
+      "newSplitView:",
+      "closeSplitView:",
+      "showNextTab:",
+      "showPreviousTab:",
+    ]),
     type: z.literal("menu"),
   }),
   z.strictObject({
@@ -263,9 +279,7 @@ const validateScenarioReferences = (scenario: AuthoredScenario) => {
 };
 
 const validateScenarioHolds = (scenario: AuthoredScenario) => {
-  const finalPresentation = scenario.steps
-    .toReversed()
-    .find((step) => step.type !== "assert");
+  const finalPresentation = scenario.steps.at(-1);
 
   const posterIndex = scenario.steps.findIndex(
     (step) => step.type === "assert" && step.id === scenario.posterCheckpoint
@@ -319,9 +333,7 @@ export const validateScenario = (input: AuthoredScenario, id: string) => {
   }
 
   validateScenarioReferences(scenario);
-
   validateScenarioHolds(scenario);
-
   let holds = 0;
 
   for (const step of scenario.steps) {

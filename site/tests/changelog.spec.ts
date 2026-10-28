@@ -54,6 +54,20 @@ test("recordings finish and restart their frames on cached replay", async ({
   const image = player.locator("img:visible");
   await player.scrollIntoViewIfNeeded();
   const poster = await image.getAttribute("src");
+  const recording = await image.getAttribute("data-recording");
+
+  if (!recording) {
+    throw new Error("Missing animation");
+  }
+
+  await page.route(new URL(recording, page.url()).href, (route) =>
+    route.fulfill({
+      body: readFileSync(
+        new URL("../../lilo-ui/e2e/fixtures/playback.webp", import.meta.url)
+      ),
+      contentType: "image/webp",
+    })
+  );
 
   const pixels = async () =>
     createHash("sha256")

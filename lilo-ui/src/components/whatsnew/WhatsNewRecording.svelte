@@ -9,11 +9,38 @@
   let played = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  function stop(): void { clearTimeout(timer); playing = false; }
-  function play(): void {
+  let movie: Blob | undefined;
+  let request: AbortController | undefined;
+  let movieURL = $state("");
+  let generation = 0;
+
+  function stop(): void {
+    generation += 1;
+    clearTimeout(timer);
+    request?.abort(); request = undefined;
+    playing = false;
+    if (movieURL) URL.revokeObjectURL(movieURL);
+    movieURL = "";
+  }
+  async function play(): Promise<void> {
     if (document.hidden) return;
-    played = true;
-    playing = true;
+    played = true; playing = true;
+    const current = ++generation;
+    let controller: AbortController | undefined;
+    try {
+      if (!movie) {
+        controller = new AbortController(); request = controller;
+        const response = await fetch(media.recording, { signal: controller.signal });
+        if (!response.ok) throw new Error("Recording unavailable");
+        const blob = await response.blob();
+        if (current !== generation) return;
+        movie = blob;
+      }
+      if (current !== generation) return;
+      // A fresh URL resets animated-image decoder state on cached replay.
+      movieURL = URL.createObjectURL(movie);
+    } catch { if (current === generation) stop(); }
+    finally { if (request === controller) request = undefined; }
   }
 
   onMount(() => {
@@ -36,15 +63,17 @@
 </script>
 
 <figure bind:this={root} class="release-recording">
+  {#key movieURL}
   <img
-    src={playing ? media.recording : media.poster}
+    src={movieURL || media.poster}
     alt={title}
     width={media.width}
     height={media.height}
     loading="lazy"
-    onload={() => { if (playing) { clearTimeout(timer); timer = setTimeout(stop, media.durationMs); } }}
+    onload={() => { if (playing && movieURL) { clearTimeout(timer); timer = setTimeout(stop, media.durationMs); } }}
     onerror={stop}
   />
+  {/key}
   <button
     type="button"
     aria-label={t(playing ? "whatsNew.recordingStop" : played ? "whatsNew.recordingReplay" : "whatsNew.recordingPlay")}

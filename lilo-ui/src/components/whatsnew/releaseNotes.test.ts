@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./releaseNotes";
+import { generatedReleaseEditorial, localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./releaseNotes";
 import registry from "./releaseHighlights.json";
 import { catalogs, loadCatalog, SUPPORTED_LOCALES } from "../../lib/i18n/translate";
 
@@ -85,4 +85,15 @@ test("authored highlights resolve to translated copy in every shipped catalog", 
 			}
 		}
 	}
+});
+
+
+test("generated maintenance editorial has no stale highlights or media", () => {
+ const archive = { content: { en: { headline: "A little steadier.", description: "Reliability improvements.", highlights: [] } }, recordings: {} };
+ assert.equal(generatedReleaseEditorial(archive, "en"), null);
+});
+
+test("generated editorial carries previously unknown native recordings", () => {
+ const archive = { content: { en: { headline: "Catch up.", description: "Unread counts.", highlights: [{ id: "unread-counts", title: "Catch up.", description: "Read your new messages." }] } }, recordings: { "unread-counts": { poster: "unread-counts-native.png", recording: "unread-counts-native.webp", durationMs: 6000, width: 1120, height: 720, quality: { passed: true } } } };
+ assert.equal(generatedReleaseEditorial(archive, "en")?.highlights[0].media?.recording, "/release-media/unread-counts-native.webp");
 });

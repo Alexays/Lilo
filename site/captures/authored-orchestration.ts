@@ -49,11 +49,50 @@ export const runCaptureCommand = (
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: root,
+      detached: true,
       stdio: ["pipe", "pipe", "pipe"],
     });
 
     let output = "";
-    const timer = setTimeout(() => child.kill("SIGTERM"), timeoutMs);
+    let timedOut = false;
+    let cancelled = false;
+    let escalation: ReturnType<typeof setTimeout> | undefined;
+
+    const terminate = (signal: NodeJS.Signals) => {
+      if (child.pid) {
+        try {
+          process.kill(-child.pid, signal);
+        } catch {
+          /* The process group already ended. */
+        }
+      }
+    };
+
+    const stop = () => {
+      clearTimeout(escalation);
+      terminate("SIGTERM");
+      escalation = setTimeout(() => terminate("SIGKILL"), 1000);
+    };
+
+    const cancel = () => {
+      cancelled = true;
+      stop();
+    };
+
+    const timer = setTimeout(() => {
+      timedOut = true;
+      stop();
+    }, timeoutMs);
+
+    process.once("SIGTERM", cancel);
+    process.once("SIGINT", cancel);
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      clearTimeout(escalation);
+      process.removeListener("SIGTERM", cancel);
+      process.removeListener("SIGINT", cancel);
+    };
 
     const append = (data: Buffer) => {
       output = `${output}${data.toString()}`.slice(-100_000);
@@ -62,26 +101,38 @@ export const runCaptureCommand = (
     child.stdout.on("data", append);
     child.stderr.on("data", append);
     child.stdin.on("error", () => {
-      // The close event supplies the agent failure after an early pipe closure.
+      // Completion reports an early closed agent pipe.
     });
     child.stdin.end(input);
     child.on("error", (error) => {
-      clearTimeout(timer);
+      cleanup();
       reject(error);
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
+      if (timedOut || cancelled) {
+        terminate("SIGKILL");
+      }
+
+      cleanup();
       writeFileSync(log, output);
 
-      if (code === 0) {
+      if (code === 0 && !timedOut && !cancelled) {
         resolve();
 
         return;
       }
 
-      const detail = `${command} failed (${code}); diagnostics: ${log}\n${output.slice(-8000)}`;
+      let reason = `Command failed (${code})`;
+
+      if (timedOut) {
+        reason = `Timed out after ${timeoutMs} ms`;
+      } else if (cancelled) {
+        reason = "Capture command cancelled";
+      }
+
+      const detail = `${reason}: ${command}; diagnostics: ${log}\n${output.slice(-8000)}`;
       reject(
-        /Unlock macOS|CGSSessionScreenIsLocked/u.test(output)
+        cancelled || /Unlock macOS|CGSSessionScreenIsLocked/u.test(output)
           ? new CaptureEnvironmentError(detail)
           : new Error(detail)
       );

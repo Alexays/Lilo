@@ -63,11 +63,12 @@ test("bundled recordings wait for explicit playback with Reduce Motion and stop 
 	await page.emulateMedia({ reducedMotion: "reduce" });
 	const notes = structuredClone(release);
 	if (!notes.editorial?.en) throw new Error("Missing test release copy");
-	const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
-	const archive = JSON.parse(readFileSync(new URL(`../../site/src/assets/releases/${version}/capture.json`, import.meta.url), "utf8"));
-	const scenario = archive.schemaVersion === 3 ? archive.plan.highlights[0].id : "tab-share";
-	const media = archive.recordings[scenario];
-	notes.editorial.en.highlights[0].media = { poster: `/release-media/${media.poster}`, recording: `/release-media/${media.recording}`, durationMs: media.durationMs, width: media.width, height: media.height };
+	const source = new URL("./fixtures/", import.meta.url);
+	for (const [extension, contentType] of [["png", "image/png"], ["webp", "image/webp"]]) {
+		await page.route(`**/release-media/playback-fixture.${extension}`, route => route.fulfill({ contentType, body: readFileSync(new URL(`playback.${extension}`, source)) }));
+	}
+	const media = { poster: "playback-fixture.png", recording: "playback-fixture.webp", durationMs: 3400, width: 320, height: 200 };
+	notes.editorial.en.highlights[0].media = { ...media, poster: `/release-media/${media.poster}`, recording: `/release-media/${media.recording}` };
 	const requested: string[] = [];
 	page.on("request", request => requested.push(request.url()));
 	await bootReleaseChrome(page, initialWorld(), undefined, notes);
@@ -75,7 +76,7 @@ test("bundled recordings wait for explicit playback with Reduce Motion and stop 
 	const player = page.locator(".whats-new .release-recording");
 	await player.scrollIntoViewIfNeeded();
 	const image = player.locator("img");
-	await expect(image).toHaveJSProperty("naturalWidth", 1120);
+	await expect(image).toHaveJSProperty("naturalWidth", media.width);
 	const button = player.getByRole("button");
 	await expect(button).toHaveAttribute("aria-pressed", "false");
 	expect(requested.some(url => url.endsWith(`/release-media/${media.recording}`))).toBe(false);
