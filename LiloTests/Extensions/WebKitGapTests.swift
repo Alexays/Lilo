@@ -474,6 +474,23 @@ final class WebKitGapTests: XCTestCase {
         XCTAssertEqual(runs, "2", "WebKit runs a file once per document as Chrome: drop the deduplication of prepareContentScriptCompat")
     }
 
+    /// Lilo keeps WebKit's `browser` and falls back, behind each namespace's prototype, on the one an extension assigns
+    /// (static-compat.ts mergeAssignedBrowser).
+    func testANamespacePrototypeTakesAFallbackAndEventsStillArrive() async throws {
+        let title = try await bareWorkerTitle("""
+        const proto = Object.getPrototypeOf(browser.alarms), extra = { ensure: () => 'ensured' };
+        Object.setPrototypeOf(proto, new Proxy(Object.getPrototypeOf(proto), { get: (t, p, r) => (p in extra ? extra[p] : Reflect.get(t, p, r)) }));
+        const found = `${browser.alarms.ensure()} ${typeof browser.alarms.create}`;
+        browser.storage.onChanged.addListener(() => browser.action.setTitle({ title: `${found}, events ok` }));
+        browser.storage.local.set({ a: 1 });
+        """, permissions: ["storage", "alarms"])
+
+        XCTAssertEqual(
+            title, "ensured function, events ok",
+            "WebKit's namespace prototypes no longer take a fallback: mergeAssignedBrowser (static-compat.ts) leaves an assigned browser's members unreachable"
+        )
+    }
+
     func testRefusedNativeConnectionSetsNoLastError() async throws {
         let refusing = RefusingNativeHosts()
         controller.delegate = refusing

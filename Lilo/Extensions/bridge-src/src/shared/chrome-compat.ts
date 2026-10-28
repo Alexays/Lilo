@@ -21,7 +21,7 @@ import { GapChromeEvent, reportGapListener } from './gap-event.ts';
 import { gapCall } from './ipc.ts';
 import { callbackify, installBridgeChrome, liloLastError, liloLastErrorMessage, withLastError } from './callbackify.ts';
 import { CHROME_CONSTANTS } from './chrome-constants.gen.ts';
-import { STATIC_CONSTANTS, addMissing, home } from './static-compat.ts';
+import { STATIC_CONSTANTS, addMissing, home, mergeAssignedBrowser } from './static-compat.ts';
 
 export type Method = (this: unknown, ...args: any[]) => any;
 /** Wraps WebKit's method; `self(this)` is the namespace, also for a detached call. */
@@ -405,10 +405,7 @@ export function installChromeCompat(action: Record<string, unknown>, page = fals
   // `browser` shares these objects without going through `chrome`: give the present ones theirs now.
   for (const name of Object.keys(chrome)) void g.chrome[name];
   for (const name in g.browser) void g.chrome[name];
-  // WebKit finds a context's listeners through its own `browser`, else `chrome`, which the proxy hides:
-  // `var browser = chrome` or webextension-polyfill's `browser` would leave the context without events.
-  const browser = g.browser;
-  if (browser) Object.defineProperty(g, 'browser', { get: () => browser, set() {}, configurable: true });
+  mergeAssignedBrowser(g);
   // The worker tells Lilo it listens, for the error of a page's message nobody answers.
   if (g.chrome.runtime?.onMessage) answerAsChrome(g.chrome.runtime.onMessage, page ? undefined : () => reportGapListener('runtime.onMessage'));
   if (!page && chrome.runtime?.onMessage) relayForContentScripts(chrome.runtime);

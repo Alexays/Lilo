@@ -101,6 +101,26 @@ describe('additions', () => {
     delete (globalThis as any).browser;
   });
 
+  it("find what the browser an extension assigns adds, while browser stays WebKit's", () => {
+    class Alarms { create() { return 'webkit create'; } }
+    const browser = Object.create({ runtime: new Runtime([]), alarms: new Alarms() });
+    (globalThis as any).browser = browser;
+    const chrome = install({});
+    // As webextension-polyfill's, a wrapper whose members fall back on chrome's.
+    const alarms: any = { get create() { return chrome.alarms.create; }, get missing() { return chrome.alarms.missing; } };
+    const wrapper: any = { alarms, extra: { ping: () => 'pong' } };
+    (globalThis as any).browser = wrapper;
+    alarms.ensure = () => 'ensured';
+    const seen = (globalThis as any).browser;
+    assert.equal(seen, browser, 'WebKit finds its listeners through its own');
+    assert.equal(seen.alarms.ensure(), 'ensured', 'added after the assignment, as AiPrice');
+    assert.equal(seen.alarms.create(), 'webkit create', "WebKit's own wins");
+    assert.equal(seen.extra.ping(), 'pong', 'a namespace only the assigned object has');
+    assert.equal(seen.alarms.missing, undefined, 'a member nobody has resolves, the wrapper falling back on chrome');
+    assert.equal('ensure' in seen.alarms, true);
+    delete (globalThis as any).browser;
+  });
+
   it('replace WebKit badge colors with the action surface Lilo bridges', () => {
     class Action { setBadgeBackgroundColor() { return 'webkit'; } }
     (globalThis as any).chrome = { runtime: new Runtime([]), action: new Action() };
