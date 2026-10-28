@@ -3,7 +3,7 @@
 
 import en from "./locales/en.json";
 
-export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru" | "uk" | "de";
+export type Locale = "en" | "fr" | "es" | "zh-Hans" | "pt-BR" | "ru" | "uk" | "de" | "ja";
 
 export const SUPPORTED_LOCALES = [
 	{ code: "en", label: "English" },
@@ -14,6 +14,7 @@ export const SUPPORTED_LOCALES = [
 	{ code: "ru", label: "Русский" },
 	{ code: "uk", label: "Українська" },
 	{ code: "de", label: "Deutsch" },
+	{ code: "ja", label: "日本語" },
 ] as const satisfies ReadonlyArray<{ code: Locale; label: string }>;
 
 type Messages = Record<string, unknown>;
@@ -29,6 +30,7 @@ export async function loadCatalog(locale: Locale): Promise<void> {
 		: locale === "zh-Hans" ? import("./locales/zh-Hans.json")
 		: locale === "uk" ? import("./locales/uk.json")
 		: locale === "de" ? import("./locales/de.json")
+		: locale === "ja" ? import("./locales/ja.json")
 		: locale === "ru" ? import("./locales/ru.json") : import("./locales/pt-BR.json"))).default;
 }
 

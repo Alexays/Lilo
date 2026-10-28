@@ -210,3 +210,21 @@ test("German regional tags, translations and count forms use the selected catalo
 		assert.equal(translate("de", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Japanese regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["ja", "ja-JP", "JA-jp"]) {
+		assert.equal(resolveLocale(tag), "ja", tag);
+	}
+	assert.equal(translate("ja", "common.cancel"), "キャンセル");
+	for (const [count, expected] of [
+		[0, "開いているタブ0個"],
+		[1, "開いているタブ1個"],
+		[2, "開いているタブ2個"],
+		[5, "開いているタブ5個"],
+		[21, "開いているタブ21個"],
+		[12345, "開いているタブ12,345個"],
+		[1.5, "開いているタブ1.5個"],
+	] as const) {
+		assert.equal(translate("ja", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});

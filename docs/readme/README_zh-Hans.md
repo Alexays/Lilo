@@ -1,6 +1,6 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · **简体中文** · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md)
+[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · **简体中文** · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md)
 
 # Lilo
 

@@ -29,6 +29,7 @@ LOCALES = {
     "ru": {"в", "во", "для", "и", "из", "к", "на", "о", "от", "по", "с", "со", "у"},
     "uk": {"в", "для", "з", "зі", "й", "на", "у", "і"},
     "de": {"auf", "das", "der", "die", "ein", "eine", "im", "in", "mit", "und", "von"},
+    "ja": set(),
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
