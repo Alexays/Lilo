@@ -40,7 +40,8 @@ final class CallControlsBridge: NSObject, WKScriptMessageHandler {
             microphoneActive: body["microphone"] as? Bool,
             cameraActive: body["camera"] as? Bool,
             actions: Set(WKWebViewTab.callActions.filter { body[$0] as? Bool == true }),
-            hasTrackControls: body["tracks"] as? Bool == true
+            hasTrackControls: body["tracks"] as? Bool == true,
+            hasPictureInPictureAction: body["pip"] as? Bool == true
         ))
     }
 }

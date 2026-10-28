@@ -3562,6 +3562,25 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(backgroundEngine.isFrozen, "an idle background tab in the active space should freeze")
     }
 
+    func testFreezeIdleEnginesNeverFreezesATabWhosePiPWindowIsOpen() {
+        let activeSpaceId = UUID(), hiddenSpaceId = UUID()
+        var opener = Tab(id: UUID(), url: URL(string: "https://timer.example"), title: "Timer", spaceId: hiddenSpaceId)
+        opener.lastActiveAt = Date(timeIntervalSince1970: 1)
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: opener)
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [opener], folders: [], treeItems: [], engines: [opener.id: engine])
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+        store.pictureInPictureOpenerIds = [opener.id]
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+
+        XCTAssertFalse(engine.isFrozen, "its PiP window runs in the opener's page")
+    }
+
     func testFreezeIdleEnginesNeverFreezesAgentTabs() {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var agent = Tab(id: UUID(), url: URL(string: "https://agent.example"), title: "Agent", spaceId: hiddenSpaceId)

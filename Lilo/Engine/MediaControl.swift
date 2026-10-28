@@ -11,6 +11,8 @@ extension WKWebViewTab {
         var cameraActive: Bool?
         var actions: Set<String> = []
         var hasTrackControls = false
+        /// The page handles `enterpictureinpicture`: it opens its own PiP window when asked.
+        var hasPictureInPictureAction = false
     }
 
     static let callActions = ["togglemicrophone", "togglecamera", "hangup"]
@@ -23,7 +25,7 @@ extension WKWebViewTab {
       let paused = [], microphone = null, camera = null;
       const call = () => stringify({ microphone, camera, togglemicrophone: !!handlers.togglemicrophone,
                                      togglecamera: !!handlers.togglecamera, hangup: !!handlers.hangup,
-                                     tracks: !!(handlers.nexttrack || handlers.previoustrack) });
+                                     tracks: !!(handlers.nexttrack || handlers.previoustrack), pip: !!handlers.enterpictureinpicture });
       // A page that never touches these controls sends nothing.
       let reported = call();
       const report = () => {
@@ -32,8 +34,9 @@ extension WKWebViewTab {
       };
       const hooks = { setActionHandler(action, handler) {
         let result;
-        // WebKit rejects hangup; a call page registering one anyway still gets the call card's button.
-        try { result = apply(original.setActionHandler, this, arguments); } catch (e) { if (action !== 'hangup') throw e; }
+        // WebKit rejects hangup and enterpictureinpicture; a call page registering one anyway still gets the call card's
+        // button, or its PiP window opened when its tab is left.
+        try { result = apply(original.setActionHandler, this, arguments); } catch (e) { if (action !== 'hangup' && action !== 'enterpictureinpicture') throw e; }
         handlers[action] = handler;
         report();
         return result;
@@ -66,6 +69,13 @@ extension WKWebViewTab {
       });
     }
     """#
+
+    /// Asks the page for its Document PiP window through its Media Session handler, as Chrome does when a call tab
+    /// is left. Without a `useraction` reason, as Chrome's automatic opening.
+    func enterDocumentPictureInPicture() {
+        guard callControls.hasPictureInPictureAction, wake() else { return }
+        wkWebView.evaluateJavaScript(PageWorld.push("media", ["enterpictureinpicture"]), in: nil, in: PageWorld.bridgeWorld)
+    }
 
     /// `action` is play, pause, nexttrack, previoustrack, or one of `callActions` the page handles.
     func controlMedia(_ action: String) {

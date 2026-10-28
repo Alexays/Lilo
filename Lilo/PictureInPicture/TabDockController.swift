@@ -28,6 +28,9 @@ final class TabDockController {
     private let scaledHost = NSView()
     private let controls = DockControlsView()
     private var engine: WKWebViewTab?
+    /// A Document Picture-in-Picture window, made for this size: it lays out at the slot's own size, unscaled.
+    private var pictureInPictureView: NSView?
+    private(set) var pictureInPictureOpenerId: UUID?
     private var logicalSize = NSSize(width: 1280, height: 800)
     private var slotRect: NSRect?
     /// Distinguishes "slot not mounted yet" (dock just started, chrome still layouting) from
@@ -36,7 +39,7 @@ final class TabDockController {
     private weak var chromeView: NSView?
 
     var engineId: UUID? { engine?.id }
-    var isDocking: Bool { engine != nil }
+    var isDocking: Bool { engine != nil || pictureInPictureView != nil }
 
     /// Whole-surface click: bring the docked tab back as the active tab.
     var onReturnToTab: ((UUID) -> Void)?
@@ -44,6 +47,8 @@ final class TabDockController {
     var onDismiss: ((UUID) -> Void)?
     /// Slot disappeared while docking (sidebar collapsed): the owner re-homes the engine.
     var onSlotLost: ((WKWebViewTab) -> Void)?
+    /// Slot disappeared while docking a PiP window: the owner floats it.
+    var onPictureInPictureSlotLost: (() -> Void)?
     /// Fired whenever the dock actually stops hosting an engine, whatever the reason (tab closed,
     /// returned to, dismissed, slot lost). The single place the chrome's slot is torn down.
     var onDockCleared: (() -> Void)?
@@ -59,21 +64,49 @@ final class TabDockController {
         container.addSubview(scaledHost)
         container.addSubview(controls)
         controls.onClick = { [weak self] in
-            guard let id = self?.engine?.id else { return }
+            guard let id = self?.engine?.id ?? self?.pictureInPictureOpenerId else { return }
             self?.onReturnToTab?(id)
         }
         controls.onDismiss = { [weak self] in
-            guard let id = self?.engine?.id else { return }
+            guard let id = self?.engine?.id ?? self?.pictureInPictureOpenerId else { return }
             self?.onDismiss?(id)
         }
     }
 
     func dock(_ engine: WKWebViewTab, logicalSize: NSSize, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
-        if self.engine !== engine { _ = undock() }
+        if pictureInPictureView != nil {
+            undock()
+            onPictureInPictureSlotLost?()
+        } else if self.engine !== engine {
+            _ = undock()
+        }
+        controls.passesClicksThrough = false
         self.engine = engine
         self.logicalSize = logicalSize.width > 100 && logicalSize.height > 100 ? logicalSize : NSSize(width: 1280, height: 800)
         self.chromeView = chromeView
         let view = engine.view
+        view.autoresizingMask = []
+        view.isHidden = false
+        scaledHost.addSubview(view)
+        if container.superview !== contentView {
+            contentView.addSubview(container, positioned: .above, relativeTo: sibling)
+        }
+        applySlot()
+    }
+
+    /// Docks a Document Picture-in-Picture window of `openerId`'s page; its own controls stay clickable.
+    func dockPictureInPicture(_ view: NSView, openerId: UUID, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
+        if let docked = engine {
+            undock()
+            onSlotLost?(docked)
+        } else if let previous = pictureInPictureView, previous !== view {
+            // A PiP window replacing another keeps the slot: no teardown for the chrome to report late.
+            previous.removeFromSuperview()
+        }
+        pictureInPictureView = view
+        pictureInPictureOpenerId = openerId
+        self.chromeView = chromeView
+        controls.passesClicksThrough = true
         view.autoresizingMask = []
         view.isHidden = false
         scaledHost.addSubview(view)
@@ -95,6 +128,15 @@ final class TabDockController {
     /// Detaches the docked view and returns its engine so the caller can re-home it.
     @discardableResult
     func undock() -> WKWebViewTab? {
+        if let view = pictureInPictureView {
+            pictureInPictureView = nil
+            pictureInPictureOpenerId = nil
+            hadSlot = false
+            if view.superview === scaledHost { view.removeFromSuperview() }
+            container.isHidden = true
+            onDockCleared?()
+            return nil
+        }
         guard let engine else { return nil }
         self.engine = nil
         hadSlot = false
@@ -109,7 +151,11 @@ final class TabDockController {
         guard slotRect != zones[Self.zoneId] else { return }
         slotRect = zones[Self.zoneId]
         applySlot()
-        if slotRect == nil, hadSlot, let engine = undock() {
+        guard slotRect == nil, hadSlot else { return }
+        if pictureInPictureView != nil {
+            undock()
+            onPictureInPictureSlotLost?()
+        } else if let engine = undock() {
             onSlotLost?(engine)
         }
     }
@@ -119,7 +165,7 @@ final class TabDockController {
         // gutter too, and its resize handle sits there. Insetting the bare sidebar width would leave a
         // gap on the right twice the one on the left.
         let width = sidebarWidth + MainWindowController.contentInset - Self.horizontalInset * 2
-        guard engine != nil, let slotRect, let chromeView, width > 10 else {
+        guard isDocking, let slotRect, let chromeView, width > 10 else {
             container.isHidden = true
             return
         }
@@ -132,6 +178,12 @@ final class TabDockController {
         )
         container.isHidden = false
         controls.frame = container.bounds
+        if let pictureInPictureView {
+            scaledHost.frame = container.bounds
+            scaledHost.bounds = NSRect(origin: .zero, size: container.bounds.size)
+            pictureInPictureView.frame = scaledHost.bounds
+            return
+        }
         // Bounds-based scaling: with the frame at slot size and the bounds at logical size, AppKit
         // renders the subtree at slotWidth/logicalWidth scale with exact slot-aligned geometry
         // (a sublayerTransform would scale about the layer's center anchor and overflow the slot).
@@ -155,6 +207,24 @@ final class TabDockController {
 private final class DockControlsView: NSView {
     var onClick: (() -> Void)?
     var onDismiss: (() -> Void)?
+    /// Over a PiP window, whose page has its own controls: only the hover buttons take clicks, and returning to
+    /// the tab gets a button of its own.
+    var passesClicksThrough = false {
+        didSet { returnButton.isHidden = true }
+    }
+
+    private lazy var returnButton: NSButton = {
+        let button = NSButton()
+        button.image = NSImage(systemSymbolName: "arrow.uturn.backward.circle.fill", accessibilityDescription: "Back to tab".localized)
+        button.isBordered = false
+        button.bezelStyle = .regularSquare
+        button.contentTintColor = .white
+        button.toolTip = "Back to tab".localized
+        button.isHidden = true
+        button.target = self
+        button.action = #selector(returnPressed)
+        return button
+    }()
 
     private let dismissButton: NSButton = {
         let button = NSButton()
@@ -175,6 +245,12 @@ private final class DockControlsView: NSView {
         dismissButton.target = self
         dismissButton.action = #selector(dismissPressed)
         addSubview(dismissButton)
+        addSubview(returnButton)
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        let hit = super.hitTest(point)
+        return passesClicksThrough && hit === self ? nil : hit
     }
 
     @available(*, unavailable)
@@ -183,6 +259,7 @@ private final class DockControlsView: NSView {
     override func layout() {
         super.layout()
         dismissButton.frame = NSRect(x: bounds.maxX - 24, y: bounds.maxY - 24, width: 20, height: 20)
+        returnButton.frame = NSRect(x: bounds.maxX - 48, y: bounds.maxY - 24, width: 20, height: 20)
     }
 
     override func updateTrackingAreas() {
@@ -193,11 +270,18 @@ private final class DockControlsView: NSView {
         trackingArea = area
     }
 
-    override func mouseEntered(with event: NSEvent) { dismissButton.isHidden = false }
-    override func mouseExited(with event: NSEvent) { dismissButton.isHidden = true }
+    override func mouseEntered(with event: NSEvent) {
+        dismissButton.isHidden = false
+        returnButton.isHidden = !passesClicksThrough
+    }
+    override func mouseExited(with event: NSEvent) {
+        dismissButton.isHidden = true
+        returnButton.isHidden = true
+    }
     override func mouseDown(with event: NSEvent) { onClick?() }
 
     @objc private func dismissPressed() { onDismiss?() }
+    @objc private func returnPressed() { onClick?() }
 
     // VoiceOver never hovers, so the dismiss button it cannot reach is offered as an action.
     override func isAccessibilityElement() -> Bool { true }
