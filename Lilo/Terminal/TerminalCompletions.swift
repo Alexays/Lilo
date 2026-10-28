@@ -119,19 +119,19 @@ actor TerminalCompletions {
         return commands
     }
 
-    /// Fish's YAML-like format escapes only backslashes and newlines; completions stay single-line.
+    /// Fish escapes backslashes and newlines byte by byte; completions stay single-line.
     private static func parseFishHistory(_ data: Data) -> [String] {
         data.split(separator: 0x0A).compactMap { slice in
-            guard let line = String(bytes: slice, encoding: .utf8), line.hasPrefix("- cmd: ") else { return nil }
-            var characters = line.dropFirst(7).makeIterator()
-            var command = ""
-            while let character = characters.next() {
-                if character == "\\" {
-                    guard characters.next() == "\\" else { return nil }
+            guard slice.starts(with: "- cmd: ".utf8) else { return nil }
+            var bytes = slice.dropFirst(7).makeIterator()
+            var command: [UInt8] = []
+            while let byte = bytes.next() {
+                if byte == 0x5C {
+                    guard bytes.next() == 0x5C else { return nil }
                 }
-                command.append(character)
+                command.append(byte)
             }
-            return command.isEmpty ? nil : command
+            return command.isEmpty ? nil : String(bytes: command, encoding: .utf8)
         }
     }
 

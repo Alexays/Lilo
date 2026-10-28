@@ -147,6 +147,7 @@ jobs:
             !.derived.noindex/xcode/Logs
           key: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+      # macOS supplies zsh; the Fish integration tests need a separate shell installation.
       - run: make fish-test-deps
       - run: make swiftlint
       # swift-test builds Debug itself.

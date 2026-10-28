@@ -283,12 +283,19 @@ final class TerminalSessionTests: XCTestCase {
     func testFishStartsWithTheUsersConfigurationAndAcceptsCommands() async throws {
         let fish = try prepareFish()
         let directory = try XCTUnwrap(fishDirectory)
+        let extraVendor = directory.appendingPathComponent("extra-vendor/fish/vendor_conf.d/extra.fish")
+        try FileManager.default.createDirectory(at: extraVendor.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try "printf 'EXTRA-VENDOR-LOADED\\n'\n".write(to: extraVendor, atomically: true, encoding: .utf8)
+        let dataDirectories = directory.path + "/vendor:" + directory.path + "/extra-vendor"
+        setenv("XDG_DATA_DIRS", dataDirectories, 1)
         let session = try launch([fish, "--private", "--login", "--interactive"])
         try await waitUntil { session.status.cwd != nil && self.screen(session).contains("fish-test>") }
         guard session.status.cwd != nil else { return }
         XCTAssertTrue(screen(session).contains("USER-FISH-LOGIN"))
         XCTAssertTrue(screen(session).contains("USER-VENDOR-LOADED"))
-        XCTAssertTrue(screen(session).contains("xdg:\(directory.path)/vendor"))
+        XCTAssertTrue(screen(session).contains("EXTRA-VENDOR-LOADED"))
+        let recordedDirectories = try String(contentsOf: directory.appendingPathComponent("xdg-data-dirs"), encoding: .utf8)
+        XCTAssertEqual(recordedDirectories, dataDirectories)
         XCTAssertFalse(screen(session).contains("LEAKED-STARTUP-COMMAND"))
         XCTAssertEqual(session.status.finishedCommands, 0)
 
@@ -353,6 +360,95 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertTrue(screen(session).components(separatedBy: "\n").contains("prefill-ran"))
         XCTAssertEqual(session.status.command, command)
         XCTAssertEqual(session.status.state, .succeeded)
+    }
+
+    func testFishAcceptsAMultilineInitialCommandOnlyOnce() async throws {
+        let fish = try prepareFish()
+        let command = #"""
+            begin
+                printf '%s\n' 'café; 50% \path'
+                printf '%s\n' 'second'
+            end
+            """#
+        let session = TerminalSession(
+            cwd: NSTemporaryDirectory(), cols: 200, rows: 50, command: [fish, "--private", "--interactive"],
+            initialCommand: command
+        )
+        sessions.append(session)
+        try session.start()
+
+        try await waitUntil { session.status.finishedCommands == 1 }
+        XCTAssertEqual(session.status.command, command)
+        XCTAssertEqual(session.status.state, .succeeded)
+        XCTAssertTrue(screen(session).contains("café; 50% \\path\nsecond"))
+        session.write(Array("true\r".utf8))
+        try await waitUntil { session.status.finishedCommands == 2 }
+        XCTAssertEqual(session.status.command, "true")
+    }
+
+    func testFishEditsAUnicodePrefillAfterRestoringTheTerminal() async throws {
+        let fish = try prepareFish()
+        let previous = VTTerminal(cols: 200, rows: 50, scrollbackBytes: 1_000_000)
+        Array("previous output\r\n\u{1b}[>1u".utf8).withUnsafeBytes { previous.write($0) }
+        let snapshot = try XCTUnwrap(previous.snapshot())
+        let command = "printf '%s\\n' 'cafe\u{301} 👩🏽‍💻'"
+        let session = TerminalSession(
+            cwd: NSTemporaryDirectory(), cols: 200, rows: 50, command: [fish, "--private", "--interactive"],
+            prefillCommand: command, restored: VTTerminal(snapshot: snapshot, scrollbackBytes: 1_000_000)
+        )
+        sessions.append(session)
+        try session.start()
+
+        try await waitUntil { self.screen(session).contains(command) }
+        XCTAssertTrue(screen(session).contains("previous output"))
+        XCTAssertEqual(session.status.finishedCommands, 0)
+        let edit = "; printf 'edited\\n'"
+        session.write(Array((edit + "\r").utf8))
+        try await waitUntil { session.status.finishedCommands == 1 }
+        XCTAssertEqual(session.status.command, command + edit)
+        XCTAssertEqual(session.status.state, .succeeded)
+        XCTAssertTrue(screen(session).contains("cafe\u{301} 👩🏽‍💻\nedited"))
+    }
+
+    func testFishHistoryWrittenByTheShellFeedsTheCommandBar() async throws {
+        let fish = try prepareFish()
+        let directory = try XCTUnwrap(fishDirectory)
+        let command = "printf '%s\\n' 'café \\\u{301} 50%'"
+        let session = TerminalSession(
+            cwd: directory.path, cols: 200, rows: 50, command: [fish, "--interactive"], initialCommand: command
+        )
+        sessions.append(session)
+        try session.start()
+
+        try await waitUntil { session.status.finishedCommands == 1 }
+        XCTAssertEqual(session.status.state, .succeeded)
+        session.write(Array("history save\r".utf8))
+        try await waitUntil { session.status.finishedCommands == 2 }
+        let history = directory.appendingPathComponent("data/fish/fish_history")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: history.path))
+        let completions = TerminalCompletions(historyFiles: [history], pathDirectories: [])
+        let suggestions = await completions.complete("printf")
+        XCTAssertEqual(suggestions, [.init(command: command, source: .history)])
+    }
+
+    func testFishCommandOutputCanBeSelectedFromItsFailureMark() async throws {
+        let fish = try prepareFish()
+        let session = try launch([fish, "--private", "--interactive"])
+        try await waitUntil { self.screen(session).contains("fish-test>") }
+        let command = #"printf '%s\n' 'café %;\path' 'second' | cat; false"#
+        session.write(Array((command + "\r").utf8))
+        try await waitUntil { session.status.finishedCommands == 1 }
+
+        XCTAssertEqual(session.status.command, command)
+        XCTAssertEqual(session.status.lastExitCode, 1)
+        let selected = session.withLockedTerminal { terminal in
+            let marks = terminal.visibleCommandMarks()
+            XCTAssertEqual(marks.map(\.exitCode), [1])
+            guard let mark = marks.first else { return nil as String? }
+            XCTAssertTrue(terminal.selectCommandOutput(atViewportRow: mark.rows.lowerBound))
+            return terminal.selectionText
+        }
+        XCTAssertTrue(selected?.contains("café %;\\path\nsecond") == true)
     }
 
     func testRestoredTerminalKeepsTheLastSessionAboveTheNewShell() async throws {
@@ -537,7 +633,7 @@ final class TerminalSessionTests: XCTestCase {
         try "printf 'USER-VENDOR-LOADED\\n'\n".write(to: vendor, atomically: true, encoding: .utf8)
         try """
             status is-login; and printf 'USER-FISH-LOGIN\\n'
-            printf 'xdg:%s\\n' "$XDG_DATA_DIRS"
+            printf '%s' "$XDG_DATA_DIRS" > "$XDG_CONFIG_HOME/xdg-data-dirs"
             if set -q LILO_INITIAL_COMMAND; or set -q LILO_PREFILL_COMMAND
                 printf 'LEAKED-STARTUP-COMMAND\\n'
             end
