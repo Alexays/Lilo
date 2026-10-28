@@ -20,6 +20,9 @@ final class IdleBridgeHandler: GapHandler {
     nonisolated(unsafe) private var observers: [Any] = []
     /// Screen lock and unlock observers, registered only while an extension listens.
     nonisolated(unsafe) private var lockObservers: [Any] = []
+    /// Chrome reports a running screen saver as locked: Dashlane's team auto-logout runs only while idle.
+    nonisolated(unsafe) private var screenSaverObservers: [Any] = []
+    private var screenSaverRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.ScreenSaver.Engine").isEmpty
     /// The state each listener was last told, or took as its baseline.
     private var lastStates: [Listener: String] = [:]
 
@@ -30,6 +33,14 @@ final class IdleBridgeHandler: GapHandler {
 
     init(registriesProvider: (() -> [ProfileExtensionRegistry])? = nil) {
         self.registriesProvider = registriesProvider
+        screenSaverObservers = [("com.apple.screensaver.didstart", true), ("com.apple.screensaver.didstop", false)].map { name, running in
+            DistributedNotificationCenter.default().addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.screenSaverRunning = running
+                    self?.update()
+                }
+            }
+        }
         guard registriesProvider != nil else { return }
         // The poller runs only while an extension holding the idle permission listens to onStateChanged:
         // a load or a listener change is when that may start or stop.
@@ -45,7 +56,7 @@ final class IdleBridgeHandler: GapHandler {
     deinit {
         pollTimer?.invalidate()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
-        lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        (lockObservers + screenSaverObservers).forEach { DistributedNotificationCenter.default().removeObserver($0) }
     }
 
     var isPolling: Bool { pollTimer != nil || !lockObservers.isEmpty }
@@ -55,7 +66,7 @@ final class IdleBridgeHandler: GapHandler {
         switch call.action {
         case "idle.queryState":
             let threshold = Self.clampInterval(call.double("detectionIntervalInSeconds") ?? detectionIntervals[listener] ?? Self.defaultInterval)
-            return Self.screenIsLocked ? "locked" : idleSeconds() >= threshold ? "idle" : "active"
+            return Self.screenIsLocked || screenSaverRunning ? "locked" : idleSeconds() >= threshold ? "idle" : "active"
 
         case "idle.setDetectionInterval":
             detectionIntervals[listener] = Self.clampInterval(call.double("intervalInSeconds") ?? Self.defaultInterval)
@@ -96,7 +107,7 @@ final class IdleBridgeHandler: GapHandler {
                 }
             }
         }
-        let locked = knownLock ?? Self.screenIsLocked
+        let locked = (knownLock ?? Self.screenIsLocked) || screenSaverRunning
         let idle = locked ? 0 : idleSeconds()
         var states: [Listener: String] = [:]
         var nextCheck = Double.infinity
