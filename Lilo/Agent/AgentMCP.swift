@@ -87,7 +87,7 @@ enum AgentMCP {
             let tab = (arguments["tabId"] as? NSNumber)?.intValue
             let callId = UUID()
             let overlapping = session.tabCalls.values.filter { $0.tab == tab }.sorted { $0.startedAt < $1.startedAt }
-            if let tab { session.tabCalls[callId] = (tab, name, startedAt) }
+            if let tab { session.tabCalls[callId] = (tab, name, startedAt, AgentCursorView.Mood(tool: name, action: arguments["action"] as? String)) }
             let warning = overlapping.map { call in
                 "Warning: \(call.tool), called \(Int(startedAt.timeIntervalSince(call.startedAt))) s ago on this tab, " +
                     "was still running when this call began: both ran at the same time on the page."
@@ -97,7 +97,10 @@ enum AgentMCP {
             let sent = AgentCallSent()
             let work = AgentCallSent.$current.withValue(sent) {
                 Task {
-                    defer { session.tabCalls[callId] = nil }
+                    defer {
+                        session.tabCalls[callId] = nil
+                        control.publishActivity()
+                    }
                     return try await AgentTools.call(name, arguments: arguments, session: session, control: control)
                 }
             }
