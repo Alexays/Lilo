@@ -12,7 +12,7 @@
   import { isPointInsideRect } from "../../lib/dndEngine/geometry";
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import SpaceMoveHint from "../spaces/SpaceMoveHint.svelte";
-  import { getAgentClients, getAgentIcons, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace } from "../../stores/agents.svelte";
+  import { getAgentClients, getAgentMood, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfiles } from "../../stores/profiles.svelte";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { userProfiles } from "../settings/profilesModel";
@@ -431,12 +431,11 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    {#if getAgentIcons(space.id)}
-      <span class="agent-icons" aria-hidden="true">
-        {#each getAgentIcons(space.id)!.slice(-3) as icon (icon)}
-          <img src={icon} alt="" draggable="false" />
-        {/each}
-      </span>
+    {#if isAgentsSpace(space.id)}
+      <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
+      {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
+        <AgentMascot mood={getAgentMood(space.id)} />
+      {/await}
     {:else}
       {space.icon || "🌐"}
     {/if}
@@ -1106,20 +1105,6 @@
     }
   }
 
-
-  .agent-icons {
-    display: flex;
-    align-items: center;
-  }
-
-  .agent-icons img {
-    width: 16px;
-    height: 16px;
-  }
-
-  .agent-icons img + img {
-    margin-left: -10px;
-  }
 
   /* The only dot in the bar: on the tile's top-right corner, ringed with the bar's background. */
   .space-attention-dot {

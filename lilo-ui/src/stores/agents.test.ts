@@ -10,12 +10,16 @@ function receive(msg: Record<string, unknown>): void {
 	(globalThis as unknown as LiloWindow).window.__lilo?.receive(msg);
 }
 
-function activity(...clients: { name: string; busy?: boolean; spaceIds?: string[] }[]): void {
+function activity(
+	moods: Record<string, string>,
+	...clients: { name: string; busy?: boolean; actingTabIds?: string[]; spaceIds?: string[] }[]
+): void {
 	receive({
 		event: "agentActivity",
 		clients: clients.map((client) => ({ busy: false, actingTabIds: [], spaceIds: ["agents"], ...client })),
 		agentsSpaceIds: ["agents", "agents-pro"],
 		hiddenAgentsSpaceIds: [],
+		moods,
 	});
 }
 
@@ -45,50 +49,42 @@ async function loadAgentsStore() {
 const iconRequests = (posted: PostedMessage[]) =>
 	posted.filter((message) => message.action === "getAgentClients").length;
 
-test("a connected agent shows its app icon once the client list arrives", async () => {
-	const posted = stubBridgeWindow();
-	const store = await loadAgentsStore();
-	const before = iconRequests(posted);
-
-	activity({ name: "claude-ai" });
-	assert.equal(iconRequests(posted), before + 1);
-	assert.equal(store.getAgentIcons("agents"), undefined);
-
-	snapshot();
-	assert.deepEqual(store.getAgentIcons("agents"), ["data:claude"]);
-});
-
-test("an unknown agent keeps the robot and asks for the client list only once", async () => {
+test("an unknown agent asks for the client list only once", async () => {
 	const posted = stubBridgeWindow();
 	const store = await loadAgentsStore();
 	snapshot();
 	const before = iconRequests(posted);
 
-	activity({ name: "my-script" });
-	activity({ name: "other-tool" });
-	activity({ name: "other-tool", busy: true });
-	assert.equal(store.getAgentIcons("agents"), undefined);
+	activity({}, { name: "my-script" });
+	activity({}, { name: "other-tool" });
+	activity({}, { name: "other-tool", busy: true });
 	assert.equal(iconRequests(posted), before + 1);
-});
-
-test("the acting agent comes last, in front of the others", async () => {
-	stubBridgeWindow();
-	const store = await loadAgentsStore();
-	snapshot();
-
-	activity({ name: "claude-ai", busy: true }, { name: "cursor-vscode" });
-	assert.deepEqual(store.getAgentIcons("agents"), ["data:cursor", "data:claude"]);
-	activity({ name: "claude-ai" }, { name: "cursor-vscode", busy: true });
-	assert.deepEqual(store.getAgentIcons("agents"), ["data:claude", "data:cursor"]);
-});
-
-test("each Agents space shows the agents working in it", async () => {
-	stubBridgeWindow();
-	const store = await loadAgentsStore();
-	snapshot();
-
-	activity({ name: "claude-ai", busy: true, spaceIds: ["agents-pro"] }, { name: "cursor-vscode" });
-	assert.deepEqual(store.getAgentIcons("agents"), ["data:cursor"]);
-	assert.deepEqual(store.getAgentIcons("agents-pro"), ["data:claude"]);
 	assert.ok(store.isAgentsSpace("agents-pro"));
+});
+
+test("a space keeps its mood between two calls while its agent still acts, then goes idle", async () => {
+	stubBridgeWindow();
+	const store = await loadAgentsStore();
+
+	activity({ agents: "reading" }, { name: "claude-ai", busy: true, actingTabIds: ["tab"] });
+	assert.equal(store.getAgentMood("agents"), "reading");
+	activity({}, { name: "claude-ai", actingTabIds: ["tab"] });
+	assert.equal(store.getAgentMood("agents"), "reading");
+	activity({ agents: "typing" }, { name: "claude-ai", busy: true, actingTabIds: ["tab"] });
+	assert.equal(store.getAgentMood("agents"), "typing");
+	activity({}, { name: "claude-ai" });
+	assert.equal(store.getAgentMood("agents"), undefined);
+});
+
+test("each Agents space has the mood of the agents working in it", async () => {
+	stubBridgeWindow();
+	const store = await loadAgentsStore();
+
+	activity(
+		{ "agents-pro": "loading" },
+		{ name: "claude-ai", busy: true, actingTabIds: ["tab"], spaceIds: ["agents-pro"] },
+		{ name: "cursor-vscode" },
+	);
+	assert.equal(store.getAgentMood("agents-pro"), "loading");
+	assert.equal(store.getAgentMood("agents"), undefined);
 });

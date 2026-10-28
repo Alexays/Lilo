@@ -162,7 +162,7 @@ final class AgentCursorView: NSView {
     }
 
     /// What the mascot acts out while a call runs on its tab, so a still pointer never reads as stuck.
-    enum Mood {
+    enum Mood: String {
         case working, reading, scripting, typing, capturing, loading, waitingForUser
 
         init(tool: String, action: String?) {

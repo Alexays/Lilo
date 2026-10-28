@@ -983,6 +983,8 @@ export interface BridgeEventPayloadMap {
 		agentsProfileId: string;
 		/** Agents spaces with no agent working there and no tab left. */
 		hiddenAgentsSpaceIds: string[];
+		/** What the latest call running in each Agents space does, by space id. */
+		moods: Record<string, BridgeAgentMood>;
 	};
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
 	appNames: { names: Record<string, string> };
@@ -1172,6 +1174,15 @@ export interface BridgeAgentAction {
 }
 
 /** An AI agent connected over MCP, by the name it gave, and whether a tool call of it runs now. */
+export type BridgeAgentMood =
+	| "working"
+	| "reading"
+	| "scripting"
+	| "typing"
+	| "capturing"
+	| "loading"
+	| "waitingForUser";
+
 export interface BridgeAgentClient {
 	name: string;
 	busy: boolean;

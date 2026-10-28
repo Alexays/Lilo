@@ -987,6 +987,8 @@ export const createDemoHost = (
           ]
         : [],
       hiddenAgentsSpaceIds: [],
+      moods:
+        agentConnected && agentBusy ? { "playground-agents": "working" } : {},
     });
 
   const ensureAgentWorkspace = () => {

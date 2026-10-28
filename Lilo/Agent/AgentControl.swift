@@ -157,10 +157,15 @@ final class AgentControl {
                 ] as [String: Any]
             }
             // The latest call running on a tab sets its cursor's mood; one that just ended leaves it until the dot goes out.
+            // The latest one in an Agents space sets the mood of the space's mascot.
             var moods: [Int: (mood: AgentCursorView.Mood, startedAt: Date)] = [:]
+            var spaceMoods: [UUID: (mood: AgentCursorView.Mood, startedAt: Date)] = [:]
             for session in authorized {
-                for call in session.tabCalls.values where call.startedAt >= moods[call.tab]?.startedAt ?? .distantPast {
-                    moods[call.tab] = (session.waitingForUser ? .waitingForUser : call.mood, call.startedAt)
+                let space = working[session.id]
+                for call in session.tabCalls.values {
+                    let mood: AgentCursorView.Mood = session.waitingForUser ? .waitingForUser : call.mood
+                    if call.startedAt >= moods[call.tab]?.startedAt ?? .distantPast { moods[call.tab] = (mood, call.startedAt) }
+                    if let space, call.startedAt >= spaceMoods[space]?.startedAt ?? .distantPast { spaceMoods[space] = (mood, call.startedAt) }
                 }
             }
             for (id, capture) in captures {
@@ -183,7 +188,8 @@ final class AgentControl {
             for window in context.windows.windows {
                 window.bridgeRouter?.send(event: "agentActivity", data: [
                     "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
-                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString)
+                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString),
+                    "moods": Dictionary(uniqueKeysWithValues: spaceMoods.map { ($0.key.uuidString, $0.value.mood.rawValue) })
                 ])
             }
         }
