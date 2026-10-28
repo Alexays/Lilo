@@ -4,6 +4,37 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-29
+
+### Added
+
+- Use Lilo in German, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Japanese, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Italian, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Korean, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Traditional Chinese, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Polish, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Turkish, including menus, system prompts, Shortcuts, and emoji search.
+- Use Lilo in Dutch, including menus, system prompts, Shortcuts, and emoji search.
+- With the address in a toolbar over the page, tabs on the left or the top, View > Hide Toolbar (Option-Command-T) hides that toolbar on its own, and hiding the sidebar or the tab strip now leaves the toolbar in place.
+- Google Meet opens its compact picture-in-picture view (speaker, mute, camera, hang up): in the sidebar while Lilo is in front, in a floating window over other apps, automatically when you leave the call tab. Other sites can open document picture-in-picture windows too.
+- Browse your whole history in a History page (⌘Y), each day's visits grouped by site: filter by period, site or terminal, search, and delete what you pick.
+
+### Changed
+
+- Agents now wear Lilo's violet instead of coral: their cursor, the frame around the tab they control, the Agents space and their folders. The cursor is a rounded pointer trailed by a little round mascot that carries the agent's name, looks where it goes and blinks. Agents also go by readable names: the Claude app's agent mode is Claude, and gemini-cli-mcp-client reads Gemini CLI.
+- The What's New sheet now fades out when you close it instead of disappearing at once.
+
+### Fixed
+
+- An agent's page sized smaller than the window keeps rounded corners inside its frame.
+- With the address hidden, the sidebar header sits on the traffic lights' line, and the page buttons on the Space row no longer cut its name short.
+- A call in Google Meet's companion mode now gets its call card and stays alive in a background tab.
+- Fix a rare crash in a terminal that prints for a long time.
+- Fix a crash when an extension signs in with a very long timeout.
+- An asleep tab's favicon stays legible when the icon brings its own background, as LinkedIn's does.
+
+[0.9.0]: https://github.com/Alexays/Lilo/compare/v0.8.0...v0.9.0
 ## [0.8.0] - 2026-10-28
 
 ### Added

@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Agents now wear Lilo''s violet instead of coral: their cursor, the frame around the tab they control, the Agents space and their folders. The cursor is a rounded pointer trailed by a little round mascot that carries the agent''s name, looks where it goes and blinks. Agents also go by readable names: the Claude app''s agent mode is Claude, and gemini-cli-mcp-client reads Gemini CLI.'
-time: 2026-10-28T20:36:22.366734+01:00
