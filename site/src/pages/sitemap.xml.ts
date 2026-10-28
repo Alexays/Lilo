@@ -3,7 +3,16 @@ import type { Locale } from "../lib/i18n";
 
 export const GET = () => {
   const site = "https://getlilo.app";
-  const pages = ["", "moving/", "arc-alternative/", "ai-agents/", "changelog/"];
+
+  const pages = [
+    "",
+    "moving/",
+    "arc-alternative/",
+    "compare/",
+    "ai-agents/",
+    "changelog/",
+  ];
+
   const languages: Locale[] = ["en", "fr"];
 
   const urls = pages.flatMap((page) =>

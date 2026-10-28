@@ -23,6 +23,14 @@ export const copy = {
     changelogDescription:
       "New features, improvements and fixes in Lilo, a free, open-source browser for Mac. Read the release notes for every version.",
     changelogTitle: "Lilo Browser changelog: what’s new in every release",
+    compare: "Compare browsers",
+    compareClosingDescription:
+      "Lilo imports from Safari, Zen, Dia and Chromium browsers in a few clicks and changes nothing in them, so you can keep both side by side.",
+    compareClosingHeading: "Try it beside the one you use.",
+    compareHeading: "Lilo, Safari, Zen, Orion and Dia, compared.",
+    compareHeroLink: "See the table",
+    compareIntroduction:
+      "Five sidebar-friendly browsers for the Mac, on three different engines. Here is what sets each one apart, and when another one fits you better than Lilo.",
     darkMode: "Dark mode",
     darkReaderDescription: "Dark mode for every site",
     demoAgentHint:
@@ -153,6 +161,14 @@ export const copy = {
       "Les nouvelles fonctions, améliorations et corrections de Lilo, un navigateur gratuit et open source pour Mac. Retrouvez les notes de chaque version.",
     changelogTitle:
       "Nouveautés du navigateur Lilo : les notes de chaque version",
+    compare: "Comparer les navigateurs",
+    compareClosingDescription:
+      "Lilo importe depuis Safari, Zen, Dia et les navigateurs Chromium en quelques clics, sans rien y changer : vous pouvez garder les deux côte à côte.",
+    compareClosingHeading: "Essayez-le à côté du vôtre.",
+    compareHeading: "Lilo, Safari, Zen, Orion et Dia, comparés.",
+    compareHeroLink: "Voir le tableau",
+    compareIntroduction:
+      "Cinq navigateurs pour Mac qui aiment les barres latérales, sur trois moteurs différents. Voici ce qui distingue chacun, et quand un autre vous conviendra mieux que Lilo.",
     darkMode: "Mode sombre",
     darkReaderDescription: "Le mode sombre sur tous les sites",
     demoAgentHint:
