@@ -342,11 +342,6 @@
 				"description": "Un onglet qui utilise votre caméra, votre micro ou votre écran se range dans la barre latérale quand vous le quittez, au lieu d'une fenêtre flottante.",
 				"keywords": "pip dock appel barre latérale flottant"
 			},
-			"fullBandMicrophone": {
-				"title": "Micro pleine qualité avec un casque",
-				"description": "Avec un casque, les appels se passent de l'annulation d'écho, qui étouffe votre voix.",
-				"keywords": "micro écho casque airpods"
-			},
 			"contentBlocker": {
 				"title": "Bloquer pubs et traqueurs",
 				"description": "S'applique dès le prochain chargement de page.",

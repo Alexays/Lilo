@@ -238,7 +238,7 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Root cause:** WebKit does not expose Apple Pay or the Payment Request API to a third-party
   WKWebView host on macOS. There is no app-side remedy; sites fall back to card entry.
 
-### Microphone quality on speakers during calls
-- **Symptom:** On speakers, a call's microphone sounds duller and quieter than in Chrome: nothing above 12 kHz reaches the page.
-- **Root cause:** With echo cancellation on (the default, and what call sites ask for), WebKit runs the microphone through Apple's voice processing, which caps it at 12 kHz and lowers the voice; Chrome cancels echo in software on the full-band signal. WebKit exposes neither `noiseSuppression` nor `autoGainControl` apart, and does not apply `echoCancellation` to a live track.
-- **Lilo's handling:** With headphones on, `MicrophoneBridge` asks WebKit for the microphone without echo cancellation, and ends those tracks when the output leaves headphones so the page reopens one with it (setting: Full-quality mic with headphones). On speakers, matching Chrome would take a software echo canceller of Lilo's own.
+### Microphone quality during calls
+- **Symptom:** A call's microphone sounds duller and more processed than in Chrome: nothing above 12 kHz reaches the page.
+- **Root cause:** With echo cancellation on (the default, and what call sites ask for), WebKit runs the microphone through Apple's voice processing, which caps it at 12 kHz; Chrome cancels echo, suppresses noise and sets the gain in software on the raw signal. WebKit exposes neither `noiseSuppression` nor `autoGainControl` apart, and its capture with `echoCancellation: false` comes out 14 to 26 dB below the device's level with dropouts, so turning it off is no remedy. A Bluetooth headset's link caps its microphone at 12 kHz in every browser.
+- **Lilo's handling:** None; matching Chrome would take an audio processing stack of Lilo's own.

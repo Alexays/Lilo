@@ -56,7 +56,6 @@ export type SettingId =
   | "autoPictureInPicture"
   | "autoplay"
   | "dockCallsInSidebar"
-  | "fullBandMicrophone"
   | "autoDevices"
   | "deviceSetup"
   | "appUpdates"
@@ -209,7 +208,6 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   askDownloadLocation: { key: "askDownloadLocation", fallback: false },
   autoPictureInPicture: { key: "autoPictureInPicture", fallback: true },
   dockCallsInSidebar: { key: "dockCallsInSidebar", fallback: true },
-  fullBandMicrophone: { key: "fullBandMicrophone", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
@@ -252,7 +250,6 @@ export const SETTINGS: SettingModel[] = [
   { id: "autoPictureInPicture", section: "media", groupKey: "settings.groups.playback" },
   { id: "autoplay", section: "media", groupKey: "settings.groups.playback" },
   { id: "dockCallsInSidebar", section: "media", groupKey: "settings.groups.calls", requires: "autoPictureInPicture" },
-  { id: "fullBandMicrophone", section: "media", groupKey: "settings.groups.calls" },
   { id: "autoDevices", section: "media", groupKey: "settings.groups.calls" },
   { id: "deviceSetup", section: "media", groupKey: "settings.groups.calls", requires: "autoDevices" },
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },

@@ -342,11 +342,6 @@
 				"description": "A tab using your camera, mic, or screen docks in the sidebar when you switch away, instead of a floating window.",
 				"keywords": "pip dock call sidebar floating"
 			},
-			"fullBandMicrophone": {
-				"title": "Full-quality mic with headphones",
-				"description": "With headphones, calls skip echo cancellation, which dulls your voice.",
-				"keywords": "mic echo airpods"
-			},
 			"contentBlocker": {
 				"title": "Block ads and trackers",
 				"description": "Applies from the next page load.",

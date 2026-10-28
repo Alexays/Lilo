@@ -342,11 +342,6 @@
 				"description": "Una pestaña que usa tu cámara, micrófono o pantalla se acopla en la barra lateral al cambiar de pestaña, en lugar de una ventana flotante.",
 				"keywords": "pip acoplar llamada barra lateral flotante"
 			},
-			"fullBandMicrophone": {
-				"title": "Micrófono de calidad completa con auriculares",
-				"description": "Con auriculares, las llamadas omiten la cancelación de eco, que apaga tu voz.",
-				"keywords": "micrófono eco auriculares airpods"
-			},
 			"contentBlocker": {
 				"title": "Bloquear anuncios y rastreadores",
 				"description": "Se aplica al volver a cargar la página.",

@@ -342,11 +342,6 @@
 				"description": "Uma aba que usa sua câmera, microfone ou tela fica na barra lateral quando você sai dela, em vez de uma janela flutuante.",
 				"keywords": "pip acoplar chamada barra lateral flutuante"
 			},
-			"fullBandMicrophone": {
-				"title": "Microfone de alta qualidade com fones",
-				"description": "Com fones de ouvido, as chamadas dispensam o cancelamento de eco, que deixa a voz abafada.",
-				"keywords": "microfone eco airpods"
-			},
 			"contentBlocker": {
 				"title": "Bloquear anúncios e rastreadores",
 				"description": "Aplica-se a partir do próximo carregamento da página.",
