@@ -481,9 +481,10 @@ final class RealExtensionSmokeTests: XCTestCase {
             // Chrome's behavior with another version says nothing about this one: all its errors count.
             let chrome = recorded?.version == outcome.version ? recorded : nil
             if chrome == nil { outcome.staleChrome = recorded?.version ?? "nothing" }
-            var connected = false
+            var connected = false, workerStarted: Date?
             if context.webExtension.hasBackgroundContent {
                 let starting = Date()
+                workerStarted = starting
                 let loaded = await registry.backgrounds.load(id)
                 connected = await pollUntil(timeout: 10) { registry.lifecycle.worker(of: id) == .running }
                 if connected { outcome.time("worker", since: starting, chrome: chrome?.workerRestartMs) }
@@ -517,8 +518,11 @@ final class RealExtensionSmokeTests: XCTestCase {
             let chromeActionMenus = chrome?.menus?.filter { !Set($0.split(separator: ",")).isDisjoint(with: ["action", "browser_action", "page_action"]) }.count ?? 0
             if !chromePage.isEmpty || chromeMenus + chromeActionMenus > 0 || context.webExtension.manifest["content_scripts"] != nil {
                 // Chrome's recording opens the test page once the popup settled, 5 s after it opened at least: an extension
-                // setting up its cosmetic filtering after its first start (SBlock, Stop Ads Now) is done by then.
-                if !chromePage.isEmpty, let popupOpened, case let wait = 5 - Date().timeIntervalSince(popupOpened), wait > 0 {
+                // setting up its cosmetic filtering after its first start (SBlock, Stop Ads Now) is done by then. Without a
+                // popup, a second after the worker started: Chrome registers content scripts in its own process, at once
+                // (Cool Ad Popup Blocker's are not yet when WebKit opens the page).
+                let ready = popupOpened.map { $0.addingTimeInterval(5) } ?? workerStarted.map { $0.addingTimeInterval(1) }
+                if !chromePage.isEmpty, let ready, case let wait = ready.timeIntervalSinceNow, wait > 0 {
                     try await Task.sleep(for: .seconds(wait))
                 }
                 let tab = try XCTUnwrap(window.createTabStateFirst(url: pageURL))
