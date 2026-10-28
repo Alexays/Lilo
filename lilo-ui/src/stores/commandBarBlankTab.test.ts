@@ -52,7 +52,6 @@ async function withStore() {
 
 	const openCommandBar = commandBarModule.openCommandBar as (
 		prefill?: string,
-		mode?: string,
 		closeBlankTabOnDismiss?: boolean,
 	) => void;
 	const closeCommandBar = commandBarModule.closeCommandBar as () => void;
