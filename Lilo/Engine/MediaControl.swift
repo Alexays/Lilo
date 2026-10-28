@@ -54,9 +54,11 @@ extension WKWebViewTab {
         return result;
       };
       const original = lilo.methods(MediaSession.prototype, hooks);
-      lilo.on('media', action => {
+      lilo.on('media', (action, reason) => {
         if (handlers[action]) {
-          try { handlers[action]({ action }); return true; } catch (e) {}
+          const details = { action };
+          if (reason) details.enterPictureInPictureReason = reason;
+          try { handlers[action](details); return true; } catch (e) {}
         }
         if (action === 'pause') {
           paused = Array.prototype.filter.call(document.querySelectorAll('video, audio'), media => !media.paused);
@@ -71,10 +73,11 @@ extension WKWebViewTab {
     """#
 
     /// Asks the page for its Document PiP window through its Media Session handler, as Chrome does when a call tab
-    /// is left. Without a `useraction` reason, as Chrome's automatic opening.
+    /// is left. As a `useraction`: the user left the tab with auto PiP on, and Meet keeps its automatic opening for
+    /// some accounts only, where its menu's opening works for all.
     func enterDocumentPictureInPicture() {
         guard callControls.hasPictureInPictureAction, wake() else { return }
-        wkWebView.evaluateJavaScript(PageWorld.push("media", ["enterpictureinpicture"]), in: nil, in: PageWorld.bridgeWorld)
+        wkWebView.evaluateJavaScript(PageWorld.push("media", ["enterpictureinpicture", "useraction"]), in: nil, in: PageWorld.bridgeWorld)
     }
 
     /// `action` is play, pause, nexttrack, previoustrack, or one of `callActions` the page handles.
