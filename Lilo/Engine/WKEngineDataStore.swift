@@ -10,6 +10,10 @@ final class WKEngineDataStore {
         self.identifier = identifier
     }
 
+    /// Every type a site keeps in the store. Screen Time's history lives in its own service, which each fetch waits on
+    /// (half a second, minutes on a loaded Mac), and Lilo reports to it without a store profile, so it holds none of the store's.
+    @MainActor static let siteDataTypes = WKWebsiteDataStore.allWebsiteDataTypes().subtracting([WKWebsiteDataTypeScreenTime])
+
     @MainActor
     func removeAllData(modifiedSince date: Date) async {
         let types = WKWebsiteDataStore.allWebsiteDataTypes()
@@ -40,7 +44,7 @@ final class WKEngineDataStore {
         let fetch = NSSelectorFromString("_fetchDataRecordsOfTypes:withOptions:completionHandler:")
         let sizeOf = NSSelectorFromString("sizeOfDataTypes:")
         guard backingStore.responds(to: fetch) else { return nil }
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
+        let types = Self.siteDataTypes
         // 1 is _WKWebsiteDataStoreFetchOptionComputeSizes. The records are summed where they arrive: they are not Sendable.
         return await withCheckedContinuation { continuation in
             unsafeBitCast(backingStore.method(for: fetch), to: FetchRecords.self)(backingStore, fetch, types as NSSet, 1) { records in

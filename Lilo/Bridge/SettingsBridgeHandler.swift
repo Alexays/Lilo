@@ -359,7 +359,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
         case "removeWebsiteData":
             if let name = message.string("name"), let backingStore = dataStoreProvider()?.backingStore {
-                let types = WKWebsiteDataStore.allWebsiteDataTypes()
+                let types = WKEngineDataStore.siteDataTypes
                 let records = await backingStore.dataRecords(ofTypes: types).filter { $0.displayName == name }
                 await backingStore.removeData(ofTypes: types, for: records)
                 await publishWebsiteData()
@@ -552,7 +552,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
     private func publishWebsiteData() async {
         guard let backingStore = dataStoreProvider()?.backingStore else { return }
-        let records = await backingStore.dataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes())
+        let records = await backingStore.dataRecords(ofTypes: WKEngineDataStore.siteDataTypes)
         let sites = records.sorted { $0.displayName < $1.displayName }.map { record in
             let kinds = Set(record.dataTypes.map { type in
                 type == WKWebsiteDataTypeCookies ? "cookies" : type.contains("Cache") ? "cache" : "storage"
