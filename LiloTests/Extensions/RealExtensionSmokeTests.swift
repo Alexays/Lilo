@@ -99,7 +99,6 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
-        "aabcgdmkeabbnleenpncegpcngjpnjkc": "some runs its worker refreshes a tab the smoke closed meanwhile (No tab with id), as Chrome's would", // Easy Auto Refresh
         "nngceckbapebfimnlniiiahkandclblb": "some runs its badge update meets a tab the smoke closed meanwhile (No tab with id)", // Bitwarden
         "npnbdojkgkbcdfdjlfdmplppdphlhhcf": "on GitHub's macOS runners its popup and page widgets stay empty, where its worker's getImageData fails; it passes on a Mac", // ProWritingAid
         "cdjkkeofanojcdolaakkckkmfcjejlij": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): some runs its status thread starts before the script defining WEBSOCKET_CONNECTED", // GIS NR plugin
@@ -154,25 +153,29 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// shows at least half of `expected`, Chrome's, or anything without one, for at most `timeout`; then closes the tab.
     /// Returns the last fingerprint and whether it matched.
     /// `closed` when the page closed its own tab, as a popup does that finds itself in one (NordPass, Zoom to Fill).
-    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool, closed: Bool) {
+    /// The page stays open as long as Chrome's recording keeps it: 5 s at least, then until its fingerprint held 2 s, so
+    /// what the extension still exchanges as it settles ends as in Chrome. `matchedAfter` is when it first matched.
+    private func render(_ window: MainWindowController, _ url: URL, probes: String, like expected: Set<String>, timeout: TimeInterval) async throws -> (tokens: Set<String>, matched: Bool, closed: Bool, matchedAfter: TimeInterval?) {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: url))
         defer { window.closeTabStateFirst(id: tab.id, undoable: false) }
         let opened = Date()
-        var tokens: Set<String> = []
+        var tokens: Set<String> = [], matchedAfter: TimeInterval?, still = opened
+        let matches = { (tokens: Set<String>) in expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count }
         while Date().timeIntervalSince(opened) < timeout {
             try await Task.sleep(for: .milliseconds(250))
-            if !window.tabManager.openTabs.contains(where: { $0.id == tab.id }) { return (tokens, false, true) }
+            if !window.tabManager.openTabs.contains(where: { $0.id == tab.id }) { return (tokens, false, true, nil) }
             guard let engine = window.tabManager.engineTab(for: tab.id) else { continue }
             // As pageText: on screen, as a popup, and unattended.
             browserContext.context.agentControl.attach(engine, to: nil)
             engine.agentDialogHandler = { _ in true }
             let page = engine.view as? WKWebView
-            tokens = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
-            if expected.isEmpty ? !tokens.isEmpty : expected.intersection(tokens).count * 2 >= expected.count {
-                return (tokens, true, false)
-            }
+            let sampled = Set(await evaluate("(\(probes)).fingerprint()", in: page) as? [String] ?? [])
+            if sampled != tokens { still = Date() }
+            tokens = sampled
+            if matchedAfter == nil, matches(tokens) { matchedAfter = Date().timeIntervalSince(opened) }
+            if matchedAfter != nil, Date().timeIntervalSince(opened) >= 5, Date().timeIntervalSince(still) >= 2 { break }
         }
-        return (tokens, false, false)
+        return (tokens, matchedAfter != nil, false, matchedAfter)
     }
 
     /// What Chrome does with each of them, recorded by `make chrome-smoke`.
@@ -221,7 +224,10 @@ final class RealExtensionSmokeTests: XCTestCase {
 
         /// Reported, never failed: past 5 s, or past 3 times Chrome's time and a second more.
         func time(_ step: String, since start: Date, chrome: Int?) {
-            let ms = Int(Date().timeIntervalSince(start) * 1000)
+            time(step, ms: Int(Date().timeIntervalSince(start) * 1000), chrome: chrome)
+        }
+
+        func time(_ step: String, ms: Int, chrome: Int?) {
             timings[step] = ms
             if ms > 5000 || chrome.map({ ms > 3 * $0 && ms - $0 > 1000 }) == true {
                 slow.append("\(step) \(ms) ms" + (chrome.map { " (Chrome \($0) ms)" } ?? ""))
@@ -530,9 +536,8 @@ final class RealExtensionSmokeTests: XCTestCase {
             if let popupURL {
                 // A popup may wait for its extension's remote configuration first (DuckDuckGo, up to 30 s).
                 let expected = tokens(chrome?.popup)
-                let opened = Date()
-                popupOpened = opened
-                let (shown, matched, closed) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
+                popupOpened = Date()
+                let (shown, matched, closed, matchedAfter) = try await render(window, popupURL, probes: probes, like: expected, timeout: 40)
                 // A popup closing the tab it was opened in shows in its own popup, which the idle check opens.
                 if closed {
                     outcome.details.append("its popup closes the tab it is opened in")
@@ -541,7 +546,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the popup", shown, expected))
                 }
-                if matched { outcome.time("popup", since: opened, chrome: chrome?.popup?.ms) }
+                if let matchedAfter { outcome.time("popup", ms: Int(matchedAfter * 1000), chrome: chrome?.popup?.ms) }
             }
             let chromePage = Set(chrome?.page ?? [])
             // WebKit hands Lilo only the items for every context and the toolbar button's: the page's own context menu
@@ -592,8 +597,7 @@ final class RealExtensionSmokeTests: XCTestCase {
             }
             if let optionsURL = context.optionsPageURL, chrome == nil || chrome?.options != nil {
                 let expected = tokens(chrome?.options)
-                let opened = Date()
-                let (shown, matched, closed) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
+                let (shown, matched, closed, matchedAfter) = try await render(window, optionsURL, probes: probes, like: expected, timeout: 20)
                 if closed {
                     outcome.details.append("its options page closes its own tab")
                 } else if shown.isEmpty {
@@ -601,7 +605,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 } else if !matched && !expected.isEmpty {
                     outcome.problems.append(mismatch("the options page", shown, expected))
                 }
-                if matched { outcome.time("options", since: opened, chrome: chrome?.options?.ms) }
+                if let matchedAfter { outcome.time("options", ms: Int(matchedAfter * 1000), chrome: chrome?.options?.ms) }
             }
             outcome.problems += unexpected(context.errors, (chrome?.errors ?? []).map(normalized)).map { "error: \($0)" }
             if !outcome.problems.isEmpty { outcome.details = errorsOf(registry, id) }
@@ -659,8 +663,6 @@ final class RealExtensionSmokeTests: XCTestCase {
         var command: (id: String, check: String)?
         var click = false
         var shows: ((MainWindowController) -> Bool)?
-        /// Why the check passes on a Mac and fails on GitHub's macOS runners, where it is skipped.
-        var macOnly: String?
     }
 
     /// Holds once the ad the page requests again at each evaluation fails: the page may load before
@@ -703,22 +705,19 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "difoiogjjojoaoomphldepapgpbgkhkb", name: "Sider", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
         Feature(id: "ddkjiahejlhfcafbddmgiahcphecmpfh", name: "uBlock Origin Lite", check: adBlocked),
-        Feature(id: "bgnkhhnnamicmpeenaelnjfhikgbkllg", name: "AdGuard AdBlocker", check: adBlocked,
-                macOnly: "its rulesets compile there past the check's wait, in some runs"),
+        Feature(id: "bgnkhhnnamicmpeenaelnjfhikgbkllg", name: "AdGuard AdBlocker", check: adBlocked),
         Feature(id: "fmkadmapgofadopljbjfkapdkoienihi", name: "React Developer Tools", check: "typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
         Feature(id: "nhdogjmejiglipccpnnnanhbledajbpd", name: "Vue.js devtools", check: "typeof window.__VUE_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
         Feature(id: "lmhkpmbekcpmknklioeibfkpmmfibljd", name: "Redux DevTools", check: "typeof window.__REDUX_DEVTOOLS_EXTENSION__ === 'function'"),
         Feature(id: "bcjindcccaagfpapjjmafapmmgkkhgoa", name: "JSON Formatter", path: "/data.json", check: "document.getElementById('jsonFormatterParsed') !== null"),
         Feature(id: "chklaanhfefbnpoihckbnefhakgolnmc", name: "JSONVue", path: "/data.json", check: "document.querySelector('.collapser, #json') !== null"),
-        Feature(id: "nffaoalbilbmmfgbnbgppjihopabppdk", name: "Video Speed Controller", path: "/video", check: "document.querySelector('vsc-controller') !== null",
-                macOnly: "the test page's video never gets the controller there"),
+        Feature(id: "nffaoalbilbmmfgbnbgppjihopabppdk", name: "Video Speed Controller", path: "/video", check: "document.querySelector('vsc-controller') !== null"),
         Feature(id: "oldceeleldhonbafppcapldpdifcinji", name: "LanguageTool", check: "document.querySelector('[data-lt-installed], [data-lt-tmp-id]') !== null"),
         Feature(id: "nllcnknpjnininklegdoijpljgdjkijc", name: "Wordtune", check: "window._wordtune_extension_installed === true"),
         Feature(id: "edacconmaakjimmfgnblocblbcdcpbko", name: "Session Buddy", check: "true", click: true,
                 shows: { window in window.tabManager.openTabs.contains { $0.url?.host == "edacconmaakjimmfgnblocblbcdcpbko" } }),
         Feature(id: "fdpohaocaechififmbbbbbknoalclacl", name: "GoFullPage", check: "true", click: true,
-                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } },
-                macOnly: "its toolbar button opens nothing there")
+                shows: { window in window.tabManager.openTabs.contains { $0.url?.lastPathComponent == "capture.html" } })
     ]
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
@@ -733,9 +732,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         }
         // LILO_SMOKE_FEATURES, comma-separated names, runs only those.
         let only = ProcessInfo.processInfo.environment["LILO_SMOKE_FEATURES"].flatMap { $0.isEmpty ? nil : Set($0.split(separator: ",").map(String.init)) }
-        let onRunner = ProcessInfo.processInfo.environment["LILO_SMOKE_ON_CI"] != nil
         for feature in Self.features where only?.contains(feature.name) ?? true {
-            if onRunner, feature.macOnly != nil { continue }
             let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)\(feature.path)"))
             do {
                 let package = try await ChromeWebStoreInstaller.downloadAndExtract(extensionId: feature.id)
@@ -773,15 +770,25 @@ final class RealExtensionSmokeTests: XCTestCase {
                 button.representedObject = feature.id
                 window.openExtensionFromMenu(button)
             }
+            // What a failing check saw, to tell an extension's failure from the machine's.
+            let diagnosis = { () async -> String in
+                let state = await self.evaluate("""
+                JSON.stringify({ url: location.href, title: document.title, videos: document.querySelectorAll('video').length,
+                  controllers: document.querySelectorAll('vsc-controller').length, text: document.body?.innerText.slice(0, 120) })
+                """, in: page) as? String ?? "unread"
+                let worker = registry.lifecycle.worker(of: feature.id).map { "\($0)" } ?? "none"
+                let errors = context.errors.suffix(4).map { String($0.localizedDescription.prefix(160)) }
+                return "page \(state), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors)"
+            }
             if let shows = feature.shows {
                 let shown = await pollUntil(timeout: 30) { shows(window) }
-                XCTAssertTrue(shown, "\(feature.name) opens what its toolbar button opens")
+                if !shown { XCTFail("\(feature.name) opens what its toolbar button opens: \(await diagnosis())") }
             }
             let checked = await holds(feature.check)
-            XCTAssertTrue(checked, "\(feature.name) does its part on the page")
+            if !checked { XCTFail("\(feature.name) does its part on the page: \(await diagnosis())") }
             if feature.menu, let adapter = window.tabManager.tabAdapter(for: tab.id) {
                 let added = await pollUntil(timeout: 10) { !context.menuItems(for: adapter).isEmpty }
-                XCTAssertTrue(added, "\(feature.name) adds its context menu entry")
+                if !added { XCTFail("\(feature.name) adds its context menu entry: \(await diagnosis())") }
             }
             if let (commandId, after) = feature.command {
                 let command = try XCTUnwrap(context.commands.first { $0.id == commandId })
