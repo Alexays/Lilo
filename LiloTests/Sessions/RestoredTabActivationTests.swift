@@ -49,14 +49,20 @@ final class RestoredTabActivationTests: XCTestCase {
         XCTAssertNil(windowController.tabManager.engineTab(for: tabId))
     }
 
-    func testChromeInitialStateAppliedBuildsTheActiveTab() async throws {
+    func testTheChromeFirstPaintBuildsTheActiveTabOnceTheExtensionsAreRestored() async throws {
         let (windowController, tabId) = try makeRestoredController()
         windowController.finishSessionRestore()
         let handler = ChromeBridgeHandler(interactiveZoneStore: ChromeInteractiveZoneStore(), windowController: windowController)
+        func send(_ action: String) async throws {
+            XCTAssertTrue(handler.handledActions.contains(action), "the router only delivers declared actions")
+            _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": [:]])))
+        }
 
-        XCTAssertTrue(handler.handledActions.contains("initialStateApplied"), "the router only delivers declared actions")
-        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "initialStateApplied", "payload": [:]])))
+        try await send("initialStateApplied")
+        XCTAssertNil(windowController.tabManager.engineTab(for: tabId), "the first paint and the extensions come first")
 
-        XCTAssertNotNil(windowController.tabManager.engineTab(for: tabId))
+        try await send("chromeVisualReady")
+        let built = await pollUntil(timeout: 5) { windowController.tabManager.engineTab(for: tabId) != nil }
+        XCTAssertTrue(built)
     }
 }

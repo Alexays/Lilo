@@ -209,7 +209,7 @@ extension MainWindowController {
         // The active tab's web view waits for the chrome to apply this state (its initialStateApplied
         // message): the chrome's load and first frames need this thread, which building that view holds.
         // A chrome that never reports back (failed bundle) still gets its tab here.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.activateRestoredActiveRuntimeIfNeeded() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.restoreExtensionsThenActiveTab() }
         // A terminal has no URL either, but it is not a new tab waiting for one. The onboarding opens
         // the bar itself when it ends: shown now, it would stack over the onboarding.
         if !context.settingsStore.shouldShowOnboarding, tabManager.activeTab.map({ $0.url == nil && $0.kind == .web }) ?? false {
@@ -227,6 +227,10 @@ extension MainWindowController {
 
     func handleChromeVisualReady(occurredAt epochMilliseconds: Double?) {
         StartupMetrics.mark("chromeVisualReady", occurredAt: epochMilliseconds)
+        if !didChromeVisualReady {
+            didChromeVisualReady = true
+            restoreExtensionsThenActiveTab()
+        }
         // Launch benchmark (scripts/bench_startup.sh): dump the marks once the late ones have landed, then quit.
         let environment = ProcessInfo.processInfo.environment
         guard let path = environment["LILO_STARTUP_BENCH_OUT"], !path.isEmpty else { return }

@@ -238,6 +238,7 @@ final class MainWindowController: NSWindowController {
     var lastAppliedWindowChromeColor: NSColor?
     var didStartChromeUILoad = false
     var didReceiveChromeReady = false
+    var didChromeVisualReady = false
     /// Last href pushed to the chrome overlay. WebKit reports the element under the pointer on every
     /// mouse move, so without this the sidebar would take one bridge message per move for a readout
     /// that only changes when the pointer crosses a link boundary.

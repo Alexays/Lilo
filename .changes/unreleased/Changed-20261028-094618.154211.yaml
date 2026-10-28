@@ -1,0 +1,3 @@
+kind: Changed
+body: With extensions installed, the sidebar appears about half a second sooner at launch, and the first page always loads with their blockers active.
+time: 2026-10-28T09:46:18.154211+01:00
