@@ -232,3 +232,16 @@ test("a long query scattered letter by letter across a tab never lists that tab"
 	const tabs = search("moulure porte").results.filter((result) => result.kind === "tab").map((result) => result.id);
 	assert.deepEqual(tabs, ["tab-moulures"]);
 });
+
+test("a query spanning a tab's title and URL lists it only when each word matches one of them", () => {
+	seed([
+		tab("klima", "home", {
+			title: "Mitsubishi Electric HR Cool 71 MSZ-HR71VF/MUZ-HR71VF - KlimaTime.com",
+			url: "https://klimatime.fr/products/mitsubishi-electric-msz-hr71vf-muz-hr71vf-wall-split-air-conditioner?variant=48",
+		}),
+		tab("pulls", "home", { title: "Pull requests", url: "https://github.com/Alexays/Lilo/pulls" }),
+	]);
+	const tabs = (input: string) => search(input).results.filter((result) => result.kind === "tab").map((result) => result.id);
+	assert.deepEqual(tabs("roole map"), []);
+	assert.deepEqual(tabs("pull lilo"), ["tab-pulls"]);
+});

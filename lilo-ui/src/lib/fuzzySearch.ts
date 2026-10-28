@@ -69,7 +69,17 @@ export function fuzzyMatch(query: string, target: string, split = -1): FuzzyMatc
 	const first = matchRange(query, target, 0, split);
 	const second = matchRange(query, target, split + 1, target.length);
 	if (first && second) return first.score >= second.score ? first : second;
-	return first ?? second ?? matchRange(query, target, 0, target.length);
+	if (first || second) return first ?? second;
+
+	// A query spanning both fields needs each word to score in one of them: otherwise letters
+	// picked across a long title and URL (the space landing on the separator) pass as a match.
+	for (const word of query.split(/\s+/)) {
+		if (!word) continue;
+		const inFirst = matchRange(word, target, 0, split);
+		const inSecond = matchRange(word, target, split + 1, target.length);
+		if (Math.max(inFirst?.score ?? -Infinity, inSecond?.score ?? -Infinity) < 0) return null;
+	}
+	return matchRange(query, target, 0, target.length);
 }
 
 // Matches sorted by score, then `tiebreak`, then source order. `accessor` returns lowercased
