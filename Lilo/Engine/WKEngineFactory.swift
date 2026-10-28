@@ -90,6 +90,10 @@ final class WKEngineFactory {
     var callControlsHandler: ((WKWebView, WKWebViewTab.CallControls) -> Void)? {
         didSet { callControlsBridge.onChange = callControlsHandler }
     }
+    /// Whether a page may open a Document Picture-in-Picture window of the given size. Set by MainWindowController.
+    var documentPiPHandler: ((WKWebView, NSSize) -> Bool)? {
+        didSet { documentPiPBridge.onPrepare = documentPiPHandler }
+    }
 
     /// The compiled filter rules, split in parts when they exceed what one list may hold.
     private var contentRuleLists: [WKContentRuleList] = []
@@ -141,6 +145,7 @@ final class WKEngineFactory {
 
     private let serialBridge = SerialBridge()
     private let eyeDropperBridge = EyeDropperBridge()
+    private let documentPiPBridge = DocumentPiPBridge()
 
     func dispatchWebNotificationClick(identifier: String) {
         notificationBridge.dispatchClick(identifier: identifier)
@@ -865,6 +870,7 @@ final class WKEngineFactory {
         contentController.add(notificationBridge, contentWorld: world, name: NotificationBridge.messageHandlerName)
         contentController.addScriptMessageHandler(serialBridge, contentWorld: world, name: SerialBridge.messageHandlerName)
         contentController.addScriptMessageHandler(eyeDropperBridge, contentWorld: world, name: EyeDropperBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(documentPiPBridge, contentWorld: world, name: DocumentPiPBridge.messageHandlerName)
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
         contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
@@ -881,8 +887,9 @@ final class WKEngineFactory {
         // First, so the store shim below finds the store's transport.
         PageWorld.install([
             GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
-            TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
-        ], on: contentController)
+            TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule,
+            DocumentPiPBridge.pageModule
+        ] + (UserDefaults.standard.bool(forKey: "LiloMeetDocumentPiPDisabled") ? [] : [DocumentPiPBridge.meetModule]), on: contentController)
         contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
                                                      in: PageWorld.bridgeWorld))
         // Store shim for regular tabs (the store is a normal https tab without ChromeAPIAugmentation.js), top-level only. Injected

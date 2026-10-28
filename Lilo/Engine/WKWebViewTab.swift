@@ -302,6 +302,9 @@ final class WKWebViewTab: NSObject {
         return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
     }
     var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, URL?, WKWindowFeatures) -> WKWebView?)?
+    /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
+    var pendingDocumentPiPSize: NSSize?
+    var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
     /// Called while building the context menu to inject extension-contributed menu items.
     /// Set by TabManager when the extension registry is active.
     var extensionContextMenuItemsProvider: (@MainActor () -> [NSMenuItem])?
@@ -1646,6 +1649,11 @@ extension WKWebViewTab: WKUIDelegate {
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
         MainActor.assumeIsolated {
+            if let size = pendingDocumentPiPSize {
+                pendingDocumentPiPSize = nil
+                webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+                return documentPiPWebViewProvider?(configuration, size)
+            }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
             if !isAgentControlled, let provider = popupWebViewProvider,
                let popup = provider(configuration, navigationAction.request.url, windowFeatures) {
