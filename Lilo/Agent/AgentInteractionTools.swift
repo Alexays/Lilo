@@ -353,7 +353,7 @@ enum AgentInteractionTools {
             let configuration = WKSnapshotConfiguration()
             configuration.rect = rect
             guard rect.width > 0, rect.height > 0, let image = try? await webView.takeSnapshot(configuration: configuration),
-                  let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+                  let cgImage = image.snapshotPixels,
                   let base64 = await Task.detached(operation: { png(cgImage)?.base64EncodedString() }).value else {
                 throw AgentToolError("Could not capture that region")
             }
@@ -546,7 +546,7 @@ enum AgentInteractionTools {
     private static func recordFrame(_ engine: WKWebViewTab, tabId: UUID, control: AgentControl) async {
         let size = engine.wkWebView.bounds.size
         // One pixel per point, as screenshots: a Retina frame would be four times the memory for the same GIF.
-        guard let image = await engine.takeSnapshot()?.cgImage(forProposedRect: nil, context: nil, hints: nil),
+        guard let image = await engine.takeSnapshot()?.snapshotPixels,
               let frame = await Task.detached(operation: { scaled(image, width: Int(size.width), height: Int(size.height)) }).value else { return }
         // A recording that never stops keeps only the latest frames, 256 MB of them at most.
         let limit = max(1, min(300, 256 * 1024 * 1024 / max(frame.bytesPerRow * frame.height, 1)))

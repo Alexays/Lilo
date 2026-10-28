@@ -698,7 +698,7 @@ final class TabBridgeHandler: BridgeHandler {
         let engine = tabManager?.engineTab(for: tabId) ?? windowController.context.browserState.liveEngine(forTab: tabId)
 
         var dataURL: String?
-        if let cgImage = (await engine?.takePreviewSnapshot())?.cgImage(forProposedRect: nil, context: nil, hints: nil) {
+        if let cgImage = await engine?.takePreviewSnapshot()?.snapshotPixels {
             let box = PreviewBox(image: cgImage)
             dataURL = await Task.detached(priority: .userInitiated) { Self.previewDataURL(from: box.image) }.value
         }
