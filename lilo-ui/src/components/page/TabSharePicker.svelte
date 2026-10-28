@@ -3,9 +3,15 @@
   import { SvelteSet } from "svelte/reactivity";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { t } from "../../lib/i18n/state.svelte";
-  import { getActiveSpaceId, getSpaces } from "../../stores/spaces.svelte";
-  import type { TabState } from "../../stores/folders.svelte";
-  import { getOpenTabs, tabDisplayTitle } from "../../stores/tabs.svelte";
+  import { getActiveSpaceId, getSpaces, type SpaceState } from "../../stores/spaces.svelte";
+  import {
+    getFoldersById,
+    getRootItems,
+    getVisibleFolderChildren,
+    type TabState,
+  } from "../../stores/folders.svelte";
+  import type { RootItem } from "../../stores/sidebarView";
+  import { getOpenTabs, getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import {
     getTabShareRequest,
     getTabShareThumbnail,
@@ -15,11 +21,21 @@
   import { isSidebarVisible } from "../../stores/ui.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
 
+  /** Tabs sharing a folder; `path` runs from the root folder down, empty for loose tabs. */
+  interface TabGroup {
+    id: string;
+    path: string[];
+    tabs: TabState[];
+  }
+
   interface Section {
     id: string;
     label: string;
-    tabs: TabState[];
+    space: SpaceState | null;
+    groups: TabGroup[];
     collapsible: boolean;
+    /** Each card names its Space and folder: suggestions and results leave the tree. */
+    showsPlacement: boolean;
   }
 
   const request = $derived(getTabShareRequest());
@@ -27,51 +43,112 @@
   let selectedId = $state<string | null>(null);
   // Other Spaces open on demand: the current one is where the tab to share usually is.
   const expanded = new SvelteSet<string>();
+  const activeSpaceId = $derived(getActiveSpaceId());
 
-  // Current space's tabs first, then the other spaces in sidebar order; only the tabs native can
-  // resolve to a live engine, so a pick never fails silently.
+  // Current space's tabs first, then the other spaces in sidebar order, each grouped by folder in
+  // sidebar order with its loose tabs first; only the tabs native can resolve to a live engine, so a
+  // pick never fails silently.
   const spaceTabs = $derived.by(() => {
     if (!request) return [];
-    const activeSpaceId = getActiveSpaceId();
     const spaces = getSpaces();
     return [
       ...spaces.filter((space) => space.id === activeSpaceId),
       ...spaces.filter((space) => space.id !== activeSpaceId),
-    ].map((space) => ({
-      space,
-      tabs: getOpenTabs(space.id).filter((tab) => request.shareableTabIds.has(tab.id)),
-    }));
+    ].map((space) => {
+      const tabsById = getTabsById(space.id);
+      const foldersById = getFoldersById(space.id);
+      const loose: TabGroup = { id: `${space.id}:loose`, path: [], tabs: [] };
+      const groups = [loose];
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one derive run, never read reactively
+      const placed = new Set<string>();
+      const walk = (items: RootItem[], group: TabGroup) => {
+        for (const item of items) {
+          if (item.kind === "tab") {
+            const tab = tabsById.get(item.id);
+            if (tab && request.shareableTabIds.has(tab.id) && !placed.has(tab.id)) {
+              placed.add(tab.id);
+              group.tabs.push(tab);
+            }
+            continue;
+          }
+          const folder = foldersById.get(item.id);
+          if (!folder) continue;
+          // A split view is tabs side by side, not a folder the user named: its tabs stay with its parent.
+          const child = folder.isSplit ? group : { id: folder.id, path: [...group.path, folder.name], tabs: [] };
+          if (child !== group) groups.push(child);
+          walk(getVisibleFolderChildren(folder.id, space.id, undefined, tabsById), child);
+        }
+      };
+      walk([...getRootItems(space.id, true), ...getRootItems(space.id)], loose);
+      // Open tabs outside the pinned and unpinned trees (an open bookmark) still get offered.
+      for (const tab of getOpenTabs(space.id)) {
+        if (request.shareableTabIds.has(tab.id) && !placed.has(tab.id)) loose.tabs.push(tab);
+      }
+      return { space, groups: groups.filter((group) => group.tabs.length > 0) };
+    });
   });
+
+  const placements = $derived(
+    new Map(
+      spaceTabs.flatMap(({ space, groups }) =>
+        groups.flatMap((group) => group.tabs.map((tab) => [tab.id, { tab, space, path: group.path }] as const)),
+      ),
+    ),
+  );
+
+  // Where a card that left the tree lives: its folder, with its Space when not the current one.
+  function placementLabel(tabId: string): string {
+    const placement = placements.get(tabId);
+    if (!placement) return "";
+    const folder = placement.path.at(-1);
+    return [placement.space.id === activeSpaceId ? null : placement.space.name, folder].filter(Boolean).join(" · ");
+  }
 
   const sections = $derived.by((): Section[] => {
     if (!request) return [];
+    const flat = (id: string, label: string, tabs: TabState[]): Section => ({
+      id,
+      label,
+      space: null,
+      groups: [{ id, path: [], tabs }],
+      collapsible: false,
+      showsPlacement: true,
+    });
     const needle = query.trim().toLowerCase();
     if (needle) {
       const tabs = spaceTabs
-        .flatMap((entry) => entry.tabs)
-        .filter((tab) => `${tabDisplayTitle(tab.title)} ${tab.url}`.toLowerCase().includes(needle));
-      return tabs.length ? [{ id: "results", label: "", tabs, collapsible: false }] : [];
+        .flatMap((entry) => entry.groups)
+        .flatMap((group) =>
+          group.tabs.filter((tab) =>
+            `${tabDisplayTitle(tab.title)} ${tab.url} ${group.path.join(" ")}`.toLowerCase().includes(needle),
+          ),
+        );
+      return tabs.length ? [flat("results", "", tabs)] : [];
     }
-    const byId = new Map(spaceTabs.flatMap((entry) => entry.tabs.map((tab) => [tab.id, tab] as const)));
-    const suggested = request.suggestedTabIds.flatMap((id) => byId.get(id) ?? []);
+    const suggested = request.suggestedTabIds.flatMap((id) => placements.get(id)?.tab ?? []);
     const suggestedIds = new Set(suggested.map((tab) => tab.id));
-    const activeSpaceId = getActiveSpaceId();
     return [
-      ...(suggested.length ? [{ id: "suggested", label: t("tabShare.suggested"), tabs: suggested, collapsible: false }] : []),
+      ...(suggested.length ? [flat("suggested", t("tabShare.suggested"), suggested)] : []),
       ...spaceTabs
-        .map(({ space, tabs }) => ({
+        .map(({ space, groups }) => ({
           id: space.id,
           label: space.name,
-          tabs: tabs.filter((tab) => !suggestedIds.has(tab.id)),
+          space,
+          groups: groups
+            .map((group) => ({ ...group, tabs: group.tabs.filter((tab) => !suggestedIds.has(tab.id)) }))
+            .filter((group) => group.tabs.length > 0),
           collapsible: space.id !== activeSpaceId,
+          showsPlacement: false,
         }))
-        .filter((section) => section.tabs.length > 0),
+        .filter((section) => section.groups.length > 0),
     ];
   });
 
   // What arrows, Enter and the Share button reach: collapsed Spaces hide their cards.
   const visibleTabs = $derived(
-    sections.flatMap((section) => (section.collapsible && !expanded.has(section.id) ? [] : section.tabs)),
+    sections.flatMap((section) =>
+      section.collapsible && !expanded.has(section.id) ? [] : section.groups.flatMap((group) => group.tabs),
+    ),
   );
 
   // The first card is picked by default, so Enter right away shares the likeliest tab.
@@ -210,6 +287,49 @@
 
 <svelte:window onkeydowncapture={request ? handleKeydown : undefined} />
 
+{#snippet sectionLabel(section: Section)}
+  {#if section.space?.icon}
+    <span class="tab-share-space-icon" aria-hidden="true">{section.space.icon}</span>
+  {/if}
+  <span>{section.label}</span>
+{/snippet}
+
+{#snippet card(tab: TabState, placement: string)}
+  {@const thumbnail = getTabShareThumbnail(tab.id)}
+  <button
+    class="tab-share-card"
+    class:selected={tab.id === selectedId}
+    aria-pressed={tab.id === selectedId}
+    data-share-tab-id={tab.id}
+    {@attach observe}
+    onclick={() => (selectedId = tab.id)}
+    ondblclick={() => share(tab.id)}
+  >
+    <span class="tab-share-thumb">
+      {#if thumbnail}
+        <img src={thumbnail} alt="" draggable="false" />
+      {:else}
+        <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={24} radius={6} />
+      {/if}
+      {#if tab.isAudioPlaying}
+        <span class="tab-share-audio" aria-label={t("tabShare.playing")}>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" />
+            <path d="M8 4.5C8.83 5 8.83 7 8 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+          </svg>
+        </span>
+      {/if}
+    </span>
+    <span class="tab-share-meta">
+      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={14} radius={4} />
+      <span class="tab-share-card-title">{tabDisplayTitle(tab.title)}</span>
+    </span>
+    {#if placement}
+      <span class="tab-share-placement">{placement}</span>
+    {/if}
+  </button>
+{/snippet}
+
 {#if request}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div
@@ -283,47 +403,37 @@
                 <svg class="chevron" class:open width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
                   <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                <span>{section.label}</span>
-                <span class="count">{section.tabs.length}</span>
+                {@render sectionLabel(section)}
+                <span class="count">{section.groups.reduce((sum, group) => sum + group.tabs.length, 0)}</span>
               </button>
             {:else if section.label}
-              <h3 class="tab-share-group">{section.label}</h3>
+              <h3 class="tab-share-group">
+                {@render sectionLabel(section)}
+                {#if section.space}
+                  <span class="tab-share-current-space">{t("tabShare.currentSpace")}</span>
+                {/if}
+              </h3>
             {/if}
             {#if open}
-              <div class="tab-share-grid">
-                {#each section.tabs as tab (tab.id)}
-                  {@const thumbnail = getTabShareThumbnail(tab.id)}
-                  <button
-                    class="tab-share-card"
-                    class:selected={tab.id === selectedId}
-                    aria-pressed={tab.id === selectedId}
-                    data-share-tab-id={tab.id}
-                    {@attach observe}
-                    onclick={() => (selectedId = tab.id)}
-                    ondblclick={() => share(tab.id)}
-                  >
-                    <span class="tab-share-thumb">
-                      {#if thumbnail}
-                        <img src={thumbnail} alt="" draggable="false" />
-                      {:else}
-                        <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={24} radius={6} />
-                      {/if}
-                      {#if tab.isAudioPlaying}
-                        <span class="tab-share-audio" aria-label={t("tabShare.playing")}>
-                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" />
-                            <path d="M8 4.5C8.83 5 8.83 7 8 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-                          </svg>
-                        </span>
-                      {/if}
-                    </span>
-                    <span class="tab-share-meta">
-                      <SiteFavicon src={tab.faviconDataURL} title={tab.title} url={tab.url} size={14} radius={4} />
-                      <span class="tab-share-card-title">{tabDisplayTitle(tab.title)}</span>
-                    </span>
-                  </button>
-                {/each}
-              </div>
+              {#each section.groups as group (group.id)}
+                {#if group.path.length}
+                  <h4 class="tab-share-folder">
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h2.3l1.2 1.3h4c.83 0 1.5.67 1.5 1.5v4.7c0 .83-.67 1.5-1.5 1.5h-7.5c-.83 0-1.5-.67-1.5-1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+                    </svg>
+                    {#if group.path.length > 1}
+                      <span class="parents">{group.path.slice(0, -1).join(" / ")} /</span>
+                    {/if}
+                    <span class="name">{group.path.at(-1)}</span>
+                    <span class="count">{group.tabs.length}</span>
+                  </h4>
+                {/if}
+                <div class="tab-share-grid">
+                  {#each group.tabs as tab (tab.id)}
+                    {@render card(tab, section.showsPlacement ? placementLabel(tab.id) : "")}
+                  {/each}
+                </div>
+              {/each}
             {/if}
           </section>
         {:else}
@@ -479,6 +589,67 @@
 
   .chevron.open {
     transform: rotate(90deg);
+  }
+
+  .tab-share-space-icon {
+    font-size: var(--font-size-sm);
+    letter-spacing: 0;
+  }
+
+  .tab-share-current-space {
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0;
+    text-transform: none;
+    opacity: 0.7;
+  }
+
+  .tab-share-folder {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 4px 0 0;
+    padding: 0 2px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+  }
+
+  .tab-share-folder svg {
+    flex-shrink: 0;
+  }
+
+  /* A deep path gives way before the folder's own name does. */
+  .tab-share-folder .parents {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+  }
+
+  .tab-share-folder .name {
+    flex-shrink: 0;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tab-share-folder .count {
+    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+  }
+
+  .tab-share-placement {
+    margin-top: -4px;
+    padding: 0 2px 0 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
   }
 
   .tab-share-grid {
