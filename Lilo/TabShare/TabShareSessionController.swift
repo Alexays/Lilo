@@ -22,7 +22,8 @@ final class TabShareSessionController {
         var consecutiveFailures = 0
         var consecutiveDuplicates = 0
         var frameInFlight = false
-        var degradedCadence = false
+        /// Snapshots per second: `framesPerSecond`, or a step of `idleCadences` on static content.
+        var cadence: Double = 30
         /// The screen stream's frame count at the last encode.
         var encodedScreenFrame = 0
 
@@ -38,10 +39,10 @@ final class TabShareSessionController {
     /// 30 fps keeps the whole pipeline (snapshot plus encode) inside the frame budget with margin;
     /// 60 would spend a large share of a core on snapshots alone.
     static let framesPerSecond: Double = 30
-    /// Static content (2s of identical snapshots) drops the snapshot cadence to this; the first
-    /// changed frame restores full speed, so a slide flip lags at most one idle interval.
-    static let idleFramesPerSecond: Double = 10
-    static let idleCadenceThreshold = 60
+    /// Static content steps the snapshot cadence down after this many identical snapshots: 10 fps after
+    /// 2 s, 3 fps after 3 s more. Input in Lilo or the first changed frame restores full speed, so only a
+    /// change the page makes on its own lags, by one idle interval at most.
+    static let idleCadences: [(duplicates: Int, framesPerSecond: Double)] = [(60, 10), (90, 3)]
     /// Frame width cap, in pixels: 1080p is the most a call sends.
     static let maxFrameWidth: CGFloat = 1920
     /// Encode-failure teardown threshold (~1.5s of dead snapshots at full cadence).
@@ -52,8 +53,8 @@ final class TabShareSessionController {
     private var sessions: [String: Session] = [:] {
         didSet { updateInteractionMonitor() }
     }
-    /// Scrolling or typing ends a static stretch at once: the idle cadence would otherwise show the
-    /// first moves of a scroll at 10 fps. Installed only while a session runs.
+    /// Scrolling, typing or clicking ends a static stretch at once: the idle cadence would otherwise show
+    /// the first moves at 3 to 10 fps. Installed only while a session runs.
     private var interactionMonitor: Any?
     /// Fired after a session ends, with its token and the shared engine's id (nil for a screen), so
     /// the window controller can detach a share-retained background view.
@@ -270,9 +271,10 @@ final class TabShareSessionController {
             // snapshot cadence until content changes again.
             current.consecutiveFailures = 0
             current.consecutiveDuplicates += 1
-            if current.consecutiveDuplicates >= Self.idleCadenceThreshold && !current.degradedCadence {
-                current.degradedCadence = true
-                startTimer(current, framesPerSecond: Self.idleFramesPerSecond)
+            if let step = Self.idleCadences.last(where: { current.consecutiveDuplicates >= $0.duplicates }),
+               step.framesPerSecond < current.cadence {
+                current.cadence = step.framesPerSecond
+                startTimer(current, framesPerSecond: step.framesPerSecond)
             }
         case .chunk(let chunk):
             current.consecutiveFailures = 0
@@ -286,8 +288,8 @@ final class TabShareSessionController {
     /// Back to full cadence from the idle one.
     private func wake(_ session: Session) {
         session.consecutiveDuplicates = 0
-        guard session.degradedCadence else { return }
-        session.degradedCadence = false
+        guard session.cadence < Self.framesPerSecond else { return }
+        session.cadence = Self.framesPerSecond
         startTimer(session, framesPerSecond: Self.framesPerSecond)
     }
 
@@ -296,7 +298,7 @@ final class TabShareSessionController {
             if let interactionMonitor { NSEvent.removeMonitor(interactionMonitor) }
             interactionMonitor = nil
         } else if interactionMonitor == nil {
-            interactionMonitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .keyDown, .leftMouseDragged]) { [weak self] event in
+            interactionMonitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel, .keyDown, .leftMouseDown, .leftMouseDragged]) { [weak self] event in
                 MainActor.assumeIsolated { self?.sessions.values.forEach { self?.wake($0) } }
                 return event
             }
