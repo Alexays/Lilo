@@ -30,9 +30,16 @@ extension MainWindowController {
         tabDock.onPictureInPictureSlotLost = { [weak self] in self?.documentPiP.float() }
         documentPiP.onReturnToTab = { [weak self] openerId in self?.switchToRecentTab(openerId) }
         documentPiP.onClosed = { [weak self] openerId, replaced in
-            self?.context.browserState.pictureInPictureOpenerIds.remove(openerId)
+            guard let self else { return }
+            context.browserState.pictureInPictureOpenerIds.remove(openerId)
+            // Kept in the window only to draw its PiP window: a background tab leaves it again.
+            if !replaced, tabManager.activeOpenTabId != openerId, !context.browserState.displayedTabIds.contains(openerId),
+               let engine = tabManager.engineTab(for: openerId), engine.view.superview === contentContainerView,
+               !engine.shouldRetainForWebInspector, !engine.isTabShareSource, !engine.isAgentControlled {
+                engine.view.removeFromSuperview()
+            }
             // A replacement is placed right after, docked over this one's slot or floating.
-            if !replaced, self?.tabDock.pictureInPictureOpenerId == openerId { self?.tabDock.undock() }
+            if !replaced, tabDock.pictureInPictureOpenerId == openerId { tabDock.undock() }
         }
     }
 
@@ -58,6 +65,11 @@ extension MainWindowController {
     /// App resigned active or the window occluded: the dock is invisible there, so the call moves
     /// to the always-on-top panel (the reason that panel exists).
     func moveDockedCallToPanel() {
+        // Leaving the app from a call tab: its page's PiP window keeps the call in view, as leaving its tab does.
+        if documentPiP.webView == nil, context.settingsStore?.autoPictureInPicture == true, let engine = tabManager.activeEngineTab,
+           engine.hasActiveCapture, engine.callControls.hasPictureInPictureAction, !engine.isAgentControlled {
+            autoEnterDocumentPiP(engine)
+        }
         if tabDock.pictureInPictureOpenerId != nil { placeDocumentPiP() }
         guard tabDock.isDocking, let engine = tabDock.undock() else { return }
         setPipDockActive(false)
@@ -67,7 +79,13 @@ extension MainWindowController {
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user
     /// put the panel on another screen, where it stays visible next to the window.
     func moveFloatingCallToDock() {
-        placeDocumentPiP()
+        // Back in the app on the call tab: an automatic PiP window gives the call back to its tab.
+        if let activeId = tabManager.activeOpenTabId, documentPiP.openerId == activeId, documentPiP.wasAutoEntered {
+            documentPiP.close()
+        } else {
+            placeDocumentPiP()
+        }
+        if awaitingDocumentPiP != nil, awaitingDocumentPiP === tabManager.activeEngineTab { awaitingDocumentPiP = nil }
         // Nil until bootstrap: the launch window comes on screen, and foregrounds, before settings load.
         guard context.settingsStore?.dockCallsInSidebar == true,
               let engineId = floatingTabPanel.hostedEngineId,

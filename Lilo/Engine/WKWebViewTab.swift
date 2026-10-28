@@ -313,6 +313,15 @@ final class WKWebViewTab: NSObject {
     /// Closes the PiP window this page opened: it never outlives the page, which leaves on a commit or a teardown.
     var documentPiPCloser: (() -> Void)?
 
+    /// Off, the page renders and runs timers at full rate though its window is hidden or covered: for a page that
+    /// draws elsewhere, an agent's or a PiP window's.
+    func setWindowOcclusionDetection(_ enabled: Bool) {
+        let selector = NSSelectorFromString("_setWindowOcclusionDetectionEnabled:")
+        guard webView.responds(to: selector) else { return }
+        typealias Setter = @convention(c) (AnyObject, Selector, Bool) -> Void
+        unsafeBitCast(webView.method(for: selector), to: Setter.self)(webView, selector, enabled)
+    }
+
     /// A PiP request whose `window.open` never came must not outlive the page: no popup blocking, and its next
     /// popup taken for the PiP window.
     func cancelPendingDocumentPiP() {
