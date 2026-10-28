@@ -55,7 +55,7 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions of top-extensions.json that do not run cleanly yet, by id, with what breaks them. A
     /// newly broken extension fails the test, and so does a listed one that now runs cleanly.
     static let knownFailures: [String: String] = [
-        "fdjamakpfbbddfjaooikfcpapjohcfmg": "its worker's carbon trackEvent command fails in every run (a is not a function), which Chrome's does not; the cause is not yet known", // Dashlane
+        "fdjamakpfbbddfjaooikfcpapjohcfmg": "its device info falls back, while its settings are not yet populated, to a carbon command it does not have (getCommonAppSetting: a is not a function); in Chrome they are by then", // Dashlane
         "gjjbmfigjpgnehjioicaalopaikcnheo": "Chrome too: its worker reads settings its backend did not send", // Dark Theme
         "adlpodnneegcnbophopdmhedicjbcgco": "Chrome too: its worker reads settings its backend did not send", // Troywell VPN
         "lieogkinebikhdchceieedcigeafdkid": "Chrome too: its worker fails at startup without the Eagle app (with another error)", // Eagle
