@@ -98,7 +98,7 @@ final class PageSnapshotService {
                       contentWorld: world
                   ) as? NSNumber).map({ CGFloat($0.doubleValue) }),
                   let frame = try? await webView.takeSnapshot(configuration: configuration),
-                  let pixels = frame.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                  let pixels = frame.snapshotPixels
             else { return nil }
 
             let top = offset * zoom
@@ -144,7 +144,7 @@ final class PageSnapshotService {
     /// Composites `image` onto an opaque `backdrop`, so no transparency survives into the PNG.
     static func flattened(_ image: NSImage?, over backdrop: CGColor) -> NSImage? {
         guard let image,
-              let pixels = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let pixels = image.snapshotPixels,
               let canvas = opaqueCanvas(width: pixels.width, height: pixels.height, backdrop: backdrop)
         else { return image }
 
@@ -387,4 +387,12 @@ private enum PageScrollCapture {
       });
     })();
     """
+}
+
+extension NSImage {
+    /// The bitmap a WebKit snapshot holds: `cgImage(forProposedRect:)` redraws it for the screen,
+    /// a half-float copy in the display profile on an EDR screen that costs ~16 ms at 1080p.
+    var snapshotPixels: CGImage? {
+        representations.first?.cgImage(forProposedRect: nil, context: nil, hints: nil) ?? cgImage(forProposedRect: nil, context: nil, hints: nil)
+    }
 }

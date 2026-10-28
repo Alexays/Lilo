@@ -7,7 +7,7 @@ extension MainWindowController {
     /// `url` is the captured tab's, not the active one's: the user may have switched tabs mid-capture.
     private func finishCapture(image: NSImage?, url: URL?) async {
         // Encoding a full-page capture takes seconds, so it stays off the main thread.
-        let pixels = image?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        let pixels = image?.snapshotPixels
         let png = await Task.detached(priority: .userInitiated) { pixels.flatMap(ScreenshotImageCodec.pngData) }.value
         guard let png else {
             bridgeRouter?.send(event: "screenshotError", data: ["message": "Could not capture the page.".localized])
