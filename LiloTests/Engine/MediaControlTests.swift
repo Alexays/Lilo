@@ -114,7 +114,8 @@ final class MediaControlTests: XCTestCase {
             return details != nil
         }
         XCTAssertTrue(called)
-        XCTAssertEqual(details, #"{"action":"enterpictureinpicture"}"#, "no useraction reason: Meet takes its automatic path")
+        XCTAssertEqual(details, #"{"action":"enterpictureinpicture","enterPictureInPictureReason":"useraction"}"#,
+                       "the user left the tab with auto PiP on: Meet keeps its automatic path for some accounts only")
     }
 
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
