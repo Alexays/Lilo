@@ -26,6 +26,14 @@
     id: string;
     path: string[];
     tabs: TabState[];
+    /** Collapsed in the sidebar: the picker shows its heading alone until opened here. */
+    collapsed: boolean;
+    /** The folders above it, root first. */
+    ancestors: string[];
+    /** Those of `ancestors` collapsed in the sidebar, each hiding it until opened. */
+    collapsedAncestors: string[];
+    /** Its tabs and its subfolders' tabs. */
+    total: number;
   }
 
   interface Section {
@@ -41,7 +49,8 @@
   const request = $derived(getTabShareRequest());
   let query = $state("");
   let selectedId = $state<string | null>(null);
-  // Other Spaces open on demand: the current one is where the tab to share usually is.
+  // Other Spaces and collapsed folders open on demand, without touching the sidebar: the current
+  // Space is where the tab to share usually is.
   const expanded = new SvelteSet<string>();
   const activeSpaceId = $derived(getActiveSpaceId());
 
@@ -57,7 +66,7 @@
     ].map((space) => {
       const tabsById = getTabsById(space.id);
       const foldersById = getFoldersById(space.id);
-      const loose: TabGroup = { id: `${space.id}:loose`, path: [], tabs: [] };
+      const loose: TabGroup = { id: `${space.id}:loose`, path: [], tabs: [], collapsed: false, ancestors: [], collapsedAncestors: [], total: 0 };
       const groups = [loose];
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to one derive run, never read reactively
       const placed = new Set<string>();
@@ -74,7 +83,17 @@
           const folder = foldersById.get(item.id);
           if (!folder) continue;
           // A split view is tabs side by side, not a folder the user named: its tabs stay with its parent.
-          const child = folder.isSplit ? group : { id: folder.id, path: [...group.path, folder.name], tabs: [] };
+          const child = folder.isSplit
+            ? group
+            : {
+                id: folder.id,
+                path: [...group.path, folder.name],
+                tabs: [],
+                collapsed: folder.isCollapsed,
+                ancestors: group.path.length ? [...group.ancestors, group.id] : [],
+                collapsedAncestors: group.collapsed ? [...group.collapsedAncestors, group.id] : group.collapsedAncestors,
+                total: 0,
+              };
           if (child !== group) groups.push(child);
           walk(getVisibleFolderChildren(folder.id, space.id, undefined, tabsById), child);
         }
@@ -84,7 +103,7 @@
       for (const tab of getOpenTabs(space.id)) {
         if (request.shareableTabIds.has(tab.id) && !placed.has(tab.id)) loose.tabs.push(tab);
       }
-      return { space, groups: groups.filter((group) => group.tabs.length > 0) };
+      return { space, groups };
     });
   });
 
@@ -110,7 +129,7 @@
       id,
       label,
       space: null,
-      groups: [{ id, path: [], tabs }],
+      groups: [{ id, path: [], tabs, collapsed: false, ancestors: [], collapsedAncestors: [], total: tabs.length }],
       collapsible: false,
       showsPlacement: true,
     });
@@ -134,9 +153,9 @@
           id: space.id,
           label: space.name,
           space,
-          groups: groups
-            .map((group) => ({ ...group, tabs: group.tabs.filter((tab) => !suggestedIds.has(tab.id)) }))
-            .filter((group) => group.tabs.length > 0),
+          groups: withTotals(
+            groups.map((group) => ({ ...group, tabs: group.tabs.filter((tab) => !suggestedIds.has(tab.id)) })),
+          ),
           collapsible: space.id !== activeSpaceId,
           showsPlacement: false,
         }))
@@ -144,10 +163,29 @@
     ];
   });
 
-  // What arrows, Enter and the Share button reach: collapsed Spaces hide their cards.
+  // A folder counts its subfolders' tabs, and one left with none at all is dropped.
+  function withTotals(groups: TabGroup[]): TabGroup[] {
+    const byId = new Map(groups.map((group) => [group.id, { ...group, total: 0 }]));
+    for (const group of groups) {
+      for (const id of [group.id, ...group.ancestors]) byId.get(id)!.total += group.tabs.length;
+    }
+    return [...byId.values()].filter((group) => group.total > 0);
+  }
+
+  function groupShown(group: TabGroup): boolean {
+    return group.collapsedAncestors.every((id) => expanded.has(id));
+  }
+
+  function groupOpen(group: TabGroup): boolean {
+    return groupShown(group) && (!group.collapsed || expanded.has(group.id));
+  }
+
+  // What arrows, Enter and the Share button reach: collapsed Spaces and folders hide their cards.
   const visibleTabs = $derived(
     sections.flatMap((section) =>
-      section.collapsible && !expanded.has(section.id) ? [] : section.groups.flatMap((group) => group.tabs),
+      section.collapsible && !expanded.has(section.id)
+        ? []
+        : section.groups.flatMap((group) => (groupOpen(group) ? group.tabs : [])),
     ),
   );
 
@@ -294,6 +332,17 @@
   <span>{section.label}</span>
 {/snippet}
 
+{#snippet folderLabel(group: TabGroup)}
+  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h2.3l1.2 1.3h4c.83 0 1.5.67 1.5 1.5v4.7c0 .83-.67 1.5-1.5 1.5h-7.5c-.83 0-1.5-.67-1.5-1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+  </svg>
+  {#if group.path.length > 1}
+    <span class="parents">{group.path.slice(0, -1).join(" / ")} /</span>
+  {/if}
+  <span class="name">{group.path.at(-1)}</span>
+  <span class="count">{group.total}</span>
+{/snippet}
+
 {#snippet card(tab: TabState, placement: string)}
   {@const thumbnail = getTabShareThumbnail(tab.id)}
   <button
@@ -415,24 +464,28 @@
               </h3>
             {/if}
             {#if open}
-              {#each section.groups as group (group.id)}
-                {#if group.path.length}
+              {#each section.groups.filter(groupShown) as group (group.id)}
+                {@const groupIsOpen = groupOpen(group)}
+                {#if group.collapsed}
                   <h4 class="tab-share-folder">
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                      <path d="M1.75 4.25c0-.83.67-1.5 1.5-1.5h2.3l1.2 1.3h4c.83 0 1.5.67 1.5 1.5v4.7c0 .83-.67 1.5-1.5 1.5h-7.5c-.83 0-1.5-.67-1.5-1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
-                    </svg>
-                    {#if group.path.length > 1}
-                      <span class="parents">{group.path.slice(0, -1).join(" / ")} /</span>
-                    {/if}
-                    <span class="name">{group.path.at(-1)}</span>
-                    <span class="count">{group.tabs.length}</span>
+                    <button class="toggle" aria-expanded={groupIsOpen} onclick={() => toggleSection(group.id)}>
+                      <svg class="chevron" class:open={groupIsOpen} width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                        <path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                      {@render folderLabel(group)}
+                    </button>
                   </h4>
+                {:else if group.path.length && group.tabs.length}
+                  <!-- An open folder holding only subfolders needs no heading: theirs carry its name. -->
+                  <h4 class="tab-share-folder">{@render folderLabel(group)}</h4>
                 {/if}
-                <div class="tab-share-grid">
-                  {#each group.tabs as tab (tab.id)}
-                    {@render card(tab, section.showsPlacement ? placementLabel(tab.id) : "")}
-                  {/each}
-                </div>
+                {#if groupIsOpen && group.tabs.length}
+                  <div class="tab-share-grid">
+                    {#each group.tabs as tab (tab.id)}
+                      {@render card(tab, section.showsPlacement ? placementLabel(tab.id) : "")}
+                    {/each}
+                  </div>
+                {/if}
               {/each}
             {/if}
           </section>
@@ -617,6 +670,25 @@
 
   .tab-share-folder svg {
     flex-shrink: 0;
+  }
+
+  .tab-share-folder .toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin-left: -2px;
+    padding: 0 2px;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .tab-share-folder .toggle:hover {
+    color: var(--text-primary);
   }
 
   /* A deep path gives way before the folder's own name does. */

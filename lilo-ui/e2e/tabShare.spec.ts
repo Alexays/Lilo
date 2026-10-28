@@ -99,6 +99,36 @@ test("tabs are grouped by folder, and suggestions name where they live", async (
 	await expect(picker.locator('[data-share-tab-id="tab-alpha"] .tab-share-placement')).toHaveText("Acme");
 });
 
+test("a folder collapsed in the sidebar opens on demand, its subfolders with it", async ({ page }) => {
+	const world = nestedFolderWorld();
+	world.foldersBySpace![SPACE_1] = world.foldersBySpace![SPACE_1].map((folder) =>
+		folder.id === "folder-clients" ? { ...folder, isCollapsed: true } : folder,
+	);
+	await bootChrome(page, world);
+
+	await page.evaluate(
+		(msg) => window.__lilo!.receive(msg),
+		{ ...requestPicker("req-1", "meet.example.com"), shareableTabIds: ["tab-alpha", "tab-beta", "tab-gamma"] },
+	);
+	const picker = page.locator(".tab-share-backdrop");
+	const folders = picker.locator(".tab-share-folder");
+	const clients = folders.filter({ hasText: "Clients" }).locator(".toggle");
+
+	// Clients counts Acme's tab; Acme and the empty Archive stay out.
+	await expect(folders.locator(".name")).toHaveText(["Projects", "Clients"]);
+	await expect(clients).toHaveAttribute("aria-expanded", "false");
+	await expect(clients.locator(".count")).toHaveText("1");
+	await expect(picker.locator('[data-share-tab-id="tab-alpha"]')).toHaveCount(0);
+
+	await clients.click();
+	await expect(folders.locator(".name")).toHaveText(["Projects", "Clients", "Acme"]);
+	await expect(picker.locator('[data-share-tab-id="tab-alpha"]')).toBeVisible();
+
+	await clients.click();
+	await picker.locator(".tab-share-search input").fill("alpha");
+	await expect(picker.locator('[data-share-tab-id="tab-alpha"]')).toBeVisible();
+});
+
 test("the system picker button resolves with choice system", async ({
 	page,
 }) => {
