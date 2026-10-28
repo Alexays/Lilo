@@ -79,7 +79,11 @@ final class ReleaseCaptureTests: XCTestCase {
         let profile = try context.profileManager.createProfile(name: "Studio")
         let space = try context.spaceManager.createSpace(name: "Studio", profileId: profile.id)
         controller.switchToSpace(space.id)
-        controller.applyTabLayout(authoredScenario == nil ? TabLayout(position: .left, address: .page) : controller.tabLayout, animated: false)
+        if authoredScenario != nil {
+            controller.reconcileBootstrapCacheWithDB()
+        } else {
+            controller.applyTabLayout(TabLayout(position: .left, address: .page), animated: false)
+        }
         if authoredScenario != nil {
             previousMenu = NSApp.mainMenu
             (NSApp.delegate as? AppDelegate)?.setupMainMenu()
