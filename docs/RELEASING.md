@@ -33,6 +33,19 @@ differs from Changie's latest release. Sparkle compares this build number, so ev
 larger one. It reads and checks every file before consuming the fragments, and running it again
 without new fragments leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
 
+For a release with visual highlights, add its translated story to
+`site/src/content/releases/<version>.json`. Each highlight names the release notes
+it describes. `make release-version` runs the story's capture scenario when its
+media is missing, then builds the website. Demo stories record local sample pages
+in English and French and both appearances. Native stories use reviewed frames
+from installed Lilo; `make site-release-import` encodes their WebP and poster.
+The pilot uses a real native Peek capture on public pages. Optional actions appear
+with the feature text. Review the recordings and copy with the prepared notes, and commit the
+versioned assets and their `capture.json` source record together. Existing captures
+are preserved; normal website builds and `make validate` do not recapture them.
+See [the website guide](../site/README.md#release-stories-and-recordings) for
+capture and replacement commands.
+
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
 Edit a prepared release's file and run `make release-version` to regenerate the changelog.

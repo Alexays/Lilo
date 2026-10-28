@@ -1,0 +1,347 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { z } from "zod";
+
+import { copy } from "../lib/i18n";
+import type { Locale } from "../lib/i18n";
+import type { ReleaseStory } from "../lib/release-stories";
+
+interface Props {
+  lang: Locale;
+  story: ReleaseStory;
+}
+
+const { lang, story } = Astro.props;
+const text = copy[lang];
+
+const posters = import.meta.glob<{ default: ImageMetadata }>(
+  "../assets/releases/*/*.png",
+  { eager: true }
+);
+
+const recordings = import.meta.glob<string>("../assets/releases/*/*.webp", {
+  eager: true,
+  import: "default",
+  query: "?url",
+});
+
+const records = import.meta.glob<unknown>("../assets/releases/*/capture.json", {
+  eager: true,
+  import: "default",
+});
+
+const prefix = `../assets/releases/${story.version}`;
+
+const metadata = z
+  .object({ durationMs: z.number().int().positive().max(30_000) })
+  .safeParse(records[`${prefix}/capture.json`]);
+
+if (!metadata.success) {
+  throw new Error(`Missing recording duration for release ${story.version}`);
+}
+
+const duration = metadata.data.durationMs;
+
+const media = (appearance: "light" | "dark") => {
+  const variant =
+    story.capture.source === "native" ? "native" : `${lang}-${appearance}`;
+
+  const path = `${prefix}/${story.capture.scenario}-${variant}`;
+  const poster = posters[`${path}.png`]?.default;
+  const recording = recordings[`${path}.webp`];
+
+  if (!poster || !recording) {
+    throw new Error(
+      `Missing ${path}; run make site-release-capture RELEASE=${story.version}`
+    );
+  }
+
+  return { poster, recording };
+};
+
+const light = media("light");
+const dark = media("dark");
+---
+
+<figure
+  class="release-recording capture"
+  data-duration={duration}
+  data-stop={text.releaseStopRecording}
+  data-replay={text.releaseReplayRecording}
+>
+  <Image
+    class="capture-light"
+    src={light.poster}
+    data-recording={light.recording}
+    alt={text.releasePeekImage}
+    widths={[560, 1120, 2240]}
+    sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1280px) 65vw, 870px"
+    loading="lazy"
+    decoding="async"
+  />
+  <Image
+    class="capture-dark"
+    src={dark.poster}
+    data-recording={dark.recording}
+    alt={text.releasePeekImage}
+    widths={[560, 1120, 2240]}
+    sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1280px) 65vw, 870px"
+    loading="lazy"
+    decoding="async"
+  />
+  <button
+    class="recording-toggle"
+    type="button"
+    aria-label={text.releasePlayRecording}
+    aria-pressed="false"
+    data-state="play"
+    hidden
+  >
+    <svg
+      class="play-icon"
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="m9 5 11 7-11 7Z" />
+    </svg>
+    <svg
+      class="stop-icon"
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+    <svg
+      class="replay-icon"
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M3 11a9 9 0 1 1 2.6 6.4M3 4v7h7" />
+    </svg>
+  </button>
+</figure>
+
+<script>
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  for (const root of document.querySelectorAll<HTMLElement>(
+    ".release-recording"
+  )) {
+    const button = root.querySelector<HTMLButtonElement>(".recording-toggle");
+
+    const images = [...root.querySelectorAll<HTMLImageElement>("img")].map(
+      (image) => ({
+        image,
+        src: image.src,
+        srcset: image.srcset,
+      })
+    );
+
+    if (!button) {
+      continue;
+    }
+
+    const duration = Number(root.dataset.duration);
+    let active: (typeof images)[number] | undefined;
+    let timer: number | undefined;
+    let playback: AbortController | undefined;
+    let played = false;
+    let visible = false;
+    // oxlint-disable-next-line prefer-const -- Playback and visibility callbacks share the observer.
+    let observer: IntersectionObserver;
+
+    const stop = () => {
+      if (!active) {
+        return;
+      }
+
+      clearTimeout(timer);
+      playback?.abort();
+      active.image.src = active.src;
+      active.image.srcset = active.srcset;
+      active = undefined;
+      observer.unobserve(root);
+      button.setAttribute("aria-pressed", "false");
+      button.setAttribute("aria-label", root.dataset.replay ?? "");
+      button.dataset.state = "replay";
+    };
+
+    const play = () => {
+      if (document.hidden) {
+        return;
+      }
+
+      stop();
+      active = images.find(
+        ({ image }) => getComputedStyle(image).display !== "none"
+      );
+      const recording = active?.image.dataset.recording;
+
+      if (!active || !recording) {
+        return;
+      }
+
+      played = true;
+      observer.observe(root);
+      playback = new AbortController();
+      active.image.addEventListener(
+        "load",
+        () => {
+          timer = window.setTimeout(stop, duration);
+        },
+        { once: true, signal: playback.signal }
+      );
+      active.image.addEventListener("error", stop, {
+        once: true,
+        signal: playback.signal,
+      });
+      active.image.removeAttribute("srcset");
+      active.image.src = recording;
+      button.setAttribute("aria-pressed", "true");
+      button.setAttribute("aria-label", root.dataset.stop ?? "");
+      button.dataset.state = "stop";
+    };
+
+    const autoplay = () => {
+      if (visible && !played && !reduceMotion.matches && !document.hidden) {
+        play();
+      }
+    };
+
+    button.hidden = false;
+    button.addEventListener("click", () => {
+      if (active) {
+        stop();
+      } else {
+        play();
+      }
+    });
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          visible = entry.intersectionRatio >= 0.5;
+
+          if (entry.isIntersecting) {
+            autoplay();
+          } else {
+            stop();
+          }
+        }
+      },
+      { threshold: [0, 0.5] }
+    );
+
+    observer.observe(root);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        autoplay();
+      }
+    });
+    reduceMotion.addEventListener("change", () => {
+      stop();
+      autoplay();
+    });
+
+    const appearanceChanged = () => {
+      if (active && getComputedStyle(active.image).display === "none") {
+        stop();
+      }
+    };
+
+    matchMedia("(prefers-color-scheme: dark)").addEventListener(
+      "change",
+      appearanceChanged
+    );
+    new MutationObserver(appearanceChanged).observe(document.documentElement, {
+      attributeFilter: ["data-theme"],
+      attributes: true,
+    });
+  }
+</script>
+
+<style>
+  .capture {
+    position: relative;
+    display: block;
+    margin: 24px 0 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--sidebar);
+  }
+  img {
+    width: 100%;
+    height: auto;
+  }
+  .capture-light {
+    display: block;
+  }
+  .capture-dark {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-theme="light"])) .capture-light {
+      display: none;
+    }
+    :global(html:not([data-theme="light"])) .capture-dark {
+      display: block;
+    }
+  }
+  :global(html[data-theme="dark"]) .capture-light {
+    display: none;
+  }
+  :global(html[data-theme="dark"]) .capture-dark {
+    display: block;
+  }
+  .recording-toggle {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 24%);
+    border-radius: 50%;
+    background: rgb(20 19 31 / 84%);
+    color: white;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 14%);
+    cursor: pointer;
+  }
+  .recording-toggle:hover {
+    background: rgb(20 19 31 / 96%);
+  }
+  .recording-toggle:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 3px;
+  }
+  .recording-toggle[hidden] {
+    display: none;
+  }
+  .recording-toggle svg {
+    display: none;
+  }
+  .recording-toggle[data-state="play"] .play-icon,
+  .recording-toggle[data-state="stop"] .stop-icon,
+  .recording-toggle[data-state="replay"] .replay-icon {
+    display: block;
+  }
+</style>

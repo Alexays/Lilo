@@ -1,0 +1,19 @@
+{
+  "appBuild": "20",
+  "appVersion": "0.7.0",
+  "captureTool": "cua_repl",
+  "capturedAt": "2026-10-28T13:41:25.400476Z",
+  "contextTool": "lilo-mcp",
+  "durationMs": 6000,
+  "files": ["peek-native.png", "peek-native.webp"],
+  "height": 904,
+  "release": "0.7.0",
+  "scenario": "peek",
+  "source": "native",
+  "sourceDigest": "3dc5a1f05df5fb3e477675eaf5982743aade8143713cb54798ecd26d72fade48",
+  "sourcePages": [
+    "https://developer.mozilla.org/en-US/docs/Web/CSS",
+    "https://developer.mozilla.org/en-US/docs/Web/API/StyleSheet"
+  ],
+  "width": 1440
+}
