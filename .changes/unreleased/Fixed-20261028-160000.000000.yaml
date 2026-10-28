@@ -1,3 +1,0 @@
-kind: Fixed
-body: A page or content script that goes away while it waits on Lilo no longer fails its calls with "Lilo is unreachable", as Chrome settles nothing more of a closed page (LastPass logged each call a closing tab cut).
-time: 2026-10-28T16:00:00.000000+01:00

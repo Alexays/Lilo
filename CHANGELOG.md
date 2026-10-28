@@ -70,6 +70,7 @@ What changes in each Lilo release, for people using it. The format follows
 - action.setBadgeText takes no text, as in Chrome, where a tab's badge then shows the global text again (Jungle Scout).
 - An extension page closing as it sends a message no longer reports "Tab not found" errors, as Chrome runs nothing more of a closed page (Immersive Translate, Wappalyzer, Table Capture).
 - An extension with more static rules than WebKit applies keeps every rule of the rulesets its manifest turns on, which the rulesets it leaves off now give up first (AdGuard blocked no ads).
+- A page or content script that goes away while it waits on Lilo no longer fails its calls with "Lilo is unreachable", as Chrome settles nothing more of a closed page (LastPass logged each call a closing tab cut).
 
 [0.7.0]: https://github.com/Alexays/Lilo/compare/v0.6.0...v0.7.0
 ## [0.6.0] - 2026-10-27
