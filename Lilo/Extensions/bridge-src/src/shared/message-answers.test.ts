@@ -325,6 +325,27 @@ describe("a content script's messages to another extension", () => {
     assert.deepEqual(opened, [{ name: 'own' }]);
   });
 
+  it("settle never their own extension's message WebKit fails as their tab closes", async () => {
+    let lastError: any;
+    const runtime: any = Object.create({
+      sendMessage(this: unknown, _message: unknown, callback?: () => void) {
+        if (!callback) return Promise.reject(new Error(closedTabMessage));
+        lastError = { message: closedTabMessage };
+        try { callback(); } finally { lastError = undefined; }
+        return undefined;
+      },
+      connect() {},
+      get lastError() { return lastError; },
+    });
+    runtime.id = 'ponmlkjihgfedcbaponmlkjihgfedcba';
+    relayExternalMessaging(runtime);
+    let called = false;
+    runtime.sendMessage('own', () => { called = true; });
+    const settled = await Promise.race([runtime.sendMessage('own').then(() => 'resolved', () => 'rejected'), new Promise((resolve) => setTimeout(() => resolve('pending'), 20))]);
+    assert.equal(called, false);
+    assert.equal(settled, 'pending');
+  });
+
   it('open a port the worker relays, named for the other extension', () => {
     const { runtime, opened } = contentRuntime(undefined);
     const port = runtime.connect(other, { name: 'tunnel' });

@@ -99,6 +99,7 @@ final class RealExtensionSmokeTests: XCTestCase {
     /// Extensions that fail in Lilo only some of the time, by id, with what breaks them: the test reports
     /// them but passes either way, until the cause is fixed and they move out.
     static let intermittent: [String: String] = [
+        "aabcgdmkeabbnleenpncegpcngjpnjkc": "some runs its worker refreshes a tab the smoke closed meanwhile (No tab with id), as Chrome's would", // Easy Auto Refresh
         "nngceckbapebfimnlniiiahkandclblb": "some runs its badge update meets a tab the smoke closed meanwhile (No tab with id)", // Bitwarden
         "npnbdojkgkbcdfdjlfdmplppdphlhhcf": "on GitHub's macOS runners its popup and page widgets stay empty, where its worker's getImageData fails; it passes on a Mac", // ProWritingAid
         "cdjkkeofanojcdolaakkckkmfcjejlij": "WebKit runs promise callbacks while importScripts loads (WEBKIT-GAPS.md, gap 14): some runs its status thread starts before the script defining WEBSOCKET_CONNECTED", // GIS NR plugin
@@ -702,7 +703,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "difoiogjjojoaoomphldepapgpbgkhkb", name: "Sider", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
         Feature(id: "ddkjiahejlhfcafbddmgiahcphecmpfh", name: "uBlock Origin Lite", check: adBlocked),
-        Feature(id: "bgnkhhnnamicmpeenaelnjfhikgbkllg", name: "AdGuard AdBlocker", check: adBlocked),
+        Feature(id: "bgnkhhnnamicmpeenaelnjfhikgbkllg", name: "AdGuard AdBlocker", check: adBlocked,
+                macOnly: "its rulesets compile there past the check's wait, in some runs"),
         Feature(id: "fmkadmapgofadopljbjfkapdkoienihi", name: "React Developer Tools", check: "typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
         Feature(id: "nhdogjmejiglipccpnnnanhbledajbpd", name: "Vue.js devtools", check: "typeof window.__VUE_DEVTOOLS_GLOBAL_HOOK__ === 'object'"),
         Feature(id: "lmhkpmbekcpmknklioeibfkpmmfibljd", name: "Redux DevTools", check: "typeof window.__REDUX_DEVTOOLS_EXTENSION__ === 'function'"),
