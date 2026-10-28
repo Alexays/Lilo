@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "Con las pestañas",
-			"page": "Encima de la página"
+			"page": "Encima de la página",
+			"hidden": "Oculta"
 		},
 		"themeSystem": "Sistema",
 		"themeLight": "Claro",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "Dirección",
-				"description": "Con las pestañas o en una barra encima de la página.",
-				"keywords": "dirección barra url herramientas ubicación",
-				"lockedRight": "Con las pestañas a la derecha, la dirección permanece encima de la página."
+				"description": "Con las pestañas, encima de la página u oculta. Usa la barra de comandos para introducir una dirección.",
+				"keywords": "dirección barra url herramientas ubicación ocultar oculta",
+				"lockedRight": "Con las pestañas a la derecha, muestra la dirección encima de la página u ocúltala."
 			},
 			"theme": {
 				"title": "Tema",

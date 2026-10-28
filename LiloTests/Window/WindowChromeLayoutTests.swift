@@ -63,6 +63,15 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 40))
     }
 
+    func testHidingTheAddressReclaimsItsRowButKeepsNavigation() throws {
+        let window = try makeSizedWindow()
+        for position in TabPosition.allCases {
+            layOut(window, position, address: .hidden)
+            XCTAssertEqual(window.tabLayout.address, .hidden)
+            XCTAssertEqual(window.contentEdges().top, position == .left ? 8 : 40, "\(position)")
+        }
+    }
+
     func testTheRightSidebarNarrowsLikeTheLeftOne() throws {
         let window = try makeSizedWindow()
         let nsWindow = try XCTUnwrap(window.window)

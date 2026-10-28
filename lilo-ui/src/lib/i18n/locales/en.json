@@ -107,7 +107,8 @@
 		},
 		"addressPlacement": {
 			"tabs": "With the tabs",
-			"page": "Above the page"
+			"page": "Above the page",
+			"hidden": "Hidden"
 		},
 		"themeSystem": "System",
 		"themeLight": "Light",
@@ -274,9 +275,9 @@
 			},
 			"addressPlacement": {
 				"title": "Address",
-				"description": "With the tabs, or in a bar above the page.",
-				"keywords": "address bar url toolbar location",
-				"lockedRight": "With the tabs on the right, the address stays above the page."
+				"description": "With the tabs, above the page, or hidden. Use the command bar to enter an address.",
+				"keywords": "address bar url toolbar location hide hidden",
+				"lockedRight": "With the tabs on the right, show the address above the page or hide it."
 			},
 			"theme": {
 				"title": "Theme",

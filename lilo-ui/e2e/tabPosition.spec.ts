@@ -19,6 +19,42 @@ test("the page toolbar carries navigation and the address on the right", async (
 	expect(Math.round(sidebar!.x + sidebar!.width)).toBe(viewport.width);
 });
 
+for (const position of ["left", "right", "top", "bottom"] as const) {
+	test(`the address can be hidden with tabs on the ${position} and the command bar still opens`, async ({ page }) => {
+		const strip = position === "top" || position === "bottom";
+		await bootChrome(page, { ...initialWorld(), tabPosition: position, addressPlacement: "hidden" }, strip ? ".tab-strip .strip-tab" : undefined);
+		await expect(page.locator(".url-display")).toHaveCount(0);
+		await expect(page.locator(".page-toolbar")).toHaveCount(position === "right" || position === "bottom" ? 1 : 0);
+
+		await receive(page, { event: "toggleCommandBar", prefill: "https://example.com", selectAll: true });
+		await expect(page.getByRole("combobox", { name: "Search or enter address" })).toHaveValue("https://example.com");
+		await page.keyboard.press("Escape");
+		await expect(page.locator(".url-display")).toHaveCount(0);
+
+		await receive(page, { event: "sidebarVisibilityChanged", visible: false, width: 260 });
+		await expect(page.locator(".url-display")).toHaveCount(0);
+	});
+}
+
+test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "right" });
+	await receive(page, { event: "openSettings" });
+	await page.locator(".section-nav-button").filter({ hasText: "Appearance" }).click();
+	const address = page.getByRole("radiogroup", { name: "Address", exact: true });
+	await expect(address.getByRole("radio", { name: "With the tabs", exact: true })).toHaveCount(0);
+	await address.getByRole("radio", { name: "Hidden", exact: true }).click();
+	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "addressPlacement", value: "hidden" });
+	await receive(page, { event: "tabLayoutChanged", position: "right", address: "hidden" });
+	await expect(address.getByRole("radio", { name: "Hidden", exact: true })).toHaveAttribute("aria-checked", "true");
+	await expect(page.locator(".url-display")).toHaveCount(0);
+
+	await address.getByRole("radio", { name: "Hidden", exact: true }).focus();
+	await page.keyboard.press("ArrowLeft");
+	expect((await sentCommands(page)).filter((command) => command.action === "setSetting").at(-1)?.payload).toEqual({ key: "addressPlacement", value: "page" });
+	await receive(page, { event: "tabLayoutChanged", position: "right", address: "page" });
+	await expect(page.locator(".page-toolbar .url-display")).toBeVisible();
+});
+
 test("a row's preview card opens on the page side of a right sidebar", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "right" });
 	const row = page.locator(".tab-list [data-tab-id]").first();
@@ -49,18 +85,19 @@ test("the sidebar going away after the strip came keeps the strip clickable", as
 	const strip = (await page.locator(".tab-strip-host").boundingBox())!;
 
 	// The old sidebar's teardown can trail the strip's mount: replay its removals last, as a live window sends them.
-	const zones = new Map<string, { y: number; width: number; height: number }>();
-	const removals: string[] = [];
-	for (const command of await sentCommands(page)) {
-		if (command.action === "registerInteractiveZones") {
-			for (const zone of command.payload.zones as { id: string; y: number; width: number; height: number }[]) zones.set(zone.id, zone);
-		} else if (command.action === "removeInteractiveZone") {
-			removals.push(command.payload.id as string);
+	await expect.poll(async () => {
+		const zones = new Map<string, { y: number; width: number; height: number }>();
+		const removals: string[] = [];
+		for (const command of await sentCommands(page)) {
+			if (command.action === "registerInteractiveZones") {
+				for (const zone of command.payload.zones as { id: string; y: number; width: number; height: number }[]) zones.set(zone.id, zone);
+			} else if (command.action === "removeInteractiveZone") {
+				removals.push(command.payload.id as string);
+			}
 		}
-	}
-	for (const id of removals) zones.delete(id);
-
-	expect([...zones.values()].some((zone) => zone.y <= strip.y + 1 && zone.height >= strip.height - 1 && zone.width >= strip.width - 1)).toBe(true);
+		for (const id of removals) zones.delete(id);
+		return [...zones.values()].some((zone) => zone.y <= strip.y + 1 && zone.height >= strip.height - 1 && zone.width >= strip.width - 1);
+	}).toBe(true);
 });
 
 test("many squeezed pills never slide under the Settings tab", async ({ page }) => {

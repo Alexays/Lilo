@@ -22,7 +22,7 @@
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getReadyUpdate } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
+  import { getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
   import { t } from "../../lib/i18n/state.svelte";
 
@@ -113,7 +113,7 @@
       <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
       <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
     </div>
-    {#if !(isSidebarVisible() && isAddressInPageToolbar())}
+    {#if isAddressVisible() && !(isSidebarVisible() && isAddressInPageToolbar())}
       <URLDisplay />
     {/if}
 

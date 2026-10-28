@@ -1,6 +1,6 @@
 <script lang="ts">
   import TabPositionPicker from "./TabPositionPicker.svelte";
-  import { getAddressPlacement, isAddressLocked, setAddressPlacement } from "../../stores/tabLayout.svelte";
+  import { canPlaceAddressWithTabs, getAddressPlacement, setAddressPlacement } from "../../stores/tabLayout.svelte";
   import type { AddressPlacement } from "../../lib/bridge";
   import { extensionActions, profileActions, settingsActions } from "../../lib/bridge/actions";
   import { isAgentsSpace } from "../../stores/agents.svelte";
@@ -126,7 +126,7 @@
   });
   const description = $derived.by(() => {
     if (id === "lifecyclePreset") return t(`settings.lifecycle.${lifecyclePreset}Desc`);
-    if (id === "addressPlacement" && isAddressLocked()) return t("settings.items.addressPlacement.lockedRight");
+    if (id === "addressPlacement" && !canPlaceAddressWithTabs()) return t("settings.items.addressPlacement.lockedRight");
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");
@@ -286,9 +286,8 @@
     {:else if id === "addressPlacement"}
       <UiSegmented
         value={getAddressPlacement()}
-        options={["tabs", "page"].map((placement) => ({ value: placement, label: t(`settings.addressPlacement.${placement}`) }))}
+        options={(canPlaceAddressWithTabs() ? ["tabs", "page", "hidden"] : ["page", "hidden"]).map((placement) => ({ value: placement, label: t(`settings.addressPlacement.${placement}`) }))}
         ariaLabel={title}
-        disabled={isAddressLocked()}
         onchange={(value) => setAddressPlacement(value as AddressPlacement)}
       />
     {:else if id === "autoplay"}

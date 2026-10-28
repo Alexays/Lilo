@@ -47,6 +47,20 @@ final class TabLayoutTests: XCTestCase {
         XCTAssertEqual(store.tabLayout.address, .page)
     }
 
+    func testAHiddenAddressStaysHiddenOnEveryEdgeAndAfterReload() throws {
+        let store = try makeSettingsStore()
+        store.set("addressPlacement", value: "hidden")
+        for position in TabPosition.allCases {
+            store.set("tabPosition", value: position.rawValue)
+            XCTAssertEqual(store.tabLayout, TabLayout(position: position, address: .hidden))
+            store.tabLayout.cache()
+            XCTAssertEqual(TabLayout.cached, store.tabLayout)
+        }
+        let pool = try XCTUnwrap(database?.pool)
+        try pool.write { _ in }
+        XCTAssertEqual(SettingsStore(dbPool: pool).tabLayout, store.tabLayout)
+    }
+
     func testUnknownValuesFallBack() throws {
         let store = try makeSettingsStore()
         store.set("tabPosition", value: "diagonal")
