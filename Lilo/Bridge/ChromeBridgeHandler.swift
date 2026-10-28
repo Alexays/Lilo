@@ -32,6 +32,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         "showSidebarContextMenu",
         "showExtensionContextMenu",
         "showDownloadContextMenu",
+        "showHistoryRowMenu",
         "allowCertificateException",
         "loadBypassingContentBlocker"
     ]
@@ -170,6 +171,13 @@ final class ChromeBridgeHandler: BridgeHandler {
                     anchorRect: anchorRect(from: message),
                     pinned: message.payload["pinned"] as? Bool,
                     profileId: message.uuid("profileId")
+                )
+            }
+
+        case "showHistoryRowMenu":
+            if let key = message.string("key"), let url = message.string("url") {
+                windowController?.showHistoryRowMenu(
+                    key: key, url: url, host: message.string("host", default: ""), anchorRect: anchorRect(from: message)
                 )
             }
 

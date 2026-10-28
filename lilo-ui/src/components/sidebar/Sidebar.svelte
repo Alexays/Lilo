@@ -12,6 +12,7 @@
   import {
     hasActivePanel,
     isDesignSystemShellOpen,
+    isHistoryShellOpen,
     isSettingsShellOpen,
   } from "../../stores/panels.svelte";
   import {
@@ -31,7 +32,7 @@
   const spaces = $derived(getPagedSpaces());
   const visualIndex = $derived(getSpacePagerVirtualIndex());
   const isOverlayPanelOpen = $derived(
-    hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen(),
+    hasActivePanel() || isSettingsShellOpen() || isDesignSystemShellOpen() || isHistoryShellOpen(),
   );
 
   // At rest the pager sits on an integer index and the other panes are clipped off-screen.

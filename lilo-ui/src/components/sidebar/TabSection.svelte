@@ -576,7 +576,7 @@
         newTabRowExiting = false;
       }, 220);
       tabActions.create();
-      openCommandBar("", "default", true);
+      openCommandBar("", true);
     }
   }
 

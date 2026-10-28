@@ -64,7 +64,7 @@ test("dismissing with only a blank tab keeps it (closing it would close the wind
 	const ctx = await withStore();
 	ctx.seed([tab("blank-tab", spaceId, { url: "" })]);
 
-	ctx.openCommandBar("", "default", true);
+	ctx.openCommandBar("", true);
 	ctx.closeCommandBar();
 	flushSync();
 
@@ -75,7 +75,7 @@ test("the deferred blank tab is closed once another tab becomes active", async (
 	const ctx = await withStore();
 	ctx.seed([tab("blank-tab", spaceId, { url: "" })]);
 
-	ctx.openCommandBar("", "default", true);
+	ctx.openCommandBar("", true);
 	ctx.closeCommandBar();
 	flushSync();
 	assert.deepEqual(ctx.closes(), [], "not closed yet: still the only tab");
@@ -102,7 +102,7 @@ test("dismissing with other tabs open closes the blank tab immediately", async (
 	const ctx = await withStore();
 	ctx.seed([tab("blank-tab", spaceId, { url: "" }), tab("other-tab", spaceId)]);
 
-	ctx.openCommandBar("", "default", true);
+	ctx.openCommandBar("", true);
 	ctx.closeCommandBar();
 	flushSync();
 
@@ -113,7 +113,7 @@ test("dismissing a new-tab command bar opened over a terminal keeps the terminal
 	const ctx = await withStore();
 	ctx.seed([tab("blank-tab", spaceId, { url: "", kind: "terminal" }), tab("other-tab", spaceId)]);
 
-	ctx.openCommandBar("", "default", true);
+	ctx.openCommandBar("", true);
 	ctx.closeCommandBar();
 	flushSync();
 
@@ -133,7 +133,7 @@ test("a typed address reaches native marked as typed, a history result does not"
 	const navigations = () => ctx.sent.filter((m) => m.action === "navigate" || m.action === "createTab").map((m) => m.payload);
 
 	for (const run of [store.executeSelected, store.executeSelectedInNewTab, store.executeRawQuery]) {
-		ctx.openCommandBar("", "default");
+		ctx.openCommandBar("");
 		store.setQuery("youtube.com");
 		flushSync();
 		run();

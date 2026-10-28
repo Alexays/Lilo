@@ -69,7 +69,7 @@ interface TabLike {
   faviconDataURL?: string;
 }
 
-const GLYPH_KINDS = new Set(["action", "terminal", "terminalTab", "closedTerminal", "clearArchive", "space", "moveToSpace"]);
+const GLYPH_KINDS = new Set(["action", "terminal", "terminalTab", "closedTerminal", "clearArchive", "showAllHistory", "space", "moveToSpace"]);
 
 // Tab snapshots are replaced, never mutated, on every patch: keying the parsed host by
 // identity spares a URL parse per tab on each rebuild.

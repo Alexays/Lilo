@@ -426,6 +426,11 @@ extension MainWindowController {
             }
         ))
 
+        bridgeRouter.register(handler: HistoryPageBridgeHandler(
+            profileContextProvider: { [weak self] in self?.profileContext },
+            bridgeRouter: bridgeRouter
+        ))
+
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
         // extension's suggest()/setDefaultSuggestion replies arrive via the app-wide gap relay, which
         // routes each reply to the window owning its request.

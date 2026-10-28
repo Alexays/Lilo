@@ -45,6 +45,7 @@ export type ResultKind =
 	| "closedTerminal"
 	| "archivedTab"
 	| "clearArchive"
+	| "showAllHistory"
 	| "lockedFolder"
 	| "space"
 	| "moveToSpace";
@@ -269,6 +270,14 @@ function toBookmarkResult(tab: TabState, highlights?: number[]): CommandResult {
 		{ tabId: tab.id },
 		{ subtitle: tab.url, icon: "B", hint: t("commandBar.hintOpen"), url: tab.url, titleHighlights, subtitleHighlights },
 	);
+}
+
+/** The History page, opened on the query: the scope only lists the best few matches. */
+function showAllHistoryResult(query: string): CommandResult {
+	return createResult("history-show-all", "showAllHistory", t("commandBar.showAllHistory"), { query }, {
+		icon: "history",
+		hint: t("commandBar.hintOpen"),
+	});
 }
 
 function toActionResult(action: CommandActionDefinition, highlights?: number[]): CommandResult {
@@ -699,7 +708,7 @@ function buildEmptySections(
 			sections,
 			"history",
 			t("commandBar.sectionRecentHistory"),
-			uniqueByURL(historyResults, new Set(), 8),
+			[...uniqueByURL(historyResults, new Set(), 8), showAllHistoryResult("")],
 			t("commandBar.subtitleLatestVisits"),
 		);
 		return sections;
@@ -892,7 +901,7 @@ function buildScopedSections(
 				sections,
 				"history",
 				t("commandBar.sectionHistory"),
-				uniqueByURL(historyResults, seenURLs, 8),
+				[...uniqueByURL(historyResults, seenURLs, 8), showAllHistoryResult(query)],
 			);
 			break;
 	}

@@ -178,7 +178,7 @@ final class TabBridgeHandler: BridgeHandler {
         switch message.action {
 
         case "createTab":
-            windowController?.createTabStateFirst(url: typedURL(message))
+            windowController?.createTabStateFirst(url: typedURL(message), activate: !message.bool("background"))
 
         case "closeTab":
             if let id = message.uuid("id") { windowController?.closeTabStateFirst(id: id) }
