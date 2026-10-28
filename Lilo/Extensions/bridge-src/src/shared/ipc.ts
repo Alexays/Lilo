@@ -101,8 +101,18 @@ if (isWorker) {
   new BroadcastChannel(RECONNECT).onmessage = () => connect();
 }
 
+/** Whether the page is going away: WebKit then disconnects its channel. */
+let leaving = false;
+let watchingPage = false;
+
 function connect(): Port | undefined {
   if (port) return port;
+  const g = globalThis as any;
+  if (!isWorker && !watchingPage && typeof g.addEventListener === 'function') {
+    watchingPage = true;
+    g.addEventListener('pagehide', () => { leaving = true; });
+    g.addEventListener('pageshow', () => { leaving = false; });
+  }
   const runtime = bridgeChrome()?.runtime;
   // connectNative is only exposed with the nativeMessaging permission, which Lilo grants to every
   // loaded context.
@@ -146,7 +156,8 @@ function connect(): Port | undefined {
     for (const [id, call] of pending) {
       if (call.port !== opened) continue;
       clearTimeout(call.timer);
-      call.reject(new Error('Lilo is unreachable'));
+      // A page going away, as Chrome's, settles nothing more (LastPass logged each call its closing tab cut).
+      if (!leaving) call.reject(new Error('Lilo is unreachable'));
       pending.delete(id);
     }
   });
