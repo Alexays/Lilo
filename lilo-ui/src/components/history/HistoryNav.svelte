@@ -1,6 +1,7 @@
 <script lang="ts">
   import { t } from "../../lib/i18n/state.svelte";
   import type { BridgeHistoryPeriod } from "../../lib/bridge/protocol";
+  import { tick } from "svelte";
   import SectionNavPanel from "../ui/SectionNavPanel.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
   import {
@@ -12,8 +13,16 @@
     showHistorySite,
     showHistoryTerminal,
   } from "../../stores/history.svelte";
+  import { isHistoryShellOpen, openSettings, openSettingsSubpage } from "../../stores/panels.svelte";
 
   let { compact = false }: { compact?: boolean } = $props();
+  let searchEl: HTMLDivElement | undefined = $state();
+
+  // Cmd+Y then typing searches: the field takes the focus each time the page opens.
+  $effect(() => {
+    if (!isHistoryShellOpen() || compact) return;
+    void tick().then(() => searchEl?.querySelector("input")?.focus({ preventScroll: true }));
+  });
 
   const filter = $derived(getHistoryFilter());
   const sidebar = $derived(getHistorySidebar());
@@ -54,10 +63,17 @@
           })),
         }]
       : []),
+    {
+      id: "manage",
+      sections: [{ id: "clearBrowsingData", label: t("historyPage.clearBrowsingData"), icon: "privacy" as const }],
+    },
   ]);
 
   function select(id: string): void {
-    if (id.startsWith("site:")) showHistorySite(id.slice("site:".length));
+    if (id === "clearBrowsingData") {
+      openSettings("privacy");
+      openSettingsSubpage("privacy", "browsingData");
+    } else if (id.startsWith("site:")) showHistorySite(id.slice("site:".length));
     else if (id.startsWith("terminal:")) showHistoryTerminal(id.slice("terminal:".length));
     else showHistoryPeriod(id as BridgeHistoryPeriod);
   }
@@ -73,11 +89,19 @@
   {compact}
 >
   {#snippet toolbar()}
-    <UiSearchField
-      value={filter.query}
-      placeholder={t("historyPage.searchPlaceholder")}
-      ariaLabel={t("historyPage.searchPlaceholder")}
-      onchange={setHistoryQuery}
-    />
+    <div class="history-search" bind:this={searchEl}>
+      <UiSearchField
+        value={filter.query}
+        placeholder={t("historyPage.searchPlaceholder")}
+        ariaLabel={t("historyPage.searchPlaceholder")}
+        onchange={setHistoryQuery}
+      />
+    </div>
   {/snippet}
 </SectionNavPanel>
+
+<style>
+  .history-search {
+    display: contents;
+  }
+</style>

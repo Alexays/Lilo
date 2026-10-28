@@ -454,7 +454,7 @@ final class HistoryStore: @unchecked Sendable {
         }
     }
 
-    /// The History page's sidebar: rows in each recent period, then the sites and terminals of the last 30 days.
+    /// The History page's sidebar: rows in each recent period, then the top 5 sites and terminals of the last 30 days.
     func sidebarSummary(now: Date = Date(), calendar: Calendar = .current) throws -> SidebarSummary {
         flushPendingWrites()
         let startOfToday = calendar.startOfDay(for: now)
@@ -468,11 +468,11 @@ final class HistoryStore: @unchecked Sendable {
             }
             let sites = try Row.fetchAll(db, sql: """
                 SELECT h.host, COUNT(*) AS visits FROM historyVisit v JOIN history h ON h.id = v.pageId
-                WHERE v.visitedAt >= ? AND h.host != '' GROUP BY h.host ORDER BY visits DESC, MAX(v.visitedAt) DESC LIMIT 8
+                WHERE v.visitedAt >= ? AND h.host != '' GROUP BY h.host ORDER BY visits DESC, MAX(v.visitedAt) DESC LIMIT 5
                 """, arguments: [monthAgo]).map { (host: $0["host"] as String, visits: $0["visits"] as Int) }
             let terminals = try Row.fetchAll(db, sql: """
                 SELECT openedFrom, COUNT(*) AS visits FROM historyVisit
-                WHERE visitedAt >= ? AND openedFrom IS NOT NULL GROUP BY openedFrom ORDER BY MAX(visitedAt) DESC LIMIT 8
+                WHERE visitedAt >= ? AND openedFrom IS NOT NULL GROUP BY openedFrom ORDER BY MAX(visitedAt) DESC LIMIT 5
                 """, arguments: [monthAgo]).map { (openedFrom: $0["openedFrom"] as String, visits: $0["visits"] as Int) }
             return SidebarSummary(today: perDay[0], yesterday: perDay[1], last7Days: perDay.reduce(0, +), sites: sites, terminals: terminals)
         }

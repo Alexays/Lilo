@@ -123,6 +123,18 @@ export function extendHistorySelection(key: string): void {
 	setSelection(next);
 }
 
+/** Selects `keys` (a site's cluster) unless all are selected already, then clears them. */
+export function toggleHistoryRows(keys: string[]): void {
+	const next = new Set(_selection);
+	const allSelected = keys.every((key) => next.has(key));
+	for (const key of keys) {
+		if (allSelected) next.delete(key);
+		else next.add(key);
+	}
+	_anchor = keys[keys.length - 1] ?? null;
+	setSelection(next);
+}
+
 export function selectAllHistory(): void {
 	setSelection(new Set(_rows.map(rowKey)));
 }
