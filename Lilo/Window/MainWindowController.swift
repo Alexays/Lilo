@@ -198,6 +198,7 @@ final class MainWindowController: NSWindowController {
     var terminalNotificationTexts: [UUID: (title: String, body: String)] = [:]
     /// Keeps a backgrounded call visible while the app is active: scaled dock in the sidebar.
     let tabDock = TabDockController()
+    let documentPiP = DocumentPiPController()
     /// getDisplayMedia tab-share frame ferry (one session at a time).
     let tabShareSessions = TabShareSessionController()
     /// Pages awaiting a tab-share picker choice from the chrome UI, keyed by request id.

@@ -305,6 +305,8 @@ final class WKWebViewTab: NSObject {
     /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
     var pendingDocumentPiPSize: NSSize?
     var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
+    /// Closes the PiP window this page opened: it never outlives the page, which leaves on a commit or a teardown.
+    var documentPiPCloser: (() -> Void)?
     /// Called while building the context menu to inject extension-contributed menu items.
     /// Set by TabManager when the extension registry is active.
     var extensionContextMenuItemsProvider: (@MainActor () -> [NSMenuItem])?
@@ -704,6 +706,7 @@ final class WKWebViewTab: NSObject {
     /// Stop media, halt loading, detach the view and close the page through its handlers. Ends the engine for good.
     func teardown() {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
+        documentPiPCloser?()
         isUnresponsive = false
         cancelRegionSelection()
         // A suspended page is neither loading nor playing (freeze paused its media).
@@ -1291,6 +1294,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                 return
             }
             tab.lastCommittedNavigation = navigation
+            tab.documentPiPCloser?()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
             if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.consoleHook) }
             tab.hasCommittedContent = true

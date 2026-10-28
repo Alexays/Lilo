@@ -347,6 +347,10 @@ extension MainWindowController {
             tab.callControls = controls
             tab.delegate?.tab(tab, didUpdateCallControls: controls)
         }
+        context.engineFactory.documentPiPHandler = { [weak context] webView, size in
+            guard let (window, engine) = context?.windows.windowAndEngine(for: webView) else { return false }
+            return window.documentPiP.prepare(engine, size: size)
+        }
         context.engineFactory.notificationShownHandler = { [weak context] webView in
             guard let (window, engine) = context?.windows.windowAndEngine(for: webView),
                   window.tabManager.activeEngineTab !== engine,

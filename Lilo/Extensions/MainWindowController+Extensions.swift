@@ -207,6 +207,10 @@ extension MainWindowController {
         engine.popupWebViewProvider = { [weak self, weak engine] configuration, requestedURL, features in
             self?.createPopupWebView(configuration: configuration, requestedURL: requestedURL, features: features, opener: engine)
         }
+        engine.documentPiPWebViewProvider = { [weak self, weak engine] configuration, size in
+            guard let self, let engine else { return nil }
+            return documentPiP.open(configuration: configuration, size: size, opener: engine)
+        }
     }
 
     /// Detached popups that WebKit released without a `window.close()`, so their close handlers
