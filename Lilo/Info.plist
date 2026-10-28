@@ -8,6 +8,10 @@
     <array>
         <string>en</string>
         <string>fr</string>
+        <string>es</string>
+        <string>zh-Hans</string>
+        <string>pt-BR</string>
+        <string>ru</string>
     </array>
     <key>CFBundleExecutable</key>
     <string>Lilo</string>
@@ -117,7 +121,7 @@
     <key>NSAudioCaptureUsageDescription</key>
     <string>Lilo shares the sound of your Mac when a call asks for it with your screen.</string>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Lilo connects to devices on your local network when you open their pages, such as a router or printer.</string>
+    <string>Lilo connects to devices on your local network, such as a router or printer, when you open their pages or an extension looks for them.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>This website requests speech recognition to turn what you say into text.</string>
     <key>NSLocationWhenInUseUsageDescription</key>

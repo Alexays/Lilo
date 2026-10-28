@@ -62,9 +62,9 @@ enum AgentScreenshot {
             if fullPage {
                 // A page pinned to the viewport scrolls an inner container: it grows to its content for the capture.
                 for frame in engine.subframes as [WKFrameInfo?] + [nil] {
-                    _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.installJS, in: frame, contentWorld: .page)
+                    _ = try? await webView.evaluateJavaScript(PageSnapshotExpansion.installJS, in: frame, contentWorld: PageSnapshotExpansion.world)
                 }
-                _ = try? await webView.callAsyncJavaScript(PageSnapshotExpansion.expandJS, arguments: [:], in: nil, contentWorld: .page)
+                _ = try? await webView.callAsyncJavaScript(PageSnapshotExpansion.expandJS, arguments: [:], in: nil, contentWorld: PageSnapshotExpansion.world)
             }
             var restore: Any?
             do {
@@ -194,7 +194,7 @@ enum AgentScreenshot {
     /// Puts the page back as it was: its scroll position, then whatever the expansion changed.
     private static func finish(_ engine: WKWebViewTab, restore: Any?, expanded: Bool) async {
         if let restore = restore as? [String: Any] { _ = try? await AgentTools.page(engine, "captureRestore", restore) }
-        if expanded { _ = try? await engine.wkWebView.evaluateJavaScript(PageSnapshotExpansion.restoreJS, in: nil, contentWorld: .page) }
+        if expanded { _ = try? await engine.wkWebView.evaluateJavaScript(PageSnapshotExpansion.restoreJS, in: nil, contentWorld: PageSnapshotExpansion.world) }
     }
 
     /// What shows under a page with no background of its own, so no transparency turns black in the PNG.

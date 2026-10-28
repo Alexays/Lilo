@@ -1,7 +1,7 @@
 // Native dispatches (requestId, text) but Chrome's listener takes (text, suggest): suggest closes over the requestId
 // and its results travel back as a separate gap call. SW-safe: no window/document/webkit.
 import { gapCall } from '../shared/ipc.ts';
-import { GapChromeEvent, gapMethod, reportGapListener } from '../shared/gap-event.ts';
+import { GapChromeEvent, gapMethod, reportGapListener, reportGapListenerRemoved } from '../shared/gap-event.ts';
 
 type OmniboxSuggestion = { content: string; description: string; deletable?: boolean };
 type SuggestFn = (suggestResults: OmniboxSuggestion[]) => void;
@@ -17,7 +17,10 @@ class OmniboxInputChangedEvent {
     this.listeners.add(listener);
     reportGapListener('omnibox.onInputChanged');
   }
-  removeListener(listener: InputChangedListener): void { this.listeners.delete(listener); }
+  removeListener(listener: InputChangedListener): void {
+    this.listeners.delete(listener);
+    if (this.listeners.size === 0) reportGapListenerRemoved('omnibox.onInputChanged');
+  }
   hasListener(listener: InputChangedListener): boolean { return this.listeners.has(listener); }
   hasListeners(): boolean { return this.listeners.size > 0; }
 

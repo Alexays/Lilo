@@ -53,6 +53,7 @@ final class GapBridgeRouter {
         "idle": ["idle"],
         "instanceID": ["gcm"],
         "management": ["management"],
+        "mdns": ["mdns"],
         "management.getSelf": [],
         "management.getPermissionWarningsByManifest": [],
         "management.uninstallSelf": [],
@@ -67,6 +68,7 @@ final class GapBridgeRouter {
         "system.cpu": ["system.cpu"],
         "system.display": ["system.display"],
         "system.memory": ["system.memory"],
+        "system.network": ["system.network"],
         "system.storage": ["system.storage"],
         "tabCapture": ["tabCapture"],
         "tabGroups": ["tabGroups"],
@@ -101,7 +103,7 @@ final class GapBridgeRouter {
         registry: ProfileExtensionRegistry
     ) async -> (result: Any?, error: String?) {
         let action = "\(namespace).\(method)"
-        let signpost = PerfSignposts.extensions.beginInterval("gapCall", id: PerfSignposts.extensions.makeSignpostID(), "\(action, privacy: .public)")
+        let signpost = PerfSignposts.extensions.beginInterval("gapCall", id: PerfSignposts.extensions.makeSignpostID(), "\(action)")
         defer { PerfSignposts.extensions.endInterval("gapCall", signpost) }
         #if DEBUG
         // An error of a page or the worker in full: WebKit keeps only a console.error's first argument.

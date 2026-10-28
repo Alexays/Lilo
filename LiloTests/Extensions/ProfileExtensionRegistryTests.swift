@@ -183,8 +183,11 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertFalse(context.errors.isEmpty, "a recorded error must be present to drive the handler")
 
         registry.backgrounds.contextErrorsChanged(id)
+        registry.backgrounds.contextErrorsChanged(id)
         for _ in 0..<50 { await Task.yield() }
 
+        XCTAssertEqual(registry.backgrounds.health(for: id)?.lastErrorCount, context.errors.count,
+                       "the count is the baseline the next notification logs from")
         XCTAssertNil(registry.backgrounds.health(for: id)?.lastReviveAttempt)
         XCTAssertEqual(extensionBridgePayload(for: id)?["runtimeStatus"] as? String, "loaded")
     }
@@ -598,6 +601,70 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         registry.teardown()
 
         XCTAssertEqual(granted, false)
+        XCTAssertTrue(registry.pendingPermissionRequests.isEmpty)
+    }
+
+    /// As in Chrome, `runtime.openOptionsPage` focuses the options tab already open, whatever its query or fragment.
+    func testOpenOptionsPageFocusesTheOpenOptionsTab() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        let extDir = tempDir.appendingPathComponent("Options")
+        try FileManager.default.createDirectory(at: extDir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Options","version":"1.0","options_page":"options.html"}"#
+            .write(to: extDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "<title>Options</title>".write(to: extDir.appendingPathComponent("options.html"), atomically: true, encoding: .utf8)
+        try await registry.load(from: extDir)
+        let context = try XCTUnwrap(registry.loadedExtensions.first?.context)
+        let optionsURL = try XCTUnwrap(context.optionsPageURL)
+        let optionsTab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "?section=sync#top", relativeTo: optionsURL)?.absoluteURL))
+        let otherTab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        XCTAssertEqual(window.tabManager.activeTab?.id, otherTab.id)
+        let tabCount = window.tabManager.openTabs.count
+
+        var openError: Error?
+        registry.delegate.webExtensionController(registry.controller, openOptionsPageFor: context) { openError = $0 }
+
+        XCTAssertNil(openError)
+        XCTAssertEqual(window.tabManager.openTabs.count, tabCount, "no second options tab opens")
+        XCTAssertEqual(window.tabManager.activeTab?.id, optionsTab.id)
+    }
+
+    /// A prompt is answered through the registry that asked, and denied once its window shows another profile or closes.
+    func testExtensionPermissionPromptResolvesThroughItsWindow() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (window, registry) = try browserContext.makeExtensionWindow()
+        try await registry.load(from: try createPermissionsExtension(named: "Prompted"))
+        let context = try XCTUnwrap(registry.loadedExtensions.first?.context)
+        let homeSpace = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let otherProfile = try browserContext.context.profileManager.createProfile(name: "Q").id
+        let otherSpace = try browserContext.context.spaceManager.createSpace(name: "T", profileId: otherProfile).id
+        func prompt() async throws -> (id: String, answer: Task<Bool, Never>) {
+            let answer = Task { await registry.delegate.promptForPermissions(["tabs"], origins: [], for: context) }
+            let shown = await pollUntil(timeout: 5) { registry.pendingPermissionRequests.count == 1 }
+            XCTAssertTrue(shown, "the prompt is shown in the window")
+            return (try XCTUnwrap(registry.pendingPermissionRequests.keys.first), answer)
+        }
+
+        let answered = try await prompt()
+        window.resolveExtensionPermissionRequest(requestId: answered.id, granted: true)
+        let granted = await answered.answer.value
+        XCTAssertTrue(granted)
+
+        let switched = try await prompt()
+        window.switchToSpace(otherSpace)
+        // A no-op once denied; otherwise it fails the assertion below instead of leaving the test waiting.
+        registry.resolvePermissionRequest(id: switched.id, granted: true)
+        let grantedAfterSwitch = await switched.answer.value
+        XCTAssertFalse(grantedAfterSwitch, "a profile switch denies the prompt")
+
+        window.switchToSpace(homeSpace)
+        let closed = try await prompt()
+        window.window?.close()
+        registry.resolvePermissionRequest(id: closed.id, granted: true)
+        let grantedAfterClose = await closed.answer.value
+        XCTAssertFalse(grantedAfterClose, "closing the window denies the prompt")
         XCTAssertTrue(registry.pendingPermissionRequests.isEmpty)
     }
 
@@ -1285,6 +1352,12 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         XCTAssertEqual(added.permissions, ["cookies"], "a removed permission is not an addition")
         XCTAssertEqual(added.matchPatterns.count, 1, "a content-script host is granted, an optional host is not")
         XCTAssertTrue(added.matchPatterns.first?.contains("example.org") ?? false)
+
+        let liloOnly = try await webExtension(manifest: """
+        {"manifest_version":3,"name":"Gap","version":"2","permissions":["storage","tabs","debugger","proxy"],"host_permissions":["https://example.com/*"]}
+        """, named: "access_gap")
+        XCTAssertEqual(ExtensionAccess.addedAccess(from: old, to: liloOnly).permissions, ["debugger", "proxy"],
+                       "a permission only a Gap API implements is an addition too")
 
         let broad = try await webExtension(manifest: """
         {"manifest_version":3,"name":"Broad","version":"1","host_permissions":["<all_urls>"]}

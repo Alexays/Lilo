@@ -116,8 +116,13 @@ enum StartupMetrics {
         marks.last(where: { $0.event == event })?.totalMilliseconds
     }
 
+    /// Marks taken since `uptime`, for a recorded performance session.
+    static func marks(since uptime: UInt64) -> [(uptime: UInt64, event: String)] {
+        marks.filter { $0.uptime >= uptime }.map { ($0.uptime, $0.event) }
+    }
+
     /// Name, count, p50, p95 and max of each runtime sample series, by name.
-    private static func runtimePercentiles() -> [(name: String, count: Int, p50: Double, p95: Double, max: Double)] {
+    static func runtimePercentiles() -> [(name: String, count: Int, p50: Double, p95: Double, max: Double)] {
         runtimeSamples.keys.sorted().compactMap { name in
             guard let values = runtimeSamples[name]?.sorted(), let max = values.last else { return nil }
             let percentile = { (p: Double) in values[Int((Double(values.count - 1) * p).rounded(.toNearestOrAwayFromZero))] }

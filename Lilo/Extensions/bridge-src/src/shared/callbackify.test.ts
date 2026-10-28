@@ -44,6 +44,28 @@ describe('callbackify', () => {
     assert.deepEqual(logged, ['Unchecked runtime.lastError: boom']);
   });
 
+  it('logs an exception thrown from the callback as Chrome does', async () => {
+    install();
+    const logged = await errors(async () => {
+      callbackify(async () => 1, () => { throw new TypeError('on success'); });
+      callbackify(() => Promise.reject(new Error('boom')), () => { void (globalThis as any).chrome.runtime.lastError; throw new Error('on error'); });
+      await new Promise((resolve) => setTimeout(resolve));
+    });
+    assert.deepEqual(logged, ['Error handling response: TypeError: on success', 'Error handling response: Error: on error']);
+  });
+
+  it('runs the callback with the global object as this, and logs a thrown string as V8 does', async () => {
+    install();
+    let self: unknown;
+    const logged = await errors(async () => {
+      callbackify(async () => 1, function (this: unknown) { self = this; });
+      callbackify(async () => 1, () => { throw 'denied'; });
+      await new Promise((resolve) => setTimeout(resolve));
+    });
+    assert.equal(self, globalThis);
+    assert.deepEqual(logged, ['Error handling response: Uncaught denied']);
+  });
+
   it('leaves lastError unset on success and rejects the promise without a callback', async () => {
     const chrome = install();
     const seen = await new Promise((resolve) => callbackify(async () => 1, () => resolve(chrome.runtime.lastError)));

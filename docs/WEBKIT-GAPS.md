@@ -14,7 +14,7 @@ Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
-Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 81 (`XMLHttpRequest`), 82, 87 and 89. Every other gap is fully worked around.
+Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. Workarounds that leave part of the gap open, mostly for extensions reaching WebKit's `browser` instead of `chrome`: gaps 3, 4, 8, 9, 22, 34, 42, 43, 44, 46, 60, 81 (`XMLHttpRequest`), 82, 87, 89, 92, 94, 95, 96 and 97. Every other gap is fully worked around.
 
 ---
 
@@ -23,8 +23,8 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 2. Events reach a context only through its own `browser` or `chrome`
 
 - **Gap:** WebKit finds a context's listeners through the global `browser`, else `chrome`, and skips the context when neither is its own namespace object: no `runtime.onMessage`, `onConnect`, port message or `storage.onChanged`. With `chrome` being Lilo's proxy, an extension assigning `browser` (`var browser = chrome`, webextension-polyfill) would lose every event. Chrome lets extensions wrap or replace either.
-- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor), in content scripts too ([content-compat-entry.ts]).
-- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers). Without it, Proton Pass, whose content script hides both globals behind proxies once loaded, never got the worker's `tabs.sendMessage`: its inline menu closed without filling the field.
+- **Lilo:** never wraps `browser`. Changes go on the prototypes `browser` shares with `chrome` ([chrome-compat.ts] `apply`), WebKit's own members are served only through `chrome`'s view (gap 3), and `browser` stays WebKit's object whatever an extension assigns (`installChromeCompat`, the `browser` accessor), in content scripts too ([content-compat-entry.ts]). In workers and pages, what an assigned object adds stays reachable: each of WebKit's namespaces, and `browser` itself, fall back behind their prototype on the assigned one's for a member they lack ([static-compat.ts] `mergeAssignedBrowser`).
+- **Impact:** an extension reading back the `browser` it assigned gets WebKit's (Web PKI, Stands, buykers), with the members it added (AiPrice's alarms.ensure and contextMenus.ensure, without which it created none of its 3 context menu items). Without it, Proton Pass, whose content script hides both globals behind proxies once loaded, never got the worker's `tabs.sendMessage`: its inline menu closed without filling the field.
 - **Check:** `testEventsSkipAContextWhoseBrowserAndChromeAreReplaced`, `testEventsStopOnceNeitherGlobalIsTheNamespace`. Repro: in an MV3 worker, keep `chrome.storage` and `chrome.action`, listen to `storage.onChanged`, set `globalThis.browser = {}` and `globalThis.chrome = {}`, then set a key. Expected: the listener runs. Actual: never.
 
 ### 3. `runtime.connectNative`, `lastError` and `onInstalled` are own, fixed properties
@@ -140,12 +140,76 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Impact:** without it, MultiPassword's offscreen document never reaches its worker, which never starts.
 - **Check:** `testExtensionPagesAreNotClientsOfTheWorker`. Repro: worker at `worker/background.js`; a root page posts to the active registration's worker. Expected: scope is the root, the page is a client, the message arrives. Actual: scope `worker/`, no client, no message.
 
+### 92. A page in its worker's process can find no registration
+
+- **Gap:** `navigator.serviceWorker.getRegistrations()` in an extension page WebKit runs in the process that loaded the worker can answer nothing for the page's whole life, while pages in other processes find the activated registration at the same moment. In `make ext-smoke` it happens whenever another extension ran before in the same profile, never for the first one. WebKit's web process answers that call from its own table of the origins with registrations once the table is imported, without asking the network process (`WebSWClientConnection::mayHaveServiceWorkerRegisteredForOrigin`): that process's table is the likely cause, not confirmed. Chrome finds the registration.
+- **Lilo:** while `ready` finds no registration, the page asks the worker over its channel whether it runs; once it answers, `ready` resolves with a stand-in whose `active` worker carries the page's messages ([worker-messages.ts] `workerStandIn`). The stand-in has no `pushManager`, `showNotification` or `update`.
+- **Impact:** MultiPassword's offscreen document, which WebKit runs in its worker's process, never reached the worker, which then answered none of its popup's requests: the popup rendered nothing.
+- **Check:** Manual: depends on an earlier extension, not reduced to a minimal case. Repro: `make ext-smoke IDS=inomeogfingihgjfjlpeplalcfajhgai,cnlhokffphohmfcddnibpohmkdfafdli SHARDS=1` with the stand-in removed. Expected: MultiPassword's offscreen document finds the registration a tab opened at the same time finds. Actual: it finds none.
+
+
+### 93. `runtime.connect` throws when no context listens
+
+- **Gap:** `chrome.runtime.connect()` from a context of an extension none of whose other contexts has an `onConnect` listener throws `Invalid call to runtime.connect(). No runtime.onConnect listeners found.`. Chrome returns a port that disconnects with `Could not establish connection. Receiving end does not exist.` as `runtime.lastError`.
+- **Lilo:** the bridge catches that error and returns such a port: it takes messages until it disconnects, on the next task, and throws after ([runtime.ts] `unansweredPort`).
+- **Impact:** Keeper's worker connects to its own pages at startup, before any is open (webext-redux), and logged the error.
+- **Check:** `runtime.test.ts` ("hands out a port that disconnects with lastError when no context listens"). Repro: in a worker with no page open, `chrome.runtime.connect({ name: 'x' })`. Expected: a port whose `onDisconnect` fires with `lastError` set. Actual: the call throws.
+
+### 94. Request methods WebKit cannot take in a rule
+
+- **Gap:** WebKit fails to compile all of an extension's declarativeNetRequest rules, with `Unable to load declarativeNetRequest rules.`, when one rule lists `requestMethods` beside `excludedRequestDomains`: each update then fails, and the rules already applied stay. It also rejects a rule naming the method `other` in `requestMethods` or `excludedRequestMethods`, and so the whole update; it knows `trace` instead, which Chrome files under `other`. Chrome applies such rules.
+- **Lilo:** beside excluded request domains, the methods a rule lists become the other methods it excludes, `trace` among them; `other` leaves both lists, and a rule asking only for it turns inert ([dnr-rules.ts] `webKitRule`). A method none of WebKit's names covers, as `PROPFIND`, then matches a rule excluding methods, where Chrome's `other` would not.
+- **Impact:** Adblock Ad Blocker Pro's regex rules include one for `get` requests outside `com` and `net`: none of its dynamic rules applied, and its filtering mode stalled behind the failed updates.
+- **Check:** `testRequestMethodsBesideExcludedRequestDomainsFailEveryRule`. Repro: `updateDynamicRules({ addRules: [{ id: 1, action: { type: 'block' }, condition: { urlFilter: 'a', requestMethods: ['get'], excludedRequestDomains: ['example.com'] } }] })`. Expected: applies. Actual: rejects with `Unable to load declarativeNetRequest rules.`, and every later update too.
+
+### 95. A subframe's webRequest details name it a main frame, and its main frame by WebKit's id
+
+- **Gap:** for the document request of a frame in a page, WebKit's webRequest details give `type: 'main_frame'` and, when its parent is the page's main frame, that frame's own WebKit identifier as `parentFrameId` (as `4294967300`), where every other API names it `0`. Chrome gives `sub_frame` and `0`. A filter on `types` matches WebKit's type.
+- **Lilo:** its stand-ins of WebKit's webRequest events report such a request as `sub_frame`, and a parent that none of the tab's subframes seen since its main frame loaded is as `0`; a filter on frame types asks WebKit for both and matches the fixed type ([webRequest.ts] `chromeFrames`). A frame whose parent frame loaded before the context listened gets `0` as its parent.
+- **Impact:** Dashlane keeps each frame's parent from webRequest: its answers to a page's iframe went to a frame that does not exist, and failed with `Could not establish connection. Receiving end does not exist.`.
+- **Check:** `webRequest.test.ts` ("reports a subframe document as sub_frame, its main frame parent as 0"). Repro: a page on `https://a.example/` with an `<iframe src="https://b.example/">`; log `onBeforeRequest`'s `type` and `parentFrameId` for the iframe. Expected: `sub_frame`, `0`. Actual: `main_frame`, a large number.
+
+### 96. An extension page cannot send its tab to the web
+
+- **Gap:** a web view built with an extension's configuration loads only that extension's pages: an extension page's own `location` change or link to an `http(s)` page is allowed by the navigation policy, then never starts, and the tab stays on the extension page without an error. Chrome navigates the tab to the web page.
+- **Lilo:** a tab in an extension's configuration cancels such a navigation and loads the page as the app does, in a web page's engine ([WKWebViewTab.swift] `policy(for:)`, [TabManager.swift] `load(_:inTab:)`). The page goes with a GET: a form an extension page posts to the web loses its body.
+- **Impact:** RSS Feed Reader's options page only redirects to its website, and stayed blank.
+- **Check:** `ExtensionPageNavigationTests`. Repro: open an extension page whose script runs `document.location = 'https://example.com/'`. Expected: the tab shows example.com. Actual: it stays on the extension page.
+
+### 97. A message sent on DOMContentLoaded misses the content scripts
+
+- **Gap:** WebKit reports a document's `webNavigation.onDOMContentLoaded` with its commit, and counts the document's content scripts a moment later: a `tabs.sendMessage` sent on that event reaches none, though they ran at `document_start`. Chrome's reaches them.
+- **Lilo:** when nobody answered a tab's message, the probe that tells whether a content script listens goes again for about half a second while the tab loads (and once for a tab that just completed); once one listens, the message goes again, as nobody received it, and its answer comes back ([chrome-compat.ts] `tabNoAnswer`). A tab nobody listens in gets its error that much later.
+- **Impact:** Requestly sends `clientPageLoaded` on `onDOMContentLoaded`: its content script never got it.
+- **Check:** `message-answers.test.ts` ("reach the content script of a loading tab that listens a moment after the message"). Repro: a worker sends `tabs.sendMessage(tabId, 'x')` from `webNavigation.onDOMContentLoaded` to a page whose `document_start` content script listens. Expected: the content script receives it. Actual: `Could not establish connection. Receiving end does not exist.`.
+
+### 98. WebKit's errors use their own words
+
+- **Gap:** WebKit fails a call as `Invalid call to tabs.get(). Tab not found.`, `Tab '12' was not found.`, `This extension does not have access to this tab.`, `Parent menu item not found.`, `Identifier is already used.` and, on a disconnected port, `The port is disconnected.`. Chrome says `No tab with id: 12.`, `Could not establish connection. Receiving end does not exist.` (tabs.sendMessage), `Cannot access contents of the page. ...`, `Cannot find menu item with id X`, `Cannot create item with duplicate id X` and `Attempting to use a disconnected port object`.
+- **Lilo:** every method `chrome` hands out fails in Chrome's words, both as `runtime.lastError` and as the rejection ([chrome-compat.ts] `chromeError`, `chromeMethod`), and logs none of them unchecked, as `browser.runtime.lastError` reads WebKit's own unseen; WebKit's ports throw Chrome's error once disconnected ([message-answers.ts] `portErrorsAsChrome`).
+- **Impact:** in the top 1000, 124 extensions test "Receiving end does not exist" (and inject their content script when they read it), 53 "No tab with id", 30 "Cannot access contents of", 22 "duplicate id" and 18 "disconnected port".
+- **Check:** `chrome-compat.test.ts` ("WebKit's errors"), `message-answers.test.ts` ("WebKit's ports"); Contract `contextMenus duplicate id`. Repro: `chrome.tabs.get(987654)`. Expected: rejects with `No tab with id: 987654.`. Actual: `Invalid call to tabs.get(). Tab not found.`.
+
+### 99. A content script runs once per granted pattern covering its page
+
+- **Gap:** WebKit injects a content script once for each granted match pattern that covers its page, whatever its path, so a page that both an extension's host permission and a content script's own matches cover runs that script twice in one world. A file declaring a top-level `const`, `let` or `class` then throws `Can't create duplicate variable`, and any other runs twice. Chrome runs it once.
+- **Lilo:** the context is granted only the patterns no other one covers, each widened to its whole host, as Chrome's host access ignores paths ([ExtensionAccess.swift] `outermost`).
+- **Impact:** without it, RoEarn (10 covering patterns on www.roblox.com), RoSeal and TubeBuddy threw on their pages, and other extensions showed their UI or ran their listeners twice.
+- **Check:** `testContentScriptRunsOncePerCoveringGrantedPattern` for WebKit, `testContentScriptRunsOnceUnderOverlappingGrants` for Lilo. Repro: grant `*://*.example.com/*` and `https://www.example.com/*`, with a content script matching the latter. Expected: it runs once on `https://www.example.com/`. Actual: twice.
+
+### 100. A file two content script entries list runs twice
+
+- **Gap:** WebKit runs a content script file for each manifest entry that lists it, so a file two entries cover a page with runs twice in one world, and a top-level `const`, `let` or `class` in it throws `Can't create duplicate variable`. Chrome runs a file once per document, however many entries list it, whatever their run times.
+- **Lilo:** an entry leaves out each file another entry runs first in every frame it runs in: same world, an earlier or equal run time, matches covering its own and frames at least as wide, without globs or excludes. Its own list stays in `lilo_js`, which getManifest shows ([ExtensionBackgroundPreparer.swift] `prepareContentScriptCompat`, [static-compat.ts] `chromeManifest`). A file `registerContentScripts` also lists still runs twice.
+- **Impact:** without it, AdBlock's welcome page threw redeclaring `determineUserLanguage`, which two of its entries list.
+- **Check:** `testAFileTwoContentScriptEntriesListRunsTwice` for WebKit, `testContentScriptsLeaveOutFilesAnotherEntryRunsFirst` for Lilo. Repro: two entries matching `https://www.example.com/*` both list `content.js`, at `document_start` and `document_idle`. Expected: it runs once. Actual: twice.
+
 ### 60. A port nobody received yet disconnects when the first process answers
 
 - **Gap:** WebKit sends a `runtime.connect` to each process with an `onConnect` listener and disconnects the port as soon as one answers with no receiver counted yet (`WebExtensionContext::runtimeConnect`). A worker that listens to `onConnect` itself gets such an answer from its own process, so its port to a page in another process nearly always disconnects. An extension page runs in its background's process unless its configuration differs, as one enabling element fullscreen does. Chrome disconnects only when no frame listens.
-- **Lilo:** no workaround. Its tabs enable element fullscreen, so an extension page in a tab runs in a process of its own. Enabling it in the extension configuration too keeps the port, but broke other extensions in `make ext-smoke` (Manus and ExpressKeys hung, Proton Pass, Ginger and Toggl Track failed).
-- **Impact:** Postman Interceptor's worker answers its popup on a port it opens back, which fails when the popup is in a tab ([RealExtensionSmokeTests.swift] lists it).
-- **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects`. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
+- **Lilo:** a `chrome.runtime.connect` between the extension's pages and worker goes through Lilo instead, as Chrome connects it: it reaches every other context listening to `onConnect`, waking a stopped worker, the opener's messages go to each of them and theirs to it, and it fails with `Receiving end does not exist.` only when none takes it; it disconnects when its opener or its last receiver goes, a page closing or a worker stopping, an idle one included, as Chrome's worker stops after 30 s ([runtime.ts] `localPort`, [RuntimeBridgeHandler.swift] `LocalPort`). Messages go as JSON, those of a turn in one call: in `make port-bench` a round trip takes about 0.2 ms against WebKit's 0.13, a burst of 2000 messages 3 ms against 24, and 100 messages of 100 KB 90 ms against 40. A content script has no channel to Lilo: its port stays WebKit's, and while it connects the content script takes its own `onConnect` listeners off WebKit's event so that WebKit asks only the other processes ([chrome-event.ts] `unheard`). `browser.runtime.connect` from a page or the worker goes through Lilo the same way (webextension-polyfill calls it).
+- **Impact:** without it, Postman Interceptor's worker answered its popup on a port it opens back, which failed when the popup was in a tab.
+- **Check:** `testWorkerPortToAPageInAnotherProcessDisconnects` for WebKit, `LocalPortTests` for Lilo. Repro: the worker listens to `onConnect` and, on a message, `runtime.connect()`s back to a page in a web view with no related web view. Expected: stays connected. Actual: disconnects.
 
 ### 70. A port message can reach a worker before earlier calls' answers
 
@@ -160,6 +224,13 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 - **Lilo:** each context names itself with a random tag in its channel's first message and in the high bits of its call ids, and Lilo stamps everything it sends on a port with the tag of the context it adopted the port for ([ipc.ts] `tag`, [GapEvents.swift] `owners`). A context drops what is not stamped with its tag. Lilo keeps a channel WebKit did not register, so the first one of its number stays registered (`twins`); on that first port, it skips the calls of another context and answers its first message with `collided`, and that context opens a new channel and sends its pending calls there again. It leaves the first one open: a page disconnecting a port of a number another port still holds makes WebKit forget its other ports, which then never disconnect. `chrome.runtime` ports drop what Lilo stamps ([message-answers.ts] `messagesOnce`).
 - **Impact:** without it, intermittently and mostly under load, a page never heard its events and the worker's calls timed out. Still open: a `browser.runtime` port that shares the worker's channel number receives what Lilo sends the worker, and disconnects when the idle worker's channel closes.
 - **Check:** Manual: timing dependent. Repro: stream WebKit's `Extensions` debug log and open extension pages in tabs (a process each) while the worker has its channel open, until a page's "Added 1 port for channel N in native world" repeats the worker's N. Expected: the page's messages reach its port. Actual: "Removed 1 port for channel N in native world" follows at once and neither port receives anything more.
+
+### 91. A content script in a frame of an offscreen document cannot message
+
+- **Gap:** WebKit finds a content script's sender by its tab (`WebExtensionContext::runtimeSendMessage` and `runtimeConnect`) and fails with "Tab not found" for a frame of an extension view that is no tab, such as an offscreen document's iframe. Chrome injects the content scripts there and delivers their messages with a sender that has no `tab`.
+- **Lilo:** the content script sends its messages and opens its ports through the extension page at the top of its frame, which sends them as its own ([frame-messaging.ts]): each request carries a key Lilo writes into the extension's content-script compat and `_lilo/frame-key`, which the frame's page cannot read, so no web page messages as the content script. An extension whose `web_accessible_resources` cover either file gets no key, and keeps the gap.
+- **Impact:** without Lilo's relay, ProWritingAid's offscreen prefetch frame logs the error at each worker start.
+- **Check:** Manual: not reduced to a test. Repro: an offscreen document frames a web page whose all-frames content script calls `chrome.runtime.sendMessage`. Expected: the worker hears it. Actual: `runtime.lastError` "Tab not found".
 
 ## Pages and web views
 
@@ -257,9 +328,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 80. Storing a `CryptoKey` in IndexedDB stalls the service worker
 
 - **Gap:** an MV3 worker that puts a `CryptoKey` in IndexedDB never sees the transaction complete, and nothing in the worker runs again (not even its timers). An extension page stores the same key at once, as Chrome's worker does.
-- **Lilo:** none.
-- **Impact:** 2FAS Auth stores its signing keys this way: its worker stops during its first setup, so its pairing page shows no QR code and its toolbar button does nothing.
-- **Check:** Manual: it would stall the test host's worker for good. Repro: in an MV3 worker, `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])`, then `put` its `privateKey` in an object store and set the action title in `oncomplete` and in a 3 s `setTimeout`. Expected: a title. Actual: neither ever runs.
+- **Lilo:** no key reaches WebKit's clone. The worker's `crypto.subtle`, and its pages', keep each key's material: the material it imports, or an export of the key it generates, unwraps or derives (made extractable for that, while `extractable`, `exportKey` and `wrapKey` still answer as the caller asked). An IndexedDB `put`, `add` or cursor `update` stores a key given as the value or one of its fields as that material, and a read gives back a stand-in, a `CryptoKey` to `instanceof`, that `crypto.subtle` imports once on first use. Pages store and read keys the same way, so each reads what the other stored. The material sits unwrapped in the extension's database, as Chrome stores it; a key nested deeper throws `DataCloneError` in the worker, and a page stores it as WebKit does, which the worker then stalls reading. A stand-in is no platform key: posted or cloned, it arrives as a plain object. Every key the worker or a page creates is exported once, for its material. WebKit itself cannot be worked around: it wraps a `CryptoKey` in every structured clone, and a worker waits for the wrap, its thread blocked, on its loader's main thread (`WorkerGlobalScope::serializeAndWrapCryptoKey`, `unwrapCryptoKey` alike), so a `postMessage` of a key from the worker still stalls it.
+- **Impact:** 2FAS Auth stores its signing keys this way during its first setup: without Lilo's storage, its worker stops, its pairing page shows no QR code and its toolbar button does nothing. Keeper stores its vault keys the same way once signed in.
+- **Check:** `crypto-key-storage.test.ts`, `crypto-key-storage-page.test.ts`, and `testPreparedWorkerStoresCryptoKeysInIndexedDB`, a worker storing and using keys as Keeper and 2FAS do. The stall itself is manual: the test host's worker stores a key without stalling where the app's stalls. Repro, in the app without Lilo's storage: in an MV3 worker, `crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign'])`, then `put` its `privateKey` in an object store and set the action title in `oncomplete` and in a 3 s `setTimeout`. Expected: a title. Actual: neither ever runs.
 
 ## Manifest and permissions
 
@@ -422,7 +493,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 81. An extension's requests leave out `SameSite` cookies
 
 - **Gap:** WebKit takes an extension page or worker for another site than the hosts it requests, so a `fetch` with `credentials: "include"` to a host the extension may access carries the cookies without `SameSite` only, never the `Lax` or `Strict` ones. Chrome sends an extension's request to a host it may access every cookie, as a first party.
-- **Lilo:** such a `fetch` from an extension page or worker goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
+- **Lilo:** such a `fetch` from an extension page or worker, or an extension page's asynchronous `XMLHttpRequest` with `withCredentials`, goes through Lilo, which sends it with the profile's cookies for the URL, each redirect included, and stores the cookies the response sets ([credentialed-fetch.ts], [CredentialedFetchBridgeHandler.swift]); a host the extension may not access, a same-origin request and `redirect: "manual"` stay WebKit's. User-visible side: COMPATIBILITY.md, "Background worker".
 - **Impact:** ChatGPT's side panel reads its session from `chatgpt.com/api/auth/session` and showed "Log in to ChatGPT" to a signed-in user.
 - **Check:** Manual (`testCredentialedFetchesCarryTheSiteCookiesAsInChrome` checks Lilo's answer). Repro: a tab of `http://127.0.0.1:<port>/` sets `lax=1; SameSite=Lax`; an extension with `host_permissions` for it fetches the same server with `credentials: "include"`. Expected: `Cookie: lax=1`. Actual: no cookie.
 
@@ -458,7 +529,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 39. Content blockers cap an extension at 150000 rules, one per request domain
 
 - **Gap:** WebKit compiles all of an extension's rules into one content rule list of at most 150000 rules, expanding a rule into one per request domain and excluded request domain. Past the cap nothing applies and `updateEnabledRulesets` fails with "Failed to apply rules.". Chrome counts a rule once.
-- **Lilo:** at preparation, keeps all static rulesets under 120000 WebKit rules (room for 30000 dynamic ones) by turning the most expanded rules inert, largest first ([dnr-rules.ts] `webKitStaticRulesets`, run by [ExtensionBackgroundPreparer.swift] `prepareStaticRulesets`). User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
+- **Lilo:** at preparation, keeps all static rulesets under 120000 WebKit rules (room for 30000 dynamic ones) by turning the most expanded rules inert, largest first, those of the rulesets the manifest leaves off before any of the ones it turns on ([dnr-rules.ts] `webKitStaticRulesets`, run by [ExtensionBackgroundPreparer.swift] `prepareStaticRulesets`). User-visible side: COMPATIBILITY.md, "declarativeNetRequest".
 - **Impact:** SBlock (313000 domains in two rules), Adblock Ad Blocker Pro (299000 expanded rules).
 - **Check:** `testRulesetOverWebKitsRuleCapDoesNotApply`.
 
@@ -485,9 +556,9 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 ### 84. Session rules recompile every rule at each launch
 
 - **Gap:** WebKit compiles an extension's session, dynamic and enabled static rules into one content rule list, and reuses the stored list only when the SHA-1 of the translated rules matches its last compile (`WebExtensionContext::compileDeclarativeNetRequestRules`, `LastLoadedDeclarativeNetRequestHash` in `WebExtensionContextCocoa.mm`). Session rules are kept in memory (`declarativeNetRequestSessionRulesStore`), so the compile at load (`loadDeclarativeNetRequestRules` in `WebExtensionContext::load`) misses the session rules the last run ended with and recompiles every rule, then the worker adding them back compiles again. The hash is read when a compile starts: an update made while the load compile runs compares with the previous run's hash and can reuse the previous run's list, and whichever finishes last is applied. Chrome indexes each static ruleset once.
-- **Lilo:** none for the compiles themselves. It sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`, so an unchanged extension without session rules compiles nothing at launch.
-- **Impact:** at every launch, AdGuard compiles its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Tampermonkey its list once, for seconds of CPU each.
-- **Check:** Manual. Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
+- **Lilo:** gives WebKit session rules as dynamic rules, which it stores, under ids counted down from 2³¹−1 and marked with the extension's id ([dnr-rules.ts] `updateSessionRules`, `heldSessionRules`), so the load compile finds the last run's rules unchanged and reuses its list. Native remembers, in memory per context, the ids this run set ([DeclarativeNetRequestBridgeHandler.swift] `sessionRules`): `getSessionRules` answers only those, as Chrome after a launch, removing one of the others changes nothing, and adding one back as it was keeps it as it is, so a worker clearing its rules at start then adding them back compiles nothing. 30 s after the worker starts, the others are removed and the run claims every rule ([declarativeNetRequest.ts] `releaseSessionRules`). `getMatchedRules` reports them under `_session` and their own ids. It also sends no rule update that changes nothing, merges the calls made while one runs (gap 38), and keeps its preparation stamp when it rewrites a ruleset for `updateStaticRules`.
+- **Impact:** at every launch, AdGuard compiled its 54 MB list three times (at load, for its 722 session rules, then for its stealth rule), uBlock Origin Lite its 28 MB list and Malwarebytes Browser Guard its 48 MB list, about 12 s of CPU together with the 20 extensions of `make ext-bench`.
+- **Check:** `dnr-rules.test.ts`, "session rules". Repro: an MV3 extension with an enabled static ruleset whose worker adds one session rule at start; quit and relaunch twice. Expected: its `DeclarativeNetRequestContentRuleList.data` stays as is on the second relaunch. Actual: rewritten on every launch.
 
 ## storage
 
@@ -531,8 +602,11 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 [action.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/action.ts
 [cookies.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/cookies.ts
 [runtime.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/runtime.ts
+[TabManager.swift]: ../Lilo/Tabs/TabManager.swift
+[RuntimeBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/RuntimeBridgeHandler.swift
 [tabs.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/tabs.ts
 [webNavigation.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webNavigation.ts
+[webRequest.ts]: ../Lilo/Extensions/bridge-src/src/augmentation/webRequest.ts
 [augmentation-entry.ts]: ../Lilo/Extensions/bridge-src/src/augmentation-entry.ts
 [background-entry.ts]: ../Lilo/Extensions/bridge-src/src/background-entry.ts
 [content-compat-entry.ts]: ../Lilo/Extensions/bridge-src/src/content-compat-entry.ts
@@ -541,6 +615,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 [chrome-event.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-event.ts
 [chrome-leniency.ts]: ../Lilo/Extensions/bridge-src/src/shared/chrome-leniency.ts
 [dnr-rules.ts]: ../Lilo/Extensions/bridge-src/src/shared/dnr-rules.ts
+[frame-messaging.ts]: ../Lilo/Extensions/bridge-src/src/shared/frame-messaging.ts
 [install-gap-apis.ts]: ../Lilo/Extensions/bridge-src/src/shared/install-gap-apis.ts
 [ipc.ts]: ../Lilo/Extensions/bridge-src/src/shared/ipc.ts
 [message-answers.ts]: ../Lilo/Extensions/bridge-src/src/shared/message-answers.ts
@@ -551,6 +626,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 60, 71, 74, 80 and 8
 [worker-messages.ts]: ../Lilo/Extensions/bridge-src/src/shared/worker-messages.ts
 [ExtensionBackgroundPreparer.swift]: ../Lilo/Extensions/Core/ExtensionBackgroundPreparer.swift
 [ExtensionControllerDelegate.swift]: ../Lilo/Extensions/Core/ExtensionControllerDelegate.swift
+[ExtensionAccess.swift]: ../Lilo/Extensions/Core/ExtensionAccess.swift
 [TabExtensionAdapter.swift]: ../Lilo/Extensions/Core/TabExtensionAdapter.swift
 [CookieChangeTracker.swift]: ../Lilo/Extensions/Core/CookieChangeTracker.swift
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift

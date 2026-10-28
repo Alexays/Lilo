@@ -62,6 +62,9 @@ final class TabManager {
     /// used to detect reorders and fire `tabs.onMoved`. Maintained only by `emitTabMovedEventsIfNeeded`.
     var lastExtensionTabMoveOrder: [UUID] = []
 
+    /// The command bar's top hit loading out of sight for a blank tab: `load(_:inTab:)` swaps it in.
+    private(set) var topHitPreload: (url: URL, tabId: UUID, engine: WKWebViewTab)?
+
     init(engineFactory: WKEngineFactory, terminalHost: TerminalHost = TerminalHost(), changesHost: ChangesHost = ChangesHost()) {
         self.engineFactory = engineFactory
         self.terminalHost = terminalHost
@@ -95,7 +98,16 @@ final class TabManager {
         return engineHost.engine(for: activeTab.id)
     }
 
-    var activeOpenTabId: UUID? { activeTab?.id }
+    /// `activeTab?.id` without building the tab, as WebKit asks for each tab an extension queries: the runtime
+    /// overlay changes neither whether a tab is closed nor its space.
+    var activeOpenTabId: UUID? {
+        guard let id = activeTabId else { return nil }
+        if let store = browserStateStore, let spaceId = store.owningSpaceId(forTab: id),
+           let stored = store.space(id: spaceId)?.spaceTab.storedTab(id) {
+            return !stored.isClosed && currentSpaceId.map { $0 == spaceId } != false ? id : nil
+        }
+        return activeTab?.id
+    }
 
     /// The split the active tab belongs to, if any: all its panes are on screen.
     var activeSplit: SplitGroup? {
@@ -194,6 +206,7 @@ final class TabManager {
     }
 
     func discardPreparedTabRuntime(for id: UUID) {
+        if topHitPreload?.tabId == id { preloadTopHit(nil) }
         if let adapter = engineHost.removeTabAdapter(for: id), let registry = extensionRegistry {
             registry.controller.didCloseTab(adapter, windowIsClosing: false)
         }
@@ -305,14 +318,6 @@ final class TabManager {
         delegate?.tabManager(self, didUpdateTab: updatedTab)
     }
 
-    func setTabMicrophoneMuted(id: UUID, muted: Bool) {
-        guard let updatedTab = mutateTab(id: id, { $0.isMicrophoneMuted = muted }) else { return }
-
-        engineHost.engine(for: id)?.setMicrophoneMuted(muted)
-
-        delegate?.tabManager(self, didUpdateTab: updatedTab)
-    }
-
     func tabIndex(for id: UUID) -> Int? {
         currentTabs.firstIndex(where: { $0.id == id })
     }
@@ -385,6 +390,19 @@ final class TabManager {
     /// pages, or between two extensions, rebuilds the engine in the configuration `url` needs.
     func load(_ url: URL, inTab id: UUID) {
         guard let tab = tab(for: id), tab.kind == .web, protectingFolder(of: tab)?.isLocked != true else { return }
+        // A preload that failed before committing is dropped: the tab loads the URL itself and shows the error.
+        if let preload = topHitPreload, preload.url == url, preload.tabId == id, tab.url == nil,
+           preload.engine.isLoading || preload.engine.hasCommittedContent {
+            topHitPreload = nil
+            engineHost.teardown(engineHost.removeEngine(for: id))
+            engineHost.adopt(preload.engine)
+            configureEngineRuntime(preload.engine)
+            if tab.isMuted { preload.engine.setMuted(true) }
+            engineHost.tabAdapter(for: id)?.engineTab = preload.engine
+            preload.engine.replayPreloadedNavigation()
+            if id == activeTabId { activateTabRuntime(id: id) }
+            return
+        }
         if let engine = engineHost.engine(for: id) {
             let host = extensionRegistry?.extensionNavigationTarget(for: url)?.url.host?.lowercased()
             // Another window shows this tab: it keeps its engine.
@@ -396,6 +414,27 @@ final class TabManager {
         }
         createEngine(forTabId: id, url: url)
         if id == activeTabId { activateTabRuntime(id: id) }
+    }
+
+    /// Loads `url` out of sight for the active tab while it is blank, so the command bar's Enter on it
+    /// swaps the page in (Safari's Preload Top Hit). A tab showing a page only warms the connection: a
+    /// swapped-in web view would lose its back list. Nil, or another URL, drops the page loading.
+    func preloadTopHit(_ url: URL?) {
+        guard url != topHitPreload?.url else { return }
+        if let preload = topHitPreload {
+            topHitPreload = nil
+            engineHost.teardown(preload.engine)
+        }
+        guard let url, url.scheme == "https" || url.scheme == "http", let tab = activeTab, let engine = activeEngineTab else { return }
+        guard tab.url == nil, engineDelegate?.tab(engine, allowsJavaScriptAt: url) != false else {
+            engine.preconnect(to: url)
+            return
+        }
+        let preload = engineFactory.createTab(configuration: .init(
+            dataStore: dataStore ?? engineFactory.defaultDataStore(), tabId: tab.id, profileId: profileId, refillsWarmPool: false
+        ))
+        preload.loadURL(url)
+        topHitPreload = (url, tab.id, preload)
     }
 
     /// A new engine for `url`, in its extension's configuration when it is an extension page, and the

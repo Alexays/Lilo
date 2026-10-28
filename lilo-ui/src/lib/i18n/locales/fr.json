@@ -139,6 +139,7 @@
 			"general": "Général",
 			"appearance": "Apparence",
 			"tabs": "Onglets et espaces",
+			"media": "Audio et vidéo",
 			"privacy": "Confidentialité",
 			"extensions": "Extensions",
 			"advanced": "Avancé",
@@ -152,7 +153,8 @@
 			"tabLayout": "Onglets",
 			"pages": "Pages",
 			"spaces": "Espaces",
-			"media": "Médias et appels",
+			"playback": "Lecture",
+			"calls": "Appels",
 			"contentBlocking": "Blocage de contenu",
 			"protection": "Protection",
 			"browsingData": "Données de navigation",
@@ -177,8 +179,16 @@
 		"searchResultsTitle": "Résultats",
 		"searchEmpty": "Aucun réglage ne correspond à « {query} ».",
 		"clearData": {
-			"open": "Effacer",
-			"title": "Effacer les données de navigation",
+			"total": "stockés par ce profil",
+			"measuring": "Mesure de ce que stocke ce profil...",
+			"freed": "{size} seront libérés",
+			"rangeNote": "Seul ce qui a été stocké pendant la période choisie est effacé.",
+			"hints": {
+				"history": "Pages : {count}",
+				"cookies": "Vous déconnecte des sites. Sites : {count}",
+				"cache": "Accélère le chargement des pages déjà visitées.",
+				"siteData": "Stockage, cookies, cache et autorisations. Sites : {count}"
+			},
 			"kinds": {
 				"history": "Historique de navigation",
 				"cookies": "Cookies",
@@ -225,7 +235,7 @@
 			"language": {
 				"title": "Langue",
 				"description": "Langue de l'interface du navigateur.",
-				"keywords": "traduction anglais français"
+				"keywords": "traduction anglais français espagnol chinois simplifié portugais brésil russe"
 			},
 			"searchEngine": {
 				"title": "Moteur de recherche",
@@ -236,6 +246,11 @@
 				"title": "Suggestions de recherche",
 				"description": "Afficher des suggestions pendant la saisie. Ce que vous tapez est envoyé au moteur.",
 				"keywords": "autocomplétion saisie"
+			},
+			"preloadTopHit": {
+				"title": "Précharger le meilleur résultat",
+				"description": "Charger un site que vous visitez souvent pendant la saisie de son adresse. Utilise plus de mémoire et de données.",
+				"keywords": "prérendu rapide"
 			},
 			"searchEngines": {
 				"title": "Moteurs de recherche",
@@ -320,6 +335,16 @@
 				"title": "Picture-in-picture automatique",
 				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet.",
 				"keywords": "pip vidéo appel flottant"
+			},
+			"dockCallsInSidebar": {
+				"title": "Garder les appels dans la barre latérale",
+				"description": "Un onglet qui utilise votre caméra, votre micro ou votre écran se range dans la barre latérale quand vous le quittez, au lieu d'une fenêtre flottante.",
+				"keywords": "pip dock appel barre latérale flottant"
+			},
+			"fullBandMicrophone": {
+				"title": "Micro pleine qualité avec un casque",
+				"description": "Avec un casque, les appels se passent de l'annulation d'écho, qui étouffe votre voix.",
+				"keywords": "micro écho casque airpods"
 			},
 			"contentBlocker": {
 				"title": "Bloquer pubs et traqueurs",
@@ -715,7 +740,13 @@
 		"play": "Lecture",
 		"pause": "Pause",
 		"next": "Piste suivante",
-		"previous": "Piste précédente"
+		"previous": "Piste précédente",
+		"turnOffCamera": "Désactiver la caméra",
+		"turnOnCamera": "Activer la caméra",
+		"leaveCall": "Quitter l'appel",
+		"sharing": "Partage : {title}",
+		"shareThisTab": "Partager cet onglet",
+		"stopSharing": "Arrêter le partage"
 	},
 	"tabEditor": {
 		"title": "Modifier l'onglet",
@@ -750,6 +781,8 @@
 		"removeBookmark": "Retirer le favori",
 		"newTab": "Nouvel onglet",
 		"cameraInUse": "Caméra en cours d'utilisation",
+		"microphoneInUse": "Micro en cours d'utilisation",
+		"microphoneMuted": "Micro coupé",
 		"muteMicrophone": "Couper le microphone",
 		"unmuteMicrophone": "Réactiver le microphone",
 		"sharingScreen": "Partage d'écran en cours",
@@ -1150,6 +1183,8 @@
 		"tabLog": "Journal",
 		"tabLogCount": "Journal ({count})",
 		"copyReport": "Copier le rapport",
+		"recordSession": "Enregistrer une session de performance (dans Téléchargements)",
+		"stopRecording": "Arrêter l'enregistrement",
 		"refresh": "Actualiser",
 		"bootLabel": "jusqu'à l'interface prête",
 		"launchedAt": "Lancement du {date}",
@@ -1836,6 +1871,7 @@
 		"History": "Historique",
 		"Reopen Last Closed Tab": "Rouvrir le dernier onglet fermé",
 		"Show All History…": "Afficher tout l'historique…",
+		"Clear Browsing Data…": "Effacer les données de navigation…",
 		"Window": "Fenêtre",
 		"Minimize": "Réduire",
 		"Zoom": "Zoom",
@@ -1916,6 +1952,8 @@
 		"Pin Tab": "Épingler l'onglet",
 		"Unpin Tab": "Désépingler l'onglet",
 		"Unmute Tab": "Réactiver le son de l'onglet",
+		"Mute Microphone": "Couper le microphone",
+		"Unmute Microphone": "Réactiver le microphone",
 		"Close Other Tabs": "Fermer les autres onglets",
 		"Create Folder": "Créer un dossier",
 		"Create Folder from Tab": "Créer un dossier à partir de l'onglet",
@@ -2022,19 +2060,19 @@
 		"Added": "Ajoutée",
 		"Cannot be shown": "Impossible à afficher",
 		"No active profile data store": "Aucun stockage de données pour le profil actif",
-		"Cookies cleared": "Cookies effacés",
-		"Cache cleared": "Cache vidé",
-		"Cookies, cache, and site permissions cleared": "Cookies, cache et autorisations des sites effacés",
-		"Cookies and cache cleared": "Cookies et cache effacés",
 		"Site permission revoked": "Autorisation du site révoquée",
 		"No history store available": "Historique indisponible",
-		"Browsing history cleared": "Historique de navigation effacé",
+		"Browsing data cleared": "Données de navigation effacées",
 		"Could not clear browsing history: %@": "Impossible d'effacer l'historique de navigation : %@",
 		"Extension diagnostics cleared": "Diagnostics des extensions effacés",
 		"Extension diagnostics copied": "Diagnostics des extensions copiés",
 		"Unable to copy extension diagnostics": "Impossible de copier les diagnostics des extensions",
 		"Diagnostics report copied": "Rapport de diagnostic copié",
 		"Unable to copy diagnostics report": "Impossible de copier le rapport de diagnostic",
+		"Record Performance Session": "Enregistrer une session de performance",
+		"Stop Performance Recording": "Arrêter l'enregistrement de performance",
+		"Performance recording saved to Downloads": "Enregistrement de performance placé dans Téléchargements",
+		"Unable to save the performance recording": "Impossible d'écrire l'enregistrement de performance",
 		"Memory trim completed": "Mémoire libérée",
 		"Lilo is now your default browser": "Lilo est maintenant votre navigateur par défaut",
 		"Lilo was not set as the default browser": "Lilo n'a pas été défini comme navigateur par défaut",

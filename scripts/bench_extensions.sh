@@ -170,12 +170,22 @@ print(json.dumps(usage))
 PY
 }
 
-# Idle once the launch settled: the workers started for onStartup had time to finish. Through LaunchServices, so the
-# WebKit processes are Lilo's responsibility and not the shell's.
+# Idle once the launch settled: the workers started for onStartup had time to finish, and the rule lists a new install
+# compiles over minutes, resumed when a launch quits first, are done (Lilo under 5 % CPU for 10 s, waiting up to 10
+# minutes). Through LaunchServices, so the WebKit processes are Lilo's responsibility and not the shell's.
 open -n -g --env "${PROFILE[0]}" --env "${PROFILE[1]}" "$APP"
 sleep 60
 APP_PID=$(pgrep -nf "$APP/Contents/MacOS/Lilo")
 kill -0 "$APP_PID" 2>/dev/null || { echo "Lilo exited during startup" >&2; exit 1; }
+SETTLED=60
+while [ "$SETTLED" -lt 600 ]; do
+    BEFORE=$(usage)
+    sleep 10
+    SETTLED=$((SETTLED + 10))
+    python3 -I -c 'import json, sys; a, b = (json.loads(x)["app"][0] for x in sys.argv[1:]); sys.exit((b - a) / 10 >= 0.05)' \
+        "$BEFORE" "$(usage)" && break
+done
+echo "$SETTLED" > "$WORK/out/settled.txt"
 usage > "$WORK/out/idle-start.json"
 sleep "$IDLE"
 usage > "$WORK/out/idle-end.json"
@@ -262,7 +272,7 @@ start, end = (json.load(open(os.path.join(out, f"idle-{name}.json"))) for name i
 delta = {k: [v[0] - start.get(k, [0, 0])[0], v[1] - start.get(k, [0, 0])[1]] for k, v in end.items()}
 webkit = [v for k, v in delta.items() if k != "app"]
 app_cpu, webkit_cpu = delta["app"][0] / int(idle) * 100, sum(v[0] for v in webkit) / int(idle) * 100
-print(f"\n== idle {idle} s, from 60 s after a launch")
+print(f"\n== idle {idle} s, from {open(os.path.join(out, 'settled.txt')).read().strip()} s after a launch, once it settled")
 row("Lilo CPU % / wakeups per s", f"{app_cpu:.1f} / {delta['app'][1] / int(idle):.0f}")
 row("its WebKit processes CPU % / wakeups per s (processes)",
     f"{webkit_cpu:.1f} / {sum(v[1] for v in webkit) / int(idle):.0f} ({len(webkit)})")

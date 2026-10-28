@@ -84,8 +84,11 @@ final class TabShareSessionControllerTests: XCTestCase {
 
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertNotNil(reply["token"] as? String)
-        XCTAssertEqual(reply["width"] as? Int, 1440)
-        XCTAssertEqual(reply["height"] as? Int, 900)
+        // Pixels, capped at 1080p width: 1440 points is 2880 pixels on Retina, sent as 1920.
+        let pixelWidth = 1440 * (NSScreen.main?.backingScaleFactor ?? 1)
+        let fit = min(1, TabShareSessionController.maxFrameWidth / pixelWidth)
+        XCTAssertEqual(reply["width"] as? Int, Int(pixelWidth * fit) & ~1)
+        XCTAssertEqual(reply["height"] as? Int, Int(900 * (NSScreen.main?.backingScaleFactor ?? 1) * fit) & ~1)
         XCTAssertTrue(engine.isTabShareSource)
         XCTAssertTrue(engine.hasActiveCapture)
         XCTAssertTrue(controller.isSharing(engineId: engine.id))
@@ -125,6 +128,33 @@ final class TabShareSessionControllerTests: XCTestCase {
         controller.stopAll()
     }
 
+    func testSwitchingSourceKeepsTheSessionAndReleasesThePreviousTab() {
+        let controller = TabShareSessionController()
+        let first = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let second = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let requester = WKWebView(frame: .zero)
+        var released: [UUID] = []
+        var changes = 0
+        controller.onSourceReleased = { released.append($0) }
+        controller.onSharesChanged = { changes += 1 }
+        let token = controller.start(engine: first, requester: requester)["token"] as? String ?? ""
+
+        controller.switchSource(token: token, to: second)
+        XCTAssertTrue(controller.hasSession(token: token))
+        XCTAssertEqual(controller.tabShare(requestedBy: requester)?.engineId, second.id)
+        XCTAssertFalse(first.isTabShareSource)
+        XCTAssertTrue(second.isTabShareSource)
+        XCTAssertEqual(released, [first.id])
+        XCTAssertEqual(changes, 2)
+
+        // Onto the tab it already shares, or for a gone session: nothing moves.
+        controller.switchSource(token: token, to: second)
+        controller.switchSource(token: "gone", to: first)
+        XCTAssertEqual(changes, 2)
+        controller.stopAll()
+        XCTAssertNil(controller.tabShare(requestedBy: requester))
+    }
+
     func testSessionsRunSideBySide() {
         let controller = TabShareSessionController()
         let first = WKWebViewTab(configuration: WKWebViewConfiguration())
@@ -160,8 +190,8 @@ final class TabShareSessionControllerTests: XCTestCase {
         let controller = TabShareSessionController()
         let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
         let reply = controller.start(engine: engine, requester: WKWebView(frame: .zero))
-        XCTAssertEqual(reply["width"] as? Int, 1280)
-        XCTAssertEqual(reply["height"] as? Int, 720)
+        XCTAssertEqual(reply["width"] as? Int, 1920)
+        XCTAssertEqual(reply["height"] as? Int, 1080)
         controller.stopAll()
     }
 

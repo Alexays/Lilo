@@ -135,6 +135,7 @@ extension AppDelegate {
         historyMenu.addItem(.separator())
         dynamicMenus[.recentlyVisited] = submenu("Recently Visited".localized, in: historyMenu, icon: .recentlyVisited)
         historyMenu.add("Show All History…".localized, #selector(MainWindowController.openHistory(_:)), icon: .history, shortcut: "history.show")
+        historyMenu.add("Clear Browsing Data…".localized, #selector(MainWindowController.clearBrowsingData(_:)), icon: .clearBrowsingData, shortcut: "history.clearBrowsingData")
 
         // Space and tab shortcuts are matched by the window's key monitor: these menus only show them,
         // so the space list can be rebuilt on open.
@@ -223,6 +224,7 @@ extension AppDelegate {
         helpMenu.add("Replay Onboarding".localized, #selector(MainWindowController.replayOnboarding(_:)), icon: .onboarding)
         helpMenu.addItem(.separator())
         helpMenu.add("Diagnostics".localized, #selector(MainWindowController.openDiagnostics(_:)), icon: .diagnostics)
+        helpMenu.add("Record Performance Session".localized, #selector(MainWindowController.togglePerfRecording(_:)), icon: .perfRecording)
         helpMenu.add("Report an Issue…".localized, #selector(MainWindowController.reportIssue(_:)), icon: .reportIssue)
         NSApp.helpMenu = helpMenu
 

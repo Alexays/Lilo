@@ -30,7 +30,7 @@ extension MainWindowController {
     /// Docks `engine` in the sidebar slot; the chrome mounts the slot on the bridge event and the
     /// zone stream then positions the native container.
     func dockInCallTab(_ engine: WKWebViewTab) {
-        guard let contentView = window?.contentView, tabLayout.position.isVertical else {
+        guard let contentView = window?.contentView, tabLayout.position.isVertical, context.settingsStore.dockCallsInSidebar else {
             floatingTabPanel.float(engine)
             return
         }
@@ -57,7 +57,9 @@ extension MainWindowController {
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user
     /// put the panel on another screen, where it stays visible next to the window.
     func moveFloatingCallToDock() {
-        guard let engineId = floatingTabPanel.hostedEngineId,
+        // Nil until bootstrap: the launch window comes on screen, and foregrounds, before settings load.
+        guard context.settingsStore?.dockCallsInSidebar == true,
+              let engineId = floatingTabPanel.hostedEngineId,
               let engine = tabManager.engineTab(for: engineId),
               engine.hasActiveCapture, !engine.isTabShareSource,
               floatingTabPanel.panelScreen == nil || floatingTabPanel.panelScreen == window?.screen else { return }

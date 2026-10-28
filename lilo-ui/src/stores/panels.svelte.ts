@@ -12,6 +12,7 @@ export type SettingsSectionId =
 	| "general"
 	| "appearance"
 	| "tabs"
+	| "media"
 	| "privacy"
 	| "extensions"
 	| "terminal"
@@ -113,6 +114,11 @@ function isPanelOpen(panel: Exclude<PanelKind, null>): boolean {
 export function initPanelsStore(): void {
 	on("openSettings", () => {
 		openSettings();
+	});
+
+	on("openClearBrowsingData", () => {
+		openSettings("privacy");
+		openSettingsSubpage("privacy", "browsingData");
 	});
 
 	on("openDesignSystem", () => {

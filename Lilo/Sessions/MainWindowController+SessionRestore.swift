@@ -160,6 +160,15 @@ extension MainWindowController {
         StartupMetrics.markOnce("firstContentPreconnected")
     }
 
+    /// Restores the extensions, then loads the active tab, so their blockers and content scripts apply to its first page.
+    func restoreExtensionsThenActiveTab() {
+        guard let extensions = profileContext?.extensions else { return activateRestoredActiveRuntimeIfNeeded() }
+        Task {
+            await extensions.restore()
+            activateRestoredActiveRuntimeIfNeeded()
+        }
+    }
+
     func activateRestoredActiveRuntimeIfNeeded() {
         if let id = tabManager.activeOpenTabId, tabManager.engineTab(for: id) == nil {
             tabManager.activateTabRuntime(id: id)
@@ -223,7 +232,13 @@ extension MainWindowController {
         context.downloadManager.setStore(profileContext.downloads)
         if profileContext.sessionPersistence == nil {
             profileContext.sessionPersistence = makeSessionPersistence(for: profileContext)
-            Task { await profileContext.extensions.restore() }
+            // At launch the chrome paints first (restoreExtensionsThenActiveTab): restoring holds this thread its first frame needs.
+            // A chrome that never paints still gets them a few seconds in.
+            if didChromeVisualReady {
+                Task { await profileContext.extensions.restore() }
+            } else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) { Task { await profileContext.extensions.restore() } }
+            }
         }
         // A profile whose favicons are not the last to fill the cache (bounded by FaviconStore.maxRows,
         // also the cache size, so another profile's warm may have evicted these) warms off the main

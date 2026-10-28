@@ -15,6 +15,7 @@ import { createDemoHost } from "./host.ts";
 import { demoMenus, menuActionEnabled, menuLabelKeys } from "./menu.ts";
 import type { DemoMenuEntry, DemoMenuState } from "./menu.ts";
 import { installNativeCopy, nativeCopy } from "./native-copy.ts";
+import type { Showcase } from "./showcase.ts";
 
 type NativeHandler = NonNullable<
   NonNullable<NonNullable<Window["webkit"]>["messageHandlers"]>["lilo"]
@@ -58,6 +59,7 @@ export const startDemo = async (
   // oxlint-disable-next-line prefer-const -- The bridge is installed before its surface can mount.
   let surface: ReturnType<typeof DemoSurface> | undefined;
   let lastTheme = "system";
+  let showcase: Showcase | undefined;
   // oxlint-disable-next-line prefer-const -- Host callbacks are installed before the menu can publish.
   let publishMenu: (() => void) | undefined;
 
@@ -451,6 +453,7 @@ export const startDemo = async (
     ["sidebar", () => host.dispatch("toggleSidebar", {})],
     ["split", () => host.dispatch("newSplitView", {})],
     ["history", () => host.emit("openHistory", {})],
+    ["clearBrowsingData", () => host.emit("openClearBrowsingData", {})],
     ["find", () => host.dispatch("showFindBar", {})],
     ["back", () => host.dispatch("goBack", {})],
     ["forward", () => host.dispatch("goForward", {})],
@@ -829,11 +832,13 @@ export const startDemo = async (
     const parsed = z.safeParse(menuCommand, event.data);
 
     if (parsed.success) {
+      showcase?.stop();
       runMenuCommand(parsed.data);
     }
 
     for (const action of commands.keys()) {
       if (event.data === `lilo-demo:${action}`) {
+        showcase?.stop();
         command(action);
       }
     }
@@ -850,6 +855,7 @@ export const startDemo = async (
       document.documentElement.classList.toggle("reduced-power", !visible);
       host.emit("windowFocusChanged", { focused: visible });
       host.emit("powerModeChanged", { constrained: !visible });
+      showcase?.setVisible(visible);
     }
   });
   document.addEventListener("pointerdown", () =>
@@ -1017,6 +1023,19 @@ export const startDemo = async (
 
   for (const event of ["focusin", "input", "selectionchange"]) {
     document.addEventListener(event, () => publishMenu?.());
+  }
+
+  const initialMode = params.get("mode");
+
+  if (initialMode === "terminal" || initialMode === "mcp") {
+    showMode(initialMode);
+
+    if (params.get("autoplay") === "1") {
+      const { createShowcase } = await import("./showcase.ts");
+      showcase = createShowcase(host, initialMode, (tabId) =>
+        surface?.reload(tabId)
+      );
+    }
   }
 
   window.parent.postMessage("lilo-demo:ready", location.origin);

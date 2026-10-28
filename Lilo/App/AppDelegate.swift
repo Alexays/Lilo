@@ -105,6 +105,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         StartupMetrics.mark("mainWindowControllerReady")
         mainWindowController?.showWindow(nil)
+        // Off the launch path: macOS delivers its payloads at most daily, so nothing waits on this.
+        DispatchQueue.main.async { MetricKitArchive.shared.start() }
         mainWindowController?.window?.makeKeyAndOrderFront(nil)
         StartupMetrics.mark("windowShown")
         // Writes the bundle's custom icon: kept off the path to the first window.
@@ -150,8 +152,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// Shows the window hidden by a close while a terminal was still running.
+    /// The floating PiP panel joins every Space, so AppKit counts it as a visible window; the Dock click still asks
+    /// for a browser window, brought forward unless one already shows on this Space.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        guard !flag, let window = mainWindowController?.window else { return true }
+        let browserWindowShown = sender.windows.contains { !($0 is NSPanel) && $0.isVisible && $0.isOnActiveSpace }
+        guard !browserWindowShown, let window = mainWindowController?.window else { return true }
         window.makeKeyAndOrderFront(nil)
         return false
     }

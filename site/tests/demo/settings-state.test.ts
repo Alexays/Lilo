@@ -149,21 +149,29 @@ test("clearing sample data mutates future snapshots and preserves permissions fo
   );
   assert.equal(latest("sitePermissionsLoaded").permissions[0].decision, "deny");
 
-  send("clearSiteData", { range: "hour" });
+  send("clearBrowsingData", { kinds: ["siteData"], range: "hour" });
   assert.deepEqual(
     latest("websiteDataLoaded").sites.map((site) => site.name),
     ["slowtravel.example.com"]
   );
   load("getSitePermissions");
   assert.equal(latest("sitePermissionsLoaded").permissions.length, 1);
-  send("clearCache", { range: "all" });
+  send("clearBrowsingData", { kinds: ["cache"], range: "all" });
   assert.deepEqual(latest("websiteDataLoaded").sites[0].kinds, [
     "cookies",
     "storage",
   ]);
-  send("clearCookies", { range: "all" });
+  send("clearBrowsingData", { kinds: ["cookies"], range: "all" });
   assert.deepEqual(latest("websiteDataLoaded").sites[0].kinds, ["storage"]);
-  send("clearSiteData", { range: "all" });
+  assert.deepEqual(latest("browsingDataSizesLoaded"), {
+    cache: 0,
+    cookies: 0,
+    event: "browsingDataSizesLoaded",
+    history: 0,
+    historyEntries: 0,
+    storage: 2_400_000,
+  });
+  send("clearBrowsingData", { kinds: ["siteData"], range: "all" });
   load("getWebsiteData");
   assert.deepEqual(latest("websiteDataLoaded").sites, []);
   assert.deepEqual(latest("sitePermissionsLoaded").permissions, []);
@@ -353,9 +361,9 @@ test("onboarding progress and history clearing complete without an unavailable-a
   assert.equal(settings.values.onboardingStep, undefined);
   assert.equal(settings.values.didPromptDefaultBrowser, "true");
   assert.ok(!events.some((event) => event.event === "settingsActionCompleted"));
-  send("clearHistory", { range: "week" });
+  send("clearBrowsingData", { kinds: ["history"], range: "week" });
   assert.deepEqual(clearedHistory, ["week"]);
-  assert.equal(latest("settingsActionCompleted").action, "clearHistory");
+  assert.equal(latest("settingsActionCompleted").action, "clearBrowsingData");
 });
 
 test("terminal options use the native automatic theme id and preserve supplied native presets", () => {

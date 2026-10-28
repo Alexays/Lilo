@@ -66,6 +66,23 @@ struct WebViewPrivateAccessors {
         }
     }
 
+    /// `callAsyncJavaScript(_:arguments:in:in:)` without the user gesture WebKit runs it under, for the same reason.
+    func callAsyncWithoutUserGesture(_ body: String, arguments: [String: Any], in world: WKContentWorld = .page,
+                                     completion: @escaping @MainActor @Sendable (Error?) -> Void) {
+        guard let (selector, imp) = method("_callAsyncJavaScript:arguments:inFrame:inContentWorld:withUserGesture:completionHandler:") else {
+            (object as? WKWebView)?.callAsyncJavaScript(body, arguments: arguments, in: nil, in: world) { result in
+                if case .failure(let error) = result { completion(error) } else { completion(nil) }
+            }
+            return
+        }
+        typealias CallMethod = @convention(c) (
+            NSObject, Selector, NSString, NSDictionary, WKFrameInfo?, WKContentWorld, Bool, @escaping @convention(block) (Any?, Error?) -> Void
+        ) -> Void
+        unsafeBitCast(imp, to: CallMethod.self)(object, selector, body as NSString, arguments as NSDictionary, nil, world, false) { _, error in
+            MainActor.assumeIsolated { completion(error) }
+        }
+    }
+
     /// The main frame's response body as loaded, from `_getMainResourceDataWithCompletionHandler:`.
     /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
     @discardableResult

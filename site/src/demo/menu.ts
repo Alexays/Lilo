@@ -325,6 +325,12 @@ export const demoMenus: DemoMenuItem[] = [
     separator,
     live("Recently Visited", "recentlyVisited", "No History"),
     command("Show All History…", "history", "history.show", "⌘Y"),
+    command(
+      "Clear Browsing Data…",
+      "clearBrowsingData",
+      "history.clearBrowsingData",
+      "⇧⌘⌫"
+    ),
   ]),
   submenu("Spaces", [
     command("Next Space", "nextSpace", "space.next", "⌃⌘→"),
@@ -409,6 +415,7 @@ export const demoMenus: DemoMenuItem[] = [
     command("Replay Onboarding", "onboarding"),
     separator,
     mac("Diagnostics"),
+    mac("Record Performance Session"),
     mac("Report an Issue…"),
   ]),
 ];

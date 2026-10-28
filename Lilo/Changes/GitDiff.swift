@@ -175,7 +175,7 @@ struct GitDiff: Sendable {
     /// Git's standard output, or nil when it exits with an error or outlives `timeout`.
     static func run(_ arguments: [String], in directory: String) -> Data? {
         guard let executable else { return nil }
-        let signpost = PerfSignposts.energy.beginInterval("git", id: PerfSignposts.energy.makeSignpostID(), "\(arguments.first ?? "", privacy: .public)")
+        let signpost = PerfSignposts.energy.beginInterval("git", id: PerfSignposts.energy.makeSignpostID(), "\(arguments.first ?? "")")
         defer { PerfSignposts.energy.endInterval("git", signpost) }
         let process = Process()
         process.executableURL = executable

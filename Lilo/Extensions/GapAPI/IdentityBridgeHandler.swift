@@ -11,7 +11,7 @@ private enum IdentityError: LocalizedError {
     case missingClientId
     case notGranted
     case authorizationFailed(String)
-    case interactiveRequired
+    case interactionRequired
     case keychainError(String)
     case invalidKeychainData
     case invalidTokenEncoding
@@ -26,7 +26,7 @@ private enum IdentityError: LocalizedError {
         // As a Chrome with no signed-in account: Lilo has none, so a token comes only from interactive sign-in.
         case .notGranted:            return "The user is not signed in."
         case .authorizationFailed(let m): return "Authorization failed: \(m)"
-        case .interactiveRequired:   return "Interactive mode is required for this operation"
+        case .interactionRequired:   return "User interaction required."
         case .keychainError(let m):  return "Keychain error: \(m)"
         case .invalidKeychainData:   return "Invalid data retrieved from Keychain"
         case .invalidTokenEncoding:  return "Token data could not be decoded as UTF-8"
@@ -37,6 +37,8 @@ private enum IdentityError: LocalizedError {
 
 // MARK: - AuthFlowPanel
 
+/// The sign-in page, in a panel, or with `hidden` in no window: the flow then fails once `hidden.timeout`
+/// elapses, or once a page loads if `hidden.abortOnLoad`, without reaching the redirect.
 @MainActor
 private final class AuthFlowPanel: NSObject {
     private let completion: (Result<String, Error>) -> Void
@@ -44,18 +46,28 @@ private final class AuthFlowPanel: NSObject {
     private var webView: WKWebView?
     private var didComplete = false
     private var navDelegate: AuthNavDelegate?
+    private var timeoutTask: Task<Void, Never>?
 
-    init(extensionId: String, dataStore: WKWebsiteDataStore, completion: @escaping (Result<String, Error>) -> Void) {
+    init(extensionId: String, dataStore: WKWebsiteDataStore, hidden: (abortOnLoad: Bool, timeout: TimeInterval)?,
+         completion: @escaping (Result<String, Error>) -> Void) {
         self.completion = completion
         super.init()
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
         WKFeatureFlags.apply([:], to: configuration.preferences)
         let wv = WKWebView(frame: NSRect(x: 0, y: 0, width: 520, height: 640), configuration: configuration)
-        let delegate = AuthNavDelegate(extensionId: extensionId) { [weak self] in self?.finish($0) }
+        let onLoad: (() -> Void)? = hidden?.abortOnLoad == true ? { [weak self] in self?.finish(.failure(IdentityError.interactionRequired)) } : nil
+        let delegate = AuthNavDelegate(extensionId: extensionId, onLoad: onLoad) { [weak self] in self?.finish($0) }
         wv.navigationDelegate = delegate
         navDelegate = delegate
         webView = wv
+        if let hidden {
+            timeoutTask = Task { [weak self] in
+                guard (try? await Task.sleep(for: .seconds(hidden.timeout))) != nil else { return }
+                self?.finish(.failure(IdentityError.interactionRequired))
+            }
+            return
+        }
         let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 520, height: 640),
                             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         panel.title = "Sign In".localized; panel.contentView = wv
@@ -69,7 +81,7 @@ private final class AuthFlowPanel: NSObject {
 
     private func finish(_ result: Result<String, Error>) {
         guard !didComplete else { return }
-        didComplete = true; window?.close(); webView?.navigationDelegate = nil; navDelegate = nil; completion(result)
+        didComplete = true; timeoutTask?.cancel(); window?.close(); webView?.navigationDelegate = nil; navDelegate = nil; completion(result)
     }
 }
 
@@ -83,11 +95,13 @@ extension AuthFlowPanel: NSWindowDelegate {
 
 private final class AuthNavDelegate: NSObject, WKNavigationDelegate, @unchecked Sendable {
     private let completion: (Result<String, Error>) -> Void
+    private let onLoad: (() -> Void)?
     private let redirectHost: String
     private var didComplete = false
 
-    init(extensionId: String, completion: @escaping (Result<String, Error>) -> Void) {
+    init(extensionId: String, onLoad: (() -> Void)? = nil, completion: @escaping (Result<String, Error>) -> Void) {
         redirectHost = "\(extensionId.lowercased()).chromiumapp.org"
+        self.onLoad = onLoad
         self.completion = completion; super.init()
     }
 
@@ -105,6 +119,10 @@ private final class AuthNavDelegate: NSObject, WKNavigationDelegate, @unchecked 
         decisionHandler(.allow)
     }
 
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if !didComplete { onLoad?() }
+    }
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         guard !didComplete else { return }
         didComplete = true; completion(.failure(error))
@@ -117,6 +135,8 @@ private final class AuthNavDelegate: NSObject, WKNavigationDelegate, @unchecked 
 final class IdentityBridgeHandler: GapHandler {
     private static let logger = Logger(liloCategory: "identity-api")
     private static let keychainService = BuildIdentity.appIdentifier + ".identity"
+    /// Bounds a hidden flow that neither loads nor redirects, as when the sign-in host is unreachable.
+    private static let nonInteractiveTimeout: TimeInterval = 30
     /// One flow per extension, so one extension cannot cancel another's sign-in.
     private var authFlowPanels: [String: AuthFlowPanel] = [:]
 
@@ -184,28 +204,33 @@ final class IdentityBridgeHandler: GapHandler {
         guard let urlString = details["url"] as? String, let url = URL(string: urlString) else {
             throw IdentityError.missingURL
         }
-        guard details["interactive"] as? Bool == true else {
-            throw IdentityError.interactiveRequired
-        }
-        return try await runAuthFlow(url, extensionId: extensionId, dataStore: dataStore)
+        // Chrome loads a non-interactive flow hidden and fails it where the user would have to act.
+        let hidden: (abortOnLoad: Bool, timeout: TimeInterval)? = details["interactive"] as? Bool == true ? nil : (
+            abortOnLoad: details["abortOnLoadForNonInteractive"] as? Bool ?? true,
+            timeout: (details["timeoutMsForNonInteractive"] as? NSNumber).map { $0.doubleValue / 1000 } ?? Self.nonInteractiveTimeout
+        )
+        return try await runAuthFlow(url, extensionId: extensionId, dataStore: dataStore, hidden: hidden)
     }
 
-    /// Shows `url` in the extension's sign-in panel and returns the redirect it ends on.
-    private func runAuthFlow(_ url: URL, extensionId: String, dataStore: WKWebsiteDataStore) async throws -> String {
-        try await withTaskCancellationHandler {
+    /// Loads `url` in the extension's sign-in panel, or hidden, and returns the redirect it ends on.
+    private func runAuthFlow(_ url: URL, extensionId: String, dataStore: WKWebsiteDataStore,
+                             hidden: (abortOnLoad: Bool, timeout: TimeInterval)? = nil) async throws -> String {
+        // A hidden flow has its own slot, so a silent retry never closes the panel the user signs in with.
+        let key = hidden == nil ? extensionId : "\(extensionId)\u{1f}hidden"
+        return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                // One flow per extension: its previous panel resumes that caller with a cancel first.
-                authFlowPanels[extensionId]?.cancel()
-                let panel = AuthFlowPanel(extensionId: extensionId, dataStore: dataStore) { [weak self] redirectResult in
-                    self?.authFlowPanels[extensionId] = nil
+                // One flow per slot: its previous one resumes that caller with a cancel first.
+                authFlowPanels[key]?.cancel()
+                let panel = AuthFlowPanel(extensionId: extensionId, dataStore: dataStore, hidden: hidden) { [weak self] redirectResult in
+                    self?.authFlowPanels[key] = nil
                     continuation.resume(with: redirectResult)
                 }
-                authFlowPanels[extensionId] = panel
+                authFlowPanels[key] = panel
                 panel.load(url)
-                panel.show()
+                if hidden == nil { panel.show() }
             }
         } onCancel: { [weak self] in
-            Task { @MainActor in self?.authFlowPanels.removeValue(forKey: extensionId)?.cancel() }
+            Task { @MainActor in self?.authFlowPanels.removeValue(forKey: key)?.cancel() }
         }
     }
 

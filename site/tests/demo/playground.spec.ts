@@ -6,7 +6,9 @@ const open = async (page: Page, mode: "terminal" | "mcp") => {
   await page.goto("/#browser-demo");
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".sample-content")).toBeVisible();
-  await page.locator(`.demo-modes [data-action='${mode}']`).click();
+  await page
+    .locator(`#browser-demo .demo-modes [data-action='${mode}']`)
+    .click();
 
   if (mode === "mcp") {
     await frame.locator(".agent-session details > summary").click();
@@ -24,12 +26,19 @@ for (const width of [538, 390]) {
     await expect(
       page.frameLocator("#browser-demo iframe").locator(".sample-content")
     ).toBeVisible();
-    await expect(page.locator(".demo-footer")).toHaveCount(0);
-    await expect(page.locator(".demo-modes [data-action=mcp]")).toBeVisible();
+    await expect(page.locator("#browser-demo .demo-footer")).toHaveCount(0);
+    await expect(
+      page.locator("#browser-demo .demo-modes [data-action=mcp]")
+    ).toBeVisible();
     await expect
       .poll(async () => {
-        const desktop = await page.locator(".demo-desktop").boundingBox();
-        const viewport = await page.locator(".demo-viewport").boundingBox();
+        const desktop = await page
+          .locator("#browser-demo .demo-desktop")
+          .boundingBox();
+
+        const viewport = await page
+          .locator("#browser-demo .demo-viewport")
+          .boundingBox();
 
         if (!desktop || !viewport) {
           return false;
@@ -74,11 +83,13 @@ test("terminal edits virtual files, updates the browser workspace and survives m
   await expect(frame.locator(".terminal-output")).toContainText(
     "CHANGED FROM THE TERMINAL"
   );
-  await page.locator(".demo-modes [data-action=browser]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=browser]").click();
   await expect(
     frame.getByRole("treeitem", { exact: true, name: "Alexays / Lilo, Pinned" })
   ).toBeVisible();
-  await page.locator(".demo-modes [data-action=terminal]").click();
+  await page
+    .locator("#browser-demo .demo-modes [data-action=terminal]")
+    .click();
   await expect(frame.locator(".workspace-file")).toContainText(
     "Changed from the terminal"
   );
@@ -87,11 +98,13 @@ test("terminal edits virtual files, updates the browser workspace and survives m
   );
   await input.press("ArrowUp");
   await expect(input).toHaveValue("cat README.md | tr 'a-z' 'A-Z'");
-  await page.locator(".demo-tools [data-action=reset]").click();
+  await page.locator("#browser-demo .demo-tools [data-action=reset]").click();
   await expect(
     frame.getByRole("treeitem", { exact: true, name: "Alexays / Lilo, Pinned" })
   ).toBeVisible();
-  await page.locator(".demo-modes [data-action=terminal]").click();
+  await page
+    .locator("#browser-demo .demo-modes [data-action=terminal]")
+    .click();
   await expect(frame.locator(".workspace-file")).not.toContainText(
     "Changed from the terminal"
   );
@@ -255,7 +268,11 @@ test("expansion falls back cleanly when native fullscreen is unavailable", async
       });
     }
   });
-  const expand = page.locator(".demo-tools [data-action=fullscreen]");
+
+  const expand = page.locator(
+    "#browser-demo .demo-tools [data-action=fullscreen]"
+  );
+
   await expand.click();
   await expect(page.locator("#browser-demo")).toHaveAttribute(
     "data-expanded",

@@ -98,7 +98,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.hasNavigationError = isError
                 t.navigationErrorCode = isError ? nsError.code : 0
                 t.navigationErrorDomain = isError ? nsError.domain : ""
-                t.navigationErrorDescription = isError ? nsError.localizedDescription : ""
+                t.navigationErrorDescription = isError
+                    ? Self.certificateRejectionReason(nsError, trust: tab.lastServerTrust) ?? nsError.localizedDescription : ""
                 t.navigationErrorURL = isError ? (url ?? resolvedURL)?.absoluteString ?? "" : ""
             }
         }
@@ -219,6 +220,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
         return SHA256.hash(data: SecCertificateCopyData(leaf) as Data).map { String(format: "%02x", $0) }.joined()
     }
 
+    /// macOS's reason for rejecting a failed navigation's certificate, naming the certificates it blames.
+    static func certificateRejectionReason(_ error: NSError, trust: SecTrust?) -> String? {
+        guard error.domain == NSURLErrorDomain, (-1204 ... -1200).contains(error.code), let trust else { return nil }
+        // Local checks only: this runs on the main thread, and the network process has already fetched what it could.
+        SecTrustSetNetworkFetchAllowed(trust, false)
+        var reason: CFError?
+        guard !SecTrustEvaluateWithError(trust, &reason), let reason else { return nil }
+        return (reason as Error).localizedDescription
+    }
+
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading }
     }
@@ -238,7 +249,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
         // The bar cannot show steps finer than this; a load's start and end always ship.
         let fineStep = progress > 0 && progress < 1 && abs(progress - active.estimatedProgress) < 0.05
-        PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent", privacy: .public)")
+        PerfSignposts.energy.emitEvent("progress", "\(fineStep ? "dropped" : "sent")")
         guard !fineStep else { return }
         updateAndEmit(tab.id) { t in t.estimatedProgress = progress }
     }
@@ -259,7 +270,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
             openLittleWindow(url: url)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id), let url else { return }
+        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        if inBackground { noteBackgroundTab(created.id) }
+        guard let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
     }
 
@@ -531,13 +544,14 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.lastCaptureStoppedAt = now
             }
         }
+        callUsageChanged(tabId: tab.id, usage: usage)
     }
 
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,
     /// back/forward), and each patch rewrites the chrome's sidebar state.
     func updateAndEmit(_ id: UUID, _ mutate: (inout Tab) -> Void) {
         guard let (old, new) = context.browserState.updateTab(id: id, mutate: mutate), old != new else { return }
-        if context.mediaTabs[id] != nil { context.mediaActivityChanged() }
+        if context.mediaTabIds.contains(id) || context.callTabIds.contains(id) { context.mediaActivityChanged() }
         if isVisibleTab(new.id) {
             tabManager.noteTabUpdated(old: old, new: new)
         }

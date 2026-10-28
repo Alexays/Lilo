@@ -18,6 +18,18 @@ final class TabDockControllerTests: XCTestCase {
         return container.frame
     }
 
+    // The launch window turns visible before bootstrap loads the settings, and that foregrounds the lifecycle.
+    func testForegroundingBeforeBootstrapDoesNotCrash() {
+        let context = BrowserContext()
+        let window = MainWindowController(context: context)
+        context.windows.add(window)
+        XCTAssertNil(context.settingsStore as SettingsStore?, "Settings must be absent to exercise the launch path")
+
+        context.hiddenSpaceLifecycle.onForegrounded?()
+
+        XCTAssertFalse(window.tabDock.isDocking)
+    }
+
     func testClickingTheDockFromAnotherSpaceReturnsToItsTab() async throws {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }

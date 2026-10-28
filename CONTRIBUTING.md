@@ -138,14 +138,14 @@ Run it once your change is done, and confirm it passes before you open a pull re
 | Command | Runs |
 |---------|------|
 | `make ui-lint` | ESLint and svelte-check over `lilo-ui/` |
-| `make ui-test` | UI unit tests, including the en/fr catalog parity check |
+| `make ui-test` | UI unit tests, including the catalog key and placeholder parity checks |
 | `make e2e` | Playwright end-to-end tests of the interface, in Chromium |
 | `make ext-bridge-test` | extension bridge TypeScript tests |
 | `make hooks-test` | commit-message validation and real Git hook/range checks in temporary repositories |
 | `make lint-commit-message` | checks a commit header or PR title read from stdin |
 | `make lint-commits` | checks non-merge commit headers in `BASE..COMMIT_HEAD` (default `origin/main..HEAD`) |
 | `make release-status` | pending release notes, changelog and app version consistency |
-| `make release-test` | release preparation and Sparkle build number synchronization tests (CI runs them; `make validate` does not) |
+| `make release-test` | release preparation, Sparkle build number synchronization and Discord announcement tests (CI runs them; `make validate` does not) |
 | `make site-check` | Ultracite lint and formatting, Astro templates and TypeScript |
 | `make site-fix` | fix website lint and formatting with Oxlint and Oxfmt |
 | `make site-test` | website build, release notes, routes, links and metadata |
@@ -157,7 +157,7 @@ Heavier checks, run when your change touches their area:
 
 | Command | Runs |
 |---------|------|
-| `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior, and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
+| `make ext-smoke` | the 100 most used Web Store extensions against Chrome's recorded behavior (their errors, what their popup and options page show, their popup again once the worker went idle, what their content scripts change on a local page, their context menu items, with the slow steps reported), and what a few do on a local page past their popup (network; `TOP=500`, `IDS=a,b`) |
 | `make ext-nightly` | unattended `ext-smoke` of the top 500 (`TOP=1000` for all), with a report in `.derived.noindex/ext-smoke/report.txt` and a non-zero exit on a regression |
 | `make terminal-bench` | terminal throughput and lock-fairness benchmarks |
 | `make startup-bench` | launch times of a Release build against a throwaway profile |
@@ -239,13 +239,13 @@ commit. Title edits run only this lightweight workflow. Maintainers should requi
 
 ### Add or change a user-facing string
 
-Every string is translated into English and French.
+Every string is translated into English, French, Spanish, Simplified Chinese, Brazilian Portuguese and Russian.
 
-1. Add the key under the right namespace in both `lilo-ui/src/lib/i18n/locales/en.json` and
-   `fr.json`.
+1. Add the key under the right namespace in every catalog under `lilo-ui/src/lib/i18n/locales/`
+   (`en.json`, `fr.json`, `es.json`, `zh-Hans.json`, `pt-BR.json`, `ru.json`).
 2. In Svelte, use `t("namespace.key")`. In AppKit, write the English string with `.localized`
-   and add an `"English": "Français"` row under the `native` namespace of both catalogs.
-3. `make ui-test` fails if a key is missing from either catalog.
+   and add an `"English": "Français"` row under the `native` namespace of every catalog.
+3. `make ui-test` fails if a key is missing from any catalog.
 
 [docs/I18N.md](docs/I18N.md) covers plurals, placeholders and adding a language.
 

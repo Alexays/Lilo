@@ -29,15 +29,15 @@ final class DownloadDestinationChoiceTests: XCTestCase {
 
     /// Hands the download over in WebKit's callback, as the app does: past it, WebKit may already have
     /// asked the download, still without a delegate, for its destination.
-    private func startDownload() {
+    private func startDownload(privateSpaceId: UUID? = nil) {
         let request = URLRequest(url: URL(string: "data:text/plain;base64,aGVsbG8=")!)
-        webView.startDownload(using: request) { download in self.manager.startDownload(download) }
+        webView.startDownload(using: request) { download in self.manager.startDownload(download, privateSpaceId: privateSpaceId) }
     }
 
     func testTheChosenFileReceivesTheDownload() async throws {
         let chosen = folder.appendingPathComponent("picked.txt")
         var proposed: URL?
-        manager.chooseDestination = { url, _ in proposed = url; return chosen }
+        manager.chooseDestination = { url, _, _ in proposed = url; return chosen }
 
         startDownload()
 
@@ -49,7 +49,7 @@ final class DownloadDestinationChoiceTests: XCTestCase {
 
     func testCancelingTheChoiceSavesNothing() async throws {
         var asked = false
-        manager.chooseDestination = { _, _ in asked = true; return nil }
+        manager.chooseDestination = { _, _, _ in asked = true; return nil }
 
         startDownload()
 
@@ -57,5 +57,27 @@ final class DownloadDestinationChoiceTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(300))
         XCTAssertTrue(asked)
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
+    }
+
+    func testAnExtensionsSuggestionMovesTheDownloadIntoASubfolder() async throws {
+        let suggested = folder.appendingPathComponent("sorted/hello.txt")
+        manager.suggestFilename = { _ in (filename: "sorted/hello.txt", conflictAction: "uniquify") }
+
+        startDownload()
+
+        let landed = await pollUntil { FileManager.default.fileExists(atPath: suggested.path) }
+        XCTAssertTrue(landed)
+    }
+
+    func testAPrivateSpaceDownloadAsksNoExtension() async throws {
+        var asked = false
+        manager.suggestFilename = { _ in asked = true; return (filename: "sorted/hello.txt", conflictAction: "uniquify") }
+
+        startDownload(privateSpaceId: UUID())
+
+        let landed = await pollUntil { (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.isEmpty == false }
+        XCTAssertTrue(landed)
+        XCTAssertFalse(asked)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent("sorted").path))
     }
 }

@@ -66,9 +66,11 @@ extension MainWindowController {
         }
     }
     @objc func openSettings(_ sender: Any?) { bridgeRouter.send(event: "openSettings") }
+    @objc func clearBrowsingData(_ sender: Any?) { bridgeRouter.send(event: "openClearBrowsingData") }
     @objc func replayOnboarding(_ sender: Any?) { bridgeRouter.send(event: "startOnboarding") }
     @objc func openDesignSystem(_ sender: Any?) { bridgeRouter.send(event: "openDesignSystem") }
     @objc func openDiagnostics(_ sender: Any?) { bridgeRouter.send(event: "openDiagnostics") }
+    @objc func togglePerfRecording(_ sender: Any?) { context.togglePerfRecording() }
     @objc func openProcessManager(_ sender: Any?) { bridgeRouter.send(event: "openProcessManager") }
     @objc func openDownloads(_ sender: Any?) { bridgeRouter.send(event: "openDownloads") }
     @objc func openFeatureFlags(_ sender: Any?) { bridgeRouter.send(event: "openConfig") }
@@ -173,7 +175,9 @@ extension MainWindowController {
     @objc func duplicateCurrentTab(_ sender: Any?) { if let tab = tabManager.visibleActiveTab { duplicateTab(tab) } }
     @objc func restoreClosedTab(_ sender: Any?) { _ = restoreClosedTabStateFirst() }
 
+    /// During a call, toggles the call's microphone instead: muting the call's tab would silence the others.
     @objc func toggleMuteCurrentTab(_ sender: Any?) {
+        if let call = shownCallTab { return controlCall(tabId: call.id, action: "togglemicrophone") }
         if let id = tabManager.activeOpenTabId, let tab = tabManager.activeTab { tabManager.setTabMuted(id: id, muted: !tab.isMuted) }
     }
 
@@ -463,9 +467,19 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(goForwardInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoForward == true }
         if action == #selector(stopLoadingCurrentPage(_:)) { return tabManager.activeTab?.isLoading == true }
         if action == #selector(showNextTab(_:)) || action == #selector(showPreviousTab(_:)) { return tabManager.currentTabs.count > 1 }
+        if action == #selector(togglePerfRecording(_:)) {
+            (item as? NSMenuItem)?.title = PerfRecorder.isRecording ? "Stop Performance Recording".localized : "Record Performance Session".localized
+            return true
+        }
         if action == #selector(toggleSidebarVisibility(_:)) {
             (item as? NSMenuItem)?.title = sidebarVisible ? "Hide Sidebar".localized : "Show Sidebar".localized
             return !sidebarCollapseLocked
+        }
+        if action == #selector(toggleMuteCurrentTab(_:)), let call = shownCallTab {
+            let muted = call.isMicrophoneMuted || context.browserState.liveEngine(forTab: call.id)?.callControls.microphoneActive == false
+            (item as? NSMenuItem)?.title = muted ? "Unmute Microphone".localized : "Mute Microphone".localized
+            (item as? NSMenuItem)?.image = (muted ? MenuIcon.unmute : .mute).image
+            return true
         }
         if action == #selector(toggleMuteCurrentTab(_:)) {
             let muted = tabManager.activeTab?.isMuted == true

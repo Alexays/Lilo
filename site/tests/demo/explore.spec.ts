@@ -5,7 +5,7 @@ const openExplore = async (page: Page, french = false) => {
   await page.goto(`${french ? "/fr/" : "/"}#browser-demo`);
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".sample-content")).toBeVisible();
-  await page.locator(".demo-tools [data-action=explore]").click();
+  await page.locator("#browser-demo .demo-tools [data-action=explore]").click();
   await expect(
     frame.getByRole("dialog", {
       exact: true,
@@ -52,17 +52,16 @@ test("Explore opens real settings and routes into the live agent session", async
   await expect(frame.locator(".section-nav-button.active")).toContainText(
     "Appearance"
   );
-  await page.locator(".demo-tools [data-action=explore]").click();
+  await page.locator("#browser-demo .demo-tools [data-action=explore]").click();
   await frame
     .getByRole("button", { exact: true, name: "Agents over MCP" })
     .click();
   await frame.getByRole("button", { exact: true, name: "Try it" }).click();
   await expect(frame.locator(".agent-session .run")).toBeEnabled();
   await expect(frame.locator(".agent-session .run")).toBeVisible();
-  await expect(page.locator(".demo-modes [data-action=mcp]")).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
+  await expect(
+    page.locator("#browser-demo .demo-modes [data-action=mcp]")
+  ).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Peek preserves the pinned page and can expand its preview into a tab", async ({
@@ -132,7 +131,9 @@ test("French Explore fits a touch viewport and switching modes closes its previe
   await expect(
     frame.getByRole("dialog", { exact: true, name: "Petite fenêtre" })
   ).toBeVisible();
-  await page.locator(".demo-modes [data-action=terminal]").click();
+  await page
+    .locator("#browser-demo .demo-modes [data-action=terminal]")
+    .click();
   await expect(frame.locator(".preview-window")).toHaveCount(0);
   await expect(
     frame.getByRole("textbox", { exact: true, name: "Commande du terminal" })

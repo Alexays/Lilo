@@ -1,10 +1,10 @@
 // Chrome on a Mac never fires onSuspend/onSuspendCanceled on a worker, onRestartRequired/restart outside ChromeOS
 // kiosks, nor onConnectNative without a native host, which Lilo never starts. SW-safe: no window/document/webkit.
-import { bridgeEvents, gapCall } from '../shared/ipc.ts';
+import { bridgeEvents, channelClosed, gapCall, instance } from '../shared/ipc.ts';
 import { bridgeChrome, callbackify, withLastError } from '../shared/callbackify.ts';
 import { ChromeEvent, WrappedEvent } from '../shared/chrome-event.ts';
 import { GapChromeEvent, GapWrappedEvent, reportGapListener } from '../shared/gap-event.ts';
-import { externalMark, messagesOnce, once, otherExtension } from '../shared/message-answers.ts';
+import { disconnectedPort, externalMark, framePort, messagesOnce, noReceiver, once, otherExtension, portErrorsAsChrome } from '../shared/message-answers.ts';
 import type { Patch } from '../shared/chrome-compat.ts';
 
 interface UpdateCheckResult {
@@ -49,36 +49,47 @@ export const runtimeLifecycle = {
   onStartup: new GapChromeEvent<[]>('runtime', 'onStartup'),
 };
 
-const noReceiver = 'Could not establish connection. Receiving end does not exist.';
-
 const isWorker = typeof (globalThis as any).ServiceWorkerGlobalScope === 'function';
 
 /** Ends, before `once`, the name of the port tabs.connect opens to the extension's own page a tab shows, with its url. */
 const tabMark = '?liloTab=';
 
 /**
- * WebKit's runtime.onConnect, `source`, handing out the port chrome.runtime.connect opened as messagesOnce's. A port
- * tabs.connect opened to the pages a tab shows reaches only those; a content script's to another extension, the worker,
- * which relays it. No listener of Lilo's own: a worker listening to onConnect loses its ports to pages (WEBKIT-GAPS 60).
+ * The port Lilo relays from another page or the worker of the extension, to `listeners`: one tabs.connect opened to the
+ * pages a tab shows reaches only the page it shows. A context that takes it says so, as one with no listener declines it.
  */
-export const onConnect = (source: () => object) => new WrappedEvent<[any]>(source, (listener) => (port: any) => {
-  const name = port?.name;
-  if (typeof name !== 'string' || !name.endsWith(once)) return listener(port);
-  const plain = name.slice(0, -once.length);
-  const tab = plain.lastIndexOf(tabMark);
-  // The page the tab shows takes it, synchronously: a message the port delivers before its listener runs is lost. The
-  // other contexts hold it all the same: one letting go before every process took the port disconnects it, and its
-  // first messages, queued, with it (WEBKIT-GAPS 60).
-  if (tab >= 0) {
-    const shown = (globalThis as any).top === globalThis && (globalThis as any).location?.href === plain.slice(tab + tabMark.length);
-    return shown ? listener(messagesOnce(port, plain.slice(0, tab))) : undefined;
+function receiveLocalPort(listeners: [(...args: any[]) => unknown, unknown[]][], info: { portId: string; name: string; sender: unknown }): void {
+  const tab = info.name.lastIndexOf(tabMark);
+  const shown = tab < 0 || ((globalThis as any).top === globalThis && (globalThis as any).location?.href === info.name.slice(tab + tabMark.length));
+  if (listeners.length === 0 || !shown) {
+    gapCall('runtime', 'portDecline', { portId: info.portId, instance }, 0).catch(() => {});
+    return;
   }
+  const { name, sender } = framePort(tab < 0 ? info.name : info.name.slice(0, tab), info.sender);
+  const port = externalPort(name, sender, info.portId);
+  // With the worker's instance: one that started since takes no port its previous one answered.
+  gapCall('runtime', 'portAccept', { portId: info.portId, instance }, 0).catch(() => {});
+  for (const [listener] of listeners) {
+    try { listener(port); } catch (err) { console.error(`Error in event handler: ${String(err)}`); }
+  }
+}
+
+/**
+ * WebKit's runtime.onConnect, `source`, which also hears the ports Lilo relays between the extension's pages and worker.
+ * WebKit's port a content script's chrome.runtime.connect opened goes out as messagesOnce's; one a content script opened
+ * to another extension goes to the worker, which relays it.
+ */
+export const onConnect = (source: () => object) => new GapWrappedEvent<[any]>('runtime.onConnect', source, (listener) => (port: any) => {
+  const name = port?.name;
+  if (typeof name !== 'string' || !name.endsWith(once)) return listener(portErrorsAsChrome(port));
+  const plain = name.slice(0, -once.length);
   const external = plain.lastIndexOf(externalMark);
   if (external >= 0) {
     return isWorker ? relayContentScriptPort(port, plain.slice(0, external), plain.slice(external + externalMark.length)) : undefined;
   }
   return listener(messagesOnce(port, plain));
-});
+  // A task of its own, as each of its port messages and disconnects: a port's disconnect runs before a later one connects.
+}, (listeners, info) => asTask(() => receiveLocalPort(listeners, info)));
 
 /**
  * tabs.connect, which Chrome also connects to the extension's own pages a tab shows, where WebKit reaches content
@@ -87,10 +98,11 @@ export const onConnect = (source: () => object) => new WrappedEvent<[any]>(sourc
  */
 export const tabsConnect: Patch = (original, self) => function (this: unknown, tabId: number, info?: { name?: string; frameId?: number; documentId?: string }) {
   const tabs: any = self(this);
-  const webKit = original.apply(tabs, info === undefined ? [tabId] : [tabId, info]);
+  const name = typeof info?.name === 'string' ? info.name : '';
+  // WebKit throws when no script of the tab listens, where Chrome's port disconnects (WEBKIT-GAPS 93).
+  const webKit = connectOrUnanswered(() => original.apply(tabs, info === undefined ? [tabId] : [tabId, info]), name);
   if (info?.documentId !== undefined || (info?.frameId ?? 0) !== 0) return webKit;
   const runtime = bridgeChrome().runtime;
-  const name = typeof info?.name === 'string' ? info.name : '';
   let end = webKit;
   let early: unknown[] | undefined = [];
   // WebKit's port went before tabs.get answered: its runtime.lastError, null without one.
@@ -102,7 +114,7 @@ export const tabsConnect: Patch = (original, self) => function (this: unknown, t
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
     postMessage(message: unknown) {
-      if (closed) throw new Error('Attempting to use a disconnected port object');
+      if (closed) throw new Error(disconnectedPort);
       early?.push(message);
       end.postMessage(message);
     },
@@ -147,6 +159,9 @@ export const tabsConnect: Patch = (original, self) => function (this: unknown, t
 
 const portClosed = 'The message port closed before a response was received.';
 
+// The page's tab, asked once: a page stays in its tab, and each connect waiting for it would lose its order.
+let currentTab: Promise<unknown> | undefined;
+
 /** What the other extension learns of this context as its sender: native checks the url and adds the id and origin. */
 async function senderInfo(): Promise<Record<string, unknown>> {
   const info: Record<string, unknown> = {};
@@ -154,8 +169,13 @@ async function senderInfo(): Promise<Record<string, unknown>> {
   if (url) info.url = url;
   if (!isWorker) {
     // WebKit's getCurrent sometimes never answers in a page a tab shows: the message then goes without its tab.
-    const unanswered = new Promise((resolve) => setTimeout(resolve, 500));
-    const tab = await Promise.race([Promise.resolve(bridgeChrome()?.tabs?.getCurrent?.()).catch(() => undefined), unanswered]);
+    if (!currentTab) {
+      const asked = Promise.resolve(bridgeChrome()?.tabs?.getCurrent?.()).catch(() => undefined);
+      // A late answer still names the tab of the ports after.
+      asked.then((tab) => { currentTab = Promise.resolve(tab); });
+      currentTab = Promise.race([asked, new Promise((resolve) => setTimeout(resolve, 500))]);
+    }
+    const tab = await currentTab;
     if (tab) info.tab = tab;
   }
   return info;
@@ -166,8 +186,38 @@ async function senderInfo(): Promise<Record<string, unknown>> {
  * disconnect, with its lastError if any.
  */
 const externalPorts = new Map<string, (message?: { data: unknown }, error?: string) => void>();
-bridgeEvents.set('runtime.portMessage', (portId: string, data: unknown) => externalPorts.get(portId)?.({ data }));
-bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => externalPorts.get(portId)?.(undefined, error));
+// Messages come as their JSON, which native relays without reading: Chrome serializes a port's messages as JSON too.
+// Chrome runs each port message as a task of its own, so what a listener schedules runs before the next message: Lilo,
+// which receives them batched, does too. A disconnect follows the messages before it.
+const portTasks: Array<() => void> = [];
+let taskChannel: MessageChannel | undefined;
+function asTask(task: () => void): void {
+  if (typeof MessageChannel !== 'function') return task();
+  if (!taskChannel) {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => {
+      portTasks.shift()?.();
+      // An open channel would keep a process that has nothing else to do running.
+      if (portTasks.length === 0 && taskChannel === channel) {
+        taskChannel = undefined;
+        channel.port1.close();
+      }
+    };
+    taskChannel = channel;
+  }
+  portTasks.push(task);
+  taskChannel.port2.postMessage(null);
+}
+// Not even the first runs in the event's task: the port's onConnect, which Lilo may send in the same message, has one of its own.
+bridgeEvents.set('runtime.portMessages', (portId: string, json: string) => {
+  if (typeof json !== 'string') return;
+  for (const data of JSON.parse(json)) asTask(() => externalPorts.get(portId)?.({ data }));
+});
+bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => asTask(() => externalPorts.get(portId)?.(undefined, error)));
+// Lilo leaves this context's ports once its channel closes, as Chrome's go with their worker: their ends here go too.
+channelClosed.push(() => {
+  for (const receive of externalPorts.values()) asTask(() => receive());
+});
 
 /**
  * A port native relays to another extension, by the id `opened` gives (a connecting extension's port, at once); a
@@ -175,13 +225,26 @@ bridgeEvents.set('runtime.portDisconnect', (portId: string, error?: string) => e
  */
 function externalPort(name: string, sender: unknown, opened: Promise<string> | string): object {
   // Native sends a context only the events it listens to: a page, or a worker whose report would leave them out.
-  reportGapListener('runtime.portMessage');
+  reportGapListener('runtime.portMessages');
   reportGapListener('runtime.portDisconnect');
   let portId: string | undefined;
   let closed = false;
   let sending: Promise<unknown>;
+  // What is posted until the next task goes as JSON in as few calls as fit BATCH_LENGTH each: the answers to a burst of
+  // messages, each its own task, go together.
+  let queued: string[][] = [];
+  let queuedLength = 0;
+  const flush = () => {
+    if (queued.length === 0) return;
+    const batches = queued;
+    queued = [];
+    sending = sending.then(() => {
+      if (!portId) return;
+      for (const batch of batches) gapCall('runtime', 'portPost', { portId, json: `[${batch.join(',')}]` }, 0).catch(() => {});
+    });
+  };
   const receive = (message?: { data: unknown }, error?: string) => {
-    if (message) return port.onMessage.dispatch(message.data, port);
+    if (message) return closed ? undefined : port.onMessage.dispatch(message.data, port);
     closed = true;
     externalPorts.delete(portId!);
     if (error) withLastError(error, () => port.onDisconnect.dispatch(port));
@@ -192,18 +255,34 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
     sender,
     onMessage: new ChromeEvent<[unknown, unknown]>(),
     onDisconnect: new ChromeEvent<[unknown]>(),
+    // Each call goes once the port has its id, in order over the channel: none waits for the answer to the one before.
     postMessage(message: unknown) {
-      if (closed) throw new Error('Attempting to use a disconnected port object');
-      sending = sending.then(() => portId && gapCall('runtime', 'portPost', { portId, message })).catch(() => {});
+      if (closed) throw new Error(disconnectedPort);
+      // Serialized now, so a message JSON cannot hold throws here, as in Chrome.
+      const json = JSON.stringify(message === undefined ? null : message);
+      const first = queued.length === 0;
+      if (first || queuedLength + json.length > BATCH_LENGTH) {
+        queued.push([json]);
+        queuedLength = json.length;
+      } else {
+        queued.at(-1)!.push(json);
+        queuedLength += json.length;
+      }
+      // During a burst, what answers its messages waits for them all; otherwise it goes when this task's microtasks do.
+      if (first) {
+        if (portTasks.length > 0) asTask(flush);
+        else queueMicrotask(flush);
+      }
     },
     disconnect() {
       if (closed) return;
       closed = true;
+      flush();
       sending = sending.then(() => {
-        if (!portId) return undefined;
+        if (!portId) return;
         externalPorts.delete(portId);
-        return gapCall('runtime', 'portDisconnect', { portId });
-      }).catch(() => {});
+        gapCall('runtime', 'portDisconnect', { portId }, 0).catch(() => {});
+      });
     },
   };
   if (typeof opened === 'string') {
@@ -221,6 +300,25 @@ function externalPort(name: string, sender: unknown, opened: Promise<string> | s
     withLastError(error?.message ?? noReceiver, () => port.onDisconnect.dispatch(port));
   });
   return port;
+}
+
+/** Past this many characters of JSON a port's messages go in another call: WebKit relays one long string slowly. */
+const BATCH_LENGTH = 64 * 1024;
+
+/** Names this context's ports to the extension's other contexts, which it posts on before Lilo answers. */
+const portTag = Math.random().toString(36).slice(2);
+let ports = 0;
+
+/**
+ * A port to the extension's other pages and worker, which Lilo relays as Chrome connects them: WebKit's drops one when a
+ * process answers before the one that listens (WEBKIT-GAPS 60). With none to take it, Lilo disconnects it with lastError.
+ */
+function localPort(name: string): object {
+  const portId = `${portTag}.${++ports}`;
+  return externalPort(name, undefined, senderInfo().then((sender) => {
+    gapCall('runtime', 'connect', { portId, name, ...sender }, 0).catch(() => {});
+    return portId;
+  }));
 }
 
 /** Whether runtime.sendMessage's `args` name another extension, which takes the message second. */
@@ -247,17 +345,60 @@ function sendExternal(args: any[]): unknown {
 }
 
 /**
+ * Chrome's port to an extension that has no onConnect listener anywhere: it posts until it disconnects, on the next
+ * task, with lastError set. WebKit throws from connect instead (WEBKIT-GAPS 93).
+ */
+function unansweredPort(name: string): object {
+  let closed = false;
+  const port = {
+    name,
+    onMessage: new ChromeEvent<[unknown, unknown]>(),
+    onDisconnect: new ChromeEvent<[unknown]>(),
+    postMessage() {
+      if (closed) throw new Error(disconnectedPort);
+    },
+    disconnect() { closed = true; },
+  };
+  setTimeout(() => {
+    if (closed) return;
+    closed = true;
+    withLastError(noReceiver, () => port.onDisconnect.dispatch(port));
+  });
+  return port;
+}
+
+/** WebKit's connect, or Chrome's port when no context listens. */
+function connectOrUnanswered(open: () => any, name: string): any {
+  try {
+    return portErrorsAsChrome(open());
+  } catch (error) {
+    if (!String((error as Error)?.message).includes('No runtime.onConnect listeners found')) throw error;
+    return unansweredPort(name);
+  }
+}
+
+/**
  * chrome.runtime's connect and sendMessage, which Lilo relays to another extension's onConnectExternal and
  * onMessageExternal (WebKit has no cross-extension messaging); `sendLocal` sends the extension's own messages.
  */
-export function crossExtensionMessaging(runtime: any, sendLocal: (...args: any[]) => any = (...args) => runtime.sendMessage(...args)) {
+export function crossExtensionMessaging(
+  runtime: any,
+  sendLocal: (...args: any[]) => any = (...args) => runtime.sendMessage(...args),
+  ownOnConnect?: WrappedEvent<[any]>,
+) {
   return {
     connect(...args: any[]) {
       if (otherExtension(args[0], runtime)) return connectExternal(args);
-      const [id, info] = typeof args[0] === 'string' ? args : [undefined, args[0]];
+      // Chrome takes a null or undefined id before the connect info, as webext-redux passes it (Keeper).
+      const [id, info] = typeof args[0] === 'string' ? args : [undefined, args.length > 1 && args[0] == null ? args[1] : args[0]];
       const name = typeof info?.name === 'string' ? info.name : '';
+      // A content script has no channel to Lilo: its port is WebKit's.
+      if (typeof runtime.connectNative === 'function') return localPort(name);
       const marked = { ...info, name: name + once };
-      return messagesOnce(id === undefined ? runtime.connect(marked) : runtime.connect(id, marked), name);
+      const open = () => (id === undefined ? runtime.connect(marked) : runtime.connect(id, marked));
+      // WebKit disconnects the port when the first process answers with no receiver, as this context's own does
+      // when it listens (WEBKIT-GAPS 60): it asks only the processes listening once the connect reaches it.
+      return connectOrUnanswered(() => messagesOnce(ownOnConnect ? ownOnConnect.unheard(open) : open(), name), name);
     },
     sendMessage(...args: any[]) {
       return toOtherExtension(args, runtime) ? sendExternal(args) : sendLocal(...args);
@@ -265,10 +406,18 @@ export function crossExtensionMessaging(runtime: any, sendLocal: (...args: any[]
   };
 }
 
-/** WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay. */
+/**
+ * WebKit's own connect and sendMessage, which browser.runtime calls: another extension's id goes to Lilo's relay, and a
+ * page's or the worker's port to Lilo, as chrome.runtime.connect's (webextension-polyfill uses this one).
+ */
 export const crossExtensionPatches: Record<string, Patch> = {
   connect: (original, self) => function (this: unknown, ...args: any[]) {
-    return otherExtension(args[0], self(this)) ? connectExternal(args) : original.apply(self(this), args);
+    const runtime: any = self(this);
+    if (otherExtension(args[0], runtime)) return connectExternal(args);
+    const info = typeof args[0] === 'string' || (args.length > 1 && args[0] == null) ? args[1] : args[0];
+    const name = typeof info?.name === 'string' ? info.name : '';
+    if (typeof runtime.connectNative === 'function') return localPort(name);
+    return connectOrUnanswered(() => original.apply(runtime, args), name);
   },
   sendMessage: (original, self) => function (this: unknown, ...args: any[]) {
     return toOtherExtension(args, self(this)) ? sendExternal(args) : original.apply(self(this), args);

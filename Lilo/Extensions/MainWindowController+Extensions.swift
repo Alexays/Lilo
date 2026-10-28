@@ -29,9 +29,7 @@ extension MainWindowController {
         context.engineFactory.sessionsContextProvider = { [weak context] registry in
             guard let context, let window = context.windows.window(showingProfileOf: registry) else { return nil }
             return SessionsContext(
-                recentlyClosedURLs: context.recentlyClosed.recentEntries.filter(window.isVisibleToExtensions).compactMap {
-                    if case .page(let url) = $0.content { url } else { nil }
-                },
+                recentlyClosed: context.recentlyClosed.recentEntries.filter(window.isVisibleToExtensions),
                 restore: { [weak window] index in window?.restoreClosedTabForExtension(at: index) }
             )
         }
@@ -92,6 +90,13 @@ extension MainWindowController {
         tabManager.extensionRegistry = registry
         registry.onExtensionsChanged = { [weak context, weak registry] in
             context?.windows.windows.forEach { if $0.profileContext?.extensions === registry { $0.sendExtensionsChangedEvent() } }
+        }
+
+        // Another profile's prompts here are denied and closed, so its extensions never wait on a profile the window left.
+        for profile in context.profileContexts.allContexts where profile.extensions !== registry {
+            for id in profile.extensions.denyPermissionRequests(shownIn: self) {
+                bridgeRouter?.send(event: "permissionRequestClosed", data: ["requestId": id])
+            }
         }
 
         registry.notifyWindowOpened()
@@ -186,8 +191,11 @@ extension MainWindowController {
         ])
     }
 
+    /// Resolves through the registry that asked, only for a prompt this window shows.
     func resolveExtensionPermissionRequest(requestId: String, granted: Bool) {
-        profileContext?.extensions.resolvePermissionRequest(id: requestId, granted: granted)
+        context.profileContexts.allContexts
+            .first { $0.extensions.permissionPromptWindows.object(forKey: requestId as NSString) === self }?
+            .extensions.resolvePermissionRequest(id: requestId, granted: granted)
     }
 
     // MARK: - Engine Configuration
@@ -248,6 +256,11 @@ extension MainWindowController {
         requestedURL?.scheme?.lowercased() == "chrome-extension"
     }
 
+    /// The close handler lives in its own world: one in the page world gives every page of the controller `window.webkit`.
+    private static let popupCloseWorld = WKContentWorld.world(name: "lilo-popup-close")
+    /// Random per launch: the event an extension page's window.close dispatches for `popupCloseWorld` to post.
+    private static let popupCloseEvent = "lilo-close-" + UUID().uuidString
+
     func installPopupCloseBridge(on userContentController: WKUserContentController) {
         guard !Self.popupCloseBridgeControllers.contains(userContentController) else { return }
         Self.popupCloseBridgeControllers.add(userContentController)
@@ -262,11 +275,7 @@ extension MainWindowController {
 
                 const closePopup = () => {
                     window.__liloPageClosing?.();
-                    try {
-                        window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
-                    } catch (error) {
-                        console.error('Failed to close popup natively', error);
-                    }
+                    document.dispatchEvent(new CustomEvent('\#(Self.popupCloseEvent)'));
                 };
 
                 window.close = closePopup;
@@ -276,9 +285,22 @@ extension MainWindowController {
             injectionTime: .atDocumentStart,
             forMainFrameOnly: true
         )
+        let relayScript = WKUserScript(
+            source: #"""
+            if (/^(webkit|chrome)-extension:$/.test(location.protocol)) {
+                document.addEventListener('\#(Self.popupCloseEvent)', () => {
+                    window.webkit.messageHandlers.liloPopupHost.postMessage({ command: 'close' });
+                });
+            }
+            """#,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: true,
+            in: Self.popupCloseWorld
+        )
 
-        userContentController.removeScriptMessageHandler(forName: "liloPopupHost")
+        userContentController.removeScriptMessageHandler(forName: "liloPopupHost", contentWorld: Self.popupCloseWorld)
         userContentController.addUserScript(nativeCloseScript)
-        userContentController.add(PopupCloseScriptHandler(windows: context.windows), name: "liloPopupHost")
+        userContentController.addUserScript(relayScript)
+        userContentController.add(PopupCloseScriptHandler(windows: context.windows), contentWorld: Self.popupCloseWorld, name: "liloPopupHost")
     }
 }

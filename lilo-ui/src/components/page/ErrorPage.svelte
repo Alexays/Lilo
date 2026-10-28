@@ -110,6 +110,9 @@
       {#if error.url}
         <p class="error-url">{error.url}</p>
       {/if}
+      <p class="error-code">
+        {#if isCertError}{error.description}<br />{/if}{error.domain} {error.code}
+      </p>
       <div class="error-actions">
         <UiButton disabled={!canGoBack} onclick={() => tabActions.goBack()}>{t("errorPage.back")}</UiButton>
         {#if isBlockedByContentBlocker}
@@ -173,12 +176,20 @@
     font-size: var(--font-size-sm);
     color: var(--text-muted);
     word-break: break-all;
+    margin: 0 0 8px;
+  }
+
+  .error-code {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
     margin: 0 0 20px;
   }
 
   .error-title,
   .error-description,
-  .error-url {
+  .error-url,
+  .error-code {
     -webkit-user-select: text;
     user-select: text;
   }

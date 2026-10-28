@@ -137,7 +137,9 @@ class UserScriptPort {
   readonly onMessage = new ChromeEvent<[unknown, UserScriptPort]>();
   readonly onDisconnect = new ChromeEvent<[UserScriptPort]>();
   connected = true;
-  private readonly portId: string;
+  /** Traffic that arrives while the sender tab resolves, relayed once the connect listeners have run. */
+  pending: Array<[unknown, unknown]> | undefined = [];
+  readonly portId: string;
   readonly name: string;
   readonly sender: Record<string, unknown>;
 
@@ -171,25 +173,34 @@ class UserScriptConnectEvent extends GapChromeEvent<[UserScriptPort]> {
     const [kind, portId] = args;
     if (typeof portId !== 'string') return;
     if (kind === 'connect') {
-      if (this.hasListeners()) void this.open(portId, String(args[2] ?? ''), (args[3] ?? {}) as Record<string, unknown>);
+      if (!this.hasListeners()) return;
+      const port = new UserScriptPort(portId, String(args[2] ?? ''), (args[3] ?? {}) as Record<string, unknown>);
+      openPorts.set(portId, port);
+      void this.open(port);
       return;
     }
     const port = openPorts.get(portId);
-    if (!port) return;
+    if (port?.pending) port.pending.push([kind, args[2]]);
+    else if (port) this.relay(port, kind, args[2]);
+  }
+
+  private relay(port: UserScriptPort, kind: unknown, message: unknown): void {
+    if (!port.connected) return;
     if (kind === 'message') {
-      port.onMessage.dispatch(args[2], port);
+      port.onMessage.dispatch(message, port);
     } else if (kind === 'disconnect') {
       port.connected = false;
-      openPorts.delete(portId);
+      openPorts.delete(port.portId);
       port.onDisconnect.dispatch(port);
     }
   }
 
-  private async open(portId: string, name: string, sender: Record<string, unknown>): Promise<void> {
-    await resolveSenderTab(sender);
-    const port = new UserScriptPort(portId, name, sender);
-    openPorts.set(portId, port);
+  private async open(port: UserScriptPort): Promise<void> {
+    await resolveSenderTab(port.sender);
     super.dispatch(port);
+    const pending = port.pending!;
+    port.pending = undefined;
+    for (const [kind, message] of pending) this.relay(port, kind, message);
   }
 }
 

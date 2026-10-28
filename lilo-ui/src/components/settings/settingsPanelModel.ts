@@ -1,4 +1,5 @@
 import type {
+  BridgeBrowsingDataKind,
   BridgeSitePermissionSnapshot,
   BridgeWebsiteDataSnapshot,
   BridgeZoomLevelSnapshot,
@@ -23,6 +24,7 @@ export const SETTINGS_NAV_GROUPS: { id: string; labelKey?: string; sections: Set
       { id: "general", labelKey: "settings.sections.general" },
       { id: "appearance", labelKey: "settings.sections.appearance" },
       { id: "tabs", labelKey: "settings.sections.tabs" },
+      { id: "media", labelKey: "settings.sections.media" },
       { id: "privacy", labelKey: "settings.sections.privacy" },
       { id: "extensions", labelKey: "settings.sections.extensions" },
     ],
@@ -47,11 +49,14 @@ export type SettingId =
   | "language"
   | "searchEngine"
   | "searchSuggestions"
+  | "preloadTopHit"
   | "askDownloadLocation"
   | "searchEngines"
   | "downloadsFolder"
   | "autoPictureInPicture"
   | "autoplay"
+  | "dockCallsInSidebar"
+  | "fullBandMicrophone"
   | "autoDevices"
   | "deviceSetup"
   | "appUpdates"
@@ -140,7 +145,8 @@ export type SettingsGlyph =
   | "cylinder"
   | "text"
   | "command"
-  | "laptop";
+  | "laptop"
+  | "microphone";
 
 export interface SettingsGroupIcon {
   glyph: SettingsGlyph;
@@ -154,7 +160,8 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.otherAppLinks": { glyph: "arrowOutOfBox", tint: "indigo" },
   "settings.groups.search": { glyph: "magnifier", tint: "orange" },
   "settings.groups.downloads": { glyph: "folder", tint: "teal" },
-  "settings.groups.media": { glyph: "play", tint: "pink" },
+  "settings.groups.playback": { glyph: "play", tint: "pink" },
+  "settings.groups.calls": { glyph: "microphone", tint: "pink" },
   "settings.groups.lilo": { glyph: "petals", tint: "lilo" },
   "settings.groups.theme": { glyph: "halfCircle", tint: "purple" },
   "settings.groups.tabLayout": { glyph: "tabs", tint: "indigo" },
@@ -198,8 +205,11 @@ export type SettingsGroupKey = keyof typeof SETTINGS_GROUP_ICONS;
 /** Boolean settings: stored key and the value an unset key means. */
 export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback: boolean }>> = {
   searchSuggestions: { key: "searchSuggestions", fallback: true },
+  preloadTopHit: { key: "preloadTopHit", fallback: true },
   askDownloadLocation: { key: "askDownloadLocation", fallback: false },
   autoPictureInPicture: { key: "autoPictureInPicture", fallback: true },
+  dockCallsInSidebar: { key: "dockCallsInSidebar", fallback: true },
+  fullBandMicrophone: { key: "fullBandMicrophone", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
@@ -235,13 +245,16 @@ export const SETTINGS: SettingModel[] = [
   { id: "externalLinkRules", section: "general", groupKey: "settings.groups.otherAppLinks" },
   { id: "searchEngine", section: "general", groupKey: "settings.groups.search" },
   { id: "searchSuggestions", section: "general", groupKey: "settings.groups.search" },
+  { id: "preloadTopHit", section: "general", groupKey: "settings.groups.search" },
   { id: "searchEngines", section: "general", groupKey: "settings.groups.search" },
   { id: "downloadsFolder", section: "general", groupKey: "settings.groups.downloads" },
   { id: "askDownloadLocation", section: "general", groupKey: "settings.groups.downloads" },
-  { id: "autoPictureInPicture", section: "general", groupKey: "settings.groups.media" },
-  { id: "autoplay", section: "general", groupKey: "settings.groups.media" },
-  { id: "autoDevices", section: "general", groupKey: "settings.groups.media" },
-  { id: "deviceSetup", section: "general", groupKey: "settings.groups.media", requires: "autoDevices" },
+  { id: "autoPictureInPicture", section: "media", groupKey: "settings.groups.playback" },
+  { id: "autoplay", section: "media", groupKey: "settings.groups.playback" },
+  { id: "dockCallsInSidebar", section: "media", groupKey: "settings.groups.calls", requires: "autoPictureInPicture" },
+  { id: "fullBandMicrophone", section: "media", groupKey: "settings.groups.calls" },
+  { id: "autoDevices", section: "media", groupKey: "settings.groups.calls" },
+  { id: "deviceSetup", section: "media", groupKey: "settings.groups.calls", requires: "autoDevices" },
   { id: "appUpdates", section: "general", groupKey: "settings.groups.lilo" },
   { id: "autoUpdate", section: "general", groupKey: "settings.groups.lilo" },
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
@@ -392,8 +405,7 @@ export function formatDownloadsFolderLabel(
   return parts.at(-1) ?? fallback;
 }
 
-export type BrowsingDataKind = "history" | "cookies" | "cache" | "siteData";
-export const BROWSING_DATA_KINDS: BrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
+export const BROWSING_DATA_KINDS: BridgeBrowsingDataKind[] = ["history", "cookies", "cache", "siteData"];
 
 export interface SiteSummary {
   /** Registrable domain when WebKit reports data for it, otherwise the bare host. */

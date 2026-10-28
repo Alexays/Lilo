@@ -67,6 +67,22 @@ describe('webNavigation url filters', () => {
       'docs https://www.example.com/docs#a',
     ]);
   });
+
+  it('rejects an invalid regular expression at addListener, leaving the other listeners heard', async () => {
+    (globalThis as any).chrome = {
+      windows: { getAll: async () => [{ id: 1 }] },
+      tabs: { query: async () => [{ id: 7 }] },
+    };
+    const event = webNavigationAugmentation.onHistoryStateUpdated;
+    const broken = () => assert.fail('a listener with an invalid filter is never added');
+    assert.throws(() => (event as any).addListener(broken, { url: [{ urlMatches: '(' }] }), SyntaxError);
+    assert.equal(event.hasListener(broken), false);
+    const heard = new Promise((resolve) => (event as any).addListener(resolve, { url: [{ hostContains: '.example' }] }));
+
+    event.dispatch({ windowPosition: 0, index: 0, url: 'https://example.com/a', timeStamp: 1, transitionQualifiers: [] } as any);
+
+    assert.equal(((await heard) as any).url, 'https://example.com/a');
+  });
 });
 
 describe('webNavigation.onCreatedNavigationTarget', () => {

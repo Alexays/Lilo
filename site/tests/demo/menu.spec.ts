@@ -8,7 +8,7 @@ for (const french of [false, true]) {
     const frame = page.frameLocator("#browser-demo iframe");
     await expect(frame.locator(".repo-top")).toBeVisible();
 
-    await expect(page.locator(".mac-menu > summary")).toHaveText(
+    await expect(page.locator("#browser-demo .mac-menu > summary")).toHaveText(
       french
         ? [
             "Lilo",
@@ -36,7 +36,7 @@ for (const french of [false, true]) {
           ]
     );
 
-    const file = page.locator(".mac-menu[data-menu='File']");
+    const file = page.locator("#browser-demo .mac-menu[data-menu='File']");
     await file.locator(":scope > summary").click();
     await expect(file.locator("[data-action='newTab']")).toBeEnabled();
     await expect(
@@ -56,15 +56,15 @@ for (const french of [false, true]) {
     const nativeOnly = file.locator("[data-native-only]").first();
     await expect(nativeOnly).toBeDisabled();
     await expect(nativeOnly).toHaveAttribute("title", /Mac/u);
-    await expect(page.locator(".mac-menu [data-action='reset']")).toHaveCount(
-      0
-    );
-    await expect(page.locator(".mac-menu [data-action='explore']")).toHaveCount(
-      0
-    );
+    await expect(
+      page.locator("#browser-demo .mac-menu [data-action='reset']")
+    ).toHaveCount(0);
+    await expect(
+      page.locator("#browser-demo .mac-menu [data-action='explore']")
+    ).toHaveCount(0);
 
     await file.locator(":scope > summary").press("Escape");
-    const view = page.locator(".mac-menu[data-menu='View']");
+    const view = page.locator("#browser-demo .mac-menu[data-menu='View']");
     await view.locator(":scope > summary").click();
     await expect(view.locator("[data-action='sidebar'] kbd")).toHaveText("⇧⌘S");
     await expect(view.locator("[data-action='reloadFromOrigin']")).toBeHidden();
@@ -85,13 +85,13 @@ test("application menus support arrows, nested menus, Escape and outside clicks"
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".repo-top")).toBeVisible();
 
-  const file = page.locator(".mac-menu[data-menu='File']");
+  const file = page.locator("#browser-demo .mac-menu[data-menu='File']");
   await file.locator(":scope > summary").focus();
   await page.keyboard.press("ArrowDown");
   await expect(file.locator("[data-action='newTab']")).toBeFocused();
   await page.keyboard.press("ArrowRight");
 
-  const edit = page.locator(".mac-menu[data-menu='Edit']");
+  const edit = page.locator("#browser-demo .mac-menu[data-menu='Edit']");
 
   const firstEditAction = edit
     .locator(":scope > .menu-items > button:enabled:visible")
@@ -118,8 +118,10 @@ test("application menus support arrows, nested menus, Escape and outside clicks"
   await expect(edit.locator("[data-submenu='Speech'] > summary")).toBeFocused();
   await page.keyboard.press("Home");
   await expect(firstEditAction).toBeFocused();
-  await page.locator(".demo-modes [data-action='browser']").click();
-  await expect(page.locator(".mac-menu[open]")).toHaveCount(0);
+  await page
+    .locator("#browser-demo .demo-modes [data-action='browser']")
+    .click();
+  await expect(page.locator("#browser-demo .mac-menu[open]")).toHaveCount(0);
 });
 
 test("menu labels, checked Spaces and history availability follow the same demo state", async ({
@@ -129,13 +131,13 @@ test("menu labels, checked Spaces and history availability follow the same demo 
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".repo-top")).toBeVisible();
 
-  const history = page.locator(".mac-menu[data-menu='History']");
+  const history = page.locator("#browser-demo .mac-menu[data-menu='History']");
   await history.locator(":scope > summary").click();
   await expect(history.locator("[data-action='back']")).toBeDisabled();
   await expect(history.locator("[data-action='reopenTab']")).toBeDisabled();
   await history.locator(":scope > summary").press("Escape");
 
-  const tab = page.locator(".mac-menu[data-menu='Tab']");
+  const tab = page.locator("#browser-demo .mac-menu[data-menu='Tab']");
   await tab.locator(":scope > summary").click();
   await expect(tab.locator("[data-action='pin'] .menu-label")).toHaveText(
     "Unpin Tab"
@@ -147,7 +149,7 @@ test("menu labels, checked Spaces and history availability follow the same demo 
   );
   await tab.locator(":scope > summary").press("Escape");
 
-  const spaces = page.locator(".mac-menu[data-menu='Spaces']");
+  const spaces = page.locator("#browser-demo .mac-menu[data-menu='Spaces']");
   await spaces.locator(":scope > summary").click();
   await expect(spaces.locator("[data-id='home']")).toHaveAttribute(
     "aria-checked",
@@ -174,29 +176,31 @@ test("menus follow language changes in the real Settings screen", async ({
   await page.goto("/#browser-demo");
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".repo-top")).toBeVisible();
-  const app = page.locator(".mac-menu[data-menu='Lilo']");
+  const app = page.locator("#browser-demo .mac-menu[data-menu='Lilo']");
   await app.locator(":scope > summary").click();
   await app.locator("[data-action='settings']").click();
   await frame
     .getByRole("combobox", { exact: true, name: "Language" })
     .selectOption("fr");
-  await expect(page.locator("[data-menu='File'] > summary")).toHaveText(
-    "Fichier"
-  );
   await expect(
-    page.locator("[data-action='selectTab1'] .menu-label")
+    page.locator("#browser-demo [data-menu='File'] > summary")
+  ).toHaveText("Fichier");
+  await expect(
+    page.locator("#browser-demo [data-action='selectTab1'] .menu-label")
   ).toHaveText("Onglet 1");
-  await expect(page.locator("[data-action='pin'] .menu-label")).toHaveText(
-    "Désépingler l'onglet"
-  );
   await expect(
-    page.locator("[data-menu-list='recentlyClosed'] button")
+    page.locator("#browser-demo [data-action='pin'] .menu-label")
+  ).toHaveText("Désépingler l'onglet");
+  await expect(
+    page.locator("#browser-demo [data-menu-list='recentlyClosed'] button")
   ).toHaveText("Aucun onglet fermé");
   await frame
     .getByRole("combobox", { exact: true, name: "Langue" })
     .selectOption("en");
-  await expect(page.locator("[data-menu='File'] > summary")).toHaveText("File");
-  await expect(page.locator("[data-action='pin'] .menu-label")).toHaveText(
-    "Unpin Tab"
-  );
+  await expect(
+    page.locator("#browser-demo [data-menu='File'] > summary")
+  ).toHaveText("File");
+  await expect(
+    page.locator("#browser-demo [data-action='pin'] .menu-label")
+  ).toHaveText("Unpin Tab");
 });

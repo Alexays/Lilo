@@ -7,6 +7,6 @@
 /* Shown by macOS when a page asks for the location. */
 "NSLocationWhenInUseUsageDescription" = "Ce site demande l'accès à votre position.";
 /* Shown by macOS the first time a page on the local network is opened. */
-"NSLocalNetworkUsageDescription" = "Lilo se connecte aux appareils de votre réseau local quand vous ouvrez leurs pages, comme un routeur ou une imprimante.";
+"NSLocalNetworkUsageDescription" = "Lilo se connecte aux appareils de votre réseau local, comme un routeur ou une imprimante, quand vous ouvrez leurs pages ou qu'une extension les cherche.";
 /* Shown by macOS when a page starts speech recognition. */
 "NSSpeechRecognitionUsageDescription" = "Ce site demande la reconnaissance vocale pour transformer ce que vous dites en texte.";

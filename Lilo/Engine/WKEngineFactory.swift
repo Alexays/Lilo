@@ -86,6 +86,10 @@ final class WKEngineFactory {
     var formDirtyHandler: ((WKWebView, Bool) -> Void)? {
         didSet { formDirtyBridge.onChange = formDirtyHandler }
     }
+    /// Reports a page's Media Session call controls to the window controller. Set by MainWindowController.
+    var callControlsHandler: ((WKWebView, WKWebViewTab.CallControls) -> Void)? {
+        didSet { callControlsBridge.onChange = callControlsHandler }
+    }
 
     /// The compiled filter rules, split in parts when they exceed what one list may hold.
     private var contentRuleLists: [WKContentRuleList] = []
@@ -154,8 +158,16 @@ final class WKEngineFactory {
         return bridge
     }()
 
+    private lazy var callControlsBridge: CallControlsBridge = {
+        let bridge = CallControlsBridge()
+        bridge.onChange = callControlsHandler
+        return bridge
+    }()
+
     /// getDisplayMedia tab-share surface; the window controller wires its picker and ferry.
     let tabShareBridge = TabShareBridge()
+    /// Microphone without echo cancellation behind headphones; `BrowserContext` wires its setting.
+    let microphoneBridge = MicrophoneBridge()
 
     /// Serves ferry frames to pages over lilo-capture://; the window controller wires its provider.
     let tabShareFrameSchemeHandler = TabShareFrameSchemeHandler()
@@ -280,6 +292,7 @@ final class WKEngineFactory {
         router.register(handler: proxyHandler)
         router.register(handler: PowerBridgeHandler())
         router.register(handler: SystemBridgeHandler(registriesProvider: allRegistries))
+        router.register(handler: LocalNetworkBridgeHandler(registriesProvider: allRegistries))
         router.register(handler: TtsBridgeHandler(registriesProvider: allRegistries))
         router.register(handler: TabsBridgeHandler(contextProvider: { [weak self] in self?.tabGroupsContextProvider?($0) }))
         router.register(handler: DebuggerBridgeHandler.shared)
@@ -392,7 +405,7 @@ final class WKEngineFactory {
 
     /// A shared pool keeping a spare WebContent process launched, so cross-site navigations and new views skip the spawn (the default
     /// pool has it off, fixed at creation). Looked up by name since WKProcessPool is deprecated; nil when the SPI is missing.
-    private static let contentProcessPool: NSObject? = {
+    static let contentProcessPool: NSObject? = {
         guard let poolClass: AnyObject = NSClassFromString("WKProcessPool") else { return nil }
         let selector = NSSelectorFromString("_processPoolWithConfiguration:")
         guard poolClass.responds(to: selector),
@@ -855,7 +868,9 @@ final class WKEngineFactory {
         contentController.addScriptMessageHandler(serialBridge, contentWorld: world, name: SerialBridge.messageHandlerName)
         contentController.addScriptMessageHandler(eyeDropperBridge, contentWorld: world, name: EyeDropperBridge.messageHandlerName)
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
+        contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
+        contentController.addScriptMessageHandler(microphoneBridge, contentWorld: world, name: MicrophoneBridge.messageHandlerName)
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }
         contentControllersByKey[key] = contentController
@@ -869,7 +884,8 @@ final class WKEngineFactory {
         // First, so the store shim below finds the store's transport.
         PageWorld.install([
             GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
-            TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
+            // After the tab-share module, so its getUserMedia hands Chrome's capture ids on to that one.
+            TabShareBridge.pageModule, MicrophoneBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule
         ], on: contentController)
         contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
                                                      in: PageWorld.bridgeWorld))
@@ -910,7 +926,7 @@ final class WKEngineFactory {
         let list = tokens.split(separator: " ").filter { $0.utf8.allSatisfy(allowed.contains) }
         guard !list.isEmpty else { return "" }
         var count = 16
-        while count * 4 < list.count { count *= 2 }
+        while count * 16 < list.count { count *= 2 }
         var buckets = [[Substring]](repeating: [], count: count)
         for token in list {
             var hash: UInt32 = 2_166_136_261

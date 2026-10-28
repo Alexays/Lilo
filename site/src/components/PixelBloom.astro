@@ -1,0 +1,81 @@
+---
+import PixelLogo from "./PixelLogo.astro";
+---
+
+<div class="pixel-bloom" aria-hidden="true">
+  <PixelLogo />
+</div>
+
+<script>
+  const fields = [...document.querySelectorAll<HTMLElement>(".pixel-bloom")];
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  const sync = () => {
+    for (const field of fields) {
+      field.toggleAttribute(
+        "data-active",
+        Object.hasOwn(field.dataset, "visible") &&
+          !document.hidden &&
+          !reduceMotion.matches
+      );
+    }
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      entry.target.toggleAttribute("data-visible", entry.isIntersecting);
+    }
+
+    sync();
+  });
+
+  for (const field of fields) {
+    observer.observe(field);
+  }
+
+  document.addEventListener("visibilitychange", sync);
+
+  reduceMotion.addEventListener("change", sync);
+</script>
+
+<style>
+  .pixel-bloom {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    pointer-events: none;
+    opacity: 0.2;
+    mask-image: linear-gradient(90deg, transparent 25%, #000 80%);
+  }
+  .pixel-bloom :global(svg) {
+    position: absolute;
+    top: 50%;
+    right: -6%;
+    width: min(680px, 85%);
+    height: auto;
+    transform: translateY(-50%);
+  }
+  .pixel-bloom :global(.pixel-petal) {
+    animation: pixel-breathe 3.2s ease-in-out infinite;
+    animation-delay: calc(var(--petal, 0) * -0.45s);
+    animation-play-state: paused;
+  }
+  .pixel-bloom[data-active] :global(.pixel-petal) {
+    animation-play-state: running;
+  }
+  @keyframes pixel-breathe {
+    0%,
+    100% {
+      opacity: 0.18;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pixel-bloom :global(.pixel-petal) {
+      animation: none;
+      opacity: 0.5;
+    }
+  }
+</style>

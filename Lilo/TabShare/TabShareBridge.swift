@@ -285,7 +285,15 @@ getDisplayMedia(constraints){
       if (actx) actx.close();
       throw new DOMException('Permission denied', 'NotAllowedError');
     }
-    if (res.mode === 'system') { if (actx) actx.close(); return pending.promise; }
+    // A screen or window share is text: without a hint, the call's encoder keeps the frame rate
+    // and lowers the resolution under load, blurring it. A hint the page sets wins.
+    if (res.mode === 'system') {
+      if (actx) actx.close();
+      return pending.promise.then(function(stream){
+        stream.getVideoTracks().forEach(function(t){ if (!t.contentHint) t.contentHint = 'detail'; });
+        return stream;
+      });
+    }
     return ferryStream(res, actx);
   }, function(){
     delete nativePending[id];

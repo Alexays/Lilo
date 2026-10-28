@@ -1,5 +1,7 @@
 import { postMessage as emit, type BridgeCommandPayloadMap } from "./index";
 import type {
+	BridgeBrowsingDataKind,
+	BridgeCallAction,
 	BridgeCommandName,
 	BridgeControlTabOrder,
 	BridgeMediaAction,
@@ -81,8 +83,6 @@ export const tabActions = {
 	returnHome: emitId("returnTabHome"),
 	setMuted: (id: string, muted: boolean): void =>
 		emit(muted ? "muteTab" : "unmuteTab", { id }),
-	setMicrophoneMuted: (id: string, muted: boolean): void =>
-		emit(muted ? "muteTabMicrophone" : "unmuteTabMicrophone", { id }),
 	showContextMenu: (id: string, x: number, y: number, width: number, height: number): void =>
 		emit("showTabContextMenu", { id, x, y, width, height }),
 	navigate: (url: string, typed?: boolean): void => emit("navigate", { url, typed }),
@@ -141,6 +141,8 @@ export const screenshotActions = {
 export const tabShareActions = {
 	resolve: (payload: BridgeCommandPayloadMap["tabShare.resolve"]): void =>
 		emit("tabShare.resolve", payload),
+	shareInstead: (token: string, tabId: string): void => emit("shareTabInstead", { token, tabId }),
+	stop: (token: string): void => emit("stopTabShare", { token }),
 };
 
 export const spaceActions = {
@@ -202,10 +204,9 @@ export const settingsActions = {
 	setSitePermission: (origin: string, type: string, allow: boolean): void =>
 		emit("setSitePermission", { origin, type, allow }),
 	toggleBlockerAllowlist: (host: string): void => emit("toggleBlockerAllowlist", { host }),
-	clearHistory: (range = "all"): void => emit("clearHistory", { range }),
-	clearCookies: (range = "all"): void => emit("clearCookies", { range }),
-	clearCache: (range = "all"): void => emit("clearCache", { range }),
-	clearSiteData: (range = "all"): void => emit("clearSiteData", { range }),
+	clearBrowsingData: (kinds: BridgeBrowsingDataKind[], range: string): void =>
+		emit("clearBrowsingData", { kinds, range }),
+	loadBrowsingDataSizes: emitEmpty("getBrowsingDataSizes"),
 	loadWebsiteData: emitEmpty("getWebsiteData"),
 	loadTerminalOptions: emitEmpty("getTerminalOptions"),
 	importTerminalTheme: emitEmpty("importTerminalTheme"),
@@ -236,6 +237,7 @@ export const settingsActions = {
 	clearExtensionDiagnostics: emitEmpty("clearExtensionDiagnostics"),
 	copyExtensionDiagnostics: emitEmpty("copyExtensionDiagnostics"),
 	copyDiagnosticsReport: emitEmpty("copyDiagnosticsReport"),
+	togglePerfRecording: emitEmpty("togglePerfRecording"),
 	forceLifecycleTrim: emitEmpty("forceLifecycleTrim"),
 	chooseDownloadsFolder: emitEmpty("chooseDownloadsFolder"),
 	loadDefaultBrowserStatus: emitEmpty("getDefaultBrowserStatus"),
@@ -286,6 +288,7 @@ export const searchActions = {
 		emit("deleteHistoryEntry", { url, query }),
 	searchSuggestions: (query: string, engine: string): void =>
 		emit("searchSuggestions", { query, engine }),
+	preloadTopHit: (url: string): void => emit("preloadTopHit", { url }),
 };
 
 export const terminalActions = {
@@ -305,6 +308,7 @@ export const terminalActions = {
 export const mediaActions = {
 	load: emitEmpty("getMediaActivity"),
 	control: (id: string, action: BridgeMediaAction): void => emit("controlMedia", { id, action }),
+	controlCall: (id: string, action: BridgeCallAction): void => emit("controlCall", { id, action }),
 };
 
 export const agentActions = {

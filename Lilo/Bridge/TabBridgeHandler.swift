@@ -93,9 +93,10 @@ final class TabBridgeHandler: BridgeHandler {
         "returnTabHome",
         "muteTab",
         "unmuteTab",
-        "muteTabMicrophone",
-        "unmuteTabMicrophone",
         "controlMedia",
+        "controlCall",
+        "shareTabInstead",
+        "stopTabShare",
         "getMediaActivity",
         "restoreClosedTab",
         "clearUnpinnedTabs",
@@ -235,11 +236,17 @@ final class TabBridgeHandler: BridgeHandler {
         case "muteTab", "unmuteTab":
             if let id = message.uuid("id") { tabManager.setTabMuted(id: id, muted: message.action == "muteTab") }
 
-        case "muteTabMicrophone", "unmuteTabMicrophone":
-            if let id = message.uuid("id") { tabManager.setTabMicrophoneMuted(id: id, muted: message.action == "muteTabMicrophone") }
-
         case "controlMedia":
             if let id = message.uuid("id") { windowController?.controlMedia(tabId: id, action: message.string("action", default: "")) }
+
+        case "shareTabInstead":
+            if let id = message.uuid("tabId") { windowController?.shareTabInstead(token: message.string("token", default: ""), tabId: id) }
+
+        case "stopTabShare":
+            windowController?.stopTabShare(token: message.string("token", default: ""))
+
+        case "controlCall":
+            if let id = message.uuid("id") { windowController?.controlCall(tabId: id, action: message.string("action", default: "")) }
 
         case "getMediaActivity":
             // A loading window has nothing yet: forget what it was sent so it gets the list.

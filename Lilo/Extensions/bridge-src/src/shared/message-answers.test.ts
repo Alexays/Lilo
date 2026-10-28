@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { answerAsChrome, listensProbe, relayExternalMessaging } from './message-answers.ts';
+import { answerAsChrome, frameMark, listensProbe, messagesOnce, relayExternalMessaging } from './message-answers.ts';
 import { installChromeCompat } from './chrome-compat.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
@@ -92,10 +92,54 @@ describe('runtime.onMessage listeners', () => {
     assert.equal(await onMessage.send({ liloExternal: 'abcdefghijklmnopabcdefghijklmnop', message: 1 }), undefined);
     assert.deepEqual(heard, []);
   });
+
+  it("hear a frame's message its extension page sends for it from the frame's url, as Chrome", () => {
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((message: unknown, sender: unknown) => { heard.push([message, sender]); });
+    const page = { id: 'abc', url: 'chrome-extension://abc/offscreen.html', origin: 'chrome-extension://abc' };
+    for (const listener of onMessage.listeners) listener({ liloFrame: 'https://example.com/frame.html', message: 'ping' }, page, () => {});
+    assert.deepEqual(heard, [['ping', { id: 'abc', url: 'https://example.com/frame.html', origin: 'https://example.com' }]]);
+  });
+
+  it("leave a content script's message naming a frame as it is: a web page could name any sender", () => {
+    const onMessage = new Event();
+    answerAsChrome(onMessage);
+    const heard: unknown[] = [];
+    onMessage.addListener((message: unknown, sender: unknown) => { heard.push([message, sender]); });
+    const content = { id: 'abc', url: 'https://evil.example/', origin: 'https://evil.example', tab: { id: 3 } };
+    const forged = { liloFrame: 'https://bank.example/login', message: 'fill' };
+    for (const listener of onMessage.listeners) listener(forged, content, () => {});
+    assert.deepEqual(heard, [[forged, content]]);
+  });
+});
+
+describe('a port a frame opens through its extension page', () => {
+  it("takes its own name and the frame's url as its sender", () => {
+    const event = () => ({ addListener() {} });
+    const url = 'https://example.com/frame.html?q=a?liloTab=x';
+    const port: any = messagesOnce({
+      sender: { id: 'abc', url: 'chrome-extension://abc/offscreen.html', origin: 'chrome-extension://abc' },
+      onMessage: event(), onDisconnect: event(), postMessage() {}, disconnect() {},
+    }, `name?liloFrame=x${frameMark}${encodeURIComponent(url)}`);
+    assert.equal(port.name, 'name?liloFrame=x');
+    assert.deepEqual(port.sender, { id: 'abc', url, origin: 'https://example.com' });
+  });
+
+  it("keeps a content script's port name and sender as they are", () => {
+    const event = () => ({ addListener() {} });
+    const sender = { id: 'abc', url: 'https://evil.example/', origin: 'https://evil.example', tab: { id: 3 } };
+    const name = `x${frameMark}${encodeURIComponent('https://bank.example/')}`;
+    const port: any = messagesOnce({ sender, onMessage: event(), onDisconnect: event(), postMessage() {}, disconnect() {} }, name);
+    assert.equal(port.name, name);
+    assert.equal(port.sender, sender);
+  });
 });
 
 let contentListens = false;
 const probes: unknown[] = [];
+const lateMessages: unknown[] = [];
 
 // WebKit calls back with undefined both when nothing answers and when it answers no value; each
 // context has its own prototypes.
@@ -112,12 +156,16 @@ function install(page: boolean, answer: unknown): any {
   // The tab's content scripts listen, without responding, when the probe is answered.
   class Tabs {
     get(tabId: number) {
+      if (tabId === 6) return Promise.resolve({ id: 6, status: 'loading', url: 'https://example.com/' });
       return Promise.resolve({ id: tabId, status: tabId === 4 ? 'loading' : 'complete', url: tabId >= 4 ? 'chrome-extension://abc/popup.html' : 'https://example.com/' });
     }
-    sendMessage(_tabId: number, message: unknown, ...rest: unknown[]) {
+    sendMessage(tabId: number, message: unknown, ...rest: unknown[]) {
       const callback = typeof rest[rest.length - 1] === 'function' ? rest.pop() as (response: unknown) => void : undefined;
       probes.push(rest[0]);
-      const response = message === listensProbe && contentListens ? true : undefined;
+      // Tab 6's content script starts listening once its third probe came: it then answers the message.
+      if (tabId === 6) lateMessages.push(message);
+      const late = tabId === 6 && lateMessages.filter((sent) => sent === listensProbe).length >= 3;
+      const response = message === listensProbe ? (contentListens || late) || undefined : late ? 'pong' : undefined;
       if (!callback) return Promise.resolve(response);
       setTimeout(() => callback(response), 0);
     }
@@ -160,6 +208,13 @@ describe('sendMessage callbacks', () => {
 });
 
 describe('tabs.sendMessage promises', () => {
+  it("reach the content script of a loading tab that listens a moment after the message, as Chrome's do", async () => {
+    const worker = install(false, undefined);
+    lateMessages.length = 0;
+    assert.equal(await worker.tabs.sendMessage(6, 'ping'), 'pong');
+    assert.deepEqual(lateMessages.filter((sent) => sent !== listensProbe), ['ping', 'ping'], 'the message goes again once, after nobody received it');
+  });
+
   it("reject with Chrome's error when no content script listens, and resolve when one does", async () => {
     const worker = install(false, undefined);
     await assert.rejects(worker.tabs.sendMessage(3, 1), { message: 'Could not establish connection. Receiving end does not exist.' });
@@ -172,6 +227,18 @@ describe('tabs.sendMessage promises', () => {
     const worker = install(false, undefined);
     assert.equal(await worker.tabs.sendMessage(4, 1), undefined);
     await assert.rejects(worker.tabs.sendMessage(5, 1), { message: 'Could not establish connection. Receiving end does not exist.' }, 'a loaded page that does not listen');
+  });
+
+  it('reject for the sending page\'s own tab, still loading, which Chrome never delivers to', async () => {
+    const page = install(true, undefined);
+    const scope = globalThis as any;
+    const saved = { top: scope.top, location: scope.location };
+    Object.assign(scope, { top: scope, location: { href: 'chrome-extension://abc/popup.html#home' } });
+    try {
+      await assert.rejects(page.tabs.sendMessage(4, 1), { message: 'Could not establish connection. Receiving end does not exist.' });
+    } finally {
+      Object.assign(scope, saved);
+    }
   });
 });
 
@@ -216,8 +283,14 @@ describe("a content script's messages to another extension", () => {
     const sent: unknown[] = [];
     const opened: unknown[] = [];
     const runtime = Object.create({
-      sendMessage(message: unknown) { sent.push(message); return Promise.resolve(answer); },
-      connect(info: { name: string }) {
+      // As WebKit's, they answer nothing called on another object.
+      sendMessage(this: unknown, message: unknown) {
+        if (this !== runtime) return undefined;
+        sent.push(message);
+        return Promise.resolve(answer);
+      },
+      connect(this: unknown, info: { name: string }) {
+        if (this !== runtime) return undefined;
         opened.push(info);
         return { name: info.name, onMessage: { addListener() {} }, onDisconnect: { addListener() {} }, postMessage() {}, disconnect() {} };
       },
@@ -242,11 +315,35 @@ describe("a content script's messages to another extension", () => {
     assert.equal(await contentRuntime({ closed: true }).runtime.sendMessage(other, 1), undefined);
   });
 
+  it('work detached, as Chrome\'s', async () => {
+    const { runtime, opened } = contentRuntime({ response: 'pong' });
+    const { sendMessage, connect } = runtime;
+    assert.deepEqual(await sendMessage('own'), { response: 'pong' });
+    assert.equal(await sendMessage(other, 'ping'), 'pong');
+    assert.equal(connect({ name: 'own' })?.name, 'own');
+    assert.deepEqual(opened, [{ name: 'own' }]);
+  });
+
   it('open a port the worker relays, named for the other extension', () => {
     const { runtime, opened } = contentRuntime(undefined);
     const port = runtime.connect(other, { name: 'tunnel' });
     runtime.connect({ name: 'own' });
     assert.equal(port.name, 'tunnel');
     assert.deepEqual(opened, [{ name: `tunnel?liloExternal=${other}?lilo` }, { name: 'own' }]);
+  });
+});
+
+describe("WebKit's ports", () => {
+  it("fail in Chrome's words once disconnected, through Lilo's wrapper or not", () => {
+    class Port {
+      name = 'state';
+      onMessage = { addListener() {} };
+      onDisconnect = { addListener() {} };
+      postMessage() { throw new Error('Invalid call to port.postMessage(). The port is disconnected.'); }
+    }
+    const port = new Port();
+    const wrapped: any = messagesOnce(port, 'state');
+    assert.throws(() => wrapped.postMessage('late'), { message: 'Attempting to use a disconnected port object' });
+    assert.throws(() => new Port().postMessage(), { message: 'Attempting to use a disconnected port object' }, 'every port of its prototype');
   });
 });

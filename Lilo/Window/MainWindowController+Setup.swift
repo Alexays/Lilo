@@ -34,8 +34,19 @@ extension MainWindowController {
         chromeWebView.addSubview(chromeInput.shield)
     }
 
+    /// The chrome keeps no data (its CSP loads nothing remote), so it need not open a store on disk. One store for
+    /// every window: WebKit shares a related web view's process only within the same store.
+    private static let chromeDataStore = WKWebsiteDataStore.nonPersistent()
+    /// The last chrome made, so the next window's chrome joins its process instead of launching and warming its own.
+    private static weak var lastChromeWebView: OverlayWebView?
+
     static func makeChromeWebView(frame: CGRect) -> OverlayWebView {
         let config = WKWebViewConfiguration()
+        config.websiteDataStore = chromeDataStore
+        let setRelatedWebView = NSSelectorFromString("_setRelatedWebView:")
+        if let lastChromeWebView, config.responds(to: setRelatedWebView) {
+            config.perform(setRelatedWebView, with: lastChromeWebView)
+        }
         config.userContentController = WKUserContentController()
         config.setURLSchemeHandler(ChromeUISchemeHandler(), forURLScheme: ChromeUISchemeHandler.scheme)
         WebInspectorSupport.prepare(configuration: config)
@@ -47,6 +58,7 @@ extension MainWindowController {
         }
         let webView = OverlayWebView(frame: frame, configuration: config)
         WebInspectorSupport.enable(for: webView)
+        lastChromeWebView = webView
         return webView
     }
 
@@ -322,6 +334,11 @@ extension MainWindowController {
             tab.isFormDirty = dirty
             tab.delegate?.tab(tab, didUpdateFormDirty: dirty)
         }
+        context.engineFactory.callControlsHandler = { [weak context] webView, controls in
+            guard let context, let tab = context.windows.windowAndEngine(for: webView)?.engine, tab.callControls != controls else { return }
+            tab.callControls = controls
+            if context.callTabIds.contains(tab.id) || context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
+        }
         context.engineFactory.notificationShownHandler = { [weak context] webView in
             guard let (window, engine) = context?.windows.windowAndEngine(for: webView),
                   window.tabManager.activeEngineTab !== engine,
@@ -390,7 +407,12 @@ extension MainWindowController {
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             bridgeRouter: bridgeRouter,
             suggestionsEnabledProvider: { settingsStore.searchSuggestions },
-            preconnect: { [weak self] url in self?.tabManager.activeEngineTab?.preconnect(to: url) }
+            preconnect: { [weak self] url in self?.tabManager.activeEngineTab?.preconnect(to: url) },
+            // Low Power Mode or a hot Mac: no page loads on a guess.
+            preloadTopHit: { [weak self] url in
+                guard let self else { return }
+                tabManager.preloadTopHit(context.hiddenSpaceLifecycle.isConstrainedPower ? nil : url)
+            }
         ))
 
         // chrome.omnibox spans both bridges: the address bar sends omniboxInput* here, and the
@@ -529,6 +551,7 @@ extension MainWindowController {
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
+        settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
         settingsHandler.onContentBlockerToggled = { [weak self] enabled in
             guard let self else { return }

@@ -40,28 +40,43 @@ function test(part: Part, filter: UrlFilter, value: string): boolean {
     && (suffix === undefined || value.endsWith(suffix));
 }
 
-/** Whether `filter` matches `rawUrl`: every criterion it sets must hold. */
-export function matchesUrlFilter(rawUrl: string, filter: UrlFilter): boolean {
-  let url: URL;
-  try {
-    url = new URL(rawUrl);
-  } catch {
-    return false;
-  }
-  // Chrome matches the url* criteria against the URL without its fragment.
-  const withoutFragment = url.href.split('#')[0];
-  const port = url.port === '' ? DEFAULT_PORTS[url.protocol] : Number(url.port);
-  if (filter.schemes && !filter.schemes.includes(url.protocol.slice(0, -1))) return false;
-  if (filter.ports && !filter.ports.some((p) => (Array.isArray(p) ? port >= p[0] && port <= p[1] : port === p))) return false;
-  if (filter.urlMatches !== undefined && !new RegExp(filter.urlMatches).test(withoutFragment)) return false;
-  if (filter.originAndPathMatches !== undefined && !new RegExp(filter.originAndPathMatches).test(url.origin + url.pathname)) return false;
-  return test('host', filter, url.hostname.toLowerCase())
-    && test('path', filter, url.pathname)
-    && test('query', filter, url.search.replace(/^\?/, ''))
-    && test('url', filter, withoutFragment);
+/**
+ * Chrome matches host criteria against the host with a leading dot, and adds one to an equals or prefix
+ * criterion that lacks it: `hostContains: '.foo'` and `hostPrefix: 'foo'` both match `foo.com`.
+ */
+function compileUrlFilter(filter: UrlFilter): (url: URL) => boolean {
+  const urlMatches = filter.urlMatches === undefined ? undefined : new RegExp(filter.urlMatches);
+  const originAndPathMatches = filter.originAndPathMatches === undefined ? undefined : new RegExp(filter.originAndPathMatches);
+  // Chrome lowercases the host criteria, which ignore case.
+  const lower = (value: string | undefined) => value?.toLowerCase();
+  const dotted = (value: string | undefined) => (value === undefined || value.startsWith('.') ? value : `.${value}`);
+  const host: UrlFilter = {
+    hostContains: lower(filter.hostContains),
+    hostEquals: dotted(lower(filter.hostEquals)),
+    hostPrefix: dotted(lower(filter.hostPrefix)),
+    hostSuffix: lower(filter.hostSuffix),
+  };
+  return (url) => {
+    // Chrome matches the url* criteria against the URL without its fragment.
+    const withoutFragment = url.href.split('#')[0];
+    const port = url.port === '' ? DEFAULT_PORTS[url.protocol] : Number(url.port);
+    if (filter.schemes && !filter.schemes.includes(url.protocol.slice(0, -1))) return false;
+    if (filter.ports && !filter.ports.some((p) => (Array.isArray(p) ? port >= p[0] && port <= p[1] : port === p))) return false;
+    if (urlMatches && !urlMatches.test(withoutFragment)) return false;
+    if (originAndPathMatches && !originAndPathMatches.test(url.origin + url.pathname)) return false;
+    return test('host', host, `.${url.hostname.toLowerCase()}`)
+      && test('path', filter, url.pathname)
+      && test('query', filter, url.search.replace(/^\?/, ''))
+      && test('url', filter, withoutFragment);
+  };
 }
 
-/** A listener's `{ url: [...] }` filter matches when any of its UrlFilters does; no filter matches all. */
-export function matchesUrlFilters(rawUrl: string, filters: UrlFilter[] | undefined): boolean {
-  return !filters || filters.length === 0 || filters.some((filter) => matchesUrlFilter(rawUrl, filter));
+/**
+ * A listener's `{ url: [...] }` filter, compiled once: it matches when any of its UrlFilters does, and undefined
+ * (no filter) matches all. Throws on an invalid regular expression, as Chrome's addListener does.
+ */
+export function compileUrlFilters(filters: UrlFilter[] | undefined): ((url: URL) => boolean) | undefined {
+  if (!filters || filters.length === 0) return undefined;
+  const compiled = filters.map(compileUrlFilter);
+  return (url) => compiled.some((matches) => matches(url));
 }

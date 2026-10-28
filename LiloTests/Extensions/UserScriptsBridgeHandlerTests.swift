@@ -326,6 +326,7 @@ final class UserScriptsExecuteTests: XCTestCase {
         try await registry.load(from: dir)
         let extensionId = try XCTUnwrap(registry.loadedExtensions.first?.id)
         let window = makeTestWindow(context, showing: space.id)
+        await registry.restore()
         func detect() async throws -> String? {
             let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "chrome-extension://\(extensionId)/page.html")))
             let page = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)?.view as? WKWebView)

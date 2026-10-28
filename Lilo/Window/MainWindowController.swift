@@ -171,7 +171,7 @@ final class MainWindowController: NSWindowController {
     /// The spaces this window showed, most recent first: a deleted space hands the window back to them.
     var recentSpaceIds: [UUID] = []
     /// The tabs this window showed, most recent first, each with when it was left.
-    var recentTabs: [(id: UUID, leftAt: Date)] = []
+    var recentTabs: [(id: UUID, leftAt: Date?)] = []
     /// The modifiers held when the recent tabs switcher opened; nil while it is closed.
     var tabSwitcherModifiers: NSEvent.ModifierFlags?
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
@@ -238,6 +238,7 @@ final class MainWindowController: NSWindowController {
     var lastAppliedWindowChromeColor: NSColor?
     var didStartChromeUILoad = false
     var didReceiveChromeReady = false
+    var didChromeVisualReady = false
     /// Last href pushed to the chrome overlay. WebKit reports the element under the pointer on every
     /// mouse move, so without this the sidebar would take one bridge message per move for a readout
     /// that only changes when the pointer crosses a link boundary.
@@ -731,7 +732,7 @@ extension MainWindowController: TabManager.Delegate {
         syncActiveBrowserState()
         publishActiveTab()
         enqueueVisibleTabUpdate(tab)
-        if context.mediaTabs[tab.id] != nil { context.mediaActivityChanged() }
+        if context.mediaTabIds.contains(tab.id) || context.callTabIds.contains(tab.id) { context.mediaActivityChanged() }
         profileContext?.sessionPersistence?.scheduleSave()
     }
 }
@@ -824,6 +825,7 @@ extension MainWindowController: NSWindowDelegate {
         browsingActivity = nil
         // WebKit must get an answer for every permission request; an open prompt dies with the window.
         for tabId in Set(pendingPermissionRequests.map(\.tabId)) { denyPermissionRequests(forTab: tabId) }
+        profileContext?.extensions.denyPermissionRequests(shownIn: self)
         pagePopups.values.forEach { $0.close() }
         // Their pages are served by this window's delegate methods.
         littleWindows.values.forEach { $0.window.close() }

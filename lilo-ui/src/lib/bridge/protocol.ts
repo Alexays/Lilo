@@ -308,6 +308,17 @@ export interface BridgeWebsiteDataSnapshot {
 	kinds: ("cache" | "cookies" | "storage")[];
 }
 
+export type BridgeBrowsingDataKind = "history" | "cookies" | "cache" | "siteData";
+
+/** Bytes the window's profile stores, by kind; a kind left out could not be measured. */
+export interface BridgeBrowsingDataSizes {
+	history?: number;
+	historyEntries?: number;
+	cache?: number;
+	cookies?: number;
+	storage?: number;
+}
+
 export interface BridgeZoomLevelSnapshot {
 	host: string;
 	zoom: number;
@@ -557,9 +568,10 @@ export interface BridgeCommandPayloadMap {
 	returnTabHome: { id: string };
 	muteTab: { id: string };
 	unmuteTab: { id: string };
-	muteTabMicrophone: { id: string };
-	unmuteTabMicrophone: { id: string };
 	controlMedia: { id: string; action: BridgeMediaAction };
+	controlCall: { id: string; action: BridgeCallAction };
+	shareTabInstead: { token: string; tabId: string };
+	stopTabShare: { token: string };
 	getMediaActivity: EmptyPayload;
 	restoreClosedTab: EmptyPayload;
 	clearUnpinnedTabs: EmptyPayload;
@@ -663,6 +675,8 @@ export interface BridgeCommandPayloadMap {
 
 	searchHistory: { query: string };
 	searchSuggestions: { query: string; engine: string };
+	/** The command bar's top hit to load out of sight; an empty `url` drops it. */
+	preloadTopHit: { url: string };
 	deleteHistoryEntry: { url: string; query: string };
 
 	omniboxInputStarted: { sessionId: string; query: string };
@@ -681,10 +695,9 @@ export interface BridgeCommandPayloadMap {
 	revokeSitePermission: { id: string };
 	setSitePermission: { origin: string; type: string; allow: boolean };
 	toggleBlockerAllowlist: { host: string };
-	clearHistory: { range?: string };
-	clearCookies: { range?: string };
-	clearCache: { range?: string };
-	clearSiteData: { range?: string };
+	/** `siteData` clears every kind of site data, cookies and cache included, and with an all-time range the site permissions. */
+	clearBrowsingData: { kinds: BridgeBrowsingDataKind[]; range: string };
+	getBrowsingDataSizes: EmptyPayload;
 	getWebsiteData: EmptyPayload;
 	getTerminalOptions: EmptyPayload;
 	runInTerminal: { command: string; split: boolean };
@@ -733,6 +746,7 @@ export interface BridgeCommandPayloadMap {
 	clearExtensionDiagnostics: EmptyPayload;
 	copyExtensionDiagnostics: EmptyPayload;
 	copyDiagnosticsReport: EmptyPayload;
+	togglePerfRecording: EmptyPayload;
 	forceLifecycleTrim: EmptyPayload;
 	getDefaultBrowserStatus: EmptyPayload;
 	setDefaultBrowser: EmptyPayload;
@@ -832,6 +846,7 @@ export interface BridgeEventPayloadMap {
 	openHistory: EmptyPayload;
 	closeCommandBarAfterNavigation: EmptyPayload;
 	openSettings: EmptyPayload;
+	openClearBrowsingData: EmptyPayload;
 	openShortcuts: EmptyPayload;
 	openDesignSystem: EmptyPayload;
 	startOnboarding: EmptyPayload;
@@ -897,7 +912,7 @@ export interface BridgeEventPayloadMap {
 	tabPreviewReady: { tabId: string; image?: string } & Partial<BridgeTerminalPrompt>;
 	// Every started terminal this window may name, sent whenever one changes state.
 	terminalActivity: { terminals: BridgeTerminalSummary[] };
-	mediaActivity: { tabs: BridgeMediaTab[] };
+	mediaActivity: { tabs: BridgeMediaTab[]; calls: BridgeCallTab[] };
 	// Sent when a non-blank tab closes; restoreClosedTab reopens it. A Clear names the tabs it
 	// archived instead, for restoreArchivedTabs.
 	tabClosedUndoable: { title: string; count?: number; archivedIds?: string[] };
@@ -940,9 +955,13 @@ export interface BridgeEventPayloadMap {
 		marks: BridgeStartupMetricMarkSnapshot[];
 		traces: BridgeStartupTraceSnapshot[];
 		lifecycleDiagnostics?: BridgeTabLifecycleDiagnostics;
+		/** Epoch milliseconds the running performance recording started at, or null. */
+		perfRecordingStartedAt?: number | null;
 	};
+	perfRecordingChanged: { startedAt: number | null };
 	settingsActionCompleted: BridgeSettingsActionStatusPayload;
 	websiteDataLoaded: { sites: BridgeWebsiteDataSnapshot[] };
+	browsingDataSizesLoaded: BridgeBrowsingDataSizes;
 	terminalOptions: BridgeTerminalOptions;
 	terminalCompletionResults: {
 		query: string;
@@ -1000,7 +1019,6 @@ export interface BridgeEventPayloadMap {
 			| "open"
 			| "quickLook"
 			| "showInFinder"
-			| "copyUrl"
 			| "deleteFile"
 			| "removeFromList"
 			| "cancel"
@@ -1158,6 +1176,7 @@ export interface BridgeAgentClient {
 }
 
 export type BridgeMediaAction = "play" | "pause" | "nexttrack" | "previoustrack";
+export type BridgeCallAction = "togglemicrophone" | "togglecamera" | "hangup";
 
 /** A tab playing media, or paused from the sidebar's media card. */
 export interface BridgeMediaTab {
@@ -1169,6 +1188,24 @@ export interface BridgeMediaTab {
 	muted: boolean;
 	/** The page registered Media Session next or previous track handlers. */
 	hasTrackControls: boolean;
+}
+
+/** A tab capturing the microphone or camera, for the sidebar's call card. */
+export interface BridgeCallTab {
+	id: string;
+	spaceId: string;
+	title: string;
+	faviconDataURL: string;
+	hasMicrophone: boolean;
+	microphoneMuted: boolean;
+	hasCamera: boolean;
+	cameraOff: boolean;
+	/** The tab's own sound, muted in Lilo. */
+	muted: boolean;
+	/** The page registered a Media Session hangup handler. */
+	canHangUp: boolean;
+	/** The tab the call shares through Lilo's tab share, if it shares one. */
+	share?: { token: string; tabId: string; title: string };
 }
 
 /** A started terminal of any window or Space, listed after `>`. Times are milliseconds since 1970, 0 when unset. */

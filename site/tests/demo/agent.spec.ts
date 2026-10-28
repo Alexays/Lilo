@@ -6,7 +6,7 @@ const openAgent = async (page: Page, french = false) => {
   await page.goto(`${french ? "/fr/" : "/"}#browser-demo`);
   const frame = page.frameLocator("#browser-demo iframe");
   await expect(frame.locator(".sample-content")).toBeVisible();
-  await page.locator(".demo-modes [data-action=mcp]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session .run")).toBeEnabled();
   await expect(frame.locator(".launch-page")).toBeVisible();
 
@@ -62,11 +62,11 @@ test("manual tools can stop an approval and cancel it when the inspector closes"
   await expect(
     frame.getByRole("button", { exact: true, name: "Allow Once" })
   ).toBeVisible();
-  await page.locator(".demo-modes [data-action=browser]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=browser]").click();
   await expect(
     frame.getByRole("button", { exact: true, name: "Allow Once" })
   ).toHaveCount(0);
-  await page.locator(".demo-modes [data-action=mcp]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".published")).toBeEmpty();
 });
 
@@ -74,14 +74,14 @@ test("the real Agents setting disables both the Codex session and manual tools",
   page,
 }) => {
   const frame = await openAgent(page);
-  const menu = page.locator(".mac-menu").first();
+  const menu = page.locator("#browser-demo .mac-menu").first();
   await menu.locator(":scope > summary").click();
   await menu.locator('[data-action="settings"]').click();
   await frame.locator(".section-nav-button", { hasText: "AI agents" }).click();
   await frame
     .getByRole("checkbox", { exact: true, name: "Let AI agents use Lilo" })
     .press("Space");
-  await page.locator(".demo-modes [data-action=mcp]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session .run")).toBeDisabled();
   await expect(frame.locator(".agent-session .connection")).toContainText(
     "Agent access is off"
@@ -96,7 +96,7 @@ test("the real Agents setting disables both the Codex session and manual tools",
   await frame
     .getByRole("checkbox", { exact: true, name: "Let AI agents use Lilo" })
     .press("Space");
-  await page.locator(".demo-modes [data-action=mcp]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session .run")).toBeEnabled();
 });
 
@@ -223,12 +223,12 @@ test("switching modes stops the live session and keeps personal tabs intact", as
   const frame = await openAgent(page);
   await frame.locator(".agent-session .run").click();
   await expect(frame.locator(".agent-cursor")).toBeVisible();
-  await page.locator(".demo-modes [data-action=browser]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=browser]").click();
   await expect(
     frame.getByRole("treeitem", { exact: true, name: "Alexays / Lilo, Pinned" })
   ).toBeVisible();
   await expect(frame.locator(".agent-frame")).toHaveCount(0);
-  await page.locator(".demo-modes [data-action=mcp]").click();
+  await page.locator("#browser-demo .demo-modes [data-action=mcp]").click();
   await expect(frame.locator(".agent-session")).toHaveAttribute(
     "data-agent-status",
     "stopped"

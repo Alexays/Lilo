@@ -48,7 +48,6 @@
     interactive = true,
     disableTooltip = false,
     tooltipAnchor,
-    previewActions = false,
     actionsInert = false,
     level = 1,
     tabStop = true,
@@ -59,7 +58,6 @@
     disableTooltip?: boolean;
     /** Ancestor selector the tooltip sits beside, so it clears neighbours sharing the row. */
     tooltipAnchor?: string;
-    previewActions?: boolean;
     actionsInert?: boolean;
     /** Depth in the sidebar tree, 1 at the root. */
     level?: number;
@@ -171,12 +169,6 @@
     tabActions.setMuted(tab.id, !tab.isMuted);
   }
 
-  function toggleMicrophoneMute(e: MouseEvent) {
-    e.stopPropagation();
-    if (!interactive) return;
-    tabActions.setMicrophoneMuted(tab.id, !tab.isMicrophoneMuted);
-  }
-
   const closeButtonLabel = $derived(
     tab.isClosed && tab.isPinned ? t("tabItem.removePinnedTab") :
     tab.isClosed && tab.isBookmarked ? t("tabItem.removeBookmark") :
@@ -184,10 +176,16 @@
   );
 
   const usesPinnedRemovalIcon = $derived(tab.isClosed && tab.isPinned);
-  // Action buttons are NEVER unmounted for transient states (drag in progress): they occupy
-  // layout even when invisible, so unmounting them reflows the whole row on every drag start.
-  // Transient disabling goes through `actionsInert` (inert attribute) instead.
-  const showPreviewActions = $derived(previewActions || interactive);
+  const isCapturing = $derived(!!(tab.isCameraActive || tab.isMicrophoneActive || tab.isScreenSharing));
+  // Red while the tab can hear or see you: a muted microphone alone stays grey.
+  const isCaptureLive = $derived(!!(tab.isCameraActive || tab.isScreenSharing || (tab.isMicrophoneActive && !tab.isMicrophoneMuted)));
+  const captureLabel = $derived(
+    [
+      tab.isCameraActive ? t("tabItem.cameraInUse") : "",
+      tab.isMicrophoneActive ? t(tab.isMicrophoneMuted ? "tabItem.microphoneMuted" : "tabItem.microphoneInUse") : "",
+      tab.isScreenSharing ? t("tabItem.sharingScreen") : "",
+    ].filter(Boolean).join(", "),
+  );
 
   const isTerminal = $derived(tab.kind === "terminal");
   const isChanges = $derived(tab.kind === "changes");
@@ -271,6 +269,7 @@
       hangSeconds !== null ? t("tabItem.notResponding") : "",
       tab.isPinned ? t("tabItem.pinned") : "",
       tab.isLoading ? t("tabItem.loading") : "",
+      captureLabel,
       tab.isMuted ? t("tabItem.muted") : tab.isAudioPlaying ? t("tabItem.playingAudio") : "",
       tab.isClosed && !isTerminal ? t("tabItem.sleeping") : "",
       awaitingInput && !isTerminal ? t("tabItem.terminalAttention") : "",
@@ -533,97 +532,76 @@
         />
       </div>
     {/if}
+    <!-- One corner mark at a time: the agent's, else what the tab captures, else its sound. -->
     {#if agentActing}
       <span class="agent-pip" aria-hidden="true" in:pipPop out:pipPop={{ leaving: true }}></span>
+    {:else if isCapturing}
+      <span
+        class="capture-pip"
+        class:live={isCaptureLive}
+        aria-hidden="true"
+        use:tooltip={{ text: captureLabel, placement: tooltipSide() }}
+        in:pipPop
+        out:pipPop={{ leaving: true }}
+      ></span>
+    {:else if tab.isAudioPlaying || tab.isMuted}
+      <button
+        type="button"
+        class="sound-badge"
+        aria-label={tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute")}
+        tabindex={interactive ? 0 : -1}
+        inert={actionsInert || undefined}
+        use:tooltip={{ text: tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute"), placement: tooltipSide() }}
+        onclick={toggleMute}
+        in:pipPop
+        out:pipPop={{ leaving: true }}
+      >
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          {#if tab.isMuted}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.55"/>
+            <path d="M8 4.5L10.5 7M10.5 4.5L8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          {:else}
+            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor"/>
+            <path d="M8.6 4C9.8 4.9 9.8 7.1 8.6 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          {/if}
+        </svg>
+      </button>
     {/if}
   </div>
 
-  {#if isRenaming}
-    <input
-      bind:this={renameInput}
-      bind:value={draftTitle}
-      class="tab-title-input"
-      type="text"
-      spellcheck="false"
-      aria-label={t("tabItem.tabName")}
-      onclick={(e) => e.stopPropagation()}
-      ondblclick={(e) => e.stopPropagation()}
-      onkeydown={handleRenameKeydown}
-      onblur={commitRename}
-    />
-  {:else}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <span
-      class="tab-title"
-      ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
-    >{terminalLabel || displayTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
-  {/if}
-  {#if terminalHint}
-    <span class="terminal-hint">{terminalHint}</span>
-  {/if}
-  {#if hangSeconds !== null}
-    <span class="hang-timer">{hangRepeat ? t("tabItem.hangAgain") : t("tabItem.hangSeconds", { seconds: String(hangSeconds) })}</span>
-  {/if}
-  {#if hasUnreadOutput || (hasPageUnread && !pageUnreadCount)}
-    <span class="unread-dot" aria-hidden="true"></span>
-  {:else if pageUnreadCount}
-    <span class="unread-count" aria-hidden="true">{unreadBadgeText(pageUnreadCount)}</span>
-  {/if}
-
-  <div class="tab-actions" inert={actionsInert || undefined}>
-    {#if tab.isCameraActive}
+  <!-- The close button floats over the end of this box, which fades under it: nothing reflows. -->
+  <div class="tab-body" class:under-close={interactive && isCloseVisible && !isRenaming}>
+    {#if isRenaming}
+      <input
+        bind:this={renameInput}
+        bind:value={draftTitle}
+        class="tab-title-input"
+        type="text"
+        spellcheck="false"
+        aria-label={t("tabItem.tabName")}
+        onclick={(e) => e.stopPropagation()}
+        ondblclick={(e) => e.stopPropagation()}
+        onkeydown={handleRenameKeydown}
+        onblur={commitRename}
+      />
+    {:else}
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <span
-        class="status-icon"
-        role="img"
-        aria-label={t("tabItem.cameraInUse")}
-        use:tooltip={{ text: t("tabItem.cameraInUse"), placement: tooltipSide() }}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="1.4" y="3.4" width="6" height="5.2" rx="1.1" stroke="currentColor" stroke-width="1.2"/>
-          <path d="M7.8 5.2 10.6 3.9v4.2L7.8 6.8z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-        </svg>
-      </span>
+        class="tab-title"
+        ondblclick={tab.isPinned && interactive ? () => setRenamingTabId(tab.id) : undefined}
+      >{terminalLabel || displayTitle}{#if awayTitle}<span class="away-title"><span class="away-slash" aria-hidden="true">/</span>{awayTitle}</span>{/if}</span>
     {/if}
-
-    {#if tab.isMicrophoneActive}
-      <button
-        type="button"
-        class="action-btn mic-btn"
-        class:muted={tab.isMicrophoneMuted}
-        aria-label={tab.isMicrophoneMuted ? t("tabItem.unmuteMicrophone") : t("tabItem.muteMicrophone")}
-        onclick={toggleMicrophoneMute}
-      >
-        {#if tab.isMicrophoneMuted}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M4 2.8C4 1.8 4.8 1 5.8 1H6.2C7.2 1 8 1.8 8 2.8V5.2C8 6.2 7.2 7 6.2 7H5.8C4.8 7 4 6.2 4 5.2V2.8Z" fill="currentColor" opacity="0.5"/>
-            <path d="M2.6 5.2C2.6 7 4.1 8.4 6 8.4M9.4 5.2C9.4 5.9 9.2 6.5 8.8 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M6 8.4V10.2M4.6 10.2H7.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M2 2L10 10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-        {:else}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M4 2.8C4 1.8 4.8 1 5.8 1H6.2C7.2 1 8 1.8 8 2.8V5.2C8 6.2 7.2 7 6.2 7H5.8C4.8 7 4 6.2 4 5.2V2.8Z" fill="currentColor"/>
-            <path d="M2.6 5.2C2.6 7 4.1 8.4 6 8.4C7.9 8.4 9.4 7 9.4 5.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M6 8.4V10.2M4.6 10.2H7.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
-        {/if}
-      </button>
+    {#if terminalHint}
+      <span class="terminal-hint">{terminalHint}</span>
     {/if}
-
-    {#if tab.isScreenSharing}
-      <span
-        class="status-icon"
-        role="img"
-        aria-label={t("tabItem.sharingScreen")}
-        use:tooltip={{ text: t("tabItem.sharingScreen"), placement: tooltipSide() }}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="1.4" y="2" width="9.2" height="6.4" rx="1.1" stroke="currentColor" stroke-width="1.2"/>
-          <path d="M4.5 10.4h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-        </svg>
-      </span>
+    {#if hangSeconds !== null}
+      <span class="hang-timer">{hangRepeat ? t("tabItem.hangAgain") : t("tabItem.hangSeconds", { seconds: String(hangSeconds) })}</span>
     {/if}
-
+    {#if hasUnreadOutput || (hasPageUnread && !pageUnreadCount)}
+      <span class="unread-dot" aria-hidden="true"></span>
+    {:else if pageUnreadCount}
+      <span class="unread-count" aria-hidden="true">{unreadBadgeText(pageUnreadCount)}</span>
+    {/if}
     {#if tab.hasPopup}
       <span
         class="status-icon"
@@ -637,30 +615,9 @@
         </svg>
       </span>
     {/if}
+  </div>
 
-    {#if (tab.isAudioPlaying || tab.isMuted) && showPreviewActions}
-      <button
-        type="button"
-        class="action-btn audio-btn"
-        class:muted={tab.isMuted}
-        aria-label={tab.isMuted ? t("tabItem.unmute") : t("tabItem.mute")}
-        onclick={toggleMute}
-      >
-        {#if tab.isMuted}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor" opacity="0.5"/>
-            <path d="M8.5 4.5L10.5 6.5M10.5 4.5L8.5 6.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-        {:else}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4.5H3.5L6.5 2V10L3.5 7.5H2V4.5Z" fill="currentColor"/>
-            <path d="M8 4.5C8.83 5 8.83 7 8 7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-            <path d="M9.5 3.5C11 4.5 11 7.5 9.5 8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-        {/if}
-      </button>
-    {/if}
-
+  <div class="tab-actions" inert={actionsInert || undefined}>
     {#if interactive}
       <button
         class="action-btn close-btn"
@@ -822,11 +779,39 @@
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
   }
 
-  .tab-actions {
+  .tab-body {
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  /* The fade sits only on rows showing the close button: a mask on every row would cost a
+     compositing layer each. */
+  @property --close-fade {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  .tab-body.under-close {
+    --close-fade: 22px;
+    mask-image: linear-gradient(to left, transparent var(--close-fade), #000 calc(var(--close-fade) + 14px));
+    transition: --close-fade var(--transition-fast);
+  }
+
+  :global(html.sidebar-dnd-active) .tab-body.under-close {
+    mask-image: none;
+  }
+
+  .tab-actions {
+    position: absolute;
+    top: 0;
+    right: 6px;
+    bottom: 0;
+    display: flex;
+    align-items: center;
   }
 
   /* During a sidebar drag the buttons stay mounted (unmounting them would reflow every row)
@@ -840,32 +825,29 @@
     font-size: var(--font-size-xs);
   }
 
-  /* One recipe for the row's controls: no surface at rest, and a surface on hover that reads
-     above the row's own hover paint, --bg-hover there would land on itself and stay invisible. */
-  .audio-btn,
-  .mic-btn,
+  /* No surface at rest, and a surface on hover that reads above the row's own hover paint:
+     --bg-hover there would land on itself and stay invisible. */
   .close-btn {
     background: transparent;
     color: var(--text-muted);
+    transition:
+      background var(--transition-fast),
+      color var(--transition-fast),
+      opacity var(--transition-fast),
+      transform var(--transition-fast);
   }
 
-  /* Muted is a state, not a transient: the button keeps a surface so the row reads as muted
-     at a glance, and hover still lifts it one step. */
-  .audio-btn.muted,
-  .mic-btn.muted {
-    background: var(--text-primary-tint-10);
-    color: var(--text-primary);
-  }
-
-  .audio-btn:hover,
-  .mic-btn:hover,
   .close-btn:hover {
     background: var(--text-primary-tint-12);
     color: var(--text-primary);
   }
 
-  /* Capture is reported, not operated: no button box, no hover affordance, and the only colour
-     in the row so it reads as the live signal. */
+  .close-btn:not(.visible) {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+  }
+
   .status-icon {
     width: 16px;
     height: 16px;
@@ -876,33 +858,58 @@
     color: var(--danger-vivid);
   }
 
-  .close-btn {
+  /* Capture is reported, not operated: the toggles live on the call card. */
+  .capture-pip {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+  }
+
+  .capture-pip.live {
+    background: var(--danger-vivid);
+  }
+
+  .sound-badge {
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 11px;
+    height: 11px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--sidebar-bg);
+    color: var(--text-muted);
+    cursor: pointer;
     transition:
       background var(--transition-fast),
       color var(--transition-fast),
-      opacity var(--transition-fast),
       transform var(--transition-fast);
   }
 
-  /* Collapsed, not just hidden: an always-reserved slot would shorten every title for a control
-     that only appears on hover or on the active row. The slot opens instantly and the button
-     fades into it; on the way out the collapse waits for the fade, so it never slides. */
-  .close-btn:not(.visible) {
-    width: 0;
-    opacity: 0;
-    transform: scale(0.8);
-    overflow: hidden;
-    pointer-events: none;
-    transition:
-      opacity var(--transition-fast),
-      transform var(--transition-fast),
-      width 0s var(--transition-fast);
+  .sound-badge:hover {
+    background: color-mix(in srgb, var(--text-primary) 12%, var(--sidebar-bg));
+    color: var(--text-primary);
+    transform: scale(1.3);
   }
 
-  /* Except when the row already shows audio/capture controls: there the slot stays reserved so
-     opening the close button never slides them sideways. Only those rows pay the width. */
-  .tab-actions > :not(.close-btn) ~ .close-btn:not(.visible) {
-    width: 20px;
+  .sound-badge:focus-visible {
+    outline: var(--focus-outline);
+  }
+
+  /* A pointer target well past the glyph, still inside the favicon's corner. */
+  .capture-pip::before,
+  .sound-badge::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
   }
 
   /* A dark tile stands in for the favicon: terminals read apart from pages at a glance, in both

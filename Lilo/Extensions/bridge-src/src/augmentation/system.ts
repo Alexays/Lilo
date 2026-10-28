@@ -1,4 +1,4 @@
-// chrome.system.cpu, .memory, .storage and .display, each installed with its own permission.
+// chrome.system.cpu, .memory, .network, .storage and .display, each installed with its own permission.
 import { gapCall } from '../shared/ipc.ts';
 import { callbackify } from '../shared/callbackify.ts';
 import { createGapEventsFromNames, gapMethod } from '../shared/gap-event.ts';
@@ -20,6 +20,10 @@ export const systemCpuAugmentation = {
 
 export const systemMemoryAugmentation = {
   getInfo: gapMethod('system.memory', 'getInfo'),
+};
+
+export const systemNetworkAugmentation = {
+  getNetworkInterfaces: gapMethod('system.network', 'getNetworkInterfaces'),
 };
 
 export const systemStorageAugmentation = {

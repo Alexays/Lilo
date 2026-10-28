@@ -2,14 +2,32 @@ export type Locale = "en" | "fr";
 
 export const copy = {
   en: {
+    agentsClosingDescription:
+      "Turn on AI agents in Settings, connect your client, and watch it work beside you.",
+    agentsClosingHeading: "Give your agent a browser.",
+    agentsHeading: "A browser for your AI agents.",
+    agentsHeroLink: "Connect an agent",
+    agentsIntroduction:
+      "Lilo has a built-in MCP server. Claude Code, Codex, Cursor or any MCP client open tabs, click, type, and read pages, the console and the network, in a real browser beside you, in their own Space. There is no AI inside Lilo: bring the agent you already use.",
     aiAgents: "Browser for AI agents",
     arcAlternative: "Arc alternative",
+    arcClosingDescription:
+      "Import your spaces, keep Arc around as long as you like, and see if Lilo feels like home.",
+    arcClosingHeading: "Try it beside Arc.",
+    arcHeading: "An Arc alternative that keeps going.",
+    arcHeroLink: "Compare with Arc",
+    arcIntroduction:
+      "The Browser Company shuts Arc down on December 22, 2026, to focus on Dia. Lilo keeps what you liked about Arc, Spaces in a sidebar, split view, Peek and a little window, and brings your Arc spaces with you. It is free, open source, and built on WebKit instead of Chromium.",
+    backToLilo: "Back to Lilo",
     changelog: "Changelog",
     changelogDescription:
       "New features, improvements and fixes in Lilo, a free, open-source browser for Mac. Read the release notes for every version.",
     changelogTitle: "Lilo Browser changelog: what’s new in every release",
     darkMode: "Dark mode",
     darkReaderDescription: "Dark mode for every site",
+    demoAgentHint:
+      "Run the launch checklist with Codex. You approve before it publishes.",
+    demoAgentWindow: "Interactive Lilo agent demo",
     demoBack: "Back",
     demoBrowser: "Browser",
     demoCloseTab: "Close Tab",
@@ -30,6 +48,7 @@ export const copy = {
     demoNewTab: "New Tab",
     demoNewTerminal: "New Terminal",
     demoNoScript: "Enable JavaScript to explore Lilo’s interactive demo.",
+    demoOpen: "Open demo",
     demoPin: "Pin / Unpin Tab",
     demoRedo: "Redo",
     demoReload: "Reload Page",
@@ -42,6 +61,9 @@ export const copy = {
     demoSplit: "Split View",
     demoTab: "Tab",
     demoTerminal: "Terminal",
+    demoTerminalHint:
+      "Try ls, cat README.md, or edit a file. Changes stay in this demo.",
+    demoTerminalWindow: "Interactive Lilo terminal demo",
     demoToggleSidebar: "Toggle Sidebar",
     demoUndo: "Undo",
     demoView: "View",
@@ -51,14 +73,25 @@ export const copy = {
     extensionLink: "View extension: {name} on the Chrome Web Store",
     extensionStore: "Chrome Web Store extensions",
     extensionStoreHint: "Open these pages in Lilo to install.",
-    footer: "Lilo, made on a Mac for Macs. macOS 26 or later.",
     footerDescription: "A free, open-source browser for Mac, built on WebKit.",
     footerNavigation: "Footer",
-    getStarted: "Get started",
+    getStarted: "Getting started",
     github: "Releases on GitHub",
     heading: "A little better,",
     headingAccent: "every release.",
     home: "Lilo home",
+    homeBeta: "beta",
+    homeClosingDescription:
+      "Read it, fork it, change the sidebar in Svelte and rebuild in seconds. Your browser stays yours.",
+    homeClosingHeading: "Open source, for good.",
+    homeCopied: "Command copied",
+    homeCopyCommand: "Copy Homebrew command",
+    homeCopyFailed: "Copy failed. Copy the selected command.",
+    homeDescription:
+      "Lilo brings Spaces, Chrome extensions, terminals and AI agents to a WebKit browser built for your Mac. Private by default. Free and open source.",
+    homeHeading: "Your internet, in bloom.",
+    homeInstallCommand: "Homebrew install command",
+    homeReleaseNotes: "Read the latest release notes",
     imageAlt:
       "The Lilo flower mark with the words: Lilo, your internet, in bloom.",
     introduction:
@@ -66,9 +99,19 @@ export const copy = {
     keepaDescription: "Amazon price tracker",
     languageNote: "",
     latest: "Latest release",
+    migrations: "Migrations",
     moving: "Moving",
+    movingClosingDescription:
+      "Download Lilo, pick your browser, and your things are there in a few minutes.",
+    movingClosingHeading: "Ready to move in?",
+    movingHeading: "Moving to Lilo.",
+    movingIntroduction:
+      "Lilo reads your bookmarks, tabs, history, sign-ins and extensions straight from the browsers on your Mac. Nothing leaves your Mac, and your other browser stays exactly as it was.",
     movingTitle: "Moving to Lilo",
     navigation: "Main",
+    notFoundDescription:
+      "The link may be old, or mistyped. Everything about Lilo is one click away.",
+    notFoundHeading: "This page never bloomed.",
     privacy: "Privacy",
     reactDevtoolsDescription: "Inspect components",
     releaseLink: "View on GitHub",
@@ -82,8 +125,23 @@ export const copy = {
     viewExtension: "View extension",
   },
   fr: {
+    agentsClosingDescription:
+      "Activez les agents IA dans les Réglages, connectez votre client, et regardez-le travailler à côté de vous.",
+    agentsClosingHeading: "Donnez un navigateur à votre agent.",
+    agentsHeading: "Un navigateur pour vos agents IA.",
+    agentsHeroLink: "Connecter un agent",
+    agentsIntroduction:
+      "Lilo intègre un serveur MCP. Claude Code, Codex, Cursor ou tout client MCP ouvrent des onglets, cliquent, tapent, lisent les pages, la console et le réseau, dans un vrai navigateur à côté de vous, dans leur propre espace. Lilo n'embarque aucune IA : gardez l'agent que vous utilisez déjà.",
     aiAgents: "Navigateur pour agents IA",
     arcAlternative: "Alternative à Arc",
+    arcClosingDescription:
+      "Importez vos espaces, gardez Arc aussi longtemps que vous voulez, et voyez si Lilo vous ressemble.",
+    arcClosingHeading: "Essayez-le à côté d'Arc.",
+    arcHeading: "Une alternative à Arc qui continue d'avancer.",
+    arcHeroLink: "Comparer avec Arc",
+    arcIntroduction:
+      "The Browser Company arrête Arc le 22 décembre 2026 pour se consacrer à Dia. Lilo garde ce que vous aimiez dans Arc, les espaces dans une barre latérale, la vue partagée, l'aperçu et la petite fenêtre, et récupère vos espaces Arc. Il est gratuit, open source, et basé sur WebKit plutôt que sur Chromium.",
+    backToLilo: "Retour à Lilo",
     changelog: "Nouveautés",
     changelogDescription:
       "Les nouvelles fonctions, améliorations et corrections de Lilo, un navigateur gratuit et open source pour Mac. Retrouvez les notes de chaque version.",
@@ -91,6 +149,9 @@ export const copy = {
       "Nouveautés du navigateur Lilo : les notes de chaque version",
     darkMode: "Mode sombre",
     darkReaderDescription: "Le mode sombre sur tous les sites",
+    demoAgentHint:
+      "Confiez la checklist à Codex. Vous donnez votre accord avant la publication.",
+    demoAgentWindow: "Démo interactive des agents dans Lilo",
     demoBack: "Précédent",
     demoBrowser: "Navigateur",
     demoCloseTab: "Fermer l’onglet",
@@ -113,6 +174,7 @@ export const copy = {
     demoNewTerminal: "Nouveau terminal",
     demoNoScript:
       "Activez JavaScript pour explorer la démo interactive de Lilo.",
+    demoOpen: "Ouvrir la démo",
     demoPin: "Épingler / Désépingler",
     demoRedo: "Rétablir",
     demoReload: "Actualiser la page",
@@ -125,6 +187,9 @@ export const copy = {
     demoSplit: "Vue partagée",
     demoTab: "Onglet",
     demoTerminal: "Terminal",
+    demoTerminalHint:
+      "Essayez ls, cat README.md ou modifiez un fichier. Tout reste dans cette démo.",
+    demoTerminalWindow: "Démo interactive du terminal de Lilo",
     demoToggleSidebar: "Afficher la barre latérale",
     demoUndo: "Annuler",
     demoView: "Présentation",
@@ -135,7 +200,6 @@ export const copy = {
     extensionStore: "Extensions du Chrome Web Store",
     extensionStoreHint:
       "Ouvrez ces pages dans Lilo pour installer les extensions.",
-    footer: "Lilo, conçu sur Mac pour le Mac. macOS 26 ou version ultérieure.",
     footerDescription:
       "Un navigateur gratuit et open source pour Mac, basé sur WebKit.",
     footerNavigation: "Pied de page",
@@ -144,15 +208,37 @@ export const copy = {
     heading: "Lilo s’améliore,",
     headingAccent: "à chaque version.",
     home: "Accueil Lilo",
+    homeBeta: "bêta",
+    homeClosingDescription:
+      "Lisez le code, forkez-le, modifiez la barre latérale en Svelte et recompilez en quelques secondes. Votre navigateur reste le vôtre.",
+    homeClosingHeading: "Open source, pour de bon.",
+    homeCopied: "Commande copiée",
+    homeCopyCommand: "Copier la commande Homebrew",
+    homeCopyFailed: "Échec de la copie. Copiez la commande sélectionnée.",
+    homeDescription:
+      "Un navigateur WebKit pour Mac, avec des Espaces, vos extensions Chrome, des terminaux et des outils pour vos agents IA. Privé par défaut. Gratuit et open source.",
+    homeHeading: "Votre internet, en fleur.",
+    homeInstallCommand: "Commande d’installation Homebrew",
+    homeReleaseNotes: "Les dernières nouveautés",
     imageAlt: "La fleur de Lilo avec les mots : Lilo, your internet, in bloom.",
     introduction:
       "De nouvelles fonctions, de petites améliorations et les corrections qui facilitent le quotidien.",
     keepaDescription: "Suivi des prix Amazon",
     languageNote: "Les notes de version sont rédigées en anglais.",
     latest: "Dernière version",
+    migrations: "Migrations",
     moving: "Changer de navigateur",
+    movingClosingDescription:
+      "Téléchargez Lilo, choisissez votre navigateur, et vos affaires sont là en quelques minutes.",
+    movingClosingHeading: "Prêt à emménager ?",
+    movingHeading: "Passer à Lilo.",
+    movingIntroduction:
+      "Lilo lit vos favoris, onglets, historique, connexions et extensions directement dans les navigateurs de votre Mac. Rien ne quitte votre Mac, et votre autre navigateur reste exactement tel qu'il était.",
     movingTitle: "Passer à Lilo",
     navigation: "Navigation principale",
+    notFoundDescription:
+      "Le lien est peut-être ancien ou mal saisi. Tout Lilo est à un clic.",
+    notFoundHeading: "Cette page n’a jamais fleuri.",
     privacy: "Confidentialité",
     reactDevtoolsDescription: "Inspecter les composants",
     releaseLink: "Voir sur GitHub",

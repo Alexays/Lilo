@@ -1,0 +1,22 @@
+---
+import type { Locale } from "../lib/i18n";
+import Demo from "./Demo.astro";
+
+interface Props {
+  lang: Locale;
+  mode: "terminal" | "mcp";
+}
+
+const { lang, mode } = Astro.props;
+---
+
+<div class="feature-demo" data-mode={mode}>
+  <Demo lang={lang} id={`${mode}-demo`} mode={mode} autoplay deferred minimal />
+</div>
+
+<style>
+  .feature-demo {
+    width: 100%;
+    min-width: 0;
+  }
+</style>

@@ -235,7 +235,7 @@ final class PowerKeeper {
 
     // The lid, battery and heat only decide the lid-closed hold: nothing is watched without it.
     private func monitorSystem(_ on: Bool) {
-        PerfSignposts.energy.emitEvent("powerMonitors", "\(on ? "start" : "stop", privacy: .public)")
+        PerfSignposts.energy.emitEvent("powerMonitors", "\(on ? "start" : "stop")")
         guard on else {
             lidObserver = nil
             powerMonitor = nil

@@ -129,7 +129,8 @@ final class ChromeBridgeHandler: BridgeHandler {
             if !event.isEmpty { StartupMetrics.mark(event, occurredAt: message.double("at")) }
 
         case "initialStateApplied":
-            windowController?.activateRestoredActiveRuntimeIfNeeded()
+            // At launch the first paint loads the tab after the extensions (restoreExtensionsThenActiveTab); a reloaded chrome's tab is live.
+            if windowController?.didChromeVisualReady == true { windowController?.activateRestoredActiveRuntimeIfNeeded() }
 
         case "chromeVisualReady":
             windowController?.handleChromeVisualReady(occurredAt: message.double("at"))

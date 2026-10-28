@@ -85,6 +85,75 @@ export const STATIC_CONSTANTS: Record<string, Record<string, unknown>> = {
  * On the prototype of a WebKit namespace, as WebKit's `browser` (which webextension-polyfill hands out) reads it
  * without going through Lilo's `chrome`; Lilo's own namespaces are plain objects and take them directly.
  */
+/**
+ * `browser` stays WebKit's whatever the extension assigns, as WebKit finds the context's listeners through it (WEBKIT-GAPS.md,
+ * gap 2). What the assigned object adds, as AiPrice its alarms.ensure on webextension-polyfill's, the extension still finds
+ * there, as in Chrome: each of WebKit's namespaces, and `browser` itself, fall back on the assigned one's for a member they
+ * lack. A lookup that finds a member costs nothing more.
+ */
+export function mergeAssignedBrowser(g: any): void {
+  const own = g.browser;
+  if (!own || own.__liloMerged) return;
+  let assigned: any;
+  // The assigned object may wrap chrome, whose missing members fall back here again.
+  let resolving = false;
+  const fallback = (lookup: (assigned: any) => any) => (behind: object | null) => new Proxy(behind ?? Object.create(null), {
+    get(target, property, receiver) {
+      if (Reflect.has(target, property) || resolving || assigned === undefined || typeof property !== 'string') return Reflect.get(target, property, receiver);
+      resolving = true;
+      try { return lookup(assigned)?.[property]; } catch { return undefined; } finally { resolving = false; }
+    },
+    has(target, property) {
+      if (Reflect.has(target, property) || resolving || assigned === undefined || typeof property !== 'string') return Reflect.has(target, property);
+      resolving = true;
+      try { const owner = lookup(assigned); return owner !== null && typeof owner === 'object' && property in owner; } catch { return false; } finally { resolving = false; }
+    },
+  });
+  const behindOf = (object: object, make: (behind: object | null) => object) => {
+    const base = home(object);
+    try { Object.setPrototypeOf(base, make(Object.getPrototypeOf(base))); } catch { /* a frozen namespace keeps its own members only */ }
+  };
+  behindOf(own, fallback((value) => value));
+  for (const name of Object.getOwnPropertyNames(Object.getPrototypeOf(own) ?? {}).concat(Object.getOwnPropertyNames(own))) {
+    let namespace: unknown;
+    try { namespace = own[name]; } catch { continue; }
+    if (namespace === null || typeof namespace !== 'object' || typeof (namespace as any).addListener === 'function') continue;
+    behindOf(namespace, fallback((value) => value?.[name]));
+  }
+  Object.defineProperty(own, '__liloMerged', { value: true });
+  Object.defineProperty(g, 'browser', {
+    configurable: true,
+    get: () => own,
+    set: (value) => { if (value !== own && value !== g.chrome) assigned = value; },
+  });
+}
+
+/** The compat ExtensionBackgroundPreparer writes into every extension, which each isolated-world script runs first. */
+export const contentCompat = '_lilo/lilo-content-compat.js';
+
+export const withoutContentCompat = (script: any) => (Array.isArray(script?.js) && script.js.includes(contentCompat)
+  ? { ...script, js: script.js.filter((file: string) => file !== contentCompat) }
+  : script);
+
+/**
+ * The manifest as the extension wrote it: ExtensionBackgroundPreparer names Lilo's wrapper as the worker, keeping the
+ * extension's own in `lilo_service_worker` (webext-detect-page compares it with the worker's location), and leads each
+ * content script entry with the compat and drops the files another entry runs first (Lightning Autofill derives a key
+ * from its content scripts).
+ */
+export function chromeManifest(manifest: any): any {
+  const background = manifest?.background;
+  if (typeof background?.lilo_service_worker === 'string') {
+    background.service_worker = background.lilo_service_worker;
+    delete background.lilo_service_worker;
+  }
+  if (Array.isArray(manifest?.content_scripts)) {
+    // `lilo_js` keeps the files before ExtensionBackgroundPreparer dropped those another entry runs first.
+    manifest.content_scripts = manifest.content_scripts.map(({ lilo_js: own, ...script }: any) => (Array.isArray(own) ? { ...script, js: own } : withoutContentCompat(script)));
+  }
+  return manifest;
+}
+
 export function home(namespace: object): any {
   const prototype = Object.getPrototypeOf(namespace);
   return prototype && prototype !== Object.prototype ? prototype : namespace;

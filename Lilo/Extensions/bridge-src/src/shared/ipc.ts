@@ -45,7 +45,7 @@ let idleTimer: ReturnType<typeof setTimeout> | undefined;
 // Lilo sends an event again on the worker's next port when it never learned it arrived.
 let lastSeq = 0;
 // Tells this worker from the next one on each port it opens: Lilo closes a stopped worker's sockets.
-const instance = Math.random().toString(36).slice(2);
+export const instance = Math.random().toString(36).slice(2);
 /** The events that reach the worker while its top-level code runs, dispatched once it is ready. */
 const held: unknown[] = [];
 let started: Promise<void> | undefined;
@@ -55,6 +55,8 @@ let start: (() => void) | undefined;
 export const bridgeEvents = new Map<string, (...args: any[]) => void>();
 /** Each runs when the channel closes: what Lilo pushed over it is no longer kept current. */
 export const channelClosed: Array<() => void> = [];
+/** Each runs when a channel opens, before the call that opened it is sent. */
+export const channelOpened: Array<() => void> = [];
 
 function receive(envelope: unknown): void {
   if (isWorker && !ready) held.push(envelope);
@@ -99,8 +101,18 @@ if (isWorker) {
   new BroadcastChannel(RECONNECT).onmessage = () => connect();
 }
 
+/** Whether the page is going away: WebKit then disconnects its channel. */
+let leaving = false;
+let watchingPage = false;
+
 function connect(): Port | undefined {
   if (port) return port;
+  const g = globalThis as any;
+  if (!isWorker && !watchingPage && typeof g.addEventListener === 'function') {
+    watchingPage = true;
+    g.addEventListener('pagehide', () => { leaving = true; });
+    g.addEventListener('pageshow', () => { leaving = false; });
+  }
   const runtime = bridgeChrome()?.runtime;
   // connectNative is only exposed with the nativeMessaging permission, which Lilo grants to every
   // loaded context.
@@ -144,7 +156,8 @@ function connect(): Port | undefined {
     for (const [id, call] of pending) {
       if (call.port !== opened) continue;
       clearTimeout(call.timer);
-      call.reject(new Error('Lilo is unreachable'));
+      // A page going away, as Chrome's, settles nothing more (LastPass logged each call its closing tab cut).
+      if (!leaving) call.reject(new Error('Lilo is unreachable'));
       pending.delete(id);
     }
   });
@@ -154,6 +167,7 @@ function connect(): Port | undefined {
     lastActivity = Date.now();
     idleTimer ??= setTimeout(checkIdle, IDLE_MS);
   }
+  channelOpened.forEach((listener) => listener());
   return opened;
 }
 

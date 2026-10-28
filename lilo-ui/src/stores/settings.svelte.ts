@@ -2,6 +2,7 @@ import { on } from "../lib/bridge";
 import { featureFlagsActions, settingsActions } from "../lib/bridge/actions";
 import type {
 	BridgeAgentClientsSnapshot,
+	BridgeBrowsingDataSizes,
 	BridgeContentBlockerStatus,
 	BridgeControlTabOrder,
 	BridgeDeviceSetupSnapshot,
@@ -23,6 +24,7 @@ let _values = $state<Record<string, string>>({});
 let _defaultBrowser = $state({ isDefault: false, shouldInvite: false });
 let _sitePermissions = $state.raw<BridgeSitePermissionSnapshot[]>([]);
 let _websiteData = $state.raw<BridgeWebsiteDataSnapshot[]>([]);
+let _browsingDataSizes = $state.raw<BridgeBrowsingDataSizes | null>(null);
 let _zoomLevels = $state.raw<BridgeZoomLevelSnapshot[]>([]);
 // Agent apps whose connect is still writing their configuration.
 let _connectingAgentClients = $state.raw<string[]>([]);
@@ -31,7 +33,6 @@ let _deviceSetup = $state.raw<BridgeDeviceSetupSnapshot>({ label: "" });
 let _blockerStatus = $state.raw<BridgeContentBlockerStatus | null>(null);
 let _terminalOptions = $state.raw<BridgeTerminalOptions | null>(null);
 let _status = $state<BridgeSettingsActionStatusPayload | null>(null);
-let _clearDataSheetOpen = $state(false);
 let _appIcons = $state.raw<{ id: string; dataURL: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
@@ -56,6 +57,9 @@ export function initSettingsStore(): void {
 	});
 	on("websiteDataLoaded", (data) => {
 		_websiteData = data.sites ?? [];
+	});
+	on("browsingDataSizesLoaded", (data) => {
+		_browsingDataSizes = data;
 	});
 	on("zoomLevelsLoaded", (data) => {
 		_zoomLevels = data.levels ?? [];
@@ -171,14 +175,9 @@ export function getSettingsStatus(): BridgeSettingsActionStatusPayload | null {
 	return _status;
 }
 
-// The sheet is hosted by the settings frame, not the row that opens it, so it overlays the
-// whole surface and survives the row scrolling away.
-export function isClearDataSheetOpen(): boolean {
-	return _clearDataSheetOpen;
-}
-
-export function setClearDataSheetOpen(open: boolean): void {
-	_clearDataSheetOpen = open;
+/** Null until the clear-data page has asked for them. */
+export function getBrowsingDataSizes(): BridgeBrowsingDataSizes | null {
+	return _browsingDataSizes;
 }
 
 export function getAppIcons(): { id: string; dataURL: string }[] {

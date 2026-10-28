@@ -100,6 +100,10 @@ function ordered(write: boolean, merge?: Merge): Patch {
   return (original, self) => function (this: unknown, ...args: any[]) {
     const area = self(this);
     const pending = writesInFlight.get(area);
+    if (write && pending !== undefined && typeof args[0] === 'object' && args[0] !== null) {
+      // WebKit serializes the items at call time, as JSON: a later change of the caller's objects must not reach them.
+      try { args[0] = JSON.parse(JSON.stringify(args[0])); } catch { /* A cycle or a BigInt, left for WebKit to reject. */ }
+    }
     if (merge && pending !== undefined && (args.length === 1 || (args.length === 2 && typeof args[1] === 'function'))) {
       const result = batched(area, pending, merge, original, args[0]);
       if (result) return args.length === 2 ? callbackify(() => result, args[1]) : ownTask(result);

@@ -159,6 +159,8 @@ final class AgentInspector {
 
     /// Undoes what the agent changed; an inspector the user is looking at stays open.
     func release() async {
+        // A frontend whose page went away with its engine answers nothing: there is nothing left to undo.
+        guard isCurrent else { return disconnect() }
         if deviceScaleFactor != 0 { deviceScaleFactor = 0 }
         _ = try? await script("reset")
         disconnect()

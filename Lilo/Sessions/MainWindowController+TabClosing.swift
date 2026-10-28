@@ -160,7 +160,7 @@ extension MainWindowController {
         // A page with a beforeunload handler gets to object first: WebKit runs the confirm panel
         // and comes back through tabDidRequestClose when the user leaves.
         if askingPage, let engine = tabManager.engineTab(for: id), !engine.pageRequestedClose, !engine.tryClose() { return }
-        if context.mediaTabs.removeValue(forKey: id) != nil { context.mediaActivityChanged() }
+        if context.mediaTabIds.remove(id) != nil || context.callTabIds.remove(id) != nil { context.mediaActivityChanged() }
         pagePopups.values.filter { $0.openerTabId == id }.forEach { $0.close() }
         sidePanel.tabWillClose(id)
         // Detach the out-of-space surfaces first: they can host a tab from another space (the pip

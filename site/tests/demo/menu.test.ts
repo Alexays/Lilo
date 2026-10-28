@@ -144,6 +144,7 @@ test("menu shortcut hints use Lilo defaults rather than the Arc preset", () => {
         combo
           .replace(/right$/u, "→")
           .replace(/left$/u, "←")
+          .replace(/delete$/u, "⌫")
           .toUpperCase(),
       ];
     })

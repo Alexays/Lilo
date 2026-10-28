@@ -13,9 +13,16 @@ test("the day splits at 6, 11, 17 and 21", () => {
 });
 
 test("the next change of day part is the next start hour, tomorrow morning after 21", () => {
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 16, 30)), 30 * 60 * 1000);
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 22, 0)), 8 * 3600 * 1000);
-  assert.equal(msUntilNextDayPart(new Date(2026, 9, 25, 3, 0)), 3 * 3600 * 1000);
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 16, 30)), 30 * 60 * 1000);
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 22, 0)), 8 * 3600 * 1000);
+  assert.equal(msUntilNextDayPart(new Date(2026, 0, 15, 3, 0)), 3 * 3600 * 1000);
+});
+
+test("the next day-part boundary accounts for a clock change", () => {
+  const now = new Date(2026, 9, 25, 3, 0);
+  const morning = new Date(2026, 9, 25, 6, 0);
+  const clockChange = (morning.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000;
+  assert.equal(msUntilNextDayPart(now), 3 * 3600 * 1000 + clockChange);
 });
 
 test("a fixed Space keeps its color whatever the context", () => {

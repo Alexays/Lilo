@@ -29,6 +29,13 @@ Features that keep their own data, all on this Mac:
 - **Diagnostics** (Help > Diagnostics) are built on demand: "Copy report" puts startup metrics and
   tab lifecycle counts on your clipboard, for you to paste where you choose. Lilo sends no crash
   report; macOS keeps its own under `~/Library/Logs/DiagnosticReports`.
+- **Performance recordings** (Help > Record Performance Session) are written to your Downloads
+  folder when you stop one, for you to share or delete: timings of Lilo's own work, CPU, memory,
+  energy and disk use of its processes, the names of menu commands you used, the ids of your
+  installed extensions, and your Mac's model and macOS version. They contain no URL, page title,
+  name or text you typed. Lilo also keeps the hang and crash diagnostics macOS hands it (MetricKit)
+  in its Application Support folder, to add them to the next recording; they never leave your Mac
+  otherwise.
 
 ## Import from other browsers
 
@@ -72,6 +79,7 @@ Besides the pages you open, Lilo contacts these services:
 |---|---|---|---|
 | Filter lists for content blocking | `easylist.to`, `ublockorigin.github.io`, and for the regional lists of your languages `easylist-downloads.adblockplus.org` and `raw.githubusercontent.com` | Every four hours at most | Disable content blocking in Settings (takes effect at the next launch); turn off Regional lists in Settings |
 | Search suggestions | Your search engine's suggestion endpoint (Google, Bing, DuckDuckGo, Brave) with what you type in the address bar | While typing | Turn off search suggestions in Settings |
+| Preload top hit | A site from your history you visit often, loaded with your cookies as if you had opened it | While you type its address in a blank tab, before you press Return | Turn off Preload top hit in Settings |
 | Extension installs and updates | `clients2.google.com` (Chrome Web Store), with the ids and versions of your store extensions | On install, and an update check every five hours while store extensions are installed | Remove store extensions; turning off automatic extension updates only stops installing new versions |
 | Google sign-in for extensions (`chrome.identity.getAuthToken`) | `accounts.google.com`, with the extension's OAuth client id and scopes | Only when an extension asks you to sign in, in a panel you see | Remove the extension, or close the panel |
 | App updates (Sparkle) | `github.com` (the latest release's `appcast.xml`, then the update itself), with Lilo's version in the User-Agent; no system profile | Once a day, after you agree when Lilo asks | Decline the prompt, or turn off automatic updates in Settings |

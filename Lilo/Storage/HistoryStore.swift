@@ -177,6 +177,19 @@ final class HistoryStore: @unchecked Sendable {
         }
     }
 
+    /// Pages in the history and the bytes their table, indexes and full-text index take in the profile database.
+    func usage() throws -> (entries: Int, bytes: Int64) {
+        flushPendingWrites()
+        return try dbPool.read { db in
+            let entries = try HistoryEntry.fetchCount(db)
+            let bytes = try Int64.fetchOne(db, sql: """
+                SELECT COALESCE(SUM(pgsize), 0) FROM dbstat
+                WHERE name IN (SELECT name FROM sqlite_schema WHERE tbl_name = 'history' OR tbl_name LIKE 'historyFts%')
+                """) ?? 0
+            return (entries, bytes)
+        }
+    }
+
     /// No flush: it would run a write on the caller (the History menu, on main) for visits under a second old.
     func recentEntries(limit: Int) throws -> [HistoryEntry] {
         try dbPool.read { db in try HistoryEntry.order(HistoryEntry.Columns.lastVisitedAt.desc).limit(limit).fetchAll(db) }

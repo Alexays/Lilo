@@ -17,6 +17,13 @@ extension MainWindowController {
         if recentTabs.count > Self.recentTabsKept { recentTabs.removeLast() }
     }
 
+    /// Puts a tab opened in the background right after the current one, so Control-Tab goes to it first.
+    func noteBackgroundTab(_ id: UUID) {
+        recentTabs.removeAll { $0.id == id }
+        recentTabs.insert((id, nil), at: recentTabs.first?.id == tabManager.activeOpenTabId ? 1 : 0)
+        if recentTabs.count > Self.recentTabsKept { recentTabs.removeLast() }
+    }
+
     /// The switcher's rows, current tab first: the window's recent tabs, then the current Space's others by last use and in
     /// sidebar order. Closed tabs are left out, and so are other Spaces' tabs from a private Space, and private and Agents
     /// Space tabs from elsewhere.

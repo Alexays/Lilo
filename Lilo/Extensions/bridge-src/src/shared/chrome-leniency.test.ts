@@ -57,6 +57,24 @@ describe('permissions with names WebKit does not know', () => {
   });
 });
 
+describe('permissions.contains for <all_urls>', () => {
+  const granted = new Set(['https://*/*']);
+  const { permissions } = install({
+    permissions: Object.create({
+      contains: async ({ origins = [] }: { origins?: string[] }) => origins.every((origin) => granted.has(origin)),
+    }),
+  });
+
+  it('holds it with all of one scheme, as Chrome', async () => {
+    assert.equal(await permissions.contains({ origins: ['<all_urls>'] }), true);
+    assert.equal(await permissions.contains({ origins: ['<all_urls>', 'https://*/*'] }), true);
+    assert.equal(await permissions.contains({ origins: ['<all_urls>', 'http://a.example/*'] }), false);
+    granted.clear();
+    granted.add('https://a.example/*');
+    assert.equal(await permissions.contains({ origins: ['<all_urls>'] }), false);
+  });
+});
+
 describe('webRequest filters WebKit rejects', () => {
   function webRequestEvent() {
     const added: unknown[] = [];
@@ -67,6 +85,7 @@ describe('webRequest filters WebKit rejects', () => {
         if (ws) throw new Error(`Invalid call to addListener(). The 'urls' value is invalid, because '${ws}' is an invalid match pattern.`);
         added.push(filter);
       },
+      removeListener(_listener: unknown) {},
     };
     const event = install({ webRequest: { onBeforeRequest: Object.create(prototype) } }).webRequest.onBeforeRequest;
     return { event, added };
@@ -75,7 +94,8 @@ describe('webRequest filters WebKit rejects', () => {
   it('drops the unknown types and patterns', () => {
     const { event, added } = webRequestEvent();
     event.addListener(() => {}, { urls: ['<all_urls>', 'ws://*/*'], types: ['main_frame', 'webbundle'] });
-    assert.deepEqual(added, [{ urls: ['<all_urls>'], types: ['main_frame'] }]);
+    // WebKit reports a subframe's document as main_frame (WEBKIT-GAPS 95): Lilo asks for both and sorts them.
+    assert.deepEqual(added, [{ urls: ['<all_urls>'], types: ['main_frame', 'sub_frame'] }]);
   });
 
   it('registers nothing when no pattern is left', () => {
@@ -253,6 +273,26 @@ describe('action calls with a null tabId', () => {
     action.setIcon({ tabId: null, path: 'a.png' });
     action.setIcon({ tabId: 3, path: 'a.png' });
     assert.deepEqual(details, [{ tabId: undefined, path: 'a.png' }, { tabId: 3, path: 'a.png' }]);
+  });
+});
+
+describe('action.setBadgeText without a text', () => {
+  it("shows the global text on the tab again, and clears the global one, as Chrome's", async () => {
+    const set: unknown[] = [];
+    const { action } = install({
+      action: Object.create({
+        setBadgeText(details: any) {
+          if (typeof details.text !== 'string') throw new Error("Invalid call to action.setBadgeText(). The 'details' value is invalid, because it is missing required keys: 'text'.");
+          set.push(details);
+          return Promise.resolve();
+        },
+        getBadgeText(details: any) { return Promise.resolve(details.tabId === undefined ? 'all' : 'tab'); },
+      }),
+    });
+    await action.setBadgeText({ tabId: 4 });
+    await new Promise((resolve) => action.setBadgeText({ tabId: null }, resolve));
+    await action.setBadgeText({ tabId: 5, text: 'x' });
+    assert.deepEqual(set, [{ tabId: 4, text: 'all' }, { tabId: undefined, text: '' }, { tabId: 5, text: 'x' }]);
   });
 });
 

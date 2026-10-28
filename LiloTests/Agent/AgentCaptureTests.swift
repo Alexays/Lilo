@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -51,6 +52,33 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertFalse(errors.text.contains("{}"), errors.text)
     }
 
+    func testAHugeObjectLogsOnlyItsStart() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+
+        _ = try await js("console.log({ items: Array.from({ length: 100000 }, (_, i) => ({ id: i, name: 'item ' + i })) }); 1", tab: tab)
+        let reply = await client.callTool("read_console_messages", ["tabId": tab, "pattern": "items"])
+
+        XCTAssertTrue(reply.text.hasPrefix(#"[log] {"items":[{"id":0,"name":"item 0"}"#), reply.text)
+        XCTAssertLessThan(reply.text.count, 6000)
+    }
+
+    func testStoppingTheCaptureLeavesThePageAsItWas() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+        let id = try XCTUnwrap(control.tabNumbers.first { $0.value == tab }?.key)
+        let webView = try engine(forTab: tab).wkWebView
+
+        try XCTUnwrap(control.captures[id]).stop()
+
+        let restored = await pollUntil(timeout: 5) {
+            (try? await webView.evaluateJavaScript("typeof window.__liloConsole")) as? String == "undefined"
+        }
+        XCTAssertTrue(restored)
+        let source = try await webView.evaluateJavaScript("Function.prototype.toString.call(console.log)") as? String
+        XCTAssertTrue(source?.contains("[native code]") == true, source ?? "")
+    }
+
     func testConsoleHookNotInstalledOnUserTabs() async throws {
         _ = try await agentTab(showing: Self.page)
         let user = try XCTUnwrap(window.tabManager.activeEngineTab)
@@ -87,6 +115,29 @@ final class AgentCaptureTests: AgentToolTestCase {
 
         XCTAssertTrue(reply.text.contains("/api/data.png"), reply.text)
         XCTAssertFalse(reply.text.contains("/node_modules/"), reply.text)
+    }
+
+    func testTheNetworkLogDropsItsOldestAndKeepsTrackOfLoadsInFlight() {
+        final class Load: NSObject {
+            @objc let resourceLoadID: UInt64
+            init(_ id: UInt64) { resourceLoadID = id }
+        }
+        let webView = WKWebView()
+        let capture = AgentCapture(webView: webView)
+        defer { capture.stop() }
+        let count = AgentCapture.maxEntries + 150
+
+        for id in 0..<UInt64(count) {
+            capture.resourceLoad(webView, resourceLoad: Load(id), didSendRequest: URLRequest(url: URL(string: "https://example.com/\(id)")!))
+        }
+        capture.resourceLoad(webView, resourceLoad: Load(UInt64(count - 1)), didCompleteWithError: nil,
+                             response: HTTPURLResponse(url: URL(string: "https://example.com/")!, statusCode: 204, httpVersion: nil, headerFields: nil))
+
+        XCTAssertEqual(capture.requests.count, AgentCapture.maxEntries + 50)
+        XCTAssertEqual(capture.requests.first?.url, "https://example.com/100")
+        XCTAssertEqual(capture.requests.last?.status, 204)
+        XCTAssertNil(capture.indexByLoad[99])
+        XCTAssertEqual(capture.indexByLoad[100], 0)
     }
 
     func testInspectorRequestIdWithoutTheInspectorSaysSo() async throws {

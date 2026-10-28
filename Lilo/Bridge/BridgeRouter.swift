@@ -84,7 +84,9 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
             }
 
             Task { @MainActor in
+                let signpost = PerfSignposts.bridge.beginInterval("handle", id: PerfSignposts.bridge.makeSignpostID(), bridgeMessage.action)
                 _ = await handler.handle(message: bridgeMessage)
+                PerfSignposts.bridge.endInterval("handle", signpost)
             }
         }
     }
@@ -192,13 +194,16 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
         )
     }
 
-    /// Bytes shipped to the chrome per event type, measured only while Instruments records the
-    /// "bridge" signpost category.
+    /// Events shipped to the chrome, with their size in bytes only while Instruments records the
+    /// "bridge" category: sizing serializes every message, which would skew a recorded session.
     private func logPayloadSize(_ messages: [[String: Any]]) {
-        guard PerfSignposts.bridge.isEnabled, JSONSerialization.isValidJSONObject(messages) else { return }
-        let bytes = (try? JSONSerialization.data(withJSONObject: messages))?.count ?? 0
+        guard PerfSignposts.bridge.isEnabled else { return }
         let events = messages.compactMap { $0["event"] as? String }.joined(separator: "+")
-        PerfSignposts.bridge.emitEvent("send", "\(events, privacy: .public): \(bytes) bytes")
+        guard PerfSignposts.bridge.signposter.isEnabled, JSONSerialization.isValidJSONObject(messages) else {
+            return PerfSignposts.bridge.emitEvent("send", events)
+        }
+        let bytes = (try? JSONSerialization.data(withJSONObject: messages))?.count ?? 0
+        PerfSignposts.bridge.emitEvent("send", "\(events): \(bytes) bytes")
     }
 
     /// Test seam: when set, receives every outgoing chrome JS call instead of the web view, so
@@ -235,11 +240,11 @@ final class BridgeRouter: NSObject, WKScriptMessageHandler {
             script = "const { \(arguments.keys.sorted().joined(separator: ", ")) } = JSON.parse(payload); \(script)"
             arguments = ["payload": payload]
         }
-        chromeWebView?.callAsyncJavaScript(script, arguments: arguments, in: nil, in: .page) { result in
-            if case .failure(let error) = result {
-                Self.logger.error("chrome JS call failed: \(error)")
-            }
-            MainActor.assumeIsolated { completion() }
+        // Without a user gesture: a state push must not hand the chrome a transient activation it can spend.
+        guard let chromeWebView else { return }
+        WebViewPrivateAccessors(chromeWebView).callAsyncWithoutUserGesture(script, arguments: arguments) { error in
+            if let error { Self.logger.error("chrome JS call failed: \(error)") }
+            completion()
         }
     }
 

@@ -139,6 +139,7 @@
 			"general": "General",
 			"appearance": "Appearance",
 			"tabs": "Tabs and spaces",
+			"media": "Audio and video",
 			"privacy": "Privacy",
 			"extensions": "Extensions",
 			"advanced": "Advanced",
@@ -152,7 +153,8 @@
 			"tabLayout": "Tabs",
 			"pages": "Pages",
 			"spaces": "Spaces",
-			"media": "Media and calls",
+			"playback": "Playback",
+			"calls": "Calls",
 			"contentBlocking": "Content blocking",
 			"protection": "Protection",
 			"browsingData": "Browsing data",
@@ -177,8 +179,16 @@
 		"searchResultsTitle": "Search results",
 		"searchEmpty": "No settings match \"{query}\".",
 		"clearData": {
-			"open": "Clear",
-			"title": "Clear browsing data",
+			"total": "stored by this profile",
+			"measuring": "Measuring what this profile stores...",
+			"freed": "{size} will be freed",
+			"rangeNote": "Only what was stored during the chosen period is cleared.",
+			"hints": {
+				"history": "Pages: {count}",
+				"cookies": "Signs you out of websites. Sites: {count}",
+				"cache": "Lets pages you revisit load faster.",
+				"siteData": "Storage, cookies, cache and permissions. Sites: {count}"
+			},
 			"kinds": {
 				"history": "Browsing history",
 				"cookies": "Cookies",
@@ -225,7 +235,7 @@
 			"language": {
 				"title": "Language",
 				"description": "Language used across the browser interface.",
-				"keywords": "locale translation english french"
+				"keywords": "locale translation english french spanish chinese simplified portuguese brazil russian"
 			},
 			"searchEngine": {
 				"title": "Search engine",
@@ -236,6 +246,11 @@
 				"title": "Search suggestions",
 				"description": "Show suggestions as you type. What you type is sent to the search engine.",
 				"keywords": "autocomplete suggest typing"
+			},
+			"preloadTopHit": {
+				"title": "Preload top hit",
+				"description": "Load a site you visit often while you type its address. Uses more memory and data.",
+				"keywords": "prerender faster"
 			},
 			"searchEngines": {
 				"title": "Search engines",
@@ -320,6 +335,16 @@
 				"title": "Auto picture-in-picture",
 				"description": "Pop a call or playing video into a floating window when you switch away from its tab.",
 				"keywords": "pip video call floating"
+			},
+			"dockCallsInSidebar": {
+				"title": "Keep calls in the sidebar",
+				"description": "A tab using your camera, mic, or screen docks in the sidebar when you switch away, instead of a floating window.",
+				"keywords": "pip dock call sidebar floating"
+			},
+			"fullBandMicrophone": {
+				"title": "Full-quality mic with headphones",
+				"description": "With headphones, calls skip echo cancellation, which dulls your voice.",
+				"keywords": "mic echo airpods"
 			},
 			"contentBlocker": {
 				"title": "Block ads and trackers",
@@ -715,7 +740,13 @@
 		"play": "Play",
 		"pause": "Pause",
 		"next": "Next track",
-		"previous": "Previous track"
+		"previous": "Previous track",
+		"turnOffCamera": "Turn off camera",
+		"turnOnCamera": "Turn on camera",
+		"leaveCall": "Leave call",
+		"sharing": "Sharing {title}",
+		"shareThisTab": "Share this tab",
+		"stopSharing": "Stop sharing"
 	},
 	"tabEditor": {
 		"title": "Edit tab",
@@ -750,6 +781,8 @@
 		"removeBookmark": "Remove bookmark",
 		"newTab": "New Tab",
 		"cameraInUse": "Camera in use",
+		"microphoneInUse": "Microphone in use",
+		"microphoneMuted": "Microphone muted",
 		"muteMicrophone": "Mute microphone",
 		"unmuteMicrophone": "Unmute microphone",
 		"sharingScreen": "Sharing screen",
@@ -1150,6 +1183,8 @@
 		"tabLog": "Log",
 		"tabLogCount": "Log ({count})",
 		"copyReport": "Copy report",
+		"recordSession": "Record a performance session (saved to Downloads)",
+		"stopRecording": "Stop recording",
 		"refresh": "Refresh",
 		"bootLabel": "until the interface is ready",
 		"launchedAt": "Launched {date}",
@@ -1836,6 +1871,7 @@
 		"History": "History",
 		"Reopen Last Closed Tab": "Reopen Last Closed Tab",
 		"Show All History…": "Show All History…",
+		"Clear Browsing Data…": "Clear Browsing Data…",
 		"Window": "Window",
 		"Minimize": "Minimize",
 		"Zoom": "Zoom",
@@ -1916,6 +1952,8 @@
 		"Pin Tab": "Pin Tab",
 		"Unpin Tab": "Unpin Tab",
 		"Unmute Tab": "Unmute Tab",
+		"Mute Microphone": "Mute Microphone",
+		"Unmute Microphone": "Unmute Microphone",
 		"Close Other Tabs": "Close Other Tabs",
 		"Create Folder": "Create Folder",
 		"Create Folder from Tab": "Create Folder from Tab",
@@ -2022,19 +2060,19 @@
 		"Added": "Added",
 		"Cannot be shown": "Cannot be shown",
 		"No active profile data store": "No active profile data store",
-		"Cookies cleared": "Cookies cleared",
-		"Cache cleared": "Cache cleared",
-		"Cookies, cache, and site permissions cleared": "Cookies, cache, and site permissions cleared",
-		"Cookies and cache cleared": "Cookies and cache cleared",
 		"Site permission revoked": "Site permission revoked",
 		"No history store available": "No history store available",
-		"Browsing history cleared": "Browsing history cleared",
+		"Browsing data cleared": "Browsing data cleared",
 		"Could not clear browsing history: %@": "Could not clear browsing history: %@",
 		"Extension diagnostics cleared": "Extension diagnostics cleared",
 		"Extension diagnostics copied": "Extension diagnostics copied",
 		"Unable to copy extension diagnostics": "Unable to copy extension diagnostics",
 		"Diagnostics report copied": "Diagnostics report copied",
 		"Unable to copy diagnostics report": "Unable to copy diagnostics report",
+		"Record Performance Session": "Record Performance Session",
+		"Stop Performance Recording": "Stop Performance Recording",
+		"Performance recording saved to Downloads": "Performance recording saved to Downloads",
+		"Unable to save the performance recording": "Unable to save the performance recording",
 		"Memory trim completed": "Memory trim completed",
 		"Lilo is now your default browser": "Lilo is now your default browser",
 		"Lilo was not set as the default browser": "Lilo was not set as the default browser",

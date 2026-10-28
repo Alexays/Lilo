@@ -4,6 +4,7 @@ import Layout from "../layouts/Layout.astro";
 import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
+import PageSection from "./PageSection.astro";
 
 interface Props {
   lang: Locale;
@@ -27,89 +28,60 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
   lang={lang}
   title={text.changelogTitle}
   description={text.changelogDescription}
+  hero={{
+    heading: `${text.heading} ${text.headingAccent}`,
+    description: text.introduction,
+    tag: text.releases,
+    note: text.languageNote,
+  }}
 >
-  <main id="main-content">
-    <div class="top changelog-top">
-      <div class="wrap hero-copy changelog-hero">
-        <span class="beta">{text.releases}</span>
-        <h1>
-          {text.heading}
-          <br />
-          <span>{text.headingAccent}</span>
-        </h1>
-        <p class="sub">{text.introduction}</p>
-        <div class="cta">
-          <a
-            class="pill dark"
-            href="https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg"
-          >
-            {text.download}
-          </a>
-          <a class="pill soft" href="https://github.com/Alexays/Lilo/releases">
-            {text.github}
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="wrap release-list">
-      {text.languageNote && <p class="language-note">{text.languageNote}</p>}
-      {releases.map((release, index) => (
-        <article
-          class="release"
-          id={`v${release.version}`}
-          aria-labelledby={`title-v${release.version}`}
-        >
-          <header class="release-meta">
-            {index === 0 && <span class="beta">{text.latest}</span>}
-            <h2 id={`title-v${release.version}`}>
-              <a
-                href={`#v${release.version}`}
-                aria-label={`${text.version} ${release.version}`}
-              >
-                {release.version}
-              </a>
-            </h2>
-            <time datetime={release.date}>
-              {dateFormat.format(new Date(`${release.date}T00:00:00Z`))}
-            </time>
+  <PageSection>
+    {releases.map((release, index) => (
+      <article
+        class="release"
+        id={`v${release.version}`}
+        aria-labelledby={`title-v${release.version}`}
+      >
+        <header class="release-meta">
+          {index === 0 && <span class="beta">{text.latest}</span>}
+          <h2 id={`title-v${release.version}`}>
             <a
-              class="release-link"
-              href={`https://github.com/Alexays/Lilo/releases/tag/v${release.version}`}
+              href={`#v${release.version}`}
+              aria-label={`${text.version} ${release.version}`}
             >
-              {text.releaseLink}
-              <span aria-hidden="true"> ↗</span>
+              {release.version}
             </a>
-          </header>
-          <div class="release-body" lang="en" set:html={release.html} />
-        </article>
-      ))}
-    </div>
-  </main>
+          </h2>
+          <time datetime={release.date}>
+            {dateFormat.format(new Date(`${release.date}T00:00:00Z`))}
+          </time>
+          <a
+            class="release-link"
+            href={`https://github.com/Alexays/Lilo/releases/tag/v${release.version}`}
+          >
+            {text.releaseLink}
+          </a>
+        </header>
+        <div class="release-body" lang="en" set:html={release.html} />
+      </article>
+    ))}
+  </PageSection>
 </Layout>
 
 <style>
-  .changelog-top {
-    padding-bottom: 40px;
-  }
-  .changelog-hero {
-    padding-block: 44px 32px;
-  }
-  .changelog-hero h1 {
-    font-size: clamp(42px, 6.5vw, 76px);
-  }
-  .release-list {
-    max-width: 1000px;
-    padding-block: 24px 72px;
-  }
   .release {
     display: grid;
-    grid-template-columns: 190px minmax(0, 1fr);
-    gap: 48px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    gap: 40px;
     padding-block: 48px;
     border-bottom: 1px solid var(--line);
     scroll-margin-top: 24px;
   }
+  .release:first-child {
+    padding-top: 0;
+  }
   .release:last-child {
+    padding-bottom: 0;
     border-bottom: 0;
   }
   .release-meta {
@@ -126,8 +98,7 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
     text-decoration: none;
   }
   .release-meta time,
-  .release-link,
-  .language-note {
+  .release-link {
     font-size: 14px;
     color: var(--ink-2);
   }
@@ -138,9 +109,6 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
   .release-link:hover {
     color: var(--accent);
     text-decoration: underline;
-  }
-  .language-note {
-    margin-top: 24px;
   }
   .release-body {
     font-size: 16px;
@@ -181,12 +149,6 @@ const dateFormat = new Intl.DateTimeFormat(lang, {
       grid-template-columns: minmax(0, 1fr);
       gap: 24px;
       padding-block: 32px;
-    }
-    .release-list {
-      padding-bottom: 32px;
-    }
-    .changelog-hero {
-      padding-block: 24px;
     }
   }
 </style>

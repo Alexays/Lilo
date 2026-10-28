@@ -41,6 +41,7 @@ interface Options {
   shortcuts: NativeShortcutAction[];
   activeURL?: () => string;
   clearHistory?: (range: string) => void;
+  historyCount?: () => number;
   terminalThemes?: BridgeTerminalTheme[];
 }
 
@@ -234,6 +235,7 @@ export const createDemoSettings = ({
   shortcuts,
   activeURL,
   clearHistory,
+  historyCount,
   terminalThemes,
 }: Options) => {
   const values: BridgeEventPayloadMap["settingsLoaded"]["settings"] = {
@@ -396,6 +398,22 @@ export const createDemoSettings = ({
       sites: sites.map(({ name, kinds }) => ({ kinds: [...kinds], name })),
     });
 
+  // Sizes a profile plausibly stores for the demo's sites and visits.
+  const sitesWith = (kind: BridgeWebsiteDataSnapshot["kinds"][number]) =>
+    sites.filter((site) => site.kinds.includes(kind)).length;
+
+  const publishSizes = () => {
+    const visits = historyCount?.() ?? 0;
+
+    emit("browsingDataSizesLoaded", {
+      cache: sitesWith("cache") * 6_300_000,
+      cookies: sitesWith("cookies") * 3200,
+      history: visits * 1200,
+      historyEntries: visits,
+      storage: sitesWith("storage") * 2_400_000,
+    });
+  };
+
   const publishPermissions = () =>
     emit("sitePermissionsLoaded", {
       permissions: permissions.toSorted(
@@ -452,6 +470,7 @@ export const createDemoSettings = ({
   };
 
   const replies: Partial<Record<BridgeCommandName, () => void>> = {
+    getBrowsingDataSizes: publishSizes,
     getContentBlockerStatus: () =>
       emit("contentBlockerStatus", { lists: 7, updating: false }),
     getDefaultBrowserStatus: () =>
@@ -502,38 +521,32 @@ export const createDemoSettings = ({
       unavailable("checkForUpdates");
     },
     chooseDownloadsFolder: () => unavailable("chooseDownloadsFolder"),
-    clearCache: ({ range }) => {
-      clearData(["cache"], range);
-      complete("clearCache", "Cache cleared");
-    },
-    clearCookies: ({ range }) => {
-      clearData(["cookies"], range);
-      complete("clearCookies", "Cookies cleared");
-    },
-    clearExtensionDiagnostics: () => {
-      replies.getExtensionDiagnostics?.();
-      complete("clearExtensionDiagnostics", "Extension diagnostics cleared");
-    },
-    clearHistory: ({ range = "all" }) => {
-      clearHistory?.(range);
-      complete("clearHistory", "Browsing history cleared");
-    },
-    clearSiteData: ({ range }) => {
-      clearData(["cookies", "cache", "storage"], range);
+    clearBrowsingData: ({ kinds, range }) => {
+      if (kinds.includes("history")) {
+        clearHistory?.(range);
+      }
 
-      const clearsPermissions = cutoff(range) === Number.NEGATIVE_INFINITY;
+      clearData(
+        kinds.includes("siteData")
+          ? ["cookies", "cache", "storage"]
+          : kinds.filter((kind) => kind === "cookies" || kind === "cache"),
+        range
+      );
 
-      if (clearsPermissions) {
+      if (
+        kinds.includes("siteData") &&
+        cutoff(range) === Number.NEGATIVE_INFINITY
+      ) {
         permissions.length = 0;
         publishPermissions();
       }
 
-      complete(
-        "clearSiteData",
-        clearsPermissions
-          ? "Cookies, cache, and site permissions cleared"
-          : "Cookies and cache cleared"
-      );
+      publishSizes();
+      complete("clearBrowsingData", "Browsing data cleared");
+    },
+    clearExtensionDiagnostics: () => {
+      replies.getExtensionDiagnostics?.();
+      complete("clearExtensionDiagnostics", "Extension diagnostics cleared");
     },
     completeOnboarding: () => {
       values.onboardingCompleted = "true";

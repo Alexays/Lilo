@@ -97,7 +97,7 @@ final class BackgroundSupervisor {
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
-            _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId, privacy: .public)")
+            _ = PerfSignposts.extensions.beginInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
         }
         var timeout: Task<Void, Never>?
         let failure: String? = await withCheckedContinuation { continuation in
@@ -117,7 +117,7 @@ final class BackgroundSupervisor {
         timeout?.cancel()
         if let failure {
             if startsWorker {
-                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "failed")
+                PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "failed")
             }
             Self.logger.error("loadBackgroundContent failed for \(extensionId, privacy: .public): \(failure, privacy: .public)")
             health[extensionId]?.failureReason = failure
@@ -136,7 +136,7 @@ final class BackgroundSupervisor {
         switch channel {
         case .open:
             if let context = context(extensionId) {
-                PerfSignposts.extensions.endInterval("workerStart", .beginState(id: PerfSignposts.extensions.makeSignpostID(from: context)), "\(extensionId, privacy: .public)")
+                PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
             }
             health[extensionId]?.restartFailures = 0
             setFlag(\.failed, to: false, for: extensionId)
@@ -153,7 +153,7 @@ final class BackgroundSupervisor {
         guard health[extensionId] != nil,
               context(extensionId)?.webExtension.hasBackgroundContent == true,
               !isLoadInFlight(extensionId) else { return }
-        PerfSignposts.energy.emitEvent("workerWake", "\(extensionId, privacy: .public)")
+        PerfSignposts.energy.emitEvent("workerWake", "\(extensionId)")
         Task { @MainActor [weak self] in
             guard let self, !self.isLoadInFlight(extensionId) else { return }
             self.nudge(extensionId)
@@ -241,14 +241,17 @@ final class BackgroundSupervisor {
         return now.timeIntervalSince(lastAttempt) >= debounce
     }
 
-    /// The context's errors changed: a background that failed to load gets one debounced revive.
+    /// The context's errors changed: a background that newly failed to load gets one debounced revive.
     func contextErrorsChanged(_ extensionId: String) {
-        guard let context = context(extensionId), health[extensionId] != nil else { return }
-        ExtensionDiagnostics.logContextErrorsIfNeeded(context, extensionId: extensionId, reason: "notification", logger: Self.logger)
-        health[extensionId]?.lastErrorCount = context.errors.count
+        guard let context = context(extensionId), let previousCount = health[extensionId]?.lastErrorCount else { return }
+        let errors = context.errors
+        // `errors` is cumulative; a shorter list was reset, so all of it is new.
+        let newErrors = errors.dropFirst(previousCount <= errors.count ? previousCount : 0)
+        ExtensionDiagnostics.logContextErrorsIfNeeded(newErrors, of: context, extensionId: extensionId, reason: "notification", logger: Self.logger)
+        health[extensionId]?.lastErrorCount = errors.count
         didChange(extensionId)
-        guard !context.errors.isEmpty, context.webExtension.hasBackgroundContent,
-              ExtensionDiagnostics.errorsWarrantBackgroundRevive(context.errors) else { return }
+        guard context.webExtension.hasBackgroundContent,
+              ExtensionDiagnostics.errorsWarrantBackgroundRevive(newErrors) else { return }
         // The debounce in `reviveIfNeeded` is the guard against the error a failed reload emits.
         Task { @MainActor [weak self] in await self?.reviveIfNeeded(extensionId) }
     }
@@ -284,7 +287,7 @@ final class BackgroundSupervisor {
 
     // MARK: - Restarts
 
-    private static func backgroundWebView(of context: WKWebExtensionContext) -> WKWebView? {
+    static func backgroundWebView(of context: WKWebExtensionContext) -> WKWebView? {
         let selector = NSSelectorFromString("_backgroundWebView")
         guard context.responds(to: selector) else { return nil }
         return context.perform(selector)?.takeUnretainedValue() as? WKWebView

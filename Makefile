@@ -57,20 +57,21 @@ DEBUG_TEAM_ID := $(or $(LILO_DEBUG_TEAM_ID),$(LILO_TEAM_ID))
 DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SIGN_IDENTITY="$(or $(LILO_DEBUG_CODE_SIGN_IDENTITY),Apple Development)" CODE_SIGN_STYLE=Manual)
 # The test host is its own app: its camera, microphone and keychain grants and its background
 # permission never touch the installed Lilo's, and a stable signature keeps them across builds.
-# One run at a time per machine, whatever the worktree: each already fills every performance core, and
-# concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
-TEST := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
+# One run at a time per machine, whatever the worktree and whichever test host: each already fills every
+# performance core, and concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
+TEST_LOCK := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock
+TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
 # CI (which sets CI) runs a failed test once more and lists it in the job summary; locally a flake fails.
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage blocker-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench script-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare perf-summary perf-compare perf-summary-test \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
-	changie change release-status release-version release-test
+	changie change release-status release-version release-discord release-test
 
 ## List the targets
 help:
@@ -108,7 +109,7 @@ bootstrap:
 ## Run UI and website checks, Swift lint/tests, the app build, bridge and hook checks and release version checks
 validate: $(UI_DEPS) $(BRIDGE_DEPS) $(SITE_DEPS) $(SWIFTLINT) $(CHANGIE)
 	@logs=$$(mktemp -d); checks=; \
-	for group in ui-lint ui-test "site-check site-test" "hooks-test ext-bridge-test swiftlint release-status"; do \
+	for group in ui-lint ui-test "site-check site-test" "hooks-test perf-summary-test ext-bridge-test swiftlint release-status"; do \
 		name=$${group%% *}; $(MAKE) -k --no-print-directory $$group > "$$logs/$$name.log" 2>&1 & checks="$$checks $$!:$$name"; \
 	done; \
 	$(MAKE) --no-print-directory $(BRIDGE_STAMP) & bridge=$$!; \
@@ -187,9 +188,13 @@ release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@$(MAKE) --no-print-directory site-generate
 
-## Test app version and Sparkle build number synchronization
+## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
+release-discord:
+	@python3 scripts/release_discord.py
+
+## Test release preparation, version synchronization and Discord announcements
 release-test: $(CHANGIE)
-	@CHANGIE='$(CHANGIE)' python3 scripts/release_test.py
+	@CHANGIE='$(CHANGIE)' python3 -B -m unittest discover -s scripts -p 'release*_test.py'
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)
@@ -267,6 +272,24 @@ blocker-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_BENCH="$$out" $(TEST) -only-testing:LiloTests/ContentBlockerBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
+## Report what the injected scripts cost a page: load with frames, a growing feed (TABLES=filter tables the app built; OUT=build/script-bench.txt)
+script-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/script-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_SCRIPT_BENCH="$$out" TEST_RUNNER_LILO_SCRIPT_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
+		$(TEST) -only-testing:LiloTests/InjectedScriptsBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report Enter to first paint of a page whose server pauses, with and without a top-hit preload (OUT=build/preload-bench.txt)
+preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/preload-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PRELOAD_BENCH="$$out" $(TEST) -only-testing:LiloTests/TopHitPreloadBenchmarkTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
+port-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) ext-bridge-build
+	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
+		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
 ## Run the terminal throughput and lock-fairness benchmarks
 terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@$(TEST) -only-testing:LiloTests/TerminalBenchmarkTests
@@ -281,11 +304,15 @@ ext-bridge-test: $(BRIDGE_DEPS)
 
 ## Install the most used Chrome Web Store extensions and the MV3 probe in parallel runs, and check they run and what a few do on a page (network; TOP=100 IDS=a,b SHARDS=6)
 ext-smoke: vt-build ext-bridge-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
+	@$(TEST_LOCK) node scripts/ext-smoke.mjs --top '$(or $(TOP),100)' --ids '$(IDS)' --shards '$(or $(SHARDS),6)'
 
 ## Unattended ext-smoke of the top 500 (TOP=1000 for every listed one); report in .derived.noindex/ext-smoke/report.txt, non-zero exit on a regression
 ext-nightly:
 	@$(MAKE) --no-print-directory ext-smoke TOP=$(or $(TOP),500)
+
+## ext-smoke of the sentinel extensions in LiloTests/Extensions/smoke-sentinels.txt, as a pull request touching extension support runs it
+ext-smoke-pr:
+	@$(MAKE) --no-print-directory ext-smoke SHARDS=2 IDS="$$(grep -v '^#' LiloTests/Extensions/smoke-sentinels.txt | cut -d' ' -f1 | paste -sd, -)"
 
 ## Rebuild top-extensions.json from the Chrome Web Store user counts (TOP=500)
 top-extensions:
@@ -433,6 +460,17 @@ energy-sample:
 ## Diff two energy-sample summaries (BEFORE=before AFTER=after OUT=~/lilo-energy)
 energy-compare:
 	@OUT=$(or $(OUT),$$HOME/lilo-energy); scripts/energy_sample.sh compare "$$OUT/$(or $(BEFORE),before).summary.tsv" "$$OUT/$(or $(AFTER),after).summary.tsv"
+
+## Summarize a performance recording from Help > Diagnostics (FILE=~/Downloads/Lilo-perf-....json)
+perf-summary:
+	@python3 scripts/perf_summary.py "$(FILE)"
+
+## Compare two performance recordings (BEFORE=a.json AFTER=b.json)
+perf-compare:
+	@python3 scripts/perf_summary.py compare "$(BEFORE)" "$(AFTER)"
+
+perf-summary-test:
+	@python3 scripts/perf_summary_test.py -q
 
 # --info --debug are required: os_log info/debug messages are memory-only and absent from `log show` without them.
 ## Dump the app log to lilo-log.txt (SINCE=15m OUT=path)
