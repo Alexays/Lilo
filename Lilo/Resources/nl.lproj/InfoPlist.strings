@@ -1,0 +1,12 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "Deze website vraagt toegang tot je camera.";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "Deze website vraagt toegang tot je microfoon.";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "Deze website vraagt toegang tot je locatie.";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "Lilo maakt verbinding met apparaten op je lokale netwerk, zoals een router of printer, wanneer je hun pagina's opent of een extensie ernaar zoekt.";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "Deze website vraagt om spraakherkenning om wat je zegt om te zetten in tekst.";
+/* Shown by macOS when sharing system audio with a screen. */
+"NSAudioCaptureUsageDescription" = "Lilo deelt het geluid van je Mac wanneer een gesprek daar samen met je scherm om vraagt.";

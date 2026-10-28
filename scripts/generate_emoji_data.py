@@ -28,6 +28,14 @@ LOCALES = {
     "pt-BR": {"a", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "na", "nas", "no", "nos", "o", "os", "um", "uma"},
     "ru": {"в", "во", "для", "и", "из", "к", "на", "о", "от", "по", "с", "со", "у"},
     "uk": {"в", "для", "з", "зі", "й", "на", "у", "і"},
+    "de": {"auf", "das", "der", "die", "ein", "eine", "im", "in", "mit", "und", "von"},
+    "ja": set(),
+    "it": {"a", "al", "con", "da", "di", "e", "il", "in", "la", "le", "un", "una"},
+    "ko": set(),
+    "zh-Hant": set(),
+    "pl": {"do", "i", "na", "w", "z", "ze"},
+    "tr": {"bir", "da", "de", "ile", "ve"},
+    "nl": {"de", "een", "en", "het", "in", "met", "op", "van"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,7 +50,7 @@ def fetch(url):
 # Folds as the picker's fold() does: no case, no accents, ligatures spelled out.
 def words(text):
     folded = "".join(c for c in unicodedata.normalize("NFD", text.lower()) if not unicodedata.combining(c))
-    return re.findall(r"[^\W_]+", folded.replace("œ", "oe").replace("æ", "ae"))
+    return re.findall(r"[^\W_]+", folded.replace("œ", "oe").replace("æ", "ae").replace("ß", "ss").replace("ı", "i"))
 
 
 def annotations(locale):
@@ -51,6 +59,7 @@ def annotations(locale):
     locale = "pt" if locale == "pt-BR" else locale
     # CLDR's base Chinese catalog uses Simplified Chinese; its filename is zh.xml.
     locale = "zh" if locale == "zh-Hans" else locale
+    locale = "zh_Hant" if locale == "zh-Hant" else locale
     for kind in ("annotations", "annotationsDerived"):
         for node in ET.fromstring(fetch(CLDR_URL.format(kind=kind, locale=locale))).iter("annotation"):
             cp = node.get("cp", "").replace("\uFE0F", "")

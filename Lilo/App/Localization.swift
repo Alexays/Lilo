@@ -18,9 +18,9 @@ enum Localization {
             let primary = parts.first.map(String.init) ?? ""
             if primary == "zh" {
                 if let script = parts.first(where: { $0 == "hans" || $0 == "hant" }) {
-                    if script == "hans" { return "zh-Hans" }
-                } else if !parts.contains(where: { ["tw", "hk", "mo"].contains($0) }) {
-                    return "zh-Hans"
+                    return script == "hans" ? "zh-Hans" : "zh-Hant"
+                } else {
+                    return parts.contains(where: { ["tw", "hk", "mo"].contains($0) }) ? "zh-Hant" : "zh-Hans"
                 }
             } else if primary == "pt" {
                 return "pt-BR"

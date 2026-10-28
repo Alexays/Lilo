@@ -1,0 +1,12 @@
+/* Shown by macOS when a page asks for the camera. */
+"NSCameraUsageDescription" = "Diese Website möchte auf deine Kamera zugreifen.";
+/* Shown by macOS when a page asks for the microphone. */
+"NSMicrophoneUsageDescription" = "Diese Website möchte auf dein Mikrofon zugreifen.";
+/* Shown by macOS when a page asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "Diese Website möchte auf deinen Standort zugreifen.";
+/* Shown by macOS the first time a page on the local network is opened. */
+"NSLocalNetworkUsageDescription" = "Lilo verbindet sich mit Geräten in deinem lokalen Netzwerk, etwa einem Router oder Drucker, wenn du ihre Seiten öffnest oder eine Erweiterung nach ihnen sucht.";
+/* Shown by macOS when a page starts speech recognition. */
+"NSSpeechRecognitionUsageDescription" = "Diese Website möchte Spracherkennung nutzen, um deine Worte in Text umzuwandeln.";
+/* Shown by macOS when sharing system audio with a screen. */
+"NSAudioCaptureUsageDescription" = "Lilo teilt den Ton deines Mac, wenn ein Anruf ihn zusammen mit deinem Bildschirm anfordert.";

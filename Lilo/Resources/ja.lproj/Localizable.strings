@@ -1,0 +1,10 @@
+/* Shortcuts actions and the Focus filter (LiloIntents.swift), keyed by their English text. */
+"Space" = "スペース";
+"Open URL in Lilo" = "Lilo で URL を開く";
+"Get Current Tab" = "現在のタブを取得";
+"The address of the tab shown in the front Lilo window." = "最前面の Lilo ウインドウに表示されているタブのアドレス。";
+"Open Space" = "スペースを開く";
+"Set Lilo Space" = "Lilo のスペースを設定";
+"Shows this space in Lilo while the Focus is on." = "集中モードがオンの間、このスペースを Lilo に表示します。";
+"No space" = "スペースなし";
+"Current Tab" = "現在のタブ";

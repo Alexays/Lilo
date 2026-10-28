@@ -76,12 +76,12 @@ test("resolveLocale maps BCP-47 tags to a supported locale, defaulting to Englis
 		["zh-Hans", "zh-Hans"],
 		["ZH-HANS-CN", "zh-Hans"],
 		["zh-Hans-HK", "zh-Hans"],
-		["zh-Hant", "en"],
-		["zh-TW", "en"],
-		["zh-HK", "en"],
-		["zh-MO", "en"],
-		["zh-Hant-CN", "en"],
-		["de-DE", "en"],
+		["zh-Hant", "zh-Hant"],
+		["zh-TW", "zh-Hant"],
+		["zh-HK", "zh-Hant"],
+		["zh-MO", "zh-Hant"],
+		["zh-Hant-CN", "zh-Hant"],
+		["ar-SA", "en"],
 		["", "en"],
 		[null, "en"],
 		[undefined, "en"],
@@ -190,5 +190,156 @@ test("Ukrainian regional tags, translations and count forms use the selected cat
 		[1.5, "1,5 відкритої вкладки"],
 	] as const) {
 		assert.equal(translate("uk", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("German regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["de", "de-DE", "DE-at", "de-CH"]) {
+		assert.equal(resolveLocale(tag), "de", tag);
+	}
+	assert.equal(translate("de", "common.cancel"), "Abbrechen");
+	for (const [count, expected] of [
+		[0, "0 offene Tabs"],
+		[1, "1 offener Tab"],
+		[2, "2 offene Tabs"],
+		[5, "5 offene Tabs"],
+		[21, "21 offene Tabs"],
+		[12345, "12.345 offene Tabs"],
+		[1.5, "1,5 offene Tabs"],
+	] as const) {
+		assert.equal(translate("de", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Japanese regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["ja", "ja-JP", "JA-jp"]) {
+		assert.equal(resolveLocale(tag), "ja", tag);
+	}
+	assert.equal(translate("ja", "common.cancel"), "キャンセル");
+	for (const [count, expected] of [
+		[0, "開いているタブ0個"],
+		[1, "開いているタブ1個"],
+		[2, "開いているタブ2個"],
+		[5, "開いているタブ5個"],
+		[21, "開いているタブ21個"],
+		[12345, "開いているタブ12,345個"],
+		[1.5, "開いているタブ1.5個"],
+	] as const) {
+		assert.equal(translate("ja", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Italian regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["it", "it-IT", "IT-ch"]) {
+		assert.equal(resolveLocale(tag), "it", tag);
+	}
+	assert.equal(translate("it", "common.cancel"), "Annulla");
+	for (const [count, expected] of [
+		[0, "0 schede aperte"],
+		[1, "1 scheda aperta"],
+		[2, "2 schede aperte"],
+		[5, "5 schede aperte"],
+		[21, "21 schede aperte"],
+		[12345, "12.345 schede aperte"],
+		[1.5, "1,5 schede aperte"],
+	] as const) {
+		assert.equal(translate("it", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Korean regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["ko", "ko-KR", "KO-kr"]) {
+		assert.equal(resolveLocale(tag), "ko", tag);
+	}
+	assert.equal(translate("ko", "common.cancel"), "취소");
+	for (const [count, expected] of [
+		[0, "열린 탭 0개"],
+		[1, "열린 탭 1개"],
+		[2, "열린 탭 2개"],
+		[5, "열린 탭 5개"],
+		[21, "열린 탭 21개"],
+		[12345, "열린 탭 12,345개"],
+		[1.5, "열린 탭 1.5개"],
+	] as const) {
+		assert.equal(translate("ko", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Traditional Chinese regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["zh-Hant", "zh-TW", "zh-HK", "zh-MO", "ZH-HANT-TW", "zh-Hant-CN"]) {
+		assert.equal(resolveLocale(tag), "zh-Hant", tag);
+	}
+	assert.equal(translate("zh-Hant", "common.cancel"), "取消");
+	for (const [count, expected] of [
+		[0, "0 個已開啟的分頁"],
+		[1, "1 個已開啟的分頁"],
+		[2, "2 個已開啟的分頁"],
+		[5, "5 個已開啟的分頁"],
+		[21, "21 個已開啟的分頁"],
+		[12345, "12,345 個已開啟的分頁"],
+		[1.5, "1.5 個已開啟的分頁"],
+	] as const) {
+		assert.equal(translate("zh-Hant", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Polish regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["pl", "pl-PL", "PL-pl"]) {
+		assert.equal(resolveLocale(tag), "pl", tag);
+	}
+	assert.equal(translate("pl", "common.cancel"), "Anuluj");
+	for (const [count, expected] of [
+		[0, "0 otwartych kart"],
+		[1, "1 otwarta karta"],
+		[2, "2 otwarte karty"],
+		[5, "5 otwartych kart"],
+		[11, "11 otwartych kart"],
+		[12, "12 otwartych kart"],
+		[14, "14 otwartych kart"],
+		[21, "21 otwartych kart"],
+		[22, "22 otwarte karty"],
+		[25, "25 otwartych kart"],
+		[101, "101 otwartych kart"],
+		[112, "112 otwartych kart"],
+		[12345, "12 345 otwartych kart"],
+		[1.5, "1,5 otwartej karty"],
+	] as const) {
+		assert.equal(translate("pl", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Turkish regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["tr", "tr-TR", "TR-tr"]) {
+		assert.equal(resolveLocale(tag), "tr", tag);
+	}
+	assert.equal(translate("tr", "common.cancel"), "Vazgeç");
+	for (const [count, expected] of [
+		[0, "0 açık sekme"],
+		[1, "1 açık sekme"],
+		[2, "2 açık sekme"],
+		[5, "5 açık sekme"],
+		[21, "21 açık sekme"],
+		[12345, "12.345 açık sekme"],
+		[1.5, "1,5 açık sekme"],
+	] as const) {
+		assert.equal(translate("tr", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});
+
+test("Dutch regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["nl", "nl-NL", "NL-be"]) {
+		assert.equal(resolveLocale(tag), "nl", tag);
+	}
+	assert.equal(translate("nl", "common.cancel"), "Annuleer");
+	for (const [count, expected] of [
+		[0, "0 geopende tabbladen"],
+		[1, "1 geopend tabblad"],
+		[2, "2 geopende tabbladen"],
+		[5, "5 geopende tabbladen"],
+		[21, "21 geopende tabbladen"],
+		[12345, "12.345 geopende tabbladen"],
+		[1.5, "1,5 geopende tabbladen"],
+	] as const) {
+		assert.equal(translate("nl", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });

@@ -102,6 +102,8 @@ test("link rules keep well-formed entries in order", () => {
 });
 
 test("search ignores case and accents and needs every term", () => {
+  assert.equal(matchesSearch("Schriftgröße", "SCHRIFTGROSSE"), true);
+  assert.equal(matchesSearch("Yazı tipi", "YAZI TİPİ"), true);
   assert.equal(matchesSearch("Mémoire des onglets", "memoire"), true);
   assert.equal(matchesSearch("Mémoire des onglets", "ONGLETS mem"), true);
   assert.equal(matchesSearch("Mémoire des onglets", "onglets zoom"), false);
