@@ -51,6 +51,17 @@ final class AgentClientConfigTests: XCTestCase {
 
         XCTAssertNotNil(AgentClientConfig.iconApp(of: .claudeCode, home: home))
         XCTAssertEqual(AgentClientConfig.Client(clientName: "claude-ai"), .claudeDesktop)
+        XCTAssertEqual(AgentClientConfig.Client(clientName: "local-agent-mode-lilo"), .claudeDesktop)
+    }
+
+    @MainActor
+    func testHandshakeNamesReadAsPeopleKnowTheAgents() {
+        XCTAssertEqual(AgentControl.displayName("local-agent-mode-lilo"), "Claude")
+        XCTAssertEqual(AgentControl.displayName("claude-code"), "Claude Code")
+        XCTAssertEqual(AgentControl.displayName("gemini-cli-mcp-client"), "Gemini CLI")
+        XCTAssertEqual(AgentControl.displayName("my_agent"), "My Agent")
+        XCTAssertEqual(AgentControl.displayName("Test Agent"), "Test Agent")
+        XCTAssertEqual(AgentControl.displayName("goose"), "goose")
     }
 
     func testClaudeCodeIsFoundWhereItsInstallerPutsIt() async throws {

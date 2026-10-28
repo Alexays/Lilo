@@ -98,12 +98,20 @@ final class AgentControl {
         }
     }
 
-    /// Known clients' handshake names as people know them: "claude-code" is Claude Code.
+    /// Handshake names as people know them: "claude-code" is Claude Code, "gemini-cli-mcp-client" Gemini CLI.
     static func displayName(_ clientName: String) -> String {
-        [
+        let name = clientName.lowercased()
+        // The Claude app's agent mode names itself after the MCP server it connects to.
+        if name.hasPrefix("local-agent-mode-") { return "Claude" }
+        if let known = [
             "claude-code": "Claude Code", "claude-ai": "Claude", "codex": "Codex", "codex-mcp-client": "Codex",
             "cursor": "Cursor", "cursor-vscode": "Cursor"
-        ][clientName.lowercased()] ?? clientName
+        ][name] { return known }
+        // A name the agent styled itself ("Test Agent", "Goose") stays as it is.
+        guard name == clientName, name.contains(where: { "-_.".contains($0) }) else { return clientName }
+        let words = name.split(whereSeparator: { "-_. ".contains($0) }).filter { $0 != "mcp" && $0 != "client" }
+        guard !words.isEmpty else { return clientName }
+        return words.map { ["ai": "AI", "cli": "CLI", "ide": "IDE", "vscode": "VS Code"][$0] ?? $0.capitalized }.joined(separator: " ")
     }
 
     /// Stopped for good: no reconnection takes the sessions back.

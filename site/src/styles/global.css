@@ -64,7 +64,7 @@
   --brand: linear-gradient(135deg, #795ceb, #6a4be0 55%, #4a2fc8);
   --on-brand: #ffffff;
   --brand-text: linear-gradient(135deg, #795ceb, #6a4be0 55%, #4a2fc8);
-  --agents: #d97757;
+  --agents: #795ceb;
   --good: #15803d;
   --sys: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -868,7 +868,7 @@ a {
 }
 /* The Agents space, drawn like the hero window: an agent's folder, and its question in the address bar */
 .window.agwin {
-  --tint: #d97757;
+  --tint: #795ceb;
   max-width: none;
   min-height: 0;
   margin: 0;
@@ -1005,7 +1005,7 @@ a {
   font-weight: 600;
   box-shadow:
     0 0 0 3px #fff,
-    0 0 0 5px #d97757;
+    0 0 0 5px #795ceb;
 }
 .cur {
   position: absolute;
@@ -1018,7 +1018,7 @@ a {
 .cur svg {
   width: 18px;
   height: 18px;
-  fill: #d97757;
+  fill: #795ceb;
   stroke: #fff;
   stroke-width: 1.4;
   stroke-linejoin: round;
@@ -1028,7 +1028,7 @@ a {
   margin-top: 12px;
   padding: 2px 7px;
   border-radius: 999px;
-  background: #d97757;
+  background: #795ceb;
   color: #fff;
   font-size: 11px;
   font-weight: 600;

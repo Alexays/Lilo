@@ -2,10 +2,10 @@ import AppKit
 import WebKit
 
 /// The agents' color in Lilo (the sidebar's activity dot).
-private let agentColor = NSColor(srgbRed: 0xD9 / 255, green: 0x77 / 255, blue: 0x57 / 255, alpha: 1)
+private let agentColor = NSColor(srgbRed: 0x79 / 255, green: 0x5C / 255, blue: 0xEB / 255, alpha: 1)
 
-/// Where the agent's pointer is, drawn over its web view so the user can follow it: a coral arrow
-/// with the agent's name beside it, like a collaborator's cursor. A native view, not page content:
+/// Where the agent's pointer is, drawn over its web view so the user can follow it: a violet arrow
+/// trailed by a little mascot carrying the agent's name, like a collaborator's cursor. A native view, not page content:
 /// agent screenshots never show it, and it lets the user's own mouse through.
 @MainActor
 final class AgentCursorView: NSView {
@@ -16,6 +16,11 @@ final class AgentCursorView: NSView {
     private let label = NSTextField(labelWithString: "")
     // A label draws its text at the top of its frame: the pill carries the height and centers it.
     private let pill = NSView()
+    // A round violet mascot with two eyes, trailing the arrow.
+    private let blob = NSView(frame: CGRect(x: 0, y: 0, width: 22, height: 22))
+    private let body = CALayer()
+    private let eyes = CALayer()
+    private var blinkTimer: Timer?
 
     override var isFlipped: Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
@@ -23,6 +28,23 @@ final class AgentCursorView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
+        blob.wantsLayer = true
+        body.frame = blob.bounds
+        body.cornerRadius = 11
+        body.backgroundColor = agentColor.cgColor
+        body.borderWidth = 1.5
+        body.borderColor = NSColor.white.cgColor
+        eyes.frame = body.bounds
+        for x: CGFloat in [5, 13] {
+            let eye = CALayer()
+            eye.frame = CGRect(x: x, y: 8.5, width: 4, height: 5)
+            eye.cornerRadius = 2
+            eye.backgroundColor = NSColor.white.cgColor
+            eyes.addSublayer(eye)
+        }
+        body.addSublayer(eyes)
+        blob.layer?.addSublayer(body)
+        addSubview(blob)
         addSubview(arrow)
         label.font = .systemFont(ofSize: 11, weight: .semibold)
         label.textColor = .white
@@ -74,17 +96,67 @@ final class AgentCursorView: NSView {
         if pressed { cursor.ripple(at: point) }
     }
 
+    /// The arrow is exact; the mascot and its name tag trail it on a spring, like a companion.
     private func place(at point: CGPoint, animator: Bool = false) {
         let origin = CGPoint(x: point.x - Self.hotSpot.x, y: point.y - Self.hotSpot.y)
-        let labelOrigin = CGPoint(x: point.x + 12, y: point.y + 18)
         if animator {
             arrow.animator().setFrameOrigin(origin)
-            pill.animator().setFrameOrigin(labelOrigin)
         } else {
             arrow.setFrameOrigin(origin)
-            pill.setFrameOrigin(labelOrigin)
         }
         arrow.setFrameSize(Self.arrowImage.size)
+
+        let previous = blob.layer.map { $0.presentation()?.position ?? $0.position }
+        let previousPill = pill.layer.map { $0.presentation()?.position ?? $0.position }
+        blob.setFrameOrigin(CGPoint(x: point.x + 11, y: point.y + 15))
+        pill.setFrameOrigin(CGPoint(x: point.x + 36, y: point.y + 17))
+        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+              let layer = blob.layer, let previous, let pillLayer = pill.layer, let previousPill else { return }
+        let dx = layer.position.x - previous.x
+        let distance = hypot(dx, layer.position.y - previous.y)
+        guard distance > 1 else { return }
+        var duration: CFTimeInterval = 0
+        for (moving, from) in [(layer, previous), (pillLayer, previousPill)] {
+            let follow = CASpringAnimation(keyPath: "position")
+            follow.stiffness = 60
+            follow.damping = 8.5
+            follow.duration = follow.settlingDuration
+            follow.fromValue = NSValue(point: from)
+            follow.toValue = NSValue(point: moving.position)
+            moving.add(follow, forKey: "follow")
+            duration = follow.duration
+        }
+        // Looks where it goes, then back at the page.
+        let look = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        look.values = [0, dx / distance * 2, dx / distance * 2, 0]
+        look.keyTimes = [0, 0.15, 0.6, 1]
+        look.duration = duration
+        eyes.add(look, forKey: "look")
+        guard distance > 20 else { return }
+        let stretch = min(0.15, distance / 600)
+        for (key, amount) in [("transform.scale.x", stretch), ("transform.scale.y", -stretch * 0.8)] {
+            let squash = CAKeyframeAnimation(keyPath: key)
+            squash.values = [1, 1 + amount, 1]
+            squash.duration = 0.45
+            body.add(squash, forKey: key)
+        }
+    }
+
+    // Blinks on a timer only while shown: a repeating Core Animation blink would keep the compositor busy.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        blinkTimer?.invalidate()
+        blinkTimer = nil
+        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        blinkTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                let blink = CAKeyframeAnimation(keyPath: "transform.scale.y")
+                blink.values = [1, 0.15, 1]
+                blink.duration = 0.14
+                self?.eyes.add(blink, forKey: "blink")
+            }
+        }
+        blinkTimer?.tolerance = 0.5
     }
 
     private func ripple(at point: CGPoint) {
@@ -102,17 +174,21 @@ final class AgentCursorView: NSView {
         }, completionHandler: { MainActor.assumeIsolated { ring.removeFromSuperview() } })
     }
 
-    /// A coral arrow with a white outline, so it reads on any page and never passes for the user's.
+    /// A violet arrow with a white outline, so it reads on any page and never passes for the user's.
     private static let arrowImage: NSImage = {
         let image = NSImage(size: NSSize(width: 22, height: 26), flipped: true) { _ in
+            // A soft pointer without a stem: tip, bottom, notch and right wing, each corner rounded.
+            let corners: [(CGPoint, CGFloat)] = [
+                // Small radii: on corners this sharp a larger one eats several points of the shape.
+                (CGPoint(x: 3, y: 2), 1), (CGPoint(x: 3.4, y: 22.5), 1.4),
+                (CGPoint(x: 9, y: 16.4), 1.6), (CGPoint(x: 19.5, y: 15.2), 1.4)
+            ]
             let path = NSBezierPath()
-            path.move(to: CGPoint(x: 3, y: 2))
-            path.line(to: CGPoint(x: 3, y: 21))
-            path.line(to: CGPoint(x: 8.2, y: 16.2))
-            path.line(to: CGPoint(x: 11.5, y: 23.6))
-            path.line(to: CGPoint(x: 14.8, y: 22.1))
-            path.line(to: CGPoint(x: 11.5, y: 14.9))
-            path.line(to: CGPoint(x: 18.5, y: 14.6))
+            let (last, first) = (corners[corners.count - 1].0, corners[0].0)
+            path.move(to: CGPoint(x: (last.x + first.x) / 2, y: (last.y + first.y) / 2))
+            for (index, (corner, radius)) in corners.enumerated() {
+                path.appendArc(from: corner, to: corners[(index + 1) % corners.count].0, radius: radius)
+            }
             path.close()
             path.lineJoinStyle = .round
             NSGraphicsContext.saveGraphicsState()
@@ -133,7 +209,7 @@ final class AgentCursorView: NSView {
     }()
 }
 
-/// A tab an agent controls: a coral edge around the page and a badge naming the agent, so the
+/// A tab an agent controls: a violet edge around the page and a badge naming the agent, so the
 /// page says it is being driven even while the pointer is still. Lets the user's mouse through.
 @MainActor
 final class AgentFrameView: NSView {

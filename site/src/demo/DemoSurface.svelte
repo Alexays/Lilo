@@ -481,12 +481,12 @@ export const requestFolderDeletion = (id: string) => {
   .sample-pane { position: relative; flex: 1; min-width: 0; min-height: 0; height: 100%; border-radius: 8px; overflow: hidden; }
   .sample-pane.split-pane { position: absolute; }
   .sample-pane.split-focused { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: -2px; }
-  .agent-frame { position: absolute; inset: 0; z-index: 8; box-sizing: border-box; border: 2px solid #d97757; border-radius: inherit; pointer-events: none; }
-  .agent-frame > span { position: absolute; right: 9px; top: 9px; border-radius: 10px; padding: 2px 8px; background: #d97757; color: white; font: 600 11px/16px -apple-system, BlinkMacSystemFont, sans-serif; }
+  .agent-frame { position: absolute; inset: 0; z-index: 8; box-sizing: border-box; border: 2px solid #795ceb; border-radius: inherit; pointer-events: none; }
+  .agent-frame > span { position: absolute; right: 9px; top: 9px; border-radius: 10px; padding: 2px 8px; background: #795ceb; color: white; font: 600 11px/16px -apple-system, BlinkMacSystemFont, sans-serif; }
   .agent-cursor { position: absolute; z-index: 9; pointer-events: none; transform: translate(-3px, -2px); transition: left .15s ease-out, top .15s ease-out; }
-  .agent-cursor svg { display: block; width: 22px; height: 26px; overflow: visible; fill: #d97757; stroke: white; stroke-width: 1.6; stroke-linejoin: round; filter: drop-shadow(0 1px 2px #00000055); }
-  .agent-cursor > span { position: absolute; left: 15px; top: 20px; border: 1px solid #ffffffd9; border-radius: 9px; padding: 0 7px; background: #d97757; color: white; font: 600 11px/17px -apple-system, BlinkMacSystemFont, sans-serif; }
-  .agent-cursor.pressed::before { content: ""; position: absolute; top: -12px; left: -11px; width: 28px; height: 28px; border: 2px solid #d97757; border-radius: 50%; background: #d9775733; animation: agent-click .4s ease-out forwards; }
+  .agent-cursor svg { display: block; width: 22px; height: 26px; overflow: visible; fill: #795ceb; stroke: white; stroke-width: 1.6; stroke-linejoin: round; filter: drop-shadow(0 1px 2px #00000055); }
+  .agent-cursor > span { position: absolute; left: 15px; top: 20px; border: 1px solid #ffffffd9; border-radius: 9px; padding: 0 7px; background: #795ceb; color: white; font: 600 11px/17px -apple-system, BlinkMacSystemFont, sans-serif; }
+  .agent-cursor.pressed::before { content: ""; position: absolute; top: -12px; left: -11px; width: 28px; height: 28px; border: 2px solid #795ceb; border-radius: 50%; background: #795ceb33; animation: agent-click .4s ease-out forwards; }
   @keyframes agent-click { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.2); } }
   @media (prefers-reduced-motion: reduce) { .agent-cursor { transition: none; } .agent-cursor.pressed::before { display: none; } }
   :global(.reduced-power) .agent-cursor { transition: none; }
