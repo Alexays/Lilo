@@ -232,8 +232,9 @@ export function relayExternalMessaging(runtime: any): void {
   const { sendMessage, connect } = target;
   // Each content script entry carries its own copy of the compat: the first one relays for all.
   if (typeof sendMessage !== 'function' || typeof connect !== 'function' || sendMessage.__liloRelays) return;
-  const relayed = function (this: unknown, ...args: any[]) {
-    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(this, args);
+  // Called on runtime, never on this: an extension may call them detached, as Chrome's.
+  const relayed = function (...args: any[]) {
+    if (args.length < 2 || typeof args[1] === 'function' || !otherExtension(args[0], runtime)) return sendMessage.apply(runtime, args);
     const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
     const sent = Promise.resolve(sendMessage.call(runtime, { liloExternal: args[0], message: args[1] })).then((answer: any) => {
       if (!answer || 'error' in answer) throw new Error(answer?.error ?? noReceiver);
@@ -245,8 +246,8 @@ export function relayExternalMessaging(runtime: any): void {
   };
   Object.defineProperty(target, 'sendMessage', { value: Object.assign(relayed, { __liloRelays: true }), configurable: true, writable: true });
   Object.defineProperty(target, 'connect', {
-    value(this: unknown, ...args: any[]) {
-      if (!otherExtension(args[0], runtime)) return portErrorsAsChrome(connect.apply(this, args));
+    value(...args: any[]) {
+      if (!otherExtension(args[0], runtime)) return portErrorsAsChrome(connect.apply(runtime, args));
       const name = typeof args[1]?.name === 'string' ? args[1].name : '';
       return messagesOnce(connect.call(runtime, { name: `${name}${externalMark}${args[0]}${once}` }), name);
     },

@@ -115,17 +115,17 @@ export function relayFrameMessaging(g: any, runtime: any, key: string): void {
     return end;
   };
 
-  // A content script's runtime.lastError stays WebKit's: a callback learns of no failure.
+  // A content script's runtime.lastError stays WebKit's: a callback learns of no failure. Both are called on runtime, as
+  // an extension may call them detached.
   Object.defineProperty(target, 'sendMessage', {
-    value(this: unknown, ...args: any[]) {
-      if (args.length >= 2 && typeof args[1] !== 'function' && otherExtension(args[0], runtime)) return sendMessage.apply(this, args);
+    value(...args: any[]) {
+      if (args.length >= 2 && typeof args[1] !== 'function' && otherExtension(args[0], runtime)) return sendMessage.apply(runtime, args);
       const callback = typeof args.at(-1) === 'function' ? args.at(-1) : undefined;
       const sent = callback ? args.slice(0, -1) : args;
       const message = sent.length >= 2 && (sent[0] == null || sent[0] === runtime.id) ? sent[1] : sent[0];
-      const self = this;
-      if (!callback) return relaying().then((relay) => (relay ? send(message) : sendMessage.apply(self, args)));
+      if (!callback) return relaying().then((relay) => (relay ? send(message) : sendMessage.apply(runtime, args)));
       relaying().then((relay) => {
-        if (!relay) return sendMessage.apply(self, args);
+        if (!relay) return sendMessage.apply(runtime, args);
         return send(message).then((response) => callback(response), () => callback());
       });
       return undefined;
@@ -133,12 +133,11 @@ export function relayFrameMessaging(g: any, runtime: any, key: string): void {
     configurable: true, writable: true,
   });
   Object.defineProperty(target, 'connect', {
-    value(this: unknown, ...args: any[]) {
-      if (otherExtension(args[0], runtime)) return connect.apply(this, args);
+    value(...args: any[]) {
+      if (otherExtension(args[0], runtime)) return connect.apply(runtime, args);
       const info = typeof args[0] === 'string' || args[0] == null ? args[1] : args[0];
       const name = typeof info?.name === 'string' ? info.name : '';
-      const self = this;
-      return deferredPort(name, relaying().then((relay) => (relay ? relayEnd(request({ connect: name })) : connect.apply(self, args))));
+      return deferredPort(name, relaying().then((relay) => (relay ? relayEnd(request({ connect: name })) : connect.apply(runtime, args))));
     },
     configurable: true, writable: true,
   });

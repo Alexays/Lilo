@@ -283,8 +283,14 @@ describe("a content script's messages to another extension", () => {
     const sent: unknown[] = [];
     const opened: unknown[] = [];
     const runtime = Object.create({
-      sendMessage(message: unknown) { sent.push(message); return Promise.resolve(answer); },
-      connect(info: { name: string }) {
+      // As WebKit's, they answer nothing called on another object.
+      sendMessage(this: unknown, message: unknown) {
+        if (this !== runtime) return undefined;
+        sent.push(message);
+        return Promise.resolve(answer);
+      },
+      connect(this: unknown, info: { name: string }) {
+        if (this !== runtime) return undefined;
         opened.push(info);
         return { name: info.name, onMessage: { addListener() {} }, onDisconnect: { addListener() {} }, postMessage() {}, disconnect() {} };
       },
@@ -307,6 +313,15 @@ describe("a content script's messages to another extension", () => {
     await assert.rejects(contentRuntime({ error: noReceiver }).runtime.sendMessage(other, 1), { message: noReceiver });
     await assert.rejects(contentRuntime(undefined).runtime.sendMessage(other, 1), { message: noReceiver }, 'the extension has no worker to relay it');
     assert.equal(await contentRuntime({ closed: true }).runtime.sendMessage(other, 1), undefined);
+  });
+
+  it('work detached, as Chrome\'s', async () => {
+    const { runtime, opened } = contentRuntime({ response: 'pong' });
+    const { sendMessage, connect } = runtime;
+    assert.deepEqual(await sendMessage('own'), { response: 'pong' });
+    assert.equal(await sendMessage(other, 'ping'), 'pong');
+    assert.equal(connect({ name: 'own' })?.name, 'own');
+    assert.deepEqual(opened, [{ name: 'own' }]);
   });
 
   it('open a port the worker relays, named for the other extension', () => {

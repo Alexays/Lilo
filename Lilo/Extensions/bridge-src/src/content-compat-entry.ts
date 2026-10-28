@@ -1,6 +1,6 @@
 // Injected as every extension's first content script: the isolated world never gets ChromeAPIAugmentation.js, so the
 // APIs WebKit omits there (chrome.storage.managed) are installed here, before the extension's own content scripts.
-import { installStaticChromeCompat } from './shared/static-compat.ts';
+import { chromeManifest, home, installStaticChromeCompat } from './shared/static-compat.ts';
 import { showChromeUserAgent } from './shared/chrome-version.ts';
 import { answerAsChrome, relayExternalMessaging } from './shared/message-answers.ts';
 import { relayFrameMessaging } from './shared/frame-messaging.ts';
@@ -57,6 +57,10 @@ const runtime = (globalThis as any).chrome?.runtime;
 if (runtime && !Object.hasOwn(globalThis, '__liloRuntime')) {
   relayExternalMessaging(runtime);
   relayFrameMessaging(globalThis, runtime, frameKey);
+  const { getManifest } = home(runtime);
+  if (typeof getManifest === 'function') {
+    Object.defineProperty(home(runtime), 'getManifest', { value: () => chromeManifest(getManifest.call(runtime)), configurable: true, writable: true });
+  }
   // WebKit recreates a collected namespace object, and its prototype, without the relay.
   Object.defineProperty(globalThis, '__liloRuntime', { value: runtime });
 }

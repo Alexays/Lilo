@@ -4,6 +4,7 @@ import { bridgeChrome, callbackify, withLastError } from './callbackify.ts';
 import { ChromeEvent, eventStandIns } from './chrome-event.ts';
 import { CHANNEL_HOST, gapCall } from './ipc.ts';
 import type { NamespaceCompat, Patch } from './chrome-compat.ts';
+import { chromeManifest, contentCompat, withoutContentCompat } from './static-compat.ts';
 
 const unknownPermission = /'([^']+)' is not a valid permission/;
 const invalidPattern = /'([^']+)' is not a valid pattern/;
@@ -299,19 +300,10 @@ export const i18nPatches: Record<string, Patch> = {
   },
 };
 
-/**
- * The manifest names Lilo's wrapper as the worker WebKit registers, and keeps the extension's own in `lilo_service_worker`
- * (ExtensionBackgroundPreparer): extensions compare it with their worker's location (webext-detect-page).
- */
+/** The manifest as the extension wrote it (chromeManifest). */
 export const runtimePatches: Record<string, Patch> = {
   getManifest: (original, self) => function (this: unknown, ...args: unknown[]) {
-    const manifest = original.apply(self(this), args);
-    const background = manifest?.background;
-    if (typeof background?.lilo_service_worker === 'string') {
-      background.service_worker = background.lilo_service_worker;
-      delete background.lilo_service_worker;
-    }
-    return manifest;
+    return chromeManifest(original.apply(self(this), args));
   },
 };
 
@@ -326,18 +318,12 @@ export async function registrationsSettled(): Promise<void> {
   while (registering.size) await Promise.allSettled(registering);
 }
 
-/** The compat ExtensionBackgroundPreparer writes into every extension, which each isolated-world script runs first. */
-const contentCompat = '_lilo/lilo-content-compat.js';
 
 /** `js` led by the compat, except in the MAIN world, where it would leak into the page. */
 const withContentCompat = (js: string[], world: unknown) => {
   const own = js.filter((file) => file !== contentCompat);
   return world === 'MAIN' ? own : [contentCompat, ...own];
 };
-
-const withoutContentCompat = (script: any) => (Array.isArray(script?.js) && script.js.includes(contentCompat)
-  ? { ...script, js: script.js.filter((file: string) => file !== contentCompat) }
-  : script);
 
 /** Each registration's scripts get the compat, as the manifest's do; `prepare` may need the current registrations. */
 const registration = (prepare: (scripts: any, namespace: any) => unknown = (scripts) => scripts): Patch => (original, self) => function (this: unknown, ...args: any[]) {
