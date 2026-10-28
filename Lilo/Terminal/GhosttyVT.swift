@@ -198,6 +198,7 @@ final class VTTerminal: @unchecked Sendable {
     /// Bars of the finished commands in the viewport: rows (clamped to it) and the exit code.
     func visibleCommandMarks() -> [TerminalCommandMark] {
         let scrollbar = self.scrollbar
+        guard scrollbar.len > 0 else { return [] }
         let top = Int(scrollbar.offset)
         let bottom = top + Int(scrollbar.len) - 1
         return commandRanges(from: top).compactMap { range in
