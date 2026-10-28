@@ -2285,29 +2285,36 @@ export const createDemoHost = (
     },
     loadArchivedTabs: publishArchive,
     // The demo's visits all happened today: one batch, nothing older.
-    loadHistoryPage: ({ before, host, openedFrom, period, query, requestId }) => {
+    loadHistoryPage: ({
+      before,
+      host,
+      openedFrom,
+      period,
+      query,
+      requestId,
+    }) => {
       const dayStart = new Date().setHours(0, 0, 0, 0);
 
       const rows =
         before || openedFrom || period === "yesterday" || period === "older"
-        ? []
-        : visited
-            .toReversed()
-            .filter((page) =>
-              `${page.title} ${page.url}`
-                .toLowerCase()
-                .includes(query.toLowerCase())
-            )
-            .map((page) => ({
-              dayStart,
-              host: new URL(page.url).host.replace(/^www\./u, ""),
-              lastVisitAt: page.visitedAt,
-              pageId: page.id,
-              title: page.title,
-              url: page.url,
-              visits: 1,
-            }))
-            .filter((row) => !host || row.host === host);
+          ? []
+          : visited
+              .toReversed()
+              .filter((page) =>
+                `${page.title} ${page.url}`
+                  .toLowerCase()
+                  .includes(query.toLowerCase())
+              )
+              .map((page) => ({
+                dayStart,
+                host: new URL(page.url).host.replace(/^www\./u, ""),
+                lastVisitAt: page.visitedAt,
+                pageId: page.id,
+                title: page.title,
+                url: page.url,
+                visits: 1,
+              }))
+              .filter((row) => !host || row.host === host);
 
       emit("historyPage", { favicons: {}, requestId, rows });
     },
