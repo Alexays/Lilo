@@ -910,7 +910,10 @@ extension MainWindowController {
         engine.restoreFromAutoPictureInPicture()  // a tab auto-PiP'd on leaving comes back inline
         floatingTabPanel.dismiss(hosting: engine.id)
         if tabDock.engineId == engine.id { tabDock.undock() }
-        if documentPiP.openerId == engine.id { placeDocumentPiP() }
+        if awaitingDocumentPiPId == engine.id { awaitingDocumentPiPId = nil }
+        if documentPiP.openerId == engine.id {
+            if documentPiP.wasAutoEntered { documentPiP.close() } else { placeDocumentPiP() }
+        }
         chromeInput.setContentView(nextView)
         let retainedSplitViews = splitPanes.retainedViews(forTabId: engine.id)
         let outgoingViews = contentContainerView.subviews.filter { view in view !== nextView && !retainedSplitViews.contains { $0 === view } }
@@ -956,6 +959,16 @@ extension MainWindowController {
             return false
         }
         guard context.settingsStore.autoPictureInPicture else { return false }
+        if engine.hasActiveCapture, engine.callControls.hasPictureInPictureAction, !engine.shouldRetainForWebInspector {
+            autoEnterDocumentPiP(engine)
+            return false
+        }
+        return popOutWholePage(engine)
+    }
+
+    /// The whole page in the sidebar dock or the floating panel, for a call; the system PiP window for playback.
+    @discardableResult
+    func popOutWholePage(_ engine: WKWebViewTab) -> Bool {
         if engine.hasActiveCapture, !engine.shouldRetainForWebInspector, NSApp.isActive {
             dockInCallTab(engine)
             return true

@@ -199,6 +199,8 @@ final class MainWindowController: NSWindowController {
     /// Keeps a backgrounded call visible while the app is active: scaled dock in the sidebar.
     let tabDock = TabDockController()
     let documentPiP = DocumentPiPController()
+    /// The call tab asked for its PiP window on being left, until the window opens or the fallback runs.
+    var awaitingDocumentPiPId: UUID?
     /// getDisplayMedia tab-share frame ferry (one session at a time).
     let tabShareSessions = TabShareSessionController()
     /// Pages awaiting a tab-share picker choice from the chrome UI, keyed by request id.

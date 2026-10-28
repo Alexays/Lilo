@@ -74,6 +74,49 @@ final class MediaControlTests: XCTestCase {
         XCTAssertEqual(reported?.hasTrackControls, false)
     }
 
+    func testEnterPictureInPictureHandlerIsAcceptedAndReported() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("""
+        <script>
+        try { navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {}); window.registered = 'ok'; }
+        catch (e) { window.registered = e.name; }
+        </script>
+        """, factory: factory)
+        defer { tab.teardown() }
+
+        let reportedPiP = await pollUntil(timeout: 5) { reported?.hasPictureInPictureAction == true }
+        let registered = try await tab.wkWebView.evaluateJavaScript("window.registered") as? String
+
+        XCTAssertTrue(reportedPiP)
+        XCTAssertEqual(registered, "ok", "a call page registering it, as Meet does, must not throw")
+    }
+
+    func testEnterDocumentPictureInPictureCallsThePageHandler() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', details => { window.details = JSON.stringify(details); });
+        </script>
+        """, factory: factory)
+        defer { tab.teardown() }
+        _ = await pollUntil(timeout: 5) { reported?.hasPictureInPictureAction == true }
+        tab.callControls = try XCTUnwrap(reported)
+
+        tab.enterDocumentPictureInPicture()
+
+        var details: String?
+        let called = await pollUntil(timeout: 5) {
+            details = (try? await tab.wkWebView.evaluateJavaScript("window.details")) as? String
+            return details != nil
+        }
+        XCTAssertTrue(called)
+        XCTAssertEqual(details, #"{"action":"enterpictureinpicture"}"#, "no useraction reason: Meet takes its automatic path")
+    }
+
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
         let tab = (factory ?? WKEngineFactory()).createTab(configuration: WKEngineFactory.Configuration())
         tab.wkWebView.loadHTMLString(html, baseURL: URL(string: "https://example.com/"))

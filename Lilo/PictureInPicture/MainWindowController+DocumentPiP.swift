@@ -1,6 +1,24 @@
 import AppKit
+import OSLog
 
 extension MainWindowController {
+    static let documentPiPFallbackDelay: TimeInterval = 1.5
+    private static let documentPiPLogger = Logger(liloCategory: "pip")
+
+    /// Leaving a call tab whose page offers its own PiP window: asks the page for it, and shows the whole page in
+    /// the dock or the panel instead when no window comes within `documentPiPFallbackDelay`.
+    func autoEnterDocumentPiP(_ engine: WKWebViewTab) {
+        awaitingDocumentPiPId = engine.id
+        engine.enterDocumentPictureInPicture()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.documentPiPFallbackDelay) { [weak self, weak engine] in
+            guard let self, let engine, awaitingDocumentPiPId == engine.id else { return }
+            awaitingDocumentPiPId = nil
+            guard tabManager.activeOpenTabId != engine.id else { return }
+            if !engine.isPrivateBrowsing { Self.documentPiPLogger.info("document pip fallback host=\(engine.currentURL?.host ?? "nil", privacy: .private)") }
+            popOutWholePage(engine)
+        }
+    }
+
     /// Docks the Document PiP window in the sidebar while this window is in front and its page's tab is not
     /// shown, and floats it otherwise: over other apps, or beside the tab it belongs to. A panel the user put on
     /// another screen stays there.

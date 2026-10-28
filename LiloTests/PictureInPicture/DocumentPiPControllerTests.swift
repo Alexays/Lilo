@@ -137,4 +137,70 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertEqual(state, "NotAllowedError")
         XCTAssertNil(controller.webView)
     }
+
+    // MARK: - In a browser window
+
+    private func makeWindowTab(_ html: String) async throws -> (TemporaryBrowserContext, MainWindowController, WKWebViewTab) {
+        let browserContext = try await TemporaryBrowserContext()
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
+        let window = makeTestWindow(context, showing: space.id)
+        window.setupTabDock()
+        let call = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: call.id))
+        // As setupBridgeEarly wires it for every window.
+        context.engineFactory.documentPiPHandler = { _, size in window.documentPiP.prepare(engine, size: size) }
+        engine.wkWebView.loadHTMLString(html + "<p>call</p>", baseURL: URL(string: "https://call.example/"))
+        _ = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("document.body?.textContent === 'call'")) as? Bool == true }
+        addTeardownBlock { @MainActor in
+            window.documentPiP.close()
+            browserContext.tearDown()
+        }
+        return (browserContext, window, engine)
+    }
+
+    func testReturningToTheTabClosesAnAutoEnteredPiPOnly() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+        window.documentPiP.wasAutoEntered = true
+
+        window.showContentView(for: engine)
+        XCTAssertNil(window.documentPiP.webView, "Lilo opened it on leaving the tab: coming back closes it")
+
+        let pip = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+        window.showContentView(for: engine)
+        XCTAssertTrue(window.documentPiP.webView === pip, "the page opened it: it stays")
+        XCTAssertTrue(pip.window is NSPanel, "beside its own tab, it floats")
+    }
+
+    func testAutoEnterOpensThePageWindowAndMarksItAutomatic() async throws {
+        let (_, window, engine) = try await makeWindowTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => documentPictureInPicture.requestWindow({ width: 300, height: 300 }));
+        </script>
+        """)
+        engine.callControls.hasPictureInPictureAction = true
+
+        window.autoEnterDocumentPiP(engine)
+
+        let opened = await pollUntil(timeout: 5) { window.documentPiP.webView != nil }
+        XCTAssertTrue(opened)
+        XCTAssertTrue(window.documentPiP.wasAutoEntered)
+        XCTAssertNil(window.awaitingDocumentPiPId)
+    }
+
+    func testNoWindowWithinTheDelayStopsWaiting() async throws {
+        let (_, window, engine) = try await makeWindowTab("""
+        <script>navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {});</script>
+        """)
+        engine.callControls.hasPictureInPictureAction = true
+
+        window.autoEnterDocumentPiP(engine)
+        XCTAssertEqual(window.awaitingDocumentPiPId, engine.id)
+
+        let gaveUp = await pollUntil(timeout: MainWindowController.documentPiPFallbackDelay + 2) { window.awaitingDocumentPiPId == nil }
+        XCTAssertTrue(gaveUp, "after the delay Lilo falls back to the whole page")
+        XCTAssertNil(window.documentPiP.webView)
+    }
 }
