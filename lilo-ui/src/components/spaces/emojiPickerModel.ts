@@ -45,6 +45,7 @@ const LOCALE_NAMES: Partial<Record<Locale, () => Promise<{ EMOJI_NAMES: string }
   "zh-Hans": () => import("./emojiData.zh-Hans.gen"),
   "pt-BR": () => import("./emojiData.pt-BR.gen"),
   ru: () => import("./emojiData.ru.gen"),
+  "uk": () => import("./emojiData.uk.gen"),
 };
 const catalogs = new Map<Locale, Promise<EmojiCatalog>>();
 

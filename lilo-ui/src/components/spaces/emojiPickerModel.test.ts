@@ -109,3 +109,16 @@ test("Russian emoji names and search load on demand and keep English search avai
   assert.ok(russian.categories.flat().every((emoji) => emoji.name.length > 0));
   assert.equal(russian.categories.flat().length, EMOJI_CATEGORIES.flat().length);
 });
+
+
+test("Ukrainian emoji names load on demand and retain English search", async () => {
+  const catalog = await loadEmojiCatalog("uk");
+  assert.equal(await loadEmojiCatalog("uk"), catalog);
+  assert.equal(emojiName(catalog, "🚀"), "ракета");
+  assert.ok(searchEmoji(catalog, "ракета").some((entry) => entry.emoji === "🚀"));
+  assert.ok(searchEmoji(catalog, "серце").some((entry) => entry.emoji === "❤️"));
+  assert.ok(searchEmoji(catalog, "rocket").some((entry) => entry.emoji === "🚀"));
+  assert.ok(catalog.categories.flat().every((entry) => entry.name.length > 0));
+  assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});
