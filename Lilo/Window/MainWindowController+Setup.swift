@@ -466,6 +466,7 @@ extension MainWindowController {
         )
         bridgeRouter.register(handler: settingsHandler)
         bridgeRouter.register(handler: OnboardingBridgeHandler(settingsStore: settingsStore, bridgeRouter: bridgeRouter))
+        bridgeRouter.register(handler: WhatsNewBridgeHandler(windowController: self))
 
         bridgeRouter.register(handler: ImportBridgeHandler(bridgeRouter: bridgeRouter, holdExtensionTabs: { [weak self] in
             self?.holdsExtensionTabsInBackground = $0

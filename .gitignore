@@ -59,6 +59,8 @@ lilo-log.txt
 .claude/
 .copilot/
 .serena/
+.superpowers/
+docs/superpowers/
 
 # Local MCP server config
 .mcp.json

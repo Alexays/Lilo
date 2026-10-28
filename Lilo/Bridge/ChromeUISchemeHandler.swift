@@ -88,12 +88,15 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             count: asset.text.utf8CodeUnitCount,
             deallocator: .none
         )
-        let response = URLResponse(
-            url: url,
-            mimeType: asset.mimeType,
-            expectedContentLength: data.count,
-            textEncodingName: "utf-8"
-        )
+        // Fetch sees a plain custom-scheme response as status 0, so local JSON needs an explicit success status.
+        let response: URLResponse = if asset.mimeType == "application/json", let response = HTTPURLResponse(
+            url: url, statusCode: 200, httpVersion: "HTTP/1.1",
+            headerFields: ["Content-Type": "application/json; charset=utf-8", "Content-Length": String(data.count)]
+        ) {
+            response
+        } else {
+            URLResponse(url: url, mimeType: asset.mimeType, expectedContentLength: data.count, textEncodingName: "utf-8")
+        }
         urlSchemeTask.didReceive(response)
         urlSchemeTask.didReceive(data)
         urlSchemeTask.didFinish()

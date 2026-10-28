@@ -111,6 +111,7 @@
 
   // Capture phase: the editor's own Escape (cancel the whole capture) must not see this one.
   function onWindowKeydown(e: KeyboardEvent): void {
+    if (e.target instanceof Element && e.target.closest("dialog[open]")) return;
     if (!saveMenuOpen || e.key !== "Escape") return;
     e.stopPropagation();
     saveMenuOpen = false;

@@ -1784,6 +1784,7 @@
 		"Start Speaking": "Iniciar locución",
 		"Stop Speaking": "Detener locución",
 		"Lilo Help": "Ayuda de Lilo",
+		"What’s New": "Novedades",
 		"Report an Issue…": "Informar de un problema…",
 		"Recently Visited": "Visitados recientemente",
 		"No History": "Sin historial",
@@ -2102,6 +2103,40 @@
 		"Agent Tabs": "Pestañas de agentes",
 		"QR code for %@": "Código QR de %@",
 		"Secure Connection": "Conexión segura"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "Novedades de Lilo",
+		"description": "Pequeñas mejoras para tu navegación diaria.",
+		"allChanges": "Todo lo que incluye esta actualización",
+		"changes": {
+			"one": "{count} cambio",
+			"other": "{count} cambios"
+		},
+		"originalNotes": "Notas de versión originales, en inglés.",
+		"unavailable": "Las notas de versión no están disponibles en esta compilación.",
+		"reopen": "Siempre en Ayuda → Novedades.",
+		"continue": "Volver a navegar",
+		"kinds": {
+			"Breaking": "Cambios importantes",
+			"Added": "Novedades",
+			"Changed": "Mejoras",
+			"Fixed": "Correcciones"
+		},
+		"art": {
+			"inbox": "Bandeja de entrada",
+			"chat": "Chat del equipo"
+		},
+		"releases": {
+			"v060": {
+				"headline": "Un poco más al día.",
+				"description": "Pequeños detalles para que navegar cada día sea más agradable.",
+				"unreadTitle": "Ponte al día con lo que te perdiste.",
+				"unreadDescription": "Los contadores de mensajes sin leer y los puntos de notificación aparecen ahora en tus pestañas y favoritos.",
+				"callsTitle": "Sigue la conversación.",
+				"callsDescription": "Las llamadas siguen fluidas si una página se bloquea brevemente y continúan con la función para mantener Lilo activo."
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "Todos los permisos",

@@ -218,6 +218,7 @@ extension MainWindowController {
     }
 
     func handleChromeReady() {
+        whatsNewUIReady = false
         didReceiveChromeReady = true
         #if DEBUG
         chromeInput.setDebugOverlayShown(UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey))

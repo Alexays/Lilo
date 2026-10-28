@@ -1784,6 +1784,7 @@
 		"Start Speaking": "Começar a falar",
 		"Stop Speaking": "Parar de falar",
 		"Lilo Help": "Ajuda do Lilo",
+		"What’s New": "Novidades",
 		"Report an Issue…": "Relatar um problema…",
 		"Recently Visited": "Visitadas recentemente",
 		"No History": "Nenhum histórico",
@@ -2102,6 +2103,40 @@
 		"Agent Tabs": "Abas de agentes",
 		"QR code for %@": "Código QR para %@",
 		"Secure Connection": "Conexão segura"
+	},
+	"whatsNew": {
+		"version": "Lilo {version}",
+		"title": "Novidades do Lilo",
+		"description": "Pequenas melhorias para sua navegação no dia a dia.",
+		"allChanges": "Tudo nesta atualização",
+		"changes": {
+			"one": "{count} alteração",
+			"other": "{count} alterações"
+		},
+		"originalNotes": "Notas de versão originais, em inglês.",
+		"unavailable": "As notas de versão não estão disponíveis nesta compilação.",
+		"reopen": "Sempre em Ajuda → Novidades.",
+		"continue": "Voltar à navegação",
+		"kinds": {
+			"Breaking": "Mudanças importantes",
+			"Added": "Novidades",
+			"Changed": "Melhorias",
+			"Fixed": "Correções"
+		},
+		"art": {
+			"inbox": "Caixa de entrada",
+			"chat": "Conversa da equipe"
+		},
+		"releases": {
+			"v060": {
+				"headline": "Fique um pouco mais por dentro.",
+				"description": "Pequenos detalhes para deixar sua navegação diária mais agradável.",
+				"unreadTitle": "Veja o que você perdeu.",
+				"unreadDescription": "Contadores de mensagens não lidas e pontos de notificação agora aparecem nas abas e nos favoritos.",
+				"callsTitle": "Continue na conversa.",
+				"callsDescription": "As chamadas continuam fluidas durante um breve travamento da página e seguem com a função para manter o Lilo ativo."
+			}
+		}
 	},
 	"siteDrawer": {
 		"allPermissions": "Todas as permissões",

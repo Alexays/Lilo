@@ -18,6 +18,7 @@
   import TabSharePicker from "./page/TabSharePicker.svelte";
   import TabPreviewCard from "./sidebar/TabPreviewCard.svelte";
   import TabSwitcher from "./sidebar/TabSwitcher.svelte";
+  import WhatsNewHost from "./whatsnew/WhatsNewHost.svelte";
   import { isDesignSystemShellOpen } from "../stores/panels.svelte";
   import { isSidebarVisible } from "../stores/ui.svelte";
 
@@ -32,6 +33,7 @@
 <CommandBar />
 <SettingsShell />
 <OnboardingShell />
+<WhatsNewHost />
 <!-- Design System showcase is a contributor tool. Shipped in every build so it's reachable from
      installed/release apps too; self-gates via its UiShellFrame `active`.
      Lazy-imported on first open: it never renders at startup. -->

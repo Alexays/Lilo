@@ -52,6 +52,43 @@ final class MenuValidationTests: XCTestCase {
         #selector(MainWindowController.togglePictureInPicture(_:))
     ]
 
+    func testAppKitKeepsNativeMenuValidationWhenHighlightsAreClosed() {
+        let menu = NSMenu()
+        let back = NSMenuItem(title: "Back", action: #selector(MainWindowController.goBackInHistory(_:)), keyEquivalent: "")
+        let sidebar = NSMenuItem(title: "", action: #selector(MainWindowController.toggleSidebarVisibility(_:)), keyEquivalent: "")
+        back.target = window
+        sidebar.target = window
+        window.sidebarVisible = true
+        menu.addItem(back)
+        menu.addItem(sidebar)
+
+        menu.update()
+
+        XCTAssertFalse(back.isEnabled)
+        XCTAssertEqual(sidebar.title, "Hide Sidebar".localized)
+    }
+
+    func testDynamicMenuActionsWaitForTheHighlightsToClose() throws {
+        let context = browserContext.context
+        let space = try XCTUnwrap(context.spaceManager.space(with: try XCTUnwrap(window.tabManager.currentSpaceId)))
+        _ = try context.spaceManager.createSpace(name: "Other", profileId: space.profileId)
+        _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let delegate = AppDelegate()
+        delegate.browserContext.windows.add(window)
+        let menu = NSMenu()
+        delegate.dynamicMenus[.moveToSpace] = menu
+        window.isShowingWhatsNew = true
+
+        delegate.menuNeedsUpdate(menu)
+        menu.update()
+        XCTAssertFalse(try XCTUnwrap(menu.items.first).isEnabled)
+
+        window.isShowingWhatsNew = false
+        delegate.menuNeedsUpdate(menu)
+        menu.update()
+        XCTAssertTrue(try XCTUnwrap(menu.items.first).isEnabled)
+    }
+
     func testPageActionsAreOffOnATerminal() throws {
         XCTAssertNotNil(window.createTerminalTab(activate: true))
 
