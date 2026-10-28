@@ -221,12 +221,10 @@ extension VTColor: Codable {
     }
 
     init(_ color: NSColor) {
-        let rgb = color.usingColorSpace(.sRGB) ?? color
-        self.init(
-            r: UInt8((rgb.redComponent * 255).rounded()),
-            g: UInt8((rgb.greenComponent * 255).rounded()),
-            b: UInt8((rgb.blueComponent * 255).rounded())
-        )
+        // An extended-range color holds components past 0...1, which UInt8 would trap on.
+        let rgb = color.usingColorSpace(.sRGB) ?? NSColor.black
+        func byte(_ value: CGFloat) -> UInt8 { UInt8((min(max(value, 0), 1) * 255).rounded()) }
+        self.init(r: byte(rgb.redComponent), g: byte(rgb.greenComponent), b: byte(rgb.blueComponent))
     }
 
     init(from decoder: Decoder) throws {
