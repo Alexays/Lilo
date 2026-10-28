@@ -276,6 +276,26 @@ describe('action calls with a null tabId', () => {
   });
 });
 
+describe('action.setBadgeText without a text', () => {
+  it("shows the global text on the tab again, and clears the global one, as Chrome's", async () => {
+    const set: unknown[] = [];
+    const { action } = install({
+      action: Object.create({
+        setBadgeText(details: any) {
+          if (typeof details.text !== 'string') throw new Error("Invalid call to action.setBadgeText(). The 'details' value is invalid, because it is missing required keys: 'text'.");
+          set.push(details);
+          return Promise.resolve();
+        },
+        getBadgeText(details: any) { return Promise.resolve(details.tabId === undefined ? 'all' : 'tab'); },
+      }),
+    });
+    await action.setBadgeText({ tabId: 4 });
+    await new Promise((resolve) => action.setBadgeText({ tabId: null }, resolve));
+    await action.setBadgeText({ tabId: 5, text: 'x' });
+    assert.deepEqual(set, [{ tabId: 4, text: 'all' }, { tabId: undefined, text: '' }, { tabId: 5, text: 'x' }]);
+  });
+});
+
 describe('scripting.registerContentScripts without a match pattern', () => {
   const { scripting } = install({
     scripting: Object.create({

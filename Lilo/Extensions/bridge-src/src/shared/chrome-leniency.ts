@@ -288,10 +288,28 @@ const nullTabIdAsNone: Patch = (original) => function (this: unknown, details: a
   return original.call(this, details?.tabId === null ? { ...details, tabId: undefined } : details, ...rest);
 };
 
-export const actionPatches: Record<string, Patch> = Object.fromEntries([
-  'setIcon', 'setTitle', 'getTitle', 'setPopup', 'getPopup', 'setBadgeText', 'getBadgeText',
-  'setBadgeBackgroundColor', 'getBadgeBackgroundColor', 'setBadgeTextColor', 'getBadgeTextColor',
-].map((name) => [name, nullTabIdAsNone]));
+/**
+ * Chrome's setBadgeText takes no text: a tab's badge then shows the global text again, the global one none. WebKit
+ * requires it, and keeps no tab's text apart from the global one.
+ */
+const badgeTextOptional: Patch = (original, self) => function (this: unknown, details: any, ...rest: unknown[]) {
+  if (details === null || typeof details !== 'object' || typeof details.text === 'string') return original.call(this, details, ...rest);
+  const target = self(this) as any;
+  const callback = typeof rest.at(-1) === 'function' ? rest.pop() as () => void : undefined;
+  const tabId = details.tabId ?? undefined;
+  return callbackify(async () => {
+    const text = tabId === undefined ? '' : await target.getBadgeText({});
+    return original.call(target, { ...details, tabId, text: text ?? '' });
+  }, callback);
+};
+
+export const actionPatches: Record<string, Patch> = {
+  ...Object.fromEntries([
+    'setIcon', 'setTitle', 'getTitle', 'setPopup', 'getPopup', 'getBadgeText',
+    'setBadgeBackgroundColor', 'getBadgeBackgroundColor', 'setBadgeTextColor', 'getBadgeTextColor',
+  ].map((name) => [name, nullTabIdAsNone])),
+  setBadgeText: (original, self) => badgeTextOptional(nullTabIdAsNone(original, self), self),
+};
 
 /** Chrome's getMessage answers whatever its `this`; WebKit's returns undefined off its namespace. */
 export const i18nPatches: Record<string, Patch> = {
