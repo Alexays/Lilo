@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Język",
 				"description": "Język całego interfejsu przeglądarki.",
-				"keywords": "język lokalizacja tłumaczenie angielski francuski hiszpański chiński uproszczony portugalski brazylijski rosyjski polish polski ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional 繁體中文 turkish türkçe"
+				"keywords": "język lokalizacja tłumaczenie angielski francuski hiszpański chiński uproszczony portugalski brazylijski rosyjski polish polski ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional 繁體中文 turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {
 				"title": "Wyszukiwarka",

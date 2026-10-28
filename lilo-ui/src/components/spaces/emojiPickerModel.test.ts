@@ -213,3 +213,15 @@ test("Turkish emoji names load on demand and retain English search", async () =>
   assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
     ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
 });
+
+test("Dutch emoji names load on demand and retain English search", async () => {
+  const catalog = await loadEmojiCatalog("nl");
+  assert.equal(await loadEmojiCatalog("nl"), catalog);
+  assert.equal(emojiName(catalog, "🚀"), "raket");
+  assert.ok(searchEmoji(catalog, "raket").some((entry) => entry.emoji === "🚀"));
+  assert.ok(searchEmoji(catalog, "hart").some((entry) => entry.emoji === "❤️"));
+  assert.ok(searchEmoji(catalog, "rocket").some((entry) => entry.emoji === "🚀"));
+  assert.ok(catalog.categories.flat().every((entry) => entry.name.length > 0));
+  assert.deepEqual(catalog.categories.map((category) => category.map((entry) => entry.emoji)),
+    ENGLISH_EMOJI.categories.map((category) => category.map((entry) => entry.emoji)));
+});

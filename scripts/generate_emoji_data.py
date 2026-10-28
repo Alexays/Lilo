@@ -35,6 +35,7 @@ LOCALES = {
     "zh-Hant": set(),
     "pl": {"do", "i", "na", "w", "z", "ze"},
     "tr": {"bir", "da", "de", "ile", "ve"},
+    "nl": {"de", "een", "en", "het", "in", "met", "op", "van"},
 }
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

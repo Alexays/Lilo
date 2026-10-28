@@ -325,3 +325,21 @@ test("Turkish regional tags, translations and count forms use the selected catal
 		assert.equal(translate("tr", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
 	}
 });
+
+test("Dutch regional tags, translations and count forms use the selected catalog", () => {
+	for (const tag of ["nl", "nl-NL", "NL-be"]) {
+		assert.equal(resolveLocale(tag), "nl", tag);
+	}
+	assert.equal(translate("nl", "common.cancel"), "Annuleer");
+	for (const [count, expected] of [
+		[0, "0 geopende tabbladen"],
+		[1, "1 geopend tabblad"],
+		[2, "2 geopende tabbladen"],
+		[5, "5 geopende tabbladen"],
+		[21, "21 geopende tabbladen"],
+		[12345, "12.345 geopende tabbladen"],
+		[1.5, "1,5 geopende tabbladen"],
+	] as const) {
+		assert.equal(translate("nl", "onboarding.import.count.tabs", { count }).replace(/\s/g, " "), expected.replace(/\s/g, " "));
+	}
+});

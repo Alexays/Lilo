@@ -236,7 +236,7 @@
 			"language": {
 				"title": "Idioma",
 				"description": "Idioma usado na interface do navegador.",
-				"keywords": "idioma tradução inglês francês espanhol português brasil chinês simplificado russo ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe"
+				"keywords": "idioma tradução inglês francês espanhol português brasil chinês simplificado russo ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {
 				"title": "Buscador",
