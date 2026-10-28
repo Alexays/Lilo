@@ -38,6 +38,16 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 	});
 }
 
+test("the page's buttons cover the Space name on hover without truncating it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), addressPlacement: "hidden" });
+	const name = page.locator(".space-pane").first().locator(".space-name");
+	const before = (await name.boundingBox())!.width;
+
+	await page.locator(".space-pane").first().locator(".space-label").hover();
+	await expect(page.locator(".space-row-end .url-actions-reveal")).toHaveCSS("opacity", "1");
+	expect((await name.boundingBox())!.width).toBe(before);
+});
+
 test("with tabs on the left the sidebar and the address toolbar hide one without the other", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "left", addressPlacement: "page" });
 	await expect(page.locator(".page-toolbar .url-display")).toBeVisible();
@@ -52,6 +62,8 @@ test("with tabs on the left the sidebar and the address toolbar hide one without
 	await expect(page.locator(".page-toolbar")).toHaveCount(0);
 	await expect(page.locator(".sidebar-layout")).not.toHaveClass(/compact-header/);
 	await expect(page.locator(".url-display")).toHaveCount(0);
+	// On the traffic lights' compact line.
+	await expect(page.locator(".sidebar-header")).toHaveCSS("height", "40px");
 });
 
 test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {

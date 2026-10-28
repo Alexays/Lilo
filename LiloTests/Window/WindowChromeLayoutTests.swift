@@ -103,7 +103,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
         window.toggleToolbar()
         XCTAssertEqual(window.contentEdges(), ContentEdges(left: sidebar, right: 8, top: 8, bottom: 8), "the sidebar stays")
-        XCTAssertEqual(window.window?.toolbarStyle, .unified, "the lights go back to the sidebar's 52pt header")
+        XCTAssertEqual(window.window?.toolbarStyle, .unifiedCompact, "on the 40pt header of a sidebar without the address")
         window.toggleToolbar()
         window.toggleSidebar()
         XCTAssertEqual(window.contentEdges(), ContentEdges(left: 8, right: 8, top: 40, bottom: 8), "the toolbar stays")

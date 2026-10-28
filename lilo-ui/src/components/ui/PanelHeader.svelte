@@ -48,8 +48,8 @@
     padding-left: 72px;
   }
 
-  /* Outside a left sidebar's full header the lights sit on the 40pt line of the page toolbar or tab strip. */
-  :global(html:not([data-tab-position='left']:not([data-address='page']))) .panel-header-bar {
+  /* Outside the default layout the lights sit on a 40pt line: page toolbar, tab strip or address-less header. */
+  :global(html:not([data-tab-position='left'][data-address='tabs'])) .panel-header-bar {
     height: var(--page-toolbar-height);
   }
 
