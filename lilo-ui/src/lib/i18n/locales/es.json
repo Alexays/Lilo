@@ -2134,6 +2134,14 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v080": {
+				"headline": "Comparte justo lo que quieres.",
+				"description": "Tus llamadas y tus páginas ganan algo de espacio.",
+				"shareTitle": "Comparte la pestaña correcta.",
+				"shareDescription": "Las vistas previas te ayudan a elegir, y la tarjeta de la llamada cambia o detiene lo que compartes con un clic. Comparte también el sonido de tu Mac.",
+				"addressTitle": "Más espacio para la página.",
+				"addressDescription": "Oculta la barra de direcciones en Ajustes > Aspecto. La barra de comandos sigue ahí para ir a cualquier sitio."
+			},
 			"v060": {
 				"headline": "Un poco más al día.",
 				"description": "Pequeños detalles para que navegar cada día sea más agradable.",

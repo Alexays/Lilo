@@ -1,3 +1,0 @@
-kind: Fixed
-body: The call preview docked in the sidebar fills its frame again, so its rounded corners are no longer cut at the top and bottom.
-time: 2026-10-28T16:20:50.521322+01:00

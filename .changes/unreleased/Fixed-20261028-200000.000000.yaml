@@ -1,3 +1,0 @@
-kind: Fixed
-body: Closing a tab no longer logs "Unchecked runtime.lastError ... Tab not found" for the content scripts that were messaging their extension (Immersive Translate, Adblock Ad Blocker Pro), as Chrome runs nothing more of a closed tab's page.
-time: 2026-10-28T20:00:00.000000+01:00

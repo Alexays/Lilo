@@ -2134,6 +2134,14 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v080": {
+				"headline": "只共享你想共享的内容。",
+				"description": "通话和网页都多了一点空间。",
+				"shareTitle": "共享正确的标签页。",
+				"shareDescription": "标签页预览帮你快速挑选，通话卡片一键即可切换或停止共享。还能同时共享 Mac 播放的声音。",
+				"addressTitle": "给网页更多空间。",
+				"addressDescription": "在设置 > 外观中隐藏地址栏。命令栏随时可用，想去哪里都行。"
+			},
 			"v060": {
 				"headline": "随时掌握新消息。",
 				"description": "一些小改进，让日常浏览更舒心。",

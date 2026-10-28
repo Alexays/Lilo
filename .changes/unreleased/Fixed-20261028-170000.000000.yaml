@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension that puts its own browser object in place, as AiPrice does over webextension-polyfill, finds what it added there, as in Chrome, and gets its context menus back.
-time: 2026-10-28T17:00:00.000000+01:00

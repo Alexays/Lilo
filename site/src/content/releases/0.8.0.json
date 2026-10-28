@@ -1,0 +1,43 @@
+{
+  "version": "0.8.0",
+  "title": {
+    "en": "Share the right tab.",
+    "fr": "Partagez le bon onglet."
+  },
+  "introduction": {
+    "en": "Sharing a tab in a call is easier to start, switch and stop. And the address bar can now step aside.",
+    "fr": "Partager un onglet pendant un appel devient plus simple à lancer, à changer et à arrêter. Et la barre d'adresse peut maintenant s'effacer."
+  },
+  "highlights": [
+    {
+      "id": "tab-share",
+      "title": {
+        "en": "Pick it, switch it, stop it.",
+        "fr": "Choisir, changer, arrêter."
+      },
+      "body": {
+        "en": "The share picker shows tab previews and suggests the tabs you are likely to share. During the call, its card switches to the tab in front of you or stops the share. Turn on Share audio too to send what your Mac plays.",
+        "fr": "Le sélecteur affiche un aperçu des onglets et suggère ceux que vous allez sans doute partager. Pendant l'appel, sa carte passe à l'onglet affiché ou arrête le partage. Activez Partager aussi le son pour envoyer ce que joue votre Mac."
+      },
+      "notes": [
+        "The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered.",
+        "While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in.",
+        "Calls can share sound with a window or the screen: \"Share audio too\" in the share picker sends what your Mac plays, without sending the call's own voices back to it."
+      ]
+    },
+    {
+      "id": "address-bar",
+      "title": {
+        "en": "More room for the page.",
+        "fr": "Plus de place pour la page."
+      },
+      "body": {
+        "en": "Hide the address bar in Settings > Appearance. The command bar and permission requests stay within reach.",
+        "fr": "Masquez la barre d'adresse dans Réglages > Apparence. La barre de commandes et les demandes d'autorisation restent à portée de main."
+      },
+      "notes": [
+        "Hide the address bar from Settings > Appearance while keeping the command bar and permission requests available."
+      ]
+    }
+  ]
+}

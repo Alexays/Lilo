@@ -2123,6 +2123,14 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v080": {
+				"headline": "Share just what you mean to.",
+				"description": "Calls and pages get a little more room to breathe.",
+				"shareTitle": "Share the right tab.",
+				"shareDescription": "Tab previews help you pick, and the call card switches or stops the share in one click. Share your Mac's sound too.",
+				"addressTitle": "More room for the page.",
+				"addressDescription": "Hide the address bar in Settings > Appearance. The command bar is always there to go somewhere."
+			},
 			"v060": {
 				"headline": "A little more in the loop.",
 				"description": "A few things to make your everyday browsing feel better.",

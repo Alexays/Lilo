@@ -1,7 +1,8 @@
 import type { Locale } from "../../lib/i18n/translate";
 
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
-export type ReleaseIllustration = "unread" | "calls";
+const illustrations = ["unread", "calls", "share", "address"] as const;
+export type ReleaseIllustration = typeof illustrations[number];
 
 export interface ReleaseHighlight {
 	illustration: ReleaseIllustration;
@@ -73,9 +74,9 @@ export function releaseHighlightsForVersion(registry: unknown, version: string):
 	if (!record(entry) || !key(entry.headlineKey) || !key(entry.descriptionKey) || !Array.isArray(entry.highlights)) return null;
 	const highlights: ReleaseHighlight[] = [];
 	for (const value of entry.highlights) {
-		if (!record(value) || (value.illustration !== "unread" && value.illustration !== "calls")
+		if (!record(value) || !illustrations.includes(value.illustration as ReleaseIllustration)
 			|| !key(value.titleKey) || !key(value.descriptionKey)) continue;
-		highlights.push({ illustration: value.illustration, titleKey: value.titleKey.trim(), descriptionKey: value.descriptionKey.trim() });
+		highlights.push({ illustration: value.illustration as ReleaseIllustration, titleKey: value.titleKey.trim(), descriptionKey: value.descriptionKey.trim() });
 		if (highlights.length === 3) break;
 	}
 	return highlights.length ? { headlineKey: entry.headlineKey.trim(), descriptionKey: entry.descriptionKey.trim(), highlights } : null;

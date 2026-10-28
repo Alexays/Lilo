@@ -4,6 +4,35 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-10-28
+
+### Added
+
+- Calls can share sound with a window or the screen: "Share audio too" in the share picker sends what your Mac plays, without sending the call's own voices back to it.
+- While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in.
+- Hide the address bar from Settings > Appearance while keeping the command bar and permission requests available.
+- The website's 0.7.0 release notes have English and French highlights, a short recording of Peek in Lilo on real pages, and the full list of changes one click away.
+- After an update, a small What’s New sheet introduces the highlights and complete release notes. Reopen it anytime from the Help menu.
+- Use Lilo in Ukrainian, including menus, system prompts, Shortcuts, and emoji search.
+
+### Changed
+
+- The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered.
+- A shared tab reaches the call one frame per change, at a steady 30 frames per second while it scrolls, instead of being sampled on its own clock.
+- Calls always use WebKit's echo cancellation again, and the Full-quality mic with headphones setting is gone: without echo cancellation, WebKit made your voice quiet and choppy.
+
+### Fixed
+
+- Shared tabs are sent at full resolution on Retina screens, and shared screens and windows ask the call to keep their resolution over their frame rate, so shared text stays sharp.
+- A tab shared from a Mac's built-in Retina screen reaches the call at 30 frames per second instead of 15, and costs a fraction of the CPU it did.
+- The call preview docked in the sidebar fills its frame again, so its rounded corners are no longer cut at the top and bottom.
+- An extension that puts its own browser object in place, as AiPrice does over webextension-polyfill, finds what it added there, as in Chrome, and gets its context menus back.
+- An extension page's runtime.sendMessage no longer fails with "Tab not found" when its tab closes as it sends (Wappalyzer, Lightning Autofill), as Chrome runs nothing more of a closed page.
+- On a Mac without a real GPU, such as a virtual machine, pages can read back what they draw on a canvas (getImageData no longer throws).
+- Closing a tab no longer logs "Unchecked runtime.lastError ... Tab not found" for the content scripts that were messaging their extension (Immersive Translate, Adblock Ad Blocker Pro), as Chrome runs nothing more of a closed tab's page.
+- Extensions see a running screen saver as a locked screen, as in Chrome, so a Dashlane business account's automatic logout after inactivity no longer logs you out while the screen saver runs.
+
+[0.8.0]: https://github.com/Alexays/Lilo/compare/v0.7.0...v0.8.0
 ## [0.7.0] - 2026-10-28
 
 ### Added

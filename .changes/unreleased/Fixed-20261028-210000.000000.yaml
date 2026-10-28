@@ -1,3 +1,0 @@
-kind: Fixed
-body: Extensions see a running screen saver as a locked screen, as in Chrome, so a Dashlane business account's automatic logout after inactivity no longer logs you out while the screen saver runs.
-time: 2026-10-28T21:00:00.000000+01:00

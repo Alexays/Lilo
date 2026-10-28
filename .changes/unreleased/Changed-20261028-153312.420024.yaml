@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Calls always use WebKit''s echo cancellation again, and the Full-quality mic with headphones setting is gone: without echo cancellation, WebKit made your voice quiet and choppy.'
-time: 2026-10-28T15:33:12.420024+01:00

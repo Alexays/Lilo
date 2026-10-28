@@ -2134,6 +2134,14 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v080": {
+				"headline": "Compartilhe só o que você quer.",
+				"description": "Suas chamadas e páginas ganham um pouco mais de espaço.",
+				"shareTitle": "Compartilhe a aba certa.",
+				"shareDescription": "Prévias das abas ajudam na escolha, e o cartão da chamada troca ou encerra o compartilhamento com um clique. Compartilhe também o som do seu Mac.",
+				"addressTitle": "Mais espaço para a página.",
+				"addressDescription": "Oculte a barra de endereço em Ajustes > Aparência. A barra de comandos continua à mão para ir a qualquer lugar."
+			},
 			"v060": {
 				"headline": "Fique um pouco mais por dentro.",
 				"description": "Pequenos detalhes para deixar sua navegação diária mais agradável.",

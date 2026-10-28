@@ -1,4 +1,20 @@
 {
+	"0.8.0": {
+		"headlineKey": "whatsNew.releases.v080.headline",
+		"descriptionKey": "whatsNew.releases.v080.description",
+		"highlights": [
+			{
+				"illustration": "share",
+				"titleKey": "whatsNew.releases.v080.shareTitle",
+				"descriptionKey": "whatsNew.releases.v080.shareDescription"
+			},
+			{
+				"illustration": "address",
+				"titleKey": "whatsNew.releases.v080.addressTitle",
+				"descriptionKey": "whatsNew.releases.v080.addressDescription"
+			}
+		]
+	},
 	"0.6.0": {
 		"headlineKey": "whatsNew.releases.v060.headline",
 		"descriptionKey": "whatsNew.releases.v060.description",

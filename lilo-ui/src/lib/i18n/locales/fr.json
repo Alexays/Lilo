@@ -2123,6 +2123,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v080": {
+				"headline": "Partagez exactement ce qu'il faut.",
+				"description": "Vos appels et vos pages gagnent un peu d'espace.",
+				"shareTitle": "Partagez le bon onglet.",
+				"shareDescription": "Des aperçus vous aident à choisir, et la carte d'appel change ou arrête le partage en un clic. Partagez aussi le son de votre Mac.",
+				"addressTitle": "Plus de place pour la page.",
+				"addressDescription": "Masquez la barre d'adresse dans Réglages > Apparence. La barre de commandes reste là pour aller ailleurs."
+			},
 			"v060": {
 				"headline": "Toujours dans la boucle.",
 				"description": "De petites attentions pour une navigation plus agréable au quotidien.",
