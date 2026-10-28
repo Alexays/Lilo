@@ -958,7 +958,7 @@ extension MainWindowController {
             return false
         }
         guard context.settingsStore.autoPictureInPicture else { return false }
-        if engine.hasActiveCapture, engine.callControls.hasPictureInPictureAction, !engine.shouldRetainForWebInspector {
+        if engine.isInCall, engine.callControls.hasPictureInPictureAction, !engine.shouldRetainForWebInspector {
             autoEnterDocumentPiP(engine)
             return false
         }
@@ -968,11 +968,11 @@ extension MainWindowController {
     /// The whole page in the sidebar dock or the floating panel, for a call; the system PiP window for playback.
     @discardableResult
     func popOutWholePage(_ engine: WKWebViewTab) -> Bool {
-        if engine.hasActiveCapture, !engine.shouldRetainForWebInspector, NSApp.isActive {
+        if engine.isInCall, !engine.shouldRetainForWebInspector, NSApp.isActive {
             dockInCallTab(engine)
             return true
         }
-        guard engine.hasActiveCapture, !engine.shouldRetainForWebInspector else {
+        guard engine.isInCall, !engine.shouldRetainForWebInspector else {
             engine.autoEnterPictureInPictureIfEligible()
             return false
         }

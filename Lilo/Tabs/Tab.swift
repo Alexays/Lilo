@@ -38,8 +38,9 @@ struct Tab: Sendable, Equatable {
     var isMicrophoneMuted: Bool = false
     var isCameraActive: Bool = false
     var isScreenSharing: Bool = false
-    /// Runtime only: the page offers a Media Session hangup, a call even without capture (Meet's companion mode).
-    var hasHangupControl = false
+    /// Runtime only: the page is in a call even without capture: it offers a Media Session hangup or holds a live
+    /// WebRTC connection (Meet's companion mode).
+    var isInCall = false
     var hasPopup: Bool = false
     /// Runtime only: an agent drives this tab, so lifecycle never freezes or discards it.
     var isAgentControlled = false
@@ -283,7 +284,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let isAudioPlaying: Bool; let lastAudioStoppedAt: Date?; let pausedFromCardAt: Date?; let isMuted: Bool
     let isMicrophoneActive: Bool; let isMicrophoneMuted: Bool
     let isCameraActive: Bool; let isScreenSharing: Bool; let lastCaptureStoppedAt: Date?; let lastActiveAt: Date?
-    let hasHangupControl: Bool
+    let isInCall: Bool
     let hasPopup: Bool
     let isAgentControlled: Bool
     let hasNavigationError: Bool; let navigationErrorCode: Int
@@ -308,7 +309,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         isAudioPlaying = tab.isAudioPlaying; lastAudioStoppedAt = tab.lastAudioStoppedAt; pausedFromCardAt = tab.pausedFromCardAt; isMuted = tab.isMuted
         isMicrophoneActive = tab.isMicrophoneActive; isMicrophoneMuted = tab.isMicrophoneMuted
         isCameraActive = tab.isCameraActive; isScreenSharing = tab.isScreenSharing; lastCaptureStoppedAt = tab.lastCaptureStoppedAt; lastActiveAt = tab.lastActiveAt
-        hasHangupControl = tab.hasHangupControl
+        isInCall = tab.isInCall
         hasPopup = tab.hasPopup
         isAgentControlled = tab.isAgentControlled
         hasNavigationError = tab.hasNavigationError; navigationErrorCode = tab.navigationErrorCode
@@ -335,7 +336,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.isAudioPlaying = isAudioPlaying; tab.lastAudioStoppedAt = lastAudioStoppedAt; tab.pausedFromCardAt = pausedFromCardAt; tab.isMuted = isMuted
         tab.isMicrophoneActive = isMicrophoneActive; tab.isMicrophoneMuted = isMicrophoneMuted
         tab.isCameraActive = isCameraActive; tab.isScreenSharing = isScreenSharing; tab.lastCaptureStoppedAt = lastCaptureStoppedAt; tab.lastActiveAt = lastActiveAt
-        tab.hasHangupControl = hasHangupControl
+        tab.isInCall = isInCall
         tab.hasPopup = hasPopup
         tab.isAgentControlled = isAgentControlled
         tab.hasNavigationError = hasNavigationError; tab.navigationErrorCode = navigationErrorCode

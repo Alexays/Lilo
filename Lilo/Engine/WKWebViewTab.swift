@@ -384,8 +384,9 @@ final class WKWebViewTab: NSObject {
         return usage.usesCamera || usage.usesMicrophone || usage.usesScreen
     }
 
-    /// A call, captured or not: a page offering a hangup is in one without mic or camera (Meet's companion mode).
-    var isInCall: Bool { hasActiveCapture || callControls.actions.contains("hangup") }
+    /// A call, captured or not: a page offering a hangup or holding a live WebRTC connection is in one without mic or
+    /// camera (Meet's companion mode).
+    var isInCall: Bool { hasActiveCapture || callControls.isCall }
 
     /// Active media on the page: an ongoing capture (call) or audible playback.
     private var hasActiveMedia: Bool {

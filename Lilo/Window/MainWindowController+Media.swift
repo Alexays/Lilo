@@ -139,7 +139,7 @@ extension MainWindowController {
 
     func callUsageChanged(_ engine: WKWebViewTab) {
         let usage = engine.effectivePermissionUsageState
-        let inCall = usage.usesMicrophone || usage.usesCamera || engine.callControls.actions.contains("hangup")
+        let inCall = usage.usesMicrophone || usage.usesCamera || engine.callControls.isCall
         guard inCall != context.callTabIds.contains(engine.id) else { return }
         if inCall { context.callTabIds.insert(engine.id) } else { context.callTabIds.remove(engine.id) }
         context.mediaActivityChanged()

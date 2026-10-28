@@ -78,7 +78,7 @@ extension BrowserContext {
     /// A tab playing sound, in a call or in Picture in Picture, holding unsaved input or driven by an
     /// agent: neither the idle sweep nor Clear takes it.
     func isBusy(_ tab: Tab, engine: WKWebViewTab?) -> Bool {
-        tab.isAudioPlaying || tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.hasHangupControl
+        tab.isAudioPlaying || tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.isInCall
             || tab.isAgentControlled || tab.hasUnsavedFormData || engine?.pip.isActive == true
     }
 

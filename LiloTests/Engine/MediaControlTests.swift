@@ -118,6 +118,45 @@ final class MediaControlTests: XCTestCase {
                        "the user left the tab with auto PiP on: Meet keeps its automatic path for some accounts only")
     }
 
+    func testALiveWebRTCConnectionMakesThePageACall() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("<p>call</p>", factory: factory)
+        defer { tab.teardown() }
+
+        // Two peers connected in the page, as a call whose page registers no Media Session action (Meet's companion mode).
+        _ = try await tab.wkWebView.callAsyncJavaScript("""
+            const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+            a.onicecandidate = e => e.candidate && b.addIceCandidate(e.candidate);
+            b.onicecandidate = e => e.candidate && a.addIceCandidate(e.candidate);
+            a.createDataChannel('call');
+            await a.setLocalDescription(await a.createOffer());
+            await b.setRemoteDescription(a.localDescription);
+            await b.setLocalDescription(await b.createAnswer());
+            await a.setRemoteDescription(b.localDescription);
+            window.peers = [a, b];
+            """, contentWorld: .page)
+
+        let connected = await pollUntil(timeout: 10) { reported?.hasLiveConnection == true }
+        XCTAssertTrue(connected, "a connected peer is a call, with or without camera and microphone")
+
+        _ = try await tab.wkWebView.evaluateJavaScript("window.peers.forEach(p => p.close()); true")
+
+        let ended = await pollUntil(timeout: 10) { reported?.hasLiveConnection == false }
+        XCTAssertTrue(ended, "the call ends with its connections")
+    }
+
+    func testALiveConnectionKeepsATabInACall() {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { tab.teardown() }
+        XCTAssertFalse(tab.isInCall)
+
+        tab.callControls.hasLiveConnection = true
+
+        XCTAssertTrue(tab.isInCall, "Meet's companion mode: no capture and no Media Session action, a live connection")
+    }
+
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
         let tab = (factory ?? WKEngineFactory()).createTab(configuration: WKEngineFactory.Configuration())
         tab.wkWebView.loadHTMLString(html, baseURL: URL(string: "https://example.com/"))
