@@ -275,22 +275,27 @@
       transform 260ms var(--motion-ease-spring);
   }
 
-  /* On the Space row there is no address to cover: the buttons stay out, in line. */
-  :global(.actions-only) .url-actions,
-  :global(.actions-only) .url-actions-reveal {
+  /* On the Space row they unfold in line instead of covering a name; the row's hover wakes them.
+     The padding keeps the clip off the buttons' lift and focus ring. */
+  :global(.actions-only) .url-actions {
     position: static;
-    opacity: 1;
-    pointer-events: auto;
     transform: none;
   }
 
   :global(.actions-only) .url-actions-reveal {
-    margin-right: 4px;
+    position: static;
+    max-width: 0;
+    padding: 4px;
+    margin: -4px 0 -4px -4px;
+    overflow: hidden;
+    transform: none;
+    transition:
+      max-width 260ms var(--motion-ease-spring),
+      opacity var(--motion-duration-normal) ease;
   }
 
-  /* Idle, they wear the extension icons' discreet face and wake up with them on hover. */
-  :global(.actions-only:not(:hover, :focus-within)) .url-action-btn:not(.active, .copied) {
-    background: color-mix(in srgb, var(--text-primary) 8%, transparent) !important;
+  :global(.actions-only) .url-actions:is(.has-toast, .menu-open) .url-actions-reveal {
+    max-width: 120px;
   }
 
   .url-blocker-btn {

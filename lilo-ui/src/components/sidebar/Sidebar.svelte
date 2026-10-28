@@ -238,6 +238,13 @@
     gap: 4px;
   }
 
+  /* Like the address bar, the page's buttons show on hover; only the extensions stay out. */
+  .space-content:has(:global(.space-label:hover), .space-row-end:hover, .space-row-end:focus-within) :global(.url-actions-reveal) {
+    max-width: 120px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .space-track {
     flex: 1;
     min-height: 0;
