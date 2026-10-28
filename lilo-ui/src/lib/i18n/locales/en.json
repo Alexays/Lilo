@@ -743,7 +743,10 @@
 		"previous": "Previous track",
 		"turnOffCamera": "Turn off camera",
 		"turnOnCamera": "Turn on camera",
-		"leaveCall": "Leave call"
+		"leaveCall": "Leave call",
+		"sharing": "Sharing {title}",
+		"shareThisTab": "Share this tab",
+		"stopSharing": "Stop sharing"
 	},
 	"tabEditor": {
 		"title": "Edit tab",

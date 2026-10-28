@@ -95,6 +95,8 @@ final class TabBridgeHandler: BridgeHandler {
         "unmuteTab",
         "controlMedia",
         "controlCall",
+        "shareTabInstead",
+        "stopTabShare",
         "getMediaActivity",
         "restoreClosedTab",
         "clearUnpinnedTabs",
@@ -236,6 +238,12 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "controlMedia":
             if let id = message.uuid("id") { windowController?.controlMedia(tabId: id, action: message.string("action", default: "")) }
+
+        case "shareTabInstead":
+            if let id = message.uuid("tabId") { windowController?.shareTabInstead(token: message.string("token", default: ""), tabId: id) }
+
+        case "stopTabShare":
+            windowController?.stopTabShare(token: message.string("token", default: ""))
 
         case "controlCall":
             if let id = message.uuid("id") { windowController?.controlCall(tabId: id, action: message.string("action", default: "")) }

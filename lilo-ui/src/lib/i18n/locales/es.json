@@ -743,7 +743,10 @@
 		"previous": "Pista anterior",
 		"turnOffCamera": "Desactivar cámara",
 		"turnOnCamera": "Activar cámara",
-		"leaveCall": "Salir de la llamada"
+		"leaveCall": "Salir de la llamada",
+		"sharing": "Compartiendo {title}",
+		"shareThisTab": "Compartir esta pestaña",
+		"stopSharing": "Dejar de compartir"
 	},
 	"tabEditor": {
 		"title": "Editar pestaña",

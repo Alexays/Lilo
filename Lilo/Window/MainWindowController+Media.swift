@@ -55,7 +55,7 @@ extension MainWindowController {
         shownTabs(context.callTabIds).compactMap { tab, spaceId in
             guard let engine = context.browserState.liveEngine(forTab: tab.id) else { return nil }
             let controls = engine.callControls
-            return [
+            var summary: [String: Any] = [
                 "id": tab.id.uuidString,
                 "spaceId": spaceId.uuidString,
                 "title": tab.title,
@@ -67,6 +67,14 @@ extension MainWindowController {
                 "muted": tab.isMuted,
                 "canHangUp": controls.actions.contains("hangup")
             ]
+            // The tab the call shares through the ferry, wherever its session runs.
+            for window in context.windows.windows {
+                guard let share = window.tabShareSessions.tabShare(requestedBy: engine.wkWebView),
+                      let shared = tabManager.tab(for: share.engineId) else { continue }
+                summary["share"] = ["token": share.token, "tabId": shared.id.uuidString, "title": shared.title]
+                break
+            }
+            return summary
         }
     }
 

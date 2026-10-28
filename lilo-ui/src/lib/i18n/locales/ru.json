@@ -749,7 +749,10 @@
 		"previous": "Предыдущий трек",
 		"turnOffCamera": "Выключить камеру",
 		"turnOnCamera": "Включить камеру",
-		"leaveCall": "Выйти из звонка"
+		"leaveCall": "Выйти из звонка",
+		"sharing": "Демонстрация: {title}",
+		"shareThisTab": "Показать эту вкладку",
+		"stopSharing": "Остановить показ"
 	},
 	"tabEditor": {
 		"title": "Изменить вкладку",

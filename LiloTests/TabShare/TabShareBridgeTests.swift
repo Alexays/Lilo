@@ -90,6 +90,33 @@ final class TabShareSessionControllerTests: XCTestCase {
         controller.stopAll()
     }
 
+    func testSwitchingSourceKeepsTheSessionAndReleasesThePreviousTab() {
+        let controller = TabShareSessionController()
+        let first = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let second = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let requester = WKWebView(frame: .zero)
+        var released: [UUID] = []
+        var changes = 0
+        controller.onSourceReleased = { released.append($0) }
+        controller.onSharesChanged = { changes += 1 }
+        let token = controller.start(engine: first, requester: requester)["token"] as? String ?? ""
+
+        controller.switchSource(token: token, to: second)
+        XCTAssertTrue(controller.hasSession(token: token))
+        XCTAssertEqual(controller.tabShare(requestedBy: requester)?.engineId, second.id)
+        XCTAssertFalse(first.isTabShareSource)
+        XCTAssertTrue(second.isTabShareSource)
+        XCTAssertEqual(released, [first.id])
+        XCTAssertEqual(changes, 2)
+
+        // Onto the tab it already shares, or for a gone session: nothing moves.
+        controller.switchSource(token: token, to: second)
+        controller.switchSource(token: "gone", to: first)
+        XCTAssertEqual(changes, 2)
+        controller.stopAll()
+        XCTAssertNil(controller.tabShare(requestedBy: requester))
+    }
+
     func testSessionsRunSideBySide() {
         let controller = TabShareSessionController()
         let first = WKWebViewTab(configuration: WKWebViewConfiguration())

@@ -565,6 +565,8 @@ export interface BridgeCommandPayloadMap {
 	unmuteTab: { id: string };
 	controlMedia: { id: string; action: BridgeMediaAction };
 	controlCall: { id: string; action: BridgeCallAction };
+	shareTabInstead: { token: string; tabId: string };
+	stopTabShare: { token: string };
 	getMediaActivity: EmptyPayload;
 	restoreClosedTab: EmptyPayload;
 	clearUnpinnedTabs: EmptyPayload;
@@ -1186,6 +1188,8 @@ export interface BridgeCallTab {
 	muted: boolean;
 	/** The page registered a Media Session hangup handler. */
 	canHangUp: boolean;
+	/** The tab the call shares through Lilo's tab share, if it shares one. */
+	share?: { token: string; tabId: string; title: string };
 }
 
 /** A started terminal of any window or Space, listed after `>`. Times are milliseconds since 1970, 0 when unset. */

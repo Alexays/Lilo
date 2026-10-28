@@ -141,6 +141,8 @@ export const screenshotActions = {
 export const tabShareActions = {
 	resolve: (payload: BridgeCommandPayloadMap["tabShare.resolve"]): void =>
 		emit("tabShare.resolve", payload),
+	shareInstead: (token: string, tabId: string): void => emit("shareTabInstead", { token, tabId }),
+	stop: (token: string): void => emit("stopTabShare", { token }),
 };
 
 export const spaceActions = {
