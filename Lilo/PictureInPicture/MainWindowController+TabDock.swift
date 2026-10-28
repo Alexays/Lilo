@@ -67,7 +67,7 @@ extension MainWindowController {
     func moveDockedCallToPanel() {
         // Leaving the app from a call tab: its page's PiP window keeps the call in view, as leaving its tab does.
         if documentPiP.webView == nil, context.settingsStore?.autoPictureInPicture == true, let engine = tabManager.activeEngineTab,
-           engine.hasActiveCapture, engine.callControls.hasPictureInPictureAction, !engine.isAgentControlled {
+           engine.isInCall, engine.callControls.hasPictureInPictureAction, !engine.isAgentControlled {
             autoEnterDocumentPiP(engine)
         }
         if tabDock.pictureInPictureOpenerId != nil { placeDocumentPiP() }
@@ -90,7 +90,7 @@ extension MainWindowController {
         guard context.settingsStore?.dockCallsInSidebar == true,
               let engineId = floatingTabPanel.hostedEngineId,
               let engine = tabManager.engineTab(for: engineId),
-              engine.hasActiveCapture, !engine.isTabShareSource,
+              engine.isInCall, !engine.isTabShareSource,
               floatingTabPanel.panelScreen == nil || floatingTabPanel.panelScreen == window?.screen else { return }
         floatingTabPanel.dismiss(hosting: engineId)
         dockInCallTab(engine)

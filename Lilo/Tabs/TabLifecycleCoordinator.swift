@@ -275,7 +275,7 @@ struct TabLifecycleCoordinator {
     }
 
     private func shouldRetainForCapture(_ tab: Tab, now: Date) -> Bool {
-        if tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.hasHangupControl { return true }
+        if tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.isInCall { return true }
         // Mirror the audio grace: WebKit emits a transient `.none` capture state on mute/unmute,
         // device switches and track renegotiation while a call is still live. Without a grace window,
         // a trim scheduled on the very next tab switch would discard the still-in-call engine.
