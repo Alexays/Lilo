@@ -207,7 +207,10 @@ final class IdentityBridgeHandler: GapHandler {
         // Chrome loads a non-interactive flow hidden and fails it where the user would have to act.
         let hidden: (abortOnLoad: Bool, timeout: TimeInterval)? = details["interactive"] as? Bool == true ? nil : (
             abortOnLoad: details["abortOnLoadForNonInteractive"] as? Bool ?? true,
-            timeout: (details["timeoutMsForNonInteractive"] as? NSNumber).map { $0.doubleValue / 1000 } ?? Self.nonInteractiveTimeout
+            // Clamped: a huge or non-finite value an extension passes would trap converting to a Duration.
+            timeout: (details["timeoutMsForNonInteractive"] as? NSNumber).flatMap {
+                $0.doubleValue.isFinite ? min(max($0.doubleValue / 1000, 0), 3600) : nil
+            } ?? Self.nonInteractiveTimeout
         )
         return try await runAuthFlow(url, extensionId: extensionId, dataStore: dataStore, hidden: hidden)
     }
