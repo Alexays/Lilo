@@ -65,8 +65,13 @@ final class TabShareSessionController {
 
     /// Starts a session for `engine`. Returns the shim reply payload.
     func start(engine: WKWebViewTab, requester: WKWebView) -> [String: Any] {
+        // The view's size in pixels, not points: a Retina tab sized in points would be sent at half
+        // its resolution, and its text would read blurry on the other side of the call.
         let bounds = engine.view.bounds
-        let sourceSize = bounds.width > 100 && bounds.height > 100 ? bounds.size : NSSize(width: 1280, height: 720)
+        let backingScale = engine.view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1
+        let sourceSize = bounds.width > 100 && bounds.height > 100
+            ? NSSize(width: bounds.width * backingScale, height: bounds.height * backingScale)
+            : NSSize(width: Self.maxFrameWidth, height: Self.maxFrameWidth * 9 / 16)
         let scale = min(1, Self.maxFrameWidth / sourceSize.width)
         // H.264 needs even dimensions.
         let width = Int(sourceSize.width * scale) & ~1

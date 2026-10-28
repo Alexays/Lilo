@@ -55,8 +55,11 @@ final class TabShareSessionControllerTests: XCTestCase {
 
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertNotNil(reply["token"] as? String)
-        XCTAssertEqual(reply["width"] as? Int, 1440)
-        XCTAssertEqual(reply["height"] as? Int, 900)
+        // Pixels, capped at 1080p width: 1440 points is 2880 pixels on Retina, sent as 1920.
+        let pixelWidth = 1440 * (NSScreen.main?.backingScaleFactor ?? 1)
+        let fit = min(1, TabShareSessionController.maxFrameWidth / pixelWidth)
+        XCTAssertEqual(reply["width"] as? Int, Int(pixelWidth * fit) & ~1)
+        XCTAssertEqual(reply["height"] as? Int, Int(900 * (NSScreen.main?.backingScaleFactor ?? 1) * fit) & ~1)
         XCTAssertTrue(engine.isTabShareSource)
         XCTAssertTrue(engine.hasActiveCapture)
         XCTAssertTrue(controller.isSharing(engineId: engine.id))
@@ -122,8 +125,8 @@ final class TabShareSessionControllerTests: XCTestCase {
         let controller = TabShareSessionController()
         let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
         let reply = controller.start(engine: engine, requester: WKWebView(frame: .zero))
-        XCTAssertEqual(reply["width"] as? Int, 1280)
-        XCTAssertEqual(reply["height"] as? Int, 720)
+        XCTAssertEqual(reply["width"] as? Int, 1920)
+        XCTAssertEqual(reply["height"] as? Int, 1080)
         controller.stopAll()
     }
 
