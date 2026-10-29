@@ -40,13 +40,13 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
         if path.hasPrefix("release-media/") {
             let name = (path as NSString).lastPathComponent
             guard path == "release-media/\(name)",
-                  name.range(of: "^[a-z][a-z0-9-]{0,47}-native\\.(png|webp)$", options: .regularExpression) != nil,
+                  name.range(of: "^[a-z][a-z0-9-]{0,47}-(native|remotion)\\.(png|webp|mp4)$", options: .regularExpression) != nil,
                   let file = Bundle.main.url(forResource: name, withExtension: nil, subdirectory: "release-media"),
                   let data = try? Data(contentsOf: file) else {
                 urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
                 return
             }
-            let mimeType = name.hasSuffix(".webp") ? "image/webp" : "image/png"
+            let mimeType = name.hasSuffix(".mp4") ? "video/mp4" : name.hasSuffix(".webp") ? "image/webp" : "image/png"
             guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": mimeType, "Content-Length": String(data.count)]) else {
                 urlSchemeTask.didFailWithError(URLError(.badServerResponse))
                 return

@@ -216,13 +216,19 @@ class SiteTests(unittest.TestCase):
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 recording = [node for node in parsed if "release-recording" in node.classes]
-                self.assertGreaterEqual(len(recording), 3)
+                self.assertGreaterEqual(len(recording), 2)
                 for player in recording:
                     button = next(node for node in nodes(player) if node.tag == "button")
                     self.assertEqual(button.attrs.get("aria-pressed"), "false")
                     self.assertTrue(button.attrs.get("aria-label"))
                     self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
                     self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
+                    if player.attrs.get("data-video"):
+                        video = next(node for node in nodes(player) if node.tag == "video")
+                        self.assertTrue(video.attrs["data-src"].endswith(".mp4"))
+                        self.assertTrue((DIST / video.attrs["data-src"].lstrip("/")).is_file())
+                        self.assertEqual(video.attrs["preload"], "none")
+                        continue
                     for image in (node for node in nodes(player) if node.tag == "img"):
                         animation = image.attrs.get("data-recording", "")
                         self.assertTrue(animation.endswith(".webp"))
@@ -252,7 +258,9 @@ class SiteTests(unittest.TestCase):
                                      for node in parsed))
                 sources = {node.attrs["src"] for node in scripts}
                 self.assertTrue(shared.issubset(sources))
-                if page in ["index.html", "fr/index.html", "changelog/index.html", "fr/changelog/index.html"]:
+                if page in ["changelog/index.html", "fr/changelog/index.html"]:
+                    self.assertEqual(len(scripts), 5)
+                elif page in ["index.html", "fr/index.html"]:
                     self.assertEqual(len(scripts), 4)
                 else:
                     self.assertEqual(sources, shared)

@@ -1,3 +1,4 @@
+import AVFoundation
 import WebKit
 import XCTest
 @testable import Lilo
@@ -24,7 +25,7 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
 
     @MainActor
     func testBundledReleaseNotesAreReadableFromTheChromeOrigin() async throws {
-        try await verifyReleaseResources(handler: ChromeUISchemeHandler())
+        try await verifyReleaseResources(handler: ChromeUISchemeHandler(), expectedVersion: ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW_VERSION"])
     }
 
     @MainActor
@@ -35,10 +36,15 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
     }
 
     @MainActor
-    private func verifyReleaseResources(handler: any WKURLSchemeHandler) async throws {
+    private func verifyReleaseResources(handler: any WKURLSchemeHandler, expectedVersion: String? = nil) async throws {
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(handler, forURLScheme: ChromeUISchemeHandler.scheme)
-        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
+        let window = NSWindow(contentRect: webView.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = webView
+        window.orderFront(nil)
+        defer { window.orderOut(nil); window.close() }
         let navigation = ChromeResourceNavigation()
         webView.navigationDelegate = navigation
         defer { webView.stopLoading(); webView.navigationDelegate = nil }
@@ -57,12 +63,39 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
                 for (const highlight of notes.editorial?.en?.highlights ?? []) {
                     const media = highlight.media;
                     if (!media) continue;
+                    const poster = new Image();
+                    poster.src = media.poster;
+                    await poster.decode();
+                    if (poster.naturalWidth !== media.width || poster.naturalHeight !== media.height) throw new Error('Offline poster failed to decode');
+                    if (media.kind === 'image') continue;
                     const recording = await fetch(media.recording);
                     if (!recording.ok) throw new Error('Offline recording unavailable');
                     const blob = await recording.blob();
                     for (let replay = 0; replay < 2; replay++) {
                         const url = URL.createObjectURL(blob);
                         try {
+                            if (media.kind === 'video') {
+                                const video = document.createElement('video');
+                                video.muted = true;
+                                video.playsInline = true;
+                                video.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:200px;z-index:2147483647';
+                                document.body.append(video);
+                                try {
+                                    video.preload = 'auto';
+                                    const ready = new Promise((resolve, reject) => {
+                                        const timeout = setTimeout(() => reject(new Error('Offline MP4 load timed out')), 5000);
+                                        video.onloadeddata = () => { clearTimeout(timeout); resolve(); };
+                                        video.onerror = () => { clearTimeout(timeout); reject(new Error(`MP4 decode error ${video.error?.code}: ${video.error?.message}`)); };
+                                    });
+                                    video.src = url;
+                                    video.load();
+                                    await ready;
+                                    await video.play();
+                                    if (video.videoWidth !== media.width || video.videoHeight !== media.height) throw new Error('Offline MP4 failed to decode');
+                                    video.pause();
+                                } finally { video.remove(); }
+                                continue;
+                            }
                             const image = new Image();
                             image.src = url;
                             await image.decode();
@@ -72,7 +105,9 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
                 }
                 return notes.version;
                 """, arguments: [:], in: nil, contentWorld: .page)
-            XCTAssertEqual(version as? String, Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+            let expected = expectedVersion
+                ?? Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            XCTAssertEqual(version as? String, expected)
         } catch {
             let error = error as NSError
             XCTFail("\(error.domain) \(error.code): \(error.userInfo)")
@@ -93,18 +128,29 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
     }
 
     @MainActor
-    func testReleaseRecordingsAreAvailableOfflineFromTheChromeOrigin() throws {
+    func testReleaseRecordingsAreAvailableOfflineFromTheChromeOrigin() async throws {
         let release = try XCTUnwrap(ChromeUIAssets.assets["release-notes.json"])
         let data = Data(release.text.description.utf8)
         let notes = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let editorial = notes["editorial"] as? [String: [String: Any]]
         let highlights = editorial?["en"]?["highlights"] as? [[String: Any]] ?? []
         for highlight in highlights {
-            guard let media = highlight["media"] as? [String: Any], let path = media["recording"] as? String else { continue }
+            guard let media = highlight["media"] as? [String: Any], let path = media["recording"] as? String ?? media["poster"] as? String else { continue }
             let task = RecordingSchemeTask("lilo-chrome://ui\(path)")
             ChromeUISchemeHandler().webView(WKWebView(), start: task)
-            XCTAssertEqual(task.response?.mimeType, "image/webp")
-            XCTAssertEqual(task.data.prefix(4), Data("RIFF".utf8))
+            if path.hasSuffix(".mp4") {
+                XCTAssertEqual(task.response?.mimeType, "video/mp4")
+                XCTAssertEqual(task.data.dropFirst(4).prefix(4), Data("ftyp".utf8))
+                let file = try XCTUnwrap(Bundle.main.url(forResource: (path as NSString).lastPathComponent, withExtension: nil, subdirectory: "release-media"))
+                let playable = try await AVURLAsset(url: file).load(.isPlayable)
+                XCTAssertTrue(playable, "Native AVFoundation must decode the MP4")
+            } else if path.hasSuffix(".png") {
+                XCTAssertEqual(task.response?.mimeType, "image/png")
+                XCTAssertEqual(task.data.prefix(4), Data([0x89, 0x50, 0x4E, 0x47]))
+            } else {
+                XCTAssertEqual(task.response?.mimeType, "image/webp")
+                XCTAssertEqual(task.data.prefix(4), Data("RIFF".utf8))
+            }
         }
         let traversal = RecordingSchemeTask("lilo-chrome://ui/release-media/../Info.plist")
         ChromeUISchemeHandler().webView(WKWebView(), start: traversal)

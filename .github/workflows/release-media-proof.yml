@@ -36,6 +36,10 @@ jobs:
           restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
       - name: Capture the real isolated native window
         run: make release-media-record SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testNativeMediaSmoke OUT=build/native-media-proof
+      - name: Render the genuine archived 0.8.0 presentation
+        run: make release-motion-render release-motion-check OUT=build/native-media-proof/presentation-0.8.0
+      - name: Check shared presentation contracts
+        run: make release-motion-test
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

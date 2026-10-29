@@ -90,6 +90,10 @@ export const releaseIdentity = (
   root: string,
   version: string
 ): ReleaseIdentity => {
+  if (process.env.LILO_RELEASE_PREVIEW) {
+    throw new Error("Preview media cannot prepare or publish a release");
+  }
+
   if (!/^\d+\.\d+\.\d+$/u.test(version)) {
     throw new Error("Use RELEASE=x.y.z");
   }

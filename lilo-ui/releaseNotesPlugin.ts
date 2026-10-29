@@ -4,7 +4,8 @@ import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate";
 import { generatedReleaseEditorial, localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes";
 
 function bundledRelease(): string {
-	const version = (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	const version = process.env.LILO_RELEASE_PREVIEW || (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("Invalid release preview version");
 	let markdown = "";
 	try { markdown = readFileSync(new URL(`../.changes/v${version}.md`, import.meta.url), "utf8"); } catch { /* Development builds may not have prepared notes. */ }
 	const release = parseReleaseNotes(markdown, version);
@@ -20,7 +21,10 @@ function bundledRelease(): string {
 	try { archive = JSON.parse(readFileSync(new URL(`../site/src/assets/releases/${version}/capture.json`, import.meta.url), "utf8")); } catch { /* The capture build precedes the media archive. */ }
 	if (archive?.schemaVersion === 3) {
 		if (archive.release !== version || archive.approval?.passed !== true) throw new Error("Unapproved generated release content");
-		for (const { code: locale } of SUPPORTED_LOCALES) release.editorial[locale] = generatedReleaseEditorial(archive, locale);
+		let presentation;
+		try { presentation = JSON.parse(readFileSync(new URL(`../site/src/assets/releases/${version}/presentation.json`, import.meta.url), "utf8")); } catch { /* Historical releases use their original native archive. */ }
+		if (presentation && (presentation.release !== version || (!presentation.approved && !process.env.LILO_RELEASE_PREVIEW))) throw new Error("Release presentation awaits visual approval");
+		for (const { code: locale } of SUPPORTED_LOCALES) release.editorial[locale] = generatedReleaseEditorial(archive, locale, presentation?.media);
 	}
 	if (archive?.schemaVersion === 2 && archive.release === version && archive.visualReview?.passed === true) {
 		for (const copy of Object.values(release.editorial)) {

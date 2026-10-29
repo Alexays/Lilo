@@ -4,6 +4,45 @@ import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
 import { createHash } from "node:crypto";
+import { generatedReleaseEditorial } from "../src/components/whatsnew/releaseNotes";
+
+test("0.8.0 MP4 and still work together, replay from cache and stop when closed", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const source = new URL("../../site/src/assets/releases/0.8.0/", import.meta.url);
+	const archive = JSON.parse(readFileSync(new URL("capture.json", source), "utf-8"));
+	const presentation = JSON.parse(readFileSync(new URL("presentation.json", source), "utf-8"));
+	const notes: ReleaseNotes = { version: "0.8.0", date: "2026-10-28", groups: [{ kind: "Added", entries: ["Choose and switch shared tabs."] }], editorial: { en: generatedReleaseEditorial(archive, "en", presentation.media) } };
+	let reads = 0;
+	await page.route("**/release-media/*-remotion.*", route => {
+		const name = new URL(route.request().url()).pathname.split("/").at(-1)!;
+		if (name.endsWith(".mp4")) reads += 1;
+		return route.fulfill({ body: readFileSync(new URL(name, source)), contentType: name.endsWith(".mp4") ? "video/mp4" : "image/png" });
+	});
+	await bootReleaseChrome(page, initialWorld(), undefined, notes);
+	await openWhatsNew(page, false, "0.8.0");
+	const still = page.locator(".whats-new .release-image");
+	await expect(still.locator("img")).toHaveJSProperty("naturalWidth", 1280);
+	await expect(still.getByRole("button")).toHaveCount(0);
+	const player = page.locator(".whats-new .release-recording");
+	await player.scrollIntoViewIfNeeded();
+	expect(reads).toBe(0);
+	const button = player.getByRole("button");
+	await button.focus();
+	await page.keyboard.press("Enter");
+	const video = player.locator("video");
+	await expect(video).toHaveJSProperty("videoWidth", 1280);
+	await expect.poll(() => video.evaluate(node => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0.1);
+	await button.click();
+	await expect(video).toHaveCount(0);
+	await button.click();
+	await expect(video).toHaveJSProperty("videoWidth", 1280);
+	await expect.poll(() => video.evaluate(node => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0.1);
+	expect(reads).toBe(1);
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await openWhatsNew(page, false, "0.8.0");
+	await expect(page.locator(".whats-new video")).toHaveCount(0);
+});
 
 const release: ReleaseNotes = {
 	version: "0.6.0", date: "2026-01-15",

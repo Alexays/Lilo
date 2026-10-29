@@ -502,10 +502,14 @@ site-preview: site-generate
 
 ## Compare the website with a disposable native Debug session (no personal profiles or preferences)
 site-native-preview: app
+	@$(MAKE) --no-print-directory site-native-preview-launch
+
+.PHONY: site-native-preview-launch
+site-native-preview-launch:
 	@task_root="$$(mktemp -d /tmp/lilo-demo-native.XXXXXX)"; \
 	mkdir -p "$$task_root/home"; \
-	CFFIXED_USER_HOME="$$task_root/home" LILO_APP_SUPPORT_DIR="$$task_root/support" \
-	build/debug/export/Lilo.app/Contents/MacOS/Lilo & task_pid=$$!; \
+	CFFIXED_USER_HOME="$$task_root/home" LILO_APP_SUPPORT_DIR="$$task_root/support" LILO_RELEASE_PREVIEW='$(LILO_RELEASE_PREVIEW)' \
+	'$(or $(NATIVE_PREVIEW_APP),build/debug/export/Lilo.app)/Contents/MacOS/Lilo' & task_pid=$$!; \
 	trap 'kill "$$task_pid" 2>/dev/null || true; wait "$$task_pid" 2>/dev/null || true; rm -rf "$$task_root"' EXIT INT TERM HUP; \
 	wait "$$task_pid"
 
@@ -530,6 +534,55 @@ site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
 
 .PHONY: release-media-publish-check ui-capture-build release-media-record release-media-test release-media-encode release-media-check release-media-proof
+
+.PHONY: release-motion-deps release-motion-test release-motion-assets release-motion-studio release-motion-render release-motion-check release-motion-review
+
+## Install pinned build-only Remotion tools
+release-motion-deps:
+	@npm --prefix site install --save-dev --save-exact @remotion/cli@4.0.539 remotion@4.0.539 react@19.3.1 react-dom@19.3.1 @types/react@19.3.0
+	@npm --prefix site install --save-exact zod@4.5.4
+
+## Test the shared still/video presentation and its native provenance
+release-motion-test: $(SITE_DEPS)
+	@node --test site/tests/release-presentation.test.ts
+
+## Prepare genuine archived 0.8.0 native frames for the Remotion proof
+release-motion-assets: $(SITE_DEPS)
+	@node site/captures/remotion/prepare.ts
+
+## Preview the 0.8.0 motion proof in Remotion Studio
+release-motion-studio: release-motion-assets
+	@cd site && npm exec remotion studio captures/remotion/index.tsx -- --public-dir ../build/release-motion-assets --port 8794 --no-open
+
+## Render the 0.8.0 native movie, poster and screenshot (OUT=directory)
+release-motion-render: release-motion-assets
+	@node site/captures/remotion/render.ts '$(if $(OUT),$(abspath $(OUT)),)'
+
+## Check the 0.8.0 presentation files without approving publication
+release-motion-check: $(SITE_DEPS)
+	@node site/captures/remotion/check.ts '$(if $(OUT),$(abspath $(OUT)),)'
+
+## Export a one-second contact sheet of the rendered 0.8.0 movie for visual review
+release-motion-review: $(SITE_DEPS)
+	@mkdir -p build/release-review/0.8.0
+	@ffmpeg -y -loglevel error -i site/src/assets/releases/0.8.0/tab-sharing-controls-remotion.mp4 -vf 'fps=1,scale=320:200,tile=4x4' -frames:v 1 build/release-review/0.8.0/remotion-contact.png
+
+.PHONY: release-motion-native-preview release-motion-native-check
+
+## Build an isolated Debug review of the 0.8.0 presentation (never a release artifact)
+release-motion-native-preview: vt-build $(BRIDGE_STAMP)
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@$(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.media-preview $(DEBUG_SIGNING) build
+	@mkdir -p build/release-motion-preview
+	@ditto .derived.noindex/xcode/Build/Products/Debug/Lilo.app build/release-motion-preview/Lilo.app
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory site-native-preview-launch NATIVE_PREVIEW_APP='$(CURDIR)/build/release-motion-preview/Lilo.app'
+
+## Verify offline MP4/still decoding and cached replay in real WebKit
+release-motion-native-check:
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@TEST_RUNNER_LILO_RELEASE_PREVIEW_VERSION=0.8.0 $(TEST) -only-testing:LiloTests/ChromeUISchemeHandlerTests -parallel-testing-enabled NO
 
 ## Select release highlights, record native proofs, and publish only quality-approved media (RELEASE=x.y.z)
 release-media-proof: $(SITE_DEPS)

@@ -1,0 +1,26 @@
+{
+  "approved": false,
+  "media": {
+    "share-system-audio": {
+      "height": 800,
+      "kind": "image",
+      "poster": "share-system-audio-remotion.png",
+      "posterDigest": "7db246b5733116c5e7aa1b5766abb630d709e0a6fa6be7ea260516bf42207816",
+      "width": 1280
+    },
+    "tab-sharing-controls": {
+      "durationMs": 14000,
+      "fps": 60,
+      "height": 800,
+      "kind": "video",
+      "poster": "tab-sharing-controls-remotion.png",
+      "posterDigest": "f5ce68d5cb5bd59818db4484dd7b539e9e6390cd6ba55fa51c5a482f61bbadd0",
+      "recording": "tab-sharing-controls-remotion.mp4",
+      "recordingDigest": "5b698d8c2ecbfdc0df9b7a9f33fce6360fefcf45f6135454d51d34fa4c975dd4",
+      "width": 1280
+    }
+  },
+  "release": "0.8.0",
+  "schemaVersion": 1,
+  "sourceArchiveDigest": "5e9777f0594d1613d73af39148502d2b4d6b7a7fd2d612cca21434798436d101"
+}

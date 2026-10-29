@@ -3,6 +3,15 @@ import test from "node:test";
 import { generatedReleaseEditorial, localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./releaseNotes";
 import registry from "./releaseHighlights.json";
 import { catalogs, loadCatalog, SUPPORTED_LOCALES } from "../../lib/i18n/translate";
+import archive080 from "../../../../site/src/assets/releases/0.8.0/capture.json";
+import presentation080 from "../../../../site/src/assets/releases/0.8.0/presentation.json";
+
+test("0.8.0 shares the same still and MP4 presentation in native What's New", () => {
+	const editorial = generatedReleaseEditorial(archive080, "en", presentation080.media);
+	assert.equal(editorial?.highlights[0].media?.kind, "image");
+	assert.equal(editorial?.highlights[1].media?.kind, "video");
+	assert.equal(editorial?.highlights[1].media?.recording, "/release-media/tab-sharing-controls-remotion.mp4");
+});
 
 test("the installed release keeps every change, continuation and group in order", () => {
 	const notes = parseReleaseNotes(`## [1.2.3] - 2026-10-27

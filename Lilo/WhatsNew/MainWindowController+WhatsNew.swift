@@ -1,7 +1,12 @@
 import AppKit
 
 extension MainWindowController {
-    private var whatsNewVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "" }
+    private var whatsNewVersion: String {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW"] == "0.8.0" { return "0.8.0" }
+        #endif
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+    }
 
     @objc func showWhatsNew(_ sender: Any?) {
         if isShowingWhatsNew { focusChrome(); return }

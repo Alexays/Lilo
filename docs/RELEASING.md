@@ -52,6 +52,18 @@ preparation and packaging. Approved prior media stays intact until a complete re
 Commit `site/src/assets/releases/<version>/` with the generated versions and notes. Normal website
 builds and `make validate` never record or invoke a model. See [the native media guide](../site/README.md#automated-native-proof).
 
+The Remotion replacement is being reviewed first on 0.8.0. Its native tab-sharing MP4 and
+system-audio still share `presentation.json` across the website and app; the original native
+archive stays intact. Run `make release-motion-render release-motion-check` to reproduce it,
+`make release-motion-native-check` for offline WebKit playback, and
+`make release-motion-native-preview` for a disposable Debug review. Studio is available with
+`make release-motion-studio`. These preview commands select 0.8.0 notes without changing the
+app's version. The presentation remains unapproved during feedback and blocks publication.
+The unprivileged `Native release media proof` CI workflow captures a real isolated Lilo window
+and renders the archived 0.8.0 proof. Broader automatic release authoring remains behind its
+existing gate until this visual treatment is accepted. Follow the repository's
+[release-media skill](../.agents/skills/lilo-release-media/SKILL.md) for medium selection and motion direction.
+
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
 Edit a prepared release's file and run `make release-version` to regenerate the changelog.

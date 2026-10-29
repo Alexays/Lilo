@@ -7,8 +7,13 @@ import {
   readApprovedArchive,
   releaseIdentity,
 } from "./authored-archive.ts";
+import { checkPresentation } from "./remotion/presentation.ts";
 
 export const checkPublication = (root: string) => {
+  if (process.env.LILO_RELEASE_PREVIEW) {
+    throw new Error("Preview media cannot be published");
+  }
+
   const { version } = JSON.parse(
     readFileSync(path.join(root, "lilo-ui/package.json"), "utf-8")
   );
@@ -36,6 +41,10 @@ export const checkPublication = (root: string) => {
       JSON.parse(readFileSync(metadata, "utf-8")).schemaVersion === 3
     ) {
       readApprovedArchive(directory);
+    }
+
+    if (existsSync(path.join(directory, "presentation.json"))) {
+      checkPresentation(directory, { publication: true });
     }
   }
 };

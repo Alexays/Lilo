@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 
 for (const language of ["en", "fr"] as const) {
   for (const width of [390, 1280]) {
-    test(`0.8.0 shares approved native recordings (${language}, ${width})`, async ({
+    test(`0.8.0 shows the native movie and still proof (${language}, ${width})`, async ({
       page,
     }) => {
       await page.setViewportSize({ height: 900, width });
@@ -14,18 +14,9 @@ for (const language of ["en", "fr"] as const) {
       await page.goto(`${path}#v0.8.0`);
       const release = page.locator("#v0\\.8\\.0");
 
-      const archive = JSON.parse(
-        readFileSync(
-          new URL("../src/assets/releases/0.8.0/capture.json", import.meta.url),
-          "utf-8"
-        )
-      );
-
-      const count =
-        archive.schemaVersion === 3 ? archive.plan.highlights.length : 2;
-
-      expect(count).toBeGreaterThan(0);
-      await expect(release.locator(".release-recording")).toHaveCount(count);
+      await expect(release.locator(".release-recording")).toHaveCount(1);
+      await expect(release.locator(".release-image")).toHaveCount(1);
+      await expect(release.locator(".release-image button")).toHaveCount(0);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth)
       ).toBe(width);
@@ -33,7 +24,7 @@ for (const language of ["en", "fr"] as const) {
       // oxlint-disable no-await-in-loop -- Each player must be scrolled and operated sequentially.
       for (const player of await release.locator(".release-recording").all()) {
         await player.scrollIntoViewIfNeeded();
-        const image = player.locator("img:visible");
+        const image = player.locator("img");
         await expect(image).toHaveJSProperty("complete", true);
         await expect(image).not.toHaveJSProperty("naturalWidth", 0);
         const button = player.locator(".recording-toggle");
@@ -41,9 +32,19 @@ for (const language of ["en", "fr"] as const) {
         await button.focus();
         await page.keyboard.press("Enter");
         await expect(button).toHaveAttribute("aria-pressed", "true");
-        await expect(image).toHaveJSProperty("complete", true);
-        await expect(image).not.toHaveJSProperty("naturalWidth", 0);
+        const video = player.locator("video");
+        await expect(video).toBeVisible();
+        await expect(video).toHaveJSProperty("videoWidth", 1280);
+        await expect
+          .poll(() =>
+            video.evaluate((node) =>
+              node instanceof HTMLVideoElement ? node.currentTime : 0
+            )
+          )
+          .toBeGreaterThan(0.1);
         await button.click();
+        await expect(video).toBeHidden();
+        await expect(image).toBeVisible();
       }
       // oxlint-enable no-await-in-loop
     });

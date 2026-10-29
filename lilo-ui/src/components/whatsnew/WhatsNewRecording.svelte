@@ -23,7 +23,7 @@
     movieURL = "";
   }
   async function play(): Promise<void> {
-    if (document.hidden) return;
+    if (document.hidden || media.kind === "image") return;
     played = true; playing = true;
     const current = ++generation;
     let controller: AbortController | undefined;
@@ -44,6 +44,7 @@
   }
 
   onMount(() => {
+    if (media.kind === "image") return;
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) stop();
@@ -62,7 +63,10 @@
   });
 </script>
 
-<figure bind:this={root} class="release-recording">
+<figure bind:this={root} class={media.kind === "image" ? "release-image" : "release-recording"}>
+  {#if media.kind === "video" && movieURL}
+    <video src={movieURL} poster={media.poster} width={media.width} height={media.height} muted playsinline preload="auto" aria-label={title} oncanplay={event => { if (playing) event.currentTarget.play().catch(stop); }} onended={stop} onerror={stop}></video>
+  {:else}
   {#key movieURL}
   <img
     src={movieURL || media.poster}
@@ -70,10 +74,12 @@
     width={media.width}
     height={media.height}
     loading="lazy"
-    onload={() => { if (playing && movieURL) { clearTimeout(timer); timer = setTimeout(stop, media.durationMs); } }}
+    onload={() => { if (playing && movieURL && media.kind !== "image") { clearTimeout(timer); timer = setTimeout(stop, media.durationMs); } }}
     onerror={stop}
   />
   {/key}
+  {/if}
+  {#if media.kind !== "image"}
   <button
     type="button"
     aria-label={t(playing ? "whatsNew.recordingStop" : played ? "whatsNew.recordingReplay" : "whatsNew.recordingPlay")}
@@ -85,11 +91,12 @@
       {:else}<path d="m9 5 11 7-11 7Z" />{/if}
     </svg>
   </button>
+  {/if}
 </figure>
 
 <style>
-  .release-recording { position: relative; margin: var(--space-12) 0 0; overflow: hidden; border-radius: var(--radius-lg); border: 1px solid var(--separator); background: var(--bg-secondary); }
-  img { display: block; width: 100%; height: auto; }
+  .release-recording, .release-image { position: relative; margin: var(--space-12) 0 0; overflow: hidden; border-radius: var(--radius-lg); border: 1px solid var(--separator); background: var(--bg-secondary); }
+  img, video { display: block; width: 100%; height: auto; }
   button { position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-chip); background: var(--bg-elevated); color: var(--text-primary); cursor: pointer; box-shadow: var(--shadow-control); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 </style>
