@@ -41,13 +41,18 @@ final class AgentCaptureTests: AgentToolTestCase {
             error.stack = 'at somewhere'
             console.log(error, Symbol('s'), 10n)
             setTimeout(() => { throw { name: 'Boom', message: 'thrown' } })
-            Promise.reject('plain')
             1
             """, tab: tab)
         var reply = (text: "", isError: false, images: [Data](), meta: [String: Any]())
+        // WebKit reports a rejection and a throw from a timer in no set order: the rejection comes once the throw is in.
         await pollUntil {
             reply = await self.client.callTool("read_console_messages", ["tabId": tab])
-            return reply.text.contains("plain") && reply.text.contains("Boom")
+            return reply.text.contains("Boom")
+        }
+        _ = try await js("Promise.reject('plain'); 1", tab: tab)
+        await pollUntil {
+            reply = await self.client.callTool("read_console_messages", ["tabId": tab])
+            return reply.text.contains("plain")
         }
 
         XCTAssertEqual(reply.text, """
@@ -58,8 +63,8 @@ final class AgentCaptureTests: AgentToolTestCase {
             [error] Custom: not an Error
             [log] TypeError: typed
             at somewhere Symbol(s) 10
-            [error] Unhandled rejection: plain
             [error] Boom: thrown
+            [error] Unhandled rejection: plain
             """)
         let errors = await client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
         XCTAssertEqual(errors.text.components(separatedBy: "\n").count, 3, errors.text)
