@@ -29,6 +29,27 @@ test("a copied capture shows a card over the page, announced, and leaves the sid
 	await expect(page.locator(".sidebar .capture-card")).toHaveCount(0);
 });
 
+test("the card's click zone follows it in once it has flown in", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await copied(page, "c1");
+	await expect(card(page)).toBeVisible();
+	await page.waitForFunction(() => document.querySelector(".capture-card")!.getAnimations().length === 0);
+
+	const box = await card(page).evaluate((el) => {
+		const { x, y, width, height } = el.getBoundingClientRect();
+		return { x, y, width, height };
+	});
+	await expect
+		.poll(async () => {
+			const zones = (await commands(page, "registerInteractiveZones")).flatMap(
+				(payload) => (payload as { zones: { id: string; x: number; y: number; width: number; height: number }[] }).zones,
+			);
+			const zone = zones.filter((z) => z.id === "capture-card").at(-1);
+			return zone && Math.abs(zone.x - box.x) < 1 && Math.abs(zone.y - box.y) < 1 && Math.abs(zone.width - box.width) < 1;
+		})
+		.toBe(true);
+});
+
 test("the card goes after 6 s, holds while hovered, and releases its capture", async ({ page }) => {
 	await page.clock.install();
 	await bootChrome(page, initialWorld());

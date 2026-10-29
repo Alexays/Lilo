@@ -231,6 +231,11 @@ export function reportInteractiveZone(
 	el.addEventListener("animationend", handleAnimationEnd);
 	el.addEventListener("animationcancel", handleAnimationEnd);
 	scheduleEntry(entry);
+	// Svelte's transitions run on the Web Animations API, which fires no animation or transition events: a card flying
+	// in would keep the zone of its first, off-screen frame. Its intro has started by the next frame.
+	requestAnimationFrame(() => {
+		if (entriesByElement.get(el) === entry && el.getAnimations().length > 0) startPolling();
+	});
 
 	return {
 		update(nextConfig: InteractiveZoneConfig) {
