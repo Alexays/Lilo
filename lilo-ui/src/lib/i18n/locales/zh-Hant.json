@@ -314,6 +314,11 @@
 				"description": "新視窗與網頁彈出式視窗會在此處以分頁開啟。",
 				"keywords": "單一 視窗 分頁 代替 視窗"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "以空白視窗開啟",
+				"description": "Lilo 開啟時不選取任何分頁，釘選的分頁會回到各自的首頁。關閉時，只有離開時間超過空間的封存期限後才會這樣。",
+				"keywords": "啟動 重新開始 空白 視窗 無分頁 回復 工作階段 封存"
+			},
 			"littleWindowHotKey": {
 				"title": "小視窗快速鍵",
 				"description": "Command-Option-N 可從任何 App 開啟小視窗。",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} 天前",
 		"selected": "{title}，{detail}"
 	},
+	"archivedTabs": {
+		"title": "最近封存",
+		"buttonLabel": {"one": "最近封存的 {count} 個分頁", "other": "最近封存的 {count} 個分頁"},
+		"restore": "回復",
+		"showAll": "顯示所有已封存的分頁"
+	},
 	"undoToast": {
 		"closed": "已關閉「{title}」",
 		"closedCount": "已關閉 {count} 個分頁",
 		"undo": "還原",
-		"undoLabel": "還原：{closed}"
+		"undoLabel": "還原：{closed}",
+		"archived": "已封存「{title}」",
+		"archivedCount": {"one": "已封存 {count} 個分頁", "other": "已封存 {count} 個分頁"}
 	},
 	"updateCard": {
 		"ready": "已準備好安裝",
@@ -2178,6 +2191,14 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "重新開始，不遺失任何內容。",
+				"description": "離開一段時間後，Lilo 以整潔的視窗開啟，已封存的分頁一鍵即可找回。",
+				"freshTitle": "回到整潔的視窗。",
+				"freshDescription": "離開很久之後，Lilo 開啟時不選取任何分頁，固定的分頁回到各自的首頁。期間封存的分頁可以透過「還原」找回。",
+				"archiveTitle": "已封存的分頁，一鍵找回。",
+				"archiveDescription": "過去一天內封存的分頁就在「新增分頁」旁邊，隨時可以找回。"
+			},
 			"v090": {
 				"headline": "輕鬆找回來時路。",
 				"description": "瀏覽記錄、通話，以及八種新語言。",

@@ -213,6 +213,56 @@ final class TabArchiveTests: XCTestCase {
         }
         XCTAssertTrue(saved)
     }
+
+    func testASpaceStartsFreshAfterAnAbsenceLongerThanItsDelayOrWhenSetTo() throws {
+        let (window, space) = try makeWindow()
+        let context = window.context
+
+        XCTAssertFalse(context.startsFresh(space), "a first launch or a crash's relaunch picks up where it was")
+        context.launchAbsence = 11 * hour
+        XCTAssertFalse(context.startsFresh(space))
+        context.launchAbsence = 13 * hour
+        XCTAssertTrue(context.startsFresh(space))
+
+        var keeping = space
+        keeping.archiveAfterHours = 0
+        XCTAssertFalse(context.startsFresh(keeping), "a Space that never archives never starts fresh on its own")
+
+        context.launchAbsence = nil
+        context.settingsStore.set("emptyWindowOnLaunch", value: "true")
+        XCTAssertTrue(context.startsFresh(keeping))
+    }
+
+    func testAFreshLaunchOpensOnNoTabAndOffersBackWhatItArchived() throws {
+        let (window, space) = try makeWindow()
+        let pinned = try openTab(window, "https://pinned.example/")
+        try window.applyBrowserCommand(.setPinned(spaceId: space.id, tabId: pinned.id, isPinned: true))
+        _ = try openTab(window, "https://active.example/", activate: true)
+        let idle = try openTab(window, "https://idle.example/")
+        window.context.launchAbsence = 13 * hour
+
+        window.settleLaunchSpace(now: Date().addingTimeInterval(13 * hour))
+
+        XCTAssertNil(window.tabManager.activeTabId)
+        XCTAssertNil(window.context.browserState.spaceTabState(forSpace: space.id)?.activeTabId)
+        XCTAssertFalse(unpinnedURLs(window, space).contains("https://idle.example/"))
+        XCTAssertTrue(window.launchArchived.contains { $0.url.absoluteString == "https://idle.example/" })
+        XCTAssertFalse(openTabIds(window).contains(idle.id))
+        XCTAssertTrue(openTabIds(window).contains(pinned.id))
+    }
+
+    func testALaunchThatDoesNotStartFreshKeepsItsTabButStillArchivesIdleOnes() throws {
+        let (window, _) = try makeWindow()
+        let active = try openTab(window, "https://active.example/", activate: true)
+        let idle = try openTab(window, "https://idle.example/")
+        window.context.launchAbsence = hour
+
+        window.settleLaunchSpace(now: Date().addingTimeInterval(13 * hour))
+
+        XCTAssertEqual(window.tabManager.activeTabId, active.id)
+        XCTAssertEqual(window.launchArchived.map(\.url.absoluteString), ["https://idle.example/"])
+        XCTAssertFalse(openTabIds(window).contains(idle.id))
+    }
 }
 
 @MainActor

@@ -314,6 +314,11 @@
 				"description": "Nuove finestre e finestre a comparsa si aprono qui come schede.",
 				"keywords": "finestra unica schede invece finestre"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Apri con una finestra vuota",
+				"description": "Lilo si apre senza schede selezionate e le schede fissate tornano alla loro pagina iniziale. Altrimenti succede solo dopo un'assenza più lunga del tempo di archiviazione dello spazio.",
+				"keywords": "avvio ricomincia vuota finestra nessuna scheda ripristina sessione archivio"
+			},
 			"littleWindowHotKey": {
 				"title": "Abbreviazione per la finestra piccola",
 				"description": "Comando-Opzione-N apre una finestra piccola da qualsiasi app.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} g fa",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Archiviate di recente",
+		"buttonLabel": {"one": "{count} scheda archiviata di recente", "other": "{count} schede archiviate di recente"},
+		"restore": "Ripristina",
+		"showAll": "Mostra tutte le schede archiviate"
+	},
 	"undoToast": {
 		"closed": "\"{title}\" chiusa",
 		"closedCount": "{count} schede chiuse",
 		"undo": "Annulla",
-		"undoLabel": "Annulla: {closed}"
+		"undoLabel": "Annulla: {closed}",
+		"archived": "«{title}» archiviata",
+		"archivedCount": {"one": "{count} scheda archiviata", "other": "{count} schede archiviate"}
 	},
 	"updateCard": {
 		"ready": "Pronto per l'installazione",
@@ -2178,6 +2191,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Ricomincia senza perdere nulla.",
+				"description": "Dopo una pausa Lilo si apre in ordine, e le schede archiviate sono a un clic.",
+				"freshTitle": "Ritrova una finestra in ordine.",
+				"freshDescription": "Dopo una lunga pausa Lilo si apre senza schede selezionate, con le schede fissate tornate alla loro pagina iniziale. Le schede archiviate nel frattempo tornano con Annulla.",
+				"archiveTitle": "Schede archiviate, a un clic.",
+				"archiveDescription": "Le schede archiviate nell'ultimo giorno aspettano accanto a Nuova scheda, pronte a tornare."
+			},
 			"v090": {
 				"headline": "Ritrova la strada.",
 				"description": "La tua cronologia, le tue chiamate e otto nuove lingue.",

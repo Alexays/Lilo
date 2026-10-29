@@ -204,8 +204,12 @@ extension MainWindowController {
         // Navigation, dialogs and permission prompts go to the window that shows the page.
         engine.delegate = self
         engine.tabManager = tabManager
-        engine.popupWebViewProvider = { [weak self, weak engine] configuration, requestedURL, features in
-            self?.createPopupWebView(configuration: configuration, requestedURL: requestedURL, features: features, opener: engine)
+        engine.popupWebViewProvider = { [weak self, weak engine] configuration, navigationAction, features in
+            guard let self else { return nil }
+            return createPopupWebView(
+                configuration: configuration, requestedURL: navigationAction.request.url, features: features, opener: engine,
+                inBackground: WKWebViewTab.opensNewTabInBackground(navigationAction, after: lastClick)
+            )
         }
         engine.documentPiPWebViewProvider = { [weak self, weak engine] configuration, size in
             guard let self, let engine else { return nil }
@@ -214,6 +218,14 @@ extension MainWindowController {
             if awaitingDocumentPiP === engine {
                 awaitingDocumentPiP = nil
                 documentPiP.wasAutoEntered = true
+                // A late answer: the whole page already went to the dock or the panel. It comes back under the shown
+                // tab, where it keeps drawing its PiP window.
+                floatingTabPanel.dismiss(hosting: engine.id)
+                if tabDock.engineId == engine.id { tabDock.undock() }
+                if engine.view.superview == nil, tabManager.activeOpenTabId != engine.id {
+                    engine.fitView(in: contentContainerView.bounds)
+                    contentContainerView.addSubview(engine.view, positioned: .below, relativeTo: nil)
+                }
             }
             placeDocumentPiP()
             return webView
@@ -233,7 +245,8 @@ extension MainWindowController {
         configuration: WKWebViewConfiguration,
         requestedURL: URL?,
         features: WKWindowFeatures? = nil,
-        opener: WKWebViewTab? = nil
+        opener: WKWebViewTab? = nil,
+        inBackground: Bool = false
     ) -> WKWebView? {
         if Self.shouldCreateDetachedExtensionPopup(for: requestedURL) {
             installPopupCloseBridge(on: configuration.userContentController)
@@ -255,9 +268,10 @@ extension MainWindowController {
 
         guard let popupTab = createTabStateFirst(
             url: requestedURL,
-            activate: true,
+            activate: !inBackground,
             nativeConfiguration: configuration
         ) else { return nil }
+        if inBackground { noteBackgroundTab(popupTab.id) }
         guard let popupEngine = tabManager.engineTab(for: popupTab.id) else { return nil }
         configureEngineIfNeeded(popupEngine)
         return popupEngine.view as? WKWebView

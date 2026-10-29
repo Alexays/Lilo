@@ -111,6 +111,14 @@ final class SettingsStore {
         set { set("downloadsFolder", value: newValue.path) }
     }
 
+    /// Set at each clean quit: how long the user was away decides whether a launch opens on no tab.
+    var lastQuitAt: Date? {
+        get { get("lastQuitAt").flatMap(Double.init).map(Date.init(timeIntervalSince1970:)) }
+        set { set("lastQuitAt", value: String(newValue?.timeIntervalSince1970 ?? 0)) }
+    }
+
+    var emptyWindowOnLaunch: Bool { self.get("emptyWindowOnLaunch") == "true" }
+
     var sessionCleanShutdown: Bool {
         get { (get("sessionCleanShutdown") ?? "true") == "true" }
         set { set("sessionCleanShutdown", value: newValue ? "true" : "false") }

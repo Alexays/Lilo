@@ -1,5 +1,6 @@
 import { type BridgeInitialStatePayload, on } from "../lib/bridge";
 import { chromeActions } from "../lib/bridge/actions";
+import { initArchivedTabsStore } from "./archivedTabs.svelte";
 import { initBannersStore } from "./banners.svelte";
 import { initOnboardingStore } from "./onboarding.svelte";
 import { initPageHangStore } from "./pageHang.svelte";
@@ -83,6 +84,7 @@ const DEFERRED_STORES: StoreInitializer[] = [
 	initTabShareStore,
 	initTabSwitcherStore,
 	initUndoToastStore,
+	initArchivedTabsStore,
 	initCaptureCardStore,
 	initPipDockStore,
 	initDownloadsStore,

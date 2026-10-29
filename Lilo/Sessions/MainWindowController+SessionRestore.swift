@@ -62,16 +62,31 @@ extension MainWindowController {
 
             context.settingsStore.resolveOnboarding(freshInstall: false)
             if tabManager.currentSpaceId == initialSpace.id {
+                settleLaunchSpace()
                 finishSessionRestore(deferNonCriticalUIUntilChromeNavigation: true)
                 return
             }
 
             try restoreSpaceContext(initialSpace)
+            settleLaunchSpace()
             finishSessionRestore(appliedWindowChrome: true, deferNonCriticalUIUntilChromeNavigation: true)
         } catch {
             createSessionFallbackTab()
             finishSessionRestore(metric: "restoreSessionFallbackNewTab", deferNonCriticalUIUntilChromeNavigation: true)
         }
+    }
+
+    /// Opens the launch's Space on no tab when it starts fresh, then archives what went idle meanwhile, so the chrome's
+    /// first paint already shows the Space without them.
+    func settleLaunchSpace(now: Date = Date()) {
+        guard let spaceId = tabManager.currentSpaceId, let space = context.spaceManager.space(with: spaceId) else { return }
+        if context.startsFresh(space), var snapshot = context.browserState.space(id: spaceId) {
+            snapshot.spaceTab.deactivate()
+            context.browserState.storeSpace(id: spaceId, snapshot: snapshot)
+            tabManager.activeTabId = nil
+            clearContentViewIfNoActiveTab()
+        }
+        launchArchived = context.archiveIdleTabs(now: now).filter { $0.spaceId == spaceId }
     }
 
     /// Shows the space a window was opened on, then what it was opened for.
@@ -460,9 +475,11 @@ extension MainWindowController {
             preferred: space.activeTabId ?? state.activeTabId,
             in: restoredTabs
         )
-        let validTabIds = Set(restoredTabs.map(\.id))
+        // A Space starting fresh reopens its pinned and bookmarked tabs on their home page, not where they were left.
+        let startsFresh = context.startsFresh(space)
+        let restorableStateIds = Set(restoredTabs.lazy.filter { !startsFresh || !($0.isPinned || $0.isBookmarked) }.map(\.id))
         let interactionStates: [UUID: Any] = persistedInteractionStates
-            .filter { validTabIds.contains($0.key) }
+            .filter { restorableStateIds.contains($0.key) }
             .mapValues { ArchivedInteractionState(data: $0) }
         return BrowserStateStore.SpaceSnapshot(
             spaceTab: SpaceTab(

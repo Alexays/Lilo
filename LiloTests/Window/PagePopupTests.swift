@@ -19,7 +19,6 @@ final class PagePopupTests: XCTestCase {
         controller = makeTestWindow(context, showing: space.id, size: NSSize(width: 1000, height: 800))
         opener = try XCTUnwrap(controller.createTabStateFirst(url: nil))
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
-        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         webView.loadHTMLString("<p>opener</p>", baseURL: URL(string: "https://example.com/"))
         await pollUntil { !webView.isLoading && webView.url != nil }
     }
@@ -58,6 +57,93 @@ final class PagePopupTests: XCTestCase {
 
         XCTAssertTrue(controller.pagePopups.isEmpty)
         XCTAssertEqual(openTabCount, tabs + 1)
+    }
+
+    func testAWindowOpenWithoutAUserActivationIsBlocked() async throws {
+        let tabs = openTabCount
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        XCTAssertEqual(openTabCount, tabs)
+    }
+
+    func testAWindowOpenAfterTheClickTaskButSoonAfterAKeyPressOpensATab() async throws {
+        let tabs = openTabCount
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.contentView = controller.contentContainerView
+        XCTAssertTrue(window.makeFirstResponder(webView))
+        let keyPress = try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: window.windowNumber, context: nil, characters: "a", charactersIgnoringModifiers: "a",
+            isARepeat: false, keyCode: 0
+        ))
+
+        NSApp.sendEvent(keyPress)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
+
+        let opened = await pollUntil(timeout: 5) { self.openTabCount == tabs + 1 }
+        XCTAssertTrue(opened, "a page may open a window a few seconds after the user's key press, as in Chrome")
+    }
+
+    func testABackgroundNewTabLinkLeavesTheOpenerActive() throws {
+        let tabs = openTabCount
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+
+        let webView = controller.createPopupWebView(
+            configuration: engine.wkWebView.configuration,
+            requestedURL: URL(string: "https://example.com/next"),
+            opener: engine,
+            inBackground: true
+        )
+
+        XCTAssertNotNil(webView)
+        XCTAssertEqual(openTabCount, tabs + 1)
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+    }
+
+    /// A real press on the opener's page, whose own click handlers open a tab as X's trending list does. Sent to the web
+    /// view directly, the press never reaches the window's monitor: the test records the release it would have.
+    private func clickOpener(_ button: AgentInput.MouseButton, modifiers: NSEvent.ModifierFlags = []) async throws {
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+        let window = try XCTUnwrap(controller.window)
+        if engine.view.window == nil {
+            window.alphaValue = 0
+            window.orderFrontRegardless()
+            window.setFrame(NSRect(x: -20000, y: -20000, width: 800, height: 600), display: false)
+            engine.view.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+            window.contentView?.addSubview(engine.view)
+        }
+        _ = try await engine.wkWebView.evaluateJavaScript("document.documentElement.style.height = '100%'; onclick = onauxclick = () => open(''); true")
+        let tabs = openTabCount
+        controller.lastClick = WKWebViewTab.Click(
+            uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: button == .middle ? 2 : 0, modifierFlags: modifiers
+        )
+        await AgentInput.click(engine.wkWebView, at: CGPoint(x: 100, y: 100), button: button, modifiers: modifiers)
+        await pollUntil { self.openTabCount > tabs }
+    }
+
+    func testATabAPageOpensFromAMiddleOrCommandClickOpensBehind() async throws {
+        try await clickOpener(.middle)
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+
+        try await clickOpener(.left, modifiers: .command)
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+    }
+
+    func testATabAPageOpensFromAPlainClickOrOutsideAClickHandlerComesForward() async throws {
+        try await clickOpener(.left)
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id)
+
+        controller.tabManager.activateTabRuntime(id: opener.id)
+        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: 2, modifierFlags: [])
+        try await openFromPage("")
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id, "the page handles no click: the open is its own, not the user's")
     }
 
     func testSizedWindowOpenOpensAPopupOutsideTheTabList() async throws {

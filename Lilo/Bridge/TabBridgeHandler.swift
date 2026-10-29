@@ -262,9 +262,7 @@ final class TabBridgeHandler: BridgeHandler {
             windowController?.clearUnpinnedTabs(nil)
 
         case "loadArchivedTabs":
-            if let windowController {
-                windowController.bridgeRouter.send(event: "archivedTabs", data: ["tabs": windowController.archivedTabSummaries()])
-            }
+            windowController?.sendArchivedTabs()
 
         case "restoreArchivedTabs":
             let ids = (message.payload["ids"] as? [String])?.compactMap(UUID.init(uuidString:)) ?? []

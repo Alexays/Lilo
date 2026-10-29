@@ -1,0 +1,41 @@
+{
+  "version": "0.10.0",
+  "title": {
+    "en": "A fresh start, nothing lost.",
+    "fr": "Un nouveau départ, rien de perdu."
+  },
+  "introduction": {
+    "en": "After a long break, Lilo opens on a clean window, and the tabs it archived meanwhile are one click away.",
+    "fr": "Après une longue pause, Lilo s'ouvre sur une fenêtre au propre, et les onglets archivés entre-temps sont à un clic."
+  },
+  "highlights": [
+    {
+      "id": "fresh-start",
+      "title": {
+        "en": "Come back to a clean window.",
+        "fr": "Retrouvez une fenêtre au propre."
+      },
+      "body": {
+        "en": "After a long enough absence, Lilo opens with no tab selected, and your pinned and bookmarked tabs back on their home page. The tabs it archived meanwhile come back with Undo. Turn on Open to an empty window to start this way at every launch.",
+        "fr": "Après une absence assez longue, Lilo s'ouvre sans onglet sélectionné, vos onglets épinglés et favoris revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler. Activez Ouvrir une fenêtre vide pour partir ainsi à chaque lancement."
+      },
+      "notes": [
+        "After a long enough absence, Lilo opens on a clean window: no tab selected, pinned and bookmarked tabs back on their home page, and the tabs it archived meanwhile offered back with Undo. The new Open to an empty window setting does this on every launch."
+      ]
+    },
+    {
+      "id": "archived-tabs",
+      "title": {
+        "en": "Archived tabs, one click away.",
+        "fr": "Les onglets archivés, à un clic."
+      },
+      "body": {
+        "en": "The tabs Lilo archived in the last day wait next to New Tab, or in the tab bar, ready to come back in one click.",
+        "fr": "Les onglets que Lilo a archivés dans la journée attendent à côté de Nouvel onglet, ou dans la barre d'onglets, prêts à revenir en un clic."
+      },
+      "notes": [
+        "The tabs Lilo archived in the last day wait next to New Tab, or in the tab bar, ready to come back in one click."
+      ]
+    }
+  ]
+}

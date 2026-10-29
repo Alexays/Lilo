@@ -28,7 +28,12 @@ extension MainWindowController {
             self?.floatingTabPanel.float(engine)
         }
         tabDock.onPictureInPictureSlotLost = { [weak self] in self?.documentPiP.float() }
-        documentPiP.onReturnToTab = { [weak self] openerId in self?.switchToRecentTab(openerId) }
+        documentPiP.onReturnToTab = { [weak self] openerId in
+            // Pressed over another app: the tab only shows once Lilo is in front.
+            NSApp.activate(ignoringOtherApps: true)
+            self?.window?.makeKeyAndOrderFront(nil)
+            self?.switchToRecentTab(openerId)
+        }
         documentPiP.onClosed = { [weak self] openerId, replaced in
             guard let self else { return }
             context.browserState.pictureInPictureOpenerIds.remove(openerId)
@@ -67,8 +72,14 @@ extension MainWindowController {
     func moveDockedCallToPanel() {
         // Leaving the app from a call tab: its page's PiP window keeps the call in view, as leaving its tab does.
         if documentPiP.webView == nil, context.settingsStore?.autoPictureInPicture == true, let engine = tabManager.activeEngineTab,
-           engine.isInCall, engine.callControls.hasPictureInPictureAction, !engine.isAgentControlled {
-            autoEnterDocumentPiP(engine)
+           engine.isInCall, !engine.isAgentControlled, !engine.shouldRetainForWebInspector {
+            if engine.callControls.hasPictureInPictureAction {
+                autoEnterDocumentPiP(engine)
+            } else if !engine.isTabShareSource {
+                // A call whose page has no PiP window (Meet's companion mode) floats whole, as when leaving its tab; a
+                // shared tab keeps its full-size layout for the share instead.
+                floatingTabPanel.float(engine)
+            }
         }
         if tabDock.pictureInPictureOpenerId != nil { placeDocumentPiP() }
         guard tabDock.isDocking, let engine = tabDock.undock() else { return }
@@ -86,6 +97,11 @@ extension MainWindowController {
             placeDocumentPiP()
         }
         if awaitingDocumentPiP != nil, awaitingDocumentPiP === tabManager.activeEngineTab { awaitingDocumentPiP = nil }
+        // Back in the app on the call tab it floated: the page comes home to the window.
+        if let active = tabManager.activeEngineTab, floatingTabPanel.hostedEngineId == active.id {
+            showContentView(for: active)
+            return
+        }
         // Nil until bootstrap: the launch window comes on screen, and foregrounds, before settings load.
         guard context.settingsStore?.dockCallsInSidebar == true,
               let engineId = floatingTabPanel.hostedEngineId,

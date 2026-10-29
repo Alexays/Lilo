@@ -314,6 +314,11 @@
 				"description": "Nieuwe vensters en pop-upvensters openen hier als tabbladen.",
 				"keywords": "enkel venster tabbladen in plaats van vensters"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Openen met een leeg venster",
+				"description": "Lilo opent zonder geselecteerd tabblad en vastgezette tabbladen gaan terug naar hun startpagina. Anders gebeurt dat alleen na een afwezigheid die langer is dan de archiveringstermijn van de Space.",
+				"keywords": "start opnieuw leeg venster geen tabblad sessie herstellen archief"
+			},
 			"littleWindowHotKey": {
 				"title": "Sneltoets voor klein venster",
 				"description": "Command-Option-N opent vanuit elke app een klein venster.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} d geleden",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Onlangs gearchiveerd",
+		"buttonLabel": {"one": "{count} onlangs gearchiveerd tabblad", "other": "{count} onlangs gearchiveerde tabbladen"},
+		"restore": "Herstellen",
+		"showAll": "Alle gearchiveerde tabbladen tonen"
+	},
 	"undoToast": {
 		"closed": "\"{title}\" gesloten",
 		"closedCount": "{count} tabbladen gesloten",
 		"undo": "Herstel",
-		"undoLabel": "Herstel: {closed}"
+		"undoLabel": "Herstel: {closed}",
+		"archived": "‘{title}’ gearchiveerd",
+		"archivedCount": {"one": "{count} tabblad gearchiveerd", "other": "{count} tabbladen gearchiveerd"}
 	},
 	"updateCard": {
 		"ready": "Klaar om te installeren",
@@ -2178,6 +2191,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Opnieuw beginnen, niets kwijt.",
+				"description": "Na een pauze opent Lilo opgeruimd, en gearchiveerde tabbladen zijn één klik weg.",
+				"freshTitle": "Terug naar een opgeruimd venster.",
+				"freshDescription": "Na een lange pauze opent Lilo zonder geselecteerd tabblad, met vastgezette tabbladen terug op hun startpagina. De tabbladen die intussen zijn gearchiveerd komen terug met Herstel.",
+				"archiveTitle": "Gearchiveerde tabbladen, één klik weg.",
+				"archiveDescription": "De tabbladen die de afgelopen dag zijn gearchiveerd wachten naast Nieuw tabblad, klaar om terug te komen."
+			},
 			"v090": {
 				"headline": "Vind je weg terug.",
 				"description": "Je geschiedenis, je gesprekken en acht nieuwe talen.",

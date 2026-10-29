@@ -20,6 +20,8 @@
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import TabItem from "./TabItem.svelte";
   import SavedTabEditor from "./SavedTabEditor.svelte";
+  import { getRecentArchivedTabs } from "../../stores/archivedTabs.svelte";
+  import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { closeTabEditor, getEditingTab } from "../../stores/tabRename.svelte";
   import type { BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
@@ -128,6 +130,10 @@
   const recentlyDraggedId = $derived(getRecentlyDroppedId());
 
   const activeTab = $derived(getActiveTab(spaceId));
+  // Native keeps the archive of the window's Space only.
+  const recentArchived = $derived(!isPinned && spaceId === getActiveSpaceId() ? getRecentArchivedTabs() : []);
+  let archiveButton: HTMLButtonElement | undefined = $state();
+  let archiveOpen = $state(false);
   const isNewTabActive = $derived(isBlankTab(activeTab));
   const showNewTabRow = $derived(!isPinned && interactive && !isNewTabActive);
   // Not gated on `interactive`: a neighbour pane must lay out like the active one, or its
@@ -975,6 +981,28 @@
         >
           {@render newTabRowBody()}
         </button>
+        {#if recentArchived.length > 0}
+          <button
+            bind:this={archiveButton}
+            class="new-terminal-button archive-button"
+            aria-label={t("archivedTabs.buttonLabel", { count: recentArchived.length })}
+            aria-expanded={archiveOpen}
+            use:tooltip={{ text: t("archivedTabs.title") }}
+            onclick={() => (archiveOpen = !archiveOpen)}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="2.5" y="3" width="11" height="3" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M3.5 6v6a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V6M6.5 8.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            <span class="archive-count">{recentArchived.length}</span>
+          </button>
+          <!-- Loaded on first open: the menu costs the chrome's first frame nothing. -->
+          {#if archiveOpen && archiveButton}
+            {#await import("./ArchivedTabsMenu.svelte") then menu}
+              <menu.default anchor={archiveButton} tabs={recentArchived} onclose={() => (archiveOpen = false)} />
+            {/await}
+          {/if}
+        {/if}
         {#if getSetting("terminalEnabled", "true") !== "false"}
           <button
             class="new-terminal-button"
@@ -1623,6 +1651,18 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
+  }
+
+  .archive-button {
+    width: auto;
+    gap: 3px;
+    padding: 0 6px;
+    margin-right: 0;
+  }
+
+  .archive-count {
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .new-tab-line.exiting {

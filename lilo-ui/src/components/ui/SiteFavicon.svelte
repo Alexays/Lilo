@@ -10,12 +10,14 @@
   const MONOCHROME_CHROMA = 0.04;
   // The luminance under which a sidebar counts as dark, as in ensureContrast.
   const DARK_SIDEBAR_LUMINANCE = 0.18;
-  // Per source: the average color of a glyph on transparency, null for an icon with its own background.
+  // RGB standard deviation from which a glyph has inner marks (Reddit's alien on its disc) a silhouette would erase.
+  const DETAIL_SPREAD = 48;
+  // Per source: the average color of a glyph on transparency and whether it has inner marks, null for an icon with its own background.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a cache filled before loadedSource changes
-  const glyphColors = new Map<string, RGB | null>();
+  const glyphs = new Map<string, { color: RGB; detailed: boolean } | null>();
   let sampler: CanvasRenderingContext2D | null = null;
 
-  function glyphColor(image: HTMLImageElement): RGB | null {
+  function sampleGlyph(image: HTMLImageElement): { color: RGB; detailed: boolean } | null {
     sampler ??= Object.assign(document.createElement("canvas"), { width: SAMPLE_SIZE, height: SAMPLE_SIZE }).getContext("2d", {
       willReadFrequently: true,
     });
@@ -28,18 +30,21 @@
     } catch {
       return null;
     }
-    let r = 0, g = 0, b = 0, coverage = 0, opaque = 0;
+    let r = 0, g = 0, b = 0, squares = 0, coverage = 0, opaque = 0;
     for (let i = 0; i < pixels.length; i += 4) {
       const alpha = pixels[i + 3];
       r += pixels[i] * alpha;
       g += pixels[i + 1] * alpha;
       b += pixels[i + 2] * alpha;
+      squares += (pixels[i] * pixels[i] + pixels[i + 1] * pixels[i + 1] + pixels[i + 2] * pixels[i + 2]) * alpha;
       coverage += alpha;
       if (alpha >= 250) opaque++;
     }
     // A mostly opaque icon brings its own background.
     if (coverage === 0 || opaque > SAMPLE_SIZE * SAMPLE_SIZE * 0.85) return null;
-    return { r: r / coverage, g: g / coverage, b: b / coverage };
+    const color = { r: r / coverage, g: g / coverage, b: b / coverage };
+    const variance = squares / coverage - color.r * color.r - color.g * color.g - color.b * color.b;
+    return { color, detailed: variance > DETAIL_SPREAD * DETAIL_SPREAD };
   }
 </script>
 
@@ -64,18 +69,18 @@
   const imageSource = $derived(src?.trim() || "");
   const imageFailed = $derived(failedSource !== "" && failedSource === imageSource);
   let loadedSource = $state("");
-  const glyph = $derived(loadedSource === imageSource ? glyphColors.get(imageSource) ?? null : null);
+  const glyph = $derived(loadedSource === imageSource ? glyphs.get(imageSource) ?? null : null);
   const treatment = $derived.by((): "none" | "chip" | "recolor" => {
     const background = parseHexColor(themeSidebarBackground());
     if (asleep || !glyph || !background) return "none";
-    if (relativeLuminance(background) >= DARK_SIDEBAR_LUMINANCE || contrastRatio(glyph, background) >= GLYPH_CONTRAST) return "none";
-    const [, glyphA, glyphB] = toOklab(glyph);
+    if (relativeLuminance(background) >= DARK_SIDEBAR_LUMINANCE || contrastRatio(glyph.color, background) >= GLYPH_CONTRAST) return "none";
+    const [, glyphA, glyphB] = toOklab(glyph.color);
     const [, sidebarA, sidebarB] = toOklab(background);
     if (Math.hypot(glyphA - sidebarA, glyphB - sidebarB) >= HUE_SEPARATION) return "none";
     return Math.hypot(glyphA, glyphB) < MONOCHROME_CHROMA ? "recolor" : "chip";
   });
-  // A glyph on transparency sleeps as a silhouette in the muted text color; an opaque icon greys out.
-  const silhouette = $derived(asleep && glyph !== null);
+  // A single-color glyph on transparency sleeps as a silhouette in the muted text color; any other icon greys out.
+  const silhouette = $derived(asleep && glyph !== null && !glyph.detailed);
   const maskColor = $derived(silhouette ? "var(--text-muted)" : treatment === "recolor" ? "var(--text-primary)" : "");
 
   const fallbackGlyph = $derived.by((): string => {
@@ -123,9 +128,9 @@
       draggable="false"
       ondragstart={(event) => event.preventDefault()}
       onload={(event) => {
-        if (!glyphColors.has(imageSource)) {
-          if (glyphColors.size >= 512) glyphColors.clear();
-          glyphColors.set(imageSource, glyphColor(event.currentTarget as HTMLImageElement));
+        if (!glyphs.has(imageSource)) {
+          if (glyphs.size >= 512) glyphs.clear();
+          glyphs.set(imageSource, sampleGlyph(event.currentTarget as HTMLImageElement));
         }
         loadedSource = imageSource;
       }}

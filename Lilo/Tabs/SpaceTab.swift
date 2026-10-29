@@ -56,6 +56,15 @@ struct SpaceTab {
         }
     }
 
+    /// Leaves the Space on no tab; the one it showed heads the activation history, its view time kept for the idle sweep.
+    mutating func deactivate() {
+        guard let activeTabId = state.activeTabId else { return }
+        state.activationHistory.removeAll { $0 == activeTabId }
+        state.activationHistory.insert(activeTabId, at: 0)
+        state.activeTabId = nil
+        durableRevision &+= 1
+    }
+
     mutating func createTab(_ tab: Tab, activate: Bool) {
         var storedTab = StoredTab(tab)
         if storedTab.isPinned {

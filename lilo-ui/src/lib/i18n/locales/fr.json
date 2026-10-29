@@ -314,6 +314,11 @@
 				"description": "Nouvelles fenêtres et popups s'ouvrent en onglets ici.",
 				"keywords": "fenêtre unique onglets au lieu de fenêtres"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Ouvrir sur une fenêtre vide",
+				"description": "Lilo s'ouvre sans onglet sélectionné, et les onglets épinglés reviennent à leur page d'origine. Sinon, cela n'arrive qu'après une absence plus longue que le délai d'archivage de l'espace.",
+				"keywords": "lancement démarrage repartir vide aucun onglet restaurer session archive"
+			},
 			"littleWindowHotKey": {
 				"title": "Raccourci de la petite fenêtre",
 				"description": "Commande-Option-N ouvre une petite fenêtre depuis n'importe quelle app.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "il y a {count} j",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Archivés récemment",
+		"buttonLabel": {"one": "{count} onglet archivé récemment", "other": "{count} onglets archivés récemment"},
+		"restore": "Restaurer",
+		"showAll": "Voir tous les onglets archivés"
+	},
 	"undoToast": {
 		"closed": "« {title} » fermé",
 		"closedCount": "{count} onglets fermés",
 		"undo": "Annuler",
-		"undoLabel": "Annuler : {closed}"
+		"undoLabel": "Annuler : {closed}",
+		"archived": "« {title} » archivé",
+		"archivedCount": {"one": "{count} onglet archivé", "other": "{count} onglets archivés"}
 	},
 	"updateCard": {
 		"ready": "Prête à installer",
@@ -2167,6 +2180,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0100": {
+				"headline": "Un nouveau départ, rien de perdu.",
+				"description": "Lilo s'ouvre au propre après une pause, et les onglets archivés sont à un clic.",
+				"freshTitle": "Retrouvez une fenêtre au propre.",
+				"freshDescription": "Après une longue pause, Lilo s'ouvre sans onglet sélectionné, les onglets épinglés revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler.",
+				"archiveTitle": "Les onglets archivés, à un clic.",
+				"archiveDescription": "Les onglets archivés dans la journée attendent à côté de Nouvel onglet, prêts à revenir."
+			},
 			"v090": {
 				"headline": "Retrouvez votre chemin.",
 				"description": "Votre historique, vos appels et huit nouvelles langues.",

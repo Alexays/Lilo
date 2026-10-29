@@ -314,6 +314,11 @@
 				"description": "新規ウインドウやページのポップアップを、このウインドウのタブとして開きます。",
 				"keywords": "単一 ウインドウ タブ"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "空のウインドウで開く",
+				"description": "Lilo はタブを選択せずに開き、固定したタブはホームページに戻ります。オフの場合は、スペースのアーカイブ期間より長く離れていたときだけそうなります。",
+				"keywords": "起動 やり直す 空 ウインドウ タブなし セッション 復元 アーカイブ"
+			},
 			"littleWindowHotKey": {
 				"title": "小さなウインドウのショートカット",
 				"description": "どのアプリからでも Command-Option-N で小さなウインドウを開きます。",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count}日前",
 		"selected": "{title}、{detail}"
 	},
+	"archivedTabs": {
+		"title": "最近アーカイブしたタブ",
+		"buttonLabel": {"one": "最近アーカイブしたタブ {count}個", "other": "最近アーカイブしたタブ {count}個"},
+		"restore": "復元",
+		"showAll": "アーカイブしたすべてのタブを表示"
+	},
 	"undoToast": {
 		"closed": "「{title}」を閉じました",
 		"closedCount": "{count}個のタブを閉じました",
 		"undo": "取り消す",
-		"undoLabel": "取り消す：{closed}"
+		"undoLabel": "取り消す：{closed}",
+		"archived": "「{title}」をアーカイブしました",
+		"archivedCount": {"one": "{count}個のタブをアーカイブしました", "other": "{count}個のタブをアーカイブしました"}
 	},
 	"updateCard": {
 		"ready": "インストールの準備ができました",
@@ -2178,6 +2191,14 @@
 			"chat": "チームチャット"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "新しく始めても、何も失わない。",
+				"description": "しばらく離れたあとは Lilo がすっきりした状態で開き、アーカイブしたタブもワンクリックで戻せます。",
+				"freshTitle": "すっきりしたウインドウに戻る。",
+				"freshDescription": "長く離れていたあとは、タブを選択せず、固定したタブはホームページに戻った状態で Lilo が開きます。その間にアーカイブされたタブは「取り消す」で戻せます。",
+				"archiveTitle": "アーカイブしたタブをワンクリックで。",
+				"archiveDescription": "この 1 日にアーカイブされたタブは「新規タブ」の横で待っていて、すぐに戻せます。"
+			},
 			"v090": {
 				"headline": "見たページに、すぐ戻れる。",
 				"description": "履歴、通話、そして8つの新しい言語。",

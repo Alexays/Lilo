@@ -261,8 +261,22 @@ final class WKWebViewTab: NSObject {
                 CIFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: 0.3])
             ].compactMap { $0 } : []
             delegate?.tab(self, didChangeResponsive: !isUnresponsive)
+            hiddenHangKill?.cancel()
+            hiddenHangKill = nil
+            guard isUnresponsive else { return }
+            // Off screen nobody can reload it: a page stuck in a loop would burn a core until its tab closes.
+            hiddenHangKill = Task { [weak self] in
+                try? await Task.sleep(for: Self.hiddenHangLimit)
+                guard let self, !Task.isCancelled, isUnresponsive, webView.window == nil, webView.responds(to: Self.killContentProcess) else { return }
+                if !isPrivateBrowsing { Self.logger.info("kill process hung off screen host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
+                webView.perform(Self.killContentProcess)
+            }
         }
     }
+    private var hiddenHangKill: Task<Void, Never>?
+    /// How long a page off screen may stay unresponsive before its process goes; it reloads when its tab shows.
+    static var hiddenHangLimit: Duration = .seconds(30)
+    private static let killContentProcess = NSSelectorFromString("_killWebContentProcessAndResetState")
     /// Host of the extension whose configuration built this web view; nil for a web page's. A web
     /// view never changes configuration, and an extension page loads only in its extension's.
     var extensionHost: String?
@@ -307,7 +321,28 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen else { return true }
         return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
     }
-    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, URL?, WKWindowFeatures) -> WKWebView?)?
+    /// Chrome's transient activation: how long after the user's last click or key press a page may still open a window.
+    private static let popupActivationWindow: TimeInterval = 5
+    /// The web view the user last clicked or typed in, and when (event time): only one takes input at a time.
+    private static weak var activatedWebView: WKWebView?
+    private static var activationTime: TimeInterval = 0
+    private static let activationMonitor: Any? = NSEvent.addLocalMonitorForEvents(
+        matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown]
+    ) { event in
+        let time = event.timestamp
+        weak var window = event.window
+        // Read after dispatch: a click makes the web view under it first responder.
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                var view = window?.firstResponder as? NSView
+                while let current = view, !(current is WKWebView) { view = current.superview }
+                activatedWebView = view as? WKWebView
+                activationTime = time
+            }
+        }
+        return event
+    }
+    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, WKNavigationAction, WKWindowFeatures) -> WKWebView?)?
     /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
     var pendingDocumentPiPSize: NSSize?
     var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
@@ -323,11 +358,10 @@ final class WKWebViewTab: NSObject {
         unsafeBitCast(webView.method(for: selector), to: Setter.self)(webView, selector, enabled)
     }
 
-    /// A PiP request whose `window.open` never came must not outlive the page: no popup blocking, and its next
-    /// popup taken for the PiP window.
+    /// A PiP request whose `window.open` never came must not outlive the page: its next popup would be taken for
+    /// the PiP window.
     func cancelPendingDocumentPiP() {
         pendingDocumentPiPSize = nil
-        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
     }
     /// Called while building the context menu to inject extension-contributed menu items.
     /// Set by TabManager when the extension registry is active.
@@ -445,6 +479,10 @@ final class WKWebViewTab: NSObject {
         webView.allowsBackForwardNavigationGestures = true
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        // WebKit's popup blocker drops a `window.open` that comes after the click's own task, as Meet's does after a
+        // request: createWebViewWith gates popups on a recent user activation instead, as Chrome does.
+        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        _ = Self.activationMonitor
         let setIconLoadingDelegate = NSSelectorFromString("_setIconLoadingDelegate:")
         if webView.responds(to: setIconLoadingDelegate) { webView.perform(setIconLoadingDelegate, with: self) }
         bindNavigationStateObservers()
@@ -568,10 +606,9 @@ final class WKWebViewTab: NSObject {
     func reload() {
         guard wake() else { return }
         // A hung process never gets to the reload: it goes, and the termination recovery loads the page again.
-        let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
-        if isUnresponsive, webView.responds(to: kill) {
+        if isUnresponsive, webView.responds(to: Self.killContentProcess) {
             if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
-            webView.perform(kill)
+            webView.perform(Self.killContentProcess)
             return
         }
         if !isPrivateBrowsing { Self.logger.info("load source=app-reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
@@ -731,6 +768,7 @@ final class WKWebViewTab: NSObject {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
         documentPiPCloser?()
         cancelPendingDocumentPiP()
+        let wasUnresponsive = isUnresponsive
         isUnresponsive = false
         cancelRegionSelection()
         // A suspended page is neither loading nor playing (freeze paused its media).
@@ -739,6 +777,12 @@ final class WKWebViewTab: NSObject {
             webView.pauseAllMediaPlayback()
         }
         webView.navigationDelegate = nil
+        // A hung process never runs the close: it would keep spinning, and WebKit would keep handing it the
+        // site's next pages. Killed after the delegate goes, so no termination recovery reloads it.
+        if wasUnresponsive, webView.responds(to: Self.killContentProcess) {
+            if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for teardown host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
+            webView.perform(Self.killContentProcess)
+        }
         runQueuedDialog(presenting: false)
         if isAudioPlayingObserverRegistered {
             webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
@@ -948,6 +992,25 @@ final class WKWebViewTab: NSObject {
 
     /// `WKNavigationAction.buttonNumber` is a bitmask (left 1, right 2, middle 4), not `NSEvent.buttonNumber`'s index.
     nonisolated static let middleButtonNumber = 1 << 2
+
+    /// The window's last mouse release, `buttonNumber` as `NSEvent` numbers it (middle 2).
+    struct Click {
+        let uptime: TimeInterval
+        let buttonNumber: Int
+        let modifierFlags: NSEvent.ModifierFlags
+    }
+
+    /// Chrome's rule for a new tab: Cmd or the middle button sends it behind. WebKit gives a page's own window.open no event,
+    /// where Chrome reads the input event being handled. The window's last release, `click`, stands in for it while the page is
+    /// still handling a mouse event: the open runs from that click's handler, not from a timer or a later load.
+    static func opensNewTabInBackground(_ action: WKNavigationAction, after click: Click?, now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Bool {
+        if action.modifierFlags.contains(.command) || action.buttonNumber == middleButtonNumber { return true }
+        guard action.navigationType == .other, let click, now - click.uptime < 1,
+              WebViewPrivateAccessors(action).bool("_isUserInitiated") ?? true,
+              action.sourceFrame.webView.flatMap({ WebViewPrivateAccessors($0).isProcessingMouseEvents() }) ?? true
+        else { return false }
+        return click.modifierFlags.contains(.command) || click.buttonNumber == 2
+    }
 
     nonisolated static func shouldOpenLinkInBackgroundTab(
         url: URL?,
@@ -1682,19 +1745,25 @@ extension WKWebViewTab: WKUIDelegate {
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
         MainActor.assumeIsolated {
-            // Only the shim's own blank open from the main frame: never a link or another frame's popup.
-            let url = navigationAction.request.url
-            if let size = pendingDocumentPiPSize, navigationAction.sourceFrame.isMainFrame,
-               url == nil || url?.absoluteString.isEmpty == true || url?.absoluteString == "about:blank" {
+            // Only the shim's own blank open from the main frame: never a link or another frame's popup. The popup
+            // blocker is off meanwhile, so any other popup is refused.
+            if let size = pendingDocumentPiPSize {
+                let url = navigationAction.request.url
+                guard navigationAction.sourceFrame.isMainFrame,
+                      url == nil || url?.absoluteString.isEmpty == true || url?.absoluteString == "about:blank" else { return nil }
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
+            // Any frame within the click's own task; only the main frame later, while this page has the activation.
+            let isActivated = Self.activatedWebView === webView
+                && ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow
+            guard WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") == true
+                    || navigationAction.sourceFrame.isMainFrame && isActivated else { return nil }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
-            if !isAgentControlled, let provider = popupWebViewProvider,
-               let popup = provider(configuration, navigationAction.request.url, windowFeatures) {
+            if !isAgentControlled, let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
                 return popup
             }
-            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: navigationAction.modifierFlags.contains(.command))
+            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: Self.opensNewTabInBackground(navigationAction, after: nil))
             return nil
         }
     }

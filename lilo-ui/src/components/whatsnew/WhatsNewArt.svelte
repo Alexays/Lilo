@@ -56,6 +56,22 @@
     <rect x="64" y="34" width="50" height="26" rx="10" fill="var(--accent)" />
     <rect x="26" y="52" width="44" height="24" rx="10" fill="var(--bg-elevated)" stroke="var(--separator)" />
     <g font-family="inherit" font-size="11" text-anchor="middle"><text x="39" y="33" fill="var(--text-primary)">Hallo</text><text x="89" y="51" fill="var(--accent-text)">Ciao</text><text x="48" y="68" fill="var(--text-primary)">こんにちは</text></g>
+  {:else if kind === "fresh"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="12" y="12" width="104" height="66" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="18" y="18" width="28" height="54" rx="4" fill="var(--accent-tint-14)" />
+    <g fill="var(--bg-elevated)" stroke="var(--separator)"><rect x="21" y="22" width="10" height="10" rx="3" /><rect x="33" y="22" width="10" height="10" rx="3" /></g>
+    <g fill="var(--separator)"><rect x="22" y="38" width="20" height="4" rx="2" /><rect x="22" y="46" width="16" height="4" rx="2" /></g>
+    <circle cx="80" cy="45" r="13" fill="var(--accent-tint-14)" />
+    <path d="m73 45 5 5 9-10" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  {:else if kind === "archive"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
+    <rect x="20" y="12" width="88" height="66" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="27" y="19" width="74" height="12" rx="4" fill="var(--separator)" opacity="0.5" />
+    <path d="M33 25h6m-3-3v6" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round" />
+    <g fill="var(--text-secondary)" opacity="0.45"><circle cx="34" cy="43" r="3.5" /><rect x="41" y="41" width="34" height="4" rx="2" /><circle cx="34" cy="57" r="3.5" /><rect x="41" y="55" width="28" height="4" rx="2" /></g>
+    <rect x="80" y="37" width="20" height="12" rx="6" fill="var(--success)" />
+    <path d="M94 43h-8m3-3-3 3 3 3" fill="none" stroke="var(--bg-elevated)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

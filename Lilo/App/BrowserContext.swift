@@ -98,6 +98,8 @@ final class BrowserContext {
     // Set by bootstrap(), which every window awaits before reading them.
     private(set) var dbManager: DatabaseManager!
     private(set) var settingsStore: SettingsStore!
+    /// How long Lilo was quit before this launch; nil on a first launch or after a crash, whose relaunch picks up where it was.
+    var launchAbsence: TimeInterval?
     private(set) var sitePermissionStore: SitePermissionStore!
     private(set) var profileManager: ProfileManager!
     private(set) var spaceManager: SpaceManager!
@@ -234,6 +236,7 @@ final class BrowserContext {
         dbManager = bootstrap.dbManager
         startupSnapshot = bootstrap.startupSnapshot
         settingsStore = SettingsStore(dbPool: dbManager.globalPool)
+        if settingsStore.sessionCleanShutdown { launchAbsence = settingsStore.lastQuitAt.map { Date().timeIntervalSince($0) } }
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
         if let loadError = settingsStore.initialLoadError {
             showDegradedDatabaseAlert(

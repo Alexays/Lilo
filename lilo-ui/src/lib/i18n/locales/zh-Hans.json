@@ -314,6 +314,11 @@
 				"description": "新窗口和网页弹出窗口都会在此作为标签页打开。",
 				"keywords": "单窗口 标签页 窗口"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "以空窗口打开",
+				"description": "Lilo 打开时不选中任何标签页，固定的标签页回到各自的主页。关闭时，只有离开时间超过空间的归档期限后才会这样。",
+				"keywords": "启动 重新开始 空 窗口 无标签页 恢复 会话 归档"
+			},
 			"littleWindowHotKey": {
 				"title": "小窗口快捷键",
 				"description": "在任意 App 中按 Command-Option-N 打开小窗口。",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} 天前",
 		"selected": "{title}，{detail}"
 	},
+	"archivedTabs": {
+		"title": "最近归档",
+		"buttonLabel": {"one": "最近归档的 {count} 个标签页", "other": "最近归档的 {count} 个标签页"},
+		"restore": "恢复",
+		"showAll": "显示所有已归档的标签页"
+	},
 	"undoToast": {
 		"closed": "“{title}”已关闭",
 		"closedCount": "已关闭 {count} 个标签页",
 		"undo": "撤销",
-		"undoLabel": "撤销：{closed}"
+		"undoLabel": "撤销：{closed}",
+		"archived": "已归档“{title}”",
+		"archivedCount": {"one": "已归档 {count} 个标签页", "other": "已归档 {count} 个标签页"}
 	},
 	"updateCard": {
 		"ready": "已准备好安装",
@@ -2178,6 +2191,14 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "重新开始，不丢失任何内容。",
+				"description": "离开一段时间后，Lilo 以整洁的窗口打开，已归档的标签页一键即可找回。",
+				"freshTitle": "回到整洁的窗口。",
+				"freshDescription": "离开很久之后，Lilo 打开时不选中任何标签页，固定的标签页回到各自的主页。期间归档的标签页可以通过“撤销”找回。",
+				"archiveTitle": "已归档的标签页，一键找回。",
+				"archiveDescription": "过去一天内归档的标签页就在“新建标签页”旁边，随时可以找回。"
+			},
 			"v090": {
 				"headline": "轻松找回来时的路。",
 				"description": "历史记录、通话，以及八种新语言。",

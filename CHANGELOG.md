@@ -4,6 +4,29 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.1] - 2026-10-29
+
+### Fixed
+
+- Middle-clicking or Cmd-clicking something a site opens on its own, like X's trending list, now opens it in a background tab, as in Chrome.
+- A page can open a window a few seconds after a click, as in Chrome, so buttons like Google Meet's chat with a guest open their window.
+
+[0.10.1]: https://github.com/Alexays/Lilo/compare/v0.10.0...v0.10.1
+## [0.10.0] - 2026-10-29
+
+### Added
+
+- After a long enough absence, Lilo opens on a clean window: no tab selected, pinned and bookmarked tabs back on their home page, and the tabs it archived meanwhile offered back with Undo. The new Open to an empty window setting does this on every launch.
+- The tabs Lilo archived in the last day wait next to New Tab, or in the tab bar, ready to come back in one click.
+
+### Fixed
+
+- With the tabs at the top or bottom, the History page shows as the active tab with its own close button, as Settings does.
+- Middle-clicking or Cmd-clicking a link that opens in a new tab now opens that tab in the background.
+- A tab whose page hangs no longer keeps a process spinning once closed, nor for long in the background, and no longer blocks the next pages of the same site.
+- The picture-in-picture back button brings Lilo to the front from another app, a call in Meet's companion mode floats when you switch apps, and Meet's picture-in-picture opens even when Meet is slow to answer.
+
+[0.10.0]: https://github.com/Alexays/Lilo/compare/v0.9.0...v0.10.0
 ## [0.9.0] - 2026-10-29
 
 ### Added

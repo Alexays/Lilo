@@ -87,4 +87,9 @@
     background: var(--bg-hover);
     color: var(--text-primary);
   }
+
+  .panel-close:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 1px;
+  }
 </style>

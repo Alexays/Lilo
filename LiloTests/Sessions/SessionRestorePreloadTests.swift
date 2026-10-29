@@ -124,6 +124,36 @@ final class SessionRestorePreloadTests: XCTestCase {
         XCTAssertNil(controller.preloadedSpaceRestoreState, "the preload must be one-shot")
     }
 
+    func testAFreshStartReopensPinnedAndBookmarkedTabsOnTheirHomePage() {
+        let space = Space(name: "S", profileId: UUID())
+        var pinned = storedTab(id: UUID(), url: "https://example.com/inbox/thread", title: "Thread")
+        pinned.isPinned = true
+        pinned.homeURL = "https://example.com/inbox"
+        var bookmarked = storedTab(id: UUID(), url: "https://example.org/docs/page", title: "Page")
+        bookmarked.isBookmarked = true
+        bookmarked.homeURL = "https://example.org/docs"
+        let open = storedTab(id: UUID(), url: "https://example.net/article", title: "Article")
+        let tabState = SpaceTabState(
+            activeTabId: open.id,
+            activationHistory: [],
+            tree: StoredSidebarTree(pinned: [.tab(pinned)], unpinned: [.tab(open)], bookmarked: [.tab(bookmarked)])
+        )
+        func restoredStateIds(absence: TimeInterval) -> Set<UUID> {
+            let controller = MainWindowController()
+            controller.context.launchAbsence = absence
+            controller.preloadedSpaceRestoreState = MainWindowController.PreloadedSpaceRestoreState(
+                profileId: space.profileId,
+                spaceId: space.id,
+                tabState: tabState,
+                interactionStates: [pinned.id: Data([1]), bookmarked.id: Data([2]), open.id: Data([3])]
+            )
+            return Set(controller.restoredSpaceSnapshot(for: space).interactionStates.keys)
+        }
+
+        XCTAssertEqual(restoredStateIds(absence: 3600), [pinned.id, bookmarked.id, open.id], "a short absence keeps every page")
+        XCTAssertEqual(restoredStateIds(absence: 13 * 3600), [open.id])
+    }
+
     func testPreloadIsClearedEvenWhenTheSpaceDoesNotMatch() {
         let controller = MainWindowController()
         controller.preloadedSpaceRestoreState = MainWindowController.PreloadedSpaceRestoreState(

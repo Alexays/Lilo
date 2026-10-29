@@ -39,7 +39,7 @@ final class AgentCursorView: NSView {
         eyes.frame = body.bounds
         for x: CGFloat in [5, 13] {
             let eye = CALayer()
-            eye.frame = CGRect(x: x, y: 8.5, width: 4, height: 5)
+            eye.frame = CGRect(x: x, y: 9.5, width: 4, height: 5)
             eye.cornerRadius = 2
             eye.backgroundColor = NSColor.white.cgColor
             eyes.addSublayer(eye)
