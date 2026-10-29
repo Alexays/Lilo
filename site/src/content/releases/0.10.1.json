@@ -1,0 +1,41 @@
+{
+  "version": "0.10.1",
+  "title": {
+    "en": "Tabs open where you expect.",
+    "fr": "Les onglets s’ouvrent comme prévu."
+  },
+  "introduction": {
+    "en": "Your modified clicks keep site-opened tabs in the background, and buttons can open a window after a short delay.",
+    "fr": "Vos clics avec modificateur gardent les onglets ouverts par les sites en arrière-plan, et les boutons peuvent ouvrir une fenêtre après un court délai."
+  },
+  "highlights": [
+    {
+      "id": "background-tabs",
+      "title": {
+        "en": "Keep your place when a site opens a tab.",
+        "fr": "Gardez votre place quand un site ouvre un onglet."
+      },
+      "body": {
+        "en": "Middle-click or ⌘-click something a site opens on its own, and the new tab stays in the background, just as it does for ordinary links.",
+        "fr": "Faites un clic milieu ou un ⌘-clic sur un élément qu’un site ouvre lui-même : le nouvel onglet reste en arrière-plan, comme pour un lien ordinaire."
+      },
+      "notes": [
+        "Middle-clicking or Cmd-clicking something a site opens on its own, like X's trending list, now opens it in a background tab, as in Chrome."
+      ]
+    },
+    {
+      "id": "delayed-windows",
+      "title": {
+        "en": "Give site buttons time to respond.",
+        "fr": "Laissez aux boutons le temps de répondre."
+      },
+      "body": {
+        "en": "A page can open its window a few seconds after your click. Flows such as starting a chat with a guest in Google Meet can finish opening their window.",
+        "fr": "Une page peut ouvrir sa fenêtre quelques secondes après votre clic. Des actions comme lancer une discussion avec un invité dans Google Meet peuvent ainsi ouvrir leur fenêtre."
+      },
+      "notes": [
+        "A page can open a window a few seconds after a click, as in Chrome, so buttons like Google Meet's chat with a guest open their window."
+      ]
+    }
+  ]
+}

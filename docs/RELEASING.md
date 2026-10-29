@@ -57,7 +57,9 @@ system-audio still share `presentation.json` across the website and app; the ori
 archive stays intact. Run `make release-motion-render release-motion-check` to reproduce it,
 `make release-motion-native-check` for offline WebKit playback, and
 `make release-motion-native-preview` for a disposable Debug review. Studio is available with
-`make release-motion-studio`. These preview commands select 0.8.0 notes without changing the
+`make release-motion-studio`. `make release-motion-native-review` captures both cards from the
+real native sheet and verifies playback; CI uploads those consumer previews with the rendered media.
+These preview commands select 0.8.0 notes without changing the
 app's version. The presentation remains unapproved during feedback and blocks publication.
 The unprivileged `Native release media proof` CI workflow captures a real isolated Lilo window
 and renders the archived 0.8.0 proof. Broader automatic release authoring remains behind its

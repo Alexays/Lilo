@@ -122,6 +122,36 @@ final class ReleaseCaptureTests: XCTestCase {
         try await super.tearDown()
     }
 
+    func testWhatsNewMediaPreview() async throws {
+        guard ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW"] == "0.8.0" else { throw XCTSkip("Use make release-motion-native-review") }
+        let chrome = controller.chromeWebView
+        let ready = await pollUntil(timeout: 10) { self.controller.whatsNewUIReady }
+        XCTAssertTrue(ready, "The production What's New host must finish its native handshake")
+        controller.showWhatsNew(nil)
+        let visible = await pollUntil(timeout: 10) { (try? await chrome.evaluateJavaScript("!!document.querySelector('dialog.whats-new[open]')")) as? Bool == true }
+        XCTAssertTrue(visible, "The native release sheet must open, key=\(controller.window?.isKeyWindow == true), ready=\(controller.whatsNewUIReady), requested=\(controller.whatsNewRequested)")
+        guard visible else { return }
+        let still = await pollUntil(timeout: 5) { (try? await chrome.evaluateJavaScript("document.querySelector('.whats-new .release-image img')?.naturalWidth === 1280 && !document.querySelector('.whats-new .release-image button')")) as? Bool == true }
+        XCTAssertTrue(still, "The screenshot must load without playback controls")
+        try await saveChromePreview("whats-new-remotion-audio.png")
+        _ = try await chrome.evaluateJavaScript("document.querySelector('.whats-new .release-recording').scrollIntoView({block:'center'}); document.querySelector('.whats-new .release-recording button').click()")
+        let playing = await pollUntil(timeout: 10) { (try? await chrome.evaluateJavaScript("(() => { const v = document.querySelector('.whats-new video'); return !!v && v.videoWidth === 1280 && v.currentTime > 0.1; })()")) as? Bool == true }
+        XCTAssertTrue(playing, "The native sheet must play its real MP4")
+        guard playing else { return }
+        _ = try await chrome.evaluateJavaScript("document.querySelector('.whats-new video').currentTime = 9.4")
+        try await hold(300)
+        try await saveChromePreview("whats-new-remotion-tabs.png")
+    }
+
+    private func saveChromePreview(_ name: String) async throws {
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let configuration = WKSnapshotConfiguration()
+        configuration.snapshotWidth = 2240
+        let image = try await controller.chromeWebView.takeSnapshot(configuration: configuration)
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(data: XCTUnwrap(image.tiffRepresentation)))
+        try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: output.appendingPathComponent(name))
+    }
+
     func testAuthoredScenario() async throws {
         guard let scenario = authoredScenario else { throw XCTSkip("Use SCENARIO=file.json") }
         guard scenario.id.range(of: "^[a-z][a-z0-9-]{0,47}$", options: .regularExpression) != nil else { throw CocoaError(.fileReadCorruptFile) }

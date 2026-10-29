@@ -40,9 +40,13 @@ jobs:
         run: make release-motion-render release-motion-check OUT=build/native-media-proof/presentation-0.8.0
       - name: Check shared presentation contracts
         run: make release-motion-test
+      - name: Capture the actual native What's New presentation
+        run: make release-motion-native-review
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: native-lilo-media-proof
-          path: build/native-media-proof/
+          path: |
+            build/native-media-proof/
+            build/release-review/0.8.0/
           if-no-files-found: warn

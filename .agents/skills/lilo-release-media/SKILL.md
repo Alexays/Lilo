@@ -24,6 +24,7 @@ make release-motion-studio
 make release-motion-render
 make release-motion-test release-motion-check
 make release-motion-native-check
+make release-motion-native-review
 make release-motion-native-preview
 make site-preview SITE_PREVIEW_PORT=8792
 ```

@@ -567,7 +567,18 @@ release-motion-review: $(SITE_DEPS)
 	@mkdir -p build/release-review/0.8.0
 	@ffmpeg -y -loglevel error -i site/src/assets/releases/0.8.0/tab-sharing-controls-remotion.mp4 -vf 'fps=1,scale=320:200,tile=4x4' -frames:v 1 build/release-review/0.8.0/remotion-contact.png
 
-.PHONY: release-motion-native-preview release-motion-native-check
+.PHONY: release-motion-native-preview release-motion-native-check release-motion-native-review
+
+## Capture the real 0.8.0 What's New sheet and verify its media controls
+release-motion-native-review: $(SITE_DEPS) vt-build $(BRIDGE_STAMP) build/release-capture-fixture.p12
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
+	TEST_RUNNER_LILO_RELEASE_PREVIEW=0.8.0 TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(CURDIR)/build/release-review/0.8.0' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_FIXTURES='$(CURDIR)/site/captures/fixtures' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_IDENTITY='$(CURDIR)/build/release-capture-fixture.p12' \
+	$(TEST) -only-testing:LiloTests/ReleaseCaptureTests/testWhatsNewMediaPreview -parallel-testing-enabled NO
 
 ## Build an isolated Debug review of the 0.8.0 presentation (never a release artifact)
 release-motion-native-preview: vt-build $(BRIDGE_STAMP)
