@@ -855,18 +855,37 @@
 		"recommended": "Recommandés",
 		"quickPicks": "Sélection rapide pour cet espace",
 		"spaceNamePlaceholder": "Nom de l'espace",
-		"colorLabel": "Couleur",
-		"colorMode": {
-			"fixed": "Fixe",
-			"time": "Heure",
-			"page": "Page",
-			"wallpaper": "Fond d'écran"
+		"appearanceLabel": "Apparence",
+		"colorFrom": {
+			"page": "Couleur de l'onglet actif",
+			"wallpaper": "Couleur de votre fond d'écran"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo garde cette couleur.",
-			"time": "Cette couleur, plus chaude le soir et plus sombre la nuit.",
-			"page": "Prend la couleur du site ouvert.",
-			"wallpaper": "Prend la couleur de votre fond d'écran."
+		"colorSourceHint": {
+			"page": "Lilo prend la couleur du site de l'onglet actif.",
+			"wallpaper": "Lilo prend la couleur de votre fond d'écran."
+		},
+		"colorName": {
+			"periwinkle": "Pervenche",
+			"lavender": "Lavande",
+			"coral": "Corail",
+			"apricot": "Abricot",
+			"butter": "Beurre",
+			"sage": "Sauge",
+			"mint": "Menthe",
+			"sky": "Ciel",
+			"lilac": "Lilas",
+			"rose": "Rose",
+			"slate": "Ardoise",
+			"sand": "Sable"
+		},
+		"hexColor": "Couleur hexadécimale",
+		"followDay": "Varier selon l'heure",
+		"followDayHint": "Plus chaude le soir, plus profonde la nuit.",
+		"materialLabel": "Matière",
+		"material": {
+			"solid": "Uni",
+			"glass": "Verre",
+			"grain": "Grain"
 		},
 		"archiveLabel": "Archiver les onglets après",
 		"archive12Hours": "12 heures",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Couleur de Lilo",
 			"title": "Votre style",
 			"subtitle": "Clair, sombre, ou comme votre Mac, et d'où vient sa couleur. La fenêtre change tout de suite.",
 			"theme": "Thème",

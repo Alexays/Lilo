@@ -148,6 +148,7 @@ final class ChromeBridgeHandler: BridgeHandler {
 
         case "updateWindowBackground":
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
+            windowController?.applyWindowMaterial(glass: message.string("material") == "glass")
 
         case "setWallpaperColorWatch":
             windowController?.setWallpaperColorWatch(message.bool("enabled"))

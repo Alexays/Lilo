@@ -861,18 +861,37 @@
 		"recommended": "Polecane",
 		"quickPicks": "Propozycje dla tej przestrzeni",
 		"spaceNamePlaceholder": "Nazwa przestrzeni",
-		"colorLabel": "Kolor",
-		"colorMode": {
-			"fixed": "Stały",
-			"time": "Pora dnia",
-			"page": "Strona",
-			"wallpaper": "Tapeta"
+		"appearanceLabel": "Wygląd",
+		"colorFrom": {
+			"page": "Kolor aktywnej karty",
+			"wallpaper": "Kolor Twojej tapety"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo zachowuje ten kolor.",
-			"time": "Ten kolor, cieplejszy wieczorem i ciemniejszy nocą.",
-			"page": "Przyjmuje kolor otwartej witryny.",
-			"wallpaper": "Przyjmuje kolor tapety."
+		"colorSourceHint": {
+			"page": "Lilo przyjmuje kolor strony w aktywnej karcie.",
+			"wallpaper": "Lilo przyjmuje kolor Twojej tapety."
+		},
+		"colorName": {
+			"periwinkle": "Barwinek",
+			"lavender": "Lawenda",
+			"coral": "Koral",
+			"apricot": "Morela",
+			"butter": "Masło",
+			"sage": "Szałwia",
+			"mint": "Mięta",
+			"sky": "Niebo",
+			"lilac": "Bez",
+			"rose": "Róż",
+			"slate": "Łupek",
+			"sand": "Piasek"
+		},
+		"hexColor": "Kolor szesnastkowy",
+		"followDay": "Zmieniaj z porą dnia",
+		"followDayHint": "Cieplejszy wieczorem, głębszy nocą.",
+		"materialLabel": "Materiał",
+		"material": {
+			"solid": "Jednolity",
+			"glass": "Szkło",
+			"grain": "Ziarno"
 		},
 		"archiveLabel": "Archiwizuj karty po",
 		"archive12Hours": "12 godzinach",
@@ -1639,7 +1658,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Kolor Lilo",
 			"title": "Twój styl",
 			"subtitle": "Jasny, ciemny lub dopasowany do Maca, a do tego źródło koloru. Okno zmienia się od razu.",
 			"theme": "Motyw",

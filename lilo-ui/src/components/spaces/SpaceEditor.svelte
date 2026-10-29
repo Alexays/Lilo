@@ -8,13 +8,16 @@
   import { getAgentsProfileId, getAgentsSpaceIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
+  import { getWallpaperThumbnail } from "../../stores/spaceColor.svelte";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
-  import ColorModePicker from "./ColorModePicker.svelte";
+  import AppearancePicker from "./AppearancePicker.svelte";
+  import { on } from "../../lib/bridge";
+  import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import PanelHeader from "../ui/PanelHeader.svelte";
   import UiButton from "../ui/UiButton.svelte";
   import UiSelect from "../ui/UiSelect.svelte";
-  import { nextProfileColor, spacesByProfile, userProfiles } from "../settings/profilesModel";
+  import { nextProfileColor, PASTEL_COLOR_NAMES, PASTEL_COLORS, spacesByProfile, userProfiles } from "../settings/profilesModel";
   import {
     canSave,
     initialProfileChoice,
@@ -50,6 +53,9 @@
   let emojiButton: HTMLButtonElement | undefined = $state();
   let moreButton: HTMLButtonElement | undefined = $state();
   let showDeleteConfirmSheet = $state(false);
+  // The appearance card floats beside the editor, anchored at its summary row.
+  let appearanceButton: HTMLButtonElement | undefined = $state();
+  let appearanceAt = $state<{ top: number; left: number } | null>(null);
   let choice = $state<ProfileChoice>({ kind: "profile", id: "" });
   let newProfileName = $state("");
 
@@ -202,6 +208,48 @@
     moreButton?.focus();
   }
 
+  const APPEARANCE_WIDTH = 304;
+
+  function toggleAppearance(): void {
+    if (appearanceAt) {
+      appearanceAt = null;
+      return;
+    }
+    const panel = appearanceButton?.closest(".editor-panel")?.getBoundingClientRect();
+    const row = appearanceButton?.getBoundingClientRect();
+    if (!panel || !row) return;
+    // Beside the editor, on whichever side has room (the sidebar can sit on the right).
+    const left = panel.right + 10 + APPEARANCE_WIDTH <= window.innerWidth ? panel.right + 10 : panel.left - 10 - APPEARANCE_WIDTH;
+    appearanceAt = { top: Math.max(12, Math.min(row.top - 24, window.innerHeight - 470)), left };
+  }
+
+  async function closeAppearance(): Promise<void> {
+    appearanceAt = null;
+    await tick();
+    appearanceButton?.focus();
+  }
+
+  // Moved out of the editor panel, which clips and transforms what it holds; closes on a press outside,
+  // the page's included (those reach the chrome only as contentInteraction).
+  function floatAppearance(node: HTMLElement): () => void {
+    document.getElementById("chrome-root")?.appendChild(node);
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!node.contains(target) && !appearanceButton?.contains(target)) appearanceAt = null;
+    };
+    window.addEventListener("pointerdown", outside, true);
+    const disposeContent = on("contentInteraction", ({ isMouseDown }) => {
+      if (isMouseDown) appearanceAt = null;
+    });
+    return () => {
+      window.removeEventListener("pointerdown", outside, true);
+      disposeContent();
+      node.remove();
+    };
+  }
+
+  const colorIndex = $derived(PASTEL_COLORS.indexOf(editorState().color));
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.defaultPrevented) return;
     if (e.key === "Escape") {
@@ -349,14 +397,32 @@
       </div>
 
       <div class="field">
-        <span class="field-label" id="space-color-label">{t("spaceEditor.colorLabel")}</span>
-        <ColorModePicker
-          mode={s.colorMode}
-          color={s.color}
-          labelledby="space-color-label"
-          onmode={(colorMode) => updateEditorState({ colorMode })}
-          oncolor={(color) => updateEditorState({ color })}
-        />
+        <span class="field-label" id="space-appearance-label">{t("spaceEditor.appearanceLabel")}</span>
+        <button class="appearance-row" bind:this={appearanceButton} aria-labelledby="space-appearance-label space-appearance-value" aria-expanded={appearanceAt !== null} onclick={toggleAppearance}>
+          <span class="appearance-chip {s.material}" style:background-color={s.color}
+            style:background-image={s.colorMode === "wallpaper" && getWallpaperThumbnail() ? `url("${getWallpaperThumbnail()}")` : null}></span>
+          <span class="appearance-text" id="space-appearance-value">
+            <span>{s.colorMode === "page" || s.colorMode === "wallpaper"
+              ? t(`spaceEditor.colorFrom.${s.colorMode}`)
+              : colorIndex >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[colorIndex]}`) : t("spaceEditor.customColor")}</span>
+            <span class="appearance-detail">{t(`spaceEditor.material.${s.material}`)}{s.colorMode === "time" ? ` · ${t("spaceEditor.followDay")}` : ""}</span>
+          </span>
+          <svg class="appearance-chevron" class:open={appearanceAt !== null} width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        {#if appearanceAt}
+          <div class="appearance-card" role="dialog" tabindex="-1" aria-labelledby="space-appearance-label" style:top="{appearanceAt.top}px" style:left="{appearanceAt.left}px"
+            {@attach floatAppearance} use:reportInteractiveZone={{ id: "space-appearance" }} onkeydown={(e) => { if (e.key === "Escape") { e.preventDefault(); closeAppearance(); } }}
+            transition:scale={{ start: 0.96, duration: prefersReducedMotion() ? 0 : 180 }}>
+            <AppearancePicker
+              mode={s.colorMode}
+              color={s.color}
+              material={s.material}
+              onmode={(colorMode) => updateEditorState({ colorMode })}
+              oncolor={(color) => updateEditorState({ color })}
+              onmaterial={(material) => updateEditorState({ material })}
+            />
+          </div>
+        {/if}
       </div>
 
       {#if !editingAgents}
@@ -525,6 +591,86 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+  }
+
+  .appearance-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .appearance-row:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: 2px;
+  }
+
+  .appearance-chip {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    background-position: center;
+    background-size: cover;
+    box-shadow: inset 0 0 0 1px var(--text-primary-tint-12), inset 0 1px 0 color-mix(in srgb, white 45%, transparent);
+  }
+
+  .appearance-chip.glass {
+    box-shadow: inset 1px 1.5px 0 color-mix(in srgb, white 85%, transparent), inset 0 0 0 1px var(--text-primary-tint-12);
+  }
+
+  .appearance-chip.grain {
+    background-image: var(--grain-texture);
+    background-size: 60px;
+    background-blend-mode: overlay;
+  }
+
+  .appearance-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .appearance-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: normal;
+  }
+
+  .appearance-chevron {
+    color: var(--text-muted);
+    transition: transform 0.25s var(--motion-ease-spring);
+  }
+
+  .appearance-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .appearance-card {
+    position: fixed;
+    pointer-events: auto;
+    z-index: 50;
+    width: 304px;
+    padding: 16px;
+    border-radius: var(--radius-xl);
+    background: var(--chrome-floating-surface);
+    box-shadow: var(--chrome-overlay-shadow), 0 0 0 0.5px var(--text-primary-tint-12);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    transform-origin: left 40px;
   }
 
   .field-label-row {

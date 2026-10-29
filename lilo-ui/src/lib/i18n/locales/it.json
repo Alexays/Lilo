@@ -855,18 +855,37 @@
 		"recommended": "Consigliate",
 		"quickPicks": "Scelte rapide per questo spazio",
 		"spaceNamePlaceholder": "Nome dello spazio",
-		"colorLabel": "Colore",
-		"colorMode": {
-			"fixed": "Fisso",
-			"time": "Ora del giorno",
-			"page": "Pagina",
-			"wallpaper": "Sfondo"
+		"appearanceLabel": "Aspetto",
+		"colorFrom": {
+			"page": "Colore della scheda attiva",
+			"wallpaper": "Colore del tuo sfondo"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo mantiene questo colore.",
-			"time": "Questo colore, più caldo la sera e più scuro la notte.",
-			"page": "Riprende il colore del sito che stai visitando.",
-			"wallpaper": "Riprende il colore del tuo sfondo."
+		"colorSourceHint": {
+			"page": "Lilo prende il colore del sito nella scheda attiva.",
+			"wallpaper": "Lilo prende il colore del tuo sfondo."
+		},
+		"colorName": {
+			"periwinkle": "Pervinca",
+			"lavender": "Lavanda",
+			"coral": "Corallo",
+			"apricot": "Albicocca",
+			"butter": "Burro",
+			"sage": "Salvia",
+			"mint": "Menta",
+			"sky": "Cielo",
+			"lilac": "Lilla",
+			"rose": "Rosa",
+			"slate": "Ardesia",
+			"sand": "Sabbia"
+		},
+		"hexColor": "Colore esadecimale",
+		"followDay": "Cambia con l'ora del giorno",
+		"followDayHint": "Più calda la sera, più profonda di notte.",
+		"materialLabel": "Materiale",
+		"material": {
+			"solid": "Pieno",
+			"glass": "Vetro",
+			"grain": "Grana"
 		},
 		"archiveLabel": "Archivia schede dopo",
 		"archive12Hours": "12 ore",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Colore di Lilo",
 			"title": "Il tuo stile",
 			"subtitle": "Chiaro, scuro o come il Mac, e da dove proviene il colore. La finestra si aggiorna subito.",
 			"theme": "Tema",

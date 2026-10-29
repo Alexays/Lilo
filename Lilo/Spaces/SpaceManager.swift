@@ -61,6 +61,7 @@ final class SpaceManager {
         icon: String = "🌐",
         color: String = "#5865f2",
         colorMode: String = Space.fixedColorMode,
+        material: String = Space.solidMaterial,
         profileId: UUID,
         isPrivate: Bool = false
     ) throws -> Space {
@@ -73,6 +74,7 @@ final class SpaceManager {
             sortOrder: isPrivate ? spaces.count : persistentSpaces.count
         )
         space.colorMode = colorMode
+        space.material = material
         if !isPrivate { try dbPool.write { db in try space.insert(db) } }
 
         spaces.append(space); normalizeOrdering()

@@ -15,6 +15,8 @@ struct Space: Sendable, Identifiable {
     var archiveAfterHours = 12
     /// Where the chrome color comes from; `color` stays the base the other modes light or fall back to.
     var colorMode = Space.fixedColorMode
+    /// What the chrome is made of: a solid fill, see-through glass, or grain over the color.
+    var material = Space.solidMaterial
     var createdAt: Date
     var modifiedAt: Date
 
@@ -29,6 +31,8 @@ struct Space: Sendable, Identifiable {
 
     static let fixedColorMode = "fixed"
     static let colorModes: Set<String> = [fixedColorMode, "time", "page", "wallpaper"]
+    static let solidMaterial = "solid"
+    static let materials: Set<String> = [solidMaterial, "glass", "grain"]
 
     /// Serializable dictionary for bridge communication.
     var bridgeData: [String: Any] {
@@ -41,7 +45,8 @@ struct Space: Sendable, Identifiable {
             "isPrivate": isPrivate,
             "sortOrder": sortOrder,
             "archiveAfterHours": archiveAfterHours,
-            "colorMode": colorMode
+            "colorMode": colorMode,
+            "material": material
         ]
     }
 }

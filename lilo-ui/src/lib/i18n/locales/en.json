@@ -855,18 +855,37 @@
 		"recommended": "Recommended",
 		"quickPicks": "Quick picks for this space",
 		"spaceNamePlaceholder": "Space name",
-		"colorLabel": "Color",
-		"colorMode": {
-			"fixed": "Fixed",
-			"time": "Time of day",
-			"page": "Page",
-			"wallpaper": "Wallpaper"
+		"appearanceLabel": "Appearance",
+		"colorFrom": {
+			"page": "Color of the active tab",
+			"wallpaper": "Color of your wallpaper"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo keeps this color.",
-			"time": "This color, warmer in the evening and darker at night.",
-			"page": "Takes the color of the site you're on.",
-			"wallpaper": "Takes the color of your wallpaper."
+		"colorSourceHint": {
+			"page": "Lilo takes the color of the site in the active tab.",
+			"wallpaper": "Lilo takes the color of your wallpaper."
+		},
+		"colorName": {
+			"periwinkle": "Periwinkle",
+			"lavender": "Lavender",
+			"coral": "Coral",
+			"apricot": "Apricot",
+			"butter": "Butter",
+			"sage": "Sage",
+			"mint": "Mint",
+			"sky": "Sky",
+			"lilac": "Lilac",
+			"rose": "Rose",
+			"slate": "Slate",
+			"sand": "Sand"
+		},
+		"hexColor": "Hex color",
+		"followDay": "Change with the time of day",
+		"followDayHint": "Warmer in the evening, deeper at night.",
+		"materialLabel": "Material",
+		"material": {
+			"solid": "Solid",
+			"glass": "Glass",
+			"grain": "Grain"
 		},
 		"archiveLabel": "Archive tabs after",
 		"archive12Hours": "12 hours",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Color of Lilo",
 			"title": "Your style",
 			"subtitle": "Light, dark, or following your Mac, and where its color comes from. The window updates right away.",
 			"theme": "Theme",

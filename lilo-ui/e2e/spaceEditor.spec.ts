@@ -199,6 +199,7 @@ for (const colorScheme of ["light", "dark"] as const) {
 		const spaceBackground = await sidebarBackground(page);
 
 		await page.evaluate(() => window.__lilo!.receive({ event: "openAddSpaceEditor" }));
+		await page.getByRole("button", { name: "Appearance" }).click();
 		await page.locator(".swatches .swatch").nth(5).click();
 
 		await expect.poll(() => sidebarBackground(page)).not.toBe(spaceBackground);
@@ -209,6 +210,8 @@ for (const colorScheme of ["light", "dark"] as const) {
 			return background(".editor-panel") === background(".sidebar");
 		})).toBe(true);
 
+		// The first Escape closes the appearance card, the second the editor.
+		await page.keyboard.press("Escape");
 		await page.keyboard.press("Escape");
 		await expect.poll(() => sidebarBackground(page)).toBe(spaceBackground);
 		await expect.poll(() => reportedBackground(page)).toBe(spaceBackground);
@@ -304,7 +307,8 @@ test("leaving for the profiles keeps the edits made to the space", async ({ page
 test("the pointer leaving for the page keeps the custom color picker connected", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openSpaceEditor", id: "space-1" }));
-	const picker = page.getByLabel("Custom color");
+	await page.getByRole("button", { name: "Appearance" }).click();
+	const picker = page.locator(".swatch.custom input");
 	await picker.focus();
 	await page.evaluate(() => window.__lilo!.receive({ event: "contentInteraction", isMouseDown: false }));
 	await expect(picker).toBeFocused();
@@ -320,6 +324,7 @@ test("a custom color keeps the hue wheel around it, and the swatch still opens t
 	world.spaces[0].color = "#4a90d9";
 	await bootChrome(page, world);
 	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), world.spaces[0].id);
+	await page.getByRole("button", { name: "Appearance" }).click();
 	const custom = page.locator(".swatches .swatch.custom");
 	await expect(custom).toHaveClass(/selected/);
 	expect(await custom.evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("conic-gradient");

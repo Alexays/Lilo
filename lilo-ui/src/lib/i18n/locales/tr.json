@@ -855,18 +855,37 @@
 		"recommended": "Önerilen",
 		"quickPicks": "Bu alan için hızlı seçimler",
 		"spaceNamePlaceholder": "Alan adı",
-		"colorLabel": "Renk",
-		"colorMode": {
-			"fixed": "Sabit",
-			"time": "Günün saati",
-			"page": "Sayfa",
-			"wallpaper": "Duvar kâğıdı"
+		"appearanceLabel": "Görünüm",
+		"colorFrom": {
+			"page": "Etkin sekmenin rengi",
+			"wallpaper": "Duvar kâğıdınızın rengi"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo bu rengi korur.",
-			"time": "Bu renk, akşamları daha sıcak ve geceleri daha koyu.",
-			"page": "Bulunduğunuz sitenin rengini alır.",
-			"wallpaper": "Duvar kâğıdınızın rengini alır."
+		"colorSourceHint": {
+			"page": "Lilo etkin sekmedeki sitenin rengini alır.",
+			"wallpaper": "Lilo duvar kâğıdınızın rengini alır."
+		},
+		"colorName": {
+			"periwinkle": "Cezayir menekşesi",
+			"lavender": "Lavanta",
+			"coral": "Mercan",
+			"apricot": "Kayısı",
+			"butter": "Tereyağı",
+			"sage": "Adaçayı",
+			"mint": "Nane",
+			"sky": "Gök",
+			"lilac": "Leylak",
+			"rose": "Gül",
+			"slate": "Arduvaz",
+			"sand": "Kum"
+		},
+		"hexColor": "Onaltılık renk",
+		"followDay": "Günün saatine göre değiş",
+		"followDayHint": "Akşam daha sıcak, gece daha koyu.",
+		"materialLabel": "Malzeme",
+		"material": {
+			"solid": "Düz",
+			"glass": "Cam",
+			"grain": "Gren"
 		},
 		"archiveLabel": "Sekmeleri şu süre sonra arşivle",
 		"archive12Hours": "12 saat",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Lilo'nun rengi",
 			"title": "Sizin tarzınız",
 			"subtitle": "Açık, koyu veya Mac'inize göre. Rengin nereden geleceğini de seçin. Pencere hemen güncellenir.",
 			"theme": "Tema",

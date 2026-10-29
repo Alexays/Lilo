@@ -4,7 +4,7 @@
   import { goBack, goNext } from "../../stores/onboarding.svelte";
   import { getActiveSpace } from "../../stores/spaces.svelte";
   import { spaceActions } from "../../lib/bridge/actions";
-  import ColorModePicker from "../spaces/ColorModePicker.svelte";
+  import AppearancePicker from "../spaces/AppearancePicker.svelte";
 
   // The first Space is the one on screen: its color answers the choice right away.
   const space = $derived(getActiveSpace());
@@ -52,13 +52,13 @@
 
 {#if space}
   <div class="color-source">
-    <span class="group-label" id="onboarding-color-label">{t("onboarding.appearance.color")}</span>
-    <ColorModePicker
+    <AppearancePicker
       mode={space.colorMode ?? "fixed"}
       color={space.color}
-      labelledby="onboarding-color-label"
+      material={space.material ?? "solid"}
       onmode={(colorMode) => spaceActions.update({ id: space.id, colorMode })}
       oncolor={setColor}
+      onmaterial={(material) => spaceActions.update({ id: space.id, material })}
     />
   </div>
 {/if}
@@ -70,7 +70,7 @@
 
 <style>
   .group-label { display: block; margin-bottom: 8px; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--text-primary); }
-  .color-source { margin-top: 18px; --color-mode-thumb-height: 44px; }
+  .color-source { margin-top: 18px; }
   .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .th { border-radius: var(--radius-lg); padding: 8px; background: var(--bg-hover); border: 2px solid transparent; cursor: pointer; font-size: var(--font-size-sm); color: var(--text-primary);
     transition: border-color var(--motion-duration-normal), transform .2s var(--motion-ease-spring); }

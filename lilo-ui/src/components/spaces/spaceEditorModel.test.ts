@@ -14,6 +14,7 @@ const fields = {
   icon: "🎧",
   color: "#b39df4",
   colorMode: "time" as const,
+  material: "grain" as const,
   profileId: "work",
   archiveAfterHours: 24,
 };
@@ -46,14 +47,14 @@ test("canSave needs a name, and a profile name for a new profile", () => {
 test("an existing profile goes in the payload as profileId", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "profile", id: "work" }, { name: "", color: "" }), {
     action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", profileId: "work" },
+    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", profileId: "work" },
   });
 });
 
 test("a new profile is created with the space, named and colored", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "new" }, { name: " Client ", color: "#f4bb8c" }), {
     action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", newProfileName: "Client", newProfileColor: "#f4bb8c" },
+    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", newProfileName: "Client", newProfileColor: "#f4bb8c" },
   });
   const edit = { ...fields, mode: "edit" as const, spaceId: "s1" };
   assert.deepEqual(spaceEditorSubmission(edit, { kind: "new" }, { name: "Client", color: "#f4bb8c" }), {
@@ -64,6 +65,7 @@ test("a new profile is created with the space, named and colored", () => {
       icon: "🎧",
       color: "#b39df4",
       colorMode: "time",
+      material: "grain",
       newProfileName: "Client",
       newProfileColor: "#f4bb8c",
       archiveAfterHours: 24,
@@ -74,6 +76,6 @@ test("a new profile is created with the space, named and colored", () => {
 test("Private creates a private space with no profile", () => {
   assert.deepEqual(spaceEditorSubmission(fields, { kind: "private" }, { name: "", color: "" }), {
     action: "createSpace",
-    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", isPrivate: true },
+    payload: { name: "Music", icon: "🎧", color: "#b39df4", colorMode: "time", material: "grain", isPrivate: true },
   });
 });

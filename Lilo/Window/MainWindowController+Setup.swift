@@ -181,7 +181,9 @@ extension MainWindowController {
         // Swipes resend the same color at ~10Hz; views shown later read the current color themselves.
         guard resolvedColor != lastAppliedWindowChromeColor else { return }
 
-        window?.backgroundColor = resolvedColor
+        // Over glass the frame keeps the Space's tint while letting the desktop through.
+        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.35)
+        window?.backgroundColor = glassView == nil ? resolvedColor : .clear
         let surfaceColor = resolvedColor.contentSurfaceColor
         // The popups, peeks and Little windows of this Space wear its color in their title bar and under their page.
         for popup in pagePopups.values where context.browserState.owningSpaceId(forTab: popup.openerTabId) == tabManager.currentSpaceId {
@@ -195,7 +197,7 @@ extension MainWindowController {
         // The visible frame paint: fades over ~0.34s to match the chrome sidebar's own
         // background-color transition (the UI throttles updateWindowBackground to ~10Hz
         // during space swipes; the native fade smooths between samples).
-        windowFrameView?.setFrameColor(resolvedColor)
+        windowFrameView?.setFrameColor(frameColor)
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
         for divider in splitPanes.dividers.values { divider.setFrameColor(resolvedColor, animated: true) }
         sidePanel.setFrameColor(resolvedColor)
@@ -214,6 +216,23 @@ extension MainWindowController {
         tabManager.terminalHost.setSurface(surfaceColor)
         // Recorded only once the window, frame view and content layer all took it.
         if window != nil, windowFrameView != nil { lastAppliedWindowChromeColor = resolvedColor }
+    }
+
+    /// Puts the window on glass, or back on its solid color. Changes only when the shown Space's material does.
+    func applyWindowMaterial(glass: Bool) {
+        guard glass != (glassView != nil), let window, let contentView = window.contentView else { return }
+        if glass {
+            let view = NSGlassEffectView(frame: contentView.bounds)
+            view.autoresizingMask = [.width, .height]
+            contentView.addSubview(view, positioned: .below, relativeTo: nil)
+            glassView = view
+        } else {
+            glassView?.removeFromSuperview()
+            glassView = nil
+        }
+        window.isOpaque = !glass
+        lastAppliedWindowChromeColor = nil
+        applyWindowChromeColors(storedWindowBackgroundColor)
     }
 
     /// The frame color of a window showing Space `id`: this window's own when it shows that Space.

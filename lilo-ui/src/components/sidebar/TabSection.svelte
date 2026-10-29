@@ -1789,6 +1789,12 @@
     min-height: 24px;
   }
 
+  /* An opaque band would cut across glass or grain. */
+  :global(html[data-material='glass']) .pinned-tab-divider-shell,
+  :global(html[data-material='grain']) .pinned-tab-divider-shell {
+    background: transparent;
+  }
+
   /* No pins and no drag: no line to show, and Clear stays on its shortcut and menu, so the row would
      only read as an empty gap. A drag grows it back, animated. */
   .pinned-tab-divider-shell.collapsed {

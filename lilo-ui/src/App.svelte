@@ -18,7 +18,7 @@
   import { getActiveTab } from "./stores/tabs.svelte";
   import { getDayPart, getWallpaperColor, watchDayPart, watchWallpaperColor } from "./stores/spaceColor.svelte";
   import { effectiveSpaceColor } from "./lib/spaceColor";
-  import type { SpaceColorMode } from "./lib/bridge/protocol";
+  import type { SpaceColorMode, SpaceMaterial } from "./lib/bridge/protocol";
   import {
     hideSidebarOverlay,
     isFullscreen,
@@ -37,7 +37,7 @@
   // One query object for the lifetime of the app: applySidebarTheme and the swipe background read it.
   const colorSchemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-  // What the native host has actually received. Starts empty even though the bootstrap seeds
+  // What the native host has actually received (background and material). Starts empty even though the bootstrap seeds
   // --sidebar-bg: that seed is the cached color, and the frame bands are painted from the space
   // accent re-derived natively, so the two can differ until the UI's own value gets through.
   let lastReportedSidebarBackground = "";
@@ -87,6 +87,10 @@
     if (swipe) return swipe.progress < 0.5 ? swipe.leadingColor : swipe.trailingColor;
     return spaceChromeColor(getSpaceById(getFocusedSpaceId()));
   });
+  // Switches with the theme: the open editor's choice, else the focused Space's.
+  const shownMaterial: SpaceMaterial = $derived(
+    (editorState().open ? editorState().material : getSpaceById(getFocusedSpaceId())?.material) ?? "solid",
+  );
   // Set on the sidebar element alone, so a swipe frame restyles that one element instead of the document.
   const swipeBackground = $derived.by(() => {
     if (!swipe || swipe.leadingColor === swipe.trailingColor || editorState().open) return null;
@@ -130,6 +134,7 @@
       }
     }
     setThemeContext(variables["--sidebar-bg"], colorSchemeQuery.matches);
+    if (root.dataset.material !== shownMaterial) root.dataset.material = shownMaterial;
   }
 
   function reportSidebarBg() {
@@ -139,7 +144,8 @@
     const bg =
       lastThemeVars["--sidebar-bg"] ||
       document.documentElement.style.getPropertyValue("--sidebar-bg").trim();
-    if (!bg || bg === lastReportedSidebarBackground) {
+    const material = shownMaterial;
+    if (!bg || `${bg} ${material}` === lastReportedSidebarBackground) {
       return;
     }
     // Dropping the report here rather than latching it: the next theme change retries, and the
@@ -148,8 +154,8 @@
       return;
     }
 
-    lastReportedSidebarBackground = bg;
-    chromeActions.updateWindowBackground(bg);
+    lastReportedSidebarBackground = `${bg} ${material}`;
+    chromeActions.updateWindowBackground(bg, material);
   }
 
   function scheduleSidebarBackgroundReport() {
@@ -340,7 +346,7 @@
     class:sidebar-hidden={!isSidebarShown()}
     class:sidebar-overlay={isSidebarOverlay()}
     class:swiping={swipeBackground !== null}
-    style:background-color={swipeBackground}
+    style:background-color={shownMaterial === "glass" ? null : swipeBackground}
     use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
     onmouseenter={cancelSidebarOverlayHide}
     onmouseleave={scheduleSidebarOverlayHide}
@@ -519,6 +525,18 @@
       box-shadow var(--motion-duration-slow) ease,
       background-color var(--motion-duration-slow) var(--motion-ease-spring);
     z-index: 10;
+  }
+
+  /* Glass shows the native glass under the chrome. */
+  :global(html[data-material='glass']) .sidebar {
+    background-color: transparent;
+  }
+
+  /* One static tile the compositor repeats: no work after the first paint. */
+  :global(html[data-material='grain']) .sidebar {
+    background-image: var(--grain-texture);
+    background-size: 160px;
+    background-blend-mode: overlay;
   }
 
   /* The background follows the finger frame by frame: easing it would make it lag behind. */

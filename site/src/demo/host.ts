@@ -2111,6 +2111,7 @@ export const createDemoHost = (
         icon: payload.icon || (payload.name || text().newSpace)[0],
         id: idFor("space"),
         isPrivate: payload.isPrivate === true,
+        material: payload.material ?? "solid",
         name: payload.name || text().newSpace,
         profileId:
           requestedProfile(payload) ||
@@ -2868,7 +2869,8 @@ export const createDemoHost = (
       publish();
     },
     updateSpace: (payload) => {
-      const { id, name, icon, color, colorMode, archiveAfterHours } = payload;
+      const { id, name, icon, color, colorMode, material, archiveAfterHours } =
+        payload;
 
       const space = world.spaces.find((candidate) => candidate.id === id);
 
@@ -2890,6 +2892,10 @@ export const createDemoHost = (
 
       if (colorMode !== undefined) {
         space.colorMode = colorMode;
+      }
+
+      if (material !== undefined) {
+        space.material = material;
       }
 
       const profileId = requestedProfile(payload);

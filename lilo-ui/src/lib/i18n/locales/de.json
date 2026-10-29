@@ -855,18 +855,37 @@
 		"recommended": "Empfohlen",
 		"quickPicks": "Schnellauswahl für diesen Space",
 		"spaceNamePlaceholder": "Space-Name",
-		"colorLabel": "Farbe",
-		"colorMode": {
-			"fixed": "Fest",
-			"time": "Tageszeit",
-			"page": "Seite",
-			"wallpaper": "Hintergrundbild"
+		"appearanceLabel": "Erscheinungsbild",
+		"colorFrom": {
+			"page": "Farbe des aktiven Tabs",
+			"wallpaper": "Farbe deines Hintergrundbilds"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo behält diese Farbe.",
-			"time": "Diese Farbe, abends wärmer und nachts dunkler.",
-			"page": "Übernimmt die Farbe der aktuellen Website.",
-			"wallpaper": "Übernimmt die Farbe deines Hintergrundbilds."
+		"colorSourceHint": {
+			"page": "Lilo übernimmt die Farbe der Website im aktiven Tab.",
+			"wallpaper": "Lilo übernimmt die Farbe deines Hintergrundbilds."
+		},
+		"colorName": {
+			"periwinkle": "Immergrün",
+			"lavender": "Lavendel",
+			"coral": "Koralle",
+			"apricot": "Aprikose",
+			"butter": "Butter",
+			"sage": "Salbei",
+			"mint": "Minze",
+			"sky": "Himmel",
+			"lilac": "Flieder",
+			"rose": "Rosé",
+			"slate": "Schiefer",
+			"sand": "Sand"
+		},
+		"hexColor": "Hex-Farbe",
+		"followDay": "Mit der Tageszeit ändern",
+		"followDayHint": "Wärmer am Abend, tiefer in der Nacht.",
+		"materialLabel": "Material",
+		"material": {
+			"solid": "Einfarbig",
+			"glass": "Glas",
+			"grain": "Körnung"
 		},
 		"archiveLabel": "Tabs archivieren nach",
 		"archive12Hours": "12 Stunden",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Farbe von Lilo",
 			"title": "Dein Stil",
 			"subtitle": "Hell, dunkel oder wie dein Mac – und woher die Farbe kommt. Das Fenster passt sich sofort an.",
 			"theme": "Design",

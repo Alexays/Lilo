@@ -8,6 +8,7 @@ import type {
 	ImportSelection,
 	OptionalPayloadCommandName,
 	ScreenshotExport,
+	SpaceMaterial,
 	SplitDropSide,
 } from "./protocol";
 
@@ -37,8 +38,8 @@ export const chromeActions = {
 		zones: BridgeCommandPayloadMap["registerInteractiveZones"]["zones"],
 	): void => emit("registerInteractiveZones", { zones }),
 	removeInteractiveZone: emitId("removeInteractiveZone"),
-	updateWindowBackground: (color: string): void =>
-		emit("updateWindowBackground", { color }),
+	updateWindowBackground: (color: string, material: SpaceMaterial): void =>
+		emit("updateWindowBackground", { color, material }),
 	setWallpaperColorWatch: (enabled: boolean): void =>
 		emit("setWallpaperColorWatch", { enabled }),
 	sidebarResized: (width: number): void => emit("sidebarResized", { width }),

@@ -855,18 +855,37 @@
 		"recommended": "おすすめ",
 		"quickPicks": "このスペースの候補",
 		"spaceNamePlaceholder": "スペース名",
-		"colorLabel": "色",
-		"colorMode": {
-			"fixed": "固定",
-			"time": "時刻",
-			"page": "ページ",
-			"wallpaper": "壁紙"
+		"appearanceLabel": "外観",
+		"colorFrom": {
+			"page": "アクティブなタブの色",
+			"wallpaper": "壁紙の色"
 		},
-		"colorModeHint": {
-			"fixed": "この色を維持します。",
-			"time": "この色を基準に、夕方は暖かく、夜は暗くなります。",
-			"page": "表示しているサイトの色に合わせます。",
-			"wallpaper": "壁紙の色に合わせます。"
+		"colorSourceHint": {
+			"page": "アクティブなタブのサイトの色を使います。",
+			"wallpaper": "壁紙の色を使います。"
+		},
+		"colorName": {
+			"periwinkle": "ペリウィンクル",
+			"lavender": "ラベンダー",
+			"coral": "コーラル",
+			"apricot": "アプリコット",
+			"butter": "バター",
+			"sage": "セージ",
+			"mint": "ミント",
+			"sky": "スカイ",
+			"lilac": "ライラック",
+			"rose": "ローズ",
+			"slate": "スレート",
+			"sand": "サンド"
+		},
+		"hexColor": "16進カラー",
+		"followDay": "時間帯で変化",
+		"followDayHint": "夕方は暖かく、夜は深く。",
+		"materialLabel": "素材",
+		"material": {
+			"solid": "ソリッド",
+			"glass": "ガラス",
+			"grain": "グレイン"
 		},
 		"archiveLabel": "タブをアーカイブするまでの時間",
 		"archive12Hours": "12時間",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Lilo の色",
 			"title": "自分らしい外観に",
 			"subtitle": "ライト、ダーク、Mac に合わせる表示と、色の決め方を選びます。ウインドウにすぐ反映されます。",
 			"theme": "テーマ",

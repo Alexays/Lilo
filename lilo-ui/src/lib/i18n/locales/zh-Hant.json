@@ -855,18 +855,37 @@
 		"recommended": "建議",
 		"quickPicks": "此空間的精選項目",
 		"spaceNamePlaceholder": "空間名稱",
-		"colorLabel": "顏色",
-		"colorMode": {
-			"fixed": "固定",
-			"time": "一天中的時間",
-			"page": "網頁",
-			"wallpaper": "背景圖片"
+		"appearanceLabel": "外觀",
+		"colorFrom": {
+			"page": "目前分頁的顏色",
+			"wallpaper": "背景圖片的顏色"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo 會保持此顏色。",
-			"time": "以此顏色為基礎，傍晚偏暖、夜間變暗。",
-			"page": "使用目前網站的顏色。",
-			"wallpaper": "使用背景圖片的顏色。"
+		"colorSourceHint": {
+			"page": "Lilo 採用目前分頁中網站的顏色。",
+			"wallpaper": "Lilo 採用你的背景圖片顏色。"
+		},
+		"colorName": {
+			"periwinkle": "長春花",
+			"lavender": "薰衣草",
+			"coral": "珊瑚",
+			"apricot": "杏",
+			"butter": "奶油",
+			"sage": "鼠尾草",
+			"mint": "薄荷",
+			"sky": "天空",
+			"lilac": "丁香",
+			"rose": "玫瑰",
+			"slate": "石板",
+			"sand": "沙"
+		},
+		"hexColor": "十六進位顏色",
+		"followDay": "隨時間變化",
+		"followDayHint": "傍晚更暖，夜晚更深。",
+		"materialLabel": "材質",
+		"material": {
+			"solid": "純色",
+			"glass": "玻璃",
+			"grain": "顆粒"
 		},
 		"archiveLabel": "經過下列時間後封存分頁",
 		"archive12Hours": "12 小時",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Lilo 的顏色",
 			"title": "你的風格",
 			"subtitle": "淺色、深色或配合 Mac，並選擇顏色來源。視窗會立即更新。",
 			"theme": "主題",

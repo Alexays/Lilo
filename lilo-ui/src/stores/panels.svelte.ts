@@ -1,5 +1,5 @@
 import { on } from "../lib/bridge";
-import type { BridgeHistoryFilter, SpaceColorMode } from "../lib/bridge/protocol";
+import type { BridgeHistoryFilter, SpaceColorMode, SpaceMaterial } from "../lib/bridge/protocol";
 import {
 	DEFAULT_ACCENT_COLOR,
 	DEFAULT_SPACE_ICON,
@@ -64,6 +64,7 @@ interface EditorState {
 	icon: string;
 	color: string;
 	colorMode: SpaceColorMode;
+	material: SpaceMaterial;
 	profileId: string;
 	spaceId: string;
 	archiveAfterHours: number;
@@ -82,6 +83,7 @@ const EMPTY_EDITOR_STATE: EditorFields = {
 	icon: "",
 	color: "",
 	colorMode: "fixed",
+	material: "solid",
 	profileId: "",
 	spaceId: "",
 	archiveAfterHours: 12,
@@ -201,6 +203,7 @@ export function openEditor(id?: string): void {
 		icon: space.icon,
 		color: space.color,
 		colorMode: space.colorMode ?? "fixed",
+		material: space.material ?? "solid",
 		profileId: space.profileId,
 		archiveAfterHours: space.archiveAfterHours ?? 12,
 	});
@@ -214,6 +217,7 @@ export function openAddEditor(): void {
 		icon: DEFAULT_SPACE_ICON,
 		color: DEFAULT_ACCENT_COLOR,
 		colorMode: "fixed",
+		material: "solid",
 		profileId: getActiveProfileId() || getActiveSpace()?.profileId || "",
 		archiveAfterHours: 12,
 	});

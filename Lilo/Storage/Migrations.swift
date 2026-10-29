@@ -82,6 +82,12 @@ enum Migrations {
             }
         }
 
+        migrator.registerMigration("v3") { db in
+            try db.alter(table: "spaces") { t in
+                t.add(column: "material", .text).notNull().defaults(to: Space.solidMaterial)
+            }
+        }
+
         try migrator.migrate(db)
     }
 

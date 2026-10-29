@@ -99,6 +99,7 @@ extension MainWindowController {
         icon: String,
         color: String,
         colorMode: String = Space.fixedColorMode,
+        material: String = Space.solidMaterial,
         isPrivate: Bool,
         targetProfileId: UUID?
     ) throws {
@@ -121,6 +122,7 @@ extension MainWindowController {
             icon: resolvedIcon,
             color: resolvedColor,
             colorMode: colorMode,
+            material: material,
             profileId: profileId,
             isPrivate: isPrivate
         )

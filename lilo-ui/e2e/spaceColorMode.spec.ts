@@ -9,7 +9,15 @@ const sidebarBackground = (page: Page) =>
 const lastCommand = async (page: Page, action: string) =>
 	(await sentCommands(page)).filter((command) => command.action === action).at(-1)?.payload;
 
-const colorModes = (page: Page) => page.getByRole("radiogroup", { name: /^(color|color of lilo)$/i });
+const fromTab = (page: Page) => page.getByRole("button", { name: "Color of the active tab", exact: true });
+const fromWallpaper = (page: Page) => page.getByRole("button", { name: "Color of your wallpaper", exact: true });
+
+async function openAppearance(page: Page): Promise<void> {
+	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
+	await expect(page.locator(".editor-panel")).toBeVisible();
+	await page.getByRole("button", { name: "Appearance" }).click();
+	await expect(page.getByRole("dialog", { name: "Appearance" })).toBeVisible();
+}
 
 // 19:00, the evening: a Space following the time is warmer than its base color.
 async function bootInTheEvening(page: Page, world: FakeHostWorld): Promise<void> {
@@ -23,60 +31,51 @@ function worldOnAColorfulSite(): FakeHostWorld {
 	return world;
 }
 
-test("each color mode previews on the whole chrome, the base color stays editable, and Save sends the mode", async ({ page }) => {
+test("each color source and material previews on the whole chrome, and Save sends them", async ({ page }) => {
 	await bootInTheEvening(page, worldOnAColorfulSite());
 	const fixed = await sidebarBackground(page);
-	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
-	await expect(page.locator(".editor-panel")).toBeVisible();
+	await openAppearance(page);
 
-	const modes = colorModes(page);
-	await expect(modes.getByRole("radio")).toHaveCount(4);
-	await expect(modes.getByRole("radio", { name: "Fixed" })).toHaveAttribute("aria-checked", "true");
+	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
 
-	await modes.getByRole("radio", { name: "Time of day" }).click();
-	await expect(page.getByText("This color, warmer in the evening and darker at night.")).toBeVisible();
+	await page.getByRole("button", { name: "Change with the time of day" }).click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(fixed);
-	// The base color is still the user's to pick under a moving mode.
+	// The base color is still the user's to pick while it follows the day.
 	const evening = await sidebarBackground(page);
-	await page.locator(".swatches .swatch").first().click();
+	// Past the tab and the wallpaper, the first color.
+	await page.locator(".swatches .swatch").nth(2).click();
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 
-	await modes.getByRole("radio", { name: "Page" }).click();
-	// The site brings the color: no swatches to pick from.
-	await expect(page.locator(".swatches")).toHaveCount(0);
+	// The active tab's site brings the color: the title says so, and the day has nothing to change.
+	await fromTab(page).click();
+	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "true");
+	await expect(page.locator(".appearance-card .name")).toHaveText("Color of the active tab");
+	await expect(page.getByRole("button", { name: "Change with the time of day" })).toHaveCount(0);
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 	const tinted = await sidebarBackground(page);
 
-	await modes.getByRole("radio", { name: "Wallpaper" }).click();
+	await fromWallpaper(page).click();
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: true });
 	await page.evaluate(() => window.__lilo!.receive({ event: "wallpaperColorChanged", color: "#2f9e8f", thumbnail: "data:image/jpeg;base64,AAAA" }));
 	await expect.poll(() => sidebarBackground(page)).not.toBe(tinted);
-	await expect(page.locator(".swatches")).toHaveCount(0);
-	// The tile shows the wallpaper itself.
-	expect(await modes.getByRole("radio", { name: "Wallpaper" }).locator(".thumb").evaluate((node) => getComputedStyle(node).backgroundImage))
-		.toContain("data:image/jpeg");
+	// The preview stands the window on the wallpaper itself.
+	expect(await page.locator(".desk").evaluate((node) => getComputedStyle(node).backgroundImage)).toContain("data:image/jpeg");
 
-	await modes.getByRole("radio", { name: "Fixed" }).click();
-	await expect(page.locator(".swatches")).toBeVisible();
-	await modes.getByRole("radio", { name: "Wallpaper" }).click();
+	// A color takes back from Lilo's pick.
+	await page.locator(".swatches .swatch").nth(4).click();
+	await expect(fromWallpaper(page)).toHaveAttribute("aria-pressed", "false");
+	await fromWallpaper(page).click();
+	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Grain" }).click();
+	await expect.poll(() => page.evaluate(() => document.documentElement.dataset.material)).toBe("grain");
+
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog", { name: "Appearance" })).toHaveCount(0);
+	await expect(page.locator(".editor-panel")).toBeVisible();
 	await page.keyboard.press("Meta+Enter");
 	await expect(page.locator(".editor-panel")).toHaveCount(0);
-	expect(await lastCommand(page, "updateSpace")).toMatchObject({ id: SPACE_1, colorMode: "wallpaper" });
+	expect(await lastCommand(page, "updateSpace")).toMatchObject({ id: SPACE_1, colorMode: "wallpaper", material: "grain" });
 	// Back on the saved fixed Space (the host has not echoed the change): the wallpaper is no longer watched.
 	await expect.poll(() => lastCommand(page, "setWallpaperColorWatch")).toEqual({ enabled: false });
-});
-
-test("the arrow keys move between the color modes", async ({ page }) => {
-	await bootChrome(page, initialWorld());
-	await page.evaluate((id) => window.__lilo!.receive({ event: "openSpaceEditor", id }), SPACE_1);
-	const modes = colorModes(page);
-	await modes.getByRole("radio", { name: "Fixed" }).focus();
-	await page.keyboard.press("ArrowRight");
-	await expect(modes.getByRole("radio", { name: "Time of day" })).toBeFocused();
-	await expect(modes.getByRole("radio", { name: "Time of day" })).toHaveAttribute("aria-checked", "true");
-	await page.keyboard.press("ArrowLeft");
-	await page.keyboard.press("ArrowLeft");
-	await expect(modes.getByRole("radio", { name: "Wallpaper" })).toHaveAttribute("aria-checked", "true");
 });
 
 test("a saved Space following the time lights the chrome without the editor open", async ({ page }) => {
@@ -89,7 +88,7 @@ test("a saved Space following the time lights the chrome without the editor open
 	await expect.poll(() => sidebarBackground(page)).not.toBe(evening);
 });
 
-test("the onboarding's appearance step sets where the current Space's color comes from", async ({ page }) => {
+test("the onboarding's appearance step sets the current Space's color and material", async ({ page }) => {
 	const world: FakeHostWorld = {
 		spaces: [{ id: "space-home", name: "Home", icon: "H", color: "#5865f2", profileId: "profile-1", isPrivate: false, sortOrder: 0 }],
 		activeSpaceId: "space-home",
@@ -99,15 +98,15 @@ test("the onboarding's appearance step sets where the current Space's color come
 	};
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({ event: "onboardingState", show: true, step: 4, usage: "browse" }));
-	const modes = colorModes(page);
-	await expect(modes).toBeVisible();
-	await expect(modes.getByRole("radio", { name: "Fixed" })).toHaveAttribute("aria-checked", "true");
+	await expect(fromTab(page)).toHaveAttribute("aria-pressed", "false");
 
-	await modes.getByRole("radio", { name: "Time of day" }).click();
+	await page.getByRole("button", { name: "Change with the time of day" }).click();
 	await expect.poll(() => lastCommand(page, "updateSpace")).toEqual({ id: "space-home", colorMode: "time" });
 	await page.evaluate(() => window.__lilo!.receive({ event: "spaceUpdated", ...{ id: "space-home", name: "Home", icon: "H", color: "#5865f2", profileId: "profile-1", isPrivate: false, sortOrder: 0, colorMode: "time" } }));
-	await expect(modes.getByRole("radio", { name: "Time of day" })).toHaveAttribute("aria-checked", "true");
-	await expect(page.getByText("This color, warmer in the evening and darker at night.")).toBeVisible();
+	await expect(page.getByRole("button", { name: "Change with the time of day" })).toHaveAttribute("aria-pressed", "true");
+
+	await page.getByRole("radiogroup", { name: "Material" }).getByRole("radio", { name: "Glass" }).click();
+	await expect.poll(() => lastCommand(page, "updateSpace")).toEqual({ id: "space-home", material: "glass" });
 
 	// The color is the user's here too, sent at once.
 	await page.locator(".swatches .swatch").nth(2).click();

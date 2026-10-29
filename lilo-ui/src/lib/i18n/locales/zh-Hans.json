@@ -855,18 +855,37 @@
 		"recommended": "推荐",
 		"quickPicks": "适合此空间的快捷选择",
 		"spaceNamePlaceholder": "空间名称",
-		"colorLabel": "颜色",
-		"colorMode": {
-			"fixed": "固定",
-			"time": "随时间变化",
-			"page": "网页",
-			"wallpaper": "墙纸"
+		"appearanceLabel": "外观",
+		"colorFrom": {
+			"page": "当前标签页的颜色",
+			"wallpaper": "墙纸的颜色"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo 会保持此颜色。",
-			"time": "以此颜色为基础，傍晚更暖，夜间更暗。",
-			"page": "使用当前网站的颜色。",
-			"wallpaper": "使用墙纸的颜色。"
+		"colorSourceHint": {
+			"page": "Lilo 采用当前标签页中网站的颜色。",
+			"wallpaper": "Lilo 采用你的墙纸颜色。"
+		},
+		"colorName": {
+			"periwinkle": "长春花",
+			"lavender": "薰衣草",
+			"coral": "珊瑚",
+			"apricot": "杏",
+			"butter": "奶油",
+			"sage": "鼠尾草",
+			"mint": "薄荷",
+			"sky": "天空",
+			"lilac": "丁香",
+			"rose": "玫瑰",
+			"slate": "石板",
+			"sand": "沙"
+		},
+		"hexColor": "十六进制颜色",
+		"followDay": "随时间变化",
+		"followDayHint": "傍晚更暖，夜晚更深。",
+		"materialLabel": "材质",
+		"material": {
+			"solid": "纯色",
+			"glass": "玻璃",
+			"grain": "颗粒"
 		},
 		"archiveLabel": "自动归档标签页的时间",
 		"archive12Hours": "12 小时",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Lilo 的颜色",
 			"title": "你的风格",
 			"subtitle": "选择浅色、深色或跟随 Mac，并选择颜色来源。窗口会立即更新。",
 			"theme": "主题",

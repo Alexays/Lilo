@@ -16,6 +16,8 @@ export const PASTEL_COLORS = [
   "#a7bcc7",
   "#c8ab98",
 ];
+/** Index-aligned with PASTEL_COLORS: each one's key under spaceEditor.colorName. */
+export const PASTEL_COLOR_NAMES = ["periwinkle", "lavender", "coral", "apricot", "butter", "sage", "mint", "sky", "lilac", "rose", "slate", "sand"];
 
 interface SpaceLike {
   id: string;

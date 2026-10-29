@@ -171,6 +171,8 @@
      overlay is composited above the content WKWebView, so each blurred surface costs a GPU
      backdrop pass per frame, and a small radius keeps that sampling cheap. */
   --chrome-floating-blur: 10px;
+  /* Gray film grain, blended over a Space's color by the Grain material: a file, so only a grain Space loads it. */
+  --grain-texture: url("./grain.svg");
 
   /* Floating surfaces (tips, cards, popovers). Declared here so they resolve against the app
      palette: a surface floating over a tinted Space keeps neutral text and hovers. */

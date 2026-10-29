@@ -855,18 +855,37 @@
 		"recommended": "추천",
 		"quickPicks": "이 스페이스의 빠른 선택",
 		"spaceNamePlaceholder": "스페이스 이름",
-		"colorLabel": "색상",
-		"colorMode": {
-			"fixed": "고정",
-			"time": "시간대",
-			"page": "페이지",
-			"wallpaper": "배경화면"
+		"appearanceLabel": "모양",
+		"colorFrom": {
+			"page": "활성 탭의 색상",
+			"wallpaper": "배경화면의 색상"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo가 이 색상을 유지합니다.",
-			"time": "저녁에는 더 따뜻하게, 밤에는 더 어둡게 조정됩니다.",
-			"page": "현재 사이트의 색상을 사용합니다.",
-			"wallpaper": "배경화면의 색상을 사용합니다."
+		"colorSourceHint": {
+			"page": "Lilo가 활성 탭에 열린 사이트의 색상을 사용합니다.",
+			"wallpaper": "Lilo가 배경화면의 색상을 사용합니다."
+		},
+		"colorName": {
+			"periwinkle": "페리윙클",
+			"lavender": "라벤더",
+			"coral": "코랄",
+			"apricot": "살구",
+			"butter": "버터",
+			"sage": "세이지",
+			"mint": "민트",
+			"sky": "스카이",
+			"lilac": "라일락",
+			"rose": "로즈",
+			"slate": "슬레이트",
+			"sand": "샌드"
+		},
+		"hexColor": "16진수 색상",
+		"followDay": "시간대에 따라 변화",
+		"followDayHint": "저녁엔 더 따뜻하게, 밤엔 더 깊게.",
+		"materialLabel": "재질",
+		"material": {
+			"solid": "단색",
+			"glass": "유리",
+			"grain": "그레인"
 		},
 		"archiveLabel": "탭 자동 보관 시간",
 		"archive12Hours": "12시간",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Lilo의 색상",
 			"title": "나만의 스타일",
 			"subtitle": "라이트, 다크 또는 Mac 설정을 따르는 모드와 색상 출처를 선택하세요. 윈도우에 바로 적용됩니다.",
 			"theme": "테마",

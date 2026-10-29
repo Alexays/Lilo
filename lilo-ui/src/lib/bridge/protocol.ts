@@ -162,9 +162,12 @@ export interface BridgeSpaceSnapshot {
 	archiveAfterHours?: number;
 	/** Where the chrome color comes from; `color` is the base the other modes light or fall back to. */
 	colorMode?: SpaceColorMode;
+	/** What the chrome is made of: a solid fill, see-through glass, or grain over the color. */
+	material?: SpaceMaterial;
 }
 
 export type SpaceColorMode = "fixed" | "time" | "page" | "wallpaper";
+export type SpaceMaterial = "solid" | "glass" | "grain";
 
 export interface BridgeSpaceBrowserStatePayload {
 	spaceId: string;
@@ -552,7 +555,7 @@ export interface BridgeCommandPayloadMap {
 	// `remember` false: a dismissal, denied for now without storing a decision for the site.
 	permissionResponse: { requestId: string; granted: boolean; remember?: boolean };
 	extensionPermissionResponse: { requestId: string; granted: boolean };
-	updateWindowBackground: { color: string };
+	updateWindowBackground: { color: string; material: SpaceMaterial };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;
@@ -654,6 +657,7 @@ export interface BridgeCommandPayloadMap {
 		icon?: string;
 		color?: string;
 		colorMode?: SpaceColorMode;
+		material?: SpaceMaterial;
 		isPrivate?: boolean;
 		profileId?: string;
 		/** Creates this profile with the space, which then uses it (profileId is ignored). */
@@ -671,6 +675,7 @@ export interface BridgeCommandPayloadMap {
 		icon?: string;
 		color?: string;
 		colorMode?: SpaceColorMode;
+		material?: SpaceMaterial;
 		profileId?: string;
 		archiveAfterHours?: number;
 		newProfileName?: string;

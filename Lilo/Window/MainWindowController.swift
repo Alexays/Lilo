@@ -207,6 +207,8 @@ final class MainWindowController: NSWindowController {
     var pendingTabSharePickerRequests: [String: (requester: WKWebView?, wantsAudio: Bool, continuation: CheckedContinuation<TabSharePickerChoice, Never>)] = [:]
     /// Opaque native frame between the content web view and the chrome overlay. Click-through.
     var windowFrameView: WindowFrameView?
+    /// Under everything while the shown Space is made of glass; the frame above it turns translucent.
+    var glassView: NSGlassEffectView?
 
     // MARK: - Tab Management
 

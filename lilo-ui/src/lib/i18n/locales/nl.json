@@ -855,18 +855,37 @@
 		"recommended": "Aanbevolen",
 		"quickPicks": "Snelle keuzes voor deze ruimte",
 		"spaceNamePlaceholder": "Naam van ruimte",
-		"colorLabel": "Kleur",
-		"colorMode": {
-			"fixed": "Vast",
-			"time": "Tijdstip",
-			"page": "Pagina",
-			"wallpaper": "Achtergrond"
+		"appearanceLabel": "Weergave",
+		"colorFrom": {
+			"page": "Kleur van het actieve tabblad",
+			"wallpaper": "Kleur van je achtergrond"
 		},
-		"colorModeHint": {
-			"fixed": "Lilo houdt deze kleur aan.",
-			"time": "Deze kleur, warmer in de avond en donkerder 's nachts.",
-			"page": "Neemt de kleur over van de website die je bekijkt.",
-			"wallpaper": "Neemt de kleur over van je achtergrond."
+		"colorSourceHint": {
+			"page": "Lilo neemt de kleur van de site in het actieve tabblad over.",
+			"wallpaper": "Lilo neemt de kleur van je achtergrond over."
+		},
+		"colorName": {
+			"periwinkle": "Maagdenpalm",
+			"lavender": "Lavendel",
+			"coral": "Koraal",
+			"apricot": "Abrikoos",
+			"butter": "Boter",
+			"sage": "Salie",
+			"mint": "Munt",
+			"sky": "Hemel",
+			"lilac": "Sering",
+			"rose": "Roze",
+			"slate": "Leisteen",
+			"sand": "Zand"
+		},
+		"hexColor": "Hexkleur",
+		"followDay": "Meeveranderen met het tijdstip",
+		"followDayHint": "Warmer in de avond, dieper in de nacht.",
+		"materialLabel": "Materiaal",
+		"material": {
+			"solid": "Effen",
+			"glass": "Glas",
+			"grain": "Korrel"
 		},
 		"archiveLabel": "Archiveer tabbladen na",
 		"archive12Hours": "12 uur",
@@ -1619,7 +1638,6 @@
 			}
 		},
 		"appearance": {
-			"color": "Kleur van Lilo",
 			"title": "Je eigen stijl",
 			"subtitle": "Licht, donker of gelijk aan je Mac, en waar de kleur vandaan komt. Het venster wordt meteen aangepast.",
 			"theme": "Thema",
