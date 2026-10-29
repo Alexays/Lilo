@@ -60,7 +60,10 @@ DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SI
 # One run at a time per machine, whatever the worktree and whichever test host: each already fills every
 # performance core, and concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
 TEST_LOCK := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock
-TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test
+# A test that never ends would hold the lock for good: past its allowance, rounded up to the minute, xcodebuild
+# samples it, ends it as failed and goes on. A test that needs longer sets its own executionTimeAllowance.
+TEST_TIMEOUTS := -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 600
+TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test $(TEST_TIMEOUTS)
 # CI (which sets CI) runs a failed test once more and lists it in the job summary; locally a flake fails.
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
@@ -253,9 +256,9 @@ e2e-energy:
 
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
-## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER=LiloTests/Class narrows the run)
+## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run)
 swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
-	@$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),LiloTests) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
+	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 

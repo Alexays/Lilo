@@ -12,6 +12,8 @@ final class WKWebViewTabTrackingPreventionTests: XCTestCase {
     typealias Advance = @convention(c) (AnyObject, Selector, Double, @escaping @convention(block) () -> Void) -> Void
 
     func testAnInteractedSiteKeepsItsSignInWhenClassifiedAsATracker() async throws {
+        // WebKit's tracker classification runs on its own schedule: minutes under a full parallel run.
+        executionTimeAllowance = 600
         // WebKit's classifier ignores loopback hosts: real-looking ones go through a CONNECT proxy.
         let proxy = try await TinyProxyServer { host in
             ("200 OK", ["Content-Type: text/html", "Set-Cookie: SID=\(host); Path=/; Max-Age=31536000; HttpOnly"], Data("<p>\(host)</p>".utf8))
