@@ -132,7 +132,7 @@
 			"conservative": "Garder chargés",
 			"aggressive": "Économiser",
 			"conservativeDesc": "Mis en pause après 15 min, rarement vidés. Moins de rechargements, plus de mémoire.",
-			"balancedDesc": "Mis en pause après 5 min, vidés après 30 min. Recommandé.",
+			"balancedDesc": "Mis en pause après 5 min, vidés seulement si la mémoire manque. Recommandé.",
 			"aggressiveDesc": "Mis en pause après 2 min, vidés après 10 min. Meilleure autonomie ; les onglets se rechargent plus souvent."
 		},
 		"permissionAllow": "Autorisé",

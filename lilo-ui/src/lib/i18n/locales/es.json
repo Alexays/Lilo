@@ -132,7 +132,7 @@
 			"conservative": "Mantener cargadas",
 			"aggressive": "Ahorrar memoria",
 			"conservativeDesc": "En pausa tras 15 min; se vacían raramente. Menos recargas, más memoria.",
-			"balancedDesc": "En pausa tras 5 min; se vacían tras 30 min. Recomendado.",
+			"balancedDesc": "En pausa tras 5 min; se vacían solo si falta memoria. Recomendado.",
 			"aggressiveDesc": "En pausa tras 2 min; se vacían tras 10 min. Mayor autonomía; las pestañas se recargan más a menudo."
 		},
 		"permissionAllow": "Permitido",

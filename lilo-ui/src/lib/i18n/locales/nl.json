@@ -132,7 +132,7 @@
 			"conservative": "Laat geladen",
 			"aggressive": "Bespaar geheugen",
 			"conservativeDesc": "Na 15 min gepauzeerd, zelden uit het geheugen verwijderd. Minder herladen, meer geheugengebruik.",
-			"balancedDesc": "Na 5 min gepauzeerd, na 30 min uit het geheugen verwijderd. Aanbevolen.",
+			"balancedDesc": "Na 5 min gepauzeerd, alleen bij geheugentekort uit het geheugen verwijderd. Aanbevolen.",
 			"aggressiveDesc": "Na 2 min gepauzeerd, na 10 min uit het geheugen verwijderd. Beste batterijduur; vaker herladen."
 		},
 		"permissionAllow": "Toegestaan",

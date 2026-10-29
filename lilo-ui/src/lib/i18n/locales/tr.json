@@ -132,7 +132,7 @@
 			"conservative": "Yüklü tut",
 			"aggressive": "Bellek tasarrufu",
 			"conservativeDesc": "15 dk sonra duraklatılır, nadiren bellekten çıkarılır. Daha az yeniden yükleme, daha çok bellek.",
-			"balancedDesc": "5 dk sonra duraklatılır, 30 dk sonra bellekten çıkarılır. Önerilen.",
+			"balancedDesc": "5 dk sonra duraklatılır, yalnızca bellek azaldığında bellekten çıkarılır. Önerilen.",
 			"aggressiveDesc": "2 dk sonra duraklatılır, 10 dk sonra bellekten çıkarılır. En iyi pil ömrü; sekmeler daha sık yeniden yüklenir."
 		},
 		"permissionAllow": "İzin verildi",

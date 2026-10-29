@@ -45,22 +45,17 @@ struct LifecyclePolicyConfig: Sendable, Equatable {
 
     static let `default` = config(for: .default)
 
-    /// On battery, an idle tab's content process keeps waking (sockets, timers) until it is discarded.
-    static let batteryDiscardThreshold: TimeInterval = 600
     /// Freezing is reversible and resumes instantly, so on battery every preset freezes early.
     static let batteryFreezeThreshold: TimeInterval = 60
     /// The sweep applies the thresholds, so it bounds how late past them a tab freezes.
     static let batteryIdleSweepInterval: TimeInterval = 30
 
-    /// `.conservative` keeps its "discard only under pressure" promise on battery too.
+    /// Battery tightens freezing only: a frozen tab already costs no energy, so discarding it earlier would only add reloads.
     static func config(for preset: LifecyclePreset, onBatteryPower: Bool = false) -> LifecyclePolicyConfig {
         var config = presetConfig(for: preset)
         guard onBatteryPower else { return config }
         config.freezeThreshold = min(config.freezeThreshold, batteryFreezeThreshold)
         config.idleSweepInterval = min(config.idleSweepInterval, batteryIdleSweepInterval)
-        if config.discardThreshold.isFinite {
-            config.discardThreshold = min(config.discardThreshold, batteryDiscardThreshold)
-        }
         return config
     }
 
@@ -68,17 +63,19 @@ struct LifecyclePolicyConfig: Sendable, Equatable {
         switch preset {
         case .balanced:
             return LifecyclePolicyConfig(
+                maxNormalRetainedEnginesPerHiddenSpace: 6,
                 maxHiddenSpacesWithNormalRetainedEngines: 2,
                 backgroundTrimGracePeriod: 120,
                 constrainedForegroundEngineBudget: 6,
                 freezeThreshold: 300,
-                discardThreshold: 1800,
+                discardThreshold: .infinity,
                 idleSweepInterval: 60,
                 foregroundEngineBudgetMultiplier: 1.0
             )
         case .conservative:
             return LifecyclePolicyConfig(
-                maxHiddenSpacesWithNormalRetainedEngines: 2,
+                maxNormalRetainedEnginesPerHiddenSpace: 12,
+                maxHiddenSpacesWithNormalRetainedEngines: 3,
                 backgroundTrimGracePeriod: 120,
                 constrainedForegroundEngineBudget: 6,
                 freezeThreshold: 900,

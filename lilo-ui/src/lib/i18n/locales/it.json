@@ -132,7 +132,7 @@
 			"conservative": "Mantieni caricate",
 			"aggressive": "Risparmia memoria",
 			"conservativeDesc": "In pausa dopo 15 min, svuotate raramente. Meno ricaricamenti, più memoria.",
-			"balancedDesc": "In pausa dopo 5 min, svuotate dopo 30 min. Consigliato.",
+			"balancedDesc": "In pausa dopo 5 min, svuotate solo se la memoria scarseggia. Consigliato.",
 			"aggressiveDesc": "In pausa dopo 2 min, svuotate dopo 10 min. Maggiore autonomia; le schede si ricaricano più spesso."
 		},
 		"permissionAllow": "Consentito",

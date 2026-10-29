@@ -353,6 +353,45 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         XCTAssertEqual(retained, [audio, restoring])
     }
 
+    func testHiddenSpaceKeepsMostRecentlyUsedTabsUpToBudget() {
+        let preferred = UUID(); let recent = UUID(); let older = UUID(); let oldest = UUID(); let unvisited = UUID()
+        let coordinator = TabLifecycleCoordinator(maxNormalRetainedEnginesPerHiddenSpace: 3)
+        var tabs = [oldest, unvisited, older, preferred, recent].map { makeTab(id: $0) }
+        let lastActive: [UUID: TimeInterval] = [oldest: 10, older: 20, preferred: 30, recent: 40]
+        for index in tabs.indices { tabs[index].lastActiveAt = lastActive[tabs[index].id].map(Date.init(timeIntervalSince1970:)) }
+
+        let retained = coordinator.retainedEngineIds(
+            tabs: tabs,
+            availableEngineIds: Set(tabs.map(\.id)),
+            preferredTabId: preferred
+        )
+
+        XCTAssertEqual(retained, [preferred, recent, older])
+    }
+
+    func testUnsavedFormInputSurvivesHiddenSpaceBudgetAndBackgroundPolicy() {
+        let preferred = UUID(); let dirty = UUID()
+        var dirtyTab = makeTab(id: dirty)
+        dirtyTab.hasUnsavedFormData = true
+        let tabs = [makeTab(id: preferred), dirtyTab]
+
+        let budgeted = TabLifecycleCoordinator(maxNormalRetainedEnginesPerHiddenSpace: 1)
+            .retainedEngineIds(tabs: tabs, availableEngineIds: [preferred, dirty], preferredTabId: preferred)
+        let collapsed = TabLifecycleCoordinator(policy: .background)
+            .retainedEngineIds(tabs: tabs, availableEngineIds: [preferred, dirty], preferredTabId: preferred)
+        let keep = TabLifecycleCoordinator().activeSpaceEnginesToKeep(
+            tabs: tabs, availableEngineIds: [preferred, dirty], activeTabId: preferred, activationHistory: [preferred], maxLiveEngines: 1
+        )
+
+        XCTAssertEqual(budgeted, [preferred, dirty])
+        XCTAssertEqual(collapsed, [dirty])
+        XCTAssertEqual(keep, [preferred, dirty])
+        XCTAssertFalse(
+            TabLifecycleCoordinator().protectedEngineIds(tabs: tabs, availableEngineIds: [preferred, dirty]).contains(dirty),
+            "a form tab can still be frozen"
+        )
+    }
+
     func testPinnedAndBookmarkedTabsDoNotBypassNormalHiddenRetentionLimit() {
         let pinned = UUID()
         let bookmarked = UUID()

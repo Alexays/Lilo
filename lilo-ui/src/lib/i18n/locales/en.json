@@ -132,7 +132,7 @@
 			"conservative": "Keep loaded",
 			"aggressive": "Save memory",
 			"conservativeDesc": "Paused after 15 min, rarely emptied. Fewer reloads, more memory.",
-			"balancedDesc": "Paused after 5 min, emptied after 30 min. Recommended.",
+			"balancedDesc": "Paused after 5 min, emptied only when memory runs low. Recommended.",
 			"aggressiveDesc": "Paused after 2 min, emptied after 10 min. Best battery life; tabs reload more often."
 		},
 		"permissionAllow": "Allowed",

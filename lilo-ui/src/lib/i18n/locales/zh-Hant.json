@@ -132,7 +132,7 @@
 			"conservative": "保持載入",
 			"aggressive": "節省記憶體",
 			"conservativeDesc": "15 分鐘後暫停，很少卸載。重新載入次數較少，但使用更多記憶體。",
-			"balancedDesc": "5 分鐘後暫停，30 分鐘後卸載。建議使用。",
+			"balancedDesc": "5 分鐘後暫停，僅在記憶體不足時卸載。建議使用。",
 			"aggressiveDesc": "2 分鐘後暫停，10 分鐘後卸載。最省電，但分頁會更常重新載入。"
 		},
 		"permissionAllow": "已允許",

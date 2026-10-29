@@ -791,7 +791,7 @@ final class BrowserStateStore {
         for spaceId in evictedSpaceIds {
             guard var snapshot = spaces[spaceId] else { continue }
             let tabs = projectedTabsBySpace[spaceId] ?? projectedSidebar(from: snapshot).tabs
-            let protectedTabIds = coordinator.protectedEngineIds(
+            let protectedTabIds = coordinator.discardProtectedEngineIds(
                 tabs: tabs,
                 availableEngineIds: Set(snapshot.engines.keys),
                 restoringTabIds: snapshot.restoringTabIds,

@@ -132,7 +132,7 @@
 			"conservative": "保持载入",
 			"aggressive": "节省内存",
 			"conservativeDesc": "15 分钟后暂停，很少卸载。重新载入次数更少，占用更多内存。",
-			"balancedDesc": "5 分钟后暂停，30 分钟后卸载。推荐使用。",
+			"balancedDesc": "5 分钟后暂停，仅在内存不足时卸载。推荐使用。",
 			"aggressiveDesc": "2 分钟后暂停，10 分钟后卸载。最省电，但标签页会更频繁地重新载入。"
 		},
 		"permissionAllow": "已允许",

@@ -132,7 +132,7 @@
 			"conservative": "Geladen lassen",
 			"aggressive": "Speicher sparen",
 			"conservativeDesc": "Nach 15 Min. pausiert, selten entladen. Weniger Neuladen, höherer Speicherbedarf.",
-			"balancedDesc": "Nach 5 Min. pausiert, nach 30 Min. entladen. Empfohlen.",
+			"balancedDesc": "Nach 5 Min. pausiert, nur bei knappem Speicher entladen. Empfohlen.",
 			"aggressiveDesc": "Nach 2 Min. pausiert, nach 10 Min. entladen. Beste Batterielaufzeit, Tabs laden häufiger neu."
 		},
 		"permissionAllow": "Erlaubt",

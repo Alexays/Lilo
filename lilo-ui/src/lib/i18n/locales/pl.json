@@ -132,7 +132,7 @@
 			"conservative": "Zachowuj w pamięci",
 			"aggressive": "Oszczędzaj pamięć",
 			"conservativeDesc": "Wstrzymanie po 15 min, rzadkie zwalnianie pamięci. Mniej przeładowań, więcej pamięci.",
-			"balancedDesc": "Wstrzymanie po 5 min, zwolnienie pamięci po 30 min. Zalecane.",
+			"balancedDesc": "Wstrzymanie po 5 min, zwolnienie pamięci tylko przy jej braku. Zalecane.",
 			"aggressiveDesc": "Wstrzymanie po 2 min, zwolnienie pamięci po 10 min. Najdłuższa praca na baterii, ale częstsze przeładowania."
 		},
 		"permissionAllow": "Dozwolone",

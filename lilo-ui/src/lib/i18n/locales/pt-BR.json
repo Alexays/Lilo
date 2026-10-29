@@ -132,7 +132,7 @@
 			"conservative": "Manter carregadas",
 			"aggressive": "Economizar memória",
 			"conservativeDesc": "Pausadas após 15 min, raramente descarregadas. Menos recarregamentos, mais memória.",
-			"balancedDesc": "Pausadas após 5 min, descarregadas após 30 min. Recomendado.",
+			"balancedDesc": "Pausadas após 5 min, descarregadas só quando falta memória. Recomendado.",
 			"aggressiveDesc": "Pausadas após 2 min, descarregadas após 10 min. Maior duração da bateria; as abas recarregam com mais frequência."
 		},
 		"permissionAllow": "Permitido",

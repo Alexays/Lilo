@@ -2,7 +2,7 @@ import AppKit
 
 // App-lifecycle engine-trim policy around the HiddenSpaceLifecycleController collaborator.
 extension MainWindowController {
-    /// The only place `.background` collapses the active space to one engine (occluded window, critical pressure); `.foreground` keeps
+    /// The only place `.background` collapses the active space to one engine (critical pressure, a forced trim); `.foreground` keeps
     /// the RAM-adaptive budget, optionally capped (soft pressure, constrained power).
     func activeSpaceTrimBudget(policy: TabLifecycleCoordinator.Policy, cap: Int?) -> Int {
         switch policy {

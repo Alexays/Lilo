@@ -93,7 +93,9 @@ struct TabLifecycleCoordinator {
         restoringTabIds: [UUID: Date] = [:],
         now: Date = Date()
     ) -> Set<UUID> {
-        let protectedIds = Set(tabs.lazy.filter { !$0.isClosed && shouldRetainProtected($0, restoringTabIds: restoringTabIds, now: now) }.map(\.id))
+        let protectedIds = Set(tabs.lazy.filter { !$0.isClosed && shouldRetainFromDiscard($0, restoringTabIds: restoringTabIds, now: now) }.map(\.id))
+        let budget = effectiveMaxNormalRetainedEnginesPerHiddenSpace
+        guard budget > 0 else { return protectedIds }
         var normalIds: [UUID] = []
 
         if let preferredTabId,
@@ -103,17 +105,18 @@ struct TabLifecycleCoordinator {
             normalIds.append(preferredTabId)
         }
 
-        if normalIds.count < effectiveMaxNormalRetainedEnginesPerHiddenSpace,
-           let firstOpenNormal = tabs.first(where: {
-               !$0.isClosed &&
-               !shouldRetainProtected($0, restoringTabIds: restoringTabIds, now: now) &&
-               availableEngineIds.contains($0.id) &&
-               !normalIds.contains($0.id)
-           }) {
-            normalIds.append(firstOpenNormal.id)
+        // Most recently used first; tabs never activated keep their sidebar order after them.
+        let candidates = tabs.enumerated().filter {
+            !$0.element.isClosed && availableEngineIds.contains($0.element.id) &&
+                !protectedIds.contains($0.element.id) && $0.element.id != preferredTabId
         }
+        let recentFirst = candidates.sorted {
+            let lhs = $0.element.lastActiveAt ?? .distantPast, rhs = $1.element.lastActiveAt ?? .distantPast
+            return lhs != rhs ? lhs > rhs : $0.offset < $1.offset
+        }
+        normalIds.append(contentsOf: recentFirst.prefix(budget - normalIds.count).map(\.element.id))
 
-        return protectedIds.union(normalIds.prefix(effectiveMaxNormalRetainedEnginesPerHiddenSpace))
+        return protectedIds.union(normalIds.prefix(budget))
     }
 
     func hiddenSpacesToEvict(_ spaces: [HiddenSpace], protectedSpaceId: UUID?, now: Date = Date()) -> Set<UUID> {
@@ -126,7 +129,7 @@ struct TabLifecycleCoordinator {
                     guard let tab = engineTabs[engineId] else {
                         return true
                     }
-                    return !shouldRetainProtected(tab, restoringTabIds: space.restoringTabIds, now: now)
+                    return !shouldRetainFromDiscard(tab, restoringTabIds: space.restoringTabIds, now: now)
                 }
             }
             .sorted { $0.lastAccessedAt < $1.lastAccessedAt }
@@ -146,6 +149,18 @@ struct TabLifecycleCoordinator {
     ) -> Set<UUID> {
         engineIds(tabs: tabs, availableEngineIds: availableEngineIds) {
             shouldRetainProtected($0, restoringTabIds: restoringTabIds, now: now)
+        }
+    }
+
+    /// `protectedEngineIds` plus tabs with unsaved form input: a discard would lose what the user typed, a freeze would not.
+    func discardProtectedEngineIds(
+        tabs: [Tab],
+        availableEngineIds: Set<UUID>,
+        restoringTabIds: [UUID: Date] = [:],
+        now: Date = Date()
+    ) -> Set<UUID> {
+        engineIds(tabs: tabs, availableEngineIds: availableEngineIds) {
+            shouldRetainFromDiscard($0, restoringTabIds: restoringTabIds, now: now)
         }
     }
 
@@ -175,7 +190,7 @@ struct TabLifecycleCoordinator {
         discardThreshold: TimeInterval = .infinity,
         now: Date = Date()
     ) -> Set<UUID> {
-        var keep = protectedEngineIds(
+        var keep = discardProtectedEngineIds(
             tabs: tabs,
             availableEngineIds: availableEngineIds,
             restoringTabIds: restoringTabIds,
@@ -241,12 +256,15 @@ struct TabLifecycleCoordinator {
         })
     }
 
-    /// Idle discard also spares pinned tabs and tabs with unsaved form input. They can still be frozen
-    /// and stay subject to budget, LRU and memory-pressure eviction, which use `shouldRetainProtected`.
+    /// Every discard spares tabs with unsaved form input; they can still be frozen.
+    private func shouldRetainFromDiscard(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date) -> Bool {
+        shouldRetainProtected(tab, restoringTabIds: restoringTabIds, now: now) || tab.hasUnsavedFormData
+    }
+
+    /// Idle discard also spares pinned tabs. They can still be frozen and stay subject to budget, LRU
+    /// and memory-pressure eviction.
     private func shouldRetainFromIdleDiscard(_ tab: Tab, restoringTabIds: [UUID: Date], now: Date) -> Bool {
-        shouldRetainProtected(tab, restoringTabIds: restoringTabIds, now: now) ||
-            tab.isPinned ||
-            tab.hasUnsavedFormData
+        shouldRetainFromDiscard(tab, restoringTabIds: restoringTabIds, now: now) || tab.isPinned
     }
 
     func idleDiscardProtectedEngineIds(

@@ -1,8 +1,8 @@
 import AppKit
 import IOKit.ps
 
-/// Discards hidden-space engines when the app backgrounds, memory is tight or the system is
-/// power-constrained, and cancels pending trims when the app returns to the foreground.
+/// Freezes engines while the window is hidden and discards them under memory pressure, power constraints or past
+/// the space budgets, and cancels pending trims when the window returns on screen.
 @MainActor
 final class HiddenSpaceLifecycleController {
     private let store: BrowserStateStore
@@ -114,9 +114,9 @@ final class HiddenSpaceLifecycleController {
         if idleSweepTimer != nil { cancelIdleSweep(); startIdleSweep() }
     }
 
+    /// Gates the idle sweep only: a hidden window freezes its tabs instead (see scheduleTrim), and only memory pressure collapses
+    /// a trim to `.background`. Occlusion, not app activation: another app's focus leaves this window on screen.
     var currentPolicy: TabLifecycleCoordinator.Policy {
-        // Occlusion, not app activation: another app's focus leaves this window on screen, and tightening there would cold-reload every tab.
-        // The idle sweep keeps running while visible, which bounds memory during a long switch-away.
         isWindowVisible ? .foreground : .background
     }
 
@@ -146,7 +146,9 @@ final class HiddenSpaceLifecycleController {
                 let protectedSpaceId = self.pendingTrimProtectedSpaceId
                 self.pendingTrimWorkItem = nil
                 self.pendingTrimProtectedSpaceId = nil
-                let plan = self.memoryPressurePlan(policy: policy ?? self.currentPolicy, cap: activeBudgetCap)
+                // Nothing is on screen: freezing stops every page's CPU yet resumes instantly, where a discard reloads on return.
+                if !self.isWindowVisible { self.store.freezeIdleEngines(freezeThreshold: 0) }
+                let plan = self.memoryPressurePlan(policy: policy ?? .foreground, cap: activeBudgetCap)
                 self.store.trimInactiveEngines(
                     excluding: protectedSpaceId,
                     policy: plan.policy,
@@ -173,7 +175,7 @@ final class HiddenSpaceLifecycleController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.pendingActiveSpaceTrimWorkItem = nil
-                let plan = self.memoryPressurePlan(policy: self.currentPolicy, cap: nil)
+                let plan = self.memoryPressurePlan(policy: .foreground, cap: nil)
                 self.trimActiveSpaceEngines(plan.policy, plan.cap)
             }
         }
@@ -234,7 +236,7 @@ final class HiddenSpaceLifecycleController {
     }
 
     func runIdleSweep() {
-        // Only sweep while the window is visible; occlusion already trims hard via policy.
+        // Only sweep while the window is visible; a hidden window freezes its tabs instead.
         guard currentPolicy == .foreground else { return }
         // Under constrained power, stop spending energy on speculative retained engines.
         let sweepPolicy = memoryPressurePlan(policy: isConstrainedPower ? .background : .foreground, cap: nil).policy
@@ -432,8 +434,7 @@ final class HiddenSpaceLifecycleController {
         onBackgrounded?()
         // The trim scheduled below supersedes any queued post-activation active-space trim.
         cancelPendingActiveSpaceTrim()
-        // No forced `.background`: the policy is resolved at fire time, so a window still on screen
-        // keeps its adaptive budget and only a genuinely hidden one collapses.
+        // A window still hidden when it fires freezes its tabs; one on screen keeps its adaptive budget.
         scheduleTrim(delay: self.config.backgroundTrimGracePeriod)
     }
 
@@ -466,11 +467,10 @@ final class HiddenSpaceLifecycleController {
             guard isForeground else { return }
             onForegrounded?()
         } else {
-            // Same reasoning as handleWillResignActive: an occlusion mid-debounce must not turn the
-            // post-activation active-space trim into a background collapse of the still-open tabs.
+            // The trim scheduled below supersedes any queued post-activation active-space trim.
             onBackgrounded?()
             cancelPendingActiveSpaceTrim()
-            scheduleTrim(delay: self.config.backgroundTrimGracePeriod, policy: .background)
+            scheduleTrim(delay: self.config.backgroundTrimGracePeriod)
         }
     }
 

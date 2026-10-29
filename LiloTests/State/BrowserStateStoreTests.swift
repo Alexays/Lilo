@@ -3562,6 +3562,58 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(backgroundEngine.isFrozen, "an idle background tab in the active space should freeze")
     }
 
+    func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() {
+        let activeSpaceId = UUID(); let hiddenSpaceId = UUID()
+        let visibleId = UUID(); let backgroundId = UUID(); let hiddenActiveId = UUID(); let hiddenOtherId = UUID()
+        let tabs = [
+            Tab(id: visibleId, url: URL(string: "https://visible.example"), title: "Visible", spaceId: activeSpaceId),
+            Tab(id: backgroundId, url: URL(string: "https://bg.example"), title: "Background", spaceId: activeSpaceId),
+            Tab(id: hiddenActiveId, url: URL(string: "https://a.example"), title: "A", spaceId: hiddenSpaceId),
+            Tab(id: hiddenOtherId, url: URL(string: "https://b.example"), title: "B", spaceId: hiddenSpaceId),
+        ]
+        var engines: [UUID: WKWebViewTab] = [:]
+        for tab in tabs { engines[tab.id] = WKWebViewTab(configuration: WKWebViewConfiguration()) }
+        let store = BrowserStateStore()
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: Array(tabs[2...]), folders: [], treeItems: [],
+                engines: [hiddenActiveId: engines[hiddenActiveId]!, hiddenOtherId: engines[hiddenOtherId]!],
+                activeTabId: hiddenActiveId, lastAccessedAt: Date(), spaceId: hiddenSpaceId
+            )
+        )
+        store.storeActiveSpace(
+            id: activeSpaceId,
+            snapshot: makeSpaceSnapshot(
+                tabs: Array(tabs[..<2]), folders: [], treeItems: [],
+                engines: [visibleId: engines[visibleId]!, backgroundId: engines[backgroundId]!],
+                activeTabId: visibleId, lastAccessedAt: Date(), spaceId: activeSpaceId
+            )
+        )
+        var config = LifecyclePolicyConfig.config(for: .balanced)
+        config.backgroundTrimGracePeriod = 0
+        var discardCount = 0
+        let trimmed = expectation(description: "occlusion trim")
+        let controller = HiddenSpaceLifecycleController(
+            store: store,
+            config: config,
+            discardEngine: { _ in discardCount += 1; return nil },
+            syncActiveState: {},
+            trimActiveSpaceEngines: { policy, _ in
+                XCTAssertEqual(policy, .foreground, "a hidden window keeps its tab budget")
+                trimmed.fulfill()
+            }
+        )
+
+        controller.windowOcclusionChanged(isVisible: false)
+        wait(for: [trimmed], timeout: 1.0)
+
+        XCTAssertEqual(discardCount, 0)
+        XCTAssertEqual(store.liveEngineCount, 4)
+        XCTAssertFalse(engines[visibleId]!.isFrozen, "WebKit already throttles the occluded visible tab")
+        XCTAssertTrue([backgroundId, hiddenActiveId, hiddenOtherId].allSatisfy { engines[$0]!.isFrozen })
+    }
+
     func testFreezeIdleEnginesNeverFreezesATabWhosePiPWindowIsOpen() {
         let activeSpaceId = UUID(), hiddenSpaceId = UUID()
         var opener = Tab(id: UUID(), url: URL(string: "https://timer.example"), title: "Timer", spaceId: hiddenSpaceId)

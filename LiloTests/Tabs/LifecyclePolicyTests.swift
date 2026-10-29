@@ -5,7 +5,7 @@ import GRDB
 final class LifecyclePolicyTests: XCTestCase {
     func testBalancedConstants() {
         let c = LifecyclePolicyConfig.config(for: .balanced)
-        XCTAssertEqual(c.maxNormalRetainedEnginesPerHiddenSpace, 1)
+        XCTAssertEqual(c.maxNormalRetainedEnginesPerHiddenSpace, 6)
         XCTAssertEqual(c.maxHiddenSpacesWithNormalRetainedEngines, 2)
         XCTAssertEqual(c.audioGracePeriod, 30)
         XCTAssertEqual(c.restorationGracePeriod, 10)
@@ -14,10 +14,10 @@ final class LifecyclePolicyTests: XCTestCase {
         XCTAssertEqual(c.foregroundEngineBudgetMultiplier, 1.0)
     }
 
-    func testBalancedFreezeFiveMinutesDiscardThirtyMinutes() {
+    func testBalancedFreezesAfterFiveMinutesAndNeverIdleDiscards() {
         let c = LifecyclePolicyConfig.config(for: .balanced)
         XCTAssertEqual(c.freezeThreshold, 300)
-        XCTAssertEqual(c.discardThreshold, 1800)
+        XCTAssertEqual(c.discardThreshold, .infinity)
     }
 
     func testAggressiveIsTighter() {
@@ -34,11 +34,13 @@ final class LifecyclePolicyTests: XCTestCase {
         XCTAssertEqual(c.foregroundEngineBudgetMultiplier, 1.0)
     }
 
-    func testBatteryPowerCapsIdleDiscard() {
-        XCTAssertEqual(LifecyclePolicyConfig.config(for: .balanced, onBatteryPower: true).discardThreshold, 600)
-        XCTAssertEqual(LifecyclePolicyConfig.config(for: .aggressive, onBatteryPower: true).discardThreshold, 600)
-        XCTAssertEqual(LifecyclePolicyConfig.config(for: .conservative, onBatteryPower: true).discardThreshold, .infinity)
-        XCTAssertEqual(LifecyclePolicyConfig.config(for: .balanced, onBatteryPower: false).discardThreshold, 1800)
+    func testBatteryPowerLeavesIdleDiscardAlone() {
+        for preset in LifecyclePreset.allCases {
+            XCTAssertEqual(
+                LifecyclePolicyConfig.config(for: preset, onBatteryPower: true).discardThreshold,
+                LifecyclePolicyConfig.config(for: preset).discardThreshold
+            )
+        }
     }
 
     func testBatteryPowerCapsIdleFreeze() {
