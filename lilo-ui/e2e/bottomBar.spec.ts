@@ -35,7 +35,7 @@ test("an acting agent glows behind its Space and a waiting terminal is the bar's
 		{ event: "profileCreated", id: "profile-1", name: "Personal", isDefault: true, color: "#f1a7a5" },
 		{ event: "profileCreated", id: "profile-2", name: "Work", isDefault: false, color: "#b39df4" },
 		{
-			event: "agentActivity",
+			event: "agentActivity", moods: {},
 			clients: [{ name: "agent", busy: true, actingTabIds: [], spaceIds: [spaceId] }],
 			agentsSpaceIds: [spaceId],
 			agentsProfileId: "agents-profile",

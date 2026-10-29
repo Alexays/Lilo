@@ -47,7 +47,7 @@ test("a new private space behind the hidden Agents space tints the sidebar and t
 	world.spaces.push({ ...world.spaces[0], id: "agents", name: "Agents", sortOrder: 2 });
 	await bootChrome(page, world);
 	await page.evaluate(() => window.__lilo!.receive({
-		event: "agentActivity", clients: [], agentsSpaceIds: ["agents"], agentsProfileId: "profile-1", hiddenAgentsSpaceIds: ["agents"],
+		event: "agentActivity", moods: {}, clients: [], agentsSpaceIds: ["agents"], agentsProfileId: "profile-1", hiddenAgentsSpaceIds: ["agents"],
 	}));
 	await expect.poll(() => reportedBackground(page)).toBe(await sidebarBackground(page));
 	const workBackground = await sidebarBackground(page);
