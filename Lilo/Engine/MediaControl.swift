@@ -64,13 +64,15 @@ extension WKWebViewTab {
       // WebRTC peer tells it. Every peer of a call gets a remote description, so the hook sees each one; the
       // constructor stays WebKit's own.
       if (typeof RTCPeerConnection === 'function') {
-        const peers = new Set();
+        const peers = new Set(), transceivers = RTCPeerConnection.prototype.getTransceivers;
+        // Audio or video only: a data channel alone is a file transfer or a game. A brief disconnection keeps the
+        // call; only a failed or closed connection ends it.
         const settle = () => {
           let live = false;
           for (const peer of peers) {
             const state = peer.connectionState;
             if (state === 'closed' || state === 'failed') peers.delete(peer);
-            else if (state === 'connected') live = true;
+            else if ((state === 'connected' || state === 'disconnected') && apply(transceivers, peer, []).length > 0) live = true;
           }
           if (live !== rtc) { rtc = live; report(); }
         };
