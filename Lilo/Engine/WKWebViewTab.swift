@@ -125,10 +125,11 @@ final class WKWebViewTab: NSObject {
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
-        didSet { runsAtFullSpeedHidden = isInCall }
+        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
     }
     /// A call keeps full speed in a hidden tab, as in Chrome: App Nap would move the process that encodes the shared
     /// screen and decodes every participant to the efficiency cores, and its timers would fire once a second or less.
+    /// An agent's tab does too, so what the agent measures is the page, not the throttling of a hidden one.
     private var runsAtFullSpeedHidden = false {
         didSet {
             guard runsAtFullSpeedHidden != oldValue else { return }
@@ -151,14 +152,17 @@ final class WKWebViewTab: NSObject {
     var isTabShareSource = false {
         didSet {
             guard isTabShareSource != oldValue else { return }
-            runsAtFullSpeedHidden = isInCall
+            runsAtFullSpeedHidden = isInCall || isAgentControlled
             delegate?.tab(self, didUpdatePermissionUsage: effectivePermissionUsageState)
         }
     }
 
     /// True while an agent drives this tab: it stays attached and rendering like a tab-share source.
     var isAgentControlled = false {
-        didSet { screenTime?.suppressUsageRecording = suppressesScreenTimeUsage }
+        didSet {
+            screenTime?.suppressUsageRecording = suppressesScreenTimeUsage
+            runsAtFullSpeedHidden = isInCall || isAgentControlled
+        }
     }
     /// Set while an agent drives this tab: true when it took the page dialog, answered at once
     /// instead of opening a sheet on the user's window.
@@ -234,7 +238,7 @@ final class WKWebViewTab: NSObject {
     var isFormDirty = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
     var callControls = CallControls() {
-        didSet { runsAtFullSpeedHidden = isInCall }
+        didSet { runsAtFullSpeedHidden = isInCall || isAgentControlled }
     }
     /// A video of this page is in the system PiP window, playing or paused. Unlike `pip.isActive`, it counts a video
     /// the fallback script sent there.

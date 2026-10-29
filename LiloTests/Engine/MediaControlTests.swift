@@ -200,7 +200,7 @@ final class MediaControlTests: XCTestCase {
         XCTAssertTrue(tab.isInCall, "Meet's companion mode: no capture and no Media Session action, a live connection")
     }
 
-    func testACallRunsAtFullSpeedWhileItsTabIsHidden() throws {
+    func testACallOrAnAgentRunsAtFullSpeedWhileItsTabIsHidden() throws {
         let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
         defer { tab.teardown() }
         let preferences = tab.wkWebView.configuration.preferences
@@ -215,6 +215,12 @@ final class MediaControlTests: XCTestCase {
         XCTAssertEqual(throttled(), [false, false], "a call left for another tab or app keeps its process and timers at full speed")
 
         tab.callControls = WKWebViewTab.CallControls()
+        XCTAssertEqual(throttled(), [true, true])
+
+        tab.isAgentControlled = true
+        XCTAssertEqual(throttled(), [false, false], "what an agent measures in its hidden tab is not hidden-page throttling")
+
+        tab.isAgentControlled = false
         XCTAssertEqual(throttled(), [true, true])
     }
 

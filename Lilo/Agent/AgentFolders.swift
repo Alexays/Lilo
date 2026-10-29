@@ -259,8 +259,9 @@ extension AgentControl {
     }
 
     /// Under the shown tab when a window shows the space; otherwise in the parking window. A view another
-    /// window shows stays there. With occlusion detection off, the page renders and runs timers at full
-    /// rate though nobody sees it: what the agent measures in it is not the throttling of a hidden page.
+    /// window shows stays there. With occlusion detection off, and no hidden-page throttling while the agent
+    /// drives the tab, the page renders and runs timers at full rate though nobody sees it: what the agent
+    /// measures in it is not the throttling of a hidden page.
     func attach(_ engine: WKWebViewTab, to host: MainWindowController?) {
         let parked = engine.view.window === parkingWindow
         engine.setWindowOcclusionDetection(false)
