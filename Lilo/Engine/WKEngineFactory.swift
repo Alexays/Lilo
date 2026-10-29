@@ -889,7 +889,7 @@ final class WKEngineFactory {
         PageWorld.install([
             GeolocationBridge.pageModule, NotificationBridge.pageModule, SerialBridge.pageModule, EyeDropperBridge.pageModule,
             TabShareBridge.pageModule, WKWebViewTab.mediaControlModule, CooperativeFreezer.pageModule, WebstoreInstallHandler.pageModule,
-            DocumentPiPBridge.pageModule
+            DocumentPiPBridge.pageModule, AgentCapture.consoleModule
         ] + (UserDefaults.standard.bool(forKey: "LiloMeetDocumentPiPDisabled") ? [] : [DocumentPiPBridge.meetModule]), on: contentController)
         contentController.addUserScript(WKUserScript(source: FormDirtyBridge.scriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: false,
                                                      in: PageWorld.bridgeWorld))

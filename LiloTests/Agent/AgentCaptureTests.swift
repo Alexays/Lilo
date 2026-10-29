@@ -29,6 +29,56 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertFalse(errors.text.contains("fine thing"))
     }
 
+    func testConsoleReadsEveryLevelAndArgument() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = try await js("""
+            console.log('loaded', 1, true, null)
+            console.info('info', undefined, { a: [1, 'two'] })
+            console.warn('warn', [1, 2])
+            console.debug(new (class Point { constructor() {} })())
+            console.error({ name: 'Custom', message: 'not an Error' })
+            const error = new TypeError('typed')
+            error.stack = 'at somewhere'
+            console.log(error, Symbol('s'), 10n)
+            setTimeout(() => { throw { name: 'Boom', message: 'thrown' } })
+            Promise.reject('plain')
+            1
+            """, tab: tab)
+        var reply = (text: "", isError: false, images: [Data](), meta: [String: Any]())
+        await pollUntil {
+            reply = await self.client.callTool("read_console_messages", ["tabId": tab])
+            return reply.text.contains("plain") && reply.text.contains("Boom")
+        }
+
+        XCTAssertEqual(reply.text, """
+            [log] loaded 1 true null
+            [info] info undefined {"a":[1,"two"]}
+            [warn] warn [1,2]
+            [debug] [object Point]
+            [error] Custom: not an Error
+            [log] TypeError: typed
+            at somewhere Symbol(s) 10
+            [error] Unhandled rejection: plain
+            [error] Boom: thrown
+            """)
+        let errors = await client.callTool("read_console_messages", ["tabId": tab, "onlyErrors": true])
+        XCTAssertEqual(errors.text.components(separatedBy: "\n").count, 3, errors.text)
+    }
+
+    func testConsoleKeepsTheLatestThousandAndStartsOverOnEachDocument() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = try await js("for (let i = 0; i < 1100; i++) console.log('n' + i); 1", tab: tab)
+
+        let kept = await client.callTool("read_console_messages", ["tabId": tab, "pattern": "n9", "limit": 200])
+        XCTAssertEqual(kept.text.components(separatedBy: "\n").count, 100, kept.text)
+        XCTAssertTrue(kept.text.hasPrefix("[log] n900\n"), kept.text)
+
+        _ = await client.callTool("navigate", ["tabId": tab, "url": "data:text/html,<p>next</p>"])
+        _ = try await js("console.log('next'); 1", tab: tab)
+        let next = await client.callTool("read_console_messages", ["tabId": tab])
+        XCTAssertEqual(next.text, "[log] next")
+    }
+
     func testRejectionsOfOtherFramesAndNonErrorsReadUsefully() async throws {
         let tab = try await agentTab(showing: "<!doctype html><body><iframe srcdoc='<p>frame</p>'></iframe></body>")
         _ = await client.callTool("read_console_messages", ["tabId": tab])
@@ -63,6 +113,9 @@ final class AgentCaptureTests: AgentToolTestCase {
         XCTAssertLessThan(reply.text.count, 6000)
     }
 
+    /// Whether the console reads its arguments, as the capture does: WebKit's own console leaves their getters alone.
+    private static let consoleIsPatched = "let read = false; console.log({ get message() { read = true; return '' } }); read"
+
     func testStoppingTheCaptureLeavesThePageAsItWas() async throws {
         let tab = try await agentTab(showing: Self.page)
         _ = await client.callTool("read_console_messages", ["tabId": tab])
@@ -71,21 +124,40 @@ final class AgentCaptureTests: AgentToolTestCase {
 
         try XCTUnwrap(control.captures[id]).stop()
 
-        let restored = await pollUntil(timeout: 5) {
-            (try? await webView.evaluateJavaScript("typeof window.__liloConsole")) as? String == "undefined"
-        }
+        let restored = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript(Self.consoleIsPatched)) as? Bool == false }
         XCTAssertTrue(restored)
-        let source = try await webView.evaluateJavaScript("Function.prototype.toString.call(console.log)") as? String
-        XCTAssertTrue(source?.contains("[native code]") == true, source ?? "")
+        _ = try await webView.evaluateJavaScript("console.log('while stopped'); Promise.reject('while stopped'); 1")
+        // Reading starts the capture over: a patch left behind would log each message twice.
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+        _ = try await webView.evaluateJavaScript("console.log('again'); 1")
+        let reply = await client.callTool("read_console_messages", ["tabId": tab])
+        XCTAssertEqual(reply.text, "[log] again")
+    }
+
+    func testTheConsolePatchLeavesNoTrace() async throws {
+        let tab = try await agentTab(showing: Self.page)
+        _ = await client.callTool("read_console_messages", ["tabId": tab])
+
+        let patched = try await js(Self.consoleIsPatched, tab: tab) as? Bool
+        let shape = try await js("""
+            [...['log', 'info', 'warn', 'error', 'debug'].map(level => {
+              const f = console[level], d = Object.getOwnPropertyDescriptor(console, level)
+              return `${Function.prototype.toString.call(f)}|${f.toString()}|${f.name}/${f.length}|${d.writable},${d.enumerable},${d.configurable}|${'prototype' in f}`
+            }), Object.keys(window).filter(key => /lilo/i.test(key)).join()].join('\\n')
+            """, tab: tab) as? String
+
+        XCTAssertEqual(patched, true)
+        let expected = ["log", "info", "warn", "error", "debug"].map { "function \($0)() {\n    [native code]\n}|function \($0)() {\n    [native code]\n}|\($0)/0|true,true,true|false" }
+        XCTAssertEqual(shape, (expected + [""]).joined(separator: "\n"))
     }
 
     func testConsoleHookNotInstalledOnUserTabs() async throws {
         _ = try await agentTab(showing: Self.page)
         let user = try XCTUnwrap(window.tabManager.activeEngineTab)
 
-        let hooked = try await user.wkWebView.evaluateJavaScript("typeof window.__liloConsole") as? String
+        let patched = try await user.wkWebView.evaluateJavaScript(Self.consoleIsPatched) as? Bool
 
-        XCTAssertEqual(hooked, "undefined")
+        XCTAssertEqual(patched, false)
     }
 
     func testNetworkLists404WithStatus() async throws {

@@ -18,52 +18,62 @@ final class AgentCapture: NSObject {
     }
 
     static let maxEntries = 1000
-    static let consoleHook = """
-        (() => {
-          if (window.__liloConsole) return
-          const log = window.__liloConsole = []
+    /// The `PageWorld` module of the console capture, which patches the console only once an agent drives the tab.
+    static let consoleModule = #"""
+    function () {
+      if (window.top !== window) return;
+      const unlisten = EventTarget.prototype.removeEventListener, objectToString = Object.prototype.toString;
+      let log, stop;
+      lilo.on('console', action => {
+        if (action === 'stop') return void (stop && stop());
+        if (!log) {
+          log = [];
           const push = (level, args) => {
             const text = args.map(a => {
-              if (typeof a === 'string') return a
-              if (a === null || typeof a !== 'object') return String(a)
+              if (typeof a === 'string') return a;
+              if (a === null || typeof a !== 'object') return String(a);
               // The page's getters may throw: the page's own console call must not.
               try {
                 // An Error of another frame fails instanceof: whatever carries a message reads as one. WebKit's
                 // stack holds the frames only, never the message.
-                if (a instanceof Error || typeof a.message === 'string') {
-                  return `${a.name || 'Error'}: ${a.message}` + (typeof a.stack === 'string' && a.stack ? '\\n' + a.stack : '')
+                if (a instanceof NativeError || typeof a.message === 'string') {
+                  return `${a.name || 'Error'}: ${a.message}` + (typeof a.stack === 'string' && a.stack ? '\n' + a.stack : '');
                 }
                 // Stops descending once the text is long enough: a huge object costs only what is kept of it.
-                let used = 0
-                const json = JSON.stringify(a, (key, value) => {
-                  if (used > 5000) return undefined
-                  used += key.length + (typeof value === 'string' ? value.length : 4)
-                  return Array.isArray(value) && value.length > 5000 ? value.slice(0, 5000) : value
-                })
+                let used = 0;
+                const json = stringify(a, (key, value) => {
+                  if (used > 5000) return undefined;
+                  used += key.length + (typeof value === 'string' ? value.length : 4);
+                  return Array.isArray(value) && value.length > 5000 ? value.slice(0, 5000) : value;
+                });
                 // An object with no data of its own (a class instance) stringifies to "{}": its class says more.
-                return json && json !== '{}' ? json : `[object ${a.constructor?.name || 'Object'}]`
-              } catch { return Object.prototype.toString.call(a) }
-            }).join(' ')
-            log.push({ level, text: text.slice(0, 5000), time: Date.now(), url: location.href })
-            if (log.length > \(maxEntries)) log.shift()
+                return json && json !== '{}' ? json : `[object ${a.constructor?.name || 'Object'}]`;
+              } catch (e) { return apply(objectToString, a, []); }
+            }).join(' ');
+            log.push({ level, text: text.slice(0, 5000), time: Date.now(), url: location.href });
+            if (log.length > \#(maxEntries)) log.shift();
+          };
+          const wrappers = create(null);
+          for (const level of ['log', 'info', 'warn', 'error', 'debug']) {
+            wrappers[level] = { [level](...args) { push(level, args); return apply(originals[level], this, args); } }[level];
           }
-          const wrapped = ['log', 'info', 'warn', 'error', 'debug'].map(level => {
-            const original = console[level]
-            const wrapper = console[level] = function (...args) { push(level, args); return original.apply(this, args) }
-            return { level, original, wrapper }
-          })
-          const onError = e => push('error', [e.error ?? e.message])
-          const onRejection = e => push('error', ['Unhandled rejection:', e.reason])
-          addEventListener('error', onError)
-          addEventListener('unhandledrejection', onRejection)
-          log.restore = () => {
-            for (const { level, original, wrapper } of wrapped) if (console[level] === wrapper) console[level] = original
-            removeEventListener('error', onError)
-            removeEventListener('unhandledrejection', onRejection)
-            delete window.__liloConsole
-          }
-        })()
-        """
+          const originals = lilo.methods(console, wrappers);
+          const onError = e => push('error', [e.error ?? e.message]);
+          const onRejection = e => push('error', ['Unhandled rejection:', e.reason]);
+          apply(listen, window, ['error', onError]);
+          apply(listen, window, ['unhandledrejection', onRejection]);
+          stop = () => {
+            for (const level in wrappers) if (console[level] === wrappers[level]) console[level] = originals[level];
+            apply(unlisten, window, ['error', onError]);
+            apply(unlisten, window, ['unhandledrejection', onRejection]);
+            log = stop = undefined;
+          };
+        }
+        if (action === 'read') return log;
+      });
+    }
+    """#
+    static let startConsole = PageWorld.push("console", ["start"])
 
     private(set) var requests: [Request] = []
     /// What Lilo answered for the agent (a dialog, a permission, a sign-in). Kept here, not in the page:
@@ -90,7 +100,9 @@ final class AgentCapture: NSObject {
         }
         // The URL changes as a navigation starts, often still in the old document: the end of the load
         // hooks the new one, in case the start was too early.
-        let hook: @Sendable (WKWebView) -> Void = { webView in MainActor.assumeIsolated { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(Self.consoleHook) } }
+        let hook: @Sendable (WKWebView) -> Void = { webView in
+            MainActor.assumeIsolated { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(Self.startConsole, in: nil, in: PageWorld.bridgeWorld) }
+        }
         observations = [
             webView.observe(\.url, options: [.initial]) { webView, _ in hook(webView) },
             webView.observe(\.isLoading, options: [.new]) { webView, change in if change.newValue == false { hook(webView) } }
@@ -101,14 +113,18 @@ final class AgentCapture: NSObject {
         observations.forEach { $0.invalidate() }
         observations = []
         if usesResourceLoadDelegate { webView?.perform(Self.setDelegate, with: nil) }
-        webView?.evaluateJavaScript("window.__liloConsole?.restore()")
+        if let webView { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("console", ["stop"]), in: nil, in: PageWorld.bridgeWorld) }
     }
 
     /// Console entries of the current document, oldest first.
     func consoleMessages() async -> [[String: Any]] {
         guard let webView else { return [] }
-        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(Self.consoleHook)
-        let page = (try? await webView.evaluateJavaScript("window.__liloConsole ?? []") as? [[String: Any]]) ?? []
+        let page = await withCheckedContinuation { continuation in
+            WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("console", ["read"]), in: nil, in: PageWorld.bridgeWorld) {
+                nonisolated(unsafe) let entries = $0 as? [[String: Any]] ?? []
+                continuation.resume(returning: entries)
+            }
+        }
         let time = { (entry: [String: Any]) in (entry["time"] as? NSNumber)?.doubleValue ?? 0 }
         return (page + notes).sorted { time($0) < time($1) }
     }

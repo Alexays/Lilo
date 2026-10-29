@@ -1386,7 +1386,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.documentPiPCloser?()
             tab.cancelPendingDocumentPiP()
             if tab.navigationSignpost != nil { PerfSignposts.navigation.emitEvent("commit") }
-            if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.consoleHook) }
+            if tab.isAgentControlled { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(AgentCapture.startConsole, in: nil, in: PageWorld.bridgeWorld) }
             tab.hasCommittedContent = true
             tab.isPageLost = false   // a navigation brought an off-screen lost page back on its own
             tab.subframes.removeAll()

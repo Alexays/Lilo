@@ -42,7 +42,8 @@ final class PageWorldTests: XCTestCase {
       if (typeof value === 'function' && value.prototype) { visit(value, key); visit(value.prototype, key + '.prototype'); }
     }
     for (const [path, object] of [['navigator', navigator], ['document', document], ['mediaDevices', navigator.mediaDevices],
-                                  ['geolocation', navigator.geolocation], ['mediaSession', navigator.mediaSession]]) {
+                                  ['geolocation', navigator.geolocation], ['mediaSession', navigator.mediaSession],
+                                  ['console', console]]) {
       if (object) visit(object, path);
     }
     const frame = fresh.contentWindow;
@@ -63,13 +64,14 @@ final class PageWorldTests: XCTestCase {
         let userAgentData: Bool
     }
 
-    private func report(of webView: WKWebView) async throws -> Report {
+    private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
         webView.loadHTMLString("<p>probe</p>", baseURL: URL(string: "https://example.com/"))
         let loaded = await pollUntil(timeout: 10) {
             let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
             return ((try? await webView.evaluateJavaScript(condition)) as? Bool) == true
         }
         XCTAssertTrue(loaded)
+        await afterLoad()
         let result = try await webView.callAsyncJavaScript(Self.probe, contentWorld: .page)
         let json = try XCTUnwrap(result as? String)
         return try JSONDecoder().decode(Report.self, from: Data(json.utf8))
@@ -79,7 +81,15 @@ final class PageWorldTests: XCTestCase {
         let factory = WKEngineFactory()
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
-        let lilo = try await report(of: tab.wkWebView)
+        // With the console capture an agent's tab runs: it must leave no more trace than the rest.
+        let capture = AgentCapture(webView: tab.wkWebView)
+        defer { capture.stop() }
+        let lilo = try await report(of: tab.wkWebView) {
+            _ = await capture.consoleMessages()
+            _ = try? await tab.wkWebView.evaluateJavaScript("console.log('captured'); 1")
+            let messages = await capture.consoleMessages()
+            XCTAssertEqual(messages.compactMap { $0["text"] as? String }, ["captured"])
+        }
 
         // The same engine settings without Lilo's scripts and handlers: only WebKit's own native APIs, as in Safari.
         let configuration = try XCTUnwrap(tab.wkWebView.configuration.copy() as? WKWebViewConfiguration)
