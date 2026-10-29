@@ -1,0 +1,62 @@
+{
+  "version": "0.9.0",
+  "title": {
+    "en": "Find your way back.",
+    "fr": "Retrouvez votre chemin."
+  },
+  "introduction": {
+    "en": "Your whole history is one shortcut away, calls stay in view when you leave their tab, and Lilo now speaks eight more languages.",
+    "fr": "Tout votre historique est à un raccourci, les appels restent visibles quand vous quittez leur onglet, et Lilo parle huit langues de plus."
+  },
+  "highlights": [
+    {
+      "id": "history",
+      "title": {
+        "en": "Your whole history, day by day.",
+        "fr": "Tout votre historique, jour par jour."
+      },
+      "body": {
+        "en": "Press ⌘Y to open the History page. Each day's visits are grouped by site, so a busy afternoon reads in a few lines. Filter by period, site or the terminal that opened a page, search, and delete what you pick.",
+        "fr": "Appuyez sur ⌘Y pour ouvrir la page Historique. Les visites de chaque jour sont regroupées par site : un après-midi chargé tient en quelques lignes. Filtrez par période, par site ou par le terminal qui a ouvert la page, cherchez, et supprimez ce que vous choisissez."
+      },
+      "notes": [
+        "Browse your whole history in a History page (⌘Y), each day's visits grouped by site: filter by period, site or terminal, search, and delete what you pick."
+      ]
+    },
+    {
+      "id": "picture-in-picture",
+      "title": {
+        "en": "Keep your call in view.",
+        "fr": "Gardez votre appel en vue."
+      },
+      "body": {
+        "en": "Leave a Google Meet tab and its compact view follows you: in the sidebar while Lilo is in front, in a floating window over your other apps. Speaker, mute, camera and hang up stay one click away.",
+        "fr": "Quittez un onglet Google Meet et sa vue compacte vous suit : dans la barre latérale tant que Lilo est au premier plan, dans une fenêtre flottante au-dessus de vos autres apps. Orateur, micro, caméra et raccrocher restent à un clic."
+      },
+      "notes": [
+        "Google Meet opens its compact picture-in-picture view (speaker, mute, camera, hang up): in the sidebar while Lilo is in front, in a floating window over other apps, automatically when you leave the call tab. Other sites can open document picture-in-picture windows too."
+      ]
+    },
+    {
+      "id": "languages",
+      "title": {
+        "en": "Lilo speaks your language.",
+        "fr": "Lilo parle votre langue."
+      },
+      "body": {
+        "en": "German, Japanese, Italian, Korean, Traditional Chinese, Polish, Turkish and Dutch join the list, from the menus to system prompts, Shortcuts and emoji search.",
+        "fr": "L'allemand, le japonais, l'italien, le coréen, le chinois traditionnel, le polonais, le turc et le néerlandais rejoignent la liste, des menus aux invites système, en passant par Raccourcis et la recherche d'emoji."
+      },
+      "notes": [
+        "Use Lilo in German, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Japanese, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Italian, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Korean, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Traditional Chinese, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Polish, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Turkish, including menus, system prompts, Shortcuts, and emoji search.",
+        "Use Lilo in Dutch, including menus, system prompts, Shortcuts, and emoji search."
+      ]
+    }
+  ]
+}
