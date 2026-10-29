@@ -1974,6 +1974,7 @@
 		"Username": "Имя пользователя",
 		"Password": "Пароль",
 		"Authentication Required": "Требуется аутентификация",
+		"%@ asks for a certificate to identify you.": "%@ запрашивает сертификат для вашей идентификации.",
 		"Log In": "Войти",
 		"Saved credentials were rejected by %@.\nRealm: %@": "%@ отклонил сохранённые учётные данные.\nОбласть: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@ требует имя пользователя и пароль.\nОбласть: %@",

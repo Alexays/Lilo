@@ -1954,6 +1954,7 @@
 		"Username": "사용자 이름",
 		"Password": "암호",
 		"Authentication Required": "인증 필요",
+		"%@ asks for a certificate to identify you.": "%@에서 본인 확인을 위한 인증서를 요청합니다.",
 		"Log In": "로그인",
 		"Saved credentials were rejected by %@.\nRealm: %@": "%@에서 저장된 인증 정보를 거부했습니다.\n영역: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@에 사용자 이름과 암호가 필요합니다.\n영역: %@",

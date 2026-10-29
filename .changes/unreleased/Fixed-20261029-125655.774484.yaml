@@ -1,0 +1,3 @@
+kind: Fixed
+body: A site that asks for a client certificate now works, Lilo shows the certificates from your keychain to choose from, as Safari does.
+time: 2026-10-29T12:56:55.774484+01:00

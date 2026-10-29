@@ -1687,6 +1687,8 @@ extension WKWebViewTab: WKNavigationDelegate {
                 delegate.tab(self, authenticateProxy: challenge) { answer in
                     if let answer { completionHandler(answer.0, answer.1) } else { prompt() }
                 }
+            } else if method == NSURLAuthenticationMethodClientCertificate, !isAgentControlled {
+                ClientCertificateChallengeHandler.resolve(challenge, in: webView.window, completion: completionHandler)
             } else {
                 completionHandler(.performDefaultHandling, nil)
             }

@@ -1954,6 +1954,7 @@
 		"Username": "Kullanıcı Adı",
 		"Password": "Parola",
 		"Authentication Required": "Kimlik Doğrulama Gerekli",
+		"%@ asks for a certificate to identify you.": "%@ sizi tanımlamak için bir sertifika istiyor.",
 		"Log In": "Oturum Aç",
 		"Saved credentials were rejected by %@.\nRealm: %@": "Kaydedilmiş kimlik bilgileri %@ tarafından reddedildi.\nBölge: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@ için kullanıcı adı ve parola gerekiyor.\nBölge: %@",

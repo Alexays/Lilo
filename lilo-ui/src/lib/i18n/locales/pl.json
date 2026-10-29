@@ -1974,6 +1974,7 @@
 		"Username": "Nazwa użytkownika",
 		"Password": "Hasło",
 		"Authentication Required": "Wymagane uwierzytelnienie",
+		"%@ asks for a certificate to identify you.": "%@ prosi o certyfikat, aby Cię zidentyfikować.",
 		"Log In": "Zaloguj się",
 		"Saved credentials were rejected by %@.\nRealm: %@": "Zapisane dane logowania zostały odrzucone przez %@.\nDziedzina: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@ wymaga nazwy użytkownika i hasła.\nDziedzina: %@",

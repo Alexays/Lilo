@@ -1954,6 +1954,7 @@
 		"Username": "ユーザ名",
 		"Password": "パスワード",
 		"Authentication Required": "認証が必要です",
+		"%@ asks for a certificate to identify you.": "%@ が本人確認のための証明書を求めています。",
 		"Log In": "ログイン",
 		"Saved credentials were rejected by %@.\nRealm: %@": "保存済みの認証情報が %@ に拒否されました。\nレルム：%@",
 		"%@ requires a username and password.\nRealm: %@": "%@ ではユーザ名とパスワードが必要です。\nレルム：%@",

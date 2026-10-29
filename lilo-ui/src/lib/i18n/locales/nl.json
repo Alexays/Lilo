@@ -1954,6 +1954,7 @@
 		"Username": "Gebruikersnaam",
 		"Password": "Wachtwoord",
 		"Authentication Required": "Authenticatie vereist",
+		"%@ asks for a certificate to identify you.": "%@ vraagt om een certificaat om je te identificeren.",
 		"Log In": "Log in",
 		"Saved credentials were rejected by %@.\nRealm: %@": "Bewaarde inloggegevens zijn geweigerd door %@.\nRealm: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@ vereist een gebruikersnaam en wachtwoord.\nRealm: %@",

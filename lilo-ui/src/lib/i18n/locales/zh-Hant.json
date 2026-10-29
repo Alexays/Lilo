@@ -1954,6 +1954,7 @@
 		"Username": "使用者名稱",
 		"Password": "密碼",
 		"Authentication Required": "需要驗證",
+		"%@ asks for a certificate to identify you.": "%@ 要求提供憑證以驗證你的身分。",
 		"Log In": "登入",
 		"Saved credentials were rejected by %@.\nRealm: %@": "%@ 拒絕了已儲存的憑證。\n領域：%@",
 		"%@ requires a username and password.\nRealm: %@": "%@ 要求使用者名稱與密碼。\n領域：%@",

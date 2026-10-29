@@ -1954,6 +1954,7 @@
 		"Username": "Nome utente",
 		"Password": "Password",
 		"Authentication Required": "Autenticazione richiesta",
+		"%@ asks for a certificate to identify you.": "%@ richiede un certificato per identificarti.",
 		"Log In": "Accedi",
 		"Saved credentials were rejected by %@.\nRealm: %@": "Le credenziali salvate sono state rifiutate da %@.\nAmbito: %@",
 		"%@ requires a username and password.\nRealm: %@": "%@ richiede un nome utente e una password.\nAmbito: %@",
