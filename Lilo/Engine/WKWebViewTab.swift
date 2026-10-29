@@ -124,7 +124,21 @@ final class WKWebViewTab: NSObject {
     private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
     private let findController: PageFindController
     let pip: PiPController
-    private var permissionUsageState = WebPermissionUsageState.none
+    private var permissionUsageState = WebPermissionUsageState.none {
+        didSet { runsAtFullSpeedHidden = isInCall }
+    }
+    /// A call keeps full speed in a hidden tab, as in Chrome: App Nap would move the process that encodes the shared
+    /// screen and decodes every participant to the efficiency cores, and its timers would fire once a second or less.
+    private var runsAtFullSpeedHidden = false {
+        didSet {
+            guard runsAtFullSpeedHidden != oldValue else { return }
+            let preferences = webView.configuration.preferences
+            for key in ["pageVisibilityBasedProcessSuppressionEnabled", "hiddenPageDOMTimerThrottlingEnabled"]
+            where preferences.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
+                preferences.setValue(!runsAtFullSpeedHidden, forKey: key)
+            }
+        }
+    }
     private lazy var captureUsageObserver = CaptureUsageObserver(webView: webView) { [weak self] state in
         guard let self, state != self.permissionUsageState else { return }
         self.permissionUsageState = state
@@ -137,6 +151,7 @@ final class WKWebViewTab: NSObject {
     var isTabShareSource = false {
         didSet {
             guard isTabShareSource != oldValue else { return }
+            runsAtFullSpeedHidden = isInCall
             delegate?.tab(self, didUpdatePermissionUsage: effectivePermissionUsageState)
         }
     }
@@ -218,7 +233,9 @@ final class WKWebViewTab: NSObject {
     /// page that held the edits is gone.
     var isFormDirty = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
-    var callControls = CallControls()
+    var callControls = CallControls() {
+        didSet { runsAtFullSpeedHidden = isInCall }
+    }
     /// A video of this page is in the system PiP window, playing or paused. Unlike `pip.isActive`, it counts a video
     /// the fallback script sent there.
     private(set) var isInPictureInPicture = false

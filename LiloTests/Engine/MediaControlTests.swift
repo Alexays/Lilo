@@ -200,6 +200,24 @@ final class MediaControlTests: XCTestCase {
         XCTAssertTrue(tab.isInCall, "Meet's companion mode: no capture and no Media Session action, a live connection")
     }
 
+    func testACallRunsAtFullSpeedWhileItsTabIsHidden() throws {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { tab.teardown() }
+        let preferences = tab.wkWebView.configuration.preferences
+        let keys = ["pageVisibilityBasedProcessSuppressionEnabled", "hiddenPageDOMTimerThrottlingEnabled"]
+        guard keys.allSatisfy({ preferences.responds(to: NSSelectorFromString("_\($0)")) }) else {
+            throw XCTSkip("This WebKit has no hidden page throttling preferences")
+        }
+        let throttled = { keys.map { preferences.value(forKey: $0) as? Bool } }
+        XCTAssertEqual(throttled(), [true, true])
+
+        tab.callControls.hasLiveConnection = true
+        XCTAssertEqual(throttled(), [false, false], "a call left for another tab or app keeps its process and timers at full speed")
+
+        tab.callControls = WKWebViewTab.CallControls()
+        XCTAssertEqual(throttled(), [true, true])
+    }
+
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
         let tab = (factory ?? WKEngineFactory()).createTab(configuration: WKEngineFactory.Configuration())
         tab.wkWebView.loadHTMLString(html, baseURL: URL(string: "https://example.com/"))
