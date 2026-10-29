@@ -314,6 +314,11 @@
 				"description": "Novas janelas e pop-ups de páginas abrem como abas aqui.",
 				"keywords": "janela única abas em vez de janelas"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Abrir com uma janela vazia",
+				"description": "O Lilo abre sem nenhuma aba selecionada e as abas fixadas voltam à página inicial. Caso contrário, isso só acontece depois de uma ausência maior que o prazo de arquivamento do espaço.",
+				"keywords": "iniciar recomeçar vazia janela sem aba restaurar sessão arquivo"
+			},
 			"littleWindowHotKey": {
 				"title": "Atalho da minijanela",
 				"description": "Command-Option-N abre uma minijanela a partir de qualquer app.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "há {count} d",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Arquivadas recentemente",
+		"buttonLabel": {"one": "{count} aba arquivada recentemente", "other": "{count} abas arquivadas recentemente"},
+		"restore": "Restaurar",
+		"showAll": "Mostrar todas as abas arquivadas"
+	},
 	"undoToast": {
 		"closed": "\"{title}\" fechada",
 		"closedCount": "{count} abas fechadas",
 		"undo": "Desfazer",
-		"undoLabel": "Desfazer: {closed}"
+		"undoLabel": "Desfazer: {closed}",
+		"archived": "“{title}” arquivada",
+		"archivedCount": {"one": "{count} aba arquivada", "other": "{count} abas arquivadas"}
 	},
 	"updateCard": {
 		"ready": "Pronta para instalar",

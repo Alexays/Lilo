@@ -314,6 +314,11 @@
 				"description": "新視窗與網頁彈出式視窗會在此處以分頁開啟。",
 				"keywords": "單一 視窗 分頁 代替 視窗"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "以空白視窗開啟",
+				"description": "Lilo 開啟時不選取任何分頁，釘選的分頁會回到各自的首頁。關閉時，只有離開時間超過空間的封存期限後才會這樣。",
+				"keywords": "啟動 重新開始 空白 視窗 無分頁 回復 工作階段 封存"
+			},
 			"littleWindowHotKey": {
 				"title": "小視窗快速鍵",
 				"description": "Command-Option-N 可從任何 App 開啟小視窗。",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} 天前",
 		"selected": "{title}，{detail}"
 	},
+	"archivedTabs": {
+		"title": "最近封存",
+		"buttonLabel": {"one": "最近封存的 {count} 個分頁", "other": "最近封存的 {count} 個分頁"},
+		"restore": "回復",
+		"showAll": "顯示所有已封存的分頁"
+	},
 	"undoToast": {
 		"closed": "已關閉「{title}」",
 		"closedCount": "已關閉 {count} 個分頁",
 		"undo": "還原",
-		"undoLabel": "還原：{closed}"
+		"undoLabel": "還原：{closed}",
+		"archived": "已封存「{title}」",
+		"archivedCount": {"one": "已封存 {count} 個分頁", "other": "已封存 {count} 個分頁"}
 	},
 	"updateCard": {
 		"ready": "已準備好安裝",

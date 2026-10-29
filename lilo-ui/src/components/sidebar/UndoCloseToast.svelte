@@ -13,18 +13,12 @@
     pauseUndoToast,
     resumeUndoToast,
     undoTabClose,
+    undoToastSubject,
     UNDO_TOAST_DURATION_MS,
   } from "../../stores/undoToast.svelte";
 
   const toast = $derived(getUndoToast());
-  const closedLabel = $derived(
-    !toast
-      ? ""
-      : toast.label ??
-        (toast.count > 1
-          ? t("undoToast.closedCount", { count: toast.count })
-          : t("undoToast.closed", { title: toast.title })),
-  );
+  const closedLabel = $derived(toast ? undoToastSubject(toast) : "");
 </script>
 
 {#if toast}
@@ -41,6 +35,10 @@
       onblur={resumeUndoToast}
       onclick={undoTabClose}
     >
+      <!-- Archived tabs leave no trace in the list, so the pill says what went. -->
+      {#if toast.archivedIds}
+        <span class="undo-subject">{closedLabel} ·</span>
+      {/if}
       <!-- Remounted on every close so the ring animation restarts from full. -->
       {#key toast.seq}
         <svg class="undo-ring" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -115,6 +113,15 @@
   .undo-ring,
   .undo-arrow {
     flex-shrink: 0;
+  }
+
+  .undo-subject {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-regular);
   }
 
   /* Drains clockwise from 12 o'clock. */

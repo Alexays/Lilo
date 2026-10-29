@@ -314,6 +314,11 @@
 				"description": "새 윈도우와 페이지 팝업을 여기에 탭으로 엽니다.",
 				"keywords": "단일 윈도우 창 대신 탭"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "빈 윈도우로 열기",
+				"description": "Lilo가 선택된 탭 없이 열리고, 고정한 탭은 홈 페이지로 돌아갑니다. 끄면 스페이스의 보관 기간보다 오래 자리를 비운 뒤에만 그렇게 됩니다.",
+				"keywords": "시작 새로 빈 윈도우 탭 없음 세션 복원 보관"
+			},
 			"littleWindowHotKey": {
 				"title": "작은 창 단축키",
 				"description": "어떤 앱에서든 Command-Option-N을 누르면 작은 창이 열립니다.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count}일 전",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "최근 보관됨",
+		"buttonLabel": {"one": "최근 보관한 탭 {count}개", "other": "최근 보관한 탭 {count}개"},
+		"restore": "복원",
+		"showAll": "보관한 모든 탭 보기"
+	},
 	"undoToast": {
 		"closed": "‘{title}’ 닫힘",
 		"closedCount": "탭 {count}개 닫힘",
 		"undo": "실행 취소",
-		"undoLabel": "실행 취소: {closed}"
+		"undoLabel": "실행 취소: {closed}",
+		"archived": "'{title}' 보관됨",
+		"archivedCount": {"one": "탭 {count}개 보관됨", "other": "탭 {count}개 보관됨"}
 	},
 	"updateCard": {
 		"ready": "설치 준비 완료",

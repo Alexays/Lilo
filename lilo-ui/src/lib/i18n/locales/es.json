@@ -314,6 +314,11 @@
 				"description": "Las ventanas nuevas y emergentes se abren aquí como pestañas.",
 				"keywords": "una ventana pestañas ventanas"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Abrir con una ventana vacía",
+				"description": "Lilo se abre sin ninguna pestaña seleccionada y las pestañas fijadas vuelven a su página de inicio. Si no, esto solo ocurre tras una ausencia más larga que el plazo de archivo del espacio.",
+				"keywords": "inicio empezar de cero vacía ventana sin pestaña restaurar sesión archivo"
+			},
 			"littleWindowHotKey": {
 				"title": "Atajo de ventana pequeña",
 				"description": "Comando-Opción-N abre una ventana pequeña desde cualquier app.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "hace {count} d",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Archivadas recientemente",
+		"buttonLabel": {"one": "{count} pestaña archivada recientemente", "other": "{count} pestañas archivadas recientemente"},
+		"restore": "Restaurar",
+		"showAll": "Ver todas las pestañas archivadas"
+	},
 	"undoToast": {
 		"closed": "«{title}» cerrada",
 		"closedCount": "{count} pestañas cerradas",
 		"undo": "Deshacer",
-		"undoLabel": "Deshacer: {closed}"
+		"undoLabel": "Deshacer: {closed}",
+		"archived": "«{title}» archivada",
+		"archivedCount": {"one": "{count} pestaña archivada", "other": "{count} pestañas archivadas"}
 	},
 	"updateCard": {
 		"ready": "Listo para instalar",

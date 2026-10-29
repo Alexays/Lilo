@@ -71,6 +71,7 @@ export type SettingId =
   | "newProfile"
   | "lifecyclePreset"
   | "singleWindow"
+  | "emptyWindowOnLaunch"
   | "littleWindowHotKey"
   | "externalLinkDefault"
   | "externalLinkRules"
@@ -210,6 +211,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   dockCallsInSidebar: { key: "dockCallsInSidebar", fallback: true },
   autoDevices: { key: "autoDeviceSwitching", fallback: false },
   singleWindow: { key: "singleWindow", fallback: false },
+  emptyWindowOnLaunch: { key: "emptyWindowOnLaunch", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
   contentBlocker: { key: "contentBlockerEnabled", fallback: true },
@@ -265,6 +267,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "newProfile", section: "tabs", groupKey: "settings.groups.profiles" },
   { id: "lifecyclePreset", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "singleWindow", section: "tabs", groupKey: "settings.groups.tabsWindows" },
+  { id: "emptyWindowOnLaunch", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "littleWindowHotKey", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "peekPinnedTabLinks", section: "tabs", groupKey: "settings.groups.tabsWindows" },
   { id: "contentBlocker", section: "privacy", groupKey: "settings.groups.contentBlocking" },

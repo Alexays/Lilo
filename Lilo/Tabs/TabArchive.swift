@@ -41,11 +41,14 @@ extension BrowserContext {
     /// Serial, so the writes land in the order they were made.
     private static let tabArchiveQueue = DispatchQueue(label: "fr.arouillard.lilo.tab-archive", qos: .utility)
 
-    /// One save per main-thread turn, however many tabs were archived in it.
+    /// One save per main-thread turn, however many tabs were archived in it; each window's chrome gets its Space's list then.
     func saveTabArchive() {
         guard !tabArchiveSavePending else { return }
         tabArchiveSavePending = true
-        DispatchQueue.main.async { [weak self] in self?.writeTabArchive() }
+        DispatchQueue.main.async { [weak self] in
+            self?.writeTabArchive()
+            self?.windows.windows.forEach { $0.sendArchivedTabs() }
+        }
     }
 
     /// Writes the archive off the main thread, private Spaces left out; at quit, waits for the disk.
@@ -75,6 +78,13 @@ extension BrowserContext {
         tabArchive.entries = saved.filter { $0.archivedAt > expiry } + tabArchive.entries
     }
 
+    /// A Space opens anew at launch, on no tab with its pinned and bookmarked tabs back on their home page, when set to
+    /// or after an absence longer than it keeps idle tabs.
+    func startsFresh(_ space: Space) -> Bool {
+        settingsStore?.emptyWindowOnLaunch == true
+            || (space.archiveAfterHours > 0 && (launchAbsence ?? 0) > Double(space.archiveAfterHours) * 3600)
+    }
+
     /// A tab playing sound, in a call or in Picture in Picture, holding unsaved input or driven by an
     /// agent: neither the idle sweep nor Clear takes it.
     func isBusy(_ tab: Tab, engine: WKWebViewTab?) -> Bool {
@@ -95,9 +105,11 @@ extension BrowserContext {
     }
 
     /// Archives the top-level unpinned web tabs of the loaded Spaces left longer than their Space's
-    /// delay, except one a window shows, a Space's active tab, and a busy one.
-    func archiveIdleTabs(now: Date = Date()) {
-        guard let spaceManager, let commander = windows.activeWindow ?? windows.windows.first else { return }
+    /// delay, except one a window shows, a Space's active tab, and a busy one. Returns what it archived.
+    @discardableResult
+    func archiveIdleTabs(now: Date = Date()) -> [TabArchive.Entry] {
+        guard let spaceManager, let commander = windows.activeWindow ?? windows.windows.first else { return [] }
+        var archived: [TabArchive.Entry] = []
         let expiry = now.addingTimeInterval(-TabArchive.maxAge)
         if let oldest = tabArchive.entries.first, oldest.archivedAt < expiry {
             tabArchive.entries.removeAll { $0.archivedAt < expiry }
@@ -109,15 +121,17 @@ extension BrowserContext {
             }
         }
         for space in spaceManager.spaces where space.archiveAfterHours > 0 {
-            guard let snapshot = browserState.space(id: space.id),
-                  let activeTabId = snapshot.spaceTab.state.activeTabId else { continue }
+            guard let snapshot = browserState.space(id: space.id) else { continue }
+            let activeTabId = snapshot.spaceTab.state.activeTabId
             let cutoff = now.addingTimeInterval(-Double(space.archiveAfterHours) * 3600)
             let host = browserState.liveHost(for: space.id)
             for (id, viewedAt) in snapshot.spaceTab.state.viewedAt where viewedAt < cutoff && id != activeTabId && !shown.contains(id) {
                 guard let stored = snapshot.spaceTab.tab(id: id), stored.kind == .web, let url = stored.url else { continue }
                 let tab = browserState.runtimeOverlay.applied(to: stored)
                 guard !isBusy(tab, engine: host?.engine(for: id) ?? snapshot.engines[id]) else { continue }
-                tabArchive.add(TabArchive.Entry(spaceId: space.id, url: url, title: tab.title))
+                let entry = TabArchive.Entry(spaceId: space.id, url: url, title: tab.title)
+                tabArchive.add(entry)
+                archived.append(entry)
                 if let window = windows.windows(showing: space.id).first {
                     window.closeTabStateFirst(id: id, undoable: false, askingPage: false)
                 } else {
@@ -126,5 +140,6 @@ extension BrowserContext {
                 }
             }
         }
+        return archived
     }
 }

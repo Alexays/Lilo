@@ -7,6 +7,7 @@
   import StripFolder from "./StripFolder.svelte";
   import StripSpaceMenu from "./StripSpaceMenu.svelte";
   import StripPopover from "./StripPopover.svelte";
+  import { getRecentArchivedTabs } from "../../stores/archivedTabs.svelte";
   import MediaCard from "../sidebar/MediaCard.svelte";
   import UpdateCard from "../sidebar/UpdateCard.svelte";
   import { getCallCardTab, getMediaCardTab } from "../../stores/media.svelte";
@@ -47,6 +48,9 @@
   const spaceId = $derived(getActiveSpaceId());
   const view = $derived(getSpaceSidebar(spaceId).view);
   const activeTabId = $derived(getActiveTabId(spaceId));
+  const recentArchived = $derived(getRecentArchivedTabs());
+  let archiveButton: HTMLButtonElement | undefined = $state();
+  let archiveOpen = $state(false);
   // Settings is a page of its own here: its pill is the active one, the page's tab steps back.
   // Settings and History open over the page as a surface of their own: the strip shows it as the active tab.
   const surface = $derived(
@@ -292,6 +296,29 @@
         <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
       </svg>
     </button>
+    {#if recentArchived.length > 0}
+      <button
+        bind:this={archiveButton}
+        class="strip-btn archive-btn"
+        class:on={archiveOpen}
+        aria-label={t("archivedTabs.buttonLabel", { count: recentArchived.length })}
+        aria-expanded={archiveOpen}
+        use:tooltip={{ text: t("archivedTabs.title"), placement: edge === "top" ? "bottom" : "top" }}
+        onclick={() => (archiveOpen = !archiveOpen)}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2.5" y="3" width="11" height="3" rx="1" stroke="currentColor" stroke-width="1.3" />
+          <path d="M3.5 6v6a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V6M6.5 8.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+        </svg>
+        <span>{recentArchived.length}</span>
+      </button>
+      <!-- Loaded on first open: the menu costs the chrome's first frame nothing. -->
+      {#if archiveOpen && archiveButton}
+        {#await import("../sidebar/ArchivedTabsMenu.svelte") then menu}
+          <menu.default anchor={archiveButton} tabs={recentArchived} onclose={() => (archiveOpen = false)} />
+        {/await}
+      {/if}
+    {/if}
   </div>
 
   </div>
@@ -655,6 +682,15 @@
   .strip-btn.off:hover {
     background: var(--danger);
     color: var(--on-color);
+  }
+
+  .archive-btn {
+    width: auto;
+    padding: 0 8px;
+    display: flex;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .update-btn {

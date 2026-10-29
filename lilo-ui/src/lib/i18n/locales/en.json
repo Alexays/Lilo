@@ -314,6 +314,11 @@
 				"description": "New windows and page popups open as tabs here.",
 				"keywords": "single window tabs instead of windows"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Open to an empty window",
+				"description": "Lilo opens with no tab selected and pinned tabs back on their home page. Otherwise that happens only after you've been away longer than the Space keeps idle tabs.",
+				"keywords": "launch start fresh empty window no tab restore session archive"
+			},
 			"littleWindowHotKey": {
 				"title": "Little window shortcut",
 				"description": "Command-Option-N opens a Little window from any app.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} d ago",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Recently archived",
+		"buttonLabel": {"one": "{count} recently archived tab", "other": "{count} recently archived tabs"},
+		"restore": "Restore",
+		"showAll": "Show all archived tabs"
+	},
 	"undoToast": {
 		"closed": "\"{title}\" closed",
 		"closedCount": "{count} tabs closed",
 		"undo": "Undo",
-		"undoLabel": "Undo: {closed}"
+		"undoLabel": "Undo: {closed}",
+		"archived": "\"{title}\" archived",
+		"archivedCount": {"one": "{count} tab archived", "other": "{count} tabs archived"}
 	},
 	"updateCard": {
 		"ready": "Ready to install",

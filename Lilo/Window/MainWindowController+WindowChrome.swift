@@ -251,6 +251,12 @@ extension MainWindowController {
         if !didChromeVisualReady {
             didChromeVisualReady = true
             restoreExtensionsThenActiveTab()
+            if let first = launchArchived.first {
+                bridgeRouter.send(event: "tabClosedUndoable", data: [
+                    "title": first.title, "count": launchArchived.count, "archivedIds": launchArchived.map(\.id.uuidString)
+                ])
+                launchArchived = []
+            }
         }
         // Launch benchmark (scripts/bench_startup.sh): dump the marks once the late ones have landed, then quit.
         let environment = ProcessInfo.processInfo.environment

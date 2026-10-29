@@ -314,6 +314,11 @@
 				"description": "Nowe okna i wyskakujące okna stron otwierają się tutaj jako karty.",
 				"keywords": "jedno okno karty zamiast okien"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Otwieraj z pustym oknem",
+				"description": "Lilo otwiera się bez wybranej karty, a przypięte karty wracają na swoją stronę główną. W przeciwnym razie dzieje się tak tylko po nieobecności dłuższej niż czas archiwizacji przestrzeni.",
+				"keywords": "uruchomienie od nowa puste okno brak karty przywróć sesję archiwum"
+			},
 			"littleWindowHotKey": {
 				"title": "Skrót małego okna",
 				"description": "Command-Option-N otwiera małe okno z dowolnej aplikacji.",
@@ -1368,11 +1373,19 @@
 		"daysAgo": "{count} d temu",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Ostatnio zarchiwizowane",
+		"buttonLabel": {"one": "{count} ostatnio zarchiwizowana karta", "few": "{count} ostatnio zarchiwizowane karty", "many": "{count} ostatnio zarchiwizowanych kart", "other": "{count} ostatnio zarchiwizowanej karty"},
+		"restore": "Przywróć",
+		"showAll": "Pokaż wszystkie zarchiwizowane karty"
+	},
 	"undoToast": {
 		"closed": "Zamknięto „{title}”",
 		"closedCount": "Zamknięte karty: {count}",
 		"undo": "Cofnij",
-		"undoLabel": "Cofnij: {closed}"
+		"undoLabel": "Cofnij: {closed}",
+		"archived": "„{title}” zarchiwizowano",
+		"archivedCount": {"one": "Zarchiwizowano {count} kartę", "few": "Zarchiwizowano {count} karty", "many": "Zarchiwizowano {count} kart", "other": "Zarchiwizowano {count} karty"}
 	},
 	"updateCard": {
 		"ready": "Gotowe do instalacji",

@@ -22,7 +22,7 @@ export function initUndoToastStore(): void {
 	on("tabClosedUndoable", (data) => {
 		const paused = _toast !== null && timer === null;
 		_toast = { title: data.title, count: data.count ?? 1, seq: ++seq, ...(data.archivedIds && { archivedIds: data.archivedIds }) };
-		announce(_toast.count > 1 ? t("undoToast.closedCount", { count: _toast.count }) : t("undoToast.closed", { title: _toast.title }));
+		announce(undoToastSubject(_toast));
 		// Replaced under the pointer: stay paused, and resume with a full window.
 		if (paused) {
 			remainingMs = UNDO_TOAST_DURATION_MS;
@@ -62,6 +62,13 @@ function startTimer(ms: number): void {
 		timer = null;
 		clearToast();
 	}, ms);
+}
+
+/** What the toast undoes: the tab or tabs a close took away, or put in the archive. */
+export function undoToastSubject(toast: UndoToast): string {
+	if (toast.label) return toast.label;
+	if (toast.archivedIds) return toast.count > 1 ? t("undoToast.archivedCount", { count: toast.count }) : t("undoToast.archived", { title: toast.title });
+	return toast.count > 1 ? t("undoToast.closedCount", { count: toast.count }) : t("undoToast.closed", { title: toast.title });
 }
 
 export function getUndoToast(): UndoToast | null {

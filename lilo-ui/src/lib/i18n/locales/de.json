@@ -314,6 +314,11 @@
 				"description": "Neue Fenster und Pop-ups werden hier als Tabs geöffnet.",
 				"keywords": "einzelnes fenster tabs statt fenster"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Mit leerem Fenster starten",
+				"description": "Lilo startet ohne ausgewählten Tab, und angeheftete Tabs kehren zu ihrer Startseite zurück. Sonst passiert das nur nach einer Abwesenheit, die länger ist als die Archivierungsfrist des Space.",
+				"keywords": "start neu leer fenster kein tab sitzung wiederherstellen archiv"
+			},
 			"littleWindowHotKey": {
 				"title": "Kurzbefehl für kleines Fenster",
 				"description": "Befehl-Wahl-N öffnet aus jeder App ein kleines Fenster.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "vor {count} T.",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Kürzlich archiviert",
+		"buttonLabel": {"one": "{count} kürzlich archivierter Tab", "other": "{count} kürzlich archivierte Tabs"},
+		"restore": "Wiederherstellen",
+		"showAll": "Alle archivierten Tabs anzeigen"
+	},
 	"undoToast": {
 		"closed": "„{title}“ geschlossen",
 		"closedCount": "{count} Tabs geschlossen",
 		"undo": "Widerrufen",
-		"undoLabel": "Widerrufen: {closed}"
+		"undoLabel": "Widerrufen: {closed}",
+		"archived": "„{title}“ archiviert",
+		"archivedCount": {"one": "{count} Tab archiviert", "other": "{count} Tabs archiviert"}
 	},
 	"updateCard": {
 		"ready": "Bereit zur Installation",

@@ -314,6 +314,11 @@
 				"description": "Yeni pencereler ve sayfa açılır pencereleri burada sekme olarak açılır.",
 				"keywords": "tek pencere pencere yerine sekme"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Boş bir pencereyle aç",
+				"description": "Lilo seçili sekme olmadan açılır ve sabitlenmiş sekmeler ana sayfalarına döner. Aksi halde bu yalnızca alanın arşivleme süresinden uzun bir aradan sonra olur.",
+				"keywords": "başlat yeniden boş pencere sekme yok oturumu geri yükle arşiv"
+			},
 			"littleWindowHotKey": {
 				"title": "Küçük pencere kestirmesi",
 				"description": "Komut-Option-N, her uygulamadan Küçük pencere açar.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} gün önce",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Son arşivlenenler",
+		"buttonLabel": {"one": "Son arşivlenen {count} sekme", "other": "Son arşivlenen {count} sekme"},
+		"restore": "Geri yükle",
+		"showAll": "Tüm arşivlenmiş sekmeleri göster"
+	},
 	"undoToast": {
 		"closed": "“{title}” kapatıldı",
 		"closedCount": "{count} sekme kapatıldı",
 		"undo": "Geri Al",
-		"undoLabel": "Geri al: {closed}"
+		"undoLabel": "Geri al: {closed}",
+		"archived": "“{title}” arşivlendi",
+		"archivedCount": {"one": "{count} sekme arşivlendi", "other": "{count} sekme arşivlendi"}
 	},
 	"updateCard": {
 		"ready": "Yüklemeye hazır",

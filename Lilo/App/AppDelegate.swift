@@ -328,6 +328,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // The pty closing at exit only hangs up the login leader, which a shell still starting outlives.
         browserContext.terminalHost.terminateAllForQuit()
         browserContext.agentControl.setEnabled(false)
+        browserContext.settingsStore?.lastQuitAt = Date()
         // Last write: a quit that dies while saving must still read as unclean on the next launch.
         browserContext.settingsStore?.sessionCleanShutdown = true
         browserContext.dbManager?.closeForShutdown()

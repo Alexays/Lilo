@@ -531,6 +531,7 @@ extension MainWindowController {
 
             profileContext?.sessionPersistence?.scheduleSave()
             context.scheduleWindowsSave()
+            sendArchivedTabs()
             // Tabs left idle while their Space was away go once it is on screen.
             DispatchQueue.main.async { [weak context] in context?.archiveIdleTabs() }
         }

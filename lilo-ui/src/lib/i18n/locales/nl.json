@@ -314,6 +314,11 @@
 				"description": "Nieuwe vensters en pop-upvensters openen hier als tabbladen.",
 				"keywords": "enkel venster tabbladen in plaats van vensters"
 			},
+			"emptyWindowOnLaunch": {
+				"title": "Openen met een leeg venster",
+				"description": "Lilo opent zonder geselecteerd tabblad en vastgezette tabbladen gaan terug naar hun startpagina. Anders gebeurt dat alleen na een afwezigheid die langer is dan de archiveringstermijn van de Space.",
+				"keywords": "start opnieuw leeg venster geen tabblad sessie herstellen archief"
+			},
 			"littleWindowHotKey": {
 				"title": "Sneltoets voor klein venster",
 				"description": "Command-Option-N opent vanuit elke app een klein venster.",
@@ -1358,11 +1363,19 @@
 		"daysAgo": "{count} d geleden",
 		"selected": "{title}, {detail}"
 	},
+	"archivedTabs": {
+		"title": "Onlangs gearchiveerd",
+		"buttonLabel": {"one": "{count} onlangs gearchiveerd tabblad", "other": "{count} onlangs gearchiveerde tabbladen"},
+		"restore": "Herstellen",
+		"showAll": "Alle gearchiveerde tabbladen tonen"
+	},
 	"undoToast": {
 		"closed": "\"{title}\" gesloten",
 		"closedCount": "{count} tabbladen gesloten",
 		"undo": "Herstel",
-		"undoLabel": "Herstel: {closed}"
+		"undoLabel": "Herstel: {closed}",
+		"archived": "‘{title}’ gearchiveerd",
+		"archivedCount": {"one": "{count} tabblad gearchiveerd", "other": "{count} tabbladen gearchiveerd"}
 	},
 	"updateCard": {
 		"ready": "Klaar om te installeren",

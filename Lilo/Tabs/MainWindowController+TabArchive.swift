@@ -29,7 +29,11 @@ extension MainWindowController {
         bridgeRouter.send(event: "openCommandBar", data: ["prefill": "<"])
     }
 
-    /// This window's Space's archived tabs, newest first, for the command bar.
+    func sendArchivedTabs() {
+        bridgeRouter.send(event: "archivedTabs", data: ["tabs": archivedTabSummaries()])
+    }
+
+    /// This window's Space's archived tabs, newest first, for the command bar and the sidebar's archive menu.
     func archivedTabSummaries() -> [[String: Any]] {
         guard let spaceId = tabManager.currentSpaceId else { return [] }
         return context.tabArchive.entries.reversed().filter { $0.spaceId == spaceId }.map { entry in
