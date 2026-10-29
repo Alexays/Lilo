@@ -24,11 +24,9 @@ make validate
 writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
 selects major. When notes request different bumps, the largest wins.
 
-A feature release (`x.y.0`) ships with its highlights: an entry in
-`lilo-ui/src/components/whatsnew/releaseHighlights.json` and a story in
-`site/src/content/releases/<version>.json`, both described below. `make release-version` refuses to
-cut one without them and leaves the notes in place; `make release-status` warns early. Patch
-releases need neither.
+A release ships with automatically selected and translated highlights from its approved native
+media archive. Historical hand-authored entries remain readable; new releases need no entries in
+`lilo-ui/src/components/whatsnew/releaseHighlights.json` or `site/src/content/releases/`.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
@@ -47,6 +45,7 @@ copy and recorded frames. No story, scenario, illustration or translation regist
 Even a maintenance release needs an approved explanation for having no recording.
 
 Generation requires an unlocked macOS capture worker with Xcode and authenticated Codex CLI.
+Version preparation runs first so the generator can inspect the exact release notes and build.
 Scenario repair gets at most three attempts per selected feature; it cannot drop that feature or
 relax the gates. Exhaustion, unavailable UI, failed quality checks or missing approval stop release
 preparation and packaging. Approved prior media stays intact until a complete replacement passes.

@@ -275,6 +275,16 @@ test("a scenario must hold after its final semantic checkpoint", () => {
   assert.throws(() => validateScenario(input, "unread-counts"), /final|hold/u);
 });
 
+test("authored menus can open the real History page", () => {
+  const input = scenario();
+  assert.doesNotThrow(() =>
+    scenarioSchema.parse({
+      ...input,
+      steps: [...input.steps, { selector: "openHistory:", type: "menu" }],
+    })
+  );
+});
+
 test("authored menu actions cannot launch shells or inspect host processes", () => {
   for (const selector of ["newTerminalTab:", "openProcessManager:"]) {
     const input = scenario();

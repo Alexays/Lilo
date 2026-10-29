@@ -3,7 +3,7 @@ import Foundation
 struct AuthoredReleaseScenario: Decodable {
     static let keyChords: Set<String> = ["Return", "Enter", "Escape", "Tab", "Shift+Tab", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Backspace", "Delete", "Space", "Home", "End", "PageUp", "PageDown", "cmd+a"]
 
-    static let menuActions: Set<String> = ["openSettings:", "openLocation:", "showWhatsNew:", "toggleSidebarVisibility:", "toggleToolbarVisibility:", "showFindBar:", "newTab:", "closeCurrentTab:", "pinCurrentTab:", "bookmarkCurrentTab:", "toggleReader:", "newSplitView:", "closeSplitView:", "showNextTab:", "showPreviousTab:"]
+    static let menuActions: Set<String> = ["openSettings:", "openHistory:", "openLocation:", "showWhatsNew:", "toggleSidebarVisibility:", "toggleToolbarVisibility:", "showFindBar:", "newTab:", "closeCurrentTab:", "pinCurrentTab:", "bookmarkCurrentTab:", "toggleReader:", "newSplitView:", "closeSplitView:", "showNextTab:", "showPreviousTab:"]
 
     static let renderedVisibilitySource = """
         ((e) => {

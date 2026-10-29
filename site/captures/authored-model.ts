@@ -182,6 +182,7 @@ export const stepSchema = z.union([
   z.strictObject({
     selector: z.enum([
       "openSettings:",
+      "openHistory:",
       "openLocation:",
       "showWhatsNew:",
       "toggleSidebarVisibility:",
