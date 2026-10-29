@@ -57,10 +57,10 @@ DEBUG_TEAM_ID := $(or $(LILO_DEBUG_TEAM_ID),$(LILO_TEAM_ID))
 DEBUG_SIGNING := $(if $(DEBUG_TEAM_ID),DEVELOPMENT_TEAM=$(DEBUG_TEAM_ID) CODE_SIGN_IDENTITY="$(or $(LILO_DEBUG_CODE_SIGN_IDENTITY),Apple Development)" CODE_SIGN_STYLE=Manual)
 # The test host is its own app: its camera, microphone and keychain grants and its background
 # permission never touch the installed Lilo's, and a stable signature keeps them across builds.
-# Asks for sudo (powermetrics) once, then takes about 45 minutes with the defaults: leave the Mac alone meanwhile.
-## Compare the energy of Lilo, Safari, Chrome and Firefox on the same local pages (ROUNDS=3 DURATION=60 BROWSERS="lilo safari chrome firefox" OUT=build/energy-browsers)
+# Asks for sudo (powermetrics) once, then takes about 5 hours with the defaults: run it overnight, Mac left alone.
+## Compare the energy and memory of Lilo, Safari, Chrome and Firefox on the same local pages (ROUNDS=3 DURATION=60 SESSION=900 SCENARIOS="idle active video session" BROWSERS="lilo safari chrome firefox" OUT=build/energy-browsers)
 energy-browsers:
-	@scripts/energy_browsers.sh --rounds $(or $(ROUNDS),3) --duration $(or $(DURATION),60) $(if $(BROWSERS),--browsers '$(BROWSERS)') $(if $(OUT),--out $(OUT)) $(if $(APP),--app '$(abspath $(APP))')
+	@scripts/energy_browsers.sh --rounds $(or $(ROUNDS),3) --duration $(or $(DURATION),60) --session $(or $(SESSION),900) $(if $(SCENARIOS),--scenarios '$(SCENARIOS)') $(if $(BROWSERS),--browsers '$(BROWSERS)') $(if $(OUT),--out $(OUT)) $(if $(APP),--app '$(abspath $(APP))')
 
 # One run at a time per machine, whatever the worktree and whichever test host: each already fills every
 # performance core, and concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.

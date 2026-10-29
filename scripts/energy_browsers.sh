@@ -1,7 +1,8 @@
 #!/bin/bash
-# Median energy impact, CPU, wakeups and power of Lilo, Safari, Chrome and Firefox on the same local pages. Usage:
-# energy_browsers.sh [--no-build] [--app PATH] [--browsers "lilo safari chrome firefox"] [--rounds N=3]
-# [--duration SECONDS=60] [--settle SECONDS=30] [--out DIR=build/energy-browsers]
+# Median power, CPU, energy impact and memory of Lilo, Safari, Chrome and Firefox on the same local pages. Usage:
+# energy_browsers.sh [--no-build] [--app PATH] [--browsers "lilo safari chrome firefox"]
+# [--scenarios "idle active video session"] [--rounds N=3] [--duration SECONDS=60] [--session SECONDS=900]
+# [--settle SECONDS=30] [--out DIR=build/energy-browsers]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,8 +10,10 @@ DERIVED="$ROOT/.derived.noindex/bench"
 APP="$DERIVED/Build/Products/Release/Lilo.app"
 BUILD=true
 BROWSERS="lilo safari chrome firefox"
+SCENARIOS="idle active video session"
 ROUNDS=3
 DURATION=60
+SESSION=900
 SETTLE=30
 OUT="$ROOT/build/energy-browsers"
 while [ $# -gt 0 ]; do
@@ -18,14 +21,18 @@ while [ $# -gt 0 ]; do
         --no-build) BUILD=false ;;
         --app) APP="$2"; BUILD=false; shift ;;
         --browsers) BROWSERS="$2"; shift ;;
+        --scenarios) SCENARIOS="$2"; shift ;;
         --rounds) ROUNDS="$2"; shift ;;
         --duration) DURATION="$2"; shift ;;
+        --session) SESSION="$2"; shift ;;
         --settle) SETTLE="$2"; shift ;;
         --out) OUT="$2"; [[ $OUT = /* ]] || OUT="$PWD/$OUT"; shift ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
     shift
 done
+# The pages measure their frame rate and video position 20 s after loading, before the sample starts.
+[ "$SETTLE" -ge 25 ] || { echo "--settle must be at least 25 s" >&2; exit 2; }
 
 CHROME="/Applications/Google Chrome.app"
 FIREFOX="/Applications/Firefox.app"
@@ -43,6 +50,13 @@ for b in $BROWSERS; do
     SELECTED+="$b "
 done
 [ -n "$SELECTED" ] || { echo "no browser to measure" >&2; exit 1; }
+for s in $SCENARIOS; do
+    case "$s" in
+        idle | active | session) ;;
+        video) command -v ffmpeg >/dev/null || { echo "the video scenario needs ffmpeg (brew install ffmpeg)" >&2; exit 1; } ;;
+        *) echo "unknown scenario: $s" >&2; exit 2 ;;
+    esac
+done
 
 # WebKit renders nothing on a locked screen.
 if ioreg -n Root -d1 -a | grep -A1 CGSSessionScreenIsLocked | grep -q '<true/>'; then
@@ -79,27 +93,53 @@ caffeinate -dimsu -w $$ &
 mkdir -p "$WORK/site" "$WORK/profiles" "$OUT"
 
 PORT=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
-python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$WORK/site" >/dev/null 2>&1 &
+# The server's request log carries the pages' beacons.
+python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$WORK/site" >/dev/null 2>"$WORK/server.log" &
 SERVER_PID=$!
 disown "$SERVER_PID"
 BASE_URL="http://127.0.0.1:$PORT"
 
 # idle: five static pages. active: a visible page with a CSS animation and a 1 s clock, and four background tabs
-# whose 250 ms timers touch the DOM, as analytics and carousels do.
+# whose 250 ms timers touch the DOM, as analytics and carousels do. video: a muted 1080p H.264 loop in the visible
+# tab and four static ones. session: twenty tabs for --session seconds, the visible one static and the background
+# ones a mix of timers, animations, polling and static pages, so lifecycle policies such as tab freezing show.
 ARTICLE='<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>'
+TIMER='<p id="n">0</p><script>let k=0;setInterval(()=>{n.textContent=++k},250)</script>'
+SPIN='<div style="width:96px;height:96px;margin:2em auto;border-radius:24px;background:#5b8def;animation:spin 2s linear infinite"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>'
+POLL='<script>setInterval(()=>fetch("/poll").catch(()=>{}),5000)</script>'
+# Counts animation frames for 2 s, then reports the rate and how far the video played.
+PROBE='<script>setTimeout(()=>{let f=0;const t=performance.now(),c=()=>{if(performance.now()-t<2000){f++;requestAnimationFrame(c)}else{const v=document.querySelector("video");fetch("/beacon?fps="+Math.round(f/2)+(v?"&video="+Math.round(v.currentTime):"")).catch(()=>{})}};requestAnimationFrame(c)},20000)</script>'
 page() { # file title body
     printf '<!doctype html><meta charset="utf-8"><title>%s</title><style>body{font:16px/1.5 -apple-system,sans-serif;max-width:40em;margin:3em auto}</style><h1>%s</h1>%s%s%s%s\n' \
         "$2" "$2" "$ARTICLE" "$ARTICLE" "$3" "$ARTICLE" > "$WORK/site/$1"
 }
 page visible-idle.html Visible ""
-page visible-active.html Visible '<div style="width:96px;height:96px;margin:2em auto;border-radius:24px;background:#5b8def;animation:spin 2s linear infinite"></div><p id="clock"></p><style>@keyframes spin{to{transform:rotate(360deg)}}</style><script>setInterval(()=>{clock.textContent=new Date().toLocaleTimeString()},1000)</script>'
+page visible-active.html Visible "$SPIN<p id=\"clock\"></p><script>setInterval(()=>{clock.textContent=new Date().toLocaleTimeString()},1000)</script>$PROBE"
+page visible-video.html Visible "<video src=\"loop.mp4\" autoplay muted loop playsinline style=\"width:100%\"></video>$PROBE"
+page visible-session.html Visible ""
 for i in 1 2 3 4; do
     page "background-idle-$i.html" "Background $i" ""
-    page "background-active-$i.html" "Background $i" '<p id="n">0</p><script>let k=0;setInterval(()=>{n.textContent=++k},250)</script>'
+    page "background-active-$i.html" "Background $i" "$TIMER"
+    page "background-video-$i.html" "Background $i" ""
 done
+for i in $(seq 1 19); do
+    case $((i % 4)) in
+        0) body="$TIMER" ;;
+        1) body="$SPIN" ;;
+        2) body="$POLL" ;;
+        3) body="" ;;
+    esac
+    page "background-session-$i.html" "Background $i" "$body"
+done
+if [[ " $SCENARIOS " == *" video "* ]]; then
+    ffmpeg -loglevel error -f lavfi -i testsrc2=size=1920x1080:rate=30 -t 60 -c:v libx264 -pix_fmt yuv420p \
+        -movflags +faststart "$WORK/site/loop.mp4"
+fi
 urls() { # scenario
     echo "$BASE_URL/visible-$1.html"
-    for i in 1 2 3 4; do echo "$BASE_URL/background-$1-$i.html"; done
+    local n=4
+    [ "$1" != session ] || n=19
+    for i in $(seq 1 "$n"); do echo "$BASE_URL/background-$1-$i.html"; done
 }
 
 new_pid() { # process name, pids before the launch
@@ -159,6 +199,29 @@ quit_browser() {
     sleep 5
 }
 
+is_frontmost() {
+    [ "$(osascript -e 'tell application "System Events" to get unix id of first process whose frontmost is true' 2>/dev/null)" = "$BROWSER_PID" ] \
+        && echo yes || echo no
+}
+
+# Hidden or occluded pages stop drawing, so each sample needs the browser in front.
+bring_to_front() {
+    for _ in 1 2 3 4 5; do
+        osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $BROWSER_PID) to true" >/dev/null 2>&1 || true
+        sleep 1
+        [ "$(is_frontmost)" = no ] || return 0
+    done
+    echo "warning: the $1 window could not be brought to the front" >&2
+}
+
+per_round=0
+for s in $SCENARIOS; do
+    run=$((DURATION + SETTLE + 25))
+    [ "$s" != session ] || run=$((SESSION + SETTLE + 25))
+    per_round=$((per_round + DURATION + run * $(echo "$SELECTED" | wc -w)))
+done
+echo "About $(((per_round * ROUNDS + 300) / 60)) minutes; started $(date '+%H:%M')" >&2
+
 # A first launch per browser creates its profile and lets it finish first-run work (components, filter lists),
 # then every run starts from a copy of that profile.
 for b in $SELECTED; do
@@ -179,14 +242,20 @@ for b in $SELECTED; do
 done
 
 RUNS="$OUT/runs.tsv"
-printf 'round\tscenario\tbrowser\tenergy_impact\tcpu_pct\tidle_wakeups_s\tsystem_power_mw\tprocesses\tfrontmost\tprocess_names\n' > "$RUNS"
-sample() { # round scenario browser
+printf 'round\tscenario\tbrowser\tpower_source\tenergy_impact\tcpu_pct\tcpu_late_pct\tidle_wakeups_s\tsystem_power_mw\tsystem_power_late_mw\tmemory_mb\tfps\tvideo_s\tprocesses\tfrontmost\tprocess_names\n' > "$RUNS"
+sample() { # round scenario browser seconds [frontmost at start]
+    local interval=1000 log_start
+    # A 1 s interval over a long session writes hundreds of megabytes of plist.
+    [ "$4" -le 120 ] || interval=5000
+    log_start="$(wc -l < "$WORK/server.log")"
     sudo /usr/bin/powermetrics --samplers tasks,cpu_power --show-process-coalition --show-process-energy \
-        -i 1000 -n "$DURATION" -f plist -o "$WORK/sample.plist" >/dev/null 2>&1
-    python3 - "$WORK/sample.plist" "${BROWSER_PID:-0}" "$1" "$2" "$3" "${4:-}" "${5:-}" >> "$RUNS" <<'PY'
-import sys, plistlib, statistics
-path, pid, rnd, scenario, browser, front_start, front_end = sys.argv[1], int(sys.argv[2]), *sys.argv[3:]
-energy, cpu, wakeups, power, pids, names = [], [], [], [], set(), set()
+        -i "$interval" -n $(($4 * 1000 / interval)) -f plist -o "$WORK/sample.plist" >/dev/null 2>&1
+    tail -n +$((log_start + 1)) "$WORK/server.log" > "$WORK/beacons.log"
+    python3 - "$WORK/sample.plist" "$WORK/beacons.log" "${BROWSER_PID:-0}" "$1" "$2" "$3" \
+        "$(pmset -g ps | head -1 | sed -E "s/.*'(.*)'.*/\1/")" "${5:-}" "$(is_frontmost)" >> "$RUNS" <<'PY'
+import sys, plistlib, statistics, subprocess, re
+path, beacons, pid, rnd, scenario, browser, source, front_start, front_end = sys.argv[1], sys.argv[2], int(sys.argv[3]), *sys.argv[4:]
+energy, cpu, wakeups, power, names, last_pids = [], [], [], [], set(), set()
 for chunk in open(path, "rb").read().split(b"\0"):
     chunk = chunk.strip()
     if not chunk:
@@ -201,46 +270,50 @@ for chunk in open(path, "rb").read().split(b"\0"):
         continue
     # The browser's coalition holds its helpers and the WebKit or Chromium processes it started.
     tasks = next((c.get("tasks") or [] for c in s.get("coalitions") or [] if any(t.get("pid") == pid for t in c.get("tasks") or [])), [])
-    pids |= {t.get("pid") for t in tasks}
+    last_pids = {t.get("pid") for t in tasks if t.get("pid", -1) > 0}
     names |= {t.get("name") for t in tasks}
     energy.append(sum(t.get("energy_impact_per_s", t.get("energy_impact", 0)) for t in tasks))
     cpu.append(sum(t.get("cputime_ms_per_s", 0) for t in tasks) / 10)
     wakeups.append(sum(t.get("idle_wakeups_per_s", 0) for t in tasks))
 if not power:
     sys.exit(f"powermetrics: no sample in {path}")
-if pid and not pids:
+if pid and not last_pids:
     sys.exit(f"powermetrics: no coalition holds pid {pid}")
 mean = lambda v: statistics.fmean(v) if v else 0
+late = lambda v: mean(v[len(v) * 2 // 3:])
+# top's MEM is the footprint Activity Monitor shows, summed over the processes alive at the end of the sample.
+memory = 0.0
+if last_pids:
+    out = subprocess.run(["top", "-l", "1", "-s", "0", "-stats", "pid,mem"] + [a for p in sorted(last_pids) for a in ("-pid", str(p))],
+                         capture_output=True, text=True).stdout
+    units = {"B": 1 / 1048576, "K": 1 / 1024, "M": 1, "G": 1024}
+    for line in out.splitlines():
+        m = re.match(r"\s*(\d+)\s+([\d.]+)([BKMG])", line)
+        if m and int(m.group(1)) in last_pids:
+            memory += float(m.group(2)) * units[m.group(3)]
+fps = video = ""
+for line in open(beacons):
+    m = re.search(r"/beacon\?fps=(\d+)(?:&video=(\d+))?", line)
+    if m:
+        fps, video = m.group(1), m.group(2) or ""
 front = "yes" if front_start == front_end == "yes" else "no" if pid else ""
-print(f"{rnd}\t{scenario}\t{browser}\t{mean(energy):.2f}\t{mean(cpu):.2f}\t{mean(wakeups):.1f}\t{mean(power):.0f}\t{len(pids)}\t{front}\t{','.join(sorted(names))}")
+print(f"{rnd}\t{scenario}\t{browser}\t{source}\t{mean(energy):.2f}\t{mean(cpu):.2f}\t{late(cpu):.2f}\t{mean(wakeups):.1f}\t{mean(power):.0f}\t{late(power):.0f}"
+      f"\t{memory:.0f}\t{fps}\t{video}\t{len(last_pids)}\t{front}\t{','.join(sorted(n for n in names if n))}")
 PY
     /bin/rm -f "$WORK/sample.plist"
 }
 
-is_frontmost() {
-    [ "$(osascript -e 'tell application "System Events" to get unix id of first process whose frontmost is true' 2>/dev/null)" = "$BROWSER_PID" ] \
-        && echo yes || echo no
-}
-
-# Hidden or occluded pages stop drawing, so each sample needs the browser in front.
-bring_to_front() {
-    for _ in 1 2 3 4 5; do
-        osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $BROWSER_PID) to true" >/dev/null 2>&1 || true
-        sleep 1
-        [ "$(is_frontmost)" = no ] || return 0
-    done
-    echo "warning: the $1 window could not be brought to the front" >&2
-}
-
 for round in $(seq 1 "$ROUNDS"); do
-    echo "Round $round: baseline" >&2
-    sample "$round" baseline none
-    for scenario in idle active; do
+    for scenario in $SCENARIOS; do
+        seconds="$DURATION"
+        [ "$scenario" != session ] || seconds="$SESSION"
+        echo "Round $round: $scenario, baseline ($(date '+%H:%M'))" >&2
+        sample "$round" "$scenario" none "$DURATION"
         # Rotated each round so drift over the run hits every browser alike.
         # shellcheck disable=SC2086
         order="$(echo $SELECTED | tr ' ' '\n' | awk -v r="$round" '{a[NR]=$0} END {for (i = 0; i < NR; i++) print a[(i + r - 1) % NR + 1]}')"
         for b in $order; do
-            echo "Round $round: $scenario, $b" >&2
+            echo "Round $round: $scenario, $b ($(date '+%H:%M'))" >&2
             /bin/rm -rf "$WORK/run"
             [ "$b" = safari ] || /bin/cp -Rf "$WORK/profiles/$b" "$WORK/run"
             # shellcheck disable=SC2046
@@ -249,27 +322,35 @@ for round in $(seq 1 "$ROUNDS"); do
             bring_to_front "$b"
             sleep "$SETTLE"
             bring_to_front "$b"
-            front="$(is_frontmost)"
-            sample "$round" "$scenario" "$b" "$front" "$(is_frontmost)"
+            sample "$round" "$scenario" "$b" "$seconds" "$(is_frontmost)"
             quit_browser "$b"
         done
     done
 done
 
+# Each scenario's power is measured above the median of its own baselines; runs that lost the front are left out.
 python3 - "$RUNS" > "$OUT/summary.tsv" <<'PY'
 import sys, csv, statistics, collections
 rows = list(csv.DictReader(open(sys.argv[1]), delimiter="\t"))
-base = statistics.median(float(r["system_power_mw"]) for r in rows if r["scenario"] == "baseline")
-groups = collections.defaultdict(list)
+base, groups = collections.defaultdict(list), collections.defaultdict(list)
 for r in rows:
-    if r["scenario"] != "baseline":
+    if r["browser"] == "none":
+        base[r["scenario"]].append(float(r["system_power_mw"]))
+    elif r["frontmost"] == "yes":
         groups[(r["scenario"], r["browser"])].append(r)
-print(f"# medians of {len(rows)} runs; baseline system power {base:.0f} mW")
-print("scenario\tbrowser\tenergy_impact\tcpu_pct\tidle_wakeups_s\tpower_above_baseline_mw\tprocesses")
+print(f"# medians of {len(rows)} runs (power source: {', '.join(sorted({r['power_source'] for r in rows}))}); "
+      + ", ".join(f"{s} baseline {statistics.median(v):.0f} mW" for s, v in base.items()))
+print("scenario\tbrowser\truns\tpower_mw\tpower_min_mw\tpower_max_mw\tpower_late_mw\tcpu_pct\tcpu_late_pct\tenergy_impact\tidle_wakeups_s\tmemory_mb\tfps\tvideo_s\tprocesses")
 for (scenario, browser), rs in groups.items():
-    m = lambda k: statistics.median(float(r[k]) for r in rs)
-    print(f"{scenario}\t{browser}\t{m('energy_impact'):.2f}\t{m('cpu_pct'):.2f}\t{m('idle_wakeups_s'):.1f}\t{m('system_power_mw') - base:.0f}\t{m('processes'):.0f}")
+    b = statistics.median(base[scenario])
+    col = lambda k: [float(r[k]) for r in rs if r[k] != ""]
+    med = lambda k: f"{statistics.median(col(k)):.2f}" if col(k) else ""
+    above = [v - b for v in col("system_power_mw")]
+    print(f"{scenario}\t{browser}\t{len(rs)}\t{statistics.median(above):.0f}\t{min(above):.0f}\t{max(above):.0f}"
+          f"\t{statistics.median(col('system_power_late_mw')) - b:.0f}\t{med('cpu_pct')}\t{med('cpu_late_pct')}\t{med('energy_impact')}"
+          f"\t{med('idle_wakeups_s')}\t{med('memory_mb')}\t{med('fps')}\t{med('video_s')}\t{med('processes')}")
 PY
 column -t -s $'\t' "$OUT/summary.tsv"
-awk -F'\t' 'NR > 1 && $2 != "baseline" && $9 != "yes" {print "warning: round " $1 " " $2 " " $3 ": the browser was not frontmost for the whole sample"}' "$RUNS" >&2
+awk -F'\t' 'NR > 1 && $3 != "none" && $15 != "yes" {print "warning: round " $1 " " $2 " " $3 ": the browser was not frontmost for the whole sample, left out"}' "$RUNS" >&2
+awk -F'\t' 'NR > 1 && $2 == "video" && $3 != "none" && ($13 == "" || $13 < 10) {print "warning: round " $1 " video " $3 ": the video did not play (" ($13 == "" ? "no report" : $13 " s") ")"}' "$RUNS" >&2
 echo "Runs: $RUNS, summary: $OUT/summary.tsv" >&2

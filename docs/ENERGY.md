@@ -34,15 +34,31 @@ MacBook Pro (M4 Pro, 48 GB), macOS 27.0.1, plugged in. Lilo 0.11.0 (`93e8173e`),
 
 1. A local server serves the pages, so the network plays no part.
 2. Each browser except Safari gets a throwaway profile, opened once for a minute so first-run work (component downloads, filter lists) is done, then copied for every run. Lilo is the Release build of the checkout. Safari has a single profile, the real one.
-3. Each run opens the five tabs with the first one visible, brings the browser to the front, waits 30 s, then samples it once a second for 60 s with `powermetrics`. The run is kept only if the browser stayed frontmost.
-4. Each round starts with a sample with no browser open, and rotates the order of the browsers so drift over the run hits each alike.
+3. Each run opens the scenario's tabs with the first one visible, brings the browser to the front, waits 30 s, then samples it with `powermetrics`: once a second for 60 s, or every 5 s for a session. A run is kept only if the browser stayed frontmost.
+4. Each scenario of a round starts with a sample with no browser open, and the order of the browsers rotates each round so drift over the night hits each alike.
 
-No extension and no content blocker runs in any browser; on local pages, Lilo's default filter lists have nothing to block.
+The scenarios:
 
-To reproduce, quit other apps (Safari included), plug the Mac in, and leave it alone for about 45 minutes:
+- **idle**: five static pages.
+- **active**: a visible page with a CSS animation and a 1 s clock, and four background tabs whose timers update the page four times a second.
+- **video**: a muted 1080p H.264 loop in the visible tab, and four static tabs.
+- **session**: twenty tabs for 15 minutes, the visible one static and the background ones a mix of timers, animations, a page polling the server every 5 s, and static pages. It shows how each browser treats tabs left in the background: Lilo freezes them after 5 minutes plugged in, after 1 minute on battery.
+
+Besides power, CPU and energy impact, each run records:
+
+- **late** power and CPU, over the last third of the sample, where a session shows background tabs once frozen or throttled;
+- **memory**, the footprint Activity Monitor shows, summed over the browser's processes at the end of the sample;
+- **fps**, the animation frame rate of the visible page. On a 120 Hz display some browsers draw at 60 fps by default, which costs less but is a real difference, not an engine one;
+- **video_s**, how far the video played, which confirms it ran;
+- the **power source**: macOS and the browsers save more on battery.
+
+The summary gives the median of each metric and the spread of power (min and max). No extension and no content blocker runs in any browser; on local pages, Lilo's default filter lists have nothing to block. Chrome's coalition includes GoogleUpdater, which Chrome starts.
+
+To reproduce, quit other apps (Safari included), plug the Mac in, and leave it alone, unlocked, for about 5 hours: overnight suits it. Run a short pass first to grant the Automation permissions it asks for:
 
 ```bash
+scripts/energy_browsers.sh --rounds 1 --duration 10 --session 60 --out build/energy-browsers-smoke
 make energy-browsers
 ```
 
-`BROWSERS`, `ROUNDS`, `DURATION` and `APP` change what is measured. The medians land in `build/energy-browsers/summary.tsv` and every run in `runs.tsv`, with the processes measured.
+`BROWSERS`, `SCENARIOS`, `ROUNDS`, `DURATION`, `SESSION` and `APP` change what is measured. The video scenario needs `ffmpeg`. The medians land in `build/energy-browsers/summary.tsv` and every run in `runs.tsv`, with the processes measured.
