@@ -153,13 +153,13 @@ final class ExtensionLifecycle {
             return
         case .updating(let from, _) where worker != .running:
             states[extensionId] = .loaded(worker)
-            backgrounds.workerChannel(extensionId, channel)
+            backgrounds.workerChannel(extensionId, channel, instance: gapEvents.workerInstance(of: extensionId))
             applyUpdate(extensionId, from)
         case .updating:
-            backgrounds.workerChannel(extensionId, channel)
+            backgrounds.workerChannel(extensionId, channel, instance: gapEvents.workerInstance(of: extensionId))
         case .loaded:
             states[extensionId] = .loaded(worker)
-            backgrounds.workerChannel(extensionId, channel)
+            backgrounds.workerChannel(extensionId, channel, instance: gapEvents.workerInstance(of: extensionId))
         }
     }
 

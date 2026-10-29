@@ -2,7 +2,8 @@
 // Must not reference window/document/webkit/messageHandlers (assert-background-prelude-safe.mjs).
 
 import { collectGapListeners, sendGapListeners } from './shared/gap-event.ts';
-import { workerReady } from './shared/ipc.ts';
+import { startupStorageSettled } from './shared/storage-area.ts';
+import { workerNativeReady, workerReady } from './shared/ipc.ts';
 import { recordErrorDiagnostics } from './shared/error-diagnostics.ts';
 import { installWorkerWebSocket } from './shared/web-socket.ts';
 import { installCredentialedFetch } from './shared/credentialed-fetch.ts';
@@ -104,7 +105,12 @@ if (!(globalThis as any).__liloBackgroundPreludeInstalled) {
       sendGapListeners();
       // As in Chrome, the events go after the answers to the calls the top-level code made (Glasp's
       // contextMenus.removeAll): WebKit can deliver a port message first, never a later call's answer.
-      const ready = () => registrationsSettled().then(workerReady);
+      const ready = async () => {
+        await registrationsSettled();
+        workerReady();
+        await startupStorageSettled();
+        workerNativeReady();
+      };
       const answered = (globalThis as any).browser?.permissions?.getAll?.();
       if (answered) answered.then(ready, ready);
       else ready();

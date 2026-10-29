@@ -22,6 +22,9 @@ final class BackgroundSupervisor {
         var failed = false
         var failureReason: String?
         var lastErrorCount = 0
+        /// A closed backing view can still address the process WebKit reuses for the next worker (WebKit gap 103).
+        var workerWebView: WKWebView?
+        var workerInstance: String?
 
         var bridgeStatus: String {
             (prepDegraded || runtimeDegraded || failed) ? "degraded" : "loaded"
@@ -43,10 +46,13 @@ final class BackgroundSupervisor {
     /// mid-evaluation segfaults the worker process, so nothing may restart a loading background. Kept
     /// apart from `health`: it must survive the unload and load of a full reload.
     private var loadStartedAt: [String: Date] = [:]
+    /// Events arriving together share the load, channel wait and recovery, not just the initial load.
+    private var responding: [String: Task<Void, Never>] = [:]
 
     private let context: (String) -> WKWebExtensionContext?
     /// The worker's channel, as the extension's lifecycle tracks it.
     private let worker: (String) -> ExtensionLifecycle.Worker?
+    private let ready: (String) -> Bool
     /// Unloads and reloads the extension from disk: its session state is lost.
     private let reload: (String) async -> Void
     /// A change the extensions panel shows.
@@ -55,11 +61,13 @@ final class BackgroundSupervisor {
     init(
         context: @escaping (String) -> WKWebExtensionContext?,
         worker: @escaping (String) -> ExtensionLifecycle.Worker?,
+        ready: @escaping (String) -> Bool,
         reload: @escaping (String) async -> Void,
         didChange: @escaping (String) -> Void
     ) {
         self.context = context
         self.worker = worker
+        self.ready = ready
         self.reload = reload
         self.didChange = didChange
     }
@@ -73,6 +81,7 @@ final class BackgroundSupervisor {
 
     func stopped(_ extensionId: String) {
         health[extensionId] = nil
+        responding.removeValue(forKey: extensionId)?.cancel()
     }
 
     func health(for extensionId: String) -> Health? {
@@ -92,8 +101,9 @@ final class BackgroundSupervisor {
     @discardableResult
     func load(_ extensionId: String) async -> Bool {
         guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return false }
-        loadStartedAt[extensionId] = Date()
-        defer { loadStartedAt[extensionId] = nil }
+        let started = Date()
+        loadStartedAt[extensionId] = started
+        defer { if loadStartedAt[extensionId] == started { loadStartedAt[extensionId] = nil } }
         // Ends when the worker connects (`workerChannel`); a running worker's load starts nothing.
         let startsWorker = worker(extensionId) != .running
         if startsWorker {
@@ -131,11 +141,16 @@ final class BackgroundSupervisor {
 
     /// The worker opened, idly closed or lost its channel to Lilo. Only a lost channel means it stopped:
     /// a restart after an unload would kill the next load's worker.
-    func workerChannel(_ extensionId: String, _ channel: GapEvents.WorkerChannel) {
+    func workerChannel(_ extensionId: String, _ channel: GapEvents.WorkerChannel, instance: String?) {
         guard health[extensionId] != nil else { return }
         switch channel {
         case .open:
             if let context = context(extensionId) {
+                // An idle port can reconnect from the old process after WebKit replaced its backing page.
+                if health[extensionId]?.workerWebView == nil || health[extensionId]?.workerInstance != instance {
+                    health[extensionId]?.workerWebView = Self.backgroundWebView(of: context)
+                    health[extensionId]?.workerInstance = instance
+                }
                 PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
             }
             health[extensionId]?.restartFailures = 0
@@ -156,10 +171,7 @@ final class BackgroundSupervisor {
         PerfSignposts.energy.emitEvent("workerWake", "\(extensionId)")
         Task { @MainActor [weak self] in
             guard let self, !self.isLoadInFlight(extensionId) else { return }
-            self.nudge(extensionId)
-            // Starts a stopped worker, or one WebKit unloads before it hears the nudge; a running one's
-            // idle unload starts counting again, as an event does in Chrome.
-            await self.load(extensionId)
+            await self.ensureResponsive(extensionId)
         }
     }
 
@@ -176,35 +188,67 @@ final class BackgroundSupervisor {
     /// Guarantees a running worker before a user action (popup, command). `loadBackgroundContent()` is a no-op on a context WebKit
     /// reports loaded, so a silent worker is restarted, and one that fails to load is restarted once, then marked failed.
     func ensureResponsive(_ extensionId: String) async {
-        guard context(extensionId)?.webExtension.hasBackgroundContent == true else { return }
-        // A worker that is still booting has not connected yet. Reloading it here would tear the
-        // context down mid-evaluation; it is already on its way up, so just wait for it.
-        guard !isLoadInFlight(extensionId) else {
-            await load(extensionId)
+        guard let context = context(extensionId), context.webExtension.hasBackgroundContent else { return }
+        if let task = responding[extensionId] {
+            await task.value
+            await finishStartup(extensionId)
             return
         }
-        guard await load(extensionId) else {
-            if await !restart(extensionId) { markFailed(extensionId) }
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.makeResponsive(extensionId)
+        }
+        responding[extensionId] = task
+        await task.value
+        // A restart only waits for WebKit's load; the replacement worker must finish the bridge barrier too.
+        // This caller survives an internal full reload, which cancels the old context's recovery task.
+        await finishStartup(extensionId)
+        if self.context(extensionId) === context { responding[extensionId] = nil }
+    }
+
+    private func finishStartup(_ extensionId: String) async {
+        guard let context = context(extensionId), health[extensionId]?.prepDegraded == false else { return }
+        for _ in 0..<20 {
+            guard !Task.isCancelled, self.context(extensionId) === context else { return }
+            if ready(extensionId) { return }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        if self.context(extensionId) === context, !ready(extensionId) { markFailed(extensionId) }
+    }
+
+    private func makeResponsive(_ extensionId: String) async {
+        // An existing load must finish its startup barrier too, but may never be restarted here:
+        // that could tear the context down mid-evaluation.
+        let wasLoading = isLoadInFlight(extensionId)
+        let loaded = await load(extensionId)
+        guard !Task.isCancelled else { return }
+        guard loaded else {
+            guard !wasLoading else { return }
+            let restarted = await restart(extensionId)
+            if !Task.isCancelled, !restarted { markFailed(extensionId) }
             return
         }
         guard let health = health[extensionId],
               // A prep-degraded worker may run without the prelude that connects: its silence proves nothing.
-              !health.prepDegraded, worker(extensionId) != .running
+              !health.prepDegraded, !ready(extensionId)
         else { return }
         // An unloaded worker comes back through the plain load and connects from its prelude at once; a
         // running one that let its channel go opens it again when nudged.
         nudge(extensionId)
         for _ in 0..<20 {
-            if worker(extensionId) == .running { return }
+            guard !Task.isCancelled else { return }
+            if ready(extensionId) { return }
             try? await Task.sleep(for: .milliseconds(100))
         }
-        if await !restart(extensionId) { await fullReload(extensionId) }
+        guard !Task.isCancelled, !wasLoading else { return }
+        let restarted = await restart(extensionId)
+        if !Task.isCancelled, !restarted { await fullReload(extensionId) }
     }
 
     /// A lost channel means the worker stopped. An idle unload is left alone (WebKit relaunches it on its next event; restarting would
     /// keep every worker alive); only a worker WebKit still believes loaded, which nothing would start again, is restarted.
     func restartIfStopped(_ extensionId: String) {
-        guard let health = health[extensionId], !health.failed, !isLoadInFlight(extensionId),
+        guard let health = health[extensionId], !health.failed, !isLoadInFlight(extensionId), responding[extensionId] == nil,
               // The revive debounce, doubled per restart after which the worker never connected.
               Self.shouldAttempt(lastAttempt: health.lastRestartAttempt, now: Date(), debounce: Self.reviveDebounce * pow(2, Double(health.restartFailures)))
         else { return }
@@ -214,7 +258,8 @@ final class BackgroundSupervisor {
             try? await Task.sleep(for: .seconds(1))
             // A worker that connected meanwhile runs.
             guard let self, let context = self.context(extensionId), Self.backgroundWebView(of: context) != nil,
-                  !self.isLoadInFlight(extensionId), self.health[extensionId] != nil, self.worker(extensionId) != .running else { return }
+                  !self.isLoadInFlight(extensionId), self.responding[extensionId] == nil,
+                  self.health[extensionId] != nil, self.worker(extensionId) != .running else { return }
             self.health[extensionId]?.restartFailures += 1
             let failures = self.health[extensionId]?.restartFailures ?? 0
             guard failures <= Self.maxRestarts else {
@@ -229,6 +274,8 @@ final class BackgroundSupervisor {
     /// A running worker starts over from its files, keeping its session state; a stopped one reads
     /// them when it next starts anyway.
     func restartIfRunning(_ extensionId: String) async {
+        guard !isLoadInFlight(extensionId) else { return }
+        await responding[extensionId]?.value
         guard !isLoadInFlight(extensionId) else { return }
         await restart(extensionId)
     }
@@ -262,7 +309,7 @@ final class BackgroundSupervisor {
     func reviveIfNeeded(_ extensionId: String) async -> Bool {
         guard context(extensionId)?.webExtension.hasBackgroundContent == true,
               // Touching a background on its way up would race the running evaluation of its worker script.
-              !isLoadInFlight(extensionId),
+              !isLoadInFlight(extensionId), responding[extensionId] == nil,
               Self.shouldAttempt(lastAttempt: health[extensionId]?.lastReviveAttempt, now: Date(), debounce: Self.reviveDebounce)
         else { return false }
         health[extensionId]?.lastReviveAttempt = Date()
@@ -293,22 +340,32 @@ final class BackgroundSupervisor {
         return context.perform(selector)?.takeUnretainedValue() as? WKWebView
     }
 
+    static func terminateProcess(_ webView: WKWebView) {
+        let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
+        if webView.responds(to: kill) { webView.perform(kill) }
+    }
+
     /// Starts a fresh worker in the same context by killing the background web view's process, the one signal that makes WebKit drop it;
     /// `storage.session` survives, so a password manager stays unlocked. False without a background web view or the SPI.
     @discardableResult
     private func restart(_ extensionId: String) async -> Bool {
-        let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
         guard let context = context(extensionId), let webView = Self.backgroundWebView(of: context),
-              webView.responds(to: kill) else { return false }
+              webView.responds(to: NSSelectorFromString("_killWebContentProcessAndResetState")) else { return false }
         Self.logger.notice("background restart in place for \(extensionId, privacy: .public)")
-        loadStartedAt[extensionId] = Date()
-        webView.perform(kill)
+        let started = Date()
+        loadStartedAt[extensionId] = started
+        defer { if loadStartedAt[extensionId] == started { loadStartedAt[extensionId] = nil } }
+        // The current backing page may be in a new process while the worker is still in the previous one's.
+        let previous = health[extensionId]?.workerWebView
+        Self.terminateProcess(webView)
+        if let previous, previous !== webView { Self.terminateProcess(previous) }
         var waits = 0
         while Self.backgroundWebView(of: context) != nil, waits < 20 {
+            guard !Task.isCancelled else { return false }
             try? await Task.sleep(for: .milliseconds(50))
             waits += 1
         }
-        loadStartedAt[extensionId] = nil
+        guard !Task.isCancelled, self.context(extensionId) === context else { return false }
         return await load(extensionId)
     }
 

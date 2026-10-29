@@ -14,6 +14,7 @@ kbfnbcaeplbcioakkpcpgfkobkghlhen Grammarly: AI Writing Assistant and Grammar Che
 nngceckbapebfimnlniiiahkandclblb Bitwarden Password Manager (password manager popup and badge)
 hdokiejnpimakedhajhdlcegeplioahd LastPass: Free Password Manager (password manager content scripts)
 ghmbeldphafepmbegfdlkpapadhbakde Proton Pass: Free Password Manager (content script hiding its globals)
+hehggadaopoacecdllhhajmbjkdcmajg ChatGPT (signed-out side panel login controls)
 fdjamakpfbbddfjaooikfcpapjohcfmg Dashlane — Password Manager (password manager worker)
 dhdgffkkebhmkfjojejmpbldmpobfkfo Tampermonkey (userScripts)
 clngdbkpkpeebahjckkjfobafhncgmne Stylus (userScripts and styles)

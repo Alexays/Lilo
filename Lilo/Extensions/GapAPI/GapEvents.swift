@@ -37,6 +37,7 @@ final class GapEvents {
     private struct Worker {
         var port: WKWebExtension.MessagePort?
         var instance: String?
+        var ready = false
         /// Oldest first, removed once the worker received them; kept while it is stopped.
         var undelivered: [GapEventEnvelope] = []
         /// The last event handed to `port`; the rest go out on the next delivery.
@@ -267,7 +268,8 @@ final class GapEvents {
                 if let role = message["role"] as? String {
                     let tag = (message["tag"] as? NSNumber)?.int64Value ?? 0
                     if owner == nil {
-                        self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String, tag: tag, extensionId: extensionId)
+                        self.adopt(port, asWorker: role == "worker", instance: message["instance"] as? String,
+                                   ready: message["ready"] as? Bool == true, tag: tag, extensionId: extensionId)
                     } else if owner != tag {
                         // Another context's channel drew this port's number: it opens another one.
                         try? await port.sendMessage(["collided": true, Self.channelKey: tag])
@@ -276,6 +278,11 @@ final class GapEvents {
                 }
                 // Another context's call, which it sends again on its next channel.
                 if let id = (message["id"] as? NSNumber)?.int64Value, let owner, id >> 32 != owner { return }
+                if message["ready"] as? Bool == true, let owner, (message["tag"] as? NSNumber)?.int64Value == owner,
+                   self.workers[extensionId]?.port === port {
+                    self.workers[extensionId]?.ready = true
+                    return
+                }
                 if message["idle"] != nil {
                     self.close(port, extensionId: extensionId)
                     return
@@ -307,7 +314,7 @@ final class GapEvents {
         }
     }
 
-    private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, tag: Int64, extensionId: String) {
+    private func adopt(_ port: WKWebExtension.MessagePort, asWorker: Bool, instance: String?, ready: Bool, tag: Int64, extensionId: String) {
         opening[extensionId]?.removeAll { $0 === port }
         owners[ObjectIdentifier(port)] = tag
         guard asWorker else {
@@ -319,6 +326,7 @@ final class GapEvents {
         let restarted = workers[extensionId]?.instance != instance
         workers[extensionId, default: Worker()].port = port
         workers[extensionId]?.instance = instance
+        workers[extensionId]?.ready = ready
         workers[extensionId]?.sentThrough = 0
         if restarted { NotificationCenter.default.post(name: .extensionWorkerDidStart, object: self, userInfo: ["extensionId": extensionId]) }
         workerChannel(extensionId, .open)
@@ -337,6 +345,11 @@ final class GapEvents {
 
     func isConnected(_ extensionId: String) -> Bool {
         workers[extensionId]?.port != nil
+    }
+
+    /// The connected worker finished its top-level code and the prelude's startup barriers.
+    func isReady(_ extensionId: String) -> Bool {
+        isConnected(extensionId) && workers[extensionId]?.ready == true
     }
 
     /// The running worker's own id, which it sends on each channel it opens: a worker that reconnects

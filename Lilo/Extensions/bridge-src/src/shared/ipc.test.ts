@@ -53,23 +53,37 @@ globalThis.BroadcastChannel = class extends BroadcastChannel {
   }
 };
 mock.timers.enable({ apis: ['setTimeout', 'Date'] });
-const { bridgeEvents, channelClosed, gapCall, workerReady } = await import('./ipc.ts');
-const { storageAreaPatches } = await import('./storage-area.ts');
+const { bridgeEvents, channelClosed, gapCall, workerNativeReady, workerReady } = await import('./ipc.ts');
+const { startupStorageSettled, storageAreaPatches } = await import('./storage-area.ts');
 
 describe('worker channel', () => {
   it('holds the events that arrive while the top-level code runs, then dispatches them in order, before storage answers', async () => {
     const call = gapCall('bookmarks', 'get', {}, 0);
     const read = storageAreaPatches.get(async () => 'stored', (area) => area as object).call({}).then((value: unknown) => dispatched.push([value]));
+    let answerCallback!: () => void;
+    storageAreaPatches.get((_keys: unknown, callback: (value: string) => void) => { answerCallback = () => callback('callback stored'); }, (area) => area as object)
+      .call({}, null, (value: unknown) => dispatched.push([value]));
     const first = ports[0];
-    assert.deepEqual(first.sent[0], { role: 'worker', tag: tag(), instance: (first.sent[0] as any).instance });
+    assert.deepEqual(first.sent[0], { role: 'worker', tag: tag(), instance: (first.sent[0] as any).instance, ready: false });
     assert.equal(first.sent[1].id, callId(1));
     first.receive({ seq: 1, namespace: 'bookmarks', event: 'onCreated', args: [1] });
     first.receive({ events: [{ seq: 2, namespace: 'bookmarks', event: 'onRemoved', args: [2] }] });
     await new Promise(setImmediate);
     assert.deepEqual(dispatched, []);
+    assert.equal(first.sent.some((message) => message.ready === true), false);
     workerReady();
+    assert.equal(first.sent.some((message) => message.ready === true), false, 'native actions still wait for the startup storage read');
+    let storageSettled = false;
+    const startup = startupStorageSettled().then(() => { storageSettled = true; });
     await read;
-    assert.deepEqual(dispatched.splice(0), [[1], [2], ['stored']]);
+    await new Promise(setImmediate);
+    assert.equal(storageSettled, false, 'a pending startup callback keeps native actions waiting');
+    answerCallback();
+    await startup;
+    workerNativeReady();
+    assert.deepEqual(first.sent.at(-1), { ready: true, tag: tag() });
+    await read;
+    assert.deepEqual(dispatched.splice(0), [[1], [2], ['stored'], ['callback stored']]);
     first.receive({ reply: callId(1), result: 'done' });
     assert.equal(await call, 'done');
   });
@@ -89,7 +103,7 @@ describe('worker channel', () => {
 
     const next = gapCall('bookmarks', 'get');
     assert.equal(ports.length, 2);
-    assert.deepEqual(ports[1].sent[0], { role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance });
+    assert.deepEqual(ports[1].sent[0], { role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance, ready: true });
     first.disconnect();
     ports[1].receive({ reply: callId(3), result: 'still answered' });
     assert.equal(await next, 'still answered', 'closing the idle port cuts no call of the new one');
@@ -143,7 +157,7 @@ describe('worker channel', () => {
     lilo.close();
     for (let turn = 0; turn < 1000 && ports.length === count; turn++) await new Promise(setImmediate);
     assert.equal(ports.length, count + 1);
-    assert.deepEqual(ports.at(-1)!.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance }]);
+    assert.deepEqual(ports.at(-1)!.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance, ready: true }]);
   });
 
   it("ignores what is not stamped with its tag: another port's messages, and Lilo's for another context", async () => {
@@ -168,7 +182,7 @@ describe('worker channel', () => {
     const next = ports.at(-1)!;
     assert.notEqual(next, taken);
     assert.equal(taken.disconnected, false);
-    assert.deepEqual(next.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance }, sent]);
+    assert.deepEqual(next.sent, [{ role: 'worker', tag: tag(), instance: (ports[0].sent[0] as any).instance, ready: true }, sent]);
     next.receive({ reply: sent.id, result: 'moved' });
     assert.equal(await call, 'moved', 'the call survives the move');
   });

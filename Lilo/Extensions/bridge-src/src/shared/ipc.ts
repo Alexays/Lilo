@@ -30,6 +30,7 @@ interface PendingCall {
 
 let port: Port | undefined;
 let ready = false;
+let nativeReady = false;
 /**
  * Names this context to Lilo, which stamps what it sends with it, and fills the high bits of its call ids. WebKit numbers
  * ports per process (WEBKIT-GAPS 89): another context's channel, or another port of the extension, can share this one's
@@ -162,7 +163,7 @@ function connect(): Port | undefined {
     }
   });
   port = opened;
-  opened.postMessage(isWorker ? { role: 'worker', tag, instance } : { role: 'page', tag });
+  opened.postMessage(isWorker ? { role: 'worker', tag, instance, ready: nativeReady } : { role: 'page', tag });
   if (isWorker) {
     lastActivity = Date.now();
     idleTimer ??= setTimeout(checkIdle, IDLE_MS);
@@ -180,6 +181,12 @@ export function workerReady(): void {
   held.splice(0).forEach(dispatch);
   start?.();
   connect();
+}
+
+/** Native actions follow the initial storage reads released by workerReady, as they cannot join our held event queue. */
+export function workerNativeReady(): void {
+  nativeReady = true;
+  port?.postMessage({ ready: true, tag });
 }
 
 /** While the worker starts, the promise that settles once the events that woke it are dispatched. */

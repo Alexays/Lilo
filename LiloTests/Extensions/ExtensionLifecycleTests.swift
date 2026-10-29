@@ -36,7 +36,9 @@ final class ExtensionLifecycleTests: XCTestCase {
             workerChannel: { lifecycle?.workerChannel($0, $1) },
             route: { _, _, _, _, _ in (nil, nil) }
         )
-        let backgrounds = BackgroundSupervisor(context: { _ in nil }, worker: { lifecycle?.worker(of: $0) }, reload: { _ in }, didChange: { _ in })
+        let backgrounds = BackgroundSupervisor(
+            context: { _ in nil }, worker: { lifecycle?.worker(of: $0) }, ready: { gapEvents.isReady($0) }, reload: { _ in }, didChange: { _ in }
+        )
         let made = ExtensionLifecycle(
             profileId: profileId, gapEvents: gapEvents, backgrounds: backgrounds,
             settings: { [unowned self] in self.settings },

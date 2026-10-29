@@ -675,7 +675,7 @@ final class RealExtensionSmokeTests: XCTestCase {
         var menu = false
         var command: (id: String, check: String)?
         var click = false
-        var shows: ((MainWindowController) -> Bool)?
+        var shows: ((MainWindowController) async -> Bool)?
         /// Why what its toolbar button opens fails on a paravirtual GPU (WEBKIT-GAPS.md), where the check expects that.
         var paravirtualGap: String?
     }
@@ -717,6 +717,11 @@ final class RealExtensionSmokeTests: XCTestCase {
         Feature(id: "mhjhnkcfbdhnjickkkdbjoemdmbfginb", name: "SelectorGadget", check: "document.getElementById('selectorgadget_main') !== null", click: true),
         Feature(id: "fcoeoabgfenejglbffodgkkbkcdhcgfn", name: "Claude", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
+        Feature(id: "hehggadaopoacecdllhhajmbjkdcmajg", name: "ChatGPT", check: "true", click: true,
+                shows: { window in
+                    let text = try? await window.sidePanel.webView?.evaluateJavaScript("document.body?.innerText") as? String
+                    return text?.contains("Log in to ChatGPT") == true && text?.contains("Continue to ChatGPT") == true
+                }),
         Feature(id: "difoiogjjojoaoomphldepapgpbgkhkb", name: "Sider", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
         Feature(id: "ddkjiahejlhfcafbddmgiahcphecmpfh", name: "uBlock Origin Lite", check: adBlocked),
@@ -738,6 +743,7 @@ final class RealExtensionSmokeTests: XCTestCase {
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
+        window.setupViews()
         let html = Data(Self.featurePage.utf8), json = Data(Self.jsonDocument.utf8), video = Data(Self.videoPage.utf8)
         let image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
         let server = try await TinyHTTPServer { request in
@@ -773,7 +779,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 XCTFail("\(feature.name) installs: \(error)")
                 continue
             }
-            let context = try XCTUnwrap(registry.context(for: feature.id))
+            XCTAssertNotNil(registry.context(for: feature.id))
             _ = await registry.backgrounds.load(feature.id)
             _ = await pollUntil(timeout: 10) { registry.gapEvents.reportedListeners(of: feature.id) != nil }
             // A welcome page the extension opens on install would take the toolbar button's click: once no tab has
@@ -808,27 +814,88 @@ final class RealExtensionSmokeTests: XCTestCase {
                   controllers: document.querySelectorAll('vsc-controller').length, text: document.body?.innerText.slice(0, 120) })
                 """, in: page) as? String ?? "unread"
                 let worker = registry.lifecycle.worker(of: feature.id).map { "\($0)" } ?? "none"
-                let errors = context.errors.suffix(4).map { String($0.localizedDescription.prefix(160)) }
+                let errors = (registry.context(for: feature.id)?.errors ?? []).suffix(4).map { String($0.localizedDescription.prefix(160)) }
                 // Lilo's console relay names the page each message came from.
                 let consoles = (registry.backgroundDiagnosticsSnapshots().first { $0["id"] as? String == feature.id }?["pageDiagnostics"] as? [[String: Any]] ?? [])
                     .suffix(4).map { "\($0["source"] ?? "?"): \(String(describing: $0["message"] ?? "").prefix(200))" }
-                return "page \(state), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors), consoles \(consoles)"
+                let panel = await self.evaluate("JSON.stringify({ url: location.href, text: document.body?.innerText })", in: window.sidePanel.webView) as? String ?? "none"
+                return "page \(state), panel \(panel), worker \(worker), tabs \(window.tabManager.openTabs.compactMap { $0.url?.absoluteString }), errors \(errors), consoles \(consoles)"
             }
             if let shows = feature.shows {
-                let shown = await pollUntil(timeout: 30) { shows(window) }
+                let shown = await pollUntil(timeout: 30) { await shows(window) }
                 if let gap = feature.paravirtualGap, paravirtualGPU {
                     if shown { XCTFail("\(feature.name) now opens what its toolbar button opens on a paravirtual GPU: drop its gap (\(gap))") }
                 } else if !shown {
                     XCTFail("\(feature.name) opens what its toolbar button opens: \(await diagnosis())")
                 }
+                if shown, window.sidePanel.webView != nil {
+                    _ = await evaluate("globalThis.liloWorkerRestartSentinel = true", in: page)
+                    for attempt in 0..<(feature.name == "ChatGPT" ? 4 : 1) {
+                        if attempt != 2 {
+                            window.sidePanel.closePanel()
+                            let closed = await pollUntil { registry.gapEvents.undelivered(to: feature.id).isEmpty }
+                            XCTAssertTrue(closed, "the close event reaches the worker")
+                        }
+                        if attempt > 0 {
+                            await registry.disable(extensionId: feature.id)
+                            try await registry.enable(extensionId: feature.id)
+                        }
+                        let button = NSMenuItem()
+                        button.representedObject = feature.id
+                        window.openExtensionFromMenu(button)
+                        let reopened = await pollUntil(timeout: 30) { await shows(window) }
+                        if !reopened {
+                            XCTFail("\(feature.name) reopens its panel on attempt \(attempt): \(await diagnosis())")
+                            break
+                        }
+                    }
+                    let pagePreserved = await evaluate("globalThis.liloWorkerRestartSentinel === true", in: page) as? Bool
+                    XCTAssertEqual(pagePreserved, true, "restarting an extension must leave the unrelated page running")
+                    if feature.name == "ChatGPT", let panel = window.sidePanel.webView {
+                        _ = try await panel.callAsyncJavaScript("await chrome.storage.session.set({ liloWorkerRestartSession: 'kept' });", arguments: [:], in: nil, contentWorld: .page)
+                        for panelOpen in [true, false] {
+                            if !panelOpen {
+                                window.sidePanel.closePanel()
+                                let closed = await pollUntil { registry.gapEvents.undelivered(to: feature.id).isEmpty }
+                                XCTAssertTrue(closed)
+                                let idle = await pollUntil(timeout: 35) { registry.lifecycle.worker(of: feature.id) == .idle }
+                                XCTAssertTrue(idle, "the bridge goes idle before the closed-panel restart")
+                            }
+                            let instance = registry.gapEvents.workerInstance(of: feature.id)
+                            await registry.backgrounds.restartIfRunning(feature.id)
+                            let restarted = await pollUntil(timeout: 10) {
+                                registry.lifecycle.worker(of: feature.id) == .running && registry.gapEvents.workerInstance(of: feature.id) != instance
+                            }
+                            XCTAssertTrue(restarted, "the worker starts a new instance, panel open: \(panelOpen)")
+                            if !panelOpen {
+                                let button = NSMenuItem()
+                                button.representedObject = feature.id
+                                window.openExtensionFromMenu(button)
+                            }
+                            let rendered = await pollUntil(timeout: 30) { await shows(window) }
+                            if !rendered { XCTFail("ChatGPT renders after a worker restart, panel open \(panelOpen): \(await diagnosis())") }
+                            let session = try await window.sidePanel.webView?.callAsyncJavaScript("return (await chrome.storage.session.get('liloWorkerRestartSession')).liloWorkerRestartSession;", arguments: [:], in: nil, contentWorld: .page) as? String
+                            XCTAssertEqual(session, "kept", "an in-place worker restart preserves storage.session")
+                            let stillPreserved = await evaluate("globalThis.liloWorkerRestartSentinel === true", in: page) as? Bool
+                            XCTAssertEqual(stillPreserved, true)
+                        }
+                    }
+                    if await shows(window), let image = try? await window.sidePanel.webView?.takeSnapshot(configuration: nil) {
+                        let attachment = XCTAttachment(image: image)
+                        attachment.name = "\(feature.name) side panel after restart"
+                        attachment.lifetime = .keepAlways
+                        add(attachment)
+                    }
+                }
             }
             let checked = await holds(feature.check)
             if !checked { XCTFail("\(feature.name) does its part on the page: \(await diagnosis())") }
-            if feature.menu, let adapter = window.tabManager.tabAdapter(for: tab.id) {
+            if feature.menu, let context = registry.context(for: feature.id), let adapter = window.tabManager.tabAdapter(for: tab.id) {
                 let added = await pollUntil(timeout: 10) { !context.menuItems(for: adapter).isEmpty }
                 if !added { XCTFail("\(feature.name) adds its context menu entry: \(await diagnosis())") }
             }
             if let (commandId, after) = feature.command {
+                let context = try XCTUnwrap(registry.context(for: feature.id))
                 let command = try XCTUnwrap(context.commands.first { $0.id == commandId })
                 // A command acts on the active tab, which a welcome page the extension opened on install may be.
                 window.activateTabStateFirst(id: tab.id)

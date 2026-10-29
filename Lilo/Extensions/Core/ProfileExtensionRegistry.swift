@@ -315,6 +315,7 @@ final class ProfileExtensionRegistry {
     private(set) lazy var backgrounds: BackgroundSupervisor = BackgroundSupervisor(
         context: { [weak self] in self?.context(for: $0) },
         worker: { [weak self] in self?.lifecycle.worker(of: $0) },
+        ready: { [weak self] in self?.gapEvents.isReady($0) == true },
         reload: { [weak self] in await self?.reloadFromDisk($0) },
         didChange: { [weak self] in self?.extensionDidChange($0) }
     )
@@ -813,6 +814,7 @@ final class ProfileExtensionRegistry {
             return
         }
         let runtime = loadedRuntimes.remove(at: index)
+        let workerWebView = backgrounds.health(for: extensionId)?.workerWebView
         if removePersistedRecord {
             lifecycle.uninstalled(extensionId)
         } else {
@@ -826,6 +828,7 @@ final class ProfileExtensionRegistry {
         runtime.contextObserver.map { NotificationCenter.default.removeObserver($0) }
         userScripts.unloaded(extensionId)
         postDidUnload(extensionId: extensionId, uninstalled: removePersistedRecord)
+        if let workerWebView { BackgroundSupervisor.terminateProcess(workerWebView) }
         if removePersistedRecord {
             await removePersistedExtension(extensionId: extensionId)
             await removeExtensionData(extensionId: extensionId)
@@ -840,6 +843,12 @@ final class ProfileExtensionRegistry {
     /// Lets gap handlers drop what they hold for the extension (`uninstalled` also clears what they
     /// persisted). Also posted for a reload or an update, which unload the context first.
     private func postDidUnload(extensionId: String, uninstalled: Bool) {
+        for adapter in windowAdapters where adapter.tabManager?.windowAdapter === adapter {
+            guard let manager = adapter.tabManager else { continue }
+            for tab in manager.openTabs where tab.url?.scheme == "chrome-extension" && tab.url?.host?.lowercased() == extensionId {
+                manager.tabsAwaitingTheirExtension.insert(tab.id)
+            }
+        }
         NotificationCenter.default.post(
             name: .extensionDidUnload,
             object: self,
@@ -892,6 +901,7 @@ final class ProfileExtensionRegistry {
         }
         // Close the window while the contexts still exist, so they observe it before unloading.
         notifyWindowClosed()
+        let workerWebViews = loadedRuntimes.compactMap { backgrounds.health(for: $0.id)?.workerWebView }
         for runtime in loadedRuntimes {
             runtime.contextObserver.map { NotificationCenter.default.removeObserver($0) }
             delegate.closeActionPopups(of: runtime.context)
@@ -907,6 +917,7 @@ final class ProfileExtensionRegistry {
             userScripts.unloaded(id)
             postDidUnload(extensionId: id, uninstalled: false)
         }
+        workerWebViews.forEach(BackgroundSupervisor.terminateProcess)
     }
 
     /// Replaces the content blocker's built-in extension with the one at `url`; nil leaves none.

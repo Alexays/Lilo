@@ -403,6 +403,35 @@ final class SidePanelTests: XCTestCase {
         UserDefaults.lilo.removeObject(forKey: "sidePanel.\(registry.profileId).\(extensionId!)")
     }
 
+    func testReloadWithAnOpenPanelRebuildsTheExtensionsVisibleTab() async throws {
+        let dir = tempDir.appendingPathComponent("Reloaded")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Reloaded","version":"1.0","permissions":["sidePanel"],"side_panel":{"default_path":"panel.html"},"background":{"service_worker":"worker.js"}}"#
+            .write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "chrome.sidePanel.getPanelBehavior();".write(to: dir.appendingPathComponent("worker.js"), atomically: true, encoding: .utf8)
+        try "<body><script src='page.js'></script>".write(to: dir.appendingPathComponent("panel.html"), atomically: true, encoding: .utf8)
+        try "document.body.textContent = chrome.runtime.getManifest().name;".write(to: dir.appendingPathComponent("page.js"), atomically: true, encoding: .utf8)
+        try await registry.load(from: dir)
+        let id = try XCTUnwrap(registry.loadedExtensions.first { $0.context.webExtension.displayName == "Reloaded" }?.id)
+        await registry.backgrounds.ensureResponsive(id)
+        let tabId = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "chrome-extension://\(id)/panel.html"))?.id)
+        let previous = try XCTUnwrap(window.tabManager.engineTab(for: tabId))
+        let initial = await pollUntil { (try? await previous.wkWebView.evaluateJavaScript("document.body?.innerText")) as? String == "Reloaded" }
+        XCTAssertTrue(initial)
+        await call("open", gesture(thisWindow), from: id)
+        let opened = await panelLoads("panel")
+        XCTAssertTrue(opened)
+
+        await registry.disable(extensionId: id)
+        XCTAssertNil(window.sidePanel.shown)
+        try await registry.enable(extensionId: id)
+
+        let rebuilt = try XCTUnwrap(window.tabManager.engineTab(for: tabId))
+        XCTAssertFalse(rebuilt === previous, "the tab must use the new extension context")
+        let restored = await pollUntil { (try? await rebuilt.wkWebView.evaluateJavaScript("document.body?.innerText")) as? String == "Reloaded" }
+        XCTAssertTrue(restored, "its native runtime API works after re-enable")
+    }
+
     // MARK: - Events
 
     func testOpenedAndClosedReachTheExtensionWithChromesPayload() async throws {

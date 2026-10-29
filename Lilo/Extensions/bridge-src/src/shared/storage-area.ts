@@ -10,6 +10,18 @@ import { workerStarting } from './ipc.ts';
 
 /** Each storage area's writes in flight, as the promise that settles once they all have. */
 const writesInFlight = new WeakMap<object, Promise<unknown>>();
+const startupReads = new Set<Promise<unknown>>();
+
+/** Startup storage reads settle after the gap events that woke the worker, before native toolbar actions. */
+export async function startupStorageSettled(): Promise<void> {
+  await Promise.allSettled(startupReads);
+}
+
+function startupRead(answer: Promise<unknown>): void {
+  startupReads.add(answer);
+  const settled = () => { startupReads.delete(answer); };
+  answer.then(settled, settled);
+}
 
 function inFlight(area: object, write: Promise<unknown>): void {
   const settled = write.then(() => {}, () => {});
@@ -113,9 +125,12 @@ function ordered(write: boolean, merge?: Merge): Patch {
     if (!write && pending === undefined && !starting) return ownTask(original.apply(this, args));
     const last = args.length - 1;
     const callback = typeof args[last] === 'function' ? args[last] : undefined;
+    let callbackDone: Promise<void> | undefined;
     if (starting && callback) {
+      let finished!: () => void;
+      callbackDone = new Promise<void>((resolve) => { finished = resolve; });
       args[last] = function (this: unknown, ...results: unknown[]) {
-        starting.then(() => callback.apply(this, results));
+        starting.then(() => { try { callback.apply(this, results); } finally { finished(); } });
       };
     }
     let call = () => original.apply(this, args);
@@ -131,8 +146,13 @@ function ordered(write: boolean, merge?: Merge): Patch {
     }
     const result: Promise<unknown> = pending === undefined ? call() : pending.then(call);
     if (write) inFlight(area, result);
-    if (callback) return undefined;
-    return ownTask(starting ? result.then((value) => starting.then(() => value)) : result);
+    if (callback) {
+      if (callbackDone) startupRead(Promise.resolve(result).then(() => callbackDone, () => {}));
+      return undefined;
+    }
+    const answer = ownTask(starting ? result.then((value) => starting.then(() => value)) : result) as Promise<unknown>;
+    if (starting) startupRead(answer);
+    return answer;
   };
 }
 

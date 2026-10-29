@@ -10,7 +10,7 @@ Status of each gap:
 - **Contract**: `ChromeContractTests` covers it (`LiloTests/Extensions/chrome-contract-differences.txt` lists the differences Lilo keeps and fails once one matches Chrome).
 - **Manual**: no automated check (it would crash the test host, it is timing dependent, or it is not reduced to a minimal case). Its repro reproduces it by hand.
 
-Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or Feedback Assistant. Only gap 19 is filed upstream (webkit.org/b/267514). Observed on macOS 27.0.1 (26A434). Gap numbers are stable, since code and tests cite them; a number that goes is not reused.
+Most gaps carry a repro (after the check) for a bug report on bugs.webkit.org or Feedback Assistant. Gap 19 is filed upstream (webkit.org/b/267514); gap 103 matches the existing WebKit report 324754 and its upstream fix. Observed on macOS 27.0.1 (26A434). Gap numbers are stable, since code and tests cite them; a number that goes is not reused.
 
 Code locations below name the file and the symbol to look for (`chrome-compat.ts` `serve` is the `serve` member of a namespace description in that file).
 
@@ -147,6 +147,12 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 - **Impact:** MultiPassword's offscreen document, which WebKit runs in its worker's process, never reached the worker, which then answered none of its popup's requests: the popup rendered nothing.
 - **Check:** Manual: depends on an earlier extension, not reduced to a minimal case. Repro: `make ext-smoke IDS=inomeogfingihgjfjlpeplalcfajhgai,cnlhokffphohmfcddnibpohmkdfafdli SHARDS=1` with the stand-in removed. Expected: MultiPassword's offscreen document finds the registration a tab opened at the same time finds. Actual: it finds none.
 
+### 103. A restarted background worker loses its extension APIs
+
+- **Gap:** on macOS 27.0.1, a worker restarted in a different process fails its first packaged `importScripts` with `NetworkError: Load failed`. Tracing before that import finds `runtime.connectNative` unavailable through both `chrome` and `browser`. The script fetch itself succeeds. These observations match [WebKit bug 324754](https://bugs.webkit.org/show_bug.cgi?id=324754), whose [upstream fix](https://github.com/WebKit/WebKit/commit/001f7dbb8bbfc1f05310c7c6eed4e092d674c523) replaces a service-worker connection when its process no longer contains the backing page and its extension bindings.
+- **Lilo:** [BackgroundSupervisor.swift] keeps the backing `WKWebView` of the last worker instance that connected to the bridge. A closed view can still terminate its original process through the guarded `_killWebContentProcessAndResetState` selector. On unload, [ProfileExtensionRegistry.swift] closes the extension's panels and offscreen pages before terminating that process; visible extension tabs rebuild with the next context. In-place recovery terminates both the current backing process and the retained one when the views differ, keeping `storage.session`. An idle port reconnect from the same worker never replaces the retained view. Queued gap events use this recovery too, with one task per extension. Once a supported macOS version includes the upstream fix, recheck without the retained view and its process retirement before removing them.
+- **Impact:** without retirement, ChatGPT leaves `side-panel-loading.html` empty because its worker never selects the real panel. A second race lets a native toolbar click reach the new worker before its initial storage reads restore the saved destination. The prelude releases those reads after startup gap events, then [storage-area.ts] waits for their promises and callbacks before [ipc.ts] reports readiness to [GapEvents.swift]. The supervisor waits for it before native actions. The worker can still unload when idle; no keepalive is added.
+- **Check:** the underlying WebKit failure is manually traced with ChatGPT 1.26.1020.11845 and non-inspectable workers. `RealExtensionSmokeTests` checks the actual signed-out login controls after a fresh install, ordinary reopen, three disable/re-enable cycles (one with the panel open), and in-place worker restarts with the panel open and after its closed panel's bridge goes idle. It checks a new worker instance, preserved `storage.session`, and an unrelated page that must not reload. Run `TEST_RUNNER_LILO_SMOKE_FEATURES=ChatGPT make ext-smoke IDS=hehggadaopoacecdllhhajmbjkdcmajg SHARDS=1`. The isolated profile has no native messaging host; signed-in behavior remains unverified. `SidePanelTests.testReloadWithAnOpenPanelRebuildsTheExtensionsVisibleTab` covers rebuilding an extension tab after unload.
 
 ### 93. `runtime.connect` throws when no context listens
 
@@ -647,6 +653,7 @@ Still open, with no workaround in Lilo: gaps 1, 14, 35, 36, 71, 74, 80 and 84. W
 [ExtensionLifecycle.swift]: ../Lilo/Extensions/Core/ExtensionLifecycle.swift
 [ExtensionNativeMessaging.swift]: ../Lilo/Extensions/Core/ExtensionNativeMessaging.swift
 [ProfileExtensionRegistry.swift]: ../Lilo/Extensions/Core/ProfileExtensionRegistry.swift
+[BackgroundSupervisor.swift]: ../Lilo/Extensions/Core/BackgroundSupervisor.swift
 [ExtensionUserScripts.swift]: ../Lilo/Extensions/Core/ExtensionUserScripts.swift
 [ActionColorBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/ActionColorBridgeHandler.swift
 [PermissionsBridgeHandler.swift]: ../Lilo/Extensions/GapAPI/PermissionsBridgeHandler.swift
