@@ -178,6 +178,15 @@ final class ReleaseCaptureTests: XCTestCase {
     private func recordAuthoredScenario(highResolution: Bool) async throws {
         guard let scenario = authoredScenario else { throw XCTSkip("Use SCENARIO=file.json") }
         guard scenario.id.range(of: "^[a-z][a-z0-9-]{0,47}$", options: .regularExpression) != nil else { throw CocoaError(.fileReadCorruptFile) }
+        if highResolution {
+            let window = try XCTUnwrap(controller.window)
+            // AppKit otherwise shrinks capture windows to the CI desktop.
+            window.contentMinSize = NSSize(width: 1120, height: 720)
+            window.setContentSize(window.contentMinSize)
+            let sized = await pollUntil(timeout: 5) { self.controller.chromeWebView.bounds.width >= 1120 && self.controller.chromeWebView.bounds.height >= 720 }
+            XCTAssertTrue(sized, "The native capture window must meet the resolution gate before recording")
+            guard sized else { throw CocoaError(.validationMissingMandatoryProperty) }
+        }
         var tabs: [String: UUID] = [:]
         do {
             for tab in scenario.tabs { tabs[tab.id] = try await open(tab.page).id }
