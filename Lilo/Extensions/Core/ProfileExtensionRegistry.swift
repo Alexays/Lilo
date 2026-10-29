@@ -814,7 +814,7 @@ final class ProfileExtensionRegistry {
             return
         }
         let runtime = loadedRuntimes.remove(at: index)
-        let workerWebView = backgrounds.health(for: extensionId)?.workerWebView
+        let worker = backgrounds.health(for: extensionId)
         if removePersistedRecord {
             lifecycle.uninstalled(extensionId)
         } else {
@@ -828,7 +828,11 @@ final class ProfileExtensionRegistry {
         runtime.contextObserver.map { NotificationCenter.default.removeObserver($0) }
         userScripts.unloaded(extensionId)
         postDidUnload(extensionId: extensionId, uninstalled: removePersistedRecord)
-        if let workerWebView { BackgroundSupervisor.terminateProcess(workerWebView) }
+        if let webView = worker?.workerWebView {
+            BackgroundSupervisor.terminateProcess(webView)
+            // A re-enable or reload loads the next context right after.
+            if let pid = worker?.workerPid { await BackgroundSupervisor.processExit(pid) }
+        }
         if removePersistedRecord {
             await removePersistedExtension(extensionId: extensionId)
             await removeExtensionData(extensionId: extensionId)

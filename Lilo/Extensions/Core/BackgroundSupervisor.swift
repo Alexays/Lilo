@@ -24,6 +24,7 @@ final class BackgroundSupervisor {
         var lastErrorCount = 0
         /// A closed backing view can still address the process WebKit reuses for the next worker (WebKit gap 103).
         var workerWebView: WKWebView?
+        var workerPid: Int?
         var workerInstance: String?
 
         var bridgeStatus: String {
@@ -148,7 +149,9 @@ final class BackgroundSupervisor {
             if let context = context(extensionId) {
                 // An idle port can reconnect from the old process after WebKit replaced its backing page.
                 if health[extensionId]?.workerWebView == nil || health[extensionId]?.workerInstance != instance {
-                    health[extensionId]?.workerWebView = Self.backgroundWebView(of: context)
+                    let webView = Self.backgroundWebView(of: context)
+                    health[extensionId]?.workerWebView = webView
+                    health[extensionId]?.workerPid = webView.flatMap { WebViewPrivateAccessors($0).pid("_webProcessIdentifier") }
                     health[extensionId]?.workerInstance = instance
                 }
                 PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")
@@ -348,6 +351,20 @@ final class BackgroundSupervisor {
         if webView.responds(to: kill) { webView.perform(kill) }
     }
 
+    /// Returns once `pid` has exited, or after a second: until WebKit sees a killed worker process exit, it can
+    /// start the extension's next worker in it, where that worker never runs (WebKit gap 103).
+    static func processExit(_ pid: Int) async {
+        let source = DispatchSource.makeProcessSource(identifier: pid_t(pid), eventMask: .exit, queue: .main)
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            source.setEventHandler { source.cancel() }
+            source.setCancelHandler { continuation.resume() }
+            source.resume()
+            // A process gone before the source registered sends no event.
+            if kill(pid_t(pid), 0) != 0, errno == ESRCH { source.cancel() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { source.cancel() }
+        }
+    }
+
     /// Starts a fresh worker in the same context by killing the background web view's process, the one signal that makes WebKit drop it;
     /// `storage.session` survives, so a password manager stays unlocked. False without a background web view or the SPI.
     @discardableResult
@@ -359,9 +376,12 @@ final class BackgroundSupervisor {
         loadStartedAt[extensionId] = started
         defer { if loadStartedAt[extensionId] == started { loadStartedAt[extensionId] = nil } }
         // The current backing page may be in a new process while the worker is still in the previous one's.
-        let previous = health[extensionId]?.workerWebView
+        let previous = health[extensionId]
         Self.terminateProcess(webView)
-        if let previous, previous !== webView { Self.terminateProcess(previous) }
+        if let view = previous?.workerWebView, view !== webView {
+            Self.terminateProcess(view)
+            if let pid = previous?.workerPid { await Self.processExit(pid) }
+        }
         var waits = 0
         while Self.backgroundWebView(of: context) != nil, waits < 20 {
             guard !Task.isCancelled else { return false }
