@@ -61,7 +61,7 @@
 
   .blink i {
     position: absolute;
-    top: 8.5px;
+    top: 7.5px;
     left: 5px;
     width: 4px;
     height: 5px;
