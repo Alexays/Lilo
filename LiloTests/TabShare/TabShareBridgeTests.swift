@@ -45,16 +45,18 @@ final class TabShareBridgeTests: XCTestCase {
 
     func testAScreenGoesThroughTheFerryWithSoundOnlyWhenBothSidesWantIt() async {
         let bridge = TabShareBridge()
-        var sounds: [Bool] = []
-        bridge.screenStarter = { _, audio in
+        var sounds: [Bool] = [], sizes: [CGSize] = []
+        bridge.screenStarter = { _, audio, maxSize in
             sounds.append(audio)
+            sizes.append(maxSize)
             return ["mode": "tab", "token": "s"]
         }
         let requester = WKWebView(frame: .zero)
 
         bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
-        var reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
+        var reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true, maxSize: CGSize(width: 1920, height: 1200))
         XCTAssertEqual(reply["mode"] as? String, "tab")
+        XCTAssertEqual(sizes.first, CGSize(width: 1920, height: 1200), "the capture never goes past what the page asked for")
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: false)
         XCTAssertEqual(reply["mode"] as? String, "tab", "full resolution and frame rate, with or without sound")
 
@@ -64,7 +66,7 @@ final class TabShareBridgeTests: XCTestCase {
         XCTAssertEqual(sounds, [true, false, false])
 
         bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
-        bridge.screenStarter = { _, _ in nil }
+        bridge.screenStarter = { _, _, _ in nil }
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "cancel", "a cancelled system picker cancels the share")
     }
@@ -105,11 +107,12 @@ final class TabShareSessionControllerTests: XCTestCase {
 
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertNotNil(reply["token"] as? String)
-        // Pixels, capped at 1080p width: 1440 points is 2880 pixels on Retina, sent as 1920.
-        let pixelWidth = 1440 * (NSScreen.main?.backingScaleFactor ?? 1)
-        let fit = min(1, TabShareSessionController.maxFrameWidth / pixelWidth)
-        XCTAssertEqual(reply["width"] as? Int, Int(pixelWidth * fit) & ~1)
-        XCTAssertEqual(reply["height"] as? Int, Int(900 * (NSScreen.main?.backingScaleFactor ?? 1) * fit) & ~1)
+        // Pixels, under 1080p's width and area: 1440x900 points is 2880x1800 pixels on Retina, sent at 1080p's area.
+        let scale = NSScreen.main?.backingScaleFactor ?? 1
+        let fit = min(1, TabShareSessionController.maxFrameWidth / (1440 * scale),
+                      (TabShareSessionController.maxFramePixels / (1440 * scale * 900 * scale)).squareRoot())
+        XCTAssertEqual(reply["width"] as? Int, Int(1440 * scale * fit) & ~1)
+        XCTAssertEqual(reply["height"] as? Int, Int(900 * scale * fit) & ~1)
         XCTAssertTrue(engine.isTabShareSource)
         XCTAssertTrue(engine.hasActiveCapture)
         XCTAssertTrue(controller.isSharing(engineId: engine.id))
@@ -162,7 +165,7 @@ final class TabShareSessionControllerTests: XCTestCase {
 
         controller.switchSource(token: token, to: second)
         XCTAssertTrue(controller.hasSession(token: token))
-        XCTAssertEqual(controller.tabShare(requestedBy: requester)?.engineId, second.id)
+        XCTAssertEqual(controller.share(requestedBy: requester)?.engineId, second.id)
         XCTAssertFalse(first.isTabShareSource)
         XCTAssertTrue(second.isTabShareSource)
         XCTAssertEqual(released, [first.id])
@@ -173,7 +176,7 @@ final class TabShareSessionControllerTests: XCTestCase {
         controller.switchSource(token: "gone", to: first)
         XCTAssertEqual(changes, 2)
         controller.stopAll()
-        XCTAssertNil(controller.tabShare(requestedBy: requester))
+        XCTAssertNil(controller.share(requestedBy: requester))
     }
 
     func testSessionsRunSideBySide() {
@@ -211,8 +214,9 @@ final class TabShareSessionControllerTests: XCTestCase {
         let controller = TabShareSessionController()
         let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
         let reply = controller.start(engine: engine, requester: WKWebView(frame: .zero))
-        XCTAssertEqual(reply["width"] as? Int, 1920)
-        XCTAssertEqual(reply["height"] as? Int, 1080)
+        // 1920x1080, just under its area: the encoder's thread count steps up at 1080p.
+        XCTAssertEqual(reply["width"] as? Int, 1918)
+        XCTAssertEqual(reply["height"] as? Int, 1078)
         controller.stopAll()
     }
 

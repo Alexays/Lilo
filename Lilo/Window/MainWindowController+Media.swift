@@ -67,11 +67,15 @@ extension MainWindowController {
                 "muted": tab.isMuted,
                 "canHangUp": controls.actions.contains("hangup")
             ]
-            // The tab the call shares through the ferry, wherever its session runs.
+            // What the call shares through the ferry, wherever its session runs: a tab, or a screen or window.
             for window in context.windows.windows {
-                guard let share = window.tabShareSessions.tabShare(requestedBy: engine.wkWebView),
-                      let shared = tabManager.tab(for: share.engineId) else { continue }
-                summary["share"] = ["token": share.token, "tabId": shared.id.uuidString, "title": shared.title]
+                guard let share = window.tabShareSessions.share(requestedBy: engine.wkWebView) else { continue }
+                if let engineId = share.engineId {
+                    guard let shared = tabManager.tab(for: engineId) else { continue }
+                    summary["share"] = ["token": share.token, "tabId": shared.id.uuidString, "title": shared.title]
+                } else {
+                    summary["share"] = ["token": share.token, "surface": share.surface]
+                }
                 break
             }
             return summary

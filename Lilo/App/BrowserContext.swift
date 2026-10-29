@@ -158,12 +158,12 @@ final class BrowserContext {
         }
         let capture = engineFactory.captureHandler
         let screenPicker = ScreenContentPicker()
-        bridge.screenStarter = { requester, wantsAudio in
+        bridge.screenStarter = { requester, wantsAudio, maxSize in
             guard windows.window(for: requester) != nil,
                   let filter = await screenPicker.pick(allowing: [.singleDisplay, .singleWindow]) else { return nil }
             // The pick consents to the picture only: sound has its own grant, asked once. Refused, the share has no sound.
             let audio = wantsAudio ? await SystemAudioAccess.request() : false
-            let screen = ScreenCaptureStream(filter: filter)
+            let screen = ScreenCaptureStream(filter: filter, maxSize: maxSize)
             guard (try? await screen.start()) != nil, let window = windows.window(for: requester) else {
                 screen.stop()
                 return nil

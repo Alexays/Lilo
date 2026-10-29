@@ -19,11 +19,14 @@ final class ScreenCaptureStream: NSObject, SCStreamOutput, SCStreamDelegate {
 
     private struct FrameBox: @unchecked Sendable { let buffer: CVPixelBuffer }
 
-    init(filter: SCContentFilter) {
+    /// `maxSize` is the largest frame the page asked for, zero on an axis it left open.
+    init(filter: SCContentFilter, maxSize: CGSize = .zero) {
         let scale = CGFloat(filter.pointPixelScale)
         let size = filter.contentRect.size
         let pixels = size.width > 0 && size.height > 0 ? NSSize(width: size.width * scale, height: size.height * scale) : NSSize(width: 1280, height: 720)
-        let fit = min(1, TabShareSessionController.maxFrameWidth / pixels.width)
+        let fit = min(1, TabShareSessionController.maxFrameWidth / pixels.width,
+                      (TabShareSessionController.maxFramePixels / (pixels.width * pixels.height)).squareRoot(),
+                      maxSize.width > 0 ? maxSize.width / pixels.width : 1, maxSize.height > 0 ? maxSize.height / pixels.height : 1)
         // H.264 needs even dimensions.
         width = Int(pixels.width * fit) & ~1
         height = Int(pixels.height * fit) & ~1

@@ -40,15 +40,18 @@ final class TabShareSessionController {
         }
     }
 
-    /// 30 fps keeps the whole pipeline (snapshot plus encode) inside the frame budget with margin;
-    /// 60 would spend a large share of a core on snapshots alone.
-    static let framesPerSecond: Double = 30
+    /// Film's rate, a little above what Chrome's call encoder sends of a moving share: every frame past it costs a capture,
+    /// two encodes and a decode, for motion a viewer hardly sees.
+    static let framesPerSecond: Double = 24
     /// Static content steps the snapshot cadence down after this many identical snapshots: 10 fps after
     /// 2 s, 3 fps after 3 s more. Input in Lilo or the first changed frame restores full speed, so only a
     /// change the page makes on its own lags, by one idle interval at most.
-    static let idleCadences: [(duplicates: Int, framesPerSecond: Double)] = [(60, 10), (90, 3)]
+    static let idleCadences: [(duplicates: Int, framesPerSecond: Double)] = [(48, 10), (78, 3)]
     /// Frame width cap, in pixels: 1080p is the most a call sends.
     static let maxFrameWidth: CGFloat = 1920
+    /// Frame area cap, in pixels: from 1920x1080 up, the call's VP8 encoder runs 8 threads that mostly spin waiting on each
+    /// other, a third more CPU than its 3 threads below for a tenth more pixels.
+    static let maxFramePixels: CGFloat = 1920 * 1080 - 1
     /// Encode-failure teardown threshold (~1.5s of dead snapshots at full cadence).
     static let maxConsecutiveFailures = 45
     /// A shim that stopped pulling (page navigated with no pagehide delivery) ends the session.
@@ -86,7 +89,7 @@ final class TabShareSessionController {
         let sourceSize = bounds.width > 100 && bounds.height > 100
             ? NSSize(width: bounds.width * backingScale, height: bounds.height * backingScale)
             : NSSize(width: Self.maxFrameWidth, height: Self.maxFrameWidth * 9 / 16)
-        let scale = min(1, Self.maxFrameWidth / sourceSize.width)
+        let scale = min(1, Self.maxFrameWidth / sourceSize.width, (Self.maxFramePixels / (sourceSize.width * sourceSize.height)).squareRoot())
         // H.264 needs even dimensions.
         let width = Int(sourceSize.width * scale) & ~1
         let height = Int(sourceSize.height * scale) & ~1
@@ -112,10 +115,11 @@ final class TabShareSessionController {
         return start(session, surface: screen.surface)
     }
 
-    /// The tab a page shares through the ferry, if it shares one.
-    func tabShare(requestedBy requester: WKWebView) -> (token: String, engineId: UUID)? {
-        for session in sessions.values where session.requester === requester && session.screen == nil {
-            if let engine = session.engine { return (session.token, engine.id) }
+    /// What a page shares through the ferry, if it shares something: a tab (`engineId`), or a screen or window (`surface`).
+    func share(requestedBy requester: WKWebView) -> (token: String, engineId: UUID?, surface: String)? {
+        for session in sessions.values where session.requester === requester {
+            if let screen = session.screen { return (session.token, nil, screen.surface) }
+            if let engine = session.engine { return (session.token, engine.id, "browser") }
         }
         return nil
     }

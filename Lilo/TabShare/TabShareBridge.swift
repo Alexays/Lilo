@@ -20,7 +20,7 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     var sessionStarter: ((_ tabId: UUID, _ requester: WKWebView) -> [String: Any]?)?
     /// Runs the system screen or window picker and ferries the pick, with the Mac's sound when asked, which WebKit's own
     /// capture cannot share without echoing the call. Returns the shim reply payload, nil when cancelled.
-    var screenStarter: ((_ requester: WKWebView, _ audio: Bool) async -> [String: Any]?)?
+    var screenStarter: ((_ requester: WKWebView, _ audio: Bool, _ maxSize: CGSize) async -> [String: Any]?)?
     var sessionStopper: ((_ token: String) -> Void)?
     /// Redeems a `chrome.tabCapture` / `chrome.desktopCapture` stream id for the calling frame's
     /// origin (`chromeMediaSource` 'tab' or 'desktop'). Returns the shim reply payload, nil when
@@ -49,7 +49,8 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
             let requesterId = ObjectIdentifier(requester)
             guard pickingWebViews.insert(requesterId).inserted else { return (nil, "picker already open") }
             defer { pickingWebViews.remove(requesterId) }
-            let reply = await pick(originHost: origin.host, requester: requester, wantsAudio: body["audio"] as? Bool == true)
+            let maxSize = CGSize(width: body["maxWidth"] as? Double ?? 0, height: body["maxHeight"] as? Double ?? 0)
+            let reply = await pick(originHost: origin.host, requester: requester, wantsAudio: body["audio"] as? Bool == true, maxSize: maxSize)
             if reply["mode"] as? String == "system", let id = body["id"] as? String {
                 // The page's user activation was spent on the async picker; app-injected JS carries
                 // a fresh one, and native getDisplayMedia also rejects a document without focus.
@@ -72,13 +73,14 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
         }
     }
 
-    func pick(originHost: String, requester: WKWebView, wantsAudio: Bool = false) async -> [String: Any] {
+    /// `maxSize` is the largest frame the page asked for, zero on an axis it left open.
+    func pick(originHost: String, requester: WKWebView, wantsAudio: Bool = false, maxSize: CGSize = .zero) async -> [String: Any] {
         guard let pickerPresenter else { return ["mode": "system"] }
         switch await pickerPresenter(originHost, requester, wantsAudio) {
         case .system(let audio):
             // WebKit's own capture is sized in points, half the pixels of a Retina screen, at the frame rate the page asks.
             guard let screenStarter else { return ["mode": "system"] }
-            return await screenStarter(requester, audio && wantsAudio) ?? ["mode": "cancel"]
+            return await screenStarter(requester, audio && wantsAudio, maxSize) ?? ["mode": "cancel"]
         case .cancel:
             return ["mode": "cancel"]
         case .tab(let tabId):
@@ -373,10 +375,13 @@ getDisplayMedia(constraints){
   var id = String(Math.random()).slice(2);
   nativePending[id] = { constraints: constraints };
   var wantsAudio = !!(constraints && constraints.audio);
+  var video = constraints && typeof constraints.video === 'object' ? constraints.video : null;
+  var limit = function(value){ return typeof value === 'number' ? value : value && typeof value === 'object' ? +(value.max || value.exact) || 0 : 0; };
   // Made inside the page's gesture, which a context needs to play: the picker's wait spends it.
   var actx = wantsAudio && AudioCtx ? new AudioCtx() : null;
   if (actx) actx.resume();
-  return lilo.post('liloTabShare', { action: 'pick', id: id, audio: wantsAudio }).then(function(res){
+  return lilo.post('liloTabShare', { action: 'pick', id: id, audio: wantsAudio,
+                                     maxWidth: video ? limit(video.width) : 0, maxHeight: video ? limit(video.height) : 0 }).then(function(res){
     var pending = nativePending[id];
     delete nativePending[id];
     // Without the hook's gesture, a native call would fail with InvalidAccessError, which pages
