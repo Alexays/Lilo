@@ -114,6 +114,8 @@ The full path matters in zsh, whose `log` builtin shadows the tool. `--signpost`
 
 `make e2e-energy` turns this into an idle check: it builds the Release app like `make startup-bench`, launches it against a throwaway profile (`CFFIXED_USER_HOME` and `LILO_APP_SUPPORT_DIR` in a temporary directory) with `TABS` restored local pages (default 3), opens a terminal tab and hides it behind the first page, waits for its one snapshot save, then stays idle for `IDLE` seconds (default 45). It prints the energy signposts of that window and fails on any `git` run, `workerWake`, or `saveSnapshots` that saved something. The terminal is opened with System Events keystrokes, which needs Accessibility access for the terminal running `make`; `TERMINAL=0` skips it. It takes about three minutes and is not part of `make e2e`.
 
+`make energy-browsers` compares Lilo with Safari, Chrome and Firefox on the same local pages: see [ENERGY.md](ENERGY.md) for the method and the latest results.
+
 In Instruments, add the os_signpost instrument filtered on that subsystem to see the events and intervals on a timeline next to CPU and energy (Points of Interest only shows the `PointsOfInterest` category).
 
 ## 10. Common failure modes

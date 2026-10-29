@@ -8,6 +8,7 @@ to build it and send a change.
 | Document | Covers |
 |----------|--------|
 | [AI-AGENTS.md](AI-AGENTS.md) | Letting local agents (Claude Code, Codex, Cursor, any MCP client) drive Lilo, and what Lilo asks you first |
+| [ENERGY.md](ENERGY.md) | What Lilo, Safari, Chrome and Firefox draw on the same tabs, and how it is measured |
 | [COMPATIBILITY.md](../COMPATIBILITY.md) | What still differs from Chrome: extension APIs, tested store extensions, web APIs, known limitations |
 | [PRIVACY.md](../PRIVACY.md) | What stays on your Mac, and every request Lilo makes on its own |
 | [SUPPORT.md](../SUPPORT.md) | Where to ask a question or report a bug |
