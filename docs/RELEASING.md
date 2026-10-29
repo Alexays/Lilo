@@ -24,6 +24,12 @@ make validate
 writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
 selects major. When notes request different bumps, the largest wins.
 
+A feature release (`x.y.0`) ships with its highlights: an entry in
+`lilo-ui/src/components/whatsnew/releaseHighlights.json` and a story in
+`site/src/content/releases/<version>.json`, both described below. `make release-version` refuses to
+cut one without them and leaves the notes in place; `make release-status` warns early. Patch
+releases need neither.
+
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
 extension bridge package versions and their lockfiles. `make site-generate` then builds the Astro website,
