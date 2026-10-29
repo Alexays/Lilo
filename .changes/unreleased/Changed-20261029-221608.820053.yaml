@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Background tabs stay loaded much longer: they are paused instead of unloaded when the window is hidden, each other space keeps its recently used tabs, tabs with unsaved form input are never unloaded, and the Balanced setting unloads tabs only when memory runs low.'
-time: 2026-10-29T22:16:08.820053+01:00
