@@ -453,7 +453,7 @@
     width: calc(var(--chrome-overlay-edge-gap) + 4px);
     height: 100vh;
     pointer-events: auto;
-    z-index: 49;
+    z-index: 63;
   }
 
   /* The strip layouts reveal from a full-width edge. */
@@ -563,9 +563,10 @@
     animation-play-state: paused !important;
   }
 
+  /* Over the modal veils (command bar, share picker), which cover the hidden sidebar's column. */
   .sidebar.sidebar-overlay {
     box-shadow: 4px 0 24px var(--sidebar-shadow);
-    z-index: 50;
+    z-index: 63;
   }
 
   :global(html[data-tab-position='right']) .sidebar.sidebar-overlay {

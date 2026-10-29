@@ -108,7 +108,7 @@
 
   .tab-strip-host.strip-overlay {
     box-shadow: 0 4px 24px var(--sidebar-shadow);
-    z-index: 50;
+    z-index: 63;
   }
 
   :global(html[data-tab-position='bottom']) .tab-strip-host.strip-overlay {
