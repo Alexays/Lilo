@@ -139,7 +139,8 @@ final class AgentConnection {
 
     /// `message` as the newline-terminated JSON `send` takes; heavy replies are encoded off the main thread.
     nonisolated static func line(_ message: [String: Any]) -> Data? {
-        guard var data = try? JSONSerialization.data(withJSONObject: message) else { return nil }
+        // A NaN or a date from a page script raises an exception that `try?` does not catch.
+        guard JSONSerialization.isValidJSONObject(message), var data = try? JSONSerialization.data(withJSONObject: message) else { return nil }
         data.append(0x0A)
         return data
     }

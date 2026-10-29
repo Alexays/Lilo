@@ -74,6 +74,87 @@ final class MediaControlTests: XCTestCase {
         XCTAssertEqual(reported?.hasTrackControls, false)
     }
 
+    func testEnterPictureInPictureHandlerIsAcceptedAndReported() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("""
+        <script>
+        try { navigator.mediaSession.setActionHandler('enterpictureinpicture', () => {}); window.registered = 'ok'; }
+        catch (e) { window.registered = e.name; }
+        </script>
+        """, factory: factory)
+        defer { tab.teardown() }
+
+        let reportedPiP = await pollUntil(timeout: 5) { reported?.hasPictureInPictureAction == true }
+        let registered = try await tab.wkWebView.evaluateJavaScript("window.registered") as? String
+
+        XCTAssertTrue(reportedPiP)
+        XCTAssertEqual(registered, "ok", "a call page registering it, as Meet does, must not throw")
+    }
+
+    func testEnterDocumentPictureInPictureCallsThePageHandler() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', details => { window.details = JSON.stringify(details); });
+        </script>
+        """, factory: factory)
+        defer { tab.teardown() }
+        _ = await pollUntil(timeout: 5) { reported?.hasPictureInPictureAction == true }
+        tab.callControls = try XCTUnwrap(reported)
+
+        tab.enterDocumentPictureInPicture()
+
+        var details: String?
+        let called = await pollUntil(timeout: 5) {
+            details = (try? await tab.wkWebView.evaluateJavaScript("window.details")) as? String
+            return details != nil
+        }
+        XCTAssertTrue(called)
+        XCTAssertEqual(details, #"{"action":"enterpictureinpicture","enterPictureInPictureReason":"useraction"}"#,
+                       "the user left the tab with auto PiP on: Meet keeps its automatic path for some accounts only")
+    }
+
+    func testALiveWebRTCConnectionMakesThePageACall() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("<p>call</p>", factory: factory)
+        defer { tab.teardown() }
+
+        // A connected peer in a page that registers no Media Session action (Meet's companion mode). The test sets the
+        // connection state itself: ICE between two local peers never completes on the CI runners.
+        _ = try await tab.wkWebView.callAsyncJavaScript("""
+            const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+            a.createDataChannel('call');
+            await b.setRemoteDescription(await a.createOffer());
+            Object.defineProperty(b, 'connectionState', { value: 'connected', configurable: true });
+            b.dispatchEvent(new Event('connectionstatechange'));
+            window.peers = [a, b];
+            """, contentWorld: .page)
+
+        let connected = await pollUntil(timeout: 10) { reported?.hasLiveConnection == true }
+        XCTAssertTrue(connected, "a connected peer is a call, with or without camera and microphone")
+
+        _ = try await tab.wkWebView.evaluateJavaScript("delete window.peers[1].connectionState; window.peers.forEach(p => p.close()); true")
+
+        let ended = await pollUntil(timeout: 10) { reported?.hasLiveConnection == false }
+        XCTAssertTrue(ended, "the call ends with its connections")
+    }
+
+    func testALiveConnectionKeepsATabInACall() {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { tab.teardown() }
+        XCTAssertFalse(tab.isInCall)
+
+        tab.callControls.hasLiveConnection = true
+
+        XCTAssertTrue(tab.isInCall, "Meet's companion mode: no capture and no Media Session action, a live connection")
+    }
+
     private func loadedTab(_ html: String, factory: WKEngineFactory? = nil) async throws -> WKWebViewTab {
         let tab = (factory ?? WKEngineFactory()).createTab(configuration: WKEngineFactory.Configuration())
         tab.wkWebView.loadHTMLString(html, baseURL: URL(string: "https://example.com/"))

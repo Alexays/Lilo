@@ -416,7 +416,7 @@ final class TabLifecycleCoordinatorTests: XCTestCase {
         var screenTab = makeTab(id: screen)
         screenTab.isScreenSharing = true
         var companionTab = makeTab(id: companion)
-        companionTab.hasHangupControl = true
+        companionTab.isInCall = true
 
         let retained = coordinator.retainedEngineIds(
             tabs: [

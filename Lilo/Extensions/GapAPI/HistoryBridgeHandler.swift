@@ -42,21 +42,19 @@ final class HistoryBridgeHandler: GapHandler {
 
         case "history.getVisits":
             let url = call.string("url") ?? ""
-            let found = await Task.detached { try store.entry(forURL: url) }.result
+            let found = await Task.detached { try (store.entry(forURL: url), store.visits(forURL: url)) }.result
             return bridged {
-                // Exact-URL lookup. This store is page-grained (one row per URL, last visit only), so
-                // it surfaces at most a single synthetic visit; Chrome returns one VisitItem per
-                // recorded visit, which we can't reconstruct without a per-visit table.
-                guard let entry = try found.get() else {
-                    return [[String: Any]]()
+                let (entry, visits) = try found.get()
+                guard let entry else { return [[String: Any]]() }
+                return visits.map { visit -> [String: Any] in
+                    [
+                        "visitId": String(visit.id),
+                        "id": entry.id.uuidString,
+                        "visitTime": visit.visitedAt.timeIntervalSince1970 * 1000,
+                        "referringVisitId": "0",
+                        "transition": "link"
+                    ]
                 }
-                return [[
-                    "visitId": "1",
-                    "id": entry.id.uuidString,
-                    "visitTime": entry.lastVisitedAt.timeIntervalSince1970 * 1000,
-                    "referringVisitId": "0",
-                    "transition": "link"
-                ]]
             }
 
         case "history.addUrl":

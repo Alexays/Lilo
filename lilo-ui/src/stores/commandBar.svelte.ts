@@ -11,7 +11,7 @@ import {
 import { getActiveTab, getOpenTabs, getTabs, isBlankTab, type TabState } from "./tabs.svelte";
 import { onSidebarApplied, type SidebarAppliedEvent } from "./sidebar.svelte";
 import { getPagedSpaces } from "./pager.svelte";
-import { closeDesignSystemShell, closeSettingsShell } from "./panels.svelte";
+import { closeDesignSystemShell, closeHistoryShell, closeSettingsShell } from "./panels.svelte";
 import { getSetting } from "./settings.svelte";
 import {
 	type CommandResult,
@@ -32,7 +32,6 @@ import {
 	executeRawQueryInNewTab as _executeRawQueryInNewTab,
 } from "./commandBarActions.svelte";
 
-type CommandBarMode = "default" | "history";
 /** An action on the selected row beyond Enter. */
 export type ResultKey = "newTab" | "split" | "peek" | "copy" | "close" | "remove" | "move";
 
@@ -48,7 +47,6 @@ let _selectionMoved = false;
 let _autofill = $state(true);
 let _historyResults: CommandResult[] = [];
 let _searchSuggestions: string[] = [];
-let _mode = $state<CommandBarMode>("default");
 let _activeScope = $state<CommandScope>("all");
 let _closeBlankTabOnDismiss = false;
 let _selectAllOnOpen = false;
@@ -108,7 +106,6 @@ export const getAutocompleteSuggestion = (): string => {
 export const getCommandBarOpenRequestId = (): number => _openRequestId;
 export const getActiveScope = (): CommandScope => _activeScope;
 export const isMovingTab = (): boolean => _moveTabId !== "";
-const openHistoryView = (): void => openCommandBar("", "history", false);
 export const selectNext = (): void => shiftSelection(1);
 export const selectPrev = (): void => shiftSelection(-1);
 export const consumeSelectAllOnOpen = (): boolean => {
@@ -122,12 +119,8 @@ function clearSuggestTimer(): void {
 	_suggestTimer = null;
 }
 
-function currentDefaultScope(): CommandScope {
-	return _mode === "history" ? "history" : "all";
-}
-
 function getParsedInput() {
-	return parseInput(_query, currentDefaultScope());
+	return parseInput(_query, "all");
 }
 
 function getTrackedBlankTab(): TabState | undefined {
@@ -238,9 +231,6 @@ export function autocompleteSelected(): void {
 }
 
 export function setCommandBarScope(scope: CommandScope): void {
-	// Picking a scope leaves the one-shot "history-direct" mode, or `currentDefaultScope()` stays pinned to "history"
-	// and the prefix-less "all" scope would re-derive it.
-	_mode = "default";
 	const parsed = getParsedInput();
 	const nextQuery =
 		scope === "all"
@@ -350,7 +340,7 @@ function scheduleSearchSuggest(query: string): void {
 
 	// Extension omnibox keyword session takes over the bar: stream input to the extension and show
 	// only its suggestions (skip the normal history/search pipeline).
-	const omniboxMatch = _mode === "default" ? matchOmniboxKeyword(query) : null;
+	const omniboxMatch = matchOmniboxKeyword(query);
 	if (omniboxMatch) {
 		if (!_omniboxSessionId) {
 			_omniboxSessionId = `omni-${++_omniboxSeq}`;
@@ -369,7 +359,7 @@ function scheduleSearchSuggest(query: string): void {
 	}
 	clearOmniboxSession(true);
 
-	const parsed = parseInput(query, currentDefaultScope());
+	const parsed = parseInput(query, "all");
 	if (parsed.type === "terminal") {
 		const command = parsed.query;
 		// Completions of a shorter prefix stay valid while typing, so they are kept until the answer arrives.
@@ -444,12 +434,10 @@ function setSearchSuggestions(query: string, items: string[]): void {
 
 export function openCommandBar(
 	prefill?: string,
-	mode: CommandBarMode = "default",
 	closeBlankTabOnDismiss = false,
 	selectAllOnOpen = false,
 ): void {
 	_open = true;
-	_mode = mode;
 	_query = prefill ?? "";
 	_selectedIndex = 0;
 	_selectionMoved = false;
@@ -474,7 +462,6 @@ export function closeCommandBar(): void {
 	_selectionMoved = false;
 	_historyResults = [];
 	_searchSuggestions = [];
-	_mode = "default";
 	_activeScope = "all";
 	_executed = false;
 	_selectAllOnOpen = false;
@@ -510,11 +497,12 @@ export function closeCommandBar(): void {
 	_dismissBlankTabId = "";
 }
 
-// A navigation has to land on the page: the settings and design system shells cover it.
+// A navigation has to land on the page: the settings, history and design system shells cover it.
 function closeCommandBarAfterNavigation(): void {
 	_executed = true;
 	closeCommandBar();
 	closeSettingsShell();
+	closeHistoryShell();
 	closeDesignSystemShell();
 }
 
@@ -705,12 +693,10 @@ export function initCommandBarStore(): void {
 	on("openCommandBar", (data) =>
 		openCommandBar(
 			data?.newTab ? "" : data?.prefill,
-			"default",
 			data?.newTab ?? false,
 			data?.selectAll ?? false,
 		),
 	);
-	on("openHistory", openHistoryView);
 	on("closeCommandBarAfterNavigation", closeCommandBarAfterNavigation);
 	on("toggleCommandBar", (data) => {
 		if (_open) {
@@ -718,7 +704,7 @@ export function initCommandBarStore(): void {
 			_selectAllOnOpen = true;
 			_openRequestId += 1;
 		} else {
-			openCommandBar(data?.prefill ?? "", "default", false, data?.selectAll ?? false);
+			openCommandBar(data?.prefill ?? "", false, data?.selectAll ?? false);
 		}
 	});
 }

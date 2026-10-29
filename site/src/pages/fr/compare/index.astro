@@ -1,0 +1,314 @@
+---
+import PageSection from "../../../components/PageSection.astro";
+import Layout from "../../../layouts/Layout.astro";
+import { copy } from "../../../lib/i18n";
+
+const lang = "fr";
+const text = copy[lang];
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/fr/compare/",
+        name: "Comparer les navigateurs",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/fr/compare/#faq",
+    "@type": "FAQPage",
+    inLanguage: "fr",
+    mainEntity: [],
+    url: "https://getlilo.app/fr/compare/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo face à Safari, Zen, Orion et Dia : les navigateurs Mac à barre latérale comparés"
+  description="Comment le navigateur Lilo se compare à Safari, Zen, Orion et Dia sur Mac : moteur, code source, prix, onglets en barre latérale, extensions et plateformes, et quand un autre vous conviendra mieux."
+  schema={schema}
+  hero={{
+    heading: text.compareHeading,
+    description: text.compareIntroduction,
+    tag: text.compare,
+    link: { href: "#table", label: text.compareHeroLink },
+  }}
+  closing={{
+    heading: text.compareClosingHeading,
+    description: text.compareClosingDescription,
+  }}
+>
+  <PageSection id="table">
+    <div class="head">
+      <span class="tag">Côte à côte</span>
+      <h2 id="browser-comparison">Cinq navigateurs d'un coup d'œil.</h2>
+      <p>
+        Vérifié sur les pages de chaque projet en octobre 2026. Les navigateurs
+        évoluent vite&nbsp;:{" "}
+        <a href="https://github.com/Alexays/Lilo/issues">dites-le-nous</a> si
+        quelque chose n'est plus à jour.
+      </p>
+    </div>
+    <div
+      class="matrix"
+      role="region"
+      aria-labelledby="browser-comparison"
+      tabindex="0"
+    >
+      <table>
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col">Lilo</th>
+            <th scope="col">Safari</th>
+            <th scope="col">Zen</th>
+            <th scope="col">Orion</th>
+            <th scope="col">Dia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Moteur</th>
+            <td>WebKit</td>
+            <td>WebKit</td>
+            <td>Gecko, celui de Firefox</td>
+            <td>WebKit</td>
+            <td>Chromium</td>
+          </tr>
+          <tr>
+            <th scope="row">Fait par</th>
+            <td>Alexays</td>
+            <td>Apple</td>
+            <td>L'équipe open source de Zen</td>
+            <td>Kagi</td>
+            <td>The Browser Company, Atlassian</td>
+          </tr>
+          <tr>
+            <th scope="row">Code source</th>
+            <td class="y">Open source, MIT</td>
+            <td>App fermée, moteur ouvert</td>
+            <td class="y">Open source, MPL 2.0</td>
+            <td>App Mac fermée</td>
+            <td class="n">Fermé</td>
+          </tr>
+          <tr>
+            <th scope="row">Prix</th>
+            <td>Gratuit</td>
+            <td>Gratuit</td>
+            <td>Gratuit</td>
+            <td>Gratuit, offre Orion+ payante</td>
+            <td>Gratuit, offre Pro payante</td>
+          </tr>
+          <tr>
+            <th scope="row">Onglets en barre latérale</th>
+            <td class="y">Oui, ou sur n'importe quel bord</td>
+            <td class="n">Non, onglets en ligne</td>
+            <td class="y">Oui</td>
+            <td class="y">Oui, en option</td>
+            <td class="y">Oui, en option</td>
+          </tr>
+          <tr>
+            <th scope="row">Extensions</th>
+            <td>Chrome Web Store, Manifest V3</td>
+            <td>Extensions Safari</td>
+            <td>Modules Firefox</td>
+            <td>Beaucoup de Chrome et Firefox</td>
+            <td>Chrome Web Store</td>
+          </tr>
+          <tr>
+            <th scope="row">Plateformes</th>
+            <td>Mac, macOS 26 ou plus récent</td>
+            <td>Mac, iPhone, iPad</td>
+            <td>Mac, Windows, Linux</td>
+            <td>Mac, iPhone, iPad</td>
+            <td>Mac</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </PageSection>
+
+  <PageSection id="lilo">
+    <div class="head">
+      <span class="tag">Ce que seul Lilo fait</span>
+      <h2>Un navigateur Mac natif pour qui vit dans une barre latérale.</h2>
+      <p>
+        Ce sont les points que vous ne trouverez réunis nulle part ailleurs dans
+        le tableau.
+      </p>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>WebKit avec les extensions Chrome.</b> Le moteur de Safari, et les
+        extensions Manifest V3 du Chrome Web Store installées en un clic.
+      </div>
+      <div>
+        <b>Des espaces avec leur propre profil.</b> Chaque espace peut garder
+        ses connexions et ses extensions, dans une seule fenêtre, avec les
+        onglets sur n'importe quel bord.
+      </div>
+      <div>
+        <b>Les fonctions phares d'Arc.</b> L'aperçu, une petite fenêtre depuis
+        n'importe quelle app, des dossiers imbriqués, l'archivage automatique et
+        des règles de liens comme Air Traffic Control.
+      </div>
+      <div>
+        <b>Des onglets terminal.</b> Un vrai terminal à côté de vos pages, avec
+        la branche et les modifications de chaque dépôt dans la barre latérale.
+      </div>
+      <div>
+        <b>Un navigateur pour vos agents IA.</b> Aucune IA intégrée, mais un
+        serveur MCP local pour que Claude Code, Codex ou Cursor naviguent dans
+        leur propre espace, et Lilo vous demande avant qu'ils envoient, paient
+        ou suppriment.
+      </div>
+      <div>
+        <b>Rien à couper.</b> Licence MIT, pas de compte, pas de télémétrie et
+        pas de serveur.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="safari">
+    <div class="head">
+      <span class="tag">Lilo ou Safari</span>
+      <h2>Le même moteur, une autre façon de travailler.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choisissez Safari</b> si vous voulez vos onglets et votre historique
+        sur votre iPhone, Apple Pay sur les sites, ou les clés d'accès du
+        trousseau iCloud, que Lilo ne peut pas utiliser tant qu'Apple ne lui en
+        donne pas l'accès.
+      </div>
+      <div>
+        <b>Choisissez Lilo</b> si vous voulez des espaces dans une barre
+        latérale, les extensions Chrome, l'aperçu et les règles de liens, sur le
+        même moteur WebKit. Lilo importe vos favoris, onglets et historique
+        Safari.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="zen">
+    <div class="head">
+      <span class="tag">Lilo ou Zen</span>
+      <h2>Deux visions open source d'Arc.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choisissez Zen</b> si vous utilisez aussi Windows ou Linux, voulez le
+        moteur et les modules de Firefox, ou avez besoin de vos espaces
+        synchronisés entre vos ordinateurs.
+      </div>
+      <div>
+        <b>Choisissez Lilo</b> si vous êtes sur Mac et voulez une app native sur
+        WebKit qui fait tourner les extensions Chrome, avec des onglets terminal
+        et un serveur MCP pour vos agents. Lilo importe aussi depuis Zen.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="orion">
+    <div class="head">
+      <span class="tag">Lilo ou Orion</span>
+      <h2>Deux navigateurs WebKit qui lisent les extensions des autres.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choisissez Orion</b> si vous voulez le même navigateur sur votre
+        iPhone et votre iPad, ou les extensions Firefox en plus de celles de
+        Chrome.
+      </div>
+      <div>
+        <b>Choisissez Lilo</b> si vous voulez du code open source, des espaces à
+        la Arc avec leur propre profil, l'import depuis Arc, des onglets
+        terminal et un navigateur que vos agents IA peuvent piloter.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="dia">
+    <div class="head">
+      <span class="tag">Lilo ou Dia</span>
+      <h2>Le successeur d'Arc, ou les idées d'Arc sans l'IA.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choisissez Dia</b> si vous voulez un assistant IA intégré au
+        navigateur, sur Chromium, par l'équipe qui a fait Arc.
+      </div>
+      <div>
+        <b>Choisissez Lilo</b> si vous ne voulez pas d'IA intégrée, un
+        navigateur qui n'est pas Chromium, et un code qui reste ouvert quoi
+        qu'il arrive à une entreprise.{" "}
+        <a href="/fr/arc-alternative/">Quitter Arc</a> explique le passage.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="faq" layout="faq">
+    <div class="head" style="margin:0">
+      <span class="tag">Questions</span>
+      <h2>Choisir un navigateur Mac.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Lequel est le plus proche d'Arc&nbsp;?</summary>
+        <p>
+          Zen, Dia et Lilo proposent tous une barre latérale d'onglets comme
+          celle d'Arc. Dia est le successeur d'Arc, par la même entreprise, sur
+          Chromium avec de l'IA intégrée. Zen repose sur le moteur de Firefox.
+          Lilo repose sur WebKit, importe vos espaces Arc et ramène l'aperçu, la
+          petite fenêtre et des règles de liens comme Air Traffic Control.
+        </p>
+      </details>
+      <details>
+        <summary>
+          Un navigateur WebKit peut-il faire tourner les extensions
+          Chrome&nbsp;?
+        </summary>
+        <p>
+          Lilo et Orion le font tous les deux. Lilo installe les extensions
+          Manifest V3 directement depuis le Chrome Web Store, et ses
+          <a href="https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md">
+            notes de compatibilité
+          </a>
+          listent ce qui diffère encore de Chrome. Safari ne fait tourner que
+          les extensions conçues pour Safari.
+        </p>
+      </details>
+      <details>
+        <summary>
+          Qu'est-ce que les autres ont et que Lilo n'a pas&nbsp;?
+        </summary>
+        <p>
+          La synchronisation, des apps mobiles et une version Windows. Lilo n'a
+          ni compte ni serveur, donc rien par où synchroniser. Apple ne laisse
+          pas un navigateur tiers utiliser Apple Pay sur le web, et les clés
+          d'accès du trousseau iCloud attendent l'accord d'Apple.
+        </p>
+      </details>
+      <details>
+        <summary>Dois-je abandonner mon navigateur actuel&nbsp;?</summary>
+        <p>
+          Non. Lilo lit votre autre navigateur sur votre Mac sans rien y
+          changer, vous pouvez donc garder les deux et voir lequel vous
+          ressemble. <a href="/fr/moving/">Voir ce qui vous suit</a>.
+        </p>
+      </details>
+    </div>
+  </PageSection>
+</Layout>

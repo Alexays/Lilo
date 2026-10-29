@@ -548,7 +548,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {
-        updateAndEmit(tab.id) { $0.hasHangupControl = controls.actions.contains("hangup") }
+        updateAndEmit(tab.id) { $0.isInCall = controls.isCall }
         callUsageChanged(tab)
         if context.callTabIds.contains(tab.id) || context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
     }

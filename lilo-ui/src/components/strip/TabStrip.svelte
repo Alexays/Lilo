@@ -18,7 +18,14 @@
   import { getAddressPlacement, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { getActiveUrlBarDrawer } from "../../stores/urlBarDrawer.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
-  import { closeSettingsShell, isDownloadsVisible, isSettingsShellOpen, openDownloadsPanel } from "../../stores/panels.svelte";
+  import {
+    closeHistoryShell,
+    closeSettingsShell,
+    isDownloadsVisible,
+    isHistoryShellOpen,
+    isSettingsShellOpen,
+    openDownloadsPanel,
+  } from "../../stores/panels.svelte";
   import { LINE_ICONS } from "../commandbar/commandBarIcons";
   import { hasSessionDownloads } from "../../stores/downloads.svelte";
   import { isDownloadUiEnabled } from "../../stores/extensions.svelte";
@@ -41,8 +48,15 @@
   const view = $derived(getSpaceSidebar(spaceId).view);
   const activeTabId = $derived(getActiveTabId(spaceId));
   // Settings is a page of its own here: its pill is the active one, the page's tab steps back.
-  const settingsOpen = $derived(isSettingsShellOpen());
-  const shownActiveId = $derived(settingsOpen ? "" : activeTabId);
+  // Settings and History open over the page as a surface of their own: the strip shows it as the active tab.
+  const surface = $derived(
+    isSettingsShellOpen()
+      ? { icon: LINE_ICONS.gear, label: t("settings.panelTitle"), close: closeSettingsShell }
+      : isHistoryShellOpen()
+        ? { icon: LINE_ICONS.history, label: t("historyPage.title"), close: closeHistoryShell }
+        : null,
+  );
+  const shownActiveId = $derived(surface ? "" : activeTabId);
   const editsAddress = $derived(getAddressPlacement() === "tabs");
   // The address field itself shows only when it has something to say (a permission prompt), or while
   // the strip floats in for hidden tabs and the page toolbar that holds it is gone.
@@ -119,7 +133,7 @@
     void shownActiveId;
     void view;
     void tick().then(() => {
-      scrollerEl?.querySelector(settingsOpen ? ".strip-settings" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      scrollerEl?.querySelector(surface ? ".strip-surface" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
       const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
       if (rovers.length && !rovers.some((rover) => rover.tabIndex === 0)) rovers[0].tabIndex = 0;
       measureOverflow();
@@ -253,15 +267,15 @@
     <span class="divider" class:lit={!!todayDividerColor} style:--zone-color={todayDividerColor} aria-hidden="true"></span>
 
     {@render zoneOf("unpinned")}
-    {#if settingsOpen}
-      <div class="strip-settings">
-        <button class="strip-settings-main" role="tab" aria-selected="true" tabindex="0" data-roving>
+    {#if surface}
+      <div class="strip-surface">
+        <button class="strip-surface-main" role="tab" aria-selected="true" tabindex="0" data-roving>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-            <path d={LINE_ICONS.gear} stroke-linejoin="round" />
+            <path d={surface.icon} stroke-linejoin="round" />
           </svg>
-          {t("settings.panelTitle")}
+          {surface.label}
         </button>
-        <button class="strip-settings-close" tabindex="-1" aria-label={t("common.close")} onclick={closeSettingsShell}>
+        <button class="strip-surface-close" tabindex="-1" aria-label={t("common.close")} onclick={surface.close}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
             <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
           </svg>
@@ -543,7 +557,7 @@
   }
 
   /* The active pill's look, sized to its label. */
-  .strip-settings {
+  .strip-surface {
     flex: none;
     height: 32px;
     display: flex;
@@ -554,7 +568,7 @@
     box-shadow: var(--shadow-control);
   }
 
-  .strip-settings-main {
+  .strip-surface-main {
     height: 100%;
     display: flex;
     align-items: center;
@@ -568,7 +582,7 @@
     cursor: default;
   }
 
-  .strip-settings-close {
+  .strip-surface-close {
     flex: none;
     width: 20px;
     height: 20px;
@@ -581,7 +595,7 @@
     color: var(--text-secondary);
   }
 
-  .strip-settings-close:hover {
+  .strip-surface-close:hover {
     background: var(--bg-hover);
   }
 

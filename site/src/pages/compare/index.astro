@@ -1,0 +1,301 @@
+---
+import PageSection from "../../components/PageSection.astro";
+import Layout from "../../layouts/Layout.astro";
+import { copy } from "../../lib/i18n";
+
+const lang = "en";
+const text = copy[lang];
+
+const schema = [
+  {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/",
+        name: "Lilo Browser",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: "https://getlilo.app/compare/",
+        name: "Compare browsers",
+        position: 2,
+      },
+    ],
+  },
+  {
+    "@id": "https://getlilo.app/compare/#faq",
+    "@type": "FAQPage",
+    inLanguage: "en",
+    mainEntity: [],
+    url: "https://getlilo.app/compare/",
+  },
+];
+---
+
+<Layout
+  lang={lang}
+  title="Lilo vs Safari, Zen, Orion and Dia: Mac browsers with a sidebar, compared"
+  description="How Lilo Browser compares with Safari, Zen, Orion and Dia on the Mac: engine, source code, price, sidebar tabs, extensions and platforms, and when another browser fits you better."
+  schema={schema}
+  hero={{
+    heading: text.compareHeading,
+    description: text.compareIntroduction,
+    tag: text.compare,
+    link: { href: "#table", label: text.compareHeroLink },
+  }}
+  closing={{
+    heading: text.compareClosingHeading,
+    description: text.compareClosingDescription,
+  }}
+>
+  <PageSection id="table">
+    <div class="head">
+      <span class="tag">Side by side</span>
+      <h2 id="browser-comparison">Five browsers at a glance.</h2>
+      <p>
+        Checked against each project's own pages in October 2026. Browsers
+        change fast:{" "}
+        <a href="https://github.com/Alexays/Lilo/issues">tell us</a> if
+        something here is out of date.
+      </p>
+    </div>
+    <div
+      class="matrix"
+      role="region"
+      aria-labelledby="browser-comparison"
+      tabindex="0"
+    >
+      <table>
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col">Lilo</th>
+            <th scope="col">Safari</th>
+            <th scope="col">Zen</th>
+            <th scope="col">Orion</th>
+            <th scope="col">Dia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Engine</th>
+            <td>WebKit</td>
+            <td>WebKit</td>
+            <td>Gecko, from Firefox</td>
+            <td>WebKit</td>
+            <td>Chromium</td>
+          </tr>
+          <tr>
+            <th scope="row">Made by</th>
+            <td>Alexays</td>
+            <td>Apple</td>
+            <td>Zen's open-source team</td>
+            <td>Kagi</td>
+            <td>The Browser Company, Atlassian</td>
+          </tr>
+          <tr>
+            <th scope="row">Source code</th>
+            <td class="y">Open source, MIT</td>
+            <td>Closed app, open engine</td>
+            <td class="y">Open source, MPL 2.0</td>
+            <td>Closed Mac app</td>
+            <td class="n">Closed</td>
+          </tr>
+          <tr>
+            <th scope="row">Price</th>
+            <td>Free</td>
+            <td>Free</td>
+            <td>Free</td>
+            <td>Free, paid Orion+ tier</td>
+            <td>Free, paid Pro tier</td>
+          </tr>
+          <tr>
+            <th scope="row">Tabs in a sidebar</th>
+            <td class="y">Yes, or on any edge</td>
+            <td class="n">No, tabs in a row</td>
+            <td class="y">Yes</td>
+            <td class="y">Yes, as an option</td>
+            <td class="y">Yes, as an option</td>
+          </tr>
+          <tr>
+            <th scope="row">Extensions</th>
+            <td>Chrome Web Store, Manifest V3</td>
+            <td>Safari extensions</td>
+            <td>Firefox add-ons</td>
+            <td>Many Chrome and Firefox ones</td>
+            <td>Chrome Web Store</td>
+          </tr>
+          <tr>
+            <th scope="row">Platforms</th>
+            <td>Mac, macOS 26 or later</td>
+            <td>Mac, iPhone, iPad</td>
+            <td>Mac, Windows, Linux</td>
+            <td>Mac, iPhone, iPad</td>
+            <td>Mac</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </PageSection>
+
+  <PageSection id="lilo">
+    <div class="head">
+      <span class="tag">What only Lilo does</span>
+      <h2>A native Mac browser for people who live in a sidebar.</h2>
+      <p>
+        These are the parts you will not find together anywhere else in the
+        table.
+      </p>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>WebKit with Chrome extensions.</b> The engine Safari uses, and the
+        Chrome Web Store's Manifest V3 extensions installed in one click.
+      </div>
+      <div>
+        <b>Spaces with their own profiles.</b> Each Space can keep its own
+        sign-ins and extensions, in one window, with tabs on any edge.
+      </div>
+      <div>
+        <b>Arc's power features.</b> Peek, a Little window from any app, nested
+        folders, an auto-archive, and link rules like Air Traffic Control.
+      </div>
+      <div>
+        <b>Terminal tabs.</b> A real terminal beside your pages, with each
+        repository's branch and pending changes in the sidebar.
+      </div>
+      <div>
+        <b>A browser for your AI agents.</b> No AI of its own, but a local MCP
+        server so Claude Code, Codex or Cursor browse in their own Space, and
+        Lilo asks you before they send, pay or delete.
+      </div>
+      <div>
+        <b>Nothing to switch off.</b> MIT licensed, no account, no telemetry and
+        no server.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="safari">
+    <div class="head">
+      <span class="tag">Lilo or Safari</span>
+      <h2>Same engine, a different way to work.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choose Safari</b> if you want your tabs and history on your iPhone,
+        Apple Pay on websites, or passkeys from iCloud Keychain, which Lilo
+        cannot use until Apple grants it access.
+      </div>
+      <div>
+        <b>Choose Lilo</b> if you want Spaces in a sidebar, Chrome extensions,
+        Peek and link rules, on the same WebKit engine. Lilo imports your Safari
+        bookmarks, tabs and history.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="zen">
+    <div class="head">
+      <span class="tag">Lilo or Zen</span>
+      <h2>Two open-source takes on Arc.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choose Zen</b> if you also use Windows or Linux, want Firefox's
+        engine and add-ons, or need your Spaces synced between computers.
+      </div>
+      <div>
+        <b>Choose Lilo</b> if you are on a Mac and want a native app on WebKit
+        that runs Chrome extensions, with terminal tabs and an MCP server for
+        your agents. Lilo imports from Zen too.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="orion">
+    <div class="head">
+      <span class="tag">Lilo or Orion</span>
+      <h2>Two WebKit browsers that run other browsers' extensions.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choose Orion</b> if you want the same browser on your iPhone and
+        iPad, or Firefox extensions as well as Chrome ones.
+      </div>
+      <div>
+        <b>Choose Lilo</b> if you want open-source code, Arc-style Spaces with
+        their own profiles, an Arc import, terminal tabs and a browser your AI
+        agents can drive.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="dia">
+    <div class="head">
+      <span class="tag">Lilo or Dia</span>
+      <h2>Arc's successor, or Arc's ideas without the AI.</h2>
+    </div>
+    <div class="feat-list two">
+      <div>
+        <b>Choose Dia</b> if you want an AI assistant built into the browser, on
+        Chromium, from the team that made Arc.
+      </div>
+      <div>
+        <b>Choose Lilo</b> if you want no AI of its own, a browser that is not
+        Chromium, and code that stays open whatever happens to a company.{" "}
+        <a href="/arc-alternative/">Leaving Arc</a> covers the move.
+      </div>
+    </div>
+  </PageSection>
+
+  <PageSection id="faq" layout="faq">
+    <div class="head" style="margin:0">
+      <span class="tag">Questions</span>
+      <h2>Choosing a Mac browser.</h2>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Which of these is closest to Arc?</summary>
+        <p>
+          Zen, Dia and Lilo all offer a sidebar of tabs like Arc's. Dia is Arc's
+          successor from the same company, on Chromium with AI built in. Zen is
+          on Firefox's engine. Lilo is on WebKit, imports your Arc spaces, and
+          brings back Peek, the Little window and link rules like Air Traffic
+          Control.
+        </p>
+      </details>
+      <details>
+        <summary>Can a WebKit browser run Chrome extensions?</summary>
+        <p>
+          Lilo and Orion both do. Lilo installs Manifest V3 extensions straight
+          from the Chrome Web Store, and its
+          <a href="https://github.com/Alexays/Lilo/blob/main/COMPATIBILITY.md">
+            compatibility notes
+          </a>
+          list what still differs from Chrome. Safari only runs extensions made
+          for Safari.
+        </p>
+      </details>
+      <details>
+        <summary>What does Lilo not have that the others do?</summary>
+        <p>
+          Sync, mobile apps and a Windows version. Lilo has no account and no
+          server, so there is nothing to sync through. Apple does not let a
+          third-party browser use Apple Pay on the web, and passkeys from iCloud
+          Keychain wait on Apple's approval.
+        </p>
+      </details>
+      <details>
+        <summary>Do I have to give up my current browser?</summary>
+        <p>
+          No. Lilo reads your other browser on your Mac and changes nothing in
+          it, so you can keep both and see which one feels like home.{" "}
+          <a href="/moving/">See what comes with you</a>.
+        </p>
+      </details>
+    </div>
+  </PageSection>
+</Layout>

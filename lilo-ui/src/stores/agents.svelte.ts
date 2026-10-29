@@ -1,12 +1,13 @@
 import { on } from "../lib/bridge";
 import { agentActions, settingsActions } from "../lib/bridge/actions";
-import type { BridgeAgentClient } from "../lib/bridge/protocol";
+import type { BridgeAgentClient, BridgeAgentMood } from "../lib/bridge/protocol";
 import { getAgentClientsSnapshot } from "./settings.svelte";
 
 let _clients = $state.raw<BridgeAgentClient[]>([]);
 let _agentsSpaceIds = $state.raw<string[]>([]);
 let _agentsProfileId = $state("");
 let _hiddenAgentsSpaceIds = $state.raw<string[]>([]);
+let _moods = $state.raw<Record<string, BridgeAgentMood>>({});
 // Names whose app icon was asked for once, so a name with no known app does not reload on every event.
 const _iconRequested = new Set<string>();
 
@@ -16,6 +17,13 @@ export function initAgentsStore(): void {
 		_agentsSpaceIds = data.agentsSpaceIds;
 		_agentsProfileId = data.agentsProfileId ?? "";
 		_hiddenAgentsSpaceIds = data.hiddenAgentsSpaceIds;
+		// Between two calls a space keeps its mood while its agents still act, like the cursor.
+		const moods = data.moods;
+		for (const [spaceId, mood] of Object.entries(_moods)) {
+			if (!moods[spaceId] && data.clients.some((client) => client.actingTabIds.length && client.spaceIds.includes(spaceId)))
+				moods[spaceId] = mood;
+		}
+		_moods = moods;
 		const allowed = getAgentClientsSnapshot().allowed;
 		const fresh = data.clients.filter(
 			(client) => !_iconRequested.has(client.name) && !allowed.some((agent) => agent.name === client.name),
@@ -45,23 +53,5 @@ export const getAgentsProfileId = (): string => _agentsProfileId;
 /** An Agents space no agent works in and holding no tab. */
 export const isHiddenAgentsSpace = (spaceId: string): boolean => _hiddenAgentsSpaceIds.includes(spaceId);
 
-const _icons = $derived.by(() => {
-	const { clients, allowed } = getAgentClientsSnapshot();
-	const icons: Record<string, string[]> = {};
-	// Acting agents last, so they draw in front.
-	for (const client of [..._clients].sort((a, b) => Number(a.busy) - Number(b.busy))) {
-		const id = allowed.find((agent) => agent.name === client.name)?.client;
-		const icon = id && clients.find((entry) => entry.id === id)?.icon;
-		if (!icon) continue;
-		for (const spaceId of client.spaceIds) {
-			const list = (icons[spaceId] ??= []);
-			const seen = list.indexOf(icon);
-			if (seen >= 0) list.splice(seen, 1);
-			list.push(icon);
-		}
-	}
-	return icons;
-});
-
-/** App icons of the agents Lilo knows working in the space, the acting ones last; none when none is known. */
-export const getAgentIcons = (spaceId: string): string[] | undefined => _icons[spaceId];
+/** What the agents in the space act out now, none while they are idle. */
+export const getAgentMood = (spaceId: string): BridgeAgentMood | undefined => _moods[spaceId];

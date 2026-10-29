@@ -34,6 +34,7 @@ export type CommandActionId =
 	| "togglePinActiveTab"
 	| "duplicateActiveTab"
 	| "showDownloads"
+	| "showHistory"
 	| "captureArea"
 	| "openPasswordsApp"
 	| "reopenClosedTab"
@@ -328,6 +329,14 @@ export const COMMAND_ACTIONS = [
 		icon: "download",
 		keywords: ["downloads", "download list", "files", "téléchargements"],
 		shortcutId: "downloads.show",
+	},
+	{
+		id: "showHistory",
+		nameKey: "commandBar.actions.showHistory",
+		descriptionKey: "commandBar.actions.showHistoryDesc",
+		icon: "history",
+		keywords: ["history", "all history", "visited pages", "historique"],
+		shortcutId: "history.show",
 	},
 	{
 		id: "captureArea",

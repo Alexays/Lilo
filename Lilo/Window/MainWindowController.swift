@@ -198,6 +198,9 @@ final class MainWindowController: NSWindowController {
     var terminalNotificationTexts: [UUID: (title: String, body: String)] = [:]
     /// Keeps a backgrounded call visible while the app is active: scaled dock in the sidebar.
     let tabDock = TabDockController()
+    let documentPiP = DocumentPiPController()
+    /// The call tab asked for its PiP window on being left, until the window opens or the fallback runs.
+    weak var awaitingDocumentPiP: WKWebViewTab?
     /// getDisplayMedia tab-share frame ferry (one session at a time).
     let tabShareSessions = TabShareSessionController()
     /// Pages awaiting a tab-share picker choice from the chrome UI, keyed by request id.
@@ -828,6 +831,7 @@ extension MainWindowController: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         // AppKit closes the windows after applicationWillTerminate: saving now would hit closed databases.
         guard !context.isTerminating else { return }
+        documentPiP.close()
         saveWindowFrame()
         if let work = pendingActiveTabPersistWork {
             pendingActiveTabPersistWork = nil

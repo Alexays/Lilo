@@ -21,6 +21,8 @@ final class AgentCursorView: NSView {
     private let body = CALayer()
     private let eyes = CALayer()
     private var blinkTimer: Timer?
+    private var mood: Mood?
+    private var moodLayers: [CALayer] = []
 
     override var isFlipped: Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
@@ -159,6 +161,117 @@ final class AgentCursorView: NSView {
         blinkTimer?.tolerance = 0.5
     }
 
+    /// What the mascot acts out while a call runs on its tab, so a still pointer never reads as stuck.
+    enum Mood: String {
+        case working, reading, scripting, typing, capturing, loading, waitingForUser
+
+        init(tool: String, action: String?) {
+            self = switch (tool, action) {
+            case ("read_page", _), ("get_page_text", _), ("find", _), ("read_console_messages", _), ("read_network_requests", _): .reading
+            case ("javascript_tool", _), ("run", _), ("devtools_command", _), ("devtools_events", _), ("performance", _),
+                 ("network_mock", _), ("network_response", _), ("emulate", _), ("cookies", _): .scripting
+            case ("form_input", _), ("file_upload", _), ("upload_image", _), ("computer", "type"), ("computer", "insert_text"),
+                 ("computer", "key"): .typing
+            case ("gif_creator", _), ("computer", "screenshot"), ("computer", "zoom"): .capturing
+            case ("navigate", _), ("wait_for", _), ("fetch", _), ("computer", "wait"): .loading
+            default: .working
+            }
+        }
+    }
+
+    static func setMood(_ mood: Mood?, in webView: WKWebView) {
+        guard let cursor = webView.subviews.lazy.compactMap({ $0 as? AgentCursorView }).first, cursor.mood != mood else { return }
+        cursor.mood = mood
+        cursor.body.removeAnimation(forKey: "mood")
+        cursor.eyes.removeAnimation(forKey: "mood")
+        cursor.moodLayers.forEach { $0.removeFromSuperlayer() }
+        cursor.moodLayers = []
+        guard let mood, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, let host = cursor.blob.layer else { return }
+
+        func loop(_ keyPath: String, _ values: [Any], _ duration: CFTimeInterval, keyTimes: [NSNumber]? = nil, smooth: Bool = false) -> CAKeyframeAnimation {
+            let animation = CAKeyframeAnimation(keyPath: keyPath)
+            animation.values = values
+            animation.keyTimes = keyTimes
+            animation.duration = duration
+            animation.repeatCount = .infinity
+            if smooth { animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut) }
+            return animation
+        }
+        func extra(size: CGFloat, above: Bool = true) -> CALayer {
+            let layer = CALayer()
+            layer.frame = CGRect(x: (22 - size) / 2, y: (22 - size) / 2, width: size, height: size)
+            layer.cornerRadius = size / 2
+            if above { host.addSublayer(layer) } else { host.insertSublayer(layer, at: 0) }
+            cursor.moodLayers.append(layer)
+            return layer
+        }
+        // The layer's y axis points up: a positive translation lifts.
+        switch mood {
+        case .working:
+            cursor.body.add(loop("transform.translation.y", [0, 2.5, 0], 0.7, smooth: true), forKey: "mood")
+            cursor.eyes.add(loop("transform.translation.x", [0, -2, -2, 2, 2, 0], 2.4, keyTimes: [0, 0.15, 0.4, 0.55, 0.85, 1]), forKey: "mood")
+        case .reading:
+            // Line by line: across, then back to the start of the next one down.
+            let lines: [CGFloat] = [0.7, -0.3, -1.3]
+            let values = lines.flatMap { y in [NSValue(size: CGSize(width: -2, height: y)), NSValue(size: CGSize(width: 2, height: y))] }
+            cursor.eyes.add(loop("transform.translation", values + [values[0]], 2.4, keyTimes: [0, 0.3, 0.33, 0.63, 0.66, 0.96, 1]), forKey: "mood")
+        case .scripting:
+            cursor.body.add(loop("transform.translation.x", [0, -0.5, 0, 0.5, 0], 0.18), forKey: "mood")
+            cursor.eyes.add(loop("transform.scale.y", [0.45, 0.6, 0.45], 1.2), forKey: "mood")
+            for index in 0..<3 {
+                let dot = extra(size: 2.5)
+                dot.position = CGPoint(x: 7 + CGFloat(index) * 4, y: 27)
+                dot.backgroundColor = agentColor.cgColor
+                let blink = loop("opacity", [0.25, 1, 0.25], 0.9)
+                blink.beginTime = CACurrentMediaTime() + Double(index) * 0.3
+                dot.add(blink, forKey: "mood")
+            }
+        case .typing:
+            cursor.body.add(loop("transform.translation.y", [0, -1, 0, -1, 0, 0], 0.6, keyTimes: [0, 0.1, 0.2, 0.35, 0.45, 1]), forKey: "mood")
+            cursor.eyes.add(loop("transform.translation.y", [-1.7, -1.7], 1), forKey: "mood")
+        case .capturing:
+            cursor.eyes.add(loop("transform.scale.y", [1, 1, 0.1, 1, 1], 1.4, keyTimes: [0, 0.7, 0.78, 0.86, 1]), forKey: "mood")
+            let ring = extra(size: 22)
+            ring.borderWidth = 1.2
+            ring.borderColor = NSColor.white.cgColor
+            ring.opacity = 0
+            let flash = CAAnimationGroup()
+            flash.animations = [
+                loop("opacity", [0, 0, 1, 0], 1.4, keyTimes: [0, 0.74, 0.78, 1]),
+                loop("transform.scale", [1, 1, 1, 1.8], 1.4, keyTimes: [0, 0.74, 0.78, 1])
+            ]
+            flash.duration = 1.4
+            flash.repeatCount = .infinity
+            ring.add(flash, forKey: "mood")
+        case .loading:
+            cursor.body.add(loop("transform.rotation.z", [0.1, -0.1, 0.1], 1.1, smooth: true), forKey: "mood")
+            // A dot riding the rim of a turning layer the size of the orbit.
+            let orbit = extra(size: 32)
+            let dot = CALayer()
+            dot.frame = CGRect(x: 30 - 4, y: 16 - 2, width: 4, height: 4)
+            dot.cornerRadius = 2
+            dot.backgroundColor = agentColor.cgColor
+            dot.borderWidth = 0.7
+            dot.borderColor = NSColor.white.cgColor
+            orbit.addSublayer(dot)
+            orbit.add(loop("transform.rotation.z", [0, -2 * CGFloat.pi], 1.1), forKey: "mood")
+        case .waitingForUser:
+            cursor.eyes.add(loop("transform.translation.y", [2, 2.7, 2], 1.8, smooth: true), forKey: "mood")
+            let halo = extra(size: 22, above: false)
+            // The white rim keeps it visible on a dark page, where the violet alone fades into it.
+            halo.backgroundColor = agentColor.cgColor
+            halo.borderWidth = 1
+            halo.borderColor = NSColor.white.cgColor
+            halo.opacity = 0
+            let pulse = CAAnimationGroup()
+            pulse.animations = [loop("transform.scale", [1, 1.6], 1.8), loop("opacity", [0.6, 0], 1.8)]
+            pulse.duration = 1.8
+            pulse.repeatCount = .infinity
+            pulse.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            halo.add(pulse, forKey: "mood")
+        }
+    }
+
     private func ripple(at point: CGPoint) {
         let size: CGFloat = 28
         let ring = NSView(frame: CGRect(x: point.x - size / 2, y: point.y - size / 2, width: size, height: size))
@@ -270,7 +383,22 @@ final class AgentFrameView: NSView {
     @objc private func fitShownPart() {
         guard let page = superview, let container = page.superview else { return }
         let shown = page.bounds.intersection(page.convert(container.bounds, from: container))
-        if !shown.isEmpty { frame = shown }
+        guard !shown.isEmpty, let layer, let pageLayer = page.layer else { return }
+        frame = shown
+        // A page wider or taller than its container has its own rounded corners cut off: round the part
+        // shown. A mask renders offscreen, so a page shown whole goes without.
+        guard shown != page.bounds else {
+            pageLayer.mask = nil
+            return
+        }
+        let mask = pageLayer.mask ?? CALayer()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        mask.backgroundColor = NSColor.black.cgColor
+        mask.cornerRadius = WindowFrameView.contentCornerRadius
+        mask.frame = layer.frame
+        CATransaction.commit()
+        pageLayer.mask = mask
     }
 
     /// Frames `webView` for `agentName`; the cursor stays above the frame.
@@ -284,5 +412,6 @@ final class AgentFrameView: NSView {
 
     static func remove(from webView: WKWebView) {
         webView.subviews.filter { $0 is AgentFrameView || $0 is AgentCursorView }.forEach { $0.removeFromSuperview() }
+        webView.layer?.mask = nil
     }
 }

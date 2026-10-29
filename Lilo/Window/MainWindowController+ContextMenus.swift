@@ -146,6 +146,12 @@ extension MainWindowController {
         if !tab.isClosed, !self.context.settingsStore.singleWindow {
             menu.addItem("Move to New Window".localized, icon: .newWindow) { self.moveTabToNewWindow(uuid) }
         }
+        if tab.kind == .web, let url = tab.url, case let host = HistoryStore.siteHost(of: url.absoluteString), !host.isEmpty {
+            menu.addItem(String(format: "Show History for %@".localized, host), icon: .history) {
+                self.focusChrome()
+                self.bridgeRouter.send(event: "openHistory", data: ["host": host])
+            }
+        }
         menu.addItem(.separator())
         if actions.contains(.removeBookmark) {
             menu.addItem("Remove Bookmark".localized, icon: .unbookmark, handler: toggleBookmark)
@@ -259,6 +265,25 @@ extension MainWindowController {
             }
         }
 
+        presentContextMenu(menu, anchorRect: anchorRect)
+    }
+
+    /// A History page row's menu; the page acts on the picked item, for the row or the selection it belongs to.
+    func showHistoryRowMenu(key: String, url: String, host: String, anchorRect: NSRect?) {
+        let menu = NSMenu()
+        func add(_ title: String, _ icon: MenuIcon, _ action: String) {
+            menu.addItem(title, icon: icon) { self.bridgeRouter?.send(event: "historyRowMenuAction", data: ["key": key, "action": action]) }
+        }
+        add("Open".localized, .open, "open")
+        add("Open in New Tab".localized, .openInNewTab, "openInNewTab")
+        // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
+        menu.addItem("Copy URL".localized, icon: .copyLink) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(url, forType: .string)
+        }
+        menu.addItem(.separator())
+        add("Delete".localized, .delete, "delete")
+        if !host.isEmpty { add(String(format: "Delete All from %@…".localized, host), .clearBrowsingData, "deleteSite") }
         presentContextMenu(menu, anchorRect: anchorRect)
     }
 
@@ -507,6 +532,8 @@ extension MainWindowController {
             menu.addItem(item.title) { self.tabManager.activeEngineTab?.goToHistoryItem(at: index, direction: direction) }
                 .toolTip = item.url.absoluteString
         }
+        menu.addItem(.separator())
+        menu.addItem("Show All History…".localized, icon: .history) { self.openHistory(nil) }
         presentContextMenu(menu, anchorRect: anchorRect)
     }
 

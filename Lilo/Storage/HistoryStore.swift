@@ -31,12 +31,16 @@ final class HistoryStore: @unchecked Sendable {
     /// Told of every visit written and every removal, whoever made it, on the thread that wrote it. Set once, before any use.
     var onChange: (@Sendable (Change) -> Void)?
 
+    private struct Visit {
+        let at: Date
+        let openedFrom: String?
+    }
+
+    /// A page's visits since the last flush, oldest first.
     private struct PendingVisit {
         let url: String
         var title: String
-        var visitCount: Int
-        var lastVisitedAt: Date
-        var openedFrom: String?
+        var visits: [Visit]
     }
 
     private enum Defaults {
@@ -54,6 +58,7 @@ final class HistoryStore: @unchecked Sendable {
     private let hasPendingVisits = OSAllocatedUnfairLock(initialState: false)
     /// Touched only inside the pool's write closure, which the writer queue serializes.
     private var insertedSinceLastPrune = Defaults.pruneEveryInserts
+    private var insertedVisitsSinceLastPrune = Defaults.pruneEveryInserts
 
     init(dbPool: DatabasePool) {
         self.dbPool = dbPool
@@ -63,7 +68,7 @@ final class HistoryStore: @unchecked Sendable {
 
     /// Record a page visit. If the URL already exists, increment visitCount and update title.
     func recordVisit(url: String, title: String) throws {
-        try writeVisits([PendingVisit(url: url, title: title, visitCount: 1, lastVisitedAt: Date())])
+        try writeVisits([PendingVisit(url: url, title: title, visits: [Visit(at: Date(), openedFrom: nil)])])
     }
 
     func scheduleRecordVisit(url: String, title: String, openedFrom: String? = nil) {
@@ -80,9 +85,7 @@ final class HistoryStore: @unchecked Sendable {
             self.pendingVisitsByURL[normalizedURL] = PendingVisit(
                 url: normalizedURL,
                 title: title.isEmpty ? existing?.title ?? "" : title,
-                visitCount: (existing?.visitCount ?? 0) + 1,
-                lastVisitedAt: Date(),
-                openedFrom: openedFrom ?? existing?.openedFrom
+                visits: (existing?.visits ?? []) + [Visit(at: Date(), openedFrom: openedFrom)]
             )
             self.scheduleFlushLocked()
         }
@@ -94,16 +97,26 @@ final class HistoryStore: @unchecked Sendable {
         let newest = visits.sorted { $0.lastVisitedAt > $1.lastVisitedAt }.prefix(Self.maxRows)
         try dbPool.write { db in
             let statement = try db.makeStatement(sql: """
-                INSERT INTO history (id, url, title, visitCount, lastVisitedAt) VALUES (?, ?, ?, ?, ?)
+                INSERT INTO history (id, url, title, visitCount, lastVisitedAt, host) VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(url) DO UPDATE SET
                     visitCount = max(visitCount, excluded.visitCount),
                     lastVisitedAt = max(lastVisitedAt, excluded.lastVisitedAt),
                     title = CASE WHEN excluded.title = '' THEN title ELSE excluded.title END
+                RETURNING id
+                """)
+            // The other browser's last visit only, once: re-importing finds it already there.
+            let visitStatement = try db.makeStatement(sql: """
+                INSERT INTO historyVisit (pageId, visitedAt) SELECT ?1, ?2
+                WHERE NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = ?1 AND visitedAt = ?2)
                 """)
             for visit in newest {
-                try statement.execute(arguments: [UUID(), visit.url, visit.title, max(1, visit.visitCount), visit.lastVisitedAt])
+                guard let pageId = try UUID.fetchOne(statement, arguments: [
+                    UUID(), visit.url, visit.title, max(1, visit.visitCount), visit.lastVisitedAt, Self.siteHost(of: visit.url)
+                ]) else { continue }
+                try visitStatement.execute(arguments: [pageId, visit.lastVisitedAt])
             }
             try db.execute(sql: Self.pruneSQL, arguments: [Self.maxRows - 1])
+            try Self.pruneVisits(db)
         }
     }
 
@@ -184,7 +197,7 @@ final class HistoryStore: @unchecked Sendable {
             let entries = try HistoryEntry.fetchCount(db)
             let bytes = try Int64.fetchOne(db, sql: """
                 SELECT COALESCE(SUM(pgsize), 0) FROM dbstat
-                WHERE name IN (SELECT name FROM sqlite_schema WHERE tbl_name = 'history' OR tbl_name LIKE 'historyFts%')
+                WHERE name IN (SELECT name FROM sqlite_schema WHERE tbl_name IN ('history', 'historyVisit') OR tbl_name LIKE 'historyFts%')
                 """) ?? 0
             return (entries, bytes)
         }
@@ -272,20 +285,207 @@ final class HistoryStore: @unchecked Sendable {
         try deleteEntries(from: date, to: .distantFuture)
     }
 
-    /// Deletes entries whose last visit falls in `[startDate, endDate]` (`chrome.history.deleteRange`). The store keeps one row per URL,
-    /// so a URL revisited after `endDate` survives, matching Chrome's observable effect without a per-visit table.
+    /// Deletes the visits in `[startDate, endDate]` (`chrome.history.deleteRange`): a page visited outside it survives with its
+    /// other visits. Returns the URLs of the pages removed entirely.
     @discardableResult
     func deleteEntries(from startDate: Date, to endDate: Date) throws -> [String] {
-        flushPendingWrites()
         guard startDate <= endDate else { return [] }
-        let urls = try dbPool.write { db in
-            let predicate = HistoryEntry.Columns.lastVisitedAt >= startDate && HistoryEntry.Columns.lastVisitedAt <= endDate
-            let urls = try String.fetchAll(db, HistoryEntry.filter(predicate).select(HistoryEntry.Columns.url))
-            try HistoryEntry.filter(predicate).deleteAll(db)
+        return try deleteVisits(where: "visitedAt >= ? AND visitedAt <= ?", arguments: [startDate, endDate])
+    }
+
+    /// Deletes what History page rows stand for: each page's visits on that row's local day, only `openedFrom`'s when given.
+    @discardableResult
+    func deleteDayRows(_ rows: [(pageId: UUID, dayStart: Date)], openedFrom: String?, calendar: Calendar = .current) throws -> [String] {
+        var removed: [String] = []
+        // Three bound values a row: chunks stay far below SQLite's variable limit.
+        for chunk in stride(from: 0, to: rows.count, by: 300).map({ rows[$0..<min($0 + 300, rows.count)] }) {
+            var arguments: StatementArguments = []
+            let clauses = chunk.map { row -> String in
+                // The next day's start, not 24 hours on: where DST starts at midnight, a day starts at 01:00.
+                let dayEnd = calendar.date(byAdding: .day, value: 1, to: row.dayStart).map(calendar.startOfDay) ?? row.dayStart
+                arguments += [row.pageId, row.dayStart, dayEnd]
+                return "(pageId = ? AND visitedAt >= ? AND visitedAt < ?)"
+            }
+            var predicate = "(\(clauses.joined(separator: " OR ")))"
+            if let openedFrom {
+                predicate += " AND openedFrom = ?"
+                arguments += [openedFrom]
+            }
+            removed += try deleteVisits(where: predicate, arguments: arguments)
+        }
+        return removed
+    }
+
+    /// Deletes every page of a site (`siteHost(of:)`), with their visits. Returns their URLs.
+    @discardableResult
+    func deleteSite(_ host: String) throws -> [String] {
+        flushPendingWrites()
+        let urls = try dbPool.write { db in try String.fetchAll(db, sql: "DELETE FROM history WHERE host = ? RETURNING url", arguments: [host]) }
+        if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
+        return urls
+    }
+
+    /// Deletes the visits `predicate` (on `historyVisit`) selects, then settles their pages: a page left without visits goes, the
+    /// others fall back to their newest remaining visit. Returns the URLs of the pages removed entirely.
+    private func deleteVisits(where predicate: String, arguments: StatementArguments) throws -> [String] {
+        flushPendingWrites()
+        let urls = try dbPool.write { db -> [String] in
+            let deleted = try Row.fetchAll(db, sql: "SELECT pageId, COUNT(*) AS count FROM historyVisit WHERE \(predicate) GROUP BY pageId",
+                                           arguments: arguments)
+            guard !deleted.isEmpty else { return [] }
+            try db.execute(sql: "DELETE FROM historyVisit WHERE \(predicate)", arguments: arguments)
+            var urls: [String] = []
+            for row in deleted {
+                let pageId: UUID = row["pageId"]
+                if let latest = try Date.fetchOne(db, sql: "SELECT MAX(visitedAt) FROM historyVisit WHERE pageId = ?", arguments: [pageId]) {
+                    // Pages older than the visits table count visits it never held: the count only drops, never below one.
+                    try db.execute(sql: """
+                        UPDATE history SET lastVisitedAt = ?1, visitCount = max(1, visitCount - ?2), openedFrom = (
+                            SELECT openedFrom FROM historyVisit WHERE pageId = ?3 AND openedFrom IS NOT NULL ORDER BY visitedAt DESC LIMIT 1
+                        ) WHERE id = ?3
+                        """, arguments: [latest, row["count"] as Int, pageId])
+                } else if let url = try String.fetchOne(db, sql: "DELETE FROM history WHERE id = ? RETURNING url", arguments: [pageId]) {
+                    urls.append(url)
+                }
+            }
             return urls
         }
         if !urls.isEmpty { onChange?(.removed(allHistory: false, urls: urls)) }
         return urls
+    }
+
+    // MARK: - History page
+
+    /// A History page row: one page on one local day, over the visits the filter keeps.
+    struct DayRow: Sendable {
+        let pageId: UUID
+        let url: String
+        let title: String
+        let host: String
+        let lastVisitAt: Date
+        let visits: Int
+        let dayStart: Date
+    }
+
+    enum Period: String, Sendable {
+        case all, today, yesterday, last7Days, older
+    }
+
+    struct Filter: Sendable {
+        var query = ""
+        var period = Period.all
+        var host: String?
+        var openedFrom: String?
+    }
+
+    struct SidebarSummary: Sendable {
+        let today: Int
+        let yesterday: Int
+        let last7Days: Int
+        let sites: [(host: String, visits: Int)]
+        let terminals: [(openedFrom: String, visits: Int)]
+    }
+
+    /// Rows of whole local days, newest first, from `before` (exclusive) down until at least `minimumRows`; `nextBefore` continues
+    /// the list, nil once nothing older matches. Each day is one bounded range of the `visitedAt` index.
+    func dayRows(
+        filter: Filter, before: Date?, minimumRows: Int, now: Date = Date(), calendar: Calendar = .current
+    ) throws -> (rows: [DayRow], nextBefore: Date?) {
+        flushPendingWrites()
+        let startOfToday = calendar.startOfDay(for: now)
+        let daysAgo = { (days: Int) in calendar.date(byAdding: .day, value: -days, to: startOfToday) ?? startOfToday }
+        var lower: Date?
+        var upper = before
+        switch filter.period {
+        case .all: break
+        case .today: lower = startOfToday
+        case .yesterday: lower = daysAgo(1); upper = min(upper ?? startOfToday, startOfToday)
+        case .last7Days: lower = daysAgo(6)
+        case .older: upper = min(upper ?? daysAgo(6), daysAgo(6))
+        }
+
+        var conditions: [String] = []
+        var filterArguments: StatementArguments = []
+        if let host = filter.host {
+            conditions.append("h.host = ?")
+            filterArguments += [host]
+        }
+        if let openedFrom = filter.openedFrom {
+            conditions.append("v.openedFrom = ?")
+            filterArguments += [openedFrom]
+        }
+        if !filter.query.trimmingCharacters(in: .whitespaces).isEmpty {
+            conditions.append("h.rowid IN (SELECT rowid FROM historyFts WHERE historyFts MATCH ?)")
+            filterArguments += [sanitizeFTSQuery(filter.query)]
+        }
+        if let lower {
+            conditions.append("v.visitedAt >= ?")
+            filterArguments += [lower]
+        }
+        let filterSQL = conditions.map { " AND \($0)" }.joined()
+
+        return try dbPool.read { db in
+            var rows: [DayRow] = []
+            var cursor = upper
+            while rows.count < minimumRows {
+                var latestArguments = filterArguments
+                if let cursor { latestArguments += [cursor] }
+                guard let latest = try Date.fetchOne(db, sql: """
+                    SELECT v.visitedAt FROM historyVisit v JOIN history h ON h.id = v.pageId
+                    WHERE 1\(filterSQL)\(cursor == nil ? "" : " AND v.visitedAt < ?")
+                    ORDER BY v.visitedAt DESC LIMIT 1
+                    """, arguments: latestArguments) else { return (rows, nil) }
+                let dayStart = calendar.startOfDay(for: latest)
+                let dayEnd = min(cursor ?? .distantFuture, calendar.date(byAdding: .day, value: 1, to: dayStart) ?? latest)
+                var dayArguments = filterArguments
+                dayArguments += [dayStart, dayEnd]
+                rows += try Row.fetchAll(db, sql: """
+                    SELECT h.id, h.url, h.title, h.host, MAX(v.visitedAt) AS lastVisitAt, COUNT(*) AS visits
+                    FROM historyVisit v JOIN history h ON h.id = v.pageId
+                    WHERE 1\(filterSQL) AND v.visitedAt >= ? AND v.visitedAt < ?
+                    GROUP BY v.pageId ORDER BY lastVisitAt DESC
+                    """, arguments: dayArguments).map {
+                    DayRow(pageId: $0["id"], url: $0["url"], title: $0["title"], host: $0["host"],
+                           lastVisitAt: $0["lastVisitAt"], visits: $0["visits"], dayStart: dayStart)
+                }
+                cursor = dayStart
+            }
+            return (rows, cursor)
+        }
+    }
+
+    /// The History page's sidebar: rows in each recent period, then the top 5 sites and terminals of the last 30 days.
+    func sidebarSummary(now: Date = Date(), calendar: Calendar = .current) throws -> SidebarSummary {
+        flushPendingWrites()
+        let startOfToday = calendar.startOfDay(for: now)
+        let dayStarts = (0...7).map { calendar.date(byAdding: .day, value: 1 - $0, to: startOfToday) ?? startOfToday }
+        let monthAgo = calendar.date(byAdding: .day, value: -30, to: startOfToday) ?? startOfToday
+        return try dbPool.read { db in
+            // dayStarts[0] is tomorrow: day i spans [dayStarts[i + 1], dayStarts[i]).
+            let perDay = try (0..<7).map { day in
+                try Int.fetchOne(db, sql: "SELECT COUNT(DISTINCT pageId) FROM historyVisit WHERE visitedAt >= ? AND visitedAt < ?",
+                                 arguments: [dayStarts[day + 1], dayStarts[day]]) ?? 0
+            }
+            let sites = try Row.fetchAll(db, sql: """
+                SELECT h.host, COUNT(*) AS visits FROM historyVisit v JOIN history h ON h.id = v.pageId
+                WHERE v.visitedAt >= ? AND h.host != '' GROUP BY h.host ORDER BY visits DESC, MAX(v.visitedAt) DESC LIMIT 5
+                """, arguments: [monthAgo]).map { (host: $0["host"] as String, visits: $0["visits"] as Int) }
+            let terminals = try Row.fetchAll(db, sql: """
+                SELECT openedFrom, COUNT(*) AS visits FROM historyVisit
+                WHERE visitedAt >= ? AND openedFrom IS NOT NULL GROUP BY openedFrom ORDER BY MAX(visitedAt) DESC LIMIT 5
+                """, arguments: [monthAgo]).map { (openedFrom: $0["openedFrom"] as String, visits: $0["visits"] as Int) }
+            return SidebarSummary(today: perDay[0], yesterday: perDay[1], last7Days: perDay.reduce(0, +), sites: sites, terminals: terminals)
+        }
+    }
+
+    /// Every recorded visit to `url`, oldest first (`chrome.history.getVisits`).
+    func visits(forURL url: String) throws -> [(id: Int64, visitedAt: Date)] {
+        flushPendingWrites()
+        return try dbPool.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT v.id, v.visitedAt FROM historyVisit v JOIN history h ON h.id = v.pageId WHERE h.url = ? ORDER BY v.visitedAt
+                """, arguments: [url]).map { (id: $0["id"] as Int64, visitedAt: $0["visitedAt"] as Date) }
+        }
     }
 
     func flushPendingWrites() {
@@ -324,9 +524,7 @@ final class HistoryStore: @unchecked Sendable {
                 pendingVisitsByURL[visit.url] = PendingVisit(
                     url: visit.url,
                     title: visit.title.isEmpty ? existing?.title ?? "" : visit.title,
-                    visitCount: visit.visitCount + (existing?.visitCount ?? 0),
-                    lastVisitedAt: max(visit.lastVisitedAt, existing?.lastVisitedAt ?? .distantPast),
-                    openedFrom: existing?.openedFrom ?? visit.openedFrom
+                    visits: visit.visits + (existing?.visits ?? [])
                 )
             }
         }
@@ -335,6 +533,8 @@ final class HistoryStore: @unchecked Sendable {
     /// Bounded like FaviconStore: nothing else ever deletes rows, so an uncapped history would
     /// grow for the profile's lifetime and slow every recent/top-sites query with it.
     static let maxRows = 50_000
+    /// The History page's journal, bounded the same way: about a year of heavy browsing.
+    static let maxVisits = 250_000
     /// Deletes rows older than the `maxRows`-th newest (offset bound to `maxRows - 1`): one walk of
     /// the lastVisitedAt index, and no row at all under the cap. history_ad keeps historyFts in sync.
     private static let pruneSQL = """
@@ -346,7 +546,7 @@ final class HistoryStore: @unchecked Sendable {
     private func writeVisits(_ visits: [PendingVisit]) throws {
         let written = try dbPool.write { db in
             let statement = try db.cachedStatement(sql: """
-                INSERT INTO history (id, url, title, visitCount, lastVisitedAt, openedFrom) VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO history (id, url, title, visitCount, lastVisitedAt, openedFrom, host) VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(url) DO UPDATE SET
                     visitCount = visitCount + excluded.visitCount,
                     lastVisitedAt = max(lastVisitedAt, excluded.lastVisitedAt),
@@ -354,23 +554,52 @@ final class HistoryStore: @unchecked Sendable {
                     openedFrom = coalesce(excluded.openedFrom, openedFrom)
                 RETURNING id, url, title, visitCount, lastVisitedAt, openedFrom
                 """)
+            let visitStatement = try db.cachedStatement(sql: "INSERT INTO historyVisit (pageId, visitedAt, openedFrom) VALUES (?, ?, ?)")
             var written: [HistoryEntry] = []
             written.reserveCapacity(visits.count)
             for visit in visits {
-                guard let entry = try HistoryEntry.fetchOne(
-                    statement, arguments: [UUID(), visit.url, visit.title, visit.visitCount, visit.lastVisitedAt, visit.openedFrom]
-                ) else { continue }
+                guard let last = visit.visits.last, let entry = try HistoryEntry.fetchOne(statement, arguments: [
+                    UUID(), visit.url, visit.title, visit.visits.count, last.at,
+                    visit.visits.last(where: { $0.openedFrom != nil })?.openedFrom, Self.siteHost(of: visit.url)
+                ]) else { continue }
                 // An existing row ends above the visit's own count, so an equal total means a new row.
-                if entry.visitCount == visit.visitCount { insertedSinceLastPrune += 1 }
+                if entry.visitCount == visit.visits.count { insertedSinceLastPrune += 1 }
+                for pageVisit in visit.visits {
+                    try visitStatement.execute(arguments: [entry.id, pageVisit.at, pageVisit.openedFrom])
+                }
+                insertedVisitsSinceLastPrune += visit.visits.count
                 written.append(entry)
             }
 
-            guard insertedSinceLastPrune >= Defaults.pruneEveryInserts else { return written }
-            try db.execute(sql: Self.pruneSQL, arguments: [Self.maxRows - 1])
-            insertedSinceLastPrune = 0
+            if insertedSinceLastPrune >= Defaults.pruneEveryInserts {
+                try db.execute(sql: Self.pruneSQL, arguments: [Self.maxRows - 1])
+                insertedSinceLastPrune = 0
+            }
+            if insertedVisitsSinceLastPrune >= Defaults.pruneEveryInserts {
+                try Self.pruneVisits(db)
+                insertedVisitsSinceLastPrune = 0
+            }
             return written
         }
         onChange?(.visited(written))
+    }
+
+    /// Keeps the newest `maxVisits` visits, then drops the pages left without any.
+    private static func pruneVisits(_ db: Database) throws {
+        try db.execute(sql: """
+            DELETE FROM historyVisit WHERE visitedAt < (
+                SELECT visitedAt FROM historyVisit ORDER BY visitedAt DESC LIMIT 1 OFFSET ?
+            )
+            """, arguments: [maxVisits - 1])
+        guard db.changesCount > 0 else { return }
+        try db.execute(sql: "DELETE FROM history WHERE NOT EXISTS (SELECT 1 FROM historyVisit WHERE pageId = history.id)")
+    }
+
+    /// The site a URL belongs to: its host, lowercased, port kept, without a leading `www.` (as `hostOf` in the chrome UI).
+    static func siteHost(of url: String) -> String {
+        guard let components = URLComponents(string: url), var host = components.host?.lowercased() else { return "" }
+        if host.hasPrefix("www.") { host.removeFirst(4) }
+        return components.port.map { "\(host):\($0)" } ?? host
     }
 
     /// Each term becomes a quoted prefix phrase, so FTS5 syntax characters in a query match literally.

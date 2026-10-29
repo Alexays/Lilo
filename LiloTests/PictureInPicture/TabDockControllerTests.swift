@@ -70,6 +70,124 @@ final class TabDockControllerTests: XCTestCase {
         XCTAssertEqual(controller.engineId, engine.id)
     }
 
+    func testAPictureInPictureViewFillsTheSlotAtNativeScale() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let view = NSView()
+        let openerId = UUID()
+        controller.dockPictureInPicture(view, openerId: openerId, in: contentView, above: nil, chromeView: chromeView)
+
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
+
+        let host = try? XCTUnwrap(view.superview)
+        XCTAssertEqual(view.frame, NSRect(x: 0, y: 0, width: 228, height: 300), "the PiP page lays out at the slot's own size")
+        XCTAssertEqual(host?.bounds.size, host?.frame.size, "no scaling: the PiP page is made for this size")
+        XCTAssertEqual(controller.pictureInPictureOpenerId, openerId)
+        XCTAssertNil(controller.engineId, "the dock holds no tab")
+    }
+
+    func testLosingTheSlotHandsThePictureInPictureBack() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let view = NSView()
+        var lost = false
+        controller.onPictureInPictureSlotLost = { lost = true }
+        controller.dockPictureInPicture(view, openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
+
+        controller.zonesChanged([:])
+
+        XCTAssertTrue(lost)
+        XCTAssertNil(controller.pictureInPictureOpenerId)
+    }
+
+    func testReplacingADockedPiPKeepsTheSlot() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        var cleared = 0
+        controller.onDockCleared = { cleared += 1 }
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
+        let next = NSView()
+        let nextOpener = UUID()
+
+        controller.dockPictureInPicture(next, openerId: nextOpener, in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertEqual(cleared, 0, "tearing the chrome slot down and up again could float the new PiP window")
+        XCTAssertEqual(controller.pictureInPictureOpenerId, nextOpener)
+        XCTAssertEqual(next.frame.size, NSSize(width: 228, height: 300))
+    }
+
+    func testDockingATabOverADockedPiPHandsThePiPBack() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        var pipLost = false
+        controller.onPictureInPictureSlotLost = { pipLost = true }
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+
+        controller.dock(WKWebViewTab(configuration: WKWebViewConfiguration()), logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertTrue(pipLost, "the PiP window floats instead of vanishing while its page thinks it shows")
+    }
+
+    func testDockingAPiPOverADockedTabHandsTheTabBack() {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let engine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        var lostEngine: WKWebViewTab?
+        controller.onSlotLost = { lostEngine = $0 }
+        controller.dock(engine, logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
+
+        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+
+        XCTAssertTrue(lostEngine === engine, "the docked call goes to the floating panel")
+    }
+
+    func testMovingBetweenDockAndPanelKeepsTheSameWebViewWithoutReloading() async throws {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let opener = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let pip = DocumentPiPController()
+        defer { pip.close(); opener.teardown() }
+        let webView = pip.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: opener)
+        webView.loadHTMLString("<p>pip</p>", baseURL: nil)
+        _ = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("document.body?.textContent === 'pip'")) as? Bool == true }
+        _ = try await webView.evaluateJavaScript("window.marker = 1; true")
+
+        controller.dockPictureInPicture(webView, openerId: opener.id, in: contentView, above: nil, chromeView: chromeView)
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
+        XCTAssertTrue(webView.isDescendant(of: contentView))
+        controller.undock()
+        pip.float()
+
+        XCTAssertTrue(pip.webView === webView)
+        XCTAssertTrue(webView.window is NSPanel)
+        let marker = try await webView.evaluateJavaScript("window.marker") as? Int
+        XCTAssertEqual(marker, 1, "the PiP page was never reloaded")
+    }
+
+    func testClosingTheLiloWindowClosesItsPiP() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
+        let window = makeTestWindow(context, showing: space.id)
+        let call = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example/")))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: call.id))
+        _ = window.documentPiP.open(configuration: WKWebViewConfiguration(), size: NSSize(width: 300, height: 300), opener: engine)
+
+        window.windowWillClose(Notification(name: NSWindow.willCloseNotification, object: window.window))
+
+        XCTAssertNil(window.documentPiP.webView, "no PiP window outlives its browser window")
+    }
+
     func testSlotVanishingBeforeFirstRectIsNotSlotLost() {
         let controller = TabDockController()
         controller.sidebarWidth = 240

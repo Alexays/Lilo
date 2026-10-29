@@ -11,6 +11,14 @@ extension WKWebViewTab {
         var cameraActive: Bool?
         var actions: Set<String> = []
         var hasTrackControls = false
+        /// The page handles `enterpictureinpicture`: it opens its own PiP window when asked.
+        var hasPictureInPictureAction = false
+        /// The page holds a connected WebRTC peer: a call, though it may register no Media Session action and
+        /// capture nothing (Meet's companion mode).
+        var hasLiveConnection = false
+
+        /// A call even without capture: the page offers a hangup or holds a live connection.
+        var isCall: Bool { actions.contains("hangup") || hasLiveConnection }
     }
 
     static let callActions = ["togglemicrophone", "togglecamera", "hangup"]
@@ -20,10 +28,10 @@ extension WKWebViewTab {
     function () {
       if (window.top !== window || typeof MediaSession !== 'function') return;
       const handlers = create(null);
-      let paused = [], microphone = null, camera = null;
+      let paused = [], microphone = null, camera = null, rtc = false;
       const call = () => stringify({ microphone, camera, togglemicrophone: !!handlers.togglemicrophone,
                                      togglecamera: !!handlers.togglecamera, hangup: !!handlers.hangup,
-                                     tracks: !!(handlers.nexttrack || handlers.previoustrack) });
+                                     tracks: !!(handlers.nexttrack || handlers.previoustrack), pip: !!handlers.enterpictureinpicture, rtc });
       // A page that never touches these controls sends nothing.
       let reported = call();
       const report = () => {
@@ -32,8 +40,9 @@ extension WKWebViewTab {
       };
       const hooks = { setActionHandler(action, handler) {
         let result;
-        // WebKit rejects hangup; a call page registering one anyway still gets the call card's button.
-        try { result = apply(original.setActionHandler, this, arguments); } catch (e) { if (action !== 'hangup') throw e; }
+        // WebKit rejects hangup and enterpictureinpicture; a call page registering one anyway still gets the call card's
+        // button, or its PiP window opened when its tab is left.
+        try { result = apply(original.setActionHandler, this, arguments); } catch (e) { if (action !== 'hangup' && action !== 'enterpictureinpicture') throw e; }
         handlers[action] = handler;
         report();
         return result;
@@ -51,9 +60,39 @@ extension WKWebViewTab {
         return result;
       };
       const original = lilo.methods(MediaSession.prototype, hooks);
-      lilo.on('media', action => {
+      // A call may register no Media Session action and capture nothing (Meet's companion mode): a connected
+      // WebRTC peer tells it. Every peer of a call gets a remote description, so the hook sees each one; the
+      // constructor stays WebKit's own.
+      if (typeof RTCPeerConnection === 'function') {
+        const peers = new Set();
+        const settle = () => {
+          let live = false;
+          for (const peer of peers) {
+            const state = peer.connectionState;
+            if (state === 'closed' || state === 'failed') peers.delete(peer);
+            else if (state === 'connected') live = true;
+          }
+          if (live !== rtc) { rtc = live; report(); }
+        };
+        const peerOriginal = lilo.methods(RTCPeerConnection.prototype, { setRemoteDescription() {
+          if (!peers.has(this)) {
+            peers.add(this);
+            apply(listen, this, ['connectionstatechange', settle]);
+          }
+          return apply(peerOriginal.setRemoteDescription, this, arguments);
+        },
+        // Closing fires no state change event.
+        close() {
+          const result = apply(peerOriginal.close, this, arguments);
+          settle();
+          return result;
+        } });
+      }
+      lilo.on('media', (action, reason) => {
         if (handlers[action]) {
-          try { handlers[action]({ action }); return true; } catch (e) {}
+          const details = { action };
+          if (reason) details.enterPictureInPictureReason = reason;
+          try { handlers[action](details); return true; } catch (e) {}
         }
         if (action === 'pause') {
           paused = Array.prototype.filter.call(document.querySelectorAll('video, audio'), media => !media.paused);
@@ -66,6 +105,14 @@ extension WKWebViewTab {
       });
     }
     """#
+
+    /// Asks the page for its Document PiP window through its Media Session handler, as Chrome does when a call tab
+    /// is left. As a `useraction`: the user left the tab with auto PiP on, and Meet keeps its automatic opening for
+    /// some accounts only, where its menu's opening works for all.
+    func enterDocumentPictureInPicture() {
+        guard callControls.hasPictureInPictureAction, wake() else { return }
+        wkWebView.evaluateJavaScript(PageWorld.push("media", ["enterpictureinpicture", "useraction"]), in: nil, in: PageWorld.bridgeWorld)
+    }
 
     /// `action` is play, pause, nexttrack, previoustrack, or one of `callActions` the page handles.
     func controlMedia(_ action: String) {

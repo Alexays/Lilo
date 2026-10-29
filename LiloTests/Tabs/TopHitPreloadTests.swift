@@ -37,8 +37,9 @@ final class TopHitPreloadTests: XCTestCase {
         _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
     }
 
-    private func preload(_ url: String, in window: MainWindowController) async throws {
-        try await send("preloadTopHit", ["url": url], to: try XCTUnwrap(window.bridgeRouter.handlers["preloadTopHit"]))
+    /// Straight to the tab manager: the bridge skips preloads in Low Power Mode, which would make these tests follow the Mac's power state.
+    private func preload(_ url: String, in window: MainWindowController) {
+        window.tabManager.preloadTopHit(URL(string: url))
     }
 
     func testEnterOnThePreloadedTopHitShowsThePageAlreadyLoadedAndRecordsTheVisit() async throws {
@@ -46,7 +47,7 @@ final class TopHitPreloadTests: XCTestCase {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         let blank = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
 
-        try await preload(page.absoluteString, in: window)
+        preload(page.absoluteString, in: window)
         let preloaded = try XCTUnwrap(window.tabManager.topHitPreload?.engine)
         let loaded = await pollUntil { preloaded.hasCommittedContent && !preloaded.isLoading && preloaded.currentTitle == "Videos" }
         XCTAssertTrue(loaded)
@@ -75,7 +76,7 @@ final class TopHitPreloadTests: XCTestCase {
         let loaded = await pollUntil { window.tabManager.engineTab(for: tab.id)?.hasCommittedContent == true }
         XCTAssertTrue(loaded)
 
-        try await preload(page.absoluteString, in: window)
+        preload(page.absoluteString, in: window)
 
         XCTAssertNil(window.tabManager.topHitPreload)
     }
@@ -83,11 +84,11 @@ final class TopHitPreloadTests: XCTestCase {
     func testAnotherTopHitOrTheBarClosingDropsThePreloadAndEnterElsewhereLoadsNormally() async throws {
         let (window, tabs) = try makeWindow()
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
-        try await preload(page.absoluteString, in: window)
+        preload(page.absoluteString, in: window)
         let first = try XCTUnwrap(window.tabManager.topHitPreload?.engine)
 
         let other = page.appendingPathComponent("other")
-        try await preload(other.absoluteString, in: window)
+        preload(other.absoluteString, in: window)
         XCTAssertEqual(window.tabManager.topHitPreload?.url, other)
         XCTAssertFalse(window.tabManager.topHitPreload?.engine === first)
 
@@ -95,7 +96,7 @@ final class TopHitPreloadTests: XCTestCase {
         XCTAssertNotNil(window.tabManager.topHitPreload, "the preload of another page stays until the bar closes")
         XCTAssertFalse(window.tabManager.engineTab(for: tab.id) === window.tabManager.topHitPreload?.engine)
 
-        try await preload("", in: window)
+        preload("", in: window)
         XCTAssertNil(window.tabManager.topHitPreload)
     }
 }

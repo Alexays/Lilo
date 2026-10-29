@@ -11,6 +11,7 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 CHANGIE = os.environ.get("CHANGIE", "")
 CONFIG = Path("Xcode/Configs/Base.xcconfig")
+HIGHLIGHTS = Path("lilo-ui/src/components/whatsnew/releaseHighlights.json")
 DIRECTORIES = [Path("lilo-ui"), Path("Lilo/Extensions/bridge-src")]
 BASE = "SWIFT_VERSION = 6.0\nCURRENT_PROJECT_VERSION = 5\nMARKETING_VERSION = 0.1.4\n"
 HISTORY = "## [0.1.4] - 2026-10-24\n\n- Existing release.\n"
@@ -32,6 +33,7 @@ class ReleaseTests(unittest.TestCase):
         self.write(".changes/unreleased/.gitkeep", "")
         self.write("CHANGELOG.md", "# Changelog\n\n" + HISTORY)
         self.write(CONFIG, BASE)
+        self.write(HIGHLIGHTS, "{}\n")
         for directory in DIRECTORIES:
             package = {"name": directory.name, "private": True, "version": "0.1.4"}
             self.write(directory / "package.json", json.dumps(package, indent=2) + "\n")
@@ -99,8 +101,14 @@ class ReleaseTests(unittest.TestCase):
     def test_major_release(self):
         self.check_release("Breaking", "1.0.0")
 
+    def highlight(self, version):
+        self.write(HIGHLIGHTS, json.dumps({version: {}}) + "\n")
+        self.write(f"site/src/content/releases/{version}.json", "{}\n")
+
     def check_release(self, kind, version):
         self.note(kind)
+        if version.endswith(".0"):
+            self.highlight(version)
         before = self.snapshot()
         self.run_release("status")
         self.assertEqual(self.snapshot(), before)
@@ -115,9 +123,30 @@ class ReleaseTests(unittest.TestCase):
         self.run_release("status")
         self.assertEqual(self.snapshot(), released)
 
+    def test_a_feature_release_waits_for_its_highlights_and_story(self):
+        self.note("Added")
+        status = self.run_release("status")
+        self.assertIn("lilo-ui/src/components/whatsnew/releaseHighlights.json", status.stdout)
+        before = self.snapshot()
+        refused = self.run_release("version", success=False)
+        self.assertIn("site/src/content/releases/0.2.0.json", refused.stderr)
+        self.assertEqual(self.snapshot(), before)
+        self.write(HIGHLIGHTS, json.dumps({"0.2.0": {}}) + "\n")
+        self.run_release("version", success=False)
+        self.assertEqual(len(list((self.root / ".changes/unreleased").glob("*.yaml"))), 1, "a missing story keeps the notes")
+        self.highlight("0.2.0")
+        self.run_release("version")
+        self.assert_versions("0.2.0")
+
+    def test_a_patch_release_needs_no_highlights(self):
+        self.note("Fixed")
+        self.run_release("version")
+        self.assert_versions("0.1.5")
+
     def test_highest_pending_bump_wins(self):
         for kind in ["Fixed", "Breaking", "Added"]:
             self.note(kind)
+        self.highlight("1.0.0")
         self.run_release("version")
         self.assert_versions("1.0.0")
         self.assertEqual(self.read("CHANGELOG.md").count("Fix tab switching."), 3)

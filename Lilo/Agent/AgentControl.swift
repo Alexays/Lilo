@@ -143,16 +143,38 @@ final class AgentControl {
             let working = Dictionary(uniqueKeysWithValues: authorized.compactMap { session in
                 agentsSpaceFolder(of: session) == nil ? nil : agentsSpaceId(of: session).map { (session.id, $0) }
             })
+            var actingTabIds: Set<UUID> = []
             let clients = Set(authorized.map(\.clientName)).sorted().map { name in
                 let mine = authorized.filter { $0.clientName == name }
                 // A tab of the call running now, however long it takes, or of one that just ended.
                 let acting = mine.flatMap { session in
                     session.actedOn.filter { $0.value > since || (session.activeCalls > 0 && $0.value >= session.callStartedAt) }.keys
                 }
+                actingTabIds.formUnion(acting)
                 return [
                     "name": name, "busy": mine.contains { $0.activeCalls > 0 }, "actingTabIds": acting.map(\.uuidString),
                     "spaceIds": Set(mine.compactMap { working[$0.id] }).map(\.uuidString)
                 ] as [String: Any]
+            }
+            // The latest call running on a tab sets its cursor's mood; one that just ended leaves it until the dot goes out.
+            // The latest one in an Agents space sets the mood of the space's mascot.
+            var moods: [Int: (mood: AgentCursorView.Mood, startedAt: Date)] = [:]
+            var spaceMoods: [UUID: (mood: AgentCursorView.Mood, startedAt: Date)] = [:]
+            for session in authorized {
+                let space = working[session.id]
+                for call in session.tabCalls.values {
+                    let mood: AgentCursorView.Mood = session.waitingForUser ? .waitingForUser : call.mood
+                    if call.startedAt >= moods[call.tab]?.startedAt ?? .distantPast { moods[call.tab] = (mood, call.startedAt) }
+                    if let space, call.startedAt >= spaceMoods[space]?.startedAt ?? .distantPast { spaceMoods[space] = (mood, call.startedAt) }
+                }
+            }
+            for (id, capture) in captures {
+                guard let webView = capture.webView else { continue }
+                if let mood = tabNumbers[id].flatMap({ moods[$0]?.mood }) {
+                    AgentCursorView.setMood(mood, in: webView)
+                } else if !actingTabIds.contains(id) {
+                    AgentCursorView.setMood(nil, in: webView)
+                }
             }
             let spaceIds = context.settingsStore?.agentsSpaceIds ?? []
             // With no agent working there and no tab left, a space has nothing to show: the bar leaves it
@@ -166,7 +188,8 @@ final class AgentControl {
             for window in context.windows.windows {
                 window.bridgeRouter?.send(event: "agentActivity", data: [
                     "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
-                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString)
+                    "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString),
+                    "moods": Dictionary(uniqueKeysWithValues: spaceMoods.map { ($0.key.uuidString, $0.value.mood.rawValue) })
                 ])
             }
         }
@@ -370,8 +393,10 @@ final class AgentControl {
         // Answered before the tool's own deadline, so the agent learns the user is needed.
         let action = ["kind": kind, "label": label, "site": site, "tab": engine.currentTitle ?? ""]
         session.waitingForUser = true
+        publishActivity()
         let allowed = await askConsent(session.clientName, action: action, timeout: 45)
         session.waitingForUser = false
+        publishActivity()
         guard allowed == true else {
             let what = ["enter": "pressing Enter to submit", "fetch": "sending"][kind] ?? "clicking"
             throw AgentToolError("The user did not allow \(what) \"\(label)\" on \(site): ask them to do it or to allow it", code: "needs_user")
@@ -387,8 +412,10 @@ final class AgentControl {
         let path = (file.path as NSString).abbreviatingWithTildeInPath
         let action = ["kind": "upload", "label": path, "site": site, "tab": engine.currentTitle ?? ""]
         session.waitingForUser = true
+        publishActivity()
         let allowed = await askConsent(session.clientName, action: action, timeout: 45)
         session.waitingForUser = false
+        publishActivity()
         guard allowed == true else {
             throw AgentToolError("The user did not allow uploading \(path) to \(site): ask them to upload it or to allow it", code: "needs_user")
         }
@@ -532,7 +559,7 @@ final class AgentSession {
     var actedOn: [UUID: Date] = [:]
     var callStartedAt = Date.distantPast
     /// The calls in flight on a tab, by call: one the client gave up on keeps running in the page.
-    var tabCalls: [UUID: (tab: Int, tool: String, startedAt: Date)] = [:]
+    var tabCalls: [UUID: (tab: Int, tool: String, startedAt: Date, mood: AgentCursorView.Mood)] = [:]
     /// The profile it works in, nil for the agents' own ephemeral one.
     var profileId: UUID?
     /// Its own tab folder in the Agents space of its profile, created with its first tab: one per conversation.

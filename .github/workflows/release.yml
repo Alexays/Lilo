@@ -182,6 +182,7 @@ jobs:
           files: |
             build/Lilo.dmg
             build/appcast/appcast.xml
+            build/release/dist/Lilo-dSYMs.zip
           # The version's notes, as make release-version wrote them for this tag.
           body_path: .changes/${{ github.ref_name }}.md
 

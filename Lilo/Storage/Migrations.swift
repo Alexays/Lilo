@@ -255,6 +255,28 @@ enum Migrations {
             }
         }
 
+        // One row per visit beside the per-page aggregate, and each page's site for the History page.
+        migrator.registerMigration("v2") { db in
+            try db.create(table: "historyVisit") { t in
+                t.primaryKey("id", .integer)
+                t.column("pageId", .text).notNull().references("history", column: "id", onDelete: .cascade)
+                t.column("visitedAt", .datetime).notNull()
+                t.column("openedFrom", .text)
+            }
+            try db.execute(sql: "CREATE INDEX idx_historyVisit_visitedAt ON historyVisit(visitedAt DESC)")
+            try db.execute(sql: "CREATE INDEX idx_historyVisit_pageId_visitedAt ON historyVisit(pageId, visitedAt DESC)")
+            try db.execute(sql: """
+                INSERT INTO historyVisit (pageId, visitedAt, openedFrom) SELECT id, lastVisitedAt, openedFrom FROM history
+                """)
+
+            try db.alter(table: "history") { t in t.add(column: "host", .text).notNull().defaults(to: "") }
+            let update = try db.makeStatement(sql: "UPDATE history SET host = ? WHERE rowid = ?")
+            for row in try Row.fetchAll(db, sql: "SELECT rowid, url FROM history") {
+                try update.execute(arguments: [HistoryStore.siteHost(of: row["url"]), row["rowid"] as Int64])
+            }
+            try db.create(index: "idx_history_host", on: "history", columns: ["host"])
+        }
+
         try migrator.migrate(db)
     }
 }

@@ -85,10 +85,10 @@ extension MainWindowController {
         bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
     }
 
-    /// The unified style centers the lights in the sidebar's 52pt header; the compact one centers them at 20pt,
-    /// on the line of a 40pt page toolbar or strip.
+    /// The unified style centers the lights in the sidebar's 52pt header, above its address; the compact one
+    /// centers them at 20pt, on the line of a 40pt page toolbar, strip or address-less sidebar header.
     func applyTitlebarStyle() {
-        window?.toolbarStyle = tabLayout.position == .left && !hasPageToolbar ? .unified : .unifiedCompact
+        window?.toolbarStyle = shownTabLayout == .default ? .unified : .unifiedCompact
     }
 
     /// The setting is app-wide: every window moves, and the next launch paints the new layout first.

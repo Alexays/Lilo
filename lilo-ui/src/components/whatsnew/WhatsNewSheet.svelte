@@ -157,11 +157,7 @@
     color: var(--text-primary);
     overflow: hidden;
   }
-  .whats-new::backdrop {
-    background: var(--chrome-overlay-backdrop-tint);
-    animation: release-fade-in var(--motion-duration-normal) var(--motion-ease-standard) both;
-  }
-  .whats-new.closing::backdrop { animation: release-fade-out 160ms var(--motion-ease-standard) both; }
+  .whats-new::backdrop { background: transparent; }
   .whats-new-stage {
     position: absolute;
     top: var(--chrome-content-top);
@@ -173,6 +169,16 @@
     padding: var(--space-24);
     pointer-events: none;
   }
+  .whats-new-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--chrome-overlay-boundary-radius);
+    background: var(--chrome-overlay-backdrop-tint);
+    backdrop-filter: blur(var(--chrome-overlay-backdrop-blur)) saturate(1.04);
+    animation: release-fade-in var(--motion-duration-normal) var(--motion-ease-standard) both;
+  }
+  .whats-new.closing .whats-new-stage::before { animation: release-fade-out 160ms var(--motion-ease-standard) both; }
   .whats-new-sheet {
     position: relative;
     display: flex;
@@ -218,6 +224,6 @@
   @keyframes release-leave { to { opacity: 0; transform: translateY(4px) scale(0.985); } }
   @keyframes release-fade-in { from { opacity: 0; } }
   @keyframes release-fade-out { to { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .whats-new-sheet, .whats-new::backdrop { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .whats-new-sheet, .whats-new-stage::before { animation: none; } }
   @media (max-height: 520px) { .whats-new-stage { padding: var(--space-12); } }
 </style>

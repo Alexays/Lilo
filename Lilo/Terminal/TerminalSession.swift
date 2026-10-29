@@ -493,7 +493,9 @@ final class TerminalSession: @unchecked Sendable {
 
     /// The line counts were read less than an interval ago.
     var gitStatIsRecent: Bool {
-        DispatchTime.now().uptimeNanoseconds - lastGitStat.load(ordering: .relaxed) < Self.gitStatInterval
+        // gitQueue may stamp a time newer than this `now`: clamped, as UInt64 would trap below zero.
+        let now = DispatchTime.now().uptimeNanoseconds
+        return now - min(now, lastGitStat.load(ordering: .relaxed)) < Self.gitStatInterval
     }
 
     /// Reads the branch, and with `withStat` runs git for the line counts. Requests made while one
@@ -722,7 +724,9 @@ final class TerminalSession: @unchecked Sendable {
     private func scheduleQuietCheck(after delay: UInt64) {
         DispatchQueue.main.asyncAfter(deadline: .now() + .nanoseconds(Int(delay))) { [weak self] in
             guard let self else { return }
-            let quiet = DispatchTime.now().uptimeNanoseconds - lastOutput.load(ordering: .relaxed)
+            // The parser thread may stamp a time newer than this `now`: clamped, as UInt64 would trap below zero.
+            let now = DispatchTime.now().uptimeNanoseconds
+            let quiet = now - min(now, lastOutput.load(ordering: .relaxed))
             if quiet < Self.quietAfter { return scheduleQuietCheck(after: Self.quietAfter - quiet) }
             quietCheckPending.store(false, ordering: .releasing)
             updateStatus { $0.printing = false }

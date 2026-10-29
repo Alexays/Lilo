@@ -46,6 +46,8 @@ final class BrowserStateStore {
     private(set) var visibleSpaceIds: Set<UUID> = []
     /// Tabs on screen in some window, maintained by the window registry: never frozen or discarded.
     var displayedTabIds: Set<UUID> = []
+    /// Tabs whose Document PiP window is open: its page runs in theirs.
+    var pictureInPictureOpenerIds: Set<UUID> = []
     /// Live runtime of each shown space and how many windows show it; every one of them uses this host.
     private var liveHosts: [UUID: (host: EngineHost, viewers: Int)] = [:]
 
@@ -723,7 +725,7 @@ final class BrowserStateStore {
                 availableEngineIds: Set(snapshot.engines.keys),
                 restoringTabIds: snapshot.restoringTabIds,
                 now: now
-            ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds)
+            ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds)
             if visibleSpaceIds.contains(spaceId), let visibleTabId = snapshot.spaceTab.state.activeTabId {
                 protectedTabIds.insert(visibleTabId)
                 if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { protectedTabIds.formUnion(split.layout.paneIds) }
@@ -971,7 +973,7 @@ final class BrowserStateStore {
             availableEngineIds: Set(snapshot.engines.keys),
             restoringTabIds: snapshot.restoringTabIds,
             now: now
-        ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds)
+        ).union(inspectedEngineIds(in: snapshot.engines)).union(displayedTabIds).union(pictureInPictureOpenerIds)
         if visibleSpaceIds.contains(spaceId), let visibleTabId = snapshot.spaceTab.state.activeTabId {
             protectedTabIds.insert(visibleTabId)
         }

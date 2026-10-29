@@ -287,6 +287,26 @@ interface BridgeHistoryResultSnapshot {
 	[key: string]: unknown;
 }
 
+export type BridgeHistoryPeriod = "all" | "today" | "yesterday" | "last7Days" | "older";
+
+export interface BridgeHistoryFilter {
+	query: string;
+	period: BridgeHistoryPeriod;
+	host?: string;
+	openedFrom?: string;
+}
+
+/** One page on one local day; times are epoch milliseconds. */
+export interface BridgeHistoryDayRow {
+	pageId: string;
+	url: string;
+	title: string;
+	host: string;
+	lastVisitAt: number;
+	visits: number;
+	dayStart: number;
+}
+
 export interface BridgeDownloadSnapshot {
 	id: number;
 	url: string;
@@ -549,7 +569,7 @@ export interface BridgeCommandPayloadMap {
 	getRecentHistory: EmptyPayload;
 
 	// typed: the URL the user typed in the command bar, which native may send to the site history knows.
-	createTab: { url?: string; typed?: boolean };
+	createTab: { url?: string; typed?: boolean; background?: boolean };
 	closeTab: { id: string };
 	switchTab: { id: string };
 	// The tab the recent tabs switcher picked, in whichever Space of the window it lives.
@@ -679,6 +699,12 @@ export interface BridgeCommandPayloadMap {
 	/** The command bar's top hit to load out of sight; an empty `url` drops it. */
 	preloadTopHit: { url: string };
 	deleteHistoryEntry: { url: string; query: string };
+	loadHistoryPage: { requestId: number; before?: number } & BridgeHistoryFilter;
+	loadHistorySidebar: EmptyPayload;
+	deleteHistoryRows: { rows: { pageId: string; dayStart: number }[]; openedFrom?: string };
+	deleteHistorySite: { host: string };
+	closeHistoryPage: EmptyPayload;
+	showHistoryRowMenu: { key: string; url: string; host: string; x: number; y: number; width: number; height: number };
 
 	omniboxInputStarted: { sessionId: string; query: string };
 	omniboxInputChanged: { sessionId: string; query: string };
@@ -848,7 +874,7 @@ export interface BridgeEventPayloadMap {
 	cancelDrag: EmptyPayload;
 	openCommandBar: { newTab?: boolean; prefill?: string; selectAll?: boolean };
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
-	openHistory: EmptyPayload;
+	openHistory: { query?: string; host?: string; openedFrom?: string };
 	closeCommandBarAfterNavigation: EmptyPayload;
 	openSettings: EmptyPayload;
 	openClearBrowsingData: EmptyPayload;
@@ -942,6 +968,23 @@ export interface BridgeEventPayloadMap {
 	profileStats: { extensionCounts: Record<string, number> };
 
 	historyResults: { query?: string; results: BridgeHistoryResultSnapshot[] };
+	historyPage: {
+		requestId: number;
+		rows: BridgeHistoryDayRow[];
+		/** Continues the list; absent once nothing older matches. */
+		nextBefore?: number;
+		/** Favicon data URLs by site, each sent once per window. */
+		favicons: Record<string, string>;
+	};
+	historySidebar: {
+		today: number;
+		yesterday: number;
+		last7Days: number;
+		sites: { host: string; visits: number }[];
+		terminals: { openedFrom: string; visits: number }[];
+	};
+	historyChanged: EmptyPayload;
+	historyRowMenuAction: { key: string; action: "open" | "openInNewTab" | "delete" | "deleteSite" };
 	searchSuggestions: { query?: string; suggestions: string[] };
 	omniboxSuggestions: {
 		sessionId: string;
@@ -983,6 +1026,8 @@ export interface BridgeEventPayloadMap {
 		agentsProfileId: string;
 		/** Agents spaces with no agent working there and no tab left. */
 		hiddenAgentsSpaceIds: string[];
+		/** What the latest call running in each Agents space does, by space id. */
+		moods: Record<string, BridgeAgentMood>;
 	};
 	agentClientsLoaded: BridgeAgentClientsSnapshot;
 	appNames: { names: Record<string, string> };
@@ -1172,6 +1217,15 @@ export interface BridgeAgentAction {
 }
 
 /** An AI agent connected over MCP, by the name it gave, and whether a tool call of it runs now. */
+export type BridgeAgentMood =
+	| "working"
+	| "reading"
+	| "scripting"
+	| "typing"
+	| "capturing"
+	| "loading"
+	| "waitingForUser";
+
 export interface BridgeAgentClient {
 	name: string;
 	busy: boolean;

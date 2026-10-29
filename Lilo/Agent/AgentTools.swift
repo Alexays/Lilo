@@ -555,7 +555,9 @@ enum AgentTools {
     /// Fragments allowed: a fetch body or a command's result can be a bare number, string or boolean, which
     /// JSONSerialization otherwise rejects with an exception, not an error.
     static func json(_ object: Any) -> String {
-        (try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys, .fragmentsAllowed])).flatMap { String(bytes: $0, encoding: .utf8) } ?? "{}"
+        // A NaN or a date raises past `try?`; the array wrapper lets the check accept fragments.
+        guard JSONSerialization.isValidJSONObject([object]) else { return "{}" }
+        return (try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys, .fragmentsAllowed])).flatMap { String(bytes: $0, encoding: .utf8) } ?? "{}"
     }
 
     static func tool(_ name: String, _ description: String, _ properties: [String: Any], required: [String] = []) -> [String: Any] {

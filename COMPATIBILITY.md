@@ -166,20 +166,29 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   - *Reduced quality:* Canal+ (720p reported in Safari), Tidal (no lossless, which needs Widevine).
   - *Unknown:* Deezer, YouTube purchased and rented movies.
 
-### Picture-in-Picture - `<video>` PiP (works) vs Document PiP (deliberate non-goal)
+### Picture-in-Picture - `<video>` PiP and Document PiP (Lilo shim)
 
 - **Single-`<video>` Picture-in-Picture: supported.** WebKit's element PiP works
   (`video.webkitSetPresentationMode('picture-in-picture')` / `requestPictureInPicture()`), and Lilo
   auto-enters it when a tab with active media is backgrounded (`PiPController`). This pops *one* video
   out into the system PiP window (no page controls) - fine for YouTube/Netflix-style single-stream PiP.
-- **Document Picture-in-Picture (`window.documentPictureInPicture`): not supported, by choice.**
-  WebKit ships no implementation. A polyfill (a same-origin child window in a floating panel) is
-  feasible, but its main user, Google Meet, gates that path on a Chromium identity
-  (`navigator.userAgentData.brands` listing `"Chromium"`) and then relies on Chromium-only media
-  APIs (`MediaStreamTrackGenerator`). Tested on a live call with a full Chrome identity, camera and
-  microphone broke and the PiP window never opened. Lilo keeps the Safari identity, Meet falls back
-  to single-`<video>` PiP, and the sidebar pip dock and floating tab panel keep a backgrounded call
-  tab visible.
+- **Document Picture-in-Picture (`window.documentPictureInPicture`): supported via a Lilo shim.**
+  WebKit ships no implementation. A page-world module (`DocumentPiPBridge`) defines the API in
+  top-level documents of regular tabs; `requestWindow` makes the tab's next `window.open` a
+  same-origin popup that `DocumentPiPController` hosts: docked at its own size in the sidebar while
+  Lilo is in front and its tab is not shown, floating otherwise (always on top, every Space, out of
+  screen sharing, non-activating, snapped to a corner remembered per screen, back and close buttons
+  on hover). The window closes when its page navigates or its tab closes. A call tab whose page
+  registers the `enterpictureinpicture` Media Session action gets its PiP window when the tab is
+  left (closed again on coming back); with no window within 1.5 s, the whole page goes to the dock or
+  floating panel as before. Agent tabs get a `NotAllowedError`.
+- **Google Meet:** Meet offers its Document PiP only to Chrome, read from `navigator.userAgent` (it
+  never reads `userAgentData`), and fixes at load the identity its WebRTC stack follows. Lilo shows a
+  Chrome user agent on `meet.google.com` only in the microtask after a read of
+  `documentPictureInPicture`: Meet's PiP checks pass, its call stays on Safari's media path. A full
+  Chrome identity breaks camera and microphone (Chromium-only `createEncodedStreams` and audio
+  `MediaStreamTrackGenerator`). `defaults write <bundle id> LiloMeetDocumentPiPDisabled -bool true`
+  turns the Meet part off (new tabs).
 
 ### Screen sharing - tab capture (Lilo frame ferry)
 
