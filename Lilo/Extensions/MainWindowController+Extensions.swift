@@ -214,6 +214,14 @@ extension MainWindowController {
             if awaitingDocumentPiP === engine {
                 awaitingDocumentPiP = nil
                 documentPiP.wasAutoEntered = true
+                // A late answer: the whole page already went to the dock or the panel. It comes back under the shown
+                // tab, where it keeps drawing its PiP window.
+                floatingTabPanel.dismiss(hosting: engine.id)
+                if tabDock.engineId == engine.id { tabDock.undock() }
+                if engine.view.superview == nil, tabManager.activeOpenTabId != engine.id {
+                    engine.fitView(in: contentContainerView.bounds)
+                    contentContainerView.addSubview(engine.view, positioned: .below, relativeTo: nil)
+                }
             }
             placeDocumentPiP()
             return webView

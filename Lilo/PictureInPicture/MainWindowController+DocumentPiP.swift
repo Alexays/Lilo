@@ -4,6 +4,7 @@ import WebKit
 
 extension MainWindowController {
     static let documentPiPFallbackDelay: TimeInterval = 1.5
+    static var documentPiPLateAnswerWindow: TimeInterval = 10
     private static let documentPiPLogger = Logger(liloCategory: "pip")
 
     /// Leaving a call tab whose page offers its own PiP window: asks the page for it, and shows the whole page in
@@ -25,10 +26,16 @@ extension MainWindowController {
         engine.enterDocumentPictureInPicture()
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.documentPiPFallbackDelay) { [weak self, weak engine] in
             guard let self, let engine, awaitingDocumentPiP === engine else { return }
-            awaitingDocumentPiP = nil
-            guard tabManager.activeOpenTabId != engine.id else { return }
-            if !engine.isPrivateBrowsing { Self.documentPiPLogger.info("document pip fallback host=\(engine.currentURL?.host ?? "nil", privacy: .private)") }
-            popOutWholePage(engine)
+            // Its own tab shown (the app was left from it): nothing to fall back to, the page stays in the window.
+            if tabManager.activeOpenTabId != engine.id {
+                if !engine.isPrivateBrowsing { Self.documentPiPLogger.info("document pip fallback host=\(engine.currentURL?.host ?? "nil", privacy: .private)") }
+                popOutWholePage(engine)
+            }
+            // The page may still answer, slowed by the first load of its PiP code: its window then replaces the
+            // whole page. Not forever, as the wait keeps the page drawing at full rate.
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.documentPiPLateAnswerWindow) { [weak self, weak engine] in
+                if let self, let engine, awaitingDocumentPiP === engine { awaitingDocumentPiP = nil }
+            }
         }
     }
 
