@@ -160,6 +160,8 @@ export const authorAgent = async <T>(
       "--sandbox",
       "read-only",
       "--ignore-user-config",
+      "--config",
+      'model_reasoning_effort="high"',
       "--output-schema",
       schemaPath,
       "--output-last-message",

@@ -13,12 +13,22 @@ export const selectionSchema = z.strictObject({
       reason,
     })
   ),
-  description: copy,
-  headline: copy,
+  description: copy
+    .max(180)
+    .describe(
+      "Public release introduction for people using Lilo. Benefit copy only, without recording or verification instructions."
+    ),
+  headline: copy
+    .max(80)
+    .describe("Public release headline for people using Lilo."),
   highlights: z
     .array(
       z.strictObject({
-        description: copy,
+        description: copy
+          .max(180)
+          .describe(
+            "Public feature description. Describe the benefit to the reader, without timing, recording or verification instructions."
+          ),
         id: featureID,
         notes: z.array(sourceNote).min(1),
         reason: reason
@@ -26,7 +36,9 @@ export const selectionSchema = z.strictObject({
           .describe(
             "Brief ranking rationale: importance and grouping only. Do not prescribe a storyboard, assertions or an exhaustive test inventory."
           ),
-        title: copy,
+        title: copy
+          .max(80)
+          .describe("Public feature title for people using Lilo."),
       })
     )
     .max(3),

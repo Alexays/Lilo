@@ -104,7 +104,7 @@ const changes = previous
     ).slice(0, 18_000)
   : "No previous release tag is available; inspect the current implementation.";
 
-const grounding = `Release ${version}, build ${identity.build}. Exact note bullets: ${notes}\nPrevious tag: ${previous ?? "unavailable"}. Change summary:\n${changes}\nInspect relevant current Lilo/ and lilo-ui/src/ implementation before deciding. Exclude the release automation itself from the feature selection.\nEach highlight gets one coherent 6–12 second visual story, always under 15 seconds including movement and readable holds. Selection reasons explain importance and grouping; do not prescribe an exhaustive test inventory in them. The walkthrough must prove its core visible workflow, with at least two meaningful native assertions. Full release notes retain every detail; a short movie need not prove every sub-clause or add network/benchmark infrastructure unrelated to showing the controls and their real outcome. Do not dilute the core feature to fit the budget.\nThe output is a SILENT animated WebP walkthrough. Select by user impact, then demonstrate honest visible interactions and outcomes suitable for that medium. Do not invent an audible-verification requirement for audio features. A walkthrough may show configuring a real feature before an external consent step, provided its goal and visuals clearly stop there and never portray an unfinished operation as completed. Source evidence supports capability claims; native assertions prove the visible states actually demonstrated. This does not permit fake outcomes, dropping important features, or weakening the quality gates.`;
+const grounding = `Release ${version}, build ${identity.build}. Exact note bullets: ${notes}\nPrevious tag: ${previous ?? "unavailable"}. Change summary:\n${changes}\nInspect relevant current Lilo/ and lilo-ui/src/ implementation before deciding. Exclude the release automation itself from the feature selection.\nThe audience reads headline, title and description directly in the public changelog. Write concise, polished benefit copy for people using Lilo; never put recording directions, durations, assertions, validators or build instructions in these fields. Ranking reasons explain importance and grouping only.\nThe output is a silent WebP telling one coherent visible workflow in 6–12 seconds, always under 15. Do not turn it into an exhaustive integration or benchmark test. An honest configuration demonstration may stop before external consent, without portraying an unfinished operation as completed. Audio features do not require audible proof in a silent movie. Preserve the core feature and all quality gates.`;
 
 const plan = await boundedRepair(
   "feature selection",
@@ -122,7 +122,7 @@ const plan = await boundedRepair(
     const review = await agent(
       `selection-review-${attempt}`,
       reviewSchema,
-      `${grounding}\nIndependently audit this proposed ranking and exact note coverage: ${JSON.stringify(selection)}. Reject omitted more important visible features, old features presented as new, unsupported claims, or decisions driven by recorder limitations. One to three strongest visible stories is enough; not every visible fix needs a movie. Empty selection requires genuinely nonvisual maintenance. Do not require an artificial movie for a performance/reliability improvement whose visible outcome cannot honestly convey it. passed=true only when the selection represents the release well.`
+      `${grounding}\nIndependently audit this proposed ranking and exact note coverage: ${JSON.stringify(selection)}. Reject omitted more important visible features, old features presented as new, unsupported claims, public copy containing recording/verification instructions, or decisions driven by recorder limitations. One to three strongest visible stories is enough; not every visible fix needs a movie. Empty selection requires genuinely nonvisual maintenance. Do not require an artificial movie for a performance/reliability improvement whose visible outcome cannot honestly convey it. passed=true only when the selection represents the release well.`
     );
 
     requireReview(review, "selection");
@@ -148,7 +148,7 @@ const content = await boundedRepair(
     const review = await agent(
       `content-review-${attempt}`,
       reviewSchema,
-      `Independently check these translated release highlights for correctness, fluent phrasing, locale coverage, unchanged feature meaning/ordering, plain text and concise copy. Reject invented claims or untranslated non-English passages. Selection: ${JSON.stringify(plan)}\nTranslations: ${JSON.stringify(translated)}`
+      `Independently check these translated release highlights for correctness, fluent phrasing, locale coverage, unchanged feature meaning/ordering, plain text and concise copy. Reject invented claims, untranslated non-English passages, or any recording directions, test/assertion language, timing requirements or build details in the public copy. Every headline, title and description must read naturally as a finished changelog for people using Lilo. Selection: ${JSON.stringify(plan)}\nTranslations: ${JSON.stringify(translated)}`
     );
 
     requireReview(review, "content");

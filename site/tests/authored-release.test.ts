@@ -86,6 +86,14 @@ test("ranking rationale cannot freeze an exhaustive execution inventory", () => 
   assert.throws(() => validateSelection(plan, "0.9.0", notes), z.ZodError);
 });
 
+test("public descriptions stay compact instead of carrying recording instructions", () => {
+  const plan = selection();
+  plan.highlights[0].description =
+    "Hide the address bar in Settings > Appearance, return to the page, and open the command bar. Allow 9 seconds. Native assertions must confirm the address bar is hidden and the command bar still opens.";
+
+  assert.throws(() => validateSelection(plan, "0.9.0", notes), z.ZodError);
+});
+
 test("selection accepts previously unknown features but accounts for every exact release note", () => {
   assert.equal(
     validateSelection(selection(), "0.9.0", notes).highlights[0].id,
