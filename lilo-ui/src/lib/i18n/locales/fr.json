@@ -2198,6 +2198,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0110": {
+				"headline": "À chaque Space son style.",
+				"description": "Du verre, du grain, et des couleurs qui suivent vos sites, votre fond d'écran ou l'heure.",
+				"materialTitle": "Verre, grain ou uni.",
+				"materialDescription": "Choisissez la matière de chaque Space sur l'aperçu de sa fenêtre, dans Apparence : du Liquid Glass teinté de sa couleur, ou un grain fin.",
+				"colorsTitle": "Des couleurs qui vous suivent.",
+				"colorsDescription": "Prenez la couleur du site ouvert ou de votre fond d'écran, ou laissez votre couleur se réchauffer le soir."
+			},
 			"v0100": {
 				"headline": "Un nouveau départ, rien de perdu.",
 				"description": "Lilo s'ouvre au propre après une pause, et les onglets archivés sont à un clic.",
@@ -2205,32 +2213,6 @@
 				"freshDescription": "Après une longue pause, Lilo s'ouvre sans onglet sélectionné, les onglets épinglés revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler.",
 				"archiveTitle": "Les onglets archivés, à un clic.",
 				"archiveDescription": "Les onglets archivés dans la journée attendent à côté de Nouvel onglet, prêts à revenir."
-			},
-			"v090": {
-				"headline": "Retrouvez votre chemin.",
-				"description": "Votre historique, vos appels et huit nouvelles langues.",
-				"historyTitle": "Tout votre historique, jour par jour.",
-				"historyDescription": "Appuyez sur ⌘Y : les visites de chaque jour regroupées par site, filtrées par période, site ou terminal, et faciles à nettoyer.",
-				"pipTitle": "Gardez votre appel en vue.",
-				"pipDescription": "La vue compacte de Google Meet vous suit dans une fenêtre flottante quand vous quittez l'onglet de l'appel.",
-				"languagesTitle": "Lilo parle votre langue.",
-				"languagesDescription": "L'allemand, le japonais, l'italien, le coréen, le chinois traditionnel, le polonais, le turc et le néerlandais rejoignent la liste."
-			},
-			"v080": {
-				"headline": "Partagez exactement ce qu'il faut.",
-				"description": "Vos appels et vos pages gagnent un peu d'espace.",
-				"shareTitle": "Partagez le bon onglet.",
-				"shareDescription": "Des aperçus vous aident à choisir, et la carte d'appel change ou arrête le partage en un clic. Partagez aussi le son de votre Mac.",
-				"addressTitle": "Plus de place pour la page.",
-				"addressDescription": "Masquez la barre d'adresse dans Réglages > Apparence. La barre de commandes reste là pour aller ailleurs."
-			},
-			"v060": {
-				"headline": "Toujours dans la boucle.",
-				"description": "De petites attentions pour une navigation plus agréable au quotidien.",
-				"unreadTitle": "Ne manquez plus un message.",
-				"unreadDescription": "Vos onglets et favoris affichent désormais le nombre de messages non lus ou un point de notification.",
-				"callsTitle": "Gardez le fil de la conversation.",
-				"callsDescription": "Les appels restent fluides si une page se fige brièvement et continuent avec le maintien en éveil."
 			}
 		}
 	},

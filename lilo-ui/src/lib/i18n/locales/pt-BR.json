@@ -2209,6 +2209,14 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Cada Space do seu jeito.",
+				"description": "Vidro, granulado e cores que seguem seus sites, seu papel de parede ou a hora do dia.",
+				"materialTitle": "Vidro, granulado ou sólido.",
+				"materialDescription": "Escolha o material de cada Space na prévia da janela, em Aparência: Liquid Glass tingido com a cor dele ou um granulado fino.",
+				"colorsTitle": "Cores que seguem você.",
+				"colorsDescription": "Use a cor do site aberto ou do papel de parede, ou deixe sua cor ficar mais quente à noite."
+			},
 			"v0100": {
 				"headline": "Recomece sem perder nada.",
 				"description": "Depois de uma pausa, o Lilo abre organizado, e as abas arquivadas ficam a um clique.",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "Depois de uma longa pausa, o Lilo abre sem aba selecionada e com as abas fixadas de volta à página inicial. As abas arquivadas nesse meio-tempo voltam com Desfazer.",
 				"archiveTitle": "Abas arquivadas, a um clique.",
 				"archiveDescription": "As abas arquivadas no último dia esperam ao lado de Nova aba, prontas para voltar."
-			},
-			"v090": {
-				"headline": "Encontre o caminho de volta.",
-				"description": "Seu histórico, suas chamadas e oito novos idiomas.",
-				"historyTitle": "Todo o seu histórico, dia a dia.",
-				"historyDescription": "Pressione ⌘Y: as visitas de cada dia agrupadas por site, filtradas por período, site ou terminal, e fáceis de limpar.",
-				"pipTitle": "Mantenha sua chamada à vista.",
-				"pipDescription": "A visualização compacta do Google Meet acompanha você numa janela flutuante quando você sai da aba da chamada.",
-				"languagesTitle": "O Lilo fala o seu idioma.",
-				"languagesDescription": "Alemão, japonês, italiano, coreano, chinês tradicional, polonês, turco e holandês entram na lista."
-			},
-			"v080": {
-				"headline": "Compartilhe só o que você quer.",
-				"description": "Suas chamadas e páginas ganham um pouco mais de espaço.",
-				"shareTitle": "Compartilhe a aba certa.",
-				"shareDescription": "Prévias das abas ajudam na escolha, e o cartão da chamada troca ou encerra o compartilhamento com um clique. Compartilhe também o som do seu Mac.",
-				"addressTitle": "Mais espaço para a página.",
-				"addressDescription": "Oculte a barra de endereço em Ajustes > Aparência. A barra de comandos continua à mão para ir a qualquer lugar."
-			},
-			"v060": {
-				"headline": "Fique um pouco mais por dentro.",
-				"description": "Pequenos detalhes para deixar sua navegação diária mais agradável.",
-				"unreadTitle": "Veja o que você perdeu.",
-				"unreadDescription": "Contadores de mensagens não lidas e pontos de notificação agora aparecem nas abas e nos favoritos.",
-				"callsTitle": "Continue na conversa.",
-				"callsDescription": "As chamadas continuam fluidas durante um breve travamento da página e seguem com a função para manter o Lilo ativo."
 			}
 		}
 	},

@@ -1,4 +1,20 @@
 {
+	"0.11.0": {
+		"headlineKey": "whatsNew.releases.v0110.headline",
+		"descriptionKey": "whatsNew.releases.v0110.description",
+		"highlights": [
+			{
+				"illustration": "material",
+				"titleKey": "whatsNew.releases.v0110.materialTitle",
+				"descriptionKey": "whatsNew.releases.v0110.materialDescription"
+			},
+			{
+				"illustration": "colors",
+				"titleKey": "whatsNew.releases.v0110.colorsTitle",
+				"descriptionKey": "whatsNew.releases.v0110.colorsDescription"
+			}
+		]
+	},
 	"0.10.0": {
 		"headlineKey": "whatsNew.releases.v0100.headline",
 		"descriptionKey": "whatsNew.releases.v0100.description",
@@ -12,59 +28,6 @@
 				"illustration": "archive",
 				"titleKey": "whatsNew.releases.v0100.archiveTitle",
 				"descriptionKey": "whatsNew.releases.v0100.archiveDescription"
-			}
-		]
-	},
-	"0.9.0": {
-		"headlineKey": "whatsNew.releases.v090.headline",
-		"descriptionKey": "whatsNew.releases.v090.description",
-		"highlights": [
-			{
-				"illustration": "history",
-				"titleKey": "whatsNew.releases.v090.historyTitle",
-				"descriptionKey": "whatsNew.releases.v090.historyDescription"
-			},
-			{
-				"illustration": "pip",
-				"titleKey": "whatsNew.releases.v090.pipTitle",
-				"descriptionKey": "whatsNew.releases.v090.pipDescription"
-			},
-			{
-				"illustration": "languages",
-				"titleKey": "whatsNew.releases.v090.languagesTitle",
-				"descriptionKey": "whatsNew.releases.v090.languagesDescription"
-			}
-		]
-	},
-	"0.8.0": {
-		"headlineKey": "whatsNew.releases.v080.headline",
-		"descriptionKey": "whatsNew.releases.v080.description",
-		"highlights": [
-			{
-				"illustration": "share",
-				"titleKey": "whatsNew.releases.v080.shareTitle",
-				"descriptionKey": "whatsNew.releases.v080.shareDescription"
-			},
-			{
-				"illustration": "address",
-				"titleKey": "whatsNew.releases.v080.addressTitle",
-				"descriptionKey": "whatsNew.releases.v080.addressDescription"
-			}
-		]
-	},
-	"0.6.0": {
-		"headlineKey": "whatsNew.releases.v060.headline",
-		"descriptionKey": "whatsNew.releases.v060.description",
-		"highlights": [
-			{
-				"illustration": "unread",
-				"titleKey": "whatsNew.releases.v060.unreadTitle",
-				"descriptionKey": "whatsNew.releases.v060.unreadDescription"
-			},
-			{
-				"illustration": "calls",
-				"titleKey": "whatsNew.releases.v060.callsTitle",
-				"descriptionKey": "whatsNew.releases.v060.callsDescription"
 			}
 		]
 	}

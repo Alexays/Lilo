@@ -2231,6 +2231,14 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Każdy Space po twojemu.",
+				"description": "Szkło, ziarno i kolory, które podążają za stronami, tapetą lub porą dnia.",
+				"materialTitle": "Szkło, ziarno lub jednolity.",
+				"materialDescription": "Wybierz materiał każdego Space w podglądzie jego okna w Wyglądzie: Liquid Glass zabarwione jego kolorem lub drobne ziarno.",
+				"colorsTitle": "Kolory, które za tobą podążają.",
+				"colorsDescription": "Przyjmij kolor otwartej strony lub tapety albo pozwól, by twój kolor ocieplał się wieczorem."
+			},
 			"v0100": {
 				"headline": "Nowy start bez utraty czegokolwiek.",
 				"description": "Po przerwie Lilo otwiera się uporządkowane, a zarchiwizowane karty są o jedno kliknięcie.",
@@ -2238,32 +2246,6 @@
 				"freshDescription": "Po długiej przerwie Lilo otwiera się bez zaznaczonej karty, a przypięte karty wracają na swoją stronę główną. Karty zarchiwizowane w międzyczasie wrócą po kliknięciu Cofnij.",
 				"archiveTitle": "Zarchiwizowane karty o jedno kliknięcie.",
 				"archiveDescription": "Karty zarchiwizowane w ciągu ostatniego dnia czekają obok Nowej karty, gotowe do powrotu."
-			},
-			"v090": {
-				"headline": "Łatwo wrócić.",
-				"description": "Twoja historia, Twoje rozmowy i osiem nowych języków.",
-				"historyTitle": "Cała historia, dzień po dniu.",
-				"historyDescription": "Naciśnij ⌘Y: wizyty z każdego dnia pogrupowane według witryn, filtrowane według okresu, witryny lub terminala i łatwe do wyczyszczenia.",
-				"pipTitle": "Miej rozmowę na oku.",
-				"pipDescription": "Kompaktowy widok Google Meet podąża za Tobą w pływającym oknie, gdy opuszczasz kartę rozmowy.",
-				"languagesTitle": "Lilo mówi w Twoim języku.",
-				"languagesDescription": "Dochodzą niemiecki, japoński, włoski, koreański, chiński tradycyjny, polski, turecki i niderlandzki."
-			},
-			"v080": {
-				"headline": "Udostępniaj dokładnie to, co chcesz.",
-				"description": "Więcej przestrzeni dla rozmów i stron.",
-				"shareTitle": "Udostępnij właściwą kartę.",
-				"shareDescription": "Podglądy kart ułatwiają wybór, a panel rozmowy pozwala zmienić lub zatrzymać udostępnianie jednym kliknięciem. Możesz też udostępniać dźwięk z Maca.",
-				"addressTitle": "Więcej miejsca na stronę.",
-				"addressDescription": "Ukryj pasek adresu w Ustawienia > Wygląd. Pasek poleceń jest zawsze dostępny, więc nadal możesz przejść w dowolne miejsce."
-			},
-			"v060": {
-				"headline": "Bądź trochę bardziej na bieżąco.",
-				"description": "Kilka rzeczy, które umilą codzienne przeglądanie.",
-				"unreadTitle": "Zobacz, co Cię ominęło.",
-				"unreadDescription": "Liczby nieprzeczytanych wiadomości i kropki powiadomień są teraz widoczne bezpośrednio na kartach i ulubionych.",
-				"callsTitle": "Pozostań w rozmowie.",
-				"callsDescription": "Rozmowy działają płynnie mimo krótkiego zawieszenia strony, a blokada usypiania pozwala je kontynuować."
 			}
 		}
 	},

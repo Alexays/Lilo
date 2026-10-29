@@ -2209,6 +2209,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Elke Space helemaal van jou.",
+				"description": "Glas, korrel en kleuren die je sites, je achtergrond of het tijdstip volgen.",
+				"materialTitle": "Glas, korrel of effen.",
+				"materialDescription": "Kies het materiaal van elke Space in de venstervoorvertoning onder Weergave: Liquid Glass in zijn kleur, of een fijne filmkorrel.",
+				"colorsTitle": "Kleuren die je volgen.",
+				"colorsDescription": "Neem de kleur van de geopende site of van je achtergrond, of laat je kleur 's avonds warmer worden."
+			},
 			"v0100": {
 				"headline": "Opnieuw beginnen, niets kwijt.",
 				"description": "Na een pauze opent Lilo opgeruimd, en gearchiveerde tabbladen zijn één klik weg.",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "Na een lange pauze opent Lilo zonder geselecteerd tabblad, met vastgezette tabbladen terug op hun startpagina. De tabbladen die intussen zijn gearchiveerd komen terug met Herstel.",
 				"archiveTitle": "Gearchiveerde tabbladen, één klik weg.",
 				"archiveDescription": "De tabbladen die de afgelopen dag zijn gearchiveerd wachten naast Nieuw tabblad, klaar om terug te komen."
-			},
-			"v090": {
-				"headline": "Vind je weg terug.",
-				"description": "Je geschiedenis, je gesprekken en acht nieuwe talen.",
-				"historyTitle": "Je hele geschiedenis, dag voor dag.",
-				"historyDescription": "Druk op ⌘Y: de bezoeken van elke dag gegroepeerd per site, te filteren op periode, site of terminal en snel op te ruimen.",
-				"pipTitle": "Houd je gesprek in beeld.",
-				"pipDescription": "De compacte weergave van Google Meet volgt je in een zwevend venster als je het tabblad van het gesprek verlaat.",
-				"languagesTitle": "Lilo spreekt jouw taal.",
-				"languagesDescription": "Duits, Japans, Italiaans, Koreaans, traditioneel Chinees, Pools, Turks en Nederlands komen erbij."
-			},
-			"v080": {
-				"headline": "Deel precies wat je wilt.",
-				"description": "Meer ruimte voor gesprekken en pagina’s.",
-				"shareTitle": "Deel het juiste tabblad.",
-				"shareDescription": "Tabbladvoorbeelden helpen je kiezen. Met de gesprekskaart wissel of stop je het delen met één klik. Je kunt ook het geluid van je Mac delen.",
-				"addressTitle": "Meer ruimte voor de pagina.",
-				"addressDescription": "Verberg de adresbalk via Instellingen > Weergave. Met de opdrachtbalk kun je altijd naar een andere plek gaan."
-			},
-			"v060": {
-				"headline": "Net iets beter op de hoogte.",
-				"description": "Een paar dingen die dagelijks surfen prettiger maken.",
-				"unreadTitle": "Bekijk wat je hebt gemist.",
-				"unreadDescription": "Aantallen ongelezen berichten en meldingsstippen staan nu direct op je tabbladen en favorieten.",
-				"callsTitle": "Blijf in gesprek.",
-				"callsDescription": "Gesprekken blijven soepel bij een kort vastgelopen pagina en gaan door met Blijf wakker."
 			}
 		}
 	},

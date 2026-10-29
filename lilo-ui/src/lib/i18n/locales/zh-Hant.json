@@ -2209,6 +2209,14 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "每個 Space 都有自己的風格。",
+				"description": "玻璃、顆粒，以及隨網站、背景圖片或時間變化的顏色。",
+				"materialTitle": "玻璃、顆粒或純色。",
+				"materialDescription": "在「外觀」的視窗預覽中為每個 Space 選擇材質：以其顏色著色的 Liquid Glass，或細膩的底片顆粒。",
+				"colorsTitle": "隨你而變的顏色。",
+				"colorsDescription": "採用目前網站或背景圖片的顏色，或讓你的顏色在傍晚變暖。"
+			},
 			"v0100": {
 				"headline": "重新開始，不遺失任何內容。",
 				"description": "離開一段時間後，Lilo 以整潔的視窗開啟，已封存的分頁一鍵即可找回。",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "離開很久之後，Lilo 開啟時不選取任何分頁，固定的分頁回到各自的首頁。期間封存的分頁可以透過「還原」找回。",
 				"archiveTitle": "已封存的分頁，一鍵找回。",
 				"archiveDescription": "過去一天內封存的分頁就在「新增分頁」旁邊，隨時可以找回。"
-			},
-			"v090": {
-				"headline": "輕鬆找回來時路。",
-				"description": "瀏覽記錄、通話，以及八種新語言。",
-				"historyTitle": "完整的瀏覽記錄，按天瀏覽。",
-				"historyDescription": "按下 ⌘Y：每天的造訪依網站分組，可依期間、網站或終端機篩選，整理也很方便。",
-				"pipTitle": "通話一直在眼前。",
-				"pipDescription": "離開通話分頁時，Google Meet 的精簡檢視會以浮動視窗跟著你。",
-				"languagesTitle": "Lilo 說你的語言。",
-				"languagesDescription": "新增德文、日文、義大利文、韓文、繁體中文、波蘭文、土耳其文和荷蘭文。"
-			},
-			"v080": {
-				"headline": "只分享你想分享的內容。",
-				"description": "讓通話和網頁都有更多空間。",
-				"shareTitle": "分享正確的分頁。",
-				"shareDescription": "分頁預覽讓你更容易選擇。透過通話卡片，按一下即可切換或停止分享，也能分享 Mac 的聲音。",
-				"addressTitle": "讓網頁有更多空間。",
-				"addressDescription": "在「設定 > 外觀」中隱藏網址列。指令列隨時可用，讓你前往任何地方。"
-			},
-			"v060": {
-				"headline": "隨時掌握多一點。",
-				"description": "讓日常瀏覽更順手的幾項改進。",
-				"unreadTitle": "補上錯過的消息。",
-				"unreadDescription": "未讀數量與通知圓點現已直接顯示在分頁和喜好項目上。",
-				"callsTitle": "讓對話繼續。",
-				"callsDescription": "網頁短暫凍結時，通話仍保持順暢；開啟「保持喚醒」後也能持續進行。"
 			}
 		}
 	},

@@ -72,6 +72,21 @@
     <g fill="var(--text-secondary)" opacity="0.45"><circle cx="34" cy="43" r="3.5" /><rect x="41" y="41" width="34" height="4" rx="2" /><circle cx="34" cy="57" r="3.5" /><rect x="41" y="55" width="28" height="4" rx="2" /></g>
     <rect x="80" y="37" width="20" height="12" rx="6" fill="var(--success)" />
     <path d="M94 43h-8m3-3-3 3 3 3" fill="none" stroke="var(--bg-elevated)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+  {:else if kind === "material"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="12" y="20" width="30" height="50" rx="6" fill="var(--accent)" />
+    <rect x="49" y="20" width="30" height="50" rx="6" fill="color-mix(in srgb, var(--accent) 30%, var(--bg-elevated))" stroke="var(--bg-elevated)" stroke-width="1.5" />
+    <path d="M53 25q8-3 16 0" fill="none" stroke="var(--bg-elevated)" stroke-width="1.5" stroke-linecap="round" />
+    <rect x="86" y="20" width="30" height="50" rx="6" fill="color-mix(in srgb, var(--accent) 70%, var(--bg-elevated))" />
+    <g fill="var(--text-secondary)" opacity="0.35"><circle cx="92" cy="28" r="0.9" /><circle cx="101" cy="33" r="0.9" /><circle cx="109" cy="27" r="0.9" /><circle cx="95" cy="42" r="0.9" /><circle cx="106" cy="46" r="0.9" /><circle cx="91" cy="55" r="0.9" /><circle cx="102" cy="58" r="0.9" /><circle cx="110" cy="63" r="0.9" /><circle cx="97" cy="65" r="0.9" /></g>
+  {:else if kind === "colors"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--warning) 12%, var(--bg-elevated))" />
+    <rect x="12" y="14" width="104" height="62" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="18" y="20" width="28" height="50" rx="4" fill="color-mix(in srgb, var(--danger) 30%, var(--bg-elevated))" />
+    <rect x="52" y="20" width="58" height="10" rx="3" fill="var(--danger)" /><rect x="56" y="23" width="4" height="4" rx="1" fill="var(--bg-elevated)" />
+    <g stroke="var(--separator)" stroke-width="3" stroke-linecap="round"><path d="M56 40h40m-40 8h48" /></g>
+    <g fill="none" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round"><circle cx="64" cy="62" r="3" /><path d="M64 56v1.5m0 9v1.5m-6-6h1.5m9 0h1.5" /><path d="M74 62h8m-2-2 2 2-2 2" /></g>
+    <path d="M94 59a4 4 0 1 1-4.5 6a4 4 0 0 0 4.5-6z" fill="var(--text-secondary)" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

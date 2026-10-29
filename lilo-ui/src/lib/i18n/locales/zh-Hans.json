@@ -2209,6 +2209,14 @@
 			"chat": "团队聊天"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "每个 Space 都有自己的风格。",
+				"description": "玻璃、颗粒，以及随网站、墙纸或时间变化的颜色。",
+				"materialTitle": "玻璃、颗粒或纯色。",
+				"materialDescription": "在“外观”的窗口预览中为每个 Space 选择材质：以其颜色着色的 Liquid Glass，或细腻的胶片颗粒。",
+				"colorsTitle": "随你而变的颜色。",
+				"colorsDescription": "采用当前网站或墙纸的颜色，或让你的颜色在傍晚变暖。"
+			},
 			"v0100": {
 				"headline": "重新开始，不丢失任何内容。",
 				"description": "离开一段时间后，Lilo 以整洁的窗口打开，已归档的标签页一键即可找回。",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "离开很久之后，Lilo 打开时不选中任何标签页，固定的标签页回到各自的主页。期间归档的标签页可以通过“撤销”找回。",
 				"archiveTitle": "已归档的标签页，一键找回。",
 				"archiveDescription": "过去一天内归档的标签页就在“新建标签页”旁边，随时可以找回。"
-			},
-			"v090": {
-				"headline": "轻松找回来时的路。",
-				"description": "历史记录、通话，以及八种新语言。",
-				"historyTitle": "完整的历史记录，按天浏览。",
-				"historyDescription": "按 ⌘Y：每天的访问按网站分组，可按时间段、网站或终端筛选，清理也很方便。",
-				"pipTitle": "通话始终在眼前。",
-				"pipDescription": "离开通话标签页时，Google Meet 的紧凑视图会以浮动窗口跟随你。",
-				"languagesTitle": "Lilo 说你的语言。",
-				"languagesDescription": "新增德语、日语、意大利语、韩语、繁体中文、波兰语、土耳其语和荷兰语。"
-			},
-			"v080": {
-				"headline": "只共享你想共享的内容。",
-				"description": "通话和网页都多了一点空间。",
-				"shareTitle": "共享正确的标签页。",
-				"shareDescription": "标签页预览帮你快速挑选，通话卡片一键即可切换或停止共享。还能同时共享 Mac 播放的声音。",
-				"addressTitle": "给网页更多空间。",
-				"addressDescription": "在设置 > 外观中隐藏地址栏。命令栏随时可用，想去哪里都行。"
-			},
-			"v060": {
-				"headline": "随时掌握新消息。",
-				"description": "一些小改进，让日常浏览更舒心。",
-				"unreadTitle": "看看错过了什么。",
-				"unreadDescription": "标签页和收藏项现在会直接显示未读数量和通知圆点。",
-				"callsTitle": "保持畅聊。",
-				"callsDescription": "页面短暂卡顿时，通话依然流畅；开启保持唤醒后，通话也能继续进行。"
 			}
 		}
 	},

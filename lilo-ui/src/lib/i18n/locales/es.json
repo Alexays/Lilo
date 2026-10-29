@@ -2209,6 +2209,14 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Cada Space, a tu manera.",
+				"description": "Cristal, grano y colores que siguen tus sitios, tu fondo o la hora del día.",
+				"materialTitle": "Cristal, grano o sólido.",
+				"materialDescription": "Elige el material de cada Space en la vista previa de su ventana, en Apariencia: Liquid Glass teñido de su color o un grano fino.",
+				"colorsTitle": "Colores que te siguen.",
+				"colorsDescription": "Toma el color del sitio abierto o de tu fondo, o deja que tu color se vuelva más cálido al atardecer."
+			},
 			"v0100": {
 				"headline": "Empieza de nuevo sin perder nada.",
 				"description": "Lilo se abre limpio tras una pausa, y las pestañas archivadas están a un clic.",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "Tras una pausa larga, Lilo se abre sin pestaña seleccionada y con las pestañas fijadas de vuelta en su inicio. Las pestañas archivadas mientras tanto vuelven con Deshacer.",
 				"archiveTitle": "Pestañas archivadas, a un clic.",
 				"archiveDescription": "Las pestañas archivadas en el último día esperan junto a Nueva pestaña, listas para volver."
-			},
-			"v090": {
-				"headline": "Encuentra el camino de vuelta.",
-				"description": "Tu historial, tus llamadas y ocho idiomas nuevos.",
-				"historyTitle": "Todo tu historial, día a día.",
-				"historyDescription": "Pulsa ⌘Y: las visitas de cada día agrupadas por sitio, filtradas por periodo, sitio o terminal, y fáciles de limpiar.",
-				"pipTitle": "Mantén tu llamada a la vista.",
-				"pipDescription": "La vista compacta de Google Meet te sigue en una ventana flotante cuando sales de la pestaña de la llamada.",
-				"languagesTitle": "Lilo habla tu idioma.",
-				"languagesDescription": "Alemán, japonés, italiano, coreano, chino tradicional, polaco, turco y neerlandés se suman a la lista."
-			},
-			"v080": {
-				"headline": "Comparte justo lo que quieres.",
-				"description": "Tus llamadas y tus páginas ganan algo de espacio.",
-				"shareTitle": "Comparte la pestaña correcta.",
-				"shareDescription": "Las vistas previas te ayudan a elegir, y la tarjeta de la llamada cambia o detiene lo que compartes con un clic. Comparte también el sonido de tu Mac.",
-				"addressTitle": "Más espacio para la página.",
-				"addressDescription": "Oculta la barra de direcciones en Ajustes > Aspecto. La barra de comandos sigue ahí para ir a cualquier sitio."
-			},
-			"v060": {
-				"headline": "Un poco más al día.",
-				"description": "Pequeños detalles para que navegar cada día sea más agradable.",
-				"unreadTitle": "Ponte al día con lo que te perdiste.",
-				"unreadDescription": "Los contadores de mensajes sin leer y los puntos de notificación aparecen ahora en tus pestañas y favoritos.",
-				"callsTitle": "Sigue la conversación.",
-				"callsDescription": "Las llamadas siguen fluidas si una página se bloquea brevemente y continúan con la función para mantener Lilo activo."
 			}
 		}
 	},

@@ -2209,6 +2209,14 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Her Space size göre.",
+				"description": "Cam, gren ve sitelerinizi, duvar kâğıdınızı ya da günün saatini takip eden renkler.",
+				"materialTitle": "Cam, gren ya da düz.",
+				"materialDescription": "Her Space'in malzemesini Görünüm'deki pencere önizlemesinde seçin: rengine boyanmış Liquid Glass ya da ince bir film greni.",
+				"colorsTitle": "Sizi takip eden renkler.",
+				"colorsDescription": "Açık sitenin ya da duvar kâğıdınızın rengini alın veya renginizin akşam ısınmasına izin verin."
+			},
 			"v0100": {
 				"headline": "Temiz bir başlangıç, hiçbir şey kaybolmadan.",
 				"description": "Lilo bir aradan sonra düzenli açılır, arşivlenen sekmeler de bir tık uzakta.",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "Uzun bir aradan sonra Lilo hiçbir sekme seçili olmadan açılır, sabitlenmiş sekmeler ana sayfalarına döner. Bu arada arşivlenen sekmeler Geri Al ile geri gelir.",
 				"archiveTitle": "Arşivlenen sekmeler bir tık uzakta.",
 				"archiveDescription": "Son bir günde arşivlenen sekmeler Yeni Sekme'nin yanında bekler, geri gelmeye hazırdır."
-			},
-			"v090": {
-				"headline": "Geri dönmek artık kolay.",
-				"description": "Geçmişiniz, görüşmeleriniz ve sekiz yeni dil.",
-				"historyTitle": "Tüm geçmişiniz, gün gün.",
-				"historyDescription": "⌘Y'ye basın: her günün ziyaretleri siteye göre gruplanır; döneme, siteye veya terminale göre süzülür ve kolayca temizlenir.",
-				"pipTitle": "Görüşmeniz hep göz önünde.",
-				"pipDescription": "Görüşme sekmesinden ayrıldığınızda Google Meet'in kompakt görünümü yüzen bir pencerede sizi izler.",
-				"languagesTitle": "Lilo sizin dilinizi konuşuyor.",
-				"languagesDescription": "Almanca, Japonca, İtalyanca, Korece, Geleneksel Çince, Lehçe, Türkçe ve Felemenkçe listeye katıldı."
-			},
-			"v080": {
-				"headline": "Tam istediğinizi paylaşın.",
-				"description": "Aramalar ve sayfalar için biraz daha geniş alan.",
-				"shareTitle": "Doğru sekmeyi paylaşın.",
-				"shareDescription": "Sekme önizlemeleri seçim yapmanıza yardımcı olur. Arama kartından tek tıklamayla paylaşılan sekmeyi değiştirebilir veya paylaşımı durdurabilirsiniz. Mac’inizin sesini de paylaşabilirsiniz.",
-				"addressTitle": "Sayfa için daha fazla alan.",
-				"addressDescription": "Ayarlar > Görünüm bölümünden adres çubuğunu gizleyin. İstediğiniz yere gitmek için komut çubuğu her zaman kullanılabilir."
-			},
-			"v060": {
-				"headline": "Gelişmelerden biraz daha haberdar olun.",
-				"description": "Günlük gezintinizi daha keyifli kılacak birkaç yenilik.",
-				"unreadTitle": "Kaçırdıklarınızı yakalayın.",
-				"unreadDescription": "Okunmamış sayıları ve bildirim noktaları artık doğrudan sekmelerinizde ve favorilerinizde.",
-				"callsTitle": "Sohbette kalın.",
-				"callsDescription": "Sayfa kısa süre donsa da aramalar akıcı kalır ve Uyanık Tut ile kesilmeden sürer."
 			}
 		}
 	},

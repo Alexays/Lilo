@@ -2209,6 +2209,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0110": {
+				"headline": "Ogni Space a modo tuo.",
+				"description": "Vetro, grana e colori che seguono i tuoi siti, il tuo sfondo o l'ora del giorno.",
+				"materialTitle": "Vetro, grana o pieno.",
+				"materialDescription": "Scegli il materiale di ogni Space nell'anteprima della sua finestra, in Aspetto: Liquid Glass tinto del suo colore o una grana fine.",
+				"colorsTitle": "Colori che ti seguono.",
+				"colorsDescription": "Prendi il colore del sito aperto o del tuo sfondo, o lascia che il tuo colore si scaldi la sera."
+			},
 			"v0100": {
 				"headline": "Ricomincia senza perdere nulla.",
 				"description": "Dopo una pausa Lilo si apre in ordine, e le schede archiviate sono a un clic.",
@@ -2216,32 +2224,6 @@
 				"freshDescription": "Dopo una lunga pausa Lilo si apre senza schede selezionate, con le schede fissate tornate alla loro pagina iniziale. Le schede archiviate nel frattempo tornano con Annulla.",
 				"archiveTitle": "Schede archiviate, a un clic.",
 				"archiveDescription": "Le schede archiviate nell'ultimo giorno aspettano accanto a Nuova scheda, pronte a tornare."
-			},
-			"v090": {
-				"headline": "Ritrova la strada.",
-				"description": "La tua cronologia, le tue chiamate e otto nuove lingue.",
-				"historyTitle": "Tutta la tua cronologia, giorno per giorno.",
-				"historyDescription": "Premi ⌘Y: le visite di ogni giorno raggruppate per sito, filtrate per periodo, sito o terminale, e facili da ripulire.",
-				"pipTitle": "Tieni d'occhio la chiamata.",
-				"pipDescription": "La vista compatta di Google Meet ti segue in una finestra mobile quando lasci il pannello della chiamata.",
-				"languagesTitle": "Lilo parla la tua lingua.",
-				"languagesDescription": "Tedesco, giapponese, italiano, coreano, cinese tradizionale, polacco, turco e olandese si aggiungono alla lista."
-			},
-			"v080": {
-				"headline": "Condividi esattamente ciò che vuoi.",
-				"description": "Più spazio per le chiamate e le pagine.",
-				"shareTitle": "Condividi la scheda giusta.",
-				"shareDescription": "Le anteprime delle schede ti aiutano a scegliere. Dalla scheda della chiamata puoi cambiare o interrompere la condivisione con un clic. Puoi condividere anche l’audio del Mac.",
-				"addressTitle": "Più spazio per la pagina.",
-				"addressDescription": "Nascondi la barra degli indirizzi in Impostazioni > Aspetto. La barra dei comandi è sempre disponibile per raggiungere qualsiasi destinazione."
-			},
-			"v060": {
-				"headline": "Sempre un po' più aggiornato.",
-				"description": "Alcune novità per rendere più piacevole la navigazione quotidiana.",
-				"unreadTitle": "Recupera ciò che ti sei perso.",
-				"unreadDescription": "Il conteggio dei messaggi da leggere e i puntini di notifica appaiono ora direttamente sulle schede e sui preferiti.",
-				"callsTitle": "Resta nella conversazione.",
-				"callsDescription": "Le chiamate proseguono senza interruzioni durante brevi blocchi delle pagine e continuano con Mantieni attivo."
 			}
 		}
 	},
