@@ -9,6 +9,13 @@ on:
       - 'LiloTests/Support/ReleaseWindowRecorder.swift'
       - 'site/captures/remotion/**'
       - 'site/package*.json'
+      - 'site/src/assets/releases/**'
+      - 'site/src/components/ReleaseMedia.astro'
+      - 'site/src/media-worker.ts'
+      - 'site/wrangler.toml'
+      - 'site/tests/changelog.spec.ts'
+      - 'lilo-ui/src/components/whatsnew/**'
+      - 'Lilo/Window/MainWindowController+Setup.swift'
       - 'Makefile'
   workflow_dispatch:
 
@@ -34,12 +41,17 @@ jobs:
           path: .derived.noindex/xcode
           key: native-media-${{ runner.os }}-${{ github.sha }}
           restore-keys: deriveddata-debug-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
-      - name: Capture the real isolated native window
-        run: make release-media-record SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testNativeMediaSmoke OUT=build/native-media-proof
-      - name: Render the genuine archived 0.8.0 presentation
-        run: make release-motion-render release-motion-check OUT=build/native-media-proof/presentation-0.8.0
+      - name: Capture fresh native 0.8.0 feature states and footage
+        run: make release-motion-capture release-motion-import
+      - name: Render the fresh high-resolution presentation with sound
+        run: make release-motion-render release-motion-check
       - name: Check shared presentation contracts
         run: make release-motion-test
+      - name: Verify website MP4 controls and byte ranges in Chromium and WebKit
+        run: |
+          make site-browser-deps
+          make site-e2e SITE_E2E_ARGS='--config=playwright.changelog.config.ts'
+          make site-e2e SITE_E2E_ARGS='--config=playwright.changelog.config.ts --browser=webkit'
       - name: Capture the actual native What's New presentation
         run: make release-motion-native-review
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -47,6 +59,11 @@ jobs:
         with:
           name: native-lilo-media-proof
           path: |
-            build/native-media-proof/
+            build/release-motion-capture/**/*.json
+            site/captures/remotion/source-0.8.0/
             build/release-review/0.8.0/
+            site/src/assets/releases/0.8.0/*-remotion.*
+            site/src/assets/releases/0.8.0/presentation.json
+            site/src/assets/releases/0.8.0/remotion-source.json
+            site/test-results/
           if-no-files-found: warn

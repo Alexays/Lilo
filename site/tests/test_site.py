@@ -218,17 +218,20 @@ class SiteTests(unittest.TestCase):
                 recording = [node for node in parsed if "release-recording" in node.classes]
                 self.assertGreaterEqual(len(recording), 2)
                 for player in recording:
+                    if player.attrs.get("data-video"):
+                        video = next(node for node in nodes(player) if node.tag == "video")
+                        self.assertTrue(video.attrs["src"].endswith(".mp4"))
+                        self.assertTrue((DIST / video.attrs["src"].lstrip("/")).is_file())
+                        self.assertIn("controls", video.attrs)
+                        self.assertIn("muted", video.attrs)
+                        self.assertIn("playsinline", video.attrs)
+                        self.assertEqual(video.attrs["preload"], "none")
+                        continue
                     button = next(node for node in nodes(player) if node.tag == "button")
                     self.assertEqual(button.attrs.get("aria-pressed"), "false")
                     self.assertTrue(button.attrs.get("aria-label"))
                     self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
                     self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
-                    if player.attrs.get("data-video"):
-                        video = next(node for node in nodes(player) if node.tag == "video")
-                        self.assertTrue(video.attrs["data-src"].endswith(".mp4"))
-                        self.assertTrue((DIST / video.attrs["data-src"].lstrip("/")).is_file())
-                        self.assertEqual(video.attrs["preload"], "none")
-                        continue
                     for image in (node for node in nodes(player) if node.tag == "img"):
                         animation = image.attrs.get("data-recording", "")
                         self.assertTrue(animation.endswith(".webp"))

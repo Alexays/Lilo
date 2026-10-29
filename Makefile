@@ -533,9 +533,23 @@ site-test: site-generate
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
 
+.PHONY: site-browser-deps
+## Install the pinned Chromium and WebKit browsers for website media checks
+site-browser-deps: $(SITE_DEPS)
+	@cd site && npm exec playwright install chromium webkit
+
 .PHONY: release-media-publish-check ui-capture-build release-media-record release-media-test release-media-encode release-media-check release-media-proof
 
-.PHONY: release-motion-deps release-motion-test release-motion-assets release-motion-studio release-motion-render release-motion-check release-motion-review
+.PHONY: release-motion-deps release-motion-test release-motion-assets release-motion-studio release-motion-render release-motion-check release-motion-review release-motion-capture release-motion-import
+
+## Capture fresh native footage and 4x native UI states for the 0.8.0 media proof
+release-motion-capture:
+	@$(MAKE) --no-print-directory release-media-record SCENARIO=site/src/assets/releases/0.8.0/share-system-audio-scenario.json SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testRemotion080HighResolution OUT=build/release-motion-capture
+	@$(MAKE) --no-print-directory release-media-record SCENARIO=site/src/assets/releases/0.8.0/tab-sharing-controls-scenario.json SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testRemotion080HighResolution OUT=build/release-motion-capture
+
+## Import fresh verified native states and preserve a high-quality source MP4
+release-motion-import: $(SITE_DEPS)
+	@node site/captures/remotion/import-capture.ts
 
 ## Install pinned build-only Remotion tools
 release-motion-deps:
@@ -546,7 +560,7 @@ release-motion-deps:
 release-motion-test: $(SITE_DEPS)
 	@node --test site/tests/release-presentation.test.ts
 
-## Prepare genuine archived 0.8.0 native frames for the Remotion proof
+## Prepare verified fresh high-resolution native sources for the Remotion proof
 release-motion-assets: $(SITE_DEPS)
 	@node site/captures/remotion/prepare.ts
 

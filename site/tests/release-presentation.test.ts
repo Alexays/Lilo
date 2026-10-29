@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   copyFileSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -16,6 +17,51 @@ import {
 } from "../captures/remotion/presentation.ts";
 
 const directory = new URL("../src/assets/releases/0.8.0/", import.meta.url);
+
+test("native footage records and respects its real capture density", () => {
+  const source = JSON.parse(
+    readFileSync(new URL("remotion-source.json", directory), "utf-8")
+  );
+
+  assert.ok(Number.isFinite(source.footage.nativePixelScale));
+  assert.ok(source.footage.maxContentScale <= 1.001);
+  assert.ok(
+    source.footage.width <=
+      source.footage.logicalWidth * source.footage.nativePixelScale
+  );
+});
+
+test("the revised proof has fresh high-resolution native sources", () => {
+  assert.ok(
+    existsSync(new URL("remotion-source.json", directory)),
+    "Fresh native sources must replace the enlarged archive"
+  );
+
+  const source = JSON.parse(
+    readFileSync(new URL("remotion-source.json", directory), "utf-8")
+  );
+
+  assert.equal(source.release, "0.8.0");
+  assert.equal(source.source, "native");
+  assert.ok(
+    source.captures.every(
+      (capture: {
+        width: number;
+        height: number;
+        logicalWidth: number;
+        logicalHeight: number;
+      }) =>
+        capture.width >= capture.logicalWidth * 4 &&
+        capture.height >= capture.logicalHeight * 4
+    )
+  );
+  assert.ok(
+    source.captures.every(
+      (capture: { capturedAt: string }) =>
+        Date.parse(capture.capturedAt) >= Date.parse("2026-10-29T00:00:00Z")
+    )
+  );
+});
 
 test("0.8.0 uses a native still for audio and a native hybrid movie for tab sharing", () => {
   const presentation = checkPresentation(directory);
@@ -60,6 +106,15 @@ test("missing, altered or different-release source and output block validation",
       path.join(temporary, "capture.json"),
       readFileSync(new URL("capture.json", directory))
     );
+
+    for (const name of [
+      "remotion-source.json",
+      "share-system-audio-scenario.json",
+      "tab-sharing-controls-scenario.json",
+    ]) {
+      copyFileSync(new URL(name, directory), path.join(temporary, name));
+    }
+
     assert.throws(
       () => checkPresentation(temporary),
       /missing presentation asset/iu

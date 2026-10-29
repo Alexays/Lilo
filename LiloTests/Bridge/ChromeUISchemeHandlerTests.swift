@@ -144,6 +144,8 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
                 let file = try XCTUnwrap(Bundle.main.url(forResource: (path as NSString).lastPathComponent, withExtension: nil, subdirectory: "release-media"))
                 let playable = try await AVURLAsset(url: file).load(.isPlayable)
                 XCTAssertTrue(playable, "Native AVFoundation must decode the MP4")
+                let audio = try await AVURLAsset(url: file).loadTracks(withMediaType: .audio)
+                XCTAssertEqual(audio.count, 1, "The offline movie must include its sound track")
             } else if path.hasSuffix(".png") {
                 XCTAssertEqual(task.response?.mimeType, "image/png")
                 XCTAssertEqual(task.data.prefix(4), Data([0x89, 0x50, 0x4E, 0x47]))

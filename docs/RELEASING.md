@@ -52,19 +52,30 @@ preparation and packaging. Approved prior media stays intact until a complete re
 Commit `site/src/assets/releases/<version>/` with the generated versions and notes. Normal website
 builds and `make validate` never record or invoke a model. See [the native media guide](../site/README.md#automated-native-proof).
 
-The Remotion replacement is being reviewed first on 0.8.0. Its native tab-sharing MP4 and
-system-audio still share `presentation.json` across the website and app; the original native
-archive stays intact. Run `make release-motion-render release-motion-check` to reproduce it,
-`make release-motion-native-check` for offline WebKit playback, and
-`make release-motion-native-preview` for a disposable Debug review. Studio is available with
-`make release-motion-studio`. `make release-motion-native-review` captures both cards from the
-real native sheet and verifies playback; CI uploads those consumer previews with the rendered media.
-These preview commands select 0.8.0 notes without changing the
-app's version. The presentation remains unapproved during feedback and blocks publication.
-The unprivileged `Native release media proof` CI workflow captures a real isolated Lilo window
-and renders the archived 0.8.0 proof. Broader automatic release authoring remains behind its
-existing gate until this visual treatment is accepted. Follow the repository's
-[release-media skill](../.agents/skills/lilo-release-media/SKILL.md) for medium selection and motion direction.
+The Remotion replacement is being reviewed first on 0.8.0. Its tab-sharing MP4 and
+system-audio still share `presentation.json` across the website and app. The original native
+0.8.0 archive stays intact. Fresh captures use the real current Lilo binary to demonstrate
+those features; `remotion-source.json` records its actual version/build separately from the
+release story. The source includes 4x native chrome snapshots and continuous native window
+footage with measured pixel density. Crops cannot enlarge their source pixels.
+
+Run `make release-motion-capture release-motion-import` for fresh capture, followed by
+`make release-motion-render release-motion-check`. Output is a 1600×1000 H.264/AAC movie,
+poster and lossless still. The soundtrack is original editorial sound design, not recorded
+personal/system audio or claimed product sounds. The checker verifies stereo audio and
+rejects silence or clipping. Both consumers expose platform MP4 controls for playback,
+seeking, sound and fullscreen; autoplay stays muted. The website's small MP4-only Worker
+serves byte ranges so browser seeking works with Cloudflare static assets.
+
+Use `make release-motion-native-check` for offline WebKit playback and audio decoding,
+`make release-motion-native-preview` for a disposable Debug review, and
+`make release-motion-native-review` for actual consumer screenshots and fullscreen capability.
+Studio is available with `make release-motion-studio`. Preview commands select 0.8.0 notes
+without changing the app's version. The presentation remains unapproved during feedback and
+blocks publication and packaging. The unprivileged `Native release media proof` CI workflow
+freshly captures, imports, renders, checks sound and captures the real native sheet. Broader
+automatic release authoring remains behind its existing gate until this visual treatment is
+accepted. Follow the [release-media skill](../.agents/skills/lilo-release-media/SKILL.md).
 
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.

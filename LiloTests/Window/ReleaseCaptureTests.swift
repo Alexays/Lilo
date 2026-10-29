@@ -132,17 +132,19 @@ final class ReleaseCaptureTests: XCTestCase {
     func testWhatsNewMediaPreview() async throws {
         guard ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW"] == "0.8.0" else { throw XCTSkip("Use make release-motion-native-review") }
         let chrome = controller.chromeWebView
+        let fullscreen = try await chrome.evaluateJavaScript("document.fullscreenEnabled") as? Bool
+        XCTAssertEqual(fullscreen, true, "The native MP4 player must support fullscreen")
         let ready = await pollUntil(timeout: 10) { self.controller.whatsNewUIReady }
         XCTAssertTrue(ready, "The production What's New host must finish its native handshake")
         controller.showWhatsNew(nil)
         let visible = await pollUntil(timeout: 10) { (try? await chrome.evaluateJavaScript("!!document.querySelector('dialog.whats-new[open]')")) as? Bool == true }
         XCTAssertTrue(visible, "The native release sheet must open, key=\(controller.window?.isKeyWindow == true), ready=\(controller.whatsNewUIReady), requested=\(controller.whatsNewRequested)")
         guard visible else { return }
-        let still = await pollUntil(timeout: 5) { (try? await chrome.evaluateJavaScript("document.querySelector('.whats-new .release-image img')?.naturalWidth === 1280 && !document.querySelector('.whats-new .release-image button')")) as? Bool == true }
+        let still = await pollUntil(timeout: 5) { (try? await chrome.evaluateJavaScript("document.querySelector('.whats-new .release-image img')?.naturalWidth === 1600 && !document.querySelector('.whats-new .release-image button')")) as? Bool == true }
         XCTAssertTrue(still, "The screenshot must load without playback controls")
         try await saveChromePreview("whats-new-remotion-audio.png")
         _ = try await chrome.evaluateJavaScript("document.querySelector('.whats-new .release-recording').scrollIntoView({block:'center'}); document.querySelector('.whats-new .release-recording button').click()")
-        let playing = await pollUntil(timeout: 10) { (try? await chrome.evaluateJavaScript("(() => { const v = document.querySelector('.whats-new video'); return !!v && v.videoWidth === 1280 && v.currentTime > 0.1; })()")) as? Bool == true }
+        let playing = await pollUntil(timeout: 10) { (try? await chrome.evaluateJavaScript("(() => { const v = document.querySelector('.whats-new video'); return !!v && v.videoWidth === 1600 && v.controls && v.currentTime > 0.1; })()")) as? Bool == true }
         XCTAssertTrue(playing, "The native sheet must play its real MP4")
         guard playing else { return }
         _ = try await chrome.evaluateJavaScript("document.querySelector('.whats-new video').currentTime = 9.4")
@@ -166,13 +168,27 @@ final class ReleaseCaptureTests: XCTestCase {
     }
 
     func testAuthoredScenario() async throws {
+        try await recordAuthoredScenario(highResolution: false)
+    }
+
+    func testRemotion080HighResolution() async throws {
+        try await recordAuthoredScenario(highResolution: true)
+    }
+
+    private func recordAuthoredScenario(highResolution: Bool) async throws {
         guard let scenario = authoredScenario else { throw XCTSkip("Use SCENARIO=file.json") }
         guard scenario.id.range(of: "^[a-z][a-z0-9-]{0,47}$", options: .regularExpression) != nil else { throw CocoaError(.fileReadCorruptFile) }
         var tabs: [String: UUID] = [:]
         do {
             for tab in scenario.tabs { tabs[tab.id] = try await open(tab.page).id }
-            try await begin(scenario.id, scenarioDigest: authoredDigest)
-            for step in scenario.steps { try await perform(step, tabs: tabs) }
+            try await begin(scenario.id, scenarioDigest: authoredDigest, pixelScale: highResolution ? 2 : 1)
+            for step in scenario.steps {
+                try await perform(step, tabs: tabs)
+                if highResolution, step.type == "assert", let name = step.id,
+                   ["audio-ready", "picker-open", "search-finds-brief", "call-card-names-brief", "share-shown-tab-available", "share-switched-to-agenda", "agenda-sharing-preview"].contains(name) {
+                    try await saveMotionState(name, scenario: scenario.id)
+                }
+            }
             try await recorder.finish(scenario: scenario.id)
         } catch {
             var diagnostic: [String: Any] = ["error": error.localizedDescription, "menus": menuActions(NSApp.mainMenu)]
@@ -185,6 +201,32 @@ final class ReleaseCaptureTests: XCTestCase {
             try JSONSerialization.data(withJSONObject: diagnostic, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("diagnostics.json"))
             throw error
         }
+    }
+
+    private func saveMotionState(_ name: String, scenario: String) async throws {
+        let chrome = controller.chromeWebView
+        let regions = try await chrome.callAsyncJavaScript("""
+            await Promise.all(document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity).map(a => a.finished.catch(() => {})));
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            return Object.fromEntries(['.tab-share-panel', '.tab-share-tools', '.tab-share-note', '.call-card'].flatMap(selector => {
+                const element = document.querySelector(selector);
+                if (!element) return [];
+                const r = element.getBoundingClientRect();
+                return [[selector, [r.x, r.y, r.width, r.height]]];
+            }));
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let configuration = WKSnapshotConfiguration()
+        configuration.snapshotWidth = NSNumber(value: chrome.bounds.width * 4 / Double(try XCTUnwrap(controller.window).backingScaleFactor))
+        configuration.afterScreenUpdates = true
+        let image = try await chrome.takeSnapshot(configuration: configuration)
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(data: XCTUnwrap(image.tiffRepresentation)))
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsWide, Int(chrome.bounds.width * 4), "Capture the native renderer at four pixels per point")
+        XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(chrome.bounds.height * 4))
+        let directory = output.appendingPathComponent(scenario)
+        try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: directory.appendingPathComponent("\(name).png"))
+        let metadata: [String: Any] = ["file": "\(name).png", "width": bitmap.pixelsWide, "height": bitmap.pixelsHigh, "regions": regions,
+                                       "captureTool": "WKWebView.takeSnapshot", "capturedAt": ISO8601DateFormatter().string(from: Date()), "logicalWidth": chrome.bounds.width, "logicalHeight": chrome.bounds.height]
+        try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("\(name).json"))
     }
 
     private func perform(_ step: AuthoredReleaseScenario.Step, tabs: [String: UUID]) async throws {
@@ -440,9 +482,9 @@ final class ReleaseCaptureTests: XCTestCase {
         return tab
     }
 
-    private func begin(_ scenario: String, scenarioDigest: String? = nil) async throws {
+    private func begin(_ scenario: String, scenarioDigest: String? = nil, pixelScale: Int = 1) async throws {
         try await hold(400)
-        recorder = try ReleaseWindowRecorder(directory: output.appendingPathComponent(scenario), scenarioDigest: scenarioDigest)
+        recorder = try ReleaseWindowRecorder(directory: output.appendingPathComponent(scenario), scenarioDigest: scenarioDigest, pixelScale: pixelScale)
         try await recorder.start(window: XCTUnwrap(controller.window))
     }
 

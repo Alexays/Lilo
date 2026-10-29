@@ -1,4 +1,5 @@
 name = "lilo-site"
+main = "src/media-worker.ts"
 compatibility_date = "2026-10-01"
 routes = [{ pattern = "getlilo.app", custom_domain = true }]
 # The site lives on getlilo.app only: a workers.dev copy would be duplicate content
@@ -7,4 +8,6 @@ preview_urls = false
 
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/_astro/*.mp4"]
 not_found_handling = "404-page"

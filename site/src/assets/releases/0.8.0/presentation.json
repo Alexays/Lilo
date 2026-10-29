@@ -2,25 +2,26 @@
   "approved": false,
   "media": {
     "share-system-audio": {
-      "height": 800,
+      "height": 1000,
       "kind": "image",
       "poster": "share-system-audio-remotion.png",
-      "posterDigest": "7db246b5733116c5e7aa1b5766abb630d709e0a6fa6be7ea260516bf42207816",
-      "width": 1280
+      "posterDigest": "e9c9be4efed7723fc5c17ccacde2153c89539c09be03311e33e57ba698272f91",
+      "width": 1600
     },
     "tab-sharing-controls": {
       "durationMs": 14000,
       "fps": 60,
-      "height": 800,
+      "height": 1000,
       "kind": "video",
       "poster": "tab-sharing-controls-remotion.png",
-      "posterDigest": "f5ce68d5cb5bd59818db4484dd7b539e9e6390cd6ba55fa51c5a482f61bbadd0",
+      "posterDigest": "a369387b3e97f0222575e57a9c1940bec09daf18f48fb5b00a26a8ce7cb3fe17",
       "recording": "tab-sharing-controls-remotion.mp4",
-      "recordingDigest": "5b698d8c2ecbfdc0df9b7a9f33fce6360fefcf45f6135454d51d34fa4c975dd4",
-      "width": 1280
+      "recordingDigest": "39e3a1314fc2300234db0bcb9ac5c5b2840f185f52348b01bf2603a17b73c9d4",
+      "width": 1600
     }
   },
   "release": "0.8.0",
   "schemaVersion": 1,
-  "sourceArchiveDigest": "5e9777f0594d1613d73af39148502d2b4d6b7a7fd2d612cca21434798436d101"
+  "sourceArchiveDigest": "5e9777f0594d1613d73af39148502d2b4d6b7a7fd2d612cca21434798436d101",
+  "sourceCaptureDigest": "ef57ff163c38bbf86392a9f2ab15e2280ff2d80b9910f6207c1f89f45c15aa07"
 }

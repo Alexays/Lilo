@@ -14,10 +14,18 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
     private var failure: Error?
     private var checkpoints: [[String: Any]] = []
     private let scenarioDigest: String?
+    private let pixelScale: Int
+    private var captureWidth = 1120
+    private var captureHeight = 720
+    private var nativePixelScale = 1.0
+    private var maxContentScale = 0.0
+    private var logicalWidth = 1120.0
+    private var logicalHeight = 720.0
 
-    init(directory: URL, scenarioDigest: String? = nil) throws {
+    init(directory: URL, scenarioDigest: String? = nil, pixelScale: Int = 1) throws {
         self.directory = directory
         self.scenarioDigest = scenarioDigest
+        self.pixelScale = pixelScale
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
@@ -25,9 +33,19 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
     func start(window: NSWindow) async throws {
         let content = try await SCShareableContent.currentProcess
         let ownWindow = try XCTUnwrap(content.windows.first { $0.windowID == CGWindowID(window.windowNumber) }, "The capture window must be visible")
+        let filter = SCContentFilter(desktopIndependentWindow: ownWindow)
+        if pixelScale > 1 {
+            logicalWidth = window.frame.width
+            logicalHeight = window.frame.height
+        }
+        nativePixelScale = Double(filter.pointPixelScale)
+        let captureScale = min(Double(pixelScale), nativePixelScale)
+        captureWidth = Int(logicalWidth * captureScale / 2) * 2
+        captureHeight = Int(logicalHeight * captureScale / 2) * 2
         let configuration = SCStreamConfiguration()
-        configuration.width = 1120
-        configuration.height = 720
+        configuration.captureResolution = .best
+        configuration.width = captureWidth
+        configuration.height = captureHeight
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         configuration.queueDepth = 3
         configuration.pixelFormat = kCVPixelFormatType_32BGRA
@@ -35,7 +53,7 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
         configuration.capturesAudio = false
         configuration.ignoreShadowsSingleWindow = true
         configuration.shouldBeOpaque = true
-        let stream = SCStream(filter: SCContentFilter(desktopIndependentWindow: ownWindow), configuration: configuration, delegate: self)
+        let stream = SCStream(filter: filter, configuration: configuration, delegate: self)
         self.stream = stream
         try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
         try await stream.startCapture()
@@ -50,7 +68,18 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
               attachments.first?[.status] as? Int == SCFrameStatus.complete.rawValue,
               let pixels = sampleBuffer.imageBuffer else { return }
         do {
-            guard frames.count < 450 else { throw CocoaError(.fileWriteOutOfSpace) }
+            let scaleFactor = try XCTUnwrap(attachments.first?[.scaleFactor] as? Double)
+            let contentScale = try XCTUnwrap(attachments.first?[.contentScale] as? Double)
+            nativePixelScale = min(nativePixelScale, scaleFactor)
+            maxContentScale = max(maxContentScale, contentScale)
+            guard contentScale <= 1.001, contentScale > 0,
+                  Double(captureWidth) <= logicalWidth * nativePixelScale,
+                  Double(captureHeight) <= logicalHeight * nativePixelScale,
+                  CVPixelBufferGetWidth(pixels) == captureWidth,
+                  CVPixelBufferGetHeight(pixels) == captureHeight else {
+                throw CocoaError(.validationMissingMandatoryProperty, userInfo: [NSLocalizedDescriptionKey: "Native capture would enlarge its source pixels"])
+            }
+            guard frames.count < (pixelScale == 1 ? 450 : 900) else { throw CocoaError(.fileWriteOutOfSpace) }
             let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
             if firstTime == nil { firstTime = timestamp }
             let atMs = Int((CMTimeGetSeconds(timestamp - firstTime!) * 1000).rounded())
@@ -89,8 +118,14 @@ final class ReleaseWindowRecorder: NSObject, SCStreamOutput, SCStreamDelegate {
             "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
             "appBuild": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
             "capturedAt": ISO8601DateFormatter().string(from: Date()),
-            "width": 1120, "height": 720, "durationMs": durationMs, "frames": frames, "checkpoints": checkpoints
+            "width": captureWidth, "height": captureHeight, "durationMs": durationMs, "frames": frames, "checkpoints": checkpoints
         ]
+        if pixelScale > 1 {
+            manifest["nativePixelScale"] = nativePixelScale
+            manifest["maxContentScale"] = maxContentScale
+            manifest["logicalWidth"] = logicalWidth
+            manifest["logicalHeight"] = logicalHeight
+        }
         if let scenarioDigest { manifest["scenarioDigest"] = scenarioDigest }
         try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("manifest.json"), options: .atomic)
     }

@@ -5,6 +5,7 @@
 
   let { media, title }: { media: ReleaseRecording; title: string } = $props();
   let root: HTMLElement;
+  let video: HTMLVideoElement | undefined;
   let playing = $state(false);
   let played = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -16,6 +17,7 @@
 
   function stop(): void {
     generation += 1;
+    video?.pause();
     clearTimeout(timer);
     request?.abort(); request = undefined;
     playing = false;
@@ -65,7 +67,7 @@
 
 <figure bind:this={root} class={media.kind === "image" ? "release-image" : "release-recording"}>
   {#if media.kind === "video" && movieURL}
-    <video src={movieURL} poster={media.poster} width={media.width} height={media.height} muted playsinline preload="auto" aria-label={title} oncanplay={event => { if (playing) event.currentTarget.play().catch(stop); }} onended={stop} onerror={stop}></video>
+    <video bind:this={video} src={movieURL} poster={media.poster} width={media.width} height={media.height} controls muted playsinline preload="auto" aria-label={title} oncanplay={event => { if (playing) event.currentTarget.play().catch(() => { playing = false; }); }} onplay={() => { playing = true; }} onpause={() => { playing = false; }} onended={() => { playing = false; }} onerror={stop}></video>
   {:else}
   {#key movieURL}
   <img
@@ -79,7 +81,7 @@
   />
   {/key}
   {/if}
-  {#if media.kind !== "image"}
+  {#if media.kind !== "image" && (media.kind !== "video" || !movieURL)}
   <button
     type="button"
     aria-label={t(playing ? "whatsNew.recordingStop" : played ? "whatsNew.recordingReplay" : "whatsNew.recordingPlay")}
