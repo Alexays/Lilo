@@ -1,0 +1,27 @@
+{
+  "version": "0.3.0",
+  "title": {
+    "en": "Settings get room beside your tabs.",
+    "fr": "Les réglages trouvent leur place."
+  },
+  "introduction": {
+    "en": "With a top or bottom tab strip, Settings opens as its own page.",
+    "fr": "Avec les onglets en haut ou en bas, les réglages s’ouvrent dans leur propre page."
+  },
+  "highlights": [
+    {
+      "id": "settings-page",
+      "title": {
+        "en": "Sections beside the settings.",
+        "fr": "Les sections à côté des réglages."
+      },
+      "body": {
+        "en": "Settings sections and their content sit together in one card. An active Settings tab in the strip closes the page.",
+        "fr": "Les sections et leur contenu partagent une même carte. L’onglet Réglages actif dans la barre permet de fermer la page."
+      },
+      "notes": [
+        "With the tabs on top or at the bottom, Settings opens as a page: its sections sit beside the content in one card, and the tab strip shows an active Settings tab that closes it."
+      ]
+    }
+  ]
+}

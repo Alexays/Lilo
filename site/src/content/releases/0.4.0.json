@@ -1,0 +1,41 @@
+{
+  "version": "0.4.0",
+  "title": {
+    "en": "Updates fit around your browsing.",
+    "fr": "Les mises à jour suivent votre rythme."
+  },
+  "introduction": {
+    "en": "Lilo downloads updates in the background and offers a restart when you are ready.",
+    "fr": "Lilo télécharge les mises à jour en arrière-plan et propose de redémarrer quand vous êtes prêt."
+  },
+  "highlights": [
+    {
+      "id": "quiet-updates",
+      "title": {
+        "en": "A restart, when it suits you.",
+        "fr": "Redémarrez au bon moment."
+      },
+      "body": {
+        "en": "A Restart card appears in the sidebar, or an icon in a tab strip. If you leave it alone, the update installs when Lilo quits.",
+        "fr": "Une carte Redémarrer apparaît dans la barre latérale, ou une icône dans la barre d’onglets. Si vous l’ignorez, la mise à jour s’installe à la fermeture de Lilo."
+      },
+      "notes": [
+        "Lilo checks for and downloads updates on its own, then offers a Restart card at the bottom of the sidebar (an icon in a top or bottom tab bar) instead of an alert; ignored, the update installs when Lilo quits"
+      ]
+    },
+    {
+      "id": "visit-anyway",
+      "title": {
+        "en": "Open a blocked page once.",
+        "fr": "Ouvrez une page bloquée une fois."
+      },
+      "body": {
+        "en": "When the content blocker stops a page, Visit Anyway loads it once without blocking.",
+        "fr": "Quand le bloqueur de contenu arrête une page, Continuer quand même la charge une fois sans blocage."
+      },
+      "notes": [
+        "A page the content blocker stops from loading offers Visit Anyway, which loads it once without blocking, in place of Try Again"
+      ]
+    }
+  ]
+}

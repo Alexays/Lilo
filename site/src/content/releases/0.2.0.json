@@ -1,0 +1,56 @@
+{
+  "version": "0.2.0",
+  "title": {
+    "en": "Make room for your way of browsing.",
+    "fr": "Naviguez à votre façon."
+  },
+  "introduction": {
+    "en": "Put tabs on any edge, let your Space follow the light, and keep reading when the connection drops.",
+    "fr": "Placez les onglets sur le bord de votre choix, adaptez les couleurs de votre espace et continuez à lire quand la connexion coupe."
+  },
+  "highlights": [
+    {
+      "id": "tab-edges",
+      "title": {
+        "en": "Four edges. Your choice.",
+        "fr": "Quatre bords. À vous de choisir."
+      },
+      "body": {
+        "en": "Place tabs on the left, right, top or bottom, with the address beside the tabs or above the page. Choose in Settings or drag the sidebar to an edge.",
+        "fr": "Placez les onglets à gauche, à droite, en haut ou en bas, avec l’adresse près des onglets ou au-dessus de la page. Choisissez dans Réglages ou faites glisser la barre latérale vers un bord."
+      },
+      "notes": [
+        "Put your tabs on any edge of the window: left, right, top or bottom, with the address with the tabs or above the page. Pick it in Settings, during the setup, from the command bar, or by holding the sidebar's top and dragging it to an edge."
+      ]
+    },
+    {
+      "id": "space-colors",
+      "title": {
+        "en": "Colors that follow your day.",
+        "fr": "Des couleurs au fil de la journée."
+      },
+      "body": {
+        "en": "A Space’s color can follow the time of day, the current page or your wallpaper.",
+        "fr": "La couleur d’un espace peut suivre le moment de la journée, la page ouverte ou votre fond d’écran."
+      },
+      "notes": [
+        "A Space's color can follow the time of day, the page you're on or your wallpaper, chosen in the Space editor and during onboarding."
+      ]
+    },
+    {
+      "id": "network-recovery",
+      "title": {
+        "en": "Pick up after a lost connection.",
+        "fr": "Reprenez après une coupure."
+      },
+      "body": {
+        "en": "Show Saved Copy opens the last saved version of an unavailable page. Interrupted downloads resume automatically, up to three times.",
+        "fr": "Afficher la copie enregistrée ouvre la dernière version conservée d’une page indisponible. Les téléchargements interrompus reprennent automatiquement, jusqu’à trois fois."
+      },
+      "notes": [
+        "When a page cannot load because the connection timed out, dropped or is offline, the error page offers Show Saved Copy, to read the version Lilo last kept of it.",
+        "Downloads cut off by the network resume on their own from where they stopped, up to three times, instead of waiting for Retry."
+      ]
+    }
+  ]
+}

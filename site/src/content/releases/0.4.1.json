@@ -1,0 +1,41 @@
+{
+  "version": "0.4.1",
+  "title": {
+    "en": "Try Lilo before opening Lilo.",
+    "fr": "Découvrez Lilo avant de l’ouvrir."
+  },
+  "introduction": {
+    "en": "The website gets an interactive browser, terminal and agent demo. Tracking prevention is on by default.",
+    "fr": "Le site propose une démo interactive du navigateur, du terminal et des agents. La prévention du suivi est activée par défaut."
+  },
+  "highlights": [
+    {
+      "id": "website-demo",
+      "title": {
+        "en": "A browser you can explore.",
+        "fr": "Un navigateur à explorer."
+      },
+      "body": {
+        "en": "Try the app’s menus, settings and sample pages on the website. A local Codex demo shows visible actions and approval prompts.",
+        "fr": "Essayez les menus, les réglages et les pages d’exemple sur le site. Une démo locale de Codex montre ses actions et ses demandes d’autorisation."
+      },
+      "notes": [
+        "The website now includes the interactive Lilo interface with its real app icons, native menus and settings, a feature explorer, local browser and terminal examples, and a Codex demo that controls sample pages through MCP with visible actions and approval prompts. Saved tabs, split views, keyboard customization and profile controls follow the Mac app."
+      ]
+    },
+    {
+      "id": "tracking-prevention",
+      "title": {
+        "en": "Less tracking between sites.",
+        "fr": "Moins de suivi entre les sites."
+      },
+      "body": {
+        "en": "Cross-site tracking prevention is enabled by default, as in Safari. Embedded sites cannot follow you from one site to another.",
+        "fr": "La prévention du suivi entre les sites est activée par défaut, comme dans Safari. Les sites intégrés ne peuvent plus vous suivre d’un site à l’autre."
+      },
+      "notes": [
+        "Cross-site tracking prevention is on by default, as in Safari: sites embedded in others can't follow you from site to site."
+      ]
+    }
+  ]
+}

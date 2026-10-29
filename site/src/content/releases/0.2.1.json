@@ -1,0 +1,27 @@
+{
+  "version": "0.2.1",
+  "title": {
+    "en": "Small fixes for getting started.",
+    "fr": "Des corrections pour bien démarrer."
+  },
+  "introduction": {
+    "en": "Peek keeps its favicon, replaying setup keeps your Space icon, and reconnecting agents can ask for access again.",
+    "fr": "Les aperçus gardent leur icône, relancer la configuration préserve celle de votre espace et les agents peuvent redemander l’accès."
+  },
+  "highlights": [
+    {
+      "id": "agent-reconnect",
+      "title": {
+        "en": "Another chance to connect.",
+        "fr": "Une nouvelle chance de se connecter."
+      },
+      "body": {
+        "en": "An agent app that reconnects after a previous prompt can request permission again instead of being refused until Lilo restarts.",
+        "fr": "Une application d’agent qui se reconnecte après une première demande peut redemander l’autorisation, sans attendre le redémarrage de Lilo."
+      },
+      "notes": [
+        "An AI agent app that Lilo had once asked about, and that reconnects at each try like Claude's local agent mode, is asked again instead of being refused without a prompt until Lilo restarts."
+      ]
+    }
+  ]
+}

@@ -11,7 +11,7 @@ interface Props {
 const { lang, story } = Astro.props;
 ---
 
-<div class="release-story">
+<div class="release-story" lang={lang}>
   <h3 class="story-title">{story.title[lang]}</h3>
   <p class="story-introduction">{story.introduction[lang]}</p>
   <div class="highlights">

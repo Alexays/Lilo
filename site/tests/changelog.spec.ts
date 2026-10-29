@@ -112,7 +112,15 @@ for (const language of ["en", "fr"] as const) {
     await expect(release.locator(".release-body")).toContainText("chrome.mdns");
     await page.keyboard.press("Space");
     await expect(release.locator(".release-body")).toBeHidden();
-    await expect(page.locator("#v0\\.6\\.0 .release-body")).toBeVisible();
+    const older = page.locator("#v0\\.6\\.0");
+    await expect(older.locator(".release-story")).toBeVisible();
+    await expect(older.locator(".release-body")).toBeHidden();
+    await older.locator("summary").focus();
+    await page.keyboard.press("Enter");
+    await expect(older.locator(".release-body")).toBeVisible();
+    await expect(older.locator(".release-body")).toContainText(
+      "Tabs and bookmarks of messaging sites"
+    );
     const demo = release.locator(".recording-action");
     await demo.focus();
     await page.keyboard.press("Enter");
@@ -176,7 +184,11 @@ for (const language of ["en", "fr"] as const) {
       expect(bounds.pageWidth).toBe(bounds.width);
       await release.locator("summary").click();
       await expect(release.locator(".release-body")).toBeVisible();
-      await expect(page.locator("#v0\\.6\\.0 .release-body")).toBeVisible();
+      const older = page.locator("#v0\\.6\\.0");
+      await expect(older.locator(".release-story")).toBeVisible();
+      await expect(older.locator(".release-body")).toBeHidden();
+      await older.locator("summary").click();
+      await expect(older.locator(".release-body")).toBeVisible();
       await expect(release.locator(".recording-action")).toHaveAttribute(
         "href",
         `${language === "fr" ? "/fr/" : "/"}#browser-demo`

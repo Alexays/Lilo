@@ -1,0 +1,41 @@
+{
+  "version": "0.3.3",
+  "title": {
+    "en": "Each agent keeps its own place.",
+    "fr": "Chaque agent garde sa place."
+  },
+  "introduction": {
+    "en": "Agent profiles stay separate, permission choices are clearer, and docked calls return you to the right Space.",
+    "fr": "Les profils des agents restent séparés, les autorisations sont plus claires et les appels ancrés retrouvent le bon espace."
+  },
+  "highlights": [
+    {
+      "id": "agent-profiles",
+      "title": {
+        "en": "Separate profiles, separate tabs.",
+        "fr": "Des profils et des onglets séparés."
+      },
+      "body": {
+        "en": "Each agent works in its own profile and Agents Space. Switching one agent’s profile leaves the others’ tabs where they belong.",
+        "fr": "Chaque agent travaille dans son propre profil et son espace Agents. Changer le profil d’un agent ne déplace plus les onglets des autres."
+      },
+      "notes": [
+        "Each agent works in its own profile, in an Agents space per profile: one agent switching profile no longer moves the other agents' tabs, and the Agents space menu no longer has a profile picker."
+      ]
+    },
+    {
+      "id": "docked-calls",
+      "title": {
+        "en": "Back to the call’s Space.",
+        "fr": "Retrouvez l’espace de votre appel."
+      },
+      "body": {
+        "en": "Click a docked call or video from another Space to return to its original Space and tab.",
+        "fr": "Cliquez sur un appel ou une vidéo ancrés depuis un autre espace pour retrouver leur espace et leur onglet d’origine."
+      },
+      "notes": [
+        "Clicking a docked call or video from another space goes back to its space and tab, instead of hiding it."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "version": "0.3.1",
+  "title": {
+    "en": "Bring your agent along.",
+    "fr": "Retrouvez votre agent."
+  },
+  "introduction": {
+    "en": "Setup can copy Lilo’s configuration for other MCP agents, and the address bar keeps a steady height.",
+    "fr": "La configuration copie les réglages de Lilo pour d’autres agents MCP, et la barre d’adresse garde une hauteur stable."
+  },
+  "highlights": [
+    {
+      "id": "agent-setup",
+      "title": {
+        "en": "Copy the connection settings.",
+        "fr": "Copiez les réglages de connexion."
+      },
+      "body": {
+        "en": "The AI agents step in setup can copy Lilo’s configuration for another MCP agent, just as Settings does.",
+        "fr": "L’étape Agents IA de la configuration peut copier les réglages de Lilo pour un autre agent MCP, comme dans Réglages."
+      },
+      "notes": [
+        "The AI agents step of the setup copies Lilo's configuration for any other MCP agent, as Settings does."
+      ]
+    }
+  ]
+}
