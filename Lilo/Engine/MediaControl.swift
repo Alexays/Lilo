@@ -90,6 +90,22 @@ extension WKWebViewTab {
           return result;
         } });
       }
+      // WebKit divides the RTP audio level (dBov) by 20 in integers: every level reads 1, 0.1, 0.01... A call page then sees
+      // everyone speaking loudly and keeps its speaking animations and tile layout busy. A band's middle is what Chrome reports.
+      if (typeof RTCRtpReceiver === 'function') {
+        const log10 = Math.log10, round = Math.round, abs = Math.abs, bandMiddle = 0.31622776601683794;
+        const level = sources => {
+          for (const source of sources) {
+            const value = source.audioLevel;
+            if (value > 0 && abs(value / 10 ** round(log10(value)) - 1) < 1e-9) source.audioLevel = value * bandMiddle;
+          }
+          return sources;
+        };
+        const receiverOriginal = lilo.methods(RTCRtpReceiver.prototype, {
+          getContributingSources() { return level(apply(receiverOriginal.getContributingSources, this, arguments)); },
+          getSynchronizationSources() { return level(apply(receiverOriginal.getSynchronizationSources, this, arguments)); },
+        });
+      }
       lilo.on('media', (action, reason) => {
         if (handlers[action]) {
           const details = { action };
