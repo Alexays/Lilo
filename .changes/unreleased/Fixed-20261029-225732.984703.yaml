@@ -1,3 +1,3 @@
 kind: Fixed
-body: Keep the ChatGPT side panel working after extension worker restarts and reloads.
+body: Recover extension workers and restore their side panels after restarts and reloads.
 time: 2026-10-29T22:57:32.984703+02:00

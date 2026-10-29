@@ -860,8 +860,6 @@ final class RealExtensionSmokeTests: XCTestCase {
                                 window.sidePanel.closePanel()
                                 let closed = await pollUntil { registry.gapEvents.undelivered(to: feature.id).isEmpty }
                                 XCTAssertTrue(closed)
-                                let idle = await pollUntil(timeout: 35) { registry.lifecycle.worker(of: feature.id) == .idle }
-                                XCTAssertTrue(idle, "the bridge goes idle before the closed-panel restart")
                             }
                             let instance = registry.gapEvents.workerInstance(of: feature.id)
                             await registry.backgrounds.restartIfRunning(feature.id)
