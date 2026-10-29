@@ -104,7 +104,7 @@ const changes = previous
     ).slice(0, 18_000)
   : "No previous release tag is available; inspect the current implementation.";
 
-const grounding = `Release ${version}, build ${identity.build}. Exact note bullets: ${notes}\nPrevious tag: ${previous ?? "unavailable"}. Change summary:\n${changes}\nInspect relevant current Lilo/ and lilo-ui/src/ implementation before deciding. Exclude the release automation itself from the feature selection.`;
+const grounding = `Release ${version}, build ${identity.build}. Exact note bullets: ${notes}\nPrevious tag: ${previous ?? "unavailable"}. Change summary:\n${changes}\nInspect relevant current Lilo/ and lilo-ui/src/ implementation before deciding. Exclude the release automation itself from the feature selection.\nThe output is a SILENT animated WebP walkthrough. Select by user impact, then demonstrate honest visible interactions and outcomes suitable for that medium. Do not invent an audible-verification requirement for audio features. A walkthrough may show configuring a real feature before an external consent step, provided its goal and visuals clearly stop there and never portray an unfinished operation as completed. Source evidence supports capability claims; native assertions prove the visible states actually demonstrated. This does not permit fake outcomes, dropping important features, or weakening the quality gates.`;
 
 const plan = await boundedRepair(
   "feature selection",
