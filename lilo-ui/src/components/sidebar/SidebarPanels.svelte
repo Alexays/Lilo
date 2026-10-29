@@ -25,15 +25,17 @@
   );
   let panelEl: HTMLDivElement | undefined = $state();
 
-  // An opening panel takes the focus to its first control, as a sheet does; Sidebar hands it back.
+  // An opening panel takes the focus itself, not its first control: a script focus after Cmd+,
+  // would ring that control. Sidebar hands the focus back.
   $effect(() => {
     if (!active || !openPanel) return;
     void tick().then(() => {
       if (!panelEl || panelEl.contains(document.activeElement)) return;
-      const first = Array.from(panelEl.querySelectorAll<HTMLElement>(
-        "button:not([disabled]), input:not([disabled]), select, textarea, a[href], [tabindex]:not([tabindex='-1'])",
-      )).find((el) => el.checkVisibility({ visibilityProperty: true }) && !el.closest("[inert]"));
-      first?.focus({ preventScroll: true });
+      const shell = Array.from(panelEl.querySelectorAll<HTMLElement>(".panel-shell"))
+        .find((el) => el.checkVisibility({ visibilityProperty: true }));
+      if (!shell) return;
+      shell.tabIndex = -1;
+      shell.focus({ preventScroll: true });
     });
   });
 </script>
@@ -77,6 +79,10 @@
   .sidebar-panel.active {
     transform: translateX(0);
     pointer-events: auto;
+  }
+
+  .sidebar-panel :global(.panel-shell:focus) {
+    outline: none;
   }
 
   /* The chunk mounts on first open with `active` already set: slide in from off-screen anyway. */
