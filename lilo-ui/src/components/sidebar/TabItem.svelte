@@ -434,6 +434,7 @@
   aria-label={rowLabel}
   use:tooltip={tooltipContent}
   onclick={switchToTab}
+  onauxclick={(e) => e.button === 1 && requestCloseTab()}
   oncontextmenu={handleContextMenu}
   onkeydown={(e) => {
     if (!interactive) return;
