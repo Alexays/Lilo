@@ -745,7 +745,6 @@ final class RealExtensionSmokeTests: XCTestCase {
 
     func testStoreExtensionFeaturesWorkOnALocalPage() async throws {
         let (window, registry) = try browserContext.makeExtensionWindow()
-        window.setupViews()
         let html = Data(Self.featurePage.utf8), json = Data(Self.jsonDocument.utf8), video = Data(Self.videoPage.utf8)
         let image = Data(base64Encoded: "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7") ?? Data()
         let server = try await TinyHTTPServer { request in

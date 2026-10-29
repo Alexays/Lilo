@@ -906,7 +906,6 @@ final class ProfileExtensionRegistry {
         }
         // Close the window while the contexts still exist, so they observe it before unloading.
         notifyWindowClosed()
-        let workerWebViews = loadedRuntimes.compactMap { backgrounds.health(for: $0.id)?.workerWebView }
         for runtime in loadedRuntimes {
             runtime.contextObserver.map { NotificationCenter.default.removeObserver($0) }
             delegate.closeActionPopups(of: runtime.context)
@@ -922,7 +921,6 @@ final class ProfileExtensionRegistry {
             userScripts.unloaded(id)
             postDidUnload(extensionId: id, uninstalled: false)
         }
-        workerWebViews.forEach(BackgroundSupervisor.terminateProcess)
     }
 
     /// Replaces the content blocker's built-in extension with the one at `url`; nil leaves none.
