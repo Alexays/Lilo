@@ -204,9 +204,11 @@ extension MainWindowController {
         // Navigation, dialogs and permission prompts go to the window that shows the page.
         engine.delegate = self
         engine.tabManager = tabManager
-        engine.popupWebViewProvider = { [weak self, weak engine] configuration, requestedURL, features, inBackground in
-            self?.createPopupWebView(
-                configuration: configuration, requestedURL: requestedURL, features: features, opener: engine, inBackground: inBackground
+        engine.popupWebViewProvider = { [weak self, weak engine] configuration, navigationAction, features in
+            guard let self else { return nil }
+            return createPopupWebView(
+                configuration: configuration, requestedURL: navigationAction.request.url, features: features, opener: engine,
+                inBackground: WKWebViewTab.opensNewTabInBackground(navigationAction, after: lastClick)
             )
         }
         engine.documentPiPWebViewProvider = { [weak self, weak engine] configuration, size in

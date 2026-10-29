@@ -76,6 +76,28 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
     }
 
+    func testAPageOpeningATabFromAMiddleOrCommandClickLeavesTheOpenerActive() async throws {
+        let now = ProcessInfo.processInfo.systemUptime
+        controller.lastClick = WKWebViewTab.Click(uptime: now, buttonNumber: 2, modifierFlags: [])
+        try await openFromPage("")
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+
+        controller.lastClick = WKWebViewTab.Click(uptime: now, buttonNumber: 0, modifierFlags: .command)
+        try await openFromPage("")
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+    }
+
+    func testAPageOpeningATabFromAPlainOrOldClickShowsIt() async throws {
+        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: 0, modifierFlags: [])
+        try await openFromPage("")
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id)
+
+        controller.tabManager.activateTabRuntime(id: opener.id)
+        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime - 5, buttonNumber: 2, modifierFlags: [])
+        try await openFromPage("")
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id, "a middle click seconds ago is not the one the page acts on")
+    }
+
     func testSizedWindowOpenOpensAPopupOutsideTheTabList() async throws {
         let tabs = openTabCount
         try await openFromPage("width=400,height=300")

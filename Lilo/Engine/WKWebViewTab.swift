@@ -321,7 +321,7 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen else { return true }
         return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
     }
-    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, URL?, WKWindowFeatures, _ inBackground: Bool) -> WKWebView?)?
+    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, WKNavigationAction, WKWindowFeatures) -> WKWebView?)?
     /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
     var pendingDocumentPiPSize: NSSize?
     var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
@@ -968,6 +968,22 @@ final class WKWebViewTab: NSObject {
 
     /// `WKNavigationAction.buttonNumber` is a bitmask (left 1, right 2, middle 4), not `NSEvent.buttonNumber`'s index.
     nonisolated static let middleButtonNumber = 1 << 2
+
+    /// The window's last mouse release, `buttonNumber` as `NSEvent` numbers it (middle 2).
+    struct Click {
+        let uptime: TimeInterval
+        let buttonNumber: Int
+        let modifierFlags: NSEvent.ModifierFlags
+    }
+
+    /// Chrome's rule for a new tab: Cmd or the middle button sends it behind. WebKit gives a page's own window.open no event,
+    /// where Chrome reads the release its handler runs for, so `click`, the window's last one, stands in when the page acts on a gesture.
+    static func opensNewTabInBackground(_ action: WKNavigationAction, after click: Click?, now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Bool {
+        if action.modifierFlags.contains(.command) || action.buttonNumber == middleButtonNumber { return true }
+        guard action.navigationType == .other, let click, now - click.uptime < 1,
+              WebViewPrivateAccessors(action).bool("_isUserInitiated") ?? true else { return false }
+        return click.modifierFlags.contains(.command) || click.buttonNumber == 2
+    }
 
     nonisolated static func shouldOpenLinkInBackgroundTab(
         url: URL?,
@@ -1711,13 +1727,11 @@ extension WKWebViewTab: WKUIDelegate {
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
-            let inBackground = navigationAction.modifierFlags.contains(.command) || navigationAction.buttonNumber == Self.middleButtonNumber
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
-            if !isAgentControlled, let provider = popupWebViewProvider,
-               let popup = provider(configuration, navigationAction.request.url, windowFeatures, inBackground) {
+            if !isAgentControlled, let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
                 return popup
             }
-            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: inBackground)
+            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: Self.opensNewTabInBackground(navigationAction, after: nil))
             return nil
         }
     }

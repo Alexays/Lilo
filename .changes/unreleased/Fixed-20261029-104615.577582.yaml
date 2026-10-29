@@ -1,0 +1,3 @@
+kind: Fixed
+body: Middle-clicking or Cmd-clicking something a site opens on its own, like X's trending list, now opens it in a background tab, as in Chrome.
+time: 2026-10-29T10:46:15.577582+01:00

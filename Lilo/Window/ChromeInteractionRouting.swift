@@ -262,10 +262,21 @@ final class ChromeInputController {
         controller.window?.acceptsMouseMovedEvents = true
         // No .cursorUpdate: real mouseMoved events already carry every positional change, and
         // feeding cursor updates too doubles the synthetic moves into WebKit while hovering chrome.
-        hoverMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+        hoverMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.mouseMoved, .leftMouseDown, .rightMouseDown, .otherMouseDown, .leftMouseUp, .otherMouseUp]
+        ) { [weak self] event in
             MainActor.assumeIsolated {
                 // Every window sees each move: reject other windows' events before allocating anything.
-                if let self, event.window === self.controller.window { self.updatePointer(for: event) }
+                guard let self, event.window === self.controller.window else { return }
+                if event.type == .leftMouseUp || event.type == .otherMouseUp {
+                    // Seen before WebKit's own handling, so a page's click handler always runs after it is recorded.
+                    self.controller.lastClick = WKWebViewTab.Click(
+                        uptime: event.timestamp, buttonNumber: event.buttonNumber,
+                        modifierFlags: event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                    )
+                } else {
+                    self.updatePointer(for: event)
+                }
             }
             return event
         }

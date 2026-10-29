@@ -245,6 +245,8 @@ final class MainWindowController: NSWindowController {
     var didStartChromeUILoad = false
     var didReceiveChromeReady = false
     var didChromeVisualReady = false
+    /// The last left or middle release in this window, for a page that opens a tab from its own click handler.
+    var lastClick: WKWebViewTab.Click?
     /// What the launch archived in this window's Space, offered back once the chrome shows.
     var launchArchived: [TabArchive.Entry] = []
     /// Last href pushed to the chrome overlay. WebKit reports the element under the pointer on every
