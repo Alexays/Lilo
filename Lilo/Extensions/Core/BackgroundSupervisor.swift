@@ -24,6 +24,7 @@ final class BackgroundSupervisor {
         var lastErrorCount = 0
         /// A closed backing view can still address the process WebKit reuses for the next worker (WebKit gap 103).
         var workerWebView: WKWebView?
+        /// The view's PID accessor reports zero once WebKit closes it.
         var workerPid: Int?
         var workerInstance: String?
 
@@ -151,7 +152,9 @@ final class BackgroundSupervisor {
                 if health[extensionId]?.workerWebView == nil || health[extensionId]?.workerInstance != instance {
                     let webView = Self.backgroundWebView(of: context)
                     health[extensionId]?.workerWebView = webView
-                    health[extensionId]?.workerPid = webView.flatMap { WebViewPrivateAccessors($0).pid("_webProcessIdentifier") }
+                    let pid = webView.flatMap { WebViewPrivateAccessors($0).pid("_webProcessIdentifier") }
+                    health[extensionId]?.workerPid = pid
+                    Self.logger.debug("background worker connected for \(extensionId, privacy: .public) process=\(pid ?? 0, privacy: .public)")
                     health[extensionId]?.workerInstance = instance
                 }
                 PerfSignposts.extensions.endInterval("workerStart", id: PerfSignposts.extensions.makeSignpostID(from: context), "\(extensionId)")

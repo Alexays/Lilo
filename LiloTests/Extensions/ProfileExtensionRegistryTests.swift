@@ -307,7 +307,10 @@ final class ProfileExtensionRegistryTests: XCTestCase {
 
         let (name, id) = installed[0]
         let sourcePath = try XCTUnwrap(registry.loadedExtensions.first { $0.id == id }?.sourcePath)
+        let oldWorker = try XCTUnwrap(registry.backgrounds.health(for: id)?.workerWebView)
+        let oldPID = try XCTUnwrap(WebViewPrivateAccessors(oldWorker).pid("_webProcessIdentifier"))
         await registry.disable(extensionId: id)
+        XCTAssertNotEqual(kill(pid_t(oldPID), 0), 0, "the old worker process exits before a replacement context loads")
         let manifestURL = URL(fileURLWithPath: sourcePath).appendingPathComponent("manifest.json")
         var manifest = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: manifestURL)) as? [String: Any])
         manifest["version"] = "2.0"
