@@ -35,9 +35,7 @@ final class SidePanelTests: XCTestCase {
         window = MainWindowController(context: context)
         window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.window?.setContentSize(NSSize(width: 1200, height: 800))
-        let contentView = try XCTUnwrap(window.window?.contentView)
-        window.contentContainerView = NSView(frame: window.contentFrameRect())
-        contentView.addSubview(window.contentContainerView)
+        window.setupViews()
         context.windows.add(window)
         window.switchToSpace(space.id)
         first = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank"))?.id)
@@ -128,6 +126,20 @@ final class SidePanelTests: XCTestCase {
         XCTAssertEqual(panel.frame.maxX, bounds.maxX - window.sidebarWidth - MainWindowController.contentInset, "between the page and the sidebar")
         XCTAssertEqual(panel.frame.minX, window.contentFrameRect().maxX + SplitDividerView.width)
         XCTAssertEqual(panel.frame.maxY, bounds.maxY - MainWindowController.pageToolbarHeight, "under the page toolbar, like the page")
+    }
+
+    func testThePanelAndDividerStayAboveTheFrameAndBelowTheChrome() async throws {
+        await call("open", gesture(thisWindow))
+
+        let subviews = try XCTUnwrap(window.window?.contentView).subviews
+        let frameIndex = try XCTUnwrap(subviews.firstIndex { $0 === window.windowFrameView })
+        let panelIndex = try XCTUnwrap(subviews.firstIndex { $0 is SidePanelView })
+        let dividerIndex = try XCTUnwrap(subviews.firstIndex { $0 is SplitDividerView })
+        let chromeIndex = try XCTUnwrap(subviews.firstIndex { $0 === window.chromeWebView })
+        XCTAssertGreaterThan(panelIndex, frameIndex, "the opaque frame covers the room reserved for the panel")
+        XCTAssertGreaterThan(dividerIndex, frameIndex, "the resize handle stays visible too")
+        XCTAssertLessThan(panelIndex, chromeIndex, "chrome overlays can still cover the panel")
+        XCTAssertLessThan(dividerIndex, chromeIndex)
     }
 
     func testThePanelTakesTheNewSpaceColor() async throws {

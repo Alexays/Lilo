@@ -224,7 +224,8 @@ final class SidePanelController: NSObject {
         panel.onClose = { [weak self] in self?.closePanel() }
         panel.autoresizingMask = [.minXMargin, .height]
         divider.autoresizingMask = [.minXMargin, .height]
-        contentView.addSubview(panel, positioned: .above, relativeTo: window.contentContainerView)
+        // The frame's opaque right band includes the room reserved for the panel.
+        contentView.addSubview(panel, positioned: .above, relativeTo: window.windowFrameView)
         contentView.addSubview(divider, positioned: .above, relativeTo: panel)
         self.panel = panel
         layoutPanel()
