@@ -247,6 +247,53 @@ test("capture fingerprints follow source and fixture edits while excluding gener
   }
 });
 
+test("ordinary Release CI compiles without a publication approval", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "release-ci-"));
+
+  try {
+    const workflow = readFileSync(
+      new URL("../../.github/workflows/build.yml", import.meta.url),
+      "utf-8"
+    );
+
+    const target = workflow.match(
+      /^ {6}- run: make (?<target>release-archive|xcode-build-release)/mu
+    )?.groups?.target;
+
+    assert.ok(target);
+
+    const makefile = readFileSync(
+      new URL("../../Makefile", import.meta.url),
+      "utf-8"
+    );
+
+    const recipe = makefile.match(
+      new RegExp(`^${target}:[^\\n]+\\n\\t[^\\n]+`, "mu")
+    )?.[0];
+
+    assert.ok(recipe);
+    writeFileSync(
+      path.join(root, "xcodebuild"),
+      "#!/bin/sh\ntest \"$*\" = '-configuration Release build' || exit 1\ntouch compiled\n",
+      { mode: 0o700 }
+    );
+    writeFileSync(
+      path.join(root, "Makefile"),
+      `XCODEBUILD := ./xcodebuild\nCHROME_UI_ASSETS := chrome.swift\nNATIVE_STRINGS := strings.swift\n${recipe}\nvt-build chrome.swift strings.swift:\n\t@true\nrelease-media-check:\n\t@false\n`
+    );
+
+    const result = spawnSync("make", [target], {
+      cwd: root,
+      encoding: "utf-8",
+    });
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.ok(existsSync(path.join(root, "compiled")));
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+  }
+});
+
 test("fresh signing-job dependencies cannot run lifecycle scripts", () => {
   const root = mkdtempSync(path.join(tmpdir(), "release-install-"));
 

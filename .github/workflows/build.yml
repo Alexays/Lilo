@@ -225,7 +225,8 @@ jobs:
             !.derived.noindex/build-app/Logs
           key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
-      - run: make release-archive
+      # Compile current development source without packaging a release or requiring its media approval.
+      - run: make xcode-build-release XCODEBUILD="xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath '$PWD/.derived.noindex/build-app'"
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
@@ -240,9 +241,9 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          codesign --force --deep --sign - --preserve-metadata=entitlements build/release/export/Lilo.app
+          codesign --force --deep --sign - --preserve-metadata=entitlements .derived.noindex/build-app/Build/Products/Release/Lilo.app
           mkdir -p build/startup-bench
-          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench APP=build/release/export/Lilo.app | tee build/startup-bench/summary.txt
+          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench APP=.derived.noindex/build-app/Build/Products/Release/Lilo.app | tee build/startup-bench/summary.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name == 'push' && always()
         with:
