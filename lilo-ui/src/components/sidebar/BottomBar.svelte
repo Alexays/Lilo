@@ -63,6 +63,11 @@
   import { isShadowItem } from "../../lib/dndEngine/projection";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
 
+  // AgentMascot at rest, as an image the tooltip can show; an <img> cannot read --agents, so its value is inlined.
+  const agentMascotIcon = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.25" fill="white" stroke="#795ceb" stroke-width="1.5"/><g fill="#795ceb"><ellipse cx="7" cy="10" rx="2" ry="2.5"/><ellipse cx="15" cy="10" rx="2" ry="2.5"/></g></svg>',
+  )}`;
+
   type SpaceDropMorphTarget = {
     spaceId: string;
     color: string;
@@ -418,6 +423,7 @@
     class:recent-drop={isSpaceRecentlyDropped(space.id)}
     use:tooltip={{
       text: profile && profile.name !== space.name ? t("bottomBar.signedInAs", { space: space.name, profile: profile.name }) : space.name,
+      iconSrc: isAgentsSpace(space.id) ? agentMascotIcon : undefined,
       iconText: space.icon || "🌐",
       // The menu bar's Spaces shortcuts count the same Spaces, in the same order.
       shortcut: index < 9 ? shortcutKeys(`space.select${index + 1}`) : undefined,
