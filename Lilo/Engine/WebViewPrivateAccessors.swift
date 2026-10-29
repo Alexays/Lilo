@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import WebKit
 
 /// Calls into private WebKit SPI on a `WKWebView` or its `_inspector` (process pids/state, capture,
@@ -101,6 +101,22 @@ struct WebViewPrivateAccessors {
         typealias DataMethod = @convention(c) (NSObject, Selector, @escaping @convention(block) (NSData?, NSError?) -> Void) -> Void
         unsafeBitCast(imp, to: DataMethod.self)(object, selector) { data, _ in
             MainActor.assumeIsolated { completion(data as Data?) }
+        }
+        return true
+    }
+
+    /// The focused frame's selected text, copied to the find pasteboard by WebKit's Use Selection for Find
+    /// command (Cmd-E). Nil when nothing was copied: no range selected, or one in a password field.
+    /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
+    @discardableResult
+    func takeFindStringFromSelection(completion: @escaping @MainActor (String?) -> Void) -> Bool {
+        guard let (selector, imp) = method("_executeEditCommand:argument:completion:") else { return false }
+        typealias CommandMethod = @convention(c) (NSObject, Selector, NSString, NSString?, @escaping @convention(block) (Bool) -> Void) -> Void
+        let pasteboard = NSPasteboard(name: .find)
+        let changeCount = pasteboard.changeCount
+        // The web process writes the pasteboard synchronously while running the command, before it replies.
+        unsafeBitCast(imp, to: CommandMethod.self)(object, selector, "TakeFindStringFromSelection", nil) { _ in
+            MainActor.assumeIsolated { completion(pasteboard.changeCount == changeCount ? nil : pasteboard.string(forType: .string)) }
         }
         return true
     }

@@ -13,8 +13,17 @@ final class PageFindController {
     }
 
     func selectedText() async -> String? {
-        let script = "window.getSelection()?.toString() || ''"
-        let selected = (try? await webView.evaluateJavaScript(script)) as? String
+        let accessors = WebViewPrivateAccessors(webView)
+        // `_WKSelectionAttributeIsRange`: a caret or no selection has no text to seed the find bar with.
+        if let attributes = accessors.int("_selectionAttributes"), attributes & 1 << 1 == 0 { return nil }
+        let persistent = webView.configuration.websiteDataStore.isPersistent
+        let selected: String? = await withCheckedContinuation { continuation in
+            // The find pasteboard is shared with every app, so a private space never writes to it.
+            if persistent, accessors.takeFindStringFromSelection(completion: { continuation.resume(returning: $0) }) { return }
+            accessors.evaluateWithoutUserGesture("window.getSelection()?.toString() || ''", in: nil, in: .defaultClient) {
+                continuation.resume(returning: $0 as? String)
+            }
+        }
         let trimmed = selected?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return trimmed.isEmpty ? nil : trimmed
     }
@@ -30,10 +39,13 @@ final class PageFindController {
     func findNext() { performFind(backwards: false) }
     func findPrevious() { performFind(backwards: true) }
 
+    /// Ends the find session like Safari: the last match stays selected, only WebKit's find state goes.
     func dismiss() {
+        guard !query.isEmpty else { return }
         query = ""
         caseSensitive = false
-        Task { _ = try? await webView.evaluateJavaScript("window.getSelection().removeAllRanges()") }
+        let hideFindUI = NSSelectorFromString("_hideFindUI")
+        if webView.responds(to: hideFindUI) { webView.perform(hideFindUI) }
     }
 
     private func performFind(backwards: Bool) {

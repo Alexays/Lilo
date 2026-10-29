@@ -200,6 +200,7 @@
 		5222223C3A352015E7834EBA /* WallpaperColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B5053BE20F338ADFB3C924 /* WallpaperColorTests.swift */; };
 		529F4D807F4B8E1DBE5BF034 /* AsyncPolling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AFC07FA48C9C6FC97D23F57 /* AsyncPolling.swift */; };
 		52BBD88D73A8D65F5A756C09 /* ZoomStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A1BC6A247228E10FAC8E58F /* ZoomStore.swift */; };
+		5353FD4AF0F7903DEDBF21A0 /* PageFindControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD65227BEC82C71B96DA3AD7 /* PageFindControllerTests.swift */; };
 		540B173565F12ADAD7822DB4 /* AgentInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 715620253137C5B53ADBDDD3 /* AgentInputTests.swift */; };
 		5422F328C243C36E548D01AA /* FaviconStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86AC937AE6AF880326D45CB6 /* FaviconStoreTests.swift */; };
 		5479CC3AB5461C9D5FCEE9CB /* MainWindowController+Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76286D4CB1EBFF996316E7B7 /* MainWindowController+Navigation.swift */; };
@@ -1385,6 +1386,7 @@
 		FBF608E3F2E7569C3033065B /* FilterListConverterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterListConverterTests.swift; sourceTree = "<group>"; };
 		FC03E7BCBD29A3CA31E6BB3B /* TabBridgeSchema.gen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBridgeSchema.gen.swift; sourceTree = "<group>"; };
 		FC8452A9EEDFBEA6C2DD96A8 /* DownloadsGapAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadsGapAPITests.swift; sourceTree = "<group>"; };
+		FD65227BEC82C71B96DA3AD7 /* PageFindControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageFindControllerTests.swift; sourceTree = "<group>"; };
 		FD7D1D02B3E5CCCD8E1A6F3E /* TabShareBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabShareBridgeHandler.swift; sourceTree = "<group>"; };
 		FE33F1BC16095EB5A431DA4D /* AppIconPreference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconPreference.swift; sourceTree = "<group>"; };
 		FEA7B781D2407BC214A591CB /* OmniboxBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OmniboxBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -2336,6 +2338,7 @@
 				67E40EDB4E5F12B521F3F99F /* MinimumFontSizeTests.swift */,
 				DD0B5CA865E43CD6C982D534 /* NavigationFailureTests.swift */,
 				26FC433BB1995D1405AE72C7 /* NotificationPolyfillTests.swift */,
+				FD65227BEC82C71B96DA3AD7 /* PageFindControllerTests.swift */,
 				BA02ED9ACD82E5C2465268E2 /* PageSignalBridgesTests.swift */,
 				39FF06F27008EF2D19F063DB /* PageSnapshotServiceFlatteningTests.swift */,
 				34EF66358C163103565EB5C8 /* PageSnapshotServiceRegionSelectionTests.swift */,
@@ -3342,6 +3345,7 @@
 				E4960068CD73F7F92562FE80 /* OmniboxBridgeHandlerTests.swift in Sources */,
 				E69063E046F883BAE8B0414F /* OnboardingSettingsTests.swift in Sources */,
 				A75FFB42294DB9565254BCDA /* PageCaptureGapAPITests.swift in Sources */,
+				5353FD4AF0F7903DEDBF21A0 /* PageFindControllerTests.swift in Sources */,
 				CB31DC61739C31BA9409191B /* PagePopupTests.swift in Sources */,
 				039166DB16625A2A84B88842 /* PageSignalBridgesTests.swift in Sources */,
 				37E02E325E3DCFB047A86F50 /* PageSnapshotServiceFlatteningTests.swift in Sources */,
