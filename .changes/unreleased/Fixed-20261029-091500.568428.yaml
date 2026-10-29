@@ -1,0 +1,3 @@
+kind: Fixed
+body: Middle-clicking or Cmd-clicking a link that opens in a new tab now opens that tab in the background.
+time: 2026-10-29T09:15:00.568428+01:00

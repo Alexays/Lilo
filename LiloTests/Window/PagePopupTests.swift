@@ -60,6 +60,22 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(openTabCount, tabs + 1)
     }
 
+    func testABackgroundNewTabLinkLeavesTheOpenerActive() throws {
+        let tabs = openTabCount
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+
+        let webView = controller.createPopupWebView(
+            configuration: engine.wkWebView.configuration,
+            requestedURL: URL(string: "https://example.com/next"),
+            opener: engine,
+            inBackground: true
+        )
+
+        XCTAssertNotNil(webView)
+        XCTAssertEqual(openTabCount, tabs + 1)
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
+    }
+
     func testSizedWindowOpenOpensAPopupOutsideTheTabList() async throws {
         let tabs = openTabCount
         try await openFromPage("width=400,height=300")

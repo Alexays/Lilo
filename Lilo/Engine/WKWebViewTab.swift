@@ -307,7 +307,7 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen else { return true }
         return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
     }
-    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, URL?, WKWindowFeatures) -> WKWebView?)?
+    var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, URL?, WKWindowFeatures, _ inBackground: Bool) -> WKWebView?)?
     /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
     var pendingDocumentPiPSize: NSSize?
     var documentPiPWebViewProvider: (@MainActor (WKWebViewConfiguration, NSSize) -> WKWebView?)?
@@ -1689,12 +1689,13 @@ extension WKWebViewTab: WKUIDelegate {
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
+            let inBackground = navigationAction.modifierFlags.contains(.command) || navigationAction.buttonNumber == Self.middleButtonNumber
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
             if !isAgentControlled, let provider = popupWebViewProvider,
-               let popup = provider(configuration, navigationAction.request.url, windowFeatures) {
+               let popup = provider(configuration, navigationAction.request.url, windowFeatures, inBackground) {
                 return popup
             }
-            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: navigationAction.modifierFlags.contains(.command))
+            delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: inBackground)
             return nil
         }
     }
