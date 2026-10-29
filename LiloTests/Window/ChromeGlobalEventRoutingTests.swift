@@ -17,7 +17,8 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         // Each load must commit, not just start, before the next one: only then is it a back-forward entry.
         for url in [first, second] {
             engine.loadURL(url)
-            await pollUntil(timeout: 5) { engine.wkWebView.backForwardList.currentItem?.url == url }
+            let committed = await pollUntil { engine.wkWebView.backForwardList.currentItem?.url == url }
+            XCTAssertTrue(committed, "\(url) never committed")
         }
         return (controller, engine, first, second)
     }
