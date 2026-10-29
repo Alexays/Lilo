@@ -6,10 +6,7 @@ import WebKit
 @MainActor
 final class PageSnapshotService {
     private let webView: WKWebView
-    /// Unique per request ("liloCapture_<uuid>"): the user content controller is shared by every tab of a data store, so a fixed
-    /// name would let one tab's `add(_:name:)` steal another's in-flight handler.
-    private var regionCaptureHandlerName: String?
-    private var pendingRegionCompletion: ((CGRect?) -> Void)?
+    private weak var regionOverlay: RegionSelectionOverlay?
     private var isCapturingFullPage = false
 
     init(webView: WKWebView) {
@@ -173,110 +170,28 @@ final class PageSnapshotService {
         return canvas
     }
 
+    /// Lets the user drag out a region of the viewport over a native overlay, so the page never sees it. `completion` gets
+    /// the region in CSS pixels, or nil once cancelled (Escape, a click without a drag, or the view leaving its window).
     func startRegionSelection(completion: @escaping (CGRect?) -> Void) {
-        // Any selection still pending on THIS tab (an abandoned overlay, or a rapid second call)
-        // must be cancelled first so its handler is never orphaned on the shared controller.
-        cancelRegionSelection()
-
-        // Hyphen-free so it can be spliced into `messageHandlers.<name>` dot-notation JS below.
-        let handlerName = "liloCapture_" + UUID().uuidString.replacingOccurrences(of: "-", with: "")
-        pendingRegionCompletion = completion
-        regionCaptureHandlerName = handlerName
-
-        let handler = RegionCaptureScriptHandler { [weak self] rect in
-            self?.finishRegionSelection(handlerName: handlerName, rect: rect)
+        regionOverlay?.finish(nil)
+        let overlay = RegionSelectionOverlay(frame: webView.bounds) { [weak webView] rect in
+            completion(rect.map { rect in
+                let zoom = webView?.pageZoom ?? 1
+                return CGRect(x: rect.minX / zoom, y: rect.minY / zoom, width: rect.width / zoom, height: rect.height / zoom)
+            })
         }
-        webView.configuration.userContentController.add(handler, name: handlerName)
-
-        let js = """
-        (function() {
-          if (document.getElementById('__liloCapture')) return;
-          var ov = document.createElement('div');
-          ov.id = '__liloCapture';
-          ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;cursor:crosshair;' +
-            'background:rgba(0,0,0,0.25);';
-          // The shadow dims everything but the selection, so the overlay itself goes clear once it shows.
-          var sel = document.createElement('div');
-          sel.style.cssText = 'position:absolute;border:2px solid rgba(74,158,255,0.9);' +
-            'box-shadow:0 0 0 100vmax rgba(0,0,0,0.25);pointer-events:none;display:none;box-sizing:border-box;';
-          ov.appendChild(sel);
-          document.documentElement.appendChild(ov);
-          var sx = 0, sy = 0, dragging = false;
-          function finish(msg) {
-            document.removeEventListener('keydown', onKey, true);
-            ov.remove();
-            window.webkit.messageHandlers.\(handlerName).postMessage(msg);
-          }
-          function onKey(e) {
-            // Cancelled from the native side, which only removes the overlay.
-            if (!ov.isConnected) { document.removeEventListener('keydown', onKey, true); return; }
-            if (e.key !== 'Escape') return;
-            e.preventDefault(); e.stopPropagation();
-            finish({cancelled:true});
-          }
-          function box(e) {
-            return {x:Math.min(e.clientX,sx), y:Math.min(e.clientY,sy),
-                    width:Math.abs(e.clientX-sx), height:Math.abs(e.clientY-sy)};
-          }
-          ov.addEventListener('pointerdown', function(e) {
-            if (e.button !== 0) return;
-            e.preventDefault(); sx = e.clientX; sy = e.clientY; dragging = true;
-            // Captured, so a release outside the page still ends the drag. Throws for a pointer that is
-            // no longer active, which only costs that guarantee.
-            try { ov.setPointerCapture(e.pointerId); } catch (_) {}
-            ov.style.background = 'transparent';
-            sel.style.display = 'block';
-            sel.style.left = sx+'px'; sel.style.top = sy+'px';
-            sel.style.width = '0'; sel.style.height = '0';
-          });
-          ov.addEventListener('pointermove', function(e) {
-            if (!dragging) return;
-            var b = box(e);
-            sel.style.left=b.x+'px'; sel.style.top=b.y+'px';
-            sel.style.width=b.width+'px'; sel.style.height=b.height+'px';
-          });
-          ov.addEventListener('pointerup', function(e) {
-            if (!dragging) return;
-            dragging = false;
-            var b = box(e);
-            finish((b.width < 4 || b.height < 4) ? {cancelled:true} : b);
-          });
-          document.addEventListener('keydown', onKey, true);
-        })();
-        """
-        // Escape only reaches the page if it has focus, and the capture is usually started from the chrome.
-        webView.window?.makeFirstResponder(webView)
-        webView.evaluateJavaScript(js)
+        regionOverlay = overlay
+        // The overlay keeps page hover from following the pointer; this drops the hover already there.
+        webView.liloClearPageHover()
+        webView.addSubview(overlay)
     }
 
-    /// Cancels this tab's region selection: removes the overlay and this request's handler from the shared controller, and calls
-    /// the completion with nil. Must run before a new selection, on navigation and on teardown: the controller outlives page loads.
+    /// Cancels this tab's region selection, calling its completion with nil. Runs on navigation and teardown.
     func cancelRegionSelection() {
-        guard let handlerName = regionCaptureHandlerName else { return }
-        webView.evaluateJavaScript(
-            "(function(){var o=document.getElementById('__liloCapture');if(o)o.remove();})()"
-        )
-        let completion = pendingRegionCompletion
-        removeRegionCaptureHandler(named: handlerName)
-        DispatchQueue.main.async { completion?(nil) }
+        regionOverlay?.finish(nil)
     }
 
-    /// Routes a result from the in-page overlay. Ignores messages tied to a handler name that has
-    /// since been superseded (e.g. a stale in-flight message racing a `cancelRegionSelection()`).
-    private func finishRegionSelection(handlerName: String, rect: CGRect?) {
-        guard handlerName == regionCaptureHandlerName else { return }
-        let completion = pendingRegionCompletion
-        removeRegionCaptureHandler(named: handlerName)
-        DispatchQueue.main.async { completion?(rect) }
-    }
-
-    private func removeRegionCaptureHandler(named handlerName: String) {
-        webView.configuration.userContentController.removeScriptMessageHandler(forName: handlerName)
-        regionCaptureHandlerName = nil
-        pendingRegionCompletion = nil
-    }
-
-    /// `rect` is in CSS pixels, as the overlay measured it; the snapshot wants view points.
+    /// `rect` is in CSS pixels; the snapshot wants view points.
     func takeRegionSnapshot(rect: CGRect) async -> NSImage? {
         let zoom = webView.pageZoom
         let config = WKSnapshotConfiguration()
@@ -285,21 +200,128 @@ final class PageSnapshotService {
     }
 }
 
-// MARK: - RegionCaptureScriptHandler
+// MARK: - RegionSelectionOverlay
 
-private final class RegionCaptureScriptHandler: NSObject, WKScriptMessageHandler {
-    private let completion: (CGRect?) -> Void
+/// Covers the web view during a region selection: dims it, draws the dragged rectangle and reports it in view points.
+private final class RegionSelectionOverlay: NSView {
+    private var completion: ((CGRect?) -> Void)?
+    private var keyMonitor: Any?
+    private var origin: NSPoint?
+    private var selection = CGRect.zero
+    /// Dims everything around its hole, as a border at least as wide as the view, like CSS's `box-shadow: 0 0 0 100vmax`.
+    private let dim = CALayer()
+    private let outline = CALayer()
 
-    init(completion: @escaping (CGRect?) -> Void) { self.completion = completion }
+    init(frame: NSRect, completion: @escaping (CGRect?) -> Void) {
+        self.completion = completion
+        super.init(frame: frame)
+        autoresizingMask = [.width, .height]
+        wantsLayer = true
+        layer?.masksToBounds = true
+        dim.borderColor = CGColor(gray: 0, alpha: 0.25)
+        outline.borderWidth = 2
+        outline.borderColor = CGColor(srgbRed: 74 / 255, green: 158 / 255, blue: 1, alpha: 0.9)
+        outline.isHidden = true
+        layer?.addSublayer(dim)
+        layer?.addSublayer(outline)
+        updateLayers()
+    }
 
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let body = message.body as? [String: Any] else { completion(nil); return }
-        if let cancelled = body["cancelled"] as? Bool, cancelled { completion(nil); return }
-        guard let x = (body["x"] as? NSNumber)?.doubleValue,
-              let y = (body["y"] as? NSNumber)?.doubleValue,
-              let w = (body["width"] as? NSNumber)?.doubleValue,
-              let h = (body["height"] as? NSNumber)?.doubleValue else { completion(nil); return }
-        completion(CGRect(x: x, y: y, width: w, height: h))
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override var isFlipped: Bool { true }
+
+    /// Removes the overlay and reports `rect`, once.
+    func finish(_ rect: CGRect?) {
+        guard let completion else { return }
+        self.completion = nil
+        removeFromSuperview()
+        DispatchQueue.main.async { completion(rect) }
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let hit = super.hitTest(point) else { return nil }
+        // WebKit only passes a move on to the page when this hit test lands inside the web view: landing outside keeps
+        // hover and cursor changes off the page under the overlay, as when the overlay was a page element.
+        if let type = NSApp.currentEvent?.type, type == .mouseMoved || type == .mouseEntered { return window?.contentView }
+        return hit
+    }
+
+    // A cursor rect, as WebKit never sets the page's cursor over one.
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+    }
+
+    override func layout() {
+        super.layout()
+        updateLayers()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        // Leaving the window it was shown in means the tab is gone from view: the selection ends with it.
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+            self.keyMonitor = nil
+            finish(nil)
+            return
+        }
+        guard window != nil else { return }
+        // A monitor, as key focus is usually in the chrome; an IME composition keeps its Escape.
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53 else { return event }
+            let eventWindow = event.window
+            let cancelled = MainActor.assumeIsolated {
+                guard let self, eventWindow === self.window,
+                      (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
+                self.finish(nil)
+                return true
+            }
+            return cancelled ? nil : event
+        }
+    }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        finish(nil)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        origin = point
+        selection = CGRect(origin: point, size: .zero)
+        outline.isHidden = false
+        updateLayers()
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let origin else { return }
+        let point = convert(event.locationInWindow, from: nil)
+        selection = CGRect(x: min(origin.x, point.x), y: min(origin.y, point.y), width: abs(point.x - origin.x), height: abs(point.y - origin.y))
+            .intersection(bounds)
+        updateLayers()
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard origin != nil else { return }
+        mouseDragged(with: event)
+        finish(selection.width < 4 || selection.height < 4 ? nil : selection.integral)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    // Swallowed, so no page menu or middle click acts under the overlay.
+    override func rightMouseDown(with event: NSEvent) {}
+    override func otherMouseDown(with event: NSEvent) {}
+
+    private func updateLayers() {
+        let reach = max(bounds.width, bounds.height)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        dim.frame = selection.insetBy(dx: -reach, dy: -reach)
+        dim.borderWidth = reach
+        outline.frame = selection
+        CATransaction.commit()
     }
 }
 

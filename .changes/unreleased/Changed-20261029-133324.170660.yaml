@@ -1,0 +1,3 @@
+kind: Changed
+body: Capturing a selected area no longer adds anything to the page that a site could detect, and Escape cancels it wherever keyboard focus is.
+time: 2026-10-29T13:33:24.17066+01:00

@@ -1365,8 +1365,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
-            // A pending region-selection overlay lives in the outgoing document; the new page won't
-            // carry it forward, so cancel it now rather than leak its handler on the shared controller.
+            // A pending region selection is a selection of the outgoing page.
             tab.cancelRegionSelection()
         }
     }
