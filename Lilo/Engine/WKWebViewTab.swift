@@ -977,11 +977,14 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Chrome's rule for a new tab: Cmd or the middle button sends it behind. WebKit gives a page's own window.open no event,
-    /// where Chrome reads the release its handler runs for, so `click`, the window's last one, stands in when the page acts on a gesture.
+    /// where Chrome reads the input event being handled. The window's last release, `click`, stands in for it while the page is
+    /// still handling a mouse event: the open runs from that click's handler, not from a timer or a later load.
     static func opensNewTabInBackground(_ action: WKNavigationAction, after click: Click?, now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Bool {
         if action.modifierFlags.contains(.command) || action.buttonNumber == middleButtonNumber { return true }
         guard action.navigationType == .other, let click, now - click.uptime < 1,
-              WebViewPrivateAccessors(action).bool("_isUserInitiated") ?? true else { return false }
+              WebViewPrivateAccessors(action).bool("_isUserInitiated") ?? true,
+              action.sourceFrame.webView.flatMap({ WebViewPrivateAccessors($0).isProcessingMouseEvents() }) ?? true
+        else { return false }
         return click.modifierFlags.contains(.command) || click.buttonNumber == 2
     }
 

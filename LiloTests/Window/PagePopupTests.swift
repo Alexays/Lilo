@@ -76,26 +76,43 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
     }
 
-    func testAPageOpeningATabFromAMiddleOrCommandClickLeavesTheOpenerActive() async throws {
-        let now = ProcessInfo.processInfo.systemUptime
-        controller.lastClick = WKWebViewTab.Click(uptime: now, buttonNumber: 2, modifierFlags: [])
-        try await openFromPage("")
+    /// A real press on the opener's page, whose own click handlers open a tab as X's trending list does. Sent to the web
+    /// view directly, the press never reaches the window's monitor: the test records the release it would have.
+    private func clickOpener(_ button: AgentInput.MouseButton, modifiers: NSEvent.ModifierFlags = []) async throws {
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+        let window = try XCTUnwrap(controller.window)
+        if engine.view.window == nil {
+            window.alphaValue = 0
+            window.orderFrontRegardless()
+            window.setFrame(NSRect(x: -20000, y: -20000, width: 800, height: 600), display: false)
+            engine.view.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+            window.contentView?.addSubview(engine.view)
+        }
+        _ = try await engine.wkWebView.evaluateJavaScript("document.documentElement.style.height = '100%'; onclick = onauxclick = () => open(''); true")
+        let tabs = openTabCount
+        controller.lastClick = WKWebViewTab.Click(
+            uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: button == .middle ? 2 : 0, modifierFlags: modifiers
+        )
+        await AgentInput.click(engine.wkWebView, at: CGPoint(x: 100, y: 100), button: button, modifiers: modifiers)
+        await pollUntil { self.openTabCount > tabs }
+    }
+
+    func testATabAPageOpensFromAMiddleOrCommandClickOpensBehind() async throws {
+        try await clickOpener(.middle)
         XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
 
-        controller.lastClick = WKWebViewTab.Click(uptime: now, buttonNumber: 0, modifierFlags: .command)
-        try await openFromPage("")
+        try await clickOpener(.left, modifiers: .command)
         XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
     }
 
-    func testAPageOpeningATabFromAPlainOrOldClickShowsIt() async throws {
-        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: 0, modifierFlags: [])
-        try await openFromPage("")
+    func testATabAPageOpensFromAPlainClickOrOutsideAClickHandlerComesForward() async throws {
+        try await clickOpener(.left)
         XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id)
 
         controller.tabManager.activateTabRuntime(id: opener.id)
-        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime - 5, buttonNumber: 2, modifierFlags: [])
+        controller.lastClick = WKWebViewTab.Click(uptime: ProcessInfo.processInfo.systemUptime, buttonNumber: 2, modifierFlags: [])
         try await openFromPage("")
-        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id, "a middle click seconds ago is not the one the page acts on")
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id, "the page handles no click: the open is its own, not the user's")
     }
 
     func testSizedWindowOpenOpensAPopupOutsideTheTabList() async throws {

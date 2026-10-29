@@ -35,6 +35,16 @@ struct WebViewPrivateAccessors {
         return unsafeBitCast(imp, to: IntMethod.self)(object, selector)
     }
 
+    /// Whether the page has yet to finish handling a mouse event sent to it: WebKit runs the block at once when none is in
+    /// flight. Nil when WebKit dropped the selector.
+    func isProcessingMouseEvents() -> Bool? {
+        guard let (selector, imp) = method("_doAfterProcessingAllPendingMouseEvents:") else { return nil }
+        typealias BlockMethod = @convention(c) (NSObject, Selector, @escaping @convention(block) () -> Void) -> Void
+        var processing = true
+        unsafeBitCast(imp, to: BlockMethod.self)(object, selector) { processing = false }
+        return processing
+    }
+
     /// Reads a private URL-returning selector (e.g. `_committedURL`) as its absolute string.
     func urlString(_ name: String) -> String? {
         guard let (selector, imp) = method(name) else { return nil }
