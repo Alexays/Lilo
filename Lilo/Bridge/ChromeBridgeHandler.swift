@@ -152,7 +152,7 @@ final class ChromeBridgeHandler: BridgeHandler {
                 break
             }
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
-            windowController?.applyWindowMaterial(glass: message.string("material") == "glass")
+            windowController?.applyWindowMaterial(message.string("material"))
 
         case "setWallpaperColorWatch":
             windowController?.setWallpaperColorWatch(message.bool("enabled"))

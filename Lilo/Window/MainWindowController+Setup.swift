@@ -233,7 +233,9 @@ extension MainWindowController {
     }
 
     /// Puts the window on glass, or back on its solid color. Changes only when the shown Space's material does.
-    func applyWindowMaterial(glass: Bool) {
+    func applyWindowMaterial(_ material: String?) {
+        windowFrameView?.setGrain(material == "grain")
+        let glass = material == "glass"
         guard glass != (glassView != nil), let window, let contentView = window.contentView else { return }
         // The glass fades with the frame and the sidebar, over the same time.
         let fade = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : WindowFrameView.colorFadeDuration

@@ -74,6 +74,9 @@ final class WindowFrameView: NSView {
     private let topRightCorner = CAShapeLayer()
     private let bottomLeftCorner = CAShapeLayer()
     private let bottomRightCorner = CAShapeLayer()
+    /// Film grain over the bands and bites for the Grain material, masked off the content hole. Built on first use.
+    private var grainLayer: CALayer?
+    private let grainMask = CAShapeLayer()
 
     private var bandLayers: [CALayer] { [leftBand, rightBand, topBand, bottomBand] }
     private var cornerLayers: [CAShapeLayer] { [topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner] }
@@ -143,6 +146,51 @@ final class WindowFrameView: NSView {
         CATransaction.commit()
     }
 
+    /// Shows or hides the grain, fading with the frame color.
+    func setGrain(_ visible: Bool) {
+        guard visible != ((grainLayer?.opacity ?? 0) > 0) else { return }
+        let grain = grainLayer ?? makeGrainLayer()
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(Self.colorFadeDuration)
+        CATransaction.setAnimationTimingFunction(Self.colorFadeTiming)
+        grain.opacity = visible ? 1 : 0
+        CATransaction.commit()
+    }
+
+    private func makeGrainLayer() -> CALayer {
+        let grain = CALayer()
+        if let tile = Self.grainTile() {
+            grain.backgroundColor = NSColor(patternImage: NSImage(cgImage: tile, size: NSSize(width: tile.width, height: tile.height))).cgColor
+        }
+        // Blended like the chrome sidebar's `background-blend-mode: overlay`, so both read as one surface.
+        grain.compositingFilter = "overlayBlendMode"
+        grain.opacity = 0
+        grainMask.fillRule = .evenOdd
+        grain.mask = grainMask
+        layer?.addSublayer(grain)
+        grainLayer = grain
+        applyLayout(animated: false)
+        return grain
+    }
+
+    /// Gray noise matching the chrome's `grain.svg`: contrast 2.4 around mid-gray, at 42% alpha (premultiplied).
+    private static func grainTile() -> CGImage? {
+        let side = 160
+        var pixels = [UInt8](repeating: 0, count: side * side * 2)
+        for index in stride(from: 0, to: pixels.count, by: 2) {
+            let noise = (Double.random(in: 0...1) + .random(in: 0...1) + .random(in: 0...1)) / 3
+            let gray = min(max(2.4 * noise - 0.7, 0), 1)
+            pixels[index] = UInt8(gray * 0.42 * 255)
+            pixels[index + 1] = UInt8(0.42 * 255)
+        }
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
+        return CGImage(
+            width: side, height: side, bitsPerComponent: 8, bitsPerPixel: 16, bytesPerRow: side * 2,
+            space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent
+        )
+    }
+
     private func applyLayout(animated: Bool, completion: (() -> Void)? = nil) {
         let geometry = WindowFrameGeometry(
             size: bounds.size,
@@ -163,6 +211,7 @@ final class WindowFrameView: NSView {
                 sublayer.removeAnimation(forKey: "position")
                 sublayer.removeAnimation(forKey: "bounds")
             }
+            grainMask.removeAnimation(forKey: "path")
         }
         if let completion { CATransaction.setCompletionBlock(completion) }
         leftBand.frame = geometry.leftBand
@@ -173,6 +222,15 @@ final class WindowFrameView: NSView {
         topRightCorner.frame = geometry.topRightCorner
         bottomLeftCorner.frame = geometry.bottomLeftCorner
         bottomRightCorner.frame = geometry.bottomRightCorner
+        if let grainLayer {
+            grainLayer.frame = bounds
+            grainMask.frame = bounds
+            // Sweeps with the bands during a toggle: the hole is a rounded rect cut out of the whole view.
+            let path = CGMutablePath()
+            path.addRect(bounds)
+            path.addRoundedRect(in: geometry.contentHole, cornerWidth: geometry.cornerRadius, cornerHeight: geometry.cornerRadius)
+            grainMask.path = path
+        }
         CATransaction.commit()
     }
 
