@@ -37,6 +37,7 @@ let _appIcons = $state.raw<{ id: string; dataURL: string }[]>([]);
 let _agentClients = $state.raw<BridgeAgentClientsSnapshot>({ clients: [], allowed: [] });
 let _updater = $state.raw<BridgeUpdaterStatus | null>(null);
 let _readyUpdate = $state<string | null>(null);
+let _restartingForUpdate = $state(false);
 let _shortcuts = $state.raw<BridgeShortcutGroup[]>([]);
 let _controlTabOrder = $state<BridgeControlTabOrder>("recent");
 let _recordingShortcut = $state<string | null>(null);
@@ -87,6 +88,8 @@ export function initSettingsStore(): void {
 	});
 	on("updateReady", (data) => {
 		_readyUpdate = data.version;
+		// Lilo is still running: a cancelled quit resends the update, which can be restarted again.
+		_restartingForUpdate = false;
 		// The update shows the chosen app icon, which only reaches the chrome with the settings.
 		if (data.version && _appIcons.length === 0) {
 			settingsActions.load();
@@ -210,6 +213,17 @@ export function getUpdaterStatus(): BridgeUpdaterStatus | null {
 /** The version of the downloaded update waiting for a relaunch, null when none is shown. */
 export function getReadyUpdate(): string | null {
 	return _readyUpdate;
+}
+
+/** True from the Restart click until Lilo quits or the quit is cancelled. */
+export function isRestartingForUpdate(): boolean {
+	return _restartingForUpdate;
+}
+
+export function restartForUpdate(): void {
+	if (_restartingForUpdate) return;
+	_restartingForUpdate = true;
+	settingsActions.installUpdate();
 }
 
 /** The menus' keyboard shortcuts, loaded when their page opens. */
