@@ -42,11 +42,15 @@ final class PiPController {
     func restoreFromAuto() {
         guard didAutoEnter else { return }
         didAutoEnter = false
-        if isActive, toggleNatively() { return }
-        webView.evaluateJavaScript(Self.exitScript, completionHandler: nil)
+        if webView.responds(to: Self.closeAllPresentations) {
+            webView.perform(Self.closeAllPresentations)
+        } else if isActive {
+            _ = toggleNatively()
+        }
     }
 
     private static let nativeToggle = NSSelectorFromString("_togglePictureInPicture")
+    private static let closeAllPresentations = NSSelectorFromString("_closeAllMediaPresentations")
 
     private func toggleNatively() -> Bool {
         guard webView.responds(to: Self.nativeToggle) else { return false }
@@ -55,10 +59,11 @@ final class PiPController {
     }
 
     /// Only reached when WebKit declines to designate a predominant video; the log tells how often
-    /// that happens on real pages.
+    /// that happens on real pages. An isolated world shares the page's DOM without the page seeing the script, and
+    /// `evaluateJavaScript` lends it the user gesture PiP needs.
     private func toggleUsingPageScript(markAutoEntered: Bool = false) {
-        webView.evaluateJavaScript(Self.toggleScript) { [weak self] result, error in
-            let state = error == nil ? (result as? String ?? "unknown") : "error"
+        webView.evaluateJavaScript(Self.toggleScript, in: nil, in: .defaultClient) { [weak self] result in
+            let state = (try? result.get()).map { $0 as? String ?? "unknown" } ?? "error"
             Self.logger.info("page-script fallback: \(state, privacy: .public)")
             guard state == "entered" || state == "requested" else { return }
             if markAutoEntered { self?.didAutoEnter = true }
@@ -100,22 +105,6 @@ final class PiPController {
       }
       target.requestPictureInPicture().catch(() => {});
       return 'requested';
-    })()
-    """
-
-    private static let exitScript = """
-    (() => {
-      const active = Array.from(document.querySelectorAll('video'))
-        .find((video) => video.webkitPresentationMode === 'picture-in-picture');
-      if (active && typeof active.webkitSetPresentationMode === 'function') {
-        active.webkitSetPresentationMode('inline');
-        return 'exited';
-      }
-      if (document.pictureInPictureElement && document.exitPictureInPicture) {
-        document.exitPictureInPicture().catch(() => {});
-        return 'requested';
-      }
-      return 'none';
     })()
     """
 }
