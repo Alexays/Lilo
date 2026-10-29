@@ -130,4 +130,42 @@ final class PiPControllerTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(500))
         XCTAssertTrue(tab.pip.isActive)
     }
+
+    func testThePiPWindowsReturnButtonShowsATabOfAnotherSpace() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        addTeardownBlock { @MainActor in browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let videoSpace = try context.spaceManager.createSpace(name: "Video", profileId: profileId)
+        let otherSpace = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let window = makeTestWindow(context, showing: videoSpace.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        await show(engine, Self.playingVideo)
+        let host = try XCTUnwrap(engine.view.window)
+        window.contentContainerView.frame = host.contentView!.bounds
+        host.contentView!.addSubview(window.contentContainerView)
+        window.showContentView(for: engine)
+        try await play(engine)
+        engine.togglePictureInPicture()
+        let entered = await pollUntil(timeout: 5) { engine.pip.isActive }
+        XCTAssertTrue(entered)
+        try await Task.sleep(for: .seconds(2))
+        window.switchToSpace(otherSpace.id)
+        XCTAssertNil(engine.view.window)
+
+        // What the PiP window's return button does: AVKit asks WebKit's presentation interface whether it may close.
+        func presentation(_ controller: NSViewController?) -> NSObject? {
+            guard let controller else { return nil }
+            if NSStringFromClass(type(of: controller)).contains("PIP") { return controller.value(forKey: "delegate") as? NSObject }
+            return controller.children.lazy.compactMap { presentation($0) }.first ?? presentation(controller.presentedViewControllers?.first)
+        }
+        let interface = try XCTUnwrap(NSApp.windows.lazy.compactMap { presentation($0.contentViewController) }.first)
+        _ = interface.perform(NSSelectorFromString("pipShouldClose:"), with: nil)
+
+        let returned = await pollUntil(timeout: 5) { !engine.pip.isActive }
+        XCTAssertTrue(returned, "the video goes back into its tab")
+        XCTAssertEqual(window.tabManager.currentSpaceId, videoSpace.id)
+        XCTAssertEqual(window.tabManager.activeOpenTabId, tab.id)
+    }
 }

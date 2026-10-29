@@ -429,7 +429,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
             little.window.makeKeyAndOrderFront(nil)
             return NSApp.activate()
         }
-        activateTabStateFirst(id: tab.id)
+        // The tab may live in a Space this window is not showing: WebKit's return from PiP waits for it to show.
+        switchToRecentTab(tab.id)
         window?.makeKeyAndOrderFront(nil)
         // The request usually arrives while another app is frontmost (a PiP return click, a
         // notification-driven focus): ordering the window front within an inactive app isn't visible.
