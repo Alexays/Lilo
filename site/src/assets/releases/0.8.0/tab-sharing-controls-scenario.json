@@ -1,0 +1,262 @@
+{
+  "evidence": [
+    "lilo-ui/src/components/page/TabSharePicker.svelte",
+    "lilo-ui/src/components/sidebar/CallCard.svelte",
+    "Lilo/TabShare/MainWindowController+TabShare.swift",
+    "Lilo/TabShare/TabShareSessionController.swift",
+    "Lilo/Engine/MediaControl.swift",
+    "Lilo/Window/MainWindowController+Media.swift",
+    "Lilo/App/MainMenu.swift",
+    "Lilo/Window/MainWindowController+Input.swift"
+  ],
+  "fixtures": [
+    {
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Project brief</title><style>*{box-sizing:border-box}body{margin:0;background:#faf7f0;color:#27352e;font-family:system-ui,sans-serif;padding:48px}main{max-width:680px;margin:auto}.eyebrow{font-size:12px;font-weight:650;letter-spacing:.16em;color:#626d61}h1{font-size:48px;letter-spacing:-.05em;line-height:1.08;margin:28px 0 18px}p{font-size:19px;line-height:1.6;color:#566055;max-width:520px}.rule{height:1px;background:#d7ddce;margin:36px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}h2{font-size:15px;margin:0 0 12px}.grid p{font-size:16px;margin:0}.tag{display:inline-block;margin-top:34px;padding:9px 14px;border-radius:20px;background:#e6eddd;font-size:13px}</style></head><body><main><div class=\"eyebrow\">STUDIO NOTES / 01</div><h1>A little more room<br>for good ideas.</h1><p>A simpler workspace for the things that deserve your attention.</p><div class=\"rule\"></div><div class=\"grid\"><section><h2>The idea</h2><p>Bring the essentials together.<br>Give everything else some space.</p></section><section><h2>The next step</h2><p>Review the direction.<br>Choose what to explore first.</p></section></div><span class=\"tag\">Project brief</span></main></body></html>",
+      "name": "brief.html"
+    },
+    {
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Meeting agenda</title><style>*{box-sizing:border-box}body{margin:0;background:#eef5f0;color:#203c32;font-family:system-ui,sans-serif;padding:48px}main{max-width:680px;margin:auto}.eyebrow{font-size:12px;font-weight:650;letter-spacing:.16em;color:#527262}h1{font-size:48px;letter-spacing:-.05em;margin:28px 0 12px}header p{font-size:19px;color:#526b5e;margin-bottom:36px}.item{display:grid;grid-template-columns:46px 1fr;gap:16px;padding:23px 0;border-top:1px solid #cbdccf}.number{font-size:14px;color:#60816d;padding-top:5px}h2{font-size:24px;letter-spacing:-.025em;margin:0 0 8px}.item p{font-size:16px;line-height:1.5;color:#526b5e;margin:0}</style></head><body><main><header><div class=\"eyebrow\">STUDIO NOTES / 02</div><h1>Make room for what’s next.</h1><p>Meeting agenda · A clear path from idea to action</p></header><section class=\"item\"><span class=\"number\">01</span><div><h2>Review the direction</h2><p>What feels useful? What could be simpler?</p></div></section><section class=\"item\"><span class=\"number\">02</span><div><h2>Choose one focus</h2><p>Agree on the idea to explore together.</p></div></section><section class=\"item\"><span class=\"number\">03</span><div><h2>Set the next step</h2><p>Leave with a small, practical action.</p></div></section></main></body></html>",
+      "name": "agenda.html"
+    },
+    {
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Presentation room</title><style>*{box-sizing:border-box}body{margin:0;background:#f8f9fb;color:#263349;font-family:system-ui,sans-serif;padding:32px}main{max-width:720px;margin:auto}.eyebrow{font-size:11px;font-weight:650;letter-spacing:.15em;color:#69758a}h1{font-size:32px;letter-spacing:-.04em;margin:14px 0 8px}.intro{font-size:15px;color:#687486;margin:0 0 22px}.stage{height:350px;position:relative;border:1px solid #dce2ea;border-radius:18px;overflow:hidden;background:#edf1f6}video{display:block;width:100%;height:100%;object-fit:contain;background:#edf1f6}.placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none;color:#64738a}.placeholder[hidden]{display:none}.placeholder strong{font-size:20px;font-weight:550}.placeholder p{font-size:14px;line-height:1.6;margin:10px 0 0}.controls{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:22px}#status{font-size:14px;color:#52647b}button{font:600 14px system-ui;color:white;background:#355fc7;border:0;border-radius:10px;padding:13px 20px;cursor:pointer}button:disabled{background:#dfe5ef;color:#65758e;cursor:default}button:focus-visible{outline:3px solid #92b2ff;outline-offset:3px}#quiet{position:fixed;right:20px;bottom:16px;width:72px;height:30px}</style></head><body><main><div class=\"eyebrow\">STUDIO / LOCAL PRESENTATION</div><h1>Presentation room</h1><p class=\"intro\">Local preview · Camera and microphone off</p><div class=\"stage\"><video id=\"preview\" autoplay muted playsinline aria-label=\"Live preview of the shared tab\"></video><div id=\"placeholder\" class=\"placeholder\"><strong id=\"placeholder-title\">A clear view of your ideas.</strong><p>Choose a tab to preview your presentation.</p></div></div><div class=\"controls\"><span id=\"status\" role=\"status\">Ready to share</span><button id=\"share\" type=\"button\">Share a tab</button></div></main><div id=\"quiet\" aria-hidden=\"true\"></div><script>const preview=document.getElementById('preview');const share=document.getElementById('share');const status=document.getElementById('status');const placeholder=document.getElementById('placeholder');const placeholderTitle=document.getElementById('placeholder-title');let stream=null;function showStopped(){delete preview.dataset.live;preview.srcObject=null;placeholder.hidden=false;placeholderTitle.textContent='Your presentation is still open.';placeholder.querySelector('p').textContent='Share another tab whenever you’re ready.';status.textContent='Sharing stopped';share.disabled=false;}function endPresentation(){if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;showStopped();}if(navigator.mediaSession){navigator.mediaSession.setActionHandler('hangup',endPresentation);}preview.addEventListener('loadeddata',()=>{if(stream&&stream.getVideoTracks()[0].readyState==='live'){placeholder.hidden=true;status.textContent='Sharing live';preview.dataset.live='true';}});share.addEventListener('click',async()=>{try{stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});share.disabled=true;const track=stream.getVideoTracks()[0];track.addEventListener('ended',()=>{stream=null;showStopped();},{once:true});preview.srcObject=stream;await preview.play();}catch(error){status.textContent=error.name==='NotAllowedError'?'Ready to share':'Unable to start sharing';share.disabled=false;}});</script></body></html>",
+      "name": "room.html"
+    }
+  ],
+  "goal": "Choose Project brief using the real tab picker's previews and search, share it into a live local preview, switch the stream to Meeting agenda from the call card, then stop sharing while the presentation room stays open.",
+  "id": "tab-sharing-controls",
+  "posterCheckpoint": "agenda-sharing-preview",
+  "settings": [
+    { "key": "locale", "value": "en" },
+    { "key": "tabPosition", "value": "left" },
+    { "key": "autoPictureInPicture", "value": "false" }
+  ],
+  "steps": [
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": { "selector": "#share", "surface": "page", "text": "" },
+      "type": "click"
+    },
+    {
+      "id": "picker-open",
+      "predicate": {
+        "kind": "visible",
+        "target": {
+          "selector": ".tab-share-panel[role='dialog']",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "id": "brief-preview-loaded",
+      "predicate": {
+        "comparison": "greater",
+        "kind": "property",
+        "name": "naturalWidth",
+        "target": {
+          "selector": "[data-share-tab-id='{{tab:brief}}'] .tab-share-thumb img",
+          "surface": "chrome",
+          "text": ""
+        },
+        "value": 0
+      },
+      "type": "assert"
+    },
+    {
+      "id": "requesting-tab-excluded",
+      "predicate": {
+        "kind": "absent",
+        "target": {
+          "selector": "[data-share-tab-id='{{tab:room}}']",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "replace": true,
+      "target": {
+        "selector": ".tab-share-search input[type='search']",
+        "surface": "chrome",
+        "text": ""
+      },
+      "text": "brief",
+      "type": "type"
+    },
+    {
+      "id": "search-finds-brief",
+      "predicate": {
+        "equals": 1,
+        "kind": "count",
+        "target": {
+          "selector": ".tab-share-card.selected[data-share-tab-id='{{tab:brief}}']:only-child",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    { "durationMs": 1000, "type": "hold" },
+    { "chord": "Return", "surface": "chrome", "type": "key" },
+    {
+      "id": "brief-shared",
+      "predicate": { "kind": "shared-tab", "tab": "brief" },
+      "type": "assert"
+    },
+    {
+      "id": "live-stream-delivered",
+      "predicate": {
+        "comparison": "greater",
+        "kind": "property",
+        "name": "videoWidth",
+        "target": {
+          "selector": "#preview[data-live='true']",
+          "surface": "page",
+          "text": ""
+        },
+        "value": 0
+      },
+      "type": "assert"
+    },
+    {
+      "id": "call-card-names-brief",
+      "predicate": {
+        "includes": "Sharing Project brief",
+        "kind": "text",
+        "target": {
+          "selector": ".call-card .share-row .call-title",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    { "durationMs": 1000, "type": "hold" },
+    { "selector": "showPreviousTab:", "type": "menu" },
+    {
+      "id": "share-shown-tab-available",
+      "predicate": {
+        "kind": "visible",
+        "target": {
+          "selector": ".call-card .share-instead",
+          "surface": "chrome",
+          "text": "Share this tab"
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": {
+        "selector": ".call-card .share-instead",
+        "surface": "chrome",
+        "text": "Share this tab"
+      },
+      "type": "click"
+    },
+    {
+      "id": "share-switched-to-agenda",
+      "predicate": { "kind": "shared-tab", "tab": "agenda" },
+      "type": "assert"
+    },
+    { "selector": "showNextTab:", "type": "menu" },
+    {
+      "id": "preview-keeps-playing",
+      "predicate": {
+        "comparison": "equals",
+        "kind": "property",
+        "name": "paused",
+        "target": { "selector": "#preview", "surface": "page", "text": "" },
+        "value": false
+      },
+      "type": "assert"
+    },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": { "selector": "#quiet", "surface": "page", "text": "" },
+      "type": "click"
+    },
+    {
+      "id": "stream-remains-live",
+      "predicate": {
+        "includes": "Sharing live",
+        "kind": "text",
+        "target": { "selector": "#status", "surface": "page", "text": "" }
+      },
+      "type": "assert"
+    },
+    {
+      "id": "agenda-sharing-preview",
+      "predicate": {
+        "includes": "Sharing Meeting agenda",
+        "kind": "text",
+        "target": {
+          "selector": ".call-card .share-row .call-title",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    { "durationMs": 2000, "type": "hold" },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": {
+        "selector": ".call-card .share-row button[aria-label='Stop sharing']",
+        "surface": "chrome",
+        "text": ""
+      },
+      "type": "click"
+    },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": { "selector": "#quiet", "surface": "page", "text": "" },
+      "type": "click"
+    },
+    {
+      "id": "sharing-ended",
+      "predicate": { "kind": "shared-tab", "tab": "" },
+      "type": "assert"
+    },
+    {
+      "id": "call-card-share-cleared",
+      "predicate": {
+        "kind": "absent",
+        "target": {
+          "selector": ".call-card .share-row",
+          "surface": "chrome",
+          "text": ""
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "id": "preview-receives-share-ended",
+      "predicate": {
+        "includes": "Sharing stopped",
+        "kind": "text",
+        "target": { "selector": "#status", "surface": "page", "text": "" }
+      },
+      "type": "assert"
+    },
+    { "durationMs": 2000, "type": "hold" }
+  ],
+  "tabs": [
+    { "id": "brief", "page": "brief.html" },
+    { "id": "agenda", "page": "agenda.html" },
+    { "id": "room", "page": "room.html" }
+  ]
+}

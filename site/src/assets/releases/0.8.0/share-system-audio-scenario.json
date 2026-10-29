@@ -1,0 +1,125 @@
+{
+  "evidence": [
+    "Lilo/TabShare/TabShareBridge.swift",
+    "Lilo/TabShare/MainWindowController+TabShare.swift",
+    "Lilo/TabShare/SystemAudioTap.swift",
+    "lilo-ui/src/components/page/TabSharePicker.svelte",
+    "lilo-ui/src/lib/i18n/locales/en.json"
+  ],
+  "fixtures": [
+    {
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Morning light · Storyboard</title><style>*{box-sizing:border-box}body{margin:0;background:#f7f5ef;color:#243b36;font-family:system-ui,sans-serif;padding:48px}main{max-width:760px;margin:auto}.eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#576f66}h1{font-size:42px;letter-spacing:-.04em;margin:18px 0 12px}p{font-size:17px;line-height:1.6;color:#576f66}.scene{margin-top:32px;height:230px;border-radius:20px;background:linear-gradient(145deg,#d9e8ce,#a9c8b2);display:flex;align-items:end;padding:28px}.scene span{font-size:26px;font-weight:600;letter-spacing:-.03em}.details{display:flex;gap:48px;margin-top:28px}.details p{font-size:14px}.details strong{display:block;color:#243b36;margin-bottom:5px}</style></head><body><main><div class=\"eyebrow\">Creative studio / Brand film</div><h1>Morning light</h1><p>A fresh start, told through small everyday moments.</p><div class=\"scene\"><span>Make room for a slower morning.</span></div><div class=\"details\"><p><strong>Picture</strong>Soft light. Natural movement.</p><p><strong>Sound</strong>Warm piano. A gentle rhythm.</p></div></main></body></html>",
+      "name": "storyboard.html"
+    },
+    {
+      "html": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Film review</title><style>*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:#202d40;font-family:system-ui,sans-serif;padding:48px}main{max-width:680px;margin:auto}.eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#65748a}h1{font-size:44px;letter-spacing:-.045em;margin:24px 0 14px}p{font-size:18px;line-height:1.6;color:#65748a;max-width:530px}.card{background:white;border:1px solid #e1e6ee;border-radius:22px;padding:30px;margin-top:32px}h2{font-size:21px;margin:0 0 10px}.card p{font-size:16px;margin:0 0 26px}button{font:600 16px system-ui,sans-serif;color:white;background:#365acb;border:0;border-radius:12px;padding:15px 22px;cursor:pointer}button:focus-visible{outline:3px solid #9bb4ff;outline-offset:4px}#status{font-size:14px;margin:20px 0 0;min-height:23px}video{display:block;width:100%;margin-top:24px;border-radius:14px}video[hidden]{display:none}</style></head><body><main><div class=\"eyebrow\">Creative studio / Review room</div><h1>See it. Hear it. Together.</h1><p>Review the picture, music and finishing touches for Morning light.</p><section class=\"card\"><h2>Bring the film into the review</h2><p>Choose a window or screen to present your work.</p><button id=\"share-screen\" type=\"button\">Share a window or screen</button><p id=\"status\" role=\"status\">Your presentation is ready when you are.</p><video id=\"preview\" autoplay muted playsinline hidden></video></section></main><script>const button=document.getElementById('share-screen');const status=document.getElementById('status');const preview=document.getElementById('preview');button.addEventListener('click',async()=>{try{const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});preview.srcObject=stream;preview.hidden=false;status.textContent='Your selected source is being shared.';stream.getVideoTracks()[0].addEventListener('ended',()=>{preview.srcObject=null;preview.hidden=true;status.textContent='Sharing ended.';});}catch(error){status.textContent=error.name==='NotAllowedError'?'Sharing was cancelled.':'Sharing could not start.';}});</script></body></html>",
+      "name": "review.html"
+    }
+  ],
+  "goal": "Show a real sharing request with Mac audio initially off, enable “Share audio too” in Lilo’s picker, and leave the configured window or screen option visible before external consent. The workflow demonstrates configuration without claiming capture has started.",
+  "id": "share-system-audio",
+  "posterCheckpoint": "audio-ready",
+  "settings": [
+    { "key": "locale", "value": "en" },
+    { "key": "tabPosition", "value": "left" },
+    { "key": "addressPlacement", "value": "page" },
+    { "key": "tabShareSystemAudio", "value": "false" }
+  ],
+  "steps": [
+    { "durationMs": 1200, "type": "hold" },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": {
+        "selector": "#share-screen",
+        "surface": "page",
+        "text": "Share a window or screen"
+      },
+      "type": "click"
+    },
+    {
+      "id": "window-screen-choice",
+      "predicate": {
+        "kind": "visible",
+        "target": {
+          "selector": ".tab-share-tools .tab-share-btn",
+          "surface": "chrome",
+          "text": "Window or screen…"
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "id": "audio-available",
+      "predicate": {
+        "kind": "visible",
+        "target": {
+          "selector": ".tab-share-sound:not(.disabled)",
+          "surface": "chrome",
+          "text": "Share audio too"
+        }
+      },
+      "type": "assert"
+    },
+    {
+      "id": "audio-off",
+      "predicate": {
+        "comparison": "equals",
+        "kind": "property",
+        "name": "checked",
+        "target": {
+          "selector": ".tab-share-sound input[type='checkbox']",
+          "surface": "chrome",
+          "text": ""
+        },
+        "value": false
+      },
+      "type": "assert"
+    },
+    { "durationMs": 1500, "type": "hold" },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": {
+        "selector": ".tab-share-sound input[type='checkbox']:not(:disabled)",
+        "surface": "chrome",
+        "text": ""
+      },
+      "type": "click"
+    },
+    { "durationMs": 700, "type": "hold" },
+    {
+      "button": "left",
+      "count": 1,
+      "modifiers": [],
+      "target": {
+        "selector": ".tab-share-heading",
+        "surface": "chrome",
+        "text": ""
+      },
+      "type": "click"
+    },
+    {
+      "id": "audio-ready",
+      "predicate": {
+        "comparison": "equals",
+        "kind": "property",
+        "name": "checked",
+        "target": {
+          "selector": ".tab-share-sound input[type='checkbox']",
+          "surface": "chrome",
+          "text": ""
+        },
+        "value": true
+      },
+      "type": "assert"
+    },
+    { "durationMs": 2800, "type": "hold" }
+  ],
+  "tabs": [
+    { "id": "storyboard", "page": "storyboard.html" },
+    { "id": "review", "page": "review.html" }
+  ]
+}

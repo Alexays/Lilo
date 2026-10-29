@@ -2,31 +2,41 @@
   "appBuild": "21",
   "appVersion": "0.8.0",
   "captureTool": "ScreenCaptureKit.currentProcess",
-  "capturedAt": "2026-10-28T21:41:15Z",
+  "capturedAt": "2026-10-29T00:31:15Z",
   "checkpoints": [
     {
-      "atMs": 4718,
-      "name": "address-hidden",
+      "atMs": 2351,
+      "name": "window-screen-choice",
       "passed": true
     },
     {
-      "atMs": 5647,
-      "name": "command-bar-available",
+      "atMs": 2351,
+      "name": "audio-available",
+      "passed": true
+    },
+    {
+      "atMs": 2351,
+      "name": "audio-off",
+      "passed": true
+    },
+    {
+      "atMs": 6799,
+      "name": "audio-ready",
       "passed": true
     }
   ],
-  "durationMs": 8966,
+  "durationMs": 9657,
   "frames": [
     {
       "atMs": 0,
       "file": "frame-0000.png"
     },
     {
-      "atMs": 33,
+      "atMs": 35,
       "file": "frame-0001.png"
     },
     {
-      "atMs": 68,
+      "atMs": 67,
       "file": "frame-0002.png"
     },
     {
@@ -34,7 +44,7 @@
       "file": "frame-0003.png"
     },
     {
-      "atMs": 134,
+      "atMs": 136,
       "file": "frame-0004.png"
     },
     {
@@ -46,1033 +56,1110 @@
       "file": "frame-0006.png"
     },
     {
-      "atMs": 237,
+      "atMs": 236,
       "file": "frame-0007.png"
     },
     {
-      "atMs": 272,
+      "atMs": 274,
       "file": "frame-0008.png"
     },
     {
-      "atMs": 306,
+      "atMs": 307,
       "file": "frame-0009.png"
     },
     {
-      "atMs": 339,
+      "atMs": 341,
       "file": "frame-0010.png"
     },
     {
-      "atMs": 373,
+      "atMs": 376,
       "file": "frame-0011.png"
     },
     {
-      "atMs": 407,
+      "atMs": 411,
       "file": "frame-0012.png"
     },
     {
-      "atMs": 442,
+      "atMs": 444,
       "file": "frame-0013.png"
     },
     {
-      "atMs": 474,
+      "atMs": 480,
       "file": "frame-0014.png"
     },
     {
-      "atMs": 508,
+      "atMs": 514,
       "file": "frame-0015.png"
     },
     {
-      "atMs": 542,
+      "atMs": 547,
       "file": "frame-0016.png"
     },
     {
-      "atMs": 576,
+      "atMs": 580,
       "file": "frame-0017.png"
     },
     {
-      "atMs": 611,
+      "atMs": 617,
       "file": "frame-0018.png"
     },
     {
-      "atMs": 645,
+      "atMs": 655,
       "file": "frame-0019.png"
     },
     {
-      "atMs": 679,
+      "atMs": 684,
       "file": "frame-0020.png"
     },
     {
-      "atMs": 713,
+      "atMs": 718,
       "file": "frame-0021.png"
     },
     {
-      "atMs": 746,
+      "atMs": 752,
       "file": "frame-0022.png"
     },
     {
-      "atMs": 783,
+      "atMs": 787,
       "file": "frame-0023.png"
     },
     {
-      "atMs": 815,
+      "atMs": 821,
       "file": "frame-0024.png"
     },
     {
-      "atMs": 850,
+      "atMs": 855,
       "file": "frame-0025.png"
     },
     {
-      "atMs": 885,
+      "atMs": 890,
       "file": "frame-0026.png"
     },
     {
-      "atMs": 918,
+      "atMs": 923,
       "file": "frame-0027.png"
     },
     {
-      "atMs": 953,
+      "atMs": 957,
       "file": "frame-0028.png"
     },
     {
-      "atMs": 989,
+      "atMs": 993,
       "file": "frame-0029.png"
     },
     {
-      "atMs": 1020,
+      "atMs": 1026,
       "file": "frame-0030.png"
     },
     {
-      "atMs": 1056,
+      "atMs": 1061,
       "file": "frame-0031.png"
     },
     {
-      "atMs": 1089,
+      "atMs": 1093,
       "file": "frame-0032.png"
     },
     {
-      "atMs": 1120,
+      "atMs": 1128,
       "file": "frame-0033.png"
     },
     {
-      "atMs": 1158,
+      "atMs": 1163,
       "file": "frame-0034.png"
     },
     {
-      "atMs": 1190,
+      "atMs": 1197,
       "file": "frame-0035.png"
     },
     {
-      "atMs": 1225,
+      "atMs": 1229,
       "file": "frame-0036.png"
     },
     {
-      "atMs": 1258,
+      "atMs": 1269,
       "file": "frame-0037.png"
     },
     {
-      "atMs": 1297,
+      "atMs": 1304,
       "file": "frame-0038.png"
     },
     {
-      "atMs": 1332,
+      "atMs": 1338,
       "file": "frame-0039.png"
     },
     {
-      "atMs": 1366,
+      "atMs": 1373,
       "file": "frame-0040.png"
     },
     {
-      "atMs": 1399,
+      "atMs": 1405,
       "file": "frame-0041.png"
     },
     {
-      "atMs": 1434,
+      "atMs": 1439,
       "file": "frame-0042.png"
     },
     {
-      "atMs": 1466,
+      "atMs": 1472,
       "file": "frame-0043.png"
     },
     {
-      "atMs": 1505,
+      "atMs": 1510,
       "file": "frame-0044.png"
     },
     {
-      "atMs": 1538,
+      "atMs": 1542,
       "file": "frame-0045.png"
     },
     {
-      "atMs": 1569,
+      "atMs": 1577,
       "file": "frame-0046.png"
     },
     {
-      "atMs": 1603,
+      "atMs": 1611,
       "file": "frame-0047.png"
     },
     {
-      "atMs": 1637,
+      "atMs": 1646,
       "file": "frame-0048.png"
     },
     {
-      "atMs": 1671,
+      "atMs": 1681,
       "file": "frame-0049.png"
     },
     {
-      "atMs": 1704,
+      "atMs": 1713,
       "file": "frame-0050.png"
     },
     {
-      "atMs": 1738,
+      "atMs": 1749,
       "file": "frame-0051.png"
     },
     {
-      "atMs": 1772,
+      "atMs": 1782,
       "file": "frame-0052.png"
     },
     {
-      "atMs": 1809,
+      "atMs": 1815,
       "file": "frame-0053.png"
     },
     {
-      "atMs": 1841,
+      "atMs": 1852,
       "file": "frame-0054.png"
     },
     {
-      "atMs": 1874,
+      "atMs": 1883,
       "file": "frame-0055.png"
     },
     {
-      "atMs": 1908,
+      "atMs": 1918,
       "file": "frame-0056.png"
     },
     {
-      "atMs": 1943,
+      "atMs": 1952,
       "file": "frame-0057.png"
     },
     {
-      "atMs": 1981,
+      "atMs": 1986,
       "file": "frame-0058.png"
     },
     {
-      "atMs": 2016,
+      "atMs": 2021,
       "file": "frame-0059.png"
     },
     {
-      "atMs": 2048,
+      "atMs": 2054,
       "file": "frame-0060.png"
     },
     {
-      "atMs": 2082,
+      "atMs": 2088,
       "file": "frame-0061.png"
     },
     {
-      "atMs": 2113,
+      "atMs": 2122,
       "file": "frame-0062.png"
     },
     {
-      "atMs": 2149,
+      "atMs": 2157,
       "file": "frame-0063.png"
     },
     {
-      "atMs": 2183,
+      "atMs": 2191,
       "file": "frame-0064.png"
     },
     {
-      "atMs": 2216,
+      "atMs": 2225,
       "file": "frame-0065.png"
     },
     {
-      "atMs": 2248,
+      "atMs": 2260,
       "file": "frame-0066.png"
     },
     {
-      "atMs": 2287,
+      "atMs": 2297,
       "file": "frame-0067.png"
     },
     {
-      "atMs": 2318,
+      "atMs": 2331,
       "file": "frame-0068.png"
     },
     {
-      "atMs": 2355,
+      "atMs": 2363,
       "file": "frame-0069.png"
     },
     {
-      "atMs": 2387,
+      "atMs": 2400,
       "file": "frame-0070.png"
     },
     {
-      "atMs": 2424,
+      "atMs": 2430,
       "file": "frame-0071.png"
     },
     {
-      "atMs": 2458,
+      "atMs": 2464,
       "file": "frame-0072.png"
     },
     {
-      "atMs": 2491,
+      "atMs": 2502,
       "file": "frame-0073.png"
     },
     {
-      "atMs": 2525,
+      "atMs": 2536,
       "file": "frame-0074.png"
     },
     {
-      "atMs": 2559,
+      "atMs": 2567,
       "file": "frame-0075.png"
     },
     {
-      "atMs": 2595,
+      "atMs": 2605,
       "file": "frame-0076.png"
     },
     {
-      "atMs": 2628,
+      "atMs": 2636,
       "file": "frame-0077.png"
     },
     {
-      "atMs": 2662,
+      "atMs": 2670,
       "file": "frame-0078.png"
     },
     {
-      "atMs": 2696,
+      "atMs": 2704,
       "file": "frame-0079.png"
     },
     {
-      "atMs": 2731,
+      "atMs": 2739,
       "file": "frame-0080.png"
     },
     {
-      "atMs": 2765,
+      "atMs": 2776,
       "file": "frame-0081.png"
     },
     {
-      "atMs": 2799,
+      "atMs": 2810,
       "file": "frame-0082.png"
     },
     {
-      "atMs": 2833,
+      "atMs": 2844,
       "file": "frame-0083.png"
     },
     {
-      "atMs": 2866,
+      "atMs": 2877,
       "file": "frame-0084.png"
     },
     {
-      "atMs": 2899,
+      "atMs": 2911,
       "file": "frame-0085.png"
     },
     {
-      "atMs": 2933,
+      "atMs": 2945,
       "file": "frame-0086.png"
     },
     {
-      "atMs": 2969,
+      "atMs": 2979,
       "file": "frame-0087.png"
     },
     {
-      "atMs": 3002,
+      "atMs": 3013,
       "file": "frame-0088.png"
     },
     {
-      "atMs": 3038,
+      "atMs": 3049,
       "file": "frame-0089.png"
     },
     {
-      "atMs": 3071,
+      "atMs": 3081,
       "file": "frame-0090.png"
     },
     {
-      "atMs": 3106,
+      "atMs": 3118,
       "file": "frame-0091.png"
     },
     {
-      "atMs": 3139,
+      "atMs": 3149,
       "file": "frame-0092.png"
     },
     {
-      "atMs": 3174,
+      "atMs": 3184,
       "file": "frame-0093.png"
     },
     {
-      "atMs": 3207,
+      "atMs": 3218,
       "file": "frame-0094.png"
     },
     {
-      "atMs": 3242,
+      "atMs": 3252,
       "file": "frame-0095.png"
     },
     {
-      "atMs": 3274,
+      "atMs": 3286,
       "file": "frame-0096.png"
     },
     {
-      "atMs": 3312,
+      "atMs": 3321,
       "file": "frame-0097.png"
     },
     {
-      "atMs": 3346,
+      "atMs": 3354,
       "file": "frame-0098.png"
     },
     {
-      "atMs": 3381,
+      "atMs": 3388,
       "file": "frame-0099.png"
     },
     {
-      "atMs": 3413,
+      "atMs": 3422,
       "file": "frame-0100.png"
     },
     {
-      "atMs": 3447,
+      "atMs": 3457,
       "file": "frame-0101.png"
     },
     {
-      "atMs": 3481,
+      "atMs": 3491,
       "file": "frame-0102.png"
     },
     {
-      "atMs": 3517,
+      "atMs": 3525,
       "file": "frame-0103.png"
     },
     {
-      "atMs": 3552,
+      "atMs": 3559,
       "file": "frame-0104.png"
     },
     {
-      "atMs": 3590,
+      "atMs": 3594,
       "file": "frame-0105.png"
     },
     {
-      "atMs": 3620,
+      "atMs": 3629,
       "file": "frame-0106.png"
     },
     {
-      "atMs": 3654,
+      "atMs": 3663,
       "file": "frame-0107.png"
     },
     {
-      "atMs": 3687,
+      "atMs": 3697,
       "file": "frame-0108.png"
     },
     {
-      "atMs": 3722,
+      "atMs": 3732,
       "file": "frame-0109.png"
     },
     {
-      "atMs": 3755,
+      "atMs": 3766,
       "file": "frame-0110.png"
     },
     {
-      "atMs": 3788,
+      "atMs": 3802,
       "file": "frame-0111.png"
     },
     {
-      "atMs": 3825,
+      "atMs": 3836,
       "file": "frame-0112.png"
     },
     {
-      "atMs": 3857,
+      "atMs": 3868,
       "file": "frame-0113.png"
     },
     {
-      "atMs": 3890,
+      "atMs": 3903,
       "file": "frame-0114.png"
     },
     {
-      "atMs": 3924,
+      "atMs": 3939,
       "file": "frame-0115.png"
     },
     {
-      "atMs": 3963,
+      "atMs": 3973,
       "file": "frame-0116.png"
     },
     {
-      "atMs": 3995,
+      "atMs": 4007,
       "file": "frame-0117.png"
     },
     {
-      "atMs": 4026,
+      "atMs": 4037,
       "file": "frame-0118.png"
     },
     {
-      "atMs": 4061,
+      "atMs": 4074,
       "file": "frame-0119.png"
     },
     {
-      "atMs": 4094,
+      "atMs": 4106,
       "file": "frame-0120.png"
     },
     {
-      "atMs": 4131,
+      "atMs": 4141,
       "file": "frame-0121.png"
     },
     {
-      "atMs": 4164,
+      "atMs": 4176,
       "file": "frame-0122.png"
     },
     {
-      "atMs": 4199,
+      "atMs": 4211,
       "file": "frame-0123.png"
     },
     {
-      "atMs": 4234,
+      "atMs": 4242,
       "file": "frame-0124.png"
     },
     {
-      "atMs": 4267,
+      "atMs": 4280,
       "file": "frame-0125.png"
     },
     {
-      "atMs": 4298,
+      "atMs": 4310,
       "file": "frame-0126.png"
     },
     {
-      "atMs": 4331,
+      "atMs": 4347,
       "file": "frame-0127.png"
     },
     {
-      "atMs": 4368,
+      "atMs": 4383,
       "file": "frame-0128.png"
     },
     {
-      "atMs": 4399,
+      "atMs": 4413,
       "file": "frame-0129.png"
     },
     {
-      "atMs": 4435,
+      "atMs": 4447,
       "file": "frame-0130.png"
     },
     {
-      "atMs": 4469,
+      "atMs": 4483,
       "file": "frame-0131.png"
     },
     {
-      "atMs": 4503,
+      "atMs": 4515,
       "file": "frame-0132.png"
     },
     {
-      "atMs": 4537,
+      "atMs": 4549,
       "file": "frame-0133.png"
     },
     {
-      "atMs": 4572,
+      "atMs": 4582,
       "file": "frame-0134.png"
     },
     {
-      "atMs": 4606,
+      "atMs": 4618,
       "file": "frame-0135.png"
     },
     {
-      "atMs": 4640,
+      "atMs": 4653,
       "file": "frame-0136.png"
     },
     {
-      "atMs": 4674,
+      "atMs": 4688,
       "file": "frame-0137.png"
     },
     {
-      "atMs": 4708,
+      "atMs": 4721,
       "file": "frame-0138.png"
     },
     {
-      "atMs": 4743,
+      "atMs": 4755,
       "file": "frame-0139.png"
     },
     {
-      "atMs": 4777,
+      "atMs": 4790,
       "file": "frame-0140.png"
     },
     {
-      "atMs": 4810,
+      "atMs": 4825,
       "file": "frame-0141.png"
     },
     {
-      "atMs": 4844,
+      "atMs": 4858,
       "file": "frame-0142.png"
     },
     {
-      "atMs": 4881,
+      "atMs": 4893,
       "file": "frame-0143.png"
     },
     {
-      "atMs": 4913,
+      "atMs": 4927,
       "file": "frame-0144.png"
     },
     {
-      "atMs": 4950,
+      "atMs": 4962,
       "file": "frame-0145.png"
     },
     {
-      "atMs": 4984,
+      "atMs": 4996,
       "file": "frame-0146.png"
     },
     {
-      "atMs": 5018,
+      "atMs": 5031,
       "file": "frame-0147.png"
     },
     {
-      "atMs": 5052,
+      "atMs": 5065,
       "file": "frame-0148.png"
     },
     {
-      "atMs": 5086,
+      "atMs": 5101,
       "file": "frame-0149.png"
     },
     {
-      "atMs": 5120,
+      "atMs": 5136,
       "file": "frame-0150.png"
     },
     {
-      "atMs": 5155,
+      "atMs": 5169,
       "file": "frame-0151.png"
     },
     {
-      "atMs": 5189,
+      "atMs": 5205,
       "file": "frame-0152.png"
     },
     {
-      "atMs": 5222,
+      "atMs": 5238,
       "file": "frame-0153.png"
     },
     {
-      "atMs": 5256,
+      "atMs": 5278,
       "file": "frame-0154.png"
     },
     {
-      "atMs": 5290,
+      "atMs": 5309,
       "file": "frame-0155.png"
     },
     {
-      "atMs": 5323,
+      "atMs": 5347,
       "file": "frame-0156.png"
     },
     {
-      "atMs": 5357,
+      "atMs": 5377,
       "file": "frame-0157.png"
     },
     {
-      "atMs": 5390,
+      "atMs": 5411,
       "file": "frame-0158.png"
     },
     {
-      "atMs": 5424,
+      "atMs": 5448,
       "file": "frame-0159.png"
     },
     {
-      "atMs": 5461,
+      "atMs": 5479,
       "file": "frame-0160.png"
     },
     {
-      "atMs": 5492,
+      "atMs": 5517,
       "file": "frame-0161.png"
     },
     {
-      "atMs": 5525,
+      "atMs": 5552,
       "file": "frame-0162.png"
     },
     {
-      "atMs": 5560,
+      "atMs": 5586,
       "file": "frame-0163.png"
     },
     {
-      "atMs": 5595,
+      "atMs": 5620,
       "file": "frame-0164.png"
     },
     {
-      "atMs": 5628,
+      "atMs": 5655,
       "file": "frame-0165.png"
     },
     {
-      "atMs": 5662,
+      "atMs": 5688,
       "file": "frame-0166.png"
     },
     {
-      "atMs": 5702,
+      "atMs": 5723,
       "file": "frame-0167.png"
     },
     {
-      "atMs": 5735,
+      "atMs": 5759,
       "file": "frame-0168.png"
     },
     {
-      "atMs": 5764,
+      "atMs": 5794,
       "file": "frame-0169.png"
     },
     {
-      "atMs": 5799,
+      "atMs": 5827,
       "file": "frame-0170.png"
     },
     {
-      "atMs": 5832,
+      "atMs": 5860,
       "file": "frame-0171.png"
     },
     {
-      "atMs": 5866,
+      "atMs": 5895,
       "file": "frame-0172.png"
     },
     {
-      "atMs": 5902,
+      "atMs": 5927,
       "file": "frame-0173.png"
     },
     {
-      "atMs": 5936,
+      "atMs": 5964,
       "file": "frame-0174.png"
     },
     {
-      "atMs": 5975,
+      "atMs": 5997,
       "file": "frame-0175.png"
     },
     {
-      "atMs": 6004,
+      "atMs": 6031,
       "file": "frame-0176.png"
     },
     {
-      "atMs": 6039,
+      "atMs": 6065,
       "file": "frame-0177.png"
     },
     {
-      "atMs": 6073,
+      "atMs": 6095,
       "file": "frame-0178.png"
     },
     {
-      "atMs": 6106,
+      "atMs": 6132,
       "file": "frame-0179.png"
     },
     {
-      "atMs": 6142,
+      "atMs": 6168,
       "file": "frame-0180.png"
     },
     {
-      "atMs": 6183,
+      "atMs": 6203,
       "file": "frame-0181.png"
     },
     {
-      "atMs": 6218,
+      "atMs": 6238,
       "file": "frame-0182.png"
     },
     {
-      "atMs": 6255,
+      "atMs": 6270,
       "file": "frame-0183.png"
     },
     {
-      "atMs": 6285,
+      "atMs": 6306,
       "file": "frame-0184.png"
     },
     {
-      "atMs": 6323,
+      "atMs": 6343,
       "file": "frame-0185.png"
     },
     {
-      "atMs": 6353,
+      "atMs": 6378,
       "file": "frame-0186.png"
     },
     {
-      "atMs": 6387,
+      "atMs": 6410,
       "file": "frame-0187.png"
     },
     {
-      "atMs": 6422,
+      "atMs": 6443,
       "file": "frame-0188.png"
     },
     {
-      "atMs": 6456,
+      "atMs": 6477,
       "file": "frame-0189.png"
     },
     {
-      "atMs": 6489,
+      "atMs": 6516,
       "file": "frame-0190.png"
     },
     {
-      "atMs": 6523,
+      "atMs": 6550,
       "file": "frame-0191.png"
     },
     {
-      "atMs": 6562,
+      "atMs": 6584,
       "file": "frame-0192.png"
     },
     {
-      "atMs": 6592,
+      "atMs": 6617,
       "file": "frame-0193.png"
     },
     {
-      "atMs": 6626,
+      "atMs": 6651,
       "file": "frame-0194.png"
     },
     {
-      "atMs": 6660,
+      "atMs": 6686,
       "file": "frame-0195.png"
     },
     {
-      "atMs": 6699,
+      "atMs": 6720,
       "file": "frame-0196.png"
     },
     {
-      "atMs": 6729,
+      "atMs": 6753,
       "file": "frame-0197.png"
     },
     {
-      "atMs": 6762,
+      "atMs": 6787,
       "file": "frame-0198.png"
     },
     {
-      "atMs": 6796,
+      "atMs": 6821,
       "file": "frame-0199.png"
     },
     {
-      "atMs": 6830,
+      "atMs": 6856,
       "file": "frame-0200.png"
     },
     {
-      "atMs": 6865,
+      "atMs": 6889,
       "file": "frame-0201.png"
     },
     {
-      "atMs": 6899,
+      "atMs": 6924,
       "file": "frame-0202.png"
     },
     {
-      "atMs": 6936,
+      "atMs": 6962,
       "file": "frame-0203.png"
     },
     {
-      "atMs": 6970,
+      "atMs": 6992,
       "file": "frame-0204.png"
     },
     {
-      "atMs": 7004,
+      "atMs": 7027,
       "file": "frame-0205.png"
     },
     {
-      "atMs": 7038,
+      "atMs": 7062,
       "file": "frame-0206.png"
     },
     {
-      "atMs": 7071,
+      "atMs": 7094,
       "file": "frame-0207.png"
     },
     {
-      "atMs": 7106,
+      "atMs": 7128,
       "file": "frame-0208.png"
     },
     {
-      "atMs": 7139,
+      "atMs": 7162,
       "file": "frame-0209.png"
     },
     {
-      "atMs": 7173,
+      "atMs": 7196,
       "file": "frame-0210.png"
     },
     {
-      "atMs": 7208,
+      "atMs": 7231,
       "file": "frame-0211.png"
     },
     {
-      "atMs": 7240,
+      "atMs": 7265,
       "file": "frame-0212.png"
     },
     {
-      "atMs": 7273,
+      "atMs": 7301,
       "file": "frame-0213.png"
     },
     {
-      "atMs": 7312,
+      "atMs": 7335,
       "file": "frame-0214.png"
     },
     {
-      "atMs": 7346,
+      "atMs": 7368,
       "file": "frame-0215.png"
     },
     {
-      "atMs": 7379,
+      "atMs": 7403,
       "file": "frame-0216.png"
     },
     {
-      "atMs": 7414,
+      "atMs": 7436,
       "file": "frame-0217.png"
     },
     {
-      "atMs": 7446,
+      "atMs": 7469,
       "file": "frame-0218.png"
     },
     {
-      "atMs": 7480,
+      "atMs": 7504,
       "file": "frame-0219.png"
     },
     {
-      "atMs": 7514,
+      "atMs": 7538,
       "file": "frame-0220.png"
     },
     {
-      "atMs": 7547,
+      "atMs": 7572,
       "file": "frame-0221.png"
     },
     {
-      "atMs": 7587,
+      "atMs": 7608,
       "file": "frame-0222.png"
     },
     {
-      "atMs": 7622,
+      "atMs": 7642,
       "file": "frame-0223.png"
     },
     {
-      "atMs": 7656,
+      "atMs": 7683,
       "file": "frame-0224.png"
     },
     {
-      "atMs": 7691,
+      "atMs": 7717,
       "file": "frame-0225.png"
     },
     {
-      "atMs": 7724,
+      "atMs": 7751,
       "file": "frame-0226.png"
     },
     {
-      "atMs": 7758,
+      "atMs": 7788,
       "file": "frame-0227.png"
     },
     {
-      "atMs": 7791,
+      "atMs": 7819,
       "file": "frame-0228.png"
     },
     {
-      "atMs": 7824,
+      "atMs": 7852,
       "file": "frame-0229.png"
     },
     {
-      "atMs": 7858,
+      "atMs": 7889,
       "file": "frame-0230.png"
     },
     {
-      "atMs": 7897,
+      "atMs": 7920,
       "file": "frame-0231.png"
     },
     {
-      "atMs": 7926,
+      "atMs": 7955,
       "file": "frame-0232.png"
     },
     {
-      "atMs": 7960,
+      "atMs": 7989,
       "file": "frame-0233.png"
     },
     {
-      "atMs": 7994,
+      "atMs": 8022,
       "file": "frame-0234.png"
     },
     {
-      "atMs": 8032,
+      "atMs": 8056,
       "file": "frame-0235.png"
     },
     {
-      "atMs": 8062,
+      "atMs": 8090,
       "file": "frame-0236.png"
     },
     {
-      "atMs": 8095,
+      "atMs": 8127,
       "file": "frame-0237.png"
     },
     {
-      "atMs": 8128,
+      "atMs": 8159,
       "file": "frame-0238.png"
     },
     {
-      "atMs": 8162,
+      "atMs": 8194,
       "file": "frame-0239.png"
     },
     {
-      "atMs": 8199,
+      "atMs": 8228,
       "file": "frame-0240.png"
     },
     {
-      "atMs": 8233,
+      "atMs": 8263,
       "file": "frame-0241.png"
     },
     {
-      "atMs": 8267,
+      "atMs": 8297,
       "file": "frame-0242.png"
     },
     {
-      "atMs": 8301,
+      "atMs": 8331,
       "file": "frame-0243.png"
     },
     {
-      "atMs": 8334,
+      "atMs": 8366,
       "file": "frame-0244.png"
     },
     {
-      "atMs": 8365,
+      "atMs": 8401,
       "file": "frame-0245.png"
     },
     {
-      "atMs": 8399,
+      "atMs": 8435,
       "file": "frame-0246.png"
     },
     {
-      "atMs": 8433,
+      "atMs": 8468,
       "file": "frame-0247.png"
     },
     {
-      "atMs": 8468,
+      "atMs": 8504,
       "file": "frame-0248.png"
     },
     {
-      "atMs": 8506,
+      "atMs": 8538,
       "file": "frame-0249.png"
     },
     {
-      "atMs": 8536,
+      "atMs": 8571,
       "file": "frame-0250.png"
     },
     {
-      "atMs": 8570,
+      "atMs": 8604,
       "file": "frame-0251.png"
     },
     {
-      "atMs": 8604,
+      "atMs": 8639,
       "file": "frame-0252.png"
     },
     {
-      "atMs": 8638,
+      "atMs": 8673,
       "file": "frame-0253.png"
     },
     {
-      "atMs": 8671,
+      "atMs": 8709,
       "file": "frame-0254.png"
     },
     {
-      "atMs": 8704,
+      "atMs": 8745,
       "file": "frame-0255.png"
     },
     {
-      "atMs": 8738,
+      "atMs": 8777,
       "file": "frame-0256.png"
     },
     {
-      "atMs": 8772,
+      "atMs": 8817,
       "file": "frame-0257.png"
     },
     {
-      "atMs": 8805,
+      "atMs": 8852,
       "file": "frame-0258.png"
     },
     {
-      "atMs": 8840,
+      "atMs": 8885,
       "file": "frame-0259.png"
     },
     {
-      "atMs": 8879,
+      "atMs": 8920,
       "file": "frame-0260.png"
     },
     {
-      "atMs": 8922,
+      "atMs": 8954,
       "file": "frame-0261.png"
     },
     {
-      "atMs": 8955,
+      "atMs": 8987,
       "file": "frame-0262.png"
+    },
+    {
+      "atMs": 9022,
+      "file": "frame-0263.png"
+    },
+    {
+      "atMs": 9056,
+      "file": "frame-0264.png"
+    },
+    {
+      "atMs": 9089,
+      "file": "frame-0265.png"
+    },
+    {
+      "atMs": 9123,
+      "file": "frame-0266.png"
+    },
+    {
+      "atMs": 9158,
+      "file": "frame-0267.png"
+    },
+    {
+      "atMs": 9192,
+      "file": "frame-0268.png"
+    },
+    {
+      "atMs": 9227,
+      "file": "frame-0269.png"
+    },
+    {
+      "atMs": 9260,
+      "file": "frame-0270.png"
+    },
+    {
+      "atMs": 9295,
+      "file": "frame-0271.png"
+    },
+    {
+      "atMs": 9329,
+      "file": "frame-0272.png"
+    },
+    {
+      "atMs": 9364,
+      "file": "frame-0273.png"
+    },
+    {
+      "atMs": 9399,
+      "file": "frame-0274.png"
+    },
+    {
+      "atMs": 9433,
+      "file": "frame-0275.png"
+    },
+    {
+      "atMs": 9468,
+      "file": "frame-0276.png"
+    },
+    {
+      "atMs": 9503,
+      "file": "frame-0277.png"
+    },
+    {
+      "atMs": 9537,
+      "file": "frame-0278.png"
+    },
+    {
+      "atMs": 9571,
+      "file": "frame-0279.png"
+    },
+    {
+      "atMs": 9606,
+      "file": "frame-0280.png"
+    },
+    {
+      "atMs": 9645,
+      "file": "frame-0281.png"
     }
   ],
   "height": 720,
-  "inputDigest": "dd36c97b9be1bfb3a9315fc8c6336e492e0dfe768d9f22e3f675d3592d9664be",
-  "scenario": "address-bar",
+  "inputDigest": "123e91fa448857f02796cea05ce756b59c79adaf3c27d7f66036af84698d4f56",
+  "scenario": "share-system-audio",
+  "scenarioDigest": "ce27715fc3990f6a40925e6a222f655a736541303f9199846d5de3feff5fbf31",
   "source": "native",
   "width": 1120
 }
