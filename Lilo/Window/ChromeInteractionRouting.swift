@@ -268,7 +268,10 @@ final class ChromeInputController {
             MainActor.assumeIsolated {
                 // Every window sees each move: reject other windows' events before allocating anything.
                 guard let self, event.window === self.controller.window else { return }
-                if event.type == .leftMouseUp || event.type == .otherMouseUp {
+                if event.type == .otherMouseUp, event.buttonNumber == 3 || event.buttonNumber == 4 {
+                    // A mouse's back and forward buttons: WebKit leaves them to the app on macOS, as Chrome handles them on release.
+                    if event.buttonNumber == 3 { self.controller.goBackInHistory(nil) } else { self.controller.goForwardInHistory(nil) }
+                } else if event.type == .leftMouseUp || event.type == .otherMouseUp {
                     // Seen before WebKit's own handling, so a page's click handler always runs after it is recorded.
                     self.controller.lastClick = WKWebViewTab.Click(
                         uptime: event.timestamp, buttonNumber: event.buttonNumber,

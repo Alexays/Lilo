@@ -4,6 +4,43 @@ import XCTest
 
 @MainActor
 final class ChromeGlobalEventRoutingTests: XCTestCase {
+    /// A real release of a mouse's back then forward button, through the window's own monitor.
+    func testAMouseBackAndForwardButtonGoThroughTheActiveTabsHistory() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        controller.chromeInput.startMonitoring()
+        defer { controller.chromeInput.stop() }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let webView = engine.wkWebView
+        let first = try XCTUnwrap(URL(string: "data:text/html,<p>first</p>"))
+        let second = try XCTUnwrap(URL(string: "data:text/html,<p>second</p>"))
+        // Each load must commit, not just start, before the next one: only then is it a back-forward entry.
+        for url in [first, second] {
+            engine.loadURL(url)
+            await pollUntil(timeout: 5) { webView.backForwardList.currentItem?.url == url }
+        }
+        // NSEvent's factory sets no button number; one built from a bare CGEvent loses its window.
+        func release(_ button: Int64) throws {
+            let cgEvent = try XCTUnwrap(NSEvent.mouseEvent(
+                with: .otherMouseUp, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: controller.window!.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 0
+            )?.cgEvent)
+            cgEvent.setIntegerValueField(.mouseEventButtonNumber, value: button)
+            NSApp.sendEvent(try XCTUnwrap(NSEvent(cgEvent: cgEvent)))
+        }
+
+        try release(3)
+        let wentBack = await pollUntil { webView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack)
+        try release(4)
+        let wentForward = await pollUntil { webView.backForwardList.currentItem?.url == second }
+        XCTAssertTrue(wentForward)
+    }
+
     func testCmdLRemainsReservedToLilo() {
         let controller = MainWindowController()
         controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
