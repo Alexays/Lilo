@@ -7,6 +7,7 @@ let _clients = $state.raw<BridgeAgentClient[]>([]);
 let _agentsSpaceIds = $state.raw<string[]>([]);
 let _agentsProfileId = $state("");
 let _hiddenAgentsSpaceIds = $state.raw<string[]>([]);
+let _isolatedSpaceIds = $state.raw<string[]>([]);
 let _moods = $state.raw<Record<string, BridgeAgentMood>>({});
 // Names whose app icon was asked for once, so a name with no known app does not reload on every event.
 const _iconRequested = new Set<string>();
@@ -17,6 +18,7 @@ export function initAgentsStore(): void {
 		_agentsSpaceIds = data.agentsSpaceIds;
 		_agentsProfileId = data.agentsProfileId ?? "";
 		_hiddenAgentsSpaceIds = data.hiddenAgentsSpaceIds;
+		_isolatedSpaceIds = data.isolatedSpaceIds ?? [];
 		// Between two calls a space keeps its mood while its agents still act, like the cursor.
 		const moods = data.moods;
 		for (const [spaceId, mood] of Object.entries(_moods)) {
@@ -52,6 +54,9 @@ export const getAgentsProfileId = (): string => _agentsProfileId;
 
 /** An Agents space no agent works in and holding no tab. */
 export const isHiddenAgentsSpace = (spaceId: string): boolean => _hiddenAgentsSpaceIds.includes(spaceId);
+
+/** A private space an agent opened for its isolated tabs. */
+export const isIsolatedAgentSpace = (spaceId: string): boolean => _isolatedSpaceIds.includes(spaceId);
 
 /** What the agents in the space act out now, none while they are idle. */
 export const getAgentMood = (spaceId: string): BridgeAgentMood | undefined => _moods[spaceId];

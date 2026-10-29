@@ -189,6 +189,7 @@ final class AgentControl {
                 window.bridgeRouter?.send(event: "agentActivity", data: [
                     "clients": clients, "agentsSpaceIds": spaceIds.map(\.uuidString), "agentsProfileId": profileId,
                     "hiddenAgentsSpaceIds": hiddenAgentsSpaceIds.map(\.uuidString),
+                    "isolatedSpaceIds": sessions.compactMap(\.isolatedSpaceId).map(\.uuidString),
                     "moods": Dictionary(uniqueKeysWithValues: spaceMoods.map { ($0.key.uuidString, $0.value.mood.rawValue) })
                 ])
             }

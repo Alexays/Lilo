@@ -1033,6 +1033,8 @@ export interface BridgeEventPayloadMap {
 		agentsProfileId: string;
 		/** Agents spaces with no agent working there and no tab left. */
 		hiddenAgentsSpaceIds: string[];
+		/** The private spaces agents open for tabs that share nothing with any other. */
+		isolatedSpaceIds: string[];
 		/** What the latest call running in each Agents space does, by space id. */
 		moods: Record<string, BridgeAgentMood>;
 	};

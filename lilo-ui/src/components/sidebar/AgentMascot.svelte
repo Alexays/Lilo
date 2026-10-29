@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { BridgeAgentMood } from "../../lib/bridge/protocol";
 
-  let { mood }: { mood?: BridgeAgentMood } = $props();
+  // A ghost for the private space an agent opens: like its tabs, it leaves nothing behind.
+  let { mood, ghost = false }: { mood?: BridgeAgentMood; ghost?: boolean } = $props();
 
   // Blinks on a timer: a repeating CSS blink would keep the compositor busy while the agents are idle.
   function blink(eyes: HTMLElement) {
@@ -17,7 +18,8 @@
      and opacity animate, and only while a call runs, so moods stay on the compositor. -->
 <span class="mascot" data-mood={mood} aria-hidden="true">
   {#if mood === "waitingForUser"}<span class="halo"></span>{/if}
-  <span class="body">
+  <span class="body" class:ghost>
+    {#if ghost}<svg viewBox="0 0 22 22"><path d="M3 10.5a8 8 0 0 1 16 0V20l-2.67-1.8-2.67 1.8-2.66-1.8-2.67 1.8-2.66-1.8L3 20Z" /></svg>{/if}
     <span class="eyes"><span class="blink" {@attach blink}><i></i><i></i></span></span>
   </span>
   {#if mood === "scripting"}
@@ -57,6 +59,29 @@
   /* The eyes span the body's 22 pt, not its content box, so they turn around its center. */
   .eyes {
     inset: -1.5px;
+  }
+
+  .ghost {
+    border: none;
+    border-radius: 0;
+    background: none;
+  }
+
+  .ghost svg {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+
+  .ghost path {
+    fill: white;
+    stroke: var(--agents);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  .ghost .eyes {
+    inset: 0;
   }
 
   .blink i {

@@ -12,7 +12,7 @@
   import { isPointInsideRect } from "../../lib/dndEngine/geometry";
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import SpaceMoveHint from "../spaces/SpaceMoveHint.svelte";
-  import { getAgentClients, getAgentMood, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace } from "../../stores/agents.svelte";
+  import { getAgentClients, getAgentMood, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace, isIsolatedAgentSpace } from "../../stores/agents.svelte";
   import { getProfileById, getProfiles } from "../../stores/profiles.svelte";
   import type { BridgeProfileSnapshot } from "../../lib/bridge/protocol";
   import { userProfiles } from "../settings/profilesModel";
@@ -63,10 +63,12 @@
   import { isShadowItem } from "../../lib/dndEngine/projection";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
 
-  // AgentMascot at rest, as an image the tooltip can show; an <img> cannot read --agents, so its value is inlined.
-  const agentMascotIcon = `data:image/svg+xml,${encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><circle cx="11" cy="11" r="10.25" fill="white" stroke="#795ceb" stroke-width="1.5"/><g fill="#795ceb"><ellipse cx="7" cy="10" rx="2" ry="2.5"/><ellipse cx="15" cy="10" rx="2" ry="2.5"/></g></svg>',
+  // AgentMascot at rest, as images the tooltip can show; an <img> cannot read --agents, so its value is inlined.
+  const mascotIcon = (body: string) => `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="white" stroke="#795ceb" stroke-width="1.5">${body}<g fill="#795ceb" stroke="none"><ellipse cx="7" cy="10" rx="2" ry="2.5"/><ellipse cx="15" cy="10" rx="2" ry="2.5"/></g></svg>`,
   )}`;
+  const agentMascotIcon = mascotIcon('<circle cx="11" cy="11" r="10.25"/>');
+  const agentGhostIcon = mascotIcon('<path d="M3 10.5a8 8 0 0 1 16 0V20l-2.67-1.8-2.67 1.8-2.66-1.8-2.67 1.8-2.66-1.8L3 20Z" stroke-linejoin="round"/>');
 
   type SpaceDropMorphTarget = {
     spaceId: string;
@@ -423,7 +425,7 @@
     class:recent-drop={isSpaceRecentlyDropped(space.id)}
     use:tooltip={{
       text: profile && profile.name !== space.name ? t("bottomBar.signedInAs", { space: space.name, profile: profile.name }) : space.name,
-      iconSrc: isAgentsSpace(space.id) ? agentMascotIcon : undefined,
+      iconSrc: isAgentsSpace(space.id) ? agentMascotIcon : isIsolatedAgentSpace(space.id) ? agentGhostIcon : undefined,
       iconText: space.icon || "🌐",
       // The menu bar's Spaces shortcuts count the same Spaces, in the same order.
       shortcut: index < 9 ? shortcutKeys(`space.select${index + 1}`) : undefined,
@@ -437,10 +439,10 @@
     oncontextmenu={(event) => showNativeSidebarContextMenu(event, space.id)}
     onkeydown={(event) => handleSpaceKeydown(event, space.id)}
   >
-    {#if isAgentsSpace(space.id)}
+    {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
       <!-- Loaded on demand: the tile shows only once an agent connects, so the first frame goes without. -->
       {#await import("./AgentMascot.svelte") then { default: AgentMascot }}
-        <AgentMascot mood={getAgentMood(space.id)} />
+        <AgentMascot mood={getAgentMood(space.id)} ghost={isIsolatedAgentSpace(space.id)} />
       {/await}
     {:else}
       {space.icon || "🌐"}
