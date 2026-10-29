@@ -1,3 +1,0 @@
-kind: Changed
-body: Closing find in page leaves the last match selected, as in Safari, instead of clearing the selection. Opening find with text selected in a text field or a frame now fills in that text too, and, outside private spaces, shares it with other apps' Find like Use Selection for Find.
-time: 2026-10-29T13:52:31.121284+01:00

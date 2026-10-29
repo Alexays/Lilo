@@ -1,0 +1,41 @@
+{
+  "version": "0.11.0",
+  "title": {
+    "en": "Make each Space your own.",
+    "fr": "À chaque Space son style."
+  },
+  "introduction": {
+    "en": "Glass, grain, and colors that follow your sites, your wallpaper or the time of day.",
+    "fr": "Du verre, du grain, et des couleurs qui suivent vos sites, votre fond d'écran ou l'heure."
+  },
+  "highlights": [
+    {
+      "id": "material",
+      "title": {
+        "en": "Glass, grain or solid.",
+        "fr": "Verre, grain ou uni."
+      },
+      "body": {
+        "en": "Pick each Space's material on its window preview in Appearance: Liquid Glass tinted with its color, or a fine film grain.",
+        "fr": "Choisissez la matière de chaque Space sur l'aperçu de sa fenêtre, dans Apparence : du Liquid Glass teinté de sa couleur, ou un grain fin."
+      },
+      "notes": [
+        "Each Space can be made of glass, with Liquid Glass tinted by its color, or of grain, its color under a fine film grain: pick it on the window preview under Appearance, in the Space editor or during setup."
+      ]
+    },
+    {
+      "id": "colors",
+      "title": {
+        "en": "Colors that follow you.",
+        "fr": "Des couleurs qui vous suivent."
+      },
+      "body": {
+        "en": "Take the color of the site you're on or of your wallpaper, or let your color warm up in the evening.",
+        "fr": "Prenez la couleur du site ouvert ou de votre fond d'écran, ou laissez votre couleur se réchauffer le soir."
+      },
+      "notes": [
+        "Each Space can be made of glass, with Liquid Glass tinted by its color, or of grain, its color under a fine film grain: pick it on the window preview under Appearance, in the Space editor or during setup."
+      ]
+    }
+  ]
+}
