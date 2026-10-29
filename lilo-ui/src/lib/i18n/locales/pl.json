@@ -754,6 +754,8 @@
 		"turnOnCamera": "Włącz kamerę",
 		"leaveCall": "Opuść rozmowę",
 		"sharing": "Udostępnianie: {title}",
+		"sharingScreen": "Udostępnianie ekranu",
+		"sharingWindow": "Udostępnianie okna",
 		"shareThisTab": "Udostępnij tę kartę",
 		"stopSharing": "Zakończ udostępnianie"
 	},

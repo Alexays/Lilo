@@ -748,6 +748,8 @@
 		"turnOnCamera": "开启摄像头",
 		"leaveCall": "离开通话",
 		"sharing": "正在共享 {title}",
+		"sharingScreen": "正在共享你的屏幕",
+		"sharingWindow": "正在共享窗口",
 		"shareThisTab": "共享此标签页",
 		"stopSharing": "停止共享"
 	},

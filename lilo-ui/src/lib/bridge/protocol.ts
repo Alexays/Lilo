@@ -1273,8 +1273,8 @@ export interface BridgeCallTab {
 	muted: boolean;
 	/** The page registered a Media Session hangup handler. */
 	canHangUp: boolean;
-	/** The tab the call shares through Lilo's tab share, if it shares one. */
-	share?: { token: string; tabId: string; title: string };
+	/** What the call shares through Lilo: a tab (`tabId`, `title`), or a screen or window (`surface`). */
+	share?: { token: string; tabId?: string; title?: string; surface?: "monitor" | "window" };
 }
 
 /** A started terminal of any window or Space, listed after `>`. Times are milliseconds since 1970, 0 when unset. */

@@ -754,6 +754,8 @@
 		"turnOnCamera": "Увімкнути камеру",
 		"leaveCall": "Завершити виклик",
 		"sharing": "Демонстрація: {title}",
+		"sharingScreen": "Демонстрація екрана",
+		"sharingWindow": "Демонстрація вікна",
 		"shareThisTab": "Показувати цю вкладку",
 		"stopSharing": "Припинити демонстрацію"
 	},

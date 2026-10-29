@@ -748,6 +748,8 @@
 		"turnOnCamera": "開啟相機",
 		"leaveCall": "離開通話",
 		"sharing": "正在分享 {title}",
+		"sharingScreen": "正在分享你的螢幕",
+		"sharingWindow": "正在分享視窗",
 		"shareThisTab": "分享此分頁",
 		"stopSharing": "停止分享"
 	},

@@ -754,6 +754,8 @@
 		"turnOnCamera": "Включить камеру",
 		"leaveCall": "Выйти из звонка",
 		"sharing": "Демонстрация: {title}",
+		"sharingScreen": "Демонстрация экрана",
+		"sharingWindow": "Демонстрация окна",
 		"shareThisTab": "Показать эту вкладку",
 		"stopSharing": "Остановить показ"
 	},

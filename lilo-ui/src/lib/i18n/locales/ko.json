@@ -748,6 +748,8 @@
 		"turnOnCamera": "카메라 켜기",
 		"leaveCall": "통화 나가기",
 		"sharing": "{title} 공유 중",
+		"sharingScreen": "화면 공유 중",
+		"sharingWindow": "윈도우 공유 중",
 		"shareThisTab": "이 탭 공유",
 		"stopSharing": "공유 중단"
 	},

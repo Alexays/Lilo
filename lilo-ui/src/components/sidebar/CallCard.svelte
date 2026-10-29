@@ -16,7 +16,7 @@
   const activeTab = $derived(getActiveTab());
   // The shown page can take over the share, unless it is the call itself, what is already shared, or a terminal.
   const canShareShown = $derived(
-    !!call?.share && !!activeTab?.url && activeTab.kind !== "terminal" && activeTab.id !== call.id && activeTab.id !== call.share.tabId,
+    !!call?.share?.tabId && !!activeTab?.url && activeTab.kind !== "terminal" && activeTab.id !== call.id && activeTab.id !== call.share.tabId,
   );
 </script>
 
@@ -103,10 +103,18 @@
   {#if call.share}
     {@const share = call.share}
     <div class="call-row share-row">
-      <button class="call-tab share-tab" use:tooltip={t("mediaCard.show")} onclick={() => terminalActions.reveal(share.tabId)}>
-        <span class="live-dot" aria-hidden="true"></span>
-        <span class="call-title">{t("mediaCard.sharing", { title: tabDisplayTitle(share.title) })}</span>
-      </button>
+      {#if share.tabId}
+        {@const tabId = share.tabId}
+        <button class="call-tab share-tab" use:tooltip={t("mediaCard.show")} onclick={() => terminalActions.reveal(tabId)}>
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="call-title">{t("mediaCard.sharing", { title: tabDisplayTitle(share.title ?? "") })}</span>
+        </button>
+      {:else}
+        <span class="call-tab share-tab">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="call-title">{t(share.surface === "window" ? "mediaCard.sharingWindow" : "mediaCard.sharingScreen")}</span>
+        </span>
+      {/if}
       {#if canShareShown && activeTab}
         {@const shown = activeTab}
         <button class="share-instead" onclick={() => tabShareActions.shareInstead(share.token, shown.id)}>

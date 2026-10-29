@@ -748,6 +748,8 @@
 		"turnOnCamera": "Kamerayı aç",
 		"leaveCall": "Aramadan ayrıl",
 		"sharing": "{title} paylaşılıyor",
+		"sharingScreen": "Ekranınız paylaşılıyor",
+		"sharingWindow": "Bir pencere paylaşılıyor",
 		"shareThisTab": "Bu sekmeyi paylaş",
 		"stopSharing": "Paylaşmayı durdur"
 	},

@@ -748,6 +748,8 @@
 		"turnOnCamera": "Ativar câmera",
 		"leaveCall": "Sair da chamada",
 		"sharing": "Compartilhando {title}",
+		"sharingScreen": "Compartilhando sua tela",
+		"sharingWindow": "Compartilhando uma janela",
 		"shareThisTab": "Compartilhar esta aba",
 		"stopSharing": "Parar de compartilhar"
 	},

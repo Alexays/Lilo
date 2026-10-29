@@ -748,6 +748,8 @@
 		"turnOnCamera": "カメラをオン",
 		"leaveCall": "通話を終了",
 		"sharing": "{title}を共有中",
+		"sharingScreen": "画面を共有中",
+		"sharingWindow": "ウインドウを共有中",
 		"shareThisTab": "このタブを共有",
 		"stopSharing": "共有を停止"
 	},
