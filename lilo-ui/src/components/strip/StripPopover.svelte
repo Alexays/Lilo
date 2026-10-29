@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { dismissable } from "../../lib/actions/dismissable";
+  import { portal } from "../../lib/actions/portal";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
 
   let { anchor, label, onclose, children }: { anchor: HTMLElement; label: string; onclose: () => void; children: Snippet } = $props();
@@ -11,7 +12,10 @@
   const rect = $derived(anchor.getBoundingClientRect());
   // Toward the page, clear of the strip itself: under a top strip, over a bottom dock.
   const strip = $derived((anchor.closest(".tab-strip") ?? anchor).getBoundingClientRect());
-  const top = $derived(getTabPosition() === "bottom" ? strip.top - 8 - height : strip.bottom + 4);
+  const top = $derived(Math.max(8, Math.min(
+    getTabPosition() === "bottom" ? strip.top - 8 - height : strip.bottom + 4,
+    window.innerHeight - height - 8,
+  )));
   const left = $derived(Math.max(8, Math.min(rect.left, window.innerWidth - 248)));
 
   $effect(() => {
@@ -29,6 +33,7 @@
   role="menu"
   aria-label={label}
   style={`left: ${left}px; top: ${top}px;`}
+  use:portal
   use:reportInteractiveZone={{ id: "strip-popover" }}
   {@attach dismiss}
 >
