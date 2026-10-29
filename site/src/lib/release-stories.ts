@@ -37,7 +37,6 @@ const storySchema = z.strictObject({
         title: translatedText,
       })
     )
-    .min(1)
     .max(3),
   introduction: translatedText,
   title: translatedText,

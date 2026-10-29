@@ -14,58 +14,65 @@ const { lang, story } = Astro.props;
 <div class="release-story" lang={lang}>
   <h3 class="story-title">{story.title[lang]}</h3>
   <p class="story-introduction">{story.introduction[lang]}</p>
-  <div class="highlights">
-    {story.highlights.map((highlight) => (
-      <section
-        class:list={[
-          "release-highlight",
-          {
-            lead:
-              highlight.id === story.capture?.highlight || !!highlight.capture,
-          },
-        ]}
-        id={`v${story.version}-${highlight.id}`}
-        lang={lang}
-        aria-labelledby={`v${story.version}-${highlight.id}-title`}
-      >
-        <h4 id={`v${story.version}-${highlight.id}-title`}>
-          {highlight.title[lang]}
-        </h4>
-        <p>{highlight.body[lang]}</p>
-        {highlight.action && (
-          <a
-            class="highlight-action recording-action"
-            href={highlight.action.href[lang]}
-          >
-            {highlight.action.label[lang]}
-            <svg
-              aria-hidden="true"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.75"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+  {story.highlights.length > 0 && (
+    <div class="highlights">
+      {story.highlights.map((highlight) => (
+        <section
+          class:list={[
+            "release-highlight",
+            {
+              lead:
+                highlight.id === story.capture?.highlight ||
+                !!highlight.capture,
+            },
+          ]}
+          id={`v${story.version}-${highlight.id}`}
+          lang={lang}
+          aria-labelledby={`v${story.version}-${highlight.id}-title`}
+        >
+          <h4 id={`v${story.version}-${highlight.id}-title`}>
+            {highlight.title[lang]}
+          </h4>
+          <p>{highlight.body[lang]}</p>
+          {highlight.action && (
+            <a
+              class="highlight-action recording-action"
+              href={highlight.action.href[lang]}
             >
-              <path d="M4 12h16m-6-6 6 6-6 6" />
-            </svg>
-          </a>
-        )}
-        {story.capture && highlight.id === story.capture.highlight && (
-          <ReleaseRecording capture={story.capture} lang={lang} story={story} />
-        )}
-        {highlight.capture && (
-          <ReleaseRecording
-            capture={highlight.capture}
-            lang={lang}
-            story={story}
-          />
-        )}
-      </section>
-    ))}
-  </div>
+              {highlight.action.label[lang]}
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 12h16m-6-6 6 6-6 6" />
+              </svg>
+            </a>
+          )}
+          {story.capture && highlight.id === story.capture.highlight && (
+            <ReleaseRecording
+              capture={story.capture}
+              lang={lang}
+              story={story}
+            />
+          )}
+          {highlight.capture && (
+            <ReleaseRecording
+              capture={highlight.capture}
+              lang={lang}
+              story={story}
+            />
+          )}
+        </section>
+      ))}
+    </div>
+  )}
 </div>
 
 <style>

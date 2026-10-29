@@ -1,13 +1,7 @@
 import type { AuthoredArchive } from "../../captures/authored-archive.ts";
 import type { ReleaseStory } from "./release-stories.ts";
 
-export const storyFromArchive = (
-  archive: AuthoredArchive
-): ReleaseStory | null => {
-  if (!archive.plan.highlights.length) {
-    return null;
-  }
-
+export const storyFromArchive = (archive: AuthoredArchive): ReleaseStory => {
   const { en, fr } = archive.content;
 
   if (!en || !fr) {

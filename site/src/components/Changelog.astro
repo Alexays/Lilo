@@ -37,11 +37,7 @@ const manual = Object.values(
   })
 ).filter((entry) => !generatedVersions.has(entry.version));
 
-const authored = generated.flatMap((archive) => {
-  const story = storyFromArchive(archive);
-
-  return story ? [story] : [];
-});
+const authored = generated.map(storyFromArchive);
 
 const stories = parseReleaseStories(changelog, [...manual, ...authored]);
 

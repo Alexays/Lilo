@@ -306,6 +306,21 @@ test("unapproved maintenance and failed final publication preserve the previous 
       checkAuthoredArchive(stage, maintenanceIdentity).plan.highlights.length,
       0
     );
+
+    const story = storyFromArchive(
+      checkAuthoredArchive(stage, maintenanceIdentity)
+    );
+
+    assert.ok(story, "Approved maintenance copy stays visible without a movie");
+    assert.deepEqual(story.title, { en: copy.headline, fr: copy.headline });
+    assert.deepEqual(story.highlights, []);
+    assert.equal(
+      parseReleaseStories(
+        "## [0.9.0] - 2026-10-29\n\n### Fixed\n\n- Improves background storage.\n",
+        [story]
+      ).get("0.9.0")?.title.en,
+      copy.headline
+    );
   } finally {
     rmSync(root, { force: true, recursive: true });
   }

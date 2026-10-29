@@ -247,6 +247,66 @@ test("capture fingerprints follow source and fixture edits while excluding gener
   }
 });
 
+test("fresh signing-job dependencies cannot run lifecycle scripts", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "release-install-"));
+
+  try {
+    const workflow = readFileSync(
+      new URL("../../.github/workflows/release.yml", import.meta.url),
+      "utf-8"
+    );
+
+    const ignoreScripts =
+      workflow.match(
+        /^ {4}env:\n {6}NPM_CONFIG_IGNORE_SCRIPTS: ['"]?(?<enabled>true)['"]?$/mu
+      )?.groups?.enabled ?? "false";
+
+    const makefile = readFileSync(
+      new URL("../../Makefile", import.meta.url),
+      "utf-8"
+    );
+
+    const recipe = makefile.match(/^\$\(SITE_DEPS\):[^\n]+\n\t[^\n]+/mu)?.[0];
+    assert.ok(recipe);
+    mkdirSync(path.join(root, "site"));
+
+    const pkg = {
+      name: "release-install-fixture",
+      scripts: {
+        postinstall:
+          "node -e \"require('fs').writeFileSync('hook-ran', 'unsafe')\"",
+      },
+      version: "1.0.0",
+    };
+
+    writeFileSync(path.join(root, "site/package.json"), JSON.stringify(pkg));
+    writeFileSync(
+      path.join(root, "site/package-lock.json"),
+      JSON.stringify({
+        lockfileVersion: 3,
+        name: pkg.name,
+        packages: { "": pkg },
+        version: pkg.version,
+      })
+    );
+    writeFileSync(
+      path.join(root, "Makefile"),
+      `SITE_DEPS := site/node_modules/.package-lock.json\n${recipe}\n`
+    );
+
+    const result = spawnSync("make", ["site/node_modules/.package-lock.json"], {
+      cwd: root,
+      encoding: "utf-8",
+      env: { ...process.env, NPM_CONFIG_IGNORE_SCRIPTS: ignoreScripts },
+    });
+
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(existsSync(path.join(root, "site/hook-ran")), false);
+  } finally {
+    rmSync(root, { force: true, recursive: true });
+  }
+});
+
 test("release preparation stops after failed recapture even when an older archive is valid", () => {
   const root = mkdtempSync(path.join(tmpdir(), "release-recapture-"));
 

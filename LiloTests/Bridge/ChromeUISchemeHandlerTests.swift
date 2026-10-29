@@ -24,8 +24,20 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
 
     @MainActor
     func testBundledReleaseNotesAreReadableFromTheChromeOrigin() async throws {
+        try await verifyReleaseResources(handler: ChromeUISchemeHandler())
+    }
+
+    @MainActor
+    func testApprovedMaintenanceReleaseNotesAreReadableWithoutRecordings() async throws {
+        let version = try XCTUnwrap(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+        let notes = try JSONSerialization.data(withJSONObject: ["version": version, "editorial": ["en": NSNull()]])
+        try await verifyReleaseResources(handler: ReleaseNotesSchemeHandler(notes: notes))
+    }
+
+    @MainActor
+    private func verifyReleaseResources(handler: any WKURLSchemeHandler) async throws {
         let configuration = WKWebViewConfiguration()
-        configuration.setURLSchemeHandler(ChromeUISchemeHandler(), forURLScheme: ChromeUISchemeHandler.scheme)
+        configuration.setURLSchemeHandler(handler, forURLScheme: ChromeUISchemeHandler.scheme)
         let webView = WKWebView(frame: .zero, configuration: configuration)
         let navigation = ChromeResourceNavigation()
         webView.navigationDelegate = navigation
@@ -38,7 +50,10 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
                 const response = await fetch('/release-notes.json');
                 if (!response.ok) throw new Error(`Release resource status: ${response.status}`);
                 const notes = await response.json();
-                if (!Array.isArray(notes.editorial?.en?.highlights)) throw new Error('Missing release editorial');
+                if (!notes.editorial || !Object.hasOwn(notes.editorial, 'en') ||
+                    (notes.editorial.en !== null && !Array.isArray(notes.editorial.en?.highlights))) {
+                    throw new Error('Missing release editorial');
+                }
                 for (const highlight of notes.editorial?.en?.highlights ?? []) {
                     const media = highlight.media;
                     if (!media) continue;
@@ -94,6 +109,28 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
         let traversal = RecordingSchemeTask("lilo-chrome://ui/release-media/../Info.plist")
         ChromeUISchemeHandler().webView(WKWebView(), start: traversal)
         XCTAssertNotNil(traversal.error)
+    }
+}
+
+@MainActor
+private final class ReleaseNotesSchemeHandler: NSObject, WKURLSchemeHandler {
+    let notes: Data
+    private let assets = ChromeUISchemeHandler()
+
+    init(notes: Data) { self.notes = notes }
+
+    func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
+        guard let url = urlSchemeTask.request.url, url.path == "/release-notes.json" else {
+            assets.webView(webView, start: urlSchemeTask)
+            return
+        }
+        urlSchemeTask.didReceive(HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json"])!)
+        urlSchemeTask.didReceive(notes)
+        urlSchemeTask.didFinish()
+    }
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {
+        assets.webView(webView, stop: urlSchemeTask)
     }
 }
 

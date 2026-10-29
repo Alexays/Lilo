@@ -28,6 +28,8 @@ jobs:
     # The signing and notarization secrets live in this environment, which only v* tags may deploy to:
     # a workflow pushed on any other branch cannot read them.
     environment: release
+    env:
+      NPM_CONFIG_IGNORE_SCRIPTS: 'true'
     runs-on: xcode-27
     timeout-minutes: 90
     permissions:

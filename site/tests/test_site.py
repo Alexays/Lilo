@@ -204,7 +204,6 @@ class SiteTests(unittest.TestCase):
                     self.assertEqual(len(overview), 1, f"Missing compact overview for {version}")
                     self.assertEqual(overview[0].attrs.get("lang"), language)
                     highlights = [node for node in nodes(overview[0]) if "release-highlight" in node.classes]
-                    self.assertGreaterEqual(len(highlights), 1)
                     self.assertLessEqual(len(highlights), 3)
                     disclosure = next(node for node in nodes(release) if node.tag == "details")
                     self.assertNotIn("open", disclosure.attrs)
