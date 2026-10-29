@@ -879,6 +879,8 @@
 			"sand": "沙"
 		},
 		"hexColor": "十六进制颜色",
+		"exampleSite": "示例网站",
+		"noSiteYet": "尚未打开网站",
 		"followDay": "随时间变化",
 		"followDayHint": "傍晚更暖，夜晚更深。",
 		"materialLabel": "材质",

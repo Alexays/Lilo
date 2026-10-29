@@ -879,6 +879,8 @@
 			"sand": "Sable"
 		},
 		"hexColor": "Couleur hexadécimale",
+		"exampleSite": "Site d'exemple",
+		"noSiteYet": "Aucun site ouvert",
 		"followDay": "Varier selon l'heure",
 		"followDayHint": "Plus chaude le soir, plus profonde la nuit.",
 		"materialLabel": "Matière",

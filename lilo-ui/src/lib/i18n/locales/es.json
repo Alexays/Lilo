@@ -879,6 +879,8 @@
 			"sand": "Arena"
 		},
 		"hexColor": "Color hexadecimal",
+		"exampleSite": "Sitio de ejemplo",
+		"noSiteYet": "Aún no hay sitios abiertos",
 		"followDay": "Cambiar según la hora",
 		"followDayHint": "Más cálido al atardecer, más profundo de noche.",
 		"materialLabel": "Material",

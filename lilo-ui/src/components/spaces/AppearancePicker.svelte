@@ -5,6 +5,7 @@
   import { getWallpaperThumbnail, watchWallpaperColor } from "../../stores/spaceColor.svelte";
   import { getFocusedSpaceId } from "../../stores/spaces.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
+  import { isChromaticHex } from "../../lib/sidebarTheme";
   import { PASTEL_COLOR_NAMES, PASTEL_COLORS } from "../settings/profilesModel";
   import AppearancePreview from "./AppearancePreview.svelte";
 
@@ -32,7 +33,11 @@
   const auto = $derived(mode === "page" || mode === "wallpaper");
   const index = $derived(PASTEL_COLORS.indexOf(color));
   // The tab swatch wears the favicon of the tab on screen, the one whose color it takes.
-  const favicon = $derived(getActiveTab(getFocusedSpaceId())?.faviconDataURL);
+  const activeTab = $derived(getActiveTab(getFocusedSpaceId()));
+  const favicon = $derived(activeTab?.faviconDataURL);
+  // With no site open (the onboarding's blank tab), the preview shows an example site taking effect.
+  const siteColor = $derived(isChromaticHex(activeTab?.faviconDominantColor) ? activeTab?.faviconDominantColor : undefined);
+  const EXAMPLE_SITE = "#e5484d";
 
   function pickColor(value: string): void {
     oncolor(value);
@@ -49,12 +54,14 @@
 <div class="picker">
   <!-- The time of day changes a chosen color only: Lilo's picks bring their own. -->
   <AppearancePreview {material} {desktop} {onmaterial} followsDay={auto ? null : mode === "time"}
+    site={mode === "page" ? { color: siteColor ?? EXAMPLE_SITE, favicon: siteColor ? favicon : undefined, example: !siteColor } : null}
     onday={(on) => onmode(on ? "time" : "fixed")} />
 
   <div class="group">
     <div class="name-row">
       {#if auto}
         <span class="name">{t(`spaceEditor.colorFrom.${mode}`)}</span>
+        {#if mode === "page" && !siteColor}<span class="note">{t("spaceEditor.noSiteYet")}</span>{/if}
       {:else if index >= 0}
         <span class="name">{t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[index]}`)}</span>
       {:else}
@@ -111,6 +118,12 @@
     align-items: center;
     gap: 6px;
     min-height: var(--control-height-sm);
+  }
+
+  .note {
+    flex: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
   }
 
   .name {

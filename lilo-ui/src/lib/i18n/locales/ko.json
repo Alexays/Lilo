@@ -879,6 +879,8 @@
 			"sand": "샌드"
 		},
 		"hexColor": "16진수 색상",
+		"exampleSite": "예시 사이트",
+		"noSiteYet": "아직 연 사이트 없음",
 		"followDay": "시간대에 따라 변화",
 		"followDayHint": "저녁엔 더 따뜻하게, 밤엔 더 깊게.",
 		"materialLabel": "재질",

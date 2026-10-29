@@ -885,6 +885,8 @@
 			"sand": "Piasek"
 		},
 		"hexColor": "Kolor szesnastkowy",
+		"exampleSite": "Przykładowa strona",
+		"noSiteYet": "Brak otwartej strony",
 		"followDay": "Zmieniaj z porą dnia",
 		"followDayHint": "Cieplejszy wieczorem, głębszy nocą.",
 		"materialLabel": "Materiał",

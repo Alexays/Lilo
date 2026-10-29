@@ -879,6 +879,8 @@
 			"sand": "Areia"
 		},
 		"hexColor": "Cor hexadecimal",
+		"exampleSite": "Site de exemplo",
+		"noSiteYet": "Nenhum site aberto",
 		"followDay": "Mudar com a hora do dia",
 		"followDayHint": "Mais quente à noitinha, mais profunda à noite.",
 		"materialLabel": "Material",

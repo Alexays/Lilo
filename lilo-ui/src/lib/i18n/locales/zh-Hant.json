@@ -879,6 +879,8 @@
 			"sand": "沙"
 		},
 		"hexColor": "十六進位顏色",
+		"exampleSite": "範例網站",
+		"noSiteYet": "尚未開啟網站",
 		"followDay": "隨時間變化",
 		"followDayHint": "傍晚更暖，夜晚更深。",
 		"materialLabel": "材質",

@@ -879,6 +879,8 @@
 			"sand": "Sand"
 		},
 		"hexColor": "Hex color",
+		"exampleSite": "Example site",
+		"noSiteYet": "No site open yet",
 		"followDay": "Change with the time of day",
 		"followDayHint": "Warmer in the evening, deeper at night.",
 		"materialLabel": "Material",

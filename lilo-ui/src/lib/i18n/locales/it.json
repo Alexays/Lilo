@@ -879,6 +879,8 @@
 			"sand": "Sabbia"
 		},
 		"hexColor": "Colore esadecimale",
+		"exampleSite": "Sito di esempio",
+		"noSiteYet": "Nessun sito aperto",
 		"followDay": "Cambia con l'ora del giorno",
 		"followDayHint": "Più calda la sera, più profonda di notte.",
 		"materialLabel": "Materiale",

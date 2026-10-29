@@ -4,7 +4,7 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import type { SpaceMaterial } from "../../lib/bridge/protocol";
 
-  let { material, desktop, onmaterial, followsDay, onday }: {
+  let { material, desktop, onmaterial, followsDay, onday, site }: {
     material: SpaceMaterial;
     /** The wallpaper, or what stands in for it, as a CSS background. */
     desktop: string;
@@ -12,6 +12,8 @@
     /** Whether the color changes with the time of day; null hides the switch. */
     followsDay: boolean | null;
     onday: (on: boolean) => void;
+    /** The site whose color the Space takes; `example` when none is open yet, which only the preview shows. */
+    site: { color: string; favicon?: string; example: boolean } | null;
   } = $props();
 
   const MATERIALS: SpaceMaterial[] = ["solid", "glass", "grain"];
@@ -40,7 +42,7 @@
 <div class="desk" style:background={desktop} style:transform="perspective(700px) rotateX({tilt.x}deg) rotateY({tilt.y}deg)"
   onpointermove={trackLight} onpointerleave={() => (tilt = { x: 0, y: 0 })} role="presentation">
   <!-- Today's window, drawn small in the Space's color and material. -->
-  <div class="win {material}" aria-hidden="true">
+  <div class="win {material}" class:example={site?.example} style:--site={site?.color} aria-hidden="true">
     <div class="side">
       <div class="bar"><span class="lights"><i></i><i></i><i></i></span><span class="tools"><i></i><i></i><i></i></span></div>
       <div class="url"><b></b></div>
@@ -51,7 +53,16 @@
       <div class="tab active"><b></b><i style:width="70%"></i></div>
       <div class="tab"><b></b><i style:width="52%"></i></div>
     </div>
-    <div class="page"><i style:width="42%"></i><i></i><i style:width="86%"></i><i style:width="64%"></i><span class="block"></span></div>
+    <div class="page">
+      {#if site}
+        <!-- The site in the tab, its color in a banner: what the sidebar takes after. -->
+        <div class="site" style:background={site.color}>
+          {#if site.favicon}<img src={site.favicon} alt="" />{:else}<b></b>{/if}
+          {#if site.example}<span>{t("spaceEditor.exampleSite")}</span>{/if}
+        </div>
+      {/if}
+      <i style:width="42%"></i><i></i><i style:width="86%"></i><i style:width="64%"></i><span class="block"></span>
+    </div>
   </div>
   <div class="sheen" style:background="radial-gradient(200px circle at {light.x * 100}% {light.y * 100}%, rgba(255, 255, 255, 0.3), transparent 60%)"></div>
   {#if followsDay !== null}
@@ -88,19 +99,20 @@
 
   /* Runs off the bottom and fades there, under the material bar. */
   .win {
+    --win-color: var(--sidebar-bg);
     display: flex;
     height: 100%;
     -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 92%);
     mask-image: linear-gradient(to bottom, black 55%, transparent 92%);
     border-radius: var(--radius-md) 0 0 0;
     overflow: hidden;
-    background: var(--sidebar-bg);
+    background: var(--win-color);
     box-shadow: 0 10px 30px rgba(10, 5, 40, 0.45), 0 0 0 0.5px rgba(0, 0, 0, 0.3);
     transition: background-color var(--motion-duration-slow);
   }
 
   .win.glass {
-    background: color-mix(in srgb, var(--sidebar-bg) 40%, transparent);
+    background: color-mix(in srgb, var(--win-color) 40%, transparent);
     -webkit-backdrop-filter: blur(10px) saturate(1.8);
     backdrop-filter: blur(10px) saturate(1.8);
     box-shadow: 0 10px 30px rgba(10, 5, 40, 0.35), inset 1px 1px 0 rgba(255, 255, 255, 0.55);
@@ -110,6 +122,35 @@
     background-image: var(--grain-texture);
     background-size: 120px;
     background-blend-mode: overlay;
+  }
+
+  /* No site open yet: the example's color stands in, in the preview only. */
+  .win.example {
+    --win-color: color-mix(in srgb, var(--site) 40%, #ffffff);
+  }
+
+  .site {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    margin: -8px -6px 4px;
+    padding: 0 7px;
+    border-radius: var(--radius-xs) 0 0 0;
+  }
+
+  .site b,
+  .site img {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--radius-2xs);
+    background: #ffffff;
+  }
+
+  .site span {
+    color: #ffffff;
+    font-size: var(--font-size-3xs);
+    font-weight: var(--font-weight-semibold);
   }
 
   .side {

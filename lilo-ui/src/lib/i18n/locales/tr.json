@@ -879,6 +879,8 @@
 			"sand": "Kum"
 		},
 		"hexColor": "Onaltılık renk",
+		"exampleSite": "Örnek site",
+		"noSiteYet": "Henüz açık site yok",
 		"followDay": "Günün saatine göre değiş",
 		"followDayHint": "Akşam daha sıcak, gece daha koyu.",
 		"materialLabel": "Malzeme",

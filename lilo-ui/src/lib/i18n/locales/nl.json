@@ -879,6 +879,8 @@
 			"sand": "Zand"
 		},
 		"hexColor": "Hexkleur",
+		"exampleSite": "Voorbeeldsite",
+		"noSiteYet": "Nog geen site open",
 		"followDay": "Meeveranderen met het tijdstip",
 		"followDayHint": "Warmer in de avond, dieper in de nacht.",
 		"materialLabel": "Materiaal",
