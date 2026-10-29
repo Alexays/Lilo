@@ -8,6 +8,18 @@ import XCTest
 @MainActor
 final class PiPControllerTests: XCTestCase {
     /// A still video WebKit passes over (no playback), so PiP goes through the fallback script.
+    /// A silent video drawn from a canvas: without a sound track, it plays on its own.
+    static let silentVideo = """
+    <video id="v" autoplay muted playsinline style="width: 320px; height: 180px"></video>
+    <script>
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    // A canvas stream carries a frame only when the canvas repaints.
+    setInterval(() => context.fillRect(0, 0, 300, 150), 100);
+    v.srcObject = canvas.captureStream();
+    </script>
+    """
+
     static let stillVideo = """
     <video id="v" playsinline style="width: 320px; height: 180px"></video>
     <script>
@@ -167,5 +179,47 @@ final class PiPControllerTests: XCTestCase {
         XCTAssertTrue(returned, "the video goes back into its tab")
         XCTAssertEqual(window.tabManager.currentSpaceId, videoSpace.id)
         XCTAssertEqual(window.tabManager.activeOpenTabId, tab.id)
+    }
+
+    func testPausedVideoInPiPKeepsItsTabFromFreezeAndDiscard() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        // WebKit holds a video's way into PiP until its page shows.
+        let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = controller.contentContainerView
+        window.orderFront(nil)
+        defer {
+            window.orderOut(nil)
+            browserContext.tearDown()
+        }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "about:blank")))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        engine.setWindowOcclusionDetection(false)
+        engine.wkWebView.loadHTMLString(Self.silentVideo, baseURL: URL(string: "https://video.example/"))
+        let ready = await pollUntil(timeout: 5) { (try? await engine.wkWebView.evaluateJavaScript("v.readyState >= 1")) as? Bool == true }
+        XCTAssertTrue(ready)
+
+        engine.togglePictureInPicture()
+        let entered = await pollUntil(timeout: 5) { await self.presentationMode(of: engine) == "picture-in-picture" }
+        XCTAssertTrue(entered)
+        // WebKit tells the UI delegate a moment after the page sees the new mode.
+        let reported = await pollUntil(timeout: 5) { engine.isInPictureInPicture }
+        XCTAssertTrue(reported)
+        _ = try await engine.wkWebView.evaluateJavaScript("v.pause(); 0")
+        controller.createTabStateFirst(url: URL(string: "about:blank"))
+
+        context.browserState.freezeIdleEngines(freezeThreshold: 60, now: Date().addingTimeInterval(60 * 60))
+        XCTAssertFalse(engine.isFrozen, "freezing a tab closes its PiP window")
+        if engine.isFrozen { engine.resume() }   // the context's teardown cannot touch a suspended page
+        _ = controller.tabManager.trimActiveSpaceEngines(maxLiveEngines: 1)
+        XCTAssertTrue(controller.tabManager.engineTab(for: tab.id) === engine, "discarding a tab closes its PiP window")
+        let stillInPiP = await presentationMode(of: engine)
+        XCTAssertEqual(stillInPiP, "picture-in-picture")
+
+        engine.togglePictureInPicture()
+        _ = await pollUntil(timeout: 5) { await self.presentationMode(of: engine) == "inline" }
     }
 }

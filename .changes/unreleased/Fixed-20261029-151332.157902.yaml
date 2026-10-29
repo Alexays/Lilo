@@ -1,0 +1,3 @@
+kind: Fixed
+body: A video in Picture in Picture stays open when paused, instead of closing after a few minutes in the background.
+time: 2026-10-29T15:13:32.157902+01:00

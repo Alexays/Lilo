@@ -41,6 +41,8 @@ struct Tab: Sendable, Equatable {
     /// Runtime only: the page is in a call even without capture: it offers a Media Session hangup or holds a live
     /// WebRTC connection (Meet's companion mode).
     var isInCall = false
+    /// Runtime only: a video of the page is in the system PiP window, so lifecycle never freezes or discards it.
+    var isInPictureInPicture = false
     var hasPopup: Bool = false
     /// Runtime only: an agent drives this tab, so lifecycle never freezes or discards it.
     var isAgentControlled = false
@@ -285,6 +287,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let isMicrophoneActive: Bool; let isMicrophoneMuted: Bool
     let isCameraActive: Bool; let isScreenSharing: Bool; let lastCaptureStoppedAt: Date?; let lastActiveAt: Date?
     let isInCall: Bool
+    let isInPictureInPicture: Bool
     let hasPopup: Bool
     let isAgentControlled: Bool
     let hasNavigationError: Bool; let navigationErrorCode: Int
@@ -310,6 +313,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         isMicrophoneActive = tab.isMicrophoneActive; isMicrophoneMuted = tab.isMicrophoneMuted
         isCameraActive = tab.isCameraActive; isScreenSharing = tab.isScreenSharing; lastCaptureStoppedAt = tab.lastCaptureStoppedAt; lastActiveAt = tab.lastActiveAt
         isInCall = tab.isInCall
+        isInPictureInPicture = tab.isInPictureInPicture
         hasPopup = tab.hasPopup
         isAgentControlled = tab.isAgentControlled
         hasNavigationError = tab.hasNavigationError; navigationErrorCode = tab.navigationErrorCode
@@ -337,6 +341,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.isMicrophoneActive = isMicrophoneActive; tab.isMicrophoneMuted = isMicrophoneMuted
         tab.isCameraActive = isCameraActive; tab.isScreenSharing = isScreenSharing; tab.lastCaptureStoppedAt = lastCaptureStoppedAt; tab.lastActiveAt = lastActiveAt
         tab.isInCall = isInCall
+        tab.isInPictureInPicture = isInPictureInPicture
         tab.hasPopup = hasPopup
         tab.isAgentControlled = isAgentControlled
         tab.hasNavigationError = hasNavigationError; tab.navigationErrorCode = navigationErrorCode

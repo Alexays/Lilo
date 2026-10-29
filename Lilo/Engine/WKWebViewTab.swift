@@ -59,6 +59,7 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
+        func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
         /// The page waits on a dialog held until its tab is shown, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
@@ -218,6 +219,9 @@ final class WKWebViewTab: NSObject {
     var isFormDirty = false
     /// Last call controls the page reported; a committed navigation clears them with the page's handlers.
     var callControls = CallControls()
+    /// A video of this page is in the system PiP window, playing or paused. Unlike `pip.isActive`, it counts a video
+    /// the fallback script sent there.
+    private(set) var isInPictureInPicture = false
     private static let maxTrackedSubframes = 32
     private static let supportsIntegrityPolicy = ["_networkConnectionIntegrityPolicy", "_setNetworkConnectionIntegrityPolicy:"]
         .allSatisfy { WKWebpagePreferences.instancesRespond(to: NSSelectorFromString($0)) }
@@ -1141,6 +1145,11 @@ final class WKWebViewTab: NSObject {
                 committed=\(self.hasCommittedContent, privacy: .public) frozen=\(self.isFrozen, privacy: .public)
                 """)
         }
+        // The PiP window closes with the process, which may never report it.
+        if isInPictureInPicture {
+            isInPictureInPicture = false
+            delegate?.tab(self, didUpdatePictureInPicture: false)
+        }
         // WebKit only clears its suspended flag in resume(), which needs a running process. Respawning
         // off-screen pages the system killed under memory pressure would keep that pressure up.
         if isFrozen || webView.window == nil {
@@ -1189,6 +1198,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
+    func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {}
     func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int) {}
@@ -1776,6 +1786,16 @@ extension WKWebViewTab: WKUIDelegate {
         onMain { tab in
             tab.pageRequestedClose = true
             tab.delegate?.tabDidRequestClose(tab)
+        }
+    }
+
+    // Lifecycle spares the tab while it is set: a freeze or a discard closes the PiP window, even on a paused video.
+    @objc(_webView:hasVideoInPictureInPictureDidChange:)
+    nonisolated func webView(_ webView: WKWebView, hasVideoInPictureInPictureDidChange isInPictureInPicture: Bool) {
+        onMain { tab in
+            guard tab.isInPictureInPicture != isInPictureInPicture else { return }
+            tab.isInPictureInPicture = isInPictureInPicture
+            tab.delegate?.tab(tab, didUpdatePictureInPicture: isInPictureInPicture)
         }
     }
 

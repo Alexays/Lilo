@@ -89,7 +89,7 @@ extension BrowserContext {
     /// agent: neither the idle sweep nor Clear takes it.
     func isBusy(_ tab: Tab, engine: WKWebViewTab?) -> Bool {
         tab.isAudioPlaying || tab.isMicrophoneActive || tab.isCameraActive || tab.isScreenSharing || tab.isInCall
-            || tab.isAgentControlled || tab.hasUnsavedFormData || engine?.pip.isActive == true
+            || tab.isAgentControlled || tab.hasUnsavedFormData || engine?.isInPictureInPicture == true
     }
 
     /// Runs `archiveIdleTabs` every few minutes; the first pass right after launch.

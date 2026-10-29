@@ -14,6 +14,7 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "_webView:drawHeaderInRect:forPageWithTitle:URL:",
         "_webView:getContextMenuFromProposedMenu:forElement:userInfo:completionHandler:",
         "_webView:getWindowFrameWithCompletionHandler:",
+        "_webView:hasVideoInPictureInPictureDidChange:",
         "_webView:mouseDidMoveOverElement:withFlags:userInfo:",
         "_webView:printFrame:pdfFirstPageSize:completionHandler:",
         "_webView:queryPermission:forOrigin:completionHandler:",

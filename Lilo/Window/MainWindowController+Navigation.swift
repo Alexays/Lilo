@@ -554,6 +554,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if context.callTabIds.contains(tab.id) || context.mediaTabIds.contains(tab.id) { context.mediaActivityChanged() }
     }
 
+    func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {
+        updateAndEmit(tab.id) { $0.isInPictureInPicture = isInPictureInPicture }
+    }
+
     /// Emits only on a real change: KVO re-reports values `didNavigate` already applied (loading,
     /// back/forward), and each patch rewrites the chrome's sidebar state.
     func updateAndEmit(_ id: UUID, _ mutate: (inout Tab) -> Void) {
