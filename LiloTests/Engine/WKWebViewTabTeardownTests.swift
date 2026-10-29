@@ -53,6 +53,60 @@ final class WKWebViewTabTeardownTests: XCTestCase {
         XCTAssertTrue(ran, "every torn-down page ran its beforeunload handler, got \(saved)")
     }
 
+    /// A page stuck in a loop, flagged hung as WebKit flags it, and its content process id.
+    private func hungTab() async throws -> (WKWebViewTab, pid_t) {
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        tab.wkWebView.loadHTMLString("<p>live</p>", baseURL: nil)
+        try await waitForJavaScript(tab, "document.body?.textContent === 'live'")
+        let pid = try XCTUnwrap(WebViewPrivateAccessors(tab.wkWebView).pid("_webProcessIdentifier"))
+        _ = try await tab.wkWebView.evaluateJavaScript("setTimeout(() => { while (true) {} }, 0); 1")
+        tab.webViewWebProcessDidBecomeUnresponsive(tab.wkWebView)
+        await pollUntil { tab.isUnresponsive }
+        return (tab, pid_t(pid))
+    }
+
+    func testTeardownOfAHungPageEndsItsContentProcess() async throws {
+        let (tab, pid) = try await hungTab()
+
+        tab.teardown()
+
+        let ended = await pollUntil(timeout: 5) { kill(pid, 0) != 0 }
+        XCTAssertTrue(ended, "a hung process outlives its closed tab and takes the site's next pages")
+    }
+
+    func testAHiddenPageHungTooLongLosesItsProcess() async throws {
+        let limit = WKWebViewTab.hiddenHangLimit
+        WKWebViewTab.hiddenHangLimit = .milliseconds(300)
+        defer { WKWebViewTab.hiddenHangLimit = limit }
+        let (tab, pid) = try await hungTab()
+        defer { tab.teardown() }
+
+        let ended = await pollUntil(timeout: 5) { kill(pid, 0) != 0 }
+
+        XCTAssertTrue(ended, "a background page spinning in a loop burns a core until its tab closes")
+    }
+
+    func testAShownHungPageKeepsItsProcess() async throws {
+        let limit = WKWebViewTab.hiddenHangLimit
+        WKWebViewTab.hiddenHangLimit = .milliseconds(300)
+        defer { WKWebViewTab.hiddenHangLimit = limit }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        defer { tab.teardown() }
+        window.contentView?.addSubview(tab.view)
+        tab.wkWebView.loadHTMLString("<p>live</p>", baseURL: nil)
+        try await waitForJavaScript(tab, "document.body?.textContent === 'live'")
+        let pid = try XCTUnwrap(WebViewPrivateAccessors(tab.wkWebView).pid("_webProcessIdentifier"))
+        tab.webViewWebProcessDidBecomeUnresponsive(tab.wkWebView)
+        await pollUntil { tab.isUnresponsive }
+
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+
+        XCTAssertEqual(kill(pid_t(pid), 0), 0, "on screen, the user decides: the hung card offers a reload")
+    }
+
     func testAPageAnsweringAgainLeavesCoreImageCompositing() async {
         let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
         defer { tab.teardown() }

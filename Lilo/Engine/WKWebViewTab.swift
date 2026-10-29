@@ -261,8 +261,22 @@ final class WKWebViewTab: NSObject {
                 CIFilter(name: "CIColorControls", parameters: [kCIInputSaturationKey: 0.3])
             ].compactMap { $0 } : []
             delegate?.tab(self, didChangeResponsive: !isUnresponsive)
+            hiddenHangKill?.cancel()
+            hiddenHangKill = nil
+            guard isUnresponsive else { return }
+            // Off screen nobody can reload it: a page stuck in a loop would burn a core until its tab closes.
+            hiddenHangKill = Task { [weak self] in
+                try? await Task.sleep(for: Self.hiddenHangLimit)
+                guard let self, !Task.isCancelled, isUnresponsive, webView.window == nil, webView.responds(to: Self.killContentProcess) else { return }
+                if !isPrivateBrowsing { Self.logger.info("kill process hung off screen host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
+                webView.perform(Self.killContentProcess)
+            }
         }
     }
+    private var hiddenHangKill: Task<Void, Never>?
+    /// How long a page off screen may stay unresponsive before its process goes; it reloads when its tab shows.
+    static var hiddenHangLimit: Duration = .seconds(30)
+    private static let killContentProcess = NSSelectorFromString("_killWebContentProcessAndResetState")
     /// Host of the extension whose configuration built this web view; nil for a web page's. A web
     /// view never changes configuration, and an extension page loads only in its extension's.
     var extensionHost: String?
@@ -568,10 +582,9 @@ final class WKWebViewTab: NSObject {
     func reload() {
         guard wake() else { return }
         // A hung process never gets to the reload: it goes, and the termination recovery loads the page again.
-        let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
-        if isUnresponsive, webView.responds(to: kill) {
+        if isUnresponsive, webView.responds(to: Self.killContentProcess) {
             if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
-            webView.perform(kill)
+            webView.perform(Self.killContentProcess)
             return
         }
         if !isPrivateBrowsing { Self.logger.info("load source=app-reload host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
@@ -731,6 +744,7 @@ final class WKWebViewTab: NSObject {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
         documentPiPCloser?()
         cancelPendingDocumentPiP()
+        let wasUnresponsive = isUnresponsive
         isUnresponsive = false
         cancelRegionSelection()
         // A suspended page is neither loading nor playing (freeze paused its media).
@@ -739,6 +753,12 @@ final class WKWebViewTab: NSObject {
             webView.pauseAllMediaPlayback()
         }
         webView.navigationDelegate = nil
+        // A hung process never runs the close: it would keep spinning, and WebKit would keep handing it the
+        // site's next pages. Killed after the delegate goes, so no termination recovery reloads it.
+        if wasUnresponsive, webView.responds(to: Self.killContentProcess) {
+            if !isPrivateBrowsing { Self.logger.info("kill unresponsive process for teardown host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
+            webView.perform(Self.killContentProcess)
+        }
         runQueuedDialog(presenting: false)
         if isAudioPlayingObserverRegistered {
             webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
