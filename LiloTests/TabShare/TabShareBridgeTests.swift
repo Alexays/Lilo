@@ -43,31 +43,28 @@ final class TabShareBridgeTests: XCTestCase {
         XCTAssertEqual(reply["mode"] as? String, "cancel")
     }
 
-    func testScreenWithSoundGoesThroughTheFerryAndWithoutStaysNative() async {
+    func testAScreenGoesThroughTheFerryWithSoundOnlyWhenBothSidesWantIt() async {
         let bridge = TabShareBridge()
-        var ferried = 0
-        bridge.screenStarter = { _ in
-            ferried += 1
-            return ["mode": "tab", "token": "s", "audioURL": "lilo-capture://frames/audio?token=s"]
+        var sounds: [Bool] = []
+        bridge.screenStarter = { _, audio in
+            sounds.append(audio)
+            return ["mode": "tab", "token": "s"]
         }
         let requester = WKWebView(frame: .zero)
 
         bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
         var reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "tab")
-        XCTAssertEqual(ferried, 1)
-
-        // The page did not ask for sound: WebKit's own capture costs less than the ferry.
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: false)
-        XCTAssertEqual(reply["mode"] as? String, "system")
+        XCTAssertEqual(reply["mode"] as? String, "tab", "full resolution and frame rate, with or without sound")
 
         bridge.pickerPresenter = { _, _, _ in .system(audio: false) }
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
-        XCTAssertEqual(reply["mode"] as? String, "system")
-        XCTAssertEqual(ferried, 1)
+        XCTAssertEqual(reply["mode"] as? String, "tab")
+        XCTAssertEqual(sounds, [true, false, false])
 
         bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
-        bridge.screenStarter = { _ in nil }
+        bridge.screenStarter = { _, _ in nil }
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "cancel", "a cancelled system picker cancels the share")
     }

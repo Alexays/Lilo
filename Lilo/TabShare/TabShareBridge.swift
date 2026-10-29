@@ -18,9 +18,9 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     /// Starts a frame-ferry session for the picked tab. Returns the shim reply payload
     /// (mode/token/width/height) or nil when the tab has no live engine.
     var sessionStarter: ((_ tabId: UUID, _ requester: WKWebView) -> [String: Any]?)?
-    /// Runs the system screen or window picker and ferries the pick with the Mac's sound, which WebKit's own capture
-    /// cannot share without echoing the call. Returns the shim reply payload, nil when cancelled.
-    var screenStarter: ((_ requester: WKWebView) async -> [String: Any]?)?
+    /// Runs the system screen or window picker and ferries the pick, with the Mac's sound when asked, which WebKit's own
+    /// capture cannot share without echoing the call. Returns the shim reply payload, nil when cancelled.
+    var screenStarter: ((_ requester: WKWebView, _ audio: Bool) async -> [String: Any]?)?
     var sessionStopper: ((_ token: String) -> Void)?
     /// Redeems a `chrome.tabCapture` / `chrome.desktopCapture` stream id for the calling frame's
     /// origin (`chromeMediaSource` 'tab' or 'desktop'). Returns the shim reply payload, nil when
@@ -76,8 +76,9 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
         guard let pickerPresenter else { return ["mode": "system"] }
         switch await pickerPresenter(originHost, requester, wantsAudio) {
         case .system(let audio):
-            guard audio, wantsAudio, let screenStarter else { return ["mode": "system"] }
-            return await screenStarter(requester) ?? ["mode": "cancel"]
+            // WebKit's own capture is sized in points, half the pixels of a Retina screen, at the frame rate the page asks.
+            guard let screenStarter else { return ["mode": "system"] }
+            return await screenStarter(requester, audio && wantsAudio) ?? ["mode": "cancel"]
         case .cancel:
             return ["mode": "cancel"]
         case .tab(let tabId):
@@ -100,6 +101,8 @@ if (typeof MediaDevices !== 'function' || !navigator.mediaDevices || !MediaDevic
 try { if (window.top !== window && window.top.location.origin !== location.origin) return; } catch (e) { return; }
 var devices = navigator.mediaDevices, originals;
 var Decoder = window.VideoDecoder, Chunk = window.EncodedVideoChunk, AudioCtx = window.AudioContext;
+var NativeWorker = window.Worker, NativeBlob = window.Blob, objectURL = URL.createObjectURL, revokeURL = URL.revokeObjectURL;
+var trusted = window.trustedTypes, createPolicy = trusted && trusted.createPolicy, workerPolicy;
 // Captured before any page script runs, so the page cannot fake a user gesture.
 var activation = navigator.userActivation;
 var activationDesc = activation && Object.getOwnPropertyDescriptor(Object.getPrototypeOf(activation), 'isActive');
@@ -123,8 +126,6 @@ if (typeof RTCPeerConnection === 'function') {
     return apply(peer.setRemoteDescription, this, args);
   } });
 }
-// Meet asks Safari for a 5 fps screen share and Chrome for 30. A capture only sends changed frames, so a still screen costs no more.
-var meet = location.hostname === 'meet.google.com';
 // The track emits a frame only on requestFrame, and none for an unchanged canvas: on static content
 // the encoder could neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
 var refreshMs = 200;
@@ -137,6 +138,7 @@ function endSession(token, notifyNative){
   if (!s) return;
   delete active[token];
   clearInterval(s.refresh);
+  if (s.worker) s.worker.terminate();
   if (s.decoder && s.decoder.state !== 'closed') s.decoder.close();
   if (s.last) s.last.close();
   if (s.audio) s.audio.ctx.close();
@@ -228,15 +230,94 @@ function pumpAudio(token, url){
     if (active[token]) setTimeout(function(){ pumpAudio(token, url); }, 250);
   });
 }
+// The worker decodes straight into a VideoTrackGenerator and hands its track over: no canvas to draw and read back at every
+// frame, and the page's main thread stays out of the loop. Same protocol and repaint rule as the canvas path below.
+var workerSource = '(' + function(refreshMs){
+  var generator = new VideoTrackGenerator(), writer = generator.writable.getWriter();
+  var decoder = null, desc = null, needKey = true, last = null, drawnAt = 0, seq = 0, frameURL;
+  function write(frame){
+    drawnAt = performance.now();
+    writer.write(new VideoFrame(frame, { timestamp: Math.round(drawnAt * 1000) })).catch(function(){});
+  }
+  function configure(codec, d){
+    if (decoder && decoder.state !== 'closed') decoder.close();
+    decoder = new VideoDecoder({
+      output: function(frame){ if (last) last.close(); last = frame; write(frame); },
+      error: function(){ decoder = null; needKey = true; }
+    });
+    decoder.configure({ codec: codec, description: Uint8Array.from(atob(d), function(c){ return c.charCodeAt(0); }),
+                        hardwareAcceleration: 'prefer-hardware', optimizeForLatency: true });
+    desc = d;
+  }
+  function pump(){
+    fetch(frameURL + '&seq=' + seq + (needKey ? '&key=1' : ''), { cache: 'no-store' }).then(function(r){
+      if (r.status === 410) { self.postMessage({ ended: true }); return; }
+      if (r.status !== 200) { setTimeout(pump, 250); return; }
+      var next = parseInt(r.headers.get('X-Lilo-Seq') || '0', 10), key = r.headers.get('X-Lilo-Key') === '1';
+      var codec = r.headers.get('X-Lilo-Codec'), d = r.headers.get('X-Lilo-Desc');
+      return r.arrayBuffer().then(function(data){
+        if (key && (!decoder || desc !== d)) configure(codec, d);
+        if (decoder && (key || !needKey)) {
+          decoder.decode(new EncodedVideoChunk({ type: key ? 'key' : 'delta', timestamp: next * 33333, data: data }));
+          needKey = false;
+        }
+        seq = next;
+        pump();
+      });
+    }).catch(function(){ setTimeout(pump, 250); });
+  }
+  setInterval(function(){ if (last && performance.now() - drawnAt >= refreshMs) write(last); }, refreshMs);
+  self.onmessage = function(e){
+    frameURL = e.data;
+    pump();
+    self.postMessage({ track: generator.track }, [generator.track]);
+  };
+} + ')(' + refreshMs + ')';
+// A page enforcing Trusted Types refuses a plain URL: the worker's then goes through a policy of Lilo's own, made only then.
+function startWorker(url){
+  try { return new NativeWorker(url); } catch (e) {
+    if (!createPolicy) throw e;
+    workerPolicy = workerPolicy || apply(createPolicy, trusted, ['lilo-share', { createScriptURL: function(u){ return u; } }]);
+    return new NativeWorker(workerPolicy.createScriptURL(url));
+  }
+}
+// Resolves the worker's track, or null where it cannot run: a CSP refusing blob workers or Lilo's policy, or no
+// VideoTrackGenerator. The canvas then carries the share.
+function workerTrack(res){
+  return new Promise(function(resolve){
+    var url, worker;
+    try {
+      url = apply(objectURL, URL, [new NativeBlob([workerSource], { type: 'text/javascript' })]);
+      worker = startWorker(url);
+    } catch (e) { if (url) apply(revokeURL, URL, [url]); return resolve(null); }
+    apply(revokeURL, URL, [url]);
+    worker.onerror = function(){ worker.terminate(); resolve(null); };
+    var handed = false;
+    worker.onmessage = function(e){
+      if (e.data.track) { handed = true; worker.onerror = null; resolve({ worker: worker, track: e.data.track }); }
+      else if (handed) endSession(res.token, false);
+      else { worker.terminate(); resolve(null); }
+    };
+    worker.postMessage(res.frameURL);
+  });
+}
 function ferryStream(res, actx){
-  var canvas = document.createElement('canvas');
-  canvas.width = res.width;
-  canvas.height = res.height;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, res.width, res.height);
-  // One captured frame per decoded or repainted one: a 30 fps capture samples the canvas on its own clock.
-  var stream = canvas.captureStream(0);
+  return workerTrack(res).then(function(made){ return ferryStreamFrom(res, actx, made); });
+}
+function ferryStreamFrom(res, actx, made){
+  var canvas = null, ctx = null, stream;
+  if (made) {
+    stream = new MediaStream([made.track]);
+  } else {
+    canvas = document.createElement('canvas');
+    canvas.width = res.width;
+    canvas.height = res.height;
+    ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, res.width, res.height);
+    // One captured frame per decoded or repainted one: a 30 fps capture samples the canvas on its own clock.
+    stream = canvas.captureStream(0);
+  }
   var audio = null;
   if (actx && res.audioURL) {
     // Never connected to the context's destination: the share's sound must not play back locally.
@@ -256,17 +337,19 @@ function ferryStream(res, actx){
   });
   var entry = {
     canvas: canvas, ctx: ctx, stream: stream, track: stream.getVideoTracks()[0], nativeStops: nativeStops,
-    decoder: null, desc: null, needKey: true, last: null, drawnAt: 0, audio: audio
+    decoder: null, desc: null, needKey: true, last: null, drawnAt: 0, audio: audio, worker: made && made.worker
   };
-  entry.refresh = setInterval(function(){
-    if (entry.last && performance.now() - entry.drawnAt >= refreshMs) {
-      entry.ctx.drawImage(entry.last, 0, 0, entry.canvas.width, entry.canvas.height);
-      entry.track.requestFrame();
-      entry.drawnAt = performance.now();
-    }
-  }, refreshMs);
   active[res.token] = entry;
-  pump({ token: res.token, frameURL: res.frameURL, seq: 0 });
+  if (!made) {
+    entry.refresh = setInterval(function(){
+      if (entry.last && performance.now() - entry.drawnAt >= refreshMs) {
+        entry.ctx.drawImage(entry.last, 0, 0, entry.canvas.width, entry.canvas.height);
+        entry.track.requestFrame();
+        entry.drawnAt = performance.now();
+      }
+    }, refreshMs);
+    pump({ token: res.token, frameURL: res.frameURL, seq: 0 });
+  }
   if (audio) pumpAudio(res.token, res.audioURL);
   return stream;
 }
@@ -288,9 +371,7 @@ getDisplayMedia(constraints){
     return Promise.reject(new DOMException('getDisplayMedia() requires user activation.', 'NotAllowedError'));
   }
   var id = String(Math.random()).slice(2);
-  var video = constraints && constraints.video;
-  nativePending[id] = { constraints: meet && video && typeof video === 'object'
-    ? assign({}, constraints, { video: assign({}, video, { frameRate: { ideal: 30 } }) }) : constraints };
+  nativePending[id] = { constraints: constraints };
   var wantsAudio = !!(constraints && constraints.audio);
   // Made inside the page's gesture, which a context needs to play: the picker's wait spends it.
   var actx = wantsAudio && AudioCtx ? new AudioCtx() : null;
