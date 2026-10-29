@@ -439,6 +439,8 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    /* A classic scrollbar showing up would drop a column and move every row under the scroll position. */
+    scrollbar-gutter: stable;
     overscroll-behavior: contain;
     outline: none;
     border-radius: var(--radius-sm);
