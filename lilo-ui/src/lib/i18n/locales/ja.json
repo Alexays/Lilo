@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "自動ピクチャ・イン・ピクチャ",
-				"description": "通話中やビデオ再生中のタブから離れると、フローティングウインドウに表示します。",
+				"description": "通話中やビデオ再生中のタブやLiloから離れると、フローティングウインドウに表示します。",
 				"keywords": "PiP ビデオ 通話 フローティング"
 			},
 			"dockCallsInSidebar": {

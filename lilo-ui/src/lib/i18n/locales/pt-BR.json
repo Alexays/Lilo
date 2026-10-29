@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automático",
-				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba.",
+				"description": "Exiba uma chamada ou um vídeo em reprodução em uma janela flutuante ao sair da aba ou do Lilo.",
 				"keywords": "pip vídeo chamada flutuante"
 			},
 			"dockCallsInSidebar": {

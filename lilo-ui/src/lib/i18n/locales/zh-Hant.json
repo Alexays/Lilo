@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "自動子母畫面",
-				"description": "切換至其他分頁時，將通話或播放中的影片移至浮動視窗。",
+				"description": "切換至其他分頁或其他 App 時，將通話或播放中的影片移至浮動視窗。",
 				"keywords": "pip 影片 通話 浮動"
 			},
 			"dockCallsInSidebar": {

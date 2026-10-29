@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Picture-in-picture automatique",
-				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet.",
+				"description": "Passer un appel ou une vidéo en cours dans une fenêtre flottante quand vous quittez son onglet ou Lilo.",
 				"keywords": "pip vidéo appel flottant"
 			},
 			"dockCallsInSidebar": {

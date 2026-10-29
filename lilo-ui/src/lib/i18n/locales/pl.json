@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Automatyczny obraz w obrazie",
-				"description": "Przenieś rozmowę lub odtwarzane wideo do pływającego okna po przejściu do innej karty.",
+				"description": "Przenieś rozmowę lub odtwarzane wideo do pływającego okna po przejściu do innej karty lub aplikacji.",
 				"keywords": "PiP wideo rozmowa pływające"
 			},
 			"dockCallsInSidebar": {

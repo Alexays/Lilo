@@ -30,7 +30,8 @@ final class PiPController {
 
     /// Auto-enter PiP when the tab is backgrounded, if it has a PiP-able video with active media.
     func autoEnterIfEligible(hasActiveMedia: Bool) {
-        guard !isActive, hasActiveMedia else { return }
+        // Leaving the app can report twice (resigning active, then the window occluded): a second toggle would exit.
+        guard !isActive, !didAutoEnter, hasActiveMedia else { return }
         if canToggle, toggleNatively() {
             didAutoEnter = true
             return
@@ -60,9 +61,9 @@ final class PiPController {
 
     /// Only reached when WebKit declines to designate a predominant video; the log tells how often
     /// that happens on real pages. An isolated world shares the page's DOM without the page seeing the script, and
-    /// `evaluateJavaScript` lends it the user gesture PiP needs.
+    /// `callAsyncJavaScript` lends it the user gesture PiP needs.
     private func toggleUsingPageScript(markAutoEntered: Bool = false) {
-        webView.evaluateJavaScript(Self.toggleScript, in: nil, in: .defaultClient) { [weak self] result in
+        webView.callAsyncJavaScript(Self.toggleScript, arguments: ["enterOnly": markAutoEntered], in: nil, in: .defaultClient) { [weak self] result in
             let state = (try? result.get()).map { $0 as? String ?? "unknown" } ?? "error"
             Self.logger.info("page-script fallback: \(state, privacy: .public)")
             guard state == "entered" || state == "requested" else { return }
@@ -70,11 +71,13 @@ final class PiPController {
         }
     }
 
+    /// An automatic entry passes `enterOnly`, so it never ends a PiP the user opened.
     private static let toggleScript = """
-    (() => {
+    return (() => {
       const videos = Array.from(document.querySelectorAll('video'));
       const active = videos.find((video) => video.webkitPresentationMode === 'picture-in-picture');
       if (active && typeof active.webkitSetPresentationMode === 'function') {
+        if (enterOnly) return 'none';
         active.webkitSetPresentationMode('inline');
         return 'exited';
       }

@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Otomatik resim içinde resim",
-				"description": "Sekmesinden ayrıldığınızda aramayı veya oynayan videoyu yüzen bir pencerede gösterin.",
+				"description": "Sekmesinden veya Lilo'dan ayrıldığınızda aramayı veya oynayan videoyu yüzen bir pencerede gösterin.",
 				"keywords": "pip video arama yüzen"
 			},
 			"dockCallsInSidebar": {

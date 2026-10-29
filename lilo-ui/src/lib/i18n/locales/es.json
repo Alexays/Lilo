@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Imagen dentro de imagen automática",
-				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña.",
+				"description": "Muestra una llamada o un vídeo en reproducción en una ventana flotante al cambiar de pestaña o salir de Lilo.",
 				"keywords": "pip vídeo llamada flotante"
 			},
 			"dockCallsInSidebar": {

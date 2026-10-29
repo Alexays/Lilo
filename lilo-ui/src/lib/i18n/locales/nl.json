@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Automatisch beeld in beeld",
-				"description": "Toon een gesprek of afspelende video in een zwevend venster wanneer je naar een ander tabblad gaat.",
+				"description": "Toon een gesprek of afspelende video in een zwevend venster wanneer je naar een ander tabblad of een andere app gaat.",
 				"keywords": "pip video gesprek zwevend"
 			},
 			"dockCallsInSidebar": {

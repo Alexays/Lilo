@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Auto picture-in-picture",
-				"description": "Pop a call or playing video into a floating window when you switch away from its tab.",
+				"description": "Pop a call or playing video into a floating window when you switch away from its tab or from Lilo.",
 				"keywords": "pip video call floating"
 			},
 			"dockCallsInSidebar": {

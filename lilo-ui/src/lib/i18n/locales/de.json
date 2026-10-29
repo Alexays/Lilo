@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Automatisches Bild-in-Bild",
-				"description": "Einen Anruf oder ein laufendes Video in einem schwebenden Fenster anzeigen, wenn du den Tab verlässt.",
+				"description": "Einen Anruf oder ein laufendes Video in einem schwebenden Fenster anzeigen, wenn du den Tab oder Lilo verlässt.",
 				"keywords": "pip video anruf schwebend"
 			},
 			"dockCallsInSidebar": {

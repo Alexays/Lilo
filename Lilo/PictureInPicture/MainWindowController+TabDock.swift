@@ -70,6 +70,11 @@ extension MainWindowController {
     /// App resigned active or the window occluded: the dock is invisible there, so the call moves
     /// to the always-on-top panel (the reason that panel exists).
     func moveDockedCallToPanel() {
+        // Leaving the app from a playing video: the system PiP window keeps it in view, as leaving its tab does.
+        if context.settingsStore?.autoPictureInPicture == true, context.windows.activeWindow === self, let engine = tabManager.activeEngineTab,
+           !engine.isInCall, !engine.isTabShareSource, !engine.isAgentControlled {
+            engine.autoEnterPictureInPictureIfEligible()
+        }
         // Leaving the app from a call tab: its page's PiP window keeps the call in view, as leaving its tab does.
         if documentPiP.webView == nil, context.settingsStore?.autoPictureInPicture == true, let engine = tabManager.activeEngineTab,
            engine.isInCall, !engine.isAgentControlled, !engine.shouldRetainForWebInspector {
@@ -90,6 +95,7 @@ extension MainWindowController {
     /// App became active again: a panel-hosted call comes home to the sidebar dock, unless the user
     /// put the panel on another screen, where it stays visible next to the window.
     func moveFloatingCallToDock() {
+        tabManager.activeEngineTab?.restoreFromAutoPictureInPicture()
         // Back in the app on the call tab: an automatic PiP window gives the call back to its tab.
         if let activeId = tabManager.activeOpenTabId, documentPiP.openerId == activeId, documentPiP.wasAutoEntered {
             documentPiP.close()

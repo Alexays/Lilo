@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "自动画中画",
-				"description": "切换到其他标签页时，将通话或正在播放的视频放入悬浮窗口。",
+				"description": "切换到其他标签页或其他应用时，将通话或正在播放的视频放入悬浮窗口。",
 				"keywords": "画中画 视频 通话 悬浮"
 			},
 			"dockCallsInSidebar": {

@@ -341,7 +341,7 @@
 			},
 			"autoPictureInPicture": {
 				"title": "Picture in Picture automatico",
-				"description": "Mostra una chiamata o un video in riproduzione in una finestra mobile quando passi a un'altra scheda.",
+				"description": "Mostra una chiamata o un video in riproduzione in una finestra mobile quando passi a un'altra scheda o esci da Lilo.",
 				"keywords": "pip video chiamata mobile"
 			},
 			"dockCallsInSidebar": {
