@@ -2188,6 +2188,14 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Empieza de nuevo sin perder nada.",
+				"description": "Lilo se abre limpio tras una pausa, y las pestañas archivadas están a un clic.",
+				"freshTitle": "Vuelve a una ventana limpia.",
+				"freshDescription": "Tras una pausa larga, Lilo se abre sin pestaña seleccionada y con las pestañas fijadas de vuelta en su inicio. Las pestañas archivadas mientras tanto vuelven con Deshacer.",
+				"archiveTitle": "Pestañas archivadas, a un clic.",
+				"archiveDescription": "Las pestañas archivadas en el último día esperan junto a Nueva pestaña, listas para volver."
+			},
 			"v090": {
 				"headline": "Encuentra el camino de vuelta.",
 				"description": "Tu historial, tus llamadas y ocho idiomas nuevos.",

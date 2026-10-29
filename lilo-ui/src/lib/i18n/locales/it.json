@@ -2188,6 +2188,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Ricomincia senza perdere nulla.",
+				"description": "Dopo una pausa Lilo si apre in ordine, e le schede archiviate sono a un clic.",
+				"freshTitle": "Ritrova una finestra in ordine.",
+				"freshDescription": "Dopo una lunga pausa Lilo si apre senza schede selezionate, con le schede fissate tornate alla loro pagina iniziale. Le schede archiviate nel frattempo tornano con Annulla.",
+				"archiveTitle": "Schede archiviate, a un clic.",
+				"archiveDescription": "Le schede archiviate nell'ultimo giorno aspettano accanto a Nuova scheda, pronte a tornare."
+			},
 			"v090": {
 				"headline": "Ritrova la strada.",
 				"description": "La tua cronologia, le tue chiamate e otto nuove lingue.",

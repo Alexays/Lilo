@@ -2177,6 +2177,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0100": {
+				"headline": "Un nouveau départ, rien de perdu.",
+				"description": "Lilo s'ouvre au propre après une pause, et les onglets archivés sont à un clic.",
+				"freshTitle": "Retrouvez une fenêtre au propre.",
+				"freshDescription": "Après une longue pause, Lilo s'ouvre sans onglet sélectionné, les onglets épinglés revenus à leur page d'accueil. Les onglets archivés entre-temps reviennent avec Annuler.",
+				"archiveTitle": "Les onglets archivés, à un clic.",
+				"archiveDescription": "Les onglets archivés dans la journée attendent à côté de Nouvel onglet, prêts à revenir."
+			},
 			"v090": {
 				"headline": "Retrouvez votre chemin.",
 				"description": "Votre historique, vos appels et huit nouvelles langues.",

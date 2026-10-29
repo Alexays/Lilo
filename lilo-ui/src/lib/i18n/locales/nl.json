@@ -2188,6 +2188,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Opnieuw beginnen, niets kwijt.",
+				"description": "Na een pauze opent Lilo opgeruimd, en gearchiveerde tabbladen zijn één klik weg.",
+				"freshTitle": "Terug naar een opgeruimd venster.",
+				"freshDescription": "Na een lange pauze opent Lilo zonder geselecteerd tabblad, met vastgezette tabbladen terug op hun startpagina. De tabbladen die intussen zijn gearchiveerd komen terug met Herstel.",
+				"archiveTitle": "Gearchiveerde tabbladen, één klik weg.",
+				"archiveDescription": "De tabbladen die de afgelopen dag zijn gearchiveerd wachten naast Nieuw tabblad, klaar om terug te komen."
+			},
 			"v090": {
 				"headline": "Vind je weg terug.",
 				"description": "Je geschiedenis, je gesprekken en acht nieuwe talen.",

@@ -1,7 +1,7 @@
 import type { Locale } from "../../lib/i18n/translate";
 
 export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
-const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages"] as const;
+const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages", "fresh", "archive"] as const;
 export type ReleaseIllustration = typeof illustrations[number];
 
 export interface ReleaseHighlight {

@@ -2188,6 +2188,14 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Recomece sem perder nada.",
+				"description": "Depois de uma pausa, o Lilo abre organizado, e as abas arquivadas ficam a um clique.",
+				"freshTitle": "Volte para uma janela organizada.",
+				"freshDescription": "Depois de uma longa pausa, o Lilo abre sem aba selecionada e com as abas fixadas de volta à página inicial. As abas arquivadas nesse meio-tempo voltam com Desfazer.",
+				"archiveTitle": "Abas arquivadas, a um clique.",
+				"archiveDescription": "As abas arquivadas no último dia esperam ao lado de Nova aba, prontas para voltar."
+			},
 			"v090": {
 				"headline": "Encontre o caminho de volta.",
 				"description": "Seu histórico, suas chamadas e oito novos idiomas.",

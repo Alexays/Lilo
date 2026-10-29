@@ -2210,6 +2210,14 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Nowy start bez utraty czegokolwiek.",
+				"description": "Po przerwie Lilo otwiera się uporządkowane, a zarchiwizowane karty są o jedno kliknięcie.",
+				"freshTitle": "Wróć do uporządkowanego okna.",
+				"freshDescription": "Po długiej przerwie Lilo otwiera się bez zaznaczonej karty, a przypięte karty wracają na swoją stronę główną. Karty zarchiwizowane w międzyczasie wrócą po kliknięciu Cofnij.",
+				"archiveTitle": "Zarchiwizowane karty o jedno kliknięcie.",
+				"archiveDescription": "Karty zarchiwizowane w ciągu ostatniego dnia czekają obok Nowej karty, gotowe do powrotu."
+			},
 			"v090": {
 				"headline": "Łatwo wrócić.",
 				"description": "Twoja historia, Twoje rozmowy i osiem nowych języków.",

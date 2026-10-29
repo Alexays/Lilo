@@ -2188,6 +2188,14 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Temiz bir başlangıç, hiçbir şey kaybolmadan.",
+				"description": "Lilo bir aradan sonra düzenli açılır, arşivlenen sekmeler de bir tık uzakta.",
+				"freshTitle": "Düzenli bir pencereye dönün.",
+				"freshDescription": "Uzun bir aradan sonra Lilo hiçbir sekme seçili olmadan açılır, sabitlenmiş sekmeler ana sayfalarına döner. Bu arada arşivlenen sekmeler Geri Al ile geri gelir.",
+				"archiveTitle": "Arşivlenen sekmeler bir tık uzakta.",
+				"archiveDescription": "Son bir günde arşivlenen sekmeler Yeni Sekme'nin yanında bekler, geri gelmeye hazırdır."
+			},
 			"v090": {
 				"headline": "Geri dönmek artık kolay.",
 				"description": "Geçmişiniz, görüşmeleriniz ve sekiz yeni dil.",

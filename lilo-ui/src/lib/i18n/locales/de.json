@@ -2188,6 +2188,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0100": {
+				"headline": "Neu anfangen, nichts verlieren.",
+				"description": "Nach einer Pause öffnet Lilo aufgeräumt, und archivierte Tabs sind nur einen Klick entfernt.",
+				"freshTitle": "Zurück zu einem aufgeräumten Fenster.",
+				"freshDescription": "Nach einer langen Pause öffnet Lilo ohne ausgewählten Tab, angeheftete Tabs zurück auf ihrer Startseite. Die inzwischen archivierten Tabs kommen mit Widerrufen zurück.",
+				"archiveTitle": "Archivierte Tabs, einen Klick entfernt.",
+				"archiveDescription": "Die Tabs, die am letzten Tag archiviert wurden, warten neben Neuer Tab und sind schnell zurück."
+			},
 			"v090": {
 				"headline": "Finde zurück.",
 				"description": "Dein Verlauf, deine Anrufe und acht neue Sprachen.",

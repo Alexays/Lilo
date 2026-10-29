@@ -1,3 +1,0 @@
-kind: Fixed
-body: A tab whose page hangs no longer keeps a process spinning once closed, nor for long in the background, and no longer blocks the next pages of the same site.
-time: 2026-10-29T09:15:45.239367+01:00

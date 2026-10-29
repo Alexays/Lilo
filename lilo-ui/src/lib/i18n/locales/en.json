@@ -2177,6 +2177,14 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0100": {
+				"headline": "A fresh start, nothing lost.",
+				"description": "Lilo opens clean after a break, and the tabs it archived are one click away.",
+				"freshTitle": "Come back to a clean window.",
+				"freshDescription": "After a long break, Lilo opens with no tab selected and pinned tabs back home. The tabs archived meanwhile return with Undo.",
+				"archiveTitle": "Archived tabs, one click away.",
+				"archiveDescription": "The tabs archived in the last day wait next to New Tab, ready to come back."
+			},
 			"v090": {
 				"headline": "Find your way back.",
 				"description": "Your history, your calls, and eight new languages.",
