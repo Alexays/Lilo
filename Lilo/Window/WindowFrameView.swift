@@ -123,11 +123,12 @@ final class WindowFrameView: NSView {
     }
 
     /// Applies the frame color, fading from the current presentation value. The first
-    /// set (bootstrap/default path, before any bridge message) is applied instantly.
-    func setFrameColor(_ color: NSColor) {
+    /// set (bootstrap/default path, before any bridge message) is applied instantly, and so is
+    /// each frame of a swipe, which already moves the color with the finger.
+    func setFrameColor(_ color: NSColor, animated: Bool = true) {
         let cgColor = color.cgColor
         guard cgColor != frameColor else { return }
-        let fade = frameColor != nil
+        let fade = animated && frameColor != nil
         frameColor = cgColor
 
         CATransaction.begin()

@@ -244,6 +244,12 @@
     background: color-mix(in srgb, var(--text-primary-tint-12) 50%, transparent);
   }
 
+  /* Rounded as the desk: WebKit stops clipping a composited child to a transformed parent's corners. */
+  .dusk,
+  .sheen {
+    border-radius: inherit;
+  }
+
   .dusk {
     position: absolute;
     inset: 0;

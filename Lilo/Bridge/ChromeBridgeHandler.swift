@@ -147,6 +147,10 @@ final class ChromeBridgeHandler: BridgeHandler {
             if let requestId = message.string("requestId") { windowController?.resolveExtensionPermissionRequest(requestId: requestId, granted: message.bool("granted")) }
 
         case "updateWindowBackground":
+            if message.bool("swiping"), let color = message.string("color") {
+                windowController?.applySwipeFrameColor(color)
+                break
+            }
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
             windowController?.applyWindowMaterial(glass: message.string("material") == "glass")
 

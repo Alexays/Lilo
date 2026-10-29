@@ -555,7 +555,8 @@ export interface BridgeCommandPayloadMap {
 	// `remember` false: a dismissal, denied for now without storing a decision for the site.
 	permissionResponse: { requestId: string; granted: boolean; remember?: boolean };
 	extensionPermissionResponse: { requestId: string; granted: boolean };
-	updateWindowBackground: { color: string; material: SpaceMaterial };
+	/** `swiping`: one frame of a Space swipe, for the frame around the page alone. */
+	updateWindowBackground: { color: string; material: SpaceMaterial; swiping?: boolean };
 	setWallpaperColorWatch: { enabled: boolean };
 	sidebarOverlayChanged: { visible: boolean };
 	showTabSecurityInfo: EmptyPayload;

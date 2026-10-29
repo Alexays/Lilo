@@ -181,9 +181,10 @@ extension MainWindowController {
         // Swipes resend the same color at ~10Hz; views shown later read the current color themselves.
         guard resolvedColor != lastAppliedWindowChromeColor else { return }
 
-        // Over glass the frame keeps the Space's tint while letting the desktop through.
-        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.35)
+        // Over glass the glass itself carries the Space's tint; the frame adds only a hint, so the desktop shows through.
+        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.15)
         window?.backgroundColor = glassView == nil ? resolvedColor : .clear
+        glassView?.tintColor = resolvedColor.withAlphaComponent(0.4)
         let surfaceColor = resolvedColor.contentSurfaceColor
         // The popups, peeks and Little windows of this Space wear its color in their title bar and under their page.
         for popup in pagePopups.values where context.browserState.owningSpaceId(forTab: popup.openerTabId) == tabManager.currentSpaceId {
@@ -218,19 +219,48 @@ extension MainWindowController {
         if window != nil, windowFrameView != nil { lastAppliedWindowChromeColor = resolvedColor }
     }
 
+    /// One frame of a Space swipe: only the frame around the page follows the finger, at once. The swipe's end
+    /// brings the full update (page surfaces, popups, the saved color).
+    func applySwipeFrameColor(_ cssColor: String) {
+        guard let color = NSColor(cssHex: cssColor) else { return }
+        if glassView == nil {
+            window?.backgroundColor = color
+        } else {
+            glassView?.tintColor = color.withAlphaComponent(0.4)
+        }
+        windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.15), animated: false)
+        lastAppliedWindowChromeColor = nil
+    }
+
     /// Puts the window on glass, or back on its solid color. Changes only when the shown Space's material does.
     func applyWindowMaterial(glass: Bool) {
         guard glass != (glassView != nil), let window, let contentView = window.contentView else { return }
+        // The glass fades with the frame and the sidebar, over the same time.
+        let fade = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : WindowFrameView.colorFadeDuration
         if glass {
             let view = NSGlassEffectView(frame: contentView.bounds)
             view.autoresizingMask = [.width, .height]
+            view.alphaValue = 0
             contentView.addSubview(view, positioned: .below, relativeTo: nil)
             glassView = view
-        } else {
-            glassView?.removeFromSuperview()
+            window.isOpaque = false
+            NSAnimationContext.runAnimationGroup { $0.duration = fade; view.animator().alphaValue = 1 }
+        } else if let view = glassView {
+            // The solid color goes under the glass at once; the glass then fades off it.
             glassView = nil
+            NSAnimationContext.runAnimationGroup({ $0.duration = fade; view.animator().alphaValue = 0 }, completionHandler: { [weak self] in
+                view.removeFromSuperview()
+                guard let self, glassView == nil else { return }
+                self.window?.isOpaque = true
+                contentContainerView?.layer?.cornerRadius = 0
+                contentContainerView?.layer?.masksToBounds = false
+            })
         }
-        window.isOpaque = !glass
+        // The frame's corner bites go translucent over glass, so the page rounds its own corners until they are opaque again.
+        if glass {
+            contentContainerView?.layer?.cornerRadius = WindowFrameView.contentCornerRadius
+            contentContainerView?.layer?.masksToBounds = true
+        }
         lastAppliedWindowChromeColor = nil
         applyWindowChromeColors(storedWindowBackgroundColor)
     }

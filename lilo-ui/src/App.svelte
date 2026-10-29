@@ -159,6 +159,11 @@
   }
 
   function scheduleSidebarBackgroundReport() {
+    // A new material goes out at once: the native frame and glass must change with the sidebar, not 100 ms after.
+    if (lastReportedSidebarBackground && !lastReportedSidebarBackground.endsWith(` ${shownMaterial}`)) {
+      reportSidebarBg();
+      return;
+    }
     if (pendingBgReportTimeout !== null) {
       return; // trailing-edge: let the existing timeout fire
     }
@@ -260,6 +265,24 @@
     scheduleSidebarBackgroundReport();
   });
 
+  // Mid-swipe the theme only switches at the midpoint, so the frame around the page takes the sidebar's color
+  // under the finger, once per animation frame; the swipe's end reports the theme again for the full update.
+  let lastSwipeFrameColor = "";
+  $effect(() => {
+    const color = swipeBackground;
+    if (!color) {
+      if (lastSwipeFrameColor) {
+        lastSwipeFrameColor = "";
+        lastReportedSidebarBackground = "";
+        scheduleSidebarBackgroundReport();
+      }
+      return;
+    }
+    if (color === lastSwipeFrameColor || !isBridgeReady()) return;
+    lastSwipeFrameColor = color;
+    chromeActions.updateWindowBackground(color, shownMaterial, true);
+  });
+
   onMount(() => {
     const handleColorSchemeChange = () => {
       applySidebarTheme();
@@ -346,7 +369,7 @@
     class:sidebar-hidden={!isSidebarShown()}
     class:sidebar-overlay={isSidebarOverlay()}
     class:swiping={swipeBackground !== null}
-    style:background-color={shownMaterial === "glass" ? null : swipeBackground}
+    style:background-color={shownMaterial === "glass" && !isSidebarOverlay() ? null : swipeBackground}
     use:reportInteractiveZone={{ id: "sidebar", active: isSidebarShown() }}
     onmouseenter={cancelSidebarOverlayHide}
     onmouseleave={scheduleSidebarOverlayHide}
@@ -527,8 +550,9 @@
     z-index: 10;
   }
 
-  /* Glass shows the native glass under the chrome. */
-  :global(html[data-material='glass']) .sidebar {
+  /* Glass shows the native glass under the chrome. Floating over the page, the sidebar has only the page
+     under it, which the chrome cannot blur: it keeps its solid color there. */
+  :global(html[data-material='glass']) .sidebar:not(.sidebar-overlay) {
     background-color: transparent;
   }
 

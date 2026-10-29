@@ -38,8 +38,8 @@ export const chromeActions = {
 		zones: BridgeCommandPayloadMap["registerInteractiveZones"]["zones"],
 	): void => emit("registerInteractiveZones", { zones }),
 	removeInteractiveZone: emitId("removeInteractiveZone"),
-	updateWindowBackground: (color: string, material: SpaceMaterial): void =>
-		emit("updateWindowBackground", { color, material }),
+	updateWindowBackground: (color: string, material: SpaceMaterial, swiping = false): void =>
+		emit("updateWindowBackground", swiping ? { color, material, swiping } : { color, material }),
 	setWallpaperColorWatch: (enabled: boolean): void =>
 		emit("setWallpaperColorWatch", { enabled }),
 	sidebarResized: (width: number): void => emit("sidebarResized", { width }),

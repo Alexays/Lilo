@@ -9,6 +9,7 @@
   import { getProfileById, getProfileExtensionCounts, getProfiles } from "../../stores/profiles.svelte";
   import { getSpaces } from "../../stores/spaces.svelte";
   import { getWallpaperThumbnail } from "../../stores/spaceColor.svelte";
+  import { lightForDayPart } from "../../lib/spaceColor";
   import { getSetting, setSetting } from "../../stores/settings.svelte";
   import { profileActions, spaceActions } from "../../lib/bridge/actions";
   import AppearancePicker from "./AppearancePicker.svelte";
@@ -398,8 +399,10 @@
 
       <div class="field">
         <span class="field-label" id="space-appearance-label">{t("spaceEditor.appearanceLabel")}</span>
-        <button class="appearance-row" bind:this={appearanceButton} aria-labelledby="space-appearance-label space-appearance-value" aria-expanded={appearanceAt !== null} onclick={toggleAppearance}>
-          <span class="appearance-chip {s.material}" style:background-color={s.color}
+        <button class="appearance-row" bind:this={appearanceButton} aria-labelledby="space-appearance-label space-appearance-value space-appearance-chip" aria-expanded={appearanceAt !== null} onclick={toggleAppearance}>
+          <span class="appearance-chip {s.material}" class:split={s.colorMode === "time"} id="space-appearance-chip"
+            role="img" aria-label={s.colorMode === "time" ? t("spaceEditor.followDay") : undefined}
+            style:--night={lightForDayPart(s.color, "night")} style:background-color={s.color}
             style:background-image={s.colorMode === "wallpaper" && getWallpaperThumbnail() ? `url("${getWallpaperThumbnail()}")` : null}></span>
           <span class="appearance-text" id="space-appearance-value">
             <span>{s.colorMode === "page" || s.colorMode === "wallpaper"
@@ -407,14 +410,6 @@
               : colorIndex >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[colorIndex]}`) : t("spaceEditor.customColor")}</span>
             <span class="appearance-detail">
               {t(`spaceEditor.material.${s.material}`)}
-              {#if s.colorMode === "time"}
-                <!-- The preview's sun-to-moon, standing for the switch it names. -->
-                <span class="appearance-day" role="img" aria-label={t("spaceEditor.followDay")} use:tooltip={t("spaceEditor.followDay")}>
-                  <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v1.3M8 12.7V14M2 8h1.3M12.7 8H14M3.8 3.8l.9.9M11.3 11.3l.9.9M3.8 12.2l.9-.9M11.3 4.7l.9-.9M8 5.4a2.6 2.6 0 1 0 0 5.2a2.6 2.6 0 0 0 0-5.2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
-                  <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 4h6M4.5 1.5 7 4 4.5 6.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5Z" fill="currentColor" /></svg>
-                </span>
-              {/if}
             </span>
           </span>
           <svg class="appearance-chevron" class:open={appearanceAt !== null} width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -540,7 +535,8 @@
     position: relative;
     overflow: hidden;
     background: var(--sidebar-bg);
-    transition: background var(--motion-duration-slow) var(--motion-ease-organic);
+    /* The sidebar's own fade, which the native frame around the page follows. */
+    transition: background var(--motion-duration-slow) var(--motion-ease-spring);
   }
 
   /* The panel stands in for the sidebar, so it is made of the same material. */
@@ -653,6 +649,15 @@
     background-blend-mode: overlay;
   }
 
+  /* Following the time of day: the color by day and by night, split across the chip. */
+  .appearance-chip.split {
+    background-image: linear-gradient(135deg, transparent 50%, var(--night) 50%);
+  }
+
+  .appearance-chip.grain.split {
+    background-image: var(--grain-texture), linear-gradient(135deg, transparent 50%, var(--night) 50%);
+  }
+
   .appearance-text {
     display: flex;
     flex: 1;
@@ -663,21 +668,18 @@
   }
 
   .appearance-detail {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
     font-weight: normal;
   }
 
-  .appearance-day {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-  }
+  /* Following the time of day: the color by day and by night, split across the chip. */
+
+
+
 
   .appearance-chevron {
     color: var(--text-muted);
