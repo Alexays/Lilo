@@ -4,6 +4,14 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.1] - 2026-10-29
+
+### Fixed
+
+- Middle-clicking or Cmd-clicking something a site opens on its own, like X's trending list, now opens it in a background tab, as in Chrome.
+- A page can open a window a few seconds after a click, as in Chrome, so buttons like Google Meet's chat with a guest open their window.
+
+[0.10.1]: https://github.com/Alexays/Lilo/compare/v0.10.0...v0.10.1
 ## [0.10.0] - 2026-10-29
 
 ### Added

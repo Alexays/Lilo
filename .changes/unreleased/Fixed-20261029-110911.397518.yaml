@@ -1,3 +1,0 @@
-kind: Fixed
-body: A page can open a window a few seconds after a click, as in Chrome, so buttons like Google Meet's chat with a guest open their window.
-time: 2026-10-29T11:09:11.397518+01:00
