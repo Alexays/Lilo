@@ -678,6 +678,8 @@ final class RealExtensionSmokeTests: XCTestCase {
         var shows: ((MainWindowController) async -> Bool)?
         /// Why what its toolbar button opens fails on a paravirtual GPU (WEBKIT-GAPS.md), where the check expects that.
         var paravirtualGap: String?
+        /// Its panel must survive disable/re-enable cycles and in-place worker restarts (WEBKIT-GAPS.md 103).
+        var restarts = false
     }
 
     /// Holds once the ad the page requests again at each evaluation fails: the page may load before
@@ -721,7 +723,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 shows: { window in
                     let text = try? await window.sidePanel.webView?.evaluateJavaScript("document.body?.innerText") as? String
                     return text?.contains("Log in to ChatGPT") == true && text?.contains("Continue to ChatGPT") == true
-                }),
+                }, restarts: true),
         Feature(id: "difoiogjjojoaoomphldepapgpbgkhkb", name: "Sider", check: "true", click: true,
                 shows: { window in window.sidePanel.webView?.url?.lastPathComponent == "sidepanel.html" }),
         Feature(id: "ddkjiahejlhfcafbddmgiahcphecmpfh", name: "uBlock Origin Lite", check: adBlocked),
@@ -830,7 +832,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                 }
                 if shown, window.sidePanel.webView != nil {
                     _ = await evaluate("globalThis.liloWorkerRestartSentinel = true", in: page)
-                    for attempt in 0..<(feature.name == "ChatGPT" ? 4 : 1) {
+                    for attempt in 0..<(feature.restarts ? 4 : 1) {
                         if attempt != 2 {
                             window.sidePanel.closePanel()
                             let closed = await pollUntil { registry.gapEvents.undelivered(to: feature.id).isEmpty }
@@ -851,7 +853,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                     }
                     let pagePreserved = await evaluate("globalThis.liloWorkerRestartSentinel === true", in: page) as? Bool
                     XCTAssertEqual(pagePreserved, true, "restarting an extension must leave the unrelated page running")
-                    if feature.name == "ChatGPT", let panel = window.sidePanel.webView {
+                    if feature.restarts, let panel = window.sidePanel.webView {
                         _ = try await panel.callAsyncJavaScript("await chrome.storage.session.set({ liloWorkerRestartSession: 'kept' });", arguments: [:], in: nil, contentWorld: .page)
                         for panelOpen in [true, false] {
                             if !panelOpen {
@@ -873,7 +875,7 @@ final class RealExtensionSmokeTests: XCTestCase {
                                 window.openExtensionFromMenu(button)
                             }
                             let rendered = await pollUntil(timeout: 30) { await shows(window) }
-                            if !rendered { XCTFail("ChatGPT renders after a worker restart, panel open \(panelOpen): \(await diagnosis())") }
+                            if !rendered { XCTFail("\(feature.name) renders after a worker restart, panel open \(panelOpen): \(await diagnosis())") }
                             let session = try await window.sidePanel.webView?.callAsyncJavaScript("return (await chrome.storage.session.get('liloWorkerRestartSession')).liloWorkerRestartSession;", arguments: [:], in: nil, contentWorld: .page) as? String
                             XCTAssertEqual(session, "kept", "an in-place worker restart preserves storage.session")
                             let stillPreserved = await evaluate("globalThis.liloWorkerRestartSentinel === true", in: page) as? Bool

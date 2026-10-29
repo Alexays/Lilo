@@ -213,7 +213,8 @@ final class BackgroundSupervisor {
             if ready(extensionId) { return }
             try? await Task.sleep(for: .milliseconds(100))
         }
-        if self.context(extensionId) === context, !ready(extensionId) { markFailed(extensionId) }
+        // A connected worker that is only slow to settle its startup reads still answers: only silence is a failure.
+        if self.context(extensionId) === context, worker(extensionId) != .running { markFailed(extensionId) }
     }
 
     private func makeResponsive(_ extensionId: String) async {
@@ -240,9 +241,11 @@ final class BackgroundSupervisor {
             if ready(extensionId) { return }
             try? await Task.sleep(for: .milliseconds(100))
         }
-        guard !Task.isCancelled, !wasLoading else { return }
+        // A connected worker still settling its startup reads is slow, not broken: restarting it would loop.
+        guard !Task.isCancelled, !wasLoading, worker(extensionId) != .running else { return }
         let restarted = await restart(extensionId)
-        if !Task.isCancelled, !restarted { await fullReload(extensionId) }
+        // The reload's unload cancels this task; the reload itself must not inherit that cancellation.
+        if !Task.isCancelled, !restarted { await Task { await self.fullReload(extensionId) }.value }
     }
 
     /// A lost channel means the worker stopped. An idle unload is left alone (WebKit relaunches it on its next event; restarting would

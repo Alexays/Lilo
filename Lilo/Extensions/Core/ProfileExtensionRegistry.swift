@@ -841,9 +841,10 @@ final class ProfileExtensionRegistry {
     }
 
     /// Lets gap handlers drop what they hold for the extension (`uninstalled` also clears what they
-    /// persisted). Also posted for a reload or an update, which unload the context first.
+    /// persisted). Also posted for a reload or an update, which unload the context first: the extension's
+    /// tabs then rebuild with the next one.
     private func postDidUnload(extensionId: String, uninstalled: Bool) {
-        for adapter in windowAdapters where adapter.tabManager?.windowAdapter === adapter {
+        for adapter in windowAdapters where !uninstalled && adapter.tabManager?.windowAdapter === adapter {
             guard let manager = adapter.tabManager else { continue }
             for tab in manager.openTabs where tab.url?.scheme == "chrome-extension" && tab.url?.host?.lowercased() == extensionId {
                 manager.tabsAwaitingTheirExtension.insert(tab.id)
