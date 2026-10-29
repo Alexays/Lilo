@@ -21,10 +21,16 @@ final class ReleaseCaptureTests: XCTestCase {
     private var authoredScenario: AuthoredReleaseScenario?
     private var authoredDigest: String?
     private var previousMenu: NSMenu?
+    private var previousReviewMarker: Any?
+    private var restoreReviewMarker = false
 
     override func setUp() async throws {
         guard let path = ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_OUT"],
               let pages = ProcessInfo.processInfo.environment["LILO_RELEASE_CAPTURE_FIXTURES"] else { throw XCTSkip("Use make release-media-record") }
+        if ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW"] == "0.8.0" {
+            restoreReviewMarker = true
+            previousReviewMarker = UserDefaults.lilo.object(forKey: "whatsNewHighestPresentedVersion")
+        }
         guard (CGSessionCopyCurrentDictionary() as? [String: Any])?["CGSSessionScreenIsLocked"] as? Bool != true else {
             throw CocoaError(.fileReadNoPermission, userInfo: [NSLocalizedDescriptionKey: "Unlock macOS before recording native release media"])
         }
@@ -115,6 +121,7 @@ final class ReleaseCaptureTests: XCTestCase {
         controller?.pagePopups.values.forEach { $0.close() }
         fixture?.tearDown()
         fixture = nil; controller = nil; server = nil; cursor = nil; recorder = nil
+        if restoreReviewMarker { UserDefaults.lilo.set(previousReviewMarker, forKey: "whatsNewHighestPresentedVersion") }
         if let activity { ProcessInfo.processInfo.endActivity(activity) }
         activity = nil
         previousApplication?.activate()
@@ -145,8 +152,14 @@ final class ReleaseCaptureTests: XCTestCase {
 
     private func saveChromePreview(_ name: String) async throws {
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        _ = try await controller.chromeWebView.callAsyncJavaScript("""
+            const dialog = document.querySelector('dialog.whats-new');
+            await Promise.all(dialog.getAnimations({subtree: true}).filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {})));
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            """, arguments: [:], in: nil, contentWorld: .page)
         let configuration = WKSnapshotConfiguration()
-        configuration.snapshotWidth = 2240
+        configuration.snapshotWidth = 1120
+        configuration.afterScreenUpdates = true
         let image = try await controller.chromeWebView.takeSnapshot(configuration: configuration)
         let bitmap = try XCTUnwrap(NSBitmapImageRep(data: XCTUnwrap(image.tiffRepresentation)))
         try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: output.appendingPathComponent(name))
