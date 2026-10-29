@@ -1702,10 +1702,12 @@ extension WKWebViewTab: WKUIDelegate {
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
         MainActor.assumeIsolated {
-            // Only the shim's own blank open from the main frame: never a link or another frame's popup.
-            let url = navigationAction.request.url
-            if let size = pendingDocumentPiPSize, navigationAction.sourceFrame.isMainFrame,
-               url == nil || url?.absoluteString.isEmpty == true || url?.absoluteString == "about:blank" {
+            // Only the shim's own blank open from the main frame: never a link or another frame's popup. The popup
+            // blocker is off meanwhile, so any other popup is refused.
+            if let size = pendingDocumentPiPSize {
+                let url = navigationAction.request.url
+                guard navigationAction.sourceFrame.isMainFrame,
+                      url == nil || url?.absoluteString.isEmpty == true || url?.absoluteString == "about:blank" else { return nil }
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }

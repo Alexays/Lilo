@@ -159,10 +159,11 @@ final class DocumentPiPControllerTests: XCTestCase {
         let tab = await makeTab()
         XCTAssertTrue(controller.prepare(tab, size: NSSize(width: 300, height: 300), userActivated: true, automatic: false))
 
-        _ = try await tab.wkWebView.evaluateJavaScript("window.open('https://example.org/ad', '_blank'); true")
+        let opened = try await tab.wkWebView.evaluateJavaScript("window.open('https://example.org/ad', '_blank') !== null") as? Bool
         try await Task.sleep(nanoseconds: 300_000_000)
 
         XCTAssertNil(controller.webView, "a link or another frame's popup never lands in the PiP window")
+        XCTAssertEqual(opened, false, "while a PiP request lifts the popup blocker, no other popup gets through")
     }
 
     func testClosingFromLiloFiresPagehideInThePage() async throws {
@@ -330,6 +331,42 @@ final class DocumentPiPControllerTests: XCTestCase {
         XCTAssertNil(window.documentPiP.webView, "back in Lilo on the call tab: the call shows in the tab again")
     }
 
+    func testALateAnswerStillReplacesTheWholePage() async throws {
+        let (_, window, engine) = try await makeWindowTab("""
+        <script>
+        navigator.mediaSession.setActionHandler('enterpictureinpicture', () => setTimeout(() => {
+          documentPictureInPicture.requestWindow({ width: 300, height: 300 });
+        }, 2500));
+        </script>
+        """)
+        engine.callControls.hasPictureInPictureAction = true
+        engine.callControls.hasLiveConnection = true
+        _ = try XCTUnwrap(window.createTabStateFirst(url: nil))
+
+        window.autoEnterDocumentPiP(engine)
+        let fellBack = await pollUntil(timeout: 5) { window.floatingTabPanel.hostedEngineId == engine.id }
+        XCTAssertTrue(fellBack, "past the delay the whole page keeps the call in view")
+
+        let opened = await pollUntil(timeout: 10) { window.documentPiP.webView != nil }
+        XCTAssertTrue(opened, "a page slow to answer (first load of Meet's PiP code) still gets its window")
+        XCTAssertNil(window.floatingTabPanel.hostedEngineId, "the PiP window replaces the whole page")
+        XCTAssertTrue(engine.view.superview === window.contentContainerView, "attached again, so it draws its PiP window")
+    }
+
+    func testLeavingTheAppFromACallWithoutAPiPWindowFloatsItsPageAndComingBackTakesItHome() async throws {
+        let (_, window, engine) = try await makeWindowTab("")
+        window.showContentView(for: engine)
+        // Meet's companion mode: a live connection, no capture, no PiP action.
+        engine.callControls.hasLiveConnection = true
+
+        window.moveDockedCallToPanel()
+        XCTAssertEqual(window.floatingTabPanel.hostedEngineId, engine.id, "the call stays in view over the other app")
+
+        window.moveFloatingCallToDock()
+        XCTAssertNil(window.floatingTabPanel.hostedEngineId)
+        XCTAssertTrue(engine.view.superview === window.contentContainerView, "back in Lilo, the call is its tab again")
+    }
+
     func testACallTabParkedByASpaceSwitchCanStillAnswerTheAutomaticOpening() async throws {
         let (browserContext, window, engine) = try await makeWindowTab("")
         let profileId = try XCTUnwrap(window.tabManager.profileId)
@@ -402,7 +439,10 @@ final class DocumentPiPControllerTests: XCTestCase {
         window.autoEnterDocumentPiP(engine)
         XCTAssertTrue(window.awaitingDocumentPiP === engine)
 
-        let gaveUp = await pollUntil(timeout: MainWindowController.documentPiPFallbackDelay + 2) { window.awaitingDocumentPiP == nil }
+        let lateWindow = MainWindowController.documentPiPLateAnswerWindow
+        MainWindowController.documentPiPLateAnswerWindow = 0.5
+        defer { MainWindowController.documentPiPLateAnswerWindow = lateWindow }
+        let gaveUp = await pollUntil(timeout: MainWindowController.documentPiPFallbackDelay + 3) { window.awaitingDocumentPiP == nil }
         XCTAssertTrue(gaveUp, "after the delay Lilo falls back to the whole page")
         XCTAssertNil(window.documentPiP.webView)
     }
