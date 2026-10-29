@@ -88,6 +88,7 @@ export const tabActions = {
 	navigate: (url: string, typed?: boolean): void => emit("navigate", { url, typed }),
 	goBack: emitEmpty("goBack"),
 	goForward: emitEmpty("goForward"),
+	openHistoryInNewTab: (forward: boolean, foreground: boolean): void => emit("openHistoryInNewTab", { forward, foreground }),
 	reload: emitEmpty("reload"),
 	showCachedCopy: emitEmpty("showCachedCopy"),
 	reportUnresponsivePage: emitEmpty("reportUnresponsivePage"),

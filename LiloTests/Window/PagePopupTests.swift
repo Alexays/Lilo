@@ -369,6 +369,11 @@ final class PagePopupTests: XCTestCase {
         XCTAssertTrue(controller.pagePopups.isEmpty)
     }
 
+    func testOptionClickDownloadsTheLink() throws {
+        XCTAssertEqual(try decidePolicy(forClickOn: "https://example.com/file.pdf", modifierFlags: .option), .download)
+        XCTAssertNotEqual(try decidePolicy(forClickOn: "https://example.com/file.pdf", modifierFlags: [.option, .command]), .download)
+    }
+
     func testShiftClickPeeksAnyLink() throws {
         XCTAssertEqual(try decidePolicy(forClickOn: "https://example.com/next", modifierFlags: .shift), .cancel)
 
@@ -393,13 +398,14 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(controller.pagePopups.count, 1)
     }
 
-    func testCommandShiftClickStillOpensABackgroundTab() throws {
+    func testCommandShiftClickOpensAForegroundTabNotAPeek() throws {
         let tabs = openTabCount
 
         XCTAssertEqual(try decidePolicy(forClickOn: "https://example.com/next", modifierFlags: [.command, .shift]), .cancel)
 
         XCTAssertTrue(controller.pagePopups.isEmpty)
         XCTAssertEqual(openTabCount, tabs + 1)
+        XCTAssertNotEqual(controller.tabManager.activeTabId, opener.id, "Shift brings it forward, as in Chrome and Safari")
     }
 
     func testAWindowShowsOneLinkPeekAtATime() async throws {

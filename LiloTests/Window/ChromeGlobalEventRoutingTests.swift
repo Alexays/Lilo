@@ -1,28 +1,35 @@
 import AppKit
+import WebKit
 import XCTest
 @testable import Lilo
 
 @MainActor
 final class ChromeGlobalEventRoutingTests: XCTestCase {
+    /// A window showing a tab whose web view holds two committed pages, the second current.
+    private func makeTabWithHistory(_ browserContext: TemporaryBrowserContext) async throws -> (MainWindowController, WKWebViewTab, first: URL, second: URL) {
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let first = try XCTUnwrap(URL(string: "data:text/html,<p>first</p>"))
+        let second = try XCTUnwrap(URL(string: "data:text/html,<input id=i autofocus>"))
+        // Each load must commit, not just start, before the next one: only then is it a back-forward entry.
+        for url in [first, second] {
+            engine.loadURL(url)
+            await pollUntil(timeout: 5) { engine.wkWebView.backForwardList.currentItem?.url == url }
+        }
+        return (controller, engine, first, second)
+    }
+
     /// A real release of a mouse's back then forward button, through the window's own monitor.
     func testAMouseBackAndForwardButtonGoThroughTheActiveTabsHistory() async throws {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
-        let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
-        let controller = makeTestWindow(context, showing: space.id)
+        let (controller, engine, first, second) = try await makeTabWithHistory(browserContext)
+        let webView = engine.wkWebView
         controller.chromeInput.startMonitoring()
         defer { controller.chromeInput.stop() }
-        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
-        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
-        let webView = engine.wkWebView
-        let first = try XCTUnwrap(URL(string: "data:text/html,<p>first</p>"))
-        let second = try XCTUnwrap(URL(string: "data:text/html,<p>second</p>"))
-        // Each load must commit, not just start, before the next one: only then is it a back-forward entry.
-        for url in [first, second] {
-            engine.loadURL(url)
-            await pollUntil(timeout: 5) { webView.backForwardList.currentItem?.url == url }
-        }
         // NSEvent's factory sets no button number; one built from a bare CGEvent loses its window.
         func release(_ button: Int64) throws {
             let cgEvent = try XCTUnwrap(NSEvent.mouseEvent(
@@ -39,6 +46,58 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         try release(4)
         let wentForward = await pollUntil { webView.backForwardList.currentItem?.url == second }
         XCTAssertTrue(wentForward)
+    }
+
+    func testThePreviousPageOpensInABackgroundTab() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (controller, engine, first, second) = try await makeTabWithHistory(browserContext)
+        let tabs = controller.tabManager.openTabs.count
+
+        controller.openHistoryInNewTab(forward: false, inBackground: true)
+
+        XCTAssertEqual(controller.tabManager.openTabs.count, tabs + 1)
+        XCTAssertEqual(controller.tabManager.activeTabId, engine.id)
+        XCTAssertTrue(controller.tabManager.openTabs.contains { $0.id != engine.id && $0.url == first })
+        XCTAssertEqual(engine.wkWebView.backForwardList.currentItem?.url, second, "the tab itself stays where it is")
+    }
+
+    /// ⌘← goes back only while the page has no caret to move: in a focused field it moves the caret.
+    func testCommandLeftGoesBackOnlyWhenThePageDoesNotUseIt() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (controller, engine, first, second) = try await makeTabWithHistory(browserContext)
+        let webView = engine.wkWebView
+        let window = try XCTUnwrap(controller.window)
+        window.alphaValue = 0
+        window.orderFrontRegardless()
+        window.setFrame(NSRect(x: -20000, y: -20000, width: 800, height: 600), display: false)
+        engine.view.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+        window.contentView?.addSubview(engine.view)
+        XCTAssertTrue(window.makeFirstResponder(webView))
+        controller.chromeInput.startMonitoring()
+        defer { controller.chromeInput.stop() }
+        func commandLeft() throws {
+            NSApp.sendEvent(try XCTUnwrap(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [.command, .numericPad, .function],
+                timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil,
+                characters: String(UnicodeScalar(NSLeftArrowFunctionKey)!), charactersIgnoringModifiers: String(UnicodeScalar(NSLeftArrowFunctionKey)!),
+                isARepeat: false, keyCode: 123
+            )))
+        }
+
+        let attributes = { WebViewPrivateAccessors(webView).int("_selectionAttributes") }
+        _ = try await webView.evaluateJavaScript("i.focus(); true")
+        await pollUntil { attributes() != 0 }
+        try commandLeft()
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(webView.backForwardList.currentItem?.url, second, "the field takes ⌘←")
+
+        _ = try await webView.evaluateJavaScript("i.blur(); true")
+        await pollUntil { attributes() == 0 }
+        try commandLeft()
+        let wentBack = await pollUntil { webView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack)
     }
 
     func testCmdLRemainsReservedToLilo() {

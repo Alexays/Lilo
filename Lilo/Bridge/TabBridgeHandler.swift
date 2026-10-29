@@ -106,6 +106,7 @@ final class TabBridgeHandler: BridgeHandler {
         "navigate",
         "goBack",
         "goForward",
+        "openHistoryInNewTab",
         "reload",
         "showCachedCopy",
         "reportUnresponsivePage",
@@ -279,6 +280,9 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "goForward":
             tabManager.activeEngineTab?.goForward()
+
+        case "openHistoryInNewTab":
+            windowController?.openHistoryInNewTab(forward: message.bool("forward"), inBackground: !message.bool("foreground"))
 
         case "reload":
             tabManager.reloadActiveTab()

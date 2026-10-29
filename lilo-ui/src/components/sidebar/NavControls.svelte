@@ -60,7 +60,7 @@
     }, HISTORY_MENU_PRESS_DELAY_MS);
   }
 
-  function handleHistoryClick(direction: HistoryDirection) {
+  function handleHistoryClick(direction: HistoryDirection, event: MouseEvent) {
     // The release that ends a long press opening the history menu is not a click.
     if (
       lastHistoryMenuDirection === direction &&
@@ -68,6 +68,12 @@
     ) {
       lastHistoryMenuDirection = null;
       lastHistoryMenuOpenedAt = 0;
+      return;
+    }
+
+    // Cmd or the middle button opens the page in a new tab, behind unless Shift is held, as in Chrome and Safari.
+    if (event.metaKey || event.button === 1) {
+      tabActions.openHistoryInNewTab(direction === "forward", event.shiftKey);
       return;
     }
 
@@ -136,7 +142,8 @@
     aria-label={t("nav.goBack")}
     disabled={!canGoBack}
     use:tooltip={{ text: t("nav.goBack"), shortcut: shortcutKeys("history.back"), placement: "bottom", disabled: !canGoBack }}
-    onclick={() => handleHistoryClick("back")}
+    onclick={(event) => handleHistoryClick("back", event)}
+    onauxclick={(event) => event.button === 1 && handleHistoryClick("back", event)}
     onpointerdown={(event) => startHistoryMenuPress("back", event)}
     onpointerup={cancelHistoryMenuPress}
     onpointercancel={cancelHistoryMenuPress}
@@ -158,7 +165,8 @@
     aria-label={t("nav.goForward")}
     disabled={!canGoForward}
     use:tooltip={{ text: t("nav.goForward"), shortcut: shortcutKeys("history.forward"), placement: "bottom", disabled: !canGoForward }}
-    onclick={() => handleHistoryClick("forward")}
+    onclick={(event) => handleHistoryClick("forward", event)}
+    onauxclick={(event) => event.button === 1 && handleHistoryClick("forward", event)}
     onpointerdown={(event) => startHistoryMenuPress("forward", event)}
     onpointerup={cancelHistoryMenuPress}
     onpointercancel={cancelHistoryMenuPress}

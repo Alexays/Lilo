@@ -1,0 +1,3 @@
+kind: Fixed
+body: Cmd-Shift-clicking a link opens it in a new tab in front, Cmd-clicking or middle-clicking Back or Forward opens that page in a new tab, Option-clicking a link downloads it, and Cmd-Left and Cmd-Right go back and forward outside text fields, as in Safari and Chrome.
+time: 2026-10-29T12:56:55.768721+01:00

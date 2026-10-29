@@ -1000,16 +1000,16 @@ final class WKWebViewTab: NSObject {
         let modifierFlags: NSEvent.ModifierFlags
     }
 
-    /// Chrome's rule for a new tab: Cmd or the middle button sends it behind. WebKit gives a page's own window.open no event,
+    /// Chrome's rule for a new tab: Cmd or the middle button sends it behind, unless Shift brings it forward. WebKit gives a page's own window.open no event,
     /// where Chrome reads the input event being handled. The window's last release, `click`, stands in for it while the page is
     /// still handling a mouse event: the open runs from that click's handler, not from a timer or a later load.
     static func opensNewTabInBackground(_ action: WKNavigationAction, after click: Click?, now: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Bool {
-        if action.modifierFlags.contains(.command) || action.buttonNumber == middleButtonNumber { return true }
+        if action.modifierFlags.contains(.command) || action.buttonNumber == middleButtonNumber { return !action.modifierFlags.contains(.shift) }
         guard action.navigationType == .other, let click, now - click.uptime < 1,
               WebViewPrivateAccessors(action).bool("_isUserInitiated") ?? true,
               action.sourceFrame.webView.flatMap({ WebViewPrivateAccessors($0).isProcessingMouseEvents() }) ?? true
         else { return false }
-        return click.modifierFlags.contains(.command) || click.buttonNumber == 2
+        return (click.modifierFlags.contains(.command) || click.buttonNumber == 2) && !click.modifierFlags.contains(.shift)
     }
 
     nonisolated static func shouldOpenLinkInBackgroundTab(
@@ -1277,13 +1277,16 @@ extension WKWebViewTab: WKNavigationDelegate {
             modifierFlags: navigationAction.modifierFlags,
             buttonNumber: navigationAction.buttonNumber
         ) {
-            delegate?.tab(self, didCreateNewTab: url, inBackground: true)
+            // Shift brings the new tab forward, as in Chrome and Safari.
+            delegate?.tab(self, didCreateNewTab: url, inBackground: !navigationAction.modifierFlags.contains(.shift))
             return .cancel
         }
 
-        // A link with `download` must download even for viewable MIME types, where the navigation-response
-        // policy would otherwise allow display.
-        if navigationAction.shouldPerformDownload {
+        // A link with `download`, or Option-clicked as in Safari and Chrome, must download even for viewable MIME types,
+        // where the navigation-response policy would otherwise allow display.
+        let optionClicked = navigationAction.navigationType == .linkActivated
+            && navigationAction.modifierFlags.intersection([.option, .command]) == .option
+        if navigationAction.shouldPerformDownload || optionClicked {
             if !isPrivateBrowsing {
                 Self.logger.info("""
                     download from navigation action url=\(url?.absoluteString ?? "nil", privacy: .private) \

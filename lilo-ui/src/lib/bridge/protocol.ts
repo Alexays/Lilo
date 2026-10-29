@@ -603,6 +603,7 @@ export interface BridgeCommandPayloadMap {
 	navigate: { url: string; typed?: boolean };
 	goBack: EmptyPayload;
 	goForward: EmptyPayload;
+	openHistoryInNewTab: { forward: boolean; foreground: boolean };
 	reload: EmptyPayload;
 	showCachedCopy: EmptyPayload;
 	reportUnresponsivePage: EmptyPayload;

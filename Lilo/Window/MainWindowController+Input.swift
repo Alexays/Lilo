@@ -200,6 +200,15 @@ extension MainWindowController {
 
     @objc func goBackInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goBack() }
     @objc func goForwardInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goForward() }
+
+    /// The active tab's previous or next page in a new tab, as Cmd- or middle-clicking Back and Forward does in Chrome and Safari.
+    func openHistoryInNewTab(forward: Bool, inBackground: Bool) {
+        guard let engine = tabManager.activeEngineTab else { return }
+        let list = engine.wkWebView.backForwardList
+        guard let item = forward ? list.forwardItem : list.backItem,
+              let created = createTabStateFirst(url: item.url, activate: !inBackground, opener: engine.id) else { return }
+        if inBackground { noteBackgroundTab(created.id) }
+    }
     @objc func reloadCurrentPage(_ sender: Any?) { tabManager.reloadActiveTab() }
     @objc func stopLoadingCurrentPage(_ sender: Any?) { tabManager.activeEngineTab?.stopLoading() }
     @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(by: 0.1) }
@@ -331,6 +340,15 @@ extension MainWindowController {
             return true
         }
         if handleTabSwitcherEvent(event) { return true }
+        // ⌘← and ⌘→ go through history as in Chrome, while the focused page has no caret or selection for them to move:
+        // WebKit would scroll with them otherwise, so the page never lets them go.
+        if event.type == .keyDown, event.keyCode == 123 || event.keyCode == 124,
+           event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]) == .command,
+           let webView = window?.firstResponder as? WKWebView, webView !== chromeWebView,
+           WebViewPrivateAccessors(webView).int("_selectionAttributes") == 0 {
+            if event.keyCode == 123 { goBackInHistory(nil) } else { goForwardInHistory(nil) }
+            return true
+        }
         // Escape while a press is held in the chrome (a sidebar drag) belongs to that drag,
         // wherever key focus is.
         if event.type == .keyDown, event.keyCode == 53, chromeInput.coordinator.isCapturing,
