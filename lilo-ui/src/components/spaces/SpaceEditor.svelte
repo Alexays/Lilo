@@ -405,7 +405,17 @@
             <span>{s.colorMode === "page" || s.colorMode === "wallpaper"
               ? t(`spaceEditor.colorFrom.${s.colorMode}`)
               : colorIndex >= 0 ? t(`spaceEditor.colorName.${PASTEL_COLOR_NAMES[colorIndex]}`) : t("spaceEditor.customColor")}</span>
-            <span class="appearance-detail">{t(`spaceEditor.material.${s.material}`)}{s.colorMode === "time" ? ` · ${t("spaceEditor.followDay")}` : ""}</span>
+            <span class="appearance-detail">
+              {t(`spaceEditor.material.${s.material}`)}
+              {#if s.colorMode === "time"}
+                <!-- The preview's sun-to-moon, standing for the switch it names. -->
+                <span class="appearance-day" role="img" aria-label={t("spaceEditor.followDay")} use:tooltip={t("spaceEditor.followDay")}>
+                  <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v1.3M8 12.7V14M2 8h1.3M12.7 8H14M3.8 3.8l.9.9M11.3 11.3l.9.9M3.8 12.2l.9-.9M11.3 4.7l.9-.9M8 5.4a2.6 2.6 0 1 0 0 5.2a2.6 2.6 0 0 0 0-5.2Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+                  <svg width="7" height="7" viewBox="0 0 8 8" aria-hidden="true"><path d="M1 4h6M4.5 1.5 7 4 4.5 6.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  <svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5Z" fill="currentColor" /></svg>
+                </span>
+              {/if}
+            </span>
           </span>
           <svg class="appearance-chevron" class:open={appearanceAt !== null} width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </button>
@@ -533,6 +543,17 @@
     transition: background var(--motion-duration-slow) var(--motion-ease-organic);
   }
 
+  /* The panel stands in for the sidebar, so it is made of the same material. */
+  :global(html[data-material='glass']) .editor-panel {
+    background: transparent;
+  }
+
+  :global(html[data-material='grain']) .editor-panel {
+    background-image: var(--grain-texture);
+    background-size: 160px;
+    background-blend-mode: overlay;
+  }
+
   /* Sized to its content: the footer follows the last field instead of the panel's bottom. */
   .editor-body {
     flex: 0 1 auto;
@@ -642,12 +663,20 @@
   }
 
   .appearance-detail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);
     font-size: var(--font-size-xs);
     font-weight: normal;
+  }
+
+  .appearance-day {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
   }
 
   .appearance-chevron {
