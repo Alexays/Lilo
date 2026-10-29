@@ -21,7 +21,11 @@ export const selectionSchema = z.strictObject({
         description: copy,
         id: featureID,
         notes: z.array(sourceNote).min(1),
-        reason,
+        reason: reason
+          .max(300)
+          .describe(
+            "Brief ranking rationale: importance and grouping only. Do not prescribe a storyboard, assertions or an exhaustive test inventory."
+          ),
         title: copy,
       })
     )

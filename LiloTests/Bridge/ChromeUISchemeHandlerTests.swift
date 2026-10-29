@@ -38,6 +38,7 @@ final class ChromeUISchemeHandlerTests: XCTestCase {
                 const response = await fetch('/release-notes.json');
                 if (!response.ok) throw new Error(`Release resource status: ${response.status}`);
                 const notes = await response.json();
+                if (!Array.isArray(notes.editorial?.en?.highlights)) throw new Error('Missing release editorial');
                 for (const highlight of notes.editorial?.en?.highlights ?? []) {
                     const media = highlight.media;
                     if (!media) continue;

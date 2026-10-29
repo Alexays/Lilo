@@ -46,7 +46,12 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
                 urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
                 return
             }
-            urlSchemeTask.didReceive(URLResponse(url: url, mimeType: name.hasSuffix(".webp") ? "image/webp" : "image/png", expectedContentLength: data.count, textEncodingName: nil))
+            let mimeType = name.hasSuffix(".webp") ? "image/webp" : "image/png"
+            guard let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": mimeType, "Content-Length": String(data.count)]) else {
+                urlSchemeTask.didFailWithError(URLError(.badServerResponse))
+                return
+            }
+            urlSchemeTask.didReceive(response)
             urlSchemeTask.didReceive(data)
             urlSchemeTask.didFinish()
             return

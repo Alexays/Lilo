@@ -78,6 +78,14 @@ const scenario = (): AuthoredScenario => ({
   tabs: [{ id: "inbox", page: "inbox.html" }],
 });
 
+test("ranking rationale cannot freeze an exhaustive execution inventory", () => {
+  const plan = selection();
+  plan.highlights[0].reason =
+    "Highest-impact visible improvement: choosing and steering a presentation without returning to the call. One 12-second silent WebP: start in a real local call harness with a visible receiving preview, search the picker for a generic page, select it with the keyboard, show another tab, click Share this tab, then stop. Use readable holds after selection, replacement and stopping. Native assertions must confirm the first shared tab identity, the replacement identity with the same active share token, and the share ending while the call remains active. The receiving preview must visibly follow both real pages. Do not fabricate call state or claim measured frame rates.";
+
+  assert.throws(() => validateSelection(plan, "0.9.0", notes), z.ZodError);
+});
+
 test("selection accepts previously unknown features but accounts for every exact release note", () => {
   assert.equal(
     validateSelection(selection(), "0.9.0", notes).highlights[0].id,
