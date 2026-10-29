@@ -339,17 +339,23 @@ final class DocumentPiPControllerTests: XCTestCase {
         }, 2500));
         </script>
         """)
+        // The call's tab left: only then does Lilo fall back to the whole page.
+        let other = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        window.switchToRecentTab(other.id)
+        let left = await pollUntil(timeout: 5) { window.tabManager.activeOpenTabId == other.id }
+        XCTAssertTrue(left)
         engine.callControls.hasPictureInPictureAction = true
         engine.callControls.hasLiveConnection = true
-        _ = try XCTUnwrap(window.createTabStateFirst(url: nil))
 
         window.autoEnterDocumentPiP(engine)
-        let fellBack = await pollUntil(timeout: 5) { window.floatingTabPanel.hostedEngineId == engine.id }
+        // Docked when the test host is the active app (as on CI), floating otherwise.
+        let fellBack = await pollUntil(timeout: 5) { window.floatingTabPanel.hostedEngineId == engine.id || window.tabDock.engineId == engine.id }
         XCTAssertTrue(fellBack, "past the delay the whole page keeps the call in view")
 
         let opened = await pollUntil(timeout: 10) { window.documentPiP.webView != nil }
         XCTAssertTrue(opened, "a page slow to answer (first load of Meet's PiP code) still gets its window")
         XCTAssertNil(window.floatingTabPanel.hostedEngineId, "the PiP window replaces the whole page")
+        XCTAssertNil(window.tabDock.engineId)
         XCTAssertTrue(engine.view.superview === window.contentContainerView, "attached again, so it draws its PiP window")
     }
 
