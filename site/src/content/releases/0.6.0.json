@@ -1,0 +1,41 @@
+{
+  "version": "0.6.0",
+  "title": {
+    "en": "Keep up without switching tabs.",
+    "fr": "Suivez le fil sans changer d’onglet."
+  },
+  "introduction": {
+    "en": "Unread counts bring your messages into view. Agents get clearer page controls and wait for the right moment to act.",
+    "fr": "Les compteurs de messages vous évitent des allers-retours. Les agents repèrent mieux les commandes et attendent le bon moment pour agir."
+  },
+  "highlights": [
+    {
+      "id": "unread-counts",
+      "title": {
+        "en": "A count, or a quiet dot.",
+        "fr": "Un compteur, ou un simple point."
+      },
+      "body": {
+        "en": "Messaging tabs and bookmarks show unread counts. A dot marks a page notification you have not seen yet.",
+        "fr": "Les onglets et favoris de messagerie affichent les messages non lus. Un point signale une notification que vous n’avez pas encore vue."
+      },
+      "notes": [
+        "Tabs and bookmarks of messaging sites like Slack, Gmail or Google Chat show their unread count, or a dot when a page sent a notification you have not seen yet."
+      ]
+    },
+    {
+      "id": "agent-page-controls",
+      "title": {
+        "en": "Agents can wait for the page.",
+        "fr": "Les agents savent attendre la page."
+      },
+      "body": {
+        "en": "Agents can wait for text, an element or an enabled button before continuing. Each click reports what it reached.",
+        "fr": "Les agents peuvent attendre un texte, un élément ou un bouton actif avant de continuer. Chaque clic indique ce qu’il a atteint."
+      },
+      "notes": [
+        "AI agents can wait for a text, an element or an enabled button to show on a page, and each click tells them what it landed on."
+      ]
+    }
+  ]
+}

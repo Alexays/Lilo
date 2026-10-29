@@ -1,0 +1,25 @@
+{
+  "version": "0.1.2",
+  "title": {
+    "en": "Connection progress you can see.",
+    "fr": "Une connexion que vous pouvez suivre."
+  },
+  "introduction": {
+    "en": "Agent connections show their progress, settings groups gain colored icons, and sleeping tabs are safer for extensions.",
+    "fr": "La connexion des agents affiche sa progression, les groupes de réglages gagnent des icônes colorées et les onglets en veille deviennent plus sûrs pour les extensions."
+  },
+  "highlights": [
+    {
+      "id": "connection-progress",
+      "title": {
+        "en": "Connect, with an answer.",
+        "fr": "Connectez-vous et suivez la réponse."
+      },
+      "body": {
+        "en": "Connect keeps showing progress until Lilo answers, so you can see that the agent connection is still underway.",
+        "fr": "Connecter affiche la progression jusqu’à la réponse de Lilo, pour voir que la connexion de l’agent est toujours en cours."
+      },
+      "notes": ["AI agents: Connect shows its progress until Lilo answers."]
+    }
+  ]
+}

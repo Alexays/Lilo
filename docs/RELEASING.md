@@ -24,11 +24,9 @@ make validate
 writing files. `Fixed` and `Changed` notes select a patch bump, `Added` selects minor, and `Breaking`
 selects major. When notes request different bumps, the largest wins.
 
-A feature release (`x.y.0`) ships with its highlights: an entry in
-`lilo-ui/src/components/whatsnew/releaseHighlights.json` and a story in
-`site/src/content/releases/<version>.json`, both described below. `make release-version` refuses to
-cut one without them and leaves the notes in place; `make release-status` warns early. Patch
-releases need neither.
+A release ships with automatically selected and translated highlights from its approved native
+media archive. Historical hand-authored entries remain readable; new releases need no entries in
+`lilo-ui/src/components/whatsnew/releaseHighlights.json` or `site/src/content/releases/`.
 
 `make release-version` collects the pending notes into a release file, consumes the fragments, and
 regenerates `CHANGELOG.md`. It updates `MARKETING_VERSION` in `Xcode/Configs/Base.xcconfig`, the UI and
@@ -39,18 +37,45 @@ differs from Changie's latest release. Sparkle compares this build number, so ev
 larger one. It reads and checks every file before consuming the fragments, and running it again
 without new fragments leaves both versions alone. `Lilo/Info.plist` and the About panel read the Xcode settings at build time.
 
-For a release with visual highlights, add its translated story to
-`site/src/content/releases/<version>.json`. Each highlight names the release notes
-it describes. A story may omit its `capture` and show no recording. Otherwise
-`make release-version` runs the story's capture scenario when its media is missing, then builds the website. Demo stories record local sample pages
-in English and French and both appearances. Native stories use reviewed frames
-from installed Lilo; `make site-release-import` encodes their WebP and poster.
-The pilot uses a real native Peek capture on public pages. Optional actions appear
-with the feature text. Review the recordings and copy with the prepared notes, and commit the
-versioned assets and their `capture.json` source record together. Existing captures
-are preserved; normal website builds and `make validate` do not recapture them.
-See [the website guide](../site/README.md#release-stories-and-recordings) for
-capture and replacement commands.
+Every prepared release automatically runs `make release-media-proof` before the website build.
+The local authenticated Codex CLI selects the strongest one to three visible improvements from
+exact release notes and implementation changes, authors synthetic native demo scenarios, translates
+the editorial copy into all app languages, and independently reviews selection, scenario safety,
+copy and recorded frames. No story, scenario, illustration or translation registry entry is needed.
+Even a maintenance release needs an approved explanation for having no recording.
+
+Generation requires an unlocked macOS capture worker with Xcode and authenticated Codex CLI.
+Version preparation runs first so the generator can inspect the exact release notes and build.
+Scenario repair gets at most three attempts per selected feature; it cannot drop that feature or
+relax the gates. Exhaustion, unavailable UI, failed quality checks or missing approval stop release
+preparation and packaging. Approved prior media stays intact until a complete replacement passes.
+Commit `site/src/assets/releases/<version>/` with the generated versions and notes. Normal website
+builds and `make validate` never record or invoke a model. See [the native media guide](../site/README.md#automated-native-proof).
+
+The Remotion replacement is being reviewed first on 0.8.0. Its tab-sharing MP4 and
+system-audio still share `presentation.json` across the website and app. The original native
+0.8.0 archive stays intact. Fresh captures use the real current Lilo binary to demonstrate
+those features; `remotion-source.json` records its actual version/build separately from the
+release story. The source includes 4x native chrome snapshots and continuous native window
+footage with measured pixel density. Crops cannot enlarge their source pixels.
+
+Run `make release-motion-capture release-motion-import` for fresh capture, followed by
+`make release-motion-render release-motion-check`. Output is a 1600×1000 H.264/AAC movie,
+poster and lossless still. The soundtrack is original editorial sound design, not recorded
+personal/system audio or claimed product sounds. The checker verifies stereo audio and
+rejects silence or clipping. Both consumers expose platform MP4 controls for playback,
+seeking, sound and fullscreen; autoplay stays muted. The website's small MP4-only Worker
+serves byte ranges so browser seeking works with Cloudflare static assets.
+
+Use `make release-motion-native-check` for offline WebKit playback and audio decoding,
+`make release-motion-native-preview` for a disposable Debug review, and
+`make release-motion-native-review` for actual consumer screenshots and fullscreen capability.
+Studio is available with `make release-motion-studio`. Preview commands select 0.8.0 notes
+without changing the app's version. The presentation remains unapproved during feedback and
+blocks publication and packaging. The unprivileged `Native release media proof` CI workflow
+freshly captures, imports, renders, checks sound and captures the real native sheet. Broader
+automatic release authoring remains behind its existing gate until this visual treatment is
+accepted. Follow the [release-media skill](../.agents/skills/lilo-release-media/SKILL.md).
 
 Review the generated notes and version changes, then commit them together. The initial
 `.changes/v0.1.5.md` contains all earlier published entries, with their dates and compare links.
@@ -58,21 +83,18 @@ Edit a prepared release's file and run `make release-version` to regenerate the 
 
 ### In-app highlights
 
+Native release media is generated by `make release-version` before tagging; rerun it independently
+with `make release-media-proof RELEASE=x.y.z`. Unchanged approved archives are reused; changed inputs
+regenerate automatically. `make release-media-check` verifies exact release/build/source identity,
+scenario and media digests, translated content, semantic checkpoints and independent approvals.
+The app and website consume the same schema-3 archive. Current-release movies and posters ship in
+local binary resources, so the sheet needs no website request. Historical archives remain readable.
+
 The app bundles the prepared notes matching its marketing version during `make ui-build` and
 shows them once after an update. **Help > What’s New** reopens them. New installations finish
-onboarding without an additional update introduction.
-
-To add visual highlights, add the exact version to
-`lilo-ui/src/components/whatsnew/releaseHighlights.json`. Its headline, introduction and up to
-three highlights reference keys under `whatsNew.releases` in **every** shared language
-catalog. Use a benefit-led heading and one or two sentences per highlight. The static local
-illustrations live in `WhatsNewArt.svelte`; a new illustration also needs a recognized identifier
-in `releaseNotes.ts`. Keep illustrations decorative and communicate the change in the copy.
-
-Without an entry for that version, the sheet opens the complete notes in a compact maintenance
-layout. An older version's highlights are never reused. The complete notes retain their original
-English text, labelled as such in the other languages. The sheet reads its bundled `release-notes.json` on
-opening; it makes no request to the public website or update feed.
+onboarding without another introduction. Approved nonvisual maintenance releases open the complete
+notes in a compact layout. The complete notes retain their original English text, labelled as such
+in the other languages. The sheet reads its bundled `release-notes.json` on opening.
 
 Run `make ui-preview`, then open `/preview/?open=whatsnew` to inspect the installed release.
 Add `&theme=dark` or `&tabs=top` to check another appearance or tab layout.
@@ -91,7 +113,7 @@ Pushing a `v*` tag triggers `.github/workflows/release.yml`.
 The release workflow runs only in `Alexays/Lilo` (never in forks), on the GitHub-hosted `xcode-27` image (macOS 27, Xcode 27; `macos-26` has no Xcode 27):
 
 1. Checks the tag is a prepared release: its `.changes/vX.Y.Z.md` exists, `MARKETING_VERSION` matches it, and `make release-status` passes.
-2. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`, before any secret is in reach. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
+2. Verifies required native media and its visual approval before any signing credentials are imported. Restores the UI build CI cached for the same sources, or builds it with `npm ci --ignore-scripts`. The extension bridge bundles are committed and checked against `bridge-src` by CI. The checkout keeps no token.
 3. Dates every file by its content and restores the Release build of the last `main` push (CI's `release-build` job builds the same thing on every push and caches it from `main`), so only what changed since compiles: a version bump alone compiles nothing.
 4. Imports the Developer ID certificate into a temporary keychain.
 5. Downloads libghostty-vt (`make vt-build`, checked against `VT_SHA256`), then runs `make release-archive` (build, export signed with Developer ID, hardened runtime and a secure timestamp).

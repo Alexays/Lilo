@@ -1,0 +1,41 @@
+{
+  "version": "0.2.3",
+  "title": {
+    "en": "A tidier toolbar and tab strip.",
+    "fr": "Des barres plus nettes."
+  },
+  "introduction": {
+    "en": "Extension icons regain their size, and crowded tabs stay in one scrolling row.",
+    "fr": "Les icônes d’extensions retrouvent leur taille et les onglets défilent sur une seule rangée."
+  },
+  "highlights": [
+    {
+      "id": "toolbar-icons",
+      "title": {
+        "en": "Icons at the right size.",
+        "fr": "Des icônes à la bonne taille."
+      },
+      "body": {
+        "en": "Extension icons fill their spot in the toolbar and extensions list again.",
+        "fr": "Les icônes d’extensions occupent à nouveau toute leur place dans la barre d’outils et la liste des extensions."
+      },
+      "notes": [
+        "Extension icons fill their spot in the toolbar and the extensions list again, instead of showing at a quarter of their size in one corner."
+      ]
+    },
+    {
+      "id": "scrolling-tabs",
+      "title": {
+        "en": "One row for all your tabs.",
+        "fr": "Une rangée pour tous vos onglets."
+      },
+      "body": {
+        "en": "Favorites and pinned tabs scroll with the rest. Narrow tabs no longer leave a close button over their neighbor.",
+        "fr": "Les favoris et les onglets épinglés défilent avec les autres. Les onglets étroits ne laissent plus leur bouton de fermeture dépasser sur le voisin."
+      },
+      "notes": [
+        "On a tab strip, every tab scrolls as one row, pinned and favorite ones too, and a pill squeezed to its icon no longer shows a stray close button over its neighbor."
+      ]
+    }
+  ]
+}

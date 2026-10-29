@@ -1,0 +1,3 @@
+kind: Fixed
+body: Automated editing shortcuts follow the current keyboard layout, so Select All reaches the intended command on non-US keyboards.
+time: 2026-10-29T01:25:48.976209+02:00

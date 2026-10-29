@@ -24,6 +24,7 @@ function cspPlugin(): Plugin {
 				"script-src 'self'; " +
 				"style-src 'self' 'unsafe-inline'; " +
 				"img-src 'self' data: blob:; " +
+				"media-src 'self' blob:; " +
 				"font-src data:; " +
 				"connect-src 'self'; " +
 				"base-uri 'none'; " +

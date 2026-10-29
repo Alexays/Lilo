@@ -19,8 +19,8 @@ final class TinyHTTPServer: @unchecked Sendable {
         }
     }
 
-    init(respond: @escaping @Sendable (String) -> Response) async throws {
-        let listener = try NWListener(using: .tcp, on: .any)
+    init(tls: NWProtocolTLS.Options? = nil, respond: @escaping @Sendable (String) -> Response) async throws {
+        let listener = try NWListener(using: tls.map { NWParameters(tls: $0, tcp: NWProtocolTCP.Options()) } ?? .tcp, on: .any)
         self.listener = listener
         listener.newConnectionHandler = { connection in
             connection.start(queue: .global())

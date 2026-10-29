@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><title>Studio call</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f8f7f3;
+      color: #242b26;
+      font:
+        16px -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    }
+    nav {
+      padding: 22px 36px;
+      border-bottom: 1px solid #dedfd6;
+      font-weight: 600;
+    }
+    main {
+      max-width: 650px;
+      margin: 42px auto;
+      padding: 0 28px;
+    }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #798775;
+    }
+    h1 {
+      font-size: 37px;
+      letter-spacing: -1.5px;
+      font-weight: 550;
+      margin: 14px 0 12px;
+    }
+    p {
+      color: #697166;
+      line-height: 1.7;
+    }
+    .stage {
+      position: relative;
+      height: 260px;
+      border: 1px solid #dce1d3;
+      border-radius: 16px;
+      background: #e9eddf;
+      display: grid;
+      place-items: center;
+      margin: 26px 0;
+    }
+    .people {
+      display: flex;
+      gap: 14px;
+    }
+    .person {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #c9d5bc;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      color: #55644b;
+    }
+    .person:nth-child(2) {
+      background: #d9cde5;
+      color: #756080;
+    }
+    video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+      background: #e9eddf;
+    }
+    video:not([src]) {
+      visibility: hidden;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: #344c35;
+      color: white;
+      font:
+        500 14px -apple-system,
+        sans-serif;
+      padding: 13px 20px;
+      cursor: pointer;
+    }
+    .status {
+      float: right;
+      padding: 12px;
+      color: #7b8774;
+      font-size: 13px;
+    }
+  </style>
+  <nav>◈ Studio / Weekly catch-up</nav>
+  <main>
+    <div class="eyebrow">Together, from anywhere</div>
+    <h1>Show the idea.</h1>
+    <p>
+      Pick the page you want to share. Switch when the conversation moves on.
+    </p>
+    <div class="stage">
+      <div class="people">
+        <div class="person">JD</div>
+        <div class="person">AL</div>
+      </div>
+      <video autoplay muted playsinline></video>
+    </div>
+    <button id="share">Share a tab</button
+    ><span class="status" id="status">Ready when you are.</span>
+  </main>
+  <script>
+    navigator.mediaSession.setActionHandler("hangup", () => {
+      window.shared?.getTracks().forEach((t) => t.stop());
+    });
+    document.querySelector("#share").onclick = async () => {
+      try {
+        window.shared = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+        });
+        const video = document.querySelector("video");
+        video.srcObject = window.shared;
+        video.style.visibility = "visible";
+        document.querySelector("#status").textContent = "Your tab is shared.";
+        window.shared.getVideoTracks()[0].onended = () => {
+          video.srcObject = null;
+          video.style.visibility = "hidden";
+          document.querySelector("#status").textContent = "Sharing stopped.";
+        };
+      } catch (e) {
+        document.querySelector("#status").textContent = e.message;
+      }
+    };
+  </script>
+</html>

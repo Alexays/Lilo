@@ -41,7 +41,7 @@ test("recordings preserve multiple frames, their timing and a single playback", 
   assert.equal(metadata.pageHeight, 4);
   assert.equal(metadata.loop, 1);
   assert.deepEqual(metadata.delay, [120, 340]);
-  assert.throws(() => encodeRecording([]), /2 to 64 frames/u);
+  assert.throws(() => encodeRecording([]), /2 to 450 frames/u);
   assert.throws(
     () =>
       encodeRecording([

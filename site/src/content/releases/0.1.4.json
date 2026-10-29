@@ -1,0 +1,42 @@
+{
+  "version": "0.1.4",
+  "title": {
+    "en": "Start with the tools you need.",
+    "fr": "Commencez avec les bons outils."
+  },
+  "introduction": {
+    "en": "Setup adds an agent-focused choice, while connection requests stay available long enough to answer.",
+    "fr": "La configuration propose un choix dédié aux agents, et les demandes de connexion vous laissent le temps de répondre."
+  },
+  "highlights": [
+    {
+      "id": "agent-onboarding",
+      "title": {
+        "en": "Browsing with your agents.",
+        "fr": "Naviguez avec vos agents."
+      },
+      "body": {
+        "en": "Choose AI agents during setup to enable them and connect their apps without turning on the terminal.",
+        "fr": "Choisissez les agents IA pendant la configuration pour les activer et connecter leurs applications, sans activer le terminal."
+      },
+      "notes": [
+        "The setup asks how you will use Lilo with a third choice between browsing and developing: with your AI agents, which turns them on and walks you through connecting them, without the terminal."
+      ]
+    },
+    {
+      "id": "visible-permissions",
+      "title": {
+        "en": "A request you can reach.",
+        "fr": "Une demande toujours accessible."
+      },
+      "body": {
+        "en": "Permission requests reveal a hidden sidebar. Agent connection requests wait ten minutes, and reconnecting while you answer keeps the prompt open.",
+        "fr": "Les demandes d’autorisation révèlent la barre latérale masquée. Celles des agents attendent dix minutes et restent ouvertes si l’agent se reconnecte pendant votre réponse."
+      },
+      "notes": [
+        "A permission request, such as an AI agent asking to connect, slides a hidden sidebar out so it can be answered, and an agent's connection request waits ten minutes instead of two.",
+        "An AI agent that reconnects while you are on your way to answer, as Claude Desktop's local agent mode does, is no longer refused behind your back: its request stays up, and once you allow it, its next connection is let in."
+      ]
+    }
+  ]
+}

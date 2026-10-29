@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { parseChangelog } from "./changelog.ts";
+import { parseChangelog, sourceReleaseNotes } from "./changelog.ts";
 
 const translatedText = z.strictObject({
   en: z.string().trim().min(1),
@@ -11,7 +11,7 @@ const storySchema = z.strictObject({
   capture: z
     .strictObject({
       highlight: z.string().min(1),
-      scenario: z.literal("peek"),
+      scenario: z.string().regex(/^[a-z][a-z0-9-]{0,47}$/u),
       source: z.enum(["demo", "native"]).default("demo"),
     })
     .optional(),
@@ -25,12 +25,18 @@ const storySchema = z.strictObject({
           })
           .optional(),
         body: translatedText,
+        capture: z
+          .strictObject({
+            highlight: z.string().min(1),
+            scenario: z.string().regex(/^[a-z][a-z0-9-]{0,47}$/u),
+            source: z.literal("native"),
+          })
+          .optional(),
         id: z.string().regex(/^[a-z][a-z0-9-]*$/u),
         notes: z.array(z.string().min(1)).min(1),
         title: translatedText,
       })
     )
-    .min(1)
     .max(3),
   introduction: translatedText,
   title: translatedText,
@@ -53,12 +59,7 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
       );
     }
 
-    const notes = new Set(
-      release.body
-        .split("\n")
-        .filter((line) => line.startsWith("- "))
-        .map((line) => line.slice(2))
-    );
+    const notes = new Set(sourceReleaseNotes(release.body));
 
     const ids = new Set(story.highlights.map((highlight) => highlight.id));
 
@@ -70,6 +71,10 @@ export const parseReleaseStories = (markdown: string, entries: unknown[]) => {
     }
 
     for (const highlight of story.highlights) {
+      if (highlight.capture && highlight.capture.highlight !== highlight.id) {
+        throw new Error(`Recording must belong to highlight ${highlight.id}`);
+      }
+
       if (!highlight.notes.every((note) => notes.has(note))) {
         throw new Error(
           `Highlight ${highlight.id} is not sourced from release ${story.version}`

@@ -1,0 +1,27 @@
+{
+  "version": "0.1.1",
+  "title": {
+    "en": "Automatic updates start here.",
+    "fr": "Les mises à jour automatiques commencent ici."
+  },
+  "introduction": {
+    "en": "This fixes the updater in the first public release.",
+    "fr": "Cette version corrige la mise à jour de la première version publique."
+  },
+  "highlights": [
+    {
+      "id": "updater-fix",
+      "title": {
+        "en": "One replacement, then automatic updates.",
+        "fr": "Un remplacement, puis les mises à jour automatiques."
+      },
+      "body": {
+        "en": "If you installed 0.1.0, replace it once with 0.1.1. Later versions arrive through Lilo’s updater.",
+        "fr": "Si vous avez installé la version 0.1.0, remplacez-la une fois par la 0.1.1. Les versions suivantes arrivent via le système de mise à jour de Lilo."
+      },
+      "notes": [
+        "Update checks: 0.1.0 could not start its updater (\"Unable to check for updates\"). If you installed 0.1.0, replace it once with this version; later versions arrive on their own."
+      ]
+    }
+  ]
+}

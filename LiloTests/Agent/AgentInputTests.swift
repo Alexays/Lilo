@@ -144,6 +144,13 @@ final class AgentInputTests: XCTestCase {
     /// Registered before the agent's listener, so the agent never hears the keyup.
     private static let swallowedKeyUp = "addEventListener('keyup', e => e.stopImmediatePropagation(), true)"
 
+    func testSynthesizedLettersUseTheCurrentKeyboardLayout() throws {
+        for key in ["a", "q", "z", "w", "m"] {
+            let expected = try XCTUnwrap(KeyboardShortcuts.keyStroke(key)?.keyCode)
+            XCTAssertEqual(AgentInput.keyCode(for: key), expected, key)
+        }
+    }
+
     /// Presses cmd+a and reports whether it returned within `seconds`.
     private func selectAllReturns(within seconds: TimeInterval) async -> Bool {
         keyReturned = false

@@ -43,6 +43,7 @@ extension MainWindowController {
     static func makeChromeWebView(frame: CGRect) -> OverlayWebView {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = chromeDataStore
+        config.preferences.isElementFullscreenEnabled = true
         let setRelatedWebView = NSSelectorFromString("_setRelatedWebView:")
         if let lastChromeWebView, config.responds(to: setRelatedWebView) {
             config.perform(setRelatedWebView, with: lastChromeWebView)

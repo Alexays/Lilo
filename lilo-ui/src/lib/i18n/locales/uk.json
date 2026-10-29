@@ -2185,6 +2185,9 @@
 		"Secure Connection": "Захищене з’єднання"
 	},
 	"whatsNew": {
+		"recordingPlay": "Відтворити демонстрацію",
+		"recordingStop": "Зупинити",
+		"recordingReplay": "Повторити",
 		"version": "Lilo {version}",
 		"title": "Що нового в Lilo",
 		"description": "Кілька невеликих покращень для щоденного перегляду.",

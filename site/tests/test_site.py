@@ -190,23 +190,53 @@ class SiteTests(unittest.TestCase):
                 demo_link = next(node for node in nodes(highlights[0]) if node.tag == "a")
                 self.assertEqual(demo_link.attrs["href"], ("/fr/" if language == "fr" else "/") + "#browser-demo")
 
+    def test_every_release_with_notes_has_a_compact_translated_overview(self):
+        source = (DIST.parents[1] / "CHANGELOG.md").read_text()
+        releases = re.findall(r"^## \[([\d.]+)\][^\n]*\n(.*?)(?=^## \[|\Z)", source, re.M | re.S)
+        for language, page in [("en", "changelog/index.html"), ("fr", "fr/changelog/index.html")]:
+            parsed = tree(DIST / page)
+            for version, body in releases:
+                if not re.search(r"^- ", body, re.M):
+                    continue
+                with self.subTest(language=language, version=version):
+                    release = next(node for node in parsed if node.attrs.get("id") == "v" + version)
+                    overview = [node for node in nodes(release) if "release-story" in node.classes]
+                    self.assertEqual(len(overview), 1, f"Missing compact overview for {version}")
+                    self.assertEqual(overview[0].attrs.get("lang"), language)
+                    highlights = [node for node in nodes(overview[0]) if "release-highlight" in node.classes]
+                    self.assertLessEqual(len(highlights), 3)
+                    disclosure = next(node for node in nodes(release) if node.tag == "details")
+                    self.assertNotIn("open", disclosure.attrs)
+                    complete = next(node for node in nodes(disclosure) if "release-body" in node.classes)
+                    self.assertEqual(complete.attrs.get("lang"), "en")
+                    self.assertEqual(sum(node.tag == "li" for node in nodes(complete)), len(re.findall(r"^- ", body, re.M)))
+
     def test_release_recording_has_local_animation_controls_and_a_contextual_action(self):
         for page in ["changelog/index.html", "fr/changelog/index.html"]:
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
                 recording = [node for node in parsed if "release-recording" in node.classes]
-                self.assertEqual(len(recording), 1)
-                player = recording[0]
-                button = next(node for node in nodes(player) if node.tag == "button")
-                self.assertEqual(button.attrs.get("aria-pressed"), "false")
-                self.assertTrue(button.attrs.get("aria-label"))
-                self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
-                self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
-                for image in (node for node in nodes(player) if node.tag == "img"):
-                    animation = image.attrs.get("data-recording", "")
-                    self.assertTrue(animation.endswith(".webp"))
-                    self.assertTrue((DIST / animation.lstrip("/")).is_file())
-                    self.assertNotEqual(image.attrs["src"], animation)
+                self.assertGreaterEqual(len(recording), 2)
+                for player in recording:
+                    if player.attrs.get("data-video"):
+                        video = next(node for node in nodes(player) if node.tag == "video")
+                        self.assertTrue(video.attrs["src"].endswith(".mp4"))
+                        self.assertTrue((DIST / video.attrs["src"].lstrip("/")).is_file())
+                        self.assertIn("controls", video.attrs)
+                        self.assertIn("muted", video.attrs)
+                        self.assertIn("playsinline", video.attrs)
+                        self.assertEqual(video.attrs["preload"], "none")
+                        continue
+                    button = next(node for node in nodes(player) if node.tag == "button")
+                    self.assertEqual(button.attrs.get("aria-pressed"), "false")
+                    self.assertTrue(button.attrs.get("aria-label"))
+                    self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
+                    self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
+                    for image in (node for node in nodes(player) if node.tag == "img"):
+                        animation = image.attrs.get("data-recording", "")
+                        self.assertTrue(animation.endswith(".webp"))
+                        self.assertTrue((DIST / animation.lstrip("/")).is_file())
+                        self.assertNotEqual(image.attrs["src"], animation)
                 highlight = next(node for node in parsed if node.attrs.get("id") == "v0.7.0-peek")
                 action = next(node for node in nodes(highlight) if "recording-action" in node.classes)
                 self.assertEqual(action.parent, highlight)
@@ -231,7 +261,9 @@ class SiteTests(unittest.TestCase):
                                      for node in parsed))
                 sources = {node.attrs["src"] for node in scripts}
                 self.assertTrue(shared.issubset(sources))
-                if page in ["index.html", "fr/index.html", "changelog/index.html", "fr/changelog/index.html"]:
+                if page in ["changelog/index.html", "fr/changelog/index.html"]:
+                    self.assertEqual(len(scripts), 5)
+                elif page in ["index.html", "fr/index.html"]:
                     self.assertEqual(len(scripts), 4)
                 else:
                     self.assertEqual(sources, shared)

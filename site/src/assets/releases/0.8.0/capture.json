@@ -1,0 +1,448 @@
+{
+  "appBuild": "21",
+  "content": {
+    "de": {
+      "description": "Teile den Ton deines Mac zusammen mit einem Fenster oder Bildschirm und wähle oder wechsle geteilte Tabs einfacher.",
+      "headline": "Mehr Kontrolle beim Teilen",
+      "highlights": [
+        {
+          "description": "Teile beim Übertragen eines Fensters oder Bildschirms auch den Ton deines Mac, ohne die Stimmen aus dem Anruf zurückzusenden.",
+          "id": "share-system-audio",
+          "title": "Teile den Ton deines Mac"
+        },
+        {
+          "description": "Finde mit Vorschauen, Vorschlägen und der Suche den richtigen Tab. Sieh auf der Anrufkarte, was du teilst, wechsle Tabs ohne Unterbrechung der Übertragung oder beende das Teilen.",
+          "id": "tab-sharing-controls",
+          "title": "Geteilte Tabs auswählen und wechseln"
+        }
+      ]
+    },
+    "en": {
+      "description": "Share your Mac’s sound with a window or screen, and choose and switch shared tabs more easily.",
+      "headline": "More control over what you share",
+      "highlights": [
+        {
+          "description": "Include your Mac’s sound when sharing a window or screen, without sending the call’s voices back to it.",
+          "id": "share-system-audio",
+          "title": "Share your Mac’s sound"
+        },
+        {
+          "description": "Find the right tab with previews, suggestions and search. See what you’re sharing, switch tabs without interrupting the stream, or stop sharing from the call card.",
+          "id": "tab-sharing-controls",
+          "title": "Choose and switch shared tabs"
+        }
+      ]
+    },
+    "es": {
+      "description": "Comparte el sonido de tu Mac junto con una ventana o pantalla, y elige y cambia de pestaña compartida más fácilmente.",
+      "headline": "Más control sobre lo que compartes",
+      "highlights": [
+        {
+          "description": "Incluye el sonido de tu Mac al compartir una ventana o pantalla, sin devolver a la llamada las voces de sus participantes.",
+          "id": "share-system-audio",
+          "title": "Comparte el sonido de tu Mac"
+        },
+        {
+          "description": "Encuentra la pestaña adecuada con vistas previas, sugerencias y búsqueda. Desde la tarjeta de llamada, ve lo que compartes, cambia de pestaña sin interrumpir la transmisión o deja de compartir.",
+          "id": "tab-sharing-controls",
+          "title": "Elige qué pestaña compartir y cambia de una a otra"
+        }
+      ]
+    },
+    "fr": {
+      "description": "Partagez le son de votre Mac avec une fenêtre ou un écran, et choisissez plus facilement l’onglet à partager ou passez à un autre.",
+      "headline": "Plus de contrôle sur ce que vous partagez",
+      "highlights": [
+        {
+          "description": "Incluez le son de votre Mac lorsque vous partagez une fenêtre ou un écran, sans renvoyer les voix de l’appel aux participants.",
+          "id": "share-system-audio",
+          "title": "Partagez le son de votre Mac"
+        },
+        {
+          "description": "Trouvez le bon onglet grâce aux aperçus, aux suggestions et à la recherche. Depuis la carte d’appel, voyez ce que vous partagez, changez d’onglet sans interrompre le flux ou arrêtez le partage.",
+          "id": "tab-sharing-controls",
+          "title": "Choisissez l’onglet à partager et changez-en"
+        }
+      ]
+    },
+    "it": {
+      "description": "Condividi l’audio del Mac insieme a una finestra o allo schermo, e scegli o cambia più facilmente la scheda da condividere.",
+      "headline": "Più controllo su ciò che condividi",
+      "highlights": [
+        {
+          "description": "Includi l’audio del Mac quando condividi una finestra o lo schermo, senza ritrasmettere le voci della chiamata ai partecipanti.",
+          "id": "share-system-audio",
+          "title": "Condividi l’audio del Mac"
+        },
+        {
+          "description": "Trova la scheda giusta con anteprime, suggerimenti e ricerca. Dal riquadro della chiamata puoi vedere cosa condividi, cambiare scheda senza interrompere il flusso o terminare la condivisione.",
+          "id": "tab-sharing-controls",
+          "title": "Scegli e cambia la scheda da condividere"
+        }
+      ]
+    },
+    "ja": {
+      "description": "ウインドウや画面と一緒にMacの音声を共有。共有するタブの選択や切り替えも、より簡単になりました。",
+      "headline": "共有をもっと自在に",
+      "highlights": [
+        {
+          "description": "ウインドウや画面の共有時にMacの音声も共有できます。通話相手の声が相手に送り返されることはありません。",
+          "id": "share-system-audio",
+          "title": "Macの音声を共有"
+        },
+        {
+          "description": "プレビュー、候補、検索で目的のタブを見つけられます。通話カードから共有内容を確認し、配信を中断せずにタブを切り替えたり、共有を停止したりできます。",
+          "id": "tab-sharing-controls",
+          "title": "共有するタブを選択・切り替え"
+        }
+      ]
+    },
+    "ko": {
+      "description": "창이나 화면과 함께 Mac의 소리를 공유하고, 공유할 탭을 더 쉽게 선택하고 전환하세요.",
+      "headline": "공유를 더 자유롭게 제어하세요",
+      "highlights": [
+        {
+          "description": "창이나 화면을 공유할 때 Mac의 소리도 함께 공유하세요. 통화 참여자의 목소리는 통화로 다시 전송되지 않습니다.",
+          "id": "share-system-audio",
+          "title": "Mac의 소리 공유"
+        },
+        {
+          "description": "미리보기, 추천, 검색으로 원하는 탭을 찾으세요. 통화 카드에서 공유 중인 내용을 확인하고, 스트림을 끊지 않고 탭을 전환하거나 공유를 중지할 수 있습니다.",
+          "id": "tab-sharing-controls",
+          "title": "공유할 탭 선택 및 전환"
+        }
+      ]
+    },
+    "nl": {
+      "description": "Deel het geluid van je Mac bij een venster of scherm, kies eenvoudiger een tabblad om te delen en wissel makkelijk van tabblad.",
+      "headline": "Meer controle over wat je deelt",
+      "highlights": [
+        {
+          "description": "Deel ook het geluid van je Mac wanneer je een venster of scherm deelt, zonder de stemmen uit het gesprek terug te sturen.",
+          "id": "share-system-audio",
+          "title": "Deel het geluid van je Mac"
+        },
+        {
+          "description": "Vind het juiste tabblad met voorvertoningen, suggesties en de zoekfunctie. Bekijk op de gesprekskaart wat je deelt, wissel van tabblad zonder de stream te onderbreken of stop met delen.",
+          "id": "tab-sharing-controls",
+          "title": "Kies een tabblad om te delen en wissel van tabblad"
+        }
+      ]
+    },
+    "pl": {
+      "description": "Udostępniaj dźwięk Maca wraz z oknem lub ekranem i łatwiej wybieraj oraz zmieniaj udostępnianą kartę.",
+      "headline": "Większa kontrola nad udostępnianiem",
+      "highlights": [
+        {
+          "description": "Dołącz dźwięk Maca, gdy udostępniasz okno lub ekran, bez odsyłania głosów uczestników z powrotem do rozmowy.",
+          "id": "share-system-audio",
+          "title": "Udostępniaj dźwięk Maca"
+        },
+        {
+          "description": "Znajdź właściwą kartę dzięki podglądom, sugestiom i wyszukiwaniu. W panelu rozmowy sprawdzisz, co udostępniasz, zmienisz kartę bez przerywania transmisji lub zakończysz udostępnianie.",
+          "id": "tab-sharing-controls",
+          "title": "Wybieraj i zmieniaj udostępnianą kartę"
+        }
+      ]
+    },
+    "pt-BR": {
+      "description": "Compartilhe o som do Mac junto com uma janela ou tela e escolha ou troque a aba compartilhada com mais facilidade.",
+      "headline": "Mais controle sobre o que você compartilha",
+      "highlights": [
+        {
+          "description": "Inclua o som do Mac ao compartilhar uma janela ou tela, sem enviar as vozes da chamada de volta aos participantes.",
+          "id": "share-system-audio",
+          "title": "Compartilhe o som do Mac"
+        },
+        {
+          "description": "Encontre a aba certa com prévias, sugestões e busca. No cartão da chamada, veja o que está compartilhando, troque de aba sem interromper a transmissão ou pare de compartilhar.",
+          "id": "tab-sharing-controls",
+          "title": "Escolha e troque a aba compartilhada"
+        }
+      ]
+    },
+    "ru": {
+      "description": "Передавайте звук Mac вместе с окном или экраном, а также проще выбирайте и переключайте вкладки для показа.",
+      "headline": "Больше контроля над тем, чем вы делитесь",
+      "highlights": [
+        {
+          "description": "Передавайте звук Mac при показе окна или экрана, не отправляя голоса участников обратно в звонок.",
+          "id": "share-system-audio",
+          "title": "Делитесь звуком Mac"
+        },
+        {
+          "description": "Находите нужную вкладку с помощью предпросмотра, подсказок и поиска. В карточке звонка можно увидеть, что вы показываете, переключить вкладку без прерывания трансляции или остановить показ.",
+          "id": "tab-sharing-controls",
+          "title": "Выбирайте и переключайте вкладки для показа"
+        }
+      ]
+    },
+    "tr": {
+      "description": "Bir pencere veya ekranla birlikte Mac’inizin sesini paylaşın, paylaşılacak sekmeyi daha kolay seçin ve değiştirin.",
+      "headline": "Paylaştıklarınız üzerinde daha fazla kontrol",
+      "highlights": [
+        {
+          "description": "Bir pencere veya ekranı paylaşırken Mac’inizin sesini de ekleyin. Görüşmedeki sesler görüşmeye geri gönderilmez.",
+          "id": "share-system-audio",
+          "title": "Mac’inizin sesini paylaşın"
+        },
+        {
+          "description": "Önizlemeler, öneriler ve aramayla doğru sekmeyi bulun. Görüşme kartından ne paylaştığınızı görün, yayını kesmeden sekme değiştirin veya paylaşımı durdurun.",
+          "id": "tab-sharing-controls",
+          "title": "Paylaşılacak sekmeyi seçin ve değiştirin"
+        }
+      ]
+    },
+    "uk": {
+      "description": "Передавайте звук Mac разом із вікном або екраном, а також легше вибирайте та перемикайте вкладки для показу.",
+      "headline": "Більше контролю над тим, чим ви ділитеся",
+      "highlights": [
+        {
+          "description": "Передавайте звук Mac під час показу вікна або екрана, не надсилаючи голоси учасників назад у виклик.",
+          "id": "share-system-audio",
+          "title": "Діліться звуком Mac"
+        },
+        {
+          "description": "Знаходьте потрібну вкладку завдяки попередньому перегляду, пропозиціям і пошуку. У картці виклику можна побачити, що ви показуєте, перемкнути вкладку без переривання трансляції або зупинити показ.",
+          "id": "tab-sharing-controls",
+          "title": "Вибирайте та перемикайте вкладки для показу"
+        }
+      ]
+    },
+    "zh-Hans": {
+      "description": "共享窗口或屏幕时，也能共享 Mac 的声音，并更轻松地选择和切换共享的标签页。",
+      "headline": "更自如地掌控共享内容",
+      "highlights": [
+        {
+          "description": "共享窗口或屏幕时，可同时共享 Mac 的声音，而不会将通话中的人声传回通话。",
+          "id": "share-system-audio",
+          "title": "共享 Mac 的声音"
+        },
+        {
+          "description": "通过预览、推荐和搜索找到所需的标签页。在通话卡片中查看正在共享的内容，无缝切换标签页或停止共享。",
+          "id": "tab-sharing-controls",
+          "title": "选择和切换共享的标签页"
+        }
+      ]
+    },
+    "zh-Hant": {
+      "description": "分享視窗或螢幕時，也能分享 Mac 的聲音，並更輕鬆地選擇及切換分享的分頁。",
+      "headline": "更自在地掌控分享內容",
+      "highlights": [
+        {
+          "description": "分享視窗或螢幕時，可同時分享 Mac 的聲音，而不會將通話中的人聲傳回通話。",
+          "id": "share-system-audio",
+          "title": "分享 Mac 的聲音"
+        },
+        {
+          "description": "透過預覽、建議和搜尋找到所需的分頁。在通話卡片中查看正在分享的內容，切換分頁而不中斷串流，或停止分享。",
+          "id": "tab-sharing-controls",
+          "title": "選擇及切換分享的分頁"
+        }
+      ]
+    }
+  },
+  "inputDigest": "123e91fa448857f02796cea05ce756b59c79adaf3c27d7f66036af84698d4f56",
+  "plan": {
+    "decisions": [
+      {
+        "mode": "capture",
+        "note": "Calls can share sound with a window or the screen: \"Share audio too\" in the share picker sends what your Mac plays, without sending the call's own voices back to it.",
+        "reason": "The leading new call capability has a visible audio-sharing option suitable for a silent configuration demonstration."
+      },
+      {
+        "mode": "capture",
+        "note": "While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in.",
+        "reason": "Direct control over an ongoing presentation is a major visible improvement, grouped with choosing the shared tab."
+      },
+      {
+        "mode": "text",
+        "note": "Hide the address bar from Settings > Appearance while keeping the command bar and permission requests available.",
+        "reason": "A useful appearance improvement, but less consequential than the sharing changes and a separate workflow."
+      },
+      {
+        "mode": "text",
+        "note": "The website's 0.7.0 release notes have English and French highlights, a short recording of Peek in Lilo on real pages, and the full list of changes one click away.",
+        "reason": "Describes the previous release's presentation rather than a new browsing capability."
+      },
+      {
+        "mode": "text",
+        "note": "After an update, a small What’s New sheet introduces the highlights and complete release notes. Reopen it anytime from the Help menu.",
+        "reason": "Improves release discovery, with less everyday impact than the selected call features."
+      },
+      {
+        "mode": "text",
+        "note": "Use Lilo in Ukrainian, including menus, system prompts, Shortcuts, and emoji search.",
+        "reason": "Important language support deserves a clear written announcement; it is separate from the sharing workflow."
+      },
+      {
+        "mode": "capture",
+        "note": "The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered.",
+        "reason": "A substantial visual improvement to finding the right tab, grouped with managing its share from the call card."
+      },
+      {
+        "mode": "text",
+        "note": "A shared tab reaches the call one frame per change, at a steady 30 frames per second while it scrolls, instead of being sampled on its own clock.",
+        "reason": "Supports the selected tab-sharing improvement; precise frame pacing is better explained in the written notes."
+      },
+      {
+        "mode": "text",
+        "note": "Calls always use WebKit's echo cancellation again, and the Full-quality mic with headphones setting is gone: without echo cancellation, WebKit made your voice quiet and choppy.",
+        "reason": "An important voice-quality fix whose benefit is audible rather than visible."
+      },
+      {
+        "mode": "text",
+        "note": "Shared tabs are sent at full resolution on Retina screens, and shared screens and windows ask the call to keep their resolution over their frame rate, so shared text stays sharp.",
+        "reason": "Strengthens the same sharing experience; resolution details belong alongside it in the written notes."
+      },
+      {
+        "mode": "text",
+        "note": "A tab shared from a Mac's built-in Retina screen reaches the call at 30 frames per second instead of 15, and costs a fraction of the CPU it did.",
+        "reason": "A valuable performance improvement supporting tab sharing, without a distinct visible interaction."
+      },
+      {
+        "mode": "text",
+        "note": "The call preview docked in the sidebar fills its frame again, so its rounded corners are no longer cut at the top and bottom.",
+        "reason": "A small visual correction with less impact than the new sharing controls."
+      },
+      {
+        "mode": "text",
+        "note": "An extension that puts its own browser object in place, as AiPrice does over webextension-polyfill, finds what it added there, as in Chrome, and gets its context menus back.",
+        "reason": "Restores an extension-specific interaction rather than introducing a broadly useful new workflow."
+      },
+      {
+        "mode": "text",
+        "note": "An extension page's runtime.sendMessage no longer fails with \"Tab not found\" when its tab closes as it sends (Wappalyzer, Lightning Autofill), as Chrome runs nothing more of a closed page.",
+        "reason": "An extension lifecycle compatibility fix with no distinct visible feature."
+      },
+      {
+        "mode": "text",
+        "note": "On a Mac without a real GPU, such as a virtual machine, pages can read back what they draw on a canvas (getImageData no longer throws).",
+        "reason": "Restores page compatibility on a limited hardware configuration."
+      },
+      {
+        "mode": "text",
+        "note": "Closing a tab no longer logs \"Unchecked runtime.lastError ... Tab not found\" for the content scripts that were messaging their extension (Immersive Translate, Adblock Ad Blocker Pro), as Chrome runs nothing more of a closed tab's page.",
+        "reason": "Removes extension teardown errors without adding a visible interaction."
+      },
+      {
+        "mode": "text",
+        "note": "Extensions see a running screen saver as a locked screen, as in Chrome, so a Dashlane business account's automatic logout after inactivity no longer logs you out while the screen saver runs.",
+        "reason": "A targeted extension compatibility fix involving background screen-lock behavior."
+      }
+    ],
+    "description": "Share your Mac’s sound with a window or screen, and choose and switch shared tabs more easily.",
+    "headline": "More control over what you share",
+    "highlights": [
+      {
+        "description": "Include your Mac’s sound when sharing a window or screen, without sending the call’s voices back to it.",
+        "id": "share-system-audio",
+        "notes": [
+          "Calls can share sound with a window or the screen: \"Share audio too\" in the share picker sends what your Mac plays, without sending the call's own voices back to it."
+        ],
+        "reason": "Ranks first because it adds a major sharing capability with a clear, visible control.",
+        "title": "Share your Mac’s sound"
+      },
+      {
+        "description": "Find the right tab with previews, suggestions and search. See what you’re sharing, switch tabs without interrupting the stream, or stop sharing from the call card.",
+        "id": "tab-sharing-controls",
+        "notes": [
+          "The tab share picker shows tab previews, suggests the tabs likely to be shared first, groups the others by Space, searches by title or address and works from the keyboard. The tab asking to share is no longer offered.",
+          "While a call shares a tab, its call card shows what is shared, shares the shown tab instead in one click without interrupting the call's stream, and stops the share. A shared tab also gets back to full frame rate as soon as it is scrolled or typed in."
+        ],
+        "reason": "Groups choosing and managing a shared tab into one presentation workflow, with substantial everyday value and clear visual changes.",
+        "title": "Choose and switch shared tabs"
+      }
+    ],
+    "noMediaReason": "",
+    "version": "0.8.0"
+  },
+  "recordings": {
+    "share-system-audio": {
+      "appBuild": "21",
+      "appVersion": "0.8.0",
+      "captureTool": "ScreenCaptureKit.currentProcess",
+      "capturedAt": "2026-10-29T00:31:15Z",
+      "checkpoints": [
+        { "atMs": 2351, "name": "window-screen-choice", "passed": true },
+        { "atMs": 2351, "name": "audio-available", "passed": true },
+        { "atMs": 2351, "name": "audio-off", "passed": true },
+        { "atMs": 6799, "name": "audio-ready", "passed": true }
+      ],
+      "durationMs": 9745,
+      "frames": 282,
+      "height": 720,
+      "inputDigest": "123e91fa448857f02796cea05ce756b59c79adaf3c27d7f66036af84698d4f56",
+      "scenario": "share-system-audio",
+      "scenarioDigest": "ce27715fc3990f6a40925e6a222f655a736541303f9199846d5de3feff5fbf31",
+      "source": "native",
+      "width": 1120,
+      "poster": "share-system-audio-native.png",
+      "posterDigest": "60cc0a9cd6cca3e6fa948f5e2dd402d877c06c2ebdb4e177c32fb1da605b3804",
+      "quality": { "decodedFrames": 97, "passed": true, "uniqueFrames": 90 },
+      "recording": "share-system-audio-native.webp",
+      "recordingDigest": "027b2f625d8f0db99d9a332a7b3f0c86aac504137b83f40e1eefd59fe3556c1d",
+      "sourceDigest": "2c9bc204ec33ffbffcd34ae8982b171e1a7b10705f1738a8890a4d7ff13ef5b0"
+    },
+    "tab-sharing-controls": {
+      "appBuild": "21",
+      "appVersion": "0.8.0",
+      "captureTool": "ScreenCaptureKit.currentProcess",
+      "capturedAt": "2026-10-29T00:44:04Z",
+      "checkpoints": [
+        { "atMs": 1082, "name": "picker-open", "passed": true },
+        { "atMs": 1082, "name": "brief-preview-loaded", "passed": true },
+        { "atMs": 1083, "name": "requesting-tab-excluded", "passed": true },
+        { "atMs": 2415, "name": "search-finds-brief", "passed": true },
+        { "atMs": 3713, "name": "brief-shared", "passed": true },
+        { "atMs": 3796, "name": "live-stream-delivered", "passed": true },
+        { "atMs": 3796, "name": "call-card-names-brief", "passed": true },
+        { "atMs": 5182, "name": "share-shown-tab-available", "passed": true },
+        { "atMs": 6506, "name": "share-switched-to-agenda", "passed": true },
+        { "atMs": 6861, "name": "preview-keeps-playing", "passed": true },
+        { "atMs": 7944, "name": "stream-remains-live", "passed": true },
+        { "atMs": 7945, "name": "agenda-sharing-preview", "passed": true },
+        { "atMs": 12154, "name": "sharing-ended", "passed": true },
+        { "atMs": 12154, "name": "call-card-share-cleared", "passed": true },
+        {
+          "atMs": 12155,
+          "name": "preview-receives-share-ended",
+          "passed": true
+        }
+      ],
+      "durationMs": 14286,
+      "frames": 416,
+      "height": 720,
+      "inputDigest": "123e91fa448857f02796cea05ce756b59c79adaf3c27d7f66036af84698d4f56",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d",
+      "source": "native",
+      "width": 1120,
+      "poster": "tab-sharing-controls-native.png",
+      "posterDigest": "29b74c81d0517fd533f6677d7012afa5c691c717e5f3d7aa7f7174c58cda7f62",
+      "quality": { "decodedFrames": 189, "passed": true, "uniqueFrames": 185 },
+      "recording": "tab-sharing-controls-native.webp",
+      "recordingDigest": "b61cfdbf68b8bf4a6050057bf340e43ab023a9dfb07bfbbadc49b83537c2297d",
+      "sourceDigest": "c96aed717f6844584ec7ad91baf99482a582914e4b4d1cdf9c06b5392f52fb3b"
+    }
+  },
+  "release": "0.8.0",
+  "scenarioDigests": {
+    "share-system-audio": "ce27715fc3990f6a40925e6a222f655a736541303f9199846d5de3feff5fbf31",
+    "tab-sharing-controls": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+  },
+  "schemaVersion": 3,
+  "source": "native",
+  "approval": {
+    "digest": "b569b18aa2900f0e8dee79174da6c10d71258314a59a5bdf581da7f2534fa839",
+    "passed": true,
+    "reviews": {
+      "selection": { "passed": true, "problems": [] },
+      "content": { "passed": true, "problems": [] },
+      "author:share-system-audio": { "passed": true, "problems": [] },
+      "visual:share-system-audio": { "passed": true, "problems": [] },
+      "author:tab-sharing-controls": { "passed": true, "problems": [] },
+      "visual:tab-sharing-controls": { "passed": true, "problems": [] }
+    }
+  }
+}

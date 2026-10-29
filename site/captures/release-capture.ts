@@ -5,6 +5,8 @@ import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { parseReleaseStories } from "../src/lib/release-stories.ts";
+import { nativeInputDigest } from "./native-inputs.ts";
+import { checkNativeArchive } from "./native-proof.ts";
 
 export const captureArchiveState = (
   directory: string,
@@ -72,6 +74,7 @@ export const captureSourceDigest = (root: string) => {
   return hash.digest("hex");
 };
 
+// oxlint-disable-next-line eslint/complexity -- Historical import and current automatic capture are distinct compatibility paths.
 const main = () => {
   const version = process.env.LILO_CAPTURE_VERSION ?? "";
 
@@ -80,6 +83,24 @@ const main = () => {
   }
 
   const site = fileURLToPath(new URL("../", import.meta.url));
+
+  const currentVersion = JSON.parse(
+    readFileSync(`${site}/../lilo-ui/package.json`, "utf-8")
+  ).version;
+
+  if (version === currentVersion) {
+    const result = spawnSync(
+      "make",
+      ["release-media-proof", `RELEASE=${version}`],
+      { cwd: `${site}/..`, env: process.env, stdio: "inherit" }
+    );
+
+    if (result.status !== 0) {
+      throw new Error("Automatic release media failed; release blocked");
+    }
+
+    return;
+  }
 
   const story = parseReleaseStories(
     readFileSync(`${site}/../CHANGELOG.md`, "utf-8"),
@@ -105,6 +126,24 @@ const main = () => {
 
   if (process.env.LILO_CAPTURE_REPLACE !== "1") {
     if (state === "complete") {
+      if (source === "native") {
+        const directory = `${site}/src/assets/releases/${version}`;
+
+        const record = JSON.parse(
+          readFileSync(`${directory}/capture.json`, "utf-8")
+        );
+
+        if (record.schemaVersion === 2) {
+          checkNativeArchive(
+            directory,
+            version,
+            true,
+            "",
+            nativeInputDigest(`${site}/..`)
+          );
+        }
+      }
+
       process.stdout.write(`Keeping archived captures for ${version}\n`);
 
       return;
@@ -120,9 +159,24 @@ const main = () => {
   const require = createRequire(import.meta.url);
 
   if (source === "native") {
-    throw new Error(
-      "Native recordings need reviewed window frames; use make site-release-import RELEASE=x.y.z FRAMES=/path/to/manifest.json RECAPTURE=1"
+    const result = spawnSync(
+      "make",
+      [
+        "release-media-proof",
+        `RELEASE=${version}`,
+        ...(process.env.LILO_CAPTURE_REPLACE === "1" ? ["RECAPTURE=1"] : []),
+      ],
+      { cwd: `${site}/..`, stdio: "inherit" }
     );
+
+    if (result.error || result.status !== 0) {
+      throw (
+        result.error ??
+        new Error("Native capture quality checks failed; release blocked")
+      );
+    }
+
+    return;
   }
 
   const result = spawnSync(

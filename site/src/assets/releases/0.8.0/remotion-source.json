@@ -1,0 +1,242 @@
+{
+  "captures": [
+    {
+      "capturedAt": "2026-10-29T12:58:23Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "audio-ready.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".tab-share-note": [369, 187.375, 642, 13],
+        ".tab-share-panel": [350, 83.1875, 680, 340],
+        ".tab-share-tools": [369, 147.375, 642, 28]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "audio-ready",
+      "digest": "6ec196aec71ef26c82ddbe54229aad5a3ab53f7df3f86267b64d5dd32fc99f5e",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "share-system-audio",
+      "scenarioDigest": "ce27715fc3990f6a40925e6a222f655a736541303f9199846d5de3feff5fbf31"
+    },
+    {
+      "capturedAt": "2026-10-29T12:58:56Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "picker-open.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 620, 248, 34],
+        ".tab-share-panel": [350, 83.1875, 680, 315],
+        ".tab-share-tools": [369, 147.375, 642, 28]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "picker-open",
+      "digest": "a54cea94a04ba61fce6e0ec1a455ab9ab0567a2671a7e8cb589c691b9e9a0bf9",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    },
+    {
+      "capturedAt": "2026-10-29T12:58:57Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "search-finds-brief.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 620, 248, 34],
+        ".tab-share-panel": [350, 83.1875, 680, 292],
+        ".tab-share-tools": [369, 147.375, 642, 28]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "search-finds-brief",
+      "digest": "61d1e97ca013498671f91ead2e5e84ee3c9eb19565be22aef503f2601ef918f2",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    },
+    {
+      "capturedAt": "2026-10-29T12:58:59Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "call-card-names-brief.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 589, 248, 65]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "call-card-names-brief",
+      "digest": "db0e4e43f6b30ac9cb2cc8fb454f600cd3d5b4911f38af0f890bdf0520f13d3c",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    },
+    {
+      "capturedAt": "2026-10-29T12:59:01Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "share-shown-tab-available.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 589, 248, 65]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "share-shown-tab-available",
+      "digest": "e8d640a60f10bc6481049fbf13baf43d612752725f3f13b591e37584abdd4d5f",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    },
+    {
+      "capturedAt": "2026-10-29T12:59:02Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "share-switched-to-agenda.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 589, 248, 65]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "share-switched-to-agenda",
+      "digest": "95074098a1e94bc1e8a379f2d7449257b8e52ba62c6e7c97433f1fc957a78960",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    },
+    {
+      "capturedAt": "2026-10-29T12:59:04Z",
+      "captureTool": "WKWebView.takeSnapshot",
+      "file": "agenda-sharing-preview.png",
+      "height": 2880,
+      "logicalHeight": 720,
+      "logicalWidth": 1120,
+      "regions": {
+        ".call-card": [10, 589, 248, 65]
+      },
+      "width": 4480,
+      "appBuild": "24",
+      "appVersion": "0.10.1",
+      "checkpoint": "agenda-sharing-preview",
+      "digest": "fc05e31b52b6f1509b3da1a0d287c6211bfe659a5e9ba7969f03ffd307ea93c8",
+      "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+      "scenario": "tab-sharing-controls",
+      "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d"
+    }
+  ],
+  "footage": {
+    "appBuild": "24",
+    "appVersion": "0.10.1",
+    "capturedAt": "2026-10-29T12:59:10Z",
+    "captureTool": "ScreenCaptureKit.currentProcess",
+    "checkpoints": [
+      {
+        "atMs": 1107,
+        "name": "picker-open",
+        "passed": true
+      },
+      {
+        "atMs": 1454,
+        "name": "brief-preview-loaded",
+        "passed": true
+      },
+      {
+        "atMs": 1455,
+        "name": "requesting-tab-excluded",
+        "passed": true
+      },
+      {
+        "atMs": 2609,
+        "name": "search-finds-brief",
+        "passed": true
+      },
+      {
+        "atMs": 4037,
+        "name": "brief-shared",
+        "passed": true
+      },
+      {
+        "atMs": 4135,
+        "name": "live-stream-delivered",
+        "passed": true
+      },
+      {
+        "atMs": 4135,
+        "name": "call-card-names-brief",
+        "passed": true
+      },
+      {
+        "atMs": 5947,
+        "name": "share-shown-tab-available",
+        "passed": true
+      },
+      {
+        "atMs": 7381,
+        "name": "share-switched-to-agenda",
+        "passed": true
+      },
+      {
+        "atMs": 8035,
+        "name": "preview-keeps-playing",
+        "passed": true
+      },
+      {
+        "atMs": 9102,
+        "name": "stream-remains-live",
+        "passed": true
+      },
+      {
+        "atMs": 9124,
+        "name": "agenda-sharing-preview",
+        "passed": true
+      },
+      {
+        "atMs": 13522,
+        "name": "sharing-ended",
+        "passed": true
+      },
+      {
+        "atMs": 13522,
+        "name": "call-card-share-cleared",
+        "passed": true
+      },
+      {
+        "atMs": 13691,
+        "name": "preview-receives-share-ended",
+        "passed": true
+      }
+    ],
+    "durationMs": 15772,
+    "height": 1440,
+    "inputDigest": "b7a34306406cff4c6b5660df2e5ea79b0aee061301177c8c8f67f83b6c8fb8cb",
+    "logicalHeight": 720,
+    "logicalWidth": 1120,
+    "maxContentScale": 1,
+    "nativePixelScale": 2,
+    "scenario": "tab-sharing-controls",
+    "scenarioDigest": "d3e19125f742ade9e75b7f28473cef0222ab532813143d172a37e1037dbc788d",
+    "source": "native",
+    "width": 2240,
+    "digest": "57bdcbe0a21e6fc3bf83330b521d1d3d50d9cfa4013e3225d23584c9a6aa0454",
+    "file": "tab-sharing-source.mp4"
+  },
+  "release": "0.8.0",
+  "schemaVersion": 1,
+  "source": "native"
+}

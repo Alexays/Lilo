@@ -2165,6 +2165,9 @@
 		"Secure Connection": "安全连接"
 	},
 	"whatsNew": {
+		"recordingPlay": "播放演示",
+		"recordingStop": "停止",
+		"recordingReplay": "重播",
 		"version": "Lilo {version}",
 		"title": "Lilo 更新内容",
 		"description": "让日常浏览更顺手的一些小改进。",

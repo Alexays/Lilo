@@ -1,0 +1,125 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+import type { ReleasePresentation } from "../../captures/remotion/presentation";
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  media: ReleasePresentation["media"][string];
+  poster: ImageMetadata;
+  recording?: string;
+  alternative: string;
+  lang: Locale;
+}
+
+const { media, poster, recording, alternative } = Astro.props;
+---
+
+<figure
+  class:list={[
+    "capture",
+    media.kind === "video" ? "release-recording" : "release-image",
+  ]}
+  data-video={media.kind === "video" ? "true" : undefined}
+>
+  {media.kind === "image" ? (
+    <Image src={poster} alt={alternative} format="png" />
+  ) : (
+    <video
+      src={recording}
+      poster={poster.src}
+      width={media.width}
+      height={media.height}
+      controls
+      muted
+      playsinline
+      preload="none"
+      aria-label={alternative}
+    ></video>
+  )}
+</figure>
+
+<script>
+  const motion = matchMedia("(prefers-reduced-motion: reduce)");
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-video]")) {
+    const video = root.querySelector("video");
+
+    if (!video) {
+      continue;
+    }
+
+    let played = false;
+    let generation = 0;
+
+    const pause = () => {
+      generation += 1;
+      video.pause();
+    };
+
+    video.addEventListener("play", () => {
+      played = true;
+    });
+    new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          pause();
+        } else if (
+          entry.intersectionRatio >= 0.5 &&
+          !played &&
+          !motion.matches &&
+          !document.hidden
+        ) {
+          generation += 1;
+          const current = generation;
+          video
+            .play()
+            .then(() => {
+              if (current !== generation) {
+                video.pause();
+              }
+
+              return video;
+            })
+            .catch(() => {
+              video.pause();
+            });
+        }
+      },
+      { threshold: [0, 0.5] }
+    ).observe(root);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        pause();
+      }
+    });
+    motion.addEventListener("change", () => {
+      if (motion.matches) {
+        pause();
+      }
+    });
+  }
+</script>
+
+<style>
+  .capture {
+    position: relative;
+    display: block;
+    margin: 24px 0 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--sidebar);
+  }
+  img,
+  video {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  video:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+  }
+</style>

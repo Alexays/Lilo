@@ -2185,6 +2185,9 @@
 		"Secure Connection": "Защищённое соединение"
 	},
 	"whatsNew": {
+		"recordingPlay": "Воспроизвести демонстрацию",
+		"recordingStop": "Остановить",
+		"recordingReplay": "Повторить",
 		"version": "Lilo {version}",
 		"title": "Что нового в Lilo",
 		"description": "Небольшие улучшения для повседневной работы в браузере.",

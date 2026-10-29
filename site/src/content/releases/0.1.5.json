@@ -1,0 +1,42 @@
+{
+  "version": "0.1.5",
+  "title": {
+    "en": "A clearer path into Lilo.",
+    "fr": "Des premiers pas plus clairs."
+  },
+  "introduction": {
+    "en": "Settings explain your choices, and protected browser imports guide you through macOS permissions.",
+    "fr": "Les réglages clarifient vos choix et l’import des navigateurs protégés vous guide dans les autorisations de macOS."
+  },
+  "highlights": [
+    {
+      "id": "clearer-settings",
+      "title": {
+        "en": "Know what is already set up.",
+        "fr": "Voyez ce qui est déjà configuré."
+      },
+      "body": {
+        "en": "Settings show clearer agent and content-blocking choices, removable site chips, and the password manager you already use.",
+        "fr": "Les réglages clarifient les choix des agents et du bloqueur, affichent les sites autorisés sous forme de pastilles et nomment votre gestionnaire de mots de passe."
+      },
+      "notes": [
+        "Settings for AI agents, the terminal's sleep and content blocking are clearer: no indented rows, one choice for when the Mac stays awake, statuses as badges, and always-allowed sites as chips you remove in one click.",
+        "Settings name the password manager you already use, with a Change button, instead of always offering to add one."
+      ]
+    },
+    {
+      "id": "protected-import",
+      "title": {
+        "en": "A hand with protected imports.",
+        "fr": "Un guide pour les imports protégés."
+      },
+      "body": {
+        "en": "A small Lilo panel stays beside Full Disk Access while you grant permission. Once allowed, Lilo returns and the browser is ready to import.",
+        "fr": "Un petit panneau Lilo reste près d’Accès complet au disque pendant l’autorisation. Une fois l’accès accordé, Lilo revient et le navigateur est prêt pour l’import."
+      },
+      "notes": [
+        "Allow access on a browser macOS protects, such as Safari, opens Full Disk Access with a small Lilo panel beside it: turn Lilo on, or drag its icon into the list. Once access is granted, Lilo comes back and the browser is ready to import."
+      ]
+    }
+  ]
+}

@@ -1,7 +1,60 @@
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, type FakeHostWorld } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 import type { ReleaseNotes } from "../src/components/whatsnew/releaseNotes";
+import { createHash } from "node:crypto";
+import { generatedReleaseEditorial } from "../src/components/whatsnew/releaseNotes";
+
+test("0.8.0 MP4 and still work together, replay from cache and stop when closed", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const source = new URL("../../site/src/assets/releases/0.8.0/", import.meta.url);
+	const archive = JSON.parse(readFileSync(new URL("capture.json", source), "utf-8"));
+	const presentation = JSON.parse(readFileSync(new URL("presentation.json", source), "utf-8"));
+	const notes: ReleaseNotes = { version: "0.8.0", date: "2026-10-28", groups: [{ kind: "Added", entries: ["Choose and switch shared tabs."] }], editorial: { en: generatedReleaseEditorial(archive, "en", presentation.media) } };
+	let reads = 0;
+	await page.route("**/release-media/*-remotion.*", route => {
+		const name = new URL(route.request().url()).pathname.split("/").at(-1)!;
+		if (name.endsWith(".mp4")) reads += 1;
+		return route.fulfill({ body: readFileSync(new URL(name, source)), contentType: name.endsWith(".mp4") ? "video/mp4" : "image/png" });
+	});
+	await bootReleaseChrome(page, initialWorld(), undefined, notes);
+	await openWhatsNew(page, false, "0.8.0");
+	const still = page.locator(".whats-new .release-image");
+	await expect(still.locator("img")).toHaveJSProperty("naturalWidth", 1600);
+	await expect(still.getByRole("button")).toHaveCount(0);
+	const player = page.locator(".whats-new .release-recording");
+	await player.scrollIntoViewIfNeeded();
+	expect(reads).toBe(0);
+	const button = player.getByRole("button");
+	await button.focus();
+	await page.keyboard.press("Enter");
+	const video = player.locator("video");
+	await expect(video).toHaveJSProperty("videoWidth", 1600);
+	await expect(video).toHaveJSProperty("controls", true);
+	await expect.poll(() => video.evaluate(node => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0.1);
+	await video.evaluate(node => { const movie = node as HTMLVideoElement; movie.pause(); movie.currentTime = 6; movie.muted = false; });
+	await expect(video).toHaveJSProperty("muted", false);
+	await expect.poll(() => video.evaluate(node => (node as HTMLVideoElement).currentTime)).toBeGreaterThanOrEqual(6);
+	await video.evaluate(node => { const movie = node as HTMLVideoElement; movie.currentTime = movie.duration - 0.1; return movie.play(); });
+	await expect(video).toHaveJSProperty("ended", true);
+	await expect(video).toBeVisible();
+	await video.evaluate(node => (node as HTMLVideoElement).play());
+	await expect(video).toHaveJSProperty("paused", false);
+	await page.locator(".whats-new-body").evaluate(node => { node.scrollTop = 0; });
+	await expect(video).toHaveCount(0);
+	await player.scrollIntoViewIfNeeded();
+	await button.click();
+	await expect(video).toHaveJSProperty("videoWidth", 1600);
+	await expect.poll(() => video.evaluate(node => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0.1);
+	expect(reads).toBe(1);
+	const activeMovie = await video.elementHandle();
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await expect.poll(() => activeMovie?.evaluate(node => node instanceof HTMLVideoElement && node.paused)).toBe(true);
+	await openWhatsNew(page, false, "0.8.0");
+	await expect(page.locator(".whats-new video")).toHaveCount(0);
+});
 
 const release: ReleaseNotes = {
 	version: "0.6.0", date: "2026-01-15",
@@ -55,6 +108,47 @@ test("the sheet presents installed highlights, all changes and one acknowledgmen
 	await openWhatsNew(page);
 	await expect(dialog).toBeVisible();
 	expect(resourceReads()).toBe(1);
+});
+
+test("bundled recordings wait for explicit playback with Reduce Motion and stop on close", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" });
+	const notes = structuredClone(release);
+	if (!notes.editorial?.en) throw new Error("Missing test release copy");
+	const source = new URL("./fixtures/", import.meta.url);
+	for (const [extension, contentType] of [["png", "image/png"], ["webp", "image/webp"]]) {
+		await page.route(`**/release-media/playback-fixture.${extension}`, route => route.fulfill({ contentType, body: readFileSync(new URL(`playback.${extension}`, source)) }));
+	}
+	const media = { poster: "playback-fixture.png", recording: "playback-fixture.webp", durationMs: 3400, width: 320, height: 200 };
+	notes.editorial.en.highlights[0].media = { ...media, poster: `/release-media/${media.poster}`, recording: `/release-media/${media.recording}` };
+	const requested: string[] = [];
+	page.on("request", request => requested.push(request.url()));
+	await bootReleaseChrome(page, initialWorld(), undefined, notes);
+	await openWhatsNew(page);
+	const player = page.locator(".whats-new .release-recording");
+	await player.scrollIntoViewIfNeeded();
+	const image = player.locator("img");
+	await expect(image).toHaveJSProperty("naturalWidth", media.width);
+	const button = player.getByRole("button");
+	await expect(button).toHaveAttribute("aria-pressed", "false");
+	expect(requested.some(url => url.endsWith(`/release-media/${media.recording}`))).toBe(false);
+	await button.focus();
+	await page.keyboard.press("Enter");
+	await expect(button).toHaveAttribute("aria-pressed", "true");
+	await expect(image).toHaveAttribute("src", /^blob:/);
+	await expect(image).toHaveJSProperty("complete", true);
+	const pixels = async () => createHash("sha256").update(await image.screenshot()).digest("hex");
+	const firstFrame = await pixels();
+	await expect.poll(pixels, { timeout: 3000 }).not.toBe(firstFrame);
+	await expect(button).toHaveAttribute("aria-pressed", "false", { timeout: 17000 });
+	await page.keyboard.press("Enter");
+	await expect(button).toHaveAttribute("aria-pressed", "true");
+	await expect(image).toHaveAttribute("src", /^blob:/);
+	await expect(image).toHaveJSProperty("complete", true);
+	await expect.poll(pixels, { timeout: 1500 }).toBe(firstFrame);
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("dialog")).toHaveCount(0);
+	await openWhatsNew(page);
+	await expect(page.locator(".whats-new .release-recording button")).toHaveAttribute("aria-pressed", "false");
 });
 
 test("Escape closes the sheet and focus stays inside until it closes", async ({ page }) => {

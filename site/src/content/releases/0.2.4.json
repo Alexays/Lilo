@@ -1,0 +1,28 @@
+{
+  "version": "0.2.4",
+  "title": {
+    "en": "Move your tabs without a restart.",
+    "fr": "Déplacez vos onglets sans redémarrer."
+  },
+  "introduction": {
+    "en": "Tab bars, permission prompts and agent approvals stay usable as your setup changes.",
+    "fr": "Les barres d’onglets, les autorisations et les accès des agents suivent vos changements de configuration."
+  },
+  "highlights": [
+    {
+      "id": "tab-placement",
+      "title": {
+        "en": "Every edge stays responsive.",
+        "fr": "Chaque bord reste réactif."
+      },
+      "body": {
+        "en": "Moving tabs to another edge no longer freezes the tab bar. Permission prompts from the address toolbar open into the page, where you can reach them.",
+        "fr": "Déplacer les onglets sur un autre bord ne fige plus leur barre. Les demandes d’autorisation de la barre d’adresse s’ouvrent dans la page et restent accessibles."
+      },
+      "notes": [
+        "Moving the tabs to another edge no longer leaves the tab bar frozen or unclickable until Lilo restarts.",
+        "A permission prompt opened from the address above the page hangs down into the page instead of rising off the top of the window."
+      ]
+    }
+  ]
+}

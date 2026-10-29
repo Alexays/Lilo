@@ -45,6 +45,29 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 ## Release stories and recordings
 
+### Automated native proof
+
+```sh
+make release-media-proof RELEASE=0.8.0
+make release-media-check RELEASE=0.8.0
+```
+
+Every release selects its one to three most important visible improvements from the prepared notes and current implementation, using authenticated local `codex exec`. A second invocation audits the ranking and accounts for every exact bullet; unavailable capture support cannot justify dropping an important feature. Only genuinely nonvisual maintenance can have no clips, with independent approval.
+
+The agent authors declarative JSON scenarios and synthetic HTML fixtures, with no fixed feature-ID registry. A fixed XCTest driver executes ordinary clicks, typing, keyboard input, drags, compiled native menu actions and observable assertions in the real Lilo window. Authors cannot change production code or validators. Scenario safety, feature coverage, translations and native frames have separate read-only reviews. Each feature gets at most three attempts with actual failure diagnostics; repairs retain the frozen selection and intended behavior. Exhaustion blocks the release.
+
+Run on macOS with Xcode, authenticated Codex CLI and an unlocked GUI session. The job temporarily keeps the display awake; locking invalidates capture. The opt-in host opens temporary browser storage, serves made-up local HTTPS pages, and records only its own window through `SCShareableContent.currentProcess`. Fixture TLS keys stay in memory; no trust root is installed. Capture takes foreground focus temporarily and restores the previous application, so unattended production belongs on a dedicated capture worker. Native capabilities needing unavailable hardware or a human permission decision fail closed.
+
+Encoding preserves timestamps, native transitions and a readable final hold, with lossless animated WebP and a still poster. Every second needs at least 24 fps with gaps <=100 ms. Semantic assertions, image changes, geometry, duration, decoded frames, size and file digests must pass. Independent visual review checks chronological frames and timing for calm, legible composition. Source, UI, release notes, scenarios and tooling are fingerprinted; generated media/embeds are excluded. Failed jobs preserve the prior archive and leave diagnostics under `build/release-media/`.
+
+Schema-3 archives under `src/assets/releases/<version>/` contain the frozen selection, all app-language editorial copy, scenario recipes, source manifests, posters/movies and digest-bound approval. The website derives English/French stories directly from this archive; the app bundles every selected feature's media and translated copy for offline playback. No per-release story file, illustration, native runner or locale-catalog edit is needed. UI control labels still use the shared catalogs.
+
+`make release-version` always runs production, including for maintenance releases. An unchanged valid archive is reused; stale/incomplete current output regenerates automatically. `make release-media-check`, final packaging and the signing workflow require current approved output. Website deployment also runs the full current-source and historical schema-3 integrity gate; inspect it with `make release-media-publish-check`. Normal validation/builds never invoke an agent or record. Use `RECAPTURE=1` to deliberately regenerate an unchanged archive.
+
+For driver development use `make release-media-record SCENARIO=/absolute/scenario.json OUT=build/release-media-smoke` and `make release-media-test`. Legacy `release-media-encode` remains available for the original proof runners. Historical 0.7.0 media is unchanged.
+
+### Existing demo and legacy recordings
+
 The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
 
 A story without `capture` shows its highlights with no recording. Stories with one choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
@@ -69,7 +92,7 @@ The recording plays once when half the player is visible. One small icon over th
 
 Each highlight can define an optional `action` with translated `label` and `href` fields. It appears with the feature text, outside the recording. Highlights for installed features can omit it; no demo action is added automatically.
 
-Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. For a native story, use `site-release-import` with reviewed window frames. Missing native media stops release preparation with that instruction. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
+Existing archives stay unchanged on later builds and releases; incomplete archives require explicit replacement. For a demo story, `make site-release-capture RELEASE=x.y.z RECAPTURE=1` replaces its media using an owned server on port 8791 and Playwright's Chromium browser. `site-release-import` remains available for the historical native pilot. Current native stories use the automated proof above. `make release-version` prepares missing media before the website build; normal builds and `make validate` never record or replace media.
 
 ## Demo playground
 
@@ -95,7 +118,7 @@ To refresh the classic icon and the Codex desktop icon on macOS, build the app w
 
 ## Changelog
 
-The changelog component reads the repository's `CHANGELOG.md`, generated by Changie. Each published version appears at `/changelog/#vX.Y.Z`, newest first. `/fr/changelog/` has French navigation and dates; the release notes keep their original English text. Release content is static; the shared header script handles the theme toggle and mobile menu.
+The changelog component reads the repository's `CHANGELOG.md`, generated by Changie. Each published version appears at `/changelog/#vX.Y.Z`, newest first. Releases with notes have a concise English/French overview and up to three highlights, followed by the complete original English notes in a collapsed disclosure. The first public release remains a short paragraph. `/fr/changelog/` has French navigation and dates. Historical overviews in `src/content/releases/` cite exact published notes; approved generated archives supply new releases. Release content and disclosures work without JavaScript; the shared header script handles the theme toggle and mobile menu.
 
 The imported history in `.changes/v0.1.5.md` contains several earlier versions. Reading the merged changelog preserves all of them. Pending fragments in `.changes/unreleased/` appear on the website when `make release-version` collects them. That command also rebuilds the website, including the changelog and app metadata.
 

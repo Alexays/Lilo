@@ -26,3 +26,21 @@ export const parseChangelog = (markdown: string) => {
       b.version.localeCompare(a.version, "en", { numeric: true })
     );
 };
+
+export const sourceReleaseNotes = (body: string): string[] => {
+  const notes: string[] = [];
+  let active = -1;
+
+  for (const line of body.split(/\r?\n/u)) {
+    if (line.startsWith("- ")) {
+      notes.push(line.slice(2));
+      active = notes.length - 1;
+    } else if (active >= 0 && /^\s+\S/u.test(line)) {
+      notes[active] += `\n${line.trim()}`;
+    } else if (line.trim()) {
+      active = -1;
+    }
+  }
+
+  return notes;
+};

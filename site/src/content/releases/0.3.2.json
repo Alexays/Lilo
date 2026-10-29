@@ -1,0 +1,28 @@
+{
+  "version": "0.3.2",
+  "title": {
+    "en": "Tab strips stay within reach.",
+    "fr": "Vos onglets restent accessibles."
+  },
+  "introduction": {
+    "en": "Moving and filling a tab strip no longer gets in the way of using it.",
+    "fr": "Déplacer ou remplir une barre d’onglets n’empêche plus de l’utiliser."
+  },
+  "highlights": [
+    {
+      "id": "tab-strip",
+      "title": {
+        "en": "Move the tabs. Keep clicking.",
+        "fr": "Déplacez les onglets. Continuez à cliquer."
+      },
+      "body": {
+        "en": "Top and bottom tab strips respond immediately after moving them. When tabs run out of room, the row scrolls instead of slipping under Settings.",
+        "fr": "Les barres d’onglets en haut ou en bas répondent dès leur déplacement. Quand la place manque, la rangée défile au lieu de passer sous Réglages."
+      },
+      "notes": [
+        "Moving the tabs from the sidebar to the top or the bottom no longer leaves the new tab bar deaf to clicks and hovers until the window is resized.",
+        "With many tabs on a tab strip, squeezed tabs no longer slide under the Settings tab: the row scrolls instead."
+      ]
+    }
+  ]
+}

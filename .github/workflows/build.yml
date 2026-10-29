@@ -197,7 +197,8 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+            lilo-ui/public/release-media
+          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'lilo-ui/releaseNotesPlugin.ts', '.changes/v*.md', 'site/src/assets/releases/**', 'scripts/copy_release_media.py', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.ui-cache.outputs.cache-hit != 'true'
         with:
@@ -224,7 +225,8 @@ jobs:
             !.derived.noindex/build-app/Logs
           key: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.sha }}
           restore-keys: deriveddata-release-${{ hashFiles('Lilo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
-      - run: make release-archive
+      # Compile current development source without packaging a release or requiring its media approval.
+      - run: make xcode-build-release XCODEBUILD="xcodebuild -project Lilo.xcodeproj -scheme Lilo -destination 'platform=macOS' -derivedDataPath '$PWD/.derived.noindex/build-app'"
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
@@ -239,9 +241,9 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          codesign --force --deep --sign - --preserve-metadata=entitlements build/release/export/Lilo.app
+          codesign --force --deep --sign - --preserve-metadata=entitlements .derived.noindex/build-app/Build/Products/Release/Lilo.app
           mkdir -p build/startup-bench
-          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench APP=build/release/export/Lilo.app | tee build/startup-bench/summary.txt
+          make startup-bench RUNS=5 TABS=10 OUT=build/startup-bench APP=.derived.noindex/build-app/Build/Products/Release/Lilo.app | tee build/startup-bench/summary.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: github.event_name == 'push' && always()
         with:

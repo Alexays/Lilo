@@ -27,6 +27,7 @@ XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What validate's UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
+UI_SOURCES += $(wildcard site/src/assets/releases/*/*) scripts/copy_release_media.py
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
 UI_STAMP := build/.ui-build.stamp
 BRIDGE_STAMP := build/.ext-bridge-build.stamp
@@ -186,10 +187,9 @@ release-status: $(CHANGIE)
 ## Collect release notes, bump the app and build versions, and refresh the website
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
-	@release=$$('$(CHANGIE)' latest --remove-prefix); \
-	if [ -f "site/src/content/releases/$$release.json" ]; then \
-		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
-	fi
+	@set -e; release=$$('$(CHANGIE)' latest --remove-prefix); \
+	$(MAKE) --no-print-directory release-media-proof RELEASE="$$release"; \
+	$(MAKE) --no-print-directory release-media-check RELEASE="$$release"
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -203,6 +203,7 @@ release-test: $(CHANGIE)
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)
 	@npm --prefix $(UI_DIR) run build
+	@python3 scripts/copy_release_media.py
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
 
@@ -369,17 +370,17 @@ run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
 
 ## Build the UI bundle and create release artifacts
-release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release: release-media-check vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release-notarize: release-media-check vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
 
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
 # against bridge-src on main, so neither needs npm here.
 ## Archive and export the release app from the UI already built (CI)
-release-archive: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+release-archive: release-media-check vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh release
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.
@@ -501,10 +502,14 @@ site-preview: site-generate
 
 ## Compare the website with a disposable native Debug session (no personal profiles or preferences)
 site-native-preview: app
+	@$(MAKE) --no-print-directory site-native-preview-launch
+
+.PHONY: site-native-preview-launch
+site-native-preview-launch:
 	@task_root="$$(mktemp -d /tmp/lilo-demo-native.XXXXXX)"; \
 	mkdir -p "$$task_root/home"; \
-	CFFIXED_USER_HOME="$$task_root/home" LILO_APP_SUPPORT_DIR="$$task_root/support" \
-	build/debug/export/Lilo.app/Contents/MacOS/Lilo & task_pid=$$!; \
+	CFFIXED_USER_HOME="$$task_root/home" LILO_APP_SUPPORT_DIR="$$task_root/support" LILO_RELEASE_PREVIEW='$(LILO_RELEASE_PREVIEW)' \
+	'$(or $(NATIVE_PREVIEW_APP),build/debug/export/Lilo.app)/Contents/MacOS/Lilo' & task_pid=$$!; \
 	trap 'kill "$$task_pid" 2>/dev/null || true; wait "$$task_pid" 2>/dev/null || true; rm -rf "$$task_root"' EXIT INT TERM HUP; \
 	wait "$$task_pid"
 
@@ -527,6 +532,125 @@ site-test: site-generate
 ## Exercise the interactive website demo with production headers (SITE_E2E_ARGS passes Playwright flags)
 site-e2e: site-generate
 	@npm --prefix site run test:e2e -- $(SITE_E2E_ARGS)
+
+.PHONY: site-browser-deps
+## Install the pinned Chromium and WebKit browsers for website media checks
+site-browser-deps: $(SITE_DEPS)
+	@cd site && npm exec playwright install chromium webkit
+
+.PHONY: release-media-publish-check ui-capture-build release-media-record release-media-test release-media-encode release-media-check release-media-proof
+
+.PHONY: release-motion-deps release-motion-test release-motion-assets release-motion-studio release-motion-render release-motion-check release-motion-review release-motion-capture release-motion-import
+
+## Capture fresh native footage and 4x native UI states for the 0.8.0 media proof
+release-motion-capture:
+	@$(MAKE) --no-print-directory release-media-record SCENARIO=site/src/assets/releases/0.8.0/share-system-audio-scenario.json SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testRemotion080HighResolution OUT=build/release-motion-capture
+	@$(MAKE) --no-print-directory release-media-record SCENARIO=site/src/assets/releases/0.8.0/tab-sharing-controls-scenario.json SWIFT_TEST_FILTER=LiloTests/ReleaseCaptureTests/testRemotion080HighResolution OUT=build/release-motion-capture
+
+## Import fresh verified native states and preserve a high-quality source MP4
+release-motion-import: $(SITE_DEPS)
+	@node site/captures/remotion/import-capture.ts
+
+## Install pinned build-only Remotion tools
+release-motion-deps:
+	@npm --prefix site install --save-dev --save-exact @remotion/cli@4.0.539 remotion@4.0.539 react@19.3.1 react-dom@19.3.1 @types/react@19.3.0
+	@npm --prefix site install --save-exact zod@4.5.4
+
+## Test the shared still/video presentation and its native provenance
+release-motion-test: $(SITE_DEPS)
+	@node --test site/tests/release-presentation.test.ts
+
+## Prepare verified fresh high-resolution native sources for the Remotion proof
+release-motion-assets: $(SITE_DEPS)
+	@node site/captures/remotion/prepare.ts
+
+## Preview the 0.8.0 motion proof in Remotion Studio
+release-motion-studio: release-motion-assets
+	@cd site && npm exec remotion studio captures/remotion/index.tsx -- --public-dir ../build/release-motion-assets --port 8794 --no-open
+
+## Render the 0.8.0 native movie, poster and screenshot (OUT=directory)
+release-motion-render: release-motion-assets
+	@node site/captures/remotion/render.ts '$(if $(OUT),$(abspath $(OUT)),)'
+
+## Check the 0.8.0 presentation files without approving publication
+release-motion-check: $(SITE_DEPS)
+	@node site/captures/remotion/check.ts '$(if $(OUT),$(abspath $(OUT)),)'
+
+## Export a one-second contact sheet of the rendered 0.8.0 movie for visual review
+release-motion-review: $(SITE_DEPS)
+	@mkdir -p build/release-review/0.8.0
+	@ffmpeg -y -loglevel error -i site/src/assets/releases/0.8.0/tab-sharing-controls-remotion.mp4 -vf 'fps=1,scale=320:200,tile=4x4' -frames:v 1 build/release-review/0.8.0/remotion-contact.png
+
+.PHONY: release-motion-native-preview release-motion-native-check release-motion-native-review
+
+## Capture the real 0.8.0 What's New sheet and verify its media controls
+release-motion-native-review: $(SITE_DEPS) vt-build $(BRIDGE_STAMP) build/release-capture-fixture.p12
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
+	TEST_RUNNER_LILO_RELEASE_PREVIEW=0.8.0 TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(CURDIR)/build/release-review/0.8.0' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_FIXTURES='$(CURDIR)/site/captures/fixtures' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_IDENTITY='$(CURDIR)/build/release-capture-fixture.p12' \
+	$(TEST) -only-testing:LiloTests/ReleaseCaptureTests/testWhatsNewMediaPreview -parallel-testing-enabled NO
+
+## Build an isolated Debug review of the 0.8.0 presentation (never a release artifact)
+release-motion-native-preview: vt-build $(BRIDGE_STAMP)
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@$(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.media-preview $(DEBUG_SIGNING) build
+	@mkdir -p build/release-motion-preview
+	@ditto .derived.noindex/xcode/Build/Products/Debug/Lilo.app build/release-motion-preview/Lilo.app
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory site-native-preview-launch NATIVE_PREVIEW_APP='$(CURDIR)/build/release-motion-preview/Lilo.app'
+
+## Verify offline MP4/still decoding and cached replay in real WebKit
+release-motion-native-check:
+	@LILO_RELEASE_PREVIEW=0.8.0 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+	@TEST_RUNNER_LILO_RELEASE_PREVIEW_VERSION=0.8.0 $(TEST) -only-testing:LiloTests/ChromeUISchemeHandlerTests -parallel-testing-enabled NO
+
+## Select release highlights, record native proofs, and publish only quality-approved media (RELEASE=x.y.z)
+release-media-proof: $(SITE_DEPS)
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_REPLACE='$(RECAPTURE)' \
+	caffeinate -di node site/captures/produce-native.ts
+
+## Test native media quality and release gates
+release-media-test: $(SITE_DEPS)
+	@node --test site/tests/native-proof.test.ts site/tests/authored-*.test.ts
+
+## Encode all native proof scenarios (RELEASE=x.y.z FRAMES=directory OUT=directory)
+release-media-encode: $(SITE_DEPS)
+	@LILO_CAPTURE_VERSION='$(RELEASE)' LILO_CAPTURE_FRAMES='$(abspath $(FRAMES))' \
+	LILO_CAPTURE_OUTPUT='$(abspath $(or $(OUT),build/release-media-proof/$(RELEASE)))' LILO_CAPTURE_REPLACE='$(RECAPTURE)' node site/captures/native-proof.ts
+
+## Verify current release approval and historical native assets before website publication
+release-media-publish-check: $(SITE_DEPS)
+	@node site/captures/publication.ts
+
+## Fail release preparation when native media has not passed quality and visual checks
+release-media-check: $(SITE_DEPS)
+	@release='$(RELEASE)'; if [ -z "$$release" ]; then release=$$(python3 -c 'import json; print(json.load(open("lilo-ui/package.json"))["version"])'); fi; \
+	LILO_CAPTURE_VERSION="$$release" LILO_CAPTURE_OUTPUT='$(if $(OUT),$(abspath $(OUT)),)' node site/captures/authored-archive.ts
+
+# Rebuilding a rejected archive must not consume that archive as a UI build dependency.
+ui-capture-build: $(UI_DEPS)
+	@LILO_CAPTURE_BUILD=1 $(MAKE) --no-print-directory ui-build
+	@python3 -c 'from pathlib import Path; Path("$(UI_STAMP)").unlink(missing_ok=True)'
+
+## Record native release scenarios in an isolated test window (OUT=build/release-media-frames)
+release-media-record: $(SITE_DEPS) vt-build ui-capture-build $(BRIDGE_STAMP) $(NATIVE_STRINGS) build/release-capture-fixture.p12
+	@set -e; capture_inputs=$$(node site/captures/native-proof.ts fingerprint); \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_INPUT_DIGEST="$$capture_inputs" \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_OUT='$(abspath $(or $(OUT),build/release-media-frames))' \
+	TEST_RUNNER_LILO_RELEASE_SCENARIO_FILE='$(if $(SCENARIO),$(abspath $(SCENARIO)),)' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_FIXTURES='$(CURDIR)/site/captures/fixtures' \
+	TEST_RUNNER_LILO_RELEASE_CAPTURE_IDENTITY='$(CURDIR)/build/release-capture-fixture.p12' \
+	$(TEST) -only-testing:$(or $(SWIFT_TEST_FILTER),$(if $(SCENARIO),LiloTests/ReleaseCaptureTests/testAuthoredScenario,LiloTests/ReleaseCaptureTests)) -parallel-testing-enabled NO
+
+build/release-capture-fixture.p12:
+	@mkdir -p build
+	@openssl req -x509 -newkey rsa:2048 -nodes -keyout build/release-capture-fixture.key -out build/release-capture-fixture.crt -days 30 -subj '/CN=localhost' >/dev/null 2>&1
+	@openssl pkcs12 -export -inkey build/release-capture-fixture.key -in build/release-capture-fixture.crt -out '$@' -passout pass:fixture-only
 
 ## Capture a prepared release's recording and posters (RELEASE=x.y.z; RECAPTURE=1 replaces archived media)
 site-release-capture: $(SITE_DEPS)

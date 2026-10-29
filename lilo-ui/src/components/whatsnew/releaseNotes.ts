@@ -4,6 +4,18 @@ export type ReleaseKind = "Breaking" | "Added" | "Changed" | "Fixed";
 const illustrations = ["unread", "calls", "share", "address", "history", "pip", "languages", "fresh", "archive"] as const;
 export type ReleaseIllustration = typeof illustrations[number];
 
+interface ReleaseImage {
+	poster: string;
+	width: number;
+	height: number;
+}
+export type ReleaseRecording = ReleaseImage & ({ kind: "image"; recording?: never; durationMs?: never } | { kind: "video"; recording: string; durationMs: number } | { kind?: undefined; recording: string; durationMs: number });
+export interface PresentationMedia extends ReleaseImage {
+	kind: string;
+	recording?: string;
+	durationMs?: number;
+}
+
 export interface ReleaseHighlight {
 	illustration: ReleaseIllustration;
 	titleKey: string;
@@ -19,7 +31,31 @@ export interface ReleaseEditorial {
 export interface ReleaseEditorialCopy {
 	headline: string;
 	description: string;
-	highlights: { illustration: ReleaseIllustration; title: string; description: string }[];
+	highlights: { illustration?: ReleaseIllustration; title: string; description: string; media?: ReleaseRecording }[];
+}
+
+export interface GeneratedReleaseArchive {
+	content: Record<string, { headline: string; description: string; highlights: { id: string; title: string; description: string }[] }>;
+	recordings: Record<string, ReleaseImage & { recording: string; durationMs: number; quality: { passed: boolean } }>;
+}
+
+export function generatedReleaseEditorial(archive: GeneratedReleaseArchive, locale: string, presentation?: Record<string, PresentationMedia>): ReleaseEditorialCopy | null {
+	const copy = archive.content[locale];
+	if (!copy) throw new Error(`Missing approved release translation: ${locale}`);
+	if (!copy.highlights.length) return null;
+	return { headline: copy.headline, description: copy.description, highlights: copy.highlights.map(highlight => {
+		const media = archive.recordings[highlight.id];
+		if (!media?.quality?.passed) throw new Error(`Missing approved media: ${highlight.id}`);
+		const selected = presentation?.[highlight.id];
+		const image = selected ?? media;
+		const base = { poster: `/release-media/${image.poster}`, width: image.width, height: image.height };
+		let output: ReleaseRecording;
+		if (selected?.kind === "image") output = { ...base, kind: "image" };
+		else if (selected?.kind === "video" && selected.recording && selected.durationMs) output = { ...base, kind: "video", recording: `/release-media/${selected.recording}`, durationMs: selected.durationMs };
+		else if (presentation) throw new Error(`Missing presentation media: ${highlight.id}`);
+		else output = { ...base, recording: `/release-media/${media.recording}`, durationMs: media.durationMs };
+		return { title: highlight.title, description: highlight.description, media: output };
+	}) };
 }
 
 export interface ReleaseNotes {

@@ -101,14 +101,8 @@ class ReleaseTests(unittest.TestCase):
     def test_major_release(self):
         self.check_release("Breaking", "1.0.0")
 
-    def highlight(self, version):
-        self.write(HIGHLIGHTS, json.dumps({version: {}}) + "\n")
-        self.write(f"site/src/content/releases/{version}.json", "{}\n")
-
     def check_release(self, kind, version):
         self.note(kind)
-        if version.endswith(".0"):
-            self.highlight(version)
         before = self.snapshot()
         self.run_release("status")
         self.assertEqual(self.snapshot(), before)
@@ -123,20 +117,16 @@ class ReleaseTests(unittest.TestCase):
         self.run_release("status")
         self.assertEqual(self.snapshot(), released)
 
-    def test_a_feature_release_waits_for_its_highlights_and_story(self):
+    def test_a_feature_release_is_prepared_before_automatic_media_production(self):
         self.note("Added")
-        status = self.run_release("status")
-        self.assertIn("lilo-ui/src/components/whatsnew/releaseHighlights.json", status.stdout)
         before = self.snapshot()
-        refused = self.run_release("version", success=False)
-        self.assertIn("site/src/content/releases/0.2.0.json", refused.stderr)
+        self.run_release("status")
         self.assertEqual(self.snapshot(), before)
-        self.write(HIGHLIGHTS, json.dumps({"0.2.0": {}}) + "\n")
-        self.run_release("version", success=False)
-        self.assertEqual(len(list((self.root / ".changes/unreleased").glob("*.yaml"))), 1, "a missing story keeps the notes")
-        self.highlight("0.2.0")
         self.run_release("version")
         self.assert_versions("0.2.0")
+        self.assertEqual(json.loads(self.read(HIGHLIGHTS)), {})
+        self.assertFalse((self.root / "site/src/content/releases/0.2.0.json").exists())
+        self.assertIn("Fix tab switching.", self.read(".changes/v0.2.0.md"))
 
     def test_a_patch_release_needs_no_highlights(self):
         self.note("Fixed")
@@ -146,7 +136,6 @@ class ReleaseTests(unittest.TestCase):
     def test_highest_pending_bump_wins(self):
         for kind in ["Fixed", "Breaking", "Added"]:
             self.note(kind)
-        self.highlight("1.0.0")
         self.run_release("version")
         self.assert_versions("1.0.0")
         self.assertEqual(self.read("CHANGELOG.md").count("Fix tab switching."), 3)

@@ -1,0 +1,57 @@
+{
+  "version": "0.1.3",
+  "title": {
+    "en": "Keep the pages you mean to keep.",
+    "fr": "Gardez les pages qui comptent."
+  },
+  "introduction": {
+    "en": "Name pinned tabs, capture part of a page, and choose which extensions stay within reach.",
+    "fr": "Nommez vos onglets épinglés, capturez une zone de page et choisissez les extensions à garder sous la main."
+  },
+  "highlights": [
+    {
+      "id": "pinned-pages",
+      "title": {
+        "en": "Your names. Your home pages.",
+        "fr": "Vos noms. Vos pages d’accueil."
+      },
+      "body": {
+        "en": "Rename a pinned tab from its menu or by double-clicking. The name survives navigation and relaunches; its icon takes you back to the pinned page.",
+        "fr": "Renommez un onglet épinglé depuis son menu ou par double-clic. Son nom reste après une navigation ou un redémarrage ; son icône vous ramène à la page épinglée."
+      },
+      "notes": [
+        "Rename a pinned tab from its menu or by double-clicking its title: the name stays across page title changes, navigations and relaunches, and an empty name brings the page title back.",
+        "A pinned tab away from its page shows a slash and the page it is on after its name; clicking its icon takes it back, and Set as Pinned Page makes the current page its new one."
+      ]
+    },
+    {
+      "id": "page-capture",
+      "title": {
+        "en": "Capture just the part you need.",
+        "fr": "Capturez seulement la zone utile."
+      },
+      "body": {
+        "en": "Press Shift-Command-2 to capture a selected area of the page. Saving a capture asks for a destination when downloads do.",
+        "fr": "Appuyez sur Maj-Commande-2 pour capturer une zone de la page. L’enregistrement demande une destination si vos téléchargements le font aussi."
+      },
+      "notes": [
+        "Shift Command 2 captures a selected area of the page.",
+        "Saving a capture asks where to save it when downloads do."
+      ]
+    },
+    {
+      "id": "pinned-extensions",
+      "title": {
+        "en": "Pin more extensions.",
+        "fr": "Épinglez plus d’extensions."
+      },
+      "body": {
+        "en": "Pin as many extensions as you need. Those that do not fit in the address bar fold into the extensions menu.",
+        "fr": "Épinglez autant d’extensions que nécessaire. Celles qui ne tiennent pas dans la barre d’adresse se rangent dans le menu des extensions."
+      },
+      "notes": [
+        "Pin any number of extensions: the ones that do not fit in the address bar fold into the extensions menu."
+      ]
+    }
+  ]
+}

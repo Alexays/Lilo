@@ -1,6 +1,9 @@
 ---
 import changelog from "../../../CHANGELOG.md?raw";
+import { parseApprovedArtifact } from "../../captures/authored-archive";
+import type { AuthoredArchive } from "../../captures/authored-archive";
 import Layout from "../layouts/Layout.astro";
+import { storyFromArchive } from "../lib/authored-story";
 import { parseChangelog } from "../lib/changelog.ts";
 import { copy } from "../lib/i18n";
 import type { Locale } from "../lib/i18n";
@@ -16,15 +19,27 @@ const { lang } = Astro.props;
 const text = copy[lang];
 const releases = parseChangelog(changelog);
 
-const stories = parseReleaseStories(
-  changelog,
-  Object.values(
-    import.meta.glob("../content/releases/*.json", {
-      eager: true,
-      import: "default",
-    })
-  )
-);
+const generated = Object.entries(
+  import.meta.glob<AuthoredArchive>("../assets/releases/*/capture.json", {
+    eager: true,
+    import: "default",
+  })
+)
+  .filter(([, archive]) => archive.schemaVersion === 3)
+  .map(([, archive]) => parseApprovedArtifact(archive));
+
+const generatedVersions = new Set(generated.map((archive) => archive.release));
+
+const manual = Object.values(
+  import.meta.glob<{ version: string }>("../content/releases/*.json", {
+    eager: true,
+    import: "default",
+  })
+).filter((entry) => !generatedVersions.has(entry.version));
+
+const authored = generated.map(storyFromArchive);
+
+const stories = parseReleaseStories(changelog, [...manual, ...authored]);
 
 if (releases.length === 0) {
   throw new Error("No published Changie releases found in CHANGELOG.md");
