@@ -289,6 +289,18 @@ final class ReleaseCaptureTests: XCTestCase {
         XCTAssertTrue(exited)
     }
 
+    func testNativeMediaSmoke() async throws {
+        let tab = try await open("guide.html")
+        let page = try XCTUnwrap(controller.tabManager.activeEngineTab?.wkWebView)
+        try await begin("native-smoke")
+        try await hold(400)
+        try await click("#peek-link", in: page, modifiers: .shift)
+        let opened = await pollUntil { self.controller.pagePopups.values.first?.engine.currentTitle == "Field notes" }
+        try recorder.checkpoint("real-native-peek", passed: opened && controller.tabManager.activeOpenTabId == tab.id)
+        try await hold(1400)
+        try await recorder.finish(scenario: "native-smoke")
+    }
+
     func testPeek() async throws {
         let tab = try await open("guide.html")
         let page = try XCTUnwrap(controller.tabManager.activeEngineTab?.wkWebView)
