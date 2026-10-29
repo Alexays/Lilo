@@ -111,6 +111,20 @@ lilo.on('nativeDisplay', function(id){
   var p = nativePending[id];
   if (p && !p.promise) p.promise = apply(originals.getDisplayMedia, devices, [p.constraints]);
 });
+// Meet's SDP flag puts a VP8 screen share in libwebrtc's legacy screenshare mode, held at 5 fps and 1 Mbps whatever the
+// page sets (Chrome shares in AV1, which escapes it). Camera simulcast does not depend on it.
+if (typeof RTCPeerConnection === 'function') {
+  var peer = lilo.methods(RTCPeerConnection.prototype, { setRemoteDescription(description) {
+    if (!description || typeof description.sdp !== 'string' || description.sdp.indexOf('a=x-google-flag:conference') === -1) {
+      return apply(peer.setRemoteDescription, this, arguments);
+    }
+    var args = [{ type: description.type, sdp: description.sdp.replace(/a=x-google-flag:conference\r?\n/g, '') }];
+    for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
+    return apply(peer.setRemoteDescription, this, args);
+  } });
+}
+// Meet asks Safari for a 5 fps screen share and Chrome for 30. A capture only sends changed frames, so a still screen costs no more.
+var meet = location.hostname === 'meet.google.com';
 // The track emits a frame only on requestFrame, and none for an unchanged canvas: on static content
 // the encoder could neither refine a blurry first frame nor answer a keyframe request. Repaint at this interval.
 var refreshMs = 200;
@@ -274,7 +288,9 @@ getDisplayMedia(constraints){
     return Promise.reject(new DOMException('getDisplayMedia() requires user activation.', 'NotAllowedError'));
   }
   var id = String(Math.random()).slice(2);
-  nativePending[id] = { constraints: constraints };
+  var video = constraints && constraints.video;
+  nativePending[id] = { constraints: meet && video && typeof video === 'object'
+    ? assign({}, constraints, { video: assign({}, video, { frameRate: { ideal: 30 } }) }) : constraints };
   var wantsAudio = !!(constraints && constraints.audio);
   // Made inside the page's gesture, which a context needs to play: the picker's wait spends it.
   var actx = wantsAudio && AudioCtx ? new AudioCtx() : null;

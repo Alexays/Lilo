@@ -71,6 +71,30 @@ final class TabShareBridgeTests: XCTestCase {
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "cancel", "a cancelled system picker cancels the share")
     }
+
+    func testAScreenShareLeavesTheLegacyConferenceMode() async throws {
+        let tab = WKEngineFactory().createTab(configuration: WKEngineFactory.Configuration())
+        defer { tab.teardown() }
+        tab.wkWebView.loadHTMLString("<p>call</p>", baseURL: URL(string: "https://example.com/"))
+        let loaded = await pollUntil(timeout: 5) {
+            ((try? await tab.wkWebView.evaluateJavaScript("location.href === 'https://example.com/' && document.readyState === 'complete'")) as? Bool) == true
+        }
+        XCTAssertTrue(loaded)
+
+        let sdp = try await tab.wkWebView.callAsyncJavaScript("""
+            const sender = new RTCPeerConnection(), receiver = new RTCPeerConnection();
+            sender.addTransceiver('video');
+            await sender.setLocalDescription();
+            const flagged = sender.localDescription.sdp.replace(/(a=mid:[^\\r\\n]*\\r\\n)/, '$1a=x-google-flag:conference\\r\\n');
+            await receiver.setRemoteDescription({ type: 'offer', sdp: flagged });
+            const result = [flagged.includes('x-google-flag:conference'), receiver.remoteDescription.sdp.includes('x-google-flag:conference')];
+            sender.close();
+            receiver.close();
+            return result;
+            """, contentWorld: .page) as? [Bool]
+
+        XCTAssertEqual(sdp, [true, false], "the flag would hold a VP8 screen share at 5 fps and 1 Mbps")
+    }
 }
 
 @MainActor
