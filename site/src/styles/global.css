@@ -496,16 +496,47 @@ a {
 .bench h3 {
   font-size: 18px;
 }
-.bench .soon {
-  display: grid;
-  gap: 4px;
-  padding: 28px 6px;
-  text-align: center;
-  border: 1px dashed var(--line);
-  border-radius: 14px;
-}
-.bench .soon span {
+.bench p {
   color: var(--ink-2);
+}
+.bench .bars {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: center;
+  margin: 6px 0;
+  padding: 0;
+  list-style: none;
+}
+.bench .bars li {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+}
+.bench .bar {
+  width: var(--v);
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+.bench .lilo .bar {
+  background: var(--accent);
+}
+.bench .lilo span:first-child {
+  font-weight: 600;
+}
+.bench .val {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.bench .note {
+  font-size: 14px;
+}
+.bench .note a {
+  display: block;
+  margin-top: 6px;
 }
 
 /* Extensions */

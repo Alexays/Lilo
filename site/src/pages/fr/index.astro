@@ -180,14 +180,44 @@ const schema = [
       </div>
     </div>
     <div class="bench" id="bench">
-      <h3>Énergie et mémoire</h3>
-      <div class="soon">
-        <b>Mesures à venir</b>
-        <span>
-          Lilo, Safari et Chrome, avec les mêmes 20 onglets pendant 30 minutes
-          sur le même Mac. La méthode sera publiée avec les chiffres.
-        </span>
-      </div>
+      <h3>Énergie, mesurée</h3>
+      <p>
+        Ce que le Mac consomme pour cinq onglets actifs, au-delà d'un Mac au
+        repos.
+      </p>
+      <ol
+        class="bars"
+        aria-label="Puissance au-delà d'un Mac au repos, par navigateur"
+      >
+        <li class="lilo">
+          <span>Lilo</span>
+          <span class="bar" style="--v:10.0%"></span>
+          <span class="val">37 mW</span>
+        </li>
+        <li>
+          <span>Safari</span>
+          <span class="bar" style="--v:9.2%"></span>
+          <span class="val">34 mW</span>
+        </li>
+        <li>
+          <span>Chrome</span>
+          <span class="bar" style="--v:27.6%"></span>
+          <span class="val">102 mW</span>
+        </li>
+        <li>
+          <span>Firefox</span>
+          <span class="bar" style="--v:100.0%"></span>
+          <span class="val">370 mW</span>
+        </li>
+      </ol>
+      <p class="note">
+        Au repos, Lilo et Safari restent dans le bruit d'un Mac inactif, Chrome
+        ajoute 62 mW et Firefox 45 mW. MacBook Pro M4 Pro, macOS 27, médianes de
+        3 séries.
+        <a href="https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md">
+          Méthode et résultats complets
+        </a>
+      </p>
     </div>
   </PageSection>
 

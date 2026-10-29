@@ -178,14 +178,38 @@ const schema = [
       </div>
     </div>
     <div class="bench" id="bench">
-      <h3>Energy and memory</h3>
-      <div class="soon">
-        <b>Measurements coming soon</b>
-        <span>
-          Lilo, Safari and Chrome with the same 20 tabs for 30 minutes on the
-          same Mac. The method ships with the numbers.
-        </span>
-      </div>
+      <h3>Energy, measured</h3>
+      <p>What the Mac draws for five busy tabs, above an idle Mac.</p>
+      <ol class="bars" aria-label="Power above an idle Mac, per browser">
+        <li class="lilo">
+          <span>Lilo</span>
+          <span class="bar" style="--v:10.0%"></span>
+          <span class="val">37 mW</span>
+        </li>
+        <li>
+          <span>Safari</span>
+          <span class="bar" style="--v:9.2%"></span>
+          <span class="val">34 mW</span>
+        </li>
+        <li>
+          <span>Chrome</span>
+          <span class="bar" style="--v:27.6%"></span>
+          <span class="val">102 mW</span>
+        </li>
+        <li>
+          <span>Firefox</span>
+          <span class="bar" style="--v:100.0%"></span>
+          <span class="val">370 mW</span>
+        </li>
+      </ol>
+      <p class="note">
+        Idle, Lilo and Safari stay within the noise of an idle Mac, Chrome adds
+        62 mW and Firefox 45 mW. MacBook Pro M4 Pro, macOS 27, medians of 3
+        runs.
+        <a href="https://github.com/Alexays/Lilo/blob/main/docs/ENERGY.md">
+          Method and full results
+        </a>
+      </p>
     </div>
   </PageSection>
 
