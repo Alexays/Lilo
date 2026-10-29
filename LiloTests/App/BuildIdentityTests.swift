@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 @testable import Lilo
 import Sparkle
@@ -50,15 +51,31 @@ final class BuildIdentityTests: XCTestCase {
     }
 
     /// The sidebar's Restart runs Sparkle's install block; taking it also keeps Sparkle's own alert away.
-    @MainActor func testADownloadedUpdateWaitsForTheSidebarsRestart() throws {
+    @MainActor func testADownloadedUpdateWaitsForTheSidebarsRestart() async throws {
         let delegate = try XCTUnwrap(NSApp.delegate as? AppDelegate)
         defer { delegate.readyUpdate = nil }
         let updater = SPUUpdater(hostBundle: .main, applicationBundle: .main, userDriver: SPUStandardUserDriver(hostBundle: .main, delegate: nil), delegate: nil)
         var installed = false
+        let database = try TemporaryProfileDatabase()
+        addTeardownBlock { database.tearDown() }
+        let settingsStore = SettingsStore(dbPool: database.pool)
+        defer { withExtendedLifetime(settingsStore) {} }
+        let handler = SettingsBridgeHandler(
+            settingsStore: settingsStore, sitePermissionStore: SitePermissionStore(dbPool: database.pool),
+            zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
+            dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
+            forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
+        )
+        func send(_ action: String) async throws {
+            XCTAssertTrue(handler.handledActions.contains(action), "the router only delivers declared actions")
+            _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": [:]])))
+        }
 
         XCTAssertTrue(delegate.updater(updater, willInstallUpdateOnQuit: .empty(), immediateInstallationBlock: { installed = true }))
-        delegate.readyUpdate?.install()
-
+        try await send("installUpdate")
         XCTAssertTrue(installed)
+
+        try await send("dismissUpdate")
+        XCTAssertNil(delegate.readyUpdate)
     }
 }

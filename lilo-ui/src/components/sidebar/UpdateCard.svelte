@@ -5,17 +5,11 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { tooltip } from "../../lib/tooltip";
-  import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
+  import { getChosenAppIcon, getReadyUpdate, isRestartingForUpdate, restartForUpdate } from "../../stores/settings.svelte";
 
   const version = $derived(getReadyUpdate());
   const icon = $derived(getChosenAppIcon());
-  let restarting = $state(false);
-
-  function restart(): void {
-    if (restarting) return;
-    restarting = true;
-    settingsActions.installUpdate();
-  }
+  const restarting = $derived(isRestartingForUpdate());
 </script>
 
 {#if version}
@@ -25,7 +19,7 @@
         class="update-main"
         aria-label={t("updateCard.restartLabel", { version })}
         disabled={restarting}
-        onclick={restart}
+        onclick={restartForUpdate}
       >
         <span class="update-icon">
           {#if icon}<img src={icon} alt="" width="28" height="28" />{/if}

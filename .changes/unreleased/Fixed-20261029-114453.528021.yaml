@@ -1,0 +1,3 @@
+kind: Fixed
+body: Restart on the update card installs the update and relaunches Lilo instead of spinning forever, and its close button hides the card again.
+time: 2026-10-29T11:44:53.528021+01:00

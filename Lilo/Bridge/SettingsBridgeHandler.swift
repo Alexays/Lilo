@@ -43,6 +43,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         "revokeAgentClient",
         "getUpdaterStatus",
         "checkForUpdates",
+        "installUpdate",
+        "dismissUpdate",
         "unlockDeveloperTools",
         "setAutomaticUpdates",
         "getShortcuts",

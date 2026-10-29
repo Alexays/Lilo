@@ -278,6 +278,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         )
         if reply == .terminateCancel {
             browserContext.isQuitting = false
+            // A Restart for the update ends here too: the card offers it again.
+            if readyUpdate != nil { browserContext.windows.windows.forEach { $0.sendUpdateReady() } }
             return reply
         }
         let clearsSiteData = browserContext.settingsStore?.clearSiteDataOnQuit == true
