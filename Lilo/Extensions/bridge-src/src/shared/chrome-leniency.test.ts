@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { installChromeCompat } from './chrome-compat.ts';
+import { registrationsSettled } from './chrome-leniency.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
 declare const chrome: any;
@@ -458,6 +459,39 @@ describe('scripting on a tab', () => {
 });
 
 describe('content scripts registered at run time', () => {
+  it('waits for the registration chained after a completed startup unregister', async () => {
+    await registrationsSettled();
+    let rejectUnregister!: (error: Error) => void;
+    let finishRegister!: () => void;
+    let registering = false;
+    const { scripting } = install({
+      scripting: Object.create({
+        unregisterContentScripts: () => new Promise<void>((_resolve, reject) => { rejectUnregister = reject; }),
+        registerContentScripts: () => {
+          registering = true;
+          return new Promise<void>((resolve) => { finishRegister = resolve; });
+        },
+      }),
+    });
+    const startup = (async () => {
+      await scripting.unregisterContentScripts({ ids: ['example'] }).catch(() => {});
+      await scripting.registerContentScripts([{ id: 'example', js: ['example.js'], matches: ['https://example.com/*'] }]);
+    })();
+    rejectUnregister(new Error('No existing registration'));
+    // The native answer has settled, but the extension's await after its catch has not run yet.
+    await Promise.resolve();
+    let ready = false;
+    const barrier = registrationsSettled().then(() => { ready = true; });
+    try {
+      await new Promise(setImmediate);
+      assert.equal(registering, true);
+      assert.equal(ready, false, 'onInstalled must wait for the chained registration');
+    } finally {
+      finishRegister();
+    }
+    await Promise.all([startup, barrier]);
+  });
+
   it("run Lilo's content compat first outside the MAIN world, which the registrations never show", async () => {
     let registered: any[] = [];
     const { scripting } = install({

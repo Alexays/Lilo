@@ -352,8 +352,11 @@ const registration = (prepare: (scripts: any, namespace: any) => unknown = (scri
   const result: Promise<unknown> = prepared instanceof Promise
     ? prepared.then((scripts) => original.call(namespace, scripts, ...args.slice(1)))
     : original.apply(namespace, args.length ? [prepared, ...args.slice(1)] : args);
-  registering.add(result);
-  result.then(() => registering.delete(result), () => registering.delete(result));
+  // An await after catch/then can register again: keep the answer tracked until those continuations run.
+  const settled = result.then(() => {}, () => {})
+    .then(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+  registering.add(settled);
+  settled.then(() => registering.delete(settled));
   return callbackify(() => result, callback);
 };
 
