@@ -28,10 +28,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     /// answer to Lilo's automatic opening. Never in an agent tab, whose popups open as tabs.
     func prepare(_ engine: WKWebViewTab, size: NSSize, userActivated: Bool, automatic: Bool) -> Bool {
         guard userActivated || automatic, !engine.isAgentControlled else { return false }
+        // The page's `window.open` comes after this round trip, past its gesture: the pending size lets it through.
         engine.pendingDocumentPiPSize = size
-        // The page's `window.open` comes after this round trip, past its gesture, and the automatic opening has none:
-        // the next PiP window, commit or teardown turns this off again.
-        engine.wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         return true
     }
 

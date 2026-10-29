@@ -321,6 +321,27 @@ final class WKWebViewTab: NSObject {
         guard !isFrozen else { return true }
         return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
     }
+    /// Chrome's transient activation: how long after the user's last click or key press a page may still open a window.
+    private static let popupActivationWindow: TimeInterval = 5
+    /// The web view the user last clicked or typed in, and when (event time): only one takes input at a time.
+    private static weak var activatedWebView: WKWebView?
+    private static var activationTime: TimeInterval = 0
+    private static let activationMonitor: Any? = NSEvent.addLocalMonitorForEvents(
+        matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown]
+    ) { event in
+        let time = event.timestamp
+        weak var window = event.window
+        // Read after dispatch: a click makes the web view under it first responder.
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                var view = window?.firstResponder as? NSView
+                while let current = view, !(current is WKWebView) { view = current.superview }
+                activatedWebView = view as? WKWebView
+                activationTime = time
+            }
+        }
+        return event
+    }
     var popupWebViewProvider: (@MainActor (WKWebViewConfiguration, WKNavigationAction, WKWindowFeatures) -> WKWebView?)?
     /// Set when the page asked for a Document Picture-in-Picture window: its next `window.open` becomes that window.
     var pendingDocumentPiPSize: NSSize?
@@ -337,11 +358,10 @@ final class WKWebViewTab: NSObject {
         unsafeBitCast(webView.method(for: selector), to: Setter.self)(webView, selector, enabled)
     }
 
-    /// A PiP request whose `window.open` never came must not outlive the page: no popup blocking, and its next
-    /// popup taken for the PiP window.
+    /// A PiP request whose `window.open` never came must not outlive the page: its next popup would be taken for
+    /// the PiP window.
     func cancelPendingDocumentPiP() {
         pendingDocumentPiPSize = nil
-        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
     }
     /// Called while building the context menu to inject extension-contributed menu items.
     /// Set by TabManager when the extension registry is active.
@@ -459,6 +479,10 @@ final class WKWebViewTab: NSObject {
         webView.allowsBackForwardNavigationGestures = true
         webView.navigationDelegate = self
         webView.uiDelegate = self
+        // WebKit's popup blocker drops a `window.open` that comes after the click's own task, as Meet's does after a
+        // request: createWebViewWith gates popups on a recent user activation instead, as Chrome does.
+        webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        _ = Self.activationMonitor
         let setIconLoadingDelegate = NSSelectorFromString("_setIconLoadingDelegate:")
         if webView.responds(to: setIconLoadingDelegate) { webView.perform(setIconLoadingDelegate, with: self) }
         bindNavigationStateObservers()
@@ -1730,6 +1754,11 @@ extension WKWebViewTab: WKUIDelegate {
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
+            // Any frame within the click's own task; only the main frame later, while this page has the activation.
+            let isActivated = Self.activatedWebView === webView
+                && ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow
+            guard WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") == true
+                    || navigationAction.sourceFrame.isMainFrame && isActivated else { return nil }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
             if !isAgentControlled, let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
                 return popup

@@ -152,7 +152,6 @@ final class DocumentPiPControllerTests: XCTestCase {
         _ = await pollUntil(timeout: 5) { (try? await tab.wkWebView.evaluateJavaScript("document.body?.textContent === 'next'")) as? Bool == true }
 
         XCTAssertNil(tab.pendingDocumentPiPSize)
-        XCTAssertFalse(tab.wkWebView.configuration.preferences.javaScriptCanOpenWindowsAutomatically, "the next page gets the popup blocker back")
     }
 
     func testOnlyABlankMainFrameOpenTakesThePendingRequest() async throws {
