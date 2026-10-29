@@ -7,7 +7,9 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 ## Shipped
 
 - Tabs, Spaces, profiles, private Spaces, session restore
-- Sidebar with tab folders nested up to five levels, pinning, drag-to-reorder, and auto-archive of idle unpinned tabs
+- Sidebar with tab folders nested up to five levels, pinning, drag-to-reorder, auto-archive of idle unpinned tabs, and tab sound and capture shown on the favicon
+- An option to hide the address bar, or only its toolbar apart from the tabs
+- A history page with a per-visit journal, a day's visits folded by site
 - A profiles page in Settings and a New Space panel (name, icon, color, profile)
 - Peek (a link from a pinned tab, or a Shift-click, opens over the page) and page popups in a window of their own
 - Little window with a global shortcut, and link rules that send links from other apps to a Space or a Little window
@@ -17,25 +19,26 @@ Architecture lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); contributor 
 - Chrome MV3 extensions (WKWebExtension + Gap APIs) with native Web Store install, optional permissions granted at Lilo's prompt, and an Extensions popover to pin, manage and add them
 - Content blocking (EasyList/EasyPrivacy/uBO lists, cosmetic and procedural filtering, scriptlets), paused per site on every layer
 - Command palette with ranking and ghost completion
-- Reader mode, screenshots (a floating capture card and a markup editor), Picture-in-Picture, media controls in the sidebar
+- Reader mode, screenshots (a floating capture card and a markup editor), media controls in the sidebar
+- Picture-in-Picture, including Document Picture-in-Picture and Google Meet's compact call view
 - Tab lifecycle and memory management, process manager and diagnostics
 - Downloads (speed/ETA, quarantine, notifications), find in page, share menu, QR codes
 - Privacy controls (GPC, HTTPS-Only, clear browsing data, website data manager)
 - Terminal tabs (libghostty-vt core, native Metal renderer, zsh shell integration), a Changes view of the working tree's diff, and keep-awake while a command runs
-- Split view, page translation, tab sharing in screen-share calls (`getDisplayMedia`)
+- Split view, page translation
+- Tab sharing in screen-share calls (`getDisplayMedia`): a picker with previews, suggestions and folders, and switching the shared tab without a cut from the call card
 - Multiple windows over shared Spaces, with per-window selection and windows restored on relaunch
 - Accessibility: VoiceOver across the sidebar tree, panels, Changes view and terminal, full keyboard reach, Reduce motion and Increase contrast
-- Localization (English, French, Spanish, Simplified Chinese, Brazilian Portuguese, Russian)
-- Signed, notarized DMG, a Homebrew cask, and signed updates through Sparkle
+- Localization in 17 languages: English, French, Spanish, German, Italian, Dutch, Polish, Turkish, Ukrainian, Russian, Brazilian Portuguese, Japanese, Korean, Simplified and Traditional Chinese
+- Signed, notarized DMG built by CI from a tag, a Homebrew cask, and signed updates through Sparkle, with the release highlights shown after an update
 - AppleScript dictionary, Shortcuts actions and a Focus filter, bookmarks in Spotlight, Screen Time
-- Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, and an approval gate for consequential actions
+- Opt-in AI agent control over local MCP, with Claude in Chrome's tool set (no AI built in): an Agents Space, agent icons in the bottom bar, agent pages in Lilo violet with a mascot cursor, and an approval gate for consequential actions
 - Web Serial API (`navigator.serial`) and EyeDropper API
 
 ## Next
 
 - A launch that feels instant: the sidebar on screen in under 300 ms (about 410 ms today)
 - Published energy and memory measurements against Safari, Chrome and Arc, with the method
-- Releases built by CI from a tag, instead of on the maintainer's Mac
 - Terminal tabs: shell integration beyond zsh
 - Password managers: the iCloud Passwords helper needs an entitlement from Apple (see [COMPATIBILITY.md](COMPATIBILITY.md#icloud-passwords-extension))
 - More locales
