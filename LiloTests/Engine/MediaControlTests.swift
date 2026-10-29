@@ -129,7 +129,7 @@ final class MediaControlTests: XCTestCase {
         // connection state itself: ICE between two local peers never completes on the CI runners.
         _ = try await tab.wkWebView.callAsyncJavaScript("""
             const a = new RTCPeerConnection(), b = new RTCPeerConnection();
-            a.createDataChannel('call');
+            a.addTransceiver('audio');
             await b.setRemoteDescription(await a.createOffer());
             Object.defineProperty(b, 'connectionState', { value: 'connected', configurable: true });
             b.dispatchEvent(new Event('connectionstatechange'));
@@ -143,6 +143,51 @@ final class MediaControlTests: XCTestCase {
 
         let ended = await pollUntil(timeout: 10) { reported?.hasLiveConnection == false }
         XCTAssertTrue(ended, "the call ends with its connections")
+    }
+
+    /// A page holding one connection, set to `state` as a peer reports it, carrying audio or only data.
+    private func connectionPage(audio: Bool) async throws -> (WKWebViewTab, () -> WKWebViewTab.CallControls?) {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("<p>call</p>", factory: factory)
+        _ = try await tab.wkWebView.callAsyncJavaScript("""
+            const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+            if (\(audio)) a.addTransceiver('audio'); else a.createDataChannel('files');
+            await b.setRemoteDescription(await a.createOffer());
+            window.setState = state => {
+              Object.defineProperty(b, 'connectionState', { value: state, configurable: true });
+              b.dispatchEvent(new Event('connectionstatechange'));
+            };
+            window.peers = [a, b];
+            """, contentWorld: .page)
+        return (tab, { reported })
+    }
+
+    func testADataOnlyConnectionIsNoCall() async throws {
+        let (tab, reported) = try await connectionPage(audio: false)
+        defer { tab.teardown() }
+
+        _ = try await tab.wkWebView.evaluateJavaScript("setState('connected'); true")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+
+        XCTAssertNotEqual(reported()?.hasLiveConnection, true, "a file transfer or a game is no call: its tab may still freeze")
+    }
+
+    func testABriefDisconnectionKeepsTheCall() async throws {
+        let (tab, reported) = try await connectionPage(audio: true)
+        defer { tab.teardown() }
+        _ = try await tab.wkWebView.evaluateJavaScript("setState('connected'); true")
+        let connected = await pollUntil(timeout: 10) { reported()?.hasLiveConnection == true }
+        XCTAssertTrue(connected)
+
+        _ = try await tab.wkWebView.evaluateJavaScript("setState('disconnected'); true")
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        XCTAssertEqual(reported()?.hasLiveConnection, true, "a network blip neither hides the call card nor lifts the tab's protection")
+
+        _ = try await tab.wkWebView.evaluateJavaScript("setState('failed'); true")
+        let ended = await pollUntil(timeout: 10) { reported()?.hasLiveConnection == false }
+        XCTAssertTrue(ended)
     }
 
     func testALiveConnectionKeepsATabInACall() {
