@@ -39,7 +39,7 @@ export const chromeActions = {
 	): void => emit("registerInteractiveZones", { zones }),
 	removeInteractiveZone: emitId("removeInteractiveZone"),
 	updateWindowBackground: (color: string, material: SpaceMaterial, swiping = false): void =>
-		emit("updateWindowBackground", swiping ? { color, material, swiping } : { color, material }),
+		emit("updateWindowBackground", { color, material, swiping }),
 	setWallpaperColorWatch: (enabled: boolean): void =>
 		emit("setWallpaperColorWatch", { enabled }),
 	sidebarResized: (width: number): void => emit("sidebarResized", { width }),
