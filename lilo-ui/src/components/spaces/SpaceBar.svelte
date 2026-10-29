@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getSpaceById } from "../../stores/spaces.svelte";
+  import { getAgentMood, isAgentsSpace } from "../../stores/agents.svelte";
   import { openEditor } from "../../stores/panels.svelte";
   import { tooltip } from "../../lib/tooltip";
   import { t } from "../../lib/i18n/state.svelte";
@@ -26,7 +27,13 @@
     use:tooltip={t("spaceBar.editSpace")}
   >
     <span class="space-icon-stack">
-      <span class="space-icon" data-onboarding-anchor="space-icon">{space?.icon || "🌐"}</span>
+      {#if isAgentsSpace(spaceId)}
+        {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}
+          <AgentMascot mood={getAgentMood(spaceId)} />
+        {/await}
+      {:else}
+        <span class="space-icon" data-onboarding-anchor="space-icon">{space?.icon || "🌐"}</span>
+      {/if}
       {#if space?.isPrivate}
         <span
           class="space-private-badge"
