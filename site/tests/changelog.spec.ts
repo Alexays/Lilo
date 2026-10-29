@@ -3,47 +3,52 @@ import { readFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
 
-test("0.8.0 shares the approved native feature recordings", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/changelog/#v0.8.0");
-  const release = page.locator("#v0\\.8\\.0");
+for (const language of ["en", "fr"] as const) {
+  for (const width of [390, 1280]) {
+    test(`0.8.0 shares approved native recordings (${language}, ${width})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ height: 900, width });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      const path = language === "fr" ? "/fr/changelog/" : "/changelog/";
+      await page.goto(`${path}#v0.8.0`);
+      const release = page.locator("#v0\\.8\\.0");
 
-  const archive = JSON.parse(
-    readFileSync(
-      new URL("../src/assets/releases/0.8.0/capture.json", import.meta.url),
-      "utf-8"
-    )
-  );
+      const archive = JSON.parse(
+        readFileSync(
+          new URL("../src/assets/releases/0.8.0/capture.json", import.meta.url),
+          "utf-8"
+        )
+      );
 
-  const count =
-    archive.schemaVersion === 3 ? archive.plan.highlights.length : 2;
+      const count =
+        archive.schemaVersion === 3 ? archive.plan.highlights.length : 2;
 
-  expect(count).toBeGreaterThan(0);
+      expect(count).toBeGreaterThan(0);
+      await expect(release.locator(".release-recording")).toHaveCount(count);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth)
+      ).toBe(width);
 
-  await expect(release.locator(".release-recording")).toHaveCount(count);
-
-  // oxlint-disable no-await-in-loop -- Each player must be scrolled and operated sequentially.
-  for (const player of await release.locator(".release-recording").all()) {
-    await player.scrollIntoViewIfNeeded();
-    await expect(player.locator("img:visible")).toHaveJSProperty(
-      "complete",
-      true
-    );
-    await expect(player.locator(".recording-toggle")).toHaveAttribute(
-      "aria-pressed",
-      "false"
-    );
-    await player.locator(".recording-toggle").click();
-    await expect(player.locator(".recording-toggle")).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    await player.locator(".recording-toggle").click();
+      // oxlint-disable no-await-in-loop -- Each player must be scrolled and operated sequentially.
+      for (const player of await release.locator(".release-recording").all()) {
+        await player.scrollIntoViewIfNeeded();
+        const image = player.locator("img:visible");
+        await expect(image).toHaveJSProperty("complete", true);
+        await expect(image).not.toHaveJSProperty("naturalWidth", 0);
+        const button = player.locator(".recording-toggle");
+        await expect(button).toHaveAttribute("aria-pressed", "false");
+        await button.focus();
+        await page.keyboard.press("Enter");
+        await expect(button).toHaveAttribute("aria-pressed", "true");
+        await expect(image).toHaveJSProperty("complete", true);
+        await expect(image).not.toHaveJSProperty("naturalWidth", 0);
+        await button.click();
+      }
+      // oxlint-enable no-await-in-loop
+    });
   }
-  // oxlint-enable no-await-in-loop
-});
+}
 
 test("recordings finish and restart their frames on cached replay", async ({
   page,
