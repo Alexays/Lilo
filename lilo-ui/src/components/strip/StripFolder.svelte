@@ -10,7 +10,7 @@
   import type { SidebarDndItem } from "../../lib/dndEngine/adapters/sidebar";
   import { commitSidebarDrop, getSidebarDrag, resetSidebarDrag, type SidebarZoneRef } from "../../stores/sidebarDnd.svelte";
   import { getLockPanel, openLockPanel } from "../../stores/folderLock.svelte";
-  import { closeSettingsShell } from "../../stores/panels.svelte";
+  import { closeHistoryShell, closeSettingsShell } from "../../stores/panels.svelte";
 
   let {
     folder,
@@ -49,6 +49,7 @@
   function activate(tab: TabState) {
     open = false;
     closeSettingsShell();
+    closeHistoryShell();
     optimisticallyActivateTab(tab.id);
     tabActions.switchTo(tab.id);
   }

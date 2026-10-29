@@ -6,7 +6,7 @@
   import { tabDisplayTitle, type TabState } from "../../stores/tabs.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
-  import { closeSettingsShell } from "../../stores/panels.svelte";
+  import { closeHistoryShell, closeSettingsShell } from "../../stores/panels.svelte";
 
   // `editsAddress`: the strip has no address bar, so a click on the active pill edits its address.
   let { tab, active = false, iconOnly = false, editsAddress = false }: { tab: TabState; active?: boolean; iconOnly?: boolean; editsAddress?: boolean } = $props();
@@ -25,6 +25,7 @@
   });
   function activate() {
     closeSettingsShell();
+    closeHistoryShell();
     if (active && editsAddress) {
       openCommandBar(tab.url ?? "", false, true);
       return;

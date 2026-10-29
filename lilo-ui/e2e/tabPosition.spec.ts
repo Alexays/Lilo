@@ -139,7 +139,7 @@ test("many squeezed pills never slide under the Settings tab", async ({ page }) 
 	}
 	await bootChrome(page, { ...world, tabPosition: "top", addressPlacement: "tabs" }, ".tab-strip .strip-tab");
 	await receive(page, { event: "openSettings" });
-	const settings = (await page.locator(".tab-strip .strip-settings").boundingBox())!;
+	const settings = (await page.locator(".tab-strip .strip-surface").boundingBox())!;
 
 	const overlapping = await page.locator(".tab-strip .today-list .strip-tab").evaluateAll(
 		(pills, edge) => pills.filter((pill) => { const box = pill.getBoundingClientRect(); return box.right > edge.left + 1 && box.left < edge.right - 1; }).length,
@@ -223,7 +223,7 @@ test("settings open as a page with its navigation and an active pill in the top 
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
 	await receive(page, { event: "openSettings" });
 
-	const pill = page.locator(".tab-strip .strip-settings");
+	const pill = page.locator(".tab-strip .strip-surface");
 	await expect(pill.getByRole("tab", { name: "Settings" })).toHaveAttribute("aria-selected", "true");
 	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveCount(0);
 	await expect(page.locator(".ui-shell-frame .ui-shell-frame-nav .section-nav-button")).toHaveCount(9);
@@ -256,22 +256,35 @@ test("the settings pill's close button closes settings", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
 	await receive(page, { event: "openSettings" });
 
-	await page.locator(".strip-settings").getByRole("button", { name: "Close" }).click();
+	await page.locator(".strip-surface").getByRole("button", { name: "Close" }).click();
 
 	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
-	await expect(page.locator(".strip-settings")).toHaveCount(0);
+	await expect(page.locator(".strip-surface")).toHaveCount(0);
+	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveAttribute("data-tab-id", "tab-alpha");
+});
+
+test("history in the strip shows as the active tab, and its close button closes it", async ({ page }) => {
+	await bootChrome(page, { ...initialWorld(), tabPosition: "top" }, ".tab-strip");
+	await receive(page, { event: "openHistory" });
+
+	await expect(page.locator(".strip-surface")).toContainText("History");
+	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveCount(0);
+	await page.locator(".strip-surface").getByRole("button", { name: "Close" }).click();
+
+	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+	await expect(page.locator(".strip-surface")).toHaveCount(0);
 	await expect(page.locator(".tab-strip .strip-tab.active")).toHaveAttribute("data-tab-id", "tab-alpha");
 });
 
 test("clicking another tab in the strip leaves settings for it", async ({ page }) => {
 	await bootChrome(page, { ...initialWorld(), tabPosition: "top", addressPlacement: "page" }, ".tab-strip .strip-tab");
 	await receive(page, { event: "openSettings" });
-	await expect(page.locator(".strip-settings")).toBeVisible();
+	await expect(page.locator(".strip-surface")).toBeVisible();
 
 	await page.locator('.tab-strip .strip-tab[data-tab-id="tab-beta"]').getByRole("tab").click();
 
 	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
-	await expect(page.locator(".strip-settings")).toHaveCount(0);
+	await expect(page.locator(".strip-surface")).toHaveCount(0);
 	const switches = (await sentCommands(page)).filter((c) => c.action === "switchTab");
 	expect(switches.at(-1)?.payload).toEqual({ id: "tab-beta" });
 });
@@ -283,7 +296,7 @@ test("settings in the sidebar layout keep their navigation in the sidebar, with 
 	await expect(page.locator(".sidebar .section-nav-button")).toHaveCount(9);
 	await expect(page.locator(".ui-shell-frame")).toBeVisible();
 	await expect(page.locator(".ui-shell-frame-nav")).toHaveCount(0);
-	await expect(page.locator(".strip-settings")).toHaveCount(0);
+	await expect(page.locator(".strip-surface")).toHaveCount(0);
 });
 
 test("holding the header then dropping near the right edge moves the tabs right", async ({ page }) => {
