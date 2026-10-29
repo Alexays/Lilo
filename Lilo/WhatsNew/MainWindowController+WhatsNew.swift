@@ -21,6 +21,12 @@ extension MainWindowController {
         whatsNewUIReady = true
         // Help can queue a request before the deferred chrome has installed its listener.
         if pendingWhatsNewAutomatic != nil { presentPendingWhatsNew(); return }
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["LILO_RELEASE_PREVIEW"] == "0.8.0" {
+            pendingWhatsNewAutomatic = false
+            presentPendingWhatsNew()
+        }
+        #endif
         #if !DEBUG
         guard context.windows.windows.first === self,
               context.whatsNew.reserveAutomatic(version: whatsNewVersion, freshInstall: context.settingsStore.shouldShowOnboarding)

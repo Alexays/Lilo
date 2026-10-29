@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
-  checkAuthoredArchive,
+  checkPreparedRelease,
   readApprovedArchive,
   releaseIdentity,
 } from "./authored-archive.ts";
@@ -19,7 +19,7 @@ export const checkPublication = (root: string) => {
   );
 
   const releases = path.join(root, "site/src/assets/releases");
-  checkAuthoredArchive(
+  checkPreparedRelease(
     path.join(releases, version),
     releaseIdentity(root, version)
   );

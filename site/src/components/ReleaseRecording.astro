@@ -47,6 +47,10 @@ const presentation = presentations[`${prefix}/presentation.json`]
 
 const presented = presentation?.media[capture.scenario];
 
+if (presentation && presentation.release !== story.version) {
+  throw new Error("Release presentation version mismatch");
+}
+
 const movies = import.meta.glob<string>("../assets/releases/*/*.mp4", {
   eager: true,
   import: "default",

@@ -18,9 +18,11 @@ import type {
 } from "../captures/authored-archive.ts";
 import {
   artifactDigest,
+  checkPreparedRelease,
   releaseIdentity,
 } from "../captures/authored-archive.ts";
 import { checkPublication } from "../captures/publication.ts";
+import { fileDigest } from "../captures/remotion/presentation.ts";
 
 const maintenanceArchive = (identity: ReleaseIdentity): AuthoredArchive => {
   const archive: AuthoredArchive = {
@@ -117,6 +119,26 @@ test("website publication requires a current approved decision and checks histor
     );
 
     save(historicalFile, JSON.stringify(historical));
+    assert.doesNotThrow(() => checkPublication(root));
+
+    const presentation = {
+      approved: false,
+      media: {},
+      release: "0.9.0",
+      schemaVersion: 1,
+      sourceArchiveDigest: fileDigest(
+        readFileSync(path.join(current, "capture.json"))
+      ),
+    };
+
+    save(path.join(current, "presentation.json"), JSON.stringify(presentation));
+    assert.throws(() => checkPublication(root), /awaiting visual approval/u);
+    assert.throws(
+      () => checkPreparedRelease(current, identity),
+      /awaiting visual approval/u
+    );
+    presentation.approved = true;
+    save(path.join(current, "presentation.json"), JSON.stringify(presentation));
     assert.doesNotThrow(() => checkPublication(root));
     historical.content.fr.headline = "Unapproved text";
     save(historicalFile, JSON.stringify(historical));

@@ -44,7 +44,6 @@ run([
   "--pixel-format=yuv420p",
   "--color-space=bt709",
   "--crf=17",
-  "--concurrency=4",
   ...flags,
 ]);
 

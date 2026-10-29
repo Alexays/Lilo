@@ -31,7 +31,7 @@ export const presentationSchema = z.strictObject({
       }),
     ])
   ),
-  release: z.literal("0.8.0"),
+  release: z.string().regex(/^\d+\.\d+\.\d+$/u),
   schemaVersion: z.literal(1),
   sourceArchiveDigest: hash,
 });

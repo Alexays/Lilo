@@ -29,6 +29,7 @@ import {
   recordingSchema,
   validateNativeTimeline,
 } from "./native-proof.ts";
+import { checkPresentation } from "./remotion/presentation.ts";
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/u);
 
@@ -281,6 +282,19 @@ export const checkAuthoredArchive = (
   return { ...artifact, approval };
 };
 
+export const checkPreparedRelease = (
+  directory: string,
+  identity: ReleaseIdentity
+) => {
+  const archive = checkAuthoredArchive(directory, identity);
+
+  if (existsSync(path.join(directory, "presentation.json"))) {
+    checkPresentation(directory, { publication: true });
+  }
+
+  return archive;
+};
+
 export const readApprovedArchive = (directory: string): AuthoredArchive => {
   const { approval: _approval, ...raw } = JSON.parse(
     readFileSync(path.join(directory, "capture.json"), "utf-8")
@@ -341,7 +355,7 @@ if (
     JSON.parse(readFileSync(path.join(root, "lilo-ui/package.json"), "utf-8"))
       .version;
 
-  checkAuthoredArchive(
+  checkPreparedRelease(
     process.env.LILO_CAPTURE_OUTPUT ||
       path.join(root, "site/src/assets/releases", version),
     releaseIdentity(root, version)
