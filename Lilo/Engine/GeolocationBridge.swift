@@ -15,6 +15,8 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
     private struct PendingRequest {
         let id: Int
         let frame: WKFrameInfo
+        /// The origin the permission was granted to.
+        let origin: String
         let isWatch: Bool
         let highAccuracy: Bool
         @MainActor var webView: WKWebView? { frame.webView }
@@ -38,12 +40,13 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
 
         switch type {
         case "get", "watch":
-            let request = PendingRequest(id: id, frame: message.frameInfo, isWatch: type == "watch", highAccuracy: highAccuracy)
+            let request = PendingRequest(id: id, frame: message.frameInfo, origin: message.frameInfo.permissionOriginKey,
+                                         isWatch: type == "watch", highAccuracy: highAccuracy)
             guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
                 deliver(error: .permissionDenied, to: [request])
                 return
             }
-            requestSitePermission(forOrigin: message.frameInfo.permissionOriginKey, webView: message.webView) { [weak self] granted in
+            requestSitePermission(forOrigin: request.origin, webView: message.webView) { [weak self] granted in
                 guard let self else { return }
                 if granted {
                     enqueue(request)
@@ -66,6 +69,20 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             return
         }
         permissionDecisionHandler(webView, "location", origin, completion)
+    }
+
+    /// Fails the requests `origin` runs in pages of `dataStore` once its permission is revoked, watches included, as Chrome does.
+    func revoke(origin: String, in dataStore: WKWebsiteDataStore) {
+        var revoked: [PendingRequest] = []
+        pendingRequests.removeAll { request in
+            guard request.origin == origin, request.webView?.configuration.websiteDataStore === dataStore else { return false }
+            revoked.append(request)
+            return true
+        }
+        guard !revoked.isEmpty else { return }
+        deliver(error: .permissionDenied, to: revoked)
+        updateDesiredAccuracy()
+        stopLocationUpdatesIfIdle()
     }
 
     // MARK: Private

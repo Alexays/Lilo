@@ -609,6 +609,19 @@ extension MainWindowController {
                 }
             ))
         }))
+        // As in Chrome, a revoked permission stops what the origin's pages in this profile use: capture, location watches.
+        settingsHandler.onSitePermissionRevoked = { [weak self] origin, type in
+            guard let self, let profileId = profileContext?.profileId else { return }
+            let dataStore = context.profileManager.dataStore(for: profileId).backingStore
+            if type == "location" { return context.engineFactory.revokeGeolocation(origin: origin, in: dataStore) }
+            for tabId in context.browserState.allTabIds() {
+                guard let webView = context.browserState.liveEngine(forTab: tabId)?.wkWebView, webView.configuration.websiteDataStore === dataStore,
+                      let url = webView.url, let scheme = url.scheme, let host = url.host,
+                      PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0) == origin else { continue }
+                if type.contains("camera"), webView.cameraCaptureState != .none { webView.setCameraCaptureState(.none) }
+                if type.contains("microphone"), webView.microphoneCaptureState != .none { webView.setMicrophoneCaptureState(.none) }
+            }
+        }
         settingsHandler.onZoomLevelReset = { [weak self] host in
             guard let self, let engine = tabManager.activeEngineTab,
                   engine.currentURL?.host?.lowercased() == host.lowercased() else { return }

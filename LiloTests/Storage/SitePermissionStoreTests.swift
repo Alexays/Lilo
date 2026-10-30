@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 import GRDB
 @testable import Lilo
@@ -202,5 +203,33 @@ final class SitePermissionStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(granted, true)
+    }
+
+    // MARK: - Revocation from settings
+
+    func testSettingsTellWhichOriginLostWhichPermission() async throws {
+        let settingsDatabase = try TemporaryProfileDatabase(schema: .global)
+        addTeardownBlock { settingsDatabase.tearDown() }
+        let settingsStore = SettingsStore(dbPool: settingsDatabase.pool)
+        defer { withExtendedLifetime(settingsStore) {} }
+        let handler = SettingsBridgeHandler(
+            settingsStore: settingsStore, sitePermissionStoreProvider: { [store] in store },
+            zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
+            dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
+            forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
+        )
+        var revoked: [String] = []
+        handler.onSitePermissionRevoked = { origin, type in revoked.append("\(type) \(origin)") }
+        store.upsert(origin: "https://maps.example", type: "location", granted: true)
+        let id = try XCTUnwrap(store.allPermissions().first?.id)
+        func send(_ action: String, _ payload: [String: Any]) async throws {
+            _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
+        }
+
+        try await send("revokeSitePermission", ["id": id.uuidString])
+        try await send("setSitePermission", ["origin": "https://call.example", "type": "camera", "allow": false])
+        try await send("setSitePermission", ["origin": "https://call.example", "type": "microphone", "allow": true])
+
+        XCTAssertEqual(revoked, ["location https://maps.example", "camera https://call.example"])
     }
 }

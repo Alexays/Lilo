@@ -90,6 +90,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     var terminalThemeImporter: (() async -> Bool)?
     /// A host's stored zoom was reset; open pages of that host fall back to the default zoom.
     var onZoomLevelReset: ((String) -> Void)?
+    /// An origin lost a permission type it may have been using.
+    var onSitePermissionRevoked: ((_ origin: String, _ type: String) -> Void)?
     var onAutoDeviceSwitchingChanged: (() -> Void)?
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
@@ -343,11 +345,16 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishSitePermissions()
 
         case "revokeSitePermission":
-            if let id = message.uuid("id") { sitePermissionStoreProvider()?.revoke(id: id); publishSitePermissions(); bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized) }
+            if let id = message.uuid("id") {
+                if let revoked = sitePermissionStoreProvider()?.revoke(id: id) { onSitePermissionRevoked?(revoked.origin, revoked.type) }
+                publishSitePermissions()
+                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized)
+            }
 
         case "setSitePermission":
             if let origin = message.string("origin"), let type = message.string("type") {
                 sitePermissionStoreProvider()?.upsert(origin: origin, type: type, granted: message.bool("allow"))
+                if !message.bool("allow") { onSitePermissionRevoked?(origin, type) }
                 publishSitePermissions()
             }
 

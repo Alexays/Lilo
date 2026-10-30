@@ -154,6 +154,10 @@ final class WKEngineFactory {
 
     /// Forwarded by the window controller whenever the visible engine view changes, so paused
     /// `watchPosition()` callers resume (and hidden ones release the GPS).
+    func revokeGeolocation(origin: String, in dataStore: WKWebsiteDataStore) {
+        geolocationBridge.revoke(origin: origin, in: dataStore)
+    }
+
     func reevaluateGeolocationWatchers() {
         geolocationBridge.reevaluateWatchers()
     }
