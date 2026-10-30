@@ -92,8 +92,8 @@ final class BrowsingDataBridgeHandler: GapHandler {
             let downloads = profile.downloads
             let items = (try? await Task.detached { try downloads.search(limit: .max) }.value) ?? []
             for item in items where item.startedAt >= since && item.state != .inProgress {
-                guard let id = item.id, !manager.isPrivateDownload(id: id) else { continue }
-                try? manager.erase(id: id)
+                guard let id = item.id, !manager.isPrivateDownload(id: id, profileId: downloads.profileId) else { continue }
+                try? manager.erase(id: id, in: downloads)
             }
         }
         return nil

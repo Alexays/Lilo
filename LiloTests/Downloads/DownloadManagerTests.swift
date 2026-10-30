@@ -14,7 +14,7 @@ final class DownloadManagerTests: XCTestCase {
         db = try TemporaryProfileDatabase()
         store = DownloadStore(dbPool: db.pool)
         manager = DownloadManager(dockController: nil)
-        manager.setStore(store)
+        manager.attach(store)
     }
 
     override func tearDown() async throws {
@@ -24,8 +24,8 @@ final class DownloadManagerTests: XCTestCase {
         db = nil
     }
 
-    func testSetStoreRunsCrashRecovery() throws {
-        // Insert a dangling inProgress item directly in DB before setStore
+    func testAttachRunsCrashRecovery() throws {
+        // Insert a dangling inProgress item directly in DB before attach
         var item = DownloadItem(
             id: nil, url: "https://example.com/a.zip", filename: "a.zip",
             destinationPath: "/tmp/a.zip", bytesReceived: 0, totalBytes: 100,
@@ -36,7 +36,7 @@ final class DownloadManagerTests: XCTestCase {
 
         // A fresh manager given the same store must run crash recovery.
         let manager2 = DownloadManager(dockController: nil)
-        manager2.setStore(store)
+        manager2.attach(store)
 
         let fetched = try store.fetch(id: item.id!)
         XCTAssertEqual(fetched?.state, .interrupted)
@@ -55,7 +55,7 @@ final class DownloadManagerTests: XCTestCase {
         var received: DownloadItem?
         manager.addObserver { received = $0 }
 
-        await manager.cancel(id: item.id!)
+        await manager.cancel(id: item.id!, in: store)
 
         XCTAssertNotNil(received)
         XCTAssertEqual(received?.state, .interrupted)
@@ -73,7 +73,7 @@ final class DownloadManagerTests: XCTestCase {
         var received: DownloadItem?
         manager.addObserver { received = $0 }
 
-        try manager.erase(id: item.id!)
+        try manager.erase(id: item.id!, in: store)
 
         XCTAssertEqual(received?.state, .interrupted, "the Dock drops what it was counting")
         XCTAssertNil(try store.fetch(id: item.id!))
@@ -87,9 +87,68 @@ final class DownloadManagerTests: XCTestCase {
         )
         try store.insert(&item)
 
-        try manager.erase(id: item.id!)
+        try manager.erase(id: item.id!, in: store)
         let fetched = try store.fetch(id: item.id!)
         XCTAssertNil(fetched)
+    }
+
+    // MARK: - Profiles
+
+    /// A tab of a background Space in profile B downloads while its window shows profile A: the row is B's, and only a window
+    /// showing B lists it.
+    func testADownloadGoesToTheDownloadingTabsProfile() async throws {
+        let otherDatabase = try TemporaryProfileDatabase()
+        defer { otherDatabase.tearDown() }
+        let windowStore = DownloadStore(dbPool: db.pool, profileId: UUID())
+        let tabStore = DownloadStore(dbPool: otherDatabase.pool, profileId: UUID())
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.attach(windowStore)
+        let windowRouter = BridgeRouter(chromeWebView: WKWebView())
+        let windowEvents = BridgeEventRecorder(windowRouter)
+        let windowHandler = DownloadBridgeHandler(downloadManager: manager, bridgeRouter: windowRouter, storeProvider: { windowStore })
+        let tabWindowRouter = BridgeRouter(chromeWebView: WKWebView())
+        let tabWindowEvents = BridgeEventRecorder(tabWindowRouter)
+        let tabWindowHandler = DownloadBridgeHandler(downloadManager: manager, bridgeRouter: tabWindowRouter, storeProvider: { tabStore })
+        var finished = false
+        manager.addObserver { if $0.state == .complete { finished = true } }
+
+        let webView = WKWebView()
+        webView.startDownload(using: URLRequest(url: try XCTUnwrap(URL(string: "data:text/plain;base64,aGVsbG8=")))) { [manager] in
+            manager?.startDownload($0, in: tabStore)
+        }
+        _ = await pollUntil(timeout: 60) { finished }
+        let listed = await pollUntil { tabWindowEvents.events.contains { $0.name == "downloadUpdated" } }
+        withExtendedLifetime((webView, windowHandler, tabWindowHandler)) {}
+
+        XCTAssertEqual(try tabStore.fetchAll().count, 1)
+        XCTAssertEqual(try windowStore.fetchAll().count, 0)
+        XCTAssertTrue(listed)
+        XCTAssertFalse(windowEvents.events.contains { $0.name == "downloadUpdated" }, "another profile's window does not list it")
+        XCTAssertEqual((DownloadBridgeHandler.snapshot(of: windowStore, manager: manager)["items"] as? [Any])?.count, 0)
+    }
+
+    /// Each profile's rows number from 1: cancelling one profile's download leaves the other's of the same id alone.
+    func testCancellingADownloadLeavesAnotherProfilesOfTheSameId() async throws {
+        let otherDatabase = try TemporaryProfileDatabase()
+        defer { otherDatabase.tearDown() }
+        let otherStore = DownloadStore(dbPool: otherDatabase.pool, profileId: UUID())
+        var item = DownloadItem(
+            id: nil, url: "https://example.com/p.zip", filename: "p.zip",
+            destinationPath: "/tmp/p.zip", bytesReceived: 10, totalBytes: 100,
+            state: .paused, startedAt: Date(), fileMissing: false
+        )
+        var otherItem = item
+        try store.insert(&item)
+        try otherStore.insert(&otherItem)
+        XCTAssertEqual(item.id, otherItem.id)
+
+        await manager.cancel(id: try XCTUnwrap(otherItem.id), in: otherStore)
+
+        XCTAssertEqual(try otherStore.fetch(id: otherItem.id!)?.state, .interrupted)
+        XCTAssertEqual(try store.fetch(id: item.id!)?.state, .paused)
     }
 
     // MARK: - Retry
@@ -108,7 +167,7 @@ final class DownloadManagerTests: XCTestCase {
         var events: [DownloadItem] = []
         manager.addObserver { events.append($0) }
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         // Resume path: the same row transitions back to inProgress at its original destination
         // and no second row is inserted (a fresh start would add one with a deduped name).
@@ -132,7 +191,7 @@ final class DownloadManagerTests: XCTestCase {
         item.source = "url"
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         let all = try store.fetchAll()
         XCTAssertEqual(all.count, 2)
@@ -150,7 +209,7 @@ final class DownloadManagerTests: XCTestCase {
         item.resumeData = Data("wk resume blob".utf8)
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         let all = try store.fetchAll()
         XCTAssertEqual(all.count, 2)
@@ -171,7 +230,7 @@ final class DownloadManagerTests: XCTestCase {
         let profileId = UUID()
         addTeardownBlock { try? await WKWebsiteDataStore.remove(forIdentifier: profileId) }
         store = DownloadStore(dbPool: db.pool, profileId: profileId)
-        manager.setStore(store)
+        manager.attach(store)
         let session = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
         await WKWebsiteDataStore(forIdentifier: profileId).httpCookieStore.setCookie(session)
         let configuration = WKWebViewConfiguration()
@@ -188,7 +247,7 @@ final class DownloadManagerTests: XCTestCase {
         item.source = "wk"
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
         _ = await pollUntil(timeout: 60) { !requests.withLock { $0.isEmpty } }
         withExtendedLifetime(webView) {}
 
@@ -212,7 +271,7 @@ final class DownloadManagerTests: XCTestCase {
         item.resumeData = Data("wk resume blob".utf8)
         try store.insert(&item)
 
-        await manager.resume(id: item.id!)
+        await manager.resume(id: item.id!, in: store)
         withExtendedLifetime(webView) {}
 
         XCTAssertEqual(try store.fetch(id: item.id!)?.state, .interrupted, "a private space's web view never hosts a profile's download")
@@ -227,7 +286,7 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.chooseDestination = { proposed, _, _ in proposed.deletingLastPathComponent().appendingPathComponent("picked.pdf") }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertEqual(try store.fetchAll().map(\.filename), ["picked.pdf"])
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("picked.pdf").path))
@@ -240,7 +299,7 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.chooseDestination = { _, _, _ in nil }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertEqual(try store.fetchAll().count, 0)
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
@@ -253,7 +312,7 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.suggestFilename = { _ in ("papers/renamed.pdf", "uniquify") }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("papers/renamed.pdf").path))
     }

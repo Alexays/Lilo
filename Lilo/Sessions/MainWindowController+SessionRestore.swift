@@ -243,8 +243,13 @@ extension MainWindowController {
                 previous.delegate.tabManager = nil
             }
         }
+        let switchesProfile = self.profileContext != nil
         self.profileContext = profileContext
-        context.downloadManager.setStore(profileContext.downloads)
+        context.downloadManager.attach(profileContext.downloads)
+        // The chrome asks for its first list itself; a later profile replaces the one it shows.
+        if switchesProfile {
+            bridgeRouter?.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: profileContext.downloads, manager: context.downloadManager))
+        }
         if profileContext.sessionPersistence == nil {
             profileContext.sessionPersistence = makeSessionPersistence(for: profileContext)
             // At launch the chrome paints first (restoreExtensionsThenActiveTab): restoring holds this thread its first frame needs.

@@ -762,7 +762,7 @@ extension BrowserContext {
     private func installDownloadGapEventObservers() {
         let tracker = DownloadGapEventTracker()
         downloadManager.addObserver { [weak self] item in
-            guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id) else { return }
+            guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id, profileId: item.profileId) else { return }
             // Ids are per profile database.
             let key = DownloadGapEventTracker.Key(profileId: item.profileId, id: id)
             // Bookkeeping runs for every download so an extension loaded later never sees a stale
@@ -799,8 +799,10 @@ extension BrowserContext {
         downloadManager.onErased = { [weak self] id, profileId in
             tracker.lastItems[DownloadGapEventTracker.Key(profileId: profileId, id: id)] = nil
             guard let self else { return }
-            windows.windows.forEach { $0.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)]) }
-            guard !downloadManager.isPrivateDownload(id: id), let profileId else { return }
+            for window in windows.windows where window.profileContext?.profileId == profileId {
+                window.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)])
+            }
+            guard !downloadManager.isPrivateDownload(id: id, profileId: profileId), let profileId else { return }
             profileContexts.existingContext(for: profileId)?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
         }
     }

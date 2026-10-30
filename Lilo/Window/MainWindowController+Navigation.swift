@@ -346,7 +346,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didStartDownload download: WKDownload) {
-        context.downloadManager.startDownload(download, privateSpaceId: privateSpaceId(of: tab))
+        if let store = downloadStore(of: tab) {
+            context.downloadManager.startDownload(download, in: store, privateSpaceId: privateSpaceId(of: tab))
+        } else {
+            download.cancel { _ in }
+        }
         // A target=_blank download link leaves a tab that never shows a page: close it (the download outlives the web view), deferred so
         // the web view is not torn down inside WebKit's didBecomeDownload callback. A tab the user typed the URL into stays, as in Chrome.
         guard !tab.hasCommittedContent else { return }
@@ -476,9 +480,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {
+        guard let store = downloadStore(of: tab) else { return }
         context.downloadManager.saveData(
             data, suggestedFilename: suggestedFilename, mimeType: mimeType, originatingURL: originatingURL,
-            webView: tab.wkWebView, privateSpaceId: privateSpaceId(of: tab)
+            webView: tab.wkWebView, in: store, privateSpaceId: privateSpaceId(of: tab)
         )
     }
 
@@ -486,6 +491,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
     private func privateSpaceId(of tab: WKWebViewTab) -> UUID? {
         guard tab.isPrivateBrowsing else { return nil }
         return tabManager.tab(for: tab.id)?.spaceId ?? tabManager.currentSpaceId
+    }
+
+    /// The downloads of the tab's own profile, not the window's: a tab of a background Space may belong to another.
+    private func downloadStore(of tab: WKWebViewTab) -> DownloadStore? {
+        let profileId = (tabManager.tab(for: tab.id)?.spaceId).flatMap { context.spaceManager?.space(with: $0)?.profileId }
+        guard let profileId, profileId != profileContext?.profileId else { return profileContext?.downloads }
+        return try? context.profileContexts.context(for: profileId).downloads
     }
 
     func tabRequestsBookmark(_ tab: WKWebViewTab) {

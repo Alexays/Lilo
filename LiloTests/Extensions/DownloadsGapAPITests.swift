@@ -13,7 +13,7 @@ final class DownloadsGapAPITests: XCTestCase {
         database = try TemporaryProfileDatabase()
         store = DownloadStore(dbPool: database.pool)
         manager = DownloadManager(dockController: nil)
-        manager.setStore(store)
+        manager.attach(store)
         handler = DownloadsBridgeHandler(
             managerProvider: { [weak manager] in manager },
             storeProvider: { [store] _ in store }
@@ -124,7 +124,7 @@ final class DownloadsGapAPITests: XCTestCase {
 
         let result = await handler.handle(makeBridgeMessage(action: "downloads.download", payload: ["url": "data:text/plain,x", "filename": "reports/2026/x.txt"]))
         let id = try XCTUnwrap(result as? Int64)
-        await manager.cancel(id: id)
+        await manager.cancel(id: id, in: store)
 
         var isDirectory: ObjCBool = false
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("reports/2026").path, isDirectory: &isDirectory))
@@ -151,7 +151,7 @@ final class DownloadsGapAPITests: XCTestCase {
         ]), registry: registry)
         let downloaded = await download.value
         let id = try XCTUnwrap(downloaded)
-        await manager.cancel(id: id)
+        await manager.cancel(id: id, in: store)
 
         XCTAssertEqual((event.args.first as? [String: Any])?["filename"] as? String, "x.txt", "Chrome names the file without its folder")
         XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("downloads/sorted/x.txt").path)
@@ -165,7 +165,7 @@ final class DownloadsGapAPITests: XCTestCase {
             "url": "data:text/plain,x", "filename": "x.txt", "extensionId": extensionId
         ]), registry: registry)
         let id = try XCTUnwrap(result as? Int64)
-        await manager.cancel(id: id)
+        await manager.cancel(id: id, in: store)
 
         XCTAssertEqual(try store.fetch(id: id)?.destinationPath, folder.appendingPathComponent("downloads/x.txt").path)
         XCTAssertTrue(Self.determiningFilenameEvents(in: registry, to: extensionId).isEmpty)
@@ -240,7 +240,7 @@ final class DownloadsGapAPITests: XCTestCase {
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         manager.downloadsFolderProvider = { folder }
-        await manager.saveData(Data([1]), suggestedFilename: "private.bin", mimeType: "", originatingURL: URL(string: "https://example.com/p")!, privateSpaceId: UUID()).value
+        await manager.saveData(Data([1]), suggestedFilename: "private.bin", mimeType: "", originatingURL: URL(string: "https://example.com/p")!, in: store, privateSpaceId: UUID()).value
         let privateId = try XCTUnwrap(store.search().first?.id)
 
         let found = await handler.handle(makeBridgeMessage(action: "downloads.search", payload: [:]))
@@ -253,7 +253,8 @@ final class DownloadsGapAPITests: XCTestCase {
         XCTAssertNotNil(try store.fetch(id: privateId))
     }
 
-    func testAnInactiveProfileCanSearchButNotChangeItsDownloads() async throws {
+    /// Each profile's rows number from 1: an extension's call acts on its own profile's download, never another's of the same id.
+    func testAnExtensionChangesItsOwnProfilesDownloadOnly() async throws {
         let otherDatabase = try TemporaryProfileDatabase()
         defer { otherDatabase.tearDown() }
         let otherStore = DownloadStore(dbPool: otherDatabase.pool)
@@ -268,12 +269,18 @@ final class DownloadsGapAPITests: XCTestCase {
             storeProvider: { _ in otherStore }
         )
 
+        var sameId = item
+        sameId.id = nil
+        try store.insert(&sameId)
+        XCTAssertEqual(sameId.id, item.id)
+
         let found = await otherHandler.handle(makeBridgeMessage(action: "downloads.search", payload: [:]))
         let erased = await otherHandler.handle(makeBridgeMessage(action: "downloads.erase", payload: ["id": item.id!]))
 
         XCTAssertEqual((found as? [[String: Any]])?.count, 1)
-        XCTAssertNotNil(erased as? BridgeError)
-        XCTAssertNotNil(try otherStore.fetch(id: item.id!))
+        XCTAssertEqual(erased as? [Int64], [item.id!])
+        XCTAssertNil(try otherStore.fetch(id: item.id!))
+        XCTAssertNotNil(try store.fetch(id: item.id!))
     }
 
     /// A download's events go to the extensions of the profile whose store holds it, never another profile's.
@@ -301,14 +308,13 @@ final class DownloadsGapAPITests: XCTestCase {
                 .filter { $0.namespace == "downloads" }.map(\.event)
         }
         let store = try context.profileContexts.context(for: profileIds[0]).downloads
-        context.downloadManager.setStore(store)
         context.downloadManager.downloadsFolderProvider = { folder }
 
         await context.downloadManager.saveData(
-            Data("x".utf8), suggestedFilename: "x.txt", mimeType: "text/plain", originatingURL: try XCTUnwrap(URL(string: "https://example.com/x"))
+            Data("x".utf8), suggestedFilename: "x.txt", mimeType: "text/plain", originatingURL: try XCTUnwrap(URL(string: "https://example.com/x")), in: store
         ).value
         let id = try XCTUnwrap(try store.fetchAll().first?.id)
-        try context.downloadManager.erase(id: id)
+        try context.downloadManager.erase(id: id, in: store)
 
         XCTAssertEqual(events(0), ["onCreated", "onErased"])
         XCTAssertEqual(events(1), [])

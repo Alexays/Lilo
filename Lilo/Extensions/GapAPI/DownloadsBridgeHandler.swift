@@ -73,25 +73,19 @@ final class DownloadsBridgeHandler: GapHandler {
 
         if call.action == "downloads.acceptDanger" {
             // Lilo never marks a download dangerous, so there is never a danger to accept.
-            guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id),
+            guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id, profileId: store.profileId),
                   let item = try? store.fetch(id: id) else { return BridgeError("Invalid downloadId") }
             return BridgeError(item.state == .inProgress ? "Download must be dangerous" : "Download must be in progress")
         }
         if call.action == "downloads.search" {
             do {
                 return try await Self.searchItems(in: store, matching: call)
-                    .filter { !downloadManager.isPrivateDownload(id: $0.id ?? 0) }
+                    .filter { !downloadManager.isPrivateDownload(id: $0.id ?? 0, profileId: store.profileId) }
                     .map(Self.chromeDownloadItem)
             } catch {
                 return BridgeError(error.localizedDescription)
             }
         }
-        // The manager acts on the active profile's store, where another profile's row ids name
-        // unrelated downloads: such a caller only gets search.
-        guard store === downloadManager.store else {
-            return BridgeError("Downloads can only be changed while the extension's profile is active")
-        }
-
         switch call.action {
         case "downloads.download":
             guard let urlString = call.string("url"),
@@ -155,7 +149,7 @@ final class DownloadsBridgeHandler: GapHandler {
                     return BridgeError(error.localizedDescription)
                 }
             }
-            return bridged { try downloadManager.startExtensionDownload(request: request, suggestedFilename: filename, destination: destination) }
+            return bridged { try downloadManager.startExtensionDownload(request: request, suggestedFilename: filename, destination: destination, in: store) }
 
         case "downloads.erase":
             let items: [DownloadItem]
@@ -163,8 +157,8 @@ final class DownloadsBridgeHandler: GapHandler {
             return bridged {
                 var erased: [Int64] = []
                 for item in items {
-                    guard let id = item.id, !downloadManager.isPrivateDownload(id: id) else { continue }
-                    try downloadManager.erase(id: id)
+                    guard let id = item.id, !downloadManager.isPrivateDownload(id: id, profileId: store.profileId) else { continue }
+                    try downloadManager.erase(id: id, in: store)
                     erased.append(id)
                 }
                 return erased
@@ -179,40 +173,40 @@ final class DownloadsBridgeHandler: GapHandler {
         }
 
         // Every remaining action addresses one download, which must exist outside private spaces.
-        guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id),
+        guard let id = Self.downloadId(from: call), !downloadManager.isPrivateDownload(id: id, profileId: store.profileId),
               (try? store.fetch(id: id)) != nil else {
             return BridgeError("Download not found")
         }
         switch call.action {
         case "downloads.pause":
-            await downloadManager.pause(id: id)
+            await downloadManager.pause(id: id, in: store)
             return nil
 
         case "downloads.resume":
-            await downloadManager.resume(id: id)
+            await downloadManager.resume(id: id, in: store)
             return nil
 
         case "downloads.cancel":
-            await downloadManager.cancel(id: id)
+            await downloadManager.cancel(id: id, in: store)
             return nil
 
         case "downloads.open":
-            downloadManager.openFile(id: id)
+            downloadManager.openFile(id: id, in: store)
             return nil
 
         case "downloads.show":
-            downloadManager.showInFinder(id: id)
+            downloadManager.showInFinder(id: id, in: store)
             return nil
 
         case "downloads.removeFile":
             return bridged { () throws -> Any? in
-                try downloadManager.removeFile(id: id)
+                try downloadManager.removeFile(id: id, in: store)
                 return nil
             }
 
         case "downloads.getFileIcon":
             let size = call.int("size") ?? 32
-            return downloadManager.fileIcon(id: id, size: size).map { "data:image/png;base64,\($0)" }
+            return downloadManager.fileIcon(id: id, size: size, in: store).map { "data:image/png;base64,\($0)" }
 
         default:
             return nil

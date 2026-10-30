@@ -697,7 +697,8 @@ extension MainWindowController {
 
         let downloadHandler = DownloadBridgeHandler(
             downloadManager: context.downloadManager,
-            bridgeRouter: bridgeRouter
+            bridgeRouter: bridgeRouter,
+            storeProvider: { [weak self] in self?.profileContext?.downloads }
         )
         downloadHandler.onQuickLookRequested = { QLPreviewPanel.shared().makeKeyAndOrderFront(nil) }
         downloadHandler.onDragRequested = { [weak self] url in self?.beginDownloadFileDrag(fileURL: url) }

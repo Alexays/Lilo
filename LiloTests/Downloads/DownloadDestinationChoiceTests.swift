@@ -7,6 +7,7 @@ import XCTest
 final class DownloadDestinationChoiceTests: XCTestCase {
     private var db: TemporaryProfileDatabase!
     private var manager: DownloadManager!
+    private var store: DownloadStore!
     private var folder: URL!
     /// Hosts the downloads: a WKDownload dies with its web view.
     private let webView = WKWebView(frame: .zero)
@@ -14,7 +15,7 @@ final class DownloadDestinationChoiceTests: XCTestCase {
     override func setUp() async throws {
         db = try TemporaryProfileDatabase()
         manager = DownloadManager(dockController: nil)
-        manager.setStore(DownloadStore(dbPool: db.pool))
+        store = DownloadStore(dbPool: db.pool)
         folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         manager.downloadsFolderProvider = { [folder] in folder }
@@ -23,6 +24,7 @@ final class DownloadDestinationChoiceTests: XCTestCase {
     override func tearDown() async throws {
         try? FileManager.default.removeItem(at: folder)
         manager = nil
+        store = nil
         db.tearDown()
         db = nil
     }
@@ -31,7 +33,7 @@ final class DownloadDestinationChoiceTests: XCTestCase {
     /// asked the download, still without a delegate, for its destination.
     private func startDownload(privateSpaceId: UUID? = nil) {
         let request = URLRequest(url: URL(string: "data:text/plain;base64,aGVsbG8=")!)
-        webView.startDownload(using: request) { download in self.manager.startDownload(download, privateSpaceId: privateSpaceId) }
+        webView.startDownload(using: request) { download in self.manager.startDownload(download, in: self.store, privateSpaceId: privateSpaceId) }
     }
 
     func testTheChosenFileReceivesTheDownload() async throws {

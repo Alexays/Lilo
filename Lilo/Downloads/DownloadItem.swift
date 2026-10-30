@@ -5,6 +5,12 @@ enum DownloadState: String, Codable {
     case inProgress, paused, complete, interrupted
 }
 
+/// Names a download across profiles, whose databases each number their rows from 1.
+struct DownloadKey: Hashable {
+    let profileId: UUID?
+    let id: Int64
+}
+
 struct DownloadItem: Codable, FetchableRecord, MutablePersistableRecord {
     static let databaseTableName = "downloads"
 
@@ -29,6 +35,7 @@ struct DownloadItem: Codable, FetchableRecord, MutablePersistableRecord {
     var profileId: UUID?
 
     var canResume: Bool { state == .paused || hasResumeData ?? (resumeData != nil) }
+    var key: DownloadKey? { id.map { DownloadKey(profileId: profileId, id: $0) } }
 
     mutating func didInsert(_ inserted: InsertionSuccess) {
         id = inserted.rowID

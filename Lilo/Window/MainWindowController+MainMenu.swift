@@ -183,23 +183,24 @@ extension MainWindowController {
     func populateDownloadsMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let manager = context.downloadManager
-        let items = ((try? manager.store?.fetchAll(limit: 16)) ?? [])
-            .filter { $0.id.map { !manager.isPrivateDownload(id: $0) } ?? false }
+        let store = profileContext?.downloads
+        let items = ((try? store?.fetchAll(limit: 16)) ?? [])
+            .filter { $0.id.map { !manager.isPrivateDownload(id: $0, profileId: store?.profileId) } ?? false }
             .prefix(8)
         if items.isEmpty { menu.addItem(withTitle: "No Downloads".localized, action: nil, keyEquivalent: "") }
         for download in items {
-            guard let id = download.id else { continue }
+            guard let id = download.id, let store else { continue }
             let progress = download.state == .inProgress && download.totalBytes > 0
                 ? " (\(download.bytesReceived * 100 / download.totalBytes)%)" : ""
             // A finished download opens; one still running, paused or failed shows in the downloads panel.
             let open = menu.addItem(download.filename + progress) { [weak self] in
                 guard let self else { return }
-                guard (try? manager.store?.fetch(id: id))??.state == .complete else { return openDownloads(nil) }
-                manager.openFile(id: id)
+                guard (try? store.fetch(id: id))??.state == .complete else { return openDownloads(nil) }
+                manager.openFile(id: id, in: store)
             }
             open.image = NSWorkspace.shared.icon(forFile: download.destinationPath)
             open.image?.size = NSSize(width: 16, height: 16)
-            let reveal = menu.addItem(String(format: "Show %@ in Finder".localized, download.filename)) { manager.showInFinder(id: id) }
+            let reveal = menu.addItem(String(format: "Show %@ in Finder".localized, download.filename)) { manager.showInFinder(id: id, in: store) }
             reveal.keyEquivalentModifierMask = .option
             reveal.isAlternate = true
         }
