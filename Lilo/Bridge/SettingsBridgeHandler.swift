@@ -208,6 +208,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 // apply() also caches the appearance for next-launch first paint.
                 if key == "theme" { ThemePreference(stored: value).apply() }
                 if key == "appIcon" { AppIconPreference.apply(value) }
+                if key == AppIconPreference.seasonalKey { AppIconPreference.setSeasonal(value != "false") }
                 if key == AppDelegate.showDevelopMenuKey {
                     UserDefaults.lilo.set(value == "true", forKey: key)
                     NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.isHidden = value != "true"

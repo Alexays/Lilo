@@ -65,6 +65,7 @@ export type SettingId =
   | "tabPosition"
   | "addressPlacement"
   | "appIcon"
+  | "seasonalAppIcon"
   | "defaultZoom"
   | "minimumFontSize"
   | "newSpace"
@@ -214,6 +215,7 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   emptyWindowOnLaunch: { key: "emptyWindowOnLaunch", fallback: false },
   littleWindowHotKey: { key: "littleWindowHotKey", fallback: true },
   peekPinnedTabLinks: { key: "peekPinnedTabLinks", fallback: true },
+  seasonalAppIcon: { key: "seasonalAppIcon", fallback: true },
   contentBlocker: { key: "contentBlockerEnabled", fallback: true },
   blockerTrackers: { key: "blockerTrackers", fallback: true },
   blockerCookieNotices: { key: "blockerCookieNotices", fallback: true },
@@ -259,6 +261,7 @@ export const SETTINGS: SettingModel[] = [
   { id: "shortcuts", section: "general", groupKey: "settings.groups.lilo" },
   { id: "theme", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "appIcon", section: "appearance", groupKey: "settings.groups.theme" },
+  { id: "seasonalAppIcon", section: "appearance", groupKey: "settings.groups.theme" },
   { id: "tabPosition", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "addressPlacement", section: "appearance", groupKey: "settings.groups.tabLayout" },
   { id: "defaultZoom", section: "appearance", groupKey: "settings.groups.pages" },

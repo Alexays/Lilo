@@ -217,6 +217,10 @@
 				"title": "Uygulama simgesi",
 				"description": "Yalnızca Klasik, macOS'in koyu, renk tonlu ve saydam simge stillerine uyar."
 			},
+			"seasonalAppIcon": {
+				"title": "Mevsimlik simge",
+				"description": "Cadılar Bayramı gibi özel günlerde şenlikli bir simge."
+			},
 			"passwordManager": {
 				"title": "Parola yöneticisi ekle",
 				"installedTitle": "Parola yöneticisi",

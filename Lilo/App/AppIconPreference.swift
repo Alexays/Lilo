@@ -2,26 +2,79 @@ import AppKit
 
 /// User-selectable app icon: macOS has no alternate-icon API, so a variant is set on the Dock tile and on the bundle itself.
 /// Only `classic` follows the system's dark, tinted and clear styles. Cached so launch can re-apply it after a reinstall wipes it.
+/// During a season (`AppIcons/<season>/`), every variant shows its seasonal version unless the setting turns that off.
 enum AppIconPreference {
     static let variants = ["classic", "night", "frost", "blueprint", "riso", "pixel", "neon", "graphite", "spring", "pride", "clay"]
+    /// Mirrors the `seasonalAppIcon` setting: launch reads it before the settings store opens.
+    static let seasonalKey = "seasonalAppIcon"
 
     private static let cacheKey = "lilo.appIcon"
+    /// Path of the image last written on the bundle, "" for its own icon.
+    private static let bundleIconKey = "lilo.appIconBundle"
 
     @MainActor private static var swapView: DockIconSwapView?
     @MainActor private static var swapTimer: Timer?
 
     @MainActor static func apply(_ name: String) {
-        let variant = variants.contains(name) ? name : "classic"
-        let image = variant == "classic"
-            ? nil
-            : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
-        let oldImage = NSApp.applicationIconImage
+        UserDefaults.lilo.set(variants.contains(name) ? name : "classic", forKey: cacheKey)
+        refresh()
+    }
+
+    @MainActor static func setSeasonal(_ enabled: Bool) {
+        UserDefaults.lilo.set(enabled, forKey: seasonalKey)
+        refresh()
+    }
+
+    /// Halloween runs from October 24 through 31, Christmas from December 15 through 26, New Year from December 31
+    /// through January 1, Valentine's Day on February 14, Lilo's birthday on April 22, summer from June 20 through 22,
+    /// Easter from Good Friday through Easter Monday, Lunar New Year over the first week of the lunar year.
+    static func season(on date: Date) -> String? {
+        let calendar = Calendar.current
+        let day = calendar.dateComponents([.year, .month, .day], from: date)
+        switch (day.month, day.day ?? 0) {
+        case (10, 24...31): return "halloween"
+        case (12, 15...26): return "christmas"
+        case (12, 31), (1, 1): return "newyear"
+        case (2, 14): return "valentine"
+        case (4, 22): return "birthday"
+        case (6, 20...22): return "summer"
+        default:
+            // Easter Sunday by the anonymous Gregorian algorithm (Meeus/Jones/Butcher).
+            let year = day.year ?? 0
+            let a = year % 19, b = year / 100, c = year % 100
+            let g = (b - (b + 8) / 25 + 1) / 3
+            let h = (19 * a + b - b / 4 - g + 15) % 30
+            let l = (32 + 2 * (b % 4) + 2 * (c / 4) - h - c % 4) % 7
+            let m = (a + 11 * h + 22 * l) / 451
+            let n = h + l - 7 * m + 114
+            if let easter = calendar.date(from: DateComponents(year: year, month: n / 31, day: n % 31 + 1)),
+               let offset = calendar.dateComponents([.day], from: easter, to: calendar.startOfDay(for: date)).day,
+               (-2...1).contains(offset) {
+                return "easter"
+            }
+            let lunar = Calendar(identifier: .chinese).dateComponents([.month, .day, .isLeapMonth], from: date)
+            return lunar.month == 1 && lunar.isLeapMonth != true && lunar.day ?? 0 <= 7 ? "lunar" : nil
+        }
+    }
+
+    /// The image due now; nil is the bundle's own icon.
+    private static func currentURL() -> URL? {
+        let variant = UserDefaults.lilo.string(forKey: cacheKey) ?? "classic"
+        let seasonal = UserDefaults.lilo.object(forKey: seasonalKey) as? Bool ?? true
+        let season = seasonal ? season(on: Date()) : nil
+        if season == nil && variant == "classic" { return nil }
+        return Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: season.map { "AppIcons/\($0)" } ?? "AppIcons")
+    }
+
+    @MainActor private static func refresh() {
+        let url = currentURL()
+        guard url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? "" else { return }
+        UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
+        let image = url.flatMap(NSImage.init(contentsOf:))
         // The download progress view owns the Dock tile while downloads run.
-        let animate = variant != UserDefaults.lilo.string(forKey: cacheKey) ?? "classic"
-            && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let animate = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             && !(NSApp.dockTile.contentView is DownloadDockProgressController.DockProgressView)
-        UserDefaults.lilo.set(variant, forKey: cacheKey)
-        if animate { animateDockSwap(from: oldImage, to: image) } else { setIcon(image) }
+        if animate { animateDockSwap(from: NSApp.applicationIconImage, to: image) } else { setIcon(image) }
     }
 
     /// nil restores the bundle's own icon on both surfaces.
@@ -77,13 +130,18 @@ enum AppIconPreference {
     }
 
     @MainActor static func applyCachedAtLaunch() {
-        guard let cached = UserDefaults.lilo.string(forKey: cacheKey), cached != "classic", variants.contains(cached),
-              let image = Bundle.main.url(forResource: cached, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
-        else { return }
-        NSApp.applicationIconImage = image
+        // A season starts or ends at midnight; the notification also follows a wake into a new day.
+        _ = NotificationCenter.default.addObserver(forName: .NSCalendarDayChanged, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { refresh() }
+        }
+        let url = currentURL()
+        let image = url.flatMap(NSImage.init(contentsOf:))
+        if let image { NSApp.applicationIconImage = image }
         // The bundle's custom icon (its `Icon\r` file) survives relaunches; only a reinstall wipes it, and
         // rewriting it makes Finder and the Dock refresh.
-        if !FileManager.default.fileExists(atPath: Bundle.main.bundlePath + "/Icon\r") {
+        if url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? ""
+            || image != nil && !FileManager.default.fileExists(atPath: Bundle.main.bundlePath + "/Icon\r") {
+            UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
             NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
         }
     }

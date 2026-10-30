@@ -217,6 +217,10 @@
 				"title": "Icône de l'app",
 				"description": "Seule Classique suit les styles d'icône sombre, teinté et transparent de macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Icône de saison",
+				"description": "Une icône festive autour de fêtes comme Halloween."
+			},
 			"passwordManager": {
 				"title": "Ajouter un gestionnaire de mots de passe",
 				"installedTitle": "Gestionnaire de mots de passe",

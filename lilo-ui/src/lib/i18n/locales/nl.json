@@ -217,6 +217,10 @@
 				"title": "Appsymbool",
 				"description": "Alleen Klassiek volgt de donkere, getinte en doorzichtige symboolstijlen van macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Seizoenssymbool",
+				"description": "Een feestelijk appsymbool rond feestdagen zoals Halloween."
+			},
 			"passwordManager": {
 				"title": "Voeg een wachtwoordmanager toe",
 				"installedTitle": "Wachtwoordmanager",

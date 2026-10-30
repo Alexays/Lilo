@@ -217,6 +217,10 @@
 				"title": "Ícone do app",
 				"description": "Apenas o Clássico acompanha os estilos de ícones escuro, tonalizado e transparente do macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Ícone sazonal",
+				"description": "Um ícone festivo em datas como o Halloween."
+			},
 			"passwordManager": {
 				"title": "Adicionar gerenciador de senhas",
 				"installedTitle": "Gerenciador de senhas",
