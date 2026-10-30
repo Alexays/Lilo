@@ -132,17 +132,21 @@ extension AgentControl {
 
     /// A new tab of the folder: through the window showing the space, else straight into the space's
     /// state with its own engine, which a window showing the space later takes over.
-    func createTab(inFolder folderId: UUID?, space: Space, host: MainWindowController?, url: URL? = nil) throws -> Tab {
+    /// `nativeConfiguration` is a popup's, from WebKit, which loads it.
+    func createTab(
+        inFolder folderId: UUID?, space: Space, host: MainWindowController?, url: URL? = nil, nativeConfiguration: WKWebViewConfiguration? = nil
+    ) throws -> Tab {
         let index = tabs(inFolder: folderId, spaceId: space.id).count
         if let host {
             guard let tab = host.createTabStateFirst(
-                url: url, activate: false, sidebarParentFolderId: folderId, sidebarSection: .unpinned, sidebarIndex: index
+                url: url, activate: false, nativeConfiguration: nativeConfiguration, sidebarParentFolderId: folderId, sidebarSection: .unpinned,
+                sidebarIndex: index
             ) else { throw AgentToolError("Could not create a tab") }
             if let engine = host.tabManager.engineTab(for: tab.id) { attach(engine, to: host) }
             return tab
         }
         guard let commander = context?.windows.activeWindow else { throw AgentToolError("Open a Lilo window so agents can work in it", code: "needs_user") }
-        let engine = makeHiddenEngine(tabId: nil, space: space, commander: commander)
+        let engine = makeHiddenEngine(tabId: nil, space: space, nativeConfiguration: nativeConfiguration, commander: commander)
         let tab = Tab(id: engine.id, url: url, spaceId: space.id)
         _ = try commander.applyBrowserCommand(.createTab(spaceId: space.id, tab: tab, activate: false))
         if let folderId {
@@ -150,18 +154,25 @@ extension AgentControl {
                 spaceId: space.id, kind: .tab, itemId: tab.id, parentFolderId: folderId, section: .unpinned, insert: .index(index)
             ))
         }
-        if let url { engine.loadURL(url) }
+        if let url, nativeConfiguration == nil { engine.loadURL(url) }
         return tab
     }
 
     /// A link or popup an agent's page opened: a new tab beside the opener, in its folder or its isolated
-    /// space, unshown.
-    func openTab(from opener: WKWebViewTab, url: URL?) {
+    /// space, unshown. A popup's tab gives back its web view, so the page keeps its `window.opener` and handle.
+    @discardableResult
+    func openTab(from opener: WKWebViewTab, url: URL?, configuration: WKWebViewConfiguration? = nil) -> WKWebView? {
         guard let context, let (spaceId, tab) = context.browserState.durableTab(for: opener.id),
               tab.groupId != nil || sessions.contains(where: { $0.isolatedSpaceId == spaceId }),
-              let space = context.spaceManager.space(with: spaceId) else { return }
-        _ = try? createTab(inFolder: tab.groupId, space: space, host: context.windows.windows(showing: spaceId).first, url: url)
+              let space = context.spaceManager.space(with: spaceId),
+              let created = try? createTab(
+                  inFolder: tab.groupId, space: space, host: context.windows.windows(showing: spaceId).first, url: url,
+                  nativeConfiguration: configuration
+              ) else { return nil }
         refreshControlledTabs()
+        let engine = context.browserState.liveEngine(forTab: created.id)
+        engine?.isOpenedByPage = true
+        return engine?.wkWebView
     }
 
     /// Closes an agent tab through the window showing its space, else straight in its state.
@@ -176,13 +187,15 @@ extension AgentControl {
     /// An engine for a tab of a space no window shows, kept with the space's others for the window that
     /// shows the space later. Only navigation state goes to `commander`: the rest of a window's wiring
     /// belongs to that window.
-    private func makeHiddenEngine(tabId: UUID?, space: Space, commander: MainWindowController) -> WKWebViewTab {
+    private func makeHiddenEngine(
+        tabId: UUID?, space: Space, nativeConfiguration: WKWebViewConfiguration? = nil, commander: MainWindowController
+    ) -> WKWebViewTab {
         let context = commander.context
         let dataStore = space.isPrivate
             ? context.profileManager.ephemeralDataStore(for: space.id)
             : context.profileManager.dataStore(for: space.profileId)
         let engine = context.engineFactory.createTab(configuration: .init(
-            dataStore: dataStore, tabId: tabId, nativeConfiguration: nil, profileId: space.profileId
+            dataStore: dataStore, tabId: tabId, nativeConfiguration: nativeConfiguration, profileId: space.profileId
         ))
         context.browserState.storeHiddenEngine(engine, tabId: engine.id, spaceId: space.id)
         engine.delegate = commander

@@ -49,6 +49,8 @@ final class WKWebViewTab: NSObject {
         /// The page's color as a CSS hex, nil when it has none.
         func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?)
         func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool)
+        /// The web view of a window an agent's page opened, as a background tab of the agent's; WebKit loads it.
+        func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView?
         /// Open a right-clicked link in a freshly created ephemeral private space and switch to it.
         func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL)
         func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL)
@@ -1349,6 +1351,7 @@ final class WKWebViewTab: NSObject {
 // MARK: - WKWebViewTab.Delegate
 
 extension WKWebViewTab.Delegate {
+    func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
     var prefersSingleWindow: Bool { false }
@@ -1942,7 +1945,8 @@ extension WKWebViewTab: WKUIDelegate {
                 Self.activationTime = 0
             }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
-            if !isAgentControlled, let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
+            if isAgentControlled { return delegate?.tab(self, openAgentPopupWith: configuration, url: navigationAction.request.url) }
+            if let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
                 return popup
             }
             delegate?.tab(self, didCreateNewTab: navigationAction.request.url, inBackground: Self.opensNewTabInBackground(navigationAction, after: nil))

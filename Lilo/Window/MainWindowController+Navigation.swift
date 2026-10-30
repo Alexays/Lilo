@@ -271,7 +271,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool) {
         // An agent's new tab joins its folder in the background: the user's shown tab stays put.
-        guard !tab.isAgentControlled else { return context.agentControl.openTab(from: tab, url: url) }
+        guard !tab.isAgentControlled else {
+            context.agentControl.openTab(from: tab, url: url)
+            return
+        }
         // A Little window's new tab is another Little window, not a tab of the window behind.
         if littleWindows[tab.id] != nil {
             openLittleWindow(url: url)
@@ -282,6 +285,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if inBackground { noteBackgroundTab(created.id) }
         guard let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
+    }
+
+    func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? {
+        context.agentControl.openTab(from: tab, url: url, configuration: configuration)
     }
 
     /// `webNavigation.onCreatedNavigationTarget` for a page that opened `url` in a new tab.

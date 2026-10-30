@@ -1,0 +1,3 @@
+kind: Fixed
+body: A window a page opens in an agent's tab stays linked to that page, so sign-in popups and forms that post to a new window work for agents.
+time: 2026-10-30T17:14:21.319077+01:00

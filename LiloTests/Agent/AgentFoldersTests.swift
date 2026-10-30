@@ -320,6 +320,21 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertTrue(window.pagePopups.isEmpty, "no popup window opens over the user's")
     }
 
+    func testAWindowAnAgentTabOpensKeepsItsOpener() async throws {
+        let number = try await agentTab(showing: """
+            <!doctype html><body style="margin:0">
+            <button style="position:absolute;left:20px;top:20px;width:200px;height:40px" onclick="window.popup = window.open('', 'p')">Open</button>
+            </body>
+            """)
+
+        _ = await client.callTool("computer", ["tabId": number, "action": "left_click", "coordinate": [120, 40]])
+        let opened = await pollUntil(timeout: 10) { (try? await self.availableTabs().count) == 2 }
+
+        XCTAssertTrue(opened, "the window opens as a tab of the agent's folder")
+        let hasPopup = try await js("window.popup !== null && !window.popup.closed", tab: number) as? Bool
+        XCTAssertEqual(hasPopup, true, "the page keeps a handle on the window it opened")
+    }
+
     func testAgentTabCannotPullItsWindowForward() async throws {
         let number = try await newAgentTab()
         let activeBefore = window.tabManager.activeTabId
