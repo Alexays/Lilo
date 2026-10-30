@@ -11,6 +11,7 @@
   import type { DndActiveDrag } from "../../lib/dndEngine/store.svelte";
   import type { DndTargetContext } from "../../lib/dndEngine/types";
   import { t } from "../../lib/i18n/state.svelte";
+  import { getConversationTab } from "../../stores/folders.svelte";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getSidebarDrag } from "../../stores/sidebarDnd.svelte";
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
@@ -33,9 +34,15 @@
     return !!tab.groupId && sidebar.view.foldersById.get(tab.groupId)?.isSplit === true;
   }
 
+  // A conversation is dragged by its row, a folder heading its agent tab: that tab is what splits.
+  function splitTabId(kind: string, id: string): string | null {
+    if (kind === "tab") return id;
+    return kind === "folder" ? (getConversationTab(id)?.id ?? null) : null;
+  }
+
   const draggedTabId = $derived.by(() => {
     const drag = getSidebarDrag();
-    return drag?.kind === "tab" ? drag.itemId : null;
+    return drag ? splitTabId(drag.kind, drag.itemId) : null;
   });
   const visible = $derived(draggedTabId !== null && untrack(() => acceptsTab(draggedTabId)));
 
@@ -130,13 +137,15 @@
   const activeTarget = $derived(hoveredTarget ?? linkTarget);
 
   function canResolve(context: DndTargetContext): boolean {
-    return context.dragSource.kind === "tab" && acceptsTab(context.dragSource.id);
+    const tabId = splitTabId(context.dragSource.kind, context.dragSource.id);
+    return tabId !== null && acceptsTab(tabId);
   }
 
   function handleDrop(drag: DndActiveDrag): void {
-    const target = targetAt(drag.currentPoint.x, drag.currentPoint.y, drag.source.item.id);
+    const tabId = splitTabId(drag.source.item.kind, drag.source.item.id);
+    const target = tabId ? targetAt(drag.currentPoint.x, drag.currentPoint.y, tabId) : null;
     isOver = false;
-    if (target) tabActions.splitTab(drag.source.item.id, target.side, target.tabId);
+    if (tabId && target) tabActions.splitTab(tabId, target.side, target.tabId);
   }
 </script>
 
