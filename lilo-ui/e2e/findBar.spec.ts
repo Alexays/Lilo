@@ -89,3 +89,17 @@ test("the bar shows where the selected match is among all of them", async ({ pag
 	);
 	await expect(page.locator(".find-status")).toHaveText("3 sur 12");
 });
+
+test("a new document closes a find bar open before its navigation, and only clears one opened during it", async ({ page }) => {
+	await openFindBar(page, "beta");
+	const findBar = page.locator(".find-bar");
+	await page.evaluate(() => window.__lilo!.receive({ event: "findInPageResult", query: "beta", matchFound: false }));
+	await expect(page.locator(".find-status")).toHaveText("Aucun résultat");
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "findPageCommitted", closeFindBar: false }));
+	await expect(findBar).toBeVisible();
+	await expect(page.locator(".find-status")).toHaveText("");
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "findPageCommitted", closeFindBar: true }));
+	await expect(findBar).toBeHidden();
+});

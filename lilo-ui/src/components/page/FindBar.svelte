@@ -40,6 +40,16 @@
       match = data.matchFound && data.matchIndex && data.matchCount ? { index: data.matchIndex, count: data.matchCount } : undefined;
       hasSearched = true;
     });
+    // As in Chrome, a new document ends the search of the old one, which a find bar opened during the load only forgets.
+    const offCommitted = on("findPageCommitted", (data) => {
+      if (!visible) return;
+      if (data.closeFindBar) {
+        dismiss();
+      } else {
+        clearResult();
+        lastSearchedQuery = "";
+      }
+    });
     const offInitialState = on("initialState", (data) => {
       updateContext(data.activeSpaceId, data.activeTabId);
     });
@@ -51,6 +61,7 @@
     return () => {
       offToggle();
       offResult();
+      offCommitted();
       offInitialState();
       offSidebar();
     };

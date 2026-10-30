@@ -75,6 +75,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if let profile = profileContext, !tab.isPrivateBrowsing { context.engineFactory.reportProxyFailure(error, registry: profile.extensions) }
         case .started, .finished: break
         }
+        // As in Chrome: a search of the old document ends, closing the find bar unless it opened during the load.
+        if tab === tabManager.activeEngineTab {
+            let findBarOpen = chromeInteractiveZones.currentZones()["findBar"] != nil
+            switch event {
+            case .started: findBarOpenAtNavigationStart = findBarOpen
+            case .committed where findBarOpen:
+                bridgeRouter.send(event: "findPageCommitted", data: ["closeFindBar": findBarOpenAtNavigationStart])
+            default: break
+            }
+        }
 
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             let resolvedURL = eventURL ?? tab.currentURL ?? t.url

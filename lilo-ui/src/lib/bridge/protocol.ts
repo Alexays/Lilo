@@ -913,6 +913,9 @@ export interface BridgeEventPayloadMap {
 	toggleFindBar: { query?: string };
 	// matchIndex (1-based) and matchCount come together, when the engine counts matches.
 	findInPageResult: { query: string; matchFound: boolean; matchIndex?: number; matchCount?: number };
+	// The active page committed a new document while the find bar was open: closeFindBar when it was already
+	// open as the navigation started.
+	findPageCommitted: { closeFindBar: boolean };
 	contentInteraction: { isMouseDown?: boolean };
 	zoomChanged: { level: number };
 	blockerAllowlistChanged: { allowlist: string[] };

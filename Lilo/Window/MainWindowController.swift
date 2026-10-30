@@ -178,6 +178,8 @@ final class MainWindowController: NSWindowController {
     /// The modifiers held when the recent tabs switcher opened; nil while it is closed.
     var tabSwitcherModifiers: NSEvent.ModifierFlags?
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
+    /// Whether the find bar was open as the active page's last navigation started: its commit then closes the bar.
+    var findBarOpenAtNavigationStart = false
     // Built by the startup steps (setupBridgeEarly, setupViews), once the window exists.
     var bridgeRouter: BridgeRouter!
     let chromeWebView: OverlayWebView
