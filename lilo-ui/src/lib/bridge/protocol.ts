@@ -619,6 +619,8 @@ export interface BridgeCommandPayloadMap {
 	findNext: EmptyPayload;
 	findPrevious: EmptyPayload;
 	dismissFind: EmptyPayload;
+	/** A chrome bar closed: the keyboard goes back to the page. */
+	focusPage: EmptyPayload;
 	screenshotPage: { mode: "full" | "viewport" | "region" };
 	/** Opens the editor on a copied capture, which it holds from then on. */
 	editCapture: { captureId: string };

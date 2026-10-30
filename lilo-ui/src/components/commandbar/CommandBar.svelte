@@ -38,6 +38,7 @@
     setSelectedIndex,
   } from "../../stores/commandBar.svelte";
   import { getAgentMood, isAgentsSpace } from "../../stores/agents.svelte";
+  import { postMessage } from "../../lib/bridge";
   import { isSidebarVisible } from "../../stores/ui.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { getTabs } from "../../stores/tabs.svelte";
@@ -336,6 +337,7 @@
           setCommandBarScope("all");
         } else {
           closeCommandBar();
+          postMessage("focusPage");
         }
         break;
       case "ArrowDown":

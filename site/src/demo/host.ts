@@ -2942,6 +2942,7 @@ export const createDemoHost = (
     "traceSpaceSwipe",
     "traceSpaceDnd",
     "dismissFind",
+    "focusPage",
     "omniboxInputCancelled",
   ]);
 

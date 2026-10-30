@@ -44,6 +44,20 @@ test("the Esc hint says Back while Escape leaves a scope or a tab move", async (
 	await expect(escHint).toHaveText("EscClose");
 });
 
+test("Escape closing the command bar hands the keyboard back to the page", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	await input.fill("@beta");
+	await input.press("Escape");
+	expect((await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(false);
+
+	await input.press("Escape");
+
+	await expect(page.locator(".command-bar")).toBeHidden();
+	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(true);
+});
+
 for (const prefix of [":", "<", ">"]) {
 	test(`Escape in the ${prefix} scope leaves the scope before closing`, async ({ page }) => {
 		await bootChrome(page, initialWorld());

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { bootChrome } from "./fakeHost";
+import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 
 test.use({ locale: "fr-FR" });
@@ -25,6 +25,20 @@ test("in a small window the find bar stays over the page, clear of the sidebar",
 		expect(box.width).toBe(24);
 		expect(box.x + box.width).toBeLessThanOrEqual(bar.x + bar.width);
 	}
+});
+
+test("Escape closing the find bar hands the keyboard back to the page", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	const findBar = page.locator(".find-bar");
+	await expect(async () => {
+		await page.evaluate(() => window.__lilo!.receive({ event: "toggleFindBar", query: "x" }));
+		await expect(findBar).toBeVisible({ timeout: 200 });
+	}).toPass();
+
+	await page.keyboard.press("Escape");
+
+	await expect(findBar).toBeHidden();
+	expect((await sentCommands(page)).map((c) => c.action)).toContain("focusPage");
 });
 
 test("the previous, next and close buttons draw icons, not text glyphs", async ({ page }) => {

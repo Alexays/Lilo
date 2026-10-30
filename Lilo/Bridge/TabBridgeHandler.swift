@@ -143,6 +143,7 @@ final class TabBridgeHandler: BridgeHandler {
         "findNext",
         "findPrevious",
         "dismissFind",
+        "focusPage",
         "updateTabFolder",
         "deleteTabFolder",
         "setTabFolderCollapsed",
@@ -442,6 +443,9 @@ final class TabBridgeHandler: BridgeHandler {
         case "dismissFind":
             if let terminal = windowController?.activeTerminalView { terminal.endFind() } else { (windowController?.focusedEngineTab ?? tabManager.activeEngineTab)?.dismissFind() }
 
+        case "focusPage":
+            windowController?.focusPage()
+
         case "updateTabFolder":
             guard let id = message.uuid("id"),
                   let name = message.string("name"),
@@ -669,6 +673,7 @@ final class TabBridgeHandler: BridgeHandler {
         // A terminal has no page to navigate: the URL opens in a new tab.
         if let id = tabManager.activeTabId, tabManager.activeEngineTab != nil {
             tabManager.load(url, inTab: id)
+            if let engine = tabManager.activeEngineTab { windowController?.focusContent(engine.view) }
         } else {
             windowController?.createTabStateFirst(url: url)
         }

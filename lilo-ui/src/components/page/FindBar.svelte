@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { on } from "../../lib/bridge";
+  import { on, postMessage } from "../../lib/bridge";
   import { onSidebarApplied } from "../../stores/sidebar.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -88,6 +88,7 @@
     hasSearched = false;
     lastSearchedQuery = "";
     tabActions.dismissFind();
+    postMessage("focusPage");
   }
 
   function search() {

@@ -84,6 +84,39 @@ final class MainWindowControllerFocusTests: XCTestCase {
         XCTAssertEqual(controller.focusOwner, .content)
     }
 
+    /// Escape in the command bar or the find bar hands the keyboard back to the page, as Enter on an
+    /// address loading in the current tab does.
+    func testLeavingTheCommandBarOrFindBarFocusesThePage() async throws {
+        let (controller, _) = makeController()
+        let tab = installActiveTab(on: controller, url: try XCTUnwrap(URL(string: "data:text/html,<p>page</p>")))
+        controller.tabManager.activateTabRuntime(id: tab.id)
+        let tabs = TabBridgeHandler(tabManager: controller.tabManager, windowController: controller, stateCommandHandler: controller.applyBrowserCommand)
+        func send(_ action: String, _ payload: [String: Any] = [:]) async throws {
+            _ = await tabs.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
+        }
+
+        controller.openLocation(nil)
+        XCTAssertEqual(controller.focusOwner, .chrome)
+        try await send("focusPage")
+        XCTAssertEqual(controller.focusOwner, .content)
+
+        controller.openLocation(nil)
+        try await send("navigate", ["url": "data:text/html,<p>next</p>"])
+        XCTAssertEqual(controller.focusOwner, .content)
+    }
+
+    func testAnAddressTypedInABlankTabFocusesItsPage() async throws {
+        let (controller, _) = makeController()
+        let tab = installActiveTab(on: controller, url: nil)
+        controller.tabManager.activateTabRuntime(id: tab.id)
+        XCTAssertEqual(controller.focusOwner, .chrome)
+        let tabs = TabBridgeHandler(tabManager: controller.tabManager, windowController: controller, stateCommandHandler: controller.applyBrowserCommand)
+
+        _ = await tabs.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": "navigate", "payload": ["url": "data:text/html,<p>page</p>"]])))
+
+        XCTAssertEqual(controller.focusOwner, .content)
+    }
+
     func testFocusChromeIsIdempotent() {
         let (controller, _) = makeController()
         controller.focusChrome()
