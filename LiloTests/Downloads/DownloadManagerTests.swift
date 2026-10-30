@@ -1,5 +1,7 @@
 import XCTest
 import GRDB
+import os
+import WebKit
 @testable import Lilo
 
 @MainActor
@@ -153,6 +155,39 @@ final class DownloadManagerTests: XCTestCase {
         let all = try store.fetchAll()
         XCTAssertEqual(all.count, 2)
         XCTAssertEqual(try store.fetch(id: item.id!)?.state, .interrupted)
+    }
+
+    func testRetryWkWithoutResumeDataSendsTheSiteCookies() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        let requests = OSAllocatedUnfairLock(initialState: [String]())
+        let server = try await TinyHTTPServer { request in
+            requests.withLock { $0.append(request) }
+            return ("200 OK", ["Content-Type: application/octet-stream", #"Content-Disposition: attachment; filename="signed.zip""#], Data("zip".utf8))
+        }
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let cookie = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
+        await configuration.websiteDataStore.httpCookieStore.setCookie(cookie)
+        manager.webView = webView
+        var item = DownloadItem(
+            id: nil, url: "http://localhost:\(server.port)/signed.zip", filename: "signed.zip",
+            destinationPath: folder.appendingPathComponent("signed.zip").path, bytesReceived: 0, totalBytes: 3,
+            state: .interrupted, startedAt: Date(), fileMissing: false
+        )
+        item.source = "wk"
+        try store.insert(&item)
+
+        try await manager.retryDownload(id: item.id!)
+        _ = await pollUntil(timeout: 60) { !requests.withLock { $0.isEmpty } }
+        withExtendedLifetime(webView) {}
+
+        XCTAssertEqual(try store.fetchAll().count, 2)
+        let received = requests.withLock { $0 }
+        XCTAssertTrue(received.contains { $0.contains("session=signed-in") }, "\(received)")
     }
 
     // MARK: - Speed and ETA tracking tests

@@ -355,7 +355,17 @@ final class DownloadManager {
             }
         }
         guard let url = URL(string: item.url) else { return }
-        try startExtensionDownload(request: URLRequest(url: url), suggestedFilename: item.filename)
+        var request = URLRequest(url: url)
+        // A signed-in download needs the site's cookies, which live in WebKit's store and not in URLSession's.
+        if let cookieStore = webView?.configuration.websiteDataStore.httpCookieStore, let host = url.host?.lowercased() {
+            let cookies = await cookieStore.allCookies().filter { cookie in
+                let domain = cookie.domain.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
+                return (host == domain || host.hasSuffix("." + domain)) && url.path.hasPrefix(cookie.path)
+                    && (!cookie.isSecure || url.scheme == "https") && (cookie.expiresDate ?? .distantFuture) > Date()
+            }
+            request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: cookies)
+        }
+        try startExtensionDownload(request: request, suggestedFilename: item.filename)
     }
 
     func fileIcon(id: Int64, size: Int) -> String? {
