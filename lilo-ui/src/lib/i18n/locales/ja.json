@@ -973,6 +973,7 @@
 		"placeholder": "ページ内を検索…",
 		"inputLabel": "ページ内を検索",
 		"noResults": "結果なし",
+		"matchCount": "{current}/{total}",
 		"matchCase": "大文字と小文字を区別",
 		"previousMatch": "前の一致項目",
 		"nextMatch": "次の一致項目",

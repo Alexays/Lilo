@@ -979,6 +979,7 @@
 		"placeholder": "Znajdź na stronie…",
 		"inputLabel": "Znajdź na stronie",
 		"noResults": "Brak wyników",
+		"matchCount": "{current} z {total}",
 		"matchCase": "Uwzględniaj wielkość liter",
 		"previousMatch": "Poprzednie wystąpienie",
 		"nextMatch": "Następne wystąpienie",

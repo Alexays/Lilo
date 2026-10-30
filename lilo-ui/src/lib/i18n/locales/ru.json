@@ -979,6 +979,7 @@
 		"placeholder": "Найти на странице…",
 		"inputLabel": "Найти на странице",
 		"noResults": "Нет результатов",
+		"matchCount": "{current} из {total}",
 		"matchCase": "Учитывать регистр",
 		"previousMatch": "Предыдущее совпадение",
 		"nextMatch": "Следующее совпадение",

@@ -973,6 +973,7 @@
 		"placeholder": "Auf Seite suchen…",
 		"inputLabel": "Auf Seite suchen",
 		"noResults": "Keine Ergebnisse",
+		"matchCount": "{current} von {total}",
 		"matchCase": "Groß-/Kleinschreibung beachten",
 		"previousMatch": "Vorheriger Treffer",
 		"nextMatch": "Nächster Treffer",

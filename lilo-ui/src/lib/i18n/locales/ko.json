@@ -973,6 +973,7 @@
 		"placeholder": "페이지에서 찾기…",
 		"inputLabel": "페이지에서 찾기",
 		"noResults": "결과 없음",
+		"matchCount": "{current}/{total}",
 		"matchCase": "대소문자 구분",
 		"previousMatch": "이전 일치 항목",
 		"nextMatch": "다음 일치 항목",

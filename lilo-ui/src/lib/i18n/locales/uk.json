@@ -979,6 +979,7 @@
 		"placeholder": "Знайти на сторінці…",
 		"inputLabel": "Знайти на сторінці",
 		"noResults": "Немає результатів",
+		"matchCount": "{current} з {total}",
 		"matchCase": "Ураховувати регістр",
 		"previousMatch": "Попередній збіг",
 		"nextMatch": "Наступний збіг",

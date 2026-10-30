@@ -973,6 +973,7 @@
 		"placeholder": "在網頁中尋找…",
 		"inputLabel": "在網頁中尋找",
 		"noResults": "沒有結果",
+		"matchCount": "{current}/{total}",
 		"matchCase": "區分大小寫",
 		"previousMatch": "上一個符合項目",
 		"nextMatch": "下一個符合項目",

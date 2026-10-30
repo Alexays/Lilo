@@ -53,6 +53,18 @@ final class PrivateDelegateSelectorTests: XCTestCase {
         "webView:resourceLoad:didCompleteWithError:response:",
     ]
 
+    /// `_WKFindDelegate`, adopted by the find controller for its match counts; no WebKit class adopts it either.
+    private static let findDelegateSelectors = [
+        "_webView:didFindMatches:forString:withMatchIndex:",
+        "_webView:didFailToFindString:",
+    ]
+
+    func testFindControllerClaimsEveryFindHook() {
+        for name in Self.findDelegateSelectors {
+            XCTAssertTrue(PageFindController.instancesRespond(to: NSSelectorFromString(name)), "PageFindController no longer implements \(name)")
+        }
+    }
+
     func testAgentCaptureClaimsEveryResourceLoadHook() {
         for name in Self.resourceLoadDelegateSelectors {
             XCTAssertTrue(AgentCapture.instancesRespond(to: NSSelectorFromString(name)), "AgentCapture no longer implements \(name)")
@@ -77,7 +89,8 @@ final class PrivateDelegateSelectorTests: XCTestCase {
     /// rename makes the guard skip silently, so the rename has to surface here.
     func testWebKitStillAnswersEveryGuardedPrivateKey() {
         let expectations: [(className: String, selectors: [String])] = [
-            ("WKWebView", ["_displayCaptureState", "_isPlayingAudio", "_setDrawsBackground:", "_setIconLoadingDelegate:", "_setResourceLoadDelegate:", "_inspector", "_setOverrideDeviceScaleFactor:", "_overrideDeviceScaleFactor", "_webProcessIdentifier"]),
+            ("WKWebView", ["_displayCaptureState", "_isPlayingAudio", "_setDrawsBackground:", "_setIconLoadingDelegate:", "_setResourceLoadDelegate:", "_inspector", "_setOverrideDeviceScaleFactor:", "_overrideDeviceScaleFactor", "_webProcessIdentifier",
+                           "_setFindDelegate:", "_findString:options:maxCount:", "_hideFindUI"]),
             ("_WKInspector", ["connect", "close", "isVisible", "isConnected", "inspectorWebView"]),
             ("_WKResourceLoadInfo", ["resourceLoadID"]),
             ("_WKLinkIconParameters", ["url", "size", "iconType"]),

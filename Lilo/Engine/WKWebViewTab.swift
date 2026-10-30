@@ -90,6 +90,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
         func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+        /// A find in page's result, Find Next and Find Previous included.
+        func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result)
         /// A peek's page going back to its opener tab's site: true when the tab took the navigation.
         func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool
     }
@@ -548,6 +550,10 @@ final class WKWebViewTab: NSObject {
         _ = Self.activationMonitor
         let setIconLoadingDelegate = NSSelectorFromString("_setIconLoadingDelegate:")
         if webView.responds(to: setIconLoadingDelegate) { webView.perform(setIconLoadingDelegate, with: self) }
+        findController.onResult = { [weak self] result in
+            guard let self else { return }
+            delegate?.tab(self, didFind: result)
+        }
         bindNavigationStateObservers()
         captureUsageObserver.start()
     }
@@ -904,9 +910,8 @@ final class WKWebViewTab: NSObject {
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }
 
-    func findInPage(_ query: String, caseSensitive: Bool) async -> Bool {
-        await findController.find(query, caseSensitive: caseSensitive)
-    }
+    /// The result reaches the delegate's `tab(_:didFind:)`.
+    func findInPage(_ query: String, caseSensitive: Bool) { findController.find(query, caseSensitive: caseSensitive) }
 
     var canFindAgain: Bool { !findController.findAgainString.isEmpty }
     func findNext() { findController.findNext() }
@@ -1389,6 +1394,7 @@ final class WKWebViewTab: NSObject {
 // MARK: - WKWebViewTab.Delegate
 
 extension WKWebViewTab.Delegate {
+    func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) {}
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}

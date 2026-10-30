@@ -973,6 +973,7 @@
 		"placeholder": "Cerca nella pagina…",
 		"inputLabel": "Cerca nella pagina",
 		"noResults": "Nessun risultato",
+		"matchCount": "{current} di {total}",
 		"matchCase": "Distingui maiuscole e minuscole",
 		"previousMatch": "Corrispondenza precedente",
 		"nextMatch": "Corrispondenza successiva",

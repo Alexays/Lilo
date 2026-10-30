@@ -428,10 +428,8 @@ final class TabBridgeHandler: BridgeHandler {
                 windowController?.bridgeRouter.send(event: "findInPageResult", data: ["query": query, "matchFound": count > 0])
                 return nil
             }
-            if let query = message.string("query"),
-               let engine = windowController?.focusedEngineTab ?? tabManager.activeEngineTab {
-                let found = await engine.findInPage(query, caseSensitive: message.bool("caseSensitive"))
-                windowController?.bridgeRouter.send(event: "findInPageResult", data: ["query": query, "matchFound": found])
+            if let query = message.string("query") {
+                (windowController?.focusedEngineTab ?? tabManager.activeEngineTab)?.findInPage(query, caseSensitive: message.bool("caseSensitive"))
             }
 
         case "findNext":

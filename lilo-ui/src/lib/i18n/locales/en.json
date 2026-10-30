@@ -973,6 +973,7 @@
 		"placeholder": "Find in page…",
 		"inputLabel": "Find in page",
 		"noResults": "No results",
+		"matchCount": "{current} of {total}",
 		"matchCase": "Match case",
 		"previousMatch": "Previous match",
 		"nextMatch": "Next match",

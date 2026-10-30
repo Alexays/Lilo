@@ -146,6 +146,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         faviconCoordinator.extract(from: tab, icons: icons)
     }
 
+    func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) {
+        guard tab === tabManager.activeEngineTab else { return }
+        var data: [String: Any] = ["query": result.query, "matchFound": result.matchFound]
+        if let index = result.matchIndex, let count = result.matchCount { (data["matchIndex"], data["matchCount"]) = (index, count) }
+        bridgeRouter.send(event: "findInPageResult", data: data)
+    }
+
     func tab(_ tab: WKWebViewTab, didUpdateTitle title: String?) {
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             t.title = self.resolvedTabTitle(currentTitle: title, url: tab.currentURL, existingTitle: t.title)

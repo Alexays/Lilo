@@ -911,7 +911,8 @@ export interface BridgeEventPayloadMap {
 	trackersBlockedChanged: { count: number };
 	toggleNewTab: EmptyPayload;
 	toggleFindBar: { query?: string };
-	findInPageResult: { query: string; matchFound: boolean };
+	// matchIndex (1-based) and matchCount come together, when the engine counts matches.
+	findInPageResult: { query: string; matchFound: boolean; matchIndex?: number; matchCount?: number };
 	contentInteraction: { isMouseDown?: boolean };
 	zoomChanged: { level: number };
 	blockerAllowlistChanged: { allowlist: string[] };

@@ -14,6 +14,7 @@
   let status = $state<FindStatus>("idle");
   let hasSearched = $state(false);
   let caseSensitive = $state(false);
+  let match = $state<{ index: number; count: number }>();
   let inputEl: HTMLInputElement | undefined = $state();
   let lastSearchedQuery = "";
   let currentActiveSpaceId = "";
@@ -34,8 +35,9 @@
       focusInput();
     });
     const offResult = on("findInPageResult", (data) => {
-      if (typeof data.query !== "string" || data.query !== lastSearchedQuery) return;
+      if (!visible || typeof data.query !== "string" || data.query !== lastSearchedQuery) return;
       status = data.matchFound ? "found" : "not-found";
+      match = data.matchFound && data.matchIndex && data.matchCount ? { index: data.matchIndex, count: data.matchCount } : undefined;
       hasSearched = true;
     });
     const offInitialState = on("initialState", (data) => {
@@ -79,13 +81,18 @@
     });
   }
 
+  function clearResult() {
+    status = "idle";
+    hasSearched = false;
+    match = undefined;
+  }
+
   // The query stays for the next opening, selected; the engine keeps it for Find Next with the bar closed.
   function dismiss() {
     clearTimeout(searchTimer);
     searchTimer = undefined;
     visible = false;
-    status = "idle";
-    hasSearched = false;
+    clearResult();
     lastSearchedQuery = "";
     tabActions.dismissFind();
     postMessage("focusPage");
@@ -96,12 +103,11 @@
     clearTimeout(searchTimer);
     searchTimer = undefined;
     if (query.trim()) {
-      if (query !== lastSearchedQuery) hasSearched = false;
+      if (query !== lastSearchedQuery) clearResult();
       lastSearchedQuery = query;
       tabActions.findInPage(query, { caseSensitive });
     } else {
-      status = "idle";
-      hasSearched = false;
+      clearResult();
       lastSearchedQuery = "";
       tabActions.dismissFind();
     }
@@ -185,7 +191,9 @@
       spellcheck="false"
     />
     <!-- Always mounted: a live region only announces changes made while it is in the DOM. -->
-    <span class="find-status" role="status">{#if status === "not-found"}{t("findBar.noResults")}{/if}</span>
+    <span class="find-status" class:not-found={status === "not-found"} role="status"
+      >{#if status === "not-found"}{t("findBar.noResults")}{:else if match}{t("findBar.matchCount", { current: match.index, total: match.count })}{/if}</span
+    >
     <button
       class="find-btn case-btn"
       class:active={caseSensitive}
@@ -273,12 +281,17 @@
   }
 
   .find-status {
-    color: var(--danger-text);
+    color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
     line-height: 1;
     padding: 0 var(--density-1);
     white-space: nowrap;
+  }
+
+  .find-status.not-found {
+    color: var(--danger-text);
+    font-weight: var(--font-weight-semibold);
   }
 
   /* Out of the row, not out of the accessibility tree: a hidden live region announces nothing. */

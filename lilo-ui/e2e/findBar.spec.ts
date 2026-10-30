@@ -81,3 +81,11 @@ test("the next opening brings the last query back, selected", async ({ page }) =
 	await expect(input).toHaveValue("beta");
 	await expect.poll(() => input.evaluate((el: HTMLInputElement) => [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
 });
+
+test("the bar shows where the selected match is among all of them", async ({ page }) => {
+	await openFindBar(page, "beta");
+	await page.evaluate(() =>
+		window.__lilo!.receive({ event: "findInPageResult", query: "beta", matchFound: true, matchIndex: 3, matchCount: 12 }),
+	);
+	await expect(page.locator(".find-status")).toHaveText("3 sur 12");
+});

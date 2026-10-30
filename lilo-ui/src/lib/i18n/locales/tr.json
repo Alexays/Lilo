@@ -973,6 +973,7 @@
 		"placeholder": "Sayfada bul…",
 		"inputLabel": "Sayfada bul",
 		"noResults": "Sonuç yok",
+		"matchCount": "{current}/{total}",
 		"matchCase": "Büyük/küçük harfe duyarlı",
 		"previousMatch": "Önceki eşleşme",
 		"nextMatch": "Sonraki eşleşme",

@@ -973,6 +973,7 @@
 		"placeholder": "Zoek op pagina…",
 		"inputLabel": "Zoek op pagina",
 		"noResults": "Geen resultaten",
+		"matchCount": "{current} van {total}",
 		"matchCase": "Hoofdlettergevoelig",
 		"previousMatch": "Vorige overeenkomst",
 		"nextMatch": "Volgende overeenkomst",

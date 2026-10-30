@@ -286,7 +286,7 @@ extension MainWindowController {
         guard let engine = focusedEngineTab else { return }
         Task { @MainActor in
             guard let text = await engine.selectedTextForFind() else { return }
-            _ = await engine.findInPage(text, caseSensitive: false)
+            engine.findInPage(text, caseSensitive: false)
         }
     }
 

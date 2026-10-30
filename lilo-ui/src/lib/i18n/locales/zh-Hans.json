@@ -973,6 +973,7 @@
 		"placeholder": "在网页中查找…",
 		"inputLabel": "在网页中查找",
 		"noResults": "没有结果",
+		"matchCount": "{current}/{total}",
 		"matchCase": "区分大小写",
 		"previousMatch": "上一个匹配项",
 		"nextMatch": "下一个匹配项",

@@ -973,6 +973,7 @@
 		"placeholder": "Rechercher dans la page…",
 		"inputLabel": "Rechercher dans la page",
 		"noResults": "Aucun résultat",
+		"matchCount": "{current} sur {total}",
 		"matchCase": "Respecter la casse",
 		"previousMatch": "Résultat précédent",
 		"nextMatch": "Résultat suivant",

@@ -121,6 +121,13 @@ struct WebViewPrivateAccessors {
         return true
     }
 
+    /// `_findString:options:maxCount:`, which reports to the web view's `_WKFindDelegate`. No-ops if absent.
+    func findString(_ string: String, options: UInt, maxCount: UInt) {
+        guard let (selector, imp) = method("_findString:options:maxCount:") else { return }
+        typealias FindMethod = @convention(c) (NSObject, Selector, NSString, UInt, UInt) -> Void
+        unsafeBitCast(imp, to: FindMethod.self)(object, selector, string as NSString, options, maxCount)
+    }
+
     /// Invokes a private selector taking a `void (^)(BOOL)` completion (e.g. `_suspendPage:`).
     /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
     @discardableResult
