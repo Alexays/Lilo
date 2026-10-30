@@ -125,7 +125,7 @@ final class SidePanelTests: XCTestCase {
         let bounds = try XCTUnwrap(window.window?.contentView).bounds
         XCTAssertEqual(panel.frame.maxX, bounds.maxX - window.sidebarWidth - MainWindowController.contentInset, "between the page and the sidebar")
         XCTAssertEqual(panel.frame.minX, window.contentFrameRect().maxX + SplitDividerView.width)
-        XCTAssertEqual(panel.frame.maxY, bounds.maxY - MainWindowController.pageToolbarHeight, "under the page toolbar, like the page")
+        XCTAssertEqual(panel.frame.maxY, bounds.maxY - MainWindowController.contentInset, "a card of its own beside the page toolbar")
     }
 
     func testThePanelAndDividerStayAboveTheFrameAndBelowTheChrome() async throws {

@@ -274,7 +274,9 @@ final class SidePanelController: NSObject {
         guard let panel, let bounds = window.window?.contentView?.bounds else { return }
         let edges = window.pageEdges()
         let width = panelWidth
-        panel.frame = NSRect(x: bounds.maxX - edges.right - width, y: edges.bottom, width: width, height: max(0, bounds.height - edges.top - edges.bottom))
+        // A card of its own beside the page and the bar over it, from the top inset; a strip on top spans it, so it starts below.
+        let top = window.tabLayout.position == .top ? edges.top : MainWindowController.contentInset
+        panel.frame = NSRect(x: bounds.maxX - edges.right - width, y: edges.bottom, width: width, height: max(0, bounds.height - top - edges.bottom))
         divider.frame = NSRect(x: panel.frame.minX - SplitDividerView.width, y: edges.bottom, width: SplitDividerView.width, height: panel.frame.height)
     }
 
