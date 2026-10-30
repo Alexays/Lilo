@@ -1133,6 +1133,14 @@ final class WKWebViewTab: NSObject {
         isMainFrame: Bool,
         canShowMIMEType: Bool
     ) -> WKNavigationResponsePolicy {
+        // canShowMIMEType ignores Content-Disposition: an attachment WebKit can render (an export loaded into a
+        // hidden iframe) would otherwise show invisibly instead of downloading.
+        // An error page stays a page even when it names an attachment.
+        if let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
+           let disposition = http.value(forHTTPHeaderField: "Content-Disposition"),
+           disposition.prefix { $0 != ";" }.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("attachment") == .orderedSame {
+            return .download
+        }
         if canShowMIMEType { return .allow }
         // A main frame without a MIME type is a page, not a download: WebKit hands one over for a load it is not serving (null
         // response, no URL, just after the real commit), and a server omitting Content-Type still means a page.

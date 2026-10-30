@@ -152,6 +152,43 @@ final class NavigationFailureTests: XCTestCase {
         )
     }
 
+    func testDownloadsAttachmentEvenWhenWebKitCanShowMimeType() {
+        let attachment = HTTPURLResponse(
+            url: URL(string: "https://example.com/export?format=pdf")!,
+            statusCode: 200,
+            httpVersion: "HTTP/2",
+            headerFields: ["Content-Type": "application/pdf", "Content-Disposition": #"Attachment; filename="doc.pdf""#]
+        )!
+        let inline = HTTPURLResponse(
+            url: URL(string: "https://example.com/doc.pdf")!,
+            statusCode: 200,
+            httpVersion: "HTTP/2",
+            headerFields: ["Content-Type": "application/pdf", "Content-Disposition": #"inline; filename="attachment.pdf""#]
+        )!
+
+        let expiredLink = HTTPURLResponse(
+            url: URL(string: "https://example.com/export?format=pdf")!,
+            statusCode: 404,
+            httpVersion: "HTTP/2",
+            headerFields: ["Content-Type": "text/html", "Content-Disposition": #"attachment; filename="doc.pdf""#]
+        )!
+
+        for isMainFrame in [true, false] {
+            XCTAssertEqual(
+                WKWebViewTab.policyForNavigationResponse(attachment, isMainFrame: isMainFrame, canShowMIMEType: true),
+                .download
+            )
+            XCTAssertEqual(
+                WKWebViewTab.policyForNavigationResponse(expiredLink, isMainFrame: isMainFrame, canShowMIMEType: true),
+                .allow
+            )
+            XCTAssertEqual(
+                WKWebViewTab.policyForNavigationResponse(inline, isMainFrame: isMainFrame, canShowMIMEType: true),
+                .allow
+            )
+        }
+    }
+
     func testDownloadRequestAttachesRefererForHTTPPage() {
         let url = URL(string: "https://cdn.example.com/file.zip")!
         let pageURL = URL(string: "https://example.com/article")!
