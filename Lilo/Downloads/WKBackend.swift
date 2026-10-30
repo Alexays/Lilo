@@ -37,6 +37,8 @@ final class WKBackend: NSObject {
     private var unquarantined: [Int64: (path: String, source: String)] = [:]
     /// Destinations proposed to downloads still deciding where to go (extension suggestion, save panel): WebKit writes nothing there yet.
     private var pendingDestinations: Set<String> = []
+    /// The download's URL and the page it came from, written to the finished file as Chrome and Safari do. Private Spaces' have none.
+    private var whereFroms: [Int64: [String]] = [:]
 
     private let flight = InFlightDownloads()
 
@@ -227,6 +229,10 @@ extension WKBackend: WKDownloadDelegate {
             }
             activeDownloads[download] = id
             unquarantined[id] = (finalURL.path, item.url)
+            if let webView = download.webView, webView.configuration.websiteDataStore.isPersistent {
+                let page = webView.url.flatMap { ["http", "https"].contains($0.scheme) && $0.absoluteString != item.url ? $0.absoluteString : nil }
+                whereFroms[id] = [item.url] + (page.map { [$0] } ?? [])
+            }
             onTracked?(download, id)
             startObservingProgress(for: download)
             flight.begin(id, item)
@@ -243,6 +249,7 @@ extension WKBackend: WKDownloadDelegate {
             let settled = flight.settle(id) { item in
                 DownloadQuarantine.stamp(path: item.destinationPath, source: item.url)
                 item.state = .complete; item.endedAt = Date()
+                if let urls = whereFroms.removeValue(forKey: id) { DownloadQuarantine.recordOrigin(path: item.destinationPath, urls: urls) }
                 if item.totalBytes > 0 { item.bytesReceived = item.totalBytes }  // throttled progress may lag the final bytes; snap to 100%
                 return true
             }

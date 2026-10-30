@@ -69,6 +69,49 @@ final class WKBackendTests: XCTestCase {
         XCTAssertEqual(Set(finished.map(\.filename)), ["report.csv", "report (1).csv"])
     }
 
+    /// Finder's "Where from" names the download's URL, as Chrome and Safari record it; a private Space's download records none.
+    @MainActor
+    func testAFinishedDownloadRecordsWhereItCameFromOutsidePrivateSpaces() async throws {
+        let server = try await TinyHTTPServer { _ in
+            ("200 OK", ["Content-Type: application/octet-stream", #"Content-Disposition: attachment; filename="report.pdf""#], Data("pdf".utf8))
+        }
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let database = try TemporaryProfileDatabase()
+        defer { database.tearDown() }
+        let store = DownloadStore(dbPool: database.pool)
+        let backend = WKBackend()
+        backend.store = store
+        backend.downloadsFolderProvider = { folder }
+        var finished: [DownloadItem] = []
+        backend.onUpdated = { if $0.state == .complete || $0.state == .interrupted { finished.append($0) } }
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/report.pdf"))
+        let privateConfiguration = WKWebViewConfiguration()
+        privateConfiguration.websiteDataStore = .nonPersistent()
+        let webViews = [WKWebView(), WKWebView(frame: .zero, configuration: privateConfiguration)]
+
+        for webView in webViews {
+            let count = finished.count
+            webView.startDownload(using: URLRequest(url: url)) { backend.startTracking($0) }
+            _ = await pollUntil(timeout: 60) { finished.count > count }
+        }
+        withExtendedLifetime((webViews, store)) {}
+
+        func whereFroms(_ item: DownloadItem?) -> [String]? {
+            guard let path = item?.destinationPath else { return nil }
+            let name = "com.apple.metadata:kMDItemWhereFroms"
+            let size = getxattr(path, name, nil, 0, 0, 0)
+            guard size > 0 else { return nil }
+            var data = Data(count: size)
+            _ = data.withUnsafeMutableBytes { getxattr(path, name, $0.baseAddress, size, 0, 0) }
+            return try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String]
+        }
+        XCTAssertEqual(finished.map(\.state), [.complete, .complete])
+        XCTAssertEqual(whereFroms(finished.first), [url.absoluteString])
+        XCTAssertNil(whereFroms(finished.last))
+    }
+
     func testResolveDestinationNoConflict() {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         let result = WKBackend.resolveDestination(for: "unique_\(UUID().uuidString).zip", in: dir)

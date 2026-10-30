@@ -109,7 +109,14 @@ final class DownloadManager {
         lane.wk.store = store
         lane.url.store = store
         lane.wk.onUpdated = { [weak self] item in self?.notifyObservers(item) }
-        lane.url.onUpdated = lane.wk.onUpdated
+        lane.url.onUpdated = { [weak self] item in
+            guard let self else { return }
+            // WKBackend records a browser download's origin itself; a private Space's is never recorded.
+            if item.state == .complete, let key = item.key, !privateDownloadIds.values.contains(where: { $0.contains(key) }) {
+                DownloadQuarantine.recordOrigin(path: item.destinationPath, urls: [item.url])
+            }
+            notifyObservers(item)
+        }
         lane.wk.onResumableFailure = { [weak self, weak store] id, error in
             if let store { self?.resumeAfterNetworkDrop(id: id, in: store, error: error) }
         }

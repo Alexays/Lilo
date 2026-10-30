@@ -44,4 +44,11 @@ enum DownloadQuarantine {
             logger.error("Failed to stamp quarantine on \(url.path, privacy: .private): \(error.localizedDescription, privacy: .public)")
         }
     }
+
+    /// Spotlight's "Where from" (kMDItemWhereFroms): the download's URL, then the page it came from.
+    static func recordOrigin(path: String, urls: [String]) {
+        guard let data = try? PropertyListSerialization.data(fromPropertyList: urls, format: .binary, options: 0) else { return }
+        let status = data.withUnsafeBytes { setxattr(path, "com.apple.metadata:kMDItemWhereFroms", $0.baseAddress, data.count, 0, 0) }
+        if status != 0 { logger.error("Failed to record where \(path, privacy: .private) came from: errno \(errno, privacy: .public)") }
+    }
 }
