@@ -88,6 +88,22 @@ final class WKBackendTests: XCTestCase {
         XCTAssertTrue(result.lastPathComponent.hasSuffix(".pdf"))
     }
 
+    func testResolveDestinationKeepsADoubleExtensionTogether() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        for name in ["archive.tar.gz", "backup.tar.ZST", "script.user.js", "report.v2024.gz", "photo.jpg"] {
+            FileManager.default.createFile(atPath: dir.appendingPathComponent(name).path, contents: Data())
+        }
+
+        XCTAssertEqual(WKBackend.resolveDestination(for: "archive.tar.gz", in: dir).lastPathComponent, "archive (1).tar.gz")
+        XCTAssertEqual(WKBackend.resolveDestination(for: "backup.tar.ZST", in: dir).lastPathComponent, "backup (1).tar.ZST")
+        XCTAssertEqual(WKBackend.resolveDestination(for: "script.user.js", in: dir).lastPathComponent, "script (1).user.js")
+        XCTAssertEqual(WKBackend.resolveDestination(for: "report.v2024.gz", in: dir).lastPathComponent, "report.v2024 (1).gz",
+                       "a component longer than 4 characters stays in the name, as in Chrome")
+        XCTAssertEqual(WKBackend.resolveDestination(for: "photo.jpg", in: dir).lastPathComponent, "photo (1).jpg")
+    }
+
     func testResolveDestinationWithoutExtension() {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         let name = "noext_\(UUID().uuidString)"

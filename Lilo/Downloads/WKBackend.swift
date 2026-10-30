@@ -165,10 +165,17 @@ final class WKBackend: NSObject {
     nonisolated static func resolveDestination(for suggestedFilename: String, in directory: URL, reserved: Set<String> = []) -> URL {
         let destination = directory.appendingPathComponent(suggestedFilename)
         var finalURL = destination
+        var name = destination.deletingPathExtension().lastPathComponent
+        var ext = destination.pathExtension
+        // As Chrome's FilePath::Extension: up to 4 characters before a compression suffix belong to the extension.
+        let inner = (name as NSString).pathExtension
+        if !inner.isEmpty, inner.count <= 4,
+           ["bz", "bz2", "gz", "lz", "lzma", "lzo", "xz", "z", "zst"].contains(ext.lowercased()) || "\(inner).\(ext)".lowercased() == "user.js" {
+            name = (name as NSString).deletingPathExtension
+            ext = "\(inner).\(ext)"
+        }
         var counter = 1
         while reserved.contains(finalURL.path) || FileManager.default.fileExists(atPath: finalURL.path) {
-            let name = destination.deletingPathExtension().lastPathComponent
-            let ext = destination.pathExtension
             let newName = ext.isEmpty ? "\(name) (\(counter))" : "\(name) (\(counter)).\(ext)"
             finalURL = destination.deletingLastPathComponent().appendingPathComponent(newName)
             counter += 1
