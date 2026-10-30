@@ -110,11 +110,28 @@
   let scrollerEl: HTMLDivElement | undefined = $state();
   let overflowStart = $state(false);
   let overflowEnd = $state(false);
+  let compactSpace = $state(false);
+  let spaceChipWidth = 0;
 
   function measureOverflow(): void {
     if (!scrollerEl) return;
     overflowStart = scrollerEl.scrollLeft > 1;
     overflowEnd = scrollerEl.scrollLeft + scrollerEl.clientWidth < scrollerEl.scrollWidth - 1;
+    // The Space chip drops its name before the tabs scroll, and takes it back only once it fits beside them:
+    // the pills grow into the room it frees, so the row cannot flip between the two.
+    const chip = stripEl?.querySelector<HTMLElement>(".space-chip");
+    if (!chip) return;
+    if (!compactSpace) {
+      if (scrollerEl.scrollWidth > scrollerEl.clientWidth + 1) {
+        spaceChipWidth = chip.offsetWidth;
+        compactSpace = true;
+      }
+      return;
+    }
+    const list = scrollerEl.querySelector(".today-list");
+    if (!list) return;
+    const end = list.lastElementChild?.getBoundingClientRect().right ?? list.getBoundingClientRect().left;
+    if (list.getBoundingClientRect().right - end >= spaceChipWidth - chip.offsetWidth) compactSpace = false;
   }
 
   // A mouse wheel scrolls vertically: the strip turns it sideways. It has to be non-passive to keep the page still.
@@ -253,7 +270,7 @@
     <NavControls show="history" />
   {/if}
 
-  <StripSpaceMenu />
+  <StripSpaceMenu compact={compactSpace} />
 
   <!-- Laid out by the strip; only the tabs are in the list. -->
   <div class="strip-tabs" role="tablist" aria-orientation="horizontal" aria-label={t("strip.ariaLabel")}>

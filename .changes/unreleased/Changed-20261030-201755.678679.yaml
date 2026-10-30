@@ -1,0 +1,3 @@
+kind: Changed
+body: When the top tab strip runs out of room, the Space button shrinks to its icon before the tabs start scrolling.
+time: 2026-10-30T20:17:55.678679+01:00

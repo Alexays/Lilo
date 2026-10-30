@@ -6,9 +6,13 @@
   import { t } from "../../lib/i18n/state.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
 
+  let { compact = false }: { compact?: boolean } = $props();
+
   let open = $state(false);
   let chip: HTMLButtonElement | undefined = $state();
   const active = $derived(getActiveSpace());
+  // A Space without an icon keeps its name: nothing else would tell it apart.
+  const iconOnly = $derived(compact && !!active?.icon);
 
   function pick(spaceId: string) {
     open = false;
@@ -20,16 +24,21 @@
 <button
   bind:this={chip}
   class="space-chip"
+  class:icon-only={iconOnly}
   aria-haspopup="menu"
   aria-expanded={open}
   aria-label={t("bottomBar.spaces")}
   style:--space-color={active?.color}
   onclick={() => (open = !open)}
 >
-  <span class="name">{active?.icon} {active?.name ?? t("spaceBar.defaultSpaceName")}</span>
-  <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
-    <path d="M1 1l3.5 3.5L8 1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-  </svg>
+  {#if iconOnly}
+    <span class="name">{active?.icon}</span>
+  {:else}
+    <span class="name">{active?.icon} {active?.name ?? t("spaceBar.defaultSpaceName")}</span>
+    <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
+      <path d="M1 1l3.5 3.5L8 1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  {/if}
 </button>
 
 {#if open && chip}
@@ -66,6 +75,12 @@
     font: inherit;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
+  }
+
+  .space-chip.icon-only {
+    width: 32px;
+    justify-content: center;
+    padding: 0;
   }
 
   .space-chip:hover,
