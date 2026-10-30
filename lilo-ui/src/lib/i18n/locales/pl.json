@@ -2241,6 +2241,12 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "Lilo w świątecznym nastroju.",
+				"description": "W wyjątkowe dni ikona aplikacji zyskuje świąteczny akcent, narysowany dla każdej ikony.",
+				"seasonsTitle": "Ikona na każdą porę roku.",
+				"seasonsDescription": "Halloween, Boże Narodzenie, Księżycowy Nowy Rok, Wielkanoc i kilka innych dni mają własną wersję Twojej ikony. Wyłączysz to w Ustawienia > Wygląd."
+			},
 			"v0120": {
 				"headline": "Pasek stapia się ze stroną.",
 				"description": "Pasek nad stroną przybiera kolor każdej witryny i porusza się razem z nią jako jedna całość.",

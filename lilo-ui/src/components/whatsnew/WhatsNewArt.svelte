@@ -87,6 +87,23 @@
     <g stroke="var(--separator)" stroke-width="3" stroke-linecap="round"><path d="M56 40h40m-40 8h48" /></g>
     <g fill="none" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round"><circle cx="64" cy="62" r="3" /><path d="M64 56v1.5m0 9v1.5m-6-6h1.5m9 0h1.5" /><path d="M74 62h8m-2-2 2 2-2 2" /></g>
     <path d="M94 59a4 4 0 1 1-4.5 6a4 4 0 0 0 4.5-6z" fill="var(--text-secondary)" />
+  {:else if kind === "seasons"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--warning) 12%, var(--bg-elevated))" />
+    <rect x="14" y="16" width="58" height="58" rx="14" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--accent)">
+      <ellipse cx="37" cy="39" rx="6.5" ry="10" transform="rotate(-45 37 39)" opacity="0.45" />
+      <ellipse cx="49" cy="39" rx="6.5" ry="10" transform="rotate(45 49 39)" opacity="0.65" />
+      <ellipse cx="37" cy="51" rx="6.5" ry="10" transform="rotate(45 37 51)" opacity="0.8" />
+      <ellipse cx="49" cy="51" rx="6.5" ry="10" transform="rotate(-45 49 51)" />
+    </g>
+    <path d="M43 16v22" stroke="var(--text-secondary)" stroke-width="1" />
+    <g stroke="var(--text-primary)" stroke-width="1.2" stroke-linecap="round" fill="none"><path d="M40 41l-3-2m3 4h-3.5m3.5 2-3 2m9-6 3-2m-3 4h3.5m-3.5 2 3 2" /></g>
+    <circle cx="43" cy="43" r="3" fill="var(--text-primary)" /><circle cx="43" cy="39.5" r="1.8" fill="var(--text-primary)" />
+    <g fill="var(--bg-elevated)" stroke="var(--separator)"><rect x="84" y="12" width="26" height="20" rx="6" /><rect x="84" y="35" width="26" height="20" rx="6" /><rect x="84" y="58" width="26" height="20" rx="6" /></g>
+    <path d="M97 27c-4-3-6-5-6-7.5a2.6 2.6 0 0 1 6-1.4a2.6 2.6 0 0 1 6 1.4c0 2.5-2 4.5-6 7.5z" fill="var(--danger)" />
+    <path d="M97 39v12m-5.2-9 10.4 6m-10.4 0 10.4-6" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" />
+    <circle cx="97" cy="68" r="3.5" fill="var(--warning)" />
+    <path d="M97 61.5v1.8m0 9.4v1.8m-6.5-6.5h1.8m9.4 0h1.8m-11.1-4.6 1.3 1.3m6.6 6.6 1.3 1.3m0-9.2-1.3 1.3m-6.6 6.6-1.3 1.3" stroke="var(--warning)" stroke-width="1.3" stroke-linecap="round" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

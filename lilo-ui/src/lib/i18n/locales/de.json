@@ -2219,6 +2219,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "Lilo macht sich festlich.",
+				"description": "An besonderen Tagen bekommt das App-Symbol eine festliche Note, für jedes Symbol eigens gezeichnet.",
+				"seasonsTitle": "Ein Symbol für jede Jahreszeit.",
+				"seasonsDescription": "Halloween, Weihnachten, das chinesische Neujahr, Ostern und einige andere Tage bekommen jeweils eine eigene Version deines Symbols. Ausschalten unter Einstellungen > Erscheinungsbild."
+			},
 			"v0120": {
 				"headline": "Die Leiste wird Teil der Seite.",
 				"description": "Die Leiste über der Seite nimmt die Farbe jeder Website an und bewegt sich mit ihr, wie aus einem Guss.",

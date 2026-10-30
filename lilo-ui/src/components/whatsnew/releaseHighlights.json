@@ -1,4 +1,15 @@
 {
+	"0.13.0": {
+		"headlineKey": "whatsNew.releases.v0130.headline",
+		"descriptionKey": "whatsNew.releases.v0130.description",
+		"highlights": [
+			{
+				"illustration": "seasons",
+				"titleKey": "whatsNew.releases.v0130.seasonsTitle",
+				"descriptionKey": "whatsNew.releases.v0130.seasonsDescription"
+			}
+		]
+	},
 	"0.12.0": {
 		"headlineKey": "whatsNew.releases.v0120.headline",
 		"descriptionKey": "whatsNew.releases.v0120.description",

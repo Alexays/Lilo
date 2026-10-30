@@ -2219,6 +2219,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "Lilo in feeststemming.",
+				"description": "Op speciale dagen krijgt het appsymbool een feestelijk tintje, voor elk symbool apart getekend.",
+				"seasonsTitle": "Een symbool voor elk seizoen.",
+				"seasonsDescription": "Halloween, kerst, Chinees Nieuwjaar, Pasen en nog een paar dagen krijgen elk hun eigen versie van je symbool. Zet het uit in Instellingen > Weergave."
+			},
 			"v0120": {
 				"headline": "De balk wordt één met de pagina.",
 				"description": "De balk boven de pagina neemt de kleur van elke site aan en beweegt met haar mee, als één geheel.",

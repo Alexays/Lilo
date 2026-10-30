@@ -2219,6 +2219,12 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "Lilo si veste a festa.",
+				"description": "L'icona dell'app si fa festiva nei giorni speciali, disegnata per ogni icona.",
+				"seasonsTitle": "Un'icona per ogni stagione.",
+				"seasonsDescription": "Halloween, Natale, il Capodanno lunare, Pasqua e qualche altro giorno hanno ognuno la propria versione della tua icona. Disattivala in Impostazioni > Aspetto."
+			},
 			"v0120": {
 				"headline": "La barra diventa la pagina.",
 				"description": "La barra sopra la pagina prende il colore di ogni sito e si muove con essa, in un unico blocco.",

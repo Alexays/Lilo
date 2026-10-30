@@ -1,3 +1,0 @@
-kind: Fixed
-body: A site an extension shows inside its pages keeps the cookies it sets, so it stays signed in instead of failing a moment later.
-time: 2026-10-30T13:17:13.017821+01:00

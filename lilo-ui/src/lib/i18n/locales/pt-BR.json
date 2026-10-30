@@ -2219,6 +2219,12 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "O Lilo entra no clima das festas.",
+				"description": "O ícone do app ganha um toque festivo em datas especiais, desenhado para cada ícone.",
+				"seasonsTitle": "Um ícone para cada estação.",
+				"seasonsDescription": "Halloween, Natal, Ano Novo Lunar, Páscoa e mais alguns dias ganham sua própria versão do seu ícone. Desative em Ajustes > Aparência."
+			},
 			"v0120": {
 				"headline": "A barra se funde à página.",
 				"description": "A barra acima da página assume a cor de cada site e se move com ela, como uma peça só.",

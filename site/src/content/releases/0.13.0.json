@@ -1,0 +1,27 @@
+{
+  "version": "0.13.0",
+  "title": {
+    "en": "Lilo dresses up for the holidays.",
+    "fr": "Lilo se met aux couleurs des fêtes."
+  },
+  "introduction": {
+    "en": "The app icon picks up a festive touch on special days, drawn for each icon.",
+    "fr": "L'icône de l'app prend une touche festive les jours de fête, dessinée pour chaque icône."
+  },
+  "highlights": [
+    {
+      "id": "seasons",
+      "title": {
+        "en": "An icon for every season.",
+        "fr": "Une icône pour chaque saison."
+      },
+      "body": {
+        "en": "Halloween, Christmas, Lunar New Year, Easter and a few other days each get their own version of your icon. Turn it off in Settings > Appearance.",
+        "fr": "Halloween, Noël, le Nouvel an lunaire, Pâques et quelques autres jours ont chacun leur version de votre icône. Désactivez-la dans Réglages > Apparence."
+      },
+      "notes": [
+        "Lilo's app icon dresses up for Halloween, Christmas, New Year, Valentine's Day, Lunar New Year, Easter, the summer solstice and its own birthday, in a version drawn for each icon. Turn it off in Settings > Appearance > Seasonal icon."
+      ]
+    }
+  ]
+}

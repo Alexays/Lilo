@@ -2208,6 +2208,12 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0130": {
+				"headline": "Lilo dresses up for the holidays.",
+				"description": "The app icon picks up a festive touch on special days, drawn for each icon.",
+				"seasonsTitle": "An icon for every season.",
+				"seasonsDescription": "Halloween, Christmas, Lunar New Year, Easter and a few other days each get their own version of your icon. Turn it off in Settings > Appearance."
+			},
 			"v0120": {
 				"headline": "The bar becomes the page.",
 				"description": "The bar above the page now takes each site's color and moves with it, as one card.",

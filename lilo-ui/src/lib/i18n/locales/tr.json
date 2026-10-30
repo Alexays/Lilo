@@ -2219,6 +2219,12 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0130": {
+				"headline": "Lilo bayram havasında.",
+				"description": "Özel günlerde uygulama simgesi, her simge için ayrı çizilmiş şenlikli bir dokunuş kazanır.",
+				"seasonsTitle": "Her mevsime bir simge.",
+				"seasonsDescription": "Cadılar Bayramı, Noel, Ay Yeni Yılı, Paskalya ve birkaç gün daha simgenizin kendi sürümünü getirir. Ayarlar > Görünüm'den kapatabilirsiniz."
+			},
 			"v0120": {
 				"headline": "Çubuk sayfayla bütünleşiyor.",
 				"description": "Sayfanın üstündeki çubuk her sitenin rengini alır ve sayfayla birlikte tek parça hâlinde hareket eder.",

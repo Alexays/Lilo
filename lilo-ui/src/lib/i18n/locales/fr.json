@@ -2208,6 +2208,12 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0130": {
+				"headline": "Lilo se met aux couleurs des fêtes.",
+				"description": "L'icône de l'app prend une touche festive les jours de fête, dessinée pour chaque icône.",
+				"seasonsTitle": "Une icône pour chaque saison.",
+				"seasonsDescription": "Halloween, Noël, le Nouvel an lunaire, Pâques et quelques autres jours ont chacun leur version de votre icône. Désactivez-la dans Réglages > Apparence."
+			},
 			"v0120": {
 				"headline": "La barre se fond dans la page.",
 				"description": "La barre au-dessus de la page prend la couleur de chaque site et bouge avec elle, d'un seul tenant.",
