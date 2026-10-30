@@ -5,7 +5,8 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 ## Build & verify
 
 - The **Makefile is the only command surface.** Don't invent build steps; `make help` lists everything.
-- **`make validate` is the gate** - UI lint/tests, SwiftLint, the Xcode build, Swift tests, and the extension bridge. Run it before claiming a change works. It should stay around 30 s warm: write tests that keep it there ([CONTRIBUTING.md](CONTRIBUTING.md#tests-and-validation)). (CI additionally runs `make e2e` and `make swift-test-slow`, checks that `Lilo.xcodeproj` and the generated extension bridge bundles are in sync, and builds Release.)
+- **`make validate` is the gate** - UI lint/tests, SwiftLint, the Xcode build, Swift tests, and the extension bridge. Run it before claiming a change outside `lilo-ui/` works. It should stay around 30 s warm: write tests that keep it there ([CONTRIBUTING.md](CONTRIBUTING.md#tests-and-validation)). (CI additionally runs `make e2e` and `make swift-test-slow`, checks that `Lilo.xcodeproj` and the generated extension bridge bundles are in sync, and builds Release.)
+- **Scope the checks to what changed.** A change confined to `lilo-ui/` (Svelte, TS, CSS, locales) needs only `make ui-lint ui-test`; keep `make validate` for changes that touch Swift, the bridge or the build.
 - `swift build` / `swift test` are fine for fast local checks once `make vt-build` and `make ui-build` have produced `Vendor/` and the generated sources; `xcodebuild` (via `make`) is the official path. Run directly, it takes `-derivedDataPath .derived.noindex/xcode` as `make` does, so a worktree's build goes with the worktree.
 - After **adding or renaming a Swift file**, run `make project-sync` and commit the regenerated `Lilo.xcodeproj` - `xcodebuild` and CI fail until it is synced.
 
