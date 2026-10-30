@@ -482,9 +482,13 @@ final class SidePanelTests: XCTestCase {
         let allowed = try await framer("Allowed", hostPermissions: #"["<all_urls>"]"#)
         let denied = try await framer("Denied", hostPermissions: "[]")
         try await visit("/set")
+        let partitioned = try XCTUnwrap(HTTPCookie(properties: [
+            .name: "lax", .value: "elsewhere", .domain: "127.0.0.1", .path: "/", HTTPCookiePropertyKey("StoragePartition"): "http://other.test"
+        ]))
+        await WKWebsiteDataStore(forIdentifier: registry.profileId).httpCookieStore.setCookie(partitioned)
 
         let first = await frame(in: allowed)
-        XCTAssertEqual(first, ["lax=1; plain=1", "lax=1; plain=1"], "the framed page and what it requests carry its Lax cookie, as in Chrome")
+        XCTAssertEqual(first, ["lax=1; plain=1", "lax=1; plain=1"], "the framed page and what it requests carry its Lax cookie, as in Chrome, not one partitioned under another site")
 
         try await visit("/later")
         let second = await frame(in: allowed)

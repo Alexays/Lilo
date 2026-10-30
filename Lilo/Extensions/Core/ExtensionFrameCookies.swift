@@ -113,8 +113,14 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
     /// A `Cookie` header set this way replaces WebKit's own, so every cookie of a framed site has its rules, not only the
     /// `SameSite` ones.
     private static func rules(for cookies: [HTTPCookie], framedBy sites: [String: Set<String>]) -> String {
+        func created(_ cookie: HTTPCookie) -> Double { (cookie.properties?[HTTPCookiePropertyKey("Created")] as? NSNumber)?.doubleValue ?? 0 }
+        // A partitioned cookie belongs to the top-level site it was set under, never to an extension page. The rest go in a
+        // browser's order, longest path first then oldest, which WebKit keeps only through priorities.
+        let sent = cookies
+            .filter { ($0.properties?[HTTPCookiePropertyKey("StoragePartition")] as? String)?.isEmpty ?? true }
+            .sorted { ($0.path.count, -created($0)) > ($1.path.count, -created($1)) }
         var rules: [[String: Any]] = []
-        for cookie in cookies {
+        for (index, cookie) in sent.enumerated() {
             let isDomain = cookie.domain.hasPrefix(".")
             let host = isDomain ? String(cookie.domain.dropFirst()) : cookie.domain
             guard let extensionIds = sites.first(where: { host == $0.key || host.hasSuffix("." + $0.key) })?.value else { continue }
@@ -124,7 +130,7 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
             let filters = path.hasSuffix("/") ? [origin + escaped(path)] : [origin + escaped(path) + "(\\?.*)?$", origin + escaped(path) + "/"]
             let action: [String: Any] = [
                 "type": "modify-headers",
-                "priority": 1,
+                "priority": sent.count - index,
                 "request-headers": [["header": "Cookie", "operation": "append", "value": "\(cookie.name)=\(cookie.value)"]]
             ]
             let pages = extensionIds.sorted().map { "^chrome-extension://\(escaped($0))/" }
