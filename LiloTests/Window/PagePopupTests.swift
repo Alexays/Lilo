@@ -430,6 +430,17 @@ final class PagePopupTests: XCTestCase {
         XCTAssertTrue(controller.pagePopups[popup.engine.id] === popup)
     }
 
+    func testAPopupWindowAsksBeforeOpeningAnExternalApp() async throws {
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popupWindow = try XCTUnwrap(popup.window)
+
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromPage: URL(string: "https://example.com/"))
+
+        let sheet = try XCTUnwrap(popupWindow.attachedSheet)
+        popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
+    }
+
     func testExpandingALinkPeekKeepsItsPageAsAnUnpinnedTab() async throws {
         try pinOpener()
         try await clickLink("https://other.test/article")

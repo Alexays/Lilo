@@ -478,8 +478,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if decision { NSWorkspace.shared.open(url) }
             return
         }
-        // The prompt is a sheet on this window; a background tab has no surface to ask from.
-        guard isVisibleTab(tab.id), let window else { return }
+        // The prompt is a sheet on the window showing the page; a background tab or a hidden peek has no surface to ask from.
+        let sheetWindow = if let popup = pagePopups[tab.id] {
+            popup.window ?? (popup.peekView?.superview != nil ? window : nil)
+        } else {
+            littleWindows[tab.id]?.window ?? (isVisibleTab(tab.id) ? window : nil)
+        }
+        guard let sheetWindow else { return }
         let appName = NSWorkspace.shared.urlForApplication(toOpen: url)?.deletingPathExtension().lastPathComponent
         let alert = NSAlert()
         alert.alertStyle = .informational
@@ -490,7 +495,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         alert.suppressionButton?.title = "Always allow for this site".localized
         alert.addButton(withTitle: "Open".localized)
         alert.addButton(withTitle: "Cancel".localized)
-        alert.beginSheetModal(for: window) { [weak self] response in
+        alert.beginSheetModal(for: sheetWindow) { [weak self] response in
             guard let self else { return }
             let open = response == .alertFirstButtonReturn
             if alert.suppressionButton?.state == .on, origin != "unknown", !tab.isPrivateBrowsing {
