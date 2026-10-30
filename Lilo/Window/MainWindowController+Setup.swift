@@ -626,6 +626,10 @@ extension MainWindowController {
                 if type.contains("microphone"), webView.microphoneCaptureState != .none { webView.setMicrophoneCaptureState(.none) }
             }
         }
+        settingsHandler.onHistoryCleared = { [weak self] cutoff in
+            guard let self, let profileId = profileContext?.profileId, let spaceManager = context.spaceManager else { return }
+            context.recentlyClosed.removePages(closedSince: cutoff) { spaceManager.space(with: $0)?.profileId == profileId }
+        }
         settingsHandler.onZoomLevelReset = { [weak self] host in
             guard let self, let engine = tabManager.activeEngineTab,
                   engine.currentURL?.host?.lowercased() == host.lowercased() else { return }

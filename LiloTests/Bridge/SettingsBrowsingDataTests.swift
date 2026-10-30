@@ -81,4 +81,29 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let remaining = await cookieStore.allCookies()
         XCTAssertEqual(remaining.map(\.name), [], "the profile's cookies outlive a clear made from its private space")
     }
+
+    func testClearingHistoryForgetsTheProfilesRecentlyClosedPages() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let otherSpace = try context.spaceManager.createSpace(name: "O", profileId: try context.profileManager.createProfile(name: "O").id)
+        let window = makeTestWindow(context, showing: space.id)
+        window.setupBridgeLate()
+        let terminal = RecentlyClosedStack.Entry.Content.terminal(.init(cwd: "/"))
+        for (content, spaceId) in [
+            (.page(URL(string: "https://cleared.example/")!), space.id),
+            (terminal, space.id),
+            (.page(URL(string: "https://other-profile.example/")!), otherSpace.id)
+        ] as [(RecentlyClosedStack.Entry.Content, UUID)] {
+            context.recentlyClosed.push(content, spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
+        }
+        let handler = try XCTUnwrap(window.bridgeRouter.handlers["clearBrowsingData"] as? SettingsBridgeHandler)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "clearBrowsingData", "payload": ["kinds": ["history"], "range": "hour"]
+        ])))
+
+        XCTAssertEqual(context.recentlyClosed.recentEntries.map(\.content), [.page(URL(string: "https://other-profile.example/")!), terminal])
+    }
 }

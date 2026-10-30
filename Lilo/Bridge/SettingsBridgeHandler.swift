@@ -92,6 +92,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     var onZoomLevelReset: ((String) -> Void)?
     /// An origin lost a permission type it may have been using.
     var onSitePermissionRevoked: ((_ origin: String, _ type: String) -> Void)?
+    /// The profile's history was cleared since this date, or entirely (nil).
+    var onHistoryCleared: ((Date?) -> Void)?
     var onAutoDeviceSwitchingChanged: (() -> Void)?
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
@@ -133,6 +135,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                     try await Task.detached {
                         if let cutoff { try historyStore.deleteEntries(since: cutoff) } else { try historyStore.clearAll() }
                     }.value
+                    onHistoryCleared?(cutoff)
                 } catch {
                     failure = String(format: "Could not clear browsing history: %@".localized, error.localizedDescription)
                 }
