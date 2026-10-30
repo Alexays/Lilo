@@ -1,0 +1,3 @@
+kind: Changed
+body: Zooming in and out steps through the same levels as Chrome, from 25% to 500%, and works on pages without a site address, such as page source and local files.
+time: 2026-10-30T19:24:09.695678+01:00

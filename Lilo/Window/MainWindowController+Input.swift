@@ -232,8 +232,8 @@ extension MainWindowController {
         if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { engine.reload() } else { tabManager.reloadActiveTab() }
     }
     @objc func stopLoadingCurrentPage(_ sender: Any?) { focusedEngineTab?.stopLoading() }
-    @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(by: 0.1) }
-    @objc func zoomOutCurrentPage(_ sender: Any?) { zoomActiveTab(by: -0.1) }
+    @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(in: true) }
+    @objc func zoomOutCurrentPage(_ sender: Any?) { zoomActiveTab(in: false) }
     @objc func resetCurrentPageZoom(_ sender: Any?) { resetActiveTabZoom() }
     @objc func showFindBar(_ sender: Any?) { presentFindBar() }
     @objc func openLocation(_ sender: Any?) {
@@ -290,14 +290,19 @@ extension MainWindowController {
         }
     }
 
-    /// Adjust the active tab's zoom by `delta`, clamped, persisted per host, and reflected in the chrome.
-    func zoomActiveTab(by delta: Double) {
+    /// Chrome's zoom levels, which zooming in and out steps through.
+    static let pageZoomLevels: [Double] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]
+
+    /// Moves the active tab's zoom to the next level up or down, persisted per host and reflected in the chrome.
+    func zoomActiveTab(in zoomIn: Bool) {
         if let terminal = activeTerminalView {
-            bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: delta > 0 ? 1 : -1)])
+            bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: zoomIn ? 1 : -1)])
             return
         }
         guard let engine = tabManager.activeEngineTab else { return }
-        applyUserZoom(min(3.0, max(0.5, engine.pageZoom + delta)), to: engine)
+        let zoom = engine.pageZoom
+        let next = zoomIn ? Self.pageZoomLevels.first { $0 > zoom + 0.001 } : Self.pageZoomLevels.last { $0 < zoom - 0.001 }
+        if let next { applyUserZoom(next, to: engine) }
     }
 
     func resetActiveTabZoom() {
@@ -312,13 +317,12 @@ extension MainWindowController {
     /// A zoom the user asked for, as the tab's extension zoom settings allow: a disabled tab ignores
     /// it and a manual one only tells its extension. A per-origin reset forgets the host's level.
     private func applyUserZoom(_ zoom: Double, to engine: WKWebViewTab, isReset: Bool = false) {
-        guard let host = tabManager.activeTab?.url?.host else { return }
         switch engine.zoomSettings.mode {
         case "disabled": return
         case "manual": return engine.reportZoomChange(from: engine.pageZoom, to: zoom)
         default: engine.setPageZoom(zoom)
         }
-        if !engine.isPrivateBrowsing, engine.zoomSettings.scope == "per-origin" {
+        if !engine.isPrivateBrowsing, engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
             if isReset { profileContext?.zoom.removeZoom(forHost: host) } else { profileContext?.zoom.setZoom(zoom, forHost: host) }
         }
         bridgeRouter.send(event: "zoomChanged", data: ["level": zoom])

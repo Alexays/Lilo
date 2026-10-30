@@ -412,10 +412,10 @@ final class TabBridgeHandler: BridgeHandler {
             if let tabId = message.uuid("tabId") { await publishTabPreview(for: tabId) }
 
         case "zoomIn":
-            windowController?.zoomActiveTab(by: 0.1)
+            windowController?.zoomActiveTab(in: true)
 
         case "zoomOut":
-            windowController?.zoomActiveTab(by: -0.1)
+            windowController?.zoomActiveTab(in: false)
 
         case "zoomReset":
             windowController?.resetActiveTabZoom()
