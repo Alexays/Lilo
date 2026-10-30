@@ -190,8 +190,21 @@ if connection == nil {
 
 Thread.detachNewThread {
     var agent = LineReader(fd: STDIN_FILENO)
-    while let line = agent.next() {
-        let message = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any]
+    let conversation = ProcessInfo.processInfo.environment["LILO_CONVERSATION"].flatMap { $0.isEmpty ? nil : $0 }
+    while var line = agent.next() {
+        var message = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any]
+        // An agent Lilo started for a conversation says so in its handshake, which ties its tabs to that conversation.
+        if let conversation, var initialize = message, initialize["method"] as? String == "initialize" {
+            var params = initialize["params"] as? [String: Any] ?? [:]
+            var meta = params["_meta"] as? [String: Any] ?? [:]
+            meta["lilo/conversation"] = conversation
+            params["_meta"] = meta
+            initialize["params"] = params
+            if let rewritten = try? JSONSerialization.data(withJSONObject: initialize) {
+                line = rewritten
+                message = initialize
+            }
+        }
         bridge.lock.lock()
         if let reason = bridge.unavailable {
             bridge.lock.unlock()

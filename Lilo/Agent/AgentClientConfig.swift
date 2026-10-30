@@ -180,7 +180,7 @@ enum AgentClientConfig {
 
     /// Off the cooperative pool, with no input: a command still running after `timeout` seconds, like a
     /// login shell whose profile hangs, is killed and gives no output.
-    private static func run(_ executable: String, _ arguments: [String], timeout: Double) async -> (status: Int32, output: String?) {
+    static func run(_ executable: String, _ arguments: [String], timeout: Double) async -> (status: Int32, output: String?) {
         await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .utility).async {
                 let process = Process()

@@ -41,6 +41,7 @@ export interface BridgeTabSnapshot {
 	isNotSecure?: boolean;
 	kind?: string;
 	cwd?: string;
+	agentId?: string;
 	gitBranch?: string;
 	diffAdded?: number;
 	diffRemoved?: number;
@@ -95,6 +96,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		isNotSecure: data.isNotSecure ?? false,
 		kind: data.kind ?? "web",
 		cwd: data.cwd ?? "",
+		agentId: data.agentId ?? "",
 		gitBranch: data.gitBranch ?? "",
 		diffAdded: data.diffAdded ?? 0,
 		diffRemoved: data.diffRemoved ?? 0,
@@ -149,6 +151,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.isNotSecure !== undefined) out.isNotSecure = data.isNotSecure;
 	if (data.kind !== undefined) out.kind = data.kind;
 	if (data.cwd !== undefined) out.cwd = data.cwd;
+	if (data.agentId !== undefined) out.agentId = data.agentId;
 	if (data.gitBranch !== undefined) out.gitBranch = data.gitBranch;
 	if (data.diffAdded !== undefined) out.diffAdded = data.diffAdded;
 	if (data.diffRemoved !== undefined) out.diffRemoved = data.diffRemoved;

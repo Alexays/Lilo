@@ -3,7 +3,7 @@ import AppKit
 /// The SF Symbol of each menu action, so an action shows the same icon in every menu.
 /// Where WebKit's own menu items show the same action, the symbol is WebKit's.
 enum MenuIcon: CaseIterable {
-    case newTab, newTerminalTab, newFolder, newSpace, newWindow, newPrivateSpace
+    case newTab, newTerminalTab, askAgent, newFolder, newSpace, newWindow, newPrivateSpace
     case openInNewTab, duplicate, openInSplit, arrangeSideBySide, arrangeTopAndBottom, separateSplit
     case moveToFolder, removeFromFolder, openFolder, closeFolder, edit, delete
     case lock, unlock, changePassword, removeLock
@@ -27,6 +27,7 @@ enum MenuIcon: CaseIterable {
         switch self {
         case .newTab: "plus.square"
         case .newTerminalTab, .openInTerminal: "terminal"
+        case .askAgent: "bubble.left.and.text.bubble.right"
         case .newFolder: "folder.badge.plus"
         case .newSpace: "rectangle.stack.badge.plus"
         case .newWindow: "interface.window.badge.plus"

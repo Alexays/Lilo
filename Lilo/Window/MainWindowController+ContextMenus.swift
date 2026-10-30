@@ -318,6 +318,10 @@ extension MainWindowController {
             presentContextMenu(menu, anchorRect: anchorRect)
             return
         }
+        if let conversation = conversationTab(inFolder: folder) {
+            showConversationContextMenu(conversation, folder: folder, anchorRect: anchorRect)
+            return
+        }
         // Every other entry would reveal or release the tabs, deleting included (they stay in the sidebar).
         if folder.isLocked {
             menu.addItem("Unlock Folder…".localized, icon: .unlock) { self.bridgeRouter.send(event: "beginFolderUnlock", data: ["id": folderId]) }

@@ -46,7 +46,16 @@ enum AgentMCP {
         case "initialize":
             if let name = (params["clientInfo"] as? [String: Any])?["name"] as? String, !name.isEmpty { session.clientName = name }
             session.supportsRoots = (params["capabilities"] as? [String: Any])?["roots"] != nil
-            if await control.authorize(session, asking: false) == true {
+            // The agent of a conversation Lilo started: the user already chose it, and its tabs go in the conversation.
+            if let token = (params["_meta"] as? [String: Any])?["lilo/conversation"] as? String,
+               let conversation = control.context?.conversations.conversation(forToken: token),
+               let spaceId = conversation.spaceId, let space = control.context?.spaceManager?.space(with: spaceId) {
+                session.conversationSpaceId = spaceId
+                session.folderId = conversation.folderId
+                session.profileId = space.profileId
+                session.supportsRoots = false
+                welcome(session, control: control)
+            } else if await control.authorize(session, asking: false) == true {
                 welcome(session, control: control)
             } else {
                 // Asked once the handshake replied: its tool calls report the wait, so the client never times out.
