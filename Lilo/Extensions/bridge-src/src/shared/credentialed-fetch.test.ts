@@ -5,9 +5,10 @@ import { installCredentialedFetch } from './credentialed-fetch.ts';
 
 const calls: any[] = [];
 let answer: unknown = null;
+// A cancel is answered at once: left pending, its 30 s ipc timeout would keep the test process alive.
 mockGapAPI((call) => {
   calls.push(call.params);
-  return answer;
+  return call.method === 'cancel' ? null : answer;
 });
 
 describe('credentialed fetch', () => {
