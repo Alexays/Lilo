@@ -117,7 +117,7 @@ final class WindowGapAPITests: XCTestCase {
     func testAPopupWindowIsOpenForContextsLoadedAfterIt() throws {
         let context = try XCTUnwrap(registry.context(for: extensionId))
         let panel = try XCTUnwrap(registry.delegate.presentExtensionPanel(
-            url: nil, type: .popup, for: context, controller: registry.controller, size: NSSize(width: 320, height: 240)
+            url: nil, type: .popup, isPrivate: false, for: context, controller: registry.controller, size: NSSize(width: 320, height: 240)
         ))
         defer { panel.nsWindow?.close() }
 
