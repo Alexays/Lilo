@@ -1,3 +1,0 @@
-kind: Fixed
-body: In a Space with no tabs open, clicking New Tab or pressing Command-T brings the command bar back after you close it, and the New Tab row no longer shows a close button that does nothing.
-time: 2026-10-30T15:09:54.440095+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Command-Shift-V pastes without formatting, as in Chrome and as Google Docs suggests, alongside Option-Shift-Command-V.
-time: 2026-10-30T15:57:18.033984+01:00

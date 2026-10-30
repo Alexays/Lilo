@@ -1,3 +1,0 @@
-kind: Fixed
-body: Retrying a download that cannot resume sends the site's cookies, so a download that needs you signed in can finish.
-time: 2026-10-30T16:12:41.65022+01:00
