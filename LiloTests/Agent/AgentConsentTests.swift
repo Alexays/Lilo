@@ -164,10 +164,13 @@ final class AgentConsentTests: AgentToolTestCase {
 
     func testRevokingAClientDisconnectsItAndKeepsTheOthers() async throws {
         XCTAssertFalse(control.sessions.isEmpty)
+        let profileId = UUID().uuidString
+        context.settingsStore.set("agentProfileGrants", value: #"["Codex|codex|\#(profileId)","Test Agent|test|\#(profileId)"]"#)
         control.revoke("Test Agent")
 
         let disconnected = await pollUntil(timeout: 5) { !self.control.sessions.contains { $0.clientName == "Test Agent" } }
         XCTAssertTrue(disconnected)
         XCTAssertEqual(control.allowedClients.keys.sorted(), ["Codex", "claude-code"])
+        XCTAssertEqual(context.settingsStore.get("agentProfileGrants"), #"["Codex|codex|\#(profileId)"]"#, "its profiles are asked again too")
     }
 }

@@ -214,11 +214,12 @@ final class AgentControl {
         }
     }
 
-    /// Forgets one client's approval and drops its connections: it has to ask again.
+    /// Forgets one client's approval, with the profiles it was allowed, and drops its connections: it has to ask again.
     func revoke(_ name: String) {
         var clients = allowedClients
         clients[name] = nil
         saveAllowedClients(clients)
+        forgetProfileGrants(of: name)
         for session in sessions where session.clientName == name {
             session.connection.close()
             end(session)
