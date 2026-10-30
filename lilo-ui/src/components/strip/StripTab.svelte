@@ -89,7 +89,7 @@
         {#if site.secure}
           <svg width="9" height="11" viewBox="0 0 11 12" aria-hidden="true"><rect x="1" y="5" width="9" height="6.5" rx="1.5" fill="currentColor" /><path d="M3 5V3.5a2.5 2.5 0 0 1 5 0V5" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
         {/if}
-        {site.host}
+        <span class="strip-tab-host">{site.host}</span>
       </span>
     {/if}
     {#if !iconOnly}
@@ -215,7 +215,8 @@
   }
 
   .strip-tab-site {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -223,11 +224,23 @@
     white-space: nowrap;
   }
 
+  .strip-tab-site svg {
+    flex: none;
+  }
+
+  .strip-tab-host {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .strip-tab-title.secondary {
     color: var(--text-secondary);
   }
 
+  /* Gives way before the site does: the host is what the active pill is there to show. */
   .strip-tab-title {
+    flex: 0 1000 auto;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
