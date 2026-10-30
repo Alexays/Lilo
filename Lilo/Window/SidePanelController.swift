@@ -214,6 +214,7 @@ final class SidePanelController: NSObject {
         guard let contentView = window.window?.contentView else { return }
         let engine = WKWebViewTab(webView: WKWebView(frame: .zero, configuration: context.webViewConfiguration ?? WKWebViewConfiguration()))
         window.configureEngineIfNeeded(engine)
+        engine.wkWebView.isInspectable = context.isInspectable
         engine.applyPageBackgroundColor(window.currentContentSurfaceColor)
         let panel = SidePanelView(
             engine: engine,
