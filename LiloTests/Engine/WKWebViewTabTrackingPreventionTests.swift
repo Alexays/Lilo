@@ -12,8 +12,6 @@ final class WKWebViewTabTrackingPreventionTests: XCTestCase {
     typealias Advance = @convention(c) (AnyObject, Selector, Double, @escaping @convention(block) () -> Void) -> Void
 
     func testAnInteractedSiteKeepsItsSignInWhenClassifiedAsATracker() async throws {
-        // WebKit's tracker classification runs on its own schedule: minutes under a full parallel run.
-        executionTimeAllowance = 600
         // WebKit's classifier ignores loopback hosts: real-looking ones go through a CONNECT proxy.
         let proxy = try await TinyCONNECTProxy { host, _ in
             ("200 OK", ["Content-Type: text/html", "Set-Cookie: SID=\(host); Path=/; Max-Age=31536000; HttpOnly"], Data("<p>\(host)</p>".utf8))
@@ -48,12 +46,12 @@ final class WKWebViewTabTrackingPreventionTests: XCTestCase {
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             unsafeBitCast(store.method(for: advance), to: Advance.self)(store, advance, 20 * 86400) { done.resume() }
         }
+        var domains = Set(await store.httpCookieStore.allCookies().map(\.domain))
+        XCTAssertEqual(domains, ["used.test", "unused.test"])
+        // The cookies go at once, but WebKit calls back only once every process dropped every data type: minutes under load.
         let process = NSSelectorFromString("_processStatisticsAndDataRecords:")
-        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
-            unsafeBitCast(store.method(for: process), to: Done.self)(store, process) { done.resume() }
-        }
+        unsafeBitCast(store.method(for: process), to: Done.self)(store, process) {}
 
-        var domains: Set<String> = []
         let purged = await pollUntil(timeout: 10) {
             domains = Set(await store.httpCookieStore.allCookies().map(\.domain))
             return !domains.contains("unused.test")
