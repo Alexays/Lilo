@@ -294,6 +294,8 @@ final class WKWebViewTab: NSObject {
     private(set) var isFrozen = false
     /// Set once beforeunload ran ahead of the teardown: the page leaves without asking, and only once.
     private var isLeaving = false
+    /// Set while a close the user asked for waits on the page's beforeunload handler: its prompt shows the tab.
+    private var isAskingToClose = false
     /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
     /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
     var lentToExtensionAt: Date?
@@ -368,12 +370,14 @@ final class WKWebViewTab: NSObject {
 
     func ownsWebView(_ candidate: WKWebView) -> Bool { webView === candidate }
 
-    /// Asks WebKit whether the page may close now. False means a beforeunload handler is in the
-    /// way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
+    /// Asks WebKit whether the page may close now, for a close the user asked for. False means a beforeunload
+    /// handler is in the way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
     func tryClose() -> Bool {
         // A suspended page runs no beforeunload handler, and WebKit refuses _tryClose on it.
         guard !isFrozen else { return true }
-        return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
+        let closes = WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
+        isAskingToClose = !closes
+        return closes
     }
     /// Chrome's transient activation: how long after the user's last click or key press a page may still open a window.
     private static let popupActivationWindow: TimeInterval = 5
@@ -883,7 +887,10 @@ final class WKWebViewTab: NSObject {
     /// Closes the page through its beforeunload, pagehide and unload handlers: `_close` alone fires no
     /// beforeunload, where a site may write state back, such as its sign-in.
     private func closePage() {
-        if !isLeaving { _ = tryClose() }
+        if !isLeaving {
+            isLeaving = true
+            _ = tryClose()
+        }
         let close = NSSelectorFromString("_close")
         if webView.responds(to: close) { webView.perform(close) }
     }
@@ -2077,9 +2084,15 @@ extension WKWebViewTab: WKUIDelegate {
         completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         onMain { tab in
-            // Like browsers, a page nobody looks at leaves without asking: the prompt would wait unseen.
-            if tab.isLeaving || tab.agentDialogHandler?("beforeunload: left the page") == true || !tab.isOnScreen { return completionHandler(true) }
-            JSDialogPresenter.runBeforeUnload(in: webView, completion: completionHandler)
+            if tab.isLeaving || tab.agentDialogHandler?("beforeunload: left the page") == true { return completionHandler(true) }
+            let isClosing = tab.isAskingToClose
+            tab.isAskingToClose = false
+            if !tab.isOnScreen {
+                // A page nobody looks at leaves without asking, unless the user closes its tab: the tab shows to ask, as in Chrome.
+                guard isClosing else { return completionHandler(true) }
+                tab.delegate?.tabRequestsForeground(tab)
+            }
+            tab.runWhenShown { $0 ? JSDialogPresenter.runBeforeUnload(in: webView, completion: completionHandler) : completionHandler(true) }
         }
     }
 

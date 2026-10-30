@@ -3,8 +3,8 @@ import WebKit
 import XCTest
 @testable import Lilo
 
-/// A page dialog never waits where nobody can see it: a tab off screen leaves without a beforeunload
-/// prompt, and holds its alert until the tab shows.
+/// A page dialog never waits where nobody can see it: a page off screen leaves without a beforeunload
+/// prompt unless the user closes its tab, and holds its alert or sign-in until the tab shows.
 @MainActor
 final class WKWebViewTabDialogTests: XCTestCase {
     private var browserContext: TemporaryBrowserContext!
@@ -82,6 +82,25 @@ final class WKWebViewTabDialogTests: XCTestCase {
         window.endSheet(try XCTUnwrap(window.attachedSheet))
         let answered = await pollUntil { (try? await engine.wkWebView.evaluateJavaScript("window.answered === true")) as? Bool == true }
         XCTAssertTrue(answered, "the page runs on once the alert is answered")
+    }
+
+    func testClosingABackgroundTabShowsItAndAsksBeforeLeaving() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<script>addEventListener('beforeunload', e => e.preventDefault())</script>", in: engine)
+        _ = try await engine.wkWebView.evaluateJavaScript("document.body.click(); true")
+        controller.createTabStateFirst(url: nil)
+        XCTAssertNil(engine.view.window)
+
+        controller.closeTabStateFirst(id: tab.id)
+
+        let asked = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(asked, "the page gets to ask before its tab closes")
+        XCTAssertEqual(controller.tabManager.activeOpenTabId, tab.id, "the tab shows with its question")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+        let closed = await pollUntil { self.controller.tabManager.tab(for: tab.id) == nil }
+        XCTAssertTrue(closed, "the tab closes once the user leaves")
     }
 
     func testAuthPromptOfABackgroundTabWaitsForTheTabToShow() async throws {
