@@ -1,4 +1,5 @@
 import AppKit
+import WebKit
 import XCTest
 @testable import Lilo
 
@@ -77,6 +78,25 @@ final class KeyboardShortcutsTests: XCTestCase {
         XCTAssertFalse(controller.handleKeyboardShortcut(keyDown("k", [.option, .command], keyCode: 40, in: controller)),
                        "the menu answers the keys it carries")
         XCTAssertEqual(target.runs, 1)
+    }
+
+    func testThePageGetsAShortcutFirstUnlessTheBrowserReservesIt() throws {
+        let controller = MainWindowController()
+        let window = try XCTUnwrap(controller.window)
+        let page = WKWebView()
+        window.contentView?.addSubview(page)
+        window.makeFirstResponder(page)
+
+        let paste = keyDown("V", [.shift, .command], keyCode: 9, in: controller)
+        XCTAssertFalse(controller.handleMonitoredKeyboardEvent(paste), "the page sees ⇧⌘V first")
+        XCTAssertTrue(controller.handleMonitoredKeyboardEvent(paste), "WebKit sends it back unhandled, so Lilo pastes")
+        XCTAssertFalse(controller.handleMonitoredKeyboardEvent(keyDown("[", .command, keyCode: 33, in: controller)), "⌘[ indents in an editor")
+        XCTAssertTrue(controller.handleMonitoredKeyboardEvent(keyDown("w", .command, keyCode: 13, in: controller)), "⌘W never reaches the page")
+
+        window.contentView?.addSubview(controller.chromeWebView)
+        window.makeFirstResponder(controller.chromeWebView)
+        XCTAssertTrue(controller.handleMonitoredKeyboardEvent(keyDown("V", [.shift, .command], keyCode: 9, in: controller)),
+                      "the address bar is no page")
     }
 
     func testRecordingAKeyHeldElsewhereAsksBeforeTakingIt() {

@@ -229,6 +229,8 @@ final class MainWindowController: NSWindowController {
     lazy var splitPanes = SplitPanesController(controller: self)
     /// Last observed Command-key state, used to push hover-pill "open in background" hints.
     var lastCommandKeyDown = false
+    /// The shortcut left to the focused page, which WebKit sends back through the key monitor when the page lets it go.
+    var keyLeftToPage: NSEvent?
     /// The shortcut Settings is recording: the next key press binds it instead of reaching anything else.
     var recordingShortcutId: String?
     var sidebarWidth: CGFloat = MainWindowController.defaultSidebarWidth

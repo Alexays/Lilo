@@ -380,10 +380,23 @@ extension MainWindowController {
             || routeUnhandledGlobalEvent(event)
     }
 
-    /// The shortcuts Lilo takes ahead of the page; the other actions reach their menu item once the
-    /// page let the key go.
+    /// Keys a page never gets, as in Chrome: opening, closing, reopening and walking tabs, windows and spaces, and the
+    /// address bar. A focused page sees every other shortcut first, which runs once WebKit sends the key back unhandled.
+    private static let reservedShortcuts = Set([
+        "tab.new", "space.newPrivate", "tab.close", "window.close", "location.open", "tab.reopenClosed",
+        "tab.next", "tab.previous", "tab.recentNext", "tab.recentPrevious", "space.next", "space.previous"
+    ] + (1...9).flatMap { ["tab.select\($0)", "space.select\($0)"] })
+
+    /// Runs the shortcut `event` types, or leaves it to the focused page or to its menu item.
     func handleKeyboardShortcut(_ event: NSEvent) -> Bool {
         guard let id = KeyboardShortcuts.action(for: event) else { return false }
+        if event === keyLeftToPage {
+            keyLeftToPage = nil
+        } else if !Self.reservedShortcuts.contains(id), let webView = (event.window ?? window)?.firstResponder as? WKWebView,
+                  webView !== chromeWebView {
+            keyLeftToPage = event
+            return false
+        }
         switch id {
         case "tab.new":
             // The chrome knows whether the command bar is open, so it toggles the blank new tab.
