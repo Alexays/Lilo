@@ -78,6 +78,21 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertTrue(controller.littleWindows.isEmpty)
     }
 
+    func testAPageOpeningANewTabGetsAnotherLittleWindowOnItsOwnSpace() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        try await load(little, try XCTUnwrap(URL(string: "https://example.com/")))
+        controller.switchToSpace(work.id)
+        let tabs = controller.tabManager.openTabs.count
+
+        let hasOpener = try await little.engine.wkWebView.evaluateJavaScript("const w = window.open('about:blank'); w.opener === window")
+
+        XCTAssertEqual(hasOpener as? Bool, true)
+        XCTAssertEqual(controller.tabManager.openTabs.count, tabs, "no tab in the window behind")
+        let opened = try XCTUnwrap(controller.littleWindows.values.first { $0 !== little })
+        XCTAssertEqual(opened.spaceId, home.id)
+        XCTAssertTrue(opened.dataStore === little.dataStore)
+    }
+
     func testClosingTheWindowSendsItsPageToRecentlyClosed() async throws {
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
         let url = try XCTUnwrap(URL(string: "https://example.com/read"))

@@ -276,8 +276,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
             return
         }
         // A Little window's new tab is another Little window, not a tab of the window behind.
-        if littleWindows[tab.id] != nil {
-            openLittleWindow(url: url)
+        if let little = littleWindows[tab.id] {
+            openLittleWindow(url: url, opener: little)
             return
         }
         // Right after the page, in its folder, as in Chrome; consecutive links of the page keep their order.

@@ -268,6 +268,11 @@ extension MainWindowController {
             return openPagePopup(configuration: configuration, features: features, opener: opener)
         }
 
+        // A Little window's new tab is another Little window, never a tab of the window behind.
+        if let opener, let little = littleWindows[opener.id] {
+            return openLittleWindow(url: requestedURL, opener: little, configuration: configuration)?.engine.wkWebView
+        }
+
         guard let popupTab = createTabStateFirst(
             url: requestedURL,
             activate: !inBackground,
