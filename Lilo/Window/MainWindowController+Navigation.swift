@@ -86,11 +86,15 @@ extension MainWindowController: WKWebViewTab.Delegate {
             }
         }
 
+        let pageLoaded = tab.hasCommittedContent && !tab.isLoading
+        let isProvisional = if case .started = event { true } else { false }
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             let resolvedURL = eventURL ?? tab.currentURL ?? t.url
             t.url = resolvedURL
-            t.title = self.resolvedTabTitle(currentTitle: tab.currentTitle, url: resolvedURL, existingTitle: t.title)
-            if t.matchesHomeURL(resolvedURL) {
+            t.title = self.resolvedTabTitle(currentTitle: tab.currentTitle, url: resolvedURL, existingTitle: t.title, pageLoaded: pageLoaded)
+            // Until the new page commits, and until it loads when it has no title, the title is the previous page's.
+            let titleIsThePages = !isProvisional && (pageLoaded || !(tab.currentTitle ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            if titleIsThePages, t.matchesHomeURL(resolvedURL) {
                 t.homeTitle = t.title
             }
             t.isLoading = tab.isLoading
@@ -164,9 +168,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateTitle title: String?) {
+        let pageTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
-            t.title = self.resolvedTabTitle(currentTitle: title, url: tab.currentURL, existingTitle: t.title)
-            if t.matchesHomeURL(tab.currentURL ?? t.url) {
+            t.title = self.resolvedTabTitle(currentTitle: title, url: tab.currentURL, existingTitle: t.title, pageLoaded: !tab.isLoading)
+            if !pageTitle.isEmpty || !tab.isLoading, t.matchesHomeURL(tab.currentURL ?? t.url) {
                 t.homeTitle = t.title
             }
         }
@@ -671,10 +676,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
 }
 
 extension MainWindowController {
-    func resolvedTabTitle(currentTitle: String?, url: URL?, existingTitle: String) -> String {
+    /// A page without a title of its own shows its address once loaded; while it loads, the previous title stays.
+    func resolvedTabTitle(currentTitle: String?, url: URL?, existingTitle: String, pageLoaded: Bool) -> String {
         let title = currentTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !title.isEmpty, url != nil || (!existingTitle.isEmpty && existingTitle != Tab.placeholderTitle) { return title }
-        return (existingTitle.isEmpty || existingTitle == Tab.placeholderTitle) ? Tab.fallbackTitle(for: url) : existingTitle
+        return (pageLoaded || existingTitle.isEmpty || existingTitle == Tab.placeholderTitle) ? Tab.fallbackTitle(for: url) : existingTitle
     }
 }
 

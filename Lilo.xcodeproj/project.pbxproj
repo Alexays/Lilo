@@ -163,6 +163,7 @@
 		410062A023F652230701D9D0 /* StateSyncBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9ABE2BA2C2EFACE9D7FBA5 /* StateSyncBridgeHandlerTests.swift */; };
 		419E68A8E890C2970F10FE35 /* ExtensionLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D8452792228C102FF9E9860 /* ExtensionLifecycleTests.swift */; };
 		426D225A383C496DD464122B /* BookmarkStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F35BF930C5354C8F563896E /* BookmarkStoreTests.swift */; };
+		432D0EFE3C6916452994A1FB /* NavigationHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B132999217708CB269B684B /* NavigationHistoryTests.swift */; };
 		43BCE93C3883317A600DF0AE /* DownloadQuarantineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9444438C18C0D569B59EB360 /* DownloadQuarantineTests.swift */; };
 		43EB24B0700E187809FC9CD5 /* ChromeHoverStateMachineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F35E8CA20BCB8F7985F7944 /* ChromeHoverStateMachineTests.swift */; };
 		445805C243121CE3AE409BDF /* PageTranslatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BCFD2826741F47BAAF2B31 /* PageTranslatorTests.swift */; };
@@ -900,6 +901,7 @@
 		3AA4167F274A99B830B26126 /* LocalPortTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPortTests.swift; sourceTree = "<group>"; };
 		3ABC27298577426623E704DC /* ContentSettingsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSettingsBridgeHandler.swift; sourceTree = "<group>"; };
 		3AE50E8E127854FD0D0AD526 /* ExtensionBackgroundPreparerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionBackgroundPreparerTests.swift; sourceTree = "<group>"; };
+		3B132999217708CB269B684B /* NavigationHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationHistoryTests.swift; sourceTree = "<group>"; };
 		3B439B798EAB8C06D971E750 /* chrome-smoke.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "chrome-smoke.json"; sourceTree = "<group>"; };
 		3B4D0EE5722E43A281A69A3A /* TabRenameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRenameTests.swift; sourceTree = "<group>"; };
 		3B6936115AB3C93DAA8D7965 /* ChromeHoverStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeHoverStateMachine.swift; sourceTree = "<group>"; };
@@ -2663,6 +2665,7 @@
 				E807867BF68ACB54326B758C /* MainWindowControllerPowerModeTests.swift */,
 				E25B8353B9467CB320CC1F0A /* MediaCardRetentionTests.swift */,
 				CA9D2C3A98A2424ABB5BB417 /* MenuValidationTests.swift */,
+				3B132999217708CB269B684B /* NavigationHistoryTests.swift */,
 				857CC4EE3AA04D16AB3FD769 /* PagePopupTests.swift */,
 				7C5A63DD73D3B6D7E5BB7E77 /* PermissionRequestQueueTests.swift */,
 				D127FE22E412BD3725926CC1 /* ProfileSwitchTests.swift */,
@@ -3397,6 +3400,7 @@
 				6BD57EC1DA7E11AB58E0B3F7 /* MinimumFontSizeTests.swift in Sources */,
 				31C4AC4B0109B7AFF35DF472 /* NativeMessagingTests.swift in Sources */,
 				02F93963D58B59C74ECAB785 /* NavigationFailureTests.swift in Sources */,
+				432D0EFE3C6916452994A1FB /* NavigationHistoryTests.swift in Sources */,
 				34F6E3D8E230BA75040D0042 /* NotificationPolyfillTests.swift in Sources */,
 				1063BD5E0861594D88CFFA3E /* NotificationsBridgeHandlerTests.swift in Sources */,
 				E4960068CD73F7F92562FE80 /* OmniboxBridgeHandlerTests.swift in Sources */,
