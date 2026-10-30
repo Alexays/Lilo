@@ -2006,6 +2006,7 @@
 		"Restricted Area": "Ограниченный доступ",
 		"Username": "Имя пользователя",
 		"Password": "Пароль",
+		"Remember this password": "Запомнить этот пароль",
 		"Authentication Required": "Требуется аутентификация",
 		"%@ asks for a certificate to identify you.": "%@ запрашивает сертификат для вашей идентификации.",
 		"Log In": "Войти",

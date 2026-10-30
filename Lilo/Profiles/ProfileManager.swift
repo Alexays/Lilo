@@ -113,6 +113,7 @@ final class ProfileManager {
             activateProfile(id: next.id)
         }
         BookmarkSpotlightIndexer.removeAll(profileId: id)
+        HTTPAuthKeychain.deleteAll(profileId: id, modifiedSince: .distantPast)
         // The row is gone and the UI is told either way; leftover files are not worth a failed delete.
         do { try dbManager.deleteProfileData(profileId: id) } catch {
             Self.logger.error("profile data removal failed for \(id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")

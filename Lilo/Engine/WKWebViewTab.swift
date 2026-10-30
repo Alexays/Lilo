@@ -1885,7 +1885,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                     DispatchQueue.main.async { [weak self] in
                         MainActor.assumeIsolated {
                             HTTPAuthChallengeHandler().resolve(
-                                challenge, in: self?.webView.window, usesKeychain: self?.isPrivateBrowsing == false,
+                                challenge, in: self?.webView.window, keychainProfile: self?.webView.configuration.websiteDataStore.identifier,
                                 completion: completionHandler
                             )
                         }

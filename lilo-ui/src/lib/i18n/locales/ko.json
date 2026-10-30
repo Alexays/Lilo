@@ -1986,6 +1986,7 @@
 		"Restricted Area": "접근 제한 구역",
 		"Username": "사용자 이름",
 		"Password": "암호",
+		"Remember this password": "이 암호 기억하기",
 		"Authentication Required": "인증 필요",
 		"%@ asks for a certificate to identify you.": "%@에서 본인 확인을 위한 인증서를 요청합니다.",
 		"Log In": "로그인",

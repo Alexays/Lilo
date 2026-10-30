@@ -284,13 +284,14 @@ final class NavigationFailureTests: XCTestCase {
             authenticationMethod: NSURLAuthenticationMethodHTTPBasic
         )
 
+        let profileId = UUID()
         XCTAssertNotEqual(
-            HTTPAuthKeychain.storageAccount(for: basicSpace),
-            HTTPAuthKeychain.storageAccount(for: digestSpace)
+            HTTPAuthKeychain.storageAccount(for: basicSpace, profileId: profileId),
+            HTTPAuthKeychain.storageAccount(for: digestSpace, profileId: profileId)
         )
         XCTAssertNotEqual(
-            HTTPAuthKeychain.storageAccount(for: basicSpace),
-            HTTPAuthKeychain.storageAccount(for: otherRealmSpace)
+            HTTPAuthKeychain.storageAccount(for: basicSpace, profileId: profileId),
+            HTTPAuthKeychain.storageAccount(for: otherRealmSpace, profileId: profileId)
         )
     }
 }

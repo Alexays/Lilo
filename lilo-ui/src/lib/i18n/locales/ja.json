@@ -1986,6 +1986,7 @@
 		"Restricted Area": "制限された領域",
 		"Username": "ユーザ名",
 		"Password": "パスワード",
+		"Remember this password": "このパスワードを記憶",
 		"Authentication Required": "認証が必要です",
 		"%@ asks for a certificate to identify you.": "%@ が本人確認のための証明書を求めています。",
 		"Log In": "ログイン",

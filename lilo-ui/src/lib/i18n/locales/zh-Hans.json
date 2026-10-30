@@ -1986,6 +1986,7 @@
 		"Restricted Area": "受限区域",
 		"Username": "用户名",
 		"Password": "密码",
+		"Remember this password": "记住此密码",
 		"Authentication Required": "需要认证",
 		"%@ asks for a certificate to identify you.": "%@ 请求提供证书以验证你的身份。",
 		"Log In": "登录",

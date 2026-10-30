@@ -139,6 +139,19 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertTrue(removed, "the deleted profile's cookies and site storage stay on disk")
     }
 
+    func testDeleteProfileForgetsItsHTTPPasswords() throws {
+        let doomed = try manager.createProfile(name: "Doomed")
+        let space = URLProtectionSpace(
+            host: "intranet.example", port: 443, protocol: "https", realm: "Staff", authenticationMethod: NSURLAuthenticationMethodHTTPBasic
+        )
+        HTTPAuthKeychain.store(URLCredential(user: "ada", password: "secret", persistence: .forSession), for: space, profileId: doomed.id)
+        XCTAssertNotNil(HTTPAuthKeychain.storedCredential(for: space, profileId: doomed.id))
+
+        try manager.deleteProfile(id: doomed.id)
+
+        XCTAssertNil(HTTPAuthKeychain.storedCredential(for: space, profileId: doomed.id))
+    }
+
     /// The store is built with a browser's storage quotas; the test host always gets those, so only its sharing is checked here.
     func testExtensionsAndTabsShareTheProfilesDataStore() throws {
         let profile = try manager.createProfile(name: "Shared")

@@ -1986,6 +1986,7 @@
 		"Restricted Area": "Zone restreinte",
 		"Username": "Nom d'utilisateur",
 		"Password": "Mot de passe",
+		"Remember this password": "Mémoriser ce mot de passe",
 		"Authentication Required": "Authentification requise",
 		"%@ asks for a certificate to identify you.": "%@ demande un certificat pour vous identifier.",
 		"Log In": "Se connecter",

@@ -1986,6 +1986,7 @@
 		"Restricted Area": "Kısıtlı Alan",
 		"Username": "Kullanıcı Adı",
 		"Password": "Parola",
+		"Remember this password": "Bu parolayı hatırla",
 		"Authentication Required": "Kimlik Doğrulama Gerekli",
 		"%@ asks for a certificate to identify you.": "%@ sizi tanımlamak için bir sertifika istiyor.",
 		"Log In": "Oturum Aç",
