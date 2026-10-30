@@ -753,13 +753,16 @@ final class WKWebViewTab: NSObject {
     /// `completion` resumes a page-initiated `window.print()`: the page's `afterprint` fires there,
     /// so it has to wait for the panel to close, which NSPrintOperation reports through a
     /// target/selector pair rather than a block.
-    func printPage(in window: NSWindow?, completion: (@MainActor @Sendable () -> Void)? = nil) {
+    /// `frame` is the `_WKFrameHandle` of a frame that called `print()`: only that frame's document is printed.
+    func printPage(in window: NSWindow?, frame: AnyObject? = nil, completion: (@MainActor @Sendable () -> Void)? = nil) {
         guard let window, let printInfo = NSPrintInfo.shared.copy() as? NSPrintInfo else {
             completion?()
             return
         }
         printInfo.isHorizontallyCentered = false; printInfo.isVerticallyCentered = false
-        let op = webView.printOperation(with: printInfo)
+        let framePrint = NSSelectorFromString("_printOperationWithPrintInfo:forFrame:")
+        let op = frame.flatMap { webView.responds(to: framePrint) ? webView.perform(framePrint, with: printInfo, with: $0)?.takeUnretainedValue() as? NSPrintOperation : nil }
+            ?? webView.printOperation(with: printInfo)
         op.showsPrintPanel = true; op.showsProgressPanel = true
         guard let completion else {
             op.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
@@ -2085,8 +2088,7 @@ extension WKWebViewTab: WKUIDelegate {
     }
 
     // `window.print()` (WKUIDelegatePrivate): without this hook the page's print request never reaches
-    // the app. The frame handle is ignored: printOperation covers the whole page, exactly like the
-    // app's own Cmd+P.
+    // the app. A subframe's `print()` prints that frame alone, as in Chrome (a receipt in a hidden iframe).
     @objc(_webView:printFrame:pdfFirstPageSize:completionHandler:)
     nonisolated func webView(
         _ webView: WKWebView,
@@ -2094,7 +2096,9 @@ extension WKWebViewTab: WKUIDelegate {
         pdfFirstPageSize: CGSize,
         completionHandler: @escaping @MainActor @Sendable () -> Void
     ) {
-        onMain { $0.printPage(in: webView.window, completion: completionHandler) }
+        // WebKit calls its UI delegate on the main thread, where the handle is used.
+        nonisolated(unsafe) let frame = frame as AnyObject
+        onMain { $0.printPage(in: webView.window, frame: frame, completion: completionHandler) }
     }
 
     // SpeechRecognition (WKUIDelegatePrivate): WebKit denies outright without this hook. Recognition
