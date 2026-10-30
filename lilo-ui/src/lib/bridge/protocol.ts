@@ -1269,6 +1269,9 @@ export interface BridgeCallTab {
 	microphoneMuted: boolean;
 	hasCamera: boolean;
 	cameraOff: boolean;
+	/** The page registered no Media Session toggle: the card's button mutes the capture in Lilo, not the page's own button. */
+	microphoneInLilo: boolean;
+	cameraInLilo: boolean;
 	/** The tab's own sound, muted in Lilo. */
 	muted: boolean;
 	/** The page registered a Media Session hangup handler. */

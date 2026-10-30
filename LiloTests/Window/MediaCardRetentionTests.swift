@@ -47,6 +47,18 @@ final class MediaCardRetentionTests: XCTestCase {
         _ = try? await engine.wkWebView.evaluateJavaScript("0")
     }
 
+    func testTheCallCardSaysWhichTogglesMuteOnlyInLilo() throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example"), activate: false))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        engine.callControls = WKWebViewTab.CallControls(actions: ["togglemicrophone", "hangup"])
+        window.context.callTabIds.insert(tab.id)
+
+        let summary = try XCTUnwrap(window.callSummaries().first { $0["id"] as? String == tab.id.uuidString })
+
+        XCTAssertEqual(summary["microphoneInLilo"] as? Bool, false, "the page toggles its own microphone")
+        XCTAssertEqual(summary["cameraInLilo"] as? Bool, true, "no camera handler: the card mutes WebKit's capture")
+    }
+
     func testTabPausedFromCardFreezesOnlyAfterItsGrace() async throws {
         let engine = try await tabPausedFromCard()
         XCTAssertTrue(window.context.mediaTabIds.contains(engine.id), "the card keeps a tab paused from it")

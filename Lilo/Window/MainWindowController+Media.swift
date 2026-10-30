@@ -64,6 +64,9 @@ extension MainWindowController {
                 "microphoneMuted": tab.isMicrophoneMuted || controls.microphoneActive == false || !tab.isMicrophoneActive,
                 "hasCamera": tab.isCameraActive || controls.actions.contains("togglecamera"),
                 "cameraOff": controls.cameraActive == false || !tab.isCameraActive || engine.wkWebView.cameraCaptureState == .muted,
+                // Without the page's handler, the toggle mutes WebKit's capture, which the page's own button does not show.
+                "microphoneInLilo": !controls.actions.contains("togglemicrophone"),
+                "cameraInLilo": !controls.actions.contains("togglecamera"),
                 "muted": tab.isMuted,
                 "canHangUp": controls.actions.contains("hangup")
             ]

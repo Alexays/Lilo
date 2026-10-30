@@ -25,6 +25,8 @@ function activity(tabs: Partial<BridgeMediaTab>[], calls: Partial<BridgeCallTab>
 			muted: false,
 			hasCamera: false,
 			cameraOff: true,
+			microphoneInLilo: false,
+			cameraInLilo: false,
 			canHangUp: false,
 			...entry,
 		})),

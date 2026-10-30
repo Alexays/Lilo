@@ -29,8 +29,11 @@
       <span class="call-title">{call.title}</span>
     </button>
     <div class="call-controls">
+      <!-- A page without its own toggle never shows Lilo's mute: the label says whose it is. -->
       {#if call.hasMicrophone}
-        {@const label = t(call.microphoneMuted ? "tabItem.unmuteMicrophone" : "tabItem.muteMicrophone")}
+        {@const label = call.microphoneInLilo
+          ? t(call.microphoneMuted ? "mediaCard.unmuteMicrophoneInLilo" : "mediaCard.muteMicrophoneInLilo")
+          : t(call.microphoneMuted ? "tabItem.unmuteMicrophone" : "tabItem.muteMicrophone")}
         <button
           class="call-btn"
           class:off={call.microphoneMuted}
@@ -50,7 +53,9 @@
         </button>
       {/if}
       {#if call.hasCamera}
-        {@const label = t(call.cameraOff ? "mediaCard.turnOnCamera" : "mediaCard.turnOffCamera")}
+        {@const label = call.cameraInLilo
+          ? t(call.cameraOff ? "mediaCard.turnOnCameraInLilo" : "mediaCard.turnOffCameraInLilo")
+          : t(call.cameraOff ? "mediaCard.turnOnCamera" : "mediaCard.turnOffCamera")}
         <button
           class="call-btn"
           class:off={call.cameraOff}
