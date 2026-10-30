@@ -109,6 +109,17 @@ final class PiPControllerTests: XCTestCase {
         XCTAssertEqual(calls, 0, "the script runs in an isolated world: the page's own prototype is never called")
     }
 
+    func testLeavingTheAppLeavesAPausedOrMutedVideoInItsPage() async throws {
+        for html in [Self.stillVideo, Self.silentVideo] {
+            let tab = await makeTab(html)
+            // As when the sound comes from an <audio> element of the same page.
+            tab.pip.autoEnterIfEligible(hasActiveMedia: true)
+            try await Task.sleep(for: .seconds(1))
+            let mode = await presentationMode(of: tab)
+            XCTAssertEqual(mode, "inline", "only a video playing with sound pops out on its own")
+        }
+    }
+
     func testLeavingTheAppFromAPlayingVideoOpensItsPiPAndComingBackEndsIt() async throws {
         let browserContext = try await TemporaryBrowserContext()
         addTeardownBlock { @MainActor in browserContext.tearDown() }
