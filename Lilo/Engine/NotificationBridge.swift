@@ -14,8 +14,8 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     typealias PermissionDecisionHandler = (WKWebView?, String, String, @escaping (Bool) -> Void) -> Void
     var permissionDecisionHandler: PermissionDecisionHandler?
 
-    /// True if the origin already has a stored "allow" decision; gates `new Notification()`.
-    var allowanceHandler: ((WKWebView?, String) -> Bool)?
+    /// The decision a page's notifications have without asking: true allowed, false blocked, nil to ask.
+    var decisionHandler: ((WKWebView?, String) -> Bool?)?
 
     /// The tab a web view belongs to, carried by each notification so a click can bring it back.
     var tabIdResolver: ((WKWebView) -> UUID?)?
@@ -59,7 +59,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
                                                                             in: frame, in: PageWorld.bridgeWorld)
             }
         case "show":
-            guard !isCrossOrigin, allowanceHandler?(message.webView, origin) == true else { return }
+            guard !isCrossOrigin, decisionHandler?(message.webView, origin) == true else { return }
             show(body: body, message: message, origin: origin)
         case "close":
             guard let pageId = body["id"] as? Int,
@@ -68,11 +68,10 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
             posted[identifier] = nil
             UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
         case "query":
-            // Only "allow" is stored as a distinct answer; anything else stays "default" so a site
-            // with no decision yet can still prompt.
-            guard !isCrossOrigin, allowanceHandler?(message.webView, origin) == true else { return }
+            // Undecided stays "default", so the site can still ask.
+            guard !isCrossOrigin, let decision = decisionHandler?(message.webView, origin) else { return }
             if let webView = message.frameInfo.webView {
-                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", ["granted"]),
+                WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", [decision ? "granted" : "denied"]),
                                                                             in: message.frameInfo, in: PageWorld.bridgeWorld)
             }
         default:
@@ -208,12 +207,13 @@ extension NotificationBridge {
         show() {},
       });
       lilo.global('Notification', Notification);
-      // Only a top origin native deems trustworthy can hold a stored allow; the others would pay an IPC for nothing. A same-origin
+      // Only a secure top origin can hold a stored decision; the others would pay an IPC for nothing. A same-origin
       // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
         try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
       } else if (window.isSecureContext) {
-        lilo.send('liloNotification', { type: 'query' });
+        // At document start the bridge world's relay may not be listening yet.
+        apply(listen, doc, ['DOMContentLoaded', () => lilo.send('liloNotification', { type: 'query' }), { once: true }]);
       }
     }
     """#

@@ -325,9 +325,10 @@ extension MainWindowController {
         }
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
-        context.engineFactory.notificationAllowanceHandler = { [weak context] webView, origin in
-            guard let webView, let window = context?.windows.window(for: webView) else { return false }
-            return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id) == true
+        context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
+            guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
+            return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
+                ?? (context.settingsStore.refusesPermissionRequests("notifications") ? false : nil)
         }
         setupTabShare()
         setupTabDock()

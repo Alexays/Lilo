@@ -57,7 +57,7 @@ final class NotificationPolyfillTests: XCTestCase {
     /// `Notification.permission` once a page at `baseURL` has had the time to learn its site's `decision`.
     private func permission(at baseURL: String, decision: Bool) async -> String? {
         let bridge = NotificationBridge()
-        bridge.allowanceHandler = { _, _ in decision }
+        bridge.decisionHandler = { _, _ in decision }
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(bridge, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
         PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
@@ -127,6 +127,11 @@ final class NotificationPolyfillTests: XCTestCase {
         }
         XCTAssertEqual(results, ["denied,denied"])
         XCTAssertEqual(asked, [])
+    }
+
+    func testABlockedSiteReadsDenied() async {
+        let permission = await permission(at: "https://example.com/", decision: false)
+        XCTAssertEqual(permission, "denied")
     }
 
     func testATaggedNotificationReplacesTheEarlierOneWithItsTag() async throws {

@@ -74,9 +74,9 @@ final class WKEngineFactory {
     var notificationPermissionDecisionHandler: NotificationBridge.PermissionDecisionHandler? {
         didSet { notificationBridge.permissionDecisionHandler = notificationPermissionDecisionHandler }
     }
-    /// Returns true if the origin already has an "allow" decision for notifications; gates delivery.
-    var notificationAllowanceHandler: ((WKWebView?, String) -> Bool)? {
-        didSet { notificationBridge.allowanceHandler = notificationAllowanceHandler }
+    /// A page's notification decision without asking (nil: undecided); only true lets one show.
+    var notificationDecisionHandler: ((WKWebView?, String) -> Bool?)? {
+        didSet { notificationBridge.decisionHandler = notificationDecisionHandler }
     }
     /// Told of each notification a page posts. Set by MainWindowController.
     var notificationShownHandler: ((WKWebView) -> Void)? {
@@ -136,7 +136,7 @@ final class WKEngineFactory {
     private lazy var notificationBridge: NotificationBridge = {
         let bridge = NotificationBridge()
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
-        bridge.allowanceHandler = notificationAllowanceHandler
+        bridge.decisionHandler = notificationDecisionHandler
         bridge.shownHandler = notificationShownHandler
         bridge.tabIdResolver = { [weak self] in self?.tabIdByWebView.object(forKey: $0) as UUID? }
         return bridge
