@@ -89,10 +89,15 @@
   }
   const pinnedDividerColor = $derived(crossingColor("bookmarked", "pinned"));
   const todayDividerColor = $derived(crossingColor(view.rootItems.pinned.length ? "pinned" : "bookmarked", "unpinned"));
+  // Keyed on the structure: a tab's runtime patch hands out a new view, and new items would re-run the animated
+  // each below, a FLIP measure of every pill.
+  const rootPinned = $derived(view.rootItems.pinned);
+  const rootUnpinned = $derived(view.rootItems.unpinned);
+  const bookmarkIdsKey = $derived(view.bookmarked.map((tab) => tab.id).join("\n"));
   const baseItems = $derived({
-    bookmarked: dndItemsForFolderTabs(view.bookmarked),
-    pinned: dndItemsForSidebarItems(view.rootItems.pinned, "pinned"),
-    unpinned: dndItemsForSidebarItems(view.rootItems.unpinned, "unpinned"),
+    bookmarked: dndItemsForFolderTabs(bookmarkIdsKey ? bookmarkIdsKey.split("\n").map((id) => ({ id })) : []),
+    pinned: dndItemsForSidebarItems(rootPinned, "pinned"),
+    unpinned: dndItemsForSidebarItems(rootUnpinned, "unpinned"),
   });
 
   /** A folder's direct children, as the drop commit sees them. */
@@ -135,7 +140,7 @@
   // The active pill comes into view, and the strip keeps exactly one tab stop.
   $effect(() => {
     void shownActiveId;
-    void view;
+    void baseItems;
     void tick().then(() => {
       scrollerEl?.querySelector(surface ? ".strip-surface" : `[data-tab-id="${activeTabId}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: prefersReducedMotion() ? "auto" : "smooth" });
       const rovers = stripEl ? [...stripEl.querySelectorAll<HTMLElement>("[data-roving]")] : [];
