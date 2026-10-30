@@ -642,6 +642,7 @@ extension MainWindowController {
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
         settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
+        settingsHandler.windowRouters = { [weak self] in self?.context.windows.windows.compactMap(\.bridgeRouter) ?? [] }
         settingsHandler.onContentBlockerToggled = { [weak self] enabled in
             guard let self else { return }
             engineFactory.applyBlockerChange(enabled: enabled)

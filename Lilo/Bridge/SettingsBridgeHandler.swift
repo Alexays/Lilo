@@ -102,6 +102,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     var onTogglePerfRecording: (() -> Void)?
     /// Settings records a shortcut for this action id, or stops recording (nil).
     var onRecordShortcut: ((String?) -> Void)?
+    /// Every browser window's router: each chrome keeps its own copy of the settings.
+    var windowRouters: (() -> [BridgeRouter])?
 
     init(
         settingsStore: SettingsStore,
@@ -193,7 +195,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         switch message.action {
 
         case "getSettings":
-            publishSettings(using: store)
+            bridgeRouter?.send(event: "settingsLoaded", data: ["settings": store.allSettings()])
 
         case "setSetting":
             if let key = message.string("key"), let value = message.string("value") {
@@ -492,8 +494,11 @@ final class SettingsBridgeHandler: BridgeHandler {
         if let status = contentBlockerStatus?() { bridgeRouter?.send(event: "contentBlockerStatus", data: status) }
     }
 
+    /// A change reaches every window, or the others keep searching with the old engine, the old language.
     private func publishSettings(using store: SettingsStore) {
-        bridgeRouter?.send(event: "settingsLoaded", data: ["settings": store.allSettings()])
+        let data: [String: Any] = ["settings": store.allSettings()]
+        bridgeRouter?.send(event: "settingsLoaded", data: data)
+        for router in windowRouters?() ?? [] where router !== bridgeRouter { router.send(event: "settingsLoaded", data: data) }
     }
 
     /// Nil in builds without a Sparkle key (local and debug builds), which never update.
