@@ -11,6 +11,8 @@ final class PagePopupController: NSObject, NSWindowDelegate {
     /// The peek shown over the opener's content; nil when the popup has its own window.
     let peekView: PagePeekView?
     private(set) var window: NSWindow?
+    /// A link the user peeked, not a page's own popup: a window shows one at a time.
+    var isLinkPeek = false
     /// The popup as extensions see it: a popup window holding one tab. Retired by the owner on close.
     var extensionWindow: WindowExtensionAdapter?
     private let header: PopupHeaderView

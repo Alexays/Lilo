@@ -35,7 +35,8 @@ extension MainWindowController {
 
     /// Shows `engine` as a popup of `openerTabId`: its window or peek, its extension window and the
     /// opener's badge.
-    func presentPagePopup(_ engine: WKWebViewTab, openerTabId: UUID, contentSize: NSSize, topLeft: NSPoint?, inPeek: Bool) {
+    @discardableResult
+    func presentPagePopup(_ engine: WKWebViewTab, openerTabId: UUID, contentSize: NSSize, topLeft: NSPoint?, inPeek: Bool) -> PagePopupController {
         configureEngineIfNeeded(engine)
         engine.applyPageBackgroundColor(currentContentSurfaceColor)
         let popup = PagePopupController(
@@ -75,12 +76,13 @@ extension MainWindowController {
         }
         updateAndEmit(openerTabId) { $0.hasPopup = true }
         refreshPagePeeks()
+        return popup
     }
 
-    /// Opens `url` in a Peek over `sourceTabId`, in its space's data store. A window shows one peek at a
-    /// time: any other one closes, its page torn down.
+    /// Opens `url` in a Peek over `sourceTabId`, in its space's data store. A window shows one link peek
+    /// at a time: any other one closes, its page torn down. A page's own popups stay.
     func openLinkPeek(_ url: URL, from sourceTabId: UUID) {
-        pagePopups.values.filter { $0.peekView != nil }.forEach { $0.close() }
+        pagePopups.values.filter(\.isLinkPeek).forEach { $0.close() }
         let engine = context.engineFactory.createTab(configuration: .init(
             dataStore: tabManager.dataStore,
             tabId: nil,
@@ -89,6 +91,7 @@ extension MainWindowController {
         ))
         // As large as the content allows: the peek clamps it to the window.
         presentPagePopup(engine, openerTabId: sourceTabId, contentSize: NSSize(width: 1600, height: 1200), topLeft: nil, inPeek: true)
+            .isLinkPeek = true
         engine.loadURL(url)
     }
 

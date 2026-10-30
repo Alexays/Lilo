@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'Shift-clicking a link no longer closes a window a page opened as a peek: only an earlier link peek closes.'
+time: 2026-10-30T17:08:49.93369+01:00

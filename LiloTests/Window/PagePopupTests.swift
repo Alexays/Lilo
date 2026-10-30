@@ -419,6 +419,17 @@ final class PagePopupTests: XCTestCase {
         XCTAssertFalse(controller.pagePopups.values.first === first)
     }
 
+    func testALinkPeekLeavesAPopupPeekOpen() async throws {
+        controller.context.settingsStore.set("singleWindow", value: "true")
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+
+        XCTAssertEqual(try decidePolicy(forClickOn: "https://example.com/next", modifierFlags: .shift), .cancel)
+
+        XCTAssertEqual(controller.pagePopups.count, 2)
+        XCTAssertTrue(controller.pagePopups[popup.engine.id] === popup)
+    }
+
     func testExpandingALinkPeekKeepsItsPageAsAnUnpinnedTab() async throws {
         try pinOpener()
         try await clickLink("https://other.test/article")
