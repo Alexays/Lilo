@@ -808,11 +808,13 @@ final class WKEngineFactory {
         wkConfig.mediaTypesRequiringUserActionForPlayback = Self.autoplayRestriction
         // KVC resolves these keys to private `_set<Key>:` setters; a missing one would raise. Private
         // Click Measurement is ad-click attribution, on by default in WebKit. No autoplay
-        // out of view, and hidden pages' timers throttled harder the longer they stay hidden.
-        let privateSettings: [(NSObject, String, Bool)] = [
+        // out of view, and hidden pages' timers throttled harder the longer they stay hidden. The top
+        // edge's color is sampled for the bars over the page, a solid band of 10pt at least, so a hairline does not count.
+        let privateSettings: [(NSObject, String, Any)] = [
             (wkConfig.preferences, "allowsPictureInPictureMediaPlayback", true), (wkConfig.preferences, "mediaDevicesEnabled", true),
             (wkConfig.preferences, "privateClickMeasurementEnabled", false), (wkConfig, "invisibleAutoplayNotPermitted", true),
-            (wkConfig.preferences, "hiddenPageDOMTimerThrottlingAutoIncreases", true)
+            (wkConfig.preferences, "hiddenPageDOMTimerThrottlingAutoIncreases", true),
+            (wkConfig, "sampledPageTopColorMaxDifference", 5.0), (wkConfig, "sampledPageTopColorMinHeight", 10.0)
         ]
         for (object, key, value) in privateSettings where object.responds(to: NSSelectorFromString("_set\(key.prefix(1).uppercased())\(key.dropFirst()):")) {
             object.setValue(value, forKey: key)

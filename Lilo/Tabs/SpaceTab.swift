@@ -455,6 +455,7 @@ struct SpaceTab {
             tab.title = updatedTab.title
             tab.faviconDataURL = updatedTab.faviconDataURL
             tab.faviconDominantColor = updatedTab.faviconDominantColor
+            tab.pageColor = updatedTab.pageColor
             tab.isPinned = updatedTab.isPinned
             tab.isBookmarked = updatedTab.isBookmarked
             tab.isClosed = updatedTab.isClosed

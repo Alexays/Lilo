@@ -92,7 +92,8 @@ extension MainWindowController {
         sidebarOverlayVisible = false
         sidebarExpandedWidth = cachedWidth > 0 ? CGFloat(cachedWidth).clamped(to: Self.sidebarWidthRange) : Self.defaultSidebarWidth
         sidebarWidth = fittedSidebarWidth
-        applyTitlebarStyle()
+        // Every layout keeps the lights where the 52pt sidebar header centers them.
+        window?.toolbarStyle = .unified
         storedWindowBackgroundColor = cachedBgColor
         applyWindowChromeColors(currentWindowBackgroundCSSColor())
     }
@@ -110,7 +111,6 @@ extension MainWindowController {
                 UserDefaults.lilo.set(dbVisible, forKey: "cachedSidebarVisible")
                 UserDefaults.lilo.set(dbToolbarVisible, forKey: "cachedToolbarVisible")
                 UserDefaults.lilo.set(Double(dbWidth), forKey: "cachedSidebarWidth")
-                applyTitlebarStyle()
                 applySidebarLayout(animated: false, syncTrafficLights: true)
             }
             let dbLayout = settings.tabLayout
@@ -199,6 +199,7 @@ extension MainWindowController {
         // background-color transition (the UI throttles updateWindowBackground to ~10Hz
         // during space swipes; the native fade smooths between samples).
         windowFrameView?.setFrameColor(frameColor)
+        syncPageBar()
         (contentContainerView as? ContentContainerView)?.stageColor = resolvedColor
         for divider in splitPanes.dividers.values { divider.setFrameColor(resolvedColor, animated: true) }
         sidePanel.setFrameColor(resolvedColor)
@@ -957,6 +958,15 @@ extension MainWindowController {
 
     // MARK: - Content View Management
 
+    /// The bar over the page takes the active page's color, drawn with the frame so it slides with the page exactly.
+    /// A page loading before it has one shows the surface under it, which the bar takes meanwhile.
+    func syncPageBar() {
+        let tab = tabManager.activeTab
+        let colors = tab?.pageColor?.split(separator: ",").compactMap { NSColor(cssHex: String($0))?.cgColor } ?? []
+        let loading = tab?.kind == .web && tab?.url != nil
+        windowFrameView?.setBarColors(colors.isEmpty ? (loading ? [currentContentSurfaceColor.cgColor] : nil) : colors)
+    }
+
     func showContentView(for engine: WKWebViewTab) {
         let nextView = engine.view
         // A freshly created engine otherwise paints WebKit's default white in the gap before content
@@ -970,6 +980,7 @@ extension MainWindowController {
             if documentPiP.wasAutoEntered { documentPiP.close() } else { placeDocumentPiP() }
         }
         chromeInput.setContentView(nextView)
+        syncPageBar()
         let retainedSplitViews = splitPanes.retainedViews(forTabId: engine.id)
         let outgoingViews = contentContainerView.subviews.filter { view in view !== nextView && !retainedSplitViews.contains { $0 === view } }
 

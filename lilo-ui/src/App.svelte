@@ -352,7 +352,7 @@
   {#if isPageToolbarShown()}
     <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
     {#await import("./components/page/PageToolbar.svelte") then toolbar}
-      <toolbar.default row={getTabPosition() === "top" && isSidebarVisible()} />
+      <toolbar.default row={getTabPosition() === "top" && isSidebarVisible()} accent={themeSidebarColor} />
     {/await}
   {/if}
 
@@ -361,7 +361,11 @@
   {#if !isVerticalLayout()}
     <!-- Loaded on demand: the default left layout's first paint carries none of it. -->
     {#await import("./components/strip/StripHost.svelte") then host}
-      <host.default onenter={cancelSidebarOverlayHide} onleave={scheduleSidebarOverlayHide} />
+      <host.default
+        accent={themeSidebarColor}
+        onenter={cancelSidebarOverlayHide}
+        onleave={scheduleSidebarOverlayHide}
+      />
     {/await}
   {:else}
   <!-- svelte-ignore a11y_no_static_element_interactions -->

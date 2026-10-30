@@ -14,6 +14,8 @@ struct Tab: Sendable, Equatable {
     var title: String
     var faviconDataURL: String?
     var faviconDominantColor: String?
+    /// The solid color along the page's top edge, else its theme-color, else hex stops read off that edge.
+    var pageColor: String?
     var isLoading: Bool = false
     var estimatedProgress: Double = 0
     var canGoBack: Bool = false
@@ -232,6 +234,8 @@ struct Tab: Sendable, Equatable {
                 // Empty, not omitted, when nil: the UI merges patches key by key, so an omitted key
                 // would keep the previous site's color.
                 data[field.rawValue] = faviconDominantColor ?? ""
+            case .pageColor:
+                put(field, pageColor ?? "")
             case .groupId:
                 if let groupId { put(field, groupId.uuidString) }
             case .spaceId:

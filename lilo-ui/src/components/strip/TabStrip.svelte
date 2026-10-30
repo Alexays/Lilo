@@ -415,7 +415,7 @@
 
 <style>
   .tab-strip {
-    height: var(--top-strip-height);
+    height: calc(var(--top-strip-height) - var(--content-inset));
     display: flex;
     align-items: center;
     gap: 6px;
@@ -639,7 +639,7 @@
   /* An open drawer grows the address toward the page, never shifting the bar itself. */
   .tab-strip:not(.dock) .strip-address {
     align-self: flex-start;
-    margin-top: calc((var(--top-strip-height) - 32px) / 2);
+    margin-top: calc((var(--top-strip-height) - var(--content-inset) - 32px) / 2);
   }
 
   .dock .strip-address {

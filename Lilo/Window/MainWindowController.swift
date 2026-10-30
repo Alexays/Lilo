@@ -91,8 +91,9 @@ final class MainWindowController: NSWindowController {
     /// Matches the 320px of `--sidebar-fitted-width` in the chrome UI's global.css.
     static let minimumContentWidth: CGFloat = 320
     /// These mirror `--top-strip-height`, `--page-toolbar-height`, `--bottom-dock-height` and `--bottom-dock-margin` in global.css.
-    static let topStripHeight: CGFloat = 40
-    static let pageToolbarHeight: CGFloat = 40
+    /// A bar over the page sits inside the content inset, centered on the traffic lights at 26pt.
+    static let topStripHeight: CGFloat = 44
+    static let pageToolbarHeight: CGFloat = 44
     static let bottomDockHeight: CGFloat = 52
     static let bottomDockMargin: CGFloat = 10
     /// Bounds main-thread archive encoding at switch and quit, and the disk footprint.

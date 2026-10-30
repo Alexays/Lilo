@@ -6,8 +6,14 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { getTabPosition, isAddressInPageToolbar } from "../../stores/tabLayout.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
+  import { getActiveTab } from "../../stores/tabs.svelte";
+  import { pageBarStyle } from "../../lib/pageBarTheme";
 
-  let { row = false }: { row?: boolean } = $props();
+  let { row = false, accent }: { row?: boolean; accent: string } = $props();
+
+  // Read apart from the tab, whose every progress tick would otherwise derive the style again.
+  const pageColor = $derived(getActiveTab()?.pageColor);
+  const style = $derived(pageBarStyle(pageColor, accent));
 
   // The traffic lights sit top-left of the window: room for them when the toolbar starts there.
   const besideTrafficLights = $derived(!row && (getTabPosition() !== "left" || !isSidebarVisible()) && areTrafficLightsVisible());
@@ -51,19 +57,21 @@
 <div
   class="page-toolbar tabs-surface"
   class:row
+  class:collapsed={!isSidebarVisible()}
+  {style}
   use:reportInteractiveZone={{ id: "page-toolbar" }}
   onpointerdown={startWindowDrag}
   ondblclick={(event) => {
     if (!(event.target as HTMLElement).closest("button, .url-display")) chromeActions.maximizeWindow();
   }}
 >
-  {#if besideTrafficLights}
-    <div class="lights-spacer"></div>
+  {#if !row && areTrafficLightsVisible()}
+    <div class="lights-spacer" class:shut={!besideTrafficLights}></div>
   {/if}
   <!-- Under a top strip, the strip already holds the navigation: this row is the address alone. Without
-       the tabs, it holds their toggle too. -->
+       the tabs, or beside the left sidebar, it holds their toggle too. -->
   {#if !row}
-    <NavControls show={isSidebarVisible() ? "history" : "all"} />
+    <NavControls show={isSidebarVisible() && getTabPosition() !== "left" ? "history" : "all"} />
   {/if}
   {#if isAddressInPageToolbar()}
     <div class="address" bind:this={addressEl}><URLDisplay /></div>
@@ -80,16 +88,31 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 4px;
+    padding: var(--content-inset) 4px 0;
     box-sizing: border-box;
     pointer-events: auto;
-    background: var(--sidebar-bg);
+    /* Its edges slide with the native page (WindowFrameView.toggleDuration). */
+    transition:
+      left var(--motion-duration-slow) var(--motion-ease-standard),
+      right var(--motion-duration-slow) var(--motion-ease-standard);
     /* Over the command bar's page veil: the address drawers hang from here into the page, as they hang beside it from the sidebar. */
     z-index: 61;
   }
 
+  /* Hiding the sidebar, the native page edge leads by two frames, the chrome hearing of the toggle later:
+     the bar and the lights' reserve start that far in. */
+  .page-toolbar.collapsed,
+  .page-toolbar.collapsed .lights-spacer {
+    transition-delay: -32ms;
+  }
+
+  :global(#chrome-root.sidebar-resizing) .page-toolbar {
+    transition: none;
+  }
+
   .page-toolbar.row {
     top: var(--top-strip-height);
+    padding-top: 0;
   }
 
   /* The sidebar header spreads its controls; the toolbar keeps them together on the left. */
@@ -102,15 +125,29 @@
   .lights-spacer {
     width: 72px;
     flex-shrink: 0;
+    /* Opens and shuts as the bar slides under the lights or away from them. */
+    transition:
+      width var(--motion-duration-slow) var(--motion-ease-standard),
+      margin-right var(--motion-duration-slow) var(--motion-ease-standard);
+  }
+
+  /* The flex gap would still reserve room beside an empty spacer. */
+  .lights-spacer.shut {
+    width: 0;
+    margin-right: -8px;
   }
 
   /* Centered on the page, whatever sits beside it; an open drawer grows it down into the page, never off the window. */
   .address {
     position: absolute;
-    top: calc((var(--page-toolbar-height) - 32px) / 2);
+    top: calc(var(--content-inset) + (var(--page-toolbar-height) - var(--content-inset) - 32px) / 2);
     left: 50%;
     transform: translateX(-50%);
     width: min(480px, 100% - 2 * 180px);
+  }
+
+  .row .address {
+    top: calc((var(--page-toolbar-height) - 32px) / 2);
   }
 
   .address > :global(.url-display) {

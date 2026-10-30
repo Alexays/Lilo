@@ -28,6 +28,7 @@ enum TabBridgeField: String, CaseIterable {
 	case groupId = "groupId"
 	case faviconDataURL = "faviconDataURL"
 	case faviconDominantColor = "faviconDominantColor"
+	case pageColor = "pageColor"
 	case hasNavigationError = "hasNavigationError"
 	case navigationErrorCode = "navigationErrorCode"
 	case navigationErrorDomain = "navigationErrorDomain"

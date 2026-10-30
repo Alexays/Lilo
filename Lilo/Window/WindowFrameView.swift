@@ -74,6 +74,10 @@ final class WindowFrameView: NSView {
     private let topRightCorner = CAShapeLayer()
     private let bottomLeftCorner = CAShapeLayer()
     private let bottomRightCorner = CAShapeLayer()
+    /// The bar over the page in the page's color, from the content inset down to the hole: drawn here, it slides
+    /// with the hole in the same transaction, and squares the hole's top corners in its own colors.
+    private let barLayer = CAGradientLayer()
+    private var barColors: [CGColor]?
     /// Film grain over the bands and bites for the Grain material, masked off the content hole. Built on first use.
     private var grainLayer: CALayer?
     private let grainMask = CAShapeLayer()
@@ -95,6 +99,12 @@ final class WindowFrameView: NSView {
             corner.masksToBounds = true
             layer?.addSublayer(corner)
         }
+        barLayer.isHidden = true
+        barLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        barLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        barLayer.cornerRadius = Self.contentCornerRadius
+        barLayer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        layer?.addSublayer(barLayer)
         applyLayout(animated: false)
     }
 
@@ -143,7 +153,28 @@ final class WindowFrameView: NSView {
         }
         bandLayers.forEach { $0.backgroundColor = cgColor }
         cornerLayers.forEach { $0.fillColor = cgColor }
+        applyBarColors()
         CATransaction.commit()
+    }
+
+    /// The page's colors for the bar, left to right, or nil for none. They switch with the page, never fading.
+    func setBarColors(_ colors: [CGColor]?) {
+        guard colors != barColors else { return }
+        barColors = colors
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        if let colors { barLayer.colors = colors.count == 1 ? [colors[0], colors[0]] : colors }
+        applyBarColors()
+        CATransaction.commit()
+        if grainLayer != nil { applyLayout(animated: false) }
+    }
+
+    /// The bar shows, and squares the hole's top corners in its colors, only where the layout leaves room for one.
+    private func applyBarColors() {
+        let colors = barLayer.frame.height > 0 ? barColors : nil
+        barLayer.isHidden = colors == nil
+        topLeftCorner.fillColor = colors?.first ?? frameColor
+        topRightCorner.fillColor = colors?.last ?? frameColor
     }
 
     /// Shows or hides the grain, fading with the frame color.
@@ -207,7 +238,7 @@ final class WindowFrameView: NSView {
             CATransaction.setDisableActions(true)
             // Geometry is authoritative: drop any in-flight curtain animation so a window
             // resize or sidebar drag mid-toggle cannot leave layers gliding to stale frames.
-            for sublayer in bandLayers + cornerLayers {
+            for sublayer in bandLayers + cornerLayers + [barLayer] {
                 sublayer.removeAnimation(forKey: "position")
                 sublayer.removeAnimation(forKey: "bounds")
             }
@@ -222,6 +253,12 @@ final class WindowFrameView: NSView {
         topRightCorner.frame = geometry.topRightCorner
         bottomLeftCorner.frame = geometry.bottomLeftCorner
         bottomRightCorner.frame = geometry.bottomRightCorner
+        let barBottom = geometry.contentHole.maxY
+        let barHeight = max(0, bounds.height - MainWindowController.contentInset - barBottom)
+        barLayer.frame = CGRect(x: geometry.contentHole.minX, y: barBottom, width: geometry.contentHole.width, height: barHeight)
+        CATransaction.setDisableActions(true)
+        applyBarColors()
+        CATransaction.setDisableActions(!animated)
         if let grainLayer {
             grainLayer.frame = bounds
             grainMask.frame = bounds
@@ -229,6 +266,7 @@ final class WindowFrameView: NSView {
             let path = CGMutablePath()
             path.addRect(bounds)
             path.addRoundedRect(in: geometry.contentHole, cornerWidth: geometry.cornerRadius, cornerHeight: geometry.cornerRadius)
+            if !barLayer.isHidden { path.addRect(barLayer.frame) }
             grainMask.path = path
         }
         CATransaction.commit()

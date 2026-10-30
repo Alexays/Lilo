@@ -175,6 +175,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         if let updatedTab {
             // Favicon was cleared above on host change: ship it so the UI drops the stale icon.
             enqueueVisibleTabUpdate(updatedTab, includeFavicon: shouldRefreshFavicon)
+            if tab.id == tabManager.activeTab?.id { syncPageBar() }
 
             if isVisibleTab(tab.id),
                shouldRefreshFavicon || (updatedTab.faviconDataURL == nil && !updatedTab.isLoading) {
@@ -260,6 +261,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdateCanGoForward canGoForward: Bool) {
         updateAndEmit(tab.id) { t in t.canGoForward = canGoForward }
+    }
+
+    func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {
+        updateAndEmit(tab.id) { t in t.pageColor = color }
+        if tab.id == tabManager.activeTab?.id { syncPageBar() }
+        profileContext?.sessionPersistence?.scheduleSave()
     }
 
     func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool) {

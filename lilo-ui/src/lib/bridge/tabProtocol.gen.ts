@@ -29,6 +29,7 @@ export interface BridgeTabSnapshot {
 	groupId?: string;
 	faviconDataURL?: string;
 	faviconDominantColor?: string;
+	pageColor?: string;
 	hasNavigationError: boolean;
 	navigationErrorCode: number;
 	navigationErrorDomain: string;
@@ -53,6 +54,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 	const url = data.url ?? "";
 	const faviconDataURL = coerceTrimmedOptional(data.faviconDataURL);
 	const faviconDominantColor = coerceHexColor(data.faviconDominantColor);
+	const pageColor = coerceTrimmedOptional(data.pageColor);
 	return {
 		id: data.id,
 		url,
@@ -77,6 +79,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		groupId: data.groupId,
 		faviconDataURL,
 		faviconDominantColor,
+		pageColor,
 		hasNavigationError: data.hasNavigationError ?? false,
 		navigationErrorCode: data.navigationErrorCode ?? 0,
 		navigationErrorDomain: data.navigationErrorDomain ?? "",
@@ -126,6 +129,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.groupId !== undefined) out.groupId = data.groupId;
 	if (data.faviconDataURL !== undefined) out.faviconDataURL = coerceTrimmedOptional(data.faviconDataURL);
 	if (data.faviconDominantColor !== undefined) out.faviconDominantColor = coerceHexColor(data.faviconDominantColor);
+	if (data.pageColor !== undefined) out.pageColor = coerceTrimmedOptional(data.pageColor);
 	if (data.hasNavigationError !== undefined) out.hasNavigationError = data.hasNavigationError;
 	if (data.navigationErrorCode !== undefined) out.navigationErrorCode = data.navigationErrorCode;
 	if (data.navigationErrorDomain !== undefined) out.navigationErrorDomain = data.navigationErrorDomain;

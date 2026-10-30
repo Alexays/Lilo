@@ -32,6 +32,8 @@
       "_comment": "Excluded from runtimePatchData. Swift sends empty string when nil; TS coerces to undefined when empty." },
     { "name": "faviconDominantColor",      "type": "string",  "tsOptional": true,  "runtime": false, "coerce": "hexColor",
       "_comment": "Excluded from runtimePatchData. Swift sends empty string when nil; TS validates hex format (empty coerces to undefined)." },
+    { "name": "pageColor",                 "type": "string",  "tsOptional": true,  "coerce": "trimmedNonEmptyString",
+      "_comment": "Web tabs: the solid color along the page's top edge, else its theme-color, else hex stops read off that edge from left to right, comma-separated; empty when unknown. The bars over the page take it." },
     { "name": "hasNavigationError",        "type": "bool",    "tsOptional": false, "tsDefault": "false" },
     { "name": "navigationErrorCode",       "type": "double",  "tsOptional": false, "tsDefault": "0" },
     { "name": "navigationErrorDomain",     "type": "string",  "tsOptional": false, "tsDefault": "\"\"" },

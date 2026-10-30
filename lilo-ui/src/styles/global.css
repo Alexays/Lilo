@@ -134,8 +134,9 @@
   --motion-ease-bounce: linear(0, 0.029, 0.103, 0.202, 0.313, 0.426, 0.535, 0.634, 0.721, 0.796, 0.858, 0.908, 0.947, 0.976, 0.997, 1.012, 1.021, 1.026, 1.028, 1.028, 1.026, 1.024, 1.021, 1.018, 1.014, 1.011, 1.009, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
 
   /* Mirror MainWindowController's topStripHeight, pageToolbarHeight, bottomDockHeight and bottomDockMargin. */
-  --top-strip-height: 40px;
-  --page-toolbar-height: 40px;
+  /* A bar over the page is a card inside the content inset, centered on the traffic lights at 26px. */
+  --top-strip-height: 44px;
+  --page-toolbar-height: 44px;
   --bottom-dock-height: 52px;
   --bottom-dock-margin: 10px;
   /* The sidebar narrows before the content gets under 320px, as MainWindowController.minimumContentWidth does. */

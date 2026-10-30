@@ -18,6 +18,8 @@ struct StoredTab: Codable, Sendable, Equatable, Identifiable {
     var resumeCommand: String?
     /// The name the user gave a pinned or bookmarked tab, shown in the sidebar instead of the page title.
     var customTitle: String?
+    /// The page's color for the bars over it, so a tab shown before it loads has it at once.
+    var pageColor: String?
 }
 
 extension StoredTab {
@@ -25,7 +27,7 @@ extension StoredTab {
         case id, url, title, faviconDominantColor
         case isPinned, isBookmarked, isClosed
         case homeURL, homeTitle, homeFaviconDominantColor
-        case kind, cwd, resumeCommand, customTitle
+        case kind, cwd, resumeCommand, customTitle, pageColor
     }
 
     init(from decoder: Decoder) throws {
@@ -45,6 +47,7 @@ extension StoredTab {
         cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
         resumeCommand = try container.decodeIfPresent(String.self, forKey: .resumeCommand)
         customTitle = try container.decodeIfPresent(String.self, forKey: .customTitle)
+        pageColor = try container.decodeIfPresent(String.self, forKey: .pageColor)
     }
 
     /// Favicon data URLs (~800 B of base64 each) are deliberately not encoded: they persist in
@@ -66,6 +69,7 @@ extension StoredTab {
         try container.encodeIfPresent(cwd, forKey: .cwd)
         try container.encodeIfPresent(resumeCommand, forKey: .resumeCommand)
         try container.encodeIfPresent(customTitle, forKey: .customTitle)
+        try container.encodeIfPresent(pageColor, forKey: .pageColor)
     }
 }
 
@@ -453,7 +457,8 @@ extension StoredTab {
             kind: tab.kind,
             cwd: tab.cwd,
             resumeCommand: tab.resumeCommand,
-            customTitle: tab.customTitle
+            customTitle: tab.customTitle,
+            pageColor: tab.pageColor
         )
     }
 }
@@ -495,6 +500,7 @@ extension Tab {
             resumeCommand: storedTab.resumeCommand,
             customTitle: storedTab.customTitle
         )
+        pageColor = storedTab.pageColor
     }
 }
 

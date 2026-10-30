@@ -80,15 +80,8 @@ extension MainWindowController {
             bridgeRouter?.send(event: "toolbarVisibilityChanged", data: ["visible": true])
         }
         tabLayout = layout
-        applyTitlebarStyle()
         applySidebarLayout(animated: animated, syncTrafficLights: true)
         bridgeRouter?.send(event: "tabLayoutChanged", data: ["position": layout.position.rawValue, "address": layout.address.rawValue])
-    }
-
-    /// The unified style centers the lights in the sidebar's 52pt header, above its address; the compact one
-    /// centers them at 20pt, on the line of a 40pt page toolbar, strip or address-less sidebar header.
-    func applyTitlebarStyle() {
-        window?.toolbarStyle = shownTabLayout == .default ? .unified : .unifiedCompact
     }
 
     /// The setting is app-wide: every window moves, and the next launch paints the new layout first.
@@ -139,7 +132,6 @@ extension MainWindowController {
         toolbarVisible.toggle()
         context.settingsStore.toolbarVisible = toolbarVisible
         UserDefaults.lilo.set(toolbarVisible, forKey: "cachedToolbarVisible")
-        applyTitlebarStyle()
         applySidebarLayout(animated: true, syncTrafficLights: true)
 
         bridgeRouter.send(event: "toolbarVisibilityChanged", data: ["visible": toolbarVisible])

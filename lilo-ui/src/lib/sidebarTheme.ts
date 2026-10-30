@@ -220,6 +220,12 @@ export function deriveSidebarThemeVariables(
 			}
 		}
 	}
+	return surfaceVariables(sidebar, accentSource, prefersDark);
+}
+
+/** Every sidebar variable over `sidebar`, its accent drawn from `accentSource`. */
+export function surfaceVariables(sidebar: RGB, accentSource: RGB, prefersDark: boolean): Record<string, string> {
+	const darkAccent = toHex(mix(accentSource, WHITE, 0.18));
 	const sidebarHex = toHex(sidebar);
 	const sidebarContrast = pickContrast(sidebar);
 	const contrastColor =

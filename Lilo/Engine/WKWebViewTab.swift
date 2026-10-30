@@ -46,6 +46,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoBack canGoBack: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoForward canGoForward: Bool)
+        /// The page's color as a CSS hex, nil when it has none.
+        func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?)
         func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool)
         /// Open a right-clicked link in a freshly created ephemeral private space and switch to it.
         func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL)
@@ -110,6 +112,7 @@ final class WKWebViewTab: NSObject {
         var canGoBack: Bool?
         var canGoForward: Bool?
         var isAudioPlaying: Bool?
+        var pageColor: String?
     }
 
     private enum NavigationEmissionTuning {
@@ -252,6 +255,12 @@ final class WKWebViewTab: NSObject {
     private static let linkDecorationFilteringPolicy: UInt = 1 << 8
     private var navigationStateObservations: [NSKeyValueObservation] = []
     private var isAudioPlayingObserverRegistered = false
+    private var isSampledColorObserverRegistered = false
+    private var sampledPageTopColor: NSColor?
+    /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
+    private var pageEdgeCapture = 0
+    private var isDarkAppearance: Bool?
+    private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
     private(set) var pendingMainFrameSendsBody = false
@@ -582,8 +591,18 @@ final class WKWebViewTab: NSObject {
         webView.setCameraCaptureState(muted ? .muted : .active, completionHandler: completion)
     }
 
+    /// Shown under the page until it first paints; from then on WebKit's own, the page's background, shows there,
+    /// where it overscrolls too.
     func applyPageBackgroundColor(_ color: NSColor) {
+        guard !showsPageBackground else { return }
         webView.underPageBackgroundColor = color
+    }
+
+    /// A blank document has no background of its own: the surface stays under it.
+    private func showPageBackground() {
+        guard !showsPageBackground, webView.url.map({ $0.scheme != "about" }) ?? false else { return }
+        showsPageBackground = true
+        webView.underPageBackgroundColor = nil
     }
 
     func goBack() {
@@ -813,6 +832,10 @@ final class WKWebViewTab: NSObject {
             webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
             isAudioPlayingObserverRegistered = false
         }
+        if isSampledColorObserverRegistered {
+            webView.removeObserver(self, forKeyPath: "_sampledPageTopColor")
+            isSampledColorObserverRegistered = false
+        }
         navigationStateObservations.removeAll()
         captureUsageObserver.stop()
         webView.removeFromSuperview()
@@ -863,6 +886,8 @@ final class WKWebViewTab: NSObject {
                     guard tab.lastNavigationEmissionState.url != nextURL else { return }
                     tab.lastNavigationEmissionState.url = nextURL; tab.pendingMainFrameURL = nextURL
                     tab.delegate?.tab(tab, didUpdateURL: nextURL)
+                    // A route changed by script, with no load: the page's color may have changed with it.
+                    if !tab.webView.isLoading { tab.recapturePageColor() }
                 }
             },
             webView.observe(\.title, options: [.new]) { [weak self] _, change in
@@ -892,8 +917,25 @@ final class WKWebViewTab: NSObject {
             },
             observeNavigationState(\.canGoForward, state: \.canGoForward) { tab, v in
                 tab.delegate?.tab(tab, didUpdateCanGoForward: v)
+            },
+            webView.observe(\.themeColor) { [weak self] _, _ in
+                self?.onMain { $0.emitPageColor() }
+            },
+            // A page following prefers-color-scheme repaints in the other appearance; moving between windows does not count.
+            webView.observe(\.effectiveAppearance) { [weak self] view, _ in
+                let dark = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                self?.onMain { tab in
+                    guard tab.isDarkAppearance != dark else { return }
+                    tab.isDarkAppearance = dark
+                    tab.recapturePageColor()
+                }
             }
         ]
+        // WebKit samples the top edge once a load paints, never on scroll; it skips a fixed header, which scrolls content under it.
+        if webView.responds(to: NSSelectorFromString("_sampledPageTopColor")) {
+            webView.addObserver(self, forKeyPath: "_sampledPageTopColor", options: [.new], context: nil)
+            isSampledColorObserverRegistered = true
+        }
         // _isPlayingAudio is not in the public macOS SDK; use string-key KVO, only when WebKit still
         // has it, since KVO on a missing key raises.
         if webView.responds(to: NSSelectorFromString("_isPlayingAudio")) {
@@ -933,9 +975,88 @@ final class WKWebViewTab: NSObject {
                 guard tab.lastNavigationEmissionState.isAudioPlaying != v else { return }
                 tab.lastNavigationEmissionState.isAudioPlaying = v; tab.delegate?.tab(tab, didUpdateAudioPlaying: v)
             }
+        case "_sampledPageTopColor":
+            let color = change?[.newKey] as? NSColor
+            onMain { tab in
+                tab.showPageBackground()
+                tab.sampledPageTopColor = color
+                tab.emitPageColor()
+            }
         default:
             super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
+    }
+
+    /// The top edge first, which the bar blends into; theme-color covers a page whose top is no solid band. A
+    /// translucent color would show the frame through the bar: only an opaque one counts. Without either, the
+    /// loaded page's edge is read off its pixels; until then the previous page's color stays, never a flash.
+    /// `loaded` comes from didFinish, while the web view still reports itself loading.
+    private func emitPageColor(loaded: Bool = false) {
+        pageEdgeCapture &+= 1
+        let opaque = { (color: NSColor?) in color?.usingColorSpace(.sRGB).flatMap { $0.alphaComponent < 1 ? nil : $0 } }
+        if let color = (opaque(sampledPageTopColor) ?? opaque(webView.themeColor))?.cssHexString {
+            sendPageColor(color)
+        } else if loaded || !webView.isLoading {
+            captureTopEdge()
+        }
+    }
+
+    /// WebKit samples the top edge only when a page loads: a page changed by script since is read off its pixels.
+    private func recapturePageColor() {
+        guard !webView.isLoading, lastNavigationEmissionState.pageColor != nil else { return }
+        sampledPageTopColor = nil
+        emitPageColor(loaded: true)
+    }
+
+    private func sendPageColor(_ color: String?) {
+        guard lastNavigationEmissionState.pageColor != color else { return }
+        lastNavigationEmissionState.pageColor = color
+        delegate?.tab(self, didUpdatePageColor: color)
+    }
+
+    /// An image or a gradient along the top: a capture of a band there, rendered straight to 32 pixels. A page
+    /// drawn by script after its load gets a second look a moment later.
+    private func captureTopEdge(again: Bool = true) {
+        let capture = pageEdgeCapture
+        let width = webView.bounds.width
+        guard width > 0 else { return sendPageColor(nil) }
+        let configuration = WKSnapshotConfiguration()
+        configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, width / CGFloat(Self.edgeSamples)))
+        configuration.snapshotWidth = NSNumber(value: Self.edgeSamples)
+        Task { [weak self] in
+            let image = try? await self?.webView.takeSnapshot(configuration: configuration)
+            guard let self, capture == pageEdgeCapture else { return }
+            sendPageColor(image.flatMap(Self.edgeStops))
+            guard again else { return }
+            try? await Task.sleep(for: .seconds(1))
+            guard capture == pageEdgeCapture else { return }
+            captureTopEdge(again: false)
+        }
+    }
+
+    private static let edgeSamples = 32
+    private static let edgeStopCount = 8
+
+    /// The edge as CSS hex stops from left to right, a single color when they barely differ.
+    static func edgeStops(_ image: NSImage) -> String? {
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        var pixels = [UInt8](repeating: 0, count: edgeSamples * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: edgeSamples, height: 1, bitsPerComponent: 8, bytesPerRow: edgeSamples * 4,
+                                          space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: edgeSamples, height: 1))
+            return true
+        }
+        guard drawn else { return nil }
+        let perStop = edgeSamples / edgeStopCount
+        let stops = (0..<edgeStopCount).map { stop in
+            (0..<3).map { channel in (0..<perStop).reduce(0) { $0 + Int(pixels[(stop * perStop + $1) * 4 + channel]) } / perStop }
+        }
+        let hex = { (rgb: [Int]) in String(format: "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]) }
+        let spread = (0..<3).map { channel in stops.map { $0[channel] }.max()! - stops.map { $0[channel] }.min()! }.max()!
+        guard spread > 6 else { return hex((0..<3).map { channel in stops.reduce(0) { $0 + $1[channel] } / edgeStopCount }) }
+        return stops.map(hex).joined(separator: ",")
     }
 
     private func historyList(for direction: WebNavigationHistoryDirection) -> [WKBackForwardListItem] {
@@ -1217,6 +1338,7 @@ extension WKWebViewTab.Delegate {
         completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
     ) { completion(nil) }
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
+    func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
     func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool) {}
@@ -1470,6 +1592,8 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.navigationStartUptime = nil
             tab.endNavigationSignpost("finish")
             tab.delegate?.tab(tab, didNavigate: .finished(tab.currentURL))
+            tab.showPageBackground()
+            tab.emitPageColor(loaded: true)
             StartupMetrics.markOnce("firstContentFinished")
         }
     }

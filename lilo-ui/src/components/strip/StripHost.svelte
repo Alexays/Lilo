@@ -4,8 +4,14 @@
   import { hasActivePanel, isDesignSystemShellOpen } from "../../stores/panels.svelte";
   import { getTabPosition } from "../../stores/tabLayout.svelte";
   import { isSidebarOverlay, isSidebarShown } from "../../stores/ui.svelte";
+  import { getActiveTab } from "../../stores/tabs.svelte";
+  import { pageBarStyle } from "../../lib/pageBarTheme";
 
-  let { onenter, onleave }: { onenter: () => void; onleave: () => void } = $props();
+  let { accent, onenter, onleave }: { accent: string; onenter: () => void; onleave: () => void } = $props();
+
+  // The strip takes the page's color, as the page toolbar does; read apart from the tab, as there.
+  const pageColor = $derived(getActiveTab()?.pageColor);
+  const style = $derived(pageBarStyle(pageColor, accent));
 
   // Settings is not among them: in a strip it is a page of its own, its navigation inside.
   const isPanelOpen = $derived(hasActivePanel() || isDesignSystemShellOpen());
@@ -26,6 +32,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="tab-strip-host tabs-surface"
+  {style}
   class:strip-hidden={!isSidebarShown()}
   class:strip-overlay={isSidebarOverlay()}
   use:reportInteractiveZone={{ id: "tab-strip", active: isSidebarShown() }}
@@ -94,6 +101,15 @@
   :global(html[data-tab-position='bottom']) .tab-strip-host {
     top: auto;
     bottom: var(--bottom-dock-margin);
+    background-color: transparent;
+  }
+
+  /* On top, inside the frame's border, over the bar the native frame draws; floating in, the strip paints its own. */
+  :global(html[data-tab-position='top']) .tab-strip-host {
+    padding: var(--content-inset) var(--content-inset) 0;
+  }
+
+  :global(html[data-tab-position='top']) .tab-strip-host:not(.strip-overlay) {
     background-color: transparent;
   }
 

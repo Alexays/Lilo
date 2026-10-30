@@ -111,8 +111,11 @@
       onpointerdown={pressTabsHeader}
     >
       <div class="header-spacer"></div>
-      <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. -->
-      <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
+      <!-- Floating in while hidden, the sidebar brings back what the unmounted page toolbar holds. On the
+           left, the page toolbar stays with the sidebar hidden and holds the toggle ahead of the history buttons. -->
+      {#if !hasPageToolbar() || getTabPosition() !== "left"}
+        <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
+      {/if}
     </div>
     {#if isAddressVisible() && !isAddressInPageToolbar()}
       <URLDisplay />
@@ -203,12 +206,8 @@
 
   /* With a page toolbar beside it, the header holds only the lights and the toggle, on that toolbar's line. */
   .compact-header .sidebar-header {
-    height: var(--page-toolbar-height);
-  }
-
-  /* Without the address under it, the header shares the lights' compact 40pt line. */
-  :global(html[data-tab-position='left'][data-address='hidden']) .sidebar-header {
-    height: var(--page-toolbar-height);
+    height: calc(var(--page-toolbar-height) - var(--content-inset));
+    margin-top: var(--content-inset);
   }
 
   .compact-header .sidebar-header :global(.nav-controls) {

@@ -46,7 +46,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
         layOut(window, .right)
 
-        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 300 - 16, height: 800 - 40 - 8))
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 300 - 16, height: 800 - 44 - 8))
         XCTAssertEqual(window.contentContainerView.frame, window.contentFrameRect())
     }
 
@@ -54,13 +54,13 @@ final class WindowChromeLayoutTests: XCTestCase {
         let window = try makeSizedWindow()
 
         layOut(window, .top)
-        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 16, height: 800 - 40 - 8))
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 8, width: 1200 - 16, height: 800 - 44 - 8))
 
         layOut(window, .top, address: .page)
-        XCTAssertEqual(window.contentFrameRect().height, 800 - 40 - 40 - 8, "the address row sits under the strip")
+        XCTAssertEqual(window.contentFrameRect().height, 800 - 44 - 44 - 8, "the address row sits under the strip")
 
         layOut(window, .bottom)
-        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 40))
+        XCTAssertEqual(window.contentFrameRect(), NSRect(x: 8, y: 72, width: 1200 - 16, height: 800 - 72 - 44))
     }
 
     func testHidingTheAddressReclaimsItsRowButKeepsNavigation() throws {
@@ -68,7 +68,7 @@ final class WindowChromeLayoutTests: XCTestCase {
         for position in TabPosition.allCases {
             layOut(window, position, address: .hidden)
             XCTAssertEqual(window.tabLayout.address, .hidden)
-            XCTAssertEqual(window.contentEdges().top, position == .left ? 8 : 40, "\(position)")
+            XCTAssertEqual(window.contentEdges().top, position == .left ? 8 : 44, "\(position)")
         }
     }
 
@@ -103,17 +103,16 @@ final class WindowChromeLayoutTests: XCTestCase {
 
         window.toggleToolbar()
         XCTAssertEqual(window.contentEdges(), ContentEdges(left: sidebar, right: 8, top: 8, bottom: 8), "the sidebar stays")
-        XCTAssertEqual(window.window?.toolbarStyle, .unifiedCompact, "on the 40pt header of a sidebar without the address")
         window.toggleToolbar()
         window.toggleSidebar()
-        XCTAssertEqual(window.contentEdges(), ContentEdges(left: 8, right: 8, top: 40, bottom: 8), "the toolbar stays")
+        XCTAssertEqual(window.contentEdges(), ContentEdges(left: 8, right: 8, top: 44, bottom: 8), "the toolbar stays")
         XCTAssertTrue(window.areTrafficLightsVisible(), "on the toolbar's line")
 
         layOut(window, .top, address: .page)
-        XCTAssertEqual(window.contentEdges().top, 40, "the address row without the strip")
+        XCTAssertEqual(window.contentEdges().top, 44, "the address row without the strip")
         window.toggleSidebar()
         window.toggleToolbar()
-        XCTAssertEqual(window.contentEdges().top, 40, "the strip without the address row")
+        XCTAssertEqual(window.contentEdges().top, 44, "the strip without the address row")
         window.toggleToolbar()
     }
 
@@ -137,7 +136,7 @@ final class WindowChromeLayoutTests: XCTestCase {
         window.applyTabLayout(TabLayout(position: .left, address: .page), animated: false)
 
         XCTAssertTrue(window.toolbarVisible)
-        XCTAssertEqual(window.contentEdges().top, 40)
+        XCTAssertEqual(window.contentEdges().top, 44)
     }
 
     func testFullScreenKeepsTheToolbarRow() throws {
@@ -150,15 +149,12 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(window.contentEdges(), edges, "navigation stays reachable over the page")
     }
 
-    func testTheLightsShareTheLineOfAToolbarOrStrip() throws {
+    func testTheLightsStayPutInEveryLayout() throws {
         let window = try makeSizedWindow()
-        XCTAssertEqual(window.window?.toolbarStyle, .unified, "today's left layout keeps its 52pt header")
-
-        window.applyTabLayout(TabLayout(position: .right, storedAddress: nil), animated: false)
-        XCTAssertEqual(window.window?.toolbarStyle, .unifiedCompact, "centered on the 40pt page toolbar")
-
-        window.applyTabLayout(.default, animated: false)
-        XCTAssertEqual(window.window?.toolbarStyle, .unified)
+        for position in TabPosition.allCases {
+            window.applyTabLayout(TabLayout(position: position, storedAddress: nil), animated: false)
+            XCTAssertEqual(window.window?.toolbarStyle, .unified, "\(position)")
+        }
     }
 
     func testSettingThePositionMovesEveryWindow() async throws {
