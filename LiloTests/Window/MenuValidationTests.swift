@@ -137,17 +137,36 @@ final class MenuValidationTests: XCTestCase {
     func testTheReaderItemSaysHideInReaderMode() async throws {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
         let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
-        webView.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://example.com/"))
-        await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
+        let paragraph = "<p>" + String(repeating: "A sentence long enough to read as an article, with commas, and more. ", count: 12) + "</p>"
+        webView.loadHTMLString("<article><h1>Title</h1>\(paragraph)\(paragraph)\(paragraph)</article>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url?.host() == "example.com" }
         let item = NSMenuItem(title: "", action: #selector(MainWindowController.toggleReader(_:)), keyEquivalent: "")
 
         window.toggleReader(nil)
 
+        let reading = await pollUntil(timeout: 5) { self.window.readerModeTabs.contains(tab.id) }
+        XCTAssertTrue(reading)
         XCTAssertTrue(window.validateUserInterfaceItem(item))
         XCTAssertEqual(item.title, "Hide Reader".localized)
 
         window.toggleReader(nil)
 
+        XCTAssertTrue(window.validateUserInterfaceItem(item))
+        XCTAssertEqual(item.title, "Show Reader".localized)
+    }
+
+    func testShowReaderLeavesAPageThatIsNotAnArticleOutOfReaderMode() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        webView.loadHTMLString("<input value=typed>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url?.host() == "example.com" }
+        let item = NSMenuItem(title: "", action: #selector(MainWindowController.toggleReader(_:)), keyEquivalent: "")
+
+        window.toggleReader(nil)
+        // A script in the reader's world runs after the reader's: once it answers, the reader has.
+        _ = try await webView.evaluateJavaScript("1", in: nil, contentWorld: ReaderMode.world)
+
+        XCTAssertFalse(window.readerModeTabs.contains(tab.id))
         XCTAssertTrue(window.validateUserInterfaceItem(item))
         XCTAssertEqual(item.title, "Show Reader".localized)
     }

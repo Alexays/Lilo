@@ -1,7 +1,8 @@
 /*
  * Lilo reader view: renders the article parsed by the bundled Mozilla Readability.js into a clean,
  * themable reading surface with in-page controls (text size, theme, width). Injected together with
- * Readability.js by ReaderMode.swift. Exiting reader mode is a plain reload, handled natively.
+ * Readability.js by ReaderMode.swift, which reads `true` back once the page shows the article. Exiting
+ * reader mode is a plain reload, handled natively.
  */
 (function () {
   "use strict";
@@ -52,7 +53,7 @@
   ].join("");
   try {
     var DOCEL = document.documentElement;
-    if (DOCEL.classList.contains("lilo-reader-active")) return;     // already in reader
+    if (DOCEL.classList.contains("lilo-reader-active")) return true; // already in reader
     if (typeof Readability !== "function") return;                  // engine failed to load
 
     // Parse a CLONE so the live DOM is untouched until we know parsing succeeded.
@@ -130,6 +131,7 @@
     });
 
     window.scrollTo(0, 0);
+    return true;
   } catch (e) {
     /* leave the page untouched on any failure */
   }

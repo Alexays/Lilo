@@ -61,8 +61,9 @@ extension MainWindowController {
             readerModeTabs.remove(id)
             tabManager.reloadActiveTab()
         } else {
-            ReaderMode.apply(to: engine.wkWebView)
-            readerModeTabs.insert(id)
+            ReaderMode.apply(to: engine.wkWebView) { [weak self] rendered in
+                if rendered { self?.readerModeTabs.insert(id) } else { NSSound.beep() }
+            }
         }
     }
     @objc func openSettings(_ sender: Any?) {

@@ -21,16 +21,17 @@ enum ReaderMode {
     /// The text size, theme and width the controls last picked, the same on every site.
     private static let preferencesKey = "ReaderPreferences"
 
+    /// `completion` gets whether the page now shows the article: false for a page that is not one.
     @MainActor
-    static func apply(to webView: WKWebView) {
-        guard !script.isEmpty else { return }
+    static func apply(to webView: WKWebView, completion: @escaping @MainActor (Bool) -> Void = { _ in }) {
+        guard !script.isEmpty else { return completion(false) }
         let controller = webView.configuration.userContentController
         // Tabs can share a content controller, which takes one handler per name.
         controller.removeScriptMessageHandler(forName: PreferencesHandler.name, contentWorld: world)
         controller.add(PreferencesHandler.shared, contentWorld: world, name: PreferencesHandler.name)
         let preferences = UserDefaults.standard.dictionary(forKey: preferencesKey) ?? [:]
         let json = (try? JSONSerialization.data(withJSONObject: preferences)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
-        webView.evaluateJavaScript("var liloReaderPrefs = \(json);\n" + script, in: nil, in: world) { _ in }
+        webView.evaluateJavaScript("var liloReaderPrefs = \(json);\n" + script, in: nil, in: world) { completion((try? $0.get()) as? Bool == true) }
     }
 
     @MainActor

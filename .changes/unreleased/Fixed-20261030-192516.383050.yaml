@@ -1,0 +1,3 @@
+kind: Fixed
+body: Show Reader on a page that is not an article leaves the page as it is and beeps, instead of switching the menu to Hide Reader and reloading the page on the next press.
+time: 2026-10-30T19:25:16.38305+01:00
