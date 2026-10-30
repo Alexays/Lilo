@@ -91,14 +91,14 @@
     postMessage("focusPage");
   }
 
+  // Spaces are part of the query, as in Chrome: "cat " skips "category". Only a blank query searches nothing.
   function search() {
     clearTimeout(searchTimer);
     searchTimer = undefined;
-    const trimmed = query.trim();
-    if (trimmed) {
-      if (trimmed !== lastSearchedQuery) hasSearched = false;
-      lastSearchedQuery = trimmed;
-      tabActions.findInPage(trimmed, { caseSensitive });
+    if (query.trim()) {
+      if (query !== lastSearchedQuery) hasSearched = false;
+      lastSearchedQuery = query;
+      tabActions.findInPage(query, { caseSensitive });
     } else {
       status = "idle";
       hasSearched = false;

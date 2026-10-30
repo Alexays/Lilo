@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld } from "./fixtures";
 
@@ -53,4 +53,20 @@ test("the previous, next and close buttons draw icons, not text glyphs", async (
 		await expect(button.locator("svg")).toHaveCount(1);
 		await expect(button).toHaveText("");
 	}
+});
+
+async function openFindBar(page: Page, query?: string): Promise<void> {
+	await bootChrome(page, initialWorld());
+	await expect(async () => {
+		await page.evaluate((query) => window.__lilo!.receive({ event: "toggleFindBar", query }), query);
+		await expect(page.locator(".find-bar")).toBeVisible({ timeout: 200 });
+	}).toPass();
+}
+
+test("the query keeps its spaces, as in Chrome", async ({ page }) => {
+	await openFindBar(page);
+	await page.getByRole("textbox", { name: "Rechercher dans la page" }).fill("cat ");
+	await expect
+		.poll(async () => (await sentCommands(page)).filter((c) => c.action === "findInPage").at(-1)?.payload.query)
+		.toBe("cat ");
 });

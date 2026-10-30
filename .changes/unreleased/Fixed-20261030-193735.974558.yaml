@@ -1,0 +1,3 @@
+kind: Fixed
+body: Find in page no longer drops the spaces around a search, so "cat " skips "category".
+time: 2026-10-30T19:37:35.974558+01:00
