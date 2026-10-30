@@ -1934,11 +1934,13 @@ extension WKWebViewTab: WKUIDelegate {
                 cancelPendingDocumentPiP()
                 return documentPiPWebViewProvider?(configuration, size)
             }
-            // Any frame within the click's own task; only the main frame later, while this page has the activation.
-            let isActivated = Self.activatedWebView === webView
-                && ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow
-            guard WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") == true
-                    || navigationAction.sourceFrame.isMainFrame && isActivated else { return nil }
+            // Any frame within the click's own task, or later while this page has the activation, which the open uses
+            // up as in Chrome: one window per click, so a frame the user never touched cannot open a stream of them.
+            if WebViewPrivateAccessors(navigationAction).bool("_isUserInitiated") != true {
+                guard Self.activatedWebView === webView,
+                      ProcessInfo.processInfo.systemUptime - Self.activationTime < Self.popupActivationWindow else { return nil }
+                Self.activationTime = 0
+            }
             // An agent's popups open as tabs of its folder: a popup window would come over the user's.
             if !isAgentControlled, let provider = popupWebViewProvider, let popup = provider(configuration, navigationAction, windowFeatures) {
                 return popup

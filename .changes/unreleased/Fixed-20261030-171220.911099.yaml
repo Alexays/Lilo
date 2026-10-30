@@ -1,0 +1,3 @@
+kind: Fixed
+body: Embedded widgets (payment, sign-in, share) can open their window a few seconds after your click, as in Chrome; each click allows one such window.
+time: 2026-10-30T17:12:20.911099+01:00

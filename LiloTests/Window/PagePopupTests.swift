@@ -69,12 +69,11 @@ final class PagePopupTests: XCTestCase {
         XCTAssertEqual(openTabCount, tabs)
     }
 
-    func testAWindowOpenAfterTheClickTaskButSoonAfterAKeyPressOpensATab() async throws {
-        let tabs = openTabCount
+    /// A key press in the opener's page: the page has a user activation for a few seconds.
+    private func pressKeyInOpener() async throws -> NSWindow {
         let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
         let window = NSWindow(contentRect: controller.contentContainerView.frame, styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
-        defer { window.close() }
         window.contentView = controller.contentContainerView
         XCTAssertTrue(window.makeFirstResponder(webView))
         let keyPress = try XCTUnwrap(NSEvent.keyEvent(
@@ -82,13 +81,37 @@ final class PagePopupTests: XCTestCase {
             windowNumber: window.windowNumber, context: nil, characters: "a", charactersIgnoringModifiers: "a",
             isARepeat: false, keyCode: 0
         ))
-
         NSApp.sendEvent(keyPress)
         try await Task.sleep(nanoseconds: 100_000_000)
+        return window
+    }
+
+    func testAWindowOpenAfterTheClickTaskButSoonAfterAKeyPressOpensATab() async throws {
+        let tabs = openTabCount
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        let window = try await pressKeyInOpener()
+        defer { window.close() }
+
         WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')")
 
         let opened = await pollUntil(timeout: 5) { self.openTabCount == tabs + 1 }
         XCTAssertTrue(opened, "a page may open a window a few seconds after the user's key press, as in Chrome")
+    }
+
+    func testAFrameMayOpenOneWindowSoonAfterTheUserActivatedItsPage() async throws {
+        let frame = try await openerSubframe()
+        let webView = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id)).wkWebView
+        let tabs = openTabCount
+        let window = try await pressKeyInOpener()
+        defer { window.close() }
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')", in: frame)
+        let opened = await pollUntil(timeout: 5) { self.openTabCount == tabs + 1 }
+        XCTAssertTrue(opened, "a widget may open its window after a request, as in Chrome")
+
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture("window.open('about:blank', '')", in: frame)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(openTabCount, tabs + 1, "the open uses up the activation, as in Chrome")
     }
 
     func testABackgroundNewTabLinkLeavesTheOpenerActive() throws {
