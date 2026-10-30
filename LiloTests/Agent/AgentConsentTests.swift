@@ -128,7 +128,7 @@ final class AgentConsentTests: AgentToolTestCase {
         let router = BridgeRouter(chromeWebView: window.chromeWebView)
         let recorder = BridgeEventRecorder(router)
         let handler = SettingsBridgeHandler(
-            settingsStore: context.settingsStore, sitePermissionStore: context.sitePermissionStore, zoomStoreProvider: { nil },
+            settingsStore: context.settingsStore, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
             historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil },
             extensionDiagnosticsProvider: { [] }, forceLifecycleTrimHandler: {}, bridgeRouter: router
         )

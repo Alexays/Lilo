@@ -15,7 +15,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     var permissionDecisionHandler: PermissionDecisionHandler?
 
     /// True if the origin already has a stored "allow" decision; gates `new Notification()`.
-    var allowanceHandler: ((String) -> Bool)?
+    var allowanceHandler: ((WKWebView?, String) -> Bool)?
 
     /// The tab a web view belongs to, carried by each notification so a click can bring it back.
     var tabIdResolver: ((WKWebView) -> UUID?)?
@@ -59,7 +59,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
                                                                             in: frame, in: PageWorld.bridgeWorld)
             }
         case "show":
-            guard !isCrossOrigin, allowanceHandler?(origin) == true else { return }
+            guard !isCrossOrigin, allowanceHandler?(message.webView, origin) == true else { return }
             show(body: body, message: message, origin: origin)
         case "close":
             guard let pageId = body["id"] as? Int,
@@ -70,7 +70,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         case "query":
             // Only "allow" is stored as a distinct answer; anything else stays "default" so a site
             // with no decision yet can still prompt.
-            guard !isCrossOrigin, allowanceHandler?(origin) == true else { return }
+            guard !isCrossOrigin, allowanceHandler?(message.webView, origin) == true else { return }
             if let webView = message.frameInfo.webView {
                 WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", ["granted"]),
                                                                             in: message.frameInfo, in: PageWorld.bridgeWorld)

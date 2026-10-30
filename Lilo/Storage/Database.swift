@@ -65,8 +65,9 @@ final class DatabaseManager: @unchecked Sendable {
                 atPath: (path as NSString).deletingLastPathComponent,
                 withIntermediateDirectories: true
             )
+            let existed = FileManager.default.fileExists(atPath: path)
             let pool = try DatabasePool(path: path, configuration: Self.configuration)
-            try Migrations.migrateProfile(pool)
+            try Migrations.migrateProfile(pool, legacyGlobal: existed ? globalPool : nil)
             pools[profileId] = pool
             return pool
         }

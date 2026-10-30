@@ -273,7 +273,6 @@ extension MainWindowController {
         }
         pendingPermissionRequests.append(PendingPermissionRequest(
             id: id, tabId: tabId, type: type, origin: origin,
-            isPrivate: tabManager.engineTab(for: tabId)?.isPrivateBrowsing ?? false,
             completion: completion, timeoutWork: timeoutWork
         ))
         DispatchQueue.main.asyncAfter(deadline: .now() + permissionRequestTimeout, execute: timeoutWork)
@@ -312,9 +311,8 @@ extension MainWindowController {
         let request = pendingPermissionRequests.remove(at: index)
         request.timeoutWork.cancel()
         request.completion(granted)
-        if answeredByUser, !request.isPrivate {
-            context.sitePermissionStore.upsert(origin: request.origin, type: request.type, granted: granted)
-            bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+        if answeredByUser {
+            rememberPermission(origin: request.origin, type: request.type, granted: granted, tabId: request.tabId)
         } else if !answeredByUser {
             // Tab close or timeout: retract the prompt, nothing can answer it now.
             bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": id.uuidString])

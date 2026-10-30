@@ -127,8 +127,6 @@ final class MainWindowController: NSWindowController {
         let tabId: UUID
         let type: String
         let origin: String
-        /// Answers from private tabs are not remembered.
-        let isPrivate: Bool
         let completion: (Bool) -> Void
         let timeoutWork: DispatchWorkItem
     }

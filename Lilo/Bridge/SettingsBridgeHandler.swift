@@ -58,7 +58,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     ]
 
     private weak var settingsStore: SettingsStore?
-    private let sitePermissionStore: SitePermissionStore
+    private let sitePermissionStoreProvider: @MainActor () -> SitePermissionStore?
     private let zoomStoreProvider: @MainActor () -> ZoomStore?
     private let historyStoreProvider: @MainActor () -> HistoryStore?
     private let extensionRegistryProvider: @MainActor () -> ProfileExtensionRegistry?
@@ -100,7 +100,7 @@ final class SettingsBridgeHandler: BridgeHandler {
 
     init(
         settingsStore: SettingsStore,
-        sitePermissionStore: SitePermissionStore,
+        sitePermissionStoreProvider: @escaping @MainActor () -> SitePermissionStore?,
         zoomStoreProvider: @escaping @MainActor () -> ZoomStore?,
         historyStoreProvider: @escaping @MainActor () -> HistoryStore?,
         extensionRegistryProvider: @escaping @MainActor () -> ProfileExtensionRegistry?,
@@ -110,7 +110,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         forceLifecycleTrimHandler: @escaping @MainActor () -> Void,
         bridgeRouter: BridgeRouter
     ) {
-        self.settingsStore = settingsStore; self.sitePermissionStore = sitePermissionStore
+        self.settingsStore = settingsStore; self.sitePermissionStoreProvider = sitePermissionStoreProvider
         self.zoomStoreProvider = zoomStoreProvider
         self.historyStoreProvider = historyStoreProvider
         self.extensionRegistryProvider = extensionRegistryProvider
@@ -144,7 +144,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                     await dataStore.removeAllData(modifiedSince: since)
                     // Permissions carry no timestamp, so only an all-time clear drops them.
                     if cutoff == nil {
-                        sitePermissionStore.clearAll()
+                        sitePermissionStoreProvider()?.clearAll()
                         publishSitePermissions()
                     }
                 } else {
@@ -343,11 +343,11 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishSitePermissions()
 
         case "revokeSitePermission":
-            if let id = message.uuid("id") { sitePermissionStore.revoke(id: id); publishSitePermissions(); bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized) }
+            if let id = message.uuid("id") { sitePermissionStoreProvider()?.revoke(id: id); publishSitePermissions(); bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized) }
 
         case "setSitePermission":
             if let origin = message.string("origin"), let type = message.string("type") {
-                sitePermissionStore.upsert(origin: origin, type: type, granted: message.bool("allow"))
+                sitePermissionStoreProvider()?.upsert(origin: origin, type: type, granted: message.bool("allow"))
                 publishSitePermissions()
             }
 
@@ -550,7 +550,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     }
 
     private func publishSitePermissions() {
-        bridgeRouter?.sendSitePermissionsLoaded(from: sitePermissionStore)
+        guard let store = sitePermissionStoreProvider() else { return }
+        bridgeRouter?.sendSitePermissionsLoaded(from: store)
     }
 
     private func publishWebsiteData() async {

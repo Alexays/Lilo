@@ -21,7 +21,6 @@ final class BrowserContextTests: XCTestCase {
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("global.db").path))
         XCTAssertNotNil(context.settingsStore)
-        XCTAssertNotNil(context.sitePermissionStore)
         XCTAssertNotNil(context.profileManager)
         XCTAssertNotNil(context.spaceManager)
         XCTAssertNotNil(context.startupSnapshot)

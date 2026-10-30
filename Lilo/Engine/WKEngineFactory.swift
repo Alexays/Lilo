@@ -75,7 +75,7 @@ final class WKEngineFactory {
         didSet { notificationBridge.permissionDecisionHandler = notificationPermissionDecisionHandler }
     }
     /// Returns true if the origin already has an "allow" decision for notifications; gates delivery.
-    var notificationAllowanceHandler: ((String) -> Bool)? {
+    var notificationAllowanceHandler: ((WKWebView?, String) -> Bool)? {
         didSet { notificationBridge.allowanceHandler = notificationAllowanceHandler }
     }
     /// Told of each notification a page posts. Set by MainWindowController.

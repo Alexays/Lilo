@@ -29,7 +29,7 @@ final class ContentSettingsBridgeHandler: GapHandler {
 
     private let settingsProvider: (ProfileExtensionRegistry) -> ExtensionSettingsStore?
     /// Lilo's own decision for a type it stores ("allow", "block"), nil to ask. Set by the window.
-    var userSetting: ((_ type: String, _ origin: String) -> String?)?
+    var userSetting: ((_ registry: ProfileExtensionRegistry, _ type: String, _ origin: String) -> String?)?
     private var parsedPatterns: [String: ContentSettingsPattern] = [:]
 
     init(settingsProvider: @escaping (ProfileExtensionRegistry) -> ExtensionSettingsStore?) {
@@ -53,7 +53,7 @@ final class ContentSettingsBridgeHandler: GapHandler {
             let incognito = call.bool("incognito")
             if incognito && !allowsPrivate { return BridgeError(ProxyBridgeHandler.incognitoError) }
             let setting = extensionSetting(name, primary: primaryURL, secondary: secondaryURL, settings: settings, registry: call.registry, isPrivate: incognito)
-                ?? Self.origin(of: primaryURL).flatMap { origin in userSetting?(name, origin) }
+                ?? Self.origin(of: primaryURL).flatMap { origin in userSetting?(call.registry, name, origin) }
                 ?? type.defaultValue
             return ["setting": setting]
 

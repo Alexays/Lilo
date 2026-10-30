@@ -57,7 +57,7 @@ final class NotificationPolyfillTests: XCTestCase {
     /// `Notification.permission` once a page at `baseURL` has had the time to learn its site's `decision`.
     private func permission(at baseURL: String, decision: Bool) async -> String? {
         let bridge = NotificationBridge()
-        bridge.allowanceHandler = { _ in decision }
+        bridge.allowanceHandler = { _, _ in decision }
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(bridge, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
         PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)

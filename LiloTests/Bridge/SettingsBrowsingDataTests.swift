@@ -25,8 +25,9 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let settingsStore = SettingsStore(dbPool: database.pool)
         let router = BridgeRouter(chromeWebView: WKWebView())
         let recorder = BridgeEventRecorder(router)
+        let sitePermissions = SitePermissionStore(dbPool: database.pool)
         let handler = SettingsBridgeHandler(
-            settingsStore: settingsStore, sitePermissionStore: SitePermissionStore(dbPool: database.pool),
+            settingsStore: settingsStore, sitePermissionStoreProvider: { sitePermissions },
             zoomStoreProvider: { nil }, historyStoreProvider: { history }, extensionRegistryProvider: { nil },
             dataStoreProvider: { dataStore }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
             forceLifecycleTrimHandler: {}, bridgeRouter: router

@@ -325,11 +325,9 @@ extension MainWindowController {
         }
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
-        context.engineFactory.notificationAllowanceHandler = { [weak context] origin in
-            guard let window = context?.windows.activeWindow else {
-                return context?.sitePermissionStore?.decision(forOrigin: origin, type: "notifications") == true
-            }
-            return window.storedPermissionDecision(type: "notifications", origin: origin, isPrivate: false) == true
+        context.engineFactory.notificationAllowanceHandler = { [weak context] webView, origin in
+            guard let webView, let window = context?.windows.window(for: webView) else { return false }
+            return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id) == true
         }
         setupTabShare()
         setupTabDock()
@@ -522,7 +520,7 @@ extension MainWindowController {
 
         let settingsHandler = SettingsBridgeHandler(
             settingsStore: settingsStore,
-            sitePermissionStore: context.sitePermissionStore,
+            sitePermissionStoreProvider: { [weak self] in self?.profileContext?.sitePermissions },
             zoomStoreProvider: { [weak self] in self?.profileContext?.zoom },
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             extensionRegistryProvider: { [weak self] in self?.profileContext?.extensions },

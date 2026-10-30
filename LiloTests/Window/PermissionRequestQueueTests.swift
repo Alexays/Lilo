@@ -12,6 +12,9 @@ final class PermissionRequestQueueTests: XCTestCase {
         browserContext = try await TemporaryBrowserContext()
         wc = MainWindowController(context: browserContext.context)
         wc.bridgeRouter = BridgeRouter(chromeWebView: wc.chromeWebView)
+        if wc.profileContext == nil, let profileId = browserContext.context.profileManager.defaultProfile?.id {
+            wc.profileContext = try browserContext.context.profileContexts.context(for: profileId)
+        }
     }
 
     override func tearDown() {
@@ -43,8 +46,19 @@ final class PermissionRequestQueueTests: XCTestCase {
         XCTAssertEqual(microphoneAnswer, false)
         XCTAssertTrue(wc.pendingPermissionRequests.isEmpty)
 
-        XCTAssertEqual(wc.context.sitePermissionStore.decision(forOrigin: "https://call.example", type: "camera"), true)
-        XCTAssertEqual(wc.context.sitePermissionStore.decision(forOrigin: "https://call.example", type: "microphone"), false)
+        XCTAssertEqual(wc.profileContext?.sitePermissions.decision(forOrigin: "https://call.example", type: "camera"), true)
+        XCTAssertEqual(wc.profileContext?.sitePermissions.decision(forOrigin: "https://call.example", type: "microphone"), false)
+    }
+
+    func testADecisionStaysInItsProfile() throws {
+        let work = try browserContext.context.profileManager.createProfile(name: "Work")
+        let workPermissions = try browserContext.context.profileContexts.context(for: work.id).sitePermissions
+        wc.enqueuePermissionRequest(tabId: UUID(), type: "camera", origin: "https://call.example") { _ in }
+
+        wc.resolvePermissionRequest(requestId: try XCTUnwrap(wc.pendingPermissionRequests.first?.id), granted: true)
+
+        XCTAssertEqual(wc.profileContext?.sitePermissions.decision(forOrigin: "https://call.example", type: "camera"), true)
+        XCTAssertNil(workPermissions.decision(forOrigin: "https://call.example", type: "camera"), "another profile keeps its own decisions")
     }
 
     func testTabCloseDeniesItsPendingRequestsOnly() throws {
@@ -62,7 +76,7 @@ final class PermissionRequestQueueTests: XCTestCase {
         XCTAssertNil(otherAnswer)
         XCTAssertEqual(wc.pendingPermissionRequests.count, 1)
         XCTAssertEqual(wc.pendingPermissionRequests.first?.tabId, otherTab)
-        XCTAssertNil(wc.context.sitePermissionStore.decision(forOrigin: "https://a.example", type: "camera"),
+        XCTAssertNil(wc.profileContext?.sitePermissions.decision(forOrigin: "https://a.example", type: "camera"),
                      "A close-time denial must not be stored as a site decision")
 
         wc.resolvePermissionRequest(requestId: try XCTUnwrap(wc.pendingPermissionRequests.first?.id), granted: true)
@@ -77,7 +91,7 @@ final class PermissionRequestQueueTests: XCTestCase {
 
         XCTAssertEqual(answer, false)
         XCTAssertTrue(wc.pendingPermissionRequests.isEmpty)
-        XCTAssertNil(wc.context.sitePermissionStore.decision(forOrigin: "https://maps.example", type: "geolocation"),
+        XCTAssertNil(wc.profileContext?.sitePermissions.decision(forOrigin: "https://maps.example", type: "geolocation"),
                      "A dismissal denies for now: the site may ask again")
     }
 

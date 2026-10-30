@@ -100,7 +100,6 @@ final class BrowserContext {
     private(set) var settingsStore: SettingsStore!
     /// How long Lilo was quit before this launch; nil on a first launch or after a crash, whose relaunch picks up where it was.
     var launchAbsence: TimeInterval?
-    private(set) var sitePermissionStore: SitePermissionStore!
     private(set) var profileManager: ProfileManager!
     private(set) var spaceManager: SpaceManager!
     private(set) var startupSnapshot: StartupSnapshot!
@@ -277,7 +276,6 @@ final class BrowserContext {
                 self?.terminalHost.refreshGitStats()
             }
         }
-        sitePermissionStore = SitePermissionStore(dbPool: dbManager.globalPool)
         profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         try profileManager.loadProfiles(
             startupSnapshot.profiles,

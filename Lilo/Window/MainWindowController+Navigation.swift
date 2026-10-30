@@ -347,7 +347,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, requestPermission type: String, forOrigin origin: String, completion: @escaping (Bool) -> Void) {
-        if let storedDecision = storedPermissionDecision(type: type, origin: origin, isPrivate: tab.isPrivateBrowsing) {
+        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: tab.id) {
             completion(storedDecision)
             return
         }
@@ -355,9 +355,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
         let remember: (Bool) -> Void = { [weak self] granted in
             completion(granted)
-            guard let self, !tab.isPrivateBrowsing else { return }
-            context.sitePermissionStore.upsert(origin: origin, type: type, granted: granted)
-            bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+            self?.rememberPermission(origin: origin, type: type, granted: granted, tabId: tab.id)
         }
         if let little = littleWindows[tab.id] {
             return PagePopupController.askPermission(type, for: tab, in: little.window, completion: remember)
@@ -411,7 +409,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, storedPermissionDecisionFor type: String, origin: String) -> Bool? {
-        storedPermissionDecision(type: type, origin: origin, isPrivate: tab.isPrivateBrowsing)
+        storedPermissionDecision(type: type, origin: origin, tabId: tab.id)
     }
 
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool {
@@ -423,7 +421,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     /// The user's stored decision, unless an extension's chrome.contentSettings rule takes precedence
     /// ("ask" prompts whatever the user chose before). Camera and microphone are decided together.
-    func storedPermissionDecision(type: String, origin: String, isPrivate: Bool) -> Bool? {
+    func storedPermissionDecision(type: String, origin: String, tabId: UUID?) -> Bool? {
+        let space = permissionSpace(forTab: tabId)
+        let isPrivate = space?.isPrivate ?? false
+        let store = sitePermissions(of: space)
         let decisions: [Bool?] = (type == "camera and microphone" ? ["camera", "microphone"] : [type]).map { type in
             let rule = profileContext.flatMap { profile in
                 URL(string: origin).flatMap {
@@ -436,7 +437,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             case "allow": return true
             case "block": return false
             case "ask": return nil
-            default: return context.sitePermissionStore.decision(forOrigin: origin, type: type)
+            default: return store?.decision(forOrigin: origin, type: type)
             }
         }
         if decisions.contains(false) { return false }
@@ -487,7 +488,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             return PermissionOriginKey.build(scheme: scheme, host: host, port: pageURL?.port ?? 0)
         }()
         let type = "external-scheme"
-        if let decision = context.sitePermissionStore.decision(forOrigin: origin, type: type) {
+        if let decision = profileContext?.sitePermissions.decision(forOrigin: origin, type: type) {
             if decision { NSWorkspace.shared.open(url) }
             return
         }
@@ -512,16 +513,33 @@ extension MainWindowController: WKWebViewTab.Delegate {
             guard let self else { return }
             let open = response == .alertFirstButtonReturn
             if alert.suppressionButton?.state == .on, origin != "unknown", !tab.isPrivateBrowsing {
-                context.sitePermissionStore.upsert(origin: origin, type: type, granted: open)
-                bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+                rememberPermission(origin: origin, type: type, granted: open, tabId: tab.id)
             }
             if open { NSWorkspace.shared.open(url) }
         }
     }
 
+    /// The user's answer, stored in the profile of the tab's space; a private space keeps none.
+    func rememberPermission(origin: String, type: String, granted: Bool, tabId: UUID?) {
+        let space = permissionSpace(forTab: tabId)
+        guard space?.isPrivate != true, let store = sitePermissions(of: space) else { return }
+        store.upsert(origin: origin, type: type, granted: granted)
+        bridgeRouter.sendSitePermissionsLoaded(from: store)
+    }
+
+    /// The space a tab's page asks from: the tab's own, else (a popup, a little window) the one the window shows.
+    private func permissionSpace(forTab tabId: UUID?) -> Space? {
+        let spaceId = tabId.flatMap(context.browserState.owningSpaceId(forTab:)) ?? tabManager.currentSpaceId
+        return spaceId.flatMap { context.spaceManager?.space(with: $0) }
+    }
+
+    private func sitePermissions(of space: Space?) -> SitePermissionStore? {
+        guard let space else { return profileContext?.sitePermissions }
+        return (try? context.profileContexts.context(for: space.profileId))?.sitePermissions
+    }
+
     func requestSitePermission(type: String, origin: String, webView: WKWebView?, completion: @escaping (Bool) -> Void) {
-        let isPrivate = webView.map { !$0.configuration.websiteDataStore.isPersistent } ?? false
-        if let storedDecision = storedPermissionDecision(type: type, origin: origin, isPrivate: isPrivate) {
+        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: tabId(owning: webView)) {
             completion(storedDecision)
             return
         }

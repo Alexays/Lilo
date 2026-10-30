@@ -321,7 +321,7 @@ final class ExtensionSettingsAPITests: XCTestCase {
 
     func testAnExtensionRuleOverridesTheUserSitePermission() async throws {
         let id = try await loadExtension()
-        factory.contentSettingsHandler.userSetting = { type, origin in type == "camera" && origin == "https://a.test" ? "allow" : nil }
+        factory.contentSettingsHandler.userSetting = { _, type, origin in type == "camera" && origin == "https://a.test" ? "allow" : nil }
         let handler = factory.contentSettingsHandler
         let page = try XCTUnwrap(URL(string: "https://a.test/"))
 
