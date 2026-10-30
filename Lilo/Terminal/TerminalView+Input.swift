@@ -441,8 +441,23 @@ extension TerminalView {
     }
 
     @objc func paste(_ sender: Any?) {
-        guard let text = NSPasteboard.general.string(forType: .string), !text.isEmpty else { return }
+        guard let text = Self.text(from: .general) else { return }
         insert(text)
+    }
+
+    /// Files and folders as shell-escaped paths, links as their URL, anything else as text.
+    private static func text(from pasteboard: NSPasteboard) -> String? {
+        let urls = pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL] ?? []
+        if !urls.isEmpty {
+            return urls.map { url in
+                guard url.isFileURL else { return url.absoluteString }
+                return String(url.path.flatMap { character -> [Character] in
+                    character.isLetter || character.isNumber || "/._-+~@%:,=".contains(character) ? [character] : ["\\", character]
+                })
+            }.joined(separator: " ") + " "
+        }
+        guard let string = pasteboard.string(forType: .string), !string.isEmpty else { return nil }
+        return string
     }
 
     /// Types text in as a paste: bracketed when the program asked for it, after a confirmation when
@@ -472,23 +487,8 @@ extension TerminalView {
         .copy
     }
 
-    /// Files and folders arrive as shell-escaped paths, links as their URL, anything else as text.
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        let pasteboard = sender.draggingPasteboard
-        let urls = pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL] ?? []
-        let text: String
-        if !urls.isEmpty {
-            text = urls.map { url in
-                guard url.isFileURL else { return url.absoluteString }
-                return String(url.path.flatMap { character -> [Character] in
-                    character.isLetter || character.isNumber || "/._-+~@%:,=".contains(character) ? [character] : ["\\", character]
-                })
-            }.joined(separator: " ") + " "
-        } else if let string = pasteboard.string(forType: .string), !string.isEmpty {
-            text = string
-        } else {
-            return false
-        }
+        guard let text = Self.text(from: sender.draggingPasteboard) else { return false }
         window?.makeFirstResponder(self)
         insert(text)
         return true
@@ -530,7 +530,7 @@ extension TerminalView {
         case #selector(copy(_:)):
             session.withLockedTerminal { $0.selectionText?.isEmpty == false }
         case #selector(paste(_:)):
-            NSPasteboard.general.string(forType: .string) != nil
+            Self.text(from: .general) != nil
         default:
             true
         }
