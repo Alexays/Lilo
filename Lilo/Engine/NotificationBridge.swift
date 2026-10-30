@@ -210,7 +210,7 @@ extension NotificationBridge {
       // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
         try { setPermission(top.Notification.permission); } catch (e) {}
-      } else if (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+      } else if (window.isSecureContext) {
         lilo.send('liloNotification', { type: 'query' });
       }
     }

@@ -628,6 +628,7 @@
 		EBA73956CB336E4DA1A2FB41 /* SessionPersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E28E9808F214A6501531E7 /* SessionPersistenceTests.swift */; };
 		EC16B140156702B1607FE05D /* FaviconStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CA1ABEF1B34D8C417B7BC3 /* FaviconStore.swift */; };
 		ECECE200138640A7DAAB9707 /* shell-integration in Resources */ = {isa = PBXBuildFile; fileRef = 49602D5C5808DF067D6D5562 /* shell-integration */; };
+		ED445F61514163A8D36265F1 /* GeolocationBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3326D78F441CB8C649ED83F /* GeolocationBridgeTests.swift */; };
 		ED7BED33310774ACD25EFAFE /* WindowExtensionAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD06A0A69230BDB140C509B /* WindowExtensionAdapterTests.swift */; };
 		EE1A0D831B6F359E14FBE5F3 /* ReaderMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE8DD9368BC12CAC7A5B7099 /* ReaderMode.swift */; };
 		EE3D1459B43E7927E41E3C4D /* PageWorld.swift in Sources */ = {isa = PBXBuildFile; fileRef = B052B5D0D33F8C42E574F2D2 /* PageWorld.swift */; };
@@ -1183,6 +1184,7 @@
 		A092BFAA00A2246E685E3CD0 /* SpeedometerBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedometerBenchmarkTests.swift; sourceTree = "<group>"; };
 		A263B852AB99D0CB06AFDD30 /* HTTPAuthKeychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPAuthKeychain.swift; sourceTree = "<group>"; };
 		A28018FAB5383FD78A7256C3 /* TerminalTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalTheme.swift; sourceTree = "<group>"; };
+		A3326D78F441CB8C649ED83F /* GeolocationBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeolocationBridgeTests.swift; sourceTree = "<group>"; };
 		A37F0047420C72EA77BB0C44 /* MainWindowController+ContextMenus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+ContextMenus.swift"; sourceTree = "<group>"; };
 		A3D45D8E559247BAE6A0BB6C /* MainWindowController+Input.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Input.swift"; sourceTree = "<group>"; };
 		A3DF2E77C29A4DD65C8F8519 /* TerminalCompletionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalCompletionsTests.swift; sourceTree = "<group>"; };
@@ -2348,6 +2350,7 @@
 				708C2473D269B2D836D39D22 /* EngineFreezerTests.swift */,
 				C7AB20A14BE4C555CF965097 /* EyeDropperBridgeTests.swift */,
 				2796BC634BEA848B9AB4C7B1 /* FullPageSnapshotTests.swift */,
+				A3326D78F441CB8C649ED83F /* GeolocationBridgeTests.swift */,
 				C4844240CAFC16B5664ADF10 /* InjectedScriptsBenchmarkTests.swift */,
 				CB1765BD6DB45D5C9173FC42 /* MediaControlTests.swift */,
 				67E40EDB4E5F12B521F3F99F /* MinimumFontSizeTests.swift */,
@@ -3328,6 +3331,7 @@
 				1B078B564BDBC1C1E4080A5A /* FullPageSnapshotTests.swift in Sources */,
 				AB22EA9CB2BCA1DA8D0E86EE /* GapCallSupport.swift in Sources */,
 				245492795F640E3D34A269EB /* GapRouterStoreProviderTests.swift in Sources */,
+				ED445F61514163A8D36265F1 /* GeolocationBridgeTests.swift in Sources */,
 				60F9EE3DF4112BC208DDA97A /* GermanLocalizationTests.swift in Sources */,
 				8D8C4F5A123A9A8DB53C12C2 /* GitDiffTests.swift in Sources */,
 				92E37AF860E6672876D98983 /* HiddenSpaceEngineRetentionTests.swift in Sources */,

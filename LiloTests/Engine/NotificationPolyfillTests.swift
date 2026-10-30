@@ -54,6 +54,31 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertFalse(recorder.messages.contains { $0["type"] as? String == "query" })
     }
 
+    /// `Notification.permission` once a page at `baseURL` has had the time to learn its site's `decision`.
+    private func permission(at baseURL: String, decision: Bool) async -> String? {
+        let bridge = NotificationBridge()
+        bridge.allowanceHandler = { _ in decision }
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController.add(bridge, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
+        PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.loadHTMLString("<p>page</p>", baseURL: URL(string: baseURL))
+        let expected = decision ? "granted" : "denied"
+        var permission: String?
+        await pollUntil(timeout: 5) {
+            permission = (try? await webView.evaluateJavaScript("Notification.permission")) as? String
+            return permission == expected
+        }
+        return permission
+    }
+
+    func testSecureContextsLearnTheirSitesDecision() async {
+        for base in ["https://example.com/", "http://app.localhost:3000/", "http://127.0.0.2/"] {
+            let permission = await permission(at: base, decision: true)
+            XCTAssertEqual(permission, "granted", base)
+        }
+    }
+
     func testASameOriginSubframeTakesTheTopsPermissionWithoutQuerying() async throws {
         let recorder = Recorder()
         let webView = try await makeWebView(recorder)
