@@ -3562,6 +3562,53 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(backgroundEngine.isFrozen, "an idle background tab in the active space should freeze")
     }
 
+    func testFreezeIdleEnginesCountsIdleTimeFromWhenTheTabWasLeft() throws {
+        let spaceId = UUID(); let readId = UUID(); let nextId = UUID()
+        var read = Tab(id: readId, url: URL(string: "https://read.example"), title: "Read", spaceId: spaceId)
+        read.lastActiveAt = Date(timeIntervalSince1970: 1)   // activated long ago, read until now
+        let next = Tab(id: nextId, url: URL(string: "https://next.example"), title: "Next", spaceId: spaceId)
+        let readEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: read)
+        store.storeActiveSpace(
+            id: spaceId,
+            snapshot: makeSpaceSnapshot(tabs: [read, next], folders: [], treeItems: [], engines: [readId: readEngine], activeTabId: readId)
+        )
+
+        _ = try store.mutate(.activateTab(spaceId: spaceId, tabId: nextId))
+        store.freezeIdleEngines(freezeThreshold: 60)
+
+        XCTAssertFalse(readEngine.isFrozen, "a tab just left is not idle, however long ago it was activated")
+    }
+
+    func testIdleFreezeAndDiscardSpareALoadingTab() {
+        let activeSpaceId = UUID(); let hiddenSpaceId = UUID(); let tabId = UUID()
+        var tab = Tab(id: tabId, url: URL(string: "slow://page"), title: "Slow", spaceId: hiddenSpaceId)
+        tab.lastActiveAt = Date(timeIntervalSince1970: 1)
+        let configuration = WKWebViewConfiguration()
+        configuration.setURLSchemeHandler(NeverAnsweringSchemeHandler(), forURLScheme: "slow")
+        let engine = WKWebViewTab(configuration: configuration)
+        engine.loadURL(URL(string: "slow://page")!)
+        defer { engine.teardown() }
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: tab)
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [tab], folders: [], treeItems: [], engines: [tabId: engine], activeTabId: tabId)
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+        XCTAssertTrue(engine.isLoading)
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+        store.trimInactiveEngines(
+            excluding: nil, policy: .foreground, maxRetainedEnginesPerHiddenSpace: 1, maxHiddenSpacesWithRetainedEngines: 2,
+            discardEngine: { _ in nil }, discardThreshold: 60
+        )
+
+        XCTAssertFalse(engine.isFrozen)
+        XCTAssertNotNil(store.space(id: hiddenSpaceId)?.engines[tabId])
+    }
+
     func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID()
         let visibleId = UUID(); let backgroundId = UUID(); let hiddenActiveId = UUID(); let hiddenOtherId = UUID()
@@ -4235,4 +4282,10 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertFalse(displayedEngine.isFrozen)
     }
 
+}
+
+/// Keeps a page loading for as long as the test needs.
+private final class NeverAnsweringSchemeHandler: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {}
+    func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {}
 }

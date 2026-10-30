@@ -236,9 +236,10 @@ final class TabManager {
 
         // A locked folder's tab can be selected, never loaded: the window shows the lock placeholder.
         // A non-web tab has no engine to wake.
+        let previousTabId = activeTabId
         if tab.kind != .web || protectingFolder(of: tab)?.isLocked == true {
             activeTabId = id
-            browserStateStore?.noteTabActivated(id)
+            browserStateStore?.noteTabActivated(id, leaving: previousTabId)
             delegate?.tabManager(self, didActivateTab: id)
             // Extensions see the window's stand-in tab active instead.
             if let windowAdapter, let previousAdapter = windowAdapter.activeAdapter, let registry = extensionRegistry {
@@ -259,7 +260,7 @@ final class TabManager {
         activeTabId = id
         // Runtime-path activations (space-switch restore, non-command) must stamp lastActiveAt too,
         // else it stays nil and the tab is never idle-frozen/discarded.
-        browserStateStore?.noteTabActivated(id)
+        browserStateStore?.noteTabActivated(id, leaving: previousTabId)
 
         delegate?.tabManager(self, didActivateTab: id)
 
