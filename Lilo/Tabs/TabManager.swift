@@ -200,9 +200,12 @@ final class TabManager {
         registry.controller.didOpenTab(adapter)
     }
 
-    func loadPreparedTab(_ tab: Tab, nativeConfiguration: WKWebViewConfiguration?) {
-        guard nativeConfiguration == nil, let url = tab.url else { return }
-        engineHost.engine(for: tab.id)?.loadURL(url)
+    /// `interactionState`, when it holds a page, replaces the load with that page and its history.
+    func loadPreparedTab(_ tab: Tab, nativeConfiguration: WKWebViewConfiguration?, interactionState: Any? = nil) {
+        guard nativeConfiguration == nil, let url = tab.url, let engine = engineHost.engine(for: tab.id) else { return }
+        // An extension page loads fresh, as a woken one does: its history may name a stale extension host.
+        if let interactionState, engine.extensionHost == nil, engine.restoreInteractionState(interactionState) { return }
+        engine.loadURL(url)
     }
 
     func discardPreparedTabRuntime(for id: UUID) {

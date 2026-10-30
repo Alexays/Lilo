@@ -29,7 +29,7 @@ extension MainWindowController {
         )
     }
 
-    /// `opener` is the tab extensions see as the new tab's `openerTabId`.
+    /// `opener` is the tab extensions see as the new tab's `openerTabId`; `interactionState` gives it `url` with its history.
     @discardableResult
     func createTabStateFirst(
         url: URL?,
@@ -37,6 +37,7 @@ extension MainWindowController {
         opener: UUID? = nil,
         nativeConfiguration: WKWebViewConfiguration? = nil,
         adopting adoptedEngine: WKWebViewTab? = nil,
+        interactionState: Any? = nil,
         sidebarParentFolderId: UUID? = nil,
         sidebarSection: TabTreeItem.Section? = nil,
         sidebarIndex: Int? = nil
@@ -65,7 +66,7 @@ extension MainWindowController {
             // An adopted page offered its icons before the tab existed, and WebKit offers them once per load.
             if let adoptedEngine { faviconCoordinator.applyCached(from: adoptedEngine) }
             // Loads ahead of activation so the request is in flight while activation does its UI work.
-            if adoptedEngine == nil { tabManager.loadPreparedTab(tab, nativeConfiguration: nativeConfiguration) }
+            if adoptedEngine == nil { tabManager.loadPreparedTab(tab, nativeConfiguration: nativeConfiguration, interactionState: interactionState) }
             if activate {
                 tabManager.activateTabRuntime(id: tab.id)
             }
@@ -116,6 +117,7 @@ extension MainWindowController {
             return createTabStateFirst(
                 url: url,
                 activate: true,
+                interactionState: entry.interactionState,
                 sidebarParentFolderId: entry.parentFolderId,
                 sidebarSection: entry.section,
                 sidebarIndex: entry.sortOrder
@@ -243,6 +245,7 @@ extension MainWindowController {
         let spaceId = tabContext.spaceId
         guard tabManager.protectingFolder(of: tab) == nil else { return false }
         let content: RecentlyClosedStack.Entry.Content
+        var interactionState: Data?
         if tab.isPinned || tab.isBookmarked {
             guard tab.isClosed else { return false }
             content = .savedTab(StoredTab(tab))
@@ -251,6 +254,7 @@ extension MainWindowController {
             case .web:
                 guard let url = tab.url else { return false }
                 content = .page(url)
+                interactionState = tabManager.engineHost.interactionState(for: id) as? Data
             case .terminal:
                 content = .terminal(.init(
                     cwd: tab.cwd ?? NSHomeDirectory(), title: tab.title, resumeCommand: tab.resumeCommand,
@@ -267,7 +271,8 @@ extension MainWindowController {
             spaceId: spaceId,
             parentFolderId: sidebarItem?.parentFolderId,
             section: sidebarItem?.section,
-            sortOrder: sidebarItem?.sortOrder
+            sortOrder: sidebarItem?.sortOrder,
+            interactionState: interactionState
         )
         return true
     }
