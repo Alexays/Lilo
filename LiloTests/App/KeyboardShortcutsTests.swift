@@ -99,6 +99,21 @@ final class KeyboardShortcutsTests: XCTestCase {
                       "the address bar is no page")
     }
 
+    func testATerminalTabKeepsThePageOnlyKeys() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        let window = makeTestWindow(context, showing: space.id)
+        let terminal = try XCTUnwrap(window.createTerminalTab(activate: true))
+        defer { window.tabManager.terminalHost.forget(terminal.id) }
+
+        for (key, keyCode) in [("[", UInt16(33)), ("]", 30), ("p", 35), ("s", 1)] {
+            XCTAssertFalse(window.handleKeyboardShortcut(keyDown(key, .command, keyCode: keyCode, in: window)), "⌘\(key)")
+        }
+    }
+
     func testRecordingAKeyHeldElsewhereAsksBeforeTakingIt() {
         let controller = MainWindowController()
         controller.recordingShortcutId = "tab.pin"

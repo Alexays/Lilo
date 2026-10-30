@@ -397,6 +397,8 @@ extension MainWindowController {
             keyLeftToPage = event
             return false
         }
+        // Without a page, as on a terminal tab, these keys go on to the focused view and the menus.
+        if tabManager.activeEngineTab == nil, ["history.back", "history.forward", "page.print", "page.save"].contains(id) { return false }
         switch id {
         case "tab.new":
             // The chrome knows whether the command bar is open, so it toggles the blank new tab.
