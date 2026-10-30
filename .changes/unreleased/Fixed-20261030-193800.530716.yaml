@@ -1,0 +1,3 @@
+kind: Fixed
+body: Closing the find bar keeps the search, so Find Next goes on with it and the next Find opens with it selected.
+time: 2026-10-30T19:38:00.530716+01:00

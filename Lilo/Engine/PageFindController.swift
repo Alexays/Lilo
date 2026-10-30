@@ -36,17 +36,16 @@ final class PageFindController {
         return (try? await webView.find(query, configuration: config))?.matchFound == true
     }
 
-    /// What Find Next looks for: the current search, else, as in Safari, the system find pasteboard (Cmd-E in any app).
+    /// What Find Next looks for: the last search, else, as in Safari, the system find pasteboard (Cmd-E in any app).
     var findAgainString: String { query.isEmpty ? NSPasteboard(name: .find).string(forType: .string) ?? "" : query }
 
     func findNext() { performFind(backwards: false) }
     func findPrevious() { performFind(backwards: true) }
 
-    /// Ends the find session like Safari: the last match stays selected, only WebKit's find state goes.
+    /// Ends the find session like Safari: the last match stays selected, only WebKit's find state goes. The search
+    /// itself stays, for Find Next and the find bar's next opening.
     func dismiss() {
         guard !query.isEmpty else { return }
-        query = ""
-        caseSensitive = false
         let hideFindUI = NSSelectorFromString("_hideFindUI")
         if webView.responds(to: hideFindUI) { webView.perform(hideFindUI) }
     }

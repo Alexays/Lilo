@@ -87,6 +87,20 @@ final class PageFindControllerTests: XCTestCase {
         XCTAssertEqual(selected, "beta")
     }
 
+    func testFindNextAfterDismissGoesOnWithTheLastSearch() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        NSPasteboard(name: .find).clearContents()
+        _ = await tab.findInPage("beta", caseSensitive: false)
+        let firstOffset = try await selectionOffset(in: tab)
+        tab.dismissFind()
+
+        XCTAssertTrue(tab.canFindAgain)
+        tab.findNext()
+        let moved = await pollUntil(timeout: 5) { (try? await self.selectionOffset(in: tab)) != firstOffset }
+        XCTAssertTrue(moved)
+    }
+
     func testFindAgainWithoutASearchLooksForTheFindPasteboard() async throws {
         let tab = try await loadedTab()
         defer { tab.teardown() }

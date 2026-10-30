@@ -70,3 +70,14 @@ test("the query keeps its spaces, as in Chrome", async ({ page }) => {
 		.poll(async () => (await sentCommands(page)).filter((c) => c.action === "findInPage").at(-1)?.payload.query)
 		.toBe("cat ");
 });
+
+test("the next opening brings the last query back, selected", async ({ page }) => {
+	await openFindBar(page, "beta");
+	const input = page.getByRole("textbox", { name: "Rechercher dans la page" });
+	await input.press("Escape");
+	await expect(page.locator(".find-bar")).toBeHidden();
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "toggleFindBar" }));
+	await expect(input).toHaveValue("beta");
+	await expect.poll(() => input.evaluate((el: HTMLInputElement) => [el.selectionStart, el.selectionEnd])).toEqual([0, 4]);
+});

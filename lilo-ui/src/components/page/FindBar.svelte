@@ -79,11 +79,11 @@
     });
   }
 
+  // The query stays for the next opening, selected; the engine keeps it for Find Next with the bar closed.
   function dismiss() {
     clearTimeout(searchTimer);
     searchTimer = undefined;
     visible = false;
-    query = "";
     status = "idle";
     hasSearched = false;
     lastSearchedQuery = "";
