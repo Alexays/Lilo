@@ -106,6 +106,9 @@
     <true/>
     <key>SUAutomaticallyUpdate</key>
     <true/>
+    <!-- Hourly, Sparkle's minimum: a release reaches the sidebar's update card within the hour. -->
+    <key>SUScheduledCheckInterval</key>
+    <integer>3600</integer>
     <key>SURequireSignedFeed</key>
     <true/>
     <!-- Sparkle refuses to start a signed-feed updater without it. -->

@@ -1,0 +1,3 @@
+kind: Changed
+body: Lilo checks for updates every hour instead of once a day, so the card offering to restart into a new version shows up soon after a release.
+time: 2026-10-30T09:23:44.33573+01:00

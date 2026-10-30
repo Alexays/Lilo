@@ -82,7 +82,7 @@ Besides the pages you open, Lilo contacts these services:
 | Preload top hit | A site from your history you visit often, loaded with your cookies as if you had opened it | While you type its address in a blank tab, before you press Return | Turn off Preload top hit in Settings |
 | Extension installs and updates | `clients2.google.com` (Chrome Web Store), with the ids and versions of your store extensions | On install, and an update check every five hours while store extensions are installed | Remove store extensions; turning off automatic extension updates only stops installing new versions |
 | Google sign-in for extensions (`chrome.identity.getAuthToken`) | `accounts.google.com`, with the extension's OAuth client id and scopes | Only when an extension asks you to sign in, in a panel you see | Remove the extension, or close the panel |
-| App updates (Sparkle) | `github.com` (the latest release's `appcast.xml`, then the update itself), with Lilo's version in the User-Agent; no system profile | Once a day, after you agree when Lilo asks | Decline the prompt, or turn off automatic updates in Settings |
+| App updates (Sparkle) | `github.com` (the latest release's `appcast.xml`, then the update itself), with Lilo's version in the User-Agent; no system profile | Once an hour, from the first launch | Turn off automatic updates in Settings |
 
 The Chrome Web Store sees Lilo as Chrome, so its install button (relabeled "Add to Lilo") works (see
 [COMPATIBILITY.md](COMPATIBILITY.md#user-agent-and-the-chrome-web-store)). Local and debug builds
