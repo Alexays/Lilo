@@ -74,6 +74,22 @@ final class ChromiumReaderTests: XCTestCase {
         XCTAssertNotNil(wrongKey.errors[.cookies], "a key that decrypts nothing is an error, not an empty import")
     }
 
+    func testCookiesSkipPartitionedRows() throws {
+        let pool = try DatabasePool(path: dir.appendingPathComponent("Network/Cookies").path)
+        try pool.write { db in
+            try db.execute(sql: "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
+            try db.execute(sql: "INSERT INTO meta VALUES ('version', '24')")
+            try db.execute(sql: """
+                CREATE TABLE cookies (host_key TEXT, top_frame_site_key TEXT, name TEXT, value TEXT, encrypted_value BLOB, path TEXT,
+                expires_utc INTEGER, is_secure INTEGER, is_httponly INTEGER, samesite INTEGER)
+                """)
+            try db.execute(sql: "INSERT INTO cookies VALUES ('.widget.example', '', 'sid', 'own', x'', '/', 0, 1, 1, 0)")
+            try db.execute(sql: "INSERT INTO cookies VALUES ('.widget.example', 'https://host.example', 'sid', 'embedded', x'', '/', 0, 1, 1, 0)")
+        }
+        let result = ChromiumReader.read(profile: profile, kinds: [.cookies], arc: nil, password: { "pw" })
+        XCTAssertEqual(result.bundle.cookies.map(\.value), ["own"])
+    }
+
     func testListsOnlyWebStoreExtensionsWithLocalizedNames() throws {
         let id = String(repeating: "a", count: 32)
         let ext = dir.appendingPathComponent("Extensions/\(id)/1.0_0")
