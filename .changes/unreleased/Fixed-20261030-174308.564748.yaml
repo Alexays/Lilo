@@ -1,0 +1,3 @@
+kind: Fixed
+body: With a Peek open, Back, Forward, Reload, Stop, Find and Print act on the Peek instead of the tab hidden under it.
+time: 2026-10-30T17:43:08.564748+01:00

@@ -126,7 +126,7 @@ extension MainWindowController {
         bridgeRouter.send(event: didCopy ? "urlCopied" : "urlCopyFailed")
     }
 
-    @objc func printCurrentPage(_ sender: Any?) { tabManager.activeEngineTab?.printPage(in: window) }
+    @objc func printCurrentPage(_ sender: Any?) { focusedEngineTab?.printPage(in: window) }
 
     @objc func savePageAs(_ sender: Any?) {
         guard let window, let webView = tabManager.activeEngineTab?.wkWebView, webView.url != nil else { return }
@@ -192,6 +192,7 @@ extension MainWindowController {
     @objc func toggleWebInspectorPageProfiling(_ sender: Any?) { tabManager.activeEngineTab?.toggleWebInspectorPageProfiling() }
 
     @objc func reloadCurrentPageFromOrigin(_ sender: Any?) {
+        if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { return engine.reloadFromOrigin() }
         if let host = tabManager.activeTab?.url?.host { context.faviconService.clear(for: host) }
         tabManager.reloadActiveTab(fromOrigin: true)
     }
@@ -201,8 +202,8 @@ extension MainWindowController {
     // Shared with the keyboard shortcuts below: menu items carry the key equivalents (so the combos
     // show in the menu), and these actions back both the menu and the chrome's own controls.
 
-    @objc func goBackInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goBack() }
-    @objc func goForwardInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goForward() }
+    @objc func goBackInHistory(_ sender: Any?) { focusedEngineTab?.goBack() }
+    @objc func goForwardInHistory(_ sender: Any?) { focusedEngineTab?.goForward() }
 
     /// The active tab's previous or next page in a new tab, as Cmd- or middle-clicking Back and Forward does in Chrome and Safari.
     func openHistoryInNewTab(forward: Bool, inBackground: Bool) {
@@ -212,8 +213,10 @@ extension MainWindowController {
               let created = createTabStateFirst(url: item.url, activate: !inBackground, opener: engine.id) else { return }
         if inBackground { noteBackgroundTab(created.id) }
     }
-    @objc func reloadCurrentPage(_ sender: Any?) { tabManager.reloadActiveTab() }
-    @objc func stopLoadingCurrentPage(_ sender: Any?) { tabManager.activeEngineTab?.stopLoading() }
+    @objc func reloadCurrentPage(_ sender: Any?) {
+        if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { engine.reload() } else { tabManager.reloadActiveTab() }
+    }
+    @objc func stopLoadingCurrentPage(_ sender: Any?) { focusedEngineTab?.stopLoading() }
     @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(by: 0.1) }
     @objc func zoomOutCurrentPage(_ sender: Any?) { zoomActiveTab(by: -0.1) }
     @objc func resetCurrentPageZoom(_ sender: Any?) { resetActiveTabZoom() }
@@ -256,16 +259,16 @@ extension MainWindowController {
         createTabStateFirst(url: form?.url)
     }
     @objc func findNextMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: true) } else { tabManager.activeEngineTab?.findNext() }
+        if let terminal = activeTerminalView { terminal.findAgain(older: true) } else { focusedEngineTab?.findNext() }
     }
 
     @objc func findPreviousMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { tabManager.activeEngineTab?.findPrevious() }
+        if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { focusedEngineTab?.findPrevious() }
     }
 
     /// Searches for the page's selection without opening the find bar, so Find Next goes on from there.
     @objc func useSelectionForFind(_ sender: Any?) {
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         Task { @MainActor in
             guard let text = await engine.selectedTextForFind() else { return }
             _ = await engine.findInPage(text, caseSensitive: false)
@@ -315,7 +318,7 @@ extension MainWindowController {
             let selectedText = if let terminal = activeTerminalView {
                 terminal.session.withLockedTerminal { $0.selectionText }
             } else {
-                await tabManager.activeEngineTab?.selectedTextForFind()
+                await focusedEngineTab?.selectedTextForFind()
             }
             focusChrome()
             if let selectedText {
@@ -525,9 +528,9 @@ extension MainWindowController: NSUserInterfaceValidations {
 
         if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { $0.peekView?.superview != nil } }
-        if action == #selector(goBackInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoBack == true }
-        if action == #selector(goForwardInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoForward == true }
-        if action == #selector(stopLoadingCurrentPage(_:)) { return tabManager.activeTab?.isLoading == true }
+        if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoBack == true }
+        if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }
+        if action == #selector(stopLoadingCurrentPage(_:)) { return focusedEngineTab?.isLoading == true }
         if action == #selector(showNextTab(_:)) || action == #selector(showPreviousTab(_:)) { return tabManager.currentTabs.count > 1 }
         if action == #selector(togglePerfRecording(_:)) {
             (item as? NSMenuItem)?.title = PerfRecorder.isRecording ? "Stop Performance Recording".localized : "Record Performance Session".localized
@@ -580,11 +583,11 @@ extension MainWindowController: NSUserInterfaceValidations {
         }
         if action == #selector(reloadCurrentPageFromOrigin(_:)) { return tabManager.activeTab?.url != nil }
         if action == #selector(findNextMatch(_:)) || action == #selector(findPreviousMatch(_:)) {
-            return activeTerminalView != nil || tabManager.activeEngineTab?.canFindAgain == true
+            return activeTerminalView != nil || focusedEngineTab?.canFindAgain == true
         }
         // A terminal or Changes tab has no page for these.
         if action == #selector(reloadCurrentPage(_:)) || action == #selector(togglePictureInPicture(_:)) { return tabManager.activeEngineTab != nil }
-        if action == #selector(printCurrentPage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(printCurrentPage(_:)) { return focusedEngineTab?.wkWebView.url != nil }
         if action == #selector(toggleReader(_:)) {
             let reading = tabManager.activeOpenTabId.map(readerModeTabs.contains) == true
             (item as? NSMenuItem)?.title = reading ? "Hide Reader".localized : "Show Reader".localized

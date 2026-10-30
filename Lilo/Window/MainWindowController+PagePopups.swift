@@ -176,6 +176,11 @@ extension MainWindowController {
         }
     }
 
+    /// The page the window's keys and page actions go to: the shown peek's, else the active tab's.
+    var focusedEngineTab: WKWebViewTab? {
+        pagePopups.values.first { $0.peekView?.superview != nil }?.engine ?? tabManager.activeEngineTab
+    }
+
     /// File > Open as Tab in the browser window: the shown peek's page, when there is one.
     @objc func openPageAsTab(_ sender: Any?) {
         pagePopups.values.first { $0.peekView?.superview != nil }?.openAsTab()

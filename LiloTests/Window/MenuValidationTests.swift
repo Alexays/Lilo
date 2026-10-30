@@ -206,6 +206,32 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertEqual(window.tabManager.activeOpenTabId, popup.engine.id)
     }
 
+    /// Back and Forward act on the shown peek, never on the tab hidden under it.
+    func testPageActionsGoToTheShownPeek() async throws {
+        let first = try XCTUnwrap(URL(string: "data:text/html,<p>first</p>"))
+        let second = try XCTUnwrap(URL(string: "data:text/html,<p>second</p>"))
+        let opener = try XCTUnwrap(window.createTabStateFirst(url: first))
+        let tab = try XCTUnwrap(window.tabManager.engineTab(for: opener.id))
+        let tabLoaded = await pollUntil { tab.wkWebView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(tabLoaded)
+        window.openLinkPeek(first, from: opener.id)
+        let peek = try XCTUnwrap(window.pagePopups.values.first?.engine)
+        for url in [first, second] {
+            if peek.wkWebView.backForwardList.currentItem?.url != url { peek.loadURL(url) }
+            let committed = await pollUntil { peek.wkWebView.backForwardList.currentItem?.url == url }
+            XCTAssertTrue(committed, "\(url) never committed")
+        }
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.goBackInHistory(_:))), "the peek can go back, the tab cannot")
+
+        window.goBackInHistory(nil)
+
+        let wentBack = await pollUntil { peek.wkWebView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack)
+        XCTAssertFalse(isEnabled(#selector(MainWindowController.goBackInHistory(_:))))
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.goForwardInHistory(_:))))
+        XCTAssertEqual(tab.wkWebView.backForwardList.backList.count, 0, "the tab under the peek never moved")
+    }
+
     func testOpenAsTabOpensThePageOfAPopupWindow() throws {
         let item = try openAsTabItem()
         let opener = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com/")))

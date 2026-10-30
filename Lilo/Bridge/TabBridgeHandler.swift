@@ -428,19 +428,19 @@ final class TabBridgeHandler: BridgeHandler {
                 return nil
             }
             if let query = message.string("query"),
-               let engine = tabManager.activeEngineTab {
+               let engine = windowController?.focusedEngineTab ?? tabManager.activeEngineTab {
                 let found = await engine.findInPage(query, caseSensitive: message.bool("caseSensitive"))
                 windowController?.bridgeRouter.send(event: "findInPageResult", data: ["query": query, "matchFound": found])
             }
 
         case "findNext":
-            if let terminal = windowController?.activeTerminalView { terminal.findAgain(older: true) } else { tabManager.activeEngineTab?.findNext() }
+            if let terminal = windowController?.activeTerminalView { terminal.findAgain(older: true) } else { (windowController?.focusedEngineTab ?? tabManager.activeEngineTab)?.findNext() }
 
         case "findPrevious":
-            if let terminal = windowController?.activeTerminalView { terminal.findAgain(older: false) } else { tabManager.activeEngineTab?.findPrevious() }
+            if let terminal = windowController?.activeTerminalView { terminal.findAgain(older: false) } else { (windowController?.focusedEngineTab ?? tabManager.activeEngineTab)?.findPrevious() }
 
         case "dismissFind":
-            if let terminal = windowController?.activeTerminalView { terminal.endFind() } else { tabManager.activeEngineTab?.dismissFind() }
+            if let terminal = windowController?.activeTerminalView { terminal.endFind() } else { (windowController?.focusedEngineTab ?? tabManager.activeEngineTab)?.dismissFind() }
 
         case "updateTabFolder":
             guard let id = message.uuid("id"),
