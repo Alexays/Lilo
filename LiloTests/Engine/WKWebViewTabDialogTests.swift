@@ -106,6 +106,28 @@ final class WKWebViewTabDialogTests: XCTestCase {
         XCTAssertTrue(sheetTexts(window).contains("An embedded page on example.com says"), "\(sheetTexts(window))")
     }
 
+    func testRepeatedDialogsCanBeStopped() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<p>page</p>", in: engine)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("setTimeout(() => { window.count = 0; while (window.count < 1000) { window.count++; alert(window.count) } }); true")
+        let firstShown = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(firstShown)
+        XCTAssertNil(alertSuppressionButton(window), "the first dialog offers nothing more")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+
+        let offered = await pollUntil { self.alertSuppressionButton(window) != nil }
+        XCTAssertTrue(offered, "the next one offers to stop them")
+        try XCTUnwrap(alertSuppressionButton(window)).state = .on
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+
+        let freed = await pollUntil { (try? await engine.wkWebView.evaluateJavaScript("window.count")) as? Int == 1000 }
+        XCTAssertTrue(freed, "the page's further dialogs are dismissed")
+        XCTAssertNil(window.attachedSheet)
+    }
+
     /// Every text field's string in the window's sheet.
     private func sheetTexts(_ window: NSWindow) -> [String] {
         var views = [window.attachedSheet?.contentView].compactMap { $0 }
@@ -115,5 +137,14 @@ final class WKWebViewTabDialogTests: XCTestCase {
             views += view.subviews
         }
         return texts
+    }
+
+    private func alertSuppressionButton(_ window: NSWindow) -> NSButton? {
+        var views = [window.attachedSheet?.contentView].compactMap { $0 }
+        while let view = views.popLast() {
+            if let button = view as? NSButton, !button.isHidden, button.title.hasPrefix("Prevent this page") { return button }
+            views += view.subviews
+        }
+        return nil
     }
 }

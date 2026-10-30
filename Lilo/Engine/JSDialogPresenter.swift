@@ -10,13 +10,14 @@ enum JSDialogPresenter {
         in webView: WKWebView,
         frame: WKFrameInfo,
         message: String,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable () -> Void
     ) {
         DispatchQueue.main.async {
             guard let w = webView.window else { completion(); return }
             let alert = pageAlert(in: webView, frame: frame, message: message)
             alert.addButton(withTitle: "OK".localized)
-            alert.beginSheetModal(for: w) { _ in completion() }
+            begin(alert, on: w, suppress: suppress) { _ in completion() }
         }
     }
 
@@ -24,13 +25,14 @@ enum JSDialogPresenter {
         in webView: WKWebView,
         frame: WKFrameInfo,
         message: String,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         DispatchQueue.main.async {
             guard let w = webView.window else { completion(false); return }
             let alert = pageAlert(in: webView, frame: frame, message: message)
             alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
-            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
+            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn) }
         }
     }
 
@@ -39,6 +41,7 @@ enum JSDialogPresenter {
         frame: WKFrameInfo,
         prompt: String,
         defaultText: String?,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable (String?) -> Void
     ) {
         DispatchQueue.main.async {
@@ -47,7 +50,7 @@ enum JSDialogPresenter {
             alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
             let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
             tf.stringValue = defaultText ?? ""; alert.accessoryView = tf
-            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn ? tf.stringValue : nil) }
+            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn ? tf.stringValue : nil) }
             alert.window.makeFirstResponder(tf)
         }
     }
@@ -67,6 +70,24 @@ enum JSDialogPresenter {
             alert.messageText = (isEmbedded ? "An embedded page on this page says" : "This page says").localized
         }
         return alert
+    }
+
+    /// Shows a page's alert as a sheet. With `suppress`, it offers to stop the page's further dialogs, as Chrome does
+    /// from a page's second one: a page looping on alert() would otherwise hold the window.
+    private static func begin(
+        _ alert: NSAlert,
+        on window: NSWindow,
+        suppress: (@MainActor @Sendable () -> Void)?,
+        completion: @escaping @MainActor @Sendable (NSApplication.ModalResponse) -> Void
+    ) {
+        if suppress != nil {
+            alert.showsSuppressionButton = true
+            alert.suppressionButton?.title = "Prevent this page from creating additional dialogs".localized
+        }
+        alert.beginSheetModal(for: window) { response in
+            if let suppress, alert.suppressionButton?.state == .on { suppress() }
+            completion(response)
+        }
     }
 
     /// Confirmation before leaving a page with an onbeforeunload handler. Like browsers, the page's

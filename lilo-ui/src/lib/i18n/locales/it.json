@@ -1979,6 +1979,7 @@
 		"An embedded page on %@ says": "Una pagina incorporata in %@ dice",
 		"This page says": "Questa pagina dice",
 		"An embedded page on this page says": "Una pagina incorporata in questa pagina dice",
+		"Prevent this page from creating additional dialogs": "Impedisci a questa pagina di creare altre finestre di dialogo",
 		"Leave this page?": "Lasciare questa pagina?",
 		"Changes you made may not be saved.": "Le modifiche apportate potrebbero non essere salvate.",
 		"Leave": "Lascia",

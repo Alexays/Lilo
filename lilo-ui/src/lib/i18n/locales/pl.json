@@ -1999,6 +1999,7 @@
 		"An embedded page on %@ says": "Komunikat z umieszczonej strony na %@",
 		"This page says": "Komunikat z tej strony",
 		"An embedded page on this page says": "Komunikat z umieszczonej strony na tej stronie",
+		"Prevent this page from creating additional dialogs": "Nie pozwalaj tej stronie tworzyć kolejnych okien dialogowych",
 		"Leave this page?": "Opuścić tę stronę?",
 		"Changes you made may not be saved.": "Wprowadzone zmiany mogą nie zostać zachowane.",
 		"Leave": "Opuść",

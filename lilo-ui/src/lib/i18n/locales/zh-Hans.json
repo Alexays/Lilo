@@ -1979,6 +1979,7 @@
 		"An embedded page on %@ says": "%@ 上的嵌入式网页显示",
 		"This page says": "此网页显示",
 		"An embedded page on this page says": "此网页上的嵌入式网页显示",
+		"Prevent this page from creating additional dialogs": "禁止此网页再显示对话框",
 		"Leave this page?": "离开此网页？",
 		"Changes you made may not be saved.": "所做的更改可能不会被存储。",
 		"Leave": "离开",

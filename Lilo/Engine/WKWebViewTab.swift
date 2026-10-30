@@ -357,6 +357,9 @@ final class WKWebViewTab: NSObject {
     /// A page dialog raised while the tab was off screen, run with true once the tab is shown, false
     /// to dismiss it. The page is blocked until it is answered, and WebKit crashes on one never answered.
     private var queuedDialog: (@MainActor (Bool) -> Void)?
+    /// The site of the page that showed the last alert, confirm or prompt, and the one whose further dialogs the user stopped.
+    private var lastDialogOrigin: String?
+    private var suppressedDialogOrigin: String?
     /// Resource loads blocked by the content rule list on the current page (drives the "ads" badge).
     private(set) var trackersBlocked = 0
     private var trackerFlushScheduled = false
@@ -2254,7 +2257,9 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable () -> Void) {
         if agentDialogHandler?("alert(\(message)) dismissed") == true { completionHandler(); return }
-        runWhenShown { $0 ? JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, completion: completionHandler) : completionHandler() }
+        runPageDialog(dismiss: completionHandler) { suppress in
+            JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        }
     }
 
     func webView(_ webView: WKWebView,
@@ -2262,7 +2267,9 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (Bool) -> Void) {
         if agentDialogHandler?("confirm(\(message)) accepted") == true { completionHandler(true); return }
-        runWhenShown { $0 ? JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, completion: completionHandler) : completionHandler(false) }
+        runPageDialog(dismiss: { completionHandler(false) }, present: { suppress in
+            JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        })
     }
 
     func webView(_ webView: WKWebView,
@@ -2271,9 +2278,27 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (String?) -> Void) {
         if agentDialogHandler?("prompt(\(prompt)) answered with its default") == true { completionHandler(defaultText ?? ""); return }
-        runWhenShown { show in
-            guard show else { return completionHandler(nil) }
-            JSDialogPresenter.runPrompt(in: webView, frame: frame, prompt: prompt, defaultText: defaultText, completion: completionHandler)
+        runPageDialog(dismiss: { completionHandler(nil) }, present: { suppress in
+            JSDialogPresenter.runPrompt(
+                in: webView, frame: frame, prompt: prompt, defaultText: defaultText, suppress: suppress, completion: completionHandler
+            )
+        })
+    }
+
+    /// Runs a page's alert, confirm or prompt once its tab shows, or dismisses it at once when the user stopped the
+    /// page's dialogs. `present` gets a way to stop them from the page's second dialog on.
+    private func runPageDialog(
+        dismiss: @escaping @MainActor () -> Void,
+        present: @escaping @MainActor ((@MainActor @Sendable () -> Void)?) -> Void
+    ) {
+        let origin = webView.url.map { "\($0.scheme ?? "")://\($0.host() ?? ""):\($0.port ?? 0)" } ?? ""
+        guard origin != suppressedDialogOrigin else { return dismiss() }
+        runWhenShown { [weak self] show in
+            guard show, let self else { return dismiss() }
+            var suppress: (@MainActor @Sendable () -> Void)?
+            if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
+            lastDialogOrigin = origin
+            present(suppress)
         }
     }
 

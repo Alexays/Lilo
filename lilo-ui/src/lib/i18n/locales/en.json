@@ -1979,6 +1979,7 @@
 		"An embedded page on %@ says": "An embedded page on %@ says",
 		"This page says": "This page says",
 		"An embedded page on this page says": "An embedded page on this page says",
+		"Prevent this page from creating additional dialogs": "Prevent this page from creating additional dialogs",
 		"Leave this page?": "Leave this page?",
 		"Changes you made may not be saved.": "Changes you made may not be saved.",
 		"Leave": "Leave",

@@ -1979,6 +1979,7 @@
 		"An embedded page on %@ says": "Een ingesloten pagina op %@ meldt",
 		"This page says": "Deze pagina meldt",
 		"An embedded page on this page says": "Een ingesloten pagina op deze pagina meldt",
+		"Prevent this page from creating additional dialogs": "Voorkomen dat deze pagina extra dialoogvensters maakt",
 		"Leave this page?": "Deze pagina verlaten?",
 		"Changes you made may not be saved.": "Je wijzigingen worden mogelijk niet bewaard.",
 		"Leave": "Verlaat",

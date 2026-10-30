@@ -1979,6 +1979,7 @@
 		"An embedded page on %@ says": "%@ に埋め込まれているページの内容",
 		"This page says": "このページの内容",
 		"An embedded page on this page says": "このページに埋め込まれているページの内容",
+		"Prevent this page from creating additional dialogs": "このページでこれ以上ダイアログを表示しない",
 		"Leave this page?": "このページから移動しますか？",
 		"Changes you made may not be saved.": "変更した内容が保存されない可能性があります。",
 		"Leave": "移動",

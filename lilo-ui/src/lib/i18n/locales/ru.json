@@ -1999,6 +1999,7 @@
 		"An embedded page on %@ says": "Встроенная страница на сайте %@ сообщает",
 		"This page says": "Страница сообщает",
 		"An embedded page on this page says": "Встроенная страница на этой странице сообщает",
+		"Prevent this page from creating additional dialogs": "Запретить странице открывать другие диалоговые окна",
 		"Leave this page?": "Покинуть страницу?",
 		"Changes you made may not be saved.": "Внесённые изменения могут не сохраниться.",
 		"Leave": "Покинуть",
