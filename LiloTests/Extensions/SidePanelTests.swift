@@ -452,6 +452,31 @@ final class SidePanelTests: XCTestCase {
     }
 
     // MARK: - Framed sites
+    func testASiteThePanelFramesKeepsItsOwnLocalStorage() async throws {
+        let server = try await TinyHTTPServer { request in
+            let path = request.split(separator: " ").dropFirst().first.map(String.init) ?? ""
+            if path == "/store" { return ("200 OK", ["Content-Type: text/html"], Data("<script>localStorage.setItem('k','v'); document.title='stored'</script>".utf8)) }
+            return ("200 OK", ["Content-Type: text/html"], Data("<script>parent.postMessage('read:' + localStorage.getItem('k'), '*')</script>".utf8))
+        }
+        let dir = tempDir.appendingPathComponent("Store")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Store","version":"1.0","permissions":["sidePanel"],"host_permissions":["<all_urls>"],"side_panel":{"default_path":"p.html"}}"#.write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("p.js"), atomically: true, encoding: .utf8)
+        try #"<title>w</title><script src="p.js"></script><iframe src="http://127.0.0.1:\#(server.port)/read"></iframe>"#.write(to: dir.appendingPathComponent("p.html"), atomically: true, encoding: .utf8)
+        let before = Set(registry.loadedExtensions.map(\.id))
+        try await registry.load(from: dir)
+        let id = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { !before.contains($0) })
+        let policy = registry.context(for: id)?.webViewConfiguration?.preferences.value(forKey: "storageBlockingPolicy") as? Int
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/store"))?.id)
+        _ = await pollUntil { self.window.tabManager.engineTab(for: tab)?.currentTitle == "stored" }
+        window.sidePanel.open(id, tabSpecific: false, in: nil)
+        let read = await pollUntil { self.window.sidePanel.webView?.title?.hasPrefix("read:") == true }
+        XCTAssertTrue(read)
+        XCTAssertEqual(window.sidePanel.webView?.title, "read:v", "what the site stored in its tab, as in Chrome")
+        let after = registry.context(for: id)?.webViewConfiguration?.preferences.value(forKey: "storageBlockingPolicy") as? Int
+        XCTAssertEqual(after, policy, "the extension's other pages keep WebKit's policy, and so their processes")
+    }
+
     /// A site that sets cookies at /set and /later and serves at /page a page that fetches /sub, recording each request's cookies.
     private final class CookieSite: @unchecked Sendable {
         private let lock = NSLock()

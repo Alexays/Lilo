@@ -223,7 +223,13 @@ final class SidePanelController: NSObject {
 
     private func present(_ entry: Entry, url: URL, context: WKWebExtensionContext) {
         guard let contentView = window.window?.contentView else { return }
-        let engine = WKWebViewTab(webView: WKWebView(frame: .zero, configuration: context.webViewConfiguration ?? WKWebViewConfiguration()))
+        let configuration = context.webViewConfiguration ?? WKWebViewConfiguration()
+        // WKPreferences._setStorageBlockingPolicy: (AllowAll), which KVC resolves: a site the panel frames keeps its own
+        // localStorage, as in Chrome, instead of a transient one. The panel only: WebKit groups processes by this policy.
+        if configuration.preferences.responds(to: NSSelectorFromString("_setStorageBlockingPolicy:")) {
+            configuration.preferences.setValue(0, forKey: "storageBlockingPolicy")
+        }
+        let engine = WKWebViewTab(webView: WKWebView(frame: .zero, configuration: configuration))
         window.configureEngineIfNeeded(engine)
         engine.wkWebView.isInspectable = context.isInspectable
         engine.applyPageBackgroundColor(window.currentContentSurfaceColor)
