@@ -240,23 +240,24 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool {
         let key = "\(host.lowercased()):\(port)"
-        guard let expected = insecureTrustExceptions[key], let fingerprint = Self.leafCertificateFingerprint(trust) else { return false }
+        let exceptions = context.engineFactory.insecureTrustExceptions(for: tab.wkWebView.configuration.websiteDataStore)
+        guard let expected = exceptions[key] as? String, let fingerprint = Self.leafCertificateFingerprint(trust) else { return false }
         // Recorded without a certificate in hand: bind the exception to the first one presented.
         if expected.isEmpty {
-            insecureTrustExceptions[key] = fingerprint
+            exceptions[key] = fingerprint
             return true
         }
         return expected == fingerprint
     }
 
-    /// Records a user-approved certificate exception for `host` (on the failed URL's port, pinned to
-    /// the certificate that failed) and reloads so the page can load.
+    /// Records a user-approved certificate exception for `host` in the active tab's profile or private Space (on the
+    /// failed URL's port, pinned to the certificate that failed) and reloads so the page can load.
     func allowInsecureTrust(forHost host: String) {
         let normalized = host.lowercased()
-        guard !normalized.isEmpty, let activeTab = tabManager.activeTab else { return }
+        guard !normalized.isEmpty, let activeTab = tabManager.activeTab, let engineTab = tabManager.activeEngineTab else { return }
         let failedURL = URL(string: activeTab.navigationErrorURL) ?? activeTab.url
-        let trust = tabManager.activeEngineTab?.lastServerTrust
-        insecureTrustExceptions["\(normalized):\(failedURL?.port ?? 443)"] = trust.flatMap(Self.leafCertificateFingerprint) ?? ""
+        let exceptions = context.engineFactory.insecureTrustExceptions(for: engineTab.wkWebView.configuration.websiteDataStore)
+        exceptions["\(normalized):\(failedURL?.port ?? 443)"] = engineTab.lastServerTrust.flatMap(Self.leafCertificateFingerprint) ?? ""
         tabManager.reloadActiveTab()
     }
 

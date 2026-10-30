@@ -1892,14 +1892,11 @@ extension WKWebViewTab: WKNavigationDelegate {
                let trust = space.serverTrust {
                 StartupMetrics.markOnce("firstContentTLSChallengeReceived")
                 let challengedHost = space.host.lowercased()
-                let pendingHost = pendingMainFrameURL?.host?.lowercased()
-                let currentHost = currentURL?.host?.lowercased()
-                guard challengedHost == pendingHost || challengedHost == currentHost else {
-                    completionHandler(.performDefaultHandling, nil)
-                    StartupMetrics.markOnce("firstContentTLSChallengeHandled")
-                    return
+                // The page's own certificate is the one its error page explains and a new exception pins;
+                // an accepted exception holds for every request to its host, as an app's API calls need.
+                if challengedHost == pendingMainFrameURL?.host?.lowercased() || challengedHost == currentURL?.host?.lowercased() {
+                    lastServerTrust = trust
                 }
-                lastServerTrust = trust
                 if delegate?.tab(self, shouldAllowInsecureServerTrust: trust, forHost: challengedHost, port: space.port) == true {
                     completionHandler(.useCredential, URLCredential(trust: trust))
                 } else {

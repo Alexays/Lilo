@@ -38,6 +38,10 @@ final class WKEngineFactory {
     private var trackingPreventionEnabled = false
     /// Every website data store handed out, so a tracking prevention change reaches all of them.
     private let websiteDataStores = NSHashTable<WKWebsiteDataStore>.weakObjects()
+    /// Certificate exceptions the user accepted, per website data store: a profile's hold in all its windows, a
+    /// private Space's go with its store. Keyed "host:port", each value is the SHA-256 of the leaf certificate the
+    /// user saw, empty until the next challenge for that key records it.
+    private let insecureTrustExceptionsByStore = NSMapTable<WKWebsiteDataStore, NSMutableDictionary>.weakToStrongObjects()
 
     private var contentControllersByKey: [ContentControllerKey: WKUserContentController] = [:]
     /// Every content controller handed out, cached or since dropped from the cache: a web view keeps
@@ -1064,7 +1068,15 @@ final class WKEngineFactory {
 
     /// Private spaces release their ephemeral data store when the space closes; without this the cache
     /// keeps the controller and its handlers alive. Existing web views hold their own reference.
+    func insecureTrustExceptions(for store: WKWebsiteDataStore) -> NSMutableDictionary {
+        if let exceptions = insecureTrustExceptionsByStore.object(forKey: store) { return exceptions }
+        let exceptions = NSMutableDictionary()
+        insecureTrustExceptionsByStore.setObject(exceptions, forKey: store)
+        return exceptions
+    }
+
     func releaseContentController(for dataStore: WKEngineDataStore) {
+        insecureTrustExceptionsByStore.removeObject(forKey: dataStore.backingStore)
         let key = contentControllerKey(for: dataStore)
         contentControllersByKey.removeValue(forKey: key)
         for warmKey in warmKeyOrder where warmKey.content == key { warmWebViewsByKey.removeValue(forKey: warmKey) }

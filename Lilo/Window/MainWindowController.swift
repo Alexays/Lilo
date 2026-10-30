@@ -222,9 +222,6 @@ final class MainWindowController: NSWindowController {
     /// Tab whose activation the last `.activateTab` command already shipped to the chrome, so the
     /// runtime activation that follows it does not send a second patch.
     private var activationAnnouncedByCommand: UUID?
-    /// Certificate exceptions accepted this session, keyed "host:port". The value is the SHA-256
-    /// of the leaf certificate the user saw; empty until the next challenge for that key records it.
-    var insecureTrustExceptions: [String: String] = [:]
     /// Tabs currently showing reader mode; toggling reloads the page to exit.
     var readerModeTabs: Set<UUID> = []
     lazy var pageTranslator = PageTranslator()
