@@ -36,6 +36,9 @@ final class PageFindController {
         return (try? await webView.find(query, configuration: config))?.matchFound == true
     }
 
+    /// What Find Next looks for: the current search, else, as in Safari, the system find pasteboard (Cmd-E in any app).
+    var findAgainString: String { query.isEmpty ? NSPasteboard(name: .find).string(forType: .string) ?? "" : query }
+
     func findNext() { performFind(backwards: false) }
     func findPrevious() { performFind(backwards: true) }
 
@@ -49,6 +52,7 @@ final class PageFindController {
     }
 
     private func performFind(backwards: Bool) {
+        query = findAgainString
         guard !query.isEmpty else { return }
         PerfSignposts.energy.emitEvent("pageFind")
         Task {

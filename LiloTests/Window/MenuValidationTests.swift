@@ -95,6 +95,7 @@ final class MenuValidationTests: XCTestCase {
         for action in pageActions { XCTAssertFalse(isEnabled(action), "\(action)") }
         XCTAssertTrue(isEnabled(#selector(MainWindowController.zoomInCurrentPage(_:))), "a terminal zooms its text")
         XCTAssertTrue(isEnabled(#selector(MainWindowController.showFindBar(_:))), "and finds in it")
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.findNextMatch(_:))))
     }
 
     func testPageActionsAreOnForAPage() async throws {
@@ -104,6 +105,11 @@ final class MenuValidationTests: XCTestCase {
         await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
 
         for action in pageActions { XCTAssertTrue(isEnabled(action), "\(action)") }
+    }
+
+    func testFindNextIsOffWithoutAPageOrATerminal() {
+        XCTAssertFalse(isEnabled(#selector(MainWindowController.findNextMatch(_:))))
+        XCTAssertFalse(isEnabled(#selector(MainWindowController.findPreviousMatch(_:))))
     }
 
     func testReopenLastClosedTabNeedsAClosedTab() throws {

@@ -874,6 +874,7 @@ final class WKWebViewTab: NSObject {
         await findController.find(query, caseSensitive: caseSensitive)
     }
 
+    var canFindAgain: Bool { !findController.findAgainString.isEmpty }
     func findNext() { findController.findNext() }
     func findPrevious() { findController.findPrevious() }
     func dismissFind() { findController.dismiss() }

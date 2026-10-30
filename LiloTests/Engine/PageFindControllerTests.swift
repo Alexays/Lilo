@@ -87,6 +87,23 @@ final class PageFindControllerTests: XCTestCase {
         XCTAssertEqual(selected, "beta")
     }
 
+    func testFindAgainWithoutASearchLooksForTheFindPasteboard() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        let pasteboard = NSPasteboard(name: .find)
+        pasteboard.clearContents()
+        XCTAssertFalse(tab.canFindAgain, "nothing to find: Find Next is off")
+
+        pasteboard.setString("gamma", forType: .string)
+        XCTAssertTrue(tab.canFindAgain)
+        tab.findNext()
+
+        let found = await pollUntil(timeout: 5) {
+            (try? await tab.wkWebView.evaluateJavaScript("getSelection().toString()")) as? String == "gamma"
+        }
+        XCTAssertTrue(found, "as in Safari after Command-E in another app")
+    }
+
     private func loadedTab(dataStore: WKWebsiteDataStore = .default()) async throws -> WKWebViewTab {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore

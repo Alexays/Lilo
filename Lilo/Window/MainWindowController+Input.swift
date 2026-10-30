@@ -579,6 +579,9 @@ extension MainWindowController: NSUserInterfaceValidations {
             return tabManager.activeEngineTab != nil
         }
         if action == #selector(reloadCurrentPageFromOrigin(_:)) { return tabManager.activeTab?.url != nil }
+        if action == #selector(findNextMatch(_:)) || action == #selector(findPreviousMatch(_:)) {
+            return activeTerminalView != nil || tabManager.activeEngineTab?.canFindAgain == true
+        }
         // A terminal or Changes tab has no page for these.
         if action == #selector(reloadCurrentPage(_:)) || action == #selector(togglePictureInPicture(_:)) { return tabManager.activeEngineTab != nil }
         if action == #selector(printCurrentPage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
