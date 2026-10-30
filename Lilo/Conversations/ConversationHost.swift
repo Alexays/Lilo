@@ -206,7 +206,8 @@ final class ConversationHost {
     }
 
     private func start(_ conversation: Conversation) async throws {
-        setState(conversation, .starting)
+        // A turn already shows as working: starting its agent must not flip it to idle and back.
+        if conversation.state != .busy { setState(conversation, .starting) }
         await catalog.load()
         guard let agent = catalog.agent(id: conversation.agentId) else {
             throw ACPAgentCatalog.LaunchError(message: "This agent is no longer in the ACP registry.".localized)
@@ -236,7 +237,7 @@ final class ConversationHost {
         conversation.acceptsImages = (capabilities["promptCapabilities"] as? [String: Any])?["image"] as? Bool ?? false
         conversation.authMethods = initialized["authMethods"] as? [[String: Any]] ?? []
         try await openSession(conversation, connection: connection)
-        setState(conversation, .idle)
+        if conversation.state == .starting { setState(conversation, .idle) }
     }
 
     private func openSession(_ conversation: Conversation, connection: ACPConnection) async throws {
