@@ -1909,7 +1909,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                     if let answer { completionHandler(answer.0, answer.1) } else { prompt() }
                 }
             } else if method == NSURLAuthenticationMethodClientCertificate, !isAgentControlled {
-                ClientCertificateChallengeHandler.resolve(challenge, in: webView.window, completion: completionHandler)
+                ClientCertificateChallengeHandler.resolve(challenge, dataStore: webView.configuration.websiteDataStore, in: webView.window, completion: completionHandler)
             } else {
                 completionHandler(.performDefaultHandling, nil)
             }
