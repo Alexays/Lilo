@@ -16,8 +16,9 @@ final class ZoomStore {
         zoomLevels = loadZoomLevels(from: dbPool)
     }
 
-    func setZoom(_ zoom: Double, forHost host: String) {
-        if abs(zoom - 1.0) < 0.01 {
+    /// Only a level other than the default is kept for a host.
+    func setZoom(_ zoom: Double, forHost host: String, default defaultZoom: Double) {
+        if abs(zoom - defaultZoom) < 0.01 {
             removeZoom(forHost: host)
             return
         }

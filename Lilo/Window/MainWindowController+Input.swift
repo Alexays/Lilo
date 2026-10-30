@@ -311,19 +311,19 @@ extension MainWindowController {
             return
         }
         guard let engine = tabManager.activeEngineTab else { return }
-        applyUserZoom(1.0, to: engine, isReset: true)
+        applyUserZoom(context.settingsStore.defaultZoom, to: engine)
     }
 
     /// A zoom the user asked for, as the tab's extension zoom settings allow: a disabled tab ignores
-    /// it and a manual one only tells its extension. A per-origin reset forgets the host's level.
-    private func applyUserZoom(_ zoom: Double, to engine: WKWebViewTab, isReset: Bool = false) {
+    /// it and a manual one only tells its extension.
+    private func applyUserZoom(_ zoom: Double, to engine: WKWebViewTab) {
         switch engine.zoomSettings.mode {
         case "disabled": return
         case "manual": return engine.reportZoomChange(from: engine.pageZoom, to: zoom)
         default: engine.setPageZoom(zoom)
         }
         if !engine.isPrivateBrowsing, engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
-            if isReset { profileContext?.zoom.removeZoom(forHost: host) } else { profileContext?.zoom.setZoom(zoom, forHost: host) }
+            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore.defaultZoom)
         }
         bridgeRouter.send(event: "zoomChanged", data: ["level": zoom])
         if let adapter = tabManager.tabAdapter(for: engine.id), let registry = tabManager.extensionRegistry, registry.hasLoadedExtensions {
