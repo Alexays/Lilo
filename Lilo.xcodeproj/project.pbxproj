@@ -522,6 +522,7 @@
 		C67C2112F35E8163B23058B1 /* FloatingTabPanelControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701C19D4AB3D4D44D9B3D841 /* FloatingTabPanelControllerTests.swift */; };
 		C6D7F65692A86AB2AD5ED110 /* IdleBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0BAECBC1841DEECB4531AC5 /* IdleBridgeHandlerTests.swift */; };
 		C7E48E863877E342AC82D980 /* BrowsingDataBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CB9B4A20A46E812A25F931 /* BrowsingDataBridgeHandler.swift */; };
+		C800A406BCAD12718A007802 /* ExtensionFrameCookies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0118441A04967077AEFB597B /* ExtensionFrameCookies.swift */; };
 		C8168E697B338520898C5BA4 /* ImportScaleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DADCFC04A3D6F96E7BE1D91 /* ImportScaleTests.swift */; };
 		C897FB9E6281DB359B8EE5A6 /* WKEngineFactoryWarmPoolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD580195B559238125EA0500 /* WKEngineFactoryWarmPoolTests.swift */; };
 		C95A3CDD757233233ED5343B /* ProgressEmitGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0ADA4FA130D5616136D531 /* ProgressEmitGate.swift */; };
@@ -730,6 +731,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0118441A04967077AEFB597B /* ExtensionFrameCookies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionFrameCookies.swift; sourceTree = "<group>"; };
 		015727AF9962C07CD6B2155A /* WhatsNewPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewPresentationTests.swift; sourceTree = "<group>"; };
 		017D01B3B4804DF6A07D7028 /* PrivateDelegateSelectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivateDelegateSelectorTests.swift; sourceTree = "<group>"; };
 		01838BCE08BCAEA786362E06 /* ExtensionRegistryFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRegistryFixture.swift; sourceTree = "<group>"; };
@@ -2297,6 +2299,7 @@
 				99125D1239CB69A1C1CF265E /* ExtensionControllerDelegate.swift */,
 				81AB35095009F1E4C0876C0F /* ExtensionDiagnostics.swift */,
 				7C793B329A8F03110B6433C9 /* ExtensionFiles.swift */,
+				0118441A04967077AEFB597B /* ExtensionFrameCookies.swift */,
 				CF5C138CBF7D8E40D1C8BE41 /* ExtensionInfoBuilder.swift */,
 				56A18FAB89FFD1AFC32551BF /* ExtensionLifecycle.swift */,
 				8EC3C84ED5DAB2601F259A69 /* ExtensionManifest.swift */,
@@ -2968,6 +2971,7 @@
 				A7F78CF632AB095240952A42 /* ExtensionControllerDelegate.swift in Sources */,
 				DB831A81D79B1EC1E2C28B87 /* ExtensionDiagnostics.swift in Sources */,
 				994DB91549319A0E11A18579 /* ExtensionFiles.swift in Sources */,
+				C800A406BCAD12718A007802 /* ExtensionFrameCookies.swift in Sources */,
 				13551416566ABAED01463838 /* ExtensionInfoBuilder.swift in Sources */,
 				F881BDF119434C493050AE94 /* ExtensionLifecycle.swift in Sources */,
 				BABA4012886AFD636CAB981D /* ExtensionManifest.swift in Sources */,

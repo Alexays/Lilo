@@ -1265,7 +1265,10 @@ extension WKWebViewTab: WKNavigationDelegate {
                 bypassesContentBlockersOnce = false
                 if Self.supportsContentBlockersToggle { preferences.setValue(false, forKey: "contentBlockersEnabled") }
             }
-            decisionHandler(policy(for: navigationAction), preferences)
+            let decide = { decisionHandler(self.policy(for: navigationAction), preferences) }
+            if let frameCookies = tabManager?.extensionRegistry?.frameCookies,
+               frameCookies.waitsForCookies(of: navigationAction, in: webView, ready: decide) { return }
+            decide()
         }
     }
 
