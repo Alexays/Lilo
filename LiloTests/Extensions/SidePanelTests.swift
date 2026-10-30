@@ -452,55 +452,68 @@ final class SidePanelTests: XCTestCase {
     }
 
     // MARK: - Framed sites
+    /// A site that sets cookies at /set and /later and serves at /page a page that fetches /sub, recording each request's cookies.
+    private final class CookieSite: @unchecked Sendable {
+        private let lock = NSLock()
+        private var headers: [String: String] = [:]
+        private(set) var server: TinyHTTPServer!
 
-    func testASiteThePanelFramesGetsItsSameSiteCookiesWhenTheExtensionMayAccessIt() async throws {
-        final class Requests: @unchecked Sendable {
-            private let lock = NSLock()
-            private var cookies: [String: String] = [:]
-            func record(_ path: String, _ cookie: String) { lock.withLock { cookies[path] = cookie } }
-            func cookie(_ path: String) -> String? { lock.withLock { cookies[path] } }
-        }
-        let requests = Requests()
-        let server = try await TinyHTTPServer { request in
-            let lines = request.split(separator: "\r\n")
-            let path = lines.first.map { String($0.split(separator: " ")[1]) } ?? ""
-            requests.record(path, lines.first { $0.lowercased().hasPrefix("cookie:") }.map { String($0.dropFirst(7)) } ?? "")
-            switch path {
-            case "/set": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; SameSite=Lax; Path=/"], Data("<title>set</title>".utf8))
-            case "/later": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: later=1; SameSite=Strict; Path=/"], Data("<title>later</title>".utf8))
-            case "/sub": return ("200 OK", ["Content-Type: text/plain"], Data("sub".utf8))
-            default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
+        init() async throws {
+            server = try await TinyHTTPServer { [unowned self] request in
+                let lines = request.split(separator: "\r\n")
+                let path = lines.first.map { String($0.split(separator: " ")[1]) } ?? ""
+                let cookie = lines.first { $0.lowercased().hasPrefix("cookie:") }.map { String($0.dropFirst(7)) } ?? ""
+                lock.withLock { headers[path] = cookie }
+                switch path {
+                case "/set": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; SameSite=Lax; Path=/"], Data("<title>set</title>".utf8))
+                case "/later": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: later=1; SameSite=Strict; Path=/"], Data("<title>later</title>".utf8))
+                case "/sub": return ("200 OK", ["Content-Type: text/plain"], Data("sub".utf8))
+                default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
+                }
             }
         }
-        func framer(_ name: String, hostPermissions: String) async throws -> String {
-            let dir = tempDir.appendingPathComponent(name)
-            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-            try #"{"manifest_version":3,"name":"\#(name)","version":"1.0","permissions":["sidePanel"],"host_permissions":\#(hostPermissions),"side_panel":{"default_path":"framer.html"}}"#
-                .write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
-            try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("framer.js"), atomically: true, encoding: .utf8)
-            try #"<title>framing</title><script src="framer.js"></script><iframe src="http://127.0.0.1:\#(server.port)/page"></iframe>"#
-                .write(to: dir.appendingPathComponent("framer.html"), atomically: true, encoding: .utf8)
-            let before = Set(registry.loadedExtensions.map(\.id))
-            try await registry.load(from: dir)
-            return try XCTUnwrap(registry.loadedExtensions.map(\.id).first { !before.contains($0) })
+
+        /// The cookies the last request for `path` carried, sorted; nil before one arrives.
+        func cookies(_ path: String) -> String? {
+            lock.withLock { headers[path] }.map { $0.split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.sorted().joined(separator: "; ") }
         }
-        func visit(_ path: String) async throws {
-            let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)\(path)"))?.id)
-            let loaded = await pollUntil { self.window.tabManager.engineTab(for: tab)?.currentTitle == String(path.dropFirst()) }
-            XCTAssertTrue(loaded)
-        }
-        func frame(in extensionId: String) async -> [String] {
-            requests.record("/page", "")
-            requests.record("/sub", "")
+
+        func forget() { lock.withLock { headers = [:] } }
+    }
+
+    /// An extension whose side panel page frames `site`'s page.
+    private func installFramer(_ name: String, hostPermissions: String, framing site: CookieSite) async throws -> String {
+        let dir = tempDir.appendingPathComponent(name)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"\#(name)","version":"1.0","permissions":["sidePanel","offscreen"],"host_permissions":\#(hostPermissions),"side_panel":{"default_path":"framer.html"}}"#
+            .write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("framer.js"), atomically: true, encoding: .utf8)
+        try #"<title>framing</title><script src="framer.js"></script><iframe src="http://127.0.0.1:\#(site.server.port)/page"></iframe>"#
+            .write(to: dir.appendingPathComponent("framer.html"), atomically: true, encoding: .utf8)
+        let before = Set(registry.loadedExtensions.map(\.id))
+        try await registry.load(from: dir)
+        return try XCTUnwrap(registry.loadedExtensions.map(\.id).first { !before.contains($0) })
+    }
+
+    private func visit(_ path: String, on site: CookieSite) async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(site.server.port)\(path)"))?.id)
+        let loaded = await pollUntil { self.window.tabManager.engineTab(for: tab)?.currentTitle == String(path.dropFirst()) }
+        XCTAssertTrue(loaded)
+    }
+
+    func testASiteThePanelFramesGetsItsSameSiteCookiesWhenTheExtensionMayAccessIt() async throws {
+        let site = try await CookieSite()
+        func frame(in extensionId: String) async -> [String?] {
+            site.forget()
             window.sidePanel.open(extensionId, tabSpecific: false, in: nil)
             let framed = await pollUntil { self.window.sidePanel.webView?.title == "framed" }
             XCTAssertTrue(framed)
             window.sidePanel.closePanel()
-            return ["/page", "/sub"].map { (requests.cookie($0) ?? "").split(separator: ";").map { $0.trimmingCharacters(in: .whitespaces) }.sorted().joined(separator: "; ") }
+            return [site.cookies("/page"), site.cookies("/sub")]
         }
-        let allowed = try await framer("Allowed", hostPermissions: #"["<all_urls>"]"#)
-        let denied = try await framer("Denied", hostPermissions: "[]")
-        try await visit("/set")
+        let allowed = try await installFramer("Allowed", hostPermissions: #"["<all_urls>"]"#, framing: site)
+        let denied = try await installFramer("Denied", hostPermissions: "[]", framing: site)
+        try await visit("/set", on: site)
         let partitioned = try XCTUnwrap(HTTPCookie(properties: [
             .name: "lax", .value: "elsewhere", .domain: "127.0.0.1", .path: "/", HTTPCookiePropertyKey("StoragePartition"): "http://other.test"
         ]))
@@ -509,12 +522,24 @@ final class SidePanelTests: XCTestCase {
         let first = await frame(in: allowed)
         XCTAssertEqual(first, ["lax=1; plain=1", "lax=1; plain=1"], "the framed page and what it requests carry its Lax cookie, as in Chrome, not one partitioned under another site")
 
-        try await visit("/later")
+        try await visit("/later", on: site)
         let second = await frame(in: allowed)
         XCTAssertEqual(second, ["later=1; lax=1; plain=1", "later=1; lax=1; plain=1"], "a cookie set since reaches the next load")
 
         let withoutAccess = await frame(in: denied)
         XCTAssertEqual(withoutAccess, ["plain=1", "plain=1"], "without host access the frame stays cross-site")
+    }
+
+    func testAnOffscreenDocumentsFrameGetsItsSiteCookies() async throws {
+        let site = try await CookieSite()
+        let extensionId = try await installFramer("Offscreen", hostPermissions: #"["<all_urls>"]"#, framing: site)
+        try await visit("/set", on: site)
+
+        _ = await router.route(namespace: "offscreen", method: "createDocument", params: ["url": "framer.html"], extensionId: extensionId, fromWorker: true, registry: registry)
+        let framed = await pollUntil { site.cookies("/sub") != nil }
+        XCTAssertTrue(framed)
+        XCTAssertEqual(site.cookies("/page"), "lax=1; plain=1")
+        XCTAssertEqual(site.cookies("/sub"), "lax=1; plain=1")
     }
 
 }

@@ -1,0 +1,3 @@
+kind: Fixed
+body: A site an extension shows inside its popup or an offscreen document gets its own cookies too, so it no longer loads signed out.
+time: 2026-10-30T10:38:27.15985+01:00

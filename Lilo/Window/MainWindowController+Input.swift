@@ -105,7 +105,10 @@ extension MainWindowController {
             await registry.backgrounds.ensureResponsive(extensionId)
             // Re-fetch: a stale worker is reloaded into a new context (see handleOpenExtensionPopup).
             guard let context = registry.context(for: extensionId) else { return }
-            context.performAction(for: actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab)
+            let tab = actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab
+            // Reading the popup creates it: watched before its first frame loads.
+            if let popup = context.action(for: tab)?.popupWebView { registry.frameCookies.watch(popup) }
+            context.performAction(for: tab)
         }
     }
 

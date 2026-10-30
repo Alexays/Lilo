@@ -374,6 +374,8 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
             registry?.recordExtensionNativeDiagnostic(context: context, level: "error", source: "popup.anchor", message: "No anchor view available for popup")
             Self.logger.error("No anchor view available"); completionHandler(Self.extensionError("No anchor view for popup", code: 1)); return
         }
+        // A popup `action.openPopup` opened from the worker reaches Lilo only here, once loaded: later frames still wait.
+        if let popup = action.popupWebView { registry?.frameCookies.watch(popup) }
         let popupURL = action.popupWebView?.url?.absoluteString ?? ""
         registry?.recordExtensionNativeDiagnostic(
             context: context,

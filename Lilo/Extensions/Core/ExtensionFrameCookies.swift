@@ -62,6 +62,16 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         return true
     }
 
+    /// Puts the frame cookies in front of the navigation delegate of an extension page Lilo does not drive: a popup, whose
+    /// delegate is WebKit's, or an offscreen document. Called before its first navigation decision; once is enough.
+    func watch(_ webView: WKWebView) {
+        guard !(webView.navigationDelegate is FrameCookiesNavigationDelegate) else { return }
+        let delegate = FrameCookiesNavigationDelegate(frameCookies: self, original: webView.navigationDelegate as? NSObject)
+        // The web view holds its navigation delegate weakly.
+        objc_setAssociatedObject(webView, &FrameCookiesNavigationDelegate.key, delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        webView.navigationDelegate = delegate
+    }
+
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
         build()
     }
@@ -147,5 +157,35 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
             if "\\^$.|?*+()[]{}".contains(character) { result.append("\\") }
             result.append(character)
         }
+    }
+}
+
+/// Lets a frame wait for its cookies, then hands every navigation callback to the delegate it stands in front of.
+@MainActor
+private final class FrameCookiesNavigationDelegate: NSObject, WKNavigationDelegate {
+    nonisolated(unsafe) static var key: UInt8 = 0
+    private weak var frameCookies: ExtensionFrameCookies?
+    nonisolated(unsafe) private weak var original: NSObject?
+
+    init(frameCookies: ExtensionFrameCookies, original: NSObject?) {
+        self.frameCookies = frameCookies
+        self.original = original
+    }
+
+    nonisolated override func responds(to aSelector: Selector!) -> Bool {
+        super.responds(to: aSelector) || original?.responds(to: aSelector) == true
+    }
+
+    nonisolated override func forwardingTarget(for aSelector: Selector!) -> Any? { original }
+
+    // The variant WebKit's popup delegate implements: the one with preferences would take precedence over it.
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void) {
+        let forward = { [original] in
+            if (original as? WKNavigationDelegate)?.webView?(webView, decidePolicyFor: navigationAction, decisionHandler: decisionHandler) == nil {
+                decisionHandler(.allow)
+            }
+        }
+        if frameCookies?.waitsForCookies(of: navigationAction, in: webView, ready: forward) == true { return }
+        forward()
     }
 }

@@ -55,6 +55,7 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
             }
             let documentView = WKWebView(frame: .zero, configuration: configuration)
             documentView.navigationDelegate = self
+            registry.frameCookies.watch(documentView)
             documents[key] = Document(context: context, webView: documentView)
             let error = await withCheckedContinuation { continuation in
                 pendingLoads[ObjectIdentifier(documentView)] = continuation

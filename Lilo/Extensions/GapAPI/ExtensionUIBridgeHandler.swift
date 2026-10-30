@@ -469,7 +469,10 @@ final class ExtensionUIBridgeHandler: BridgeHandler, GapHandler {
         // the action on the torn-down one would present the popup against the dead worker (a hang).
         guard let context = registry.context(for: id) else { return nil }
         // A window showing no web page hands the popup its stand-in tab, so the popup's current window is this one.
-        context.performAction(for: actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab)
+        let tab = actionTabAdapter ?? registry.delegate.windowAdapter?.activeTab
+        // Reading the popup creates it: watched before its first frame loads.
+        if let popup = context.action(for: tab)?.popupWebView { registry.frameCookies.watch(popup) }
+        context.performAction(for: tab)
         return nil
     }
 }
