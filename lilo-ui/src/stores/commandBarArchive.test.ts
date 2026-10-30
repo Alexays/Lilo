@@ -59,7 +59,7 @@ test("opening the archive asks native once, and picking a row reopens it", async
 	commandBar.setQuery("< gui");
 	assert.equal(sent.filter((message) => message.action === "loadArchivedTabs").length, 1);
 
-	receive({ event: "archivedTabs", tabs: archived });
+	receive({ event: "archivedTabs", tabs: archived, favicons: {} });
 	const results = commandBar.getResults() as Array<{ kind: string; payload: { id: string } }>;
 	assert.deepEqual(results.map((result) => result.payload.id), ["old"]);
 

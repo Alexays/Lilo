@@ -15,6 +15,7 @@ for (const position of ["left", "right", "top", "bottom"] as const) {
 				url: `https://example.com/page/${index}`,
 				archivedAt: Date.now() - 3_600_000,
 			})),
+			favicons: {},
 		}));
 
 		const button = page.getByRole("button", { name: "26 recently archived tabs" });

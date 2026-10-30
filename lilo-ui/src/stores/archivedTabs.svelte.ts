@@ -8,9 +8,11 @@ import type { BridgeArchivedTab } from "../lib/bridge/protocol";
 export const RECENT_ARCHIVE_MS = 24 * 60 * 60 * 1000;
 
 let _tabs = $state.raw<BridgeArchivedTab[]>([]);
+let _favicons: Record<string, string> = {};
 
 export function initArchivedTabsStore(): void {
 	on("archivedTabs", (data) => {
+		_favicons = data.favicons;
 		_tabs = data.tabs;
 	});
 	tabActions.loadArchived();
@@ -19,3 +21,5 @@ export function initArchivedTabsStore(): void {
 export function getRecentArchivedTabs(now = Date.now()): BridgeArchivedTab[] {
 	return _tabs.filter((tab) => now - tab.archivedAt < RECENT_ARCHIVE_MS);
 }
+
+export const getArchivedFavicons = (): Record<string, string> => _favicons;

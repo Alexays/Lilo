@@ -22,7 +22,9 @@ test("asks native for the list once, then keeps only the last day's tabs one cli
 			{ id: "today", url: "https://news.example/", title: "News", archivedAt: now - 9 * HOUR },
 			{ id: "older", url: "https://docs.example/", title: "Docs", archivedAt: now - 3 * 24 * HOUR },
 		],
+		favicons: { "news.example": "data:image/png;base64,AA==" },
 	});
 
 	assert.deepEqual(store.getRecentArchivedTabs(now).map((tab: { id: string }) => tab.id), ["today"]);
+	assert.deepEqual(store.getArchivedFavicons(), { "news.example": "data:image/png;base64,AA==" });
 });

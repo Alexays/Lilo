@@ -954,8 +954,8 @@ export interface BridgeEventPayloadMap {
 	// Sent when a non-blank tab closes; restoreClosedTab reopens it. A Clear names the tabs it
 	// archived instead, for restoreArchivedTabs.
 	tabClosedUndoable: { title: string; count?: number; archivedIds?: string[] };
-	// Reply to loadArchivedTabs: the current space's archived tabs, newest first.
-	archivedTabs: { tabs: BridgeArchivedTab[] };
+	// Reply to loadArchivedTabs: the current space's archived tabs, newest first, and their favicons by host.
+	archivedTabs: { tabs: BridgeArchivedTab[]; favicons: Record<string, string> };
 	powerModeChanged: { constrained: boolean };
 	reduceTransparencyChanged: { reduce: boolean };
 

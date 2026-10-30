@@ -29,8 +29,28 @@ extension MainWindowController {
         bridgeRouter.send(event: "openCommandBar", data: ["prefill": "<"])
     }
 
+    /// Sends the archived tabs with their favicons keyed by host, so a site archived many times sends its icon once.
     func sendArchivedTabs() {
-        bridgeRouter.send(event: "archivedTabs", data: ["tabs": archivedTabSummaries()])
+        var favicons: [String: String] = [:]
+        var missingHosts = Set<String>()
+        let spaceId = tabManager.currentSpaceId
+        for entry in context.tabArchive.entries where entry.spaceId == spaceId {
+            guard let host = entry.url.host?.lowercased(), favicons[host] == nil else { continue }
+            if let cached = context.faviconService.cached(for: host) {
+                favicons[host] = cached.dataURL
+            } else {
+                missingHosts.insert(host)
+            }
+        }
+        // Tabs archived before a relaunch are in no live tab, so the cache misses them: the store has them.
+        if !missingHosts.isEmpty, let profileId = context.spaceManager?.space(with: spaceId)?.profileId,
+           let store = context.profileContexts.existingContext(for: profileId)?.favicons {
+            for entry in (try? store.entries(forHosts: missingHosts)) ?? [] {
+                context.faviconService.warmIfAbsent(host: entry.host, dataURL: entry.dataURL, dominantColor: entry.dominantColor)
+                favicons[entry.host] = entry.dataURL
+            }
+        }
+        bridgeRouter.send(event: "archivedTabs", data: ["tabs": archivedTabSummaries(), "favicons": favicons])
     }
 
     /// This window's Space's archived tabs, newest first, for the command bar and the sidebar's archive menu.

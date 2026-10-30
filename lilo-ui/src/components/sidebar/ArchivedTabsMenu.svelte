@@ -3,6 +3,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { tabActions } from "../../lib/bridge/actions";
   import type { BridgeArchivedTab } from "../../lib/bridge/protocol";
+  import { getArchivedFavicons } from "../../stores/archivedTabs.svelte";
   import { openCommandBar } from "../../stores/commandBar.svelte";
   import SiteFavicon from "../ui/SiteFavicon.svelte";
   import StripPopover from "../strip/StripPopover.svelte";
@@ -15,6 +16,15 @@
   function age(archivedAt: number): string {
     const minutes = Math.round((archivedAt - now) / 60_000);
     return Math.abs(minutes) < 60 ? format.format(minutes, "minute") : format.format(Math.round(minutes / 60), "hour");
+  }
+
+  // Keyed by the URL's own hostname, as native reads it: no port, "www." kept.
+  function favicon(url: string): string | undefined {
+    try {
+      return getArchivedFavicons()[new URL(url).hostname];
+    } catch {
+      return undefined;
+    }
   }
 
   function restore(tab: BridgeArchivedTab): void {
@@ -32,7 +42,7 @@
   <div class="menu-title">{t("archivedTabs.title")}</div>
   {#each tabs as tab (tab.id)}
     <button class="menu-row" role="menuitem" onclick={() => restore(tab)}>
-      <SiteFavicon title={tab.title} url={tab.url} size={16} radius={4} />
+      <SiteFavicon src={favicon(tab.url)} title={tab.title} url={tab.url} size={16} radius={4} />
       <span class="row-title">{tab.title || tab.url}</span>
       <span class="row-age">{age(tab.archivedAt)}</span>
       <span class="row-restore">{t("archivedTabs.restore")}</span>

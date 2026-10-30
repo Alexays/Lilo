@@ -733,6 +733,7 @@ export const createDemoHost = (
 
   const publishArchive = () =>
     emit("archivedTabs", {
+      favicons: {},
       tabs: archived
         .filter((entry) => entry.spaceId === world.activeSpaceId)
         .toReversed()
