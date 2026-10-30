@@ -62,8 +62,8 @@ test("with tabs on the left the sidebar and the address toolbar hide one without
 	await expect(page.locator(".page-toolbar")).toHaveCount(0);
 	await expect(page.locator(".sidebar-layout")).not.toHaveClass(/compact-header/);
 	await expect(page.locator(".url-display")).toHaveCount(0);
-	// On the traffic lights' compact line.
-	await expect(page.locator(".sidebar-header")).toHaveCSS("height", "40px");
+	// The traffic lights keep the same line in every layout.
+	await expect(page.locator(".sidebar-header")).toHaveCSS("height", "52px");
 });
 
 test("the address setting offers Hidden on the right and can restore the address", async ({ page }) => {
