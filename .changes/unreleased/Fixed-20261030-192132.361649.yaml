@@ -1,0 +1,3 @@
+kind: Fixed
+body: Reader text size, theme and width are kept by Lilo for every site instead of in each site's storage, where the site could read them.
+time: 2026-10-30T19:21:32.361649+01:00

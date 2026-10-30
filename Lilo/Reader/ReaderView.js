@@ -59,20 +59,19 @@
     var article = new Readability(document.cloneNode(true), { charThreshold: 200 }).parse();
     if (!article || !article.content) return;                       // not an article: leave the page as-is
 
-    var PREF_KEY = "lilo-reader-prefs";
     var THEMES = ["auto", "light", "sepia", "dark"];
     var WIDTHS = ["narrow", "normal", "wide"];
 
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
     function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
 
-    var prefs = {};
-    try { prefs = JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch (e) {}
+    // Settings live in Lilo, never in the site's storage: ReaderMode.swift passes them in and keeps what changes.
+    var prefs = typeof liloReaderPrefs === "object" && liloReaderPrefs || {};
     var fontSize = clamp(prefs.fontSize || 19, 14, 28);
     var theme = THEMES.indexOf(prefs.theme) >= 0 ? prefs.theme : "auto";
     var width = WIDTHS.indexOf(prefs.width) >= 0 ? prefs.width : "normal";
     function savePrefs() {
-      try { localStorage.setItem(PREF_KEY, JSON.stringify({ fontSize: fontSize, theme: theme, width: width })); } catch (e) {}
+      try { webkit.messageHandlers.liloReaderPrefs.postMessage({ fontSize: fontSize, theme: theme, width: width }); } catch (e) {}
     }
 
     var words = (article.textContent || "").trim().split(/\s+/).filter(Boolean).length;
