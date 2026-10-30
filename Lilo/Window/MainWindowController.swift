@@ -652,6 +652,8 @@ extension MainWindowController: TabManager.Delegate {
         defer {
             refreshPagePeeks()
             sidePanel.activeTabDidChange()
+            // Focusing a split pane shows no new view: the bar follows the active tab here.
+            syncPageBar()
             if let changesPeek, changesPeek.terminalId != id { dismissChangesPeek() }
         }
         let announcedByCommand = activationAnnouncedByCommand == id
