@@ -202,6 +202,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateURL url: URL?) {
+        pagePopups[tab.id]?.refreshHost()
+        littleWindows[tab.id]?.refreshAddress()
         var shouldRefreshFavicon = false
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             let previousURL = t.url
@@ -281,6 +283,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {
+        pagePopups[tab.id]?.refreshHost()
         updateAndEmit(tab.id) { t in t.isNotSecure = isNotSecure }
     }
 

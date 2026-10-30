@@ -67,7 +67,6 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         header.onShowSpaces = { [weak self] button in self?.showSpacesMenu(from: button) }
         header.openButton.title = String(format: "Open in %@".localized, spaceLabel(spaceId))
         observations = [
-            engine.wkWebView.observe(\.url) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshAddress() } },
             engine.wkWebView.observe(\.title) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshTitle() } },
             engine.wkWebView.observe(\.estimatedProgress) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshProgress() } },
             engine.wkWebView.observe(\.isLoading) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshProgress() } }
@@ -114,7 +113,9 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.maxY + 4), in: button)
     }
 
-    private func refreshAddress() {
+    /// The engine's delegate calls it when the page's address changes: a navigation the page starts shows its
+    /// address once it commits, when the web view's own URL no longer changes.
+    func refreshAddress() {
         guard header.field.currentEditor() == nil else { return }
         header.field.stringValue = engine.currentURL?.absoluteString ?? ""
     }

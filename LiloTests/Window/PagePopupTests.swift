@@ -504,6 +504,17 @@ final class PagePopupTests: XCTestCase {
         popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
     }
 
+    func testAPopupWindowNamesTheSiteItsPageWentToOnceThatSiteShows() async throws {
+        let server = try await TinyHTTPServer(index: "<p>signed in</p>")
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        for host in ["127.0.0.1", "localhost"] {
+            _ = try await popup.engine.wkWebView.evaluateJavaScript("location = 'http://\(host):\(server.port)/'; 1")
+            let named = await pollUntil(timeout: 10) { popup.window?.title.hasSuffix(host) == true }
+            XCTAssertTrue(named, "the popup's title names \(host) once its page commits")
+        }
+    }
+
     func testAnExternalAppDecisionHoldsForItsSchemeOnly() async throws {
         try await openFromPage("width=400,height=300")
         let popup = try XCTUnwrap(controller.pagePopups.values.first)
