@@ -100,6 +100,8 @@ export type SettingId =
   | "autoUpdateExtensions"
   | "checkExtensionUpdates"
   | "passwordManager"
+  | "agentsEnabled"
+  | "agentsNotifyDone"
   | "agentControl"
   | "agentAskBeforeActions"
   | "agentAlwaysAllowed"
@@ -178,6 +180,7 @@ export const SETTINGS_GROUP_ICONS = {
   "settings.groups.browsingData": { glyph: "clock", tint: "teal" },
   "settings.groups.updates": { glyph: "arrowsCircle", tint: "gray" },
   "settings.groups.passwords": { glyph: "key", tint: "green" },
+  "settings.groups.agentConversations": { glyph: "agents", tint: "purple" },
   "settings.groups.agentAccess": { glyph: "agents", tint: "agents" },
   "settings.groups.agentClients": { glyph: "grid", tint: "agents" },
   "settings.groups.tools": { glyph: "code", tint: "gray" },
@@ -227,6 +230,8 @@ export const SETTING_TOGGLES: Partial<Record<SettingId, { key: string; fallback:
   preventCrossSiteTracking: { key: "preventCrossSiteTracking", fallback: true },
   clearOnQuit: { key: "clearSiteDataOnQuit", fallback: false },
   autoUpdateExtensions: { key: "autoUpdateExtensions", fallback: true },
+  agentsEnabled: { key: "agentsEnabled", fallback: false },
+  agentsNotifyDone: { key: "agentsNotifyDone", fallback: true },
   agentControl: { key: "agentControlEnabled", fallback: false },
   agentAskBeforeActions: { key: "agentAskBeforeActions", fallback: true },
   developMenu: { key: "showDevelopMenu", fallback: true },
@@ -295,6 +300,8 @@ export const SETTINGS: SettingModel[] = [
   { id: "autoUpdateExtensions", section: "extensions", groupKey: "settings.groups.updates" },
   { id: "checkExtensionUpdates", section: "extensions", groupKey: "settings.groups.updates" },
   { id: "passwordManager", section: "extensions", groupKey: "settings.groups.passwords" },
+  { id: "agentsEnabled", section: "agents", groupKey: "settings.groups.agentConversations" },
+  { id: "agentsNotifyDone", section: "agents", groupKey: "settings.groups.agentConversations", requires: "agentsEnabled" },
   { id: "agentControl", section: "agents", groupKey: "settings.groups.agentAccess" },
   { id: "agentAskBeforeActions", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },
   { id: "agentAlwaysAllowed", section: "agents", groupKey: "settings.groups.agentAccess", requires: "agentControl" },

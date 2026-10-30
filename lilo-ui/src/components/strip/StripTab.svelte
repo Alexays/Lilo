@@ -68,6 +68,8 @@
         <span class="terminal-tile" class:asleep={!tab.terminalState} aria-hidden="true">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="m3.5 4.5 3.5 3.5-3.5 3.5" /><path d="M8.5 11.5h4" /></svg>
         </span>
+      {:else if tab.kind === "agent"}
+        {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
       {:else if tab.kind === "changes"}
         <span class="changes-tile" aria-hidden="true">
           <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5 2.5v6M2 5.5h6" /><path d="M8.5 12h5" /></svg>

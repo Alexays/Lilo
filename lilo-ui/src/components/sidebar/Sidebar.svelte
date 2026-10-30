@@ -20,7 +20,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate } from "../../stores/settings.svelte";
+  import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getAddressPlacement, getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
@@ -112,6 +112,14 @@
            left, the page toolbar stays with the sidebar hidden and holds the toggle ahead of the history buttons. -->
       {#if !hasPageToolbar() || getTabPosition() !== "left"}
         <NavControls collapseLocked={isOverlayPanelOpen} show={isSidebarVisible() && hasPageToolbar() ? "toggle" : "all"} />
+      {/if}
+      <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
+      {#if getSetting("agentsEnabled", "false") === "true"}
+        <div class="agents-slot">
+          {#await import("../agents/AgentsBadge.svelte") then badge}
+            <badge.default />
+          {/await}
+        </div>
       {/if}
       <!-- With the address hidden, the page's buttons stay on the header's line. -->
       {#if !isAddressVisible()}
@@ -328,6 +336,16 @@
   }
 
   /* Reserve space for macOS traffic light buttons, 15pt in from the window's edge. */
+  .agents-slot {
+    flex: none;
+    display: flex;
+  }
+
+  /* Without the navigation buttons to fill the line, the badge still keeps its end. */
+  .header-spacer + .agents-slot {
+    margin-left: auto;
+  }
+
   .header-spacer {
     width: 81px;
     flex-shrink: 0;

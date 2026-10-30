@@ -71,10 +71,16 @@ test("settings under a switch that is off drop out of their group", () => {
   const values: Record<string, string> = { agentControlEnabled: "false" };
   const get = (key: string, fallback: string) => values[key] ?? fallback;
   const visible = sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get));
-  assert.deepEqual(visible, [{ groupKey: "settings.groups.agentAccess", settings: ["agentControl"] }]);
+  assert.deepEqual(visible, [
+    { groupKey: "settings.groups.agentConversations", settings: ["agentsEnabled"] },
+    { groupKey: "settings.groups.agentAccess", settings: ["agentControl"] },
+  ]);
 
   values.agentControlEnabled = "true";
-  assert.equal(sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get)).length, 2);
+  values.agentsEnabled = "true";
+  const shown = sectionGroups("agents", (setting) => !setting.requires || isToggleOn(setting.requires, get));
+  assert.equal(shown.length, 3);
+  assert.deepEqual(shown[0].settings, ["agentsEnabled", "agentsNotifyDone"]);
 });
 
 test("cross-site tracking prevention is a protection switch, on until turned off", () => {

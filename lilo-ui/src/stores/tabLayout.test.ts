@@ -4,7 +4,7 @@ import { freshStores, stubBridgeWindow } from "./testHarness";
 
 function stubRoot(): Record<string, string> {
 	const dataset: Record<string, string> = {};
-	(globalThis as { document: { documentElement?: unknown } }).document.documentElement = { dataset };
+	(globalThis as { document: { documentElement?: unknown } }).document.documentElement = { dataset, classList: { contains: () => false } };
 	return dataset;
 }
 
