@@ -34,6 +34,41 @@ final class WKBackendTests: XCTestCase {
         XCTAssertTrue(DownloadQuarantine.isQuarantined(file), "Gatekeeper checks the file before it first runs")
     }
 
+    @MainActor
+    func testTwoDownloadsOfTheSameNameGetTheirOwnFile() async throws {
+        let server = try await TinyHTTPServer { _ in
+            ("200 OK", ["Content-Type: text/csv", #"Content-Disposition: attachment; filename="report.csv""#], Data("a,b\n".utf8))
+        }
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let database = try TemporaryProfileDatabase()
+        defer { database.tearDown() }
+        let store = DownloadStore(dbPool: database.pool)
+        let backend = WKBackend()
+        backend.store = store
+        backend.downloadsFolderProvider = { folder }
+        // Both downloads are deciding at once, as when a save panel or an extension's suggestion is pending.
+        var deciding = 0
+        backend.chooseDestination = { proposed, _, _ in
+            deciding += 1
+            _ = await pollUntil(timeout: 60) { deciding == 2 }
+            return proposed
+        }
+        var finished: [DownloadItem] = []
+        backend.onUpdated = { if $0.state == .complete || $0.state == .interrupted { finished.append($0) } }
+
+        let webView = WKWebView()
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
+        webView.startDownload(using: URLRequest(url: url)) { backend.startTracking($0) }
+        webView.startDownload(using: URLRequest(url: url)) { backend.startTracking($0) }
+        _ = await pollUntil(timeout: 60) { finished.count == 2 }
+        withExtendedLifetime((webView, store)) {}
+
+        XCTAssertEqual(finished.map(\.state), [.complete, .complete], "\(finished.map(\.error))")
+        XCTAssertEqual(Set(finished.map(\.filename)), ["report.csv", "report (1).csv"])
+    }
+
     func testResolveDestinationNoConflict() {
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         let result = WKBackend.resolveDestination(for: "unique_\(UUID().uuidString).zip", in: dir)

@@ -17,6 +17,8 @@ final class InFlightDownloads {
     /// Each item keeps the store it was inserted into: a profile switch must not redirect its writes.
     private var items: [Int64: (item: DownloadItem, store: DownloadStore?)] = [:]
 
+    var destinationPaths: Set<String> { Set(items.values.map(\.item.destinationPath)) }
+
     /// Registers a newly started (or resumed) download of the current store and notifies.
     func begin(_ id: Int64, _ item: DownloadItem) {
         items[id] = (item, store)

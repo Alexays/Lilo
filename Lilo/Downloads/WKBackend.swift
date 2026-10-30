@@ -36,6 +36,8 @@ final class WKBackend: NSObject {
     /// Downloads whose file WebKit has not written yet: the first bytes quarantine it, so it never
     /// sits unquarantined while it downloads, nor once interrupted.
     private var unquarantined: [Int64: (path: String, source: String)] = [:]
+    /// Destinations proposed to downloads still deciding where to go (extension suggestion, save panel): WebKit writes nothing there yet.
+    private var pendingDestinations: Set<String> = []
 
     private let flight = InFlightDownloads()
 
@@ -155,12 +157,12 @@ final class WKBackend: NSObject {
         }
     }
 
-    /// Resolves a filename to a non-conflicting path in the given directory.
-    nonisolated static func resolveDestination(for suggestedFilename: String, in directory: URL) -> URL {
+    /// Resolves a filename to a path in the given directory that neither exists nor is `reserved`.
+    nonisolated static func resolveDestination(for suggestedFilename: String, in directory: URL, reserved: Set<String> = []) -> URL {
         let destination = directory.appendingPathComponent(suggestedFilename)
         var finalURL = destination
         var counter = 1
-        while FileManager.default.fileExists(atPath: finalURL.path) {
+        while reserved.contains(finalURL.path) || FileManager.default.fileExists(atPath: finalURL.path) {
             let name = destination.deletingPathExtension().lastPathComponent
             let ext = destination.pathExtension
             let newName = ext.isEmpty ? "\(name) (\(counter))" : "\(name) (\(counter)).\(ext)"
@@ -177,8 +179,13 @@ extension WKBackend: WKDownloadDelegate {
         decideDestinationUsing response: URLResponse,
         suggestedFilename: String
     ) async -> URL? {
-        let dir = await MainActor.run { resolvedDownloadsFolder(downloadsFolderProvider()) }
-        let proposedURL = Self.resolveDestination(for: suggestedFilename, in: dir)
+        // In-flight files may not exist yet: skipping their paths keeps two downloads of one name apart.
+        let (dir, proposedURL) = await MainActor.run {
+            let dir = resolvedDownloadsFolder(downloadsFolderProvider())
+            let url = Self.resolveDestination(for: suggestedFilename, in: dir, reserved: pendingDestinations.union(flight.destinationPaths))
+            pendingDestinations.insert(url.path)
+            return (dir, url)
+        }
         var item = DownloadItem(id: nil, url: response.url?.absoluteString ?? "",
             filename: suggestedFilename, destinationPath: proposedURL.path,
             bytesReceived: 0, totalBytes: response.expectedContentLength,
@@ -186,7 +193,10 @@ extension WKBackend: WKDownloadDelegate {
         item.mimeType = response.mimeType
         let suggested = await suggestedDestination(for: download, item: item, in: dir)
         guard let finalURL = await destination(for: suggested.url, from: await download.webView, prompts: suggested.prompts) else {
-            await MainActor.run { onDropped?(download) }
+            await MainActor.run {
+                pendingDestinations.remove(proposedURL.path)
+                onDropped?(download)
+            }
             return nil
         }
         item.filename = finalURL.lastPathComponent
@@ -194,6 +204,7 @@ extension WKBackend: WKDownloadDelegate {
 
         let tracked: Bool = await MainActor.run { [item] in
             var item = item
+            pendingDestinations.remove(proposedURL.path)
             guard (try? store?.insert(&item)) != nil, let id = item.id else {
                 // Returning nil from decideDestination makes WebKit cancel silently, so leave a trail.
                 Self.logger.error("download dropped before tracking (store nil or insert failed), WebKit will cancel: \(finalURL.lastPathComponent, privacy: .private) from \(response.url?.absoluteString ?? "nil", privacy: .private)")
