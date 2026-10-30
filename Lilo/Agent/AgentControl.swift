@@ -296,6 +296,10 @@ final class AgentControl {
             (session.identity, session.executable, session.clientPID) = await Task.detached { AgentControl.clientIdentity(peer: peer) }.value
         }
         if session.identity.isEmpty { Self.logger.warning("Could not read the signature of \(name, privacy: .public): asking for this connection only") }
+        #if DEBUG
+        // A harness that launches its own Debug build drives it without a prompt; a Release build never reads this.
+        if ProcessInfo.processInfo.environment["LILO_AGENT_ALLOW_ALL"] == "1" { return true }
+        #endif
         if !session.identity.isEmpty, allowedClients[name]?.contains(session.identity) == true {
             markSeen(name)
             return true

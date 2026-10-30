@@ -76,7 +76,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
 	swift-test swift-test-slow blocker-coverage blocker-bench script-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
-	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test \
+	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
@@ -375,6 +375,17 @@ xcode-build-release: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 ## Launch the app against the local Vite dev server
 run-ui-dev: app
 	@LILO_UI_DEV_SERVER=http://localhost:5173 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo
+
+# LILO_AGENT_ALLOW_ALL lets any agent client in without asking: only a Debug build reads it.
+## Call the debug app's agent tools from a shell, starting the app first if needed (CALLS=calls.json, see scripts/agent_call.mjs)
+agent-call:
+	@test -n "$(CALLS)" || { echo "CALLS=calls.json is required" >&2; exit 2; }
+	@test -d build/debug/export/Lilo.app || { echo "run make app first" >&2; exit 1; }
+	@pgrep -qf "build/debug/export/Lilo.app/Contents/MacOS/Lilo$$" || { \
+		/bin/rm -f "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock"; \
+		LILO_AGENT_ALLOW_ALL=1 ./build/debug/export/Lilo.app/Contents/MacOS/Lilo >/dev/null 2>&1 & \
+		until [ -S "$(HOME)/Library/Application Support/Lilo-Debug/agent.sock" ] && sleep 3; do sleep 1; done; }
+	@node scripts/agent_call.mjs build/debug/export/Lilo.app/Contents/MacOS/lilo-mcp "$(CALLS)"
 
 ## Build the UI bundle and create release artifacts
 release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
