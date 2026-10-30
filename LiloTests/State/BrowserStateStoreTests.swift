@@ -3609,6 +3609,30 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertNotNil(store.space(id: hiddenSpaceId)?.engines[tabId])
     }
 
+    func testFreezeIdleEnginesSparesASiteAllowedToNotify() {
+        let activeSpaceId = UUID(); let hiddenSpaceId = UUID(); let chatId = UUID(); let newsId = UUID()
+        var chat = Tab(id: chatId, url: URL(string: "https://chat.example/inbox"), title: "Chat", spaceId: hiddenSpaceId)
+        var news = Tab(id: newsId, url: URL(string: "https://news.example/"), title: "News", spaceId: hiddenSpaceId)
+        chat.lastActiveAt = Date(timeIntervalSince1970: 1)
+        news.lastActiveAt = Date(timeIntervalSince1970: 1)
+        let chatEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let newsEngine = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let store = BrowserStateStore()
+        store.allowsNotifications = { origin, _ in origin == "https://chat.example" }
+        store.runtimeOverlay.setRuntimeState(from: chat)
+        store.runtimeOverlay.setRuntimeState(from: news)
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [chat, news], folders: [], treeItems: [], engines: [chatId: chatEngine, newsId: newsEngine])
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+
+        XCTAssertFalse(chatEngine.isFrozen, "a site that may notify keeps receiving its messages")
+        XCTAssertTrue(newsEngine.isFrozen)
+    }
+
     func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID()
         let visibleId = UUID(); let backgroundId = UUID(); let hiddenActiveId = UUID(); let hiddenOtherId = UUID()

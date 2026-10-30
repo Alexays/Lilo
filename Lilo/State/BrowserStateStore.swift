@@ -48,6 +48,8 @@ final class BrowserStateStore {
     var displayedTabIds: Set<UUID> = []
     /// Tabs whose Document PiP window is open: its page runs in theirs.
     var pictureInPictureOpenerIds: Set<UUID> = []
+    /// Whether an origin may post notifications in a space's profile: an idle freeze spares its tabs, so a messaging app keeps receiving.
+    var allowsNotifications: (_ origin: String, _ spaceId: UUID) -> Bool = { _, _ in false }
     /// Live runtime of each shown space and how many windows show it; every one of them uses this host.
     private var liveHosts: [UUID: (host: EngineHost, viewers: Int)] = [:]
 
@@ -719,8 +721,8 @@ final class BrowserStateStore {
     }
 
     /// Freeze (suspend in place, not discard) idle engines in hidden spaces whose runtime `lastActiveAt`
-    /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading)
-    /// or already frozen. A frozen engine stays in memory (instant resume) but stops spending CPU/energy.
+    /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading,
+    /// allowed to notify) or already frozen. A frozen engine stays in memory (instant resume) but stops spending CPU/energy.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
@@ -738,7 +740,11 @@ final class BrowserStateStore {
                 if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { protectedTabIds.formUnion(split.layout.paneIds) }
             }
             var lastActiveByTab: [UUID: Date] = [:]
-            for tab in tabs { if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last } }
+            for tab in tabs {
+                if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last }
+                guard snapshot.engines[tab.id] != nil, let url = tab.url, let scheme = url.scheme, let host = url.host else { continue }
+                if allowsNotifications(PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), spaceId) { protectedTabIds.insert(tab.id) }
+            }
             for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading {
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard now.timeIntervalSince(last) > freezeThreshold else { continue }

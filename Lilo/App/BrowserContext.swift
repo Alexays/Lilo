@@ -278,6 +278,10 @@ final class BrowserContext {
                 self?.terminalHost.refreshGitStats()
             }
         }
+        browserState.allowsNotifications = { [weak self] origin, spaceId in
+            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate else { return false }
+            return profileContexts.existingContext(for: space.profileId)?.sitePermissions.decision(forOrigin: origin, type: "notifications") == true
+        }
         profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         try profileManager.loadProfiles(
             startupSnapshot.profiles,
