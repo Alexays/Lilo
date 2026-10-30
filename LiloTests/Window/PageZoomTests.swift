@@ -91,4 +91,19 @@ final class PageZoomTests: XCTestCase {
         XCTAssertEqual(engine.pageZoom, 1, accuracy: 0.001)
         XCTAssertEqual(try zoomStore.allZoomLevels["example.com"] ?? 0, 1, accuracy: 0.001)
     }
+
+    func testAPrivateSpaceKeepsItsZoomInMemoryOverTheProfiles() async throws {
+        let window = try makeWindow()
+        try await load("https://example.com/", in: window)
+        window.zoomInCurrentPage(nil)
+        let privateWindow = try makeWindow(isPrivate: true)
+
+        let engine = try await load("https://example.com/", in: privateWindow)
+        XCTAssertEqual(engine.pageZoom, 1.1, accuracy: 0.001)
+        privateWindow.zoomInCurrentPage(nil)
+        try await load("https://example.com/next", in: privateWindow)
+
+        XCTAssertEqual(engine.pageZoom, 1.25, accuracy: 0.001)
+        XCTAssertEqual(try zoomStore.allZoomLevels, ["example.com": 1.1])
+    }
 }

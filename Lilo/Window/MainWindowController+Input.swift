@@ -322,8 +322,8 @@ extension MainWindowController {
         case "manual": return engine.reportZoomChange(from: engine.pageZoom, to: zoom)
         default: engine.setPageZoom(zoom)
         }
-        if !engine.isPrivateBrowsing, engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
-            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore.defaultZoom)
+        if engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
+            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore.defaultZoom, of: engine)
         }
         bridgeRouter.send(event: "zoomChanged", data: ["level": zoom])
         if let adapter = tabManager.tabAdapter(for: engine.id), let registry = tabManager.extensionRegistry, registry.hasLoadedExtensions {
