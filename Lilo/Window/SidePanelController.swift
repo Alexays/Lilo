@@ -331,6 +331,9 @@ final class SidePanelView: NSView {
         super.init(frame: .zero)
         wantsLayer = true
         layer?.backgroundColor = background.cgColor
+        // The panel sits above the window frame, so it rounds its own corners like the content's.
+        layer?.cornerRadius = WindowFrameView.contentCornerRadius
+        layer?.masksToBounds = true
         iconView.image = icon
         // The extension's name follows it.
         iconView.setAccessibilityElement(false)
