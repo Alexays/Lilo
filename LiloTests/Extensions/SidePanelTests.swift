@@ -1,4 +1,5 @@
 import AppKit
+import Network
 import WebKit
 import XCTest
 @testable import Lilo
@@ -482,21 +483,39 @@ final class SidePanelTests: XCTestCase {
     private final class CookieSite: @unchecked Sendable {
         private let lock = NSLock()
         private var headers: [String: String] = [:]
-        private(set) var server: TinyHTTPServer!
+        private var server: TinyHTTPServer?
+        private var proxy: TinyCONNECTProxy?
+        /// Where the site is served: a loopback port, or `framed.test` through `proxy`, which tracking prevention treats
+        /// as a real site.
+        private(set) var base = ""
 
-        init() async throws {
-            server = try await TinyHTTPServer { [unowned self] request in
-                let lines = request.split(separator: "\r\n")
-                let path = lines.first.map { String($0.split(separator: " ")[1]) } ?? ""
-                let cookie = lines.first { $0.lowercased().hasPrefix("cookie:") }.map { String($0.dropFirst(7)) } ?? ""
-                lock.withLock { headers[path] = cookie }
-                switch path {
-                case "/set": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; SameSite=Lax; Path=/"], Data("<title>set</title>".utf8))
-                case "/later": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: later=1; SameSite=Strict; Path=/"], Data("<title>later</title>".utf8))
-                case "/sub": return ("200 OK", ["Content-Type: text/plain"], Data("sub".utf8))
-                case "/socket": return ("403 Forbidden", [], Data())
-                default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>new WebSocket('ws://' + location.host + '/socket'); fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
-                }
+        /// `proxied` serves it through a CONNECT proxy, which the profile's store must use (`proxyConfiguration`).
+        init(proxied: Bool = false) async throws {
+            if proxied {
+                proxy = try await TinyCONNECTProxy { [unowned self] _, request in respond(request) }
+                base = "http://framed.test"
+            } else {
+                let server = try await TinyHTTPServer { [unowned self] request in respond(request) }
+                self.server = server
+                base = "http://127.0.0.1:\(server.port)"
+            }
+        }
+
+        var proxyConfiguration: ProxyConfiguration? {
+            proxy.flatMap { NWEndpoint.Port(rawValue: $0.port) }.map { ProxyConfiguration(httpCONNECTProxy: .hostPort(host: "127.0.0.1", port: $0)) }
+        }
+
+        private func respond(_ request: String) -> TinyHTTPServer.Response {
+            let lines = request.split(separator: "\r\n")
+            let path = lines.first.map { String($0.split(separator: " ")[1]) } ?? ""
+            let cookie = lines.first { $0.lowercased().hasPrefix("cookie:") }.map { String($0.dropFirst(7)) } ?? ""
+            lock.withLock { headers[path] = cookie }
+            switch path {
+            case "/set": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; SameSite=Lax; Path=/"], Data("<title>set</title>".utf8))
+            case "/later": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: later=1; SameSite=Strict; Path=/"], Data("<title>later</title>".utf8))
+            case "/sub": return ("200 OK", ["Content-Type: text/plain"], Data("sub".utf8))
+            case "/socket": return ("403 Forbidden", [], Data())
+            default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>new WebSocket('ws://' + location.host + '/socket'); fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
             }
         }
 
@@ -515,7 +534,7 @@ final class SidePanelTests: XCTestCase {
         try #"{"manifest_version":3,"name":"\#(name)","version":"1.0","permissions":["sidePanel","offscreen"],"host_permissions":\#(hostPermissions),"side_panel":{"default_path":"framer.html"}}"#
             .write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
         try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("framer.js"), atomically: true, encoding: .utf8)
-        try #"<title>framing</title><script src="framer.js"></script><iframe src="http://127.0.0.1:\#(site.server.port)/page"></iframe>"#
+        try #"<title>framing</title><script src="framer.js"></script><iframe src="\#(site.base)/page"></iframe>"#
             .write(to: dir.appendingPathComponent("framer.html"), atomically: true, encoding: .utf8)
         let before = Set(registry.loadedExtensions.map(\.id))
         try await registry.load(from: dir)
@@ -523,7 +542,7 @@ final class SidePanelTests: XCTestCase {
     }
 
     private func visit(_ path: String, on site: CookieSite) async throws {
-        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(site.server.port)\(path)"))?.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "\(site.base)\(path)"))?.id)
         let loaded = await pollUntil { self.window.tabManager.engineTab(for: tab)?.currentTitle == String(path.dropFirst()) }
         XCTAssertTrue(loaded)
     }
@@ -562,6 +581,32 @@ final class SidePanelTests: XCTestCase {
 
         let withoutAccess = await frame(in: denied)
         XCTAssertEqual(withoutAccess, ["plain=1", "plain=1"], "without host access the frame stays cross-site")
+    }
+
+    func testUnderTrackingPreventionAFramedSiteGetsEachOfItsCookiesOnce() async throws {
+        browserContext.context.engineFactory.setTrackingPrevention(true)
+        defer { browserContext.context.engineFactory.setTrackingPrevention(false) }
+        let site = try await CookieSite(proxied: true)
+        let store = WKWebsiteDataStore(forIdentifier: registry.profileId)
+        store.proxyConfigurations = [try XCTUnwrap(site.proxyConfiguration)]
+        defer { store.proxyConfigurations = [] }
+        let extensionId = try await installFramer("Tracked", hostPermissions: #"["<all_urls>"]"#, framing: site)
+        try await visit("/set", on: site)
+        // What Cloudflare leaves after challenging the frame as a third party: its cookie again, partitioned under the extension.
+        for (name, value, domain, partition) in [("plain", "stale", "framed.test", extensionId), ("clearance", "real", ".framed.test", nil), ("clearance", "stale", ".framed.test", extensionId)] {
+            var properties: [HTTPCookiePropertyKey: Any] = [.name: name, .value: value, .domain: domain, .path: "/", .sameSitePolicy: "none"]
+            if let partition { properties[HTTPCookiePropertyKey("StoragePartition")] = "chrome-extension://\(partition)" }
+            await store.httpCookieStore.setCookie(try XCTUnwrap(HTTPCookie(properties: properties)))
+        }
+
+        window.sidePanel.open(extensionId, tabSpecific: false, in: nil)
+        let framed = await pollUntil { self.window.sidePanel.webView?.title == "framed" }
+        XCTAssertTrue(framed)
+        let socket = await pollUntil { site.cookies("/socket") != nil }
+        XCTAssertTrue(socket)
+        for path in ["/page", "/sub", "/socket"] {
+            XCTAssertEqual(site.cookies(path), "clearance=real; lax=1; plain=1", "\(path): each cookie once, not the stale twins")
+        }
     }
 
     func testCookiesAFramedSiteSetsAreKeptAsItsOwn() async throws {

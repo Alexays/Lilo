@@ -489,6 +489,7 @@
 		B9047DBE8E71E4932B1EDCDB /* ChromeInputCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0446E557B73B38C0A986B42F /* ChromeInputCoordinator.swift */; };
 		B9A5DAEA0B07415B34E29432 /* CaptureBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98539D73D9D0AF62B001E724 /* CaptureBridgeHandler.swift */; };
 		B9ECEACFB8360FFB6362D83C /* JSDialogPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B56DCD2782B9C38E7799E0D3 /* JSDialogPresenter.swift */; };
+		BA3F767C66ACD31520D70C97 /* TinyCONNECTProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4357F14F5A691B934F290395 /* TinyCONNECTProxy.swift */; };
 		BAA8B0FF2C4947C3AAD5F750 /* CertificateRejectionReasonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEFBD55F4EF1951246FF18C6 /* CertificateRejectionReasonTests.swift */; };
 		BABA4012886AFD636CAB981D /* ExtensionManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EC3C84ED5DAB2601F259A69 /* ExtensionManifest.swift */; };
 		BB46F90F8F880376E09F13D2 /* HitboxDebugOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EB06D0954FAE8692A6F6686 /* HitboxDebugOverlayTests.swift */; };
@@ -913,6 +914,7 @@
 		4311ADDEB86FC366DB1A4BE5 /* WKWebViewTabDelegateSpy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabDelegateSpy.swift; sourceTree = "<group>"; };
 		431ABDDD13D3442436E79EA8 /* TemporaryBrowserContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryBrowserContext.swift; sourceTree = "<group>"; };
 		432C11CE1AE1F9293931D612 /* ExtensionDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionDiagnosticsTests.swift; sourceTree = "<group>"; };
+		4357F14F5A691B934F290395 /* TinyCONNECTProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyCONNECTProxy.swift; sourceTree = "<group>"; };
 		43CE673EAC07CD546E7EC737 /* GenericCosmetics.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = GenericCosmetics.js; sourceTree = "<group>"; };
 		445A4257BF6C0F872F9C6396 /* ChromeProcessRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeProcessRecoveryTests.swift; sourceTree = "<group>"; };
 		44786C1BB32D8EB3B1C40945 /* SpaceBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -2185,6 +2187,7 @@
 				AEBB7A5A6633D26F9EAC4A0E /* TestProfileIds.swift */,
 				A502F5037D82C044BECC0C79 /* TestRunCleanup.swift */,
 				0AAF2560A569844ACBE2F487 /* TestRunCleanupTests.swift */,
+				4357F14F5A691B934F290395 /* TinyCONNECTProxy.swift */,
 				03896996B8F742A26C2FFDCC /* WKWebViewTab+Configuration.swift */,
 				4311ADDEB86FC366DB1A4BE5 /* WKWebViewTabDelegateSpy.swift */,
 			);
@@ -3439,6 +3442,7 @@
 				DD185B2D6F84A43DF0329FB9 /* TestProfileIds.swift in Sources */,
 				C190818DBDA1FF175779AC6D /* TestRunCleanup.swift in Sources */,
 				6ACD49D2FA41C45FD9E5F39E /* TestRunCleanupTests.swift in Sources */,
+				BA3F767C66ACD31520D70C97 /* TinyCONNECTProxy.swift in Sources */,
 				282E2D74385E5D55BD437F9D /* TinyHTTPServer.swift in Sources */,
 				1ABD5832E75656F0B474AC28 /* TopHitPreloadBenchmarkTests.swift in Sources */,
 				93B3CDCEAB76699A3BC93F9D /* TopHitPreloadTests.swift in Sources */,
