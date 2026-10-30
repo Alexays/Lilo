@@ -156,6 +156,19 @@ test("clicking a Space's lone blank tab brings the bar back, with one New Tab ro
 	expect((await sentCommands(page)).some((c) => c.action === "createTab")).toBe(false);
 });
 
+test("a Space's lone Changes tab is not taken for a blank one", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = [tab("tab-changes", SPACE_1, { url: "", title: "Changes", kind: "changes" })];
+	world.treeItemsBySpace[SPACE_1] = [treeItem("tab-changes", SPACE_1, 0)];
+	world.activeTabBySpace[SPACE_1] = "tab-changes";
+	await bootChrome(page, world);
+	const row = page.locator(".space-pane").nth(0).locator('[data-tab-id="tab-changes"]');
+
+	await expect(row.locator(".close-btn")).toHaveClass(/visible/);
+	await row.click();
+	await expect(page.locator(".command-bar-input")).toHaveCount(0);
+});
+
 test("the terminal button beside New Tab sits on the close buttons' column", async ({ page }) => {
 	await bootChrome(page, initialWorld());
 	const center = async (selector: string) => {

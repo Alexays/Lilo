@@ -61,7 +61,7 @@ export function getActiveTabId(spaceId?: string): string {
 
 /** A new tab still waiting for a page. A terminal has no URL either, but is never blank. */
 export function isBlankTab(tab: TabState | undefined): tab is TabState {
-	return tab != null && !tab.url && tab.kind !== "terminal";
+	return tab != null && !tab.url && (tab.kind ?? "web") === "web";
 }
 
 /** A tab title as shown: native's blank-tab placeholder (`Tab.placeholderTitle`) reads in the app's language. */
