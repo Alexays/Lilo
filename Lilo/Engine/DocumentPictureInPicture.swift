@@ -38,10 +38,11 @@ final class DocumentPiPBridge: NSObject, WKScriptMessageHandlerWithReply {
         requestWindow(options) {
           const width = max(0, round(Number(options && options.width) || 0)), height = max(0, round(Number(options && options.height) || 0));
           const request = ++generation;
-          if (current) { const previous = current; current = null; try { previous.close(); } catch (e) {} }
           const activated = !!(activation && activation.get && isActive && isActive.get && apply(isActive.get, apply(activation.get, navigator, []), []));
           return lilo.post('liloDocumentPiP', { width, height, activated }).then(() => {
             if (request !== generation) throw new DOMException('A newer request replaced this one.', 'AbortError');
+            // Only an accepted request replaces the open window.
+            if (current) { const previous = current; current = null; try { previous.close(); } catch (e) {} }
             const win = apply(open, window, ['', '_blank', 'popup,width=' + (width || 400) + ',height=' + (height || 300)]);
             if (!win) throw new DOMException('The Picture-in-Picture window could not open.', 'NotAllowedError');
             current = win;
