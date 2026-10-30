@@ -83,4 +83,37 @@ final class WKWebViewTabDialogTests: XCTestCase {
         let answered = await pollUntil { (try? await engine.wkWebView.evaluateJavaScript("window.answered === true")) as? Bool == true }
         XCTAssertTrue(answered, "the page runs on once the alert is answered")
     }
+
+    func testAlertSaysWhichSiteIsAsking() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<iframe src=\"data:text/html,<script>onmessage = () => alert('framed')</script>\"></iframe>", in: engine)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("setTimeout(() => alert('hi')); true")
+        let askedByPage = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(askedByPage)
+        let texts = sheetTexts(window)
+        XCTAssertTrue(texts.contains("example.com says"), "\(texts)")
+        XCTAssertTrue(texts.contains("hi"), "\(texts)")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+        let dismissed = await pollUntil { window.attachedSheet == nil }
+        XCTAssertTrue(dismissed)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("frames[0].postMessage(1, '*'); true")
+        let askedByFrame = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(askedByFrame)
+        XCTAssertTrue(sheetTexts(window).contains("An embedded page on example.com says"), "\(sheetTexts(window))")
+    }
+
+    /// Every text field's string in the window's sheet.
+    private func sheetTexts(_ window: NSWindow) -> [String] {
+        var views = [window.attachedSheet?.contentView].compactMap { $0 }
+        var texts: [String] = []
+        while let view = views.popLast() {
+            if let field = view as? NSTextField { texts.append(field.stringValue) }
+            views += view.subviews
+        }
+        return texts
+    }
 }

@@ -2254,7 +2254,7 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable () -> Void) {
         if agentDialogHandler?("alert(\(message)) dismissed") == true { completionHandler(); return }
-        runWhenShown { $0 ? JSDialogPresenter.runAlert(in: webView, message: message, completion: completionHandler) : completionHandler() }
+        runWhenShown { $0 ? JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, completion: completionHandler) : completionHandler() }
     }
 
     func webView(_ webView: WKWebView,
@@ -2262,7 +2262,7 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (Bool) -> Void) {
         if agentDialogHandler?("confirm(\(message)) accepted") == true { completionHandler(true); return }
-        runWhenShown { $0 ? JSDialogPresenter.runConfirm(in: webView, message: message, completion: completionHandler) : completionHandler(false) }
+        runWhenShown { $0 ? JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, completion: completionHandler) : completionHandler(false) }
     }
 
     func webView(_ webView: WKWebView,
@@ -2273,7 +2273,7 @@ extension WKWebViewTab: WKUIDelegate {
         if agentDialogHandler?("prompt(\(prompt)) answered with its default") == true { completionHandler(defaultText ?? ""); return }
         runWhenShown { show in
             guard show else { return completionHandler(nil) }
-            JSDialogPresenter.runPrompt(in: webView, prompt: prompt, defaultText: defaultText, completion: completionHandler)
+            JSDialogPresenter.runPrompt(in: webView, frame: frame, prompt: prompt, defaultText: defaultText, completion: completionHandler)
         }
     }
 
