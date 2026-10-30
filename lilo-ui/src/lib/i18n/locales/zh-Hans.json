@@ -176,7 +176,8 @@
 			"profiles": "个人资料",
 			"otherAppLinks": "其他 App 中的链接",
 			"blockerCategories": "Lilo 拦截的内容",
-			"blockerExceptions": "列表与例外"
+			"blockerExceptions": "列表与例外",
+			"agentConversations": "对话"
 		},
 		"searchPlaceholder": "搜索设置",
 		"searchResultsTitle": "搜索结果",
@@ -542,6 +543,16 @@
 				"title": "按网站设置",
 				"description": "各个网站的权限、缩放和已存储的数据。",
 				"keywords": "网站 权限 Cookie 缩放 数据 存储空间"
+			},
+			"agentsEnabled": {
+				"title": "与你的智能体对话",
+				"description": "在标签页中与 Claude Code、Codex、Gemini 等智能体对话，使用你自己的订阅。Lilo 本身不内置 AI。",
+				"keywords": "智能体 AI ACP 聊天 对话 询问 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "智能体完成时通知",
+				"description": "你未在查看的对话完成时发送通知。",
+				"keywords": "智能体 通知 提醒 完成 结束"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "归档未固定的标签页",
 		"pinnedTabs": "固定标签页",
 		"openTabs": "打开的标签页",
-		"dropToPin": "放下以固定"
+		"dropToPin": "放下以固定",
+		"askAgent": "询问智能体"
 	},
 	"bookmarks": {
 		"groupLabel": "书签标签页",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "上级文件夹",
 		"Name": "名称",
 		"Size": "大小",
-		"Date Modified": "修改日期"
+		"Date Modified": "修改日期",
+		"%@ could not be downloaded.": "无法下载 %@。",
+		"%@ could not be installed.": "无法安装 %@。",
+		"%@ did not match its checksum and was not installed.": "%@ 的校验和不匹配，未安装。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：请从 nodejs.org 安装，然后重试。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：请从 astral.sh/uv 安装，然后重试。",
+		"Choose": "选取",
+		"New Conversation": "新建对话",
+		"Screenshot of %@": "%@ 的屏幕快照",
+		"Sign in in the terminal Lilo opened, then send your message again.": "请在 Lilo 打开的终端中登录，然后重新发送消息。",
+		"The agent stopped (code %d).": "智能体已停止（代码 %d）。",
+		"This agent is no longer in the ACP registry.": "此智能体已不在 ACP 注册表中。",
+		"Always Allow": "始终允许",
+		"Ask an Agent": "询问智能体",
+		"Review Changes": "查看更改",
+		"Show Pages": "显示页面",
+		"Hide Pages": "隐藏页面",
+		"Close Conversation": "关闭对话",
+		"Pasted image": "粘贴的图片"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,239 @@
 			"ellipse": "椭圆",
 			"text": "文本",
 			"pen": "画笔"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "模式",
+			"context": "已使用 {percent}% 的上下文",
+			"ownCopy": "独立副本",
+			"ownCopyHint": "在项目的独立副本中工作。可在更改中合并。",
+			"starting": "正在启动智能体...",
+			"errorHint": "发送消息即可重试。",
+			"showEarlier": {
+				"one": "显示前 {count} 项",
+				"other": "显示前 {count} 项"
+			},
+			"queued": {
+				"one": "{count} 条消息排队中",
+				"other": "{count} 条消息排队中"
+			},
+			"queuedHint": "智能体完成后发送。按 Cmd Return 立即发送。",
+			"thought": "思考",
+			"restoreToHere": "恢复到此处",
+			"restoreConfirm": "将项目文件恢复到此消息时的状态？",
+			"restore": "恢复",
+			"reviewChanges": "在更改中查看",
+			"undo": "撤销",
+			"keep": "保留",
+			"undone": "已撤销",
+			"kept": "已保留",
+			"moreLines": {
+				"one": "还有 {count} 行",
+				"other": "还有 {count} 行"
+			},
+			"plan": "计划",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "待办",
+				"in_progress": "进行中",
+				"completed": "已完成"
+			},
+			"permissionTitle": "允许此操作？",
+			"answered": "回答：{option}",
+			"cancelled": "未作回答",
+			"notice": {
+				"restored": "文件已恢复到此处",
+				"restoreFailed": "无法恢复文件",
+				"signedIn": "已登录"
+			},
+			"moreOptions": "更多选项",
+			"signInHint": "请通过智能体登录，然后重新发送消息。",
+			"branch": "分支 {branch}",
+			"jumpToLatest": "跳到最新"
+		},
+		"tool": {
+			"untitled": "工具调用",
+			"status": {
+				"pending": "等待中",
+				"in_progress": "运行中",
+				"failed": "失败"
+			},
+			"group": {
+				"read": {
+					"one": "读取了 {count} 个文件",
+					"other": "读取了 {count} 个文件"
+				},
+				"search": {
+					"one": "{count} 次搜索",
+					"other": "{count} 次搜索"
+				},
+				"fetch": {
+					"one": "获取了 {count} 个页面",
+					"other": "获取了 {count} 个页面"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"action": {
+					"one": "{count} 个操作",
+					"other": "{count} 个操作"
+				}
+			}
+		},
+		"composer": {
+			"label": "给智能体发消息",
+			"placeholder": "回复，@ 添加内容，/ 使用命令",
+			"addContext": "添加上下文",
+			"send": "发送",
+			"removeAttachment": "移除 {label}",
+			"tabs": "标签页",
+			"folders": "文件夹",
+			"fromPage": "来自页面",
+			"more": "更多",
+			"selection": "所选内容",
+			"screenshot": "屏幕快照",
+			"file": "文件 {path}",
+			"fileHint": "输入路径以附加项目文件",
+			"commands": "命令",
+			"files": "文件",
+			"image": "图片"
+		},
+		"ask": {
+			"label": "询问智能体",
+			"placeholder": "询问智能体，@ 添加内容",
+			"thisPage": "此页面",
+			"agent": "智能体",
+			"loadingAgents": "正在载入智能体...",
+			"project": "项目",
+			"chooseProject": "选择项目",
+			"chooseFolder": "选择文件夹...",
+			"ownCopy": "独立副本",
+			"ownCopyHint": "让智能体在项目的独立副本（git worktree）中工作",
+			"openBeside": "打开",
+			"openBackground": "在后台",
+			"start": "开始"
+		},
+		"row": {
+			"untitled": "新对话",
+			"working": "工作中",
+			"failed": "因出错而停止",
+			"changes": "新增 {added} 行，删除 {removed} 行",
+			"pages": {
+				"one": "{count} 个页面",
+				"other": "{count} 个页面"
+			},
+			"showPages": "显示页面",
+			"hidePages": "隐藏页面"
+		},
+		"question": {
+			"allow": "允许",
+			"allowAlways": "始终允许",
+			"reject": "拒绝",
+			"rejectAlways": "始终拒绝"
+		},
+		"badge": {
+			"title": "智能体",
+			"waiting": {
+				"one": "智能体，{count} 个在等你",
+				"other": "智能体，{count} 个在等你"
+			},
+			"new": "新",
+			"needsYou": "等你处理",
+			"running": "运行中",
+			"done": "完成",
+			"finished": "已结束",
+			"empty": "没有需要你处理的对话"
+		},
+		"status": {
+			"working": "工作中",
+			"waiting": "等你处理",
+			"stopHint": "按 Esc 停止"
+		},
+		"work": {
+			"verb": {
+				"read": "读取",
+				"edit": "编辑",
+				"delete": "删除",
+				"move": "移动",
+				"search": "搜索",
+				"fetch": "获取"
+			},
+			"summary": {
+				"read": {
+					"one": "读取了 {count} 个文件",
+					"other": "读取了 {count} 个文件"
+				},
+				"edit": {
+					"one": "编辑了 {count} 个文件",
+					"other": "编辑了 {count} 个文件"
+				},
+				"execute": {
+					"one": "运行了 {count} 条命令",
+					"other": "运行了 {count} 条命令"
+				},
+				"search": {
+					"one": "搜索了 {count} 次",
+					"other": "搜索了 {count} 次"
+				},
+				"fetch": {
+					"one": "获取了 {count} 个网页",
+					"other": "获取了 {count} 个网页"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"browser": {
+					"one": "使用了 {count} 次浏览器",
+					"other": "使用了 {count} 次浏览器"
+				},
+				"tool": {
+					"one": "使用了 {count} 个工具",
+					"other": "使用了 {count} 个工具"
+				}
+			},
+			"exit": "退出码 {code}",
+			"showAll": {
+				"one": "显示全部 {count} 行",
+				"other": "显示全部 {count} 行"
+			},
+			"showLess": "只显示最后几行"
+		},
+		"turn": {
+			"workedFor": "工作了 {duration}",
+			"stopped": "已停止",
+			"files": {
+				"one": "更改了 {count} 个文件",
+				"other": "更改了 {count} 个文件"
+			},
+			"review": "查看",
+			"copy": "复制回复",
+			"copied": "已复制"
+		},
+		"markdown": {
+			"code": "代码",
+			"copy": "复制代码",
+			"copied": "已复制"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "解释这个项目",
+					"prompt": "解释这个项目是如何组织的：它的主要部分、这些部分如何配合，以及应该从哪里开始阅读。"
+				},
+				"fixBug": {
+					"label": "查找并修复一个 bug",
+					"prompt": "在这个项目中找到一个 bug，解释它的原因，然后修复它。"
+				},
+				"tests": {
+					"label": "编写测试...",
+					"prompt": "为以下内容编写测试："
+				}
+			}
 		}
 	}
 }

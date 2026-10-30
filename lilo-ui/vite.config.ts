@@ -36,23 +36,26 @@ function cspPlugin(): Plugin {
 	};
 }
 
-// Dialog copy loads with the sheet; native strings compile into Swift, and release headlines
-// travel with the optional local notes. None belongs in the chrome's first frame.
+// Dialog copy loads with the sheet, agents' copy with their first surface; native strings compile into
+// Swift, and release headlines travel with the optional local notes. None belongs in the chrome's first frame.
 function stripNativeStringsPlugin(): Plugin {
 	return {
 		name: "strip-native-strings",
 		enforce: "pre",
 		load(id) {
 			if (!id.endsWith("/i18n/locales/en.json?raw")) return null;
-			const { whatsNew } = JSON.parse(readFileSync(id.slice(0, -4), "utf8"));
+			const { whatsNew, agents } = JSON.parse(readFileSync(id.slice(0, -4), "utf8"));
 			delete whatsNew.releases;
-			return `export default ${JSON.stringify(JSON.stringify({ whatsNew }))}`;
+			return `export default ${JSON.stringify(JSON.stringify({ whatsNew, agents }))}`;
 		},
 		transform(code, id) {
 			if (!/\/i18n\/locales\/[^/]+\.json$/.test(id)) return null;
 			const catalog = JSON.parse(code);
 			delete catalog.native;
-			if (id.endsWith("/en.json")) delete catalog.whatsNew;
+			if (id.endsWith("/en.json")) {
+				delete catalog.whatsNew;
+				delete catalog.agents;
+			}
 			else if (catalog.whatsNew) delete catalog.whatsNew.releases;
 			return { code: JSON.stringify(catalog), map: null };
 		},

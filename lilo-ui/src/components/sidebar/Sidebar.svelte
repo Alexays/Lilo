@@ -21,7 +21,7 @@
     setSpacePagerElement,
   } from "../../stores/pager.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
-  import { getReadyUpdate } from "../../stores/settings.svelte";
+  import { getReadyUpdate, getSetting } from "../../stores/settings.svelte";
   import { areTrafficLightsVisible, isSidebarVisible } from "../../stores/ui.svelte";
   import { getTabPosition, hasPageToolbar, isAddressInPageToolbar, isAddressVisible } from "../../stores/tabLayout.svelte";
   import { pressTabsHeader } from "../../stores/tabEdgeDrag.svelte";
@@ -126,6 +126,12 @@
       <!-- Over the Space header but outside the pages: it does not swipe, it is about the page and the Mac. -->
       <div class="space-row-end" bind:clientWidth={spaceRowEndWidth}>
         <KeepAwakeIndicator />
+        <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
+        {#if getSetting("agentsEnabled", "false") === "true"}
+          {#await import("../agents/AgentsBadge.svelte") then badge}
+            <badge.default />
+          {/await}
+        {/if}
         {#if !isAddressVisible()}
           <URLDisplay actionsOnly />
         {/if}

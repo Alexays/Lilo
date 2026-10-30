@@ -176,7 +176,8 @@
 			"profiles": "Profiller",
 			"otherAppLinks": "Diğer uygulamalardan gelen bağlantılar",
 			"blockerCategories": "Lilo'nun engelledikleri",
-			"blockerExceptions": "Listeler ve istisnalar"
+			"blockerExceptions": "Listeler ve istisnalar",
+			"agentConversations": "Sohbetler"
 		},
 		"searchPlaceholder": "Ayarlarda ara",
 		"searchResultsTitle": "Arama sonuçları",
@@ -542,6 +543,16 @@
 				"title": "Siteye göre ayarlar",
 				"description": "Her sitenin izinleri, büyütme düzeyi ve saklanan verileri.",
 				"keywords": "site izinler çerezler büyütme veriler depolama"
+			},
+			"agentsEnabled": {
+				"title": "Ajanlarınızla sohbetler",
+				"description": "Claude Code, Codex, Gemini ve diğer ajanlarla kendi aboneliklerinizle bir sekmede konuşun. Lilo'nun kendi yapay zekâsı yoktur.",
+				"keywords": "ajan yapay zeka ai acp sohbet sor claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Bir ajan bitirdiğinde bildir",
+				"description": "Bakmadığınız bir sohbet bittiğinde bildirim.",
+				"keywords": "ajan bildirim uyarı bitti tamamlandı"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Sabitlenmemiş sekmeleri arşivle",
 		"pinnedTabs": "Sabitlenmiş sekmeler",
 		"openTabs": "Açık sekmeler",
-		"dropToPin": "Sabitlemek için bırakın"
+		"dropToPin": "Sabitlemek için bırakın",
+		"askAgent": "Bir ajana sor"
 	},
 	"bookmarks": {
 		"groupLabel": "Yer imli sekmeler",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Üst klasör",
 		"Name": "Ad",
 		"Size": "Boyut",
-		"Date Modified": "Değiştirilme tarihi"
+		"Date Modified": "Değiştirilme tarihi",
+		"%@ could not be downloaded.": "%@ indirilemedi.",
+		"%@ could not be installed.": "%@ yüklenemedi.",
+		"%@ did not match its checksum and was not installed.": "%@ sağlama toplamıyla eşleşmedi ve yüklenmedi.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ için Node.js gerekli: nodejs.org adresinden yükleyip yeniden deneyin.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ için uv gerekli: astral.sh/uv adresinden yükleyip yeniden deneyin.",
+		"Choose": "Seç",
+		"New Conversation": "Yeni Sohbet",
+		"Screenshot of %@": "%@ ekran resmi",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Lilo'nun açtığı terminalde oturum açın, sonra mesajınızı yeniden gönderin.",
+		"The agent stopped (code %d).": "Ajan durdu (kod %d).",
+		"This agent is no longer in the ACP registry.": "Bu ajan artık ACP kayıt defterinde değil.",
+		"Always Allow": "Her Zaman İzin Ver",
+		"Ask an Agent": "Bir Ajana Sor",
+		"Review Changes": "Değişiklikleri incele",
+		"Show Pages": "Sayfaları göster",
+		"Hide Pages": "Sayfaları gizle",
+		"Close Conversation": "Sohbeti kapat",
+		"Pasted image": "Yapıştırılan görsel"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,239 @@
 			"ellipse": "Elips",
 			"text": "Metin",
 			"pen": "Kalem"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Durdur",
+			"mode": "Mod",
+			"context": "Bağlamın %{percent} kadarı kullanıldı",
+			"ownCopy": "Ayrı kopya",
+			"ownCopyHint": "Projenin kendi kopyası üzerinde çalışır. Değişiklikler'den birleştirin.",
+			"starting": "Ajan başlatılıyor...",
+			"errorHint": "Yeniden denemek için bir mesaj gönderin.",
+			"showEarlier": {
+				"one": "Önceki {count} öğeyi göster",
+				"other": "Önceki {count} öğeyi göster"
+			},
+			"queued": {
+				"one": "Sırada {count} mesaj",
+				"other": "Sırada {count} mesaj"
+			},
+			"queuedHint": "Ajan bitirince gönderilir. Cmd Return hemen gönderir.",
+			"thought": "Düşünce",
+			"restoreToHere": "Buraya kadar geri yükle",
+			"restoreConfirm": "Proje dosyaları bu mesajdaki hâline geri döndürülsün mü?",
+			"restore": "Geri yükle",
+			"reviewChanges": "Değişiklikler'de incele",
+			"undo": "Geri Al",
+			"keep": "Koru",
+			"undone": "Geri alındı",
+			"kept": "Korundu",
+			"moreLines": {
+				"one": "{count} satır daha",
+				"other": "{count} satır daha"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Yapılacak",
+				"in_progress": "Sürüyor",
+				"completed": "Bitti"
+			},
+			"permissionTitle": "Bu işleme izin verilsin mi?",
+			"answered": "Yanıt: {option}",
+			"cancelled": "Yanıt verilmedi",
+			"notice": {
+				"restored": "Dosyalar bu noktaya geri yüklendi",
+				"restoreFailed": "Dosyalar geri yüklenemedi",
+				"signedIn": "Oturum açıldı"
+			},
+			"moreOptions": "Diğer seçenekler",
+			"signInHint": "Ajanla oturum açın, ardından mesajınızı yeniden gönderin.",
+			"branch": "Dal {branch}",
+			"jumpToLatest": "En yeniye git"
+		},
+		"tool": {
+			"untitled": "Araç çağrısı",
+			"status": {
+				"pending": "Bekliyor",
+				"in_progress": "Çalışıyor",
+				"failed": "Başarısız"
+			},
+			"group": {
+				"read": {
+					"one": "{count} dosya okundu",
+					"other": "{count} dosya okundu"
+				},
+				"search": {
+					"one": "{count} arama",
+					"other": "{count} arama"
+				},
+				"fetch": {
+					"one": "{count} sayfa alındı",
+					"other": "{count} sayfa alındı"
+				},
+				"think": {
+					"one": "{count} kez düşündü",
+					"other": "{count} kez düşündü"
+				},
+				"action": {
+					"one": "{count} işlem",
+					"other": "{count} işlem"
+				}
+			}
+		},
+		"composer": {
+			"label": "Ajana mesaj yazın",
+			"placeholder": "Yanıtlayın, bir şey eklemek için @, komutlar için /",
+			"addContext": "Bağlam ekle",
+			"send": "Gönder",
+			"removeAttachment": "{label} öğesini kaldır",
+			"tabs": "Sekmeler",
+			"folders": "Klasörler",
+			"fromPage": "Sayfadan",
+			"more": "Daha fazla",
+			"selection": "Seçim",
+			"screenshot": "Ekran Resmi",
+			"file": "Dosya {path}",
+			"fileHint": "Bir proje dosyası eklemek için yol yazın",
+			"commands": "Komutlar",
+			"files": "Dosyalar",
+			"image": "Görsel"
+		},
+		"ask": {
+			"label": "Bir ajana sor",
+			"placeholder": "Bir ajana sorun, bir şey eklemek için @",
+			"thisPage": "Bu sayfa",
+			"agent": "Ajan",
+			"loadingAgents": "Ajanlar yükleniyor...",
+			"project": "Proje",
+			"chooseProject": "Bir proje seçin",
+			"chooseFolder": "Klasör seç...",
+			"ownCopy": "Ayrı kopya",
+			"ownCopyHint": "Ajan projenin kendi kopyası üzerinde çalışsın (bir git worktree)",
+			"openBeside": "aç",
+			"openBackground": "arka planda",
+			"start": "Başlat"
+		},
+		"row": {
+			"untitled": "Yeni sohbet",
+			"working": "Çalışıyor",
+			"failed": "Bir hatayla durdu",
+			"changes": "{added} satır eklendi, {removed} satır silindi",
+			"pages": {
+				"one": "{count} sayfa",
+				"other": "{count} sayfa"
+			},
+			"showPages": "Sayfaları göster",
+			"hidePages": "Sayfaları gizle"
+		},
+		"question": {
+			"allow": "İzin Ver",
+			"allowAlways": "Her zaman",
+			"reject": "Reddet",
+			"rejectAlways": "Asla"
+		},
+		"badge": {
+			"title": "Ajanlar",
+			"waiting": {
+				"one": "Ajanlar, {count} tanesi sizi bekliyor",
+				"other": "Ajanlar, {count} tanesi sizi bekliyor"
+			},
+			"new": "Yeni",
+			"needsYou": "Sizi bekliyor",
+			"running": "Çalışıyor",
+			"done": "Bitti",
+			"finished": "Tamamlandı",
+			"empty": "Sizi bekleyen sohbet yok"
+		},
+		"status": {
+			"working": "Çalışıyor",
+			"waiting": "Sizi bekliyor",
+			"stopHint": "Durdurmak için Esc"
+		},
+		"work": {
+			"verb": {
+				"read": "Okundu",
+				"edit": "Düzenlendi",
+				"delete": "Silindi",
+				"move": "Taşındı",
+				"search": "Arandı",
+				"fetch": "Getirildi"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} dosya okundu",
+					"other": "{count} dosya okundu"
+				},
+				"edit": {
+					"one": "{count} dosya düzenlendi",
+					"other": "{count} dosya düzenlendi"
+				},
+				"execute": {
+					"one": "{count} komut çalıştırıldı",
+					"other": "{count} komut çalıştırıldı"
+				},
+				"search": {
+					"one": "{count} arama",
+					"other": "{count} arama"
+				},
+				"fetch": {
+					"one": "{count} sayfa getirildi",
+					"other": "{count} sayfa getirildi"
+				},
+				"think": {
+					"one": "{count} kez düşündü",
+					"other": "{count} kez düşündü"
+				},
+				"browser": {
+					"one": "tarayıcı {count} kez kullanıldı",
+					"other": "tarayıcı {count} kez kullanıldı"
+				},
+				"tool": {
+					"one": "{count} araç kullanıldı",
+					"other": "{count} araç kullanıldı"
+				}
+			},
+			"exit": "Çıkış {code}",
+			"showAll": {
+				"one": "{count} satırın tümünü göster",
+				"other": "{count} satırın tümünü göster"
+			},
+			"showLess": "Son satırları göster"
+		},
+		"turn": {
+			"workedFor": "{duration} çalıştı",
+			"stopped": "Durduruldu",
+			"files": {
+				"one": "{count} dosya değişti",
+				"other": "{count} dosya değişti"
+			},
+			"review": "İncele",
+			"copy": "Yanıtı kopyala",
+			"copied": "Kopyalandı"
+		},
+		"markdown": {
+			"code": "Kod",
+			"copy": "Kodu kopyala",
+			"copied": "Kopyalandı"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Bu projeyi açıkla",
+					"prompt": "Bu projenin nasıl düzenlendiğini açıkla: ana parçaları, bunların birbirine nasıl bağlandığını ve okumaya nereden başlanacağını."
+				},
+				"fixBug": {
+					"label": "Bir hata bul ve düzelt",
+					"prompt": "Bu projede bir hata bul, nedenini açıkla, sonra düzelt."
+				},
+				"tests": {
+					"label": "Şunun için test yaz...",
+					"prompt": "Şunun için test yaz: "
+				}
+			}
 		}
 	}
 }

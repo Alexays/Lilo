@@ -26,6 +26,7 @@
   import type { BridgeSplitLayout } from "../../lib/bridge/protocol";
   import type { TabState } from "../../stores/tabs.svelte";
   import TabFolderItem from "./TabFolderItem.svelte";
+  import { openAskBar } from "../../stores/conversations.svelte";
   import { getActiveTab, getActiveTabId, getTabsById, isBlankTab } from "../../stores/tabs.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { tabActions, folderActions, sidebarActions } from "../../lib/bridge/actions";
@@ -58,6 +59,7 @@
     getVisibleFolderChildren,
     countVisibleFolderChildren,
     canNestFolder,
+    getConversationTab,
     type FolderState,
   } from "../../stores/folders.svelte";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
@@ -543,8 +545,10 @@
       zoneTop: context.zone.rect.top,
       zoneBottom: context.zone.rect.bottom,
       isCollapsed: folder.isCollapsed,
+      // A tab dropped on a conversation is not filed into it; its own pages still reorder.
       refusesDrag:
         folder.isLocked === true ||
+        (getConversationTab(folderId, spaceId) !== undefined && parentFolderIdById.get(source.id) !== folderId) ||
         (source.kind === "folder" && !canNestFolder(source.id, folderId, spaceId)),
       dragKind: source.kind,
       rows: folderTargetRows(context),
@@ -591,8 +595,11 @@
     folderActions.update({ id: folder.id, name, color });
   }
 
+  // A conversation's own tab is its folder's row, not one of its children.
   function visibleChildren(folderId: string) {
-    return getVisibleFolderChildren(folderId, spaceId, isPinned, tabsById);
+    const children = getVisibleFolderChildren(folderId, spaceId, isPinned, tabsById);
+    const conversation = getConversationTab(folderId, spaceId);
+    return conversation ? children.filter((child) => child.id !== conversation.id) : children;
   }
 
   const parentFolderIdById = $derived(getSpaceSidebar(spaceId).view.treeIndex.parentFolderIdById);
@@ -658,7 +665,7 @@
       anchors = anchorsAt(others, index + 1);
     } else if (key === "ArrowRight" && items[index - 1]?.kind === "folder") {
       const target = foldersById.get(items[index - 1].id);
-      if (!target || target.isSplit || target.isLocked) return;
+      if (!target || target.isSplit || target.isLocked || getConversationTab(target.id, spaceId)) return;
       if (kind === "folder" && !canNestFolder(id, target.id, spaceId)) return;
       const children = visibleChildren(target.id);
       parentFolderId = target.id;
@@ -812,11 +819,14 @@
 <!-- `shown`: every folder above this one is open. Subfolders render through this same snippet,
      one indent and one branch of their parent's line deeper. -->
 {#snippet folderBlock(folder: FolderState, shown: boolean, level: number)}
-  {@const childZoneEntries = childZoneItems(folder.id, visibleChildren(folder.id))}
+  {@const conversation = getConversationTab(folder.id, spaceId)}
+  {@const children = visibleChildren(folder.id)}
+  {@const childZoneEntries = childZoneItems(folder.id, children)}
   {@const childrenShown = shown && !folder.isCollapsed}
 
   <div
     class="folder-drop-zone"
+    class:conversation={!!conversation}
     use:dndZone={{
       id: folderZone(folder.id).id,
       axis: "vertical",
@@ -837,6 +847,22 @@
       class="folder-header-drop"
       class:drop-into={sidebarDrag?.intoCollapsedFolder && sidebarDrag.target?.parentFolderId === folder.id}
     >
+      {#if conversation}
+        <!-- Loaded with the first conversation, out of the chrome's first frame. -->
+        {#await import("./ConversationRow.svelte") then { default: ConversationRow }}
+        <ConversationRow
+          {folder}
+          tab={conversation}
+          pageCount={children.length}
+          isActive={conversation.id === activeTabId}
+          interactive={interactive && shown}
+          {level}
+          tabStop={folder.id === tabStopId}
+          onCollapse={(collapsed) => folderActions.setCollapsed(folder.id, collapsed)}
+          onContextMenu={(rect) => folderActions.showContextMenu(folder.id, rect.left, rect.top, rect.width, rect.height)}
+        />
+        {/await}
+      {:else}
       <TabFolderItem
         {folder}
         isRenaming={renamingFolderId === folder.id}
@@ -850,6 +876,7 @@
         onDelete={() => folderActions.delete(folder.id)}
         onContextMenu={(rect) => folderActions.showContextMenu(folder.id, rect.left, rect.top, rect.width, rect.height)}
       />
+      {/if}
     </div>
 
     <div
@@ -864,6 +891,7 @@
         {#if shouldRenderFolderContents(folder)}
           <div
             class="folder-contents"
+            class:conversation-contents={!!conversation}
             role="group"
             class:drag-active={dragActive}
             class:is-empty={childZoneEntries.length === 0}
@@ -921,7 +949,7 @@
                 {/if}
               </div>
             {/each}
-            {#if childZoneEntries.length === 0}
+            {#if childZoneEntries.length === 0 && !conversation}
               <div class="folder-empty-placeholder">{t("tabSection.folderEmpty")}</div>
             {/if}
           </div>
@@ -1015,6 +1043,17 @@
               <path d="M2.5 4.5 6 8l-3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M8 12h5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
             </svg>
+          </button>
+        {/if}
+        {#if getSetting("agentsEnabled", "false") === "true"}
+          <button
+            class="new-terminal-button ask-agent-button"
+            aria-label={t("tabSection.askAgent")}
+            use:tooltip={{ text: t("tabSection.askAgent"), shortcut: shortcutKeys("agents.ask") }}
+            disabled={!interactive}
+            onclick={openAskBar}
+          >
+            {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
           </button>
         {/if}
       </div>
@@ -1439,6 +1478,29 @@
     bottom: calc(100% - 14.5px);
   }
 
+  /* A conversation's pages hang on one straight violet rail under the agent's tile, on no tint. */
+  .folder-open-rail > .folder-drop-zone.conversation {
+    background: none;
+  }
+
+  .folder-open-rail .conversation-contents > .child-tab-wrapper::before,
+  .folder-open-rail .conversation-contents > .child-tab-wrapper:last-child::before {
+    top: 0;
+    bottom: calc(-1 * var(--sidebar-tab-row-gap));
+    width: auto;
+    border-left: 2px solid color-mix(in srgb, var(--agents) 70%, transparent);
+    border-bottom: none;
+    border-radius: 0;
+  }
+
+  .folder-open-rail .conversation-contents > .child-tab-wrapper:last-child::before {
+    bottom: 0;
+  }
+
+  .folder-open-rail .conversation-contents > .child-tab-wrapper:not(:last-child)::after {
+    content: none;
+  }
+
   @media (prefers-color-scheme: dark) {
     .folder-open-rail > .folder-drop-zone {
       --folder-rail-color: color-mix(in srgb, var(--folder-accent) 62%, var(--text-primary) 12%);
@@ -1651,6 +1713,15 @@
 
   .new-terminal-button:hover:not(:disabled) {
     color: var(--text-primary);
+  }
+
+  .ask-agent-button svg {
+    opacity: 0.85;
+    transition: opacity var(--transition-fast);
+  }
+
+  .ask-agent-button:hover:not(:disabled) svg {
+    opacity: 1;
   }
 
   .archive-button {

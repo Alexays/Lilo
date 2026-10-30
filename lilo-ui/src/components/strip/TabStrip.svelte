@@ -11,7 +11,8 @@
   import MediaCard from "../sidebar/MediaCard.svelte";
   import UpdateCard from "../sidebar/UpdateCard.svelte";
   import { getCallCardTab, getMediaCardTab } from "../../stores/media.svelte";
-  import { getChosenAppIcon, getReadyUpdate } from "../../stores/settings.svelte";
+  import { getChosenAppIcon, getReadyUpdate, getSetting } from "../../stores/settings.svelte";
+  import { getConversationTab } from "../../stores/folders.svelte";
   import { chromeActions, tabActions } from "../../lib/bridge/actions";
   import { getSpaceSidebar } from "../../stores/sidebar.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
@@ -220,7 +221,12 @@
         <div class="strip-placeholder" aria-hidden="true"></div>
       {:else if item.kind === "folder"}
         {@const folder = view.foldersById.get(item.id)}
-        {#if folder}
+        {@const conversation = folder ? getConversationTab(folder.id, spaceId) : undefined}
+        {#if folder && conversation}
+          {#await import("./StripConversation.svelte") then { default: StripConversation }}
+            <StripConversation {folder} tab={conversation} pages={folderTabs(folder.id).filter((tab) => tab.id !== conversation.id)} activeTabId={shownActiveId} />
+          {/await}
+        {:else if folder}
           <StripFolder {folder} tabs={folderTabs(folder.id)} activeTabId={shownActiveId} {spaceId} childItems={folderChildItems(folder.id, section === "pinned" ? "pinned" : "unpinned")} section={section === "pinned" ? "pinned" : "unpinned"} />
         {/if}
       {:else}
@@ -431,6 +437,12 @@
       </button>
     {/if}
     <KeepAwakeIndicator />
+    <!-- Loaded only once the feature is on: no conversation code ships to the chrome otherwise. -->
+    {#if getSetting("agentsEnabled", "false") === "true"}
+      {#await import("../agents/AgentsBadge.svelte") then badge}
+        <badge.default />
+      {/await}
+    {/if}
     <NavControls show="toggle" />
   </div>
 </nav>

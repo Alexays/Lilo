@@ -176,7 +176,8 @@
 			"profiles": "Perfis",
 			"otherAppLinks": "Links de outros apps",
 			"blockerCategories": "O que o Lilo bloqueia",
-			"blockerExceptions": "Listas e exceções"
+			"blockerExceptions": "Listas e exceções",
+			"agentConversations": "Conversas"
 		},
 		"searchPlaceholder": "Buscar nos ajustes",
 		"searchResultsTitle": "Resultados da busca",
@@ -542,6 +543,16 @@
 				"title": "Ajustes por site",
 				"description": "Permissões, zoom e dados armazenados de cada site.",
 				"keywords": "site permissões cookies zoom dados armazenamento"
+			},
+			"agentsEnabled": {
+				"title": "Conversas com seus agentes",
+				"description": "Converse com Claude Code, Codex, Gemini e outros agentes em uma aba, com suas próprias assinaturas. O Lilo não tem IA própria.",
+				"keywords": "agente ia acp chat conversa perguntar claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Notificar quando um agente terminar",
+				"description": "Uma notificação quando uma conversa que você não está vendo termina.",
+				"keywords": "agente notificação alerta concluído finalizado"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Arquivar abas não fixadas",
 		"pinnedTabs": "Abas fixadas",
 		"openTabs": "Abas abertas",
-		"dropToPin": "Solte para fixar"
+		"dropToPin": "Solte para fixar",
+		"askAgent": "Perguntar a um agente"
 	},
 	"bookmarks": {
 		"groupLabel": "Abas nos favoritos",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Pasta superior",
 		"Name": "Nome",
 		"Size": "Tamanho",
-		"Date Modified": "Data de modificação"
+		"Date Modified": "Data de modificação",
+		"%@ could not be downloaded.": "Não foi possível baixar %@.",
+		"%@ could not be installed.": "Não foi possível instalar %@.",
+		"%@ did not match its checksum and was not installed.": "%@ não correspondeu à soma de verificação e não foi instalado.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ precisa do Node.js: instale-o em nodejs.org e tente de novo.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ precisa do uv: instale-o em astral.sh/uv e tente de novo.",
+		"Choose": "Escolher",
+		"New Conversation": "Nova conversa",
+		"Screenshot of %@": "Captura de tela de %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Inicie sessão no terminal que o Lilo abriu e envie sua mensagem de novo.",
+		"The agent stopped (code %d).": "O agente parou (código %d).",
+		"This agent is no longer in the ACP registry.": "Este agente não está mais no registro do ACP.",
+		"Always Allow": "Sempre permitir",
+		"Ask an Agent": "Perguntar a um agente",
+		"Review Changes": "Revisar alterações",
+		"Show Pages": "Mostrar páginas",
+		"Hide Pages": "Ocultar páginas",
+		"Close Conversation": "Fechar conversa",
+		"Pasted image": "Imagem colada"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,239 @@
 			"ellipse": "Elipse",
 			"text": "Texto",
 			"pen": "Caneta"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Parar",
+			"mode": "Modo",
+			"context": "{percent}% do contexto usado",
+			"ownCopy": "Cópia própria",
+			"ownCopyHint": "Trabalha em uma cópia própria do projeto. Mescle-a em Alterações.",
+			"starting": "Iniciando o agente...",
+			"errorHint": "Envie uma mensagem para tentar de novo.",
+			"showEarlier": {
+				"one": "Mostrar {count} item anterior",
+				"other": "Mostrar {count} itens anteriores"
+			},
+			"queued": {
+				"one": "{count} mensagem na fila",
+				"other": "{count} mensagens na fila"
+			},
+			"queuedHint": "Enviada quando o agente terminar. Cmd Return envia agora.",
+			"thought": "Raciocínio",
+			"restoreToHere": "Restaurar até aqui",
+			"restoreConfirm": "Voltar os arquivos do projeto ao estado desta mensagem?",
+			"restore": "Restaurar",
+			"reviewChanges": "Revisar em Alterações",
+			"undo": "Desfazer",
+			"keep": "Manter",
+			"undone": "Desfeito",
+			"kept": "Mantido",
+			"moreLines": {
+				"one": "Mais {count} linha",
+				"other": "Mais {count} linhas"
+			},
+			"plan": "Plano",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "A fazer",
+				"in_progress": "Em andamento",
+				"completed": "Concluído"
+			},
+			"permissionTitle": "Permitir esta ação?",
+			"answered": "Resposta: {option}",
+			"cancelled": "Nenhuma resposta foi dada",
+			"notice": {
+				"restored": "Arquivos restaurados até este ponto",
+				"restoreFailed": "Não foi possível restaurar os arquivos",
+				"signedIn": "Sessão iniciada"
+			},
+			"moreOptions": "Mais opções",
+			"signInHint": "Entre com o agente e envie sua mensagem de novo.",
+			"branch": "Branch {branch}",
+			"jumpToLatest": "Ir para o mais recente"
+		},
+		"tool": {
+			"untitled": "Chamada de ferramenta",
+			"status": {
+				"pending": "Aguardando",
+				"in_progress": "Executando",
+				"failed": "Falhou"
+			},
+			"group": {
+				"read": {
+					"one": "{count} arquivo lido",
+					"other": "{count} arquivos lidos"
+				},
+				"search": {
+					"one": "{count} pesquisa",
+					"other": "{count} pesquisas"
+				},
+				"fetch": {
+					"one": "{count} página obtida",
+					"other": "{count} páginas obtidas"
+				},
+				"think": {
+					"one": "Pensou {count} vez",
+					"other": "Pensou {count} vezes"
+				},
+				"action": {
+					"one": "{count} ação",
+					"other": "{count} ações"
+				}
+			}
+		},
+		"composer": {
+			"label": "Mensagem para o agente",
+			"placeholder": "Responda, @ para adicionar algo, / para comandos",
+			"addContext": "Adicionar contexto",
+			"send": "Enviar",
+			"removeAttachment": "Remover {label}",
+			"tabs": "Abas",
+			"folders": "Pastas",
+			"fromPage": "Da página",
+			"more": "Mais",
+			"selection": "Seleção",
+			"screenshot": "Captura de tela",
+			"file": "Arquivo {path}",
+			"fileHint": "Digite um caminho para anexar um arquivo do projeto",
+			"commands": "Comandos",
+			"files": "Arquivos",
+			"image": "Imagem"
+		},
+		"ask": {
+			"label": "Perguntar a um agente",
+			"placeholder": "Pergunte a um agente, @ para adicionar algo",
+			"thisPage": "Esta página",
+			"agent": "Agente",
+			"loadingAgents": "Carregando agentes...",
+			"project": "Projeto",
+			"chooseProject": "Escolher um projeto",
+			"chooseFolder": "Escolher pasta...",
+			"ownCopy": "Cópia própria",
+			"ownCopyHint": "Deixar o agente trabalhar em uma cópia própria do projeto (um worktree do git)",
+			"openBeside": "abrir",
+			"openBackground": "em segundo plano",
+			"start": "Iniciar"
+		},
+		"row": {
+			"untitled": "Nova conversa",
+			"working": "Trabalhando",
+			"failed": "Parou com um erro",
+			"changes": "{added} linhas adicionadas, {removed} removidas",
+			"pages": {
+				"one": "{count} página",
+				"other": "{count} páginas"
+			},
+			"showPages": "Mostrar páginas",
+			"hidePages": "Ocultar páginas"
+		},
+		"question": {
+			"allow": "Permitir",
+			"allowAlways": "Sempre",
+			"reject": "Negar",
+			"rejectAlways": "Nunca"
+		},
+		"badge": {
+			"title": "Agentes",
+			"waiting": {
+				"one": "Agentes, {count} esperando por você",
+				"other": "Agentes, {count} esperando por você"
+			},
+			"new": "Novo",
+			"needsYou": "Precisa de você",
+			"running": "Executando",
+			"done": "Concluído",
+			"finished": "Finalizado",
+			"empty": "Nenhuma conversa precisa de você"
+		},
+		"status": {
+			"working": "Trabalhando",
+			"waiting": "Esperando por você",
+			"stopHint": "Esc para parar"
+		},
+		"work": {
+			"verb": {
+				"read": "Lido",
+				"edit": "Editado",
+				"delete": "Excluído",
+				"move": "Movido",
+				"search": "Pesquisado",
+				"fetch": "Obtido"
+			},
+			"summary": {
+				"read": {
+					"one": "leu {count} arquivo",
+					"other": "leu {count} arquivos"
+				},
+				"edit": {
+					"one": "editou {count} arquivo",
+					"other": "editou {count} arquivos"
+				},
+				"execute": {
+					"one": "executou {count} comando",
+					"other": "executou {count} comandos"
+				},
+				"search": {
+					"one": "pesquisou {count} vez",
+					"other": "pesquisou {count} vezes"
+				},
+				"fetch": {
+					"one": "obteve {count} página",
+					"other": "obteve {count} páginas"
+				},
+				"think": {
+					"one": "pensou {count} vez",
+					"other": "pensou {count} vezes"
+				},
+				"browser": {
+					"one": "usou o navegador {count} vez",
+					"other": "usou o navegador {count} vezes"
+				},
+				"tool": {
+					"one": "usou {count} ferramenta",
+					"other": "usou {count} ferramentas"
+				}
+			},
+			"exit": "Saída {code}",
+			"showAll": {
+				"one": "Mostrar {count} linha",
+				"other": "Mostrar todas as {count} linhas"
+			},
+			"showLess": "Mostrar as últimas linhas"
+		},
+		"turn": {
+			"workedFor": "Trabalhou por {duration}",
+			"stopped": "Parado",
+			"files": {
+				"one": "{count} arquivo alterado",
+				"other": "{count} arquivos alterados"
+			},
+			"review": "Revisar",
+			"copy": "Copiar resposta",
+			"copied": "Copiado"
+		},
+		"markdown": {
+			"code": "Código",
+			"copy": "Copiar código",
+			"copied": "Copiado"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Explicar este projeto",
+					"prompt": "Explique como este projeto está organizado: suas partes principais, como elas se encaixam e por onde começar a ler."
+				},
+				"fixBug": {
+					"label": "Encontrar e corrigir um bug",
+					"prompt": "Encontre um bug neste projeto, explique o que o causa e depois corrija-o."
+				},
+				"tests": {
+					"label": "Escrever testes para...",
+					"prompt": "Escreva testes para "
+				}
+			}
 		}
 	}
 }
