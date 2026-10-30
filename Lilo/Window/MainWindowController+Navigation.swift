@@ -280,7 +280,18 @@ extension MainWindowController: WKWebViewTab.Delegate {
             openLittleWindow(url: url)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        // Right after the page, in its folder, as in Chrome; consecutive links of the page keep their order.
+        let previous = lastTabOpenedFromLink.flatMap { $0.openerId == tab.id ? sidebarItemBeside($0.tabId) : nil }
+        let beside = previous ?? sidebarItemBeside(tab.id)
+        guard let created = createTabStateFirst(
+            url: url,
+            activate: !inBackground,
+            opener: tab.id,
+            sidebarParentFolderId: beside?.parentFolderId,
+            sidebarSection: beside?.section,
+            sidebarIndex: beside.map { $0.sortOrder + 1 }
+        ) else { return }
+        lastTabOpenedFromLink = (tab.id, created.id)
         tabManager.engineTab(for: created.id)?.isOpenedByPage = true
         if inBackground { noteBackgroundTab(created.id) }
         guard let url else { return }

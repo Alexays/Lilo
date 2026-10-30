@@ -173,6 +173,8 @@ final class MainWindowController: NSWindowController {
     var recentSpaceIds: [UUID] = []
     /// The tabs this window showed, most recent first, each with when it was left.
     var recentTabs: [(id: UUID, leftAt: Date?)] = []
+    /// The last tab a page opened from a link, while that page stays selected: the next one goes after it.
+    var lastTabOpenedFromLink: (openerId: UUID, tabId: UUID)?
     /// The modifiers held when the recent tabs switcher opened; nil while it is closed.
     var tabSwitcherModifiers: NSEvent.ModifierFlags?
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
@@ -662,6 +664,7 @@ final class MainWindowController: NSWindowController {
 extension MainWindowController: TabManager.Delegate {
     func tabManager(_ manager: TabManager, didActivateTab id: UUID) {
         noteRecentTab(id)
+        if id != lastTabOpenedFromLink?.openerId { lastTabOpenedFromLink = nil }
         defer {
             refreshPagePeeks()
             sidePanel.activeTabDidChange()
