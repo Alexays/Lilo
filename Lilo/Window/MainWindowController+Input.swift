@@ -146,7 +146,7 @@ extension MainWindowController {
     @objc func printCurrentPage(_ sender: Any?) { focusedEngineTab?.printPage(in: window) }
 
     @objc func savePageAs(_ sender: Any?) {
-        guard let window, let webView = tabManager.activeEngineTab?.wkWebView, let pageURL = webView.url else { return }
+        guard let window, let webView = focusedEngineTab?.wkWebView, let pageURL = webView.url else { return }
         let page = WebViewPrivateAccessors(webView)
         // A PDF, an image or any other document WebKit shows as is saves as the bytes it loaded, under its own name.
         // A web page saves as a web archive: a paginated PDF of it is the print panel's.
@@ -301,13 +301,13 @@ extension MainWindowController {
     /// Chrome's zoom levels, which zooming in and out steps through.
     static let pageZoomLevels: [Double] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]
 
-    /// Moves the active tab's zoom to the next level up or down, persisted per host and reflected in the chrome.
+    /// Moves the shown page's zoom to the next level up or down, persisted per host and reflected in the chrome.
     func zoomActiveTab(in zoomIn: Bool) {
         if let terminal = activeTerminalView {
             bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: zoomIn ? 1 : -1)])
             return
         }
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         let zoom = engine.pageZoom
         let next = zoomIn ? Self.pageZoomLevels.first { $0 > zoom + 0.001 } : Self.pageZoomLevels.last { $0 < zoom - 0.001 }
         if let next { applyUserZoom(next, to: engine) }
@@ -318,7 +318,7 @@ extension MainWindowController {
             bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: nil)])
             return
         }
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         applyUserZoom(context.settingsStore.defaultZoom, to: engine)
     }
 
@@ -627,7 +627,8 @@ extension MainWindowController: NSUserInterfaceValidations {
             return tabManager.activeEngineTab?.wkWebView.url != nil
         }
         if action == #selector(shareCurrentPage(_:)) || action == #selector(showQRCode(_:)) { return shareableURL() != nil }
-        if action == #selector(savePageAs(_:)) || action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(savePageAs(_:)) { return focusedEngineTab?.wkWebView.url != nil }
+        if action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
         if action == #selector(newSplitView(_:)) {
             return tabManager.activeTab != nil && (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes
         }

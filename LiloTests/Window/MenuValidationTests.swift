@@ -272,6 +272,11 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertFalse(isEnabled(#selector(MainWindowController.goBackInHistory(_:))))
         XCTAssertTrue(isEnabled(#selector(MainWindowController.goForwardInHistory(_:))))
         XCTAssertEqual(tab.wkWebView.backForwardList.backList.count, 0, "the tab under the peek never moved")
+
+        window.zoomInCurrentPage(nil)
+
+        XCTAssertGreaterThan(peek.pageZoom, 1)
+        XCTAssertEqual(tab.pageZoom, 1, "zoom acts on the peek, not the tab under it")
     }
 
     func testOpenAsTabOpensThePageOfAPopupWindow() throws {
