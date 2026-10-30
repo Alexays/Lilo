@@ -169,7 +169,7 @@
       {/snippet}
     </PanelHeader>
 
-    <div class="downloads-filter">
+    <div class="downloads-filter" {@attach (node) => node.querySelector("input")?.focus({ preventScroll: true })}>
       <UiSearchField
         placeholder={t("downloadsPanel.searchPlaceholder")}
         ariaLabel={t("downloadsPanel.searchPlaceholder")}

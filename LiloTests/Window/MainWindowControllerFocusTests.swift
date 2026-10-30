@@ -117,6 +117,20 @@ final class MainWindowControllerFocusTests: XCTestCase {
         XCTAssertEqual(controller.focusOwner, .content)
     }
 
+    /// Settings and the panels opened from their keys take the keyboard, as History does.
+    func testPanelsOpenedFromTheKeyboardTakeTheFocus() {
+        let (controller, sink) = makeController()
+        let actions: [(Any?) -> Void] = [
+            controller.openSettings, controller.openDownloads, controller.clearBrowsingData,
+            controller.manageExtensions, controller.openProcessManager
+        ]
+        for open in actions {
+            XCTAssertTrue(controller.window!.makeFirstResponder(sink))
+            open(nil)
+            XCTAssertEqual(controller.focusOwner, .chrome)
+        }
+    }
+
     func testFocusChromeIsIdempotent() {
         let (controller, _) = makeController()
         controller.focusChrome()

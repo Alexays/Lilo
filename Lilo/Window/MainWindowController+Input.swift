@@ -65,14 +65,26 @@ extension MainWindowController {
             readerModeTabs.insert(id)
         }
     }
-    @objc func openSettings(_ sender: Any?) { bridgeRouter.send(event: "openSettings") }
-    @objc func clearBrowsingData(_ sender: Any?) { bridgeRouter.send(event: "openClearBrowsingData") }
+    @objc func openSettings(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openSettings")
+    }
+    @objc func clearBrowsingData(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openClearBrowsingData")
+    }
     @objc func replayOnboarding(_ sender: Any?) { bridgeRouter.send(event: "startOnboarding") }
     @objc func openDesignSystem(_ sender: Any?) { bridgeRouter.send(event: "openDesignSystem") }
     @objc func openDiagnostics(_ sender: Any?) { bridgeRouter.send(event: "openDiagnostics") }
     @objc func togglePerfRecording(_ sender: Any?) { context.togglePerfRecording() }
-    @objc func openProcessManager(_ sender: Any?) { bridgeRouter.send(event: "openProcessManager") }
-    @objc func openDownloads(_ sender: Any?) { bridgeRouter.send(event: "openDownloads") }
+    @objc func openProcessManager(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openProcessManager")
+    }
+    @objc func openDownloads(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openDownloads")
+    }
     @objc func openFeatureFlags(_ sender: Any?) { bridgeRouter.send(event: "openConfig") }
     @objc func togglePictureInPicture(_ sender: Any?) { tabManager.activeEngineTab?.togglePictureInPicture() }
     @objc func openHistory(_ sender: Any?) {
@@ -80,7 +92,10 @@ extension MainWindowController {
         bridgeRouter.send(event: "openHistory")
     }
     @objc func addExtension(_ sender: Any?) { createTabStateFirst(url: URL(string: "https://chromewebstore.google.com")) }
-    @objc func manageExtensions(_ sender: Any?) { bridgeRouter.send(event: "openExtensions") }
+    @objc func manageExtensions(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openExtensions")
+    }
 
     @objc func toggleHitboxDebug(_ sender: NSMenuItem?) {
         let enabled = !UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey)

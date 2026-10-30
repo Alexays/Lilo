@@ -172,7 +172,12 @@
 {/snippet}
 
 {#if isProcessManagerVisible()}
-  <div class="panel-shell process-panel" role="dialog" aria-label={t("processManager.title")}>
+  <div
+    class="panel-shell process-panel"
+    role="dialog"
+    aria-label={t("processManager.title")}
+    {@attach (node) => node.querySelector<HTMLElement>("button:not(:disabled)")?.focus({ preventScroll: true })}
+  >
     <PanelHeader title={t("processManager.title")} onclose={closeActivePanel}>
       {#snippet actions()}
         <button
