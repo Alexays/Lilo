@@ -201,10 +201,20 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionTab)?, Error?) -> Void
     ) {
-        // `windowId` names one of this profile's browser windows; a panel or unknown window falls back.
-        let requestedWindow = (configuration.window as? WindowExtensionAdapter)?.nsWindow?.windowController as? MainWindowController
-        guard let target = requestedWindow?.profileContext?.extensions === registry ? requestedWindow : windowController,
-              let spaceId = target.tabManager.currentSpaceId else {
+        // The tab opens in a space's window the context sees: the one asked for, else the focused one, else the one it saw last.
+        let visible = { (window: WindowExtensionAdapter?) in
+            window.flatMap { $0.spaceId != nil && (!$0.isPrivateWindow || context.hasAccessToPrivateData) ? $0 : nil }
+        }
+        let requested = visible(configuration.window as? WindowExtensionAdapter) ?? visible(windowAdapter)
+            ?? registry?.extensionWindows(for: context).first { $0.spaceId != nil }
+        // A space in the background is shown first, in the browser window that showed it last.
+        guard let spaceId = requested?.spaceId,
+              let target = windows?.windows.first(where: { $0.tabManager.currentSpaceId == spaceId })
+                ?? requested?.nsWindow?.windowController as? MainWindowController else {
+            completionHandler(nil, Self.extensionError("Window controller not available")); return
+        }
+        if target.tabManager.currentSpaceId != spaceId { target.switchToSpace(spaceId) }
+        guard target.tabManager.currentSpaceId == spaceId else {
             completionHandler(nil, Self.extensionError("Window controller not available")); return
         }
         let tabManager = target.tabManager

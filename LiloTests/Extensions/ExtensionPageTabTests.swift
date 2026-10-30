@@ -242,6 +242,41 @@ final class ExtensionPageTabTests: XCTestCase {
         XCTAssertEqual(tabURL, [pageURL])
     }
 
+    /// A space whose browser window shows another one is still a window of its own: `tabs.create` into it opens there.
+    func testTabsCreateOpensInTheRequestedWindowOfASpaceBehind() async throws {
+        let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let shownId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let behind = try browserContext.context.spaceManager.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(behind.id)
+        window.switchToSpace(shownId)
+
+        _ = try await page.callAsyncJavaScript("""
+            const own = (await chrome.tabs.getCurrent()).windowId;
+            const other = (await chrome.windows.getAll()).find(({ id }) => id !== own);
+            await chrome.tabs.create({ windowId: other.id, url: 'page.html#behind', active: false });
+            """, contentWorld: .page)
+
+        let created = URL(string: pageURL.absoluteString + "#behind")
+        XCTAssertTrue(window.tabManager.tabs(forSpace: behind.id).contains { $0.url == created }, "the tab opens in the window asked for")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: shownId).contains { $0.url == created })
+    }
+
+    /// A space's browser window may since show a private space: an extension not allowed there never opens a tab in it.
+    func testTabsCreateNeverOpensInAPrivateSpaceForAnExtensionNotAllowedThere() async throws {
+        let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        window.newPrivateSpace(nil)
+        let privateId = try XCTUnwrap(window.tabManager.currentSpaceId)
+
+        _ = try await page.callAsyncJavaScript("await chrome.tabs.create({ url: 'page.html#opened' })", contentWorld: .page)
+
+        let created = URL(string: pageURL.absoluteString + "#opened")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == created }, "no tab in the private space")
+        XCTAssertTrue(window.tabManager.tabs(forSpace: spaceId).contains { $0.url == created }, "the tab opens in the page's space")
+    }
+
     func testTabsDiscardDropsABackgroundTabButNeverTheOneOnScreen() async throws {
         let (window, registry, extensionId, _, tabId, otherId) = try await openExtensionPage()
         window.setupExtensions()
