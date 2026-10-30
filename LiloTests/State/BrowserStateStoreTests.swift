@@ -161,6 +161,7 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertThrowsError(try store.mutate(.setBookmarked(spaceId: spaceId, tabId: bank.id, isBookmarked: true)))
         XCTAssertThrowsError(try store.mutate(.splitTabs(spaceId: spaceId, tabId: news.id, targetTabId: bank.id, vertical: false, before: false)))
         XCTAssertThrowsError(try store.mutate(.groupTabs(spaceId: spaceId, sourceTabId: bank.id, targetTabId: news.id)))
+        XCTAssertThrowsError(try store.mutate(.closeTab(spaceId: spaceId, tabId: bank.id)))
 
         XCTAssertEqual(store.state(spaceId: spaceId)?.tabsById[bank.id]?.groupId, folder.id, "the tab never left its locked folder")
     }

@@ -198,7 +198,7 @@ final class BrowserStateStore {
 
     @discardableResult
     func mutate(_ command: BrowserCommand) throws -> BrowserChangeSet {
-        // Moving a tab out of a locked folder would reveal it without the password.
+        // Moving a tab out of a locked folder would reveal it without the password; closing it would destroy it.
         if let (spaceId, tabIds) = Self.tabsMoved(by: command), let spaceTab = spaces[spaceId]?.spaceTab,
            let tabId = tabIds.first(where: { spaceTab.protectingFolder(of: $0)?.isLocked == true }) {
             throw BrowserMutationError.lockedTab(tabId)
@@ -517,7 +517,7 @@ final class BrowserStateStore {
     private static func tabsMoved(by command: BrowserCommand) -> (spaceId: UUID, tabIds: [UUID])? {
         switch command {
         case let .setPinned(spaceId, tabId, _), let .setBookmarked(spaceId, tabId, _),
-             let .moveTabToBookmarked(spaceId, tabId, _):
+             let .moveTabToBookmarked(spaceId, tabId, _), let .closeTab(spaceId, tabId):
             return (spaceId, [tabId])
         case let .moveTabToSpace(tabId, sourceSpaceId, _, _):
             return (sourceSpaceId, [tabId])
