@@ -234,13 +234,15 @@ extension AppDelegate {
     }
 
     @IBAction func showAboutPanel(_ sender: Any?) {
-        let options: [NSApplication.AboutPanelOptionKey: Any] = [
-            .credits: NSAttributedString(
-                string: "A fast, minimal WebKit browser for macOS.\nhttps://github.com/Alexays/Lilo",
-                attributes: [.font: NSFont.systemFont(ofSize: 11)]
-            )
-        ]
-        NSApplication.shared.orderFrontStandardAboutPanel(options: options)
+        let font = NSFont.systemFont(ofSize: 11)
+        let credits = NSMutableAttributedString(string: "Your internet, in bloom.".localized + "\n", attributes: [.font: font])
+        credits.append(NSAttributedString(string: "getlilo.app", attributes: [.font: font, .link: URL(string: "https://getlilo.app")!]))
+        credits.append(NSAttributedString(string: " · ", attributes: [.font: font]))
+        credits.append(NSAttributedString(string: "GitHub", attributes: [.font: font, .link: URL(string: "https://github.com/Alexays/Lilo")!]))
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        credits.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: credits.length))
+        NSApplication.shared.orderFrontStandardAboutPanel(options: [.credits: credits])
     }
 
     // MARK: - NSMenuDelegate
