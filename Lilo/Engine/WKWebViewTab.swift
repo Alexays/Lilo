@@ -236,13 +236,18 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming
-    /// a file:// or data: URL means nothing to a remote server.
+    /// a file:// or data: URL means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy.
     nonisolated static func downloadRequest(for url: URL, pageURL: URL?) -> URLRequest {
         var request = URLRequest(url: url)
-        if let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https" {
-            request.setValue(pageURL.absoluteString, forHTTPHeaderField: "Referer")
-            request.mainDocumentURL = pageURL
+        guard let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              var referrer = URLComponents(url: pageURL, resolvingAgainstBaseURL: false) else { return request }
+        request.mainDocumentURL = pageURL
+        if scheme == "https", url.scheme?.lowercased() != "https" { return request }
+        referrer.user = nil; referrer.password = nil; referrer.fragment = nil
+        if referrer.host?.lowercased() != url.host?.lowercased() || scheme != url.scheme?.lowercased() || pageURL.port != url.port {
+            referrer.path = "/"; referrer.query = nil
         }
+        request.setValue(referrer.string, forHTTPHeaderField: "Referer")
         return request
     }
     private let snapshotService: PageSnapshotService

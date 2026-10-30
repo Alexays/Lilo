@@ -174,24 +174,33 @@ final class NavigationFailureTests: XCTestCase {
         }
     }
 
-    func testDownloadRequestAttachesRefererForHTTPPage() {
+    func testDownloadRequestSendsOnlyThePageOriginCrossOrigin() {
         let url = URL(string: "https://cdn.example.com/file.zip")!
-        let pageURL = URL(string: "https://example.com/article")!
+        let pageURL = URL(string: "https://example.com/article?token=secret#part")!
 
         let request = WKWebViewTab.downloadRequest(for: url, pageURL: pageURL)
 
         XCTAssertEqual(request.url, url)
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Referer"), pageURL.absoluteString)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Referer"), "https://example.com/")
         XCTAssertEqual(request.mainDocumentURL, pageURL)
     }
 
-    func testDownloadRequestAttachesRefererForHTTPSPage() {
-        let url = URL(string: "http://cdn.example.com/file.zip")!
-        let pageURL = URL(string: "http://example.com/article")!
+    func testDownloadRequestSendsThePageURLSameOrigin() {
+        let url = URL(string: "https://example.com/files/file.zip")!
+        let pageURL = URL(string: "https://example.com/article?id=1#part")!
 
         let request = WKWebViewTab.downloadRequest(for: url, pageURL: pageURL)
 
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Referer"), pageURL.absoluteString)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Referer"), "https://example.com/article?id=1")
+    }
+
+    func testDownloadRequestSendsNoRefererFromHTTPSToHTTP() {
+        let url = URL(string: "http://example.com/file.zip")!
+        let pageURL = URL(string: "https://example.com/article")!
+
+        let request = WKWebViewTab.downloadRequest(for: url, pageURL: pageURL)
+
+        XCTAssertNil(request.value(forHTTPHeaderField: "Referer"))
     }
 
     func testDownloadRequestOmitsRefererWhenPageURLIsNil() {
