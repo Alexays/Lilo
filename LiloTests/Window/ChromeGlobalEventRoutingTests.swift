@@ -101,6 +101,53 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         XCTAssertTrue(wentBack)
     }
 
+    /// A shown window whose focused page is `engine`'s, with the window's key monitor running.
+    private func focusPage(of engine: WKWebViewTab, in controller: MainWindowController) throws -> NSWindow {
+        let window = try XCTUnwrap(controller.window)
+        window.alphaValue = 0
+        window.orderFrontRegardless()
+        window.setFrame(NSRect(x: -20000, y: -20000, width: 800, height: 600), display: false)
+        engine.view.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+        window.contentView?.addSubview(engine.view)
+        XCTAssertTrue(window.makeFirstResponder(engine.wkWebView))
+        // AppKit hands key equivalents, and WebKit's resend of a key the page let go, to the key window.
+        window.makeKey()
+        controller.chromeInput.startMonitoring()
+        return window
+    }
+
+    private func sendKey(_ characters: String, _ flags: NSEvent.ModifierFlags, keyCode: UInt16, to window: NSWindow) throws {
+        NSApp.sendEvent(try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: flags, timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: window.windowNumber, context: nil, characters: characters, charactersIgnoringModifiers: characters,
+            isARepeat: false, keyCode: keyCode
+        )))
+    }
+
+    /// ⌘[ reaches the page first, as in Chrome, through a real WebKit round trip: an editor indenting with it
+    /// keeps the tab where it is, and a page that lets it go still goes back.
+    func testThePageGetsCommandBracketBeforeHistory() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (controller, engine, first, second) = try await makeTabWithHistory(browserContext)
+        let webView = engine.wkWebView
+        let window = try focusPage(of: engine, in: controller)
+        defer { controller.chromeInput.stop() }
+        _ = try await webView.evaluateJavaScript(
+            "onkeydown = e => { if (e.metaKey && e.key == '[') { e.preventDefault(); document.title = 'indented' } }; true"
+        )
+
+        try sendKey("[", .command, keyCode: 33, to: window)
+        let indented = await pollUntil { webView.title == "indented" }
+        XCTAssertTrue(indented, "the page never saw ⌘[")
+        XCTAssertEqual(webView.backForwardList.currentItem?.url, second)
+
+        _ = try await webView.evaluateJavaScript("onkeydown = null; true")
+        try sendKey("[", .command, keyCode: 33, to: window)
+        let wentBack = await pollUntil { webView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack, "a key the page lets go still goes back")
+    }
+
     func testCmdLRemainsReservedToLilo() {
         let controller = MainWindowController()
         controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
