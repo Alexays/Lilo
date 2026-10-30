@@ -380,7 +380,7 @@
         break;
       case "Backspace":
       case "Delete":
-        if (e.key === "Delete" && !e.metaKey && completionShown) {
+        if (!e.metaKey && completionShown) {
           e.preventDefault();
           dismissAutofill();
           break;

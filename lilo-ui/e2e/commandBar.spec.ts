@@ -224,6 +224,24 @@ test("the ghost completion shows only with the caret at the end, and only then d
 	await expect(input).toHaveValue("github.com");
 });
 
+test("Backspace over the ghost completion removes the completion and keeps the typed text", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((t) => t.id === "tab-beta")!.url = "https://github.com/";
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	const ghost = page.locator(".command-bar-autocomplete");
+	await input.pressSequentially("gi");
+	await expect(ghost).toHaveText("github.com");
+
+	await input.press("Backspace");
+	await expect(input).toHaveValue("gi");
+	await expect(ghost).toHaveCount(0);
+
+	await input.press("Backspace");
+	await expect(input).toHaveValue("g");
+});
+
 async function showClosedTerminal(page: Page, closedMinutesAgo: number) {
 	await bootChrome(page, initialWorld());
 	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));

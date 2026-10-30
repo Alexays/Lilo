@@ -1,0 +1,3 @@
+kind: Fixed
+body: Backspace in the command bar removes the suggested completion first, keeping the letters you typed.
+time: 2026-10-30T19:04:33.639502+01:00
