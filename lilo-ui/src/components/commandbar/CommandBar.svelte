@@ -4,7 +4,8 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
   import { t } from "../../lib/i18n/state.svelte";
-  import { formatShortcut, parseInput, type CommandScope } from "../../lib/inputParser";
+  import { formatShortcut, parseInput, setTopLevelDomains, type CommandScope } from "../../lib/inputParser";
+  import { TOP_LEVEL_DOMAINS } from "../../lib/topLevelDomains.gen";
   import { cubicInOut } from "svelte/easing";
   import { fade, scale } from "svelte/transition";
   import {
@@ -47,6 +48,8 @@
     buildTabFaviconLookup,
     resolveResultIcon,
   } from "./commandBarIcons";
+
+  setTopLevelDomains(TOP_LEVEL_DOMAINS);
 
   const SCOPE_HINTS: Array<{
     prefix: string;

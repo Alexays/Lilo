@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { COMMAND_ACTIONS, formatShortcut, parseInput } from "./inputParser";
+import { COMMAND_ACTIONS, formatShortcut, parseInput, setTopLevelDomains } from "./inputParser";
+import { TOP_LEVEL_DOMAINS } from "./topLevelDomains.gen";
 
 test("parseInput treats chrome-extension:// URLs as navigate URLs", () => {
 	const raw = "chrome-extension://d9eef443-b6ce-4936-adac-6ecb243419be/index.html#/onboarding";
@@ -31,6 +32,28 @@ test("local hosts and IP addresses go over http unless a scheme is typed; other 
 		const parsed = parseInput(input);
 		assert.equal(parsed.type, "url", input);
 		assert.equal((parsed as { url?: string }).url, url, input);
+	}
+});
+
+test("a name navigates when its last label is a top-level domain, or a port or path follows it", () => {
+	setTopLevelDomains(TOP_LEVEL_DOMAINS);
+	const expected: Record<string, string> = {
+		"münchen.de": "https://münchen.de",
+		"例え.テスト/ページ": "https://例え.テスト/ページ",
+		"README.md": "https://README.md",
+		"example.com.": "https://example.com.",
+		"node.js/": "https://node.js/",
+		"intranet.corp:8443": "https://intranet.corp:8443",
+		"mailto:someone@example.com": "mailto:someone@example.com",
+		"data:text/html,<h1>Hello there</h1>": "data:text/html,<h1>Hello there</h1>",
+	};
+	for (const [input, url] of Object.entries(expected)) {
+		const parsed = parseInput(input);
+		assert.equal(parsed.type, "url", input);
+		assert.equal((parsed as { url?: string }).url, url, input);
+	}
+	for (const input of ["node.js", "package.json", "3.14", "localhostfoo", "localhost.js", "1.2.3.4.5", "10.0.0.256x", "intranet.corp"]) {
+		assert.equal(parseInput(input).type, "search", input);
 	}
 });
 

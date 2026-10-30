@@ -1,0 +1,3 @@
+kind: Fixed
+body: 'The address bar opens addresses with accented or non-Latin names, mailto: and data: links, and searches for names like node.js or package.json instead of trying to open them.'
+time: 2026-10-30T19:09:49.597954+01:00
