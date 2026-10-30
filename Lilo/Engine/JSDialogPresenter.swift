@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import WebKit
 
 /// Presents native panels for JavaScript dialogs (alert/confirm/prompt) and file open requests.
@@ -90,6 +91,11 @@ enum JSDialogPresenter {
             panel.allowsMultipleSelection = parameters.allowsMultipleSelection
             panel.canChooseFiles = !parameters.allowsDirectories
             panel.canChooseDirectories = parameters.allowsDirectories
+            // An input's accept= is only exposed privately, as extensions; without it any file stays selectable.
+            let accepted = NSSelectorFromString("_allowedFileExtensions")
+            let extensions = parameters.responds(to: accepted) ? parameters.value(forKey: "_allowedFileExtensions") as? [String] : nil
+            let types = (extensions ?? []).compactMap { UTType(filenameExtension: $0) }
+            if !parameters.allowsDirectories, !types.isEmpty { panel.allowedContentTypes = types }
             if let window = webView.window {
                 panel.beginSheetModal(for: window) { response in
                     completion(response == .OK ? panel.urls : nil)
