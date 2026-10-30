@@ -7,10 +7,25 @@
   // Blinks on a timer: a repeating CSS blink would keep the compositor busy while the agents are idle.
   function blink(eyes: HTMLElement) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = setInterval(() => {
-      eyes.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0.15)" }, { transform: "scaleY(1)" }], { duration: 140 });
-    }, 3000);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setInterval> | undefined;
+    // Only in the key window (a hidden one never is): App sets window-unfocused from the native focus, as the DOM
+    // blur also fires on every tab activation.
+    const root = document.documentElement;
+    const run = () => {
+      // Other classes change on the root too: only a focus change restarts the timer.
+      if (root.classList.contains("window-unfocused") === (timer === undefined)) return;
+      clearInterval(timer);
+      timer = root.classList.contains("window-unfocused")
+        ? undefined
+        : setInterval(() => eyes.animate([{ transform: "scaleY(1)" }, { transform: "scaleY(0.15)" }, { transform: "scaleY(1)" }], { duration: 140 }), 3000);
+    };
+    run();
+    const focus = new MutationObserver(run);
+    focus.observe(root, { attributeFilter: ["class"] });
+    return () => {
+      clearInterval(timer);
+      focus.disconnect();
+    };
   }
 </script>
 
