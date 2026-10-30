@@ -281,8 +281,9 @@
     white-space: nowrap;
   }
 
+  /* Out of the row, not out of the accessibility tree: a hidden live region announces nothing. */
   .find-status:empty {
-    display: none;
+    position: absolute;
   }
 
   /* Only the input gives way in a narrow window. */
