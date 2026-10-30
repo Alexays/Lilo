@@ -507,9 +507,12 @@ final class BrowserContext {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
+    /// A window on a private space is left out: the space ends with the app, as an incognito window does.
     private func storedWindows() -> [StoredWindow] {
         windows.windows.compactMap { window in
-            window.window.map { StoredWindow(frame: $0.frame, spaceId: window.tabManager.currentSpaceId) }
+            let spaceId = window.tabManager.currentSpaceId
+            if let spaceId, spaceManager?.space(with: spaceId)?.isPrivate == true { return nil }
+            return window.window.map { StoredWindow(frame: $0.frame, spaceId: spaceId) }
         }
     }
 
