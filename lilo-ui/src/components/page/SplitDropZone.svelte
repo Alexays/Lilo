@@ -48,8 +48,9 @@
   });
 
   // The pane under the pointer, and in it the nearest edge, each edge owning a triangle. A full
-  // split has no edge left to cut: the whole pane is the target.
-  function targetAt(x: number, y: number, droppedTabId: string | null): DropTarget | null {
+  // split has no edge left to cut: the whole pane is the target. A link only reaches the left
+  // and right strips, and takes their side.
+  function targetAt(x: number, y: number, droppedTabId: string | null, sideOnly?: boolean): DropTarget | null {
     if (!zoneEl) return null;
     const rect = zoneEl.getBoundingClientRect();
     const fx = (x - rect.left) / rect.width;
@@ -59,7 +60,7 @@
     if (panes.length >= MAX_SPLIT_PANES) return { tabId: pane.tabId, side: "replace" };
     const dx = (fx - pane.x) / pane.width;
     const dy = (fy - pane.y) / pane.height;
-    const side: SplitSide = Math.min(dx, 1 - dx) <= Math.min(dy, 1 - dy)
+    const side: SplitSide = sideOnly || Math.min(dx, 1 - dx) <= Math.min(dy, 1 - dy)
       ? dx < 0.5 ? "left" : "right"
       : dy < 0.5 ? "top" : "bottom";
     return { tabId: pane.tabId, side };
@@ -85,8 +86,8 @@
     return () => window.removeEventListener("pointermove", track);
   });
 
-  // A web link dragged to a pane edge: the native side routes only those bands here, as HTML5
-  // drag events, so any dragover with a link means its target is being aimed at.
+  // A web link dragged to a pane's left or right edge: the native side routes only those strips
+  // here, as HTML5 drag events, so any dragover with a link means its target is being aimed at.
   let linkTarget = $state.raw<DropTarget | null>(null);
   $effect(() => {
     const over = (event: DragEvent) => {
@@ -99,7 +100,7 @@
       }
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
-      const next = targetAt(event.clientX, event.clientY, null);
+      const next = targetAt(event.clientX, event.clientY, null, true);
       if (!sameTarget(next, linkTarget)) linkTarget = next;
     };
     const leave = (event: DragEvent) => {
