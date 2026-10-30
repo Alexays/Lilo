@@ -270,8 +270,10 @@ final class WKWebViewTab: NSObject {
     private var networkChangeRetryURL: URL?
     private var lastNavigationEmissionState = NavigationEmissionState()
     /// True once any main-frame navigation has committed. Stays false for a tab whose only navigation
-    /// became a download (e.g. a target="_blank" download link), so that blank tab can auto-close.
+    /// became a download (e.g. a target="_blank" download link).
     private(set) var hasCommittedContent = false
+    /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
+    var isOpenedByPage = false
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
     /// it is set, and the exception unwinding through Swift corrupts the concurrency runtime.
     private(set) var isFrozen = false

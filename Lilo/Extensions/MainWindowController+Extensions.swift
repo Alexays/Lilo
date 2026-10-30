@@ -273,6 +273,7 @@ extension MainWindowController {
         ) else { return nil }
         if inBackground { noteBackgroundTab(popupTab.id) }
         guard let popupEngine = tabManager.engineTab(for: popupTab.id) else { return nil }
+        popupEngine.isOpenedByPage = true
         configureEngineIfNeeded(popupEngine)
         return popupEngine.view as? WKWebView
     }

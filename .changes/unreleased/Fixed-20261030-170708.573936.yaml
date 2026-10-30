@@ -1,0 +1,3 @@
+kind: Fixed
+body: Typing a download link into a new tab no longer closes that tab once the download starts.
+time: 2026-10-30T17:07:08.573936+01:00

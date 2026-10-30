@@ -455,6 +455,7 @@
 		ACB88CEE3EFCAC4DAE10AD07 /* WKBackendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5C05BC369876063A855749 /* WKBackendTests.swift */; };
 		ADA245153EE5B8FE65EBA139 /* BrowserProcessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 707DD0D47F5895FF57D2EE35 /* BrowserProcessSnapshot.swift */; };
 		ADA84B1F561E87C606957FBF /* ChromeAPIBackgroundPrelude.js in Resources */ = {isa = PBXBuildFile; fileRef = 3BB8ACFFF948B01F3F7036FF /* ChromeAPIBackgroundPrelude.js */; };
+		AE407BBECE84454C6FFD61C3 /* DownloadTabClosingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91771224C81841AE85FBE7C2 /* DownloadTabClosingTests.swift */; };
 		AE46206E6B4741992AD43060 /* WebViewPrivateAccessorsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DDFB66696986F176450780 /* WebViewPrivateAccessorsTests.swift */; };
 		AE4C34285DE346211452B1FE /* SystemPowerBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = FECC304FF06C06D6169A35F4 /* SystemPowerBackend.swift */; };
 		AE853D5D06E88A53F07FC5C3 /* ThemePreference.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF609A8B52AFEC50BDA5B16C /* ThemePreference.swift */; };
@@ -1127,6 +1128,7 @@
 		90FDF211B183C09E0574C812 /* AgentSocketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSocketTests.swift; sourceTree = "<group>"; };
 		9106EF60CBC6AD48FB25741C /* InFlightDownloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InFlightDownloads.swift; sourceTree = "<group>"; };
 		9150C2D6070742D02D55202D /* AgentScreenshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentScreenshot.swift; sourceTree = "<group>"; };
+		91771224C81841AE85FBE7C2 /* DownloadTabClosingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadTabClosingTests.swift; sourceTree = "<group>"; };
 		919CA9E629FDB10D67535409 /* smoke-probes.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "smoke-probes.js"; sourceTree = "<group>"; };
 		91C30864516C6565D3FC915A /* WKSecurityOrigin+PermissionKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKSecurityOrigin+PermissionKey.swift"; sourceTree = "<group>"; };
 		91C5B0C26FF97F4BF43C2820 /* CaptureRetentionIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureRetentionIntegrationTests.swift; sourceTree = "<group>"; };
@@ -2619,6 +2621,7 @@
 				D02E6B9E162D7FF0E34A0109 /* ChromeNavigationPolicyTests.swift */,
 				445A4257BF6C0F872F9C6396 /* ChromeProcessRecoveryTests.swift */,
 				1C45A79BA8A637E4D7600875 /* ContentContainerViewTests.swift */,
+				91771224C81841AE85FBE7C2 /* DownloadTabClosingTests.swift */,
 				041D070362A134FB62C93574 /* ExternalLinkRoutingTests.swift */,
 				1CABF119B44BBE5A30F4D649 /* InitialStateCommandBarTests.swift */,
 				709B1B6FB5C95CA7E23226B1 /* MainWindowControllerFocusTests.swift */,
@@ -3289,6 +3292,7 @@
 				3251220445041B6D92B3F6C5 /* DownloadManagerTests.swift in Sources */,
 				43BCE93C3883317A600DF0AE /* DownloadQuarantineTests.swift in Sources */,
 				0202B000435436DE1D48B1CE /* DownloadStoreTests.swift in Sources */,
+				AE407BBECE84454C6FFD61C3 /* DownloadTabClosingTests.swift in Sources */,
 				6D8DC297B3489646352AF932 /* DownloadsGapAPITests.swift in Sources */,
 				BF72D29326B2972E93582FE3 /* DutchLocalizationTests.swift in Sources */,
 				2FBB3B61A13C73C49B510236 /* EngineFreezerTests.swift in Sources */,

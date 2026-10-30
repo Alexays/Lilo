@@ -278,6 +278,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             return
         }
         guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        tabManager.engineTab(for: created.id)?.isOpenedByPage = true
         if inBackground { noteBackgroundTab(created.id) }
         guard let url else { return }
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
@@ -303,7 +304,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
             // createSpace activates the new space synchronously (through switchToSpace),
             // so the tab below lands in it.
             try createSpace(name: "Private", icon: "🕶️", color: "#5865f2", isPrivate: true, targetProfileId: nil)
-            createTabStateFirst(url: url, activate: true)
+            let created = createTabStateFirst(url: url, activate: true)
+            created.flatMap { tabManager.engineTab(for: $0.id) }?.isOpenedByPage = true
         } catch {
             Self.logger.error("open link in new private space failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -322,12 +324,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didStartDownload download: WKDownload) {
         context.downloadManager.startDownload(download, privateSpaceId: privateSpaceId(of: tab))
         // A target=_blank download link leaves a tab that never shows a page: close it (the download outlives the web view), deferred so
-        // the web view is not torn down inside WebKit's didBecomeDownload callback.
+        // the web view is not torn down inside WebKit's didBecomeDownload callback. A tab the user typed the URL into stays, as in Chrome.
         guard !tab.hasCommittedContent else { return }
         let tabId = tab.id
         DispatchQueue.main.async { [weak self] in
             if let little = self?.littleWindows[tabId] { return little.window.close() }
-            if let popup = self?.pagePopups[tabId] { popup.close() } else { self?.closeTabStateFirst(id: tabId, undoable: false) }
+            if let popup = self?.pagePopups[tabId] { popup.close() } else if tab.isOpenedByPage { self?.closeTabStateFirst(id: tabId, undoable: false) }
         }
     }
 
