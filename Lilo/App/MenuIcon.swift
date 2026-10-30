@@ -15,7 +15,7 @@ enum MenuIcon: CaseIterable {
     // Main menu actions.
     case checkForUpdates, extensions, newLittleWindow, newTerminalBeside, newTerminalBelow, openLocation, openAsTab, savePage
     case share, qrCode, screenshot, captureArea, captureVisible, captureFullPage, print, copyMarkdown, find, findNext
-    case findPrevious, spelling, showSpelling, checkSpelling, spellWhileTyping, checkGrammar, autocorrect
+    case findPrevious, useSelectionForFind, spelling, showSpelling, checkSpelling, spellWhileTyping, checkGrammar, autocorrect
     case substitutions, showSubstitutions, smartQuotes, smartDashes, textReplacement, transformations, speech, sidebar, toolbar
     case fullScreen, reloadFromOrigin, stopLoading, zoomIn, zoomOut, actualSize, reader, translate, showChanges
     case recentlyClosed, archivedTabs, recentlyVisited, history, clearBrowsingData, nextSpace, previousSpace, previousTab, nextTab
@@ -93,6 +93,7 @@ enum MenuIcon: CaseIterable {
         case .find: "magnifyingglass"
         case .findNext: "arrow.down"
         case .findPrevious: "arrow.up"
+        case .useSelectionForFind: "text.viewfinder"
         case .spelling: "textformat.abc.dottedunderline"
         case .showSpelling: "text.magnifyingglass"
         case .checkSpelling: "checkmark.circle"

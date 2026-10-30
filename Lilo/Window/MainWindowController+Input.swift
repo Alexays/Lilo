@@ -263,6 +263,15 @@ extension MainWindowController {
         if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { tabManager.activeEngineTab?.findPrevious() }
     }
 
+    /// Searches for the page's selection without opening the find bar, so Find Next goes on from there.
+    @objc func useSelectionForFind(_ sender: Any?) {
+        guard let engine = tabManager.activeEngineTab else { return }
+        Task { @MainActor in
+            guard let text = await engine.selectedTextForFind() else { return }
+            _ = await engine.findInPage(text, caseSensitive: false)
+        }
+    }
+
     /// Adjust the active tab's zoom by `delta`, clamped, persisted per host, and reflected in the chrome.
     func zoomActiveTab(by delta: Double) {
         if let terminal = activeTerminalView {
@@ -357,6 +366,13 @@ extension MainWindowController {
         if event.type == .keyDown, event.keyCode == 53, chromeInput.coordinator.isCapturing,
            chromeInput.coordinator.effectiveCaptureTarget == .chrome {
             bridgeRouter?.send(event: "cancelDrag")
+            return true
+        }
+        // Escape stops a loading page as in Chrome; the chrome's own Escape (command bar, find bar) comes first.
+        if event.type == .keyDown, event.keyCode == 53,
+           event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
+           window?.firstResponder !== chromeWebView, let engine = tabManager.activeEngineTab, engine.isLoading {
+            engine.stopLoading()
             return true
         }
         return (event.type == .keyDown && handleKeyboardShortcut(event))

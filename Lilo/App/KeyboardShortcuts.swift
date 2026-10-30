@@ -61,6 +61,7 @@ enum KeyboardShortcuts {
         Action("find.show", "Find…", "Edit", ["⌘f"]),
         Action("find.next", "Find Next", "Edit", ["⌘g"]),
         Action("find.previous", "Find Previous", "Edit", ["⇧⌘g"]),
+        Action("find.useSelection", "Use Selection for Find", "Edit", ["⌘e"]),
         Action("spelling.check", "Check Document Now", "Edit", ["⌘;"]),
         Action("sidebar.toggle", "Toggle Sidebar", "View", ["⇧⌘s"]),
         Action("toolbar.toggle", "Toggle Toolbar", "View", ["⌥⌘t"]),

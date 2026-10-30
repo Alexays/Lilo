@@ -266,6 +266,12 @@ export const demoMenus: DemoMenuItem[] = [
       command("Find…", "find", "find.show", "⌘F"),
       command("Find Next", "findNext", "find.next", "⌘G"),
       command("Find Previous", "findPrevious", "find.previous", "⇧⌘G"),
+      command(
+        "Use Selection for Find",
+        "useSelectionForFind",
+        "find.useSelection",
+        "⌘E"
+      ),
     ]),
     submenu("Spelling and Grammar", [
       { ...mac("Show Spelling and Grammar"), keys: "⌘:" },

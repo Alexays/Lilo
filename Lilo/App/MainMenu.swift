@@ -82,6 +82,7 @@ extension AppDelegate {
         findMenu.add("Find…".localized, #selector(MainWindowController.showFindBar(_:)), icon: .find, shortcut: "find.show")
         findMenu.add("Find Next".localized, #selector(MainWindowController.findNextMatch(_:)), icon: .findNext, shortcut: "find.next")
         findMenu.add("Find Previous".localized, #selector(MainWindowController.findPreviousMatch(_:)), icon: .findPrevious, shortcut: "find.previous")
+        findMenu.add("Use Selection for Find".localized, #selector(MainWindowController.useSelectionForFind(_:)), icon: .useSelectionForFind, shortcut: "find.useSelection")
         // Spelling & Grammar: WKWebView handles these standard responder-chain actions when a web text
         // field is focused (it spell-checks editable content by default; this surfaces the controls).
         let spellingMenu = submenu("Spelling and Grammar".localized, in: editMenu, icon: .spelling)

@@ -1,0 +1,3 @@
+kind: Fixed
+body: Escape stops a page that is loading, as in Chrome and Safari.
+time: 2026-10-30T16:12:39.608234+01:00
