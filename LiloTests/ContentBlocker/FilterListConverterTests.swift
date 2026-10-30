@@ -1,3 +1,4 @@
+import os
 import WebKit
 import XCTest
 @testable import Lilo
@@ -100,8 +101,9 @@ final class FilterListConverterTests: XCTestCase {
     }
 
     func testNegatedTypeKeepsTheOtherTypes() {
-        XCTAssertEqual(trigger("||x.example^$~script,~image")?["resource-type"] as? [String],
-                       ["document", "font", "media", "ping", "raw", "style-sheet"])
+        let negated = FilterListConverter.convert("||x.example^$~script,~image").blocks.compactMap { $0["trigger"] as? [String: Any] }
+        XCTAssertEqual(negated.compactMap { $0["resource-type"] as? [String] }, [["document"], ["font", "media", "ping", "raw", "style-sheet"]])
+        XCTAssertEqual(negated.first?["load-context"] as? [String], ["child-frame"], "frames only: the page itself takes $document")
         XCTAssertEqual(trigger("||x.example^$script,~image")?["resource-type"] as? [String], ["script"])
     }
 
@@ -809,6 +811,35 @@ final class FilterListConverterTests: XCTestCase {
                                        "#top-ad": ["aside#top-ad"]])
         XCTAssertEqual(generic.cssRules.compactMap { ($0["action"] as? [String: Any])?["selector"] as? String },
                        ["[data-ad-slot]", ".a, .b", "div > span", #"div[title="].fake"]"#])
+    }
+
+    /// As uBO, only `$document`, `$all` or a bare `||host^` block the page itself: other rules keep to its frames and resources.
+    @MainActor
+    func testOnlyPageRulesBlockThePageItself() async throws {
+        let requested = OSAllocatedUnfairLock(initialState: [String]())
+        let server = try await TinyHTTPServer { request in
+            let path = String(request.split(separator: " ").dropFirst().first ?? "")
+            requested.withLock { $0.append(path) }
+            let page = #"<iframe src="/log/page-view?frame"></iframe><img src="/log/page-view.gif"><iframe src="/ad-frame/x"></iframe>"#
+            return ("200 OK", ["Content-Type: text/html"], Data((path.hasPrefix("/log/page-view?top") ? page : "").utf8))
+        }
+        let rules = FilterListConverter.convert("/log/page-view\n/ad-frame/$subdocument\n||blocked.example^").blocks
+        let json = try XCTUnwrap(String(data: JSONSerialization.data(withJSONObject: rules), encoding: .utf8))
+        let store = try XCTUnwrap(WKContentRuleListStore.default())
+        let compiled = try await store.compileContentRuleList(forIdentifier: "lilo-tests-page-rules", encodedContentRuleList: json)
+        let list = try XCTUnwrap(compiled)
+        defer { store.removeContentRuleList(forIdentifier: "lilo-tests-page-rules") { _ in } }
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.userContentController.add(list)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/log/page-view?top"))))
+        let loaded = await pollUntil(timeout: 10) {
+            ((try? await webView.evaluateJavaScript("document.readyState === 'complete' && !!document.querySelector('img')")) as? Bool) == true
+        }
+        XCTAssertTrue(loaded, "a path rule leaves the page it matches")
+        XCTAssertEqual(requested.withLock { $0 }, ["/log/page-view?top"], "the page's own frames and images stay blocked")
+        XCTAssertNil((rules.last?["trigger"] as? [String: Any])?["load-context"], "a bare host blocks its pages")
     }
 
     /// End-to-end safety net: the converter's output must be a JSON that WebKit actually accepts and
