@@ -118,6 +118,7 @@ final class ProxyBridgeHandler: GapHandler {
         applied[registry.profileId] = value as NSDictionary
         // The store the profile's tabs and extension pages share.
         registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations = Self.configurations(for: value)
+        NotificationCenter.default.post(name: .extensionProxyDidChange, object: registry)
         // The first value applied for a profile is its launch state, which Chrome does not announce.
         guard previous != nil else { return }
         for id in registry.extensionIds(withPermission: "proxy") {
@@ -213,6 +214,7 @@ final class ProxyBridgeHandler: GapHandler {
               let configuration = Self.configurations(for: value, at: request.challenger).first else { return }
         configuration.applyCredential(username: user, password: password)
         registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations = [configuration]
+        NotificationCenter.default.post(name: .extensionProxyDidChange, object: registry)
     }
 
     // MARK: - Chrome's ProxyConfig

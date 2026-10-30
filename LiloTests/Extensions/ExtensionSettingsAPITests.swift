@@ -1,3 +1,4 @@
+import os
 import WebKit
 import XCTest
 @testable import Lilo
@@ -86,6 +87,32 @@ final class ExtensionSettingsAPITests: XCTestCase {
         let (cleared, _) = await call("proxy", "get", [:], from: id)
         XCTAssertEqual((cleared as? [String: Any])?["value"] as? NSDictionary, ["mode": "system"] as NSDictionary)
         XCTAssertTrue(store.proxyConfigurations.isEmpty)
+    }
+
+    /// An extension's own credentialed fetch goes through the profile's proxy as its pages' requests do, from the moment it applies.
+    func testCredentialedFetchesFollowTheProxy() async throws {
+        // Loopback hosts never go through a proxy and App Transport Security refuses plain http elsewhere: the proxy counts
+        // the tunnels it opens for https://example.test, whose TLS then fails against its plain answer.
+        let tunnels = OSAllocatedUnfairLock(initialState: 0)
+        let proxy = try await TinyCONNECTProxy { host, _ in
+            if host == "example.test" { tunnels.withLock { $0 += 1 } }
+            return ("200 OK", [], Data())
+        }
+        let id = try await loadExtension(hostPermissions: ["<all_urls>"])
+        let fetch = { _ = await self.call("fetch", "credentialed", ["url": "https://example.test/", "requestId": "r"], from: id) }
+
+        await fetch()
+        let direct = tunnels.withLock { $0 }
+        _ = await call("proxy", "set", ["value": ["mode": "fixed_servers", "rules": ["singleProxy": ["host": "127.0.0.1", "port": Int(proxy.port)]]]], from: id)
+        await fetch()
+        let proxied = tunnels.withLock { $0 }
+        _ = await call("proxy", "clear", [:], from: id)
+        await fetch()
+        let cleared = tunnels.withLock { $0 }
+
+        XCTAssertEqual(direct, 0)
+        XCTAssertEqual(proxied, 1, "the fetch goes through the proxy once it applies")
+        XCTAssertEqual(cleared, 1, "and no longer once it is cleared")
     }
 
     func testProxyRejectsWhatChromeRejects() async throws {
