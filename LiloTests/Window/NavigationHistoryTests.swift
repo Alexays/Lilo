@@ -32,6 +32,31 @@ final class NavigationHistoryTests: XCTestCase {
         XCTAssertTrue(loaded, "\(url) never loaded")
     }
 
+    private func entry(_ url: String, in window: MainWindowController) throws -> HistoryEntry? {
+        try XCTUnwrap(window.profileContext?.history).entry(forURL: url)
+    }
+
+    func testEveryCommittedPageAndEveryAddressWithinItIsOneVisit() async throws {
+        let (window, engine) = try makeTab()
+        try await load("<title>A</title><p>a</p>", at: "https://example.com/a", in: engine)
+        let page = try entry("https://example.com/a", in: window)
+        XCTAssertEqual(page?.visitCount, 1, "commit and load are one visit")
+
+        _ = try await engine.wkWebView.evaluateJavaScript("history.pushState({}, '', '/b'); 0")
+        let pushed = await pollUntil(timeout: 5) { (try? self.entry("https://example.com/b", in: window)) != nil }
+        XCTAssertTrue(pushed, "a route the page pushed is a visit")
+        _ = try await engine.wkWebView.evaluateJavaScript("location.hash = 'c'; 0")
+        let fragment = await pollUntil(timeout: 5) { (try? self.entry("https://example.com/b#c", in: window)) != nil }
+        XCTAssertTrue(fragment, "a fragment is a visit")
+
+        _ = try await engine.wkWebView.evaluateJavaScript("history.replaceState({}, '', location.href); location.hash = 'c'; 0")
+        _ = try await engine.wkWebView.evaluateJavaScript("history.pushState({}, '', '/d'); 0")
+        let pushedAgain = await pollUntil(timeout: 5) { (try? self.entry("https://example.com/d", in: window)) != nil }
+        XCTAssertTrue(pushedAgain)
+        XCTAssertEqual(try entry("https://example.com/b#c", in: window)?.visitCount, 1, "staying at the same address is no visit")
+        XCTAssertEqual(try entry("https://example.com/b#c", in: window)?.title, "A")
+    }
+
     func testAPageWithoutTitleShowsItsAddressRatherThanThePreviousPagesTitle() async throws {
         let home = try XCTUnwrap(URL(string: "https://example.com/raw.txt"))
         let (window, engine) = try makeTab()

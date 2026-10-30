@@ -90,6 +90,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
         func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+        /// A same-document navigation (fragment, history API) moved the page to another address.
+        func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL)
         /// A find in page's result, Find Next and Find Previous included.
         func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result)
         /// A peek's page going back to its opener tab's site: true when the tab took the navigation.
@@ -294,6 +296,8 @@ final class WKWebViewTab: NSObject {
     /// True once any main-frame navigation has committed. Stays false for a tab whose only navigation
     /// became a download (e.g. a target="_blank" download link).
     private(set) var hasCommittedContent = false
+    /// The main frame document's address, same-document navigations included.
+    private var documentURL: URL?
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
@@ -1395,6 +1399,7 @@ final class WKWebViewTab: NSObject {
 
 extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) {}
+    func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL) {}
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
@@ -1643,6 +1648,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                     ms=\(tab.navigationStartUptime.map { (DispatchTime.now().uptimeNanoseconds - $0) / 1_000_000 } ?? 0, privacy: .public)
                     """)
             }
+            tab.documentURL = webView.url
             tab.delegate?.tab(tab, didNavigate: .committed(tab.currentURL))
             tab.reportToScreenTime(webView.url)
             // A new page resets the blocked-tracker count; the send is skipped when it was already 0.
@@ -1776,6 +1782,10 @@ extension WKWebViewTab: WKNavigationDelegate {
     /// `type` is `_WKSameDocumentNavigationType`: 0 anchor, 1 push, 2 replace, 3 pop. WebKit owns the
     /// integer tab id, so the event carries the tab's window position and index for JS to resolve.
     private func reportSameDocumentNavigation(type: Int) {
+        if let url = webView.url, url != documentURL {
+            documentURL = url
+            delegate?.tab(self, didNavigateWithinPageTo: url)
+        }
         guard let registry = tabManager?.extensionRegistry else { return }
         let event = type == 0 ? "onReferenceFragmentUpdated" : "onHistoryStateUpdated"
         // The window and index lookups below are skipped when no extension listens.

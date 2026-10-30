@@ -133,25 +133,31 @@ extension MainWindowController: WKWebViewTab.Delegate {
             enqueueVisibleTabUpdate(updatedTab)
         }
 
-        if case .finished = event {
-            // Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited). Check the visiting tab's
-            // own space, which may be a background one; a popup's visit counts as its opener's.
-            let visitingTab = updatedTab ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
-            let isPublicSpace = (visitingTab?.spaceId ?? littleWindows[tab.id]?.spaceId)
-                .flatMap { context.spaceManager?.space(with: $0) }.map { !$0.isPrivate } ?? false
-            let isProtected = visitingTab.flatMap { tabManager.protectingFolder(of: $0) } != nil
-            if isPublicSpace, !isProtected, let url = tab.currentURL, !url.absoluteString.isEmpty,
-               url.scheme == "https" || url.scheme == "http" {
-                // A page a terminal's link opened in a peek remembers which terminal: folder and branch.
-                let openedFrom = pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
-                    .flatMap { opener -> String? in
-                        guard opener.kind == .terminal else { return nil }
-                        let folder = opener.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
-                        return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-                    }
-                profileContext?.history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
+        if case .committed = event { recordVisit(of: tab, state: updatedTab) }
+    }
+
+    /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
+    /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
+    private func recordVisit(of tab: WKWebViewTab, state: Tab?) {
+        // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
+        let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
+        let isPublicSpace = (visitingTab?.spaceId ?? littleWindows[tab.id]?.spaceId)
+            .flatMap { context.spaceManager?.space(with: $0) }.map { !$0.isPrivate } ?? false
+        let isProtected = visitingTab.flatMap { tabManager.protectingFolder(of: $0) } != nil
+        guard isPublicSpace, !isProtected, let history = profileContext?.history, let url = tab.currentURL, !url.absoluteString.isEmpty,
+              url.scheme == "https" || url.scheme == "http" else { return }
+        // A page a terminal's link opened in a peek remembers which terminal: folder and branch.
+        let openedFrom = pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
+            .flatMap { opener -> String? in
+                guard opener.kind == .terminal else { return nil }
+                let folder = opener.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+                return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
             }
-        }
+        history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
+    }
+
+    func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL) {
+        recordVisit(of: tab, state: context.browserState.durableTab(for: tab.id)?.tab)
     }
 
     // Even for non-visible tabs (other spaces / not-yet-registered): the favicon is persisted to the
