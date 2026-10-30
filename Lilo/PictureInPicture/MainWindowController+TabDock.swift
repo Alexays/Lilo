@@ -118,7 +118,8 @@ extension MainWindowController {
         dockInCallTab(engine)
     }
 
-    func setPipDockActive(_ active: Bool, title: String = "") {
-        bridgeRouter.send(event: "pipDockChanged", data: active ? ["active": true, "title": title] : ["active": false])
+    /// `aspectRatio` is the slot's width over height: a docked tab fills a 16:10 band, a PiP window keeps its own shape.
+    func setPipDockActive(_ active: Bool, title: String = "", aspectRatio: CGFloat = 1.6) {
+        bridgeRouter.send(event: "pipDockChanged", data: active ? ["active": true, "title": title, "aspectRatio": aspectRatio] : ["active": false])
     }
 }

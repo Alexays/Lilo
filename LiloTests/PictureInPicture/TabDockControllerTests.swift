@@ -70,21 +70,36 @@ final class TabDockControllerTests: XCTestCase {
         XCTAssertEqual(controller.engineId, engine.id)
     }
 
-    func testAPictureInPictureViewFillsTheSlotAtNativeScale() {
+    func testANarrowPictureInPictureViewFillsTheSlotAtNativeScale() {
         let controller = TabDockController()
         controller.sidebarWidth = 240
         let (contentView, chromeView) = makeHost()
         let view = NSView()
         let openerId = UUID()
-        controller.dockPictureInPicture(view, openerId: openerId, in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(view, size: NSSize(width: 200, height: 150), openerId: openerId, in: contentView, above: nil, chromeView: chromeView)
 
         controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
 
         let host = try? XCTUnwrap(view.superview)
         XCTAssertEqual(view.frame, NSRect(x: 0, y: 0, width: 228, height: 300), "the PiP page lays out at the slot's own size")
-        XCTAssertEqual(host?.bounds.size, host?.frame.size, "no scaling: the PiP page is made for this size")
+        XCTAssertEqual(host?.bounds.size, host?.frame.size, "never scaled up")
         XCTAssertEqual(controller.pictureInPictureOpenerId, openerId)
         XCTAssertNil(controller.engineId, "the dock holds no tab")
+    }
+
+    // A PiP page draws fixed-size controls for its own width: laid out narrower, they would be cropped.
+    func testAWidePictureInPictureViewKeepsItsWidthScaledDownToTheSlot() throws {
+        let controller = TabDockController()
+        controller.sidebarWidth = 240
+        let (contentView, chromeView) = makeHost()
+        let view = NSView()
+        controller.dockPictureInPicture(view, size: NSSize(width: 456, height: 540), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+
+        controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 270)])
+
+        let host = try XCTUnwrap(view.superview)
+        XCTAssertEqual(view.frame.size, NSSize(width: 456, height: 540), "laid out at its own size, at half scale")
+        XCTAssertEqual(host.frame.size, NSSize(width: 228, height: 270))
     }
 
     func testLosingTheSlotHandsThePictureInPictureBack() {
@@ -94,7 +109,7 @@ final class TabDockControllerTests: XCTestCase {
         let view = NSView()
         var lost = false
         controller.onPictureInPictureSlotLost = { lost = true }
-        controller.dockPictureInPicture(view, openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(view, size: NSSize(width: 200, height: 150), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
         controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
 
         controller.zonesChanged([:])
@@ -109,12 +124,12 @@ final class TabDockControllerTests: XCTestCase {
         let (contentView, chromeView) = makeHost()
         var cleared = 0
         controller.onDockCleared = { cleared += 1 }
-        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(NSView(), size: NSSize(width: 200, height: 150), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
         controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
         let next = NSView()
         let nextOpener = UUID()
 
-        controller.dockPictureInPicture(next, openerId: nextOpener, in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(next, size: NSSize(width: 200, height: 150), openerId: nextOpener, in: contentView, above: nil, chromeView: chromeView)
 
         XCTAssertEqual(cleared, 0, "tearing the chrome slot down and up again could float the new PiP window")
         XCTAssertEqual(controller.pictureInPictureOpenerId, nextOpener)
@@ -127,7 +142,7 @@ final class TabDockControllerTests: XCTestCase {
         let (contentView, chromeView) = makeHost()
         var pipLost = false
         controller.onPictureInPictureSlotLost = { pipLost = true }
-        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(NSView(), size: NSSize(width: 200, height: 150), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
 
         controller.dock(WKWebViewTab(configuration: WKWebViewConfiguration()), logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
 
@@ -143,7 +158,7 @@ final class TabDockControllerTests: XCTestCase {
         controller.onSlotLost = { lostEngine = $0 }
         controller.dock(engine, logicalSize: NSSize(width: 1200, height: 750), in: contentView, above: nil, chromeView: chromeView)
 
-        controller.dockPictureInPicture(NSView(), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(NSView(), size: NSSize(width: 200, height: 150), openerId: UUID(), in: contentView, above: nil, chromeView: chromeView)
 
         XCTAssertTrue(lostEngine === engine, "the docked call goes to the floating panel")
     }
@@ -160,7 +175,7 @@ final class TabDockControllerTests: XCTestCase {
         _ = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("document.body?.textContent === 'pip'")) as? Bool == true }
         _ = try await webView.evaluateJavaScript("window.marker = 1; true")
 
-        controller.dockPictureInPicture(webView, openerId: opener.id, in: contentView, above: nil, chromeView: chromeView)
+        controller.dockPictureInPicture(webView, size: NSSize(width: 200, height: 150), openerId: opener.id, in: contentView, above: nil, chromeView: chromeView)
         controller.zonesChanged([TabDockController.zoneId: NSRect(x: 8, y: 500, width: 240, height: 300)])
         XCTAssertTrue(webView.isDescendant(of: contentView))
         controller.undock()

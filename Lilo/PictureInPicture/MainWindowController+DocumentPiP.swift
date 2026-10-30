@@ -54,8 +54,10 @@ extension MainWindowController {
             tabDock.sidebarWidth = sidebarWidth
             tabDock.sidebarOnRight = tabLayout.position == .right
             // Docking replaces a docked tab, whose undock tears the chrome slot down: mount it after.
-            tabDock.dockPictureInPicture(webView, openerId: openerId, in: contentView, above: chromeWebView, chromeView: chromeWebView)
-            setPipDockActive(true, title: tabManager.engineTab(for: openerId)?.currentTitle ?? "")
+            let size = documentPiP.windowSize
+            tabDock.dockPictureInPicture(webView, size: size, openerId: openerId, in: contentView, above: chromeWebView, chromeView: chromeWebView)
+            // At most 4:3 portrait: a taller window would push the sidebar's tabs away.
+            setPipDockActive(true, title: tabManager.engineTab(for: openerId)?.currentTitle ?? "", aspectRatio: max(0.75, size.width / size.height))
         } else {
             if tabDock.pictureInPictureOpenerId != nil { tabDock.undock() }
             documentPiP.float()

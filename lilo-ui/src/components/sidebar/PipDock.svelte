@@ -1,6 +1,6 @@
 <script lang="ts">
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
-  import { isPipDockActive, getPipDockTitle } from "../../stores/pipDock.svelte";
+  import { isPipDockActive, getPipDockTitle, getPipDockAspectRatio } from "../../stores/pipDock.svelte";
 </script>
 
 {#if isPipDockActive()}
@@ -8,6 +8,7 @@
     class="pip-dock"
     data-native-surface
     title={getPipDockTitle()}
+    style:aspect-ratio={getPipDockAspectRatio()}
     use:reportInteractiveZone={{ id: "pip-dock" }}
   ></div>
 {/if}
@@ -18,6 +19,5 @@
   .pip-dock {
     flex-shrink: 0;
     margin: 0 var(--sidebar-right-pad, 10px) 8px 10px;
-    aspect-ratio: 16 / 10;
   }
 </style>

@@ -941,7 +941,7 @@ export interface BridgeEventPayloadMap {
 	};
 	// The requesting tab closed while its picker was open; native already cancelled the pick.
 	tabSharePickerDismissed: { requestId: string };
-	pipDockChanged: { active: boolean; title?: string };
+	pipDockChanged: { active: boolean; title?: string; aspectRatio?: number };
 
 	browserStateChanged: BridgeBrowserStateChangedPayload;
 	browserStatePatch: BridgeBrowserStatePatchPayload;

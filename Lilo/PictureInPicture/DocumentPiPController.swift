@@ -18,6 +18,8 @@ final class DocumentPiPController: NSObject, WKUIDelegate, WKNavigationDelegate,
     private weak var opener: WKWebViewTab?
     /// The screen the user dragged the panel to, while it stays open: it then stays there rather than docking.
     private(set) var movedToScreen: NSScreen?
+    /// The window size the page asked for, as `resizeTo` and the screen cap left it: the size it is laid out for.
+    var windowSize: NSSize { panel?.frame.size ?? Self.defaultSize }
     private var panel: NSPanel?
     private let content = PiPContentView()
 

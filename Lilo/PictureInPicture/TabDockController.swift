@@ -28,7 +28,8 @@ final class TabDockController {
     private let scaledHost = NSView()
     private let controls = DockControlsView()
     private var engine: WKWebViewTab?
-    /// A Document Picture-in-Picture window, made for this size: it lays out at the slot's own size, unscaled.
+    /// A Document Picture-in-Picture window: it lays out at least at its own width (`logicalSize`), scaled down to the slot,
+    /// as its page draws fixed-size controls that a narrower window would crop.
     private var pictureInPictureView: NSView?
     private(set) var pictureInPictureOpenerId: UUID?
     private var logicalSize = NSSize(width: 1280, height: 800)
@@ -95,7 +96,7 @@ final class TabDockController {
     }
 
     /// Docks a Document Picture-in-Picture window of `openerId`'s page; its own controls stay clickable.
-    func dockPictureInPicture(_ view: NSView, openerId: UUID, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
+    func dockPictureInPicture(_ view: NSView, size: NSSize, openerId: UUID, in contentView: NSView, above sibling: NSView?, chromeView: NSView) {
         if let docked = engine {
             undock()
             onSlotLost?(docked)
@@ -105,6 +106,7 @@ final class TabDockController {
         }
         pictureInPictureView = view
         pictureInPictureOpenerId = openerId
+        logicalSize = size
         self.chromeView = chromeView
         controls.passesClicksThrough = true
         view.autoresizingMask = []
@@ -179,8 +181,11 @@ final class TabDockController {
         container.isHidden = false
         controls.frame = container.bounds
         if let pictureInPictureView {
+            // Never scaled up: a wider slot gives the page more room instead. The height follows the slot, so a band
+            // mid-resize reflows the page rather than cropping it.
+            let scale = logicalSize.width > 0 ? min(1, width / logicalSize.width) : 1
             scaledHost.frame = container.bounds
-            scaledHost.bounds = NSRect(origin: .zero, size: container.bounds.size)
+            scaledHost.bounds = NSRect(x: 0, y: 0, width: width / scale, height: slotRect.height / scale)
             pictureInPictureView.frame = scaledHost.bounds
             return
         }
