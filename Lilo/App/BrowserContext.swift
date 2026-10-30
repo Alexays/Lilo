@@ -148,8 +148,8 @@ final class BrowserContext {
     private func installTabShareRouting() {
         let windows = windows
         let bridge = engineFactory.tabShareBridge
-        bridge.pickerPresenter = { origin, requester, wantsAudio in
-            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester, wantsAudio: wantsAudio) ?? .cancel
+        bridge.pickerPresenter = { origin, requester, wantsAudio, selfTab in
+            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester, wantsAudio: wantsAudio, selfTab: selfTab) ?? .cancel
         }
         bridge.sessionStarter = { tabId, requester in
             windows.window(for: requester)?.startTabShare(tabId: tabId, requester: requester)

@@ -81,20 +81,27 @@ extension MainWindowController {
     static let suggestedShareTabCount = 4
 
     /// Cancelling the calling task takes the picker off screen and returns `.cancel`.
-    func presentTabSharePicker(origin: String, requester: WKWebView?, allowsSystem: Bool = true, wantsAudio: Bool = false) async -> TabSharePickerChoice {
+    func presentTabSharePicker(
+        origin: String, requester: WKWebView?, allowsSystem: Bool = true, wantsAudio: Bool = false, selfTab: String = "exclude"
+    ) async -> TabSharePickerChoice {
         let requestId = UUID().uuidString
         // Only tabs `liveEngineForSharing` can resolve: every current-space tab (revived on pick)
         // and the hidden-space tabs whose parked engine is still live.
-        // The requesting tab is left out: sharing a call's own tab shows the call back to itself.
+        // As in Chrome, the requesting tab is left out unless the page asks for it: sharing a call's own
+        // tab shows the call back to itself.
         let requesterTabId = requester.flatMap { context.windows.windowAndEngine(for: $0)?.engine.id }
         let shareableTabIds = Set(tabManager.openTabs.map(\.id)).union(context.browserState.parkedEngineTabIds)
             .filter { id in
-                id != requesterTabId
+                (id != requesterTabId || selfTab != "exclude")
                     && context.browserState.durableTab(for: id).map { tabManager.protectingFolder(of: $0.tab)?.isLocked != true } ?? true
             }
-        // Tabs playing sound first, then the most recently shown: what a call usually goes on to share.
+        // The requesting tab first when preferred, then tabs playing sound, then the most recently shown: what a
+        // call usually goes on to share. The picker selects the first.
         let suggestedTabIds = shareableTabIds.compactMap { tabManager.tab(for: $0) }
-            .sorted { ($0.isAudioPlaying ? 1 : 0, $0.lastActiveAt ?? .distantPast) > ($1.isAudioPlaying ? 1 : 0, $1.lastActiveAt ?? .distantPast) }
+            .sorted {
+                (selfTab == "prefer" && $0.id == requesterTabId ? 1 : 0, $0.isAudioPlaying ? 1 : 0, $0.lastActiveAt ?? .distantPast)
+                    > (selfTab == "prefer" && $1.id == requesterTabId ? 1 : 0, $1.isAudioPlaying ? 1 : 0, $1.lastActiveAt ?? .distantPast)
+            }
             .prefix(Self.suggestedShareTabCount)
             .map(\.id.uuidString)
         var data: [String: Any] = [
