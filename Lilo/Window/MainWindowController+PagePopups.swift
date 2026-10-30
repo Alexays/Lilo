@@ -81,7 +81,8 @@ extension MainWindowController {
 
     /// Opens `url` in a Peek over `sourceTabId`, in its space's data store. A window shows one link peek
     /// at a time: any other one closes, its page torn down. A page's own popups stay.
-    func openLinkPeek(_ url: URL, from sourceTabId: UUID) {
+    @discardableResult
+    func openLinkPeek(_ url: URL, from sourceTabId: UUID) -> PagePopupController {
         pagePopups.values.filter(\.isLinkPeek).forEach { $0.close() }
         let engine = context.engineFactory.createTab(configuration: .init(
             dataStore: tabManager.dataStore,
@@ -90,21 +91,35 @@ extension MainWindowController {
             profileId: tabManager.profileId
         ))
         // As large as the content allows: the peek clamps it to the window.
-        presentPagePopup(engine, openerTabId: sourceTabId, contentSize: NSSize(width: 1600, height: 1200), topLeft: nil, inPeek: true)
-            .isLinkPeek = true
+        let peek = presentPagePopup(engine, openerTabId: sourceTabId, contentSize: NSSize(width: 1600, height: 1200), topLeft: nil, inPeek: true)
+        peek.isLinkPeek = true
         engine.loadURL(url)
+        return peek
     }
 
     /// Shift+click peeks any link; a pinned or bookmarked tab peeks a link to another site instead of
     /// leaving its own (unless turned off). A peek's own links stay in the peek.
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool {
         guard pagePopups[tab.id] == nil, !tab.isAgentControlled, let source = tabManager.tab(for: tab.id) else { return false }
-        if !modifierFlags.contains(.shift) {
-            guard source.isPinned || source.isBookmarked, context.settingsStore.get("peekPinnedTabLinks") != "false",
-                  let host = url.host?.lowercased(), let pageHost = tab.currentURL?.host?.lowercased(),
-                  CookiesBridgeHandler.registrableDomain(of: host) != CookiesBridgeHandler.registrableDomain(of: pageHost) else { return false }
+        guard !modifierFlags.contains(.shift) else {
+            openLinkPeek(url, from: tab.id)
+            return true
         }
-        openLinkPeek(url, from: tab.id)
+        guard source.isPinned || source.isBookmarked, context.settingsStore.get("peekPinnedTabLinks") != "false",
+              let host = url.host?.lowercased(), let pageHost = tab.currentURL?.host?.lowercased() else { return false }
+        let pageSite = CookiesBridgeHandler.registrableDomain(of: pageHost)
+        guard CookiesBridgeHandler.registrableDomain(of: host) != pageSite else { return false }
+        openLinkPeek(url, from: tab.id).openerSite = pageSite
+        return true
+    }
+
+    /// A pinned or bookmarked tab's peek that comes back to the tab's site hands the page over to the tab, so a
+    /// sign-in through another site returns to the page that started it. A POST stays: its body cannot follow.
+    func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool {
+        guard let peek = pagePopups[tab.id], let site = peek.openerSite, let url = request.url, let host = url.host?.lowercased(),
+              (request.httpMethod ?? "GET").uppercased() == "GET", CookiesBridgeHandler.registrableDomain(of: host) == site else { return false }
+        peek.close()
+        tabManager.load(url, inTab: peek.openerTabId)
         return true
     }
 

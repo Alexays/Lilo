@@ -481,6 +481,18 @@ final class PagePopupTests: XCTestCase {
         XCTAssertTrue(controller.pagePopups[popup.engine.id] === popup)
     }
 
+    func testALinkPeekComingBackToThePinnedTabsSiteGoesBackToTheTab() async throws {
+        try pinOpener()
+        try await clickLink("https://other.test/sign-in")
+        let peek = try XCTUnwrap(controller.pagePopups.values.first)
+
+        _ = try await peek.engine.wkWebView.evaluateJavaScript("location.href = 'https://www.example.com/callback?code=1'; true")
+        await pollUntil { self.controller.pagePopups.isEmpty }
+
+        XCTAssertTrue(controller.pagePopups.isEmpty)
+        XCTAssertEqual(controller.tabManager.engineTab(for: opener.id)?.currentURL?.absoluteString, "https://www.example.com/callback?code=1")
+    }
+
     func testAPopupWindowAsksBeforeOpeningAnExternalApp() async throws {
         try await openFromPage("width=400,height=300")
         let popup = try XCTUnwrap(controller.pagePopups.values.first)

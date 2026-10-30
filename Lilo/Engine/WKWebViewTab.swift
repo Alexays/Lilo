@@ -86,6 +86,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
         func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+        /// A peek's page going back to its opener tab's site: true when the tab took the navigation.
+        func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool
     }
 
     /// A link icon (`/favicon.ico` when the page declares none) WebKit loads on request through the
@@ -1377,6 +1379,7 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
+    func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool { false }
 }
 
 // MARK: - WKNavigationDelegate
@@ -1472,6 +1475,10 @@ extension WKWebViewTab: WKNavigationDelegate {
         ) {
             // Shift brings the new tab forward, as in Chrome and Safari.
             delegate?.tab(self, didCreateNewTab: url, inBackground: !navigationAction.modifierFlags.contains(.shift))
+            return .cancel
+        }
+
+        if navigationAction.targetFrame?.isMainFrame == true, delegate?.tab(self, returnsPeekToOpener: navigationAction.request) == true {
             return .cancel
         }
 

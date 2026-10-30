@@ -13,6 +13,8 @@ final class PagePopupController: NSObject, NSWindowDelegate {
     private(set) var window: NSWindow?
     /// A link the user peeked, not a page's own popup: a window shows one at a time.
     var isLinkPeek = false
+    /// The site of the pinned or bookmarked tab whose link to another site this peek took.
+    var openerSite: String?
     /// The popup as extensions see it: a popup window holding one tab. Retired by the owner on close.
     var extensionWindow: WindowExtensionAdapter?
     private let header: PopupHeaderView
