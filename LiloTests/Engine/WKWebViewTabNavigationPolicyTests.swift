@@ -1,5 +1,6 @@
 import WebKit
 import XCTest
+import os
 @testable import Lilo
 
 /// What a page may start on its own, against what only the user (through Lilo) may.
@@ -91,5 +92,30 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         XCTAssertTrue(failed)
         guard case .failed(let url, _) = spy.events.last else { return }
         XCTAssertEqual(url, target, "the error page names the failed address, as in Chrome")
+    }
+
+    func testOnlyTheUserOpensAPagesSource() async throws {
+        let requests = OSAllocatedUnfairLock<[String]>(initialState: [])
+        let server = try await TinyHTTPServer { request in
+            requests.withLock { $0.append(String(request.prefix { $0 != "\r" })) }
+            return ("200 OK", ["Content-Type: text/html"], Data("<p>account</p>".utf8))
+        }
+        let source = try XCTUnwrap(URL(string: "view-source:http://127.0.0.1:\(server.port)/account"))
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: false, identifier: nil)))
+        defer { tab.teardown() }
+        let spy = WKWebViewTabDelegateSpy()
+        tab.delegate = spy
+        tab.wkWebView.loadHTMLString("<p>page</p>", baseURL: URL(string: "http://example.com/"))
+        _ = await pollUntil(timeout: 10) { spy.commits == 1 && !tab.isLoading }
+
+        _ = try await tab.wkWebView.evaluateJavaScript("location = '\(source.absoluteString)'; 1")
+        try await Task.sleep(for: .milliseconds(500))
+        XCTAssertEqual(requests.withLock { $0 }, [], "a page cannot open another page's source, as in Chrome")
+
+        tab.loadURL(source)
+        let opened = await pollUntil(timeout: 10) { spy.commits == 2 }
+        XCTAssertTrue(opened)
+        XCTAssertEqual(tab.currentURL, source)
     }
 }

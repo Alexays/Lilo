@@ -1573,6 +1573,9 @@ extension WKWebViewTab: WKNavigationDelegate {
             }
         }
 
+        // The source loads again with the user's cookies: only the user opens it, as in Chrome.
+        if url?.scheme == ViewSourceSchemeHandler.scheme, !isMainFrame || isPageNavigationPending { return .cancel }
+
         // Non-web schemes (slack://, mailto:, ...) route to the delegate, which confirms before launching so a page can't silently open other apps.
         if let url, let scheme = url.scheme?.lowercased(), !Self.webSchemes.contains(scheme) {
             // The frame that asked, as Chrome keys these decisions: a frame does not speak for the page embedding it.
