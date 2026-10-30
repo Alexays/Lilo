@@ -287,6 +287,8 @@ final class WKWebViewTab: NSObject {
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
+    /// The pending main-frame navigation is the page's own, not one Lilo started (typed, bookmark, history, reload).
+    private var isPageNavigationPending = false
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
     private(set) var pendingMainFrameSendsBody = false
     /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
@@ -449,8 +451,14 @@ final class WKWebViewTab: NSObject {
 
     var view: NSView { webView }
     var wkWebView: WKWebView { webView }
+    /// A navigation the page started shows its address once it commits, as in Chrome: the page cannot put another
+    /// site's address over its own content. A page that has shown nothing yet (a new popup) shows where it goes.
     var currentURL: URL? {
-        Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: pendingMainFrameURL)
+        if isPageNavigationPending, let committed = WebViewPrivateAccessors(webView).urlString("_committedURL").flatMap(URL.init(string:)),
+           !Self.isAboutBlank(committed) {
+            return committed
+        }
+        return Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: pendingMainFrameURL)
     }
     /// The target of an in-flight main-frame navigation that hasn't committed yet (the committed URL
     /// is still the old one). Nil once committed or when idle. Maps to Chrome's `tab.pendingUrl`.
@@ -933,8 +941,9 @@ final class WKWebViewTab: NSObject {
                 guard let url = change.newValue else { return }
                 self?.onMain { tab in
                     guard !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: tab.pendingMainFrameURL) else { return }
-                    // A failed provisional load clears the web view's URL: the pending one stays shown.
-                    let nextURL = url ?? tab.pendingMainFrameURL
+                    // A failed provisional load clears the web view's URL: the pending one stays shown. A navigation
+                    // the page started shows once it commits, a same-document one at once (see currentURL).
+                    let nextURL = tab.isPageNavigationPending ? tab.currentURL : url ?? tab.pendingMainFrameURL
                     guard tab.lastNavigationEmissionState.url != nextURL else { return }
                     tab.lastNavigationEmissionState.url = nextURL; tab.pendingMainFrameURL = nextURL
                     tab.delegate?.tab(tab, didUpdateURL: nextURL)
@@ -1545,6 +1554,11 @@ extension WKWebViewTab: WKNavigationDelegate {
         // here would repoint this tab's pending URL (retry target, TLS host check) at the popup's page.
         if navigationAction.targetFrame?.isMainFrame == true,
            !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: pendingMainFrameURL) {
+            // Lilo names the URL it loads before WebKit asks; a redirect belongs to the navigation it continues.
+            if WebViewPrivateAccessors(navigationAction).bool("_isRedirect") != true {
+                isPageNavigationPending = url != pendingMainFrameURL
+                    && ![.backForward, .reload, .formResubmitted].contains(navigationAction.navigationType)
+            }
             pendingMainFrameURL = url
             pendingMainFrameSendsBody = (navigationAction.request.httpMethod ?? "GET").uppercased() != "GET"
             isLoadingCachedCopy = navigationAction.request.cachePolicy == .returnCacheDataDontLoad
@@ -1596,7 +1610,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
         onMain { tab in
             StartupMetrics.markOnce("firstContentServerRedirected")
-            if let url = tab.currentURL { tab.pendingMainFrameURL = url }
+            if let url = Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: tab.pendingMainFrameURL) { tab.pendingMainFrameURL = url }
         }
     }
 
@@ -1649,6 +1663,13 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.didAutoRetryProvisionalLoad = false
             tab.isLoadingCachedCopy = false
             tab.networkChangeRetryURL = nil
+            if tab.isPageNavigationPending {
+                tab.isPageNavigationPending = false
+                if tab.lastNavigationEmissionState.url != tab.currentURL {
+                    tab.lastNavigationEmissionState.url = tab.currentURL
+                    tab.delegate?.tab(tab, didUpdateURL: tab.currentURL)
+                }
+            }
             tab.pendingMainFrameURL = tab.currentURL
             if !tab.isPrivateBrowsing {
                 Self.logger.info("""
@@ -1697,6 +1718,8 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         onMain { tab in
             tab.endNavigationSignpost("fail")
+            // The error page names the address that failed, as in Chrome.
+            tab.isPageNavigationPending = false
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false
