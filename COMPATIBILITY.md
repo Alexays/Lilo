@@ -252,3 +252,9 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Symptom:** A call's microphone sounds duller and more processed than in Chrome: nothing above 12 kHz reaches the page.
 - **Root cause:** With echo cancellation on (the default, and what call sites ask for), WebKit runs the microphone through Apple's voice processing, which caps it at 12 kHz; Chrome cancels echo, suppresses noise and sets the gain in software on the raw signal. WebKit exposes neither `noiseSuppression` nor `autoGainControl` apart, and its capture with `echoCancellation: false` comes out 14 to 26 dB below the device's level with dropouts, so turning it off is no remedy. A Bluetooth headset's link caps its microphone at 12 kHz in every browser.
 - **Lilo's handling:** None; matching Chrome would take an audio processing stack of Lilo's own.
+
+### Favicons a page changes by script
+
+- **Symptom:** a tab keeps the icon its page loaded with when the page then swaps its `<link rel=icon>` (an unread badge, a build status).
+- **Root cause:** WebKit offers a document's link icons to the app once, when the document loads, and never again for a `<link rel=icon>` added or changed afterwards (checked on macOS 27). Chrome follows those changes.
+- **Lilo's handling:** None; following them would take a script watching every page's `<head>` in an isolated world, an icon load of Lilo's own outside WebKit's, and a per-tab icon apart from the per-site one Lilo caches.
