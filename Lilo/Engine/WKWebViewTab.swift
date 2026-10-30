@@ -54,6 +54,10 @@ final class WKWebViewTab: NSObject {
         /// Open a right-clicked link in a freshly created ephemeral private space and switch to it.
         func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL)
         func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL)
+        /// Names the search engine in the page's context menu.
+        var searchEngineName: String { get }
+        /// Opens the default search engine's results for `text` in a new tab.
+        func tab(_ tab: WKWebViewTab, searchWebFor text: String)
         /// Hides "Open Link in New Window" from the page's context menu.
         var prefersSingleWindow: Bool { get }
         func tabDidRequestClose(_ tab: WKWebViewTab)
@@ -213,7 +217,13 @@ final class WKWebViewTab: NSObject {
         onOpenInNewWindow: { [weak self] url in if let self { delegate?.tab(self, openLinkInNewWindow: url) } },
         onTogglePiP: { [weak self] in self?.togglePictureInPicture() },
         onBookmark: { [weak self] in if let self { delegate?.tabRequestsBookmark(self) } },
-        onDownload: { [weak self] url in self?.startContextMenuDownload(from: url) }
+        onDownload: { [weak self] url in self?.startContextMenuDownload(from: url) },
+        onSearchWeb: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, let text = await selectedTextForFind() else { return }
+                delegate?.tab(self, searchWebFor: text)
+            }
+        }
     )
 
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
@@ -1365,6 +1375,8 @@ extension WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
+    var searchEngineName: String { "Google" }
+    func tab(_ tab: WKWebViewTab, searchWebFor text: String) {}
     var prefersSingleWindow: Bool { false }
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool { false }
     func tab(
@@ -2007,7 +2019,7 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false))
+            contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             completionHandler(menu)
         }
     }

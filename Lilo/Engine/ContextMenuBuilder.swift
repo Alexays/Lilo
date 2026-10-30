@@ -25,6 +25,7 @@ final class ContextMenuBuilder: NSObject {
     private let onTogglePiP: () -> Void
     private let onBookmark: () -> Void
     private let onDownload: (URL) -> Void
+    private let onSearchWeb: () -> Void
 
     init(
         webView: WKWebView,
@@ -33,7 +34,8 @@ final class ContextMenuBuilder: NSObject {
         onOpenInNewWindow: @escaping (URL) -> Void,
         onTogglePiP: @escaping () -> Void,
         onBookmark: @escaping () -> Void,
-        onDownload: @escaping (URL) -> Void
+        onDownload: @escaping (URL) -> Void,
+        onSearchWeb: @escaping () -> Void
     ) {
         self.webView = webView
         self.onOpenInNewTab = onOpenInNewTab
@@ -42,6 +44,7 @@ final class ContextMenuBuilder: NSObject {
         self.onTogglePiP = onTogglePiP
         self.onBookmark = onBookmark
         self.onDownload = onDownload
+        self.onSearchWeb = onSearchWeb
         super.init()
     }
 
@@ -62,7 +65,14 @@ final class ContextMenuBuilder: NSObject {
         return result.value(forKey: key) as? URL
     }
 
-    func build(_ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, extensionItems: [NSMenuItem], offersNewWindow: Bool = true) {
+    func build(_ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, extensionItems: [NSMenuItem], offersNewWindow: Bool = true, searchEngineName: String? = nil) {
+        // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
+        if let searchEngineName, let item = menu.items.first(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("SearchWeb") ?? false }) {
+            item.title = String(format: "Search with %@".localized, searchEngineName)
+            item.target = self
+            item.action = #selector(contextMenuSearchWeb)
+        }
+
         // WebKit's native "Download Image"/"Download Linked File" items never fire WKDownloadDelegate,
         // so route them through Lilo's download pipeline (via `onDownload`).
         wireDownloadItems(in: menu, imageURL: imageURL, linkURL: linkURL)
@@ -180,6 +190,8 @@ final class ContextMenuBuilder: NSObject {
     private func makeDownloadItem(_ title: String, url: URL) -> NSMenuItem {
         makeLinkItem(title, icon: .download, action: #selector(contextMenuDownload(_:)), url: url)
     }
+
+    @objc private func contextMenuSearchWeb() { onSearchWeb() }
 
     @objc private func contextMenuDownload(_ sender: NSMenuItem) {
         guard let url = sender.representedObject as? URL else { return }

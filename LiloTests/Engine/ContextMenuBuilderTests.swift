@@ -4,7 +4,7 @@ import WebKit
 
 @MainActor
 final class ContextMenuBuilderTests: XCTestCase {
-    private func makeBuilder(onDownload: @escaping (URL) -> Void = { _ in }) -> ContextMenuBuilder {
+    private func makeBuilder(onDownload: @escaping (URL) -> Void = { _ in }, onSearchWeb: @escaping () -> Void = {}) -> ContextMenuBuilder {
         ContextMenuBuilder(
             webView: WKWebView(frame: .zero),
             onOpenInNewTab: { _ in },
@@ -12,8 +12,23 @@ final class ContextMenuBuilderTests: XCTestCase {
             onOpenInNewWindow: { _ in },
             onTogglePiP: {},
             onBookmark: {},
-            onDownload: onDownload
+            onDownload: onDownload,
+            onSearchWeb: onSearchWeb
         )
+    }
+
+    func testSearchWebItemSearchesWithLiloEngine() throws {
+        var searched = false
+        let menu = NSMenu()
+        let item = menu.addItem(withTitle: "Search with Google", action: nil, keyEquivalent: "")
+        item.identifier = NSUserInterfaceItemIdentifier("WKMenuItemIdentifierSearchWeb")
+        let builder = makeBuilder(onSearchWeb: { searched = true })
+        builder.build(menu, linkURL: nil, extensionItems: [], searchEngineName: "DuckDuckGo")
+
+        XCTAssertEqual(item.title, String(format: "Search with %@".localized, "DuckDuckGo"))
+        let action = try XCTUnwrap(item.action)
+        NSApp.sendAction(action, to: item.target, from: item)
+        XCTAssertTrue(searched)
     }
 
     func testIsOpenInNewWindowItemMatchesWebKitIdentifierLoosely() {

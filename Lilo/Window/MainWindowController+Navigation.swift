@@ -287,6 +287,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
         reportCreatedNavigationTarget(from: tab.id, to: created.id, url: url)
     }
 
+    var searchEngineName: String { SearchQueryBridgeHandler.searchEngine(settings: context.settingsStore).name }
+
+    func tab(_ tab: WKWebViewTab, searchWebFor text: String) {
+        self.tab(tab, didCreateNewTab: URL(string: SearchQueryBridgeHandler.searchURL(for: text, settings: context.settingsStore)), inBackground: false)
+    }
+
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? {
         context.agentControl.openTab(from: tab, url: url, configuration: configuration)
     }
