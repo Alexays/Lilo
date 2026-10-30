@@ -148,6 +148,41 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         XCTAssertTrue(wentBack, "a key the page lets go still goes back")
     }
 
+    /// Escape reaches the page first, as in Chrome: a dialog closing on it leaves the load going, and
+    /// a page that lets it go stops loading.
+    func testThePageGetsEscapeBeforeItStopsTheLoad() async throws {
+        let server = try await TinyHTTPServer { request in
+            if request.hasPrefix("GET /slow ") { Thread.sleep(forTimeInterval: 8) }
+            return ("200 OK", ["Content-Type: text/html"], Data("""
+                <script>onkeydown = e => { if (e.key == 'Escape') { e.preventDefault(); document.title = 'closed' } }</script>
+                <img src="/slow">
+                """.utf8))
+        }
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let webView = engine.wkWebView
+        engine.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        let parsed = await pollUntil { (try? await webView.evaluateJavaScript("typeof onkeydown == 'function'")) as? Bool == true }
+        XCTAssertTrue(parsed)
+        let window = try focusPage(of: engine, in: controller)
+        defer { controller.chromeInput.stop() }
+
+        try sendKey("\u{1b}", [], keyCode: 53, to: window)
+        let closed = await pollUntil { webView.title == "closed" }
+        XCTAssertTrue(closed, "the page never saw Escape")
+        XCTAssertTrue(engine.isLoading)
+
+        _ = try await webView.evaluateJavaScript("onkeydown = null; true")
+        try sendKey("\u{1b}", [], keyCode: 53, to: window)
+        let stopped = await pollUntil(timeout: 3) { !engine.isLoading }
+        XCTAssertTrue(stopped, "Escape the page lets go stops the load")
+    }
+
     func testCmdLRemainsReservedToLilo() {
         let controller = MainWindowController()
         controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)

@@ -371,10 +371,16 @@ extension MainWindowController {
             bridgeRouter?.send(event: "cancelDrag")
             return true
         }
-        // Escape stops a loading page as in Chrome; the chrome's own Escape (command bar, find bar) comes first.
+        // Escape stops a loading page as in Chrome, once a focused page lets it go; the chrome's own Escape
+        // (command bar, find bar) comes first.
         if event.type == .keyDown, event.keyCode == 53,
            event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
-           window?.firstResponder !== chromeWebView, let engine = tabManager.activeEngineTab, engine.isLoading {
+           window?.firstResponder !== chromeWebView, let engine = focusedEngineTab, engine.isLoading {
+            if event !== keyLeftToPage, window?.firstResponder is WKWebView {
+                keyLeftToPage = event
+                return false
+            }
+            keyLeftToPage = nil
             engine.stopLoading()
             return true
         }
