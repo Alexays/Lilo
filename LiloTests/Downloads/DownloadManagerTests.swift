@@ -255,6 +255,7 @@ final class DownloadManagerTests: XCTestCase {
         let received = requests.withLock { $0 }
         XCTAssertTrue(received.contains { $0.contains("session=signed-in") }, "\(received)")
         XCTAssertFalse(received.contains { $0.contains("private=yes") }, "\(received)")
+        XCTAssertTrue(received.contains { $0.contains(WKEngineFactory.safariApplicationName) }, "the user agent of pages, not CFNetwork's: \(received)")
     }
 
     func testResumeLeavesAWebViewOfAnotherDataStore() async throws {

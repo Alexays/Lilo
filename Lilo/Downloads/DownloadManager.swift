@@ -12,6 +12,13 @@ typealias FilenameSuggestion = (filename: String, conflictAction: String)
 @MainActor
 final class DownloadManager {
     private static let logger = Logger(liloCategory: "DownloadManager")
+    /// The user agent pages get, which a retry sends in place of CFNetwork's. WebKit only builds it inside a web view.
+    private static let pageUserAgent: String? = {
+        let configuration = WKWebViewConfiguration()
+        configuration.applicationNameForUserAgent = WKEngineFactory.safariApplicationName
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        return webView.responds(to: NSSelectorFromString("_userAgent")) ? webView.value(forKey: "_userAgent") as? String : nil
+    }()
 
     /// The backends of one profile store. Row ids are per database, so each store gets its own: two profiles' downloads
     /// may share an id.
@@ -416,6 +423,7 @@ final class DownloadManager {
             request.httpShouldHandleCookies = false
             request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: await cookieStore.cookies(for: url))
         }
+        request.setValue(Self.pageUserAgent, forHTTPHeaderField: "User-Agent")
         let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename, in: store)
         // The new row of a private download is forgotten with its space too.
         if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key {
