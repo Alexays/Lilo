@@ -961,7 +961,7 @@
   <span class="new-tab-icon">
     <span class="new-tab-plus">+</span>
   </span>
-  <span>{t("tabSection.newTab")}</span>
+  <span class="new-tab-label">{t("tabSection.newTab")}</span>
 {/snippet}
 
 {#snippet newTabRow()}
@@ -1679,6 +1679,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .new-tab-label {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .new-tab-plus {
