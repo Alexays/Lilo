@@ -1453,6 +1453,7 @@
 			"connection": "Соединение",
 			"encrypted": "Зашифровано",
 			"notEncrypted": "Не зашифровано",
+			"notSecure": "Не защищено",
 			"certificate": "Сертификат",
 			"blocking": "Блокировка",
 			"usage": "Использование",

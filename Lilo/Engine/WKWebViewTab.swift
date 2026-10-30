@@ -46,6 +46,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoBack canGoBack: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoForward canGoForward: Bool)
+        /// See `isNotSecure`.
+        func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool)
         /// The page's color as a CSS hex, nil when it has none.
         func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?)
         func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool)
@@ -293,6 +295,10 @@ final class WKWebViewTab: NSObject {
     private(set) var pendingMainFrameSendsBody = false
     /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
     private var isLoadingCachedCopy = false
+    /// The committed https page's certificate is one the user let through despite its error.
+    private var usesCertificateException = false
+    /// An https page whose certificate the user let through, or that loaded part of its content over http.
+    private(set) var isNotSecure = false
     /// An error shows for a load that failed before it committed, over the page it was leaving.
     private var showsFailureOverPage = false
     /// The failed page to reload on the next network change; set while that wait is registered.
@@ -989,6 +995,9 @@ final class WKWebViewTab: NSObject {
             observeNavigationState(\.canGoForward, state: \.canGoForward) { tab, v in
                 tab.delegate?.tab(tab, didUpdateCanGoForward: v)
             },
+            webView.observe(\.hasOnlySecureContent, options: []) { [weak self] _, _ in
+                self?.onMain { $0.updateNotSecure() }
+            },
             webView.observe(\.themeColor) { [weak self] _, _ in
                 self?.onMain { $0.emitPageColor() }
             },
@@ -1361,6 +1370,13 @@ final class WKWebViewTab: NSObject {
         delegate?.tab(self, didNavigate: keepsPage ? .finished(currentURL) : .failed(failedURL, error))
     }
 
+    private func updateNotSecure() {
+        let notSecure = webView.url?.scheme == "https" && (usesCertificateException || !webView.hasOnlySecureContent)
+        guard notSecure != isNotSecure else { return }
+        isNotSecure = notSecure
+        delegate?.tab(self, didUpdateNotSecure: notSecure)
+    }
+
     /// Closes the open page-load interval of a recorded session, with how it ended.
     private func endNavigationSignpost(_ result: String) {
         guard let navigationSignpost else { return }
@@ -1446,6 +1462,7 @@ extension WKWebViewTab.Delegate {
         completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
     ) { completion(nil) }
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
+    func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
@@ -1716,6 +1733,12 @@ extension WKWebViewTab: WKNavigationDelegate {
                     """)
             }
             tab.documentURL = webView.url
+            // Asked once per page: the exception holds for the connection, which WebKit challenges once.
+            tab.usesCertificateException = webView.url.flatMap { url -> Bool? in
+                guard url.scheme == "https", let host = url.host, let trust = webView.serverTrust else { return nil }
+                return tab.delegate?.tab(tab, shouldAllowInsecureServerTrust: trust, forHost: host.lowercased(), port: url.port ?? 443)
+            } ?? false
+            tab.updateNotSecure()
             tab.delegate?.tab(tab, didNavigate: .committed(tab.currentURL))
             tab.reportToScreenTime(webView.url)
             // A new page resets the blocked-tracker count; the send is skipped when it was already 0.

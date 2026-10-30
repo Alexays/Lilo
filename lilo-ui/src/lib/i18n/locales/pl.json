@@ -1453,6 +1453,7 @@
 			"connection": "Połączenie",
 			"encrypted": "Szyfrowane",
 			"notEncrypted": "Nieszyfrowane",
+			"notSecure": "Niezabezpieczone",
 			"certificate": "Certyfikat",
 			"blocking": "Blokowanie",
 			"usage": "Użycie",

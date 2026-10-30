@@ -35,6 +35,7 @@ export interface BridgeTabSnapshot {
 	navigationErrorDomain: string;
 	navigationErrorDescription: string;
 	navigationErrorURL: string;
+	isNotSecure?: boolean;
 	kind?: string;
 	cwd?: string;
 	gitBranch?: string;
@@ -85,6 +86,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		navigationErrorDomain: data.navigationErrorDomain ?? "",
 		navigationErrorDescription: data.navigationErrorDescription ?? "",
 		navigationErrorURL: data.navigationErrorURL ?? "",
+		isNotSecure: data.isNotSecure ?? false,
 		kind: data.kind ?? "web",
 		cwd: data.cwd ?? "",
 		gitBranch: data.gitBranch ?? "",
@@ -135,6 +137,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.navigationErrorDomain !== undefined) out.navigationErrorDomain = data.navigationErrorDomain;
 	if (data.navigationErrorDescription !== undefined) out.navigationErrorDescription = data.navigationErrorDescription;
 	if (data.navigationErrorURL !== undefined) out.navigationErrorURL = data.navigationErrorURL;
+	if (data.isNotSecure !== undefined) out.isNotSecure = data.isNotSecure;
 	if (data.kind !== undefined) out.kind = data.kind;
 	if (data.cwd !== undefined) out.cwd = data.cwd;
 	if (data.gitBranch !== undefined) out.gitBranch = data.gitBranch;

@@ -58,6 +58,7 @@ struct Tab: Sendable, Equatable {
     var navigationErrorDomain: String = ""
     var navigationErrorDescription: String = ""
     var navigationErrorURL: String = ""
+    var isNotSecure = false
     var groupId: UUID?
     var spaceId: UUID?
     var windowId: UUID?
@@ -228,6 +229,8 @@ struct Tab: Sendable, Equatable {
                 put(field, navigationErrorDescription)
             case .navigationErrorURL:
                 put(field, navigationErrorURL)
+            case .isNotSecure:
+                put(field, isNotSecure)
             case .faviconDataURL:
                 data[field.rawValue] = faviconDataURL ?? ""
             case .faviconDominantColor:
@@ -296,6 +299,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let isAgentControlled: Bool
     let hasNavigationError: Bool; let navigationErrorCode: Int
     let navigationErrorDomain: String; let navigationErrorDescription: String; let navigationErrorURL: String
+    let isNotSecure: Bool
     let windowId: UUID?
     let hasUnsavedFormData: Bool
     let gitBranch: String
@@ -322,6 +326,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         isAgentControlled = tab.isAgentControlled
         hasNavigationError = tab.hasNavigationError; navigationErrorCode = tab.navigationErrorCode
         navigationErrorDomain = tab.navigationErrorDomain; navigationErrorDescription = tab.navigationErrorDescription; navigationErrorURL = tab.navigationErrorURL
+        isNotSecure = tab.isNotSecure
         windowId = tab.windowId
         hasUnsavedFormData = tab.hasUnsavedFormData
         gitBranch = tab.gitBranch
@@ -350,6 +355,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.isAgentControlled = isAgentControlled
         tab.hasNavigationError = hasNavigationError; tab.navigationErrorCode = navigationErrorCode
         tab.navigationErrorDomain = navigationErrorDomain; tab.navigationErrorDescription = navigationErrorDescription; tab.navigationErrorURL = navigationErrorURL
+        tab.isNotSecure = isNotSecure
         tab.windowId = windowId
         tab.hasUnsavedFormData = hasUnsavedFormData
         tab.gitBranch = gitBranch

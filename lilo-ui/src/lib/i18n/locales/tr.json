@@ -1443,6 +1443,7 @@
 			"connection": "Bağlantı",
 			"encrypted": "Şifreli",
 			"notEncrypted": "Şifreli değil",
+			"notSecure": "Güvenli değil",
 			"certificate": "Sertifika",
 			"blocking": "Engelleme",
 			"usage": "Kullanım",

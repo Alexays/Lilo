@@ -1443,6 +1443,7 @@
 			"connection": "Verbinding",
 			"encrypted": "Versleuteld",
 			"notEncrypted": "Niet versleuteld",
+			"notSecure": "Niet veilig",
 			"certificate": "Certificaat",
 			"blocking": "Blokkering",
 			"usage": "Gebruik",

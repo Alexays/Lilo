@@ -146,3 +146,15 @@ for (const key of ["Enter", "Space"]) {
 		await expect(page.locator(".command-bar")).toHaveCount(0);
 	});
 }
+
+test("the details card says an https page is not secure when its certificate or content is", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((tab) => tab.id === "tab-alpha")!.isNotSecure = true;
+	await bootChrome(page, world);
+	await page.locator(".url-trigger").hover();
+	await page.mouse.move(60, 72);
+
+	const card = page.locator(".url-details");
+	await expect(card).toContainText("Not secure");
+	await expect(card).not.toContainText("Encrypted");
+});

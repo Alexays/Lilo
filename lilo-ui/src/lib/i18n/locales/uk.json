@@ -1453,6 +1453,7 @@
 			"connection": "З’єднання",
 			"encrypted": "Зашифроване",
 			"notEncrypted": "Незашифроване",
+			"notSecure": "Не захищено",
 			"certificate": "Сертифікат",
 			"blocking": "Блокування",
 			"usage": "Використання",

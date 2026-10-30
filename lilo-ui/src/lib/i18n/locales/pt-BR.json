@@ -1443,6 +1443,7 @@
 			"connection": "Conexão",
 			"encrypted": "Criptografada",
 			"notEncrypted": "Não criptografada",
+			"notSecure": "Não segura",
 			"certificate": "Certificado",
 			"blocking": "Bloqueio",
 			"usage": "Uso",

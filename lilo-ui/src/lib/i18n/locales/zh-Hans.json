@@ -1443,6 +1443,7 @@
 			"connection": "连接",
 			"encrypted": "已加密",
 			"notEncrypted": "未加密",
+			"notSecure": "不安全",
 			"certificate": "证书",
 			"blocking": "拦截",
 			"usage": "用量",

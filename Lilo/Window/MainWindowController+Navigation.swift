@@ -280,6 +280,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading }
     }
 
+    func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {
+        updateAndEmit(tab.id) { t in t.isNotSecure = isNotSecure }
+    }
+
     func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double) {
         let progressUpdateStart = DispatchTime.now().uptimeNanoseconds
         defer {

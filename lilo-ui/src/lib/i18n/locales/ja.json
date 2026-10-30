@@ -1443,6 +1443,7 @@
 			"connection": "接続",
 			"encrypted": "暗号化されています",
 			"notEncrypted": "暗号化されていません",
+			"notSecure": "保護されていません",
 			"certificate": "証明書",
 			"blocking": "ブロック",
 			"usage": "使用量",

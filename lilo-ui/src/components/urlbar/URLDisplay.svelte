@@ -480,11 +480,12 @@
       }
     } else {
       if (activeTabURL.startsWith("https:")) {
+        const notSecure = getActiveTab()?.isNotSecure ?? false;
         rows.push({
           label: t("urlBar.details.connection"),
-          value: t("urlBar.details.encrypted"),
-          tone: "success",
-          lock: true,
+          value: t(notSecure ? "urlBar.details.notSecure" : "urlBar.details.encrypted"),
+          tone: notSecure ? "danger" : "success",
+          lock: !notSecure,
           action: {
             label: t("urlBar.details.certificate"),
             run: (event) => {

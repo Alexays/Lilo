@@ -116,7 +116,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
     private func refreshHost() {
         let url = engine.currentURL
         let host = url?.host ?? ""
-        let insecure = url?.scheme == "http"
+        let insecure = url?.scheme == "http" || engine.isNotSecure
         window?.title = insecure ? "Not Secure".localized + " - " + host : host
         header.setHost(host, insecure: insecure)
     }
