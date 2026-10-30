@@ -1,3 +1,4 @@
+import Network
 import WebKit
 import XCTest
 import os
@@ -117,5 +118,35 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         let opened = await pollUntil(timeout: 10) { spy.commits == 2 }
         XCTAssertTrue(opened)
         XCTAssertEqual(tab.currentURL, source)
+    }
+
+    func testAPageThatLosesItsConnectionKeepsWhatItShowed() async throws {
+        // Headers announcing more than the body sent, then the connection drops.
+        let listener = try NWListener(using: .tcp, on: .any)
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 100000\r\n\r\n<p>partial</p>"
+                connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) { connection.forceCancel() }
+                })
+            }
+        }
+        let ready = AsyncStream<UInt16> { continuation in
+            listener.stateUpdateHandler = { if case .ready = $0 { continuation.yield(listener.port?.rawValue ?? 0); continuation.finish() } }
+        }
+        listener.start(queue: .global())
+        defer { listener.cancel() }
+        var port: UInt16 = 0
+        for await value in ready { port = value }
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let spy = WKWebViewTabDelegateSpy()
+        tab.delegate = spy
+
+        tab.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(port)/")))
+
+        let ended = await pollUntil(timeout: 10) { spy.events.contains { if case .finished = $0 { true } else { false } } }
+        XCTAssertTrue(ended, "the load ends with the part that loaded")
+        XCTAssertFalse(spy.events.contains { if case .failed = $0 { true } else { false } }, "no error page over it, as in Chrome")
     }
 }

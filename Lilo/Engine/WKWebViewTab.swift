@@ -1298,10 +1298,10 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    /// A committed page that lost its connection is not reloaded at once, which would drop what it shows,
-    /// but on the next network change.
+    /// A committed page that lost its connection keeps what it shows, as in Chrome, and is not reloaded at once,
+    /// which would drop it, but on the next network change.
     private func handleCommittedNavigationFailure(_ error: Error) {
-        handleNavigationFailure(error)
+        handleNavigationFailure(error, keepsPage: true)
         guard let url = pendingMainFrameURL ?? currentURL,
               Self.recoveryForNavigationFailure(error, sendsBody: pendingMainFrameSendsBody, alreadyRetried: true,
                                                 isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied) != .surface
@@ -1332,7 +1332,7 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    private func handleNavigationFailure(_ error: Error, phase: StaticString = "committed") {
+    private func handleNavigationFailure(_ error: Error, phase: StaticString = "committed", keepsPage: Bool = false) {
         let failedURL = pendingMainFrameURL ?? currentURL
         let nsError = error as NSError
         let underlying = (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)
@@ -1347,7 +1347,7 @@ final class WKWebViewTab: NSObject {
                 underlying=\(underlying, privacy: .public)
                 """)
         }
-        delegate?.tab(self, didNavigate: .failed(failedURL, error))
+        delegate?.tab(self, didNavigate: keepsPage ? .finished(currentURL) : .failed(failedURL, error))
     }
 
     /// Closes the open page-load interval of a recorded session, with how it ended.
