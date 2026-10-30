@@ -136,4 +136,37 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(renamed.error, "No tab group with id \(groupId)")
         XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.name), ["Theirs"])
     }
+
+    /// `tabs.group` and `ungroup` act in the space of the tabs, shown or not, and tabs of two spaces make no group.
+    func test_tabsGroupAndUngroupActInTheSpaceOfTheTabs() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let caller = try await groupsCaller(in: browserContext)
+        let window = caller.window
+        let behind = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let shown = try browserContext.context.spaceManager.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(shown.id)
+        let front = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let position = { (id: UUID) throws -> [String: Int] in
+            let adapter = try XCTUnwrap(window.tabManager.browserStateStore?.tabAdapter(forTab: id))
+            return try XCTUnwrap(caller.registry.tabPosition(of: adapter, extensionId: caller.extensionId))
+        }
+
+        let mixed = await caller.call("tabs", "group", ["tabs": [try position(behind.id), try position(front.id)]])
+        let grouped = await caller.call("tabs", "group", ["tabs": [try position(behind.id)]])
+        let groupId = try XCTUnwrap((grouped.result as? [String: Any])?["groupId"] as? Int)
+
+        XCTAssertNotNil(mixed.error, "tabs of two windows make no group")
+        XCTAssertEqual(window.tabManager.folders(forSpace: shown.id), [], "nothing lands in the space shown")
+        let folder = try XCTUnwrap(window.tabManager.folders(forSpace: caller.spaceId).first)
+        XCTAssertEqual(window.tabManager.tabs(forSpace: caller.spaceId).first { $0.id == behind.id }?.groupId, folder.id)
+
+        let regrouped = await caller.call("tabs", "group", ["tabs": [try position(front.id)], "groupId": groupId])
+        let ungrouped = await caller.call("tabs", "ungroup", ["tabs": [try position(behind.id)]])
+
+        XCTAssertNotNil(regrouped.error, "a tab joins no group of another window")
+        XCTAssertNil(ungrouped.error)
+        XCTAssertEqual(window.tabManager.folders(forSpace: caller.spaceId), [], "the emptied group goes")
+        XCTAssertNil(window.tabManager.tabs(forSpace: caller.spaceId).first { $0.id == behind.id }?.groupId)
+    }
 }
