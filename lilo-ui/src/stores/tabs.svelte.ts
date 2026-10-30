@@ -7,7 +7,7 @@ import { tabActions } from "../lib/bridge/actions";
 import { DEFAULT_TAB_TITLE } from "../lib/bridge/defaults";
 import { t } from "../lib/i18n/state.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
-import { openCommandBar, closeCommandBar } from "./commandBar.svelte";
+import { openCommandBar, closeCommandBar, isCommandBarOpen } from "./commandBar.svelte";
 import { dragExcludedTabId } from "./folders.svelte";
 import { getSpaceSidebar, initSidebarStore } from "./sidebar.svelte";
 
@@ -89,7 +89,7 @@ export function initTabStore(): void {
 
 	on("toggleNewTab", () => {
 		const active = getActiveTab();
-		if (isBlankTab(active)) {
+		if (isBlankTab(active) && isCommandBarOpen()) {
 			tabActions.close(active.id);
 			closeCommandBar();
 		} else {

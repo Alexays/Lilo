@@ -32,12 +32,14 @@
   import { getSelectionTravelTarget } from "../../stores/selectionTravel.svelte";
   import { getRenamingTabId, setRenamingTabId } from "../../stores/tabRename.svelte";
   import { t } from "../../lib/i18n/state.svelte";
-  import { getActingAgentTabIds } from "../../stores/agents.svelte";
+  import { getActingAgentTabIds, isAgentsSpace } from "../../stores/agents.svelte";
   import { getHangSeconds, getPageHang } from "../../stores/pageHang.svelte";
   import { isChromaticHex } from "../../lib/sidebarTheme";
   import { terminalFolder, terminalTitle, formatTerminalDuration } from "../../lib/terminalTitle";
   import { titleUnread, unreadBadgeText } from "../../lib/titleUnread";
-  import type { TabState } from "../../stores/tabs.svelte";
+  import { getOpenTabs, isBlankTab, type TabState } from "../../stores/tabs.svelte";
+  import { getSpaceById } from "../../stores/spaces.svelte";
+  import { isCommandBarOpen, openCommandBar } from "../../stores/commandBar.svelte";
   import { cubicOut } from "svelte/easing";
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { springEase } from "../../lib/motion/spring";
@@ -111,6 +113,11 @@
 
   function switchToTab() {
     if (!interactive) return;
+    // A Space's last tab outlives its dismissed bar: its row stands in for New Tab, hidden while it is active.
+    if (isActive && isBlankTab(tab) && !isCommandBarOpen()) {
+      openCommandBar("", true);
+      return;
+    }
     clearTabPreview();
     optimisticallyActivateTab(tab.id);
     tabActions.switchTo(tab.id);
@@ -285,7 +292,12 @@
       : "",
   );
 
-  const isCloseVisible = $derived(isHovered || isActive);
+  // Native keeps a Space's last blank tab, but a private Space closes and an agents one is left.
+  const isKeptBlankTab = $derived(
+    isBlankTab(tab) && !tab.isPinned && !tab.isBookmarked && getOpenTabs(tab.spaceId).length === 1 &&
+      !getSpaceById(tab.spaceId)?.isPrivate && !isAgentsSpace(tab.spaceId ?? ""),
+  );
+  const isCloseVisible = $derived((isHovered || isActive) && !isKeptBlankTab);
 
   // Read only while hovered, like the memory line: a running command's elapsed time is taken then.
   const terminalStatusDetail = $derived.by((): string => {
