@@ -387,13 +387,9 @@ final class DownloadManager {
         guard let url = URL(string: item.url) else { return }
         var request = URLRequest(url: url)
         // A signed-in download needs the site's cookies, which live in WebKit's store and not in URLSession's.
-        if let cookieStore = dataStore(ofDownload: id)?.httpCookieStore, let host = url.host?.lowercased() {
-            let cookies = await cookieStore.allCookies().filter { cookie in
-                let domain = cookie.domain.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
-                return (host == domain || host.hasSuffix("." + domain)) && url.path.hasPrefix(cookie.path)
-                    && (!cookie.isSecure || url.scheme == "https") && (cookie.expiresDate ?? .distantFuture) > Date()
-            }
-            request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: cookies)
+        if let cookieStore = dataStore(ofDownload: id)?.httpCookieStore {
+            request.httpShouldHandleCookies = false
+            request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: await cookieStore.cookies(for: url))
         }
         let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename)
         // The new row of a private download is forgotten with its space too.
