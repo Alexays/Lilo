@@ -1447,20 +1447,9 @@ extension WKWebViewTab: WKNavigationDelegate {
             return .cancel
         }
 
-        if Self.shouldOpenLinkInBackgroundTab(
-            url: url,
-            isMainFrame: isMainFrame,
-            navigationType: navigationAction.navigationType,
-            modifierFlags: navigationAction.modifierFlags,
-            buttonNumber: navigationAction.buttonNumber
-        ) {
-            // Shift brings the new tab forward, as in Chrome and Safari.
-            delegate?.tab(self, didCreateNewTab: url, inBackground: !navigationAction.modifierFlags.contains(.shift))
-            return .cancel
-        }
-
         // A link with `download`, or Option-clicked as in Safari and Chrome, must download even for viewable MIME types,
-        // where the navigation-response policy would otherwise allow display.
+        // where the navigation-response policy would otherwise allow display. Checked before a Cmd or middle click's new
+        // tab: a blob: or data: link cannot load in another web view.
         let optionClicked = navigationAction.navigationType == .linkActivated
             && navigationAction.modifierFlags.intersection([.option, .command]) == .option
         if navigationAction.shouldPerformDownload || optionClicked {
@@ -1471,6 +1460,18 @@ extension WKWebViewTab: WKNavigationDelegate {
                     """)
             }
             return .download
+        }
+
+        if Self.shouldOpenLinkInBackgroundTab(
+            url: url,
+            isMainFrame: isMainFrame,
+            navigationType: navigationAction.navigationType,
+            modifierFlags: navigationAction.modifierFlags,
+            buttonNumber: navigationAction.buttonNumber
+        ) {
+            // Shift brings the new tab forward, as in Chrome and Safari.
+            delegate?.tab(self, didCreateNewTab: url, inBackground: !navigationAction.modifierFlags.contains(.shift))
+            return .cancel
         }
 
         if isMainFrame, navigationAction.navigationType == .linkActivated, let url, url.scheme == "https" || url.scheme == "http",

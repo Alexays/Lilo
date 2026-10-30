@@ -350,15 +350,25 @@ final class PagePopupTests: XCTestCase {
 
     /// The opener's policy for a click on `href`, handed over as WebKit does: a page cannot fake a
     /// click's modifiers, and a link to an unreachable host may never move the tab.
-    private func decidePolicy(forClickOn href: String, modifierFlags: NSEvent.ModifierFlags = []) throws -> WKNavigationActionPolicy? {
+    private func decidePolicy(
+        forClickOn href: String, modifierFlags: NSEvent.ModifierFlags = [], downloads: Bool = false
+    ) throws -> WKNavigationActionPolicy? {
         let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
         var decision: WKNavigationActionPolicy?
         engine.webView(
             engine.wkWebView,
-            decidePolicyFor: LinkClick(url: try XCTUnwrap(URL(string: href)), modifierFlags: modifierFlags),
+            decidePolicyFor: LinkClick(url: try XCTUnwrap(URL(string: href)), modifierFlags: modifierFlags, downloads: downloads),
             preferences: WKWebpagePreferences()
         ) { policy, _ in decision = policy }
         return decision
+    }
+
+    func testCommandClickOnADownloadLinkDownloadsIt() throws {
+        let tabs = openTabCount
+
+        XCTAssertEqual(try decidePolicy(forClickOn: "https://example.com/report.csv", modifierFlags: .command, downloads: true), .download)
+
+        XCTAssertEqual(openTabCount, tabs)
     }
 
     func testPinnedTabsFollowLinksWhenPeekingIsTurnedOff() throws {
@@ -490,10 +500,12 @@ final class PagePopupTests: XCTestCase {
 private final class LinkClick: WKNavigationAction {
     private let url: URL
     private let flags: NSEvent.ModifierFlags
+    private let downloads: Bool
 
-    init(url: URL, modifierFlags: NSEvent.ModifierFlags) {
+    init(url: URL, modifierFlags: NSEvent.ModifierFlags, downloads: Bool = false) {
         self.url = url
         flags = modifierFlags
+        self.downloads = downloads
         super.init()
     }
 
@@ -501,7 +513,7 @@ private final class LinkClick: WKNavigationAction {
     override var navigationType: WKNavigationType { .linkActivated }
     override var modifierFlags: NSEvent.ModifierFlags { flags }
     override var targetFrame: WKFrameInfo? { nil }
-    override var shouldPerformDownload: Bool { false }
+    override var shouldPerformDownload: Bool { downloads }
 }
 
 @MainActor
