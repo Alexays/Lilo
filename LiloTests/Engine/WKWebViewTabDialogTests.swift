@@ -84,6 +84,42 @@ final class WKWebViewTabDialogTests: XCTestCase {
         XCTAssertTrue(answered, "the page runs on once the alert is answered")
     }
 
+    func testAuthPromptOfABackgroundTabWaitsForTheTabToShow() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let server = try await TinyHTTPServer { _ in
+            ("401 Unauthorized", ["WWW-Authenticate: Basic realm=\"test\"", "Content-Type: text/html"], Data("<p>denied</p>".utf8))
+        }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/"), activate: false))
+
+        let marked = await pollUntil { self.controller.tabManager.tab(for: tab.id)?.awaitingInputSince != nil }
+        XCTAssertTrue(marked, "the sidebar marks the tab as waiting for the user")
+        XCTAssertNil(window.attachedSheet, "no sign-in prompt opens over another tab")
+
+        controller.activateTabStateFirst(id: tab.id)
+
+        let shown = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(shown, "the sign-in prompt shows with its tab")
+    }
+
+    func testCancellingTheAuthPromptShowsTheServersPage() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let server = try await TinyHTTPServer { _ in
+            ("401 Unauthorized", ["WWW-Authenticate: Basic realm=\"test\"", "Content-Type: text/html"], Data("<p>denied</p>".utf8))
+        }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/")))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let asked = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(asked)
+        XCTAssertTrue(sheetTexts(window).contains("Authentication Required"), "\(sheetTexts(window))")
+
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertSecondButtonReturn)
+
+        let shown = await pollUntil {
+            (try? await engine.wkWebView.evaluateJavaScript("document.body?.innerText ?? ''")) as? String == "denied"
+        }
+        XCTAssertTrue(shown, "the server's own 401 page shows")
+    }
+
     func testAlertSaysWhichSiteIsAsking() async throws {
         let window = try XCTUnwrap(controller.window)
         let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))

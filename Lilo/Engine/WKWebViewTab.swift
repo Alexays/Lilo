@@ -1887,8 +1887,10 @@ extension WKWebViewTab: WKNavigationDelegate {
                 let prompt = { [weak self] in
                     DispatchQueue.main.async { [weak self] in
                         MainActor.assumeIsolated {
+                            guard let self else { return completionHandler(.cancelAuthenticationChallenge, nil) }
                             HTTPAuthChallengeHandler().resolve(
-                                challenge, in: self?.webView.window, keychainProfile: self?.webView.configuration.websiteDataStore.identifier,
+                                challenge, keychainProfile: self.webView.configuration.websiteDataStore.identifier,
+                                whenShown: { show in self.runWhenShown { [weak self] in show($0 ? self?.webView.window : nil) } },
                                 completion: completionHandler
                             )
                         }

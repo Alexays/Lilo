@@ -7,13 +7,13 @@ import Foundation
 /// TLS server-trust is handled by the tab directly (it needs the navigation context), not here.
 @MainActor
 struct HTTPAuthChallengeHandler {
-    /// `completion` runs exactly once, on the main actor. The prompt is a sheet on `window`;
-    /// without a window it falls back to an app-modal alert. Saved credentials belong to `keychainProfile`;
-    /// a private data store passes nil, so what is typed there never outlives the session.
+    /// `completion` runs exactly once, on the main actor. The prompt is a sheet on the window `whenShown`
+    /// hands over once the page's tab shows; without one the challenge is cancelled. Saved credentials belong
+    /// to `keychainProfile`; a private data store passes nil, so what is typed there never outlives the session.
     func resolve(
         _ challenge: URLAuthenticationChallenge,
-        in window: NSWindow?,
         keychainProfile: UUID?,
+        whenShown: (@escaping @MainActor (NSWindow?) -> Void) -> Void,
         completion: @escaping @MainActor @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
         let space = challenge.protectionSpace
@@ -27,13 +27,16 @@ struct HTTPAuthChallengeHandler {
             HTTPAuthKeychain.delete(for: space, profileId: keychainProfile)
         }
 
-        prompt(challenge, storedCredential: storedCredential, offersToRemember: keychainProfile != nil, in: window) { credential, remember in
-            guard let credential else {
-                completion(.cancelAuthenticationChallenge, nil)
-                return
+        whenShown { window in
+            guard let window else { return completion(.cancelAuthenticationChallenge, nil) }
+            prompt(challenge, storedCredential: storedCredential, offersToRemember: keychainProfile != nil, in: window) { credential, remember in
+                guard let credential else {
+                    completion(.cancelAuthenticationChallenge, nil)
+                    return
+                }
+                if remember, let keychainProfile { HTTPAuthKeychain.store(credential, for: space, profileId: keychainProfile) }
+                completion(.useCredential, credential)
             }
-            if remember, let keychainProfile { HTTPAuthKeychain.store(credential, for: space, profileId: keychainProfile) }
-            completion(.useCredential, credential)
         }
     }
 
@@ -41,7 +44,7 @@ struct HTTPAuthChallengeHandler {
         _ challenge: URLAuthenticationChallenge,
         storedCredential: URLCredential?,
         offersToRemember: Bool,
-        in window: NSWindow?,
+        in window: NSWindow,
         completion: @escaping @MainActor @Sendable (URLCredential?, Bool) -> Void
     ) {
         let space = challenge.protectionSpace
@@ -89,10 +92,6 @@ struct HTTPAuthChallengeHandler {
                 persistence: .forSession
             ), rememberBox.state == .on)
         }
-        if let window {
-            alert.beginSheetModal(for: window, completionHandler: finish)
-        } else {
-            finish(alert.runModal())
-        }
+        alert.beginSheetModal(for: window, completionHandler: finish)
     }
 }
