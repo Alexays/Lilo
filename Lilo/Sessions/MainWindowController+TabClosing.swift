@@ -17,12 +17,13 @@ extension MainWindowController {
         return item
     }
 
-    /// Opens `tab`'s page again in a new active tab, right below it when the sidebar allows.
+    /// Opens `tab`'s page again, with its history, in a new active tab, right below it when the sidebar allows.
     func duplicateTab(_ tab: Tab) {
         guard let url = tab.url else { return }
         let beside = sidebarItemBeside(tab.id)
         createTabStateFirst(
             url: url,
+            interactionState: tabManager.engineHost.interactionState(for: tab.id),
             sidebarParentFolderId: beside?.parentFolderId,
             sidebarSection: beside?.section,
             sidebarIndex: beside.map { $0.sortOrder + 1 }

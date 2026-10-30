@@ -72,6 +72,31 @@ final class TabClosingTests: XCTestCase {
         XCTAssertEqual(back, ["data:text/html,first"])
     }
 
+    func testADuplicateKeepsTheHistoryOfItsTab() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try await openTab(window, through: ["data:text/html,first", "data:text/html,second"])
+
+        window.duplicateTab(tab)
+
+        let duplicate = try XCTUnwrap(window.tabManager.activeOpenTabId)
+        XCTAssertNotEqual(duplicate, tab.id)
+        let back = try await backPages(window, duplicate, showing: "data:text/html,second")
+        XCTAssertEqual(back, ["data:text/html,first"])
+    }
+
+    func testADuplicateOfADiscardedTabKeepsItsHistory() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try await openTab(window, through: ["data:text/html,first", "data:text/html,second"])
+        window.createTabStateFirst(url: nil)
+        window.tabManager.discardEngine(tab.id)
+
+        window.duplicateTab(try XCTUnwrap(window.tabManager.tab(for: tab.id)))
+
+        let duplicate = try XCTUnwrap(window.tabManager.activeOpenTabId)
+        let back = try await backPages(window, duplicate, showing: "data:text/html,second")
+        XCTAssertEqual(back, ["data:text/html,first"])
+    }
+
     func testRemovingAPinnedTabIsUndonePinnedInItsFolderAtItsPlace() async throws {
         let (window, space) = try makeWindow()
         let events = BridgeEventRecorder(window.bridgeRouter)
