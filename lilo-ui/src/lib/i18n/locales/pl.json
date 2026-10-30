@@ -217,6 +217,10 @@
 				"title": "Ikona aplikacji",
 				"description": "Tylko ikona Klasyczna obsługuje ciemny, barwiony i przezroczysty styl ikon macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Ikona sezonowa",
+				"description": "Świąteczna ikona w okresie świąt takich jak Halloween."
+			},
 			"passwordManager": {
 				"title": "Dodaj menedżer haseł",
 				"installedTitle": "Menedżer haseł",

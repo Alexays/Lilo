@@ -217,6 +217,10 @@
 				"title": "Icona dell'app",
 				"description": "Solo Classica segue gli stili scuro, colorato e trasparente delle icone di macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Icona stagionale",
+				"description": "Un'icona festiva in occasione di feste come Halloween."
+			},
 			"passwordManager": {
 				"title": "Aggiungi un gestore di password",
 				"installedTitle": "Gestore di password",

@@ -217,6 +217,10 @@
 				"title": "アプリアイコン",
 				"description": "macOS のダーク、色合い調整、クリアのアイコンスタイルに対応するのはクラシックのみです。"
 			},
+			"seasonalAppIcon": {
+				"title": "季節のアイコン",
+				"description": "ハロウィンなどの時期に、お祝い仕様のアイコンを表示します。"
+			},
 			"passwordManager": {
 				"title": "パスワードマネージャを追加",
 				"installedTitle": "パスワードマネージャ",

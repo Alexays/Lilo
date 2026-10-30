@@ -217,6 +217,10 @@
 				"title": "App 图标",
 				"description": "仅“经典”图标支持 macOS 的深色、色调和透明图标样式。"
 			},
+			"seasonalAppIcon": {
+				"title": "季节图标",
+				"description": "在万圣节等节日期间显示节日版图标。"
+			},
 			"passwordManager": {
 				"title": "添加密码管理器",
 				"installedTitle": "密码管理器",

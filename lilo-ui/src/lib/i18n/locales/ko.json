@@ -217,6 +217,10 @@
 				"title": "앱 아이콘",
 				"description": "클래식만 macOS의 다크, 색조 및 투명 아이콘 스타일을 따릅니다."
 			},
+			"seasonalAppIcon": {
+				"title": "계절 아이콘",
+				"description": "핼러윈 같은 기념일에 축제 버전 아이콘을 보여줍니다."
+			},
 			"passwordManager": {
 				"title": "암호 관리자 추가",
 				"installedTitle": "암호 관리자",

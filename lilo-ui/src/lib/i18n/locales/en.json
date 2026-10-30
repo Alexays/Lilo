@@ -217,6 +217,10 @@
 				"title": "App icon",
 				"description": "Only Classic follows the macOS dark, tinted and clear icon styles."
 			},
+			"seasonalAppIcon": {
+				"title": "Seasonal icon",
+				"description": "A festive app icon around holidays like Halloween."
+			},
 			"passwordManager": {
 				"title": "Add a password manager",
 				"installedTitle": "Password manager",

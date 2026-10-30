@@ -217,6 +217,10 @@
 				"title": "App-Symbol",
 				"description": "Nur „Klassisch“ unterstützt die macOS-Symbolstile „Dunkel“, „Eingefärbt“ und „Transparent“."
 			},
+			"seasonalAppIcon": {
+				"title": "Saisonales App-Symbol",
+				"description": "Ein festliches App-Symbol rund um Feiertage wie Halloween."
+			},
 			"passwordManager": {
 				"title": "Passwortmanager hinzufügen",
 				"installedTitle": "Passwortmanager",

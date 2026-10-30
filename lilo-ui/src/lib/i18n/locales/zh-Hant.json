@@ -217,6 +217,10 @@
 				"title": "App 圖像",
 				"description": "只有「經典」會配合 macOS 的深色、色調與透明圖像樣式。"
 			},
+			"seasonalAppIcon": {
+				"title": "季節圖像",
+				"description": "在萬聖節等節日期間顯示節日版圖像。"
+			},
 			"passwordManager": {
 				"title": "加入密碼管理工具",
 				"installedTitle": "密碼管理工具",

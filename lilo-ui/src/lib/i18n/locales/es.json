@@ -217,6 +217,10 @@
 				"title": "Icono de la app",
 				"description": "Solo Clásico sigue los estilos de iconos oscuro, teñido y transparente de macOS."
 			},
+			"seasonalAppIcon": {
+				"title": "Icono de temporada",
+				"description": "Un icono festivo en fechas como Halloween."
+			},
 			"passwordManager": {
 				"title": "Añadir un gestor de contraseñas",
 				"installedTitle": "Gestor de contraseñas",
