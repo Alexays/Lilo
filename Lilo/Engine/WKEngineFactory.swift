@@ -618,7 +618,7 @@ final class WKEngineFactory {
         filterScriptsHash = hash
         // Cosmetics are main frame only: the network rule list already catches subframe ads, and the
         // ~100 KB procedural table would otherwise be parsed again in every iframe. An isolated world
-        // keeps the injected <style> clear of the page's CSP.
+        // keeps the cosmetics' sheet clear of the page's CSP.
         let sources: [(String?, Bool, WKContentWorld)] = [
             (scripts.genericCosmetics, true, .defaultClient), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
         ]

@@ -13,6 +13,7 @@ final class PageWorldTests: XCTestCase {
     /// Every own property of the window, its interfaces and their prototypes, and the objects Lilo's modules touch, by
     /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
     private static let probe = #"""
+    const dom = document.documentElement.outerHTML, styleSheets = document.styleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
     const freshToString = fresh.contentWindow.Function.prototype.toString;
@@ -53,7 +54,7 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
     return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
-                            userAgentData: 'userAgentData' in navigator });
+                            userAgentData: 'userAgentData' in navigator, dom, styleSheets });
     """#
 
     private struct Report: Decodable {
@@ -62,6 +63,8 @@ final class PageWorldTests: XCTestCase {
         let userAgent: String
         let vendor: String
         let userAgentData: Bool
+        let dom: String
+        let styleSheets: Int
     }
 
     private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
@@ -79,6 +82,10 @@ final class PageWorldTests: XCTestCase {
 
     func testATabShowsPagesNothingABareWebKitPageDoesNot() async throws {
         let factory = WKEngineFactory()
+        // A site's cosmetics apply at once: their sheet must leave the page's DOM and stylesheets as they are.
+        factory.setFilterTables(rulesTag: nil, rules: nil, scripts: WKEngineFactory.makeFilterScripts(
+            cosmetic: nil, sites: #"{"example.com":[".ad"]}"#, scriptlets: nil, procedural: nil
+        ))
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))
         defer { tab.teardown() }
         // With the console capture an agent's tab runs: it must leave no more trace than the rest.
@@ -115,5 +122,7 @@ final class PageWorldTests: XCTestCase {
                        + WKEngineFactory.safariApplicationName)
         XCTAssertEqual(lilo.vendor, "Apple Computer, Inc.")
         XCTAssertFalse(lilo.userAgentData)
+        XCTAssertEqual(lilo.dom, bare.dom)
+        XCTAssertEqual(lilo.styleSheets, bare.styleSheets)
     }
 }
