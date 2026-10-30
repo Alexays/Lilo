@@ -552,14 +552,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
         bookmarkCurrentTab(nil)
     }
 
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?) {
-        let origin: String = {
-            guard let scheme = pageURL?.scheme, let host = pageURL?.host else { return "unknown" }
-            // URL.port is nil for default-port URLs; PermissionOriginKey treats 0 as "no port",
-            // so default-port pages produce the portless key their stored decisions use.
-            return PermissionOriginKey.build(scheme: scheme, host: host, port: pageURL?.port ?? 0)
-        }()
-        let type = "external-scheme"
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {
+        let origin = origin ?? "unknown"
+        // Per scheme, as in Chrome: letting a site open Zoom does not let it open every other app.
+        let type = "external-scheme:\(url.scheme?.lowercased() ?? "")"
         if let decision = profileContext?.sitePermissions.decision(forOrigin: origin, type: type) {
             if decision { NSWorkspace.shared.open(url) }
             return

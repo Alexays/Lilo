@@ -37,9 +37,9 @@ final class PermissionOriginKeyTests: XCTestCase {
         }
     }
 
-    /// The external-scheme prompt (`MainWindowController+Navigation.launchExternalURL`) derives
-    /// the key from a page `URL`, whose `port` is `nil` (not 0) when no port is written in the
-    /// URL. It feeds `pageURL?.port ?? 0` into the helper; this verifies that convention end to end.
+    /// A committed page's permission cleanup (`MainWindowController+Navigation`) derives the key from
+    /// a page `URL`, whose `port` is `nil` (not 0) when no port is written in the URL. It feeds
+    /// `url.port ?? 0` into the helper; this verifies that convention end to end.
     func testURLDerivedPortConvention() {
         let defaultPortURL = URL(string: "https://x.example/page")!
         XCTAssertNil(defaultPortURL.port, "URL.port must be nil when the URL spells no port")

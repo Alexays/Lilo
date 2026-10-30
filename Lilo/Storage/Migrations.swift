@@ -303,6 +303,11 @@ enum Migrations {
             }
         }
 
+        // An external app decision is per link scheme: one for every scheme cannot say which it was for, so it is asked again.
+        migrator.registerMigration("v4") { db in
+            try db.execute(sql: "DELETE FROM sitePermissions WHERE type = 'external-scheme'")
+        }
+
         try migrator.migrate(db)
     }
 }

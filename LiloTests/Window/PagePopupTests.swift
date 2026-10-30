@@ -498,9 +498,23 @@ final class PagePopupTests: XCTestCase {
         let popup = try XCTUnwrap(controller.pagePopups.values.first)
         let popupWindow = try XCTUnwrap(popup.window)
 
-        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromPage: URL(string: "https://example.com/"))
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromOrigin: "https://example.com")
 
         let sheet = try XCTUnwrap(popupWindow.attachedSheet)
+        popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
+    }
+
+    func testAnExternalAppDecisionHoldsForItsSchemeOnly() async throws {
+        try await openFromPage("width=400,height=300")
+        let popup = try XCTUnwrap(controller.pagePopups.values.first)
+        let popupWindow = try XCTUnwrap(popup.window)
+        try XCTUnwrap(controller.profileContext).sitePermissions.upsert(origin: "https://example.com", type: "external-scheme:zoommtg", granted: false)
+
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "zoommtg://join")), fromOrigin: "https://example.com")
+        XCTAssertNil(popupWindow.attachedSheet, "the site's answer for Zoom links holds")
+
+        controller.tab(popup.engine, launchExternalURL: try XCTUnwrap(URL(string: "slack://open")), fromOrigin: "https://example.com")
+        let sheet = try XCTUnwrap(popupWindow.attachedSheet, "another app is asked for, as in Chrome")
         popupWindow.endSheet(sheet, returnCode: .alertSecondButtonReturn)
     }
 

@@ -1423,6 +1423,7 @@
 		"location": "位置",
 		"notifications": "通知",
 		"ask": "詢問",
+		"externalScheme": "開啟 {scheme} 連結",
 		"allow": "允許",
 		"block": "封鎖",
 		"reset": "重設"

@@ -1423,6 +1423,7 @@
 		"location": "Konum",
 		"notifications": "Bildirimler",
 		"ask": "Sor",
+		"externalScheme": "{scheme} bağlantılarını açma",
 		"allow": "İzin Ver",
 		"block": "Engelle",
 		"reset": "Sıfırla"

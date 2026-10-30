@@ -1433,6 +1433,7 @@
 		"location": "Położenie",
 		"notifications": "Powiadomienia",
 		"ask": "Pytaj",
+		"externalScheme": "Otwieranie linków {scheme}",
 		"allow": "Zezwól",
 		"block": "Blokuj",
 		"reset": "Wyzeruj"

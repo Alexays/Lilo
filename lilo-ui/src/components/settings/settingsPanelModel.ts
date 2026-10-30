@@ -420,6 +420,14 @@ export interface SiteSummary {
   zoomLevels: BridgeZoomLevelSnapshot[];
 }
 
+/** A stored decision's label; an external app's type names the link scheme it covers ("external-scheme:zoommtg"). */
+export function sitePermissionLabel(type: string, translate: (key: string, params?: Record<string, string | number>) => string): string {
+  const scheme = type.startsWith("external-scheme:") ? type.slice("external-scheme:".length) : null;
+  return scheme === null
+    ? translate(`sitePermissions.${type}`)
+    : translate("sitePermissions.externalScheme", { scheme: `${scheme}:` });
+}
+
 function hostOf(origin: string): string {
   try {
     return new URL(origin).hostname.toLowerCase();

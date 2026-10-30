@@ -1433,6 +1433,7 @@
 		"location": "Геопозиція",
 		"notifications": "Сповіщення",
 		"ask": "Питати",
+		"externalScheme": "Відкриття посилань {scheme}",
 		"allow": "Дозволити",
 		"block": "Блокувати",
 		"reset": "Скинути"

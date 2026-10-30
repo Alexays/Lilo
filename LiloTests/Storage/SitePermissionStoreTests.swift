@@ -62,6 +62,25 @@ final class SitePermissionStoreTests: XCTestCase {
         }
     }
 
+    func testUpgradingDropsExternalAppDecisionsThatNamedNoScheme() throws {
+        let pool = try DatabasePool(path: NSTemporaryDirectory() + UUID().uuidString + ".db")
+        try Migrations.migrateProfile(pool)
+        try pool.write { db in
+            try db.execute(sql: "DELETE FROM grdb_migrations WHERE identifier = 'v4'")
+            for type in ["external-scheme", "external-scheme:zoommtg", "location"] {
+                try db.execute(
+                    sql: "INSERT INTO sitePermissions (id, origin, type, decision, updatedAt) VALUES (?, 'https://example.com', ?, 'allow', ?)",
+                    arguments: [UUID().uuidString, type, Date()]
+                )
+            }
+        }
+
+        try Migrations.migrateProfile(pool)
+
+        let types = SitePermissionStore(dbPool: pool).allPermissions().map(\.type).sorted()
+        XCTAssertEqual(types, ["external-scheme:zoommtg", "location"], "an app decision for every scheme is asked again, per scheme")
+    }
+
     // MARK: - upsert
 
     func testUpsertOverwritesExistingDecision() {

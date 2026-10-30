@@ -1423,6 +1423,7 @@
 		"location": "Locatie",
 		"notifications": "Meldingen",
 		"ask": "Vraag",
+		"externalScheme": "{scheme}-links openen",
 		"allow": "Sta toe",
 		"block": "Blokkeer",
 		"reset": "Stel opnieuw in"

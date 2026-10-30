@@ -1423,6 +1423,7 @@
 		"location": "Localização",
 		"notifications": "Notificações",
 		"ask": "Perguntar",
+		"externalScheme": "Abrir links {scheme}",
 		"allow": "Permitir",
 		"block": "Bloquear",
 		"reset": "Redefinir"

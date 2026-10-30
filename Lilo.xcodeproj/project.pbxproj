@@ -176,6 +176,7 @@
 		4914B8F46DE28B83AC7723F0 /* SearchBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14320C179015732A2B1775D /* SearchBridgeHandlerTests.swift */; };
 		49394FED0A83BF9BC70F9FA7 /* SpaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA0B491588CDFD138D534C43 /* SpaceManager.swift */; };
 		49522518C2DD3AD730F46358 /* arc-storable-sidebar.json in Resources */ = {isa = PBXBuildFile; fileRef = BFFE0215E62DF39CA5A5BA91 /* arc-storable-sidebar.json */; };
+		49F6074A63CE8742F624B993 /* WKWebViewTabNavigationPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B88189CA5154455C4382892 /* WKWebViewTabNavigationPolicyTests.swift */; };
 		4A32E59C78B5B6C9B091D071 /* Scriptlets.js in Resources */ = {isa = PBXBuildFile; fileRef = E45027F84778FF66E330D01E /* Scriptlets.js */; };
 		4A358455003A370150ADCEBF /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 95EC3B76D8ACF6B44D4E67DE /* AppIcon.icon */; };
 		4A95DA111D4E4775A954D9A6 /* PowerBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104DADCADD6B7B7671BDAE0F /* PowerBridgeHandler.swift */; };
@@ -854,6 +855,7 @@
 		292F5F7373D512DF94EAB7C2 /* AppShortcuts.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = AppShortcuts.strings; path = ko.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		29F8A3E02FAD20294119950A /* ExtensionPageNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPageNavigationTests.swift; sourceTree = "<group>"; };
 		2B1C3FDFB052BFDCE12B8834 /* FeatureFlagsBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsBridgeHandler.swift; sourceTree = "<group>"; };
+		2B88189CA5154455C4382892 /* WKWebViewTabNavigationPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabNavigationPolicyTests.swift; sourceTree = "<group>"; };
 		2BAF3FA7CB946F4AEC598E44 /* TabExtensionEventsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabExtensionEventsTests.swift; sourceTree = "<group>"; };
 		2BF1B068EE38071BDC4C8801 /* MainWindowController+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+Extensions.swift"; sourceTree = "<group>"; };
 		2BF2A6D8AA9663C63227724B /* TemporaryProfileDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryProfileDatabase.swift; sourceTree = "<group>"; };
@@ -2409,6 +2411,7 @@
 				C94999EE51194B9498EE4D42 /* WKWebViewTabDialogTests.swift */,
 				C989F8C73AF90F446FE6EB8C /* WKWebViewTabFileAccessTests.swift */,
 				24395920E5020A85C239D981 /* WKWebViewTabLoggingTests.swift */,
+				2B88189CA5154455C4382892 /* WKWebViewTabNavigationPolicyTests.swift */,
 				97A54DFDCAE5F4C28B2880DD /* WKWebViewTabPrintTests.swift */,
 				6927B2D3B13F62F69A3A4523 /* WKWebViewTabSourceTests.swift */,
 				960DFFCE802FDF5C7EAE7DA7 /* WKWebViewTabTeardownTests.swift */,
@@ -3524,6 +3527,7 @@
 				7AF2C33D32037C5570EECB05 /* WKWebViewTabDialogTests.swift in Sources */,
 				58B9E18E2805822BF212FFBD /* WKWebViewTabFileAccessTests.swift in Sources */,
 				B2A7CD0EC82D30EA10A1E0D7 /* WKWebViewTabLoggingTests.swift in Sources */,
+				49F6074A63CE8742F624B993 /* WKWebViewTabNavigationPolicyTests.swift in Sources */,
 				60C7C5B67B46EA345AD157A6 /* WKWebViewTabPrintTests.swift in Sources */,
 				E3FCB3DD20185E64FB3652A3 /* WKWebViewTabSourceTests.swift in Sources */,
 				A4061B705534BA0A2B0D902D /* WKWebViewTabTeardownTests.swift in Sources */,

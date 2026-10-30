@@ -1423,6 +1423,7 @@
 		"location": "위치",
 		"notifications": "알림",
 		"ask": "묻기",
+		"externalScheme": "{scheme} 링크 열기",
 		"allow": "허용",
 		"block": "차단",
 		"reset": "재설정"

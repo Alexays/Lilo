@@ -85,7 +85,8 @@ final class WKWebViewTab: NSObject {
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
         func tabRequestsBookmark(_ tab: WKWebViewTab)
         /// A non-web scheme (mailto:, tel:, slack:, ...) wants to open in an external app, pending user confirmation.
-        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?)
+        /// `origin` is the permission origin of the frame that asked, nil when it has none.
+        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?)
         /// The loaded document's link icons, in document order. Every icon's `decide` must be called once.
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
@@ -1429,7 +1430,7 @@ extension WKWebViewTab.Delegate {
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?) {}
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
     func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool { false }
@@ -1560,7 +1561,10 @@ extension WKWebViewTab: WKNavigationDelegate {
 
         // Non-web schemes (slack://, mailto:, ...) route to the delegate, which confirms before launching so a page can't silently open other apps.
         if let url, let scheme = url.scheme?.lowercased(), !Self.webSchemes.contains(scheme) {
-            delegate?.tab(self, launchExternalURL: url, fromPage: webView.url)
+            // The frame that asked, as Chrome keys these decisions: a frame does not speak for the page embedding it.
+            // A load Lilo starts may come without one, whatever the header says.
+            let initiator = (navigationAction.sourceFrame as WKFrameInfo?)?.securityOrigin
+            delegate?.tab(self, launchExternalURL: url, fromOrigin: initiator.flatMap { $0.host.isEmpty ? nil : $0.permissionOriginKey })
             return .cancel
         }
 

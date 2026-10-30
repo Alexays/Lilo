@@ -1423,6 +1423,7 @@
 		"location": "位置情報",
 		"notifications": "通知",
 		"ask": "確認する",
+		"externalScheme": "{scheme} リンクを開く",
 		"allow": "許可",
 		"block": "ブロック",
 		"reset": "リセット"
