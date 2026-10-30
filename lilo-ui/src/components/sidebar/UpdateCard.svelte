@@ -74,7 +74,15 @@
     padding: 1px;
     border-radius: var(--radius-md);
     isolation: isolate;
+    container-type: inline-size;
     animation: update-rise 520ms var(--motion-ease-bounce) both;
+  }
+
+  /* A narrow sidebar keeps its room for the version and the Restart button. */
+  @container (max-width: 230px) {
+    .update-icon {
+      display: none;
+    }
   }
 
   /* A light runs once around the edge as the card lands, then rests as an accent hairline. */
@@ -162,11 +170,16 @@
     display: flex;
     align-items: baseline;
     gap: 6px;
+    min-width: 0;
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
   }
 
   .update-version {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 1px 6px;
     border-radius: var(--radius-chip);
     background: var(--accent-tint-14);
