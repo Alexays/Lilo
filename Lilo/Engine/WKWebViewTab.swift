@@ -263,6 +263,7 @@ final class WKWebViewTab: NSObject {
     private var sampledPageTopColor: NSColor?
     /// Bumped on every page color update: a capture of the top edge answers only for the page it was taken of.
     private var pageEdgeCapture = 0
+    private var pageColorRecapture: Task<Void, Never>?
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
@@ -1016,10 +1017,18 @@ final class WKWebViewTab: NSObject {
     }
 
     /// WebKit samples the top edge only when a page loads: a page changed by script since is read off its pixels.
+    /// Route changes come in bursts (a scroll-spy rewriting the hash as the page scrolls): one capture once they settle.
     private func recapturePageColor() {
         guard !webView.isLoading, lastNavigationEmissionState.pageColor != nil else { return }
-        sampledPageTopColor = nil
-        emitPageColor(loaded: true)
+        pageColorRecapture?.cancel()
+        let capture = pageEdgeCapture
+        pageColorRecapture = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            // A load or a color update since speaks for the page instead.
+            guard let self, !Task.isCancelled, capture == pageEdgeCapture, !webView.isLoading else { return }
+            sampledPageTopColor = nil
+            emitPageColor(loaded: true)
+        }
     }
 
     private func sendPageColor(_ color: String?) {
