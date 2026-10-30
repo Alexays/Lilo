@@ -43,4 +43,26 @@ final class InteractionStateRestoreTests: XCTestCase {
         let pool = try browserContext.context.dbManager.pool(for: space.profileId)
         XCTAssertNotNil(try InteractionStateStore(dbPool: pool).load(spaceId: space.id)[background.id])
     }
+
+    /// A crash keeps the URL saved on the last commit but the history saved long before it.
+    func testAStateSavedBeforeTheTabsLastPageStillOpensThatPage() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        try await load("data:text/html,old", in: engine)
+        let staleState = try XCTUnwrap(engine.interactionState)
+        try await load("data:text/html,latest", in: engine)
+        window.createTabStateFirst(url: nil)
+        window.tabManager.discardEngine(tab.id)
+        // As a relaunch reads it from the profile database.
+        let archived = ArchivedInteractionState(data: try XCTUnwrap(InteractionStateCodec.encode(staleState)))
+        window.tabManager.engineHost.saveInteractionState(archived, for: tab.id)
+
+        window.tabManager.activateTabRuntime(id: tab.id)
+
+        let woken = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        let shown = await pollUntil(timeout: 10) { woken.wkWebView.url?.absoluteString == "data:text/html,latest" && !woken.wkWebView.isLoading }
+        XCTAssertTrue(shown, "the tab opens the page the sidebar shows")
+        XCTAssertEqual(woken.wkWebView.backForwardList.backList.map(\.url.absoluteString), ["data:text/html,old"], "the saved history stays behind it")
+    }
 }

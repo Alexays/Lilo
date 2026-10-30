@@ -495,6 +495,8 @@ final class TabManager {
         // A state with no page (a blank tab, or a page whose first load failed) loads the tab's URL instead.
         let savedState = engineHost.consumeSavedInteractionState(for: id)
         if let savedState, requestedURL == nil, engine.extensionHost == nil, engine.restoreInteractionState(savedState) {
+            // A state saved before a crash can stop short of the tab's page: that page loads on top of its history.
+            if let url = tab.url, engine.wkWebView.backForwardList.currentItem?.url != url { engine.loadURL(url) }
             updateTab(id: id) { $0.isLoading = engine.isLoading }
         } else if let url = loadURL {
             engine.loadURL(url); updateTab(id: id) { $0.isLoading = true }
