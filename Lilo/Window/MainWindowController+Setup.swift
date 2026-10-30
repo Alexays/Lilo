@@ -525,7 +525,11 @@ extension MainWindowController {
             zoomStoreProvider: { [weak self] in self?.profileContext?.zoom },
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             extensionRegistryProvider: { [weak self] in self?.profileContext?.extensions },
-            dataStoreProvider: { [weak tabManager] in tabManager?.dataStore },
+            // The profile's own store, never a private space's ephemeral one: the clear-data page acts on the profile.
+            dataStoreProvider: { [weak self] in
+                guard let self, let profileId = profileContext?.profileId else { return nil }
+                return context.profileManager.dataStore(for: profileId)
+            },
             lifecycleDiagnosticsProvider: { [weak self] in self?.context.browserState.lifecycleDiagnostics() },
             extensionDiagnosticsProvider: { [weak self] in self?.extensionDiagnosticsSnapshots() ?? [] },
             forceLifecycleTrimHandler: { [weak self] in self?.context.hiddenSpaceLifecycle.forceTrim() },

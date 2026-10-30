@@ -58,4 +58,27 @@ final class SettingsBrowsingDataTests: XCTestCase {
         XCTAssertEqual(completed["action"] as? String, "clearBrowsingData")
         XCTAssertEqual(completed["level"] as? String, "info")
     }
+
+    func testClearingFromAPrivateSpaceClearsTheProfile() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "Private", profileId: profileId, isPrivate: true)
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.close() }
+        let cookieStore = context.profileManager.dataStore(for: profileId).backingStore.httpCookieStore
+        await cookieStore.setCookie(try XCTUnwrap(HTTPCookie(properties: [
+            .domain: "example.com", .path: "/", .name: "sid", .value: "1", .expires: Date(timeIntervalSinceNow: 3600)
+        ])))
+
+        window.setupBridgeLate()
+        let handler = try XCTUnwrap(window.bridgeRouter.handlers["clearBrowsingData"])
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "clearBrowsingData", "payload": ["kinds": ["cookies"], "range": "all"]
+        ])))
+
+        let remaining = await cookieStore.allCookies()
+        XCTAssertEqual(remaining.map(\.name), [], "the profile's cookies outlive a clear made from its private space")
+    }
 }
