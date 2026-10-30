@@ -1,6 +1,7 @@
 // Keyboard shortcuts and menu actions.
 
 import AppKit
+import UniformTypeIdentifiers
 import WebKit
 
 extension MainWindowController {
@@ -145,23 +146,29 @@ extension MainWindowController {
     @objc func printCurrentPage(_ sender: Any?) { focusedEngineTab?.printPage(in: window) }
 
     @objc func savePageAs(_ sender: Any?) {
-        guard let window, let webView = tabManager.activeEngineTab?.wkWebView, webView.url != nil else { return }
+        guard let window, let webView = tabManager.activeEngineTab?.wkWebView, let pageURL = webView.url else { return }
+        let page = WebViewPrivateAccessors(webView)
+        // A PDF, an image or any other document WebKit shows as is saves as the bytes it loaded, under its own name.
+        // A web page saves as a web archive: a paginated PDF of it is the print panel's.
+        let mimeType = page.string("_MIMEType") ?? "text/html"
+        let isWebPage = mimeType == "text/html" || mimeType == "application/xhtml+xml"
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.webArchive, .pdf]
-        panel.showsContentTypes = true
-        let title = (webView.title?.isEmpty == false ? webView.title : webView.url?.host()) ?? "Page"
+        panel.allowedContentTypes = [isWebPage ? .webArchive : UTType(mimeType: mimeType) ?? .data]
+        let fileName = pageURL.lastPathComponent
+        let title = !isWebPage && !fileName.isEmpty && fileName != "/" ? fileName
+            : (webView.title?.isEmpty == false ? webView.title : pageURL.host()) ?? "Page"
         panel.nameFieldStringValue = title.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let url = panel.url else { return }
-            let asPDF = panel.currentContentType == .pdf
             Task { @MainActor in
                 do {
-                    let data: Data
-                    if asPDF {
-                        data = try await webView.pdf()
-                    } else {
-                        data = try await withCheckedThrowingContinuation { continuation in
+                    let data: Data = try await withCheckedThrowingContinuation { continuation in
+                        if isWebPage {
                             webView.createWebArchiveData { continuation.resume(with: $0) }
+                        } else if !page.mainResourceData(completion: { data in
+                            continuation.resume(with: data.map(Result.success) ?? .failure(CocoaError(.fileReadUnknown)))
+                        }) {
+                            continuation.resume(throwing: CocoaError(.featureUnsupported))
                         }
                     }
                     try data.write(to: url, options: .atomic)

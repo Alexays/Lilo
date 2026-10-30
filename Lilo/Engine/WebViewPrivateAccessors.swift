@@ -52,6 +52,13 @@ struct WebViewPrivateAccessors {
         return (unsafeBitCast(imp, to: ObjectMethod.self)(object, selector)?.takeUnretainedValue() as? URL)?.absoluteString
     }
 
+    /// Reads a private string-returning selector (e.g. `_MIMEType`).
+    func string(_ name: String) -> String? {
+        guard let (selector, imp) = method(name) else { return nil }
+        typealias ObjectMethod = @convention(c) (NSObject, Selector) -> Unmanaged<AnyObject>?
+        return unsafeBitCast(imp, to: ObjectMethod.self)(object, selector)?.takeUnretainedValue() as? String
+    }
+
     /// Invokes a private one-argument `(unsigned)` setter (e.g. `_setPageMuted:`). No-ops if absent.
     func setUInt(_ name: String, _ value: UInt) {
         guard let (selector, imp) = method(name) else { return }

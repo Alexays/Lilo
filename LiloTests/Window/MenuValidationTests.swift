@@ -171,6 +171,29 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertEqual(item.title, "Show Reader".localized)
     }
 
+    func testSaveAsOffersAPDFUnderItsOwnNameAndType() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        let pdf = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100)).dataWithPDF(inside: NSRect(x: 0, y: 0, width: 200, height: 100))
+        let pdfURL = try XCTUnwrap(URL(string: "https://example.com/files/report.pdf"))
+        webView.load(pdf, mimeType: "application/pdf", characterEncodingName: "", baseURL: pdfURL)
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url == pdfURL }
+
+        window.savePageAs(nil)
+
+        let panel = try XCTUnwrap(window.window?.attachedSheet as? NSSavePanel)
+        XCTAssertEqual(panel.nameFieldStringValue, "report.pdf")
+        XCTAssertEqual(panel.allowedContentTypes, [.pdf])
+        // Saving would write to the panel's last folder, out of the test's reach: the bytes it writes are the main resource's.
+        window.window?.endSheet(panel, returnCode: .cancel)
+        let original: Data? = await withCheckedContinuation { continuation in
+            if !WebViewPrivateAccessors(webView).mainResourceData(completion: { continuation.resume(returning: $0) }) {
+                continuation.resume(returning: nil)
+            }
+        }
+        XCTAssertEqual(original, pdf)
+    }
+
     func testTheReaderLeavesThePageNoGlobal() async throws {
         let webView = WKWebView()
         let paragraph = "<p>" + String(repeating: "A sentence long enough to read as an article, with commas, and more. ", count: 12) + "</p>"
