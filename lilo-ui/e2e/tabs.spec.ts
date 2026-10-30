@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, SPACE_1, SPACE_2 } from "./fixtures";
 import { tab, treeItem } from "../src/stores/testFixtures";
@@ -120,6 +120,53 @@ test("the New Tab row stays while a terminal is the active tab", async ({ page }
 	await bootChrome(page, world);
 
 	await expect(page.locator(".space-pane").nth(0).locator(".new-tab-line .new-tab-row")).toBeVisible();
+});
+
+// A Space with nothing open: its only tab is blank, so dismissing the bar cannot close it.
+async function bootOnALoneBlankTab(page: Page): Promise<void> {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = [tab("tab-blank", SPACE_1, { url: "", title: "" })];
+	world.treeItemsBySpace[SPACE_1] = [treeItem("tab-blank", SPACE_1, 0)];
+	world.activeTabBySpace[SPACE_1] = "tab-blank";
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar", newTab: true }));
+	await page.locator(".command-bar-input").press("Escape");
+	await expect(page.locator(".command-bar-input")).toHaveCount(0);
+}
+
+test("Command-T brings the bar back on a Space's lone blank tab", async ({ page }) => {
+	await bootOnALoneBlankTab(page);
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "toggleNewTab" }));
+
+	await expect(page.locator(".command-bar-input")).toBeFocused();
+	expect((await sentCommands(page)).some((c) => c.action === "closeTab")).toBe(false);
+});
+
+test("clicking a Space's lone blank tab brings the bar back, with one New Tab row and no close button", async ({ page }) => {
+	await bootOnALoneBlankTab(page);
+	const pane = page.locator(".space-pane").nth(0);
+	await expect(pane.locator(".new-tab-line .new-tab-row")).toHaveCount(0);
+	// Closing it would do nothing: native keeps a Space's last blank tab.
+	await expect(pane.locator('[data-tab-id="tab-blank"] .close-btn')).not.toHaveClass(/visible/);
+
+	await pane.locator('[data-tab-id="tab-blank"]').click();
+
+	await expect(page.locator(".command-bar-input")).toBeFocused();
+	expect((await sentCommands(page)).some((c) => c.action === "createTab")).toBe(false);
+});
+
+test("a Space's lone Changes tab is not taken for a blank one", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1] = [tab("tab-changes", SPACE_1, { url: "", title: "Changes", kind: "changes" })];
+	world.treeItemsBySpace[SPACE_1] = [treeItem("tab-changes", SPACE_1, 0)];
+	world.activeTabBySpace[SPACE_1] = "tab-changes";
+	await bootChrome(page, world);
+	const row = page.locator(".space-pane").nth(0).locator('[data-tab-id="tab-changes"]');
+
+	await expect(row.locator(".close-btn")).toHaveClass(/visible/);
+	await row.click();
+	await expect(page.locator(".command-bar-input")).toHaveCount(0);
 });
 
 test("the terminal button beside New Tab sits on the close buttons' column", async ({ page }) => {
