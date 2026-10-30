@@ -3,7 +3,7 @@ import GRDB
 import os
 
 /// Per-profile store of `WKWebView.interactionState` blobs (back/forward list, scroll, form state) keyed by space and tab, so a relaunch
-/// restores tabs to their prior navigation state. The caller bounds the scope (active tab plus a capped recent set).
+/// restores tabs to their prior navigation state. The caller bounds the scope (live pages plus a capped recent set).
 struct InteractionStateStore: Sendable {
     private let dbPool: DatabasePool
 

@@ -278,6 +278,7 @@
 		70D08C1CCA01AB0B13F6614B /* BridgeEventRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5F4AFB0C021C061B8906E5 /* BridgeEventRecorder.swift */; };
 		70F4AD3EC63069401C8691CA /* BridgeRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1DEF333D02A932AD84ED0A /* BridgeRouterTests.swift */; };
 		71393DAB603A712EF14BD52D /* PageWorldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8074AC7DF9DEC16F56B5BFB3 /* PageWorldTests.swift */; };
+		714A318DC9BFE492C65D0DB1 /* InteractionStateRestoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA71CC882B7A32DDBC90DF1 /* InteractionStateRestoreTests.swift */; };
 		717E773EBC0116FE4EB837C3 /* ExtensionUpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99A7333A1D83DE4DE198A1A /* ExtensionUpdateChecker.swift */; };
 		7184FE5D8274DC0CF5F15450 /* CaptureUsageObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36638B06A4A888385340A81E /* CaptureUsageObserverTests.swift */; };
 		720EEDBF9BC1B4E69E487858 /* TraditionalChineseLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6E4C686494304EB3C12561 /* TraditionalChineseLocalizationTests.swift */; };
@@ -987,6 +988,7 @@
 		5D72B3E33445B63A003F70B0 /* ChangesHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangesHost.swift; sourceTree = "<group>"; };
 		5DBF17D32BB4F1F2E2524061 /* ChromeUIAssets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeUIAssets.swift; sourceTree = "<group>"; };
 		5E6E4C686494304EB3C12561 /* TraditionalChineseLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TraditionalChineseLocalizationTests.swift; sourceTree = "<group>"; };
+		5EA71CC882B7A32DDBC90DF1 /* InteractionStateRestoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InteractionStateRestoreTests.swift; sourceTree = "<group>"; };
 		5EB779EF73598ABBDB5152BF /* RuntimeGapAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeGapAPITests.swift; sourceTree = "<group>"; };
 		5EC75FECC2F2B242F8F8504A /* WKExtensionAPIAuditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKExtensionAPIAuditTests.swift; sourceTree = "<group>"; };
 		5ED18CBF566C8BA6B5753F0C /* ChromeAPIShimTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeAPIShimTests.swift; sourceTree = "<group>"; };
@@ -1762,6 +1764,7 @@
 		4BA4217C8D163F93ED914079 /* Sessions */ = {
 			isa = PBXGroup;
 			children = (
+				5EA71CC882B7A32DDBC90DF1 /* InteractionStateRestoreTests.swift */,
 				947CC450B0D91201DCD69180 /* RestoredTabActivationTests.swift */,
 				57AEC88F04C1DC1D3BF3EBFC /* SessionRestorePreloadTests.swift */,
 				04401EEF80AB6F0D56B687F8 /* TabClosingTests.swift */,
@@ -3351,6 +3354,7 @@
 				C8168E697B338520898C5BA4 /* ImportScaleTests.swift in Sources */,
 				177D8B9236E02C600185E430 /* InitialStateCommandBarTests.swift in Sources */,
 				9F575C7A5DB240BC0B070255 /* InjectedScriptsBenchmarkTests.swift in Sources */,
+				714A318DC9BFE492C65D0DB1 /* InteractionStateRestoreTests.swift in Sources */,
 				A534406302519A4A35D73002 /* InteractionStateStoreTests.swift in Sources */,
 				F1AB7E6994363208511270C5 /* ItalianLocalizationTests.swift in Sources */,
 				92C7182161DFA096A7489A2A /* JapaneseLocalizationTests.swift in Sources */,

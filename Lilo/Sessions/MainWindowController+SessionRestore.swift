@@ -516,11 +516,10 @@ extension MainWindowController {
               let space = context.spaceManager?.space(with: spaceId), !space.isPrivate,
               let pool = try? context.poolReportingFailure(for: space.profileId) else { return }
 
+        // Every live page, whose count the engine budget bounds, then the most recently discarded ones.
         var states: [UUID: Any] = [:]
-        if let activeId = tabManager.activeOpenTabId,
-           let engine = tabManager.engineTab(for: activeId),
-           let state = engine.interactionState {
-            states[activeId] = state
+        for tabId in tabManager.engineHost.liveEngineIds {
+            states[tabId] = tabManager.engineTab(for: tabId)?.interactionState
         }
         for (tabId, state) in tabManager.engineHost.recentSavedInteractionStates(
             limit: Self.maxPersistedInteractionStatesPerSpace
