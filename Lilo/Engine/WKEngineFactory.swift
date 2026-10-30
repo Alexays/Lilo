@@ -361,7 +361,7 @@ final class WKEngineFactory {
                 Self.logger.fault("Non-UUID data store identifier \(identifier, privacy: .public); using the default persistent store")
                 return sharedDefaultDataStore
             }
-            let store = applyingTrackingPrevention(to: WKWebsiteDataStore(forIdentifier: uuid))
+            let store = applyingTrackingPrevention(to: Self.persistentDataStore(for: uuid))
             return WKEngineDataStore(backingStore: store, identifier: "persistent:\(identifier)")
         } else if persistent {
             return sharedDefaultDataStore
@@ -372,6 +372,33 @@ final class WKEngineFactory {
     }
 
     func defaultDataStore() -> WKEngineDataStore { sharedDefaultDataStore }
+
+    private static let persistentDataStores = NSMapTable<NSUUID, WKWebsiteDataStore>.strongToWeakObjects()
+
+    /// A profile's store, with a browser's storage quotas (60% of the disk per origin, 80% in all) where WebKit gives any other app
+    /// 15% and 20%. Every caller shares it: WebKit would open a second store on the same identifier, splitting its data.
+    static func persistentDataStore(for identifier: UUID) -> WKWebsiteDataStore {
+        if let store = persistentDataStores.object(forKey: identifier as NSUUID) { return store }
+        let alloc = NSSelectorFromString("alloc")
+        let initWithIdentifier = NSSelectorFromString("initWithIdentifier:"), initWithConfiguration = NSSelectorFromString("_initWithConfiguration:")
+        var store = WKWebsiteDataStore?.none
+        if let configurationClass = NSClassFromString("_WKWebsiteDataStoreConfiguration") as? NSObject.Type,
+           configurationClass.instancesRespond(to: initWithIdentifier),
+           configurationClass.instancesRespond(to: NSSelectorFromString("setOriginQuotaRatio:")),
+           configurationClass.instancesRespond(to: NSSelectorFromString("setTotalQuotaRatio:")),
+           WKWebsiteDataStore.instancesRespond(to: initWithConfiguration),
+           // alloc hands over its reference, which init returns: the result is taken unretained.
+           let configuration = configurationClass.perform(alloc).takeRetainedValue()
+               .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
+            configuration.setValue(0.6, forKey: "originQuotaRatio")
+            configuration.setValue(0.8, forKey: "totalQuotaRatio")
+            store = WKWebsiteDataStore.perform(alloc).takeRetainedValue()
+                .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
+        }
+        let resolved = store ?? WKWebsiteDataStore(forIdentifier: identifier)
+        persistentDataStores.setObject(resolved, forKey: identifier as NSUUID)
+        return resolved
+    }
 
     @discardableResult
     private func applyingTrackingPrevention(to store: WKWebsiteDataStore) -> WKWebsiteDataStore {

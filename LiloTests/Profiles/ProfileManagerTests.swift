@@ -139,6 +139,14 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertTrue(removed, "the deleted profile's cookies and site storage stay on disk")
     }
 
+    /// The store is built with a browser's storage quotas; the test host always gets those, so only its sharing is checked here.
+    func testExtensionsAndTabsShareTheProfilesDataStore() throws {
+        let profile = try manager.createProfile(name: "Shared")
+        let extensionStore = WKEngineFactory.persistentDataStore(for: profile.id)
+        XCTAssertTrue(manager.dataStore(for: profile.id).backingStore === extensionStore)
+        XCTAssertTrue(WKWebsiteDataStore(forIdentifier: profile.id) === extensionStore)
+    }
+
     func testActivateProfileCachesIdInUserDefaults() throws {
         let profile = try manager.createProfile(name: "Cached")
 
