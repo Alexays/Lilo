@@ -114,16 +114,16 @@ extension MainWindowController {
     }
 
     func setSidebarCollapseLocked(_ locked: Bool) {
+        guard locked != sidebarCollapseLocked else { return }
         sidebarCollapseLocked = locked
 
-        if locked && !sidebarVisible {
-            sidebarVisible = true
-            sidebarOverlayVisible = false
-            context.settingsStore.sidebarVisible = true
-            UserDefaults.lilo.set(true, forKey: "cachedSidebarVisible")
-            applySidebarLayout(animated: true, syncTrafficLights: true)
-            bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": true, "width": sidebarExpandedWidth])
-        }
+        // A panel shows a hidden sidebar only while it is open: the choice stays unpersisted and is restored on close.
+        guard locked ? !sidebarVisible : sidebarRevealedByLock else { return }
+        sidebarRevealedByLock = locked
+        sidebarVisible = locked
+        sidebarOverlayVisible = false
+        applySidebarLayout(animated: true, syncTrafficLights: true)
+        bridgeRouter.send(event: "sidebarVisibilityChanged", data: ["visible": locked, "width": sidebarExpandedWidth])
     }
 
     func toggleToolbar() {

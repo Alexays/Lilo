@@ -240,6 +240,7 @@ final class MainWindowController: NSWindowController {
     var tabLayout = TabLayout.cached
     var sidebarOverlayVisible = false
     var sidebarCollapseLocked = false
+    var sidebarRevealedByLock = false
     var restoredStartupSpaceIdsByProfile: [UUID: [String: UUID]] = [:]
     var storedWindowBackgroundColor: String?
     /// Set while the chrome shows a Space that follows the wallpaper.
