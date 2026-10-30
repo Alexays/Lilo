@@ -241,7 +241,7 @@
 			},
 			"language": {
 				"title": "Langue",
-				"description": "Langue de l'interface du navigateur.",
+				"description": "Langue de l'interface du navigateur. Les menus et dialogues changent au prochain lancement de Lilo.",
 				"keywords": "traduction anglais français espagnol chinois simplifié portugais brésil russe ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {

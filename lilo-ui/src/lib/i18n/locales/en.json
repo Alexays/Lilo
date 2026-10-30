@@ -241,7 +241,7 @@
 			},
 			"language": {
 				"title": "Language",
-				"description": "Language used across the browser interface.",
+				"description": "Language used across the browser interface. Menus and dialogs switch when Lilo restarts.",
 				"keywords": "locale translation english french spanish chinese simplified portuguese brazil russian ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {

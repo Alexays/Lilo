@@ -241,7 +241,7 @@
 			},
 			"language": {
 				"title": "Taal",
-				"description": "Taal van de browserinterface.",
+				"description": "Taal van de browserinterface. Menu's en dialoogvensters wisselen wanneer Lilo opnieuw opstart.",
 				"keywords": "landinstelling vertaling engels frans spaans vereenvoudigd chinees portugees brazilië russisch dutch nederlands ukrainian українська german deutsch japanese 日本語 italian italiano korean 한국어 traditional 繁體中文 polish polski turkish türkçe"
 			},
 			"searchEngine": {

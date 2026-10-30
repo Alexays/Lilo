@@ -241,7 +241,7 @@
 			},
 			"language": {
 				"title": "言語",
-				"description": "ブラウザ全体の表示言語。",
+				"description": "ブラウザ全体の表示言語。メニューとダイアログは Lilo の再起動後に切り替わります。",
 				"keywords": "言語 ロケール 翻訳 英語 フランス語 スペイン語 中国語 簡体字 ポルトガル語 ブラジル ロシア語 japanese 日本語 ukrainian українська german deutsch italian italiano korean 한국어 traditional chinese 繁體中文 polish polski turkish türkçe dutch nederlands"
 			},
 			"searchEngine": {
