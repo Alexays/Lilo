@@ -74,7 +74,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
         case "tabGroups.get":
             guard let groupId = call.int("groupId"),
-                  let folder = folder(forGroup: groupId, tabManager: tabManager) else {
+                  let folder = folder(forGroup: groupId, tabManager: tabManager, windows: windows) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
             return ["group": groupDict(folder, windows: windows)]
@@ -86,13 +86,13 @@ final class TabGroupsBridgeHandler: GapHandler {
             // Reordering a folder maps onto Lilo's sectioned sidebar tree, which has no single linear
             // index, so the move is a no-op that echoes the group back rather than erroring.
             guard let groupId = call.int("groupId"),
-                  let folder = folder(forGroup: groupId, tabManager: tabManager) else {
+                  let folder = folder(forGroup: groupId, tabManager: tabManager, windows: windows) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
             return ["group": groupDict(folder, windows: windows)]
 
         case "tabs.group":
-            return groupTabs(call, context: context, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
+            return groupTabs(call, context: context, windows: windows, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
 
         case "tabs.ungroup":
             return ungroupTabs(context: context, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
@@ -132,7 +132,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     private func updateGroup(_ call: GapCall, context: TabGroupsContext, windows: [WindowExtensionAdapter]) -> Any? {
         guard let groupId = call.int("groupId"),
-              let folder = folder(forGroup: groupId, tabManager: context.tabManager) else {
+              let folder = folder(forGroup: groupId, tabManager: context.tabManager, windows: windows) else {
             return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
         }
         let newName = call.string("title") ?? folder.name
@@ -150,7 +150,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     // MARK: - tabs.group / ungroup
 
-    private func groupTabs(_ call: GapCall, context: TabGroupsContext, uuids: [UUID]) -> Any? {
+    private func groupTabs(_ call: GapCall, context: TabGroupsContext, windows: [WindowExtensionAdapter], uuids: [UUID]) -> Any? {
         let tabManager = context.tabManager
         guard let spaceId = tabManager.currentSpaceId else { return BridgeError("No active space") }
         guard !uuids.isEmpty else { return BridgeError("No tabs to group") }
@@ -159,7 +159,7 @@ final class TabGroupsBridgeHandler: GapHandler {
         // Resolve the destination folder: an existing group, or a freshly minted one.
         let folderId: UUID
         if let groupId = call.int("groupId"), groupId != Self.tabGroupIdNone {
-            guard let resolved = folder(forGroup: groupId, tabManager: tabManager)?.id else {
+            guard let resolved = folder(forGroup: groupId, tabManager: tabManager, windows: windows)?.id else {
                 return BridgeError("No tab group with id \(groupId)")
             }
             folderId = resolved
@@ -365,9 +365,10 @@ final class TabGroupsBridgeHandler: GapHandler {
         return id
     }
 
-    private func folder(forGroup groupId: Int, tabManager: TabManager) -> TabFolder? {
+    /// The group's folder when it is in one of `windows`, the caller's: the ids name folders of every profile and space.
+    private func folder(forGroup groupId: Int, tabManager: TabManager, windows: [WindowExtensionAdapter]) -> TabFolder? {
         guard let folderId = folderIdByGroupId[groupId] else { return nil }
-        return tabManager.folder(id: folderId)
+        return windows.lazy.compactMap(\.spaceId).compactMap { tabManager.folders(forSpace: $0).first { $0.id == folderId } }.first
     }
 
     /// Chrome `TabGroup` shape, with the position of its space's window in `windows` (the caller's `windows.getAll()`, -1 when

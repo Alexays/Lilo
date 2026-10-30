@@ -85,4 +85,55 @@ final class TabGroupsBridgeHandlerTests: XCTestCase {
         XCTAssertEqual(positions(created), ["First": 0, "Shown": 0, "Behind": 1])
         XCTAssertNil(groups.first?["windowId"], "only WebKit knows window ids")
     }
+
+    @MainActor
+    private struct GroupsCaller {
+        let window: MainWindowController
+        let registry: ProfileExtensionRegistry
+        let extensionId: String
+        let spaceId: UUID
+
+        func call(_ namespace: String, _ method: String, _ params: [String: Any] = [:]) async -> (result: Any?, error: String?) {
+            await window.context.engineFactory.gapRouter.route(
+                namespace: namespace, method: method, params: params, extensionId: extensionId, fromWorker: true, registry: registry
+            )
+        }
+    }
+
+    /// A window on a new space of a new profile, whose extension holds `tabGroups`.
+    private func groupsCaller(in browserContext: TemporaryBrowserContext) async throws -> GroupsCaller {
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let registry = try context.profileContexts.context(for: profileId).extensions
+        let window = makeTestWindow(context, showing: space.id)
+        window.setupExtensions()
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("tab-groups-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
+        let manifest: [String: Any] = ["manifest_version": 3, "name": "Groups", "version": "1.0", "permissions": ["tabGroups"]]
+        try JSONSerialization.data(withJSONObject: manifest).write(to: directory.appendingPathComponent("manifest.json"))
+        try await registry.load(from: directory)
+        return GroupsCaller(window: window, registry: registry, extensionId: try XCTUnwrap(registry.loadedExtensions.first?.id), spaceId: space.id)
+    }
+
+    /// A group id names a folder of the caller's windows only, never one of another profile, whose ids count from the same 1.
+    func test_aGroupOfAnotherProfileIsNoGroupOfTheCaller() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let mine = try await groupsCaller(in: browserContext)
+        let other = try await groupsCaller(in: browserContext)
+        try other.window.applyBrowserCommand(.createFolder(
+            spaceId: other.spaceId, folder: TabFolder(spaceId: other.spaceId, name: "Theirs", color: "#1a73e8"), section: .unpinned
+        ))
+        let theirs = await other.call("tabGroups", "query")
+        let groupId = try XCTUnwrap(((theirs.result as? [String: Any])?["groups"] as? [[String: Any]])?.first?["id"] as? Int)
+
+        let read = await mine.call("tabGroups", "get", ["groupId": groupId])
+        let renamed = await mine.call("tabGroups", "update", ["groupId": groupId, "title": "Mine"])
+
+        XCTAssertEqual(read.error, "No tab group with id \(groupId)")
+        XCTAssertEqual(renamed.error, "No tab group with id \(groupId)")
+        XCTAssertEqual(other.window.tabManager.folders(forSpace: other.spaceId).map(\.name), ["Theirs"])
+    }
 }
