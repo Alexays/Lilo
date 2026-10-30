@@ -1,0 +1,3 @@
+kind: Fixed
+body: An extension that registers its content scripts again on install, like a meeting transcriber, no longer fails with a duplicate script error.
+time: 2026-10-30T17:27:29.969625+01:00

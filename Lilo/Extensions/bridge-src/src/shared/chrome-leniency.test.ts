@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { installChromeCompat } from './chrome-compat.ts';
+import { registrationsSettled } from './chrome-leniency.ts';
 import { mockGapAPI } from './ipc.testkit.ts';
 
 declare const chrome: any;
@@ -313,6 +314,27 @@ describe('scripting.registerContentScripts without a match pattern', () => {
     await assert.rejects(scripting.registerContentScripts([{ id: 'b', js: ['b.js'] }]), { message: "Script with ID 'b' must specify 'matches'." });
     const lastError = await new Promise((resolve) => scripting.registerContentScripts([{ id: 'c', js: ['c.js'], matches: [] }], () => resolve(chrome.runtime.lastError?.message)));
     assert.equal(lastError, "Script with ID 'c' must specify at least one match.");
+  });
+});
+
+describe('registrationsSettled', () => {
+  // WebKit answers a registration a while later, as its own process does.
+  const later = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
+  const { scripting } = install({
+    scripting: Object.create({ unregisterContentScripts: later, registerContentScripts: later }),
+  });
+
+  it('waits for a registration the extension makes once its unregistration answers', async () => {
+    let registered = false;
+    (async () => {
+      await scripting.unregisterContentScripts({ ids: ['meet'] }).catch(() => {});
+      await scripting.registerContentScripts([{ id: 'meet', js: ['content.js'], matches: ['*://example.com/*'] }]);
+      registered = true;
+    })();
+
+    await registrationsSettled();
+
+    assert.equal(registered, true);
   });
 });
 

@@ -333,7 +333,11 @@ const registering = new Set<Promise<unknown>>();
  * worker, WebKit later (Tactiq's onInstalled unregisters what its startup is still registering).
  */
 export async function registrationsSettled(): Promise<void> {
-  while (registering.size) await Promise.allSettled(registering);
+  while (registering.size) {
+    await Promise.allSettled(registering);
+    // A task turn lets the extension's code awaiting that answer make its next call (unregister, then register).
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
 }
 
 
