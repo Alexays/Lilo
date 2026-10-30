@@ -84,9 +84,19 @@ extension MainWindowController {
 
     func populateSpacesMenu(_ menu: NSMenu) {
         menu.items.filter { $0.tag == Self.spaceMenuItemTag }.forEach(menu.removeItem)
+        let agentsSpaceIds = context.settingsStore.agentsSpaceIds
+        let agentsProfileId = context.settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:))
         // Below Next Space, Previous Space and their separator.
         for (index, space) in switchableSpaces.enumerated() {
-            let item = NSMenuItem(title: "\(space.icon)  \(space.name)", action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
+            let item: NSMenuItem
+            if agentsSpaceIds.contains(space.id) {
+                // Each profile agents work in has its own Agents space: its profile tells them apart.
+                let profile = space.profileId == agentsProfileId ? nil : context.profileManager.profiles.first { $0.id == space.profileId }
+                item = NSMenuItem(title: profile.map { "\(space.name) · \($0.name)" } ?? space.name, action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
+                item.image = AgentCursorView.menuImage
+            } else {
+                item = NSMenuItem(title: "\(space.icon)  \(space.name)", action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
+            }
             if index < 9 { KeyboardShortcuts.show("space.select\(index + 1)", on: item) }
             item.tag = Self.spaceMenuItemTag
             item.representedObject = space.id

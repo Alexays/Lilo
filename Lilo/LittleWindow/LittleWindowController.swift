@@ -104,8 +104,11 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     private func showSpacesMenu(from button: NSButton) {
         let menu = NSMenu()
         let others = owner?.switchableSpaces.filter { $0.id != spaceId && !$0.isPrivate } ?? []
+        let agentsSpaceIds = owner?.context.settingsStore.agentsSpaceIds ?? []
         for space in others {
-            menu.addItem(String(format: "Open in %@".localized, "\(space.icon) \(space.name)")) { [weak self] in self?.openInSpace(space.id) }
+            let isAgents = agentsSpaceIds.contains(space.id)
+            let item = menu.addItem(String(format: "Open in %@".localized, isAgents ? space.name : "\(space.icon) \(space.name)")) { [weak self] in self?.openInSpace(space.id) }
+            if isAgents { item.image = AgentCursorView.menuImage }
         }
         if others.isEmpty { menu.addItem(withTitle: "No Other Spaces".localized, action: nil, keyEquivalent: "") }
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.maxY + 4), in: button)

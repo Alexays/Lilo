@@ -12,6 +12,19 @@ final class AgentCursorView: NSView {
     /// The arrow's tip in its own image.
     static let hotSpot = CGPoint(x: 3, y: 2)
 
+    /// The mascot at rest, standing for an Agents space in a menu.
+    static let menuImage = NSImage(size: NSSize(width: 16, height: 16), flipped: true) { rect in
+        let scale = rect.width / 22
+        agentColor.setFill()
+        NSBezierPath(ovalIn: rect).fill()
+        NSColor.white.setFill()
+        for x: CGFloat in [5, 13] {
+            let eye = CGRect(x: x * scale, y: 7.5 * scale, width: 4 * scale, height: 5 * scale)
+            NSBezierPath(roundedRect: eye, xRadius: 2 * scale, yRadius: 2 * scale).fill()
+        }
+        return true
+    }
+
     private let arrow = NSImageView(image: AgentCursorView.arrowImage)
     private let label = NSTextField(labelWithString: "")
     // A label draws its text at the top of its frame: the pill carries the height and centers it.

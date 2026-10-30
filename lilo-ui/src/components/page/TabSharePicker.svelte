@@ -4,6 +4,7 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { t } from "../../lib/i18n/state.svelte";
   import { getActiveSpaceId, getSpaces, type SpaceState } from "../../stores/spaces.svelte";
+  import { isAgentsSpace } from "../../stores/agents.svelte";
   import {
     getFoldersById,
     getRootItems,
@@ -326,7 +327,9 @@
 <svelte:window onkeydowncapture={request ? handleKeydown : undefined} />
 
 {#snippet sectionLabel(section: Section)}
-  {#if section.space?.icon}
+  {#if section.space && isAgentsSpace(section.space.id)}
+    {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}<AgentMascot />{/await}
+  {:else if section.space?.icon}
     <span class="tab-share-space-icon" aria-hidden="true">{section.space.icon}</span>
   {/if}
   <span>{section.label}</span>

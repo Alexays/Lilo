@@ -31,6 +31,7 @@ import {
 import { getFoldersById, getLockedFolderRoots } from "./folders.svelte";
 import { getActiveSpaceId } from "./spaces.svelte";
 import { getProfileById, getProfiles } from "./profiles.svelte";
+import { isAgentsSpace, isHiddenAgentsSpace } from "./agents.svelte";
 
 export type ResultKind =
 	| "tab"
@@ -486,7 +487,8 @@ function spaceResults(
 	const entries: { row: SpaceRow; space: BridgeSpaceSnapshot; title: string; profile: string; haystack: string }[] = [];
 	for (const row of rows) {
 		for (const space of spaces) {
-			if (space.id === activeSpaceId || space.isPrivate) continue;
+			// Agents spaces hold the agents' tabs: never a tab's destination, and listed only while in use.
+			if (space.id === activeSpaceId || space.isPrivate || isHiddenAgentsSpace(space.id) || (row.kind === "moveToSpace" && isAgentsSpace(space.id))) continue;
 			const title = row.titleKey ? t(row.titleKey, { name: space.name }) : space.name;
 			const profile = showProfile ? (getProfileById(space.profileId)?.name ?? "") : "";
 			entries.push({ row, space, title, profile, haystack: `${title} ${profile}`.toLowerCase() });

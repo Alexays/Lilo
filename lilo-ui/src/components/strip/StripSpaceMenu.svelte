@@ -5,14 +5,21 @@
   import { openAddEditor } from "../../stores/panels.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { shortcutKeys } from "../../stores/shortcutKeys.svelte";
+  import { getAgentMood, getAgentsProfileId, isAgentsSpace, isHiddenAgentsSpace, isIsolatedAgentSpace } from "../../stores/agents.svelte";
+  import { getProfileById } from "../../stores/profiles.svelte";
 
   let { compact = false }: { compact?: boolean } = $props();
 
   let open = $state(false);
   let chip: HTMLButtonElement | undefined = $state();
   const active = $derived(getActiveSpace());
+  const activeIsAgents = $derived(!!active && (isAgentsSpace(active.id) || isIsolatedAgentSpace(active.id)));
   // A Space without an icon keeps its name: nothing else would tell it apart.
-  const iconOnly = $derived(compact && !!active?.icon);
+  const iconOnly = $derived(compact && (activeIsAgents || !!active?.icon));
+  // The Spaces native switches between, in the order its space.selectN shortcuts number them.
+  const spaces = $derived(
+    getSpaces().filter((space) => space.id === getActiveSpaceId() || (!space.isPrivate && !isHiddenAgentsSpace(space.id))),
+  );
 
   function pick(spaceId: string) {
     open = false;
@@ -20,6 +27,13 @@
     spaceActions.switchTo(spaceId);
   }
 </script>
+
+{#snippet mascot(spaceId: string)}
+  <!-- Loaded on demand, as in the bottom bar: only an agent creates an Agents space. -->
+  {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}
+    <AgentMascot mood={getAgentMood(spaceId)} ghost={isIsolatedAgentSpace(spaceId)} />
+  {/await}
+{/snippet}
 
 <button
   bind:this={chip}
@@ -31,10 +45,13 @@
   style:--space-color={active?.color}
   onclick={() => (open = !open)}
 >
-  {#if iconOnly}
+  {#if activeIsAgents}
+    {@render mascot(getActiveSpaceId())}
+  {:else if iconOnly}
     <span class="name">{active?.icon}</span>
-  {:else}
-    <span class="name">{active?.icon} {active?.name ?? t("spaceBar.defaultSpaceName")}</span>
+  {/if}
+  {#if !iconOnly}
+    <span class="name">{activeIsAgents ? "" : active?.icon} {active?.name ?? t("spaceBar.defaultSpaceName")}</span>
     <svg width="9" height="6" viewBox="0 0 9 6" aria-hidden="true">
       <path d="M1 1l3.5 3.5L8 1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -43,10 +60,17 @@
 
 {#if open && chip}
   <StripPopover anchor={chip} label={t("bottomBar.spaces")} onclose={() => (open = false)}>
-    {#each getSpaces() as space, index (space.id)}
+    {#each spaces as space, index (space.id)}
       <button class="space-row" role="menuitemradio" aria-checked={space.id === getActiveSpaceId()} onclick={() => pick(space.id)}>
         <span class="dot" style:background={space.color}></span>
-        <span class="space-name">{space.icon} {space.name}</span>
+        {#if isAgentsSpace(space.id) || isIsolatedAgentSpace(space.id)}
+          <!-- Each profile agents work in has its own Agents space: its profile tells them apart. -->
+          {@const profile = space.profileId !== getAgentsProfileId() ? getProfileById(space.profileId) : undefined}
+          {@render mascot(space.id)}
+          <span class="space-name">{space.name}{#if profile}<span class="profile"> · {profile.name}</span>{/if}</span>
+        {:else}
+          <span class="space-name">{space.icon} {space.name}</span>
+        {/if}
         {#if index < 9 && shortcutKeys(`space.select${index + 1}`)}<kbd>{shortcutKeys(`space.select${index + 1}`)}</kbd>{/if}
       </button>
     {/each}
@@ -127,6 +151,10 @@
 
   .space-name {
     flex: 1;
+  }
+
+  .profile {
+    color: var(--text-secondary);
   }
 
   kbd {

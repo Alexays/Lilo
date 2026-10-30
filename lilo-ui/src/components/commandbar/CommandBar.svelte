@@ -37,6 +37,7 @@
     setQuery,
     setSelectedIndex,
   } from "../../stores/commandBar.svelte";
+  import { getAgentMood, isAgentsSpace } from "../../stores/agents.svelte";
   import { isSidebarVisible } from "../../stores/ui.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { getTabs } from "../../stores/tabs.svelte";
@@ -571,7 +572,13 @@
                       onmousedown={(e) => runClickedRow(e, entry.index, entry.result)}
                       onmousemove={(e) => selectUnderPointer(e, entry.index)}
                     >
-                      {#if iconSpec.type === "favicon"}
+                      {#if entry.result.kind === "space" && isAgentsSpace(String(entry.result.payload.spaceId))}
+                        <span class="result-icon">
+                          {#await import("../sidebar/AgentMascot.svelte") then { default: AgentMascot }}
+                            <AgentMascot mood={getAgentMood(String(entry.result.payload.spaceId))} />
+                          {/await}
+                        </span>
+                      {:else if iconSpec.type === "favicon"}
                         <span class="result-icon result-icon-favicon">
                           <span class="result-favicon-fallback" aria-hidden="true">{iconSpec.fallback}</span>
                           <img
