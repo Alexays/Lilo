@@ -1,0 +1,3 @@
+kind: Fixed
+body: On a site with a sticky header, such as X, the bar above the page takes the header's color instead of a dark one the site declares over a light page.
+time: 2026-10-30T13:17:44.875733+01:00

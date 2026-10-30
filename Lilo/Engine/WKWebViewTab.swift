@@ -987,18 +987,22 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    /// The top edge first, which the bar blends into; theme-color covers a page whose top is no solid band. A
-    /// translucent color would show the frame through the bar: only an opaque one counts. Without either, the
-    /// loaded page's edge is read off its pixels; until then the previous page's color stays, never a flash.
+    /// WebKit's sample of the top edge first, which the bar blends into. A top it does not sample (a sticky header,
+    /// an image, a gradient) is read off the loaded page's pixels, closer to what shows than a theme-color, which
+    /// some sites leave dark over a light page; until then the previous page's color stays, never a flash.
     /// `loaded` comes from didFinish, while the web view still reports itself loading.
     private func emitPageColor(loaded: Bool = false) {
         pageEdgeCapture &+= 1
-        let opaque = { (color: NSColor?) in color?.usingColorSpace(.sRGB).flatMap { $0.alphaComponent < 1 ? nil : $0 } }
-        if let color = (opaque(sampledPageTopColor) ?? opaque(webView.themeColor))?.cssHexString {
+        if let color = Self.opaque(sampledPageTopColor)?.cssHexString {
             sendPageColor(color)
         } else if loaded || !webView.isLoading {
             captureTopEdge()
         }
+    }
+
+    /// A translucent color would show the frame through the bar: only an opaque one counts.
+    private static func opaque(_ color: NSColor?) -> NSColor? {
+        color?.usingColorSpace(.sRGB).flatMap { $0.alphaComponent < 1 ? nil : $0 }
     }
 
     /// WebKit samples the top edge only when a page loads: a page changed by script since is read off its pixels.
@@ -1014,19 +1018,20 @@ final class WKWebViewTab: NSObject {
         delegate?.tab(self, didUpdatePageColor: color)
     }
 
-    /// An image or a gradient along the top: a capture of a band there, rendered straight to 32 pixels. A page
-    /// drawn by script after its load gets a second look a moment later.
+    /// A capture of a band along the top, rendered straight to 32 pixels; theme-color when there is none to take. A
+    /// page drawn by script after its load gets a second look a moment later.
     private func captureTopEdge(again: Bool = true) {
         let capture = pageEdgeCapture
         let width = webView.bounds.width
-        guard width > 0 else { return sendPageColor(nil) }
+        let themeColor = Self.opaque(webView.themeColor)?.cssHexString
+        guard width > 0 else { return sendPageColor(themeColor) }
         let configuration = WKSnapshotConfiguration()
         configuration.rect = CGRect(x: 0, y: 0, width: width, height: min(webView.bounds.height, width / CGFloat(Self.edgeSamples)))
         configuration.snapshotWidth = NSNumber(value: Self.edgeSamples)
         Task { [weak self] in
             let image = try? await self?.webView.takeSnapshot(configuration: configuration)
             guard let self, capture == pageEdgeCapture else { return }
-            sendPageColor(image.flatMap(Self.edgeStops))
+            sendPageColor(image.flatMap(Self.edgeStops) ?? themeColor)
             guard again else { return }
             try? await Task.sleep(for: .seconds(1))
             guard capture == pageEdgeCapture else { return }
