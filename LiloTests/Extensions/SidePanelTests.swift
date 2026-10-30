@@ -477,7 +477,8 @@ final class SidePanelTests: XCTestCase {
         XCTAssertEqual(after, policy, "the extension's other pages keep WebKit's policy, and so their processes")
     }
 
-    /// A site that sets cookies at /set and /later and serves at /page a page that fetches /sub, recording each request's cookies.
+    /// A site that sets cookies at /set and /later and serves at /page a page that opens a WebSocket to /socket and fetches
+    /// /sub, recording each request's cookies.
     private final class CookieSite: @unchecked Sendable {
         private let lock = NSLock()
         private var headers: [String: String] = [:]
@@ -493,7 +494,8 @@ final class SidePanelTests: XCTestCase {
                 case "/set": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: plain=1; Path=/", "Set-Cookie: lax=1; SameSite=Lax; Path=/"], Data("<title>set</title>".utf8))
                 case "/later": return ("200 OK", ["Content-Type: text/html", "Set-Cookie: later=1; SameSite=Strict; Path=/"], Data("<title>later</title>".utf8))
                 case "/sub": return ("200 OK", ["Content-Type: text/plain"], Data("sub".utf8))
-                default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
+                case "/socket": return ("403 Forbidden", [], Data())
+                default: return ("200 OK", ["Content-Type: text/html"], Data(#"<script>new WebSocket('ws://' + location.host + '/socket'); fetch('/sub').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
                 }
             }
         }
@@ -543,9 +545,16 @@ final class SidePanelTests: XCTestCase {
             .name: "lax", .value: "elsewhere", .domain: "127.0.0.1", .path: "/", HTTPCookiePropertyKey("StoragePartition"): "http://other.test"
         ]))
         await WKWebsiteDataStore(forIdentifier: registry.profileId).httpCookieStore.setCookie(partitioned)
+        let twin = try XCTUnwrap(HTTPCookie(properties: [
+            .name: "plain", .value: "stale", .domain: "127.0.0.1", .path: "/", HTTPCookiePropertyKey("StoragePartition"): "chrome-extension://\(allowed)"
+        ]))
+        await WKWebsiteDataStore(forIdentifier: registry.profileId).httpCookieStore.setCookie(twin)
 
         let first = await frame(in: allowed)
-        XCTAssertEqual(first, ["lax=1; plain=1", "lax=1; plain=1"], "the framed page and what it requests carry its Lax cookie, as in Chrome, not one partitioned under another site")
+        XCTAssertEqual(first, ["lax=1; plain=1", "lax=1; plain=1"], "the framed page and what it requests carry its Lax cookie, as in Chrome, not one partitioned under another site nor a stale twin in the extension's partition")
+        let socket = await pollUntil { site.cookies("/socket") != nil }
+        XCTAssertTrue(socket)
+        XCTAssertEqual(site.cookies("/socket"), "lax=1; plain=1", "its WebSocket too")
 
         try await visit("/later", on: site)
         let second = await frame(in: allowed)
@@ -583,7 +592,7 @@ final class SidePanelTests: XCTestCase {
         XCTAssertTrue(framed)
         var cookies: [String] = []
         let kept = await pollUntil {
-            cookies = await store.allCookies().filter { $0.domain == "127.0.0.1" }.map { "\($0.name)=\($0.value)" }.sorted()
+            cookies = await store.allCookies().filter { $0.domain == "127.0.0.1" && $0.properties?[HTTPCookiePropertyKey("StoragePartition")] == nil }.map { "\($0.name)=\($0.value)" }.sorted()
             return cookies.contains("fresh=1")
         }
         XCTAssertTrue(kept)

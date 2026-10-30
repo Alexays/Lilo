@@ -340,7 +340,7 @@ final class ProfileExtensionRegistry {
     )
 
     private(set) lazy var frameCookies = ExtensionFrameCookies(
-        profileId: profileId, cookieStore: cookieStore, userContentController: pageScripts,
+        cookieStore: cookieStore,
         hasAccess: { [weak self] extensionId, url in self?.context(for: extensionId)?.hasAccess(to: url) ?? false }
     )
 
@@ -521,12 +521,6 @@ final class ProfileExtensionRegistry {
             config.webViewConfiguration.setValue(pool, forKey: "processPool")
         }
         cookieStore = profileDataStore.httpCookieStore
-        // WKWebpagePreferences._setActiveContentRuleListActionPatterns:, which lets the frame cookie rules set headers.
-        let activePatterns = NSSelectorFromString("_setActiveContentRuleListActionPatterns:")
-        if config.webViewConfiguration.defaultWebpagePreferences.responds(to: activePatterns) {
-            let patterns = [ExtensionFrameCookies.identifier(for: profileId): Set(["*://*/*"])] as NSDictionary
-            config.webViewConfiguration.defaultWebpagePreferences.perform(activePatterns, with: patterns)
-        }
 
         // WebKit snapshots the configuration at controller-creation time: set everything up first.
 

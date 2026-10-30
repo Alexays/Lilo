@@ -1,10 +1,9 @@
-import OSLog
 import WebKit
 
-/// Sends a site framed by an extension page its first-party cookies, `SameSite=Lax` and `Strict` ones included, when the
-/// extension may access it, as Chrome does; WebKit takes the frame for cross-site and leaves them out.
-/// A rule list in the extension pages' content controller sets the `Cookie` header of what the extension's pages request
-/// from that site, from the profile's store. It exists only while a page frames such a site, and follows the store until then.
+/// Lets a site framed by an extension page that may access it have its first-party cookies there, `SameSite=Lax` and
+/// `Strict` ones included, as in Chrome; WebKit takes the frame for cross-site and leaves them out. While a page frames the
+/// site, the profile holds a copy of each partitioned under the extension's pages, which WebKit sends there on every
+/// request, WebSockets included, and nowhere else.
 @MainActor
 final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
     private struct Framer: Hashable {
@@ -12,38 +11,29 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         let extensionId: String
     }
 
-    private static let logger = Logger(liloCategory: "extension-frame-cookies")
+    /// Tells Lilo's copies from the cookies a site sets in an extension page's partition itself.
+    private static let copyComment = "lilo-extension-frame-copy"
+    private static let partition = HTTPCookiePropertyKey("StoragePartition")
 
-    private let identifier: String
     private let cookieStore: WKHTTPCookieStore
-    private let userContentController: WKUserContentController
     private lazy var responseCookies = FrameResponseCookies(frameCookies: self)
-    private lazy var ruleStore = WKContentRuleListStore(url: FileManager.default.temporaryDirectory.appendingPathComponent(identifier, isDirectory: true))
     private let hasAccess: (String, URL) -> Bool
-    /// The extension pages framing each site, and the framers the installed rules cover.
+    /// The extension pages framing each site, and the framers the copies in the store cover.
     private var framers: [Framer: NSHashTable<WKWebView>] = [:]
     private var covered: Set<Framer> = []
-    private var installed: (source: String, list: WKContentRuleList)?
     private var waiting: [() -> Void] = []
-    /// Changes arriving while a build runs share the next one, as `CookieChangeTracker` reads.
+    /// Changes arriving while a sync runs share the next one, as `CookieChangeTracker` reads.
     private var building = false
     private var stale = false
     private var observing = false
 
-    init(profileId: UUID, cookieStore: WKHTTPCookieStore, userContentController: WKUserContentController, hasAccess: @escaping (String, URL) -> Bool) {
-        identifier = Self.identifier(for: profileId)
+    init(cookieStore: WKHTTPCookieStore, hasAccess: @escaping (String, URL) -> Bool) {
         self.cookieStore = cookieStore
-        self.userContentController = userContentController
         self.hasAccess = hasAccess
     }
 
-    /// The rule list's identifier, which the extension pages' preferences must grant header changes to.
-    static func identifier(for profileId: UUID) -> String {
-        "lilo-extension-frame-cookies-\(profileId.uuidString)"
-    }
-
-    /// Whether `navigationAction` must wait for `ready`: an extension page frames a site it may access whose cookies
-    /// its rules do not carry yet. `ready` runs once they do, or once building them failed.
+    /// Whether `navigationAction` must wait for `ready`: an extension page frames a site it may access whose copies the
+    /// store does not hold yet. `ready` runs once it does.
     func waitsForCookies(of navigationAction: WKNavigationAction, in webView: WKWebView, ready: @escaping () -> Void) -> Bool {
         guard let frame = navigationAction.targetFrame, !frame.isMainFrame,
               let top = webView.url, top.scheme == "chrome-extension", let extensionId = top.host,
@@ -107,9 +97,7 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
                 stale = false
                 framers = framers.filter { $0.value.anyObject != nil }
                 let framing = framers.keys
-                let sites = Dictionary(grouping: framing, by: \.site).mapValues { Set($0.map(\.extensionId)) }
-                let source = sites.isEmpty ? "" : Self.rules(for: await cookieStore.allCookies(), framedBy: sites)
-                await install(source)
+                await syncCopies(for: Dictionary(grouping: framing, by: \.site).mapValues { Set($0.map(\.extensionId)) })
                 covered = Set(framing)
             } while stale
             building = false
@@ -123,63 +111,47 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         }
     }
 
-    private func install(_ source: String) async {
-        guard source != (installed?.source ?? "") else { return }
-        guard !source.isEmpty, let ruleStore else {
-            if let installed { userContentController.remove(installed.list) }
-            installed = nil
-            return
+    /// Writes the copies the framing extensions need, and removes the others: a copy follows its cookie and goes with the
+    /// last page framing its site. Only `SameSite` cookies need one, WebKit sends the rest itself; a partitioned cookie
+    /// belongs to another top-level site. A twin the site set in an extension's partition while WebKit served it as a third
+    /// party goes too, else the frame would send both (Cloudflare challenges two `cf_clearance`).
+    private func syncCopies(for sites: [String: Set<String>]) async {
+        func key(_ cookie: HTTPCookie) -> String {
+            "\(cookie.name)\t\(cookie.domain)\t\(cookie.path)\t\(cookie.properties?[Self.partition] as? String ?? "")"
         }
-        do {
-            // A list under the same identifier replaces the installed one, so the frame is never left without cookies.
-            guard let list = try await ruleStore.compileContentRuleList(forIdentifier: identifier, encodedContentRuleList: source) else { return }
-            userContentController.add(list)
-            installed = (source, list)
-            // The compiled file holds cookie values: the web processes keep their mapping, the disk keeps nothing.
-            try? await ruleStore.removeContentRuleList(forIdentifier: identifier)
-        } catch {
-            Self.logger.error("frame cookie rules failed to compile: \(error.localizedDescription, privacy: .public)")
+        func site(of cookie: HTTPCookie) -> Set<String>? {
+            let host = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            return sites.first { host == $0.key || host.hasSuffix("." + $0.key) }?.value
         }
-    }
-
-    /// A rule per cookie and path match appending the cookie to what the pages of the extensions framing its site request.
-    /// A `Cookie` header set this way replaces WebKit's own, so every cookie of a framed site has its rules, not only the
-    /// `SameSite` ones.
-    private static func rules(for cookies: [HTTPCookie], framedBy sites: [String: Set<String>]) -> String {
-        func created(_ cookie: HTTPCookie) -> Double { (cookie.properties?[HTTPCookiePropertyKey("Created")] as? NSNumber)?.doubleValue ?? 0 }
-        // A partitioned cookie belongs to the top-level site it was set under, never to an extension page. The rest go in a
-        // browser's order, longest path first then oldest, which WebKit keeps only through priorities.
-        let sent = cookies
-            .filter { ($0.properties?[HTTPCookiePropertyKey("StoragePartition")] as? String)?.isEmpty ?? true }
-            .sorted { ($0.path.count, -created($0)) > ($1.path.count, -created($1)) }
-        var rules: [[String: Any]] = []
-        for (index, cookie) in sent.enumerated() {
-            let isDomain = cookie.domain.hasPrefix(".")
-            let host = isDomain ? String(cookie.domain.dropFirst()) : cookie.domain
-            guard let extensionIds = sites.first(where: { host == $0.key || host.hasSuffix("." + $0.key) })?.value else { continue }
-            let origin = "^\(cookie.isSecure ? "https" : "https?")://\(isDomain ? "([^/:]+\\.)?" : "")\(escaped(host))(:[0-9]+)?"
-            let path = cookie.path.isEmpty ? "/" : cookie.path
-            // A path matches itself and what lies under it, never a sibling that only starts like it.
-            let filters = path.hasSuffix("/") ? [origin + escaped(path)] : [origin + escaped(path) + "(\\?.*)?$", origin + escaped(path) + "/"]
-            let action: [String: Any] = [
-                "type": "modify-headers",
-                "priority": sent.count - index,
-                "request-headers": [["header": "Cookie", "operation": "append", "value": "\(cookie.name)=\(cookie.value)"]]
-            ]
-            let pages = extensionIds.sorted().map { "^chrome-extension://\(escaped($0))/" }
-            for filter in filters {
-                rules.append(["trigger": ["url-filter": filter, "url-filter-is-case-sensitive": true, "if-top-url": pages], "action": action])
+        let cookies = await cookieStore.allCookies()
+        var wanted: [String: HTTPCookie] = [:]
+        var twins: Set<String> = []
+        for cookie in cookies where (cookie.properties?[Self.partition] as? String ?? "").isEmpty {
+            guard let extensionIds = site(of: cookie), var properties = cookie.properties else { continue }
+            guard cookie.sameSitePolicy == .sameSiteLax || cookie.sameSitePolicy == .sameSiteStrict else {
+                extensionIds.forEach { twins.insert("\(cookie.name)\t\(cookie.domain)\t\(cookie.path)\tchrome-extension://\($0)") }
+                continue
+            }
+            properties[.sameSitePolicy] = nil
+            properties[.comment] = Self.copyComment
+            for extensionId in extensionIds {
+                properties[Self.partition] = "chrome-extension://\(extensionId)"
+                if let copy = HTTPCookie(properties: properties) { wanted[key(copy)] = copy }
             }
         }
-        guard !rules.isEmpty, let data = try? JSONSerialization.data(withJSONObject: rules, options: .sortedKeys) else { return "" }
-        return String(bytes: data, encoding: .utf8) ?? ""
-    }
-
-    private static func escaped(_ literal: String) -> String {
-        literal.reduce(into: "") { result, character in
-            if "\\^$.|?*+()[]{}".contains(character) { result.append("\\") }
-            result.append(character)
+        for cookie in cookies where cookie.comment != Self.copyComment && twins.contains(key(cookie)) {
+            await cookieStore.deleteCookie(cookie)
         }
+        for cookie in cookies where cookie.comment == Self.copyComment {
+            let copy = wanted[key(cookie)]
+            if let copy, copy.value == cookie.value, copy.expiresDate == cookie.expiresDate, copy.isSecure == cookie.isSecure,
+               copy.isHTTPOnly == cookie.isHTTPOnly {
+                wanted[key(cookie)] = nil
+            } else if copy == nil {
+                await cookieStore.deleteCookie(cookie)
+            }
+        }
+        for copy in wanted.values { await cookieStore.setCookie(copy) }
     }
 }
 
