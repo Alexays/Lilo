@@ -51,6 +51,40 @@ final class GeolocationBridgeTests: XCTestCase {
         }
     }
 
+    /// Frames post `<name>:<code>` to the top page, which collects them in `results`.
+    private func frameResults(top: String, baseURL: String, count: Int) async throws -> [String] {
+        let frame = "<script>navigator.geolocation.getCurrentPosition(() => parent.postMessage(location.search + ':0', '*'), "
+            + "e => parent.postMessage(location.search + ':' + e.code, '*'));</script>"
+        let server = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: text/html"], Data(frame.utf8)) }
+        let html = "<script>window.results = []; addEventListener('message', e => results.push(e.data));</script>"
+            + top.replacingOccurrences(of: "PORT", with: String(server.port))
+        let webView = await makeWebView(html: html, baseURL: baseURL.replacingOccurrences(of: "PORT", with: String(server.port)))
+        var results: [String] = []
+        await pollUntil(timeout: 5) {
+            results = (try? await webView.evaluateJavaScript("results")) as? [String] ?? []
+            return results.count >= count
+        }
+        return results.sorted()
+    }
+
+    func testACrossOriginFrameAsksUnderThePagesOriginOnlyWhenAllowed() async throws {
+        let results = try await frameResults(top: """
+            <iframe src="http://localhost:PORT/?none"></iframe>
+            <iframe allow="geolocation" src="http://localhost:PORT/?allowed"></iframe>
+            <iframe src="http://127.0.0.1:PORT/?same"></iframe>
+            """, baseURL: "http://127.0.0.1:PORT/", count: 3)
+        XCTAssertEqual(results, ["?allowed:1", "?none:1", "?same:1"])
+        XCTAssertEqual(asked.count, 2, "the frame without allow= is refused without asking")
+        XCTAssertTrue(asked.allSatisfy { $0.hasPrefix("http://127.0.0.1:") }, "asked under the page's origin: \(asked)")
+    }
+
+    func testAFrameUnderAnInsecurePageIsDeniedWithoutAsking() async throws {
+        let results = try await frameResults(top: #"<iframe allow="geolocation" src="http://localhost:PORT/?frame"></iframe>"#,
+                                             baseURL: "http://example.com/", count: 1)
+        XCTAssertEqual(results, ["?frame:1"])
+        XCTAssertEqual(asked, [])
+    }
+
     func testAnInsecureOriginIsDeniedWithoutAsking() async {
         let webView = await makeWebView(html: Self.request, baseURL: "http://example.com/")
         let codes = await codes(webView, count: 1)

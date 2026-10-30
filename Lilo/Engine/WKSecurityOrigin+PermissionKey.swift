@@ -36,3 +36,13 @@ extension WKSecurityOrigin {
             || host == "::1" || host == "[::1]" || IPv4Address(host).map { $0.rawValue.first == 127 } == true
     }
 }
+
+extension WKFrameInfo {
+    /// The origin a frame's request is asked and stored under: its page's, as browsers delegate a frame's request to the top.
+    var permissionOriginKey: String {
+        guard !isMainFrame, let url = webView?.url, let scheme = url.scheme, let host = url.host, !host.isEmpty else {
+            return securityOrigin.permissionOriginKey
+        }
+        return PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0)
+    }
+}

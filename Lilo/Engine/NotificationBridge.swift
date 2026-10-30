@@ -38,11 +38,13 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
         let origin = message.frameInfo.securityOrigin.permissionOriginKey
+        // Browsers refuse notifications to a frame of another origin than its page's.
+        let isCrossOrigin = origin != message.frameInfo.permissionOriginKey
 
         switch type {
         case "requestPermission":
             guard let id = body["id"] as? Int else { return }
-            guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
+            guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy, !isCrossOrigin else {
                 if let webView = message.webView {
                     WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifyPermission", [id, "denied"]),
                                                                                 in: message.frameInfo, in: PageWorld.bridgeWorld)
@@ -57,7 +59,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
                                                                             in: frame, in: PageWorld.bridgeWorld)
             }
         case "show":
-            guard allowanceHandler?(origin) == true else { return }
+            guard !isCrossOrigin, allowanceHandler?(origin) == true else { return }
             show(body: body, message: message, origin: origin)
         case "close":
             guard let pageId = body["id"] as? Int,
@@ -68,7 +70,7 @@ final class NotificationBridge: NSObject, WKScriptMessageHandler {
         case "query":
             // Only "allow" is stored as a distinct answer; anything else stays "default" so a site
             // with no decision yet can still prompt.
-            guard allowanceHandler?(origin) == true else { return }
+            guard !isCrossOrigin, allowanceHandler?(origin) == true else { return }
             if let webView = message.frameInfo.webView {
                 WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("notifySetPermission", ["granted"]),
                                                                             in: message.frameInfo, in: PageWorld.bridgeWorld)
@@ -209,7 +211,7 @@ extension NotificationBridge {
       // Only a top origin native deems trustworthy can hold a stored allow; the others would pay an IPC for nothing. A same-origin
       // subframe shares the top's answer, and browsers refuse notifications to cross-origin ones.
       if (window.top !== window) {
-        try { setPermission(top.Notification.permission); } catch (e) {}
+        try { setPermission(top.Notification.permission); } catch (e) { setPermission('denied'); }
       } else if (window.isSecureContext) {
         lilo.send('liloNotification', { type: 'query' });
       }

@@ -103,6 +103,32 @@ final class NotificationPolyfillTests: XCTestCase {
         XCTAssertEqual(queries(), before, "only the top frame asks")
     }
 
+    func testACrossOriginFrameIsDeniedWithoutAsking() async throws {
+        let frame = """
+            <script>const initial = Notification.permission;
+            Notification.requestPermission().then(result => parent.postMessage(initial + ',' + result, '*'));</script>
+            """
+        let server = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: text/html"], Data(frame.utf8)) }
+        let bridge = NotificationBridge()
+        var asked: [String] = []
+        bridge.permissionDecisionHandler = { _, _, origin, completion in asked.append(origin); completion(true) }
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController.add(bridge, contentWorld: PageWorld.bridgeWorld, name: NotificationBridge.messageHandlerName)
+        PageWorld.install([NotificationBridge.pageModule], on: configuration.userContentController)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.loadHTMLString("""
+            <script>window.results = []; addEventListener('message', e => results.push(e.data));</script>
+            <iframe src="http://localhost:\(server.port)/"></iframe>
+            """, baseURL: URL(string: "http://127.0.0.1:\(server.port)/"))
+        var results: [String] = []
+        await pollUntil(timeout: 5) {
+            results = (try? await webView.evaluateJavaScript("results")) as? [String] ?? []
+            return !results.isEmpty
+        }
+        XCTAssertEqual(results, ["denied,denied"])
+        XCTAssertEqual(asked, [])
+    }
+
     func testATaggedNotificationReplacesTheEarlierOneWithItsTag() async throws {
         let recorder = Recorder()
         let webView = try await makeWebView(recorder)
