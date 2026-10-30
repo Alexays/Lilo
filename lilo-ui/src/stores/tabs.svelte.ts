@@ -59,7 +59,7 @@ export function getActiveTabId(spaceId?: string): string {
 	return getActiveTab(spaceId)?.id ?? "";
 }
 
-/** A new tab still waiting for a page. A terminal has no URL either, but is never blank. */
+/** A new tab still waiting for a page. Terminal, Changes and agent tabs have no URL either, but are never blank. */
 export function isBlankTab(tab: TabState | undefined): tab is TabState {
 	return tab != null && !tab.url && (tab.kind ?? "web") === "web";
 }
