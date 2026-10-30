@@ -23,6 +23,8 @@ enum WKFeatureFlags {
     private static let defaultsOn: Set<String> = [
         // `<link rel=prefetch>`: a page a site announces as next opens from the cache.
         "LinkPrefetchEnabled",
+        // Speculation rules prefetch, as Chrome: WebKit already reports `speculationrules` supported, so a site counts on it.
+        "SpeculationRulesPrefetchEnabled",
         "CloseWatcherEnabled",
         "RequestIdleCallbackEnabled",
         "SelectShowPickerEnabled",
