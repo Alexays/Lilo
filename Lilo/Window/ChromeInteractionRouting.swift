@@ -332,6 +332,7 @@ final class ChromeInputController {
     /// The global monitor is the sole caller of `updatePointer`, so one physical move is never classified
     /// and run through the machines twice.
     func updatePointer(for event: NSEvent) {
+        controller.sidePanel.pointerMoved(to: event.locationInWindow)
         let target: ChromeEventRouter.Target = router.target(forWindowPoint: event.locationInWindow) == .chrome ? .chrome : .content
         // The debug overlay reflects every sampled point, even on the no-op fast path; redraw is change-only.
         if let debugOverlay {

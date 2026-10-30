@@ -198,6 +198,25 @@ final class SidePanelTests: XCTestCase {
         XCTAssertEqual(views as? [[String: String]], [["contextType": "SIDE_PANEL", "url": url.absoluteString]])
     }
 
+    func testHoveringTheDividerTintsItWithTheSidebarsAccent() async throws {
+        await call("open", gesture(thisWindow))
+        let loaded = await panelLoads("panel")
+        XCTAssertTrue(loaded)
+        window.sidePanel.setAccentColor("#7a52d6")
+        let panel = try XCTUnwrap(panelView)
+        let contentView = try XCTUnwrap(window.window?.contentView)
+        let divider = try XCTUnwrap(contentView.subviews.lazy.compactMap { $0 as? SplitDividerView }.first { $0.frame.maxX == panel.frame.minX })
+        let handle = try XCTUnwrap(divider.layer?.sublayers?[1])
+
+        window.sidePanel.pointerMoved(to: divider.convert(NSPoint(x: divider.bounds.midX, y: divider.bounds.midY), to: nil))
+        XCTAssertEqual(handle.opacity, 1)
+        XCTAssertEqual(handle.frame, divider.bounds, "the whole edge, as the sidebar's")
+        XCTAssertEqual(handle.backgroundColor, NSColor(cssHex: "#7a52d6")?.withAlphaComponent(0.12).cgColor)
+
+        window.sidePanel.pointerMoved(to: panel.convert(NSPoint(x: panel.bounds.midX, y: panel.bounds.midY), to: nil))
+        XCTAssertEqual(handle.opacity, 0)
+    }
+
     func testTheUserResizesThePanelAndTheWidthIsRemembered() async throws {
         await call("open", gesture(thisWindow))
         let divider = try XCTUnwrap(window.window?.contentView?.subviews.lazy.compactMap { $0 as? SplitDividerView }.first)

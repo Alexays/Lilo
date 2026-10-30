@@ -152,6 +152,17 @@ final class SidePanelController: NSObject {
         registry = nil
     }
 
+    /// The sidebar's accent, which the divider takes on hover as the sidebar's edge does.
+    func setAccentColor(_ css: String) {
+        divider.hoverTint = NSColor(cssHex: css)
+    }
+
+    /// Hover follows the window's pointer monitor, which sees every move, as the split dividers' does.
+    func pointerMoved(to windowPoint: NSPoint) {
+        guard panel != nil, let contentView = window.window?.contentView else { return }
+        divider.setHovered(divider.frame.contains(contentView.convert(windowPoint, from: nil)))
+    }
+
     func setFrameColor(_ color: NSColor) {
         divider.setFrameColor(color, animated: true)
         guard let panel else { return }

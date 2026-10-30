@@ -145,6 +145,7 @@
       lastThemeVars["--sidebar-bg"] ||
       document.documentElement.style.getPropertyValue("--sidebar-bg").trim();
     const material = shownMaterial;
+    const accent = lastThemeVars["--sidebar-accent"];
     if (!bg || `${bg} ${material}` === lastReportedSidebarBackground) {
       return;
     }
@@ -155,7 +156,7 @@
     }
 
     lastReportedSidebarBackground = `${bg} ${material}`;
-    chromeActions.updateWindowBackground(bg, material);
+    chromeActions.updateWindowBackground(bg, material, false, accent);
   }
 
   function scheduleSidebarBackgroundReport() {

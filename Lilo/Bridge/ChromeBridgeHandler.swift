@@ -152,6 +152,7 @@ final class ChromeBridgeHandler: BridgeHandler {
                 break
             }
             if let color = message.string("color") { windowController?.applyWindowChromeColors(color) }
+            if let accent = message.string("accent") { windowController?.sidePanel.setAccentColor(accent) }
             windowController?.applyWindowMaterial(message.string("material"))
 
         case "setWallpaperColorWatch":

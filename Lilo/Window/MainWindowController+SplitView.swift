@@ -21,6 +21,14 @@ final class SplitDividerView: NSView {
     var onDrag: ((NSPoint) -> Void)?
     var onDragEnd: (() -> Void)?
     var onSuperviewResize: (() -> Void)?
+    /// Set on an edge that resizes like the sidebar's: hovering tints the whole divider with it, as the sidebar's edge
+    /// does, instead of showing the pill.
+    var hoverTint: NSColor? {
+        didSet {
+            applyHandleColor()
+            layoutLayers()
+        }
+    }
 
     private let fill = CALayer()
     private let handle = CALayer()
@@ -73,9 +81,18 @@ final class SplitDividerView: NSView {
         }
         fill.backgroundColor = color.cgColor
         corners.forEach { $0.fillColor = color.cgColor }
-        let srgb = color.usingColorSpace(.sRGB) ?? color
-        handle.backgroundColor = (srgb.blended(withFraction: 0.16, of: srgb.brightnessComponent > 0.5 ? .black : .white) ?? srgb).cgColor
+        applyHandleColor()
         CATransaction.commit()
+    }
+
+    private func applyHandleColor() {
+        if let hoverTint {
+            // The sidebar's `--accent-tint-12`, over the frame color the divider paints.
+            handle.backgroundColor = hoverTint.withAlphaComponent(0.12).cgColor
+            return
+        }
+        let srgb = frameColor.usingColorSpace(.sRGB) ?? frameColor
+        handle.backgroundColor = (srgb.blended(withFraction: 0.16, of: srgb.brightnessComponent > 0.5 ? .black : .white) ?? srgb).cgColor
     }
 
     func setHovered(_ hovered: Bool) {
@@ -110,9 +127,14 @@ final class SplitDividerView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         fill.frame = bounds
-        // Runs between the pane corners, where both edges are straight.
-        handle.frame = isVertical ? bounds.insetBy(dx: r, dy: 0) : bounds.insetBy(dx: 0, dy: r)
-        handle.cornerRadius = min(handle.frame.width, handle.frame.height) / 2
+        if hoverTint != nil {
+            handle.frame = bounds
+            handle.cornerRadius = 0
+        } else {
+            // Runs between the pane corners, where both edges are straight.
+            handle.frame = isVertical ? bounds.insetBy(dx: r, dy: 0) : bounds.insetBy(dx: 0, dy: r)
+            handle.cornerRadius = min(handle.frame.width, handle.frame.height) / 2
+        }
         for (corner, frame) in zip(corners, frames) { corner.frame = frame }
         CATransaction.commit()
     }
