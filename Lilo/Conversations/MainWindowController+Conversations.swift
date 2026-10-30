@@ -145,6 +145,26 @@ extension MainWindowController {
     }
 
     /// Opens the Ask bar with the active page's selection, so it offers one only when there is one.
+    /// An HTML or SVG block of the thread, rendered as what it is: a page, opened among the conversation's
+    /// pages. Written to Lilo's support folder, so it loads as a file like any local page.
+    func previewArtifact(_ code: String, language: String, forConversation tabId: UUID) {
+        let folder = URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Agents/Artifacts")
+        let file = folder.appending(path: "\(UUID().uuidString).\(language == "svg" ? "svg" : "html")")
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try code.write(to: file, atomically: true, encoding: .utf8)
+        } catch {
+            return Self.logger.error("artifact preview failed: \(error.localizedDescription, privacy: .public)")
+        }
+        let conversation = context.conversations.conversations[tabId]
+        let index = conversation?.folderId.map { folderId in
+            tabManager.sidebarTreeItems(forSpace: conversation?.spaceId ?? UUID()).filter { $0.parentFolderId == folderId }.count
+        }
+        guard let tab = createTabStateFirst(url: file, activate: false, sidebarParentFolderId: conversation?.folderId,
+                                            sidebarSection: .unpinned, sidebarIndex: index) else { return }
+        tabManager.activateTabRuntime(id: tab.id)
+    }
+
     @objc func askAgent(_ sender: Any?) {
         guard agentsEnabled else { return NSSound.beep() }
         guard let tab = tabManager.activeTab, tab.kind == .web, let engine = tabManager.engineTab(for: tab.id) else {

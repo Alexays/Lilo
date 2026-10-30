@@ -2,7 +2,7 @@
 
 export type ContentBlock =
   | { type: "text"; text: string }
-  | { type: "image"; data: string; mimeType: string }
+  | { type: "image"; data: string; mimeType: string; uri?: string | null }
   | { type: "resource_link"; uri: string; name: string; title?: string | null }
   | { type: "resource"; resource: { uri: string; text?: string; blob?: string; mimeType?: string | null } };
 
@@ -116,6 +116,19 @@ export interface TextItem {
   text: string;
 }
 
+export interface ImageRef {
+  /** A data: URL, or a local file's path or file: URL the view resolves against the project. */
+  src: string;
+  alt: string;
+}
+
+/** A picture the agent shows in its reply. */
+export interface ImageItem extends ImageRef {
+  kind: "image";
+  id: number;
+  messageId: string | null;
+}
+
 export interface ToolCallItem {
   kind: "toolCall";
   id: number;
@@ -125,6 +138,8 @@ export interface ToolCallItem {
   status: ToolCallStatus;
   diffs: FileDiff[];
   output: string;
+  /** Pictures the call returned, such as a browser screenshot. */
+  images: ImageRef[];
   locations: ToolCallLocation[];
   rawInput: unknown;
   /** From the call's raw output, when the agent reports one. */
@@ -166,6 +181,7 @@ export interface NoticeItem {
 export type ThreadItem =
   | UserMessageItem
   | TextItem
+  | ImageItem
   | ToolCallItem
   | TurnEndItem
   | PlanItem
@@ -231,14 +247,20 @@ export function diffStats(oldText: string | null, newText: string): { added: num
   return { added, removed };
 }
 
+/** What the chrome can draw of a local file: the image types `conversation-file/` serves. */
+export const IMAGE_FILE = /\.(png|jpe?g|gif|webp|svg|heic|avif)$/i;
+
 function setContent(call: ToolCallItem, content: ToolCallContent[]): void {
   call.diffs = [];
   call.output = "";
+  call.images = [];
   for (const entry of content) {
     if (entry.type === "diff") {
       call.diffs.push({ path: entry.path, oldText: entry.oldText, newText: entry.newText, ...diffStats(entry.oldText, entry.newText) });
     } else if (entry.type === "content" && entry.content.type === "text") {
       call.output = call.output ? `${call.output}\n${entry.content.text}` : entry.content.text;
+    } else if (entry.type === "content" && entry.content.type === "image") {
+      call.images.push({ src: `data:${entry.content.mimeType};base64,${entry.content.data}`, alt: call.title });
     }
   }
 }
@@ -255,6 +277,7 @@ function applyToolCall(state: ConversationState, update: ToolCallFields, receive
       status: "pending",
       diffs: [],
       output: "",
+      images: [],
       locations: [],
       rawInput: null,
       exitCode: null,
@@ -299,6 +322,10 @@ function applyChunk(
   if (content.type === "text") {
     if (item) item.text += content.text;
     else pushText(state, kind, messageId, content.text);
+  } else if (kind === "agent" && content.type === "image") {
+    state.items.push({ kind: "image", id: state.nextId++, messageId, src: `data:${content.mimeType};base64,${content.data}`, alt: "" });
+  } else if (kind === "agent" && content.type === "resource_link" && IMAGE_FILE.test(content.uri) && /^(file:|\/)/.test(content.uri)) {
+    state.items.push({ kind: "image", id: state.nextId++, messageId, src: content.uri, alt: content.title || content.name || "" });
   } else if (kind === "user" && (content.type === "resource_link" || content.type === "resource")) {
     const chip =
       content.type === "resource_link"

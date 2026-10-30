@@ -2517,6 +2517,10 @@
 			"stopHint": "Esc で停止"
 		},
 		"work": {
+			"images": {
+				"one": "{count} 枚の画像",
+				"other": "{count} 枚の画像"
+			},
 			"verb": {
 				"read": "読み込み",
 				"edit": "編集",
@@ -2577,7 +2581,18 @@
 			"copy": "応答をコピー",
 			"copied": "コピーしました"
 		},
+		"image": {
+			"unavailable": "画像を表示できません",
+			"open": "画像を開く",
+			"viewer": "画像",
+			"previous": "前の画像",
+			"next": "次の画像",
+			"counter": "{index} / {total}"
+		},
 		"markdown": {
+			"preview": "プレビュー",
+			"openPreview": "プレビューをタブで開く",
+			"view": "表示形式",
 			"code": "コード",
 			"copy": "コードをコピー",
 			"copied": "コピーしました"

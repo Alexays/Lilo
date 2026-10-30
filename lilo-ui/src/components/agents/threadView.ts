@@ -1,10 +1,11 @@
 // What the conversation view draws from the thread: light markdown, line diffs, and when an item changed.
 
-import type { ThreadItem } from "./conversationModel";
+import { IMAGE_FILE, type ThreadItem } from "./conversationModel";
 
 export type Inline =
   | { type: "text" | "code" | "path" | "strong" | "em"; text: string }
-  | { type: "link"; text: string; href: string };
+  | { type: "link"; text: string; href: string }
+  | { type: "image"; alt: string; src: string };
 
 export type Block =
   | { type: "p" | "quote"; inline: Inline[] }
@@ -13,7 +14,7 @@ export type Block =
   | { type: "list"; ordered: boolean; items: Inline[][] };
 
 const INLINE =
-  /`([^`\n]+)`|\*\*([^*\n]+)\*\*|__([^_\n]+)__|(?<![\w*])\*([^*\s][^*\n]*)\*(?![\w*])|(?<![\w_])_([^_\s][^_\n]*)_(?![\w_])|\[([^\]\n]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s<>()]*[^\s<>().,;:!?'"])|(?<![\w/.:@-])((?:\.{1,2}\/|\/)?(?:[\w.@-]+\/)+[\w.-]*\.[A-Za-z][\w]*(?::\d+(?::\d+)?)?)(?![\w/])/g;
+  /`([^`\n]+)`|\*\*([^*\n]+)\*\*|__([^_\n]+)__|(?<![\w*])\*([^*\s][^*\n]*)\*(?![\w*])|(?<![\w_])_([^_\s][^_\n]*)_(?![\w_])|!\[([^\]\n]*)\]\(([^)\s]+)\)|\[([^\]\n]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s<>()]*[^\s<>().,;:!?'"])|(?<![\w/.:@-])((?:\.{1,2}\/|\/)?(?:[\w.@-]+\/)+[\w.-]*\.[A-Za-z][\w]*(?::\d+(?::\d+)?)?)(?![\w/])/g;
 
 const SAFE_LINK = /^(https?:|mailto:)/i;
 
@@ -27,10 +28,11 @@ export function parseInline(text: string): Inline[] {
     if (match[1] !== undefined) out.push({ type: "code", text: match[1] });
     else if (match[2] !== undefined || match[3] !== undefined) out.push({ type: "strong", text: match[2] ?? match[3] });
     else if (match[4] !== undefined || match[5] !== undefined) out.push({ type: "em", text: match[4] ?? match[5] });
-    else if (match[6] !== undefined) {
-      out.push(SAFE_LINK.test(match[7]) ? { type: "link", text: match[6], href: match[7] } : { type: "text", text: match[6] });
-    } else if (match[8] !== undefined) out.push({ type: "link", text: match[8], href: match[8] });
-    else out.push({ type: "path", text: match[9] });
+    else if (match[7] !== undefined) out.push({ type: "image", alt: match[6], src: match[7] });
+    else if (match[8] !== undefined) {
+      out.push(SAFE_LINK.test(match[9]) ? { type: "link", text: match[8], href: match[9] } : { type: "text", text: match[8] });
+    } else if (match[10] !== undefined) out.push({ type: "link", text: match[10], href: match[10] });
+    else out.push({ type: "path", text: match[11] });
   }
   if (last < text.length) out.push({ type: "text", text: text.slice(last) });
   return out;
@@ -101,6 +103,33 @@ export function parseMarkdown(text: string): Block[] {
   return blocks;
 }
 
+/**
+ * Where the chrome loads a picture from. Local files go through Lilo's `conversation-file/`, which
+ * serves only images inside the project; remote ones stay links, since the chrome's CSP blocks them.
+ */
+export function imageSource(src: string, cwd: string): { type: "image"; src: string } | { type: "remote"; href: string; host: string } | null {
+  if (/^data:image\//i.test(src)) return { type: "image", src };
+  if (/^https?:/i.test(src)) {
+    try {
+      return { type: "remote", href: src, host: new URL(src).host };
+    } catch {
+      return null;
+    }
+  }
+  let path: string;
+  if (/^file:/i.test(src)) {
+    try {
+      path = decodeURIComponent(new URL(src).pathname);
+    } catch {
+      return null;
+    }
+  } else if (src.startsWith("/")) path = src;
+  else if (!/^[a-z][\w+.-]*:/i.test(src) && cwd) path = `${cwd.replace(/\/$/, "")}/${src.replace(/^\.\//, "")}`;
+  else return null;
+  path = path.replace(/[?#].*$/, "");
+  return IMAGE_FILE.test(path) ? { type: "image", src: `lilo-chrome://ui/conversation-file/${encodeURIComponent(path)}` } : null;
+}
+
 export interface DiffLine {
   type: "context" | "added" | "removed";
   line: number;
@@ -149,8 +178,10 @@ export function itemSignature(item: ThreadItem, undone: Set<string>): string {
     case "agent":
     case "thought":
       return String(item.text.length);
+    case "image":
+      return `${item.src.length}:${item.alt}`;
     case "toolCall":
-      return `${item.status}:${item.title}:${item.output.length}:${item.rawInput ? 1 : 0}:${item.diffs.map((diff) => `${diff.added}/${diff.removed}/${undone.has(diff.path)}`).join()}`;
+      return `${item.status}:${item.title}:${item.output.length}:${item.images.length}:${item.rawInput ? 1 : 0}:${item.diffs.map((diff) => `${diff.added}/${diff.removed}/${undone.has(diff.path)}`).join()}`;
     case "turnEnd":
       return item.stopReason;
     case "plan":

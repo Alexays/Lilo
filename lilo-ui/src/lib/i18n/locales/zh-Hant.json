@@ -2517,6 +2517,10 @@
 			"stopHint": "按 Esc 停止"
 		},
 		"work": {
+			"images": {
+				"one": "{count} 張圖片",
+				"other": "{count} 張圖片"
+			},
 			"verb": {
 				"read": "讀取",
 				"edit": "編輯",
@@ -2577,7 +2581,18 @@
 			"copy": "拷貝回覆",
 			"copied": "已拷貝"
 		},
+		"image": {
+			"unavailable": "無法顯示圖片",
+			"open": "打開圖片",
+			"viewer": "圖片",
+			"previous": "上一張圖片",
+			"next": "下一張圖片",
+			"counter": "第 {index} 張，共 {total} 張"
+		},
 		"markdown": {
+			"preview": "預覽",
+			"openPreview": "在分頁中打開預覽",
+			"view": "顯示為",
 			"code": "程式碼",
 			"copy": "拷貝程式碼",
 			"copied": "已拷貝"

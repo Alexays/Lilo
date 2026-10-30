@@ -2559,6 +2559,12 @@
 			"stopHint": "Esc, aby zatrzymać"
 		},
 		"work": {
+			"images": {
+				"one": "{count} obraz",
+				"few": "{count} obrazy",
+				"many": "{count} obrazów",
+				"other": "{count} obrazu"
+			},
 			"verb": {
 				"read": "Odczytano",
 				"edit": "Edytowano",
@@ -2639,7 +2645,18 @@
 			"copy": "Kopiuj odpowiedź",
 			"copied": "Skopiowano"
 		},
+		"image": {
+			"unavailable": "Obraz niedostępny",
+			"open": "Otwórz obraz",
+			"viewer": "Obraz",
+			"previous": "Poprzedni obraz",
+			"next": "Następny obraz",
+			"counter": "{index} z {total}"
+		},
 		"markdown": {
+			"preview": "Podgląd",
+			"openPreview": "Otwórz podgląd w karcie",
+			"view": "Wyświetl jako",
 			"code": "Kod",
 			"copy": "Kopiuj kod",
 			"copied": "Skopiowano"

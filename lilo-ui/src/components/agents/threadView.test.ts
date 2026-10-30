@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDuration, lineDiff, parseInline, parseMarkdown } from "./threadView";
+import { formatDuration, imageSource, lineDiff, parseInline, parseMarkdown } from "./threadView";
 
 test("inline markdown splits code, emphasis and links", () => {
   assert.deepEqual(parseInline("Run `npm test` then **check** the *logs* at https://example.com/a."), [
@@ -81,4 +81,23 @@ test("durations read in whole seconds, then minutes, then hours", () => {
     "1m 05s",
     "2h 03m",
   ]);
+});
+
+test("markdown images parse before links", () => {
+  assert.deepEqual(parseInline("See ![the chart](out/chart.png) and [docs](https://example.com)"), [
+    { type: "text", text: "See " },
+    { type: "image", alt: "the chart", src: "out/chart.png" },
+    { type: "text", text: " and " },
+    { type: "link", text: "docs", href: "https://example.com" },
+  ]);
+});
+
+test("image sources: local files go through Lilo, remote ones stay links", () => {
+  const local = (path: string) => ({ type: "image", src: `lilo-chrome://ui/conversation-file/${encodeURIComponent(path)}` });
+  assert.deepEqual(imageSource("./out/a b.png", "/p/app"), local("/p/app/out/a b.png"));
+  assert.deepEqual(imageSource("file:///p/app/shot.JPG", "/p/app"), local("/p/app/shot.JPG"));
+  assert.deepEqual(imageSource("/p/app/logo.svg?v=2", ""), local("/p/app/logo.svg"));
+  assert.deepEqual(imageSource("data:image/png;base64,AAAA", ""), { type: "image", src: "data:image/png;base64,AAAA" });
+  assert.deepEqual(imageSource("https://example.com/a.png", ""), { type: "remote", href: "https://example.com/a.png", host: "example.com" });
+  assert.deepEqual([imageSource("notes.md", "/p"), imageSource("a.png", ""), imageSource("javascript:alert(1)", "/p")], [null, null, null]);
 });

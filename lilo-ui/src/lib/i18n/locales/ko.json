@@ -2517,6 +2517,10 @@
 			"stopHint": "Esc로 중지"
 		},
 		"work": {
+			"images": {
+				"one": "이미지 {count}개",
+				"other": "이미지 {count}개"
+			},
 			"verb": {
 				"read": "읽음",
 				"edit": "편집함",
@@ -2577,7 +2581,18 @@
 			"copy": "응답 복사",
 			"copied": "복사됨"
 		},
+		"image": {
+			"unavailable": "이미지를 표시할 수 없음",
+			"open": "이미지 열기",
+			"viewer": "이미지",
+			"previous": "이전 이미지",
+			"next": "다음 이미지",
+			"counter": "{index} / {total}"
+		},
 		"markdown": {
+			"preview": "미리보기",
+			"openPreview": "미리보기를 탭에서 열기",
+			"view": "보기 방식",
 			"code": "코드",
 			"copy": "코드 복사",
 			"copied": "복사됨"

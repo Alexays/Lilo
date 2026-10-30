@@ -2517,6 +2517,10 @@
 			"stopHint": "Esc om te stoppen"
 		},
 		"work": {
+			"images": {
+				"one": "{count} afbeelding",
+				"other": "{count} afbeeldingen"
+			},
 			"verb": {
 				"read": "Gelezen",
 				"edit": "Bewerkt",
@@ -2577,7 +2581,18 @@
 			"copy": "Antwoord kopiëren",
 			"copied": "Gekopieerd"
 		},
+		"image": {
+			"unavailable": "Afbeelding niet beschikbaar",
+			"open": "Afbeelding openen",
+			"viewer": "Afbeelding",
+			"previous": "Vorige afbeelding",
+			"next": "Volgende afbeelding",
+			"counter": "{index} van {total}"
+		},
 		"markdown": {
+			"preview": "Voorvertoning",
+			"openPreview": "Voorvertoning openen in een tabblad",
+			"view": "Weergeven als",
 			"code": "Code",
 			"copy": "Code kopiëren",
 			"copied": "Gekopieerd"

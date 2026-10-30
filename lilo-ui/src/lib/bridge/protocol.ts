@@ -835,6 +835,8 @@ export interface BridgeCommandPayloadMap {
 	authenticateConversation: { tabId: string; methodId: string };
 	/** Files of a project matching `query`, for @ in the composer: answered with `conversationFiles`. */
 	searchConversationFiles: { cwd: string; query: string };
+	/** Opens an HTML or SVG block of the thread as a page beside the conversation. */
+	previewConversationArtifact: { tabId: string; code: string; language: string };
 	getAgentClients: EmptyPayload;
 	revokeAgentClient: { name: string };
 	getAppNames: { ids: string[] };

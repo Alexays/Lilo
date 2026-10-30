@@ -19,6 +19,10 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     /// than as data URLs: a full-page PNG runs to tens of megabytes, and a same-origin image keeps
     /// the editor's export canvas untainted.
     private static var screenshots: [String: Data] = [:]
+    private static let conversationFilePrefix = "conversation-file/"
+    /// The projects of open conversations: the only folders `conversation-file/` reads, and images only.
+    static var conversationRoots: Set<String> = []
+    private static let conversationImageTypes: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "svg", "heic", "avif"]
 
     /// Holds `png` until `discardScreenshot(id:)` and returns the URL the editor loads it from.
     static func publishScreenshot(_ png: Data) -> (id: String, url: URL) {
@@ -59,6 +63,22 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
                 return
             }
             urlSchemeTask.didReceive(response)
+            urlSchemeTask.didReceive(data)
+            urlSchemeTask.didFinish()
+            return
+        }
+        if path.hasPrefix(Self.conversationFilePrefix) {
+            let file = URL(fileURLWithPath: String(path.dropFirst(Self.conversationFilePrefix.count)).removingPercentEncoding ?? "")
+                .standardizedFileURL.resolvingSymlinksInPath()
+            guard Self.conversationImageTypes.contains(file.pathExtension.lowercased()),
+                  Self.conversationRoots.contains(where: { file.path.hasPrefix($0.hasSuffix("/") ? $0 : $0 + "/") }),
+                  ((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? .max) < 20_000_000,
+                  let data = try? Data(contentsOf: file) else {
+                urlSchemeTask.didFailWithError(URLError(.fileDoesNotExist))
+                return
+            }
+            let mimeType = UTType(filenameExtension: file.pathExtension)?.preferredMIMEType ?? "application/octet-stream"
+            urlSchemeTask.didReceive(URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: nil))
             urlSchemeTask.didReceive(data)
             urlSchemeTask.didFinish()
             return

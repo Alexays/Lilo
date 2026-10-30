@@ -286,22 +286,6 @@
     flex: 1;
   }
 
-  .hint {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-4);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  kbd {
-    margin-left: var(--space-6);
-    font-family: inherit;
-    color: var(--text-secondary);
-  }
-
   .send {
     flex: none;
     display: grid;

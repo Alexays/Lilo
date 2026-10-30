@@ -15,7 +15,7 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { hostOf } from "../../lib/url";
   import { getFolders } from "../../stores/folders.svelte";
-  import { getProjectFiles, searchProjectFiles } from "../../stores/conversations.svelte";
+  import { getProjectFiles, searchProjectFiles } from "./projectFiles.svelte";
   import { getActiveSpaceId } from "../../stores/spaces.svelte";
   import { getOpenTabs, getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import UiChip from "../ui/UiChip.svelte";

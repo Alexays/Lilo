@@ -2517,6 +2517,10 @@
 			"stopHint": "Esc zum Stoppen"
 		},
 		"work": {
+			"images": {
+				"one": "{count} Bild",
+				"other": "{count} Bilder"
+			},
 			"verb": {
 				"read": "Gelesen",
 				"edit": "Bearbeitet",
@@ -2577,7 +2581,18 @@
 			"copy": "Antwort kopieren",
 			"copied": "Kopiert"
 		},
+		"image": {
+			"unavailable": "Bild nicht verfügbar",
+			"open": "Bild öffnen",
+			"viewer": "Bild",
+			"previous": "Vorheriges Bild",
+			"next": "Nächstes Bild",
+			"counter": "{index} von {total}"
+		},
 		"markdown": {
+			"preview": "Vorschau",
+			"openPreview": "Vorschau in einem Tab öffnen",
+			"view": "Anzeigen als",
 			"code": "Code",
 			"copy": "Code kopieren",
 			"copied": "Kopiert"

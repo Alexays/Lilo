@@ -2506,6 +2506,10 @@
 			"stopHint": "Esc to stop"
 		},
 		"work": {
+			"images": {
+				"one": "{count} image",
+				"other": "{count} images"
+			},
 			"verb": {
 				"read": "Read",
 				"edit": "Edited",
@@ -2566,7 +2570,18 @@
 			"copy": "Copy response",
 			"copied": "Copied"
 		},
+		"image": {
+			"unavailable": "Image unavailable",
+			"open": "Open image",
+			"viewer": "Image",
+			"previous": "Previous image",
+			"next": "Next image",
+			"counter": "{index} of {total}"
+		},
 		"markdown": {
+			"preview": "Preview",
+			"openPreview": "Open preview in a tab",
+			"view": "View as",
 			"code": "Code",
 			"copy": "Copy code",
 			"copied": "Copied"

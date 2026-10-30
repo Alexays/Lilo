@@ -2517,6 +2517,10 @@
 			"stopHint": "Durdurmak için Esc"
 		},
 		"work": {
+			"images": {
+				"one": "{count} görsel",
+				"other": "{count} görsel"
+			},
 			"verb": {
 				"read": "Okundu",
 				"edit": "Düzenlendi",
@@ -2577,7 +2581,18 @@
 			"copy": "Yanıtı kopyala",
 			"copied": "Kopyalandı"
 		},
+		"image": {
+			"unavailable": "Görsel kullanılamıyor",
+			"open": "Görseli aç",
+			"viewer": "Görsel",
+			"previous": "Önceki görsel",
+			"next": "Sonraki görsel",
+			"counter": "{index} / {total}"
+		},
 		"markdown": {
+			"preview": "Önizleme",
+			"openPreview": "Önizlemeyi sekmede aç",
+			"view": "Şu şekilde göster",
 			"code": "Kod",
 			"copy": "Kodu kopyala",
 			"copied": "Kopyalandı"
