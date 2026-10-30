@@ -789,10 +789,12 @@ final class WKWebViewTab: NSObject {
             return
         }
         printInfo.isHorizontallyCentered = false; printInfo.isVerticallyCentered = false
+        webView.configuration.preferences.shouldPrintBackgrounds = PrintOptionsController.printsBackgrounds
         let framePrint = NSSelectorFromString("_printOperationWithPrintInfo:forFrame:")
         let op = frame.flatMap { webView.responds(to: framePrint) ? webView.perform(framePrint, with: printInfo, with: $0)?.takeUnretainedValue() as? NSPrintOperation : nil }
             ?? webView.printOperation(with: printInfo)
         op.showsPrintPanel = true; op.showsProgressPanel = true
+        op.printPanel.addAccessoryController(PrintOptionsController(webView: webView))
         guard let completion else {
             op.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
             return
@@ -2223,11 +2225,12 @@ extension WKWebViewTab: WKUIDelegate {
         completionHandler(frame)
     }
 
-    // Printed-page header/footer (WKUIDelegatePrivate): the page title and source URL.
+    // Printed-page header/footer (WKUIDelegatePrivate): the page title and date, then the source URL and page number, unless the
+    // print panel's option turns them off.
     @objc(_webViewHeaderHeight:)
-    nonisolated func webViewHeaderHeight(_ webView: WKWebView) -> CGFloat { Self.printEdgeHeight }
+    nonisolated func webViewHeaderHeight(_ webView: WKWebView) -> CGFloat { PrintOptionsController.printsHeadersAndFooters ? Self.printEdgeHeight : 0 }
     @objc(_webViewFooterHeight:)
-    nonisolated func webViewFooterHeight(_ webView: WKWebView) -> CGFloat { Self.printEdgeHeight }
+    nonisolated func webViewFooterHeight(_ webView: WKWebView) -> CGFloat { PrintOptionsController.printsHeadersAndFooters ? Self.printEdgeHeight : 0 }
 
     @objc(_webView:drawHeaderInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawHeaderInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
@@ -2235,7 +2238,8 @@ extension WKWebViewTab: WKUIDelegate {
     }
     @objc(_webView:drawFooterInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
-        Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: nil)
+        let pageNumber = MainActor.assumeIsolated { NSPrintOperation.current.map { "\($0.currentPage)/\($0.pageRange.upperBound - 1)" } }
+        Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: pageNumber)
     }
 
     nonisolated private static let printEdgeHeight: CGFloat = 18
@@ -2357,6 +2361,56 @@ extension WKWebViewTab: WKUIDelegate {
             }
         }
     }
+}
+
+// MARK: - PrintOptionsController
+
+/// The print panel's options, kept for every later print as in Safari.
+@MainActor
+final class PrintOptionsController: NSViewController, NSPrintPanelAccessorizing {
+    nonisolated static var printsHeadersAndFooters: Bool { UserDefaults.standard.object(forKey: "PrintHeadersAndFooters") as? Bool ?? true }
+    static var printsBackgrounds: Bool { UserDefaults.standard.bool(forKey: "PrintBackgrounds") }
+
+    private let webView: WKWebView
+    // Observed by the print panel, which redraws its preview when either changes.
+    @objc dynamic private var headersAndFooters = PrintOptionsController.printsHeadersAndFooters
+    @objc dynamic private var backgrounds = PrintOptionsController.printsBackgrounds
+
+    init(webView: WKWebView) {
+        self.webView = webView
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func loadView() {
+        let backgrounds = NSButton(checkboxWithTitle: "Print backgrounds".localized, target: self, action: #selector(toggleBackgrounds(_:)))
+        backgrounds.state = self.backgrounds ? .on : .off
+        let headers = NSButton(checkboxWithTitle: "Print headers and footers".localized, target: self, action: #selector(toggleHeadersAndFooters(_:)))
+        headers.state = headersAndFooters ? .on : .off
+        let stack = NSStackView(views: [backgrounds, headers])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.edgeInsets = NSEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+        view = stack
+    }
+
+    @objc private func toggleBackgrounds(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: "PrintBackgrounds")
+        webView.configuration.preferences.shouldPrintBackgrounds = sender.state == .on
+        backgrounds = sender.state == .on
+    }
+
+    @objc private func toggleHeadersAndFooters(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: "PrintHeadersAndFooters")
+        headersAndFooters = sender.state == .on
+    }
+
+    func localizedSummaryItems() -> [[NSPrintPanel.AccessorySummaryKey: String]] { [] }
+
+    func keyPathsForValuesAffectingPreview() -> Set<String> { ["headersAndFooters", "backgrounds"] }
 }
 
 // MARK: - PrintCompletionProxy
