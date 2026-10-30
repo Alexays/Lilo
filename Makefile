@@ -74,7 +74,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage blocker-bench script-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -289,6 +289,19 @@ script-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@out="$(abspath $(or $(OUT),build/script-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_SCRIPT_BENCH="$$out" TEST_RUNNER_LILO_SCRIPT_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
 		$(TEST) -only-testing:LiloTests/InjectedScriptsBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
+
+## Report Speedometer 3.1 in a plain web view, with Lilo's bridges, and with all it injects (network; ROUNDS=4 TABLES=filter tables the app built; OUT=build/speedometer-bench.txt)
+speedometer-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@out="$(abspath $(or $(OUT),build/speedometer-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	for round in $$(seq 0 $$(($(or $(ROUNDS),4) - 1))); do \
+		log=$$(mktemp); TEST_RUNNER_LILO_SPEEDOMETER_BENCH="$$out" TEST_RUNNER_LILO_SPEEDOMETER_ROUND=$$round \
+			TEST_RUNNER_LILO_SPEEDOMETER_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
+			$(TEST) -only-testing:LiloTests/SpeedometerBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; \
+	done; \
+	python3 -I -c 'import statistics as s, sys; rows = [list(map(float, l.split())) for l in open(sys.argv[1])]; \
+		print("Speedometer 3.1, 5 iterations, rounds:", len(rows)); print("        plain  bridges  lilo"); \
+		[print(f"round  {r[0]:6.1f} {r[1]:8.1f} {r[2]:5.1f}") for r in rows]; m = [s.median(c) for c in zip(*rows)]; \
+		print(f"median {m[0]:6.1f} {m[1]:8.1f} {m[2]:5.1f}")' "$$out"
 
 ## Report Enter to first paint of a page whose server pauses, with and without a top-hit preload (OUT=build/preload-bench.txt)
 preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
