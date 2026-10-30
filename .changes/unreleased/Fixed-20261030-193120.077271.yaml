@@ -1,0 +1,3 @@
+kind: Fixed
+body: VoiceOver reaches the address bar's buttons (site controls, ad blocker, screenshot, copy link) instead of reading the bar as one button.
+time: 2026-10-30T19:31:20.077271+01:00
