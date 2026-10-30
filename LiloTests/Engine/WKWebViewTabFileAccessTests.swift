@@ -2,10 +2,10 @@ import WebKit
 import XCTest
 @testable import Lilo
 
-/// A local file reads its folder only when it is an HTML page, for the assets beside it.
+/// A local HTML page shows local assets from any folder, as in Chrome; any other file reads only itself.
 @MainActor
 final class WKWebViewTabFileAccessTests: XCTestCase {
-    /// Opens `name` holding `document`, beside a picture it shows, and returns whether the picture loaded.
+    /// Opens `name` holding `document`, in or below the folder of a picture it shows, and returns whether the picture loaded.
     private func loadsSiblingPicture(_ name: String, _ document: String) async throws -> String? {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-file-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -13,6 +13,7 @@ final class WKWebViewTabFileAccessTests: XCTestCase {
         let pixel = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="
         try XCTUnwrap(Data(base64Encoded: pixel)).write(to: folder.appendingPathComponent("pic.png"))
         let file = folder.appendingPathComponent(name)
+        try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         try document.write(to: file, atomically: true, encoding: .utf8)
         let factory = WKEngineFactory()
         let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: false, identifier: nil)))
@@ -31,6 +32,18 @@ final class WKWebViewTabFileAccessTests: XCTestCase {
         let page = #"<html><body><img src="pic.png" onload="document.documentElement.setAttribute('data-picture','loaded')" onerror="document.documentElement.setAttribute('data-picture','blocked')"></body></html>"#
         let state = try await loadsSiblingPicture("page.html", page)
         XCTAssertEqual(state, "loaded")
+    }
+
+    func testAnHTMLPageShowsAssetsOutsideItsFolder() async throws {
+        let page = #"<html><body><img src="../pic.png" onload="document.documentElement.setAttribute('data-picture','loaded')" onerror="document.documentElement.setAttribute('data-picture','blocked')"></body></html>"#
+        let state = try await loadsSiblingPicture("docs/page.html", page)
+        XCTAssertEqual(state, "loaded")
+    }
+
+    func testAnHTMLPageCannotFetchAnotherFile() async throws {
+        let page = #"<html><body><script>fetch("../pic.png").then(() => "loaded", () => "blocked").then((s) => document.documentElement.setAttribute('data-picture', s))</script></body></html>"#
+        let state = try await loadsSiblingPicture("docs/page.html", page)
+        XCTAssertEqual(state, "blocked")
     }
 
     func testAnotherFileReadsNothingBesideIt() async throws {

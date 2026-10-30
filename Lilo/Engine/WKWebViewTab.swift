@@ -574,10 +574,11 @@ final class WKWebViewTab: NSObject {
         didReloadEmptyCommit = false
         StartupMetrics.markOnce("firstContentLoadRequested")
         if url.isFileURL {
-            // A plain URLRequest load silently no-ops for file URLs. An HTML page may read its own folder, for
-            // the assets beside it; any other file (an SVG, a text file) only itself.
+            // A plain URLRequest load silently no-ops for file URLs. An HTML page shows images, styles and scripts
+            // from any local folder, as in Chrome (`../style.css` in generated docs); WebKit still blocks its
+            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself.
             let isPage = ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
-            webView.loadFileURL(url, allowingReadAccessTo: isPage ? url.deletingLastPathComponent() : url)
+            webView.loadFileURL(url, allowingReadAccessTo: isPage ? URL(fileURLWithPath: "/") : url)
             return
         }
         webView.load(URLRequest(url: url))
