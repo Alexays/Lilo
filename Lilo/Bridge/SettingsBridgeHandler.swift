@@ -96,6 +96,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     /// The profile's history was cleared since this date, or entirely (nil).
     var onHistoryCleared: ((Date?) -> Void)?
     var onAutoDeviceSwitchingChanged: (() -> Void)?
+    var onFolderAutoLockChanged: (() -> Void)?
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
     var onForgetDeviceSetup: (() -> Void)?
@@ -211,6 +212,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "lifecyclePreset" { onLifecyclePresetChanged?(value) }
                 if key == "tabPosition" || key == "addressPlacement" { onTabLayoutChanged?() }
                 if key == DeviceSetupController.enabledKey { onAutoDeviceSwitchingChanged?() }
+                if key == "folderAutoLockMinutes" { onFolderAutoLockChanged?() }
                 // Mirror the UI language choice so native menus/dialogs follow it on next launch.
                 if key == "locale" { Localization.persistOverride(value) }
                 // apply() also caches the appearance for next-launch first paint.

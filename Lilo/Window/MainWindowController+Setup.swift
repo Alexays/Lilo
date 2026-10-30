@@ -638,6 +638,7 @@ extension MainWindowController {
         }
         let deviceSetup = context.deviceSetupController
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
+        settingsHandler.onFolderAutoLockChanged = { [weak self] in self?.context.folderAutoLock.limitDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
         settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }

@@ -29,6 +29,12 @@ final class FolderAutoLock {
         lockIfIdle()
     }
 
+    /// A new `folderAutoLockMinutes` applies to the folders already unlocked, at once if the user is idle past it.
+    func limitDidChange() {
+        idleTimer?.invalidate()
+        lockIfIdle()
+    }
+
     func lockAll() {
         idleTimer?.invalidate()
         idleTimer = nil
