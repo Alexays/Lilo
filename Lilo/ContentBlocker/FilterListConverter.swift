@@ -569,6 +569,9 @@ enum FilterListConverter {
         var requestHosts: [String]?
         if let opts = optionsStr,
            !applyOptions(opts, to: &trigger, important: &isImportant, requestHosts: &requestHosts, isException: isException) { return [] }
+        // `||host^`: a host is always followed by its port or path.
+        let isBareHost = !isRegex && pattern.hasPrefix("||") && pattern.hasSuffix("^")
+            && pattern.dropFirst(2).dropLast().allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "." || $0 == "-") }
         var filters: [String]
         if isRegex, pattern.hasSuffix("/") {
             guard let alternatives = regexURLFilters(pattern.dropFirst().dropLast()) else { return [] }
@@ -576,6 +579,8 @@ enum FilterListConverter {
         } else {
             guard let filter = urlFilter(for: pattern) else { return [] }
             filters = [filter]
+            // ABP's `^` also matches the end of the URL, which a regex class cannot.
+            if pattern.hasSuffix("^"), !isBareHost, let end = urlFilter(for: pattern.dropLast() + "|") { filters.append(end) }
         }
         if let requestHosts {
             guard let scoped = requestHostFilters(filters, pattern: pattern, isRegex: isRegex, hosts: requestHosts) else { return [] }

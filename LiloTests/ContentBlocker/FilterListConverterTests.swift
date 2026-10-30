@@ -264,6 +264,19 @@ final class FilterListConverterTests: XCTestCase {
                        "a prefix cutting a group open stays whole")
     }
 
+    /// ABP's `^` also matches the end of the URL: a filter ending in one gets a second rule anchored there.
+    func testTrailingSeparatorAlsoMatchesTheEndOfTheURL() {
+        func filters(_ line: String) -> [String] {
+            let out = FilterListConverter.convert(line)
+            return (out.blocks + out.exceptions).compactMap { ($0["trigger"] as? [String: Any])?["url-filter"] as? String }
+        }
+        XCTAssertEqual(filters("@@||cdn.example.com/ads/ad.js^$script"), [
+            #"^https?://([^/]+\.)?cdn\.example\.com/ads/ad\.js[^-a-zA-Z0-9._%]"#, #"^https?://([^/]+\.)?cdn\.example\.com/ads/ad\.js$"#
+        ])
+        XCTAssertEqual(filters("/track.gif^$image"), [#"/track\.gif[^-a-zA-Z0-9._%]"#, #"/track\.gif$"#])
+        XCTAssertEqual(filters("||ads.example.com^").count, 1, "a host is always followed by its path")
+    }
+
     /// A costly page rule matches the page's URL once, as its top URL, instead of every load's.
     func testCostlyPageRulesMoveToTheTopURL() throws {
         let page = try XCTUnwrap(trigger("/?pl=*&sm=$doc"))
@@ -811,6 +824,7 @@ final class FilterListConverterTests: XCTestCase {
         ||ads.example.com^$script,image,domain=news.example|~good.example
         |http://tracker.example/pixel|
         /banners/*.gif
+        @@||cdn.example.com/ads/ad.js^$script
         @@||cdn.example.com^
         /^https?:\/\/[a-z\d]{3,5}\.(?:com|net)\/[\w-]+\/ad\d+\.js$/$script
         /\/x(\/y)?\.js$/$domain=a.example

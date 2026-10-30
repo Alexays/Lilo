@@ -1,0 +1,3 @@
+kind: Fixed
+body: Content blocker filters ending in ^ also match a URL that ends there, so their blocks and the exceptions that repair sites apply again.
+time: 2026-10-30T19:28:54.62811+01:00
