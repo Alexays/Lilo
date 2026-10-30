@@ -1,0 +1,3 @@
+kind: Fixed
+body: Restarting for an update now checks for a newer release right away, so a version published while the update waited arrives without waiting for the next scheduled check.
+time: 2026-10-30T17:26:48.081445+01:00

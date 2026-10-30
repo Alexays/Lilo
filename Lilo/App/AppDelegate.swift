@@ -371,6 +371,12 @@ extension AppDelegate: SPUUpdaterDelegate {
         return true
     }
 
+    /// Sparkle stops checking once an update waits, and cannot swap it for a newer one: the relaunched
+    /// Lilo forgets the last check so it fetches a release published in between at once.
+    nonisolated func updaterWillRelaunchApplication(_ updater: SPUUpdater) {
+        UserDefaults.standard.removeObject(forKey: "SULastCheckTime")
+    }
+
     /// The feed's `releases/latest` redirect is cached by URLSession, so a check could keep reading the
     /// previous release's appcast: a fresh query string makes every check reach GitHub.
     nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
