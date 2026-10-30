@@ -207,4 +207,22 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         XCTAssertEqual(posts(), 1)
         XCTAssertNil(window.attachedSheet, "nothing is asked until the user tries again")
     }
+
+    func testBackFromALoadThatFailedBeforeCommittingReturnsToThePageItLeft() async throws {
+        let server = try await slowServer()
+        let page = try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/"))
+        let (tab, spy) = try await loadedTab(page)
+        XCTAssertFalse(tab.canGoBack)
+        _ = try await tab.wkWebView.evaluateJavaScript("location = 'https://localhost:\(server.port)/'; 1")
+        let failed = await pollUntil(timeout: 10) { if case .failed = spy.events.last { true } else { false } }
+        XCTAssertTrue(failed)
+        XCTAssertTrue(tab.canGoBack, "the error is an entry of its own, as in Chrome")
+
+        tab.goBack()
+
+        guard case .finished(let url) = spy.events.last else { return XCTFail("the page it left shows again") }
+        XCTAssertEqual(url, page)
+        XCTAssertFalse(tab.canGoBack)
+        XCTAssertEqual(spy.commits, 1, "nothing loads: the page was still there")
+    }
 }

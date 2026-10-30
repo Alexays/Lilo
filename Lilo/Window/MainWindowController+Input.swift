@@ -549,7 +549,7 @@ extension MainWindowController: NSUserInterfaceValidations {
 
         if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { $0.peekView?.superview != nil } }
-        if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoBack == true }
+        if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.canGoBack == true }
         if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }
         if action == #selector(stopLoadingCurrentPage(_:)) { return focusedEngineTab?.isLoading == true }
         if action == #selector(showNextTab(_:)) || action == #selector(showPreviousTab(_:)) { return tabManager.currentTabs.count > 1 }

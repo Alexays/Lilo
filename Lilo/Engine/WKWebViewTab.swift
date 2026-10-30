@@ -293,6 +293,8 @@ final class WKWebViewTab: NSObject {
     private(set) var pendingMainFrameSendsBody = false
     /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
     private var isLoadingCachedCopy = false
+    /// An error shows for a load that failed before it committed, over the page it was leaving.
+    private var showsFailureOverPage = false
     /// The failed page to reload on the next network change; set while that wait is registered.
     private var networkChangeRetryURL: URL?
     private var lastNavigationEmissionState = NavigationEmissionState()
@@ -469,7 +471,7 @@ final class WKWebViewTab: NSObject {
     var currentTitle: String? { webView.title }
     var isLoading: Bool { webView.isLoading }
     var estimatedProgress: Double { webView.estimatedProgress }
-    var canGoBack: Bool { webView.canGoBack }
+    var canGoBack: Bool { webView.canGoBack || showsFailureOverPage }
     var canGoForward: Bool { webView.canGoForward }
     var interactionState: Any? { webView.interactionState }
     var pageZoom: Double { Double(webView.pageZoom) }
@@ -659,6 +661,14 @@ final class WKWebViewTab: NSObject {
 
     func goBack() {
         guard wake() else { return }
+        // The page the failed load was leaving is still there: Back returns to it, as leaving Chrome's error page does.
+        if showsFailureOverPage {
+            showsFailureOverPage = false
+            networkChangeRetryURL = nil
+            pendingMainFrameURL = webView.url
+            delegate?.tab(self, didNavigate: .finished(currentURL))
+            return
+        }
         webView.goBack()
     }
 
@@ -1272,6 +1282,7 @@ final class WKWebViewTab: NSObject {
             alreadyRetried: didAutoRetryProvisionalLoad,
             isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied
         )
+        showsFailureOverPage = hasCommittedContent && recovery != .retrySilently
         guard recovery != .surface, let failedURL = pendingMainFrameURL ?? currentURL else {
             handleNavigationFailure(error, phase: "provisional")
             return
@@ -1646,6 +1657,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.navigationSignpost = PerfSignposts.navigation.beginInterval("load", id: PerfSignposts.navigation.makeSignpostID(from: tab))
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
+            tab.showsFailureOverPage = false
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
             // A pending region selection is a selection of the outgoing page.
             tab.cancelRegionSelection()
@@ -1685,6 +1697,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.lastContentTerminationAt = nil
             // A hung process killed for a reload never says it answers again: the new one committing does.
             tab.isUnresponsive = false
+            tab.showsFailureOverPage = false
             tab.didAutoRetryProvisionalLoad = false
             tab.isLoadingCachedCopy = false
             tab.networkChangeRetryURL = nil
@@ -1748,6 +1761,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false
+                tab.showsFailureOverPage = tab.hasCommittedContent
                 tab.handleNavigationFailure(NSError(domain: NSURLErrorDomain, code: NSURLErrorResourceUnavailable), phase: "provisional")
                 return
             }
