@@ -22,8 +22,6 @@ let _home = $state.raw("");
 let _chosenProject = $state.raw<string | null>(null);
 let _askOpen = $state(false);
 let _askSelection = $state.raw("");
-let _files = $state.raw<{ cwd: string; query: string; files: string[] }>({ cwd: "", query: "", files: [] });
-let fileSearch: ReturnType<typeof setTimeout> | undefined;
 /** Bumped at most once per frame when an open conversation changes: its thread is mutated in place. */
 let _version = $state(0);
 const open = new Map<string, OpenConversation>();
@@ -46,7 +44,6 @@ export function initConversationsStore(): void {
 		_home = data.home;
 	});
 	on("conversationProjectChosen", (data) => { _chosenProject = data.path; });
-	on("conversationFiles", (data) => { _files = data; });
 	on("openAskBar", (data) => {
 		_askSelection = data.selection;
 		_askOpen = true;
@@ -109,15 +106,6 @@ export const openAskBar = (): void => {
 	_askSelection = "";
 	_askOpen = true;
 };
-/** Asks for the project's files matching `query`, once typing pauses: `getProjectFiles` gets the answer. */
-export function searchProjectFiles(cwd: string, query: string): void {
-	clearTimeout(fileSearch);
-	fileSearch = setTimeout(() => postMessage("searchConversationFiles", { cwd, query }), 60);
-}
-
-/** The last answer to `searchProjectFiles`, for the query it was asked with. */
-export const getProjectFiles = (): { cwd: string; query: string; files: string[] } => _files;
-
 /** The page's selected text when the bar opened, empty when there was none. */
 export const getAskSelection = (): string => _askSelection;
 export const closeAskBar = (): void => { _askOpen = false; };

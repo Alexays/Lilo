@@ -72,6 +72,7 @@
   import DiffCard from "./DiffCard.svelte";
   import Icon from "./Icon.svelte";
   import MascotGlyph from "./MascotGlyph.svelte";
+  import ThreadImage from "./ThreadImage.svelte";
   import { formatDuration } from "./threadView";
 
   interface Props {
@@ -111,7 +112,9 @@
     const files = new Set<string>();
     let added = 0;
     let removed = 0;
+    let images = 0;
     for (const view of views) {
+      images += view.call.images.length;
       const kind = view.call.toolKind;
       const category = view.browser ? "browser" : FILE_KINDS.has(kind) && kind !== "read" ? "edit" : SUMMARY_KINDS.has(kind) ? kind : "tool";
       if (category !== "edit") {
@@ -129,7 +132,7 @@
     }
     if (files.size) counts.set("edit", files.size);
     const text = [...counts].map(([category, count]) => t(`agents.work.summary.${category}`, { count })).join(", ");
-    return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, categories: [...counts.keys()] };
+    return { text: text.charAt(0).toUpperCase() + text.slice(1), added, removed, images, categories: [...counts.keys()] };
   });
 
   const running = $derived(views.some((view) => view.call.status === "in_progress" || view.call.status === "pending"));
@@ -177,6 +180,11 @@
     {#if summary.added || summary.removed}
       <span class="count-added">+{summary.added}</span>
       <span class="count-removed">-{summary.removed}</span>
+    {/if}
+    {#if summary.images}
+      <span class="image-count" role="img" aria-label={t("agents.work.images", { count: summary.images })}>
+        <Icon name="image" size={12} />{summary.images}
+      </span>
     {/if}
     {#if failed}
       <span class="failed" role="img" aria-label={t("agents.tool.status.failed")}><Icon name="alert" size={12} /></span>
@@ -262,6 +270,13 @@
                   </div>
                 {/if}
               {/if}
+              {#if call.images.length}
+                <div class="call-images">
+                  {#each call.images as image, index (index)}
+                    <ThreadImage src={image.src} alt={image.alt} small />
+                  {/each}
+                </div>
+              {/if}
             </div>
           {/each}
         </div>
@@ -344,6 +359,23 @@
 
   .count-added {
     color: var(--success-text);
+  }
+
+  .image-count {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .call-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    padding: 0 0 var(--space-4) var(--space-20);
   }
 
   .count-removed {

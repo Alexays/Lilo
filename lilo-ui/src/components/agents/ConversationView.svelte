@@ -36,8 +36,9 @@
   import { getSplitPanes } from "../../stores/splitPanes.svelte";
   import { getTabsById, tabDisplayTitle } from "../../stores/tabs.svelte";
   import AgentTile from "./AgentTile.svelte";
-  import type { PermissionItem, ThreadItem, ToolCallItem } from "./conversationModel";
+  import type { ImageRef, PermissionItem, ThreadItem, ToolCallItem } from "./conversationModel";
   import Icon from "./Icon.svelte";
+  import Lightbox from "./Lightbox.svelte";
   import MenuPicker from "./MenuPicker.svelte";
   import PromptField, { type AttachmentDraft } from "./PromptField.svelte";
   import ThreadRow, { type TurnSummary } from "./ThreadRow.svelte";
@@ -95,6 +96,16 @@
   let threadHeight = $state(0);
   let composerHeight = $state(0);
   let field: ReturnType<typeof PromptField> | undefined = $state();
+  let lightbox = $state.raw<{ images: ImageRef[]; start: number; opener: HTMLElement } | null>(null);
+
+  // Thumbnails mark themselves `data-lightbox`: one listener here, and the viewer steps through what the thread draws.
+  function openLightbox(event: MouseEvent): void {
+    const opener = (event.target as Element).closest<HTMLElement>("[data-lightbox]");
+    if (!opener || !columnEl) return;
+    const imgs = [...columnEl.querySelectorAll<HTMLImageElement>("[data-lightbox] img")];
+    const start = imgs.indexOf(opener.querySelector("img") as HTMLImageElement);
+    lightbox = { images: imgs.map((img) => ({ src: img.getAttribute("src") ?? "", alt: img.alt })), start: Math.max(0, start), opener };
+  }
 
   /**
    * following: the end stays in view as the reply grows. anchoring: a prompt just sent sits near the top
@@ -410,7 +421,8 @@
       style:padding-bottom="{composerHeight + DOCK_GAP}px"
       onscroll={onThreadScroll}
     >
-      <div class="column" bind:this={columnEl}>
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <div class="column" bind:this={columnEl} onclick={openLightbox}>
         {#if hiddenCount > 0}
           <button type="button" class="show-earlier" onclick={() => (limit += PAGE)}>
             {t("agents.conversation.showEarlier", { count: hiddenCount })}
@@ -443,7 +455,7 @@
             </div>
           </div>
         {/if}
-        {#each turns as turn (turn.key)}
+        {#each turns as turn, turnIndex (turn.key)}
           <div class="turn" data-turn={turn.key} style:min-height={turn.key === anchorKey ? `${reserve}px` : undefined}>
             {#each turn.rows as row (row.key)}
               {@const permission = row.kind === "item" && row.item.kind === "permission"}
@@ -475,10 +487,25 @@
                     promptIndex={row.promptIndex}
                     canRestore={row.canRestore}
                     turn={row.turn}
+                    cwd={header.cwd}
                   />
                 {/if}
               </div>
             {/each}
+            <!-- Where the reply appears, right under the prompt: what the agent is doing reads where the eye is. -->
+            {#if working && turnIndex === turns.length - 1}
+              <div class="activity" role="status" in:fade={{ duration: prefersReducedMotion() ? 0 : 120 }}>
+                {#if asking}
+                  <span class="pip" aria-hidden="true"></span>
+                  <span class="status-label">{t("agents.status.waiting")}</span>
+                {:else}
+                  <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                  <span class="status-label shimmer">{t("agents.status.working")}</span>
+                  <span class="elapsed" bind:this={elapsedEl} aria-hidden="true"></span>
+                  <span class="status-hint">{t("agents.status.stopHint")}</span>
+                {/if}
+              </div>
+            {/if}
           </div>
         {/each}
         {#if header.error}
@@ -507,19 +534,6 @@
 
     <div class="dock" bind:clientHeight={composerHeight}>
       <!-- Laid over the thread's bottom padding: showing either never changes the dock's height. -->
-      {#if working}
-        <div class="status-line" role="status" transition:fade={{ duration: prefersReducedMotion() ? 0 : MOTION.itemExitMs }}>
-          {#if asking}
-            <span class="pip" aria-hidden="true"></span>
-            <span class="status-label">{t("agents.status.waiting")}</span>
-          {:else}
-            <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span class="status-label">{t("agents.status.working")}</span>
-            <span class="elapsed" bind:this={elapsedEl} aria-hidden="true"></span>
-            <span class="status-hint">{t("agents.status.stopHint")}</span>
-          {/if}
-        </div>
-      {/if}
       {#if scrollMode === "free" && !atBottom}
         <button
           type="button"
@@ -642,6 +656,16 @@
         </div>
       </div>
     </div>
+    {#if lightbox}
+      <Lightbox
+        images={lightbox.images}
+        start={lightbox.start}
+        onclose={() => {
+          lightbox?.opener.focus();
+          lightbox = null;
+        }}
+      />
+    {/if}
   </section>
 </div>
 
@@ -918,16 +942,41 @@
     align-items: center;
   }
 
-  .status-line {
-    position: absolute;
-    left: var(--space-12);
-    bottom: calc(100% + var(--space-8));
+  .activity {
     display: flex;
     align-items: center;
-    gap: var(--space-6);
+    gap: var(--space-8);
+    min-height: 24px;
+    margin-top: var(--space-4);
     color: var(--text-secondary);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-md);
     white-space: nowrap;
+  }
+
+  /* A light passing over the word while the agent works; it runs only while a turn does. */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--text-secondary) 0%,
+      var(--text-secondary) 40%,
+      var(--text-primary) 50%,
+      var(--text-secondary) 60%,
+      var(--text-secondary) 100%
+    );
+    background-size: 300% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: shimmer 1.8s linear infinite;
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0 0;
+    }
   }
 
   .status-label {

@@ -24,7 +24,8 @@
   import Icon from "./Icon.svelte";
   import Markdown from "./Markdown.svelte";
   import PermissionButtons from "./PermissionButtons.svelte";
-  import { formatDuration } from "./threadView";
+  import ThreadImage from "./ThreadImage.svelte";
+  import { formatDuration, imageSource } from "./threadView";
 
   interface Props {
     tabId: string;
@@ -37,9 +38,11 @@
     canRestore: boolean;
     /** A turn end: what its footer sums up. */
     turn?: TurnSummary | null;
+    /** The project folder, which local image paths resolve against. */
+    cwd: string;
   }
 
-  let { tabId, item, sig, promptIndex, canRestore, turn = null }: Props = $props();
+  let { tabId, item, sig, promptIndex, canRestore, turn = null, cwd }: Props = $props();
 
   const view = $derived.by((): ThreadItem => {
     void sig;
@@ -111,7 +114,10 @@
     {/if}
   </div>
 {:else if view.kind === "agent"}
-  <Markdown text={view.text} />
+  <Markdown text={view.text} {tabId} {cwd} />
+{:else if view.kind === "image"}
+  {@const source = imageSource(view.src, cwd)}
+  {#if source?.type === "image"}<ThreadImage src={source.src} alt={view.alt} />{/if}
 {:else if view.kind === "thought"}
   <div class="thought">
     <button

@@ -91,6 +91,7 @@ final class ConversationHost {
         conversation.spaceId = tab.spaceId
         conversation.title = tab.title
         conversations[tab.id] = conversation
+        ChromeUISchemeHandler.conversationRoots.insert(URL(fileURLWithPath: conversation.cwd).standardizedFileURL.resolvingSymlinksInPath().path)
         scheduleSummary()
         return conversation
     }

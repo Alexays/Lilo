@@ -16,5 +16,6 @@ export const conversationActions = {
 	loadSummaries: (): void => emit("loadConversations"),
 	chooseProject: (): void => emit("chooseConversationProject"),
 	openChanges: (tabId: string): void => emit("openConversationChanges", { tabId }),
+	previewArtifact: (tabId: string, code: string, language: string): void => emit("previewConversationArtifact", { tabId, code, language }),
 	authenticate: (tabId: string, methodId: string): void => emit("authenticateConversation", { tabId, methodId }),
 };

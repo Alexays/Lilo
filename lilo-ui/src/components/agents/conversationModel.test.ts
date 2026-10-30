@@ -241,3 +241,38 @@ test("notices are appended", () => {
   const state = addNotice(emptyConversation(), "Files restored");
   assert.deepEqual(state.items, [{ kind: "notice", id: 1, text: "Files restored" }]);
 });
+
+test("agent images become thread items; local image links do too, other links do not", () => {
+  const state = applyUpdates(emptyConversation(), [
+    agentText("Here:", "m1"),
+    { sessionUpdate: "agent_message_chunk", content: { type: "image", data: "AAAA", mimeType: "image/png" }, messageId: "m1" },
+    { sessionUpdate: "agent_message_chunk", content: { type: "resource_link", uri: "file:///p/shot.png", name: "shot.png" }, messageId: "m1" },
+    { sessionUpdate: "agent_message_chunk", content: { type: "resource_link", uri: "file:///p/notes.md", name: "notes.md" }, messageId: "m1" },
+    agentText("done", "m1"),
+  ]);
+  assert.deepEqual(
+    state.items.map((item) => (item.kind === "image" ? `image:${item.src}:${item.alt}` : `${item.kind}:${(item as { text: string }).text}`)),
+    ["agent:Here:", "image:data:image/png;base64,AAAA:", "image:file:///p/shot.png:shot.png", "agent:done"],
+  );
+});
+
+test("tool call images are kept with the call and replaced with its content", () => {
+  const state = applyUpdates(emptyConversation(), [
+    {
+      sessionUpdate: "tool_call",
+      toolCallId: "s1",
+      title: "Screenshot",
+      kind: "other",
+      status: "completed",
+      content: [
+        { type: "content", content: { type: "text", text: "captured" } },
+        { type: "content", content: { type: "image", data: "BBBB", mimeType: "image/jpeg" } },
+      ],
+    },
+  ]);
+  const call = state.items[0] as ToolCallItem;
+  assert.equal(call.output, "captured");
+  assert.deepEqual(call.images, [{ src: "data:image/jpeg;base64,BBBB", alt: "Screenshot" }]);
+  applyUpdate(state, { sessionUpdate: "tool_call_update", toolCallId: "s1", content: [] });
+  assert.deepEqual(call.images, []);
+});

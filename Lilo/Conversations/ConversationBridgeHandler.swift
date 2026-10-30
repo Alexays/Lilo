@@ -8,7 +8,7 @@ final class ConversationBridgeHandler: BridgeHandler {
         "startConversation", "sendConversationPrompt", "cancelConversation", "answerConversation",
         "setConversationMode", "setConversationConfig", "showConversation", "restoreConversation",
         "undoConversationFile", "loadAgentCatalog", "loadConversations", "chooseConversationProject",
-        "openConversationChanges", "authenticateConversation", "searchConversationFiles"
+        "openConversationChanges", "authenticateConversation", "searchConversationFiles", "previewConversationArtifact"
     ]
 
     private weak var window: MainWindowController?
@@ -76,6 +76,9 @@ final class ConversationBridgeHandler: BridgeHandler {
             guard let cwd = payload["cwd"] as? String, let query = payload["query"] as? String else { return nil }
             let files = await host.projectFiles.search(query, in: cwd)
             window.bridgeRouter.send(event: "conversationFiles", data: ["cwd": cwd, "query": query, "files": files])
+        case "previewConversationArtifact":
+            guard let tabId, let code = payload["code"] as? String else { return nil }
+            window.previewArtifact(code, language: payload["language"] as? String ?? "html", forConversation: tabId)
         case "authenticateConversation":
             if let tabId, let methodId = payload["methodId"] as? String { host.authenticate(tabId, methodId: methodId) }
         case "openConversationChanges":
