@@ -173,7 +173,7 @@ struct GitDiff: Sendable {
         .map { URL(fileURLWithPath: $0) }
 
     /// Git's standard output, or nil when it exits with an error or outlives `timeout`.
-    static func run(_ arguments: [String], in directory: String) -> Data? {
+    static func run(_ arguments: [String], in directory: String, environment extra: [String: String] = [:]) -> Data? {
         guard let executable else { return nil }
         let signpost = PerfSignposts.energy.beginInterval("git", id: PerfSignposts.energy.makeSignpostID(), "\(arguments.first ?? "")")
         defer { PerfSignposts.energy.endInterval("git", signpost) }
@@ -187,6 +187,7 @@ struct GitDiff: Sendable {
         // Reading never takes the index lock, so it never fails a git command the user runs meanwhile.
         environment["GIT_OPTIONAL_LOCKS"] = "0"
         environment["GIT_TERMINAL_PROMPT"] = "0"
+        environment.merge(extra) { $1 }
         process.environment = environment
         let output = Pipe()
         process.standardOutput = output

@@ -36,6 +36,7 @@ enum KeyboardShortcuts {
         Action("terminal.newTab", "New Terminal Tab", "File", ["⌃`"]),
         Action("terminal.newBeside", "New Terminal Beside", "File", ["⌘d"]),
         Action("terminal.newBelow", "New Terminal Below", "File", ["⇧⌘d"]),
+        Action("agents.ask", "Ask an Agent", "File", ["⇧⌘a"]),
         Action("location.open", "Open Location…", "File", ["⌘l"]),
         Action("file.open", "Open File…", "File"),
         Action("page.openAsTab", "Open as Tab", "File", ["⌘o"]),

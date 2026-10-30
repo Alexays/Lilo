@@ -459,6 +459,7 @@ extension MainWindowController {
             windowController: self
         ))
 
+        bridgeRouter.register(handler: ConversationBridgeHandler(window: self))
         bridgeRouter.register(handler: KeepAwakeBridgeHandler(powerKeeper: context.powerKeeper, bridgeRouter: bridgeRouter) { [weak self] in
             guard let self else { return }
             context.sentTerminalActivity[ObjectIdentifier(self)] = nil

@@ -47,6 +47,7 @@ extension AppDelegate {
         fileMenu.add("New Terminal Tab".localized, #selector(MainWindowController.newTerminalTab(_:)), icon: .newTerminalTab, shortcut: "terminal.newTab")
         fileMenu.add("New Terminal Beside".localized, #selector(MainWindowController.newTerminalBeside(_:)), icon: .newTerminalBeside, shortcut: "terminal.newBeside")
         fileMenu.add("New Terminal Below".localized, #selector(MainWindowController.newTerminalBelow(_:)), icon: .newTerminalBelow, shortcut: "terminal.newBelow")
+        fileMenu.add("Ask an Agent".localized, #selector(MainWindowController.askAgent(_:)), icon: .askAgent, shortcut: "agents.ask")
         fileMenu.addItem(.separator())
         fileMenu.add("Open Location…".localized, #selector(MainWindowController.openLocation(_:)), icon: .openLocation, shortcut: "location.open")
         fileMenu.add("Open File…".localized, #selector(openDocument(_:)), shortcut: "file.open")

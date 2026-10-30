@@ -38,6 +38,7 @@ enum TabBridgeField: String, CaseIterable {
 	case isNotSecure = "isNotSecure"
 	case kind = "kind"
 	case cwd = "cwd"
+	case agentId = "agentId"
 	case gitBranch = "gitBranch"
 	case diffAdded = "diffAdded"
 	case diffRemoved = "diffRemoved"
@@ -56,6 +57,7 @@ enum TabBridgeField: String, CaseIterable {
 	static let runtimeExcluded: Set<TabBridgeField> = [
 			.customTitle,
 			.faviconDataURL,
-			.faviconDominantColor
+			.faviconDominantColor,
+			.agentId
 	]
 }

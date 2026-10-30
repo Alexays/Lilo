@@ -325,6 +325,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // close reaches the network process before it syncs storage at the app's exit.
         browserContext.closePagesBeforeQuit()
         browserContext.writeClosedTerminals()
+        browserContext.conversations.stopAll()
         browserContext.writeTabArchive()
         for profile in browserContext.profileContexts.allContexts { profile.history.flushPendingWrites() }
         // The pty closing at exit only hangs up the login leader, which a shell still starting outlives.
@@ -399,6 +400,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         let extensionId = userInfo["extensionId"] as? String
         let notificationId = userInfo["notificationId"] as? String
         let terminalTabId = (userInfo["terminalTabId"] as? String).flatMap(UUID.init(uuidString:))
+        let conversationTabId = (userInfo["conversationTabId"] as? String).flatMap(UUID.init(uuidString:))
         let webNotification = userInfo["webNotification"] as? String
         let webTabId = (userInfo["webTabId"] as? String).flatMap(UUID.init(uuidString:))
         let typedReply = (response as? UNTextInputNotificationResponse)?.userText
@@ -410,7 +412,13 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                     self.mainWindowController?.answerTerminal(terminalTabId, with: typedReply + "\r")
                 }
             }
-            if let tabId = terminalTabId ?? webTabId, actionId == UNNotificationDefaultActionIdentifier {
+            if let conversationTabId, actionId.hasPrefix(UNNotificationCategory.conversationOptionPrefix),
+               let option = self.browserContext.conversations.option(
+                   of: conversationTabId, kind: String(actionId.dropFirst(UNNotificationCategory.conversationOptionPrefix.count))
+               ) {
+                self.browserContext.conversations.answer(conversationTabId, requestId: option.requestId, optionId: option.optionId)
+            }
+            if let tabId = terminalTabId ?? conversationTabId ?? webTabId, actionId == UNNotificationDefaultActionIdentifier {
                 self.mainWindowController?.revealTab(tabId)
             }
             if let webNotification, actionId == UNNotificationDefaultActionIdentifier {

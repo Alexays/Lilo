@@ -92,6 +92,11 @@ final class BrowserContext {
         return controller
     }()
     lazy var agentControl = AgentControl(context: self)
+    lazy var conversations: ConversationHost = {
+        let host = ConversationHost(directory: URL(fileURLWithPath: BuildIdentity.appSupportDirectory).appending(path: "Agents"))
+        host.context = self
+        return host
+    }()
     let appSupportDirectory: String
     private let makeProfileId: @MainActor () -> UUID
 
