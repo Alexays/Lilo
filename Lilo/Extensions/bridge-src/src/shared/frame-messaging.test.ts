@@ -106,7 +106,7 @@ describe("a content script of a frame no tab shows, such as an offscreen documen
     const port = frame(page).connect();
     let disconnected = false;
     port.onDisconnect.addListener(() => { disconnected = true; });
-    await new Promise((resolve) => setTimeout(resolve, 5));
+    await until(() => remote.onDisconnect.hasListeners());
     remote.onDisconnect.dispatch();
     await until(() => disconnected);
     assert.throws(() => port.postMessage(1), { message: 'Attempting to use a disconnected port object' });
