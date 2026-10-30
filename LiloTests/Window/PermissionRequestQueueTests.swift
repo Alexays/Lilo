@@ -61,6 +61,39 @@ final class PermissionRequestQueueTests: XCTestCase {
         XCTAssertNil(workPermissions.decision(forOrigin: "https://call.example", type: "camera"), "another profile keeps its own decisions")
     }
 
+    func testAPrivateSpaceInheritsOnlyBlocksAndKeepsItsOwnAnswersForItsLife() throws {
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let secret = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: true)
+        let permissions = try context.profileContexts.context(for: profileId).sitePermissions
+        permissions.upsert(origin: "https://call.example", type: "camera", granted: true)
+        permissions.upsert(origin: "https://ads.example", type: "location", granted: false)
+        permissions.upsert(origin: "https://call.example", type: "notifications", granted: true)
+        let window = makeTestWindow(context, showing: secret.id)
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example/"), activate: true))
+
+        XCTAssertNil(window.storedPermissionDecision(type: "camera", origin: "https://call.example", tabId: tab.id), "an allow is not inherited")
+        XCTAssertEqual(window.storedPermissionDecision(type: "location", origin: "https://ads.example", tabId: tab.id), false)
+        XCTAssertNil(window.storedPermissionDecision(type: "notifications", origin: "https://call.example", tabId: tab.id),
+                     "Notification.permission reads \"default\", as in a normal space")
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)?.wkWebView)
+        let denied = expectation(description: "notifications are denied without asking")
+        window.requestSitePermission(type: "notifications", origin: "https://call.example", webView: webView) { granted in
+            XCTAssertFalse(granted)
+            denied.fulfill()
+        }
+        XCTAssertTrue(window.pendingPermissionRequests.isEmpty, "no prompt")
+        wait(for: [denied], timeout: 5)
+
+        window.enqueuePermissionRequest(tabId: tab.id, type: "camera", origin: "https://call.example") { _ in }
+        window.resolvePermissionRequest(requestId: try XCTUnwrap(window.pendingPermissionRequests.first?.id), granted: false)
+
+        XCTAssertEqual(window.storedPermissionDecision(type: "camera", origin: "https://call.example", tabId: tab.id), false)
+        XCTAssertEqual(permissions.decision(forOrigin: "https://call.example", type: "camera"), true, "the profile keeps its own decision")
+        try context.spaceManager.deleteSpace(id: secret.id)
+        XCTAssertNil(context.privateSitePermissions[secret.id])
+    }
+
     func testTabCloseDeniesItsPendingRequestsOnly() throws {
         let closingTab = UUID()
         let otherTab = UUID()

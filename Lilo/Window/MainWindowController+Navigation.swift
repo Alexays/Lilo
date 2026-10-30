@@ -420,7 +420,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     /// The user's stored decision, unless an extension's chrome.contentSettings rule takes precedence
-    /// ("ask" prompts whatever the user chose before). Camera and microphone are decided together.
+    /// ("ask" prompts whatever the user chose before). Camera and microphone are decided together. A private space inherits
+    /// only the profile's blocks and keeps its own answers for its life.
     func storedPermissionDecision(type: String, origin: String, tabId: UUID?) -> Bool? {
         let space = permissionSpace(forTab: tabId)
         let isPrivate = space?.isPrivate ?? false
@@ -437,7 +438,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
             case "allow": return true
             case "block": return false
             case "ask": return nil
-            default: return store?.decision(forOrigin: origin, type: type)
+            default:
+                let stored = store?.decision(forOrigin: origin, type: type)
+                guard let space, isPrivate, stored != false else { return stored }
+                return context.privateSitePermissions[space.id]?["\(type) \(origin)"]
             }
         }
         if decisions.contains(false) { return false }
@@ -519,10 +523,16 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
     }
 
-    /// The user's answer, stored in the profile of the tab's space; a private space keeps none.
+    /// The user's answer, stored in the profile of the tab's space; a private space keeps it in memory.
     func rememberPermission(origin: String, type: String, granted: Bool, tabId: UUID?) {
         let space = permissionSpace(forTab: tabId)
-        guard space?.isPrivate != true, let store = sitePermissions(of: space) else { return }
+        if let space, space.isPrivate {
+            for type in type == "camera and microphone" ? ["camera", "microphone"] : [type] {
+                context.privateSitePermissions[space.id, default: [:]]["\(type) \(origin)"] = granted
+            }
+            return
+        }
+        guard let store = sitePermissions(of: space) else { return }
         store.upsert(origin: origin, type: type, granted: granted)
         bridgeRouter.sendSitePermissionsLoaded(from: store)
     }
@@ -539,7 +549,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func requestSitePermission(type: String, origin: String, webView: WKWebView?, completion: @escaping (Bool) -> Void) {
-        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: tabId(owning: webView)) {
+        let owner = tabId(owning: webView)
+        if type == "notifications", permissionSpace(forTab: owner)?.isPrivate == true {
+            // As in Chrome's incognito: denied without asking, after a random delay so a page cannot tell a private space by timing it.
+            return DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(.random(in: 1000...3000))) { completion(false) }
+        }
+        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: owner) {
             completion(storedDecision)
             return
         }
@@ -549,7 +564,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
 
         // The prompt lives in its tab's chrome, so an unattributable request has nowhere to show.
-        guard let tabId = tabId(owning: webView) else {
+        guard let tabId = owner else {
             completion(false)
             return
         }

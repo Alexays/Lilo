@@ -100,6 +100,8 @@ final class BrowserContext {
     private(set) var settingsStore: SettingsStore!
     /// How long Lilo was quit before this launch; nil on a first launch or after a crash, whose relaunch picks up where it was.
     var launchAbsence: TimeInterval?
+    /// Site permission answers given in each private space, by "type origin", forgotten with the space.
+    var privateSitePermissions: [UUID: [String: Bool]] = [:]
     private(set) var profileManager: ProfileManager!
     private(set) var spaceManager: SpaceManager!
     private(set) var startupSnapshot: StartupSnapshot!
@@ -682,6 +684,7 @@ extension BrowserContext {
         if space.isPrivate {
             profileManager.releaseEphemeralDataStore(for: space.id)
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
+            privateSitePermissions[space.id] = nil
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
         // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
