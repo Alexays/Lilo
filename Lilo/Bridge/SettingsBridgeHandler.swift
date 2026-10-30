@@ -68,7 +68,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     private let forceLifecycleTrimHandler: @MainActor () -> Void
     private weak var bridgeRouter: BridgeRouter?
     var onContentBlockerToggled: ((Bool) -> Void)?
-    var onBlockerAllowlistChanged: (() -> Void)?
+    /// Rebuilds the blocker, then reloads the tab given, if any.
+    var onBlockerAllowlistChanged: ((_ reloadTabId: UUID?) -> Void)?
     /// The content blocker's lists and counts, for the settings page.
     var contentBlockerStatus: (() -> [String: Any])?
     /// Fetches and converts the filter lists now.
@@ -199,7 +200,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "pinnedExtensions" { extensionRegistryProvider()?.pinnedExtensionsChanged(from: store.get(key), to: value) }
                 store.set(key, value: value)
                 if key == "contentBlockerEnabled" { onContentBlockerToggled?(value == "true") }
-                if key == "contentBlockerAllowedDomains" { onBlockerAllowlistChanged?() }
+                if key == "contentBlockerAllowedDomains" { onBlockerAllowlistChanged?(nil) }
                 if key == "sendGPC" { onSendGPCChanged?(value == "true") }
                 if key == "preventCrossSiteTracking" { onTrackingPreventionChanged?(value == "true") }
                 if key == "httpsOnly" { onHTTPSOnlyChanged?(value == "true") }
@@ -333,7 +334,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 var list = store.contentBlockerAllowlist
                 if let idx = list.firstIndex(of: host) { list.remove(at: idx) } else { list.append(host) }
                 store.contentBlockerAllowlist = list
-                onBlockerAllowlistChanged?()
+                onBlockerAllowlistChanged?(message.uuid("reloadTabId"))
                 bridgeRouter?.send(event: "blockerAllowlistChanged", data: ["allowlist": list])
                 publishSettings(using: store)
             }

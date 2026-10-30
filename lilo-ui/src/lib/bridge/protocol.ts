@@ -730,7 +730,8 @@ export interface BridgeCommandPayloadMap {
 	getSitePermissions: EmptyPayload;
 	revokeSitePermission: { id: string };
 	setSitePermission: { origin: string; type: string; allow: boolean };
-	toggleBlockerAllowlist: { host: string };
+	/** `reloadTabId` reloads that tab once the new rules are in place. */
+	toggleBlockerAllowlist: { host: string; reloadTabId?: string };
 	/** `siteData` clears every kind of site data, cookies and cache included, and with an all-time range the site permissions. */
 	clearBrowsingData: { kinds: BridgeBrowsingDataKind[]; range: string };
 	getBrowsingDataSizes: EmptyPayload;

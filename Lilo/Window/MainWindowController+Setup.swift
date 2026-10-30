@@ -655,8 +655,11 @@ extension MainWindowController {
         settingsHandler.contentBlockerStatus = { [weak self] in self?.context.contentBlockerStatus ?? [:] }
         settingsHandler.onUpdateFilterLists = { [weak self] in await self?.context.updateFilterLists() }
         settingsHandler.agentControl = { [weak self] in self?.context.agentControl }
-        settingsHandler.onBlockerAllowlistChanged = { [weak self] in
-            Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) }
+        settingsHandler.onBlockerAllowlistChanged = { [weak self] reloadTabId in
+            Task {
+                await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist)
+                if let reloadTabId { self?.tabManager.engineTab(for: reloadTabId)?.reload() }
+            }
             Task { await self?.context.filterListService?.installBlockerExtension() }
         }
         settingsHandler.onSendGPCChanged = { enabled in

@@ -115,19 +115,20 @@ test("a hang without a reload before it is no repeat", async () => {
 	assert.equal(store.getShownPageHang("t1")?.repeat, false);
 });
 
-test("reloading without the blocker allows the site, offers to undo it, and reloads", async () => {
+test("reloading without the blocker allows the site, offers to undo it, and leaves the reload to the rule swap", async () => {
 	const { store, posted, undoToast } = await load();
 	hang("t1", "example.com");
 
-	store.reloadHungPageWithoutBlocker("t1");
+	store.reloadHungPage("t1", true);
 
 	assert.deepEqual(
 		posted.map((message) => [message.action, message.payload]),
-		[["toggleBlockerAllowlist", { host: "example.com" }], ["reload", {}]],
+		[["toggleBlockerAllowlist", { host: "example.com", reloadTabId: "t1" }]],
 	);
+	assert.equal(store.getShownPageHang("t1"), undefined);
 	assert.match(undoToast.getUndoToast()?.label ?? "", /example\.com/);
 	undoToast.undoTabClose();
-	assert.deepEqual(posted.at(-1), { action: "toggleBlockerAllowlist", payload: { host: "example.com" } });
+	assert.deepEqual(posted.at(-1), { action: "toggleBlockerAllowlist", payload: { host: "example.com", reloadTabId: undefined } });
 	assert.equal(undoToast.getUndoToast(), null);
 });
 
