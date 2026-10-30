@@ -226,7 +226,8 @@ final class DocumentPiPControllerTests: XCTestCase {
         let tab = await makeTab()
         _ = try await requestWindow(tab)
 
-        tab.webViewWebContentProcessDidTerminate(tab.wkWebView)
+        // The reason-carrying variant is the one WebKit calls when it is implemented.
+        tab.webView(tab.wkWebView, webContentProcessDidTerminateWithReason: 3)
 
         let closed = await pollUntil(timeout: 5) { self.controller.webView == nil }
         XCTAssertTrue(closed, "a PiP window of a dead page would stay blank over everything")
