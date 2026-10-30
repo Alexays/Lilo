@@ -119,6 +119,26 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertEqual(engineFactory.test_warmPoolCount, 0, "the deleted profile's warm view and controller go")
     }
 
+    func testDeleteProfileRemovesItsWebsiteData() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let doomed = try context.profileManager.createProfile(name: "Doomed")
+        // Its extension controller shares the store too.
+        _ = try context.profileContexts.context(for: doomed.id)
+        let cookie = try XCTUnwrap(HTTPCookie(properties: [
+            .domain: "example.com", .path: "/", .name: "sid", .value: "1", .expires: Date(timeIntervalSinceNow: 3600)
+        ]))
+        await context.profileManager.dataStore(for: doomed.id).backingStore.httpCookieStore.setCookie(cookie)
+        let created = await WKWebsiteDataStore.allDataStoreIdentifiers.contains(doomed.id)
+        XCTAssertTrue(created)
+
+        try context.profileManager.deleteProfile(id: doomed.id)
+
+        let removed = await pollUntil(timeout: 70) { await !WKWebsiteDataStore.allDataStoreIdentifiers.contains(doomed.id) }
+        XCTAssertTrue(removed, "the deleted profile's cookies and site storage stay on disk")
+    }
+
     func testActivateProfileCachesIdInUserDefaults() throws {
         let profile = try manager.createProfile(name: "Cached")
 
