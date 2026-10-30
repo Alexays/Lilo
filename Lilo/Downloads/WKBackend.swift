@@ -8,7 +8,6 @@ import OSLog
 final class WKBackend: NSObject {
     private static let logger = Logger(liloCategory: "WKBackend")
 
-    weak var webView: WKWebView?
     var downloadsFolderProvider: () -> URL? = { nil }
     /// Set when the user wants to pick where each download goes: gets the proposed file and returns
     /// the chosen one, or nil to cancel the download. With `prompts`, it asks whatever the user's setting.
@@ -69,10 +68,10 @@ final class WKBackend: NSObject {
         }
     }
 
-    /// Resumes a paused download, or an interrupted one that still carries resumeData (retry).
+    /// Resumes a paused download, or an interrupted one that still carries resumeData (retry), in `webView`.
     /// Returns false when nothing was resumed (no resumeData, or no webView to host it).
     @discardableResult
-    func resume(id: Int64) async -> Bool {
+    func resume(id: Int64, in webView: WKWebView?) async -> Bool {
         guard var item = try? store?.fetch(id: id),
               item.state == .paused || item.state == .interrupted,
               let resumeData = item.resumeData,

@@ -34,9 +34,8 @@ final class DownloadManager {
     /// chrome.downloads.onDeterminingFilename for a browser download about to start, never asked for a private space's.
     var suggestFilename: ((DownloadItem) async -> FilenameSuggestion?)?
 
-    weak var webView: WKWebView? {
-        didSet { wkBackend.webView = webView }
-    }
+    /// The active tab's web view, which hosts a WKDownload resume when it browses with the download's data store.
+    weak var webView: WKWebView?
 
     /// Observers called on every DownloadItem state change, each with the token that removes it.
     private var observers: [(token: UUID, notify: (DownloadItem) -> Void)] = []
@@ -70,6 +69,8 @@ final class DownloadManager {
     private var privateDownloadIds: [UUID: [Int64]] = [:]
     /// Pending downloads of a private space that closed before they got a row: cancelled and erased once tracked.
     private var forgottenPendingDownloads: [WKDownload: UUID] = [:]
+    /// Each private space's website data store, where its downloads resume and find their cookies.
+    private var privateDataStores: [UUID: WKWebsiteDataStore] = [:]
 
     init(dockController: DownloadDockProgressController? = DownloadDockProgressController()) {
         self.dockController = dockController
@@ -125,7 +126,10 @@ final class DownloadManager {
     // MARK: - Browser downloads (WKDownload)
 
     func startDownload(_ download: WKDownload, privateSpaceId: UUID? = nil) {
-        if let privateSpaceId { pendingPrivateSpaceIds[download] = privateSpaceId }
+        if let privateSpaceId {
+            pendingPrivateSpaceIds[download] = privateSpaceId
+            download.webView.map { privateDataStores[privateSpaceId] = $0.configuration.websiteDataStore }
+        }
         wkBackend.startTracking(download)
     }
 
@@ -141,6 +145,7 @@ final class DownloadManager {
             loggingPersistenceError("download.erasePrivate[\(id)]") { try erase(id: id) }
         }
         privateDownloadIds[spaceId] = nil
+        privateDataStores[spaceId] = nil
     }
 
     /// Private-space downloads are never exposed to extensions.
@@ -239,7 +244,7 @@ final class DownloadManager {
         guard var item = try? store?.fetch(id: id), item.state == .paused else { return }
         var resumed = false
         if item.source == "wk" {
-            resumed = await wkBackend.resume(id: id)
+            resumed = await wkBackend.resume(id: id, in: resumeHost(for: id))
         } else if item.resumeData != nil {
             do {
                 try urlSessionBackend.resume(id: id)
@@ -339,16 +344,31 @@ final class DownloadManager {
         }
     }
 
+    /// The website data store a download belongs to: its private space's, else its profile's. Nil once its private space's is gone.
+    private func dataStore(ofDownload id: Int64) -> WKWebsiteDataStore? {
+        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(id) })?.key { return privateDataStores[spaceId] }
+        return store?.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
+    }
+
+    /// `webView` when it browses with the download's data store: resumed in another, a download would carry another
+    /// profile's or space's cookies, and a private one would land in the persistent store or the reverse.
+    private func resumeHost(for id: Int64) -> WKWebView? {
+        guard let webView, let expected = dataStore(ofDownload: id) else { return nil }
+        let current = webView.configuration.websiteDataStore
+        let matches = current === expected || current.isPersistent && expected.isPersistent && current.identifier == expected.identifier
+        return matches ? webView : nil
+    }
+
     /// Retries an interrupted download. When the row still carries resumeData the download is
     /// resumed from the partial bytes into its original destination; otherwise it restarts
-    /// fresh (a wk-source retry without a webView also falls back to a fresh start).
+    /// fresh (a wk-source retry without a web view of its data store also falls back to a fresh start).
     func retryDownload(id: Int64) async throws {
         pendingAutoResumes.remove(id)
         guard let item = try? store?.fetch(id: id),
               item.state == .interrupted else { return }
         if item.resumeData != nil {
             if item.source == "wk" {
-                if await wkBackend.resume(id: id) { return }
+                if await wkBackend.resume(id: id, in: resumeHost(for: id)) { return }
             } else {
                 try urlSessionBackend.resume(id: id)
                 return
@@ -357,7 +377,7 @@ final class DownloadManager {
         guard let url = URL(string: item.url) else { return }
         var request = URLRequest(url: url)
         // A signed-in download needs the site's cookies, which live in WebKit's store and not in URLSession's.
-        if let cookieStore = webView?.configuration.websiteDataStore.httpCookieStore, let host = url.host?.lowercased() {
+        if let cookieStore = dataStore(ofDownload: id)?.httpCookieStore, let host = url.host?.lowercased() {
             let cookies = await cookieStore.allCookies().filter { cookie in
                 let domain = cookie.domain.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))
                 return (host == domain || host.hasSuffix("." + domain)) && url.path.hasPrefix(cookie.path)
@@ -365,7 +385,9 @@ final class DownloadManager {
             }
             request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: cookies)
         }
-        try startExtensionDownload(request: request, suggestedFilename: item.filename)
+        let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename)
+        // The new row of a private download is forgotten with its space too.
+        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(id) })?.key { privateDownloadIds[spaceId]?.append(retryId) }
     }
 
     func fileIcon(id: Int64, size: Int) -> String? {

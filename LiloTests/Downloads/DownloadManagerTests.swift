@@ -167,11 +167,18 @@ final class DownloadManagerTests: XCTestCase {
             requests.withLock { $0.append(request) }
             return ("200 OK", ["Content-Type: application/octet-stream", #"Content-Disposition: attachment; filename="signed.zip""#], Data("zip".utf8))
         }
+        // The download's profile has the session; the active tab browses a private space with its own cookie.
+        let profileId = UUID()
+        addTeardownBlock { try? await WKWebsiteDataStore.remove(forIdentifier: profileId) }
+        store = DownloadStore(dbPool: db.pool, profileId: profileId)
+        manager.setStore(store)
+        let session = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
+        await WKWebsiteDataStore(forIdentifier: profileId).httpCookieStore.setCookie(session)
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        let cookie = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
-        await configuration.websiteDataStore.httpCookieStore.setCookie(cookie)
+        let privateCookie = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "private", .value: "yes"]))
+        await configuration.websiteDataStore.httpCookieStore.setCookie(privateCookie)
         manager.webView = webView
         var item = DownloadItem(
             id: nil, url: "http://localhost:\(server.port)/signed.zip", filename: "signed.zip",
@@ -188,6 +195,27 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertEqual(try store.fetchAll().count, 2)
         let received = requests.withLock { $0 }
         XCTAssertTrue(received.contains { $0.contains("session=signed-in") }, "\(received)")
+        XCTAssertFalse(received.contains { $0.contains("private=yes") }, "\(received)")
+    }
+
+    func testResumeLeavesAWebViewOfAnotherDataStore() async throws {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        manager.webView = webView
+        var item = DownloadItem(
+            id: nil, url: "http://127.0.0.1:9/paused.zip", filename: "paused.zip",
+            destinationPath: "/tmp/paused.zip", bytesReceived: 100, totalBytes: 1000,
+            state: .paused, startedAt: Date(), fileMissing: false
+        )
+        item.source = "wk"
+        item.resumeData = Data("wk resume blob".utf8)
+        try store.insert(&item)
+
+        await manager.resume(id: item.id!)
+        withExtendedLifetime(webView) {}
+
+        XCTAssertEqual(try store.fetch(id: item.id!)?.state, .interrupted, "a private space's web view never hosts a profile's download")
     }
 
     // MARK: - Speed and ETA tracking tests
