@@ -555,6 +555,41 @@ final class SidePanelTests: XCTestCase {
         XCTAssertEqual(withoutAccess, ["plain=1", "plain=1"], "without host access the frame stays cross-site")
     }
 
+    func testCookiesAFramedSiteSetsAreKeptAsItsOwn() async throws {
+        let server = try await TinyHTTPServer { request in
+            switch request.split(separator: " ").dropFirst().first ?? "" {
+            case "/rotate":
+                return ("200 OK", ["Content-Type: text/plain", "Set-Cookie: session=2; SameSite=Lax; Path=/", "Set-Cookie: fresh=1; SameSite=Lax; Expires=Wed, 21 Oct 2099 07:28:00 GMT; Path=/",
+                                   "Set-Cookie: chip=1; SameSite=None; Path=/; Partitioned"], Data("ok".utf8))
+            default:
+                return ("200 OK", ["Content-Type: text/html"], Data(#"<script>fetch('/rotate').finally(() => parent.postMessage('framed', '*'))</script>"#.utf8))
+            }
+        }
+        let dir = tempDir.appendingPathComponent("Rotate")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Rotate","version":"1.0","permissions":["sidePanel"],"host_permissions":["<all_urls>"],"side_panel":{"default_path":"p.html"}}"#
+            .write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("p.js"), atomically: true, encoding: .utf8)
+        try #"<title>w</title><script src="p.js"></script><iframe src="http://127.0.0.1:\#(server.port)/page"></iframe>"#
+            .write(to: dir.appendingPathComponent("p.html"), atomically: true, encoding: .utf8)
+        let before = Set(registry.loadedExtensions.map(\.id))
+        try await registry.load(from: dir)
+        let id = try XCTUnwrap(registry.loadedExtensions.map(\.id).first { !before.contains($0) })
+        let store = WKWebsiteDataStore(forIdentifier: registry.profileId).httpCookieStore
+        await store.setCookie(try XCTUnwrap(HTTPCookie(properties: [.name: "session", .value: "1", .domain: "127.0.0.1", .path: "/", .sameSitePolicy: HTTPCookieStringPolicy.sameSiteLax])))
+
+        window.sidePanel.open(id, tabSpecific: false, in: nil)
+        let framed = await pollUntil { self.window.sidePanel.webView?.title == "framed" }
+        XCTAssertTrue(framed)
+        var cookies: [String] = []
+        let kept = await pollUntil {
+            cookies = await store.allCookies().filter { $0.domain == "127.0.0.1" }.map { "\($0.name)=\($0.value)" }.sorted()
+            return cookies.contains("fresh=1")
+        }
+        XCTAssertTrue(kept)
+        XCTAssertEqual(cookies, ["fresh=1", "session=2"], "the renewed and the new Lax cookie, as in Chrome; not the partitioned one")
+    }
+
     func testAnOffscreenDocumentsFrameGetsItsSiteCookies() async throws {
         let site = try await CookieSite()
         let extensionId = try await installFramer("Offscreen", hostPermissions: #"["<all_urls>"]"#, framing: site)

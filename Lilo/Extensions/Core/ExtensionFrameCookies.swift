@@ -17,6 +17,7 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
     private let identifier: String
     private let cookieStore: WKHTTPCookieStore
     private let userContentController: WKUserContentController
+    private lazy var responseCookies = FrameResponseCookies(frameCookies: self)
     private lazy var ruleStore = WKContentRuleListStore(url: FileManager.default.temporaryDirectory.appendingPathComponent(identifier, isDirectory: true))
     private let hasAccess: (String, URL) -> Bool
     /// The extension pages framing each site, and the framers the installed rules cover.
@@ -52,6 +53,7 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
         let pages = framers[framer] ?? .weakObjects()
         pages.add(webView)
         framers[framer] = pages
+        keepCookies(of: webView)
         guard !covered.contains(framer) else { return false }
         waiting.append(ready)
         if !observing {
@@ -74,6 +76,27 @@ final class ExtensionFrameCookies: NSObject, WKHTTPCookieStoreObserver {
 
     func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
         build()
+    }
+
+    /// WebKit drops what a frame it takes for cross-site sets, `Lax` cookies included, where Chrome keeps it: the page's
+    /// responses go through WKWebView._setResourceLoadDelegate:, which sees their headers, unless the page has one already.
+    private func keepCookies(of webView: WKWebView) {
+        let setter = NSSelectorFromString("_setResourceLoadDelegate:"), getter = NSSelectorFromString("_resourceLoadDelegate")
+        guard webView.responds(to: setter), webView.responds(to: getter), webView.perform(getter) == nil else { return }
+        webView.perform(setter, with: responseCookies)
+    }
+
+    /// Stores the cookies a response from a framed site sets, as the site's own; partitioned ones belong to another top-level site.
+    fileprivate func store(_ response: URLResponse, in webView: WKWebView) {
+        guard let http = response as? HTTPURLResponse, let url = http.url, let header = http.value(forHTTPHeaderField: "Set-Cookie"),
+              let host = url.host?.lowercased(), let top = webView.url, top.scheme == "chrome-extension", let extensionId = top.host,
+              framers[Framer(site: CookiesBridgeHandler.registrableDomain(of: host), extensionId: extensionId)] != nil,
+              hasAccess(extensionId, url) else { return }
+        // The header joins the response's Set-Cookie lines with ", ": each starts with `name=`, unlike the rest of an Expires date.
+        for line in header.split(separator: /,\s*(?=[!#$%&'*+\-.^_`|~0-9A-Za-z]+=)/)
+        where line.range(of: #";\s*partitioned\s*(;|$)"#, options: [.regularExpression, .caseInsensitive]) == nil {
+            HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie": String(line)], for: url).forEach { cookieStore.setCookie($0) }
+        }
     }
 
     private func build() {
@@ -187,5 +210,20 @@ private final class FrameCookiesNavigationDelegate: NSObject, WKNavigationDelega
         }
         if frameCookies?.waitsForCookies(of: navigationAction, in: webView, ready: forward) == true { return }
         forward()
+    }
+}
+
+/// Hands the responses of a page framing a site to the frame cookies, which keep what the site sets.
+@MainActor
+private final class FrameResponseCookies: NSObject {
+    private weak var frameCookies: ExtensionFrameCookies?
+
+    init(frameCookies: ExtensionFrameCookies) {
+        self.frameCookies = frameCookies
+    }
+
+    @objc(webView:resourceLoad:didReceiveResponse:)
+    func resourceLoad(_ webView: WKWebView, resourceLoad: AnyObject, didReceiveResponse response: URLResponse) {
+        frameCookies?.store(response, in: webView)
     }
 }
