@@ -1,17 +1,18 @@
 import AppKit
 
 extension MainWindowController {
-    /// Opens a Little window on this window's Space and its profile: `url`, or a blank page with the
-    /// address field focused.
+    /// Opens a Little window on the Space links from other apps open in, with its profile: `url`, or a
+    /// blank page with the address field focused.
     @discardableResult
     func openLittleWindow(url: URL?) -> LittleWindowController? {
-        guard let spaceId = tabManager.currentSpaceId else { return nil }
-        let dataStore = tabManager.dataStore ?? context.engineFactory.defaultDataStore()
+        guard let spaceId = externalLinkSpaceId, let space = context.spaceManager?.space(with: spaceId) else { return nil }
+        let dataStore = (spaceId == tabManager.currentSpaceId ? tabManager.dataStore : context.profileManager?.dataStore(for: space.profileId))
+            ?? context.engineFactory.defaultDataStore()
         let engine = context.engineFactory.createTab(configuration: .init(
             dataStore: dataStore,
             tabId: nil,
             nativeConfiguration: nil,
-            profileId: tabManager.profileId
+            profileId: space.profileId
         ))
         configureEngineIfNeeded(engine)
         let little = LittleWindowController(engine: engine, spaceId: spaceId, dataStore: dataStore, owner: self)
