@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { on } from "../../lib/bridge";
   import { historyActions } from "../../lib/bridge/actions";
@@ -43,15 +43,19 @@
   // A search or a site already narrows the list: folding by site would only hide what was asked for.
   const bySite = $derived(!filter.query.trim() && filter.host === undefined);
   const days = $derived(groupHistoryDays(rows, Date.now(), getLocale(), bySite));
-  // The persisted favicons miss many sites: an open tab of the same site fills in.
+  // The persisted favicons miss many sites: an open tab of the same site fills in. Built once per open: tracking
+  // the tabs would rebuild it on every tab's title or progress update.
   const tabFavicons = $derived.by(() => {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole by the $derived, never mutated after
-    const byHost = new Map<string, string>();
-    for (const tab of getTabs()) {
-      const host = hostOf(tab.url);
-      if (host && tab.faviconDataURL && !byHost.has(host)) byHost.set(host, tab.faviconDataURL);
-    }
-    return byHost;
+    void shellOpen;
+    return untrack(() => {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- rebuilt whole by the $derived, never mutated after
+      const byHost = new Map<string, string>();
+      for (const tab of getTabs()) {
+        const host = hostOf(tab.url);
+        if (host && tab.faviconDataURL && !byHost.has(host)) byHost.set(host, tab.faviconDataURL);
+      }
+      return byHost;
+    });
   });
   const expanded = new SvelteSet<string>();
 
