@@ -45,6 +45,18 @@ final class KeyboardShortcutsTests: XCTestCase {
         XCTAssertEqual(KeyboardShortcuts.display("⇧⌘t"), "⇧⌘T")
     }
 
+    func testCommandShiftVPastesAndMatchesStyleAsInChrome() throws {
+        let controller = MainWindowController()
+        let window = try XCTUnwrap(controller.window)
+        let field = NSTextView()
+        window.contentView?.addSubview(field)
+        window.makeFirstResponder(field)
+
+        for flags: NSEvent.ModifierFlags in [[.shift, .command], [.option, .shift, .command]] {
+            XCTAssertTrue(controller.handleKeyboardShortcut(keyDown("V", flags, keyCode: 9, in: controller)))
+        }
+    }
+
     func testRecordingAKeyHeldElsewhereAsksBeforeTakingIt() {
         let controller = MainWindowController()
         controller.recordingShortcutId = "tab.pin"

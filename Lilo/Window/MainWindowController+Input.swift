@@ -395,6 +395,9 @@ extension MainWindowController {
         case "tabs.positionTop": setTabPosition(.top)
         case "tabs.positionBottom": setTabPosition(.bottom)
         case "page.copyURL": copyCurrentURL(nil)
+        // The menu item carries only the first combo, so Chrome's ⇧⌘V is sent from here.
+        case "edit.pasteMatchStyle":
+            return (event.window ?? window)?.firstResponder?.tryToPerform(#selector(NSTextView.pasteAsPlainText(_:)), with: nil) ?? false
         case "tab.mute": toggleMuteCurrentTab(nil)
         case "zoom.in": zoomInCurrentPage(nil)
         case "zoom.out": zoomOutCurrentPage(nil)

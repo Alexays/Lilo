@@ -56,7 +56,7 @@ enum KeyboardShortcuts {
         Action("page.copyURL", "Copy Page URL", "Edit", ["⇧⌘c"]),
         Action("page.copyMarkdown", "Copy Page Link as Markdown", "Edit", ["⌥⇧⌘c"]),
         Action("edit.paste", "Paste", "Edit", ["⌘v"]),
-        Action("edit.pasteMatchStyle", "Paste and Match Style", "Edit", ["⌥⇧⌘v"]),
+        Action("edit.pasteMatchStyle", "Paste and Match Style", "Edit", ["⌥⇧⌘v", "⇧⌘v"]),
         Action("edit.selectAll", "Select All", "Edit", ["⌘a"]),
         Action("find.show", "Find…", "Edit", ["⌘f"]),
         Action("find.next", "Find Next", "Edit", ["⌘g"]),
