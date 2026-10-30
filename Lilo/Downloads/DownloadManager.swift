@@ -307,6 +307,11 @@ final class DownloadManager {
             guard var item = try? store.fetch(id: id),
                   item.state == .inProgress || item.state == .paused else { return }
             item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+            // A paused browser download keeps its partial bytes under the final name, as an in-flight one does.
+            if item.source == "wk" {
+                try? FileManager.default.removeItem(atPath: item.destinationPath)
+                item.fileMissing = true
+            }
             loggingPersistenceError("download.cancel[\(id)]") { try store.update(item) }
             notifyObservers(item)
         }
@@ -357,6 +362,10 @@ final class DownloadManager {
     /// ticking or badging the Dock for a row that is gone.
     func erase(id: Int64, in store: DownloadStore) throws {
         stop(id: id, in: store)
+        // The partial bytes of a browser download that failed go with it, as Chrome's do.
+        if let item = try? store.fetch(id: id), item.source == "wk", item.state == .interrupted, !item.fileMissing {
+            try? FileManager.default.removeItem(atPath: item.destinationPath)
+        }
         let key = DownloadKey(profileId: store.profileId, id: id)
         pendingAutoResumes.remove(key); autoResumes[key] = nil
         try store.delete(id: id)
@@ -417,6 +426,11 @@ final class DownloadManager {
             }
         }
         guard let url = URL(string: item.url) else { return }
+        // A browser download starting over drops its partial bytes, so it takes the original name again.
+        if item.source == "wk", !item.fileMissing {
+            try? FileManager.default.removeItem(atPath: item.destinationPath)
+            try? store.markFileMissing(id: id)
+        }
         var request = URLRequest(url: url)
         // A signed-in download needs the site's cookies, which live in WebKit's store and not in URLSession's.
         if let cookieStore = dataStore(ofDownload: key)?.httpCookieStore {

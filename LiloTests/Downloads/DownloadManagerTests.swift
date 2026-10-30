@@ -1,6 +1,7 @@
 import XCTest
 import GRDB
 import os
+import Network
 import WebKit
 @testable import Lilo
 
@@ -318,6 +319,57 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("papers/renamed.pdf").path))
     }
 
+    // MARK: - Partial files
+
+    /// WebKit writes a download under its final name: cancelling it removes the bytes written, as Chrome does, and a retry then
+    /// gets the original name back instead of a "(1)" copy.
+    func testCancellingADownloadRemovesItsPartialFile() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        let server = try await HeldDownloadServer()
+        let partial = folder.appendingPathComponent("big.bin")
+        let webView = WKWebView()
+        webView.startDownload(using: URLRequest(url: server.url)) { [manager, store] in manager?.startDownload($0, in: store!) }
+        _ = await pollUntil(timeout: 60) { ((try? FileManager.default.attributesOfItem(atPath: partial.path)[.size]) as? Int ?? 0) > 0 }
+        let id = try XCTUnwrap(try store.fetchAll().first?.id)
+
+        await manager.cancel(id: id, in: store)
+        let removed = await pollUntil { !FileManager.default.fileExists(atPath: partial.path) }
+        try await manager.retryDownload(id: id, in: store)
+        _ = await pollUntil(timeout: 60) { (try? self.store.fetchAll().first)??.state == .complete }
+        withExtendedLifetime((webView, server)) {}
+
+        XCTAssertTrue(removed)
+        XCTAssertEqual(try store.fetch(id: id)?.fileMissing, true)
+        XCTAssertEqual(try store.fetchAll().first?.filename, "big.bin", "the retry takes the original name")
+    }
+
+    func testErasingAFailedBrowserDownloadRemovesItsPartialFile() throws {
+        let partial = FileManager.default.temporaryDirectory.appendingPathComponent("partial-\(UUID().uuidString).bin")
+        let other = FileManager.default.temporaryDirectory.appendingPathComponent("other-\(UUID().uuidString).bin")
+        for file in [partial, other] { FileManager.default.createFile(atPath: file.path, contents: Data("x".utf8)) }
+        defer { for file in [partial, other] { try? FileManager.default.removeItem(at: file) } }
+        var failed = DownloadItem(
+            id: nil, url: "https://example.com/partial.bin", filename: partial.lastPathComponent,
+            destinationPath: partial.path, bytesReceived: 1, totalBytes: 100,
+            state: .interrupted, startedAt: Date(), fileMissing: false
+        )
+        // A row whose file is already gone: the path may now be another download's.
+        var cancelled = failed
+        cancelled.destinationPath = other.path
+        cancelled.fileMissing = true
+        try store.insert(&failed)
+        try store.insert(&cancelled)
+
+        try manager.erase(id: failed.id!, in: store)
+        try manager.erase(id: cancelled.id!, in: store)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: partial.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path))
+    }
+
     // MARK: - Speed and ETA tracking tests
 
     func testAugmentedBridgeDataIncludesSpeedAfterTwoSamples() throws {
@@ -415,5 +467,48 @@ final class DownloadManagerTests: XCTestCase {
 
         data = manager.augmentedBridgeData(for: item)
         XCTAssertNil(data["speedBytesPerSec"])
+    }
+}
+
+/// Answers a first download with its headers and some bytes, then holds the connection: the download stays in flight. A later
+/// request gets the whole body.
+private final class HeldDownloadServer: @unchecked Sendable {
+    private let listener: NWListener
+    /// The held connection must outlive its handlers.
+    private let connections = OSAllocatedUnfairLock(initialState: [NWConnection]())
+    let url: URL
+
+    init() async throws {
+        let listener = try NWListener(using: .tcp, on: .any)
+        self.listener = listener
+        let connections = connections
+        let size = 1_000_000
+        let held = OSAllocatedUnfairLock(initialState: false)
+        listener.newConnectionHandler = { connection in
+            connections.withLock { $0.append(connection) }
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                let holds = held.withLock { wasHeld in defer { wasHeld = true }; return !wasHeld }
+                let head = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
+                    + "Content-Disposition: attachment; filename=\"big.bin\"\r\nContent-Length: \(size)\r\n\r\n"
+                connection.send(content: Data(head.utf8) + Data(repeating: 0x78, count: holds ? 256 * 1024 : size), completion: .contentProcessed { _ in
+                    if !holds { connection.cancel() }
+                })
+            }
+        }
+        let ready = AsyncStream<UInt16> { continuation in
+            listener.stateUpdateHandler = { state in
+                if case .ready = state { continuation.yield(listener.port?.rawValue ?? 0); continuation.finish() }
+            }
+        }
+        listener.start(queue: .global())
+        var port: UInt16 = 0
+        for await value in ready { port = value }
+        url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(port)/big.bin"))
+    }
+
+    deinit {
+        listener.cancel()
+        connections.withLock { $0.forEach { $0.cancel() } }
     }
 }

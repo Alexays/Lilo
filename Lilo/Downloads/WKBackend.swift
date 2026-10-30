@@ -91,13 +91,16 @@ final class WKBackend: NSObject {
 
     func cancel(id: Int64) {
         guard let download = activeDownloads.first(where: { $0.value == id })?.key else { return }
-        download.cancel { _ in }
         stopObservingProgress(for: download)
         activeDownloads.removeValue(forKey: download)
-        flight.settle(id) { item in
-            DownloadQuarantine.stamp(path: item.destinationPath, source: item.url)
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+        // WebKit leaves the bytes it wrote under the final name. Chrome deletes them; the row says the file is gone, so nothing
+        // later deletes another download that takes the name.
+        let path = flight.settle(id) { item in
+            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date(); item.fileMissing = true
             return true
+        }?.destinationPath
+        download.cancel { _ in
+            if let path { try? FileManager.default.removeItem(atPath: path) }
         }
     }
 
