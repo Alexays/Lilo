@@ -351,16 +351,34 @@ final class PagePopupTests: XCTestCase {
     /// The opener's policy for a click on `href`, handed over as WebKit does: a page cannot fake a
     /// click's modifiers, and a link to an unreachable host may never move the tab.
     private func decidePolicy(
-        forClickOn href: String, modifierFlags: NSEvent.ModifierFlags = [], downloads: Bool = false
+        forClickOn href: String, modifierFlags: NSEvent.ModifierFlags = [], in frame: WKFrameInfo? = nil, downloads: Bool = false
     ) throws -> WKNavigationActionPolicy? {
         let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
         var decision: WKNavigationActionPolicy?
         engine.webView(
             engine.wkWebView,
-            decidePolicyFor: LinkClick(url: try XCTUnwrap(URL(string: href)), modifierFlags: modifierFlags, downloads: downloads),
+            decidePolicyFor: LinkClick(url: try XCTUnwrap(URL(string: href)), modifierFlags: modifierFlags, targetFrame: frame, downloads: downloads),
             preferences: WKWebpagePreferences()
         ) { policy, _ in decision = policy }
         return decision
+    }
+
+    /// An iframe of the opener's page, as WebKit reports it.
+    private func openerSubframe() async throws -> WKFrameInfo {
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: opener.id))
+        engine.wkWebView.loadHTMLString(#"<iframe src="https://widget.test/frame"></iframe>"#, baseURL: URL(string: "https://example.com/"))
+        await pollUntil { !engine.subframes.isEmpty && !engine.wkWebView.isLoading }
+        return try XCTUnwrap(engine.subframes.last)
+    }
+
+    func testCommandClickInAFrameOpensABackgroundTab() async throws {
+        let frame = try await openerSubframe()
+        let tabs = openTabCount
+
+        XCTAssertEqual(try decidePolicy(forClickOn: "https://widget.test/next", modifierFlags: .command, in: frame), .cancel)
+
+        XCTAssertEqual(openTabCount, tabs + 1)
+        XCTAssertEqual(controller.tabManager.activeTabId, opener.id)
     }
 
     func testCommandClickOnADownloadLinkDownloadsIt() throws {
@@ -496,15 +514,17 @@ final class PagePopupTests: XCTestCase {
     }
 }
 
-/// A main-frame link click, as WebKit reports it.
+/// A link click, as WebKit reports it: in the main frame unless `targetFrame` names another.
 private final class LinkClick: WKNavigationAction {
     private let url: URL
     private let flags: NSEvent.ModifierFlags
+    private let frame: WKFrameInfo?
     private let downloads: Bool
 
-    init(url: URL, modifierFlags: NSEvent.ModifierFlags, downloads: Bool = false) {
+    init(url: URL, modifierFlags: NSEvent.ModifierFlags, targetFrame: WKFrameInfo? = nil, downloads: Bool = false) {
         self.url = url
         flags = modifierFlags
+        frame = targetFrame
         self.downloads = downloads
         super.init()
     }
@@ -512,7 +532,7 @@ private final class LinkClick: WKNavigationAction {
     override var request: URLRequest { URLRequest(url: url) }
     override var navigationType: WKNavigationType { .linkActivated }
     override var modifierFlags: NSEvent.ModifierFlags { flags }
-    override var targetFrame: WKFrameInfo? { nil }
+    override var targetFrame: WKFrameInfo? { frame }
     override var shouldPerformDownload: Bool { downloads }
 }
 

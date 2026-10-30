@@ -1177,15 +1177,14 @@ final class WKWebViewTab: NSObject {
         return (click.modifierFlags.contains(.command) || click.buttonNumber == 2) && !click.modifierFlags.contains(.shift)
     }
 
+    /// A link in any frame, as in Chrome: the new tab takes it instead of the frame.
     nonisolated static func shouldOpenLinkInBackgroundTab(
         url: URL?,
-        isMainFrame: Bool,
         navigationType: WKNavigationType,
         modifierFlags: NSEvent.ModifierFlags,
         buttonNumber: Int
     ) -> Bool {
-        guard isMainFrame,
-              navigationType == .linkActivated,
+        guard navigationType == .linkActivated,
               modifierFlags.contains(.command) || buttonNumber == middleButtonNumber,
               let scheme = url?.scheme?.lowercased()
         else { return false }
@@ -1464,7 +1463,6 @@ extension WKWebViewTab: WKNavigationDelegate {
 
         if Self.shouldOpenLinkInBackgroundTab(
             url: url,
-            isMainFrame: isMainFrame,
             navigationType: navigationAction.navigationType,
             modifierFlags: navigationAction.modifierFlags,
             buttonNumber: navigationAction.buttonNumber

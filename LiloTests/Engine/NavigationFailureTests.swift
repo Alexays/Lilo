@@ -32,7 +32,6 @@ final class NavigationFailureTests: XCTestCase {
         XCTAssertTrue(
             WKWebViewTab.shouldOpenLinkInBackgroundTab(
                 url: URL(string: "https://example.com/page"),
-                isMainFrame: true,
                 navigationType: .linkActivated,
                 modifierFlags: [.command],
                 buttonNumber: 1
@@ -44,7 +43,6 @@ final class NavigationFailureTests: XCTestCase {
         XCTAssertFalse(
             WKWebViewTab.shouldOpenLinkInBackgroundTab(
                 url: URL(string: "https://example.com/page"),
-                isMainFrame: true,
                 navigationType: .linkActivated,
                 modifierFlags: [],
                 buttonNumber: 1
@@ -56,22 +54,9 @@ final class NavigationFailureTests: XCTestCase {
         XCTAssertTrue(
             WKWebViewTab.shouldOpenLinkInBackgroundTab(
                 url: URL(string: "https://example.com/page"),
-                isMainFrame: true,
                 navigationType: .linkActivated,
                 modifierFlags: [],
                 buttonNumber: WKWebViewTab.middleButtonNumber
-            )
-        )
-    }
-
-    func testCommandClickSubframeLinkDoesNotOpenBackgroundTab() {
-        XCTAssertFalse(
-            WKWebViewTab.shouldOpenLinkInBackgroundTab(
-                url: URL(string: "https://example.com/frame"),
-                isMainFrame: false,
-                navigationType: .linkActivated,
-                modifierFlags: [.command],
-                buttonNumber: 1
             )
         )
     }
