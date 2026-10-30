@@ -93,6 +93,29 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertTrue(opened.dataStore === little.dataStore)
     }
 
+    func testClosingTheBrowserWindowHandsItsLittleWindowsToAnother() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let other = makeTestWindow(browserContext.context, showing: work.id)
+        defer { other.littleWindows.values.forEach { $0.window.close() }; other.window?.close() }
+
+        controller.window?.close()
+
+        XCTAssertTrue(little.window.isVisible)
+        XCTAssertTrue(other.littleWindows[little.engine.id] === little)
+        XCTAssertTrue(little.owner === other)
+        XCTAssertTrue(little.engine.delegate === other, "the other window serves its page now")
+    }
+
+    func testTheLastBrowserWindowHidesWhileALittleWindowIsOpen() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let window = try XCTUnwrap(controller.window)
+        window.makeKeyAndOrderFront(nil)
+
+        XCTAssertFalse(controller.windowShouldClose(window), "closing it would quit the app")
+        XCTAssertFalse(window.isVisible)
+        XCTAssertTrue(little.window.isVisible)
+    }
+
     func testClosingTheWindowSendsItsPageToRecentlyClosed() async throws {
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
         let url = try XCTUnwrap(URL(string: "https://example.com/read"))

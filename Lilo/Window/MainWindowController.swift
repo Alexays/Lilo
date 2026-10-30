@@ -783,8 +783,8 @@ extension MainWindowController: NSWindowDelegate {
     /// brings it back. With nothing running, closing it quits.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         let host = tabManager.terminalHost
-        // Shells outlive any window but the last one, which hides instead of quitting the app.
-        guard context.windows.windows.count == 1, host.liveTabIds.contains(where: host.isBusy) else { return true }
+        // Shells and Little windows outlive any window but the last one, which hides instead of quitting the app.
+        guard context.windows.windows.count == 1, !littleWindows.isEmpty || host.liveTabIds.contains(where: host.isBusy) else { return true }
         sender.orderOut(nil)
         return false
     }
@@ -869,8 +869,17 @@ extension MainWindowController: NSWindowDelegate {
         for tabId in Set(pendingPermissionRequests.map(\.tabId)) { denyPermissionRequests(forTab: tabId) }
         profileContext?.extensions.denyPermissionRequests(shownIn: self)
         pagePopups.values.forEach { $0.close() }
-        // Their pages are served by this window's delegate methods.
-        littleWindows.values.forEach { $0.window.close() }
+        // Their pages are served by a browser window's delegate methods: another one takes them over.
+        if let heir = context.windows.windows.first(where: { $0 !== self }) {
+            for (id, little) in littleWindows {
+                little.owner = heir
+                heir.littleWindows[id] = little
+                heir.configureEngineIfNeeded(little.engine)
+            }
+            littleWindows = [:]
+        } else {
+            littleWindows.values.forEach { $0.window.close() }
+        }
         sidePanel.closeAll()
         setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.
