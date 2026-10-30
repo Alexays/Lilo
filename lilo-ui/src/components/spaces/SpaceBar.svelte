@@ -91,7 +91,8 @@
     gap: 8px;
     border: none;
     background: none;
-    padding: 6px;
+    /* The 10px pencil sits centred in a 16px column, mirroring the icon's inset on the left. */
+    padding: 6px 9px 6px 6px;
     border-radius: var(--radius-md);
     cursor: default;
     color: var(--text-muted);
