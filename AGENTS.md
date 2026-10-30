@@ -12,6 +12,7 @@ Rules for coding agents (and humans) working in Lilo. Bias toward small, KISS ch
 ## House style
 
 - **KISS.** Minimum code that solves the problem. No speculative abstraction, no single-use protocols, no config knobs with one caller. If it could be half the size, rewrite it.
+- **Generic, never per site.** Fix a site's problem with the web platform or a mechanism every site gets: no hostname check, no reliance on a site's markup, class names or internals, no user agent for one site. Such a quirk breaks silently on the site's next deploy and helps no other site. The existing Meet modules are no precedent. When no generic fix exists, say so and document the limit in [COMPATIBILITY.md](COMPATIBILITY.md).
 - **Surgical diffs.** Touch only what the task needs and match the surrounding style. Don't refactor code that isn't part of the task.
 - **Placement.** A new file goes where the [placement rule](docs/ARCHITECTURE.md#placement-rule) says; tests mirror source paths.
 - **Design bar: Apple and Arc.** Every screen and interaction must feel like a first-party macOS app with Arc's polish: native conventions (HIG spacing, SF Symbols, system fonts, standard shortcuts and menus), calm motion that respects Reduce motion, no layout jumps, nothing clipped or misaligned, AA contrast, every control reachable by keyboard. If it would look out of place in an Apple app, it is not done.
