@@ -4,6 +4,28 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0] - 2026-10-30
+
+### Added
+
+- With Lilo's developer tools unlocked, Safari's Develop menu lists each extension's background and side panel, so you can inspect them.
+
+### Changed
+
+- Lilo checks for updates every hour instead of once a day, so the card offering to restart into a new version shows up soon after a release.
+- When a call page offers no microphone or camera control of its own, such as Google Meet, the call card says its button mutes in Lilo: the page's own button does not follow it.
+- The edge between the page and an extension's side panel lights up in the Space's color when you point at it, as the sidebar's edge does.
+- The bar above the page, or the tabs on top, takes the site's color, gradients and images included, and slides with the page as one card. The window keeps a border all around, the traffic lights stay in the same place in every layout, and with the sidebar on the left its toggle sits just before the back arrow.
+
+### Fixed
+
+- A call's picture-in-picture window docked in the sidebar, such as Google Meet's, keeps its shape and shows all its controls instead of being cropped.
+- A site an extension shows inside its side panel or pages gets its own cookies, as in Chrome, so it no longer loads signed out.
+- The recently archived tabs menu shows each site's favicon instead of a letter.
+- A site an extension shows inside its popup or an offscreen document gets its own cookies too, so it no longer loads signed out.
+- A site an extension shows in its side panel keeps the local storage it has in your tabs, instead of starting empty on every load.
+
+[0.12.0]: https://github.com/Alexays/Lilo/compare/v0.11.1...v0.12.0
 ## [0.11.1] - 2026-10-30
 
 ### Changed

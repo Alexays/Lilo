@@ -1,0 +1,27 @@
+{
+  "version": "0.12.0",
+  "title": {
+    "en": "The bar becomes the page.",
+    "fr": "La barre se fond dans la page."
+  },
+  "introduction": {
+    "en": "The bar above the page now takes each site's color and moves with it, as one card.",
+    "fr": "La barre au-dessus de la page prend la couleur de chaque site et bouge avec elle, d'un seul tenant."
+  },
+  "highlights": [
+    {
+      "id": "address",
+      "title": {
+        "en": "Blends into every site.",
+        "fr": "Aux couleurs de chaque site."
+      },
+      "body": {
+        "en": "With the address above the page or the tabs on top, the bar takes the site's color, gradients included, and slides with the page.",
+        "fr": "Avec l'adresse au-dessus de la page ou les onglets en haut, la barre prend la couleur du site, dégradés compris, et glisse avec la page."
+      },
+      "notes": [
+        "The bar above the page, or the tabs on top, takes the site's color, gradients and images included, and slides with the page as one card. The window keeps a border all around, the traffic lights stay in the same place in every layout, and with the sidebar on the left its toggle sits just before the back arrow."
+      ]
+    }
+  ]
+}

@@ -2215,6 +2215,12 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "La barra se funde con la página.",
+				"description": "La barra sobre la página toma el color de cada sitio y se mueve con ella, como una sola pieza.",
+				"addressTitle": "Con los colores de cada sitio.",
+				"addressDescription": "Con la dirección sobre la página o las pestañas arriba, la barra toma el color del sitio, degradados incluidos, y se desliza con la página."
+			},
 			"v0110": {
 				"headline": "Cada Space, a tu manera.",
 				"description": "Cristal, grano y colores que siguen tus sitios, tu fondo o la hora del día.",

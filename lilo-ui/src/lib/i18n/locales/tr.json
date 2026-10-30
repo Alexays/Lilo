@@ -2215,6 +2215,12 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "Çubuk sayfayla bütünleşiyor.",
+				"description": "Sayfanın üstündeki çubuk her sitenin rengini alır ve sayfayla birlikte tek parça hâlinde hareket eder.",
+				"addressTitle": "Her sitenin renklerinde.",
+				"addressDescription": "Adres sayfanın üstündeyken veya sekmeler üstteyken çubuk, geçişler dahil sitenin rengini alır ve sayfayla birlikte kayar."
+			},
 			"v0110": {
 				"headline": "Her Space size göre.",
 				"description": "Cam, gren ve sitelerinizi, duvar kâğıdınızı ya da günün saatini takip eden renkler.",

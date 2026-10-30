@@ -2204,6 +2204,12 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0120": {
+				"headline": "The bar becomes the page.",
+				"description": "The bar above the page now takes each site's color and moves with it, as one card.",
+				"addressTitle": "Blends into every site.",
+				"addressDescription": "With the address above the page or the tabs on top, the bar takes the site's color, gradients included, and slides with the page."
+			},
 			"v0110": {
 				"headline": "Make each Space your own.",
 				"description": "Glass, grain, and colors that follow your sites, your wallpaper or the time of day.",

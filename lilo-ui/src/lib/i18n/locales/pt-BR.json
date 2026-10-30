@@ -2215,6 +2215,12 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "A barra se funde à página.",
+				"description": "A barra acima da página assume a cor de cada site e se move com ela, como uma peça só.",
+				"addressTitle": "Nas cores de cada site.",
+				"addressDescription": "Com o endereço acima da página ou as abas no topo, a barra assume a cor do site, inclusive degradês, e desliza com a página."
+			},
 			"v0110": {
 				"headline": "Cada Space do seu jeito.",
 				"description": "Vidro, granulado e cores que seguem seus sites, seu papel de parede ou a hora do dia.",

@@ -2237,6 +2237,12 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "Pasek stapia się ze stroną.",
+				"description": "Pasek nad stroną przybiera kolor każdej witryny i porusza się razem z nią jako jedna całość.",
+				"addressTitle": "W barwach każdej witryny.",
+				"addressDescription": "Gdy adres jest nad stroną lub karty są u góry, pasek przybiera kolor witryny, także z gradientami, i przesuwa się razem ze stroną."
+			},
 			"v0110": {
 				"headline": "Każdy Space po twojemu.",
 				"description": "Szkło, ziarno i kolory, które podążają za stronami, tapetą lub porą dnia.",

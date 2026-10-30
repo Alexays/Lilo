@@ -2215,6 +2215,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "Die Leiste wird Teil der Seite.",
+				"description": "Die Leiste über der Seite nimmt die Farbe jeder Website an und bewegt sich mit ihr, wie aus einem Guss.",
+				"addressTitle": "In den Farben jeder Website.",
+				"addressDescription": "Mit der Adresse über der Seite oder den Tabs oben nimmt die Leiste die Farbe der Website an, Verläufe inklusive, und gleitet mit der Seite."
+			},
 			"v0110": {
 				"headline": "Jeder Space ganz nach deinem Geschmack.",
 				"description": "Glas, Körnung und Farben, die deinen Websites, deinem Hintergrundbild oder der Tageszeit folgen.",

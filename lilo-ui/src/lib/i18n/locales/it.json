@@ -2215,6 +2215,12 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "La barra diventa la pagina.",
+				"description": "La barra sopra la pagina prende il colore di ogni sito e si muove con essa, in un unico blocco.",
+				"addressTitle": "Con i colori di ogni sito.",
+				"addressDescription": "Con l'indirizzo sopra la pagina o le schede in alto, la barra prende il colore del sito, sfumature comprese, e scorre con la pagina."
+			},
 			"v0110": {
 				"headline": "Ogni Space a modo tuo.",
 				"description": "Vetro, grana e colori che seguono i tuoi siti, il tuo sfondo o l'ora del giorno.",

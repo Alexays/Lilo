@@ -2215,6 +2215,12 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0120": {
+				"headline": "De balk wordt één met de pagina.",
+				"description": "De balk boven de pagina neemt de kleur van elke site aan en beweegt met haar mee, als één geheel.",
+				"addressTitle": "In de kleuren van elke site.",
+				"addressDescription": "Met het adres boven de pagina of de tabbladen bovenaan neemt de balk de kleur van de site aan, kleurverlopen inbegrepen, en schuift met de pagina mee."
+			},
 			"v0110": {
 				"headline": "Elke Space helemaal van jou.",
 				"description": "Glas, korrel en kleuren die je sites, je achtergrond of het tijdstip volgen.",

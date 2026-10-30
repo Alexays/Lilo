@@ -2204,6 +2204,12 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0120": {
+				"headline": "La barre se fond dans la page.",
+				"description": "La barre au-dessus de la page prend la couleur de chaque site et bouge avec elle, d'un seul tenant.",
+				"addressTitle": "Aux couleurs de chaque site.",
+				"addressDescription": "Avec l'adresse au-dessus de la page ou les onglets en haut, la barre prend la couleur du site, dégradés compris, et glisse avec la page."
+			},
 			"v0110": {
 				"headline": "À chaque Space son style.",
 				"description": "Du verre, du grain, et des couleurs qui suivent vos sites, votre fond d'écran ou l'heure.",
