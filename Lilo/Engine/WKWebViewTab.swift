@@ -1390,6 +1390,15 @@ final class WKWebViewTab: NSObject {
             ))
             return
         }
+        // A page a form sent is never sent again behind the user's back, as in Chrome: Try Again asks first.
+        if pendingMainFrameSendsBody {
+            handleNavigationFailure(NSError(
+                domain: "LiloEngine",
+                code: NSURLErrorCannotLoadFromNetwork,
+                userInfo: [NSLocalizedDescriptionKey: "This page stopped responding. It was not reloaded, which would send its form again.".localized]
+            ))
+            return
+        }
         lastContentTerminationAt = now
         // `reload()` silently no-ops without a committed back-forward item, leaving a blank view and no
         // failure delegate, so a tab that died before its first commit re-loads its known URL instead.
@@ -1476,7 +1485,20 @@ extension WKWebViewTab: WKNavigationDelegate {
                 bypassesContentBlockersOnce = false
                 if Self.supportsContentBlockersToggle { preferences.setValue(false, forKey: "contentBlockersEnabled") }
             }
-            let decide = { decisionHandler(self.policy(for: navigationAction), preferences) }
+            var decide = { decisionHandler(self.policy(for: navigationAction), preferences) }
+            // Sending a form again may repeat what it did, such as a purchase: the user says so first, as in Chrome.
+            if navigationAction.navigationType == .formResubmitted, navigationAction.targetFrame?.isMainFrame != false {
+                let send = decide
+                decide = {
+                    if self.agentDialogHandler?("a reload would send the page's form again: cancelled") == true {
+                        return decisionHandler(.cancel, preferences)
+                    }
+                    self.runWhenShown { shown in
+                        guard shown else { return decisionHandler(.cancel, preferences) }
+                        JSDialogPresenter.runFormResubmission(in: webView) { $0 ? send() : decisionHandler(.cancel, preferences) }
+                    }
+                }
+            }
             if let frameCookies = tabManager?.extensionRegistry?.frameCookies,
                frameCookies.waitsForCookies(of: navigationAction, in: webView, ready: decide) { return }
             decide()

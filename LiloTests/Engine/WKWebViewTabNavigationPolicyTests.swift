@@ -1,3 +1,4 @@
+import AppKit
 import Network
 import WebKit
 import XCTest
@@ -148,5 +149,62 @@ final class WKWebViewTabNavigationPolicyTests: XCTestCase {
         let ended = await pollUntil(timeout: 10) { spy.events.contains { if case .finished = $0 { true } else { false } } }
         XCTAssertTrue(ended, "the load ends with the part that loaded")
         XCTAssertFalse(spy.events.contains { if case .failed = $0 { true } else { false } }, "no error page over it, as in Chrome")
+    }
+
+    /// A tab in an off-screen window, showing a page a form sent with POST; `posts` counts the form's sends.
+    private func formResultTab() async throws -> (tab: WKWebViewTab, window: NSWindow, spy: WKWebViewTabDelegateSpy, posts: () -> Int, server: TinyHTTPServer) {
+        let posts = OSAllocatedUnfairLock(initialState: 0)
+        let server = try await TinyHTTPServer { request in
+            guard request.hasPrefix("POST") else {
+                return ("200 OK", ["Content-Type: text/html"], Data("<form method=post action=/order><input name=item value=1></form><script>document.forms[0].submit()</script>".utf8))
+            }
+            posts.withLock { $0 += 1 }
+            return ("200 OK", ["Content-Type: text/html"], Data("<p>ordered</p>".utf8))
+        }
+        let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
+        let spy = WKWebViewTabDelegateSpy()
+        tab.delegate = spy
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.alphaValue = 0
+        window.contentView = tab.wkWebView
+        window.orderFrontRegardless()
+        tab.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        let ordered = await pollUntil(timeout: 10) { posts.withLock { $0 } == 1 && spy.commits == 2 && !tab.isLoading }
+        XCTAssertTrue(ordered)
+        return (tab, window, spy, { posts.withLock { $0 } }, server)
+    }
+
+    func testReloadingAPageAFormSentAsksBeforeSendingTheFormAgain() async throws {
+        let (tab, window, _, posts, server) = try await formResultTab()
+        defer { window.close(); _ = server }
+
+        tab.reload()
+        let asked = await pollUntil(timeout: 10) { window.attachedSheet != nil }
+        XCTAssertTrue(asked, "Chrome's Confirm Form Resubmission")
+        XCTAssertEqual(posts(), 1)
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertSecondButtonReturn)
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(posts(), 1, "Cancel sends nothing")
+
+        tab.reload()
+        _ = await pollUntil(timeout: 10) { window.attachedSheet != nil }
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+        let sent = await pollUntil(timeout: 10) { posts() == 2 }
+        XCTAssertTrue(sent, "Continue sends the form again")
+    }
+
+    func testAPageAFormSentIsNotSentAgainAfterItsProcessEnds() async throws {
+        let (tab, window, spy, posts, server) = try await formResultTab()
+        defer { window.close(); _ = server }
+        let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
+        try XCTSkipUnless(tab.wkWebView.responds(to: kill))
+
+        tab.wkWebView.perform(kill)
+
+        let failed = await pollUntil(timeout: 10) { if case .failed = spy.events.last { true } else { false } }
+        XCTAssertTrue(failed, "the crash shows, as in Chrome")
+        XCTAssertEqual(posts(), 1)
+        XCTAssertNil(window.attachedSheet, "nothing is asked until the user tries again")
     }
 }

@@ -106,6 +106,21 @@ enum JSDialogPresenter {
         }
     }
 
+    /// Confirmation before a reload or history move sends a form's data again. completion(true) = send it.
+    static func runFormResubmission(
+        in webView: WKWebView,
+        completion: @escaping @MainActor @Sendable (Bool) -> Void
+    ) {
+        DispatchQueue.main.async {
+            guard let w = webView.window else { completion(false); return }
+            let alert = NSAlert()
+            alert.messageText = "Confirm Form Resubmission".localized
+            alert.informativeText = "This page used information you entered. Loading it again sends that information again, which may repeat an action such as a purchase.".localized
+            alert.addButton(withTitle: "Continue".localized); alert.addButton(withTitle: "Cancel".localized)
+            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
+        }
+    }
+
     /// Storage Access API prompt: lets a cross-site embed use its own cookies under the current site.
     static func runStorageAccessPrompt(
         in webView: WKWebView,
