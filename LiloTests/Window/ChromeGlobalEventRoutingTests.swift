@@ -43,10 +43,10 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
 
         try release(3)
         let wentBack = await pollUntil { webView.backForwardList.currentItem?.url == first }
-        XCTAssertTrue(wentBack)
+        XCTAssertTrue(wentBack, "at \(webView.backForwardList.currentItem?.url.absoluteString ?? "nil"), loading \(webView.isLoading)")
         try release(4)
         let wentForward = await pollUntil { webView.backForwardList.currentItem?.url == second }
-        XCTAssertTrue(wentForward)
+        XCTAssertTrue(wentForward, "at \(webView.backForwardList.currentItem?.url.absoluteString ?? "nil"), loading \(webView.isLoading)")
     }
 
     func testThePreviousPageOpensInABackgroundTab() async throws {
