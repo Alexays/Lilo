@@ -1,0 +1,3 @@
+kind: Fixed
+body: Saving a file a page generates, such as a PDF from the viewer, now asks where to save it when that setting is on and applies extension filename suggestions.
+time: 2026-10-30T17:10:36.885256+01:00

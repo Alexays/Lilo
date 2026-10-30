@@ -163,21 +163,42 @@ final class DownloadManager {
 
     // MARK: - Blob / data saves (WKUIDelegatePrivate saveDataToFile)
 
-    /// Writes raw data (a blob/canvas/generated file the page handed us) to the downloads folder and
-    /// records it as a completed download so it shows up in the downloads panel. The write runs off
-    /// the main thread; the returned task finishes once the row is recorded.
+    /// Writes raw data (a blob/canvas/generated file the page handed us) where a download of it would go, after the
+    /// extensions' suggestion and the save panel, and records it as a completed download so it shows up in the downloads
+    /// panel. The write runs off the main thread; the returned task finishes once the row is recorded.
     @discardableResult
     func saveData(
-        _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, privateSpaceId: UUID? = nil
+        _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, privateSpaceId: UUID? = nil
     ) -> Task<Void, Never> {
         let folder = resolvedDownloadsFolder(settingsFolder)
         let name = suggestedFilename.isEmpty ? "download" : suggestedFilename
-        let source = originatingURL.absoluteString
-        return Task { @MainActor in
+        let proposed = WKBackend.resolveDestination(for: name, in: folder)
+        var item = DownloadItem(
+            id: nil, url: originatingURL.absoluteString, filename: name, destinationPath: proposed.path,
+            bytesReceived: 0, totalBytes: Int64(data.count), state: .inProgress, startedAt: Date(), fileMissing: false
+        )
+        item.mimeType = mimeType.isEmpty ? nil : mimeType
+        item.source = "blob"
+        item.profileId = store?.profileId
+        return Task { @MainActor [item] in
+            var item = item
+            let suggestion = privateSpaceId == nil ? await suggestFilename?(item) : nil
+            let suggested = suggestion.map { WKBackend.destination(for: $0, in: folder) } ?? (url: proposed, prompts: false)
+            let chosen: URL
+            if let chooseDestination {
+                guard let url = await chooseDestination(suggested.url, webView, suggested.prompts) else { return }
+                chosen = url
+            } else {
+                chosen = suggested.url
+            }
+            let source = item.url
             let written = await Task.detached(priority: .utility) { () -> Result<URL, Error> in
-                let destination = WKBackend.resolveDestination(for: name, in: folder)
+                // Resolved again at write time, as another save may have taken the proposed name meanwhile. A file
+                // the user or an extension picked may replace one there.
+                let unchanged = chosen == proposed
+                let destination = unchanged ? WKBackend.resolveDestination(for: name, in: folder) : chosen
                 do {
-                    try data.write(to: destination, options: .withoutOverwriting)
+                    try data.write(to: destination, options: unchanged ? .withoutOverwriting : [])
                 } catch {
                     return .failure(error)
                 }
@@ -191,22 +212,11 @@ final class DownloadManager {
                 Self.logger.error("Failed to save data to file: \(error.localizedDescription)")
                 return
             }
-            var item = DownloadItem(
-                id: nil,
-                url: source,
-                filename: destination.lastPathComponent,
-                destinationPath: destination.path,
-                bytesReceived: Int64(data.count),
-                totalBytes: Int64(data.count),
-                state: .complete,
-                error: nil,
-                resumeData: nil,
-                startedAt: Date(),
-                endedAt: Date(),
-                mimeType: mimeType.isEmpty ? nil : mimeType,
-                fileMissing: false,
-                source: "blob"
-            )
+            item.filename = destination.lastPathComponent
+            item.destinationPath = destination.path
+            item.bytesReceived = Int64(data.count)
+            item.state = .complete
+            item.endedAt = Date()
             // The file is already on disk; a lost row only hides it from the list, so notifyObservers
             // still runs and the completion notification fires either way.
             loggingPersistenceError("download.insert[\(destination.lastPathComponent)]") {

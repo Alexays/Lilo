@@ -141,6 +141,11 @@ final class WKBackend: NSObject {
         var item = item
         item.profileId = store?.profileId
         guard let suggestion = await suggestFilename?(download, item) else { return (URL(fileURLWithPath: item.destinationPath), false) }
+        return Self.destination(for: suggestion, in: directory)
+    }
+
+    /// Where an extension's suggestion puts a download, and whether the user picks the file (it exists and the suggestion says "prompt").
+    nonisolated static func destination(for suggestion: FilenameSuggestion, in directory: URL) -> (url: URL, prompts: Bool) {
         let target = directory.appendingPathComponent(suggestion.filename)
         try? FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
         guard FileManager.default.fileExists(atPath: target.path) else { return (target, false) }
@@ -152,7 +157,7 @@ final class WKBackend: NSObject {
         case "prompt":
             return (target, true)
         default:
-            return (Self.resolveDestination(for: suggestion.filename, in: directory), false)
+            return (resolveDestination(for: suggestion.filename, in: directory), false)
         }
     }
 

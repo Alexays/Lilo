@@ -218,6 +218,46 @@ final class DownloadManagerTests: XCTestCase {
         XCTAssertEqual(try store.fetch(id: item.id!)?.state, .interrupted, "a private space's web view never hosts a profile's download")
     }
 
+    // MARK: - Saved data
+
+    func testSavedDataGoesWhereTheUserPicks() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.chooseDestination = { proposed, _, _ in proposed.deletingLastPathComponent().appendingPathComponent("picked.pdf") }
+
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+
+        XCTAssertEqual(try store.fetchAll().map(\.filename), ["picked.pdf"])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("picked.pdf").path))
+    }
+
+    func testSavedDataIsNotKeptWhenTheUserCancels() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.chooseDestination = { _, _, _ in nil }
+
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+
+        XCTAssertEqual(try store.fetchAll().count, 0)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
+    }
+
+    func testSavedDataTakesTheExtensionsSuggestedName() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.suggestFilename = { _ in ("papers/renamed.pdf", "uniquify") }
+
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("papers/renamed.pdf").path))
+    }
+
     // MARK: - Speed and ETA tracking tests
 
     func testAugmentedBridgeDataIncludesSpeedAfterTwoSamples() throws {

@@ -449,7 +449,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {
         context.downloadManager.saveData(
             data, suggestedFilename: suggestedFilename, mimeType: mimeType, originatingURL: originatingURL,
-            privateSpaceId: privateSpaceId(of: tab)
+            webView: tab.wkWebView, privateSpaceId: privateSpaceId(of: tab)
         )
     }
 
