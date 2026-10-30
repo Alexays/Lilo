@@ -130,6 +130,10 @@ enum AgentDevTools {
                     true, or more patterns that must not show, like the first name alone: computer screenshot and zoom fail \
                     while a textReplace or guard pattern matches the rendered text, a name split by markup included, or a field.
                     """],
+                "frozen": ["type": ["boolean", "null"], "description": """
+                    true freezes the tab as Lilo freezes a user's tab left in the background (page suspended, told it \
+                    is hidden, media paused). Your next call on the tab wakes it, as the user coming back to it.
+                    """],
                 "reset": AgentTools.prop("boolean", "Undo every emulation of the tab."),
                 "tabId": AgentTools.prop("number", "The tab.")
             ], required: ["tabId"]),
@@ -257,6 +261,10 @@ enum AgentDevTools {
                 inspector.deviceScaleFactor = scale
             }
             if inspector.deviceScaleFactor != 0 { state["deviceScaleFactor"] = Double(inspector.deviceScaleFactor) }
+            if arguments["frozen"] as? Bool == true {
+                engine.freeze()
+                state["frozen"] = engine.isFrozen
+            }
             return [.text(state.isEmpty ? "No emulation" : AgentTools.json(state))]
         case "performance":
             let (tab, engine) = try control.agentTab(arguments["tabId"], session: session)
