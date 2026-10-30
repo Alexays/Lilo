@@ -66,11 +66,13 @@ energy-browsers:
 
 # One run at a time per machine, whatever the worktree and whichever test host: each already fills every
 # performance core, and concurrent runs' WebKit processes saturate runningboardd until the whole Mac stalls.
+# The build runs before taking the lock: other worktrees build while one runs its tests.
 TEST_LOCK := lockf -k $(or $(TMPDIR),/tmp/)lilo-swift-test.lock
 # A test that never ends would hold the lock for good: past its allowance, rounded up to the minute, xcodebuild
 # samples it, ends it as failed and goes on. A test that needs longer sets its own executionTimeAllowance.
 TEST_TIMEOUTS := -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 600
-TEST := $(TEST_LOCK) $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING) test $(TEST_TIMEOUTS)
+TEST_CONFIG := $(XCODEBUILD) -configuration Debug LILO_BUNDLE_ID_SUFFIX=.tests $(DEBUG_SIGNING)
+TEST := $(TEST_LOCK) $(TEST_CONFIG) test-without-building $(TEST_TIMEOUTS)
 # CI (which sets CI) runs a failed test once more and lists it in the job summary; locally a flake fails.
 TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
@@ -261,39 +263,43 @@ e2e: $(UI_DEPS)
 e2e-energy:
 	@scripts/energy_idle_check.sh --idle $(or $(IDLE),45) --tabs $(or $(TABS),3) $(if $(filter 0,$(TERMINAL)),--no-terminal)
 
+## Build the app and its tests for the targets that run them
+test-build: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+	@$(TEST_CONFIG) build-for-testing -quiet
+
 # RESULT_BUNDLE=path writes an .xcresult bundle (used by CI to upload results on failure).
 # Test classes run in parallel app instances, one per performance core: more only adds load and timing flakes.
 ## Run Swift unit tests but the slow ones (SWIFT_TEST_FILTER="LiloTests/Class LiloTests/Other/testCase" narrows the run)
-swift-test: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+swift-test: test-build
 	@$(TEST) $(addprefix -only-testing:,$(or $(SWIFT_TEST_FILTER),LiloTests)) -skip-testing:LiloTests/TerminalBenchmarkTests -skip-testing:LiloTests/RealExtensionSmokeTests \
 		$(addprefix -skip-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES -maximum-parallel-testing-workers $(TEST_WORKERS) \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
 ## Run the Swift tests that wait out real clocks, which swift-test skips
-swift-test-slow: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+swift-test-slow: test-build
 	@$(TEST) $(addprefix -only-testing:LiloTests/,$(SLOW_TESTS)) -parallel-testing-enabled YES \
 		$(TEST_RETRY) $(if $(RESULT_BUNDLE),-resultBundlePath '$(RESULT_BUNDLE)')
 
 ## Report what the converter keeps of the default filter lists, by kind and skip reason (network; OUT=build/blocker-coverage.txt)
-blocker-coverage: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+blocker-coverage: test-build
 	@out="$(abspath $(or $(OUT),build/blocker-coverage.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_COVERAGE="$$out" $(TEST) -only-testing:LiloTests/FilterListCoverageTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report what an image load costs a page with and without the default filter lists (network; OUT=build/blocker-bench.txt)
-blocker-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+blocker-bench: test-build
 	@out="$(abspath $(or $(OUT),build/blocker-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_BLOCKER_BENCH="$$out" $(TEST) -only-testing:LiloTests/ContentBlockerBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report what the injected scripts cost a page: load with frames, a growing feed (TABLES=filter tables the app built; OUT=build/script-bench.txt)
-script-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+script-bench: test-build
 	@out="$(abspath $(or $(OUT),build/script-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_SCRIPT_BENCH="$$out" TEST_RUNNER_LILO_SCRIPT_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
 		$(TEST) -only-testing:LiloTests/InjectedScriptsBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report Speedometer 3.1 in a plain web view, with Lilo's bridges, and with all it injects (network; ROUNDS=4 TABLES=filter tables the app built; OUT=build/speedometer-bench.txt)
-speedometer-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+speedometer-bench: test-build
 	@out="$(abspath $(or $(OUT),build/speedometer-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	for round in $$(seq 0 $$(($(or $(ROUNDS),4) - 1))); do \
 		log=$$(mktemp); TEST_RUNNER_LILO_SPEEDOMETER_BENCH="$$out" TEST_RUNNER_LILO_SPEEDOMETER_ROUND=$$round \
@@ -306,19 +312,19 @@ speedometer-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 		print(f"median {m[0]:6.1f} {m[1]:8.1f} {m[2]:5.1f}")' "$$out"
 
 ## Report Enter to first paint of a page whose server pauses, with and without a top-hit preload (OUT=build/preload-bench.txt)
-preload-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+preload-bench: test-build
 	@out="$(abspath $(or $(OUT),build/preload-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_PRELOAD_BENCH="$$out" $(TEST) -only-testing:LiloTests/TopHitPreloadBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Report what a page's runtime.connect port to its extension's worker costs (OUT=build/port-bench.txt)
-port-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS) ext-bridge-build
+port-bench: ext-bridge-build test-build
 	@out="$(abspath $(or $(OUT),build/port-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
 	log=$$(mktemp); TEST_RUNNER_LILO_PORT_BENCH="$$out" $(TEST) -only-testing:LiloTests/PortBenchmarkTests > "$$log" 2>&1 \
 		|| { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; cat "$$out"
 
 ## Run the terminal throughput and lock-fairness benchmarks
-terminal-bench: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+terminal-bench: test-build
 	@$(TEST) -only-testing:LiloTests/TerminalBenchmarkTests
 
 ## Build the extension bridge JS artifacts from bridge-src
