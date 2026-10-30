@@ -133,12 +133,22 @@ extension MainWindowController: WKWebViewTab.Delegate {
             enqueueVisibleTabUpdate(updatedTab)
         }
 
-        if case .committed = event { recordVisit(of: tab, state: updatedTab) }
+        switch event {
+        case .committed:
+            recordVisit(of: tab, state: updatedTab)
+        case .finished:
+            if tab.visitTitleUpdates?.url == tab.currentURL?.absoluteString {
+                tab.visitTitleUpdates?.renamableUntil = .now + .seconds(5)
+            }
+        case .started, .failed:
+            break
+        }
     }
 
     /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
     /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
-    private func recordVisit(of tab: WKWebViewTab, state: Tab?) {
+    private func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+        tab.visitTitleUpdates = nil
         // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
         let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
         let isPublicSpace = (visitingTab?.spaceId ?? littleWindows[tab.id]?.spaceId)
@@ -154,10 +164,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
             }
         history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
+        tab.visitTitleUpdates = (url.absoluteString, 5, renamableUntil)
     }
 
     func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL) {
-        recordVisit(of: tab, state: context.browserState.durableTab(for: tab.id)?.tab)
+        recordVisit(of: tab, state: context.browserState.durableTab(for: tab.id)?.tab, renamableUntil: .now + .seconds(5))
     }
 
     // Even for non-visible tabs (other spaces / not-yet-registered): the favicon is persisted to the
@@ -180,6 +191,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if !pageTitle.isEmpty || !tab.isLoading, t.matchesHomeURL(tab.currentURL ?? t.url) {
                 t.homeTitle = t.title
             }
+        }
+        if !pageTitle.isEmpty, let visit = tab.visitTitleUpdates, visit.changesLeft > 0, visit.url == tab.currentURL?.absoluteString,
+           visit.renamableUntil.map({ ContinuousClock.now < $0 }) ?? true {
+            tab.visitTitleUpdates?.changesLeft -= 1
+            profileContext?.history.scheduleUpdateTitle(url: visit.url, title: pageTitle)
         }
         if let updatedTab { enqueueVisibleTabUpdate(updatedTab) }
         if tab.id == tabManager.activeOpenTabId { publishActiveTab() }

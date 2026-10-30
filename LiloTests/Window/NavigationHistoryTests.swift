@@ -57,6 +57,24 @@ final class NavigationHistoryTests: XCTestCase {
         XCTAssertEqual(try entry("https://example.com/b#c", in: window)?.title, "A")
     }
 
+    func testATitleTheScriptSetsAfterLoadingNamesTheVisitForFiveChanges() async throws {
+        let (window, engine) = try makeTab()
+        try await load("""
+            <script>
+            let n = 0
+            const next = () => { document.title = 't' + ++n; if (n < 7) setTimeout(next, 40) }
+            onload = () => setTimeout(next, 40)
+            </script>
+            """, at: "https://example.com/app", in: engine)
+        let settled = await pollUntil(timeout: 5) { engine.currentTitle == "t7" }
+        XCTAssertTrue(settled)
+
+        let visit = try entry("https://example.com/app", in: window)
+        XCTAssertEqual(visit?.title, "t5", "a title the page keeps changing stops reaching the history")
+        XCTAssertEqual(visit?.visitCount, 1)
+        XCTAssertEqual(window.tabManager.tab(for: engine.id)?.title, "t7")
+    }
+
     func testAPageWithoutTitleShowsItsAddressRatherThanThePreviousPagesTitle() async throws {
         let home = try XCTUnwrap(URL(string: "https://example.com/raw.txt"))
         let (window, engine) = try makeTab()
