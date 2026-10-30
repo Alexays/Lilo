@@ -50,7 +50,7 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
             guard let path = call.string("url"),
                   let url = URL(string: path, relativeTo: context.baseURL)?.absoluteURL,
                   url.scheme == context.baseURL.scheme, url.host == context.baseURL.host,
-                  let configuration = context.webViewConfiguration else {
+                  let configuration = context.pageWebViewConfiguration else {
                 return BridgeError("Invalid offscreen document url")
             }
             let documentView = WKWebView(frame: .zero, configuration: configuration)

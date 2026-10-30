@@ -453,6 +453,26 @@ final class SidePanelTests: XCTestCase {
     }
 
     // MARK: - Framed sites
+    func testASiteThePanelFramesRunsTheBlobWorkersItsPolicyAllows() async throws {
+        let server = try await TinyHTTPServer { _ in
+            ("200 OK", ["Content-Type: text/html", "Content-Security-Policy: worker-src 'self' blob:"], Data(#"""
+            <script>const w = new Worker(URL.createObjectURL(new Blob(['postMessage(1)'])));
+            w.onmessage = () => parent.postMessage('worker:ok', '*'); w.onerror = () => parent.postMessage('worker:refused', '*')</script>
+            """#.utf8))
+        }
+        let dir = tempDir.appendingPathComponent("Worker")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try #"{"manifest_version":3,"name":"Worker","version":"1.0","permissions":["sidePanel"],"side_panel":{"default_path":"p.html"}}"#.write(to: dir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try "addEventListener('message', (e) => { document.title = e.data; });".write(to: dir.appendingPathComponent("p.js"), atomically: true, encoding: .utf8)
+        try #"<title>w</title><script src="p.js"></script><iframe src="http://127.0.0.1:\#(server.port)/"></iframe>"#.write(to: dir.appendingPathComponent("p.html"), atomically: true, encoding: .utf8)
+        let before = Set(registry.loadedExtensions.map(\.id))
+        try await registry.load(from: dir)
+        window.sidePanel.open(try XCTUnwrap(registry.loadedExtensions.map(\.id).first { !before.contains($0) }), tabSpecific: false, in: nil)
+        let ran = await pollUntil { self.window.sidePanel.webView?.title?.hasPrefix("worker:") == true }
+        XCTAssertTrue(ran)
+        XCTAssertEqual(window.sidePanel.webView?.title, "worker:ok", "the site's own policy, not the extension's, decides")
+    }
+
     func testASiteThePanelFramesKeepsItsOwnLocalStorage() async throws {
         let server = try await TinyHTTPServer { request in
             let path = request.split(separator: " ").dropFirst().first.map(String.init) ?? ""

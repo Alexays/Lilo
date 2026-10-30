@@ -989,7 +989,7 @@ final class ProfileExtensionRegistry {
 
     func extensionNavigationTarget(for url: URL) -> ExtensionNavigationTarget? {
         guard url.scheme?.lowercased() == "chrome-extension", let host = url.host,
-              let webViewConfiguration = loadedRuntimes.first(where: { $0.id == host })?.context.webViewConfiguration else {
+              let webViewConfiguration = loadedRuntimes.first(where: { $0.id == host })?.context.pageWebViewConfiguration else {
             return nil
         }
         return ExtensionNavigationTarget(url: url, webViewConfiguration: webViewConfiguration)
@@ -1456,5 +1456,19 @@ final class ProfileExtensionRegistry {
                 }
             }
         }
+    }
+}
+
+extension WKWebExtensionContext {
+    /// `webViewConfiguration` for a view Lilo creates. WebKit's manifest CSP mode filters the policy of every frame in the
+    /// view, so a framed site loses `blob:` and `'self'`; Chrome already refuses the extension policies it would filter.
+    var pageWebViewConfiguration: WKWebViewConfiguration? {
+        guard let configuration = webViewConfiguration else { return nil }
+        let setMode = NSSelectorFromString("_setContentSecurityPolicyModeForExtension:")
+        if configuration.responds(to: setMode) {
+            typealias SetMode = @convention(c) (AnyObject, Selector, Int) -> Void
+            unsafeBitCast(configuration.method(for: setMode), to: SetMode.self)(configuration, setMode, 0)
+        }
+        return configuration
     }
 }
