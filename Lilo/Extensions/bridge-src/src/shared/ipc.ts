@@ -120,7 +120,8 @@ function connect(): Port | undefined {
   const opened: Port = runtime.connectNative(CHANNEL_HOST);
   opened.onMessage.addListener((message) => {
     if (message?.[channelKey] !== tag) return;
-    lastActivity = Date.now();
+    // A state Lilo keeps current is none of the context's own work: it must not hold an idle worker's port open.
+    if (typeof message.push !== 'string') lastActivity = Date.now();
     if (message.collided) {
       // WebKit gave this port the number of a channel Lilo heard from first: what went on it goes again on a new one. It
       // stays open: disconnecting it would make WebKit forget the page's other ports (WEBKIT-GAPS 89).

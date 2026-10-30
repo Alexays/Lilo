@@ -134,6 +134,21 @@ describe('worker channel', () => {
     assert.deepEqual(dispatched, []);
   });
 
+  it('lets the port go once idle, whatever state Lilo pushes meanwhile', async () => {
+    const call = gapCall('bookmarks', 'get');
+    const port = ports.at(-1)!;
+    port.receive({ reply: callId(4), result: 'done' });
+    assert.equal(await call, 'done');
+
+    // A tab switch every 8 s pushes the tab state.
+    for (let push = 0; push < 3; push++) {
+      mock.timers.tick(8_000);
+      port.receive({ push: 'test.state', args: [push] });
+    }
+
+    assert.deepEqual(port.sent.at(-1), { idle: true }, '20 s after the reply, as with no push');
+  });
+
   it('opens a new port when Lilo broadcasts that it holds an event', async () => {
     mock.timers.tick(30_000);
     assert.deepEqual(ports.at(-1)!.sent.at(-1), { idle: true });

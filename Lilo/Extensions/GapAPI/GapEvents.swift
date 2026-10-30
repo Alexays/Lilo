@@ -198,9 +198,12 @@ final class GapEvents {
     }
 
     /// Sends `message` now over the extension's open channels, its running worker's and its pages': a stopped worker misses it.
-    func send(_ message: [String: Any], toOpenChannelsOf extensionId: String) {
-        var message = message
-        if let port = workers[extensionId]?.port {
+    /// Built only when one is open.
+    func send(_ message: @autoclosure () -> [String: Any], toOpenChannelsOf extensionId: String) {
+        let worker = workers[extensionId]?.port
+        guard worker != nil || pages[extensionId]?.isEmpty == false else { return }
+        var message = message()
+        if let port = worker {
             message[Self.channelKey] = owners[ObjectIdentifier(port)]
             port.sendMessage(message) { _ in }
         }
