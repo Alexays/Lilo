@@ -437,6 +437,9 @@ extension MainWindowController {
                 selectTab(ordinal: ordinal)
             } else if id.hasPrefix("space.select"), let ordinal = Int(id.dropFirst(12)) {
                 switchToSpace(ordinal: ordinal)
+            } else if let item = KeyboardShortcuts.menuItem(id, missedBy: event), let action = item.action {
+                item.menu?.update()
+                return item.isEnabled && NSApp.sendAction(action, to: item.target, from: item)
             } else {
                 return false
             }

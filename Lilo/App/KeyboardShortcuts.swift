@@ -217,6 +217,15 @@ enum KeyboardShortcuts {
         NotificationCenter.default.post(name: didChange, object: nil)
     }
 
+    /// The menu item of `id` when AppKit cannot match `event` to it: the item carries only the first combo, and
+    /// AppKit compares a symbol typed with Shift by its shifted character ("@" for ⇧⌘2).
+    static func menuItem(_ id: String, missedBy event: NSEvent) -> NSMenuItem? {
+        guard let item = menuItems[id] else { return nil }
+        let matches = event.charactersIgnoringModifiers?.lowercased() == item.keyEquivalent.lowercased()
+            && event.modifierFlags.intersection(modifierFlags) == item.keyEquivalentModifierMask.intersection(modifierFlags)
+        return matches ? nil : item
+    }
+
     /// Sets `item`'s key equivalent to the first binding of `id`.
     static func show(_ id: String, on item: NSMenuItem) {
         guard let combo = bindings(id).first else {

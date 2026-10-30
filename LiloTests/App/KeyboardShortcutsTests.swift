@@ -57,6 +57,28 @@ final class KeyboardShortcutsTests: XCTestCase {
         }
     }
 
+    func testAShiftedSymbolRunsTheMenuItemAppKitCannotMatch() throws {
+        let controller = MainWindowController()
+        let target = MenuTarget()
+        let item = NSMenuItem(title: "New Split View", action: #selector(MenuTarget.run(_:)), keyEquivalent: "")
+        item.target = target
+        KeyboardShortcuts.bind(item, to: "split.new")
+        // The key typing "=" on a US layout, named as the current layout types it, as Arc's ⌃⇧= is.
+        let probe = keyDown("", [], keyCode: 24, in: controller)
+        let key = try XCTUnwrap(probe.characters(byApplyingModifiers: []))
+        let shifted = try XCTUnwrap(probe.characters(byApplyingModifiers: .shift))
+        try XCTSkipIf(key.uppercased() != key || key == shifted, "the key needs a symbol Shift changes")
+        KeyboardShortcuts.set("split.new", to: ["⌃⇧\(key)"], store: nil)
+
+        XCTAssertTrue(controller.handleKeyboardShortcut(keyDown(shifted, [.control, .shift], keyCode: 24, in: controller)))
+        XCTAssertEqual(target.runs, 1)
+
+        KeyboardShortcuts.set("split.new", to: ["⌥⌘k"], store: nil)
+        XCTAssertFalse(controller.handleKeyboardShortcut(keyDown("k", [.option, .command], keyCode: 40, in: controller)),
+                       "the menu answers the keys it carries")
+        XCTAssertEqual(target.runs, 1)
+    }
+
     func testRecordingAKeyHeldElsewhereAsksBeforeTakingIt() {
         let controller = MainWindowController()
         controller.recordingShortcutId = "tab.pin"
@@ -223,4 +245,9 @@ final class KeyboardShortcutsTests: XCTestCase {
         XCTAssertEqual(keys["page.save"], "⇧⌘S")
         XCTAssertNil(keys["terminal.newBeside"], "an unbound action shows no keys")
     }
+}
+
+private final class MenuTarget: NSObject {
+    var runs = 0
+    @objc func run(_ sender: Any?) { runs += 1 }
 }
