@@ -49,20 +49,23 @@ final class ContextMenuBuilder: NSObject {
     }
 
     /// `_WKContextMenuElementInfo.hitTestResult.absoluteLinkURL`, read by KVC (private classes).
-    static func linkURL(from element: NSObject?) -> URL? { hitTestURL("absoluteLinkURL", from: element) }
+    static func linkURL(from element: NSObject?) -> URL? { hitTestValue("absoluteLinkURL", from: element) }
 
     /// `_WKContextMenuElementInfo.hitTestResult.absoluteImageURL`, read by KVC (private classes).
-    static func imageURL(from element: NSObject?) -> URL? { hitTestURL("absoluteImageURL", from: element) }
+    static func imageURL(from element: NSObject?) -> URL? { hitTestValue("absoluteImageURL", from: element) }
 
     /// `_WKContextMenuElementInfo.hitTestResult.absoluteMediaURL` (video/audio), read by KVC.
-    static func mediaURL(from element: NSObject?) -> URL? { hitTestURL("absoluteMediaURL", from: element) }
+    static func mediaURL(from element: NSObject?) -> URL? { hitTestValue("absoluteMediaURL", from: element) }
+
+    /// `_WKContextMenuElementInfo.hitTestResult.frameInfo`, the frame holding the clicked element, read by KVC.
+    static func frameInfo(from element: NSObject?) -> WKFrameInfo? { hitTestValue("frameInfo", from: element) }
 
     /// nil when WebKit renames either private property, instead of raising on the KVC read.
-    private static func hitTestURL(_ key: String, from element: NSObject?) -> URL? {
+    private static func hitTestValue<Value>(_ key: String, from element: NSObject?) -> Value? {
         guard let element, element.responds(to: NSSelectorFromString("hitTestResult")),
               let result = element.value(forKey: "hitTestResult") as? NSObject,
               result.responds(to: NSSelectorFromString(key)) else { return nil }
-        return result.value(forKey: key) as? URL
+        return result.value(forKey: key) as? Value
     }
 
     /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.

@@ -16,6 +16,10 @@ extension WKWebViewTab {
         /// The page holds a connected WebRTC peer: a call, though it may register no Media Session action and
         /// capture nothing (Meet's companion mode).
         var hasLiveConnection = false
+        /// The page holds a connected WebRTC peer, data channels alone included, or a Web Lock: as in Chrome, an idle freeze
+        /// spares it, so a web chat or game stays connected and other tabs waiting for the lock are not held up.
+        var hasPeerConnection = false
+        var holdsWebLock = false
 
         /// A call even without capture: the page offers a hangup or holds a live connection.
         var isCall: Bool { actions.contains("hangup") || hasLiveConnection }
@@ -28,10 +32,11 @@ extension WKWebViewTab {
     function () {
       if (window.top !== window || typeof MediaSession !== 'function') return;
       const handlers = create(null);
-      let paused = [], microphone = null, camera = null, rtc = false;
+      let paused = [], microphone = null, camera = null, rtc = false, peer = false, locks = 0;
       const call = () => stringify({ microphone, camera, togglemicrophone: !!handlers.togglemicrophone,
                                      togglecamera: !!handlers.togglecamera, hangup: !!handlers.hangup,
-                                     tracks: !!(handlers.nexttrack || handlers.previoustrack), pip: !!handlers.enterpictureinpicture, rtc });
+                                     tracks: !!(handlers.nexttrack || handlers.previoustrack), pip: !!handlers.enterpictureinpicture, rtc,
+                                     peer, lock: locks > 0 });
       // A page that never touches these controls sends nothing.
       let reported = call();
       const report = () => {
@@ -65,16 +70,19 @@ extension WKWebViewTab {
       // constructor stays WebKit's own.
       if (typeof RTCPeerConnection === 'function') {
         const peers = new Set(), transceivers = RTCPeerConnection.prototype.getTransceivers;
-        // Audio or video only: a data channel alone is a file transfer or a game. A brief disconnection keeps the
-        // call; only a failed or closed connection ends it.
+        // A call carries audio or video: a data channel alone is a file transfer or a game. A brief disconnection keeps
+        // the connection; only a failed or closed one ends it.
         const settle = () => {
-          let live = false;
-          for (const peer of peers) {
-            const state = peer.connectionState;
-            if (state === 'closed' || state === 'failed') peers.delete(peer);
-            else if ((state === 'connected' || state === 'disconnected') && apply(transceivers, peer, []).length > 0) live = true;
+          rtc = peer = false;
+          for (const connection of peers) {
+            const state = connection.connectionState;
+            if (state === 'closed' || state === 'failed') peers.delete(connection);
+            else if (state === 'connected' || state === 'disconnected') {
+              peer = true;
+              if (apply(transceivers, connection, []).length > 0) rtc = true;
+            }
           }
-          if (live !== rtc) { rtc = live; report(); }
+          report();
         };
         const peerOriginal = lilo.methods(RTCPeerConnection.prototype, { setRemoteDescription() {
           if (!peers.has(this)) {
@@ -88,6 +96,31 @@ extension WKWebViewTab {
           const result = apply(peerOriginal.close, this, arguments);
           settle();
           return result;
+        } });
+      }
+      // A lock counts from its grant until what the page's callback returns settles, which is when WebKit releases it. The page's
+      // own promise is left untouched, so a rejected request still reaches unhandledrejection.
+      if (typeof LockManager === 'function') {
+        const then = NativePromise.prototype.then;
+        const lockOriginal = lilo.methods(LockManager.prototype, { request() {
+          const args = [], last = arguments.length - 1, callback = arguments[last];
+          for (let i = 0; i < arguments.length; i++) args[i] = arguments[i];
+          if (typeof callback === 'function') args[last] = function (lock) {
+            if (!lock) return apply(callback, this, arguments);
+            locks++;
+            report();
+            const release = () => { locks--; report(); };
+            let result, settle;
+            try { result = apply(callback, this, arguments); } catch (e) { release(); throw e; }
+            const held = new NativePromise(resolve => { settle = resolve; });
+            // Own members keep WebKit's adoption of `held`, and this one, off a Promise.prototype the page may patch.
+            defineProperty(held, 'then', { value: then });
+            defineProperty(held, 'constructor', { value: undefined });
+            settle(result);
+            apply(then, held, [release, release]);
+            return held;
+          };
+          return apply(lockOriginal.request, this, args);
         } });
       }
       // WebKit divides the RTP audio level (dBov) by 20 in integers: every level reads 1, 0.1, 0.01... A call page then sees

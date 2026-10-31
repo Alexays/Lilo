@@ -229,7 +229,7 @@ final class SidePanelController: NSObject {
         if configuration.preferences.responds(to: NSSelectorFromString("_setStorageBlockingPolicy:")) {
             configuration.preferences.setValue(0, forKey: "storageBlockingPolicy")
         }
-        let engine = WKWebViewTab(webView: WKWebView(frame: .zero, configuration: configuration))
+        let engine = WKWebViewTab(webView: PageWebView(frame: .zero, configuration: configuration))
         window.configureEngineIfNeeded(engine)
         engine.wkWebView.isInspectable = context.isInspectable
         engine.applyPageBackgroundColor(window.currentContentSurfaceColor)

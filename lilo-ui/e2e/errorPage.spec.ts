@@ -36,3 +36,17 @@ test("a cache miss says the saved copy is missing and offers none", async ({ pag
 	await expect(page.locator(".error-page .error-title")).toHaveText("No Saved Copy");
 	await expect(page.getByRole("button", { name: "Show Saved Copy" })).toHaveCount(0);
 });
+
+test("a certificate error offers a way past it", async ({ page }) => {
+	await bootChrome(page, failedWorld(-1202));
+	await page.getByRole("button", { name: "Visit Anyway" }).click();
+	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "allowCertificateException")).toBe(true);
+});
+
+test("a certificate error on a host that requires https offers no way past it", async ({ page }) => {
+	const world = failedWorld(-1202);
+	world.tabsBySpace[SPACE_1][0].navigationErrorUsesHSTS = true;
+	await bootChrome(page, world);
+	await expect(page.locator(".error-page .error-title")).toHaveText("Connection Not Secure");
+	await expect(page.getByRole("button", { name: "Visit Anyway" })).toHaveCount(0);
+});

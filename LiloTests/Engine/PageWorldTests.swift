@@ -14,6 +14,7 @@ final class PageWorldTests: XCTestCase {
     /// shape; and every function among them that does not print as native code, in its own realm or in a fresh frame's.
     private static let probe = #"""
     const dom = document.documentElement.outerHTML, styleSheets = document.styleSheets.length;
+    const adoptedStyleSheets = document.adoptedStyleSheets.length;
     const fresh = document.createElement('iframe');
     document.body.appendChild(fresh);
     const freshToString = fresh.contentWindow.Function.prototype.toString;
@@ -54,7 +55,7 @@ final class PageWorldTests: XCTestCase {
     shapes['webkit in frame'] = String('webkit' in frame);
     shapes['frame keys'] = Object.keys(frame).join();
     return JSON.stringify({ shapes, nonNative, userAgent: navigator.userAgent, vendor: navigator.vendor,
-                            userAgentData: 'userAgentData' in navigator, dom, styleSheets });
+                            userAgentData: 'userAgentData' in navigator, dom, styleSheets, adoptedStyleSheets });
     """#
 
     private struct Report: Decodable {
@@ -65,6 +66,7 @@ final class PageWorldTests: XCTestCase {
         let userAgentData: Bool
         let dom: String
         let styleSheets: Int
+        let adoptedStyleSheets: Int
     }
 
     private func report(of webView: WKWebView, afterLoad: () async -> Void = {}) async throws -> Report {
@@ -124,5 +126,6 @@ final class PageWorldTests: XCTestCase {
         XCTAssertFalse(lilo.userAgentData)
         XCTAssertEqual(lilo.dom, bare.dom)
         XCTAssertEqual(lilo.styleSheets, bare.styleSheets)
+        XCTAssertEqual(lilo.adoptedStyleSheets, bare.adoptedStyleSheets)
     }
 }

@@ -2,92 +2,46 @@ import AppKit
 import UniformTypeIdentifiers
 import WebKit
 
-/// Presents native panels for JavaScript dialogs (alert/confirm/prompt) and file open requests.
-/// Stateless: depends only on the web view's window for sheet presentation. A web view without a
-/// window (a background tab) gets the dismissed answer instead of an app-modal panel.
+/// Builds a page's alert, confirm and prompt as tab-modal dialogs. Its other questions and file open requests are
+/// native panels: a web view without a window (a background tab) gets their dismissed answer instead of an app-modal one.
 enum JSDialogPresenter {
-    static func runAlert(
+    /// An alert without `cancelTitle`, a confirm with it, a prompt with `field` too. With `suppress`, it offers to stop
+    /// the page's further dialogs, as Chrome does from a page's second one.
+    @MainActor static func pageDialog(
         in webView: WKWebView,
         frame: WKFrameInfo,
         message: String,
+        field: NSTextField? = nil,
+        cancelTitle: String? = nil,
         suppress: (@MainActor @Sendable () -> Void)?,
-        completion: @escaping @MainActor @Sendable () -> Void
-    ) {
-        DispatchQueue.main.async {
-            guard let w = webView.window else { completion(); return }
-            let alert = pageAlert(in: webView, frame: frame, message: message)
-            alert.addButton(withTitle: "OK".localized)
-            begin(alert, on: w, suppress: suppress) { _ in completion() }
+        completion: @escaping @MainActor (Bool) -> Void
+    ) -> TabModalDialogView {
+        let suppressBox = suppress.map { _ in
+            NSButton(checkboxWithTitle: "Prevent this page from creating additional dialogs".localized, target: nil, action: nil)
+        }
+        return TabModalDialogView(
+            title: pageTitle(in: webView, frame: frame),
+            message: message,
+            accessories: [field, suppressBox].compactMap { $0 },
+            acceptTitle: "OK".localized,
+            cancelTitle: cancelTitle
+        ) { accepted in
+            if let suppress, suppressBox?.state == .on { suppress() }
+            completion(accepted)
         }
     }
 
-    static func runConfirm(
-        in webView: WKWebView,
-        frame: WKFrameInfo,
-        message: String,
-        suppress: (@MainActor @Sendable () -> Void)?,
-        completion: @escaping @MainActor @Sendable (Bool) -> Void
-    ) {
-        DispatchQueue.main.async {
-            guard let w = webView.window else { completion(false); return }
-            let alert = pageAlert(in: webView, frame: frame, message: message)
-            alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
-            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn) }
-        }
-    }
-
-    static func runPrompt(
-        in webView: WKWebView,
-        frame: WKFrameInfo,
-        prompt: String,
-        defaultText: String?,
-        suppress: (@MainActor @Sendable () -> Void)?,
-        completion: @escaping @MainActor @Sendable (String?) -> Void
-    ) {
-        DispatchQueue.main.async {
-            guard let w = webView.window else { completion(nil); return }
-            let alert = pageAlert(in: webView, frame: frame, message: prompt)
-            alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
-            let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-            tf.stringValue = defaultText ?? ""; alert.accessoryView = tf
-            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn ? tf.stringValue : nil) }
-            alert.window.makeFirstResponder(tf)
-        }
-    }
-
-    /// An alert titled with the site that asks, as Chrome words it, so a frame cannot pass for the page it is embedded in.
-    private static func pageAlert(in webView: WKWebView, frame: WKFrameInfo, message: String) -> NSAlert {
-        let alert = NSAlert()
-        alert.informativeText = message
+    /// The site that asks, as Chrome words it, so a frame cannot pass for the page it is embedded in.
+    @MainActor private static func pageTitle(in webView: WKWebView, frame: WKFrameInfo) -> String {
         let page = webView.url
         let origin = frame.securityOrigin
         let isEmbedded = !frame.isMainFrame
             && (origin.protocol != page?.scheme || origin.host != page?.host() || origin.port != page?.port ?? 0)
         if let page, let host = page.host(), page.scheme == "https" || page.scheme == "http" {
             let site = page.port.map { "\(host):\($0)" } ?? host
-            alert.messageText = String(format: (isEmbedded ? "An embedded page on %@ says" : "%@ says").localized, site)
-        } else {
-            alert.messageText = (isEmbedded ? "An embedded page on this page says" : "This page says").localized
+            return String(format: (isEmbedded ? "An embedded page on %@ says" : "%@ says").localized, site)
         }
-        return alert
-    }
-
-    /// Shows a page's alert as a sheet. With `suppress`, it offers to stop the page's further dialogs, as Chrome does
-    /// from a page's second one: a page looping on alert() would otherwise hold the window.
-    private static func begin(
-        _ alert: NSAlert,
-        on window: NSWindow,
-        suppress: (@MainActor @Sendable () -> Void)?,
-        completion: @escaping @MainActor @Sendable (NSApplication.ModalResponse) -> Void
-    ) {
-        if suppress != nil {
-            alert.showsSuppressionButton = true
-            alert.suppressionButton?.title = "Prevent this page from creating additional dialogs".localized
-        }
-        alert.beginSheetModal(for: window) { response in
-            if let suppress, alert.suppressionButton?.state == .on { suppress() }
-            completion(response)
-        }
+        return (isEmbedded ? "An embedded page on this page says" : "This page says").localized
     }
 
     /// Confirmation before leaving a page with an onbeforeunload handler. Like browsers, the page's

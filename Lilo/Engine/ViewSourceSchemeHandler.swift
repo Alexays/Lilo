@@ -108,7 +108,7 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
         """
     }
 
-    nonisolated private static func escape(_ text: Substring) -> String {
+    nonisolated static func escape(_ text: some StringProtocol) -> String {
         var out = ""
         out.reserveCapacity(text.utf8.count)
         for char in text {

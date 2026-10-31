@@ -134,6 +134,7 @@ final class TabBridgeHandler: BridgeHandler {
         "showChanges",
         "splitTab",
         "splitURL",
+        "openDroppedLinks",
         "peekURL",
         "closeSplitView",
         "zoomIn",
@@ -381,6 +382,9 @@ final class TabBridgeHandler: BridgeHandler {
                let side = SplitDropSide(message.string("side")) {
                 windowController?.splitURL(url, at: message.uuid("targetTabId"), side: side)
             }
+
+        case "openDroppedLinks":
+            openDroppedLinks(message, tabManager: tabManager)
 
         case "peekURL":
             if let url = message.string("url").flatMap(URL.init(string:)), url.scheme == "http" || url.scheme == "https",
@@ -649,6 +653,38 @@ final class TabBridgeHandler: BridgeHandler {
             return tabManager.context(for: id)?.spaceId ?? tabManager.currentSpaceId
         case .folder:
             return tabManager.folder(id: id)?.spaceId
+        }
+    }
+
+    /// Links dropped on the sidebar, as Chrome takes them on its tab strip: the first loads in the tab it lands on
+    /// and selects it, or they all open as new tabs at the drop's place, the first one selected.
+    private func openDroppedLinks(_ message: BridgeMessage, tabManager: TabManager) {
+        let urls = (message.payload["urls"] as? [String] ?? []).compactMap(URL.init(string:))
+        guard let first = urls.first, let windowController, let spaceId = tabManager.currentSpaceId else { return }
+        if let tabId = message.uuid("tabId") {
+            guard tabManager.context(for: tabId)?.spaceId == spaceId,
+                  tryApplyStateCommand(.activateTab(spaceId: spaceId, tabId: tabId)) != nil else { return }
+            tabManager.load(first, inTab: tabId)
+            tabManager.activateTabRuntime(id: tabId)
+            return
+        }
+        guard let section = message.string("section").flatMap(TabTreeItem.Section.init(rawValue:)),
+              let fallbackIndex = message.int("fallbackIndex") else { return }
+        let insertBeforeId = message.uuid("insertBeforeId")
+        var insertAfterId = message.uuid("insertAfterId")
+        for (index, url) in urls.enumerated() {
+            guard let tab = windowController.createTabStateFirst(url: url, activate: index == 0) else { return }
+            // Each next link goes after the one before it, so they keep their dropped order.
+            let insert = SidebarInsertPosition.anchored(
+                fallbackIndex: fallbackIndex + index, insertBeforeId: insertBeforeId, insertAfterId: insertAfterId
+            )
+            _ = tryApplyStateCommand(section == .bookmarked
+                ? .moveTabToBookmarked(spaceId: spaceId, tabId: tab.id, insert: insert)
+                : .moveSidebarItem(
+                    spaceId: spaceId, kind: .tab, itemId: tab.id, parentFolderId: message.uuid("parentFolderId"),
+                    section: section, insert: insert
+                ))
+            insertAfterId = tab.id
         }
     }
 

@@ -399,10 +399,10 @@ extension MainWindowController {
             return true
         }
         // Escape stops a loading page as in Chrome, once a focused page lets it go; the chrome's own Escape
-        // (command bar, find bar) comes first.
+        // (command bar, find bar) and the page's dialog come first.
         if event.type == .keyDown, event.keyCode == 53,
            event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
-           window?.firstResponder !== chromeWebView, let engine = focusedEngineTab, engine.isLoading {
+           window?.firstResponder !== chromeWebView, let engine = focusedEngineTab, engine.isLoading, engine.modalDialogs.isEmpty {
             if event !== keyLeftToPage, window?.firstResponder is WKWebView {
                 keyLeftToPage = event
                 return false

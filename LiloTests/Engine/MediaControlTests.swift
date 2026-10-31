@@ -190,6 +190,33 @@ final class MediaControlTests: XCTestCase {
         XCTAssertTrue(ended)
     }
 
+    func testARejectedLockRequestStillReachesThePage() async throws {
+        let factory = WKEngineFactory()
+        var reported: WKWebViewTab.CallControls?
+        factory.callControlsHandler = { _, controls in reported = controls }
+        let tab = try await loadedTab("<p>app</p>", factory: factory)
+        defer { tab.teardown() }
+
+        _ = try await tab.wkWebView.evaluateJavaScript("""
+            window.unhandled = [];
+            addEventListener('unhandledrejection', event => window.unhandled.push(event.reason.name));
+            navigator.locks.request('thrown', () => { throw new TypeError('thrown'); });
+            navigator.locks.request('rejected', () => Promise.reject(new RangeError('rejected')));
+            navigator.locks.request('aborted', { signal: AbortSignal.abort() }, () => {});
+            navigator.locks.request('-invalid', () => {});
+            true
+            """)
+
+        var unhandled: [String] = []
+        let reached = await pollUntil(timeout: 5) {
+            unhandled = (try? await tab.wkWebView.evaluateJavaScript("window.unhandled")) as? [String] ?? []
+            return unhandled.count == 4
+        }
+        XCTAssertTrue(reached, "\(unhandled)")
+        XCTAssertEqual(Set(unhandled), ["TypeError", "RangeError", "AbortError", "NotSupportedError"], "as in Safari, error reporters see them")
+        XCTAssertNotEqual(reported?.holdsWebLock, true, "a lock whose callback failed is released")
+    }
+
     func testALiveConnectionKeepsATabInACall() {
         let tab = WKWebViewTab(configuration: WKWebViewConfiguration())
         defer { tab.teardown() }

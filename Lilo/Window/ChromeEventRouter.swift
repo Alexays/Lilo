@@ -43,6 +43,9 @@ final class ChromeEventRouter {
 
     /// Lets the window hand a drag over the page to the chrome instead (a link aimed at a split side).
     var routesDragToChrome: ((any NSDraggingInfo) -> Bool)?
+    /// Called as a drag enters the chrome, before WebKit sees it, so the window can tell the chrome what it carries,
+    /// and with nil as it leaves.
+    var chromeDragChanged: (((any NSDraggingInfo)?) -> Void)?
 
     init(zoneStore: ChromeInteractiveZoneStore, captureMachine: ChromeCaptureMachine) {
         self.zoneStore = zoneStore
@@ -74,6 +77,8 @@ final class ChromeEventRouter {
     @discardableResult
     func routeUnhandledGlobalEvent(_ event: NSEvent) -> Bool {
         guard let contentView = currentContentView() else { return false }
+        // A page under its tab-modal dialog takes no keys.
+        if contentView.subviews.contains(where: { $0 is TabModalDialogView }) { return false }
 
         switch event.type {
         case .keyDown:
@@ -167,7 +172,9 @@ final class ChromeEventRouter {
               routesDragToChrome?(sender) != true else {
             return .chrome
         }
-        return currentContentView() == nil ? .none : .content
+        // A page under its tab-modal dialog takes no drop.
+        guard let content = currentContentView(), !content.subviews.contains(where: { $0 is TabModalDialogView }) else { return .none }
+        return .content
     }
 
     /// Turn the machine's ordered `CaptureEffect`s into real chrome / content-destination
@@ -184,11 +191,13 @@ final class ChromeEventRouter {
             switch effect {
             case .exitChrome:
                 chromeView?.receiveChromeDraggingExited(sender)
+                chromeDragChanged?(nil)
             case .exitContent:
                 contentDragDestination?.draggingExited(sender)
                 contentDragDestination = nil
             case .enterChrome:
                 contentDragDestination = nil
+                chromeDragChanged?(sender)
                 operation = chromeView?.receiveChromeDraggingEntered(sender) ?? []
             case .enterContent:
                 let destination = currentContentView()

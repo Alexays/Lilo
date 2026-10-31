@@ -137,6 +137,15 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   polyfill would switch those apps onto a path with missing pieces (handles that do not survive
   IndexedDB, directory writes), which is worse than the fallback.
 
+### Protocol handlers (`navigator.registerProtocolHandler`)
+
+- **Status:** Not implemented, on purpose
+- **WebKit support:** None on macOS - `'registerProtocolHandler' in navigator` is false in a WKWebView
+  (checked on macOS 27); Chrome lets a site handle a scheme, such as Gmail for `mailto:` links
+- **Impact:** sites feature-detect it and skip the offer. A `mailto:` or other non-web link opens the
+  app macOS assigns to the scheme, after Lilo asks. Pages see Lilo as Safari, which lacks the API
+  too: adding it would tell Lilo apart from Safari, and a page-visible trace flags Lilo as a bot.
+
 ### Passkeys / WebAuthn
 
 - **Status:** Basic `navigator.credentials.create()` / `.get({publicKey})` and security keys work
@@ -216,6 +225,13 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   the picker opens but no window can be selected, in every browser including Safari. Quit the
   overlay app while sharing.
 
+### Idle tab freezing
+
+- **Spared as in Chrome's freezing policy:** tabs playing or capturing media, loading, allowed to notify, holding a
+  connected `RTCPeerConnection` (data channels alone included) or a Web Lock.
+- **Caveat:** WebKit reports neither peers nor locks to the app, so Lilo tracks them in the top document's page world
+  only: a peer or a lock held by a frame or a worker does not keep its tab from freezing.
+
 ---
 
 ## Known Limitations (WebKit/macOS level - no fix possible in Lilo)
@@ -258,3 +274,15 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Symptom:** a tab keeps the icon its page loaded with when the page then swaps its `<link rel=icon>` (an unread badge, a build status).
 - **Root cause:** WebKit offers a document's link icons to the app once, when the document loads, and never again for a `<link rel=icon>` added or changed afterwards (checked on macOS 27). Chrome follows those changes.
 - **Lilo's handling:** None; following them would take a script watching every page's `<head>` in an isolated world, an icon load of Lilo's own outside WebKit's, and a per-tab icon apart from the per-site one Lilo caches.
+
+### Referrer of a context-menu download
+
+- **Symptom:** "Download Image" or "Download Linked File" from a frame sandboxed without `allow-popups` sends the frame's origin (none from https to http) whatever the frame's referrer policy; with "Prevent cross-site tracking" on, or in a private space, a download to another site sends at most the page's origin even under `unsafe-url`.
+- **Root cause:** WebKit's own download items send no Referer, so Lilo has WebKit open the address in a new window from the clicked frame, as a link would, and takes the Referer from that request's policy decision before cancelling it; a sandboxed frame without `allow-popups` cannot open one. WebKit's tracking prevention trims every cross-site Referer to its origin in the network process, a download's included. Chrome applies the frame's policy in both cases.
+- **Lilo's handling:** the sandboxed frame gets strict-origin-when-cross-origin from its address; the cross-site trim is WebKit's, as for every request.
+
+### Certificate errors on sites that set HSTS themselves
+
+- **Symptom:** a certificate error on a site that sent a `Strict-Transport-Security` header on an earlier visit still offers "Visit Anyway", and the exception loads the page. Chrome offers no way past it. Hosts on the HSTS preload list (all of `.app` and `.dev`, many large sites) get no "Visit Anyway", as in Chrome.
+- **Root cause:** the HSTS hosts a profile's pages record live in WebKit's network process. The only view WebKit gives the app, its `_WKWebsiteDataTypeHSTSCache` website data records, names each by registrable domain (`example.com` for `www.example.com`), without the host or `includeSubDomains`, so it cannot tell an HSTS host from a sibling without HSTS (checked on macOS 27). CFNetwork does honor the exception on an HSTS host.
+- **Lilo's handling:** the preload list comes from CFNetwork's lookup in Lilo's own process; a per-site rule would also lock users out of a sibling host with a self-signed certificate (a home server under a personal domain), so Lilo keeps offering the exception there.

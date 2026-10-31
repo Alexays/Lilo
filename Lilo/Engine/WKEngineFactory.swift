@@ -338,13 +338,13 @@ final class WKEngineFactory {
     func createTab(configuration: Configuration) -> WKWebViewTab {
         let webView: WKWebView
         if configuration.nativeConfiguration != nil {
-            webView = WKWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: true))
+            webView = PageWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: true))
         } else {
             let store = configuration.dataStore ?? sharedDefaultDataStore
             let poolKey = WarmKey(content: contentControllerKey(for: store), profileId: configuration.profileId)
             // Consult the warm pool first: a hit skips the config + feature-flag pass entirely.
             webView = takeWarm(key: poolKey)
-                ?? WKWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: false))
+                ?? PageWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: false))
             if configuration.refillsWarmPool { scheduleWarmRefill(dataStore: store, key: poolKey) }
         }
 
@@ -628,10 +628,10 @@ final class WKEngineFactory {
         guard hash != filterScriptsHash else { return }
         filterScriptsHash = hash
         // Cosmetics are main frame only: the network rule list already catches subframe ads, and the
-        // ~100 KB procedural table would otherwise be parsed again in every iframe. An isolated world
-        // keeps the cosmetics' sheet clear of the page's CSP.
+        // ~100 KB procedural table would otherwise be parsed again in every iframe. The bridge world holds
+        // the cosmetics' sheet handler, and keeps their fallback sheet clear of the page's CSP.
         let sources: [(String?, Bool, WKContentWorld)] = [
-            (scripts.genericCosmetics, true, .defaultClient), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
+            (scripts.genericCosmetics, true, PageWorld.bridgeWorld), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
         ]
         let allowlist = Self.allowlistLiteral(blockerAllowlist)
         filterUserScripts = sources.compactMap { source, mainFrameOnly, world in
@@ -919,6 +919,9 @@ final class WKEngineFactory {
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
         contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
+        if CosmeticStyleSheets.isSupported {
+            contentController.add(CosmeticStyleSheets.shared, contentWorld: world, name: CosmeticStyleSheets.messageHandlerName)
+        }
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }
         contentControllersByKey[key] = contentController
@@ -1172,7 +1175,7 @@ final class WKEngineFactory {
             warmWebViewsByKey.removeValue(forKey: oldest)
             warmKeyOrder.removeFirst()
         }
-        let webView = WKWebView(frame: .zero, configuration: wkConfig)
+        let webView = PageWebView(frame: .zero, configuration: wkConfig)
         // A bare WKWebView is an unspawned shell, and this one carries the right per-data-store config, so
         // the tab that takes it reuses the process. Forced with a trivial script rather than about:blank,
         // which would commit a back-forward entry the back-swipe would land on.

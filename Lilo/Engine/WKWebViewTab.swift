@@ -71,7 +71,7 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
-        /// The page waits on a dialog held until its tab is shown, or no longer does.
+        /// The page waits on a dialog, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int)
         /// Stored per-site permission decision (granted/denied), or nil if undecided. Must NOT prompt.
@@ -236,17 +236,68 @@ final class WKWebViewTab: NSObject {
         }
     )
 
+    /// The clicked element of the open context menu, until one of its download items uses it.
+    private var contextMenuElement: NSObject?
+    private enum ReferrerProbe { case pending, answered(String?), abandoned }
+    /// Context-menu downloads' referrer probes by the fragment marking their request. One stays until its request comes, so
+    /// a request coming after its download started is still cancelled rather than opened.
+    private var referrerProbes: [String: ReferrerProbe] = [:]
+    /// Opens the URL in a new window from the clicked frame, as a link would: the request WebKit asks a policy for carries
+    /// the referrer the frame's policy gives (header, meta, a `rel=noreferrer` link), which Chrome sends for these downloads.
+    /// The clicked element's own `referrerpolicy` stays out, as Chrome ignores it here.
+    private static let referrerProbeScript = """
+        const probe = document.createElement('a')
+        probe.href = url
+        probe.target = '_blank'
+        const links = link ? [...document.querySelectorAll('a[href], area[href]')].filter(element => element.href === link) : []
+        if ((links.find(element => element.matches(':hover')) ?? links[0])?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
+        probe.click()
+        """
+
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
     /// routes them here to reach the same pipeline as navigation-initiated downloads.
     private func startContextMenuDownload(from url: URL) {
-        webView.startDownload(using: Self.downloadRequest(for: url, pageURL: webView.url)) { [weak self] download in
+        let element = contextMenuElement
+        contextMenuElement = nil
+        let frame = ContextMenuBuilder.frameInfo(from: element)
+        let fallback = Self.downloadRequest(for: url, pageURL: frame?.request.url ?? webView.url)
+        let token = UUID().uuidString
+        guard let frame, var marked = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return startDownload(fallback) }
+        marked.fragment = token
+        guard let probeURL = marked.string else { return startDownload(fallback) }
+        referrerProbes[token] = .pending
+        // Runs once, on the script's reply or after a hung page's timeout; the probe's policy request comes before the reply.
+        let finish: @MainActor @Sendable () -> Void = { [weak self] in
+            guard let self, let probe = referrerProbes[token] else { return }
+            var request = fallback
+            switch probe {
+            case .pending: referrerProbes[token] = .abandoned
+            case .answered(let referrer): referrerProbes[token] = nil; request.setValue(referrer, forHTTPHeaderField: "Referer")
+            case .abandoned: return
+            }
+            startDownload(request)
+        }
+        let arguments = ["url": probeURL, "link": ContextMenuBuilder.linkURL(from: element)?.absoluteString ?? ""]
+        Task { [weak self] in
+            _ = try? await self?.webView.callAsyncJavaScript(Self.referrerProbeScript, arguments: arguments, in: frame, contentWorld: PageWorld.bridgeWorld)
+            finish()
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            finish()
+        }
+    }
+
+    private func startDownload(_ request: URLRequest) {
+        webView.startDownload(using: request) { [weak self] download in
             guard let self else { return }
             self.delegate?.tab(self, didStartDownload: download)
         }
     }
 
-    /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming
-    /// a file:// or data: URL means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy.
+    /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming a file:// or data: URL
+    /// means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy, for a
+    /// frame the referrer probe cannot run in or that does not answer it in time.
     nonisolated static func downloadRequest(for url: URL, pageURL: URL?) -> URLRequest {
         var request = URLRequest(url: url)
         guard let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https",
@@ -292,6 +343,12 @@ final class WKWebViewTab: NSObject {
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
+    /// The folder whose listing the page last showed.
+    private var listedFolderURL: URL?
+    /// The next main-frame navigation to a local file is the one a listing's link handed to `loadURL`.
+    private var passesNextFileNavigation = false
+    /// A listing's rows, read once its page may still be loading.
+    private var listingRows: (url: URL, rows: String)?
     /// The pending main-frame navigation is the page's own, not one Lilo started (typed, bookmark, history, reload).
     private var isPageNavigationPending = false
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
@@ -384,9 +441,12 @@ final class WKWebViewTab: NSObject {
     private(set) var pageRequestedClose = false
     /// Holds the print-panel completion target alive for as long as the panel is up.
     private var pendingPrintProxy: PrintCompletionProxy?
-    /// A page dialog raised while the tab was off screen, run with true once the tab is shown, false
+    /// A beforeunload prompt raised while the tab was off screen, run with true once the tab is shown, false
     /// to dismiss it. The page is blocked until it is answered, and WebKit crashes on one never answered.
     private var queuedDialog: (@MainActor (Bool) -> Void)?
+    /// The alerts, confirms, prompts and sign-ins the page waits on: the first covers the page, the next shows once
+    /// it is answered.
+    private(set) var modalDialogs: [TabModalDialogView] = []
     /// The site of the page that showed the last alert, confirm or prompt, and the one whose further dialogs the user stopped.
     private var lastDialogOrigin: String?
     private var suppressedDialogOrigin: String?
@@ -401,6 +461,8 @@ final class WKWebViewTab: NSObject {
     /// Asks WebKit whether the page may close now, for a close the user asked for. False means a beforeunload
     /// handler is in the way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
     func tryClose() -> Bool {
+        // A page blocked on its dialog would never answer the close.
+        dismissModalDialogs()
         // A suspended page runs no beforeunload handler, and WebKit refuses _tryClose on it.
         guard !isFrozen else { return true }
         let closes = WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
@@ -586,6 +648,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func loadURL(_ url: URL) {
+        dismissModalDialogs()
         guard wake() else { return }
         if !isPrivateBrowsing { Self.logger.info("load source=app host=\(url.host ?? "nil", privacy: .private)") }
         pendingMainFrameURL = url
@@ -596,12 +659,22 @@ final class WKWebViewTab: NSObject {
         if url.isFileURL {
             // A plain URLRequest load silently no-ops for file URLs. An HTML page shows images, styles and scripts
             // from any local folder, as in Chrome (`../style.css` in generated docs); WebKit still blocks its
-            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself.
+            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself. A folder fails
+            // to load, and the failure shows its listing.
             let isPage = ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
             webView.loadFileURL(url, allowingReadAccessTo: isPage ? URL(fileURLWithPath: "/") : url)
             return
         }
         webView.load(URLRequest(url: url))
+    }
+
+    /// Fills the listing on show with the rows read for it; the rows of a folder the tab left wait for its page to come back.
+    private func showListingRows() {
+        guard let listingRows, webView.url == listingRows.url else { return }
+        self.listingRows = nil
+        WebViewPrivateAccessors(webView).callAsyncWithoutUserGesture(
+            "document.querySelector('tbody').innerHTML = rows", arguments: ["rows": listingRows.rows]
+        ) { _ in }
     }
 
     /// Tells a delegate set mid-load what a page loading out of sight did so far, as if it had watched:
@@ -621,6 +694,7 @@ final class WKWebViewTab: NSObject {
     /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
     /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
     func loadCachedCopy(of url: URL) {
+        dismissModalDialogs()
         guard wake() else { return }
         pendingMainFrameURL = url
         didAutoRetryProvisionalLoad = false
@@ -669,6 +743,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func goBack() {
+        dismissModalDialogs()
         guard wake() else { return }
         // The page the failed load was leaving is still there: Back returns to it, as leaving Chrome's error page does.
         if showsFailureOverPage {
@@ -682,6 +757,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func goForward() {
+        dismissModalDialogs()
         guard wake() else { return }
         webView.goForward()
     }
@@ -693,6 +769,7 @@ final class WKWebViewTab: NSObject {
     func goToHistoryItem(at index: Int, direction: WebNavigationHistoryDirection) {
         let items = historyList(for: direction)
         guard items.indices.contains(index), wake() else { return }
+        dismissModalDialogs()
         webView.go(to: items[index])
     }
 
@@ -759,6 +836,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func reload() {
+        dismissModalDialogs()
         guard wake() else { return }
         // A hung process never gets to the reload: it goes, and the termination recovery loads the page again.
         if isUnresponsive, webView.responds(to: Self.killContentProcess) {
@@ -771,6 +849,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func reloadFromOrigin() {
+        dismissModalDialogs()
         guard wake() else { return }
         if !isPrivateBrowsing { Self.logger.info("load source=app-reload-origin host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
         webView.reloadFromOrigin()
@@ -778,6 +857,8 @@ final class WKWebViewTab: NSObject {
 
     /// A suspended page has nothing loading.
     func stopLoading() {
+        // A load waiting on a sign-in stops with it.
+        dismissModalDialogs()
         guard !isFrozen else { return }
         isLoadingCachedCopy = false
         webView.stopLoading()
@@ -926,6 +1007,7 @@ final class WKWebViewTab: NSObject {
     /// Stop media, halt loading, detach the view and close the page through its handlers. Ends the engine for good.
     func teardown() {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
+        CosmeticStyleSheets.shared.removeSheets(of: webView)
         documentPiPCloser?()
         cancelPendingDocumentPiP()
         let wasUnresponsive = isUnresponsive
@@ -944,6 +1026,7 @@ final class WKWebViewTab: NSObject {
             webView.perform(Self.killContentProcess)
         }
         runQueuedDialog(presenting: false)
+        dismissModalDialogs()
         if isAudioPlayingObserverRegistered {
             webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
             isAudioPlayingObserverRegistered = false
@@ -1431,6 +1514,7 @@ final class WKWebViewTab: NSObject {
     /// surfaces an error page rather than looping.
     private func recoverFromContentProcessTermination() {
         endNavigationSignpost("processEnded")
+        dismissModalDialogs()
         let now = Date()
         if !isPrivateBrowsing {
             Self.logger.error("""
@@ -1537,6 +1621,14 @@ extension WKWebViewTab: WKNavigationDelegate {
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
     ) {
         MainActor.assumeIsolated {
+            if !referrerProbes.isEmpty, let token = navigationAction.request.url?.fragment, let probe = referrerProbes[token] {
+                if case .pending = probe {
+                    referrerProbes[token] = .answered(navigationAction.request.value(forHTTPHeaderField: "Referer"))
+                } else {
+                    referrerProbes[token] = nil
+                }
+                return decisionHandler(.cancel, preferences)
+            }
             // The configuration's default policies are frozen at creation, so the live settings are applied here.
             preferences.preferredHTTPSNavigationPolicy =
                 WKEngineFactory.httpsOnlyEnabled ? .userMediatedFallbackToHTTP : .automaticFallbackToHTTP
@@ -1643,6 +1735,20 @@ extension WKWebViewTab: WKNavigationDelegate {
             return .cancel
         }
 
+        // WebKit fails a folder listing's links to local files: they load as the app opens a file.
+        if isMainFrame, navigationAction.targetFrame != nil, let url, url.isFileURL {
+            if passesNextFileNavigation {
+                passesNextFileNavigation = false
+            } else if url != pendingMainFrameURL, ![.backForward, .reload].contains(navigationAction.navigationType),
+                      let listedFolderURL, webView.url == listedFolderURL {
+                DispatchQueue.main.async { [weak self] in
+                    self?.passesNextFileNavigation = true
+                    self?.loadURL(url)
+                }
+                return .cancel
+            }
+        }
+
         // A nil target frame is a new-window navigation: its URL belongs to the popup, and taking it
         // here would repoint this tab's pending URL (retry target, TLS host check) at the popup's page.
         if navigationAction.targetFrame?.isMainFrame == true,
@@ -1728,6 +1834,10 @@ extension WKWebViewTab: WKNavigationDelegate {
 
     nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         onMain { tab in
+            CosmeticStyleSheets.shared.removeSheets(of: webView)
+            // A dialog of the page that left must not cover the new one, which a process swap commits while the old
+            // page still waits on it.
+            tab.dismissModalDialogs()
             // When a response forces a process swap (COOP) before the web view committed anything, WebKit can
             // commit the navigation in the old process and again, as an empty document, in the new one.
             if let navigation, navigation === tab.lastCommittedNavigation, !tab.didReloadEmptyCommit,
@@ -1798,6 +1908,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         onMain { tab in
             tab.pendingMainFrameURL = tab.currentURL
+            tab.showListingRows()
             if !tab.isPrivateBrowsing {
                 Self.logger.info("""
                     nav finished host=\(webView.url?.host ?? "nil", privacy: .private) \
@@ -1827,6 +1938,30 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.endNavigationSignpost("fail")
             // The error page names the address that failed, as in Chrome.
             tab.isPageNavigationPending = false
+            // WebKit fails a folder's load; a cancelled one gave way to another navigation.
+            if (error as NSError).code != NSURLErrorCancelled,
+               let url = (error as NSError).userInfo[NSURLErrorFailingURLErrorKey] as? URL, url.isFileURL,
+               (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
+                tab.listedFolderURL = url
+                tab.listingRows = nil
+                // Alternate HTML takes the failed load's place in history only from inside this callback: going back,
+                // reloading or restoring lists the folder again.
+                let page = DirectoryListing.page(for: url)
+                let folder = URL(filePath: url.path(percentEncoded: false), directoryHint: .isDirectory)
+                if !WebViewPrivateAccessors(webView).loadAlternateHTML(page, baseURL: folder, unreachableURL: url) {
+                    webView.loadSimulatedRequest(URLRequest(url: folder), responseHTML: page)
+                }
+                // The files are read off the main thread: a large, network or permission-guarded folder takes its time.
+                DispatchQueue.global(qos: .userInitiated).async { [weak tab] in
+                    guard let rows = DirectoryListing.rows(of: url) else { return }
+                    DispatchQueue.main.async {
+                        guard let tab, tab.listedFolderURL == url else { return }
+                        tab.listingRows = (url, rows)
+                        if !webView.isLoading { tab.showListingRows() }
+                    }
+                }
+                return
+            }
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false
@@ -1947,8 +2082,8 @@ extension WKWebViewTab: WKNavigationDelegate {
     @objc(_webViewWebProcessDidBecomeUnresponsive:)
     nonisolated func webViewWebProcessDidBecomeUnresponsive(_ webView: WKWebView) {
         onMain { tab in
-            // A page waiting on a dialog, on screen or queued until its tab shows, is blocked by design too.
-            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, webView.window?.attachedSheet == nil else { return }
+            // A page waiting on a dialog is blocked by design too.
+            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, tab.modalDialogs.isEmpty, webView.window?.attachedSheet == nil else { return }
             tab.isUnresponsive = true
         }
     }
@@ -2056,8 +2191,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                             guard let self else { return completionHandler(.cancelAuthenticationChallenge, nil) }
                             HTTPAuthChallengeHandler().resolve(
                                 challenge, keychainProfile: self.webView.configuration.websiteDataStore.identifier,
-                                whenShown: { show in self.runWhenShown { [weak self] in show($0 ? self?.webView.window : nil) } },
-                                completion: completionHandler
+                                present: self.presentModalDialog, completion: completionHandler
                             )
                         }
                     }
@@ -2190,6 +2324,7 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
+            contextMenuElement = element
             contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             completionHandler(menu)
         }
@@ -2434,7 +2569,7 @@ extension WKWebViewTab: WKUIDelegate {
                  completionHandler: @escaping @MainActor @Sendable () -> Void) {
         if agentDialogHandler?("alert(\(message)) dismissed") == true { completionHandler(); return }
         runPageDialog(dismiss: completionHandler) { suppress in
-            JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+            JSDialogPresenter.pageDialog(in: webView, frame: frame, message: message, suppress: suppress) { _ in completionHandler() }
         }
     }
 
@@ -2443,8 +2578,10 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (Bool) -> Void) {
         if agentDialogHandler?("confirm(\(message)) accepted") == true { completionHandler(true); return }
-        runPageDialog(dismiss: { completionHandler(false) }, present: { suppress in
-            JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        runPageDialog(dismiss: { completionHandler(false) }, make: { suppress in
+            JSDialogPresenter.pageDialog(
+                in: webView, frame: frame, message: message, cancelTitle: "Cancel".localized, suppress: suppress, completion: completionHandler
+            )
         })
     }
 
@@ -2454,28 +2591,54 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (String?) -> Void) {
         if agentDialogHandler?("prompt(\(prompt)) answered with its default") == true { completionHandler(defaultText ?? ""); return }
-        runPageDialog(dismiss: { completionHandler(nil) }, present: { suppress in
-            JSDialogPresenter.runPrompt(
-                in: webView, frame: frame, prompt: prompt, defaultText: defaultText, suppress: suppress, completion: completionHandler
-            )
+        runPageDialog(dismiss: { completionHandler(nil) }, make: { suppress in
+            let field = NSTextField(string: defaultText ?? "")
+            field.setAccessibilityLabel(prompt)
+            return JSDialogPresenter.pageDialog(
+                in: webView, frame: frame, message: prompt, field: field, cancelTitle: "Cancel".localized, suppress: suppress
+            ) { completionHandler($0 ? field.stringValue : nil) }
         })
     }
 
-    /// Runs a page's alert, confirm or prompt once its tab shows, or dismisses it at once when the user stopped the
-    /// page's dialogs. `present` gets a way to stop them from the page's second dialog on.
+    /// Covers the page with its alert, confirm or prompt, or dismisses it at once when the user stopped the page's
+    /// dialogs. `make` gets a way to stop them from the page's second dialog on.
     private func runPageDialog(
         dismiss: @escaping @MainActor () -> Void,
-        present: @escaping @MainActor ((@MainActor @Sendable () -> Void)?) -> Void
+        make: @MainActor ((@MainActor @Sendable () -> Void)?) -> TabModalDialogView
     ) {
         let origin = webView.url.map { "\($0.scheme ?? "")://\($0.host() ?? ""):\($0.port ?? 0)" } ?? ""
         guard origin != suppressedDialogOrigin else { return dismiss() }
-        runWhenShown { [weak self] show in
-            guard show, let self else { return dismiss() }
-            var suppress: (@MainActor @Sendable () -> Void)?
-            if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
-            lastDialogOrigin = origin
-            present(suppress)
+        var suppress: (@MainActor @Sendable () -> Void)?
+        if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
+        lastDialogOrigin = origin
+        presentModalDialog(make(suppress))
+    }
+
+    /// Covers the page with `dialog`, over this tab only: the window, the sidebar and the other tabs stay usable.
+    /// A tab off screen keeps it until it shows, and is marked as waiting for the user meanwhile.
+    func presentModalDialog(_ dialog: TabModalDialogView) {
+        dialog.onFinish = { [weak self, weak dialog] in
+            guard let self else { return }
+            modalDialogs.removeAll { $0 === dialog }
+            if let next = modalDialogs.first { next.show(in: webView) }
+            delegate?.tab(self, didUpdateAwaitingDialog: queuedDialog != nil || !modalDialogs.isEmpty)
         }
+        modalDialogs.append(dialog)
+        guard modalDialogs.count == 1 else { return }
+        dialog.show(in: webView)
+        delegate?.tab(self, didUpdateAwaitingDialog: true)
+    }
+
+    /// Answers every dialog the page waits on as dismissed: the tab closes or the user navigates away.
+    func dismissModalDialogs() {
+        guard !modalDialogs.isEmpty else { return }
+        let dialogs = modalDialogs
+        modalDialogs = []
+        for dialog in dialogs {
+            dialog.onFinish = nil
+            dialog.dismiss()
+        }
+        delegate?.tab(self, didUpdateAwaitingDialog: queuedDialog != nil)
     }
 
     /// In a window and not hidden: a background tab, a tab of another space or a hidden peek is not.
@@ -2494,7 +2657,7 @@ extension WKWebViewTab: WKUIDelegate {
     func runQueuedDialog(presenting: Bool) {
         guard let dialog = queuedDialog else { return }
         queuedDialog = nil
-        delegate?.tab(self, didUpdateAwaitingDialog: false)
+        delegate?.tab(self, didUpdateAwaitingDialog: !modalDialogs.isEmpty)
         dialog(presenting)
     }
 

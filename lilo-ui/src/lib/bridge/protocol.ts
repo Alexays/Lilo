@@ -86,6 +86,11 @@ type BridgeSidebarDropAnchors = {
 	insertAfterId?: string | null;
 };
 
+/** Where links dropped on the sidebar go: loaded in a tab, or opened as new tabs at the anchors. */
+export type BridgeLinkDropTarget =
+	| { tabId: string }
+	| (BridgeSidebarDropAnchors & { section: BridgeSidebarTreeSection; parentFolderId: string | null });
+
 export type BridgeSidebarRootInsertPayload = BridgeSidebarDropAnchors & {
 	type: "insert";
 	kind: BridgeSidebarItemKind;
@@ -640,6 +645,7 @@ export interface BridgeCommandPayloadMap {
 	newTerminal: EmptyPayload;
 	splitTab: { tabId: string; side: SplitDropSide; targetTabId?: string };
 	splitURL: { url: string; side: SplitDropSide; targetTabId?: string };
+	openDroppedLinks: { urls: string[] } & BridgeLinkDropTarget;
 	peekURL: { url: string };
 	closeSplitView: EmptyPayload;
 	"screenshot.saveDefault": ScreenshotExport & { filename: string };
@@ -883,6 +889,8 @@ export interface BridgeEventPayloadMap {
 	windowFullscreenChanged: { isFullscreen: boolean };
 	windowFocusChanged: { focused: boolean };
 	cancelDrag: EmptyPayload;
+	/** A drag entered the chrome: its links (file URLs included), else its text. */
+	linkDrag: { urls: string[]; text: string };
 	openCommandBar: { newTab?: boolean; prefill?: string; selectAll?: boolean };
 	toggleCommandBar: { prefill?: string; selectAll?: boolean };
 	openHistory: { query?: string; host?: string; openedFrom?: string };

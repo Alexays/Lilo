@@ -135,6 +135,15 @@ struct WebViewPrivateAccessors {
         unsafeBitCast(imp, to: FindMethod.self)(object, selector, string as NSString, options, maxCount)
     }
 
+    /// `_loadAlternateHTMLString:baseURL:forUnreachableURL:`, which shows `html` in place of a failed load without adding a
+    /// history item. False if absent.
+    func loadAlternateHTML(_ html: String, baseURL: URL, unreachableURL: URL) -> Bool {
+        guard let (selector, imp) = method("_loadAlternateHTMLString:baseURL:forUnreachableURL:") else { return false }
+        typealias LoadMethod = @convention(c) (NSObject, Selector, NSString, NSURL, NSURL) -> Void
+        unsafeBitCast(imp, to: LoadMethod.self)(object, selector, html as NSString, baseURL as NSURL, unreachableURL as NSURL)
+        return true
+    }
+
     /// Invokes a private selector taking a `void (^)(BOOL)` completion (e.g. `_suspendPage:`).
     /// Returns false, without calling `completion`, if the selector is unavailable on this OS.
     @discardableResult

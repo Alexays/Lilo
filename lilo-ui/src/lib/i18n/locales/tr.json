@@ -2211,7 +2211,12 @@
 		"Terminal": "Terminal",
 		"Agent Tabs": "Ajan Sekmeleri",
 		"QR code for %@": "%@ için QR kodu",
-		"Secure Connection": "Güvenli Bağlantı"
+		"Secure Connection": "Güvenli Bağlantı",
+		"Index of %@": "%@ dizini",
+		"Parent folder": "Üst klasör",
+		"Name": "Ad",
+		"Size": "Boyut",
+		"Date Modified": "Değiştirilme tarihi"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

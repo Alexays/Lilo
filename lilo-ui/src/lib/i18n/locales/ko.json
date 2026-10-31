@@ -2211,7 +2211,12 @@
 		"Terminal": "터미널",
 		"Agent Tabs": "에이전트 탭",
 		"QR code for %@": "%@의 QR 코드",
-		"Secure Connection": "보안 연결"
+		"Secure Connection": "보안 연결",
+		"Index of %@": "%@의 색인",
+		"Parent folder": "상위 폴더",
+		"Name": "이름",
+		"Size": "크기",
+		"Date Modified": "수정일"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

@@ -58,6 +58,7 @@ struct Tab: Sendable, Equatable {
     var navigationErrorDomain: String = ""
     var navigationErrorDescription: String = ""
     var navigationErrorURL: String = ""
+    var navigationErrorUsesHSTS = false
     var isNotSecure = false
     var groupId: UUID?
     var spaceId: UUID?
@@ -229,6 +230,8 @@ struct Tab: Sendable, Equatable {
                 put(field, navigationErrorDescription)
             case .navigationErrorURL:
                 put(field, navigationErrorURL)
+            case .navigationErrorUsesHSTS:
+                put(field, navigationErrorUsesHSTS)
             case .isNotSecure:
                 put(field, isNotSecure)
             case .faviconDataURL:
@@ -299,6 +302,7 @@ private struct TabRuntimeState: Equatable, Sendable {
     let isAgentControlled: Bool
     let hasNavigationError: Bool; let navigationErrorCode: Int
     let navigationErrorDomain: String; let navigationErrorDescription: String; let navigationErrorURL: String
+    let navigationErrorUsesHSTS: Bool
     let isNotSecure: Bool
     let windowId: UUID?
     let hasUnsavedFormData: Bool
@@ -326,6 +330,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         isAgentControlled = tab.isAgentControlled
         hasNavigationError = tab.hasNavigationError; navigationErrorCode = tab.navigationErrorCode
         navigationErrorDomain = tab.navigationErrorDomain; navigationErrorDescription = tab.navigationErrorDescription; navigationErrorURL = tab.navigationErrorURL
+        navigationErrorUsesHSTS = tab.navigationErrorUsesHSTS
         isNotSecure = tab.isNotSecure
         windowId = tab.windowId
         hasUnsavedFormData = tab.hasUnsavedFormData
@@ -355,6 +360,7 @@ private struct TabRuntimeState: Equatable, Sendable {
         tab.isAgentControlled = isAgentControlled
         tab.hasNavigationError = hasNavigationError; tab.navigationErrorCode = navigationErrorCode
         tab.navigationErrorDomain = navigationErrorDomain; tab.navigationErrorDescription = navigationErrorDescription; tab.navigationErrorURL = navigationErrorURL
+        tab.navigationErrorUsesHSTS = navigationErrorUsesHSTS
         tab.isNotSecure = isNotSecure
         tab.windowId = windowId
         tab.hasUnsavedFormData = hasUnsavedFormData

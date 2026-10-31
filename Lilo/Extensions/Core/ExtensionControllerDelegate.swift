@@ -165,7 +165,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
                 tabId: nil, nativeConfiguration: nil, profileId: profileId
             ))
         } else {
-            WKWebViewTab(webView: WKWebView(frame: .zero, configuration: context.pageWebViewConfiguration ?? WKWebViewConfiguration()))
+            WKWebViewTab(webView: PageWebView(frame: .zero, configuration: context.pageWebViewConfiguration ?? WKWebViewConfiguration()))
         }
         let webView = engineTab.wkWebView
 

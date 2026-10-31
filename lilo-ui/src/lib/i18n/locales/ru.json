@@ -2231,7 +2231,12 @@
 		"Terminal": "Терминал",
 		"Agent Tabs": "Вкладки агентов",
 		"QR code for %@": "QR-код для %@",
-		"Secure Connection": "Защищённое соединение"
+		"Secure Connection": "Защищённое соединение",
+		"Index of %@": "Содержимое %@",
+		"Parent folder": "Родительская папка",
+		"Name": "Имя",
+		"Size": "Размер",
+		"Date Modified": "Дата изменения"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

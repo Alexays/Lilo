@@ -39,6 +39,8 @@
     { "name": "navigationErrorDomain",     "type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
     { "name": "navigationErrorDescription","type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
     { "name": "navigationErrorURL",        "type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
+    { "name": "navigationErrorUsesHSTS",   "type": "bool",    "tsOptional": true,  "tsDefault": "false",
+      "_comment": "A certificate error on a host that requires HTTPS (HSTS): the error page offers no way past it." },
     { "name": "isNotSecure",               "type": "bool",    "tsOptional": true,  "tsDefault": "false",
       "_comment": "Web tabs: an https page whose certificate the user let through, or that loaded part of its content over http." },
     { "name": "kind",                      "type": "string",  "tsOptional": true, "tsDefault": "\"web\"",

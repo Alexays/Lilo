@@ -26,6 +26,18 @@ final class ChromeDragRoutingTests: XCTestCase {
         )
     }
 
+    func testOverlayWebViewRefusesADropOnAPageUnderItsDialog() {
+        let harness = makeHarness()
+        let drag = TestDraggingInfo(location: NSPoint(x: 150, y: 150))
+        harness.destination.draggingEnteredResult = .copy
+        harness.destination.performDragOperationResult = true
+        harness.destination.addSubview(TabModalDialogView(title: "example.com says", message: "", acceptTitle: "OK", cancelTitle: nil) { _ in })
+
+        XCTAssertEqual(harness.overlay.draggingEntered(drag), [])
+        XCTAssertFalse(harness.overlay.performDragOperation(drag))
+        XCTAssertTrue(harness.destination.calls.isEmpty, "the page under the dialog never sees the drop")
+    }
+
     func testOverlayWebViewReentersContentDestinationWhenDragLeavesChromeZone() {
         let harness = makeHarness()
         let chromeDrag = TestDraggingInfo(location: NSPoint(x: 20, y: 180))
@@ -156,6 +168,47 @@ final class ChromeDragRoutingTests: XCTestCase {
     func testShieldRequestsPeriodicDraggingUpdates() {
         let harness = makeControllerHarness()
         XCTAssertTrue(harness.shield.wantsPeriodicDraggingUpdates())
+    }
+
+    /// The sidebar opens dropped links and files, which WebKit's drop events cannot name: the window sends them as the drag
+    /// enters the chrome, and takes them back as it leaves.
+    func testDragOffersItsLinksToTheChromeWhileOverIt() async throws {
+        let harness = makeControllerHarness()
+        let router = BridgeRouter(chromeWebView: harness.controller.chromeWebView)
+        var offers: [[String: Any]] = []
+        router.javaScriptSink = { _, arguments, completion in
+            let messages = arguments["messages"] as? [[String: Any]] ?? (arguments["message"] as? [String: Any]).map { [$0] } ?? []
+            offers += messages.filter { $0["event"] as? String == "linkDrag" }
+            completion()
+        }
+        harness.controller.bridgeRouter = router
+        harness.controller.chromeInteractiveZones.registerZones([(id: "sidebar", rect: NSRect(x: 0, y: 0, width: 50, height: 50))])
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("Some Notes.html").resolvingSymlinksInPath()
+        try Data().write(to: file)
+        // As Finder writes a file: by reference.
+        let reference = try XCTUnwrap((file as NSURL).fileReferenceURL())
+
+        let fileDrag = TestDraggingInfo(location: NSPoint(x: 20, y: 180))
+        fileDrag.draggingSequenceNumber = 1
+        fileDrag.draggingPasteboard.writeObjects([reference as NSURL, URL(string: "https://example.com/a")! as NSURL])
+        _ = harness.shield.draggingEntered(fileDrag)
+        harness.shield.draggingExited(fileDrag)
+
+        let textDrag = TestDraggingInfo(location: NSPoint(x: 20, y: 180))
+        textDrag.draggingSequenceNumber = 2
+        textDrag.draggingPasteboard.setString("example.com", forType: .string)
+        _ = harness.shield.draggingEntered(textDrag)
+        harness.shield.draggingExited(textDrag)
+
+        let arrived = await pollUntil { offers.count == 4 }
+        XCTAssertTrue(arrived)
+        let offered = (offers.first?["urls"] as? [String] ?? []).compactMap(URL.init(string:))
+        XCTAssertEqual(offered.map { $0.isFileURL ? $0.resolvingSymlinksInPath() : $0 }, [file, URL(string: "https://example.com/a")!])
+        XCTAssertEqual(offers.map { $0["text"] as? String }, ["", "", "example.com", ""])
+        XCTAssertEqual(offers.map { ($0["urls"] as? [String])?.count }, [2, 0, 0, 0])
     }
 
     private func makeHarness() -> OverlayHarness {

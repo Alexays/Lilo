@@ -2211,7 +2211,12 @@
 		"Terminal": "終端機",
 		"Agent Tabs": "代理程式分頁",
 		"QR code for %@": "%@ 的 QR 碼",
-		"Secure Connection": "安全連線"
+		"Secure Connection": "安全連線",
+		"Index of %@": "%@ 的索引",
+		"Parent folder": "上層檔案夾",
+		"Name": "名稱",
+		"Size": "大小",
+		"Date Modified": "修改日期"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
