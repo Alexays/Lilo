@@ -343,6 +343,12 @@ final class WKWebViewTab: NSObject {
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
+    /// The folder whose listing the page last showed.
+    private var listedFolderURL: URL?
+    /// The next main-frame navigation to a local file is the one a listing's link handed to `loadURL`.
+    private var passesNextFileNavigation = false
+    /// A listing's rows, read once its page may still be loading.
+    private var listingRows: (url: URL, rows: String)?
     /// The pending main-frame navigation is the page's own, not one Lilo started (typed, bookmark, history, reload).
     private var isPageNavigationPending = false
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
@@ -653,12 +659,22 @@ final class WKWebViewTab: NSObject {
         if url.isFileURL {
             // A plain URLRequest load silently no-ops for file URLs. An HTML page shows images, styles and scripts
             // from any local folder, as in Chrome (`../style.css` in generated docs); WebKit still blocks its
-            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself.
+            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself. A folder fails
+            // to load, and the failure shows its listing.
             let isPage = ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
             webView.loadFileURL(url, allowingReadAccessTo: isPage ? URL(fileURLWithPath: "/") : url)
             return
         }
         webView.load(URLRequest(url: url))
+    }
+
+    /// Fills the listing on show with the rows read for it; the rows of a folder the tab left wait for its page to come back.
+    private func showListingRows() {
+        guard let listingRows, webView.url == listingRows.url else { return }
+        self.listingRows = nil
+        WebViewPrivateAccessors(webView).callAsyncWithoutUserGesture(
+            "document.querySelector('tbody').innerHTML = rows", arguments: ["rows": listingRows.rows]
+        ) { _ in }
     }
 
     /// Tells a delegate set mid-load what a page loading out of sight did so far, as if it had watched:
@@ -1719,6 +1735,20 @@ extension WKWebViewTab: WKNavigationDelegate {
             return .cancel
         }
 
+        // WebKit fails a folder listing's links to local files: they load as the app opens a file.
+        if isMainFrame, navigationAction.targetFrame != nil, let url, url.isFileURL {
+            if passesNextFileNavigation {
+                passesNextFileNavigation = false
+            } else if url != pendingMainFrameURL, ![.backForward, .reload].contains(navigationAction.navigationType),
+                      let listedFolderURL, webView.url == listedFolderURL {
+                DispatchQueue.main.async { [weak self] in
+                    self?.passesNextFileNavigation = true
+                    self?.loadURL(url)
+                }
+                return .cancel
+            }
+        }
+
         // A nil target frame is a new-window navigation: its URL belongs to the popup, and taking it
         // here would repoint this tab's pending URL (retry target, TLS host check) at the popup's page.
         if navigationAction.targetFrame?.isMainFrame == true,
@@ -1878,6 +1908,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         onMain { tab in
             tab.pendingMainFrameURL = tab.currentURL
+            tab.showListingRows()
             if !tab.isPrivateBrowsing {
                 Self.logger.info("""
                     nav finished host=\(webView.url?.host ?? "nil", privacy: .private) \
@@ -1907,6 +1938,30 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.endNavigationSignpost("fail")
             // The error page names the address that failed, as in Chrome.
             tab.isPageNavigationPending = false
+            // WebKit fails a folder's load; a cancelled one gave way to another navigation.
+            if (error as NSError).code != NSURLErrorCancelled,
+               let url = (error as NSError).userInfo[NSURLErrorFailingURLErrorKey] as? URL, url.isFileURL,
+               (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
+                tab.listedFolderURL = url
+                tab.listingRows = nil
+                // Alternate HTML takes the failed load's place in history only from inside this callback: going back,
+                // reloading or restoring lists the folder again.
+                let page = DirectoryListing.page(for: url)
+                let folder = URL(filePath: url.path(percentEncoded: false), directoryHint: .isDirectory)
+                if !WebViewPrivateAccessors(webView).loadAlternateHTML(page, baseURL: folder, unreachableURL: url) {
+                    webView.loadSimulatedRequest(URLRequest(url: folder), responseHTML: page)
+                }
+                // The files are read off the main thread: a large, network or permission-guarded folder takes its time.
+                DispatchQueue.global(qos: .userInitiated).async { [weak tab] in
+                    guard let rows = DirectoryListing.rows(of: url) else { return }
+                    DispatchQueue.main.async {
+                        guard let tab, tab.listedFolderURL == url else { return }
+                        tab.listingRows = (url, rows)
+                        if !webView.isLoading { tab.showListingRows() }
+                    }
+                }
+                return
+            }
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false

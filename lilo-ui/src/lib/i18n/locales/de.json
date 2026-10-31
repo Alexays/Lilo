@@ -2211,7 +2211,12 @@
 		"Terminal": "Terminal",
 		"Agent Tabs": "Agenten-Tabs",
 		"QR code for %@": "QR-Code für %@",
-		"Secure Connection": "Sichere Verbindung"
+		"Secure Connection": "Sichere Verbindung",
+		"Index of %@": "Index von %@",
+		"Parent folder": "Übergeordneter Ordner",
+		"Name": "Name",
+		"Size": "Größe",
+		"Date Modified": "Änderungsdatum"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

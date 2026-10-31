@@ -582,6 +582,7 @@
 		D65093F4B158C1830BE75EB8 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB4FBF3BC08F7AE4D389DFD /* MainMenu.swift */; };
 		D6ADAD8ECE8C04B386BFD113 /* ProfileBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3568E9E8C952657276BD58F3 /* ProfileBridgeHandler.swift */; };
 		D71375871CA896E95512C8DA /* WebInspectorSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B38EC438C7FA8FF4C00D009 /* WebInspectorSupport.swift */; };
+		D71399345F661ECD5B6DC1D7 /* DirectoryListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF785CC2D1386A8009207812 /* DirectoryListing.swift */; };
 		D75B737199C1687F0176BAC3 /* AgentComputerToolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12657EBBC5AB62F6B59CFD7C /* AgentComputerToolTests.swift */; };
 		D7A9EC15EC734F2DB65DB36F /* ExtensionPageTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE7E43A224B337727C1D71B6 /* ExtensionPageTabTests.swift */; };
 		D7B2477132F08BA55D3A0D3C /* ScreenshotBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2696FC4623FDF92617224F9 /* ScreenshotBridgeHandler.swift */; };
@@ -1367,6 +1368,7 @@
 		DEF6F9CA5924443C5AF9BCBC /* ChromiumReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumReader.swift; sourceTree = "<group>"; };
 		DEFBD55F4EF1951246FF18C6 /* CertificateRejectionReasonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateRejectionReasonTests.swift; sourceTree = "<group>"; };
 		DF5F4AFB0C021C061B8906E5 /* BridgeEventRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BridgeEventRecorder.swift; sourceTree = "<group>"; };
+		DF785CC2D1386A8009207812 /* DirectoryListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectoryListing.swift; sourceTree = "<group>"; };
 		DF9ECB7C136BAC1E08DBF609 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E0597C73354C06382A05C80A /* DocumentPiPController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPiPController.swift; sourceTree = "<group>"; };
 		E0D6E27C75E2D74D14974B13 /* I18nBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = I18nBridgeHandler.swift; sourceTree = "<group>"; };
@@ -2140,6 +2142,7 @@
 				B6CF8BC122165D6C530F812A /* ChromeMasquerade.swift */,
 				3A614E35792F6C5E59AB4DFD /* ClientCertificateChallengeHandler.swift */,
 				803C40E6CC8D03E15990CD33 /* ContextMenuBuilder.swift */,
+				DF785CC2D1386A8009207812 /* DirectoryListing.swift */,
 				280FDCE1DE656133E7952F1E /* DocumentPictureInPicture.swift */,
 				2E28BF7995DB783B3B5C0C4F /* EngineFreezer.swift */,
 				08C4E87643CDE09774E04C0B /* EyeDropperBridge.swift */,
@@ -3024,6 +3027,7 @@
 				DD3FAA9CA145952D0D439639 /* DefaultBrowserService.swift in Sources */,
 				1264B7F28050437AB896696C /* DeviceSetupController.swift in Sources */,
 				E6062DC0DD6D3A983CD4E74F /* DeviceSetupMemory.swift in Sources */,
+				D71399345F661ECD5B6DC1D7 /* DirectoryListing.swift in Sources */,
 				3FBB3B74090BD5B5CB2938FF /* DocumentPiPController.swift in Sources */,
 				585B686BB3A1D8A04738BE72 /* DocumentPictureInPicture.swift in Sources */,
 				F38F048A36C73FF7CC442F22 /* DownloadBridgeHandler.swift in Sources */,

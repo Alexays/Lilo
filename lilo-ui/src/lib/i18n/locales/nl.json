@@ -2211,7 +2211,12 @@
 		"Terminal": "Terminal",
 		"Agent Tabs": "Agenttabbladen",
 		"QR code for %@": "QR-code voor %@",
-		"Secure Connection": "Beveiligde verbinding"
+		"Secure Connection": "Beveiligde verbinding",
+		"Index of %@": "Index van %@",
+		"Parent folder": "Bovenliggende map",
+		"Name": "Naam",
+		"Size": "Grootte",
+		"Date Modified": "Wijzigingsdatum"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

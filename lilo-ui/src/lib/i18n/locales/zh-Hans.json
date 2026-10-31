@@ -2211,7 +2211,12 @@
 		"Terminal": "终端",
 		"Agent Tabs": "智能体标签页",
 		"QR code for %@": "%@ 的二维码",
-		"Secure Connection": "安全连接"
+		"Secure Connection": "安全连接",
+		"Index of %@": "%@ 的索引",
+		"Parent folder": "上级文件夹",
+		"Name": "名称",
+		"Size": "大小",
+		"Date Modified": "修改日期"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",

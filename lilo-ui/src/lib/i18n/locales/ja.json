@@ -2211,7 +2211,12 @@
 		"Terminal": "ターミナル",
 		"Agent Tabs": "エージェントのタブ",
 		"QR code for %@": "%@ の QR コード",
-		"Secure Connection": "安全な接続"
+		"Secure Connection": "安全な接続",
+		"Index of %@": "%@ のインデックス",
+		"Parent folder": "親フォルダ",
+		"Name": "名前",
+		"Size": "サイズ",
+		"Date Modified": "変更日"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
