@@ -176,7 +176,8 @@
 			"profiles": "プロファイル",
 			"otherAppLinks": "ほかのアプリからのリンク",
 			"blockerCategories": "Lilo がブロックするもの",
-			"blockerExceptions": "リストと例外"
+			"blockerExceptions": "リストと例外",
+			"agentConversations": "会話"
 		},
 		"searchPlaceholder": "設定を検索",
 		"searchResultsTitle": "検索結果",
@@ -542,6 +543,16 @@
 				"title": "サイトごとの設定",
 				"description": "各サイトのアクセス権、ズーム、保存データ。",
 				"keywords": "サイト アクセス権 Cookie ズーム データ ストレージ"
+			},
+			"agentsEnabled": {
+				"title": "エージェントとの会話",
+				"description": "Claude Code、Codex、Gemini などのエージェントと、ご自身のサブスクリプションでタブ内で会話できます。Lilo 自体に AI は搭載していません。",
+				"keywords": "エージェント AI ACP チャット 会話 質問 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "エージェントの完了時に通知",
+				"description": "表示していない会話が完了したときに通知します。",
+				"keywords": "エージェント 通知 アラート 完了 終了"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "固定されていないタブをアーカイブ",
 		"pinnedTabs": "固定タブ",
 		"openTabs": "開いているタブ",
-		"dropToPin": "ドロップして固定"
+		"dropToPin": "ドロップして固定",
+		"askAgent": "エージェントに質問"
 	},
 	"bookmarks": {
 		"groupLabel": "ブックマーク済みのタブ",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "親フォルダ",
 		"Name": "名前",
 		"Size": "サイズ",
-		"Date Modified": "変更日"
+		"Date Modified": "変更日",
+		"%@ could not be downloaded.": "%@ をダウンロードできませんでした。",
+		"%@ could not be installed.": "%@ をインストールできませんでした。",
+		"%@ did not match its checksum and was not installed.": "%@ はチェックサムが一致しなかったため、インストールされませんでした。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ には Node.js が必要です。nodejs.org からインストールしてから、もう一度お試しください。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ には uv が必要です。astral.sh/uv からインストールしてから、もう一度お試しください。",
+		"Choose": "選択",
+		"New Conversation": "新しい会話",
+		"Screenshot of %@": "%@ のスクリーンショット",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Lilo が開いたターミナルでサインインしてから、メッセージをもう一度送信してください。",
+		"The agent stopped (code %d).": "エージェントが停止しました（コード %d）。",
+		"This agent is no longer in the ACP registry.": "このエージェントは ACP レジストリに登録されていません。",
+		"Always Allow": "常に許可",
+		"Ask an Agent": "エージェントに質問",
+		"Review Changes": "変更を確認",
+		"Show Pages": "ページを表示",
+		"Hide Pages": "ページを隠す",
+		"Close Conversation": "会話を閉じる",
+		"Pasted image": "貼り付けた画像"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,254 @@
 			"ellipse": "楕円",
 			"text": "テキスト",
 			"pen": "ペン"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "モード",
+			"context": "コンテキストの {percent}% を使用",
+			"ownCopy": "専用コピー",
+			"ownCopyHint": "プロジェクトの専用コピーで作業します。「変更」からマージしてください。",
+			"starting": "エージェントを起動中...",
+			"errorHint": "もう一度試すにはメッセージを送信してください。",
+			"showEarlier": {
+				"one": "前の項目を {count} 件表示",
+				"other": "前の項目を {count} 件表示"
+			},
+			"queued": {
+				"one": "{count} 件のメッセージが待機中",
+				"other": "{count} 件のメッセージが待機中"
+			},
+			"queuedHint": "エージェントの完了後に送信されます。Cmd Return ですぐに送信します。",
+			"thought": "思考",
+			"restoreToHere": "ここまで復元",
+			"restoreConfirm": "プロジェクトのファイルをこのメッセージの時点の状態に戻しますか？",
+			"restore": "復元",
+			"reviewChanges": "「変更」で確認",
+			"undo": "取り消す",
+			"keep": "保持",
+			"undone": "取り消しました",
+			"kept": "保持しました",
+			"moreLines": {
+				"one": "さらに {count} 行",
+				"other": "さらに {count} 行"
+			},
+			"plan": "プラン",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "未着手",
+				"in_progress": "進行中",
+				"completed": "完了"
+			},
+			"permissionTitle": "この操作を許可しますか？",
+			"answered": "回答: {option}",
+			"cancelled": "回答はありませんでした",
+			"notice": {
+				"restored": "ファイルをこの時点に復元しました",
+				"restoreFailed": "ファイルを復元できませんでした",
+				"signedIn": "サインインしました"
+			},
+			"moreOptions": "その他のオプション",
+			"signInHint": "エージェントでサインインしてから、メッセージをもう一度送信してください。",
+			"branch": "ブランチ {branch}",
+			"jumpToLatest": "最新へ移動"
+		},
+		"tool": {
+			"untitled": "ツール呼び出し",
+			"status": {
+				"pending": "待機中",
+				"in_progress": "実行中",
+				"failed": "失敗"
+			},
+			"group": {
+				"read": {
+					"one": "{count} 個のファイルを読み込み",
+					"other": "{count} 個のファイルを読み込み"
+				},
+				"search": {
+					"one": "{count} 回検索",
+					"other": "{count} 回検索"
+				},
+				"fetch": {
+					"one": "{count} ページを取得",
+					"other": "{count} ページを取得"
+				},
+				"think": {
+					"one": "{count} 回思考",
+					"other": "{count} 回思考"
+				},
+				"action": {
+					"one": "{count} 件の操作",
+					"other": "{count} 件の操作"
+				}
+			}
+		},
+		"composer": {
+			"label": "エージェントへのメッセージ",
+			"placeholder": "返信、@ で追加、/ でコマンド",
+			"addContext": "コンテキストを追加",
+			"send": "送信",
+			"removeAttachment": "{label} を削除",
+			"tabs": "タブ",
+			"folders": "フォルダ",
+			"fromPage": "ページから",
+			"more": "その他",
+			"selection": "選択範囲",
+			"screenshot": "スクリーンショット",
+			"file": "ファイル {path}",
+			"fileHint": "パスを入力してプロジェクトのファイルを添付",
+			"commands": "コマンド",
+			"files": "ファイル",
+			"image": "画像"
+		},
+		"ask": {
+			"label": "エージェントに質問",
+			"placeholder": "エージェントに質問、@ で追加",
+			"thisPage": "このページ",
+			"agent": "エージェント",
+			"loadingAgents": "エージェントを読み込み中...",
+			"project": "プロジェクト",
+			"chooseProject": "プロジェクトを選択",
+			"chooseFolder": "フォルダを選択...",
+			"ownCopy": "専用コピー",
+			"ownCopyHint": "エージェントにプロジェクトの専用コピー（git worktree）で作業させます",
+			"openBeside": "開く",
+			"openBackground": "バックグラウンドで",
+			"start": "開始"
+		},
+		"row": {
+			"untitled": "新しい会話",
+			"working": "作業中",
+			"failed": "エラーで停止",
+			"changes": "{added} 行追加、{removed} 行削除",
+			"pages": {
+				"one": "{count} ページ",
+				"other": "{count} ページ"
+			},
+			"showPages": "ページを表示",
+			"hidePages": "ページを隠す"
+		},
+		"question": {
+			"allow": "許可",
+			"allowAlways": "常に許可",
+			"reject": "拒否",
+			"rejectAlways": "常に拒否"
+		},
+		"badge": {
+			"title": "エージェント",
+			"waiting": {
+				"one": "エージェント、{count} 件が対応待ち",
+				"other": "エージェント、{count} 件が対応待ち"
+			},
+			"new": "新規",
+			"needsYou": "対応待ち",
+			"running": "実行中",
+			"done": "完了",
+			"finished": "終了",
+			"empty": "対応待ちの会話はありません"
+		},
+		"status": {
+			"working": "作業中",
+			"waiting": "対応待ち",
+			"stopHint": "Esc で停止"
+		},
+		"work": {
+			"images": {
+				"one": "{count} 枚の画像",
+				"other": "{count} 枚の画像"
+			},
+			"verb": {
+				"read": "読み込み",
+				"edit": "編集",
+				"delete": "削除",
+				"move": "移動",
+				"search": "検索",
+				"fetch": "取得"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} 個のファイルを読み込み",
+					"other": "{count} 個のファイルを読み込み"
+				},
+				"edit": {
+					"one": "{count} 個のファイルを編集",
+					"other": "{count} 個のファイルを編集"
+				},
+				"execute": {
+					"one": "{count} 個のコマンドを実行",
+					"other": "{count} 個のコマンドを実行"
+				},
+				"search": {
+					"one": "{count} 回検索",
+					"other": "{count} 回検索"
+				},
+				"fetch": {
+					"one": "{count} 個のページを取得",
+					"other": "{count} 個のページを取得"
+				},
+				"think": {
+					"one": "{count} 回思考",
+					"other": "{count} 回思考"
+				},
+				"browser": {
+					"one": "ブラウザを {count} 回使用",
+					"other": "ブラウザを {count} 回使用"
+				},
+				"tool": {
+					"one": "{count} 個のツールを使用",
+					"other": "{count} 個のツールを使用"
+				}
+			},
+			"exit": "終了コード {code}",
+			"showAll": {
+				"one": "{count} 行すべてを表示",
+				"other": "{count} 行すべてを表示"
+			},
+			"showLess": "最後の行だけを表示"
+		},
+		"turn": {
+			"workedFor": "{duration} 作業",
+			"stopped": "停止しました",
+			"files": {
+				"one": "{count} 個のファイルを変更",
+				"other": "{count} 個のファイルを変更"
+			},
+			"review": "確認",
+			"copy": "応答をコピー",
+			"copied": "コピーしました"
+		},
+		"image": {
+			"unavailable": "画像を表示できません",
+			"open": "画像を開く",
+			"viewer": "画像",
+			"previous": "前の画像",
+			"next": "次の画像",
+			"counter": "{index} / {total}"
+		},
+		"markdown": {
+			"preview": "プレビュー",
+			"openPreview": "プレビューをタブで開く",
+			"view": "表示形式",
+			"code": "コード",
+			"copy": "コードをコピー",
+			"copied": "コピーしました"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "このプロジェクトを説明",
+					"prompt": "このプロジェクトの構成を説明してください: 主な部分、それらの関係、どこから読み始めればよいか。"
+				},
+				"fixBug": {
+					"label": "バグを見つけて修正",
+					"prompt": "このプロジェクトのバグを見つけ、原因を説明してから修正してください。"
+				},
+				"tests": {
+					"label": "テストを書く...",
+					"prompt": "次のテストを書いてください: "
+				}
+			}
 		}
 	}
 }

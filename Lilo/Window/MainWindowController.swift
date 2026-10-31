@@ -524,6 +524,7 @@ final class MainWindowController: NSWindowController {
         // Closing a tab, a folder or a whole space ends the shells it held.
         tabManager.terminalHost.prune { id in tabManager.tab(for: id).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { id in tabManager.tab(for: id).map { !$0.isClosed } ?? false }
+        if !context.conversations.conversations.isEmpty { pruneConversations() }
         discardCollapsedFolderEngines(after: command)
         // Activation lays the split out through showContentView; other commands can form or break one.
         if case .activateTab = command {} else if tabManager.activeSplit != splitPanes.split { layoutSplitContent() }
@@ -710,7 +711,11 @@ extension MainWindowController: TabManager.Delegate {
             }
         }
         if let tab = manager.activeTab, tab.kind != .web {
-            if tab.kind == .terminal { showTerminalView(for: tab) } else { showChangesTabView(for: tab) }
+            switch tab.kind {
+            case .terminal: showTerminalView(for: tab)
+            case .agent: showAgentChatView(for: tab)
+            default: showChangesTabView(for: tab)
+            }
             // Nothing a page left on screen may outlive it: tracker count, Handoff.
             bridgeRouter.send(event: "trackersBlockedChanged", data: ["count": 0])
             publishActiveTab()

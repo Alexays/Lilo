@@ -470,6 +470,7 @@ extension MainWindowController {
         case "zoom.out": zoomOutCurrentPage(nil)
         case "zoom.reset": resetCurrentPageZoom(nil)
         case "terminal.newTab": createTerminalTab()
+        case "agents.ask": askAgent(nil)
         case "tab.next", "tab.previous": switchToAdjacentTab(forward: id == "tab.next")
         case "tab.recentNext", "tab.recentPrevious": openTabSwitcher(holding: event.modifierFlags, backwards: id == "tab.recentPrevious")
         case "find.show": presentFindBar()
@@ -637,6 +638,9 @@ extension MainWindowController: NSUserInterfaceValidations {
         if action == #selector(newTerminalBeside(_:)) || action == #selector(newTerminalBelow(_:)) || action == #selector(newTerminalTab(_:))
             || action == #selector(showNextWaitingTerminal(_:)) {
             return context.settingsStore?.terminalEnabled != false
+        }
+        if action == #selector(askAgent(_:)) {
+            return agentsEnabled && context.spaceManager?.space(with: tabManager.currentSpaceId)?.isPrivate == false
         }
         if action == #selector(viewPageSource(_:)) { return ["http", "https"].contains(tabManager.visibleActiveTab?.url?.scheme) }
 

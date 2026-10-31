@@ -176,7 +176,8 @@
 			"profiles": "Profiles",
 			"otherAppLinks": "Links from other apps",
 			"blockerCategories": "What Lilo blocks",
-			"blockerExceptions": "Lists and exceptions"
+			"blockerExceptions": "Lists and exceptions",
+			"agentConversations": "Conversations"
 		},
 		"searchPlaceholder": "Search settings",
 		"searchResultsTitle": "Search results",
@@ -542,6 +543,16 @@
 				"title": "Settings by site",
 				"description": "Permissions, zoom and stored data of each site.",
 				"keywords": "site permissions cookies zoom data storage"
+			},
+			"agentsEnabled": {
+				"title": "Conversations with your agents",
+				"description": "Talk to Claude Code, Codex, Gemini and other agents in a tab, with your own subscriptions. Lilo has no AI of its own.",
+				"keywords": "agent ai acp chat conversation ask claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Notify when an agent finishes",
+				"description": "A notification when a conversation you are not looking at is done.",
+				"keywords": "agent notification alert done finished"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Archive unpinned tabs",
 		"pinnedTabs": "Pinned tabs",
 		"openTabs": "Open tabs",
-		"dropToPin": "Drop to pin"
+		"dropToPin": "Drop to pin",
+		"askAgent": "Ask an Agent"
 	},
 	"bookmarks": {
 		"groupLabel": "Bookmarked tabs",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Parent folder",
 		"Name": "Name",
 		"Size": "Size",
-		"Date Modified": "Date Modified"
+		"Date Modified": "Date Modified",
+		"%@ could not be downloaded.": "%@ could not be downloaded.",
+		"%@ could not be installed.": "%@ could not be installed.",
+		"%@ did not match its checksum and was not installed.": "%@ did not match its checksum and was not installed.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ needs Node.js: install it from nodejs.org, then try again.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ needs uv: install it from astral.sh/uv, then try again.",
+		"Choose": "Choose",
+		"New Conversation": "New Conversation",
+		"Screenshot of %@": "Screenshot of %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Sign in in the terminal Lilo opened, then send your message again.",
+		"The agent stopped (code %d).": "The agent stopped (code %d).",
+		"This agent is no longer in the ACP registry.": "This agent is no longer in the ACP registry.",
+		"Always Allow": "Always Allow",
+		"Ask an Agent": "Ask an Agent",
+		"Review Changes": "Review Changes",
+		"Show Pages": "Show Pages",
+		"Hide Pages": "Hide Pages",
+		"Close Conversation": "Close Conversation",
+		"Pasted image": "Pasted image"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2323,6 +2353,254 @@
 			"ellipse": "Ellipse",
 			"text": "Text",
 			"pen": "Pen"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Stop",
+			"mode": "Mode",
+			"context": "{percent}% of the context used",
+			"ownCopy": "Own copy",
+			"ownCopyHint": "Works on its own copy of the project. Merge it from Changes.",
+			"starting": "Starting the agent...",
+			"errorHint": "Send a message to try again.",
+			"showEarlier": {
+				"one": "Show {count} earlier item",
+				"other": "Show {count} earlier items"
+			},
+			"queued": {
+				"one": "{count} message queued",
+				"other": "{count} messages queued"
+			},
+			"queuedHint": "Sent when the agent finishes. Cmd Return sends now.",
+			"thought": "Thought",
+			"restoreToHere": "Restore to here",
+			"restoreConfirm": "Put the project files back as they were at this message?",
+			"restore": "Restore",
+			"reviewChanges": "Review in Changes",
+			"undo": "Undo",
+			"keep": "Keep",
+			"undone": "Undone",
+			"kept": "Kept",
+			"moreLines": {
+				"one": "{count} more line",
+				"other": "{count} more lines"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "To do",
+				"in_progress": "In progress",
+				"completed": "Done"
+			},
+			"permissionTitle": "Allow this action?",
+			"answered": "Answered: {option}",
+			"cancelled": "No answer was given",
+			"notice": {
+				"restored": "Files restored to this point",
+				"restoreFailed": "The files could not be restored",
+				"signedIn": "Signed in"
+			},
+			"moreOptions": "More options",
+			"signInHint": "Sign in with the agent, then send your message again.",
+			"branch": "Branch {branch}",
+			"jumpToLatest": "Jump to latest"
+		},
+		"tool": {
+			"untitled": "Tool call",
+			"status": {
+				"pending": "Waiting",
+				"in_progress": "Running",
+				"failed": "Failed"
+			},
+			"group": {
+				"read": {
+					"one": "Read {count} file",
+					"other": "Read {count} files"
+				},
+				"search": {
+					"one": "{count} search",
+					"other": "{count} searches"
+				},
+				"fetch": {
+					"one": "Fetched {count} page",
+					"other": "Fetched {count} pages"
+				},
+				"think": {
+					"one": "Thought {count} time",
+					"other": "Thought {count} times"
+				},
+				"action": {
+					"one": "{count} action",
+					"other": "{count} actions"
+				}
+			}
+		},
+		"composer": {
+			"label": "Message the agent",
+			"placeholder": "Reply, @ to add something, / for commands",
+			"addContext": "Add context",
+			"send": "Send",
+			"removeAttachment": "Remove {label}",
+			"tabs": "Tabs",
+			"folders": "Folders",
+			"fromPage": "From the page",
+			"more": "More",
+			"selection": "Selection",
+			"screenshot": "Screenshot",
+			"file": "File {path}",
+			"fileHint": "Type a path to attach a project file",
+			"commands": "Commands",
+			"files": "Files",
+			"image": "Image"
+		},
+		"ask": {
+			"label": "Ask an agent",
+			"placeholder": "Ask an agent, @ to add something",
+			"thisPage": "This page",
+			"agent": "Agent",
+			"loadingAgents": "Loading agents...",
+			"project": "Project",
+			"chooseProject": "Choose a project",
+			"chooseFolder": "Choose folder...",
+			"ownCopy": "Own copy",
+			"ownCopyHint": "Let the agent work on its own copy of the project (a git worktree)",
+			"openBeside": "open",
+			"openBackground": "in the background",
+			"start": "Start"
+		},
+		"row": {
+			"untitled": "New conversation",
+			"working": "Working",
+			"failed": "Stopped with an error",
+			"changes": "{added} lines added, {removed} removed",
+			"pages": {
+				"one": "{count} page",
+				"other": "{count} pages"
+			},
+			"showPages": "Show pages",
+			"hidePages": "Hide pages"
+		},
+		"question": {
+			"allow": "Allow",
+			"allowAlways": "Always",
+			"reject": "Deny",
+			"rejectAlways": "Never"
+		},
+		"badge": {
+			"title": "Agents",
+			"waiting": {
+				"one": "Agents, {count} waiting for you",
+				"other": "Agents, {count} waiting for you"
+			},
+			"new": "New",
+			"needsYou": "Needs you",
+			"running": "Running",
+			"done": "Done",
+			"finished": "Finished",
+			"empty": "No conversation needs you"
+		},
+		"status": {
+			"working": "Working",
+			"waiting": "Waiting for you",
+			"stopHint": "Esc to stop"
+		},
+		"work": {
+			"images": {
+				"one": "{count} image",
+				"other": "{count} images"
+			},
+			"verb": {
+				"read": "Read",
+				"edit": "Edited",
+				"delete": "Deleted",
+				"move": "Moved",
+				"search": "Searched",
+				"fetch": "Fetched"
+			},
+			"summary": {
+				"read": {
+					"one": "read {count} file",
+					"other": "read {count} files"
+				},
+				"edit": {
+					"one": "edited {count} file",
+					"other": "edited {count} files"
+				},
+				"execute": {
+					"one": "ran {count} command",
+					"other": "ran {count} commands"
+				},
+				"search": {
+					"one": "ran {count} search",
+					"other": "ran {count} searches"
+				},
+				"fetch": {
+					"one": "fetched {count} page",
+					"other": "fetched {count} pages"
+				},
+				"think": {
+					"one": "thought {count} time",
+					"other": "thought {count} times"
+				},
+				"browser": {
+					"one": "took {count} browser action",
+					"other": "took {count} browser actions"
+				},
+				"tool": {
+					"one": "used {count} tool",
+					"other": "used {count} tools"
+				}
+			},
+			"exit": "Exit {code}",
+			"showAll": {
+				"one": "Show all {count} line",
+				"other": "Show all {count} lines"
+			},
+			"showLess": "Show the last lines"
+		},
+		"turn": {
+			"workedFor": "Worked for {duration}",
+			"stopped": "Stopped",
+			"files": {
+				"one": "{count} file changed",
+				"other": "{count} files changed"
+			},
+			"review": "Review",
+			"copy": "Copy response",
+			"copied": "Copied"
+		},
+		"image": {
+			"unavailable": "Image unavailable",
+			"open": "Open image",
+			"viewer": "Image",
+			"previous": "Previous image",
+			"next": "Next image",
+			"counter": "{index} of {total}"
+		},
+		"markdown": {
+			"preview": "Preview",
+			"openPreview": "Open preview in a tab",
+			"view": "View as",
+			"code": "Code",
+			"copy": "Copy code",
+			"copied": "Copied"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Explain this project",
+					"prompt": "Explain how this project is organized: its main parts, how they fit together, and where to start reading."
+				},
+				"fixBug": {
+					"label": "Find and fix a bug",
+					"prompt": "Find a bug in this project, explain what causes it, then fix it."
+				},
+				"tests": {
+					"label": "Write tests for...",
+					"prompt": "Write tests for "
+				}
+			}
 		}
 	}
 }

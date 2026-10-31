@@ -176,7 +176,8 @@
 			"profiles": "Profils",
 			"otherAppLinks": "Liens venant d'autres apps",
 			"blockerCategories": "Ce que Lilo bloque",
-			"blockerExceptions": "Listes et exceptions"
+			"blockerExceptions": "Listes et exceptions",
+			"agentConversations": "Conversations"
 		},
 		"searchPlaceholder": "Rechercher un réglage",
 		"searchResultsTitle": "Résultats",
@@ -542,6 +543,16 @@
 				"title": "Réglages par site",
 				"description": "Permissions, zoom et données de chaque site.",
 				"keywords": "site permissions cookies zoom données stockage"
+			},
+			"agentsEnabled": {
+				"title": "Conversations avec vos agents",
+				"description": "Parlez à Claude Code, Codex, Gemini et d'autres agents dans un onglet, avec vos propres abonnements. Lilo n'embarque aucune IA.",
+				"keywords": "agent ia acp chat conversation demander claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Notifier quand un agent a fini",
+				"description": "Une notification quand une conversation que vous ne regardez pas est terminée.",
+				"keywords": "agent notification alerte terminé fini"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Archiver les onglets non épinglés",
 		"pinnedTabs": "Onglets épinglés",
 		"openTabs": "Onglets ouverts",
-		"dropToPin": "Déposer pour épingler"
+		"dropToPin": "Déposer pour épingler",
+		"askAgent": "Demander à un agent"
 	},
 	"bookmarks": {
 		"groupLabel": "Onglets favoris",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Dossier parent",
 		"Name": "Nom",
 		"Size": "Taille",
-		"Date Modified": "Date de modification"
+		"Date Modified": "Date de modification",
+		"%@ could not be downloaded.": "%@ n'a pas pu être téléchargé.",
+		"%@ could not be installed.": "%@ n'a pas pu être installé.",
+		"%@ did not match its checksum and was not installed.": "%@ ne correspondait pas à sa somme de contrôle et n'a pas été installé.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ a besoin de Node.js : installez-le depuis nodejs.org, puis réessayez.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ a besoin de uv : installez-le depuis astral.sh/uv, puis réessayez.",
+		"Choose": "Choisir",
+		"New Conversation": "Nouvelle conversation",
+		"Screenshot of %@": "Capture d'écran de %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Connectez-vous dans le terminal ouvert par Lilo, puis renvoyez votre message.",
+		"The agent stopped (code %d).": "L'agent s'est arrêté (code %d).",
+		"This agent is no longer in the ACP registry.": "Cet agent n'est plus dans le registre ACP.",
+		"Always Allow": "Toujours autoriser",
+		"Ask an Agent": "Demander à un agent",
+		"Review Changes": "Voir les modifications",
+		"Show Pages": "Afficher les pages",
+		"Hide Pages": "Masquer les pages",
+		"Close Conversation": "Fermer la conversation",
+		"Pasted image": "Image collée"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2323,6 +2353,254 @@
 			"ellipse": "Ellipse",
 			"text": "Texte",
 			"pen": "Crayon"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Arrêter",
+			"mode": "Mode",
+			"context": "{percent} % du contexte utilisé",
+			"ownCopy": "Copie à part",
+			"ownCopyHint": "Travaille sur sa propre copie du projet. Fusionnez-la depuis Modifications.",
+			"starting": "Démarrage de l'agent...",
+			"errorHint": "Envoyez un message pour réessayer.",
+			"showEarlier": {
+				"one": "Afficher {count} élément précédent",
+				"other": "Afficher {count} éléments précédents"
+			},
+			"queued": {
+				"one": "{count} message en attente",
+				"other": "{count} messages en attente"
+			},
+			"queuedHint": "Envoyé quand l'agent a fini. Cmd Entrée l'envoie tout de suite.",
+			"thought": "Réflexion",
+			"restoreToHere": "Revenir à ce point",
+			"restoreConfirm": "Remettre les fichiers du projet tels qu'ils étaient à ce message ?",
+			"restore": "Restaurer",
+			"reviewChanges": "Relire dans Modifications",
+			"undo": "Annuler",
+			"keep": "Garder",
+			"undone": "Annulé",
+			"kept": "Gardé",
+			"moreLines": {
+				"one": "{count} ligne de plus",
+				"other": "{count} lignes de plus"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "À faire",
+				"in_progress": "En cours",
+				"completed": "Fait"
+			},
+			"permissionTitle": "Autoriser cette action ?",
+			"answered": "Réponse : {option}",
+			"cancelled": "Aucune réponse donnée",
+			"notice": {
+				"restored": "Fichiers restaurés à ce point",
+				"restoreFailed": "Les fichiers n'ont pas pu être restaurés",
+				"signedIn": "Connecté"
+			},
+			"moreOptions": "Plus d'options",
+			"signInHint": "Connectez-vous avec l'agent, puis renvoyez votre message.",
+			"branch": "Branche {branch}",
+			"jumpToLatest": "Aller aux derniers messages"
+		},
+		"tool": {
+			"untitled": "Appel d'outil",
+			"status": {
+				"pending": "En attente",
+				"in_progress": "En cours",
+				"failed": "Échec"
+			},
+			"group": {
+				"read": {
+					"one": "{count} fichier lu",
+					"other": "{count} fichiers lus"
+				},
+				"search": {
+					"one": "{count} recherche",
+					"other": "{count} recherches"
+				},
+				"fetch": {
+					"one": "{count} page récupérée",
+					"other": "{count} pages récupérées"
+				},
+				"think": {
+					"one": "{count} réflexion",
+					"other": "{count} réflexions"
+				},
+				"action": {
+					"one": "{count} action",
+					"other": "{count} actions"
+				}
+			}
+		},
+		"composer": {
+			"label": "Écrire à l'agent",
+			"placeholder": "Répondre, @ pour ajouter un élément, / pour les commandes",
+			"addContext": "Ajouter du contexte",
+			"send": "Envoyer",
+			"removeAttachment": "Retirer {label}",
+			"tabs": "Onglets",
+			"folders": "Dossiers",
+			"fromPage": "Depuis la page",
+			"more": "Plus",
+			"selection": "Sélection",
+			"screenshot": "Capture d'écran",
+			"file": "Fichier {path}",
+			"fileHint": "Tapez un chemin pour joindre un fichier du projet",
+			"commands": "Commandes",
+			"files": "Fichiers",
+			"image": "Image"
+		},
+		"ask": {
+			"label": "Demander à un agent",
+			"placeholder": "Demander à un agent, @ pour ajouter un élément",
+			"thisPage": "Cette page",
+			"agent": "Agent",
+			"loadingAgents": "Chargement des agents...",
+			"project": "Projet",
+			"chooseProject": "Choisir un projet",
+			"chooseFolder": "Choisir un dossier...",
+			"ownCopy": "Copie à part",
+			"ownCopyHint": "Laisser l'agent travailler sur sa propre copie du projet (un worktree git)",
+			"openBeside": "ouvrir",
+			"openBackground": "en arrière-plan",
+			"start": "Démarrer"
+		},
+		"row": {
+			"untitled": "Nouvelle conversation",
+			"working": "En cours",
+			"failed": "Arrêté sur une erreur",
+			"changes": "{added} lignes ajoutées, {removed} supprimées",
+			"pages": {
+				"one": "{count} page",
+				"other": "{count} pages"
+			},
+			"showPages": "Afficher les pages",
+			"hidePages": "Masquer les pages"
+		},
+		"question": {
+			"allow": "Autoriser",
+			"allowAlways": "Toujours",
+			"reject": "Refuser",
+			"rejectAlways": "Jamais"
+		},
+		"badge": {
+			"title": "Agents",
+			"waiting": {
+				"one": "Agents, {count} vous attend",
+				"other": "Agents, {count} vous attendent"
+			},
+			"new": "Nouveau",
+			"needsYou": "Vous attend",
+			"running": "En cours",
+			"done": "Terminé",
+			"finished": "Fini",
+			"empty": "Aucune conversation ne vous attend"
+		},
+		"status": {
+			"working": "En cours",
+			"waiting": "Vous attend",
+			"stopHint": "Échap pour arrêter"
+		},
+		"work": {
+			"images": {
+				"one": "{count} image",
+				"other": "{count} images"
+			},
+			"verb": {
+				"read": "Lu",
+				"edit": "Modifié",
+				"delete": "Supprimé",
+				"move": "Déplacé",
+				"search": "Recherché",
+				"fetch": "Récupéré"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} fichier lu",
+					"other": "{count} fichiers lus"
+				},
+				"edit": {
+					"one": "{count} fichier modifié",
+					"other": "{count} fichiers modifiés"
+				},
+				"execute": {
+					"one": "{count} commande exécutée",
+					"other": "{count} commandes exécutées"
+				},
+				"search": {
+					"one": "{count} recherche",
+					"other": "{count} recherches"
+				},
+				"fetch": {
+					"one": "{count} page récupérée",
+					"other": "{count} pages récupérées"
+				},
+				"think": {
+					"one": "{count} réflexion",
+					"other": "{count} réflexions"
+				},
+				"browser": {
+					"one": "navigateur utilisé {count} fois",
+					"other": "navigateur utilisé {count} fois"
+				},
+				"tool": {
+					"one": "{count} outil utilisé",
+					"other": "{count} outils utilisés"
+				}
+			},
+			"exit": "Sortie {code}",
+			"showAll": {
+				"one": "Afficher {count} ligne",
+				"other": "Afficher les {count} lignes"
+			},
+			"showLess": "Afficher les dernières lignes"
+		},
+		"turn": {
+			"workedFor": "A travaillé pendant {duration}",
+			"stopped": "Arrêté",
+			"files": {
+				"one": "{count} fichier modifié",
+				"other": "{count} fichiers modifiés"
+			},
+			"review": "Relire",
+			"copy": "Copier la réponse",
+			"copied": "Copié"
+		},
+		"image": {
+			"unavailable": "Image indisponible",
+			"open": "Ouvrir l'image",
+			"viewer": "Image",
+			"previous": "Image précédente",
+			"next": "Image suivante",
+			"counter": "{index} sur {total}"
+		},
+		"markdown": {
+			"preview": "Aperçu",
+			"openPreview": "Ouvrir l'aperçu dans un onglet",
+			"view": "Afficher en",
+			"code": "Code",
+			"copy": "Copier le code",
+			"copied": "Copié"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Expliquer ce projet",
+					"prompt": "Explique comment ce projet est organisé : ses parties principales, comment elles s'articulent et par où commencer la lecture."
+				},
+				"fixBug": {
+					"label": "Trouver et corriger un bug",
+					"prompt": "Trouve un bug dans ce projet, explique sa cause, puis corrige-le."
+				},
+				"tests": {
+					"label": "Écrire des tests pour...",
+					"prompt": "Écris des tests pour "
+				}
+			}
 		}
 	}
 }

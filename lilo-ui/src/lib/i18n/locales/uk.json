@@ -176,7 +176,8 @@
 			"profiles": "Профілі",
 			"otherAppLinks": "Посилання з інших програм",
 			"blockerCategories": "Що блокує Lilo",
-			"blockerExceptions": "Списки й винятки"
+			"blockerExceptions": "Списки й винятки",
+			"agentConversations": "Розмови"
 		},
 		"searchPlaceholder": "Пошук параметрів",
 		"searchResultsTitle": "Результати пошуку",
@@ -542,6 +543,16 @@
 				"title": "Параметри за сайтами",
 				"description": "Дозволи, масштаб і збережені дані кожного сайту.",
 				"keywords": "сайт дозволи файли cookie масштаб дані сховище"
+			},
+			"agentsEnabled": {
+				"title": "Розмови з вашими агентами",
+				"description": "Спілкуйтеся з Claude Code, Codex, Gemini та іншими агентами у вкладці, з власними підписками. У Lilo немає власного ШІ.",
+				"keywords": "агент ші ai acp чат розмова запитати claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Сповіщати, коли агент завершить",
+				"description": "Сповіщення, коли завершується розмова, яку ви зараз не переглядаєте.",
+				"keywords": "агент сповіщення нагадування готово завершено"
 			}
 		},
 		"devices": {
@@ -856,7 +867,8 @@
 		"clearUnpinnedTooltip": "Архівувати незакріплені вкладки",
 		"pinnedTabs": "Закріплені вкладки",
 		"openTabs": "Відкриті вкладки",
-		"dropToPin": "Перетягніть сюди для закріплення"
+		"dropToPin": "Перетягніть сюди для закріплення",
+		"askAgent": "Запитати агента"
 	},
 	"bookmarks": {
 		"groupLabel": "Вкладки в закладках",
@@ -2236,7 +2248,25 @@
 		"Parent folder": "Батьківська папка",
 		"Name": "Назва",
 		"Size": "Розмір",
-		"Date Modified": "Дата змінення"
+		"Date Modified": "Дата змінення",
+		"%@ could not be downloaded.": "Не вдалося завантажити %@.",
+		"%@ could not be installed.": "Не вдалося інсталювати %@.",
+		"%@ did not match its checksum and was not installed.": "%@ не збігся з контрольною сумою і не був інстальований.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "Для %@ потрібен Node.js: інсталюйте його з nodejs.org і спробуйте знову.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "Для %@ потрібен uv: інсталюйте його з astral.sh/uv і спробуйте знову.",
+		"Choose": "Вибрати",
+		"New Conversation": "Нова розмова",
+		"Screenshot of %@": "Знімок екрана: %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Увійдіть у терміналі, який відкрив Lilo, і надішліть повідомлення знову.",
+		"The agent stopped (code %d).": "Агент зупинився (код %d).",
+		"This agent is no longer in the ACP registry.": "Цього агента більше немає в реєстрі ACP.",
+		"Always Allow": "Завжди дозволяти",
+		"Ask an Agent": "Запитати агента",
+		"Review Changes": "Переглянути зміни",
+		"Show Pages": "Показати сторінки",
+		"Hide Pages": "Сховати сторінки",
+		"Close Conversation": "Закрити розмову",
+		"Pasted image": "Вставлене зображення"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2356,6 +2386,296 @@
 			"ellipse": "Еліпс",
 			"text": "Текст",
 			"pen": "Перо"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Зупинити",
+			"mode": "Режим",
+			"context": "Використано {percent}% контексту",
+			"ownCopy": "Окрема копія",
+			"ownCopyHint": "Працює в окремій копії проєкту. Об'єднайте її в розділі «Зміни».",
+			"starting": "Запуск агента...",
+			"errorHint": "Надішліть повідомлення, щоб спробувати знову.",
+			"showEarlier": {
+				"one": "Показати {count} попередній елемент",
+				"few": "Показати {count} попередні елементи",
+				"many": "Показати {count} попередніх елементів",
+				"other": "Показати {count} попереднього елемента"
+			},
+			"queued": {
+				"one": "{count} повідомлення в черзі",
+				"few": "{count} повідомлення в черзі",
+				"many": "{count} повідомлень у черзі",
+				"other": "{count} повідомлення в черзі"
+			},
+			"queuedHint": "Буде надіслано, коли агент завершить. Cmd Return надсилає одразу.",
+			"thought": "Міркування",
+			"restoreToHere": "Відновити до цього місця",
+			"restoreConfirm": "Повернути файли проєкту до стану на момент цього повідомлення?",
+			"restore": "Відновити",
+			"reviewChanges": "Переглянути в «Змінах»",
+			"undo": "Скасувати",
+			"keep": "Залишити",
+			"undone": "Скасовано",
+			"kept": "Залишено",
+			"moreLines": {
+				"one": "Ще {count} рядок",
+				"few": "Ще {count} рядки",
+				"many": "Ще {count} рядків",
+				"other": "Ще {count} рядка"
+			},
+			"plan": "План",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Заплановано",
+				"in_progress": "Виконується",
+				"completed": "Готово"
+			},
+			"permissionTitle": "Дозволити цю дію?",
+			"answered": "Відповідь: {option}",
+			"cancelled": "Відповіді не було",
+			"notice": {
+				"restored": "Файли відновлено до цього місця",
+				"restoreFailed": "Не вдалося відновити файли",
+				"signedIn": "Вхід виконано"
+			},
+			"moreOptions": "Інші параметри",
+			"signInHint": "Увійдіть через агента й надішліть повідомлення знову.",
+			"branch": "Гілка {branch}",
+			"jumpToLatest": "До останніх"
+		},
+		"tool": {
+			"untitled": "Виклик інструмента",
+			"status": {
+				"pending": "Очікування",
+				"in_progress": "Виконується",
+				"failed": "Помилка"
+			},
+			"group": {
+				"read": {
+					"one": "Прочитано {count} файл",
+					"few": "Прочитано {count} файли",
+					"many": "Прочитано {count} файлів",
+					"other": "Прочитано {count} файлу"
+				},
+				"search": {
+					"one": "{count} пошук",
+					"few": "{count} пошуки",
+					"many": "{count} пошуків",
+					"other": "{count} пошуку"
+				},
+				"fetch": {
+					"one": "Завантажено {count} сторінку",
+					"few": "Завантажено {count} сторінки",
+					"many": "Завантажено {count} сторінок",
+					"other": "Завантажено {count} сторінки"
+				},
+				"think": {
+					"one": "Міркував {count} раз",
+					"few": "Міркував {count} рази",
+					"many": "Міркував {count} разів",
+					"other": "Міркував {count} раза"
+				},
+				"action": {
+					"one": "{count} дія",
+					"few": "{count} дії",
+					"many": "{count} дій",
+					"other": "{count} дії"
+				}
+			}
+		},
+		"composer": {
+			"label": "Повідомлення агенту",
+			"placeholder": "Відповідь, @ щоб щось додати, / для команд",
+			"addContext": "Додати контекст",
+			"send": "Надіслати",
+			"removeAttachment": "Прибрати {label}",
+			"tabs": "Вкладки",
+			"folders": "Папки",
+			"fromPage": "Зі сторінки",
+			"more": "Більше",
+			"selection": "Виділення",
+			"screenshot": "Знімок екрана",
+			"file": "Файл {path}",
+			"fileHint": "Введіть шлях, щоб додати файл проєкту",
+			"commands": "Команди",
+			"files": "Файли",
+			"image": "Зображення"
+		},
+		"ask": {
+			"label": "Запитати агента",
+			"placeholder": "Запитайте агента, @ щоб щось додати",
+			"thisPage": "Ця сторінка",
+			"agent": "Агент",
+			"loadingAgents": "Завантаження агентів...",
+			"project": "Проєкт",
+			"chooseProject": "Виберіть проєкт",
+			"chooseFolder": "Вибрати папку...",
+			"ownCopy": "Окрема копія",
+			"ownCopyHint": "Агент працює в окремій копії проєкту (git worktree)",
+			"openBeside": "відкрити",
+			"openBackground": "у фоні",
+			"start": "Почати"
+		},
+		"row": {
+			"untitled": "Нова розмова",
+			"working": "Працює",
+			"failed": "Зупинено через помилку",
+			"changes": "Додано рядків: {added}, видалено: {removed}",
+			"pages": {
+				"one": "{count} сторінка",
+				"few": "{count} сторінки",
+				"many": "{count} сторінок",
+				"other": "{count} сторінки"
+			},
+			"showPages": "Показати сторінки",
+			"hidePages": "Сховати сторінки"
+		},
+		"question": {
+			"allow": "Дозволити",
+			"allowAlways": "Завжди",
+			"reject": "Відхилити",
+			"rejectAlways": "Ніколи"
+		},
+		"badge": {
+			"title": "Агенти",
+			"waiting": {
+				"one": "Агенти, {count} чекає на вас",
+				"few": "Агенти, {count} чекають на вас",
+				"many": "Агенти, {count} чекають на вас",
+				"other": "Агенти, {count} чекають на вас"
+			},
+			"new": "Нова",
+			"needsYou": "Чекає на вас",
+			"running": "Виконується",
+			"done": "Готово",
+			"finished": "Завершено",
+			"empty": "Жодна розмова не чекає на вас"
+		},
+		"status": {
+			"working": "Працює",
+			"waiting": "Чекає на вас",
+			"stopHint": "Esc, щоб зупинити"
+		},
+		"work": {
+			"images": {
+				"one": "{count} зображення",
+				"few": "{count} зображення",
+				"many": "{count} зображень",
+				"other": "{count} зображення"
+			},
+			"verb": {
+				"read": "Прочитано",
+				"edit": "Змінено",
+				"delete": "Видалено",
+				"move": "Переміщено",
+				"search": "Пошук",
+				"fetch": "Завантажено"
+			},
+			"summary": {
+				"read": {
+					"one": "прочитано {count} файл",
+					"few": "прочитано {count} файли",
+					"many": "прочитано {count} файлів",
+					"other": "прочитано {count} файлу"
+				},
+				"edit": {
+					"one": "змінено {count} файл",
+					"few": "змінено {count} файли",
+					"many": "змінено {count} файлів",
+					"other": "змінено {count} файлу"
+				},
+				"execute": {
+					"one": "виконано {count} команду",
+					"few": "виконано {count} команди",
+					"many": "виконано {count} команд",
+					"other": "виконано {count} команди"
+				},
+				"search": {
+					"one": "{count} пошук",
+					"few": "{count} пошуки",
+					"many": "{count} пошуків",
+					"other": "{count} пошуку"
+				},
+				"fetch": {
+					"one": "завантажено {count} сторінку",
+					"few": "завантажено {count} сторінки",
+					"many": "завантажено {count} сторінок",
+					"other": "завантажено {count} сторінки"
+				},
+				"think": {
+					"one": "міркував {count} раз",
+					"few": "міркував {count} рази",
+					"many": "міркував {count} разів",
+					"other": "міркував {count} раза"
+				},
+				"browser": {
+					"one": "браузер використано {count} раз",
+					"few": "браузер використано {count} рази",
+					"many": "браузер використано {count} разів",
+					"other": "браузер використано {count} раза"
+				},
+				"tool": {
+					"one": "використано {count} інструмент",
+					"few": "використано {count} інструменти",
+					"many": "використано {count} інструментів",
+					"other": "використано {count} інструмента"
+				}
+			},
+			"exit": "Код виходу {code}",
+			"showAll": {
+				"one": "Показати {count} рядок",
+				"few": "Показати всі {count} рядки",
+				"many": "Показати всі {count} рядків",
+				"other": "Показати всі {count} рядка"
+			},
+			"showLess": "Показати останні рядки"
+		},
+		"turn": {
+			"workedFor": "Працював {duration}",
+			"stopped": "Зупинено",
+			"files": {
+				"one": "Змінено {count} файл",
+				"few": "Змінено {count} файли",
+				"many": "Змінено {count} файлів",
+				"other": "Змінено {count} файлу"
+			},
+			"review": "Переглянути",
+			"copy": "Копіювати відповідь",
+			"copied": "Скопійовано"
+		},
+		"image": {
+			"unavailable": "Зображення недоступне",
+			"open": "Відкрити зображення",
+			"viewer": "Зображення",
+			"previous": "Попереднє зображення",
+			"next": "Наступне зображення",
+			"counter": "{index} з {total}"
+		},
+		"markdown": {
+			"preview": "Попередній перегляд",
+			"openPreview": "Відкрити попередній перегляд у вкладці",
+			"view": "Показати як",
+			"code": "Код",
+			"copy": "Копіювати код",
+			"copied": "Скопійовано"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Пояснити цей проєкт",
+					"prompt": "Поясни, як організовано цей проєкт: його основні частини, як вони поєднуються і з чого почати читання."
+				},
+				"fixBug": {
+					"label": "Знайти й виправити помилку",
+					"prompt": "Знайди помилку в цьому проєкті, поясни, що її спричиняє, а потім виправ її."
+				},
+				"tests": {
+					"label": "Написати тести для...",
+					"prompt": "Напиши тести для "
+				}
+			}
 		}
 	}
 }

@@ -176,7 +176,8 @@
 			"profiles": "Profielen",
 			"otherAppLinks": "Links uit andere apps",
 			"blockerCategories": "Wat Lilo blokkeert",
-			"blockerExceptions": "Lijsten en uitzonderingen"
+			"blockerExceptions": "Lijsten en uitzonderingen",
+			"agentConversations": "Gesprekken"
 		},
 		"searchPlaceholder": "Zoek in instellingen",
 		"searchResultsTitle": "Zoekresultaten",
@@ -542,6 +543,16 @@
 				"title": "Instellingen per website",
 				"description": "Bevoegdheden, zoom en opgeslagen gegevens per website.",
 				"keywords": "website bevoegdheden cookies zoom gegevens opslag"
+			},
+			"agentsEnabled": {
+				"title": "Gesprekken met je agents",
+				"description": "Praat in een tabblad met Claude Code, Codex, Gemini en andere agents, met je eigen abonnementen. Lilo heeft zelf geen AI.",
+				"keywords": "agent ai acp chat gesprek vragen claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Melden als een agent klaar is",
+				"description": "Een melding als een gesprek waar je niet naar kijkt klaar is.",
+				"keywords": "agent melding notificatie klaar afgerond"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Archiveer niet-vastgemaakte tabbladen",
 		"pinnedTabs": "Vastgemaakte tabbladen",
 		"openTabs": "Geopende tabbladen",
-		"dropToPin": "Laat los om vast te maken"
+		"dropToPin": "Laat los om vast te maken",
+		"askAgent": "Vraag een agent"
 	},
 	"bookmarks": {
 		"groupLabel": "Bladwijzertabbladen",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Bovenliggende map",
 		"Name": "Naam",
 		"Size": "Grootte",
-		"Date Modified": "Wijzigingsdatum"
+		"Date Modified": "Wijzigingsdatum",
+		"%@ could not be downloaded.": "%@ kon niet worden gedownload.",
+		"%@ could not be installed.": "%@ kon niet worden geïnstalleerd.",
+		"%@ did not match its checksum and was not installed.": "%@ kwam niet overeen met de checksum en is niet geïnstalleerd.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ heeft Node.js nodig: installeer het via nodejs.org en probeer het opnieuw.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ heeft uv nodig: installeer het via astral.sh/uv en probeer het opnieuw.",
+		"Choose": "Kies",
+		"New Conversation": "Nieuw gesprek",
+		"Screenshot of %@": "Schermafbeelding van %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Log in in de terminal die Lilo heeft geopend en stuur je bericht opnieuw.",
+		"The agent stopped (code %d).": "De agent is gestopt (code %d).",
+		"This agent is no longer in the ACP registry.": "Deze agent staat niet meer in het ACP-register.",
+		"Always Allow": "Altijd toestaan",
+		"Ask an Agent": "Vraag een agent",
+		"Review Changes": "Wijzigingen bekijken",
+		"Show Pages": "Pagina's tonen",
+		"Hide Pages": "Pagina's verbergen",
+		"Close Conversation": "Gesprek sluiten",
+		"Pasted image": "Geplakte afbeelding"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,254 @@
 			"ellipse": "Ovaal",
 			"text": "Tekst",
 			"pen": "Pen"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Stop",
+			"mode": "Modus",
+			"context": "{percent}% van de context gebruikt",
+			"ownCopy": "Eigen kopie",
+			"ownCopyHint": "Werkt aan een eigen kopie van het project. Voeg die samen vanuit Wijzigingen.",
+			"starting": "Agent starten...",
+			"errorHint": "Stuur een bericht om het opnieuw te proberen.",
+			"showEarlier": {
+				"one": "Toon {count} eerder item",
+				"other": "Toon {count} eerdere items"
+			},
+			"queued": {
+				"one": "{count} bericht in de wachtrij",
+				"other": "{count} berichten in de wachtrij"
+			},
+			"queuedHint": "Wordt verstuurd als de agent klaar is. Cmd Return verstuurt nu.",
+			"thought": "Gedachte",
+			"restoreToHere": "Herstel tot hier",
+			"restoreConfirm": "Projectbestanden terugzetten naar hoe ze bij dit bericht waren?",
+			"restore": "Herstel",
+			"reviewChanges": "Bekijk in Wijzigingen",
+			"undo": "Ongedaan maken",
+			"keep": "Behoud",
+			"undone": "Ongedaan gemaakt",
+			"kept": "Behouden",
+			"moreLines": {
+				"one": "Nog {count} regel",
+				"other": "Nog {count} regels"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Te doen",
+				"in_progress": "Bezig",
+				"completed": "Klaar"
+			},
+			"permissionTitle": "Deze actie toestaan?",
+			"answered": "Antwoord: {option}",
+			"cancelled": "Er is geen antwoord gegeven",
+			"notice": {
+				"restored": "Bestanden hersteld naar dit punt",
+				"restoreFailed": "De bestanden konden niet worden hersteld",
+				"signedIn": "Ingelogd"
+			},
+			"moreOptions": "Meer opties",
+			"signInHint": "Log in bij de agent en verstuur je bericht opnieuw.",
+			"branch": "Branch {branch}",
+			"jumpToLatest": "Naar nieuwste"
+		},
+		"tool": {
+			"untitled": "Toolaanroep",
+			"status": {
+				"pending": "Wachten",
+				"in_progress": "Actief",
+				"failed": "Mislukt"
+			},
+			"group": {
+				"read": {
+					"one": "{count} bestand gelezen",
+					"other": "{count} bestanden gelezen"
+				},
+				"search": {
+					"one": "{count} zoekopdracht",
+					"other": "{count} zoekopdrachten"
+				},
+				"fetch": {
+					"one": "{count} pagina opgehaald",
+					"other": "{count} pagina's opgehaald"
+				},
+				"think": {
+					"one": "{count} keer nagedacht",
+					"other": "{count} keer nagedacht"
+				},
+				"action": {
+					"one": "{count} actie",
+					"other": "{count} acties"
+				}
+			}
+		},
+		"composer": {
+			"label": "Bericht aan de agent",
+			"placeholder": "Antwoord, @ om iets toe te voegen, / voor opdrachten",
+			"addContext": "Context toevoegen",
+			"send": "Verstuur",
+			"removeAttachment": "Verwijder {label}",
+			"tabs": "Tabbladen",
+			"folders": "Mappen",
+			"fromPage": "Van de pagina",
+			"more": "Meer",
+			"selection": "Selectie",
+			"screenshot": "Schermafbeelding",
+			"file": "Bestand {path}",
+			"fileHint": "Typ een pad om een projectbestand toe te voegen",
+			"commands": "Opdrachten",
+			"files": "Bestanden",
+			"image": "Afbeelding"
+		},
+		"ask": {
+			"label": "Vraag een agent",
+			"placeholder": "Vraag een agent, @ om iets toe te voegen",
+			"thisPage": "Deze pagina",
+			"agent": "Agent",
+			"loadingAgents": "Agents laden...",
+			"project": "Project",
+			"chooseProject": "Kies een project",
+			"chooseFolder": "Kies map...",
+			"ownCopy": "Eigen kopie",
+			"ownCopyHint": "Laat de agent aan een eigen kopie van het project werken (een git-worktree)",
+			"openBeside": "openen",
+			"openBackground": "op de achtergrond",
+			"start": "Start"
+		},
+		"row": {
+			"untitled": "Nieuw gesprek",
+			"working": "Bezig",
+			"failed": "Gestopt met een fout",
+			"changes": "{added} regels toegevoegd, {removed} verwijderd",
+			"pages": {
+				"one": "{count} pagina",
+				"other": "{count} pagina's"
+			},
+			"showPages": "Toon pagina's",
+			"hidePages": "Verberg pagina's"
+		},
+		"question": {
+			"allow": "Sta toe",
+			"allowAlways": "Altijd",
+			"reject": "Weiger",
+			"rejectAlways": "Nooit"
+		},
+		"badge": {
+			"title": "Agents",
+			"waiting": {
+				"one": "Agents, {count} wacht op je",
+				"other": "Agents, {count} wachten op je"
+			},
+			"new": "Nieuw",
+			"needsYou": "Wacht op je",
+			"running": "Actief",
+			"done": "Klaar",
+			"finished": "Afgerond",
+			"empty": "Geen gesprek wacht op je"
+		},
+		"status": {
+			"working": "Bezig",
+			"waiting": "Wacht op je",
+			"stopHint": "Esc om te stoppen"
+		},
+		"work": {
+			"images": {
+				"one": "{count} afbeelding",
+				"other": "{count} afbeeldingen"
+			},
+			"verb": {
+				"read": "Gelezen",
+				"edit": "Bewerkt",
+				"delete": "Verwijderd",
+				"move": "Verplaatst",
+				"search": "Gezocht",
+				"fetch": "Opgehaald"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} bestand gelezen",
+					"other": "{count} bestanden gelezen"
+				},
+				"edit": {
+					"one": "{count} bestand bewerkt",
+					"other": "{count} bestanden bewerkt"
+				},
+				"execute": {
+					"one": "{count} opdracht uitgevoerd",
+					"other": "{count} opdrachten uitgevoerd"
+				},
+				"search": {
+					"one": "{count} keer gezocht",
+					"other": "{count} keer gezocht"
+				},
+				"fetch": {
+					"one": "{count} pagina opgehaald",
+					"other": "{count} pagina's opgehaald"
+				},
+				"think": {
+					"one": "{count} keer nagedacht",
+					"other": "{count} keer nagedacht"
+				},
+				"browser": {
+					"one": "{count} keer de browser gebruikt",
+					"other": "{count} keer de browser gebruikt"
+				},
+				"tool": {
+					"one": "{count} tool gebruikt",
+					"other": "{count} tools gebruikt"
+				}
+			},
+			"exit": "Exitcode {code}",
+			"showAll": {
+				"one": "Toon {count} regel",
+				"other": "Toon alle {count} regels"
+			},
+			"showLess": "Toon de laatste regels"
+		},
+		"turn": {
+			"workedFor": "{duration} gewerkt",
+			"stopped": "Gestopt",
+			"files": {
+				"one": "{count} bestand gewijzigd",
+				"other": "{count} bestanden gewijzigd"
+			},
+			"review": "Bekijken",
+			"copy": "Antwoord kopiëren",
+			"copied": "Gekopieerd"
+		},
+		"image": {
+			"unavailable": "Afbeelding niet beschikbaar",
+			"open": "Afbeelding openen",
+			"viewer": "Afbeelding",
+			"previous": "Vorige afbeelding",
+			"next": "Volgende afbeelding",
+			"counter": "{index} van {total}"
+		},
+		"markdown": {
+			"preview": "Voorvertoning",
+			"openPreview": "Voorvertoning openen in een tabblad",
+			"view": "Weergeven als",
+			"code": "Code",
+			"copy": "Code kopiëren",
+			"copied": "Gekopieerd"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Leg dit project uit",
+					"prompt": "Leg uit hoe dit project is opgebouwd: de belangrijkste onderdelen, hoe ze samenhangen en waar je moet beginnen met lezen."
+				},
+				"fixBug": {
+					"label": "Zoek en los een bug op",
+					"prompt": "Zoek een bug in dit project, leg uit waardoor die ontstaat en los hem dan op."
+				},
+				"tests": {
+					"label": "Schrijf tests voor...",
+					"prompt": "Schrijf tests voor "
+				}
+			}
 		}
 	}
 }

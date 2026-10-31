@@ -150,6 +150,7 @@ extension MainWindowController {
         }
         didCompleteSessionRestore = true
         context.startArchiveSweep()
+        registerRestoredConversations()
         scheduleHiddenSpacePreload()
         flushPendingExternalURLs()
         // The active tab's web view is built once the chrome has applied its state (initialStateApplied):

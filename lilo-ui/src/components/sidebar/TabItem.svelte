@@ -520,6 +520,16 @@
           </svg>
         </span>
       </div>
+    {:else if tab.kind === "agent"}
+      <!-- An agent tab outside its conversation row, as in a split: the mascot, with the state on it. -->
+      <div class="tab-icon-inner" in:iconMorph out:iconMorph>
+        <span class="agent-tile" aria-hidden="true">
+          {#await import("../agents/MascotGlyph.svelte") then { default: MascotGlyph }}<MascotGlyph />{/await}
+          {#if terminalPip}
+            <span class="terminal-pip" data-state={terminalPip} in:pipPop out:pipPop={{ leaving: true }}></span>
+          {/if}
+        </span>
+      </div>
     {:else if hangSeconds !== null}
       <div class="tab-icon-inner" in:iconMorph out:iconMorph>
         <svg class="hang-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -967,6 +977,14 @@
     border-radius: 50%;
     background: var(--agents);
     box-shadow: 0 0 0 1.5px var(--sidebar-bg);
+  }
+
+  .agent-tile {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
   }
 
   .terminal-pip {

@@ -41,6 +41,26 @@ the prompt is a safety net for well-behaved agents, not a sandbox.
 
 Agents can never see or act on a private Space.
 
+## Conversations with your agents
+
+Settings > AI agents > "Conversations with your agents" lets you talk to the agents you use
+(Claude Agent, Codex, Gemini CLI, Copilot and the rest of the [ACP registry](https://agentclientprotocol.com))
+in Lilo itself, over the Agent Client Protocol. Lilo still ships no model and holds no API key: it
+starts the agent's own program, which signs in to its own account (your subscription) and talks to
+its own service. Agents installed with `npx` or `uvx` need Node.js or uv; binaries come from the
+registry and are checked against its SHA-256 before they run.
+
+- `⇧⌘A` asks an agent from anywhere, with the page you read and its selection attached; `@` adds
+  tabs, folders, a screenshot or files.
+- A conversation lives where you started it: a row of its own in the sidebar (or the tab strip),
+  with the pages the agent opens under it. The agent drives only those pages, through the same
+  tools and the same approvals as above, and never one of your tabs or a private Space.
+- When an agent asks for a permission, the row turns amber and the question opens under it; the
+  Agents badge next to the keep-awake sun counts what waits on you, and lists every conversation.
+- Each prompt saves the project's files as they were, so "Restore to here" can bring them back, and
+  Undo puts back one file. An agent can work on its own copy of the project (a git worktree).
+- An idle agent stops after ten minutes and resumes its session when you come back.
+
 ## Known limitations
 
 - An agent's `emulate` and an extension's `chrome.debugger` on the same tab share its Web Inspector, so each can overwrite the other's user agent, media and init script.

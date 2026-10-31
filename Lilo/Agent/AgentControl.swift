@@ -546,6 +546,8 @@ final class AgentSession {
     let connection: AgentConnection
     /// `clientInfo.name` from the MCP handshake: what the agent calls itself, never a credential.
     var clientName = "Agent"
+    /// Set for the agent of a Lilo conversation: its tabs go in that conversation's folder, in this Space.
+    var conversationSpaceId: UUID?
     /// The process behind the connection, which approvals bind to: see `AgentControl.clientIdentity`. Empty until
     /// the handshake reads it.
     var identity = ""

@@ -176,7 +176,8 @@
 			"profiles": "個人檔案",
 			"otherAppLinks": "來自其他 App 的連結",
 			"blockerCategories": "Lilo 阻擋的內容",
-			"blockerExceptions": "清單與例外"
+			"blockerExceptions": "清單與例外",
+			"agentConversations": "對話"
 		},
 		"searchPlaceholder": "搜尋設定",
 		"searchResultsTitle": "搜尋結果",
@@ -542,6 +543,16 @@
 				"title": "依網站設定",
 				"description": "各網站的權限、縮放比例與儲存的資料。",
 				"keywords": "網站 權限 cookie 縮放 資料 儲存空間"
+			},
+			"agentsEnabled": {
+				"title": "與你的代理程式對話",
+				"description": "在分頁中與 Claude Code、Codex、Gemini 等代理程式對話，使用你自己的訂閱。Lilo 本身不含 AI。",
+				"keywords": "代理程式 AI ACP 聊天 對話 詢問 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "代理程式完成時通知",
+				"description": "你未在檢視的對話完成時發出通知。",
+				"keywords": "代理程式 通知 提醒 完成 結束"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "封存未釘選分頁",
 		"pinnedTabs": "釘選分頁",
 		"openTabs": "已開啟分頁",
-		"dropToPin": "放下以釘選"
+		"dropToPin": "放下以釘選",
+		"askAgent": "詢問代理程式"
 	},
 	"bookmarks": {
 		"groupLabel": "書籤分頁",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "上層檔案夾",
 		"Name": "名稱",
 		"Size": "大小",
-		"Date Modified": "修改日期"
+		"Date Modified": "修改日期",
+		"%@ could not be downloaded.": "無法下載 %@。",
+		"%@ could not be installed.": "無法安裝 %@。",
+		"%@ did not match its checksum and was not installed.": "%@ 的檢查碼不符，未安裝。",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ 需要 Node.js：請從 nodejs.org 安裝，然後再試一次。",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ 需要 uv：請從 astral.sh/uv 安裝，然後再試一次。",
+		"Choose": "選擇",
+		"New Conversation": "新對話",
+		"Screenshot of %@": "%@ 的截圖",
+		"Sign in in the terminal Lilo opened, then send your message again.": "請在 Lilo 開啟的終端機中登入，然後再次傳送訊息。",
+		"The agent stopped (code %d).": "代理程式已停止（代碼 %d）。",
+		"This agent is no longer in the ACP registry.": "此代理程式已不在 ACP 登錄檔中。",
+		"Always Allow": "一律允許",
+		"Ask an Agent": "詢問代理程式",
+		"Review Changes": "檢視變更",
+		"Show Pages": "顯示頁面",
+		"Hide Pages": "隱藏頁面",
+		"Close Conversation": "關閉對話",
+		"Pasted image": "貼上的圖片"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,254 @@
 			"ellipse": "橢圓",
 			"text": "文字",
 			"pen": "畫筆"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "停止",
+			"mode": "模式",
+			"context": "已使用 {percent}% 的脈絡",
+			"ownCopy": "獨立副本",
+			"ownCopyHint": "在專案的獨立副本中工作。可從「變更」合併。",
+			"starting": "正在啟動代理程式...",
+			"errorHint": "傳送訊息即可重試。",
+			"showEarlier": {
+				"one": "顯示前 {count} 個項目",
+				"other": "顯示前 {count} 個項目"
+			},
+			"queued": {
+				"one": "{count} 則訊息排隊中",
+				"other": "{count} 則訊息排隊中"
+			},
+			"queuedHint": "代理程式完成後傳送。按 Cmd Return 立即傳送。",
+			"thought": "思考",
+			"restoreToHere": "回復到此處",
+			"restoreConfirm": "要將專案檔案回復到這則訊息時的狀態嗎？",
+			"restore": "回復",
+			"reviewChanges": "在「變更」中檢閱",
+			"undo": "還原",
+			"keep": "保留",
+			"undone": "已還原",
+			"kept": "已保留",
+			"moreLines": {
+				"one": "還有 {count} 行",
+				"other": "還有 {count} 行"
+			},
+			"plan": "計畫",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "待辦",
+				"in_progress": "進行中",
+				"completed": "已完成"
+			},
+			"permissionTitle": "要允許此動作嗎？",
+			"answered": "回答：{option}",
+			"cancelled": "未作答",
+			"notice": {
+				"restored": "檔案已回復到此處",
+				"restoreFailed": "無法回復檔案",
+				"signedIn": "已登入"
+			},
+			"moreOptions": "更多選項",
+			"signInHint": "請透過代理程式登入，然後重新傳送訊息。",
+			"branch": "分支 {branch}",
+			"jumpToLatest": "跳到最新"
+		},
+		"tool": {
+			"untitled": "工具呼叫",
+			"status": {
+				"pending": "等待中",
+				"in_progress": "執行中",
+				"failed": "失敗"
+			},
+			"group": {
+				"read": {
+					"one": "讀取了 {count} 個檔案",
+					"other": "讀取了 {count} 個檔案"
+				},
+				"search": {
+					"one": "{count} 次搜尋",
+					"other": "{count} 次搜尋"
+				},
+				"fetch": {
+					"one": "取得了 {count} 個頁面",
+					"other": "取得了 {count} 個頁面"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"action": {
+					"one": "{count} 個動作",
+					"other": "{count} 個動作"
+				}
+			}
+		},
+		"composer": {
+			"label": "傳訊息給代理程式",
+			"placeholder": "回覆，@ 加入內容，/ 使用指令",
+			"addContext": "加入脈絡",
+			"send": "傳送",
+			"removeAttachment": "移除 {label}",
+			"tabs": "分頁",
+			"folders": "資料夾",
+			"fromPage": "來自頁面",
+			"more": "更多",
+			"selection": "所選內容",
+			"screenshot": "截圖",
+			"file": "檔案 {path}",
+			"fileHint": "輸入路徑以附加專案檔案",
+			"commands": "指令",
+			"files": "檔案",
+			"image": "圖片"
+		},
+		"ask": {
+			"label": "詢問代理程式",
+			"placeholder": "詢問代理程式，@ 加入內容",
+			"thisPage": "此頁面",
+			"agent": "代理程式",
+			"loadingAgents": "正在載入代理程式...",
+			"project": "專案",
+			"chooseProject": "選擇專案",
+			"chooseFolder": "選擇資料夾...",
+			"ownCopy": "獨立副本",
+			"ownCopyHint": "讓代理程式在專案的獨立副本（git worktree）中工作",
+			"openBeside": "開啟",
+			"openBackground": "在背景",
+			"start": "開始"
+		},
+		"row": {
+			"untitled": "新對話",
+			"working": "工作中",
+			"failed": "因錯誤而停止",
+			"changes": "新增 {added} 行，刪除 {removed} 行",
+			"pages": {
+				"one": "{count} 個頁面",
+				"other": "{count} 個頁面"
+			},
+			"showPages": "顯示頁面",
+			"hidePages": "隱藏頁面"
+		},
+		"question": {
+			"allow": "允許",
+			"allowAlways": "一律允許",
+			"reject": "拒絕",
+			"rejectAlways": "一律拒絕"
+		},
+		"badge": {
+			"title": "代理程式",
+			"waiting": {
+				"one": "代理程式，{count} 個正在等你",
+				"other": "代理程式，{count} 個正在等你"
+			},
+			"new": "新",
+			"needsYou": "等你處理",
+			"running": "執行中",
+			"done": "完成",
+			"finished": "已結束",
+			"empty": "沒有需要你處理的對話"
+		},
+		"status": {
+			"working": "工作中",
+			"waiting": "等你處理",
+			"stopHint": "按 Esc 停止"
+		},
+		"work": {
+			"images": {
+				"one": "{count} 張圖片",
+				"other": "{count} 張圖片"
+			},
+			"verb": {
+				"read": "讀取",
+				"edit": "編輯",
+				"delete": "刪除",
+				"move": "移動",
+				"search": "搜尋",
+				"fetch": "擷取"
+			},
+			"summary": {
+				"read": {
+					"one": "讀取了 {count} 個檔案",
+					"other": "讀取了 {count} 個檔案"
+				},
+				"edit": {
+					"one": "編輯了 {count} 個檔案",
+					"other": "編輯了 {count} 個檔案"
+				},
+				"execute": {
+					"one": "執行了 {count} 個指令",
+					"other": "執行了 {count} 個指令"
+				},
+				"search": {
+					"one": "搜尋了 {count} 次",
+					"other": "搜尋了 {count} 次"
+				},
+				"fetch": {
+					"one": "擷取了 {count} 個網頁",
+					"other": "擷取了 {count} 個網頁"
+				},
+				"think": {
+					"one": "思考了 {count} 次",
+					"other": "思考了 {count} 次"
+				},
+				"browser": {
+					"one": "使用了 {count} 次瀏覽器",
+					"other": "使用了 {count} 次瀏覽器"
+				},
+				"tool": {
+					"one": "使用了 {count} 個工具",
+					"other": "使用了 {count} 個工具"
+				}
+			},
+			"exit": "結束代碼 {code}",
+			"showAll": {
+				"one": "顯示全部 {count} 行",
+				"other": "顯示全部 {count} 行"
+			},
+			"showLess": "只顯示最後幾行"
+		},
+		"turn": {
+			"workedFor": "工作了 {duration}",
+			"stopped": "已停止",
+			"files": {
+				"one": "變更了 {count} 個檔案",
+				"other": "變更了 {count} 個檔案"
+			},
+			"review": "檢閱",
+			"copy": "拷貝回覆",
+			"copied": "已拷貝"
+		},
+		"image": {
+			"unavailable": "無法顯示圖片",
+			"open": "打開圖片",
+			"viewer": "圖片",
+			"previous": "上一張圖片",
+			"next": "下一張圖片",
+			"counter": "第 {index} 張，共 {total} 張"
+		},
+		"markdown": {
+			"preview": "預覽",
+			"openPreview": "在分頁中打開預覽",
+			"view": "顯示為",
+			"code": "程式碼",
+			"copy": "拷貝程式碼",
+			"copied": "已拷貝"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "解釋這個專案",
+					"prompt": "解釋這個專案是如何組織的：它的主要部分、這些部分如何搭配，以及應該從哪裡開始閱讀。"
+				},
+				"fixBug": {
+					"label": "找出並修正一個錯誤",
+					"prompt": "在這個專案中找出一個錯誤，解釋它的成因，然後修正它。"
+				},
+				"tests": {
+					"label": "撰寫測試...",
+					"prompt": "為以下內容撰寫測試："
+				}
+			}
 		}
 	}
 }

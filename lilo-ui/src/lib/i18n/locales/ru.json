@@ -176,7 +176,8 @@
 			"profiles": "Профили",
 			"otherAppLinks": "Ссылки из других приложений",
 			"blockerCategories": "Что блокирует Lilo",
-			"blockerExceptions": "Списки и исключения"
+			"blockerExceptions": "Списки и исключения",
+			"agentConversations": "Разговоры"
 		},
 		"searchPlaceholder": "Поиск настроек",
 		"searchResultsTitle": "Результаты поиска",
@@ -542,6 +543,16 @@
 				"title": "Настройки сайтов",
 				"description": "Разрешения, масштаб и сохранённые данные каждого сайта.",
 				"keywords": "сайт разрешения cookie масштаб данные хранилище"
+			},
+			"agentsEnabled": {
+				"title": "Разговоры с вашими агентами",
+				"description": "Общайтесь с Claude Code, Codex, Gemini и другими агентами во вкладке, используя свои подписки. У Lilo нет собственного ИИ.",
+				"keywords": "агент ии ai acp чат разговор спросить claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Уведомлять, когда агент закончит",
+				"description": "Уведомление, когда завершается разговор, который вы сейчас не смотрите.",
+				"keywords": "агент уведомление оповещение готово завершено"
 			}
 		},
 		"devices": {
@@ -856,7 +867,8 @@
 		"clearUnpinnedTooltip": "Архивировать незакреплённые вкладки",
 		"pinnedTabs": "Закреплённые вкладки",
 		"openTabs": "Открытые вкладки",
-		"dropToPin": "Отпустите, чтобы закрепить"
+		"dropToPin": "Отпустите, чтобы закрепить",
+		"askAgent": "Спросить агента"
 	},
 	"bookmarks": {
 		"groupLabel": "Вкладки в закладках",
@@ -2236,7 +2248,25 @@
 		"Parent folder": "Родительская папка",
 		"Name": "Имя",
 		"Size": "Размер",
-		"Date Modified": "Дата изменения"
+		"Date Modified": "Дата изменения",
+		"%@ could not be downloaded.": "Не удалось загрузить %@.",
+		"%@ could not be installed.": "Не удалось установить %@.",
+		"%@ did not match its checksum and was not installed.": "%@ не совпал с контрольной суммой и не был установлен.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "Для %@ нужен Node.js: установите его с nodejs.org и повторите попытку.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "Для %@ нужен uv: установите его с astral.sh/uv и повторите попытку.",
+		"Choose": "Выбрать",
+		"New Conversation": "Новый разговор",
+		"Screenshot of %@": "Снимок экрана: %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Войдите в терминале, который открыл Lilo, и отправьте сообщение ещё раз.",
+		"The agent stopped (code %d).": "Агент остановился (код %d).",
+		"This agent is no longer in the ACP registry.": "Этого агента больше нет в реестре ACP.",
+		"Always Allow": "Всегда разрешать",
+		"Ask an Agent": "Спросить агента",
+		"Review Changes": "Просмотреть изменения",
+		"Show Pages": "Показать страницы",
+		"Hide Pages": "Скрыть страницы",
+		"Close Conversation": "Закрыть разговор",
+		"Pasted image": "Вставленное изображение"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2356,6 +2386,296 @@
 			"ellipse": "Эллипс",
 			"text": "Текст",
 			"pen": "Перо"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Остановить",
+			"mode": "Режим",
+			"context": "Использовано {percent}% контекста",
+			"ownCopy": "Отдельная копия",
+			"ownCopyHint": "Работает в отдельной копии проекта. Объедините её в разделе «Изменения».",
+			"starting": "Запуск агента...",
+			"errorHint": "Отправьте сообщение, чтобы повторить попытку.",
+			"showEarlier": {
+				"one": "Показать {count} предыдущий элемент",
+				"few": "Показать {count} предыдущих элемента",
+				"many": "Показать {count} предыдущих элементов",
+				"other": "Показать {count} предыдущего элемента"
+			},
+			"queued": {
+				"one": "{count} сообщение в очереди",
+				"few": "{count} сообщения в очереди",
+				"many": "{count} сообщений в очереди",
+				"other": "{count} сообщения в очереди"
+			},
+			"queuedHint": "Отправится, когда агент закончит. Cmd Return отправляет сразу.",
+			"thought": "Размышления",
+			"restoreToHere": "Восстановить до этого места",
+			"restoreConfirm": "Вернуть файлы проекта в состояние на момент этого сообщения?",
+			"restore": "Восстановить",
+			"reviewChanges": "Просмотреть в «Изменениях»",
+			"undo": "Отменить",
+			"keep": "Оставить",
+			"undone": "Отменено",
+			"kept": "Оставлено",
+			"moreLines": {
+				"one": "Ещё {count} строка",
+				"few": "Ещё {count} строки",
+				"many": "Ещё {count} строк",
+				"other": "Ещё {count} строки"
+			},
+			"plan": "План",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Предстоит",
+				"in_progress": "Выполняется",
+				"completed": "Готово"
+			},
+			"permissionTitle": "Разрешить это действие?",
+			"answered": "Ответ: {option}",
+			"cancelled": "Ответа не было",
+			"notice": {
+				"restored": "Файлы восстановлены до этого места",
+				"restoreFailed": "Не удалось восстановить файлы",
+				"signedIn": "Вход выполнен"
+			},
+			"moreOptions": "Другие параметры",
+			"signInHint": "Войдите через агента и отправьте сообщение снова.",
+			"branch": "Ветка {branch}",
+			"jumpToLatest": "К последним"
+		},
+		"tool": {
+			"untitled": "Вызов инструмента",
+			"status": {
+				"pending": "Ожидание",
+				"in_progress": "Выполняется",
+				"failed": "Ошибка"
+			},
+			"group": {
+				"read": {
+					"one": "Прочитан {count} файл",
+					"few": "Прочитано {count} файла",
+					"many": "Прочитано {count} файлов",
+					"other": "Прочитано {count} файла"
+				},
+				"search": {
+					"one": "{count} поиск",
+					"few": "{count} поиска",
+					"many": "{count} поисков",
+					"other": "{count} поиска"
+				},
+				"fetch": {
+					"one": "Загружена {count} страница",
+					"few": "Загружено {count} страницы",
+					"many": "Загружено {count} страниц",
+					"other": "Загружено {count} страницы"
+				},
+				"think": {
+					"one": "Размышлял {count} раз",
+					"few": "Размышлял {count} раза",
+					"many": "Размышлял {count} раз",
+					"other": "Размышлял {count} раза"
+				},
+				"action": {
+					"one": "{count} действие",
+					"few": "{count} действия",
+					"many": "{count} действий",
+					"other": "{count} действия"
+				}
+			}
+		},
+		"composer": {
+			"label": "Сообщение агенту",
+			"placeholder": "Ответ, @ чтобы что-то добавить, / для команд",
+			"addContext": "Добавить контекст",
+			"send": "Отправить",
+			"removeAttachment": "Убрать {label}",
+			"tabs": "Вкладки",
+			"folders": "Папки",
+			"fromPage": "Со страницы",
+			"more": "Ещё",
+			"selection": "Выделение",
+			"screenshot": "Снимок экрана",
+			"file": "Файл {path}",
+			"fileHint": "Введите путь, чтобы прикрепить файл проекта",
+			"commands": "Команды",
+			"files": "Файлы",
+			"image": "Изображение"
+		},
+		"ask": {
+			"label": "Спросить агента",
+			"placeholder": "Спросите агента, @ чтобы что-то добавить",
+			"thisPage": "Эта страница",
+			"agent": "Агент",
+			"loadingAgents": "Загрузка агентов...",
+			"project": "Проект",
+			"chooseProject": "Выберите проект",
+			"chooseFolder": "Выбрать папку...",
+			"ownCopy": "Отдельная копия",
+			"ownCopyHint": "Агент работает в отдельной копии проекта (git worktree)",
+			"openBeside": "открыть",
+			"openBackground": "в фоне",
+			"start": "Начать"
+		},
+		"row": {
+			"untitled": "Новый разговор",
+			"working": "Работает",
+			"failed": "Остановлен из-за ошибки",
+			"changes": "Добавлено строк: {added}, удалено: {removed}",
+			"pages": {
+				"one": "{count} страница",
+				"few": "{count} страницы",
+				"many": "{count} страниц",
+				"other": "{count} страницы"
+			},
+			"showPages": "Показать страницы",
+			"hidePages": "Скрыть страницы"
+		},
+		"question": {
+			"allow": "Разрешить",
+			"allowAlways": "Всегда",
+			"reject": "Запретить",
+			"rejectAlways": "Никогда"
+		},
+		"badge": {
+			"title": "Агенты",
+			"waiting": {
+				"one": "Агенты, {count} ждёт вас",
+				"few": "Агенты, {count} ждут вас",
+				"many": "Агенты, {count} ждут вас",
+				"other": "Агенты, {count} ждут вас"
+			},
+			"new": "Новый",
+			"needsYou": "Ждёт вас",
+			"running": "Выполняется",
+			"done": "Готово",
+			"finished": "Завершено",
+			"empty": "Нет разговоров, которые ждут вас"
+		},
+		"status": {
+			"working": "Работает",
+			"waiting": "Ждёт вас",
+			"stopHint": "Esc, чтобы остановить"
+		},
+		"work": {
+			"images": {
+				"one": "{count} изображение",
+				"few": "{count} изображения",
+				"many": "{count} изображений",
+				"other": "{count} изображения"
+			},
+			"verb": {
+				"read": "Прочитан",
+				"edit": "Изменён",
+				"delete": "Удалён",
+				"move": "Перемещён",
+				"search": "Поиск",
+				"fetch": "Загружено"
+			},
+			"summary": {
+				"read": {
+					"one": "прочитан {count} файл",
+					"few": "прочитано {count} файла",
+					"many": "прочитано {count} файлов",
+					"other": "прочитано {count} файла"
+				},
+				"edit": {
+					"one": "изменён {count} файл",
+					"few": "изменено {count} файла",
+					"many": "изменено {count} файлов",
+					"other": "изменено {count} файла"
+				},
+				"execute": {
+					"one": "выполнена {count} команда",
+					"few": "выполнено {count} команды",
+					"many": "выполнено {count} команд",
+					"other": "выполнено {count} команды"
+				},
+				"search": {
+					"one": "{count} поиск",
+					"few": "{count} поиска",
+					"many": "{count} поисков",
+					"other": "{count} поиска"
+				},
+				"fetch": {
+					"one": "загружена {count} страница",
+					"few": "загружено {count} страницы",
+					"many": "загружено {count} страниц",
+					"other": "загружено {count} страницы"
+				},
+				"think": {
+					"one": "размышлял {count} раз",
+					"few": "размышлял {count} раза",
+					"many": "размышлял {count} раз",
+					"other": "размышлял {count} раза"
+				},
+				"browser": {
+					"one": "браузер использован {count} раз",
+					"few": "браузер использован {count} раза",
+					"many": "браузер использован {count} раз",
+					"other": "браузер использован {count} раза"
+				},
+				"tool": {
+					"one": "использован {count} инструмент",
+					"few": "использовано {count} инструмента",
+					"many": "использовано {count} инструментов",
+					"other": "использовано {count} инструмента"
+				}
+			},
+			"exit": "Код выхода {code}",
+			"showAll": {
+				"one": "Показать {count} строку",
+				"few": "Показать все {count} строки",
+				"many": "Показать все {count} строк",
+				"other": "Показать все {count} строки"
+			},
+			"showLess": "Показать последние строки"
+		},
+		"turn": {
+			"workedFor": "Работал {duration}",
+			"stopped": "Остановлено",
+			"files": {
+				"one": "Изменён {count} файл",
+				"few": "Изменено {count} файла",
+				"many": "Изменено {count} файлов",
+				"other": "Изменено {count} файла"
+			},
+			"review": "Просмотреть",
+			"copy": "Копировать ответ",
+			"copied": "Скопировано"
+		},
+		"image": {
+			"unavailable": "Изображение недоступно",
+			"open": "Открыть изображение",
+			"viewer": "Изображение",
+			"previous": "Предыдущее изображение",
+			"next": "Следующее изображение",
+			"counter": "{index} из {total}"
+		},
+		"markdown": {
+			"preview": "Предпросмотр",
+			"openPreview": "Открыть предпросмотр во вкладке",
+			"view": "Показать как",
+			"code": "Код",
+			"copy": "Копировать код",
+			"copied": "Скопировано"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Объяснить этот проект",
+					"prompt": "Объясни, как устроен этот проект: его основные части, как они связаны между собой и с чего начать чтение."
+				},
+				"fixBug": {
+					"label": "Найти и исправить ошибку",
+					"prompt": "Найди ошибку в этом проекте, объясни, чем она вызвана, а затем исправь её."
+				},
+				"tests": {
+					"label": "Написать тесты для...",
+					"prompt": "Напиши тесты для "
+				}
+			}
 		}
 	}
 }

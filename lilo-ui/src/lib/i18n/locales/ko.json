@@ -176,7 +176,8 @@
 			"profiles": "프로필",
 			"otherAppLinks": "다른 앱의 링크",
 			"blockerCategories": "Lilo가 차단하는 항목",
-			"blockerExceptions": "목록 및 예외"
+			"blockerExceptions": "목록 및 예외",
+			"agentConversations": "대화"
 		},
 		"searchPlaceholder": "설정 검색",
 		"searchResultsTitle": "검색 결과",
@@ -542,6 +543,16 @@
 				"title": "사이트별 설정",
 				"description": "각 사이트의 권한, 확대/축소 및 저장된 데이터입니다.",
 				"keywords": "사이트 권한 쿠키 확대 축소 데이터 저장 공간"
+			},
+			"agentsEnabled": {
+				"title": "에이전트와의 대화",
+				"description": "Claude Code, Codex, Gemini 등 여러 에이전트와 내 구독으로 탭에서 대화합니다. Lilo에는 자체 AI가 없습니다.",
+				"keywords": "에이전트 AI ACP 채팅 대화 질문 Claude Codex Gemini Copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "에이전트가 끝나면 알림",
+				"description": "보고 있지 않은 대화가 끝나면 알려 줍니다.",
+				"keywords": "에이전트 알림 경고 완료 종료"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "고정되지 않은 탭 보관",
 		"pinnedTabs": "고정된 탭",
 		"openTabs": "열린 탭",
-		"dropToPin": "놓아서 고정"
+		"dropToPin": "놓아서 고정",
+		"askAgent": "에이전트에게 묻기"
 	},
 	"bookmarks": {
 		"groupLabel": "책갈피로 저장된 탭",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "상위 폴더",
 		"Name": "이름",
 		"Size": "크기",
-		"Date Modified": "수정일"
+		"Date Modified": "수정일",
+		"%@ could not be downloaded.": "%@을(를) 다운로드할 수 없습니다.",
+		"%@ could not be installed.": "%@을(를) 설치할 수 없습니다.",
+		"%@ did not match its checksum and was not installed.": "%@의 체크섬이 일치하지 않아 설치하지 않았습니다.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@에는 Node.js가 필요합니다. nodejs.org에서 설치한 후 다시 시도하세요.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@에는 uv가 필요합니다. astral.sh/uv에서 설치한 후 다시 시도하세요.",
+		"Choose": "선택",
+		"New Conversation": "새 대화",
+		"Screenshot of %@": "%@ 스크린샷",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Lilo가 연 터미널에서 로그인한 다음 메시지를 다시 보내세요.",
+		"The agent stopped (code %d).": "에이전트가 중지되었습니다(코드 %d).",
+		"This agent is no longer in the ACP registry.": "이 에이전트는 더 이상 ACP 레지스트리에 없습니다.",
+		"Always Allow": "항상 허용",
+		"Ask an Agent": "에이전트에게 묻기",
+		"Review Changes": "변경 사항 검토",
+		"Show Pages": "페이지 보기",
+		"Hide Pages": "페이지 숨기기",
+		"Close Conversation": "대화 닫기",
+		"Pasted image": "붙여넣은 이미지"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,254 @@
 			"ellipse": "타원",
 			"text": "텍스트",
 			"pen": "펜"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "중지",
+			"mode": "모드",
+			"context": "컨텍스트 {percent}% 사용",
+			"ownCopy": "별도 사본",
+			"ownCopyHint": "프로젝트의 별도 사본에서 작업합니다. 변경사항에서 병합하세요.",
+			"starting": "에이전트 시작 중...",
+			"errorHint": "다시 시도하려면 메시지를 보내세요.",
+			"showEarlier": {
+				"one": "이전 항목 {count}개 보기",
+				"other": "이전 항목 {count}개 보기"
+			},
+			"queued": {
+				"one": "대기 중인 메시지 {count}개",
+				"other": "대기 중인 메시지 {count}개"
+			},
+			"queuedHint": "에이전트가 끝나면 전송됩니다. Cmd Return을 누르면 바로 보냅니다.",
+			"thought": "생각",
+			"restoreToHere": "여기까지 복원",
+			"restoreConfirm": "프로젝트 파일을 이 메시지 시점으로 되돌릴까요?",
+			"restore": "복원",
+			"reviewChanges": "변경사항에서 검토",
+			"undo": "실행 취소",
+			"keep": "유지",
+			"undone": "취소됨",
+			"kept": "유지됨",
+			"moreLines": {
+				"one": "{count}줄 더",
+				"other": "{count}줄 더"
+			},
+			"plan": "계획",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "할 일",
+				"in_progress": "진행 중",
+				"completed": "완료"
+			},
+			"permissionTitle": "이 작업을 허용할까요?",
+			"answered": "답변: {option}",
+			"cancelled": "답변하지 않음",
+			"notice": {
+				"restored": "파일을 이 시점으로 복원함",
+				"restoreFailed": "파일을 복원할 수 없습니다",
+				"signedIn": "로그인됨"
+			},
+			"moreOptions": "추가 옵션",
+			"signInHint": "에이전트로 로그인한 다음 메시지를 다시 보내세요.",
+			"branch": "브랜치 {branch}",
+			"jumpToLatest": "최신으로 이동"
+		},
+		"tool": {
+			"untitled": "도구 호출",
+			"status": {
+				"pending": "대기 중",
+				"in_progress": "실행 중",
+				"failed": "실패"
+			},
+			"group": {
+				"read": {
+					"one": "파일 {count}개 읽음",
+					"other": "파일 {count}개 읽음"
+				},
+				"search": {
+					"one": "검색 {count}회",
+					"other": "검색 {count}회"
+				},
+				"fetch": {
+					"one": "페이지 {count}개 가져옴",
+					"other": "페이지 {count}개 가져옴"
+				},
+				"think": {
+					"one": "{count}회 생각함",
+					"other": "{count}회 생각함"
+				},
+				"action": {
+					"one": "작업 {count}개",
+					"other": "작업 {count}개"
+				}
+			}
+		},
+		"composer": {
+			"label": "에이전트에게 메시지 보내기",
+			"placeholder": "답장, @로 항목 추가, /로 명령",
+			"addContext": "컨텍스트 추가",
+			"send": "보내기",
+			"removeAttachment": "{label} 제거",
+			"tabs": "탭",
+			"folders": "폴더",
+			"fromPage": "페이지에서",
+			"more": "더 보기",
+			"selection": "선택 영역",
+			"screenshot": "스크린샷",
+			"file": "파일 {path}",
+			"fileHint": "경로를 입력해 프로젝트 파일 첨부",
+			"commands": "명령",
+			"files": "파일",
+			"image": "이미지"
+		},
+		"ask": {
+			"label": "에이전트에게 묻기",
+			"placeholder": "에이전트에게 묻기, @로 항목 추가",
+			"thisPage": "이 페이지",
+			"agent": "에이전트",
+			"loadingAgents": "에이전트 불러오는 중...",
+			"project": "프로젝트",
+			"chooseProject": "프로젝트 선택",
+			"chooseFolder": "폴더 선택...",
+			"ownCopy": "별도 사본",
+			"ownCopyHint": "에이전트가 프로젝트의 별도 사본(git worktree)에서 작업하게 합니다",
+			"openBeside": "열기",
+			"openBackground": "백그라운드에서",
+			"start": "시작"
+		},
+		"row": {
+			"untitled": "새 대화",
+			"working": "작업 중",
+			"failed": "오류로 중지됨",
+			"changes": "{added}줄 추가, {removed}줄 삭제",
+			"pages": {
+				"one": "페이지 {count}개",
+				"other": "페이지 {count}개"
+			},
+			"showPages": "페이지 보기",
+			"hidePages": "페이지 숨기기"
+		},
+		"question": {
+			"allow": "허용",
+			"allowAlways": "항상 허용",
+			"reject": "거부",
+			"rejectAlways": "항상 거부"
+		},
+		"badge": {
+			"title": "에이전트",
+			"waiting": {
+				"one": "에이전트, {count}개가 확인 대기 중",
+				"other": "에이전트, {count}개가 확인 대기 중"
+			},
+			"new": "신규",
+			"needsYou": "확인 필요",
+			"running": "실행 중",
+			"done": "완료",
+			"finished": "종료됨",
+			"empty": "확인이 필요한 대화가 없습니다"
+		},
+		"status": {
+			"working": "작업 중",
+			"waiting": "확인 필요",
+			"stopHint": "Esc로 중지"
+		},
+		"work": {
+			"images": {
+				"one": "이미지 {count}개",
+				"other": "이미지 {count}개"
+			},
+			"verb": {
+				"read": "읽음",
+				"edit": "편집함",
+				"delete": "삭제함",
+				"move": "이동함",
+				"search": "검색함",
+				"fetch": "가져옴"
+			},
+			"summary": {
+				"read": {
+					"one": "파일 {count}개 읽음",
+					"other": "파일 {count}개 읽음"
+				},
+				"edit": {
+					"one": "파일 {count}개 편집함",
+					"other": "파일 {count}개 편집함"
+				},
+				"execute": {
+					"one": "명령 {count}개 실행함",
+					"other": "명령 {count}개 실행함"
+				},
+				"search": {
+					"one": "{count}회 검색함",
+					"other": "{count}회 검색함"
+				},
+				"fetch": {
+					"one": "페이지 {count}개 가져옴",
+					"other": "페이지 {count}개 가져옴"
+				},
+				"think": {
+					"one": "{count}회 생각함",
+					"other": "{count}회 생각함"
+				},
+				"browser": {
+					"one": "브라우저 {count}회 사용함",
+					"other": "브라우저 {count}회 사용함"
+				},
+				"tool": {
+					"one": "도구 {count}개 사용함",
+					"other": "도구 {count}개 사용함"
+				}
+			},
+			"exit": "종료 코드 {code}",
+			"showAll": {
+				"one": "{count}줄 모두 보기",
+				"other": "{count}줄 모두 보기"
+			},
+			"showLess": "마지막 줄만 보기"
+		},
+		"turn": {
+			"workedFor": "{duration} 동안 작업함",
+			"stopped": "중지됨",
+			"files": {
+				"one": "파일 {count}개 변경됨",
+				"other": "파일 {count}개 변경됨"
+			},
+			"review": "검토",
+			"copy": "응답 복사",
+			"copied": "복사됨"
+		},
+		"image": {
+			"unavailable": "이미지를 표시할 수 없음",
+			"open": "이미지 열기",
+			"viewer": "이미지",
+			"previous": "이전 이미지",
+			"next": "다음 이미지",
+			"counter": "{index} / {total}"
+		},
+		"markdown": {
+			"preview": "미리보기",
+			"openPreview": "미리보기를 탭에서 열기",
+			"view": "보기 방식",
+			"code": "코드",
+			"copy": "코드 복사",
+			"copied": "복사됨"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "이 프로젝트 설명",
+					"prompt": "이 프로젝트의 구성을 설명해 주세요: 주요 부분, 서로 어떻게 연결되는지, 어디서부터 읽기 시작하면 좋은지."
+				},
+				"fixBug": {
+					"label": "버그 찾아서 수정",
+					"prompt": "이 프로젝트에서 버그를 찾아 원인을 설명한 다음 수정해 주세요."
+				},
+				"tests": {
+					"label": "테스트 작성...",
+					"prompt": "다음에 대한 테스트를 작성해 주세요: "
+				}
+			}
 		}
 	}
 }

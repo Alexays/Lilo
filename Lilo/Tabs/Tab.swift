@@ -5,8 +5,9 @@ struct Tab: Sendable, Equatable {
     static let placeholderTitle = "New Tab"
 
     enum Kind: String, Sendable {
-        /// `changes` shows the diff of the repository at `cwd`.
-        case web, terminal, changes
+        /// `changes` shows the diff of the repository at `cwd`; `agent` is a conversation with an ACP agent,
+        /// the first tab of its own folder, whose other tabs are the pages the agent opened.
+        case web, terminal, changes, agent
     }
 
     let id: UUID
@@ -64,8 +65,11 @@ struct Tab: Sendable, Equatable {
     var spaceId: UUID?
     var windowId: UUID?
     var kind = Kind.web
-    /// Terminal tabs: the shell's working directory, where a restored tab starts again.
+    /// Terminal tabs: the shell's working directory, where a restored tab starts again. Agent tabs: the project.
     var cwd: String?
+    /// Agent tabs: the agent's id in the ACP registry, and its session, resumed with `session/load`.
+    var agentId: String?
+    var agentSessionId: String?
     /// Terminal tabs: the last interactive or long command, typed at a restored tab's first prompt.
     var resumeCommand: String?
     /// Terminal tabs, runtime only: the branch checked out in `cwd`, empty outside a repository.
@@ -93,7 +97,8 @@ struct Tab: Sendable, Equatable {
         homeURL: URL? = nil, homeTitle: String? = nil,
         homeFaviconDataURL: String? = nil, homeFaviconDominantColor: String? = nil,
         groupId: UUID? = nil, spaceId: UUID? = nil, windowId: UUID? = nil,
-        kind: Kind = .web, cwd: String? = nil, resumeCommand: String? = nil, customTitle: String? = nil
+        kind: Kind = .web, cwd: String? = nil, resumeCommand: String? = nil, customTitle: String? = nil,
+        agentId: String? = nil, agentSessionId: String? = nil
     ) {
         self.id = id; self.url = url; self.title = title
         self.faviconDataURL = faviconDataURL; self.faviconDominantColor = faviconDominantColor
@@ -106,6 +111,7 @@ struct Tab: Sendable, Equatable {
         self.spaceId = spaceId; self.windowId = windowId
         self.kind = kind; self.cwd = cwd; self.resumeCommand = resumeCommand
         self.customTitle = customTitle
+        self.agentId = agentId; self.agentSessionId = agentSessionId
     }
 
     static func fallbackTitle(for url: URL?) -> String {
@@ -250,6 +256,8 @@ struct Tab: Sendable, Equatable {
                 put(field, kind.rawValue)
             case .cwd:
                 put(field, cwd ?? "")
+            case .agentId:
+                put(field, agentId ?? "")
             case .gitBranch:
                 put(field, gitBranch)
             case .diffAdded:

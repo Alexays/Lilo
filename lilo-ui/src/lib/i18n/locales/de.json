@@ -176,7 +176,8 @@
 			"profiles": "Profile",
 			"otherAppLinks": "Links aus anderen Apps",
 			"blockerCategories": "Was Lilo blockiert",
-			"blockerExceptions": "Listen und Ausnahmen"
+			"blockerExceptions": "Listen und Ausnahmen",
+			"agentConversations": "Unterhaltungen"
 		},
 		"searchPlaceholder": "Einstellungen durchsuchen",
 		"searchResultsTitle": "Suchergebnisse",
@@ -542,6 +543,16 @@
 				"title": "Einstellungen nach Website",
 				"description": "Berechtigungen, Zoom und gespeicherte Daten jeder Website.",
 				"keywords": "website berechtigungen cookies zoom daten speicher"
+			},
+			"agentsEnabled": {
+				"title": "Unterhaltungen mit deinen Agenten",
+				"description": "Sprich in einem Tab mit Claude Code, Codex, Gemini und anderen Agenten, mit deinen eigenen Abos. Lilo hat keine eigene KI.",
+				"keywords": "agent ki acp chat unterhaltung fragen claude codex gemini copilot"
+			},
+			"agentsNotifyDone": {
+				"title": "Benachrichtigen, wenn ein Agent fertig ist",
+				"description": "Eine Mitteilung, wenn eine Unterhaltung fertig ist, die du gerade nicht ansiehst.",
+				"keywords": "agent mitteilung benachrichtigung fertig abgeschlossen"
 			}
 		},
 		"devices": {
@@ -850,7 +861,8 @@
 		"clearUnpinnedTooltip": "Nicht angeheftete Tabs archivieren",
 		"pinnedTabs": "Angeheftete Tabs",
 		"openTabs": "Offene Tabs",
-		"dropToPin": "Zum Anheften ablegen"
+		"dropToPin": "Zum Anheften ablegen",
+		"askAgent": "Einen Agenten fragen"
 	},
 	"bookmarks": {
 		"groupLabel": "Tabs mit Lesezeichen",
@@ -2216,7 +2228,25 @@
 		"Parent folder": "Übergeordneter Ordner",
 		"Name": "Name",
 		"Size": "Größe",
-		"Date Modified": "Änderungsdatum"
+		"Date Modified": "Änderungsdatum",
+		"%@ could not be downloaded.": "%@ konnte nicht heruntergeladen werden.",
+		"%@ could not be installed.": "%@ konnte nicht installiert werden.",
+		"%@ did not match its checksum and was not installed.": "%@ stimmte nicht mit seiner Prüfsumme überein und wurde nicht installiert.",
+		"%@ needs Node.js: install it from nodejs.org, then try again.": "%@ benötigt Node.js: Installiere es von nodejs.org und versuche es dann erneut.",
+		"%@ needs uv: install it from astral.sh/uv, then try again.": "%@ benötigt uv: Installiere es von astral.sh/uv und versuche es dann erneut.",
+		"Choose": "Auswählen",
+		"New Conversation": "Neue Unterhaltung",
+		"Screenshot of %@": "Bildschirmfoto von %@",
+		"Sign in in the terminal Lilo opened, then send your message again.": "Melde dich in dem Terminal an, das Lilo geöffnet hat, und sende deine Nachricht dann erneut.",
+		"The agent stopped (code %d).": "Der Agent wurde beendet (Code %d).",
+		"This agent is no longer in the ACP registry.": "Dieser Agent ist nicht mehr in der ACP-Registry.",
+		"Always Allow": "Immer erlauben",
+		"Ask an Agent": "Einen Agenten fragen",
+		"Review Changes": "Änderungen prüfen",
+		"Show Pages": "Seiten einblenden",
+		"Hide Pages": "Seiten ausblenden",
+		"Close Conversation": "Unterhaltung schließen",
+		"Pasted image": "Eingefügtes Bild"
 	},
 	"whatsNew": {
 		"version": "Lilo {version}",
@@ -2334,6 +2364,254 @@
 			"ellipse": "Ellipse",
 			"text": "Text",
 			"pen": "Stift"
+		}
+	},
+	"agents": {
+		"conversation": {
+			"stop": "Stoppen",
+			"mode": "Modus",
+			"context": "{percent} % des Kontexts belegt",
+			"ownCopy": "Eigene Kopie",
+			"ownCopyHint": "Arbeitet an einer eigenen Kopie des Projekts. Führe sie unter Änderungen zusammen.",
+			"starting": "Agent wird gestartet...",
+			"errorHint": "Sende eine Nachricht, um es erneut zu versuchen.",
+			"showEarlier": {
+				"one": "{count} früheren Eintrag anzeigen",
+				"other": "{count} frühere Einträge anzeigen"
+			},
+			"queued": {
+				"one": "{count} Nachricht in der Warteschlange",
+				"other": "{count} Nachrichten in der Warteschlange"
+			},
+			"queuedHint": "Wird gesendet, wenn der Agent fertig ist. Cmd Return sendet sofort.",
+			"thought": "Gedanken",
+			"restoreToHere": "Bis hierher wiederherstellen",
+			"restoreConfirm": "Projektdateien auf den Stand dieser Nachricht zurücksetzen?",
+			"restore": "Wiederherstellen",
+			"reviewChanges": "In Änderungen prüfen",
+			"undo": "Widerrufen",
+			"keep": "Behalten",
+			"undone": "Rückgängig gemacht",
+			"kept": "Behalten",
+			"moreLines": {
+				"one": "{count} weitere Zeile",
+				"other": "{count} weitere Zeilen"
+			},
+			"plan": "Plan",
+			"planProgress": "{done}/{total}",
+			"planStatus": {
+				"pending": "Offen",
+				"in_progress": "In Arbeit",
+				"completed": "Erledigt"
+			},
+			"permissionTitle": "Diese Aktion erlauben?",
+			"answered": "Antwort: {option}",
+			"cancelled": "Keine Antwort gegeben",
+			"notice": {
+				"restored": "Dateien auf diesen Stand zurückgesetzt",
+				"restoreFailed": "Die Dateien konnten nicht wiederhergestellt werden",
+				"signedIn": "Angemeldet"
+			},
+			"moreOptions": "Weitere Optionen",
+			"signInHint": "Melde dich beim Agenten an und sende deine Nachricht dann erneut.",
+			"branch": "Branch {branch}",
+			"jumpToLatest": "Zum Neuesten"
+		},
+		"tool": {
+			"untitled": "Tool-Aufruf",
+			"status": {
+				"pending": "Wartet",
+				"in_progress": "Läuft",
+				"failed": "Fehlgeschlagen"
+			},
+			"group": {
+				"read": {
+					"one": "{count} Datei gelesen",
+					"other": "{count} Dateien gelesen"
+				},
+				"search": {
+					"one": "{count} Suche",
+					"other": "{count} Suchen"
+				},
+				"fetch": {
+					"one": "{count} Seite abgerufen",
+					"other": "{count} Seiten abgerufen"
+				},
+				"think": {
+					"one": "{count}-mal nachgedacht",
+					"other": "{count}-mal nachgedacht"
+				},
+				"action": {
+					"one": "{count} Aktion",
+					"other": "{count} Aktionen"
+				}
+			}
+		},
+		"composer": {
+			"label": "Nachricht an den Agenten",
+			"placeholder": "Antworten, @ zum Hinzufügen, / für Befehle",
+			"addContext": "Kontext hinzufügen",
+			"send": "Senden",
+			"removeAttachment": "{label} entfernen",
+			"tabs": "Tabs",
+			"folders": "Ordner",
+			"fromPage": "Von der Seite",
+			"more": "Mehr",
+			"selection": "Auswahl",
+			"screenshot": "Bildschirmfoto",
+			"file": "Datei {path}",
+			"fileHint": "Gib einen Pfad ein, um eine Projektdatei anzuhängen",
+			"commands": "Befehle",
+			"files": "Dateien",
+			"image": "Bild"
+		},
+		"ask": {
+			"label": "Einen Agenten fragen",
+			"placeholder": "Einen Agenten fragen, @ zum Hinzufügen",
+			"thisPage": "Diese Seite",
+			"agent": "Agent",
+			"loadingAgents": "Agenten werden geladen...",
+			"project": "Projekt",
+			"chooseProject": "Projekt auswählen",
+			"chooseFolder": "Ordner auswählen...",
+			"ownCopy": "Eigene Kopie",
+			"ownCopyHint": "Den Agenten an einer eigenen Kopie des Projekts arbeiten lassen (ein Git-Worktree)",
+			"openBeside": "öffnen",
+			"openBackground": "im Hintergrund",
+			"start": "Starten"
+		},
+		"row": {
+			"untitled": "Neue Unterhaltung",
+			"working": "Arbeitet",
+			"failed": "Mit einem Fehler gestoppt",
+			"changes": "{added} Zeilen hinzugefügt, {removed} entfernt",
+			"pages": {
+				"one": "{count} Seite",
+				"other": "{count} Seiten"
+			},
+			"showPages": "Seiten einblenden",
+			"hidePages": "Seiten ausblenden"
+		},
+		"question": {
+			"allow": "Erlauben",
+			"allowAlways": "Immer",
+			"reject": "Ablehnen",
+			"rejectAlways": "Nie"
+		},
+		"badge": {
+			"title": "Agenten",
+			"waiting": {
+				"one": "Agenten, {count} wartet auf dich",
+				"other": "Agenten, {count} warten auf dich"
+			},
+			"new": "Neu",
+			"needsYou": "Wartet auf dich",
+			"running": "Läuft",
+			"done": "Fertig",
+			"finished": "Abgeschlossen",
+			"empty": "Keine Unterhaltung wartet auf dich"
+		},
+		"status": {
+			"working": "Arbeitet",
+			"waiting": "Wartet auf dich",
+			"stopHint": "Esc zum Stoppen"
+		},
+		"work": {
+			"images": {
+				"one": "{count} Bild",
+				"other": "{count} Bilder"
+			},
+			"verb": {
+				"read": "Gelesen",
+				"edit": "Bearbeitet",
+				"delete": "Gelöscht",
+				"move": "Verschoben",
+				"search": "Gesucht",
+				"fetch": "Abgerufen"
+			},
+			"summary": {
+				"read": {
+					"one": "{count} Datei gelesen",
+					"other": "{count} Dateien gelesen"
+				},
+				"edit": {
+					"one": "{count} Datei bearbeitet",
+					"other": "{count} Dateien bearbeitet"
+				},
+				"execute": {
+					"one": "{count} Befehl ausgeführt",
+					"other": "{count} Befehle ausgeführt"
+				},
+				"search": {
+					"one": "{count}-mal gesucht",
+					"other": "{count}-mal gesucht"
+				},
+				"fetch": {
+					"one": "{count} Seite abgerufen",
+					"other": "{count} Seiten abgerufen"
+				},
+				"think": {
+					"one": "{count}-mal nachgedacht",
+					"other": "{count}-mal nachgedacht"
+				},
+				"browser": {
+					"one": "{count}-mal den Browser genutzt",
+					"other": "{count}-mal den Browser genutzt"
+				},
+				"tool": {
+					"one": "{count} Tool genutzt",
+					"other": "{count} Tools genutzt"
+				}
+			},
+			"exit": "Exit-Code {code}",
+			"showAll": {
+				"one": "Alle {count} Zeile anzeigen",
+				"other": "Alle {count} Zeilen anzeigen"
+			},
+			"showLess": "Nur die letzten Zeilen anzeigen"
+		},
+		"turn": {
+			"workedFor": "Hat {duration} gearbeitet",
+			"stopped": "Gestoppt",
+			"files": {
+				"one": "{count} Datei geändert",
+				"other": "{count} Dateien geändert"
+			},
+			"review": "Prüfen",
+			"copy": "Antwort kopieren",
+			"copied": "Kopiert"
+		},
+		"image": {
+			"unavailable": "Bild nicht verfügbar",
+			"open": "Bild öffnen",
+			"viewer": "Bild",
+			"previous": "Vorheriges Bild",
+			"next": "Nächstes Bild",
+			"counter": "{index} von {total}"
+		},
+		"markdown": {
+			"preview": "Vorschau",
+			"openPreview": "Vorschau in einem Tab öffnen",
+			"view": "Anzeigen als",
+			"code": "Code",
+			"copy": "Code kopieren",
+			"copied": "Kopiert"
+		},
+		"empty": {
+			"suggestions": {
+				"explain": {
+					"label": "Dieses Projekt erklären",
+					"prompt": "Erkläre, wie dieses Projekt aufgebaut ist: seine Hauptteile, wie sie zusammenspielen und wo man mit dem Lesen anfängt."
+				},
+				"fixBug": {
+					"label": "Einen Fehler finden und beheben",
+					"prompt": "Finde einen Fehler in diesem Projekt, erkläre seine Ursache und behebe ihn."
+				},
+				"tests": {
+					"label": "Tests schreiben für...",
+					"prompt": "Schreibe Tests für "
+				}
+			}
 		}
 	}
 }

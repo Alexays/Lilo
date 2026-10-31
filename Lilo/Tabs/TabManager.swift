@@ -67,6 +67,8 @@ final class TabManager {
     /// The sleeping tab the pointer rested on, loading ahead of a click: it goes back to sleep unless it is shown.
     private var warmedTab: (id: UUID, engine: WKWebViewTab)?
 
+    let agentChatHost = AgentChatHost()
+
     init(engineFactory: WKEngineFactory, terminalHost: TerminalHost = TerminalHost(), changesHost: ChangesHost = ChangesHost()) {
         self.engineFactory = engineFactory
         self.terminalHost = terminalHost
@@ -127,7 +129,7 @@ final class TabManager {
 
     /// The view already showing a tab, without starting a shell or reviving a discarded engine.
     func loadedContentView(forTabId id: UUID) -> NSView? {
-        terminalHost.view(for: id) ?? changesHost.view(for: id) ?? engineHost.engine(for: id)?.view
+        terminalHost.view(for: id) ?? changesHost.view(for: id) ?? agentChatHost.view(for: id) ?? engineHost.engine(for: id)?.view
     }
 
     /// The view that shows a tab: its terminal (shell started on first use), its diff, or its live
@@ -137,6 +139,7 @@ final class TabManager {
         switch tab.kind {
         case .terminal: return terminalHost.ensureView(for: tab)
         case .changes: return changesHost.ensureView(for: tab)
+        case .agent: return agentChatHost.ensureView(for: tab.id)
         case .web: return ensureLiveEngine(forTabId: id)?.view
         }
     }
