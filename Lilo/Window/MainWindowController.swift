@@ -27,6 +27,11 @@ private final class LiloWindow: NSWindow {
            engine.isAgentControlled, !controller.displayedTabIds.contains(engine.id) {
             return false
         }
+        // A page under its tab-modal dialog hands the keyboard to the dialog.
+        if let webView = responder as? WKWebView,
+           let dialog = webView.subviews.last(where: { $0 is TabModalDialogView }) as? TabModalDialogView {
+            return dialog.focus()
+        }
         return super.makeFirstResponder(responder)
     }
 }

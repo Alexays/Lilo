@@ -1,3 +1,0 @@
-kind: Fixed
-body: A sign-in prompt from a background tab waits for that tab to show, instead of blocking the whole app or opening over another tab.
-time: 2026-10-30T17:42:45.325097+01:00

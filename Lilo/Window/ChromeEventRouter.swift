@@ -74,6 +74,8 @@ final class ChromeEventRouter {
     @discardableResult
     func routeUnhandledGlobalEvent(_ event: NSEvent) -> Bool {
         guard let contentView = currentContentView() else { return false }
+        // A page under its tab-modal dialog takes no keys.
+        if contentView.subviews.contains(where: { $0 is TabModalDialogView }) { return false }
 
         switch event.type {
         case .keyDown:
@@ -167,7 +169,9 @@ final class ChromeEventRouter {
               routesDragToChrome?(sender) != true else {
             return .chrome
         }
-        return currentContentView() == nil ? .none : .content
+        // A page under its tab-modal dialog takes no drop.
+        guard let content = currentContentView(), !content.subviews.contains(where: { $0 is TabModalDialogView }) else { return .none }
+        return .content
     }
 
     /// Turn the machine's ordered `CaptureEffect`s into real chrome / content-destination

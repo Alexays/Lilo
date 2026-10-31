@@ -338,13 +338,13 @@ final class WKEngineFactory {
     func createTab(configuration: Configuration) -> WKWebViewTab {
         let webView: WKWebView
         if configuration.nativeConfiguration != nil {
-            webView = WKWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: true))
+            webView = PageWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: true))
         } else {
             let store = configuration.dataStore ?? sharedDefaultDataStore
             let poolKey = WarmKey(content: contentControllerKey(for: store), profileId: configuration.profileId)
             // Consult the warm pool first: a hit skips the config + feature-flag pass entirely.
             webView = takeWarm(key: poolKey)
-                ?? WKWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: false))
+                ?? PageWebView(frame: .zero, configuration: configuredWebViewConfiguration(from: configuration, usesNativeConfiguration: false))
             if configuration.refillsWarmPool { scheduleWarmRefill(dataStore: store, key: poolKey) }
         }
 
@@ -1175,7 +1175,7 @@ final class WKEngineFactory {
             warmWebViewsByKey.removeValue(forKey: oldest)
             warmKeyOrder.removeFirst()
         }
-        let webView = WKWebView(frame: .zero, configuration: wkConfig)
+        let webView = PageWebView(frame: .zero, configuration: wkConfig)
         // A bare WKWebView is an unspawned shell, and this one carries the right per-data-store config, so
         // the tab that takes it reuses the process. Forced with a trivial script rather than about:blank,
         // which would commit a back-forward entry the back-swipe would land on.

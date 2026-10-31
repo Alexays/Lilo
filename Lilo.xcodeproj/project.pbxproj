@@ -21,6 +21,7 @@
 		03A635F8DEC31DDD0AF7359F /* MediaControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41F699A304DA693AFB801D0 /* MediaControl.swift */; };
 		03B9E8C8422190A213DF902E /* SessionPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9063A5C927EFCD47951BC114 /* SessionPersistence.swift */; };
 		04286CABF2965C3CB293520A /* WKEngineFactoryScriptletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41B43C831833AD0D8279C79E /* WKEngineFactoryScriptletTests.swift */; };
+		04F5D2FE5569F59A21652CA9 /* TabModalDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7903E95332ACF9AF41922079 /* TabModalDialog.swift */; };
 		0557133FDE9D0B01465A21A1 /* OmniboxBridgeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9701BB474C5D4FD7055B9993 /* OmniboxBridgeHandler.swift */; };
 		065A22042826A2D12C45B35D /* SpeedometerBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A092BFAA00A2246E685E3CD0 /* SpeedometerBenchmarkTests.swift */; };
 		065AFC84B5E000C6EC025732 /* ChromeMasquerade.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6CF8BC122165D6C530F812A /* ChromeMasquerade.swift */; };
@@ -1082,6 +1083,7 @@
 		77A9F93F481F043DDE4203B1 /* ArcSidebarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcSidebarTests.swift; sourceTree = "<group>"; };
 		7863654FA36B9E0C0EEC0F66 /* AgentMCP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentMCP.swift; sourceTree = "<group>"; };
 		786883466FCC11DD7DA60DB9 /* HistoryPageBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPageBridgeHandler.swift; sourceTree = "<group>"; };
+		7903E95332ACF9AF41922079 /* TabModalDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabModalDialog.swift; sourceTree = "<group>"; };
 		7919AA873183AC68E01F67AA /* MainWindowController+WindowChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MainWindowController+WindowChrome.swift"; sourceTree = "<group>"; };
 		792B9177EDFB6A1F310FE9C0 /* BrowserImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserImporterTests.swift; sourceTree = "<group>"; };
 		79A5723DF4A4CDEF65E81429 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
@@ -2156,6 +2158,7 @@
 				B052B5D0D33F8C42E574F2D2 /* PageWorld.swift */,
 				6AA1880CDAF01D266BA850DA /* PiPController.swift */,
 				9BFD96136290CB7C3BD8CE35 /* SerialBridge.swift */,
+				7903E95332ACF9AF41922079 /* TabModalDialog.swift */,
 				BD72EED90A74A2317DEDC69B /* ViewSourceSchemeHandler.swift */,
 				8B38EC438C7FA8FF4C00D009 /* WebInspectorSupport.swift */,
 				EC69FC1191B1A8A54A2E9858 /* WebViewPrivateAccessors.swift */,
@@ -3214,6 +3217,7 @@
 				980571B97F7BFCD2F19DB67B /* TabManager+StateMirror.swift in Sources */,
 				C9AFDED31F32818635E25A13 /* TabManager+StateTransfer.swift in Sources */,
 				D9A5731AA0ECC8B90A15AC7A /* TabManager.swift in Sources */,
+				04F5D2FE5569F59A21652CA9 /* TabModalDialog.swift in Sources */,
 				01653A6ACB1BC27CE693330F /* TabShareBridge.swift in Sources */,
 				E1D2E5E4640EAC8592753017 /* TabShareBridgeHandler.swift in Sources */,
 				82D2624459EF3FE5D915D91B /* TabShareEncoder.swift in Sources */,

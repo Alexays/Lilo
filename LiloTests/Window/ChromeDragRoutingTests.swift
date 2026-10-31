@@ -26,6 +26,18 @@ final class ChromeDragRoutingTests: XCTestCase {
         )
     }
 
+    func testOverlayWebViewRefusesADropOnAPageUnderItsDialog() {
+        let harness = makeHarness()
+        let drag = TestDraggingInfo(location: NSPoint(x: 150, y: 150))
+        harness.destination.draggingEnteredResult = .copy
+        harness.destination.performDragOperationResult = true
+        harness.destination.addSubview(TabModalDialogView(title: "example.com says", message: "", acceptTitle: "OK", cancelTitle: nil) { _ in })
+
+        XCTAssertEqual(harness.overlay.draggingEntered(drag), [])
+        XCTAssertFalse(harness.overlay.performDragOperation(drag))
+        XCTAssertTrue(harness.destination.calls.isEmpty, "the page under the dialog never sees the drop")
+    }
+
     func testOverlayWebViewReentersContentDestinationWhenDragLeavesChromeZone() {
         let harness = makeHarness()
         let chromeDrag = TestDraggingInfo(location: NSPoint(x: 20, y: 180))

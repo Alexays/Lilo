@@ -71,7 +71,7 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: CallControls)
         func tab(_ tab: WKWebViewTab, didUpdatePictureInPicture isInPictureInPicture: Bool)
         func tab(_ tab: WKWebViewTab, didChangeResponsive responsive: Bool)
-        /// The page waits on a dialog held until its tab is shown, or no longer does.
+        /// The page waits on a dialog, or no longer does.
         func tab(_ tab: WKWebViewTab, didUpdateAwaitingDialog isAwaiting: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateTrackersBlocked count: Int)
         /// Stored per-site permission decision (granted/denied), or nil if undecided. Must NOT prompt.
@@ -435,9 +435,12 @@ final class WKWebViewTab: NSObject {
     private(set) var pageRequestedClose = false
     /// Holds the print-panel completion target alive for as long as the panel is up.
     private var pendingPrintProxy: PrintCompletionProxy?
-    /// A page dialog raised while the tab was off screen, run with true once the tab is shown, false
+    /// A beforeunload prompt raised while the tab was off screen, run with true once the tab is shown, false
     /// to dismiss it. The page is blocked until it is answered, and WebKit crashes on one never answered.
     private var queuedDialog: (@MainActor (Bool) -> Void)?
+    /// The alerts, confirms, prompts and sign-ins the page waits on: the first covers the page, the next shows once
+    /// it is answered.
+    private(set) var modalDialogs: [TabModalDialogView] = []
     /// The site of the page that showed the last alert, confirm or prompt, and the one whose further dialogs the user stopped.
     private var lastDialogOrigin: String?
     private var suppressedDialogOrigin: String?
@@ -452,6 +455,8 @@ final class WKWebViewTab: NSObject {
     /// Asks WebKit whether the page may close now, for a close the user asked for. False means a beforeunload
     /// handler is in the way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
     func tryClose() -> Bool {
+        // A page blocked on its dialog would never answer the close.
+        dismissModalDialogs()
         // A suspended page runs no beforeunload handler, and WebKit refuses _tryClose on it.
         guard !isFrozen else { return true }
         let closes = WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
@@ -637,6 +642,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func loadURL(_ url: URL) {
+        dismissModalDialogs()
         guard wake() else { return }
         if !isPrivateBrowsing { Self.logger.info("load source=app host=\(url.host ?? "nil", privacy: .private)") }
         pendingMainFrameURL = url
@@ -672,6 +678,7 @@ final class WKWebViewTab: NSObject {
     /// Shows the copy of `url` in the HTTP cache, for a page the network cannot serve. WebKit reports
     /// a cache miss as a cancellation, surfaced as `NSURLErrorResourceUnavailable`.
     func loadCachedCopy(of url: URL) {
+        dismissModalDialogs()
         guard wake() else { return }
         pendingMainFrameURL = url
         didAutoRetryProvisionalLoad = false
@@ -720,6 +727,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func goBack() {
+        dismissModalDialogs()
         guard wake() else { return }
         // The page the failed load was leaving is still there: Back returns to it, as leaving Chrome's error page does.
         if showsFailureOverPage {
@@ -733,6 +741,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func goForward() {
+        dismissModalDialogs()
         guard wake() else { return }
         webView.goForward()
     }
@@ -744,6 +753,7 @@ final class WKWebViewTab: NSObject {
     func goToHistoryItem(at index: Int, direction: WebNavigationHistoryDirection) {
         let items = historyList(for: direction)
         guard items.indices.contains(index), wake() else { return }
+        dismissModalDialogs()
         webView.go(to: items[index])
     }
 
@@ -810,6 +820,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func reload() {
+        dismissModalDialogs()
         guard wake() else { return }
         // A hung process never gets to the reload: it goes, and the termination recovery loads the page again.
         if isUnresponsive, webView.responds(to: Self.killContentProcess) {
@@ -822,6 +833,7 @@ final class WKWebViewTab: NSObject {
     }
 
     func reloadFromOrigin() {
+        dismissModalDialogs()
         guard wake() else { return }
         if !isPrivateBrowsing { Self.logger.info("load source=app-reload-origin host=\(self.currentURL?.host ?? "nil", privacy: .private)") }
         webView.reloadFromOrigin()
@@ -829,6 +841,8 @@ final class WKWebViewTab: NSObject {
 
     /// A suspended page has nothing loading.
     func stopLoading() {
+        // A load waiting on a sign-in stops with it.
+        dismissModalDialogs()
         guard !isFrozen else { return }
         isLoadingCachedCopy = false
         webView.stopLoading()
@@ -996,6 +1010,7 @@ final class WKWebViewTab: NSObject {
             webView.perform(Self.killContentProcess)
         }
         runQueuedDialog(presenting: false)
+        dismissModalDialogs()
         if isAudioPlayingObserverRegistered {
             webView.removeObserver(self, forKeyPath: "_isPlayingAudio")
             isAudioPlayingObserverRegistered = false
@@ -1483,6 +1498,7 @@ final class WKWebViewTab: NSObject {
     /// surfaces an error page rather than looping.
     private func recoverFromContentProcessTermination() {
         endNavigationSignpost("processEnded")
+        dismissModalDialogs()
         let now = Date()
         if !isPrivateBrowsing {
             Self.logger.error("""
@@ -1789,6 +1805,9 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         onMain { tab in
             CosmeticStyleSheets.shared.removeSheets(of: webView)
+            // A dialog of the page that left must not cover the new one, which a process swap commits while the old
+            // page still waits on it.
+            tab.dismissModalDialogs()
             // When a response forces a process swap (COOP) before the web view committed anything, WebKit can
             // commit the navigation in the old process and again, as an empty document, in the new one.
             if let navigation, navigation === tab.lastCommittedNavigation, !tab.didReloadEmptyCommit,
@@ -2008,8 +2027,8 @@ extension WKWebViewTab: WKNavigationDelegate {
     @objc(_webViewWebProcessDidBecomeUnresponsive:)
     nonisolated func webViewWebProcessDidBecomeUnresponsive(_ webView: WKWebView) {
         onMain { tab in
-            // A page waiting on a dialog, on screen or queued until its tab shows, is blocked by design too.
-            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, webView.window?.attachedSheet == nil else { return }
+            // A page waiting on a dialog is blocked by design too.
+            guard tab.pendingPrintProxy == nil, tab.queuedDialog == nil, tab.modalDialogs.isEmpty, webView.window?.attachedSheet == nil else { return }
             tab.isUnresponsive = true
         }
     }
@@ -2117,8 +2136,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                             guard let self else { return completionHandler(.cancelAuthenticationChallenge, nil) }
                             HTTPAuthChallengeHandler().resolve(
                                 challenge, keychainProfile: self.webView.configuration.websiteDataStore.identifier,
-                                whenShown: { show in self.runWhenShown { [weak self] in show($0 ? self?.webView.window : nil) } },
-                                completion: completionHandler
+                                present: self.presentModalDialog, completion: completionHandler
                             )
                         }
                     }
@@ -2496,7 +2514,7 @@ extension WKWebViewTab: WKUIDelegate {
                  completionHandler: @escaping @MainActor @Sendable () -> Void) {
         if agentDialogHandler?("alert(\(message)) dismissed") == true { completionHandler(); return }
         runPageDialog(dismiss: completionHandler) { suppress in
-            JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+            JSDialogPresenter.pageDialog(in: webView, frame: frame, message: message, suppress: suppress) { _ in completionHandler() }
         }
     }
 
@@ -2505,8 +2523,10 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (Bool) -> Void) {
         if agentDialogHandler?("confirm(\(message)) accepted") == true { completionHandler(true); return }
-        runPageDialog(dismiss: { completionHandler(false) }, present: { suppress in
-            JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        runPageDialog(dismiss: { completionHandler(false) }, make: { suppress in
+            JSDialogPresenter.pageDialog(
+                in: webView, frame: frame, message: message, cancelTitle: "Cancel".localized, suppress: suppress, completion: completionHandler
+            )
         })
     }
 
@@ -2516,28 +2536,54 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (String?) -> Void) {
         if agentDialogHandler?("prompt(\(prompt)) answered with its default") == true { completionHandler(defaultText ?? ""); return }
-        runPageDialog(dismiss: { completionHandler(nil) }, present: { suppress in
-            JSDialogPresenter.runPrompt(
-                in: webView, frame: frame, prompt: prompt, defaultText: defaultText, suppress: suppress, completion: completionHandler
-            )
+        runPageDialog(dismiss: { completionHandler(nil) }, make: { suppress in
+            let field = NSTextField(string: defaultText ?? "")
+            field.setAccessibilityLabel(prompt)
+            return JSDialogPresenter.pageDialog(
+                in: webView, frame: frame, message: prompt, field: field, cancelTitle: "Cancel".localized, suppress: suppress
+            ) { completionHandler($0 ? field.stringValue : nil) }
         })
     }
 
-    /// Runs a page's alert, confirm or prompt once its tab shows, or dismisses it at once when the user stopped the
-    /// page's dialogs. `present` gets a way to stop them from the page's second dialog on.
+    /// Covers the page with its alert, confirm or prompt, or dismisses it at once when the user stopped the page's
+    /// dialogs. `make` gets a way to stop them from the page's second dialog on.
     private func runPageDialog(
         dismiss: @escaping @MainActor () -> Void,
-        present: @escaping @MainActor ((@MainActor @Sendable () -> Void)?) -> Void
+        make: @MainActor ((@MainActor @Sendable () -> Void)?) -> TabModalDialogView
     ) {
         let origin = webView.url.map { "\($0.scheme ?? "")://\($0.host() ?? ""):\($0.port ?? 0)" } ?? ""
         guard origin != suppressedDialogOrigin else { return dismiss() }
-        runWhenShown { [weak self] show in
-            guard show, let self else { return dismiss() }
-            var suppress: (@MainActor @Sendable () -> Void)?
-            if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
-            lastDialogOrigin = origin
-            present(suppress)
+        var suppress: (@MainActor @Sendable () -> Void)?
+        if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
+        lastDialogOrigin = origin
+        presentModalDialog(make(suppress))
+    }
+
+    /// Covers the page with `dialog`, over this tab only: the window, the sidebar and the other tabs stay usable.
+    /// A tab off screen keeps it until it shows, and is marked as waiting for the user meanwhile.
+    func presentModalDialog(_ dialog: TabModalDialogView) {
+        dialog.onFinish = { [weak self, weak dialog] in
+            guard let self else { return }
+            modalDialogs.removeAll { $0 === dialog }
+            if let next = modalDialogs.first { next.show(in: webView) }
+            delegate?.tab(self, didUpdateAwaitingDialog: queuedDialog != nil || !modalDialogs.isEmpty)
         }
+        modalDialogs.append(dialog)
+        guard modalDialogs.count == 1 else { return }
+        dialog.show(in: webView)
+        delegate?.tab(self, didUpdateAwaitingDialog: true)
+    }
+
+    /// Answers every dialog the page waits on as dismissed: the tab closes or the user navigates away.
+    func dismissModalDialogs() {
+        guard !modalDialogs.isEmpty else { return }
+        let dialogs = modalDialogs
+        modalDialogs = []
+        for dialog in dialogs {
+            dialog.onFinish = nil
+            dialog.dismiss()
+        }
+        delegate?.tab(self, didUpdateAwaitingDialog: queuedDialog != nil)
     }
 
     /// In a window and not hidden: a background tab, a tab of another space or a hidden peek is not.
@@ -2556,7 +2602,7 @@ extension WKWebViewTab: WKUIDelegate {
     func runQueuedDialog(presenting: Bool) {
         guard let dialog = queuedDialog else { return }
         queuedDialog = nil
-        delegate?.tab(self, didUpdateAwaitingDialog: false)
+        delegate?.tab(self, didUpdateAwaitingDialog: !modalDialogs.isEmpty)
         dialog(presenting)
     }
 
