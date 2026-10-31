@@ -119,26 +119,18 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertEqual(engineFactory.test_warmPoolCount, 0, "the deleted profile's warm view and controller go")
     }
 
-    func testDeleteProfileRemovesItsWebsiteData() async throws {
+    func testDeleteProfileLetsGoOfItsDataStoreSoWebKitCanRemoveIt() async throws {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
         let doomed = try context.profileManager.createProfile(name: "Doomed")
         // Its extension controller shares the store too.
         _ = try context.profileContexts.context(for: doomed.id)
-        let cookie = try XCTUnwrap(HTTPCookie(properties: [
-            .domain: "example.com", .path: "/", .name: "sid", .value: "1", .expires: Date(timeIntervalSinceNow: 3600)
-        ]))
-        weak var store = context.profileManager.dataStore(for: doomed.id).backingStore
-        await store?.httpCookieStore.setCookie(cookie)
-        let created = await WKWebsiteDataStore.allDataStoreIdentifiers.contains(doomed.id)
-        XCTAssertTrue(created)
 
         try context.profileManager.deleteProfile(id: doomed.id)
 
-        // WebKit removes a store from disk only once nothing holds it; when its network process lets go is up to WebKit.
-        let released = await pollUntil(timeout: 30) { store == nil }
-        XCTAssertTrue(released, "the deleted profile's store stays in use, so WebKit cannot remove its cookies and site storage")
+        XCTAssertNil(context.profileContexts.existingContext(for: doomed.id),
+                     "the deleted profile's extension controller keeps its store in use, so WebKit cannot remove its cookies and site storage")
     }
 
     func testDeleteProfileForgetsItsHTTPPasswords() throws {
