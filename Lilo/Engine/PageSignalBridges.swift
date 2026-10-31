@@ -42,7 +42,9 @@ final class CallControlsBridge: NSObject, WKScriptMessageHandler {
             actions: Set(WKWebViewTab.callActions.filter { body[$0] as? Bool == true }),
             hasTrackControls: body["tracks"] as? Bool == true,
             hasPictureInPictureAction: body["pip"] as? Bool == true,
-            hasLiveConnection: body["rtc"] as? Bool == true
+            hasLiveConnection: body["rtc"] as? Bool == true,
+            hasPeerConnection: body["peer"] as? Bool == true,
+            holdsWebLock: body["lock"] as? Bool == true
         ))
     }
 }

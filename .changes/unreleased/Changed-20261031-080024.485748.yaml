@@ -1,0 +1,3 @@
+kind: Changed
+body: Background tabs connected to a peer, such as a web chat or an online game, or holding a lock other tabs may wait on, are no longer frozen when idle.
+time: 2026-10-31T08:00:24.485748+01:00

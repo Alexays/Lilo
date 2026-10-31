@@ -216,6 +216,13 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   the picker opens but no window can be selected, in every browser including Safari. Quit the
   overlay app while sharing.
 
+### Idle tab freezing
+
+- **Spared as in Chrome's freezing policy:** tabs playing or capturing media, loading, allowed to notify, holding a
+  connected `RTCPeerConnection` (data channels alone included) or a Web Lock.
+- **Caveat:** WebKit reports neither peers nor locks to the app, so Lilo tracks them in the top document's page world
+  only: a peer or a lock held by a frame or a worker does not keep its tab from freezing.
+
 ---
 
 ## Known Limitations (WebKit/macOS level - no fix possible in Lilo)

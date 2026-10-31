@@ -3634,6 +3634,68 @@ final class BrowserStateStoreTests: XCTestCase {
         XCTAssertTrue(newsEngine.isFrozen)
     }
 
+    func testFreezeIdleEnginesSparesAPageHoldingAPeerConnectionOrAWebLock() async throws {
+        let activeSpaceId = UUID(); let hiddenSpaceId = UUID(); let gameId = UUID(); let lockId = UUID()
+        let factory = WKEngineFactory()
+        let game = factory.createTab(configuration: WKEngineFactory.Configuration())
+        let locker = factory.createTab(configuration: WKEngineFactory.Configuration())
+        defer { game.teardown(); locker.teardown() }
+        factory.callControlsHandler = { webView, controls in
+            for engine in [game, locker] where engine.wkWebView === webView { engine.callControls = controls }
+        }
+        for engine in [game, locker] {
+            engine.wkWebView.loadHTMLString("<p>app</p>", baseURL: URL(string: "https://example.com/"))
+            let loaded = await pollUntil(timeout: 10) {
+                let condition = "location.href === 'https://example.com/' && document.readyState === 'complete'"
+                return ((try? await engine.wkWebView.evaluateJavaScript(condition)) as? Bool) == true
+            }
+            XCTAssertTrue(loaded)
+        }
+        // A loopback data channel, connected as a peer reports it: ICE between two local peers never completes on the CI runners.
+        _ = try await game.wkWebView.callAsyncJavaScript("""
+            const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+            a.createDataChannel('moves');
+            await b.setRemoteDescription(await a.createOffer());
+            Object.defineProperty(b, 'connectionState', { value: 'connected', configurable: true });
+            b.dispatchEvent(new Event('connectionstatechange'));
+            window.peers = [a, b];
+            """, contentWorld: .page)
+        _ = try await locker.wkWebView.callAsyncJavaScript("""
+            await new Promise(granted => navigator.locks.request('sync', () => new Promise(release => {
+              window.release = release;
+              granted();
+            })));
+            """, contentWorld: .page)
+        let reported = await pollUntil(timeout: 10) { game.callControls.hasPeerConnection && locker.callControls.holdsWebLock }
+        XCTAssertTrue(reported)
+
+        var gameTab = Tab(id: gameId, url: URL(string: "https://example.com/"), title: "Game", spaceId: hiddenSpaceId)
+        var lockTab = Tab(id: lockId, url: URL(string: "https://example.com/"), title: "Editor", spaceId: hiddenSpaceId)
+        gameTab.lastActiveAt = Date(timeIntervalSince1970: 1)
+        lockTab.lastActiveAt = Date(timeIntervalSince1970: 1)
+        let store = BrowserStateStore()
+        store.runtimeOverlay.setRuntimeState(from: gameTab)
+        store.runtimeOverlay.setRuntimeState(from: lockTab)
+        store.storeSpace(
+            id: hiddenSpaceId,
+            snapshot: makeSpaceSnapshot(tabs: [gameTab, lockTab], folders: [], treeItems: [], engines: [gameId: game, lockId: locker])
+        )
+        store.storeActiveSpace(id: activeSpaceId, snapshot: makeSpaceSnapshot(tabs: [], folders: [], treeItems: [], engines: [:]))
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+        XCTAssertFalse(game.isFrozen, "a web chat or game keeps its peer connected")
+        XCTAssertFalse(locker.isFrozen, "a frozen lock holder would hold up every tab waiting for the lock")
+
+        _ = try await game.wkWebView.evaluateJavaScript("delete window.peers[1].connectionState; window.peers.forEach(p => p.close()); true")
+        _ = try await locker.wkWebView.evaluateJavaScript("window.release(); true")
+        let ended = await pollUntil(timeout: 10) { !game.callControls.hasPeerConnection && !locker.callControls.holdsWebLock }
+        XCTAssertTrue(ended)
+
+        store.freezeIdleEngines(freezeThreshold: 60)
+        XCTAssertTrue(game.isFrozen)
+        XCTAssertTrue(locker.isFrozen)
+    }
+
     func testHiddenWindowFreezesEveryTabInsteadOfDiscarding() {
         let activeSpaceId = UUID(); let hiddenSpaceId = UUID()
         let visibleId = UUID(); let backgroundId = UUID(); let hiddenActiveId = UUID(); let hiddenOtherId = UUID()

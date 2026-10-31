@@ -722,7 +722,8 @@ final class BrowserStateStore {
 
     /// Freeze (suspend in place, not discard) idle engines in hidden spaces whose runtime `lastActiveAt`
     /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading,
-    /// allowed to notify) or already frozen. A frozen engine stays in memory (instant resume) but stops spending CPU/energy.
+    /// allowed to notify, holding a WebRTC peer or a Web Lock) or already frozen. A frozen engine stays in memory (instant resume)
+    /// but stops spending CPU/energy.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
@@ -745,7 +746,8 @@ final class BrowserStateStore {
                 guard snapshot.engines[tab.id] != nil, let url = tab.url, let scheme = url.scheme, let host = url.host else { continue }
                 if allowsNotifications(PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), spaceId) { protectedTabIds.insert(tab.id) }
             }
-            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading {
+            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading
+                && !engine.callControls.hasPeerConnection && !engine.callControls.holdsWebLock {
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard now.timeIntervalSince(last) > freezeThreshold else { continue }
                 engine.freeze(now: now)
