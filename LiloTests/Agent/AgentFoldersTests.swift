@@ -169,6 +169,26 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertFalse(isOpen(blank.id, in: spaceId))
     }
 
+    func testThePastFolderTheFirstAgentOfARunDeletesLeavesTheWindowShowingIt() async throws {
+        let past = try await newAgentTab()
+        let spaceId = try XCTUnwrap(agentsSpaceId)
+        let engine = try engine(forTab: past)
+        let pastId = try tabId(of: past)
+        window.switchToSpace(spaceId)
+        window.activateTabStateFirst(id: pastId)
+        XCTAssertTrue(window.contentContainerView.subviews.last === engine.view)
+        control.cleanedAgentsSpaceIds = []
+        let next = try AgentTestClient(path: socketURL)
+        _ = await next.initialize(name: "Codex")
+
+        _ = await next.callTool("tabs_create_mcp")
+
+        XCTAssertFalse(isOpen(pastId, in: spaceId))
+        XCTAssertNotEqual(window.tabManager.activeTabId, pastId)
+        let gone = await pollUntil(timeout: 2) { engine.view.superview == nil }
+        XCTAssertTrue(gone, "the deleted tab's page leaves the window that showed it")
+    }
+
     func testAnIdleAgentDoesNotHoldTheProfile() async throws {
         let other = try AgentTestClient(path: socketURL)
         _ = await other.initialize(name: "Codex")

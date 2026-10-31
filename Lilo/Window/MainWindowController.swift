@@ -497,7 +497,19 @@ final class MainWindowController: NSWindowController {
         if case let .setPinned(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isPinned { removedTab = tab }
         if case let .setBookmarked(_, tabId, false) = command, let tab = tabManager.tab(for: tabId), tab.isClosed, tab.isBookmarked { removedTab = tab }
         let removalRecorded = removedTab.map { recordClosedTabForRestore(id: $0.id) } ?? false
+        var deletedTabs: (spaceId: UUID, ids: Set<UUID>)?
+        if case let .deleteFolderWithTabs(spaceId, folderId) = command {
+            deletedTabs = (spaceId, Set(context.browserState.space(id: spaceId)?.spaceTab.tabIds(inFolder: folderId) ?? []))
+        }
         let changes = try browserRuntimeCoordinator.apply(command)
+        // A folder deleted with its tabs takes their pages along, or one a window shows stays on screen.
+        if let deletedTabs {
+            if let host = context.windows.windows(showing: deletedTabs.spaceId).first {
+                deletedTabs.ids.forEach(host.tabManager.discardPreparedTabRuntime)
+            } else {
+                context.browserState.discardParkedEngines(deletedTabs.ids, spaceId: deletedTabs.spaceId) { context.discardEngine($0) }
+            }
+        }
         if removalRecorded, let removedTab { announceUndoableClose(of: removedTab) }
         if let closingTerminal, tabManager.tab(for: closingTerminal) == nil { tabManager.terminalHost.forget(closingTerminal) }
         if case let .activateTab(_, tabId) = command { activationAnnouncedByCommand = tabId }

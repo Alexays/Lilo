@@ -126,7 +126,6 @@ extension AgentControl {
         }
         guard let commander = context.windows.activeWindow else { return }
         endedTabNumbers.formUnion(tabs.compactMap { tabNumbers[$0.id] })
-        context.browserState.discardParkedEngines(Set(tabs.map(\.id)), spaceId: spaceId) { context.discardEngine($0) }
         _ = try? commander.applyBrowserCommand(.deleteFolderWithTabs(spaceId: spaceId, folderId: folderId))
     }
 

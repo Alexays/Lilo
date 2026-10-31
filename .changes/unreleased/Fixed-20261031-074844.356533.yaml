@@ -1,0 +1,3 @@
+kind: Fixed
+body: Deleting a folder, or a new agent clearing a past agent's folder, no longer leaves the page of a tab it held on screen.
+time: 2026-10-31T07:48:44.356533+01:00
