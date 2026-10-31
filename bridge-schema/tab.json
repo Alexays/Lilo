@@ -39,6 +39,8 @@
     { "name": "navigationErrorDomain",     "type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
     { "name": "navigationErrorDescription","type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
     { "name": "navigationErrorURL",        "type": "string",  "tsOptional": false, "tsDefault": "\"\"" },
+    { "name": "isNotSecure",               "type": "bool",    "tsOptional": true,  "tsDefault": "false",
+      "_comment": "Web tabs: an https page whose certificate the user let through, or that loaded part of its content over http." },
     { "name": "kind",                      "type": "string",  "tsOptional": true, "tsDefault": "\"web\"",
       "_comment": "\"web\", \"terminal\" or \"changes\" (the diff of the repository at cwd)." },
     { "name": "cwd",                       "type": "string",  "tsOptional": true, "tsDefault": "\"\"",

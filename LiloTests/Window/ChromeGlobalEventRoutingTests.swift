@@ -101,6 +101,88 @@ final class ChromeGlobalEventRoutingTests: XCTestCase {
         XCTAssertTrue(wentBack)
     }
 
+    /// A shown window whose focused page is `engine`'s, with the window's key monitor running.
+    private func focusPage(of engine: WKWebViewTab, in controller: MainWindowController) throws -> NSWindow {
+        let window = try XCTUnwrap(controller.window)
+        window.alphaValue = 0
+        window.orderFrontRegardless()
+        window.setFrame(NSRect(x: -20000, y: -20000, width: 800, height: 600), display: false)
+        engine.view.frame = NSRect(x: 0, y: 0, width: 600, height: 400)
+        window.contentView?.addSubview(engine.view)
+        XCTAssertTrue(window.makeFirstResponder(engine.wkWebView))
+        // AppKit hands key equivalents, and WebKit's resend of a key the page let go, to the key window.
+        window.makeKey()
+        controller.chromeInput.startMonitoring()
+        return window
+    }
+
+    private func sendKey(_ characters: String, _ flags: NSEvent.ModifierFlags, keyCode: UInt16, to window: NSWindow) throws {
+        NSApp.sendEvent(try XCTUnwrap(NSEvent.keyEvent(
+            with: .keyDown, location: .zero, modifierFlags: flags, timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: window.windowNumber, context: nil, characters: characters, charactersIgnoringModifiers: characters,
+            isARepeat: false, keyCode: keyCode
+        )))
+    }
+
+    /// ⌘[ reaches the page first, as in Chrome, through a real WebKit round trip: an editor indenting with it
+    /// keeps the tab where it is, and a page that lets it go still goes back.
+    func testThePageGetsCommandBracketBeforeHistory() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let (controller, engine, first, second) = try await makeTabWithHistory(browserContext)
+        let webView = engine.wkWebView
+        let window = try focusPage(of: engine, in: controller)
+        defer { controller.chromeInput.stop() }
+        _ = try await webView.evaluateJavaScript(
+            "onkeydown = e => { if (e.metaKey && e.key == '[') { e.preventDefault(); document.title = 'indented' } }; true"
+        )
+
+        try sendKey("[", .command, keyCode: 33, to: window)
+        let indented = await pollUntil { webView.title == "indented" }
+        XCTAssertTrue(indented, "the page never saw ⌘[")
+        XCTAssertEqual(webView.backForwardList.currentItem?.url, second)
+
+        _ = try await webView.evaluateJavaScript("onkeydown = null; true")
+        try sendKey("[", .command, keyCode: 33, to: window)
+        let wentBack = await pollUntil { webView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack, "a key the page lets go still goes back")
+    }
+
+    /// Escape reaches the page first, as in Chrome: a dialog closing on it leaves the load going, and
+    /// a page that lets it go stops loading.
+    func testThePageGetsEscapeBeforeItStopsTheLoad() async throws {
+        let server = try await TinyHTTPServer { request in
+            if request.hasPrefix("GET /slow ") { Thread.sleep(forTimeInterval: 8) }
+            return ("200 OK", ["Content-Type: text/html"], Data("""
+                <script>onkeydown = e => { if (e.key == 'Escape') { e.preventDefault(); document.title = 'closed' } }</script>
+                <img src="/slow">
+                """.utf8))
+        }
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let controller = makeTestWindow(context, showing: space.id)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let webView = engine.wkWebView
+        engine.loadURL(try XCTUnwrap(URL(string: "http://127.0.0.1:\(server.port)/")))
+        let parsed = await pollUntil { (try? await webView.evaluateJavaScript("typeof onkeydown == 'function'")) as? Bool == true }
+        XCTAssertTrue(parsed)
+        let window = try focusPage(of: engine, in: controller)
+        defer { controller.chromeInput.stop() }
+
+        try sendKey("\u{1b}", [], keyCode: 53, to: window)
+        let closed = await pollUntil { webView.title == "closed" }
+        XCTAssertTrue(closed, "the page never saw Escape")
+        XCTAssertTrue(engine.isLoading)
+
+        _ = try await webView.evaluateJavaScript("onkeydown = null; true")
+        try sendKey("\u{1b}", [], keyCode: 53, to: window)
+        let stopped = await pollUntil(timeout: 3) { !engine.isLoading }
+        XCTAssertTrue(stopped, "Escape the page lets go stops the load")
+    }
+
     func testCmdLRemainsReservedToLilo() {
         let controller = MainWindowController()
         controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)

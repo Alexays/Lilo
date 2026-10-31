@@ -73,6 +73,27 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(entry?.title, "Second Title")
     }
 
+    func testATitleUpdateRenamesThePageWithoutCountingAVisit() throws {
+        let url = "https://example.com/app"
+        store.scheduleRecordVisit(url: url, title: "")
+        store.scheduleUpdateTitle(url: url, title: "Pending")
+        store.flushPendingWrites()
+        XCTAssertEqual(try store.entry(forURL: url)?.title, "Pending")
+
+        store.scheduleUpdateTitle(url: url, title: "Written")
+        store.flushPendingWrites()
+        store.scheduleUpdateTitle(url: url, title: "Superseded")
+        store.scheduleRecordVisit(url: url, title: "")
+        store.flushPendingWrites()
+        let entry = try store.entry(forURL: url)
+        XCTAssertEqual(entry?.title, "Superseded")
+        XCTAssertEqual(entry?.visitCount, 2)
+
+        store.scheduleUpdateTitle(url: "https://example.com/never-visited", title: "Nothing")
+        store.flushPendingWrites()
+        XCTAssertNil(try store.entry(forURL: "https://example.com/never-visited"))
+    }
+
     func testScheduleRecordVisitCoalescesPendingWritesForSameURLBeforeFlush() throws {
         // Two schedules land in the same in-memory batch (no flush between them): the pending
         // merge logic (`(existing?.visitCount ?? 0) + 1`) should still produce visitCount == 2

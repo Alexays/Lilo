@@ -83,7 +83,7 @@ final class ScriptTab: NSObject {
 }
 
 /// The `window` class extension of Lilo.sdef. Windows other than browser windows have no tabs, and
-/// neither has a window showing a private space, as for Shortcuts.
+/// neither has a window showing a private space, as for Shortcuts. A locked folder's tabs stay hidden.
 extension NSWindow {
     private var browserWindowController: MainWindowController? {
         guard let owner = windowController as? MainWindowController,
@@ -91,31 +91,35 @@ extension NSWindow {
         return owner
     }
 
+    private func scriptableTabs(of owner: MainWindowController) -> [Tab] {
+        owner.tabManager.openTabs.filter { owner.tabManager.protectingFolder(of: $0)?.isLocked != true }
+    }
+
     @objc var scriptTabs: [ScriptTab] {
         guard let owner = browserWindowController else { return [] }
-        return owner.tabManager.openTabs.map { ScriptTab(tabId: $0.id, owner: owner) }
+        return scriptableTabs(of: owner).map { ScriptTab(tabId: $0.id, owner: owner) }
     }
 
     @objc func valueInScriptTabsWithUniqueID(_ uniqueID: String) -> ScriptTab? {
         guard let owner = browserWindowController, let id = UUID(uuidString: uniqueID),
-              owner.tabManager.openTabs.contains(where: { $0.id == id }) else { return nil }
+              scriptableTabs(of: owner).contains(where: { $0.id == id }) else { return nil }
         return ScriptTab(tabId: id, owner: owner)
     }
 
     @objc var scriptActiveTab: ScriptTab? {
-        guard let owner = browserWindowController, let id = owner.tabManager.activeOpenTabId else { return nil }
+        guard let owner = browserWindowController, let id = owner.tabManager.visibleActiveTab?.id else { return nil }
         return ScriptTab(tabId: id, owner: owner)
     }
 
     @objc var scriptActiveTabIndex: Int {
         get {
-            guard let owner = browserWindowController, let id = owner.tabManager.activeOpenTabId,
-                  let index = owner.tabManager.openTabs.firstIndex(where: { $0.id == id }) else { return 0 }
+            guard let owner = browserWindowController, let id = owner.tabManager.visibleActiveTab?.id,
+                  let index = scriptableTabs(of: owner).firstIndex(where: { $0.id == id }) else { return 0 }
             return index + 1
         }
         set {
             guard let owner = browserWindowController else { return }
-            let tabs = owner.tabManager.openTabs
+            let tabs = scriptableTabs(of: owner)
             guard tabs.indices.contains(newValue - 1) else {
                 NSScriptCommand.current()?.scriptErrorNumber = errAENoSuchObject
                 return
@@ -132,7 +136,7 @@ extension NSWindow {
     /// KVC only treats `scriptTabs` as mutable when both insert and remove accessors exist.
     @objc func removeObjectFromScriptTabsAtIndex(_ index: Int) {
         guard let owner = browserWindowController else { return }
-        let tabs = owner.tabManager.openTabs
+        let tabs = scriptableTabs(of: owner)
         guard tabs.indices.contains(index) else { return }
         owner.closeTabStateFirst(id: tabs[index].id)
     }

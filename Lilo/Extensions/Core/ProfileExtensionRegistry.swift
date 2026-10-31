@@ -509,8 +509,8 @@ final class ProfileExtensionRegistry {
         let config = WKWebExtensionController.Configuration(identifier: profileId)
         let userContentController = config.webViewConfiguration.userContentController
         // Extension pages, workers and the cookies API see this profile's data, not the app default
-        // store. Returns the same store the profile's tabs use (WebKit keys stores by identifier).
-        let profileDataStore = WKWebsiteDataStore(forIdentifier: profileId)
+        // store: the same store the profile's tabs use.
+        let profileDataStore = WKEngineFactory.persistentDataStore(for: profileId)
         config.defaultWebsiteDataStore = profileDataStore
         config.webViewConfiguration.websiteDataStore = profileDataStore
         // Workers, popups and panels WebKit creates read Chrome in their user agent, as extensions expect.

@@ -569,6 +569,9 @@ enum FilterListConverter {
         var requestHosts: [String]?
         if let opts = optionsStr,
            !applyOptions(opts, to: &trigger, important: &isImportant, requestHosts: &requestHosts, isException: isException) { return [] }
+        // `||host^`: a host is always followed by its port or path.
+        let isBareHost = !isRegex && pattern.hasPrefix("||") && pattern.hasSuffix("^")
+            && pattern.dropFirst(2).dropLast().allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "." || $0 == "-") }
         var filters: [String]
         if isRegex, pattern.hasSuffix("/") {
             guard let alternatives = regexURLFilters(pattern.dropFirst().dropLast()) else { return [] }
@@ -576,6 +579,8 @@ enum FilterListConverter {
         } else {
             guard let filter = urlFilter(for: pattern) else { return [] }
             filters = [filter]
+            // ABP's `^` also matches the end of the URL, which a regex class cannot.
+            if pattern.hasSuffix("^"), !isBareHost, let end = urlFilter(for: pattern.dropLast() + "|") { filters.append(end) }
         }
         if let requestHosts {
             guard let scoped = requestHostFilters(filters, pattern: pattern, isRegex: isRegex, hosts: requestHosts) else { return [] }
@@ -623,12 +628,30 @@ enum FilterListConverter {
             }
         }
 
-        return filters.map { filter -> NetworkRule in
-            var t = trigger
-            t["url-filter"] = filter
-            return (["trigger": t, "action": ["type": isException ? "ignore-previous-rules" : "block"]], isException, isImportant)
+        // As uBO, only `$document`, `$all` or a bare `||host^` block the page itself: another block keeps to its frames there.
+        var triggers = [trigger]
+        let types = trigger["resource-type"] as? [String]
+        let blocksPage = (isBareHost && types == nil) || optionsStr?.split(separator: ",").contains {
+            ["document", "doc", "all"].contains($0.trimmingCharacters(in: .whitespaces))
+        } == true
+        if !isException, !blocksPage, types?.contains("document") ?? true {
+            var frames = trigger
+            frames["resource-type"] = ["document"]
+            frames["load-context"] = ["child-frame"]
+            let others = (types ?? subresourceTypes).filter { $0 != "document" }
+            triggers = others.isEmpty ? [frames] : [frames, trigger.merging(["resource-type": others]) { $1 }]
+        }
+        return filters.flatMap { filter in
+            triggers.map { trigger -> NetworkRule in
+                var t = trigger
+                t["url-filter"] = filter
+                return (["trigger": t, "action": ["type": isException ? "ignore-previous-rules" : "block"]], isException, isImportant)
+            }
         }
     }
+
+    /// Every WebKit resource type but `document` and `popup`, which a rule without a type option leaves out.
+    private static let subresourceTypes = ["font", "image", "media", "ping", "raw", "script", "style-sheet", "svg-document"]
 
     /// `$to=a|b` keeps a rule to requests to those hosts and their subdomains. Content rules have no request-host condition
     /// (`if-domain` is the page's), so it holds only where the url-filter carries it: a rule matching every URL gets one filter per

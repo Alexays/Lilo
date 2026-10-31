@@ -1,6 +1,7 @@
 import XCTest
 import GRDB
 import os
+import Network
 import WebKit
 @testable import Lilo
 
@@ -14,7 +15,7 @@ final class DownloadManagerTests: XCTestCase {
         db = try TemporaryProfileDatabase()
         store = DownloadStore(dbPool: db.pool)
         manager = DownloadManager(dockController: nil)
-        manager.setStore(store)
+        manager.attach(store)
     }
 
     override func tearDown() async throws {
@@ -24,8 +25,8 @@ final class DownloadManagerTests: XCTestCase {
         db = nil
     }
 
-    func testSetStoreRunsCrashRecovery() throws {
-        // Insert a dangling inProgress item directly in DB before setStore
+    func testAttachRunsCrashRecovery() throws {
+        // Insert a dangling inProgress item directly in DB before attach
         var item = DownloadItem(
             id: nil, url: "https://example.com/a.zip", filename: "a.zip",
             destinationPath: "/tmp/a.zip", bytesReceived: 0, totalBytes: 100,
@@ -36,7 +37,7 @@ final class DownloadManagerTests: XCTestCase {
 
         // A fresh manager given the same store must run crash recovery.
         let manager2 = DownloadManager(dockController: nil)
-        manager2.setStore(store)
+        manager2.attach(store)
 
         let fetched = try store.fetch(id: item.id!)
         XCTAssertEqual(fetched?.state, .interrupted)
@@ -55,7 +56,7 @@ final class DownloadManagerTests: XCTestCase {
         var received: DownloadItem?
         manager.addObserver { received = $0 }
 
-        await manager.cancel(id: item.id!)
+        await manager.cancel(id: item.id!, in: store)
 
         XCTAssertNotNil(received)
         XCTAssertEqual(received?.state, .interrupted)
@@ -73,7 +74,7 @@ final class DownloadManagerTests: XCTestCase {
         var received: DownloadItem?
         manager.addObserver { received = $0 }
 
-        try manager.erase(id: item.id!)
+        try manager.erase(id: item.id!, in: store)
 
         XCTAssertEqual(received?.state, .interrupted, "the Dock drops what it was counting")
         XCTAssertNil(try store.fetch(id: item.id!))
@@ -87,9 +88,68 @@ final class DownloadManagerTests: XCTestCase {
         )
         try store.insert(&item)
 
-        try manager.erase(id: item.id!)
+        try manager.erase(id: item.id!, in: store)
         let fetched = try store.fetch(id: item.id!)
         XCTAssertNil(fetched)
+    }
+
+    // MARK: - Profiles
+
+    /// A tab of a background Space in profile B downloads while its window shows profile A: the row is B's, and only a window
+    /// showing B lists it.
+    func testADownloadGoesToTheDownloadingTabsProfile() async throws {
+        let otherDatabase = try TemporaryProfileDatabase()
+        defer { otherDatabase.tearDown() }
+        let windowStore = DownloadStore(dbPool: db.pool, profileId: UUID())
+        let tabStore = DownloadStore(dbPool: otherDatabase.pool, profileId: UUID())
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        manager.attach(windowStore)
+        let windowRouter = BridgeRouter(chromeWebView: WKWebView())
+        let windowEvents = BridgeEventRecorder(windowRouter)
+        let windowHandler = DownloadBridgeHandler(downloadManager: manager, bridgeRouter: windowRouter, storeProvider: { windowStore })
+        let tabWindowRouter = BridgeRouter(chromeWebView: WKWebView())
+        let tabWindowEvents = BridgeEventRecorder(tabWindowRouter)
+        let tabWindowHandler = DownloadBridgeHandler(downloadManager: manager, bridgeRouter: tabWindowRouter, storeProvider: { tabStore })
+        var finished = false
+        manager.addObserver { if $0.state == .complete { finished = true } }
+
+        let webView = WKWebView()
+        webView.startDownload(using: URLRequest(url: try XCTUnwrap(URL(string: "data:text/plain;base64,aGVsbG8=")))) { [manager] in
+            manager?.startDownload($0, in: tabStore)
+        }
+        _ = await pollUntil(timeout: 60) { finished }
+        let listed = await pollUntil { tabWindowEvents.events.contains { $0.name == "downloadUpdated" } }
+        withExtendedLifetime((webView, windowHandler, tabWindowHandler)) {}
+
+        XCTAssertEqual(try tabStore.fetchAll().count, 1)
+        XCTAssertEqual(try windowStore.fetchAll().count, 0)
+        XCTAssertTrue(listed)
+        XCTAssertFalse(windowEvents.events.contains { $0.name == "downloadUpdated" }, "another profile's window does not list it")
+        XCTAssertEqual((DownloadBridgeHandler.snapshot(of: windowStore, manager: manager)["items"] as? [Any])?.count, 0)
+    }
+
+    /// Each profile's rows number from 1: cancelling one profile's download leaves the other's of the same id alone.
+    func testCancellingADownloadLeavesAnotherProfilesOfTheSameId() async throws {
+        let otherDatabase = try TemporaryProfileDatabase()
+        defer { otherDatabase.tearDown() }
+        let otherStore = DownloadStore(dbPool: otherDatabase.pool, profileId: UUID())
+        var item = DownloadItem(
+            id: nil, url: "https://example.com/p.zip", filename: "p.zip",
+            destinationPath: "/tmp/p.zip", bytesReceived: 10, totalBytes: 100,
+            state: .paused, startedAt: Date(), fileMissing: false
+        )
+        var otherItem = item
+        try store.insert(&item)
+        try otherStore.insert(&otherItem)
+        XCTAssertEqual(item.id, otherItem.id)
+
+        await manager.cancel(id: try XCTUnwrap(otherItem.id), in: otherStore)
+
+        XCTAssertEqual(try otherStore.fetch(id: otherItem.id!)?.state, .interrupted)
+        XCTAssertEqual(try store.fetch(id: item.id!)?.state, .paused)
     }
 
     // MARK: - Retry
@@ -108,7 +168,7 @@ final class DownloadManagerTests: XCTestCase {
         var events: [DownloadItem] = []
         manager.addObserver { events.append($0) }
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         // Resume path: the same row transitions back to inProgress at its original destination
         // and no second row is inserted (a fresh start would add one with a deduped name).
@@ -132,7 +192,7 @@ final class DownloadManagerTests: XCTestCase {
         item.source = "url"
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         let all = try store.fetchAll()
         XCTAssertEqual(all.count, 2)
@@ -150,7 +210,7 @@ final class DownloadManagerTests: XCTestCase {
         item.resumeData = Data("wk resume blob".utf8)
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
 
         let all = try store.fetchAll()
         XCTAssertEqual(all.count, 2)
@@ -171,7 +231,7 @@ final class DownloadManagerTests: XCTestCase {
         let profileId = UUID()
         addTeardownBlock { try? await WKWebsiteDataStore.remove(forIdentifier: profileId) }
         store = DownloadStore(dbPool: db.pool, profileId: profileId)
-        manager.setStore(store)
+        manager.attach(store)
         let session = try XCTUnwrap(HTTPCookie(properties: [.domain: "localhost", .path: "/", .name: "session", .value: "signed-in"]))
         await WKWebsiteDataStore(forIdentifier: profileId).httpCookieStore.setCookie(session)
         let configuration = WKWebViewConfiguration()
@@ -188,7 +248,7 @@ final class DownloadManagerTests: XCTestCase {
         item.source = "wk"
         try store.insert(&item)
 
-        try await manager.retryDownload(id: item.id!)
+        try await manager.retryDownload(id: item.id!, in: store)
         _ = await pollUntil(timeout: 60) { !requests.withLock { $0.isEmpty } }
         withExtendedLifetime(webView) {}
 
@@ -196,6 +256,7 @@ final class DownloadManagerTests: XCTestCase {
         let received = requests.withLock { $0 }
         XCTAssertTrue(received.contains { $0.contains("session=signed-in") }, "\(received)")
         XCTAssertFalse(received.contains { $0.contains("private=yes") }, "\(received)")
+        XCTAssertTrue(received.contains { $0.contains(WKEngineFactory.safariApplicationName) }, "the user agent of pages, not CFNetwork's: \(received)")
     }
 
     func testResumeLeavesAWebViewOfAnotherDataStore() async throws {
@@ -212,7 +273,7 @@ final class DownloadManagerTests: XCTestCase {
         item.resumeData = Data("wk resume blob".utf8)
         try store.insert(&item)
 
-        await manager.resume(id: item.id!)
+        await manager.resume(id: item.id!, in: store)
         withExtendedLifetime(webView) {}
 
         XCTAssertEqual(try store.fetch(id: item.id!)?.state, .interrupted, "a private space's web view never hosts a profile's download")
@@ -227,7 +288,7 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.chooseDestination = { proposed, _, _ in proposed.deletingLastPathComponent().appendingPathComponent("picked.pdf") }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertEqual(try store.fetchAll().map(\.filename), ["picked.pdf"])
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("picked.pdf").path))
@@ -240,7 +301,7 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.chooseDestination = { _, _, _ in nil }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertEqual(try store.fetchAll().count, 0)
         XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path), [])
@@ -253,9 +314,60 @@ final class DownloadManagerTests: XCTestCase {
         manager.downloadsFolderProvider = { folder }
         manager.suggestFilename = { _ in ("papers/renamed.pdf", "uniquify") }
 
-        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!).value
+        await manager.saveData(Data("pdf".utf8), suggestedFilename: "doc.pdf", mimeType: "application/pdf", originatingURL: URL(string: "https://example.com/doc")!, in: store).value
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("papers/renamed.pdf").path))
+    }
+
+    // MARK: - Partial files
+
+    /// WebKit writes a download under its final name: cancelling it removes the bytes written, as Chrome does, and a retry then
+    /// gets the original name back instead of a "(1)" copy.
+    func testCancellingADownloadRemovesItsPartialFile() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lilo-downloads-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        manager.downloadsFolderProvider = { folder }
+        let server = try await HeldDownloadServer()
+        let partial = folder.appendingPathComponent("big.bin")
+        let webView = WKWebView()
+        webView.startDownload(using: URLRequest(url: server.url)) { [manager, store] in manager?.startDownload($0, in: store!) }
+        _ = await pollUntil(timeout: 60) { ((try? FileManager.default.attributesOfItem(atPath: partial.path)[.size]) as? Int ?? 0) > 0 }
+        let id = try XCTUnwrap(try store.fetchAll().first?.id)
+
+        await manager.cancel(id: id, in: store)
+        let removed = await pollUntil { !FileManager.default.fileExists(atPath: partial.path) }
+        try await manager.retryDownload(id: id, in: store)
+        _ = await pollUntil(timeout: 60) { (try? self.store.fetchAll().first)??.state == .complete }
+        withExtendedLifetime((webView, server)) {}
+
+        XCTAssertTrue(removed)
+        XCTAssertEqual(try store.fetch(id: id)?.fileMissing, true)
+        XCTAssertEqual(try store.fetchAll().first?.filename, "big.bin", "the retry takes the original name")
+    }
+
+    func testErasingAFailedBrowserDownloadRemovesItsPartialFile() throws {
+        let partial = FileManager.default.temporaryDirectory.appendingPathComponent("partial-\(UUID().uuidString).bin")
+        let other = FileManager.default.temporaryDirectory.appendingPathComponent("other-\(UUID().uuidString).bin")
+        for file in [partial, other] { FileManager.default.createFile(atPath: file.path, contents: Data("x".utf8)) }
+        defer { for file in [partial, other] { try? FileManager.default.removeItem(at: file) } }
+        var failed = DownloadItem(
+            id: nil, url: "https://example.com/partial.bin", filename: partial.lastPathComponent,
+            destinationPath: partial.path, bytesReceived: 1, totalBytes: 100,
+            state: .interrupted, startedAt: Date(), fileMissing: false
+        )
+        // A row whose file is already gone: the path may now be another download's.
+        var cancelled = failed
+        cancelled.destinationPath = other.path
+        cancelled.fileMissing = true
+        try store.insert(&failed)
+        try store.insert(&cancelled)
+
+        try manager.erase(id: failed.id!, in: store)
+        try manager.erase(id: cancelled.id!, in: store)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: partial.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path))
     }
 
     // MARK: - Speed and ETA tracking tests
@@ -355,5 +467,48 @@ final class DownloadManagerTests: XCTestCase {
 
         data = manager.augmentedBridgeData(for: item)
         XCTAssertNil(data["speedBytesPerSec"])
+    }
+}
+
+/// Answers a first download with its headers and some bytes, then holds the connection: the download stays in flight. A later
+/// request gets the whole body.
+private final class HeldDownloadServer: @unchecked Sendable {
+    private let listener: NWListener
+    /// The held connection must outlive its handlers.
+    private let connections = OSAllocatedUnfairLock(initialState: [NWConnection]())
+    let url: URL
+
+    init() async throws {
+        let listener = try NWListener(using: .tcp, on: .any)
+        self.listener = listener
+        let connections = connections
+        let size = 1_000_000
+        let held = OSAllocatedUnfairLock(initialState: false)
+        listener.newConnectionHandler = { connection in
+            connections.withLock { $0.append(connection) }
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                let holds = held.withLock { wasHeld in defer { wasHeld = true }; return !wasHeld }
+                let head = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
+                    + "Content-Disposition: attachment; filename=\"big.bin\"\r\nContent-Length: \(size)\r\n\r\n"
+                connection.send(content: Data(head.utf8) + Data(repeating: 0x78, count: holds ? 256 * 1024 : size), completion: .contentProcessed { _ in
+                    if !holds { connection.cancel() }
+                })
+            }
+        }
+        let ready = AsyncStream<UInt16> { continuation in
+            listener.stateUpdateHandler = { state in
+                if case .ready = state { continuation.yield(listener.port?.rawValue ?? 0); continuation.finish() }
+            }
+        }
+        listener.start(queue: .global())
+        var port: UInt16 = 0
+        for await value in ready { port = value }
+        url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(port)/big.bin"))
+    }
+
+    deinit {
+        listener.cancel()
+        connections.withLock { $0.forEach { $0.cancel() } }
     }
 }

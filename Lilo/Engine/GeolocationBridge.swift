@@ -15,6 +15,8 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
     private struct PendingRequest {
         let id: Int
         let frame: WKFrameInfo
+        /// The origin the permission was granted to.
+        let origin: String
         let isWatch: Bool
         let highAccuracy: Bool
         @MainActor var webView: WKWebView? { frame.webView }
@@ -38,12 +40,13 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
 
         switch type {
         case "get", "watch":
-            let request = PendingRequest(id: id, frame: message.frameInfo, isWatch: type == "watch", highAccuracy: highAccuracy)
+            let request = PendingRequest(id: id, frame: message.frameInfo, origin: message.frameInfo.permissionOriginKey,
+                                         isWatch: type == "watch", highAccuracy: highAccuracy)
             guard message.frameInfo.securityOrigin.isPotentiallyTrustworthy else {
                 deliver(error: .permissionDenied, to: [request])
                 return
             }
-            requestSitePermission(forOrigin: message.frameInfo.securityOrigin.permissionOriginKey, webView: message.webView) { [weak self] granted in
+            requestSitePermission(forOrigin: request.origin, webView: message.webView) { [weak self] granted in
                 guard let self else { return }
                 if granted {
                     enqueue(request)
@@ -66,6 +69,20 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
             return
         }
         permissionDecisionHandler(webView, "location", origin, completion)
+    }
+
+    /// Fails the requests `origin` runs in pages of `dataStore` once its permission is revoked, watches included, as Chrome does.
+    func revoke(origin: String, in dataStore: WKWebsiteDataStore) {
+        var revoked: [PendingRequest] = []
+        pendingRequests.removeAll { request in
+            guard request.origin == origin, request.webView?.configuration.websiteDataStore === dataStore else { return false }
+            revoked.append(request)
+            return true
+        }
+        guard !revoked.isEmpty else { return }
+        deliver(error: .permissionDenied, to: revoked)
+        updateDesiredAccuracy()
+        stopLocationUpdatesIfIdle()
     }
 
     // MARK: Private
@@ -264,8 +281,10 @@ extension GeolocationBridge {
     function () {
       if (typeof Geolocation !== 'function') return;
       let nextId = Math.floor(Math.random() * 0x7fffffff) * 0x10000 + 1;
-      const callbacks = create(null);
-      lilo.on('geolocation', (id, type, data) => {
+      const callbacks = create(null), secure = window.isSecureContext;
+      const nativeGet = Geolocation.prototype.getCurrentPosition;
+      const codeOf = getOwnPropertyDescriptor(GeolocationPositionError.prototype, 'code').get;
+      const receive = (id, type, data) => {
         const callback = callbacks[id];
         if (!callback) return;
         if (!callback.watch) delete callbacks[id];
@@ -275,16 +294,24 @@ extension GeolocationBridge {
         } else {
           callback.error({ code: data.code, message: data.message, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
         }
-      });
-      const request = (type, success, error, options) => {
+      };
+      lilo.on('geolocation', receive);
+      const request = (type, geolocation, success, error, options) => {
         const id = nextId++, highAccuracy = !!(options && options.enableHighAccuracy);
+        // WebKit's own call applies Permissions-Policy, which refuses a cross-origin frame without allow="geolocation", and
+        // the ancestors' secure context; with no timeout it asks no one. Its error is read through natives the page cannot wrap.
+        const decide = code => {
+          if (!callbacks[id]) return;
+          if (secure && code !== 1) lilo.send('liloGeolocation', { type, id, highAccuracy });
+          else receive(id, 'error', { code: 1, message: 'User denied Geolocation' });
+        };
+        apply(nativeGet, geolocation, [() => decide(0), positionError => decide(apply(codeOf, positionError, [])), { __proto__: null, timeout: 0 }]);
         callbacks[id] = { success, error: error || (() => {}), watch: type === 'watch', highAccuracy };
-        lilo.send('liloGeolocation', { type, id, highAccuracy });
         return id;
       };
       lilo.methods(Geolocation.prototype, {
-        getCurrentPosition(success, error, options) { request('get', success, error, options); },
-        watchPosition(success, error, options) { return request('watch', success, error, options); },
+        getCurrentPosition(success, error, options) { request('get', this, success, error, options); },
+        watchPosition(success, error, options) { return request('watch', this, success, error, options); },
         clearWatch(id) {
           delete callbacks[id];
           lilo.send('liloGeolocation', { type: 'clear', id });

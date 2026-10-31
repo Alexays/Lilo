@@ -420,18 +420,17 @@ final class SplitPanesController {
         return hit.view
     }
 
-    /// A web link dragged over the outer band of any edge of a pane goes to the chrome, which
-    /// offers it as a split pane; the middle of the pane keeps its own drop handling.
+    /// A web link dragged from outside the pages over a narrow strip at a pane's left or right edge goes to the chrome, which
+    /// offers it as a split pane; the rest of the pane, where a page's own fields and drop targets sit, keeps the drop.
     func isLinkDrag(_ sender: any NSDraggingInfo) -> Bool {
         let tabManager = controller.tabManager
-        guard tabManager.activeTab != nil, let container = controller.contentContainerView else { return false }
+        guard tabManager.activeTab != nil, let container = controller.contentContainerView,
+              (sender.draggingSource as? NSView)?.isDescendant(of: container) != true else { return false }
         let local = container.convert(sender.draggingLocation, from: nil)
         let paneFrames = split?.layout.paneIds.compactMap { tabManager.loadedContentView(forTabId: $0)?.frame } ?? []
         guard let pane = (paneFrames.isEmpty ? [container.bounds] : paneFrames).first(where: { $0.contains(local) }) else { return false }
-        let bandX = min(max(pane.width * 0.2, 80), 240)
-        let bandY = min(max(pane.height * 0.2, 80), 240)
-        guard local.x < pane.minX + bandX || local.x > pane.maxX - bandX
-            || local.y < pane.minY + bandY || local.y > pane.maxY - bandY else { return false }
+        let band = min(pane.width / 6, 64)
+        guard local.x < pane.minX + band || local.x > pane.maxX - band else { return false }
         if linkDragCache?.sequence != sender.draggingSequenceNumber {
             let url = (sender.draggingPasteboard.readObjects(forClasses: [NSURL.self]) as? [URL])?.first
             linkDragCache = (sender.draggingSequenceNumber, url?.scheme == "http" || url?.scheme == "https")

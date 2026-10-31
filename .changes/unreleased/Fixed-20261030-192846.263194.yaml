@@ -1,0 +1,3 @@
+kind: Fixed
+body: When a page sends you to another address, the address bar keeps showing the page you are on until the new one appears, so a page can no longer show another site's address over its own content.
+time: 2026-10-30T19:28:46.263194+01:00

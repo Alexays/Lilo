@@ -1,0 +1,3 @@
+kind: Fixed
+body: A page's alert, confirm and prompt dialogs say which site is asking, and a frame embedded in the page is named as such.
+time: 2026-10-30T17:38:51.617514+01:00

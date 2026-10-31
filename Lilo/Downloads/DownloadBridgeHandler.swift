@@ -22,14 +22,18 @@ final class DownloadBridgeHandler: BridgeHandler {
 
     private weak var downloadManager: DownloadManager?
     private weak var bridgeRouter: BridgeRouter?
+    /// The store of the window's profile: the window lists that profile's downloads only.
+    private let storeProvider: () -> DownloadStore?
     private let observerToken: UUID
     var onQuickLookRequested: (() -> Void)?
     var onDragRequested: ((URL) -> Void)?
 
-    init(downloadManager: DownloadManager, bridgeRouter: BridgeRouter) {
+    init(downloadManager: DownloadManager, bridgeRouter: BridgeRouter, storeProvider: @escaping () -> DownloadStore?) {
         self.downloadManager = downloadManager
         self.bridgeRouter = bridgeRouter
+        self.storeProvider = storeProvider
         observerToken = downloadManager.addObserver { [weak bridgeRouter, weak downloadManager] item in
+            guard let store = storeProvider(), item.profileId == store.profileId else { return }
             let data = downloadManager?.augmentedBridgeData(for: item) ?? item.bridgeData
             bridgeRouter?.send(event: "downloadUpdated", data: data)
         }
@@ -42,74 +46,63 @@ final class DownloadBridgeHandler: BridgeHandler {
         }
     }
 
+    /// The `downloadsSnapshot` of a window showing `store`'s profile.
+    static func snapshot(of store: DownloadStore?, manager: DownloadManager?) -> [String: Any] {
+        let items = (try? store?.fetchAll()) ?? []
+        return ["items": items.map { manager?.augmentedBridgeData(for: $0) ?? $0.bridgeData }]
+    }
+
     func handle(message: BridgeMessage) async -> Any? {
-        let id = message.int("id").map(Int64.init)
         switch message.action {
-
         case "requestDownloadsSnapshot":
-            guard let items = try? downloadManager?.store?.fetchAll() else {
-                bridgeRouter?.send(event: "downloadsSnapshot", data: ["items": []])
-                return nil
-            }
-            let bridgeItems = items.map { item in
-                downloadManager?.augmentedBridgeData(for: item) ?? item.bridgeData
-            }
-            bridgeRouter?.send(event: "downloadsSnapshot", data: ["items": bridgeItems])
+            bridgeRouter?.send(event: "downloadsSnapshot", data: Self.snapshot(of: storeProvider(), manager: downloadManager))
             return nil
-
-        case "pauseDownload":
-            if let id { await downloadManager?.pause(id: id) }
-            return nil
-
-        case "resumeDownload":
-            if let id { await downloadManager?.resume(id: id) }
-            return nil
-
-        case "cancelDownload":
-            if let id { await downloadManager?.cancel(id: id) }
-            return nil
-
-        case "eraseDownload":
-            if let id { loggingPersistenceError("download.erase[\(id)]") { try downloadManager?.erase(id: id) } }
-            return nil
-
-        case "retryDownload":
-            guard let id else { return nil }
-            do { try await downloadManager?.retryDownload(id: id) } catch {
-                Self.logger.error("download retry failed: \(error.localizedDescription, privacy: .public)")
-            }
-            return nil
-
-        case "openDownload":
-            if let id { downloadManager?.openFile(id: id) }
-            return nil
-
-        case "showDownloadInFinder":
-            if let id { downloadManager?.showInFinder(id: id) }
-            return nil
-
-        case "removeDownloadFile":
-            if let id { loggingPersistenceError("download.removeFile[\(id)]") { try downloadManager?.removeFile(id: id) } }
-            return nil
-
-        case "quickLookDownload":
-            guard let id else { return nil }
-            guard downloadManager?.prepareQuickLook(id: id) != nil else { return nil }
-            onQuickLookRequested?()
-            return nil
-
-        case "startDownloadDrag":
-            guard let id,
-                  let url = downloadManager?.fileURL(id: id) else { return nil }
-            onDragRequested?(url)
-            return nil
-
         case "showDownloadsFolder":
             downloadManager?.showDownloadsFolder()
             return nil
+        default:
+            break
+        }
+        guard let id = message.int("id").map(Int64.init), let store = storeProvider(), let downloadManager else { return nil }
+        switch message.action {
+
+        case "pauseDownload":
+            await downloadManager.pause(id: id, in: store)
+
+        case "resumeDownload":
+            await downloadManager.resume(id: id, in: store)
+
+        case "cancelDownload":
+            await downloadManager.cancel(id: id, in: store)
+
+        case "eraseDownload":
+            loggingPersistenceError("download.erase[\(id)]") { try downloadManager.erase(id: id, in: store) }
+
+        case "retryDownload":
+            do { try await downloadManager.retryDownload(id: id, in: store) } catch {
+                Self.logger.error("download retry failed: \(error.localizedDescription, privacy: .public)")
+            }
+
+        case "openDownload":
+            downloadManager.openFile(id: id, in: store)
+
+        case "showDownloadInFinder":
+            downloadManager.showInFinder(id: id, in: store)
+
+        case "removeDownloadFile":
+            loggingPersistenceError("download.removeFile[\(id)]") { try downloadManager.removeFile(id: id, in: store) }
+
+        case "quickLookDownload":
+            guard downloadManager.prepareQuickLook(id: id, in: store) != nil else { return nil }
+            onQuickLookRequested?()
+
+        case "startDownloadDrag":
+            guard let url = downloadManager.fileURL(id: id, in: store) else { return nil }
+            onDragRequested?(url)
 
         default:
-            return nil
+            break
         }
+        return nil
     }
 }

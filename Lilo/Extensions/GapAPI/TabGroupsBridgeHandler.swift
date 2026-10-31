@@ -74,7 +74,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
         case "tabGroups.get":
             guard let groupId = call.int("groupId"),
-                  let folder = folder(forGroup: groupId, tabManager: tabManager) else {
+                  let folder = folder(forGroup: groupId, tabManager: tabManager, windows: windows) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
             return ["group": groupDict(folder, windows: windows)]
@@ -86,16 +86,16 @@ final class TabGroupsBridgeHandler: GapHandler {
             // Reordering a folder maps onto Lilo's sectioned sidebar tree, which has no single linear
             // index, so the move is a no-op that echoes the group back rather than erroring.
             guard let groupId = call.int("groupId"),
-                  let folder = folder(forGroup: groupId, tabManager: tabManager) else {
+                  let folder = folder(forGroup: groupId, tabManager: tabManager, windows: windows) else {
                 return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
             }
             return ["group": groupDict(folder, windows: windows)]
 
         case "tabs.group":
-            return groupTabs(call, context: context, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
+            return groupTabs(call, context: context, windows: windows, tabs: tabAdapters(call))
 
         case "tabs.ungroup":
-            return ungroupTabs(context: context, uuids: tabUUIDs(call, registry: registry).compactMap { $0 })
+            return ungroupTabs(context: context, tabs: tabAdapters(call))
 
         case "tabs.discard":
             guard let id = tabUUIDs(call, registry: registry).first ?? nil, tabManager.engineTab(for: id) != nil else {
@@ -132,7 +132,7 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     private func updateGroup(_ call: GapCall, context: TabGroupsContext, windows: [WindowExtensionAdapter]) -> Any? {
         guard let groupId = call.int("groupId"),
-              let folder = folder(forGroup: groupId, tabManager: context.tabManager) else {
+              let folder = folder(forGroup: groupId, tabManager: context.tabManager, windows: windows) else {
             return BridgeError("No tab group with id \(call.int("groupId") ?? -1)")
         }
         let newName = call.string("title") ?? folder.name
@@ -150,19 +150,23 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     // MARK: - tabs.group / ungroup
 
-    private func groupTabs(_ call: GapCall, context: TabGroupsContext, uuids: [UUID]) -> Any? {
+    private func groupTabs(_ call: GapCall, context: TabGroupsContext, windows: [WindowExtensionAdapter], tabs: [TabExtensionAdapter]) -> Any? {
         let tabManager = context.tabManager
-        guard let spaceId = tabManager.currentSpaceId else { return BridgeError("No active space") }
-        guard !uuids.isEmpty else { return BridgeError("No tabs to group") }
+        guard !tabs.isEmpty else { return BridgeError("No tabs to group") }
+        // A folder holds the tabs of one space, so a group takes the tabs of one window.
+        let spaceIds = Set(tabs.map { ($0.extensionWindow as? WindowExtensionAdapter)?.spaceId })
+        guard spaceIds.count == 1, let spaceId = spaceIds.first ?? nil else { return BridgeError("Cannot group tabs of different windows") }
+        let uuids = tabs.map(\.tabId)
         let sourceFolderIds = currentFolderIds(of: uuids, spaceId: spaceId, tabManager: tabManager)
 
         // Resolve the destination folder: an existing group, or a freshly minted one.
         let folderId: UUID
         if let groupId = call.int("groupId"), groupId != Self.tabGroupIdNone {
-            guard let resolved = folder(forGroup: groupId, tabManager: tabManager)?.id else {
+            guard let resolved = folder(forGroup: groupId, tabManager: tabManager, windows: windows) else {
                 return BridgeError("No tab group with id \(groupId)")
             }
-            folderId = resolved
+            guard resolved.spaceId == spaceId else { return BridgeError("Cannot group tabs of different windows") }
+            folderId = resolved.id
         } else {
             let folder = TabFolder(spaceId: spaceId, name: "", color: Self.hex(forChromeColor: "grey") ?? "#9aa0a6")
             guard applied(.createFolder(spaceId: spaceId, folder: folder, section: .unpinned), context: context)?
@@ -194,13 +198,15 @@ final class TabGroupsBridgeHandler: GapHandler {
         }
     }
 
-    private func ungroupTabs(context: TabGroupsContext, uuids: [UUID]) -> Any? {
-        let tabManager = context.tabManager
-        guard let spaceId = tabManager.currentSpaceId else { return BridgeError("No active space") }
-        let sourceFolderIds = currentFolderIds(of: uuids, spaceId: spaceId, tabManager: tabManager)
-        moveTabs(uuids, toFolder: nil, spaceId: spaceId, context: context)
-        // Chrome auto-removes a group once its last tab leaves it.
-        deleteEmptyFolders(sourceFolderIds, spaceId: spaceId, context: context)
+    private func ungroupTabs(context: TabGroupsContext, tabs: [TabExtensionAdapter]) -> Any? {
+        for (spaceId, spaceTabs) in Dictionary(grouping: tabs, by: { ($0.extensionWindow as? WindowExtensionAdapter)?.spaceId }) {
+            guard let spaceId else { continue }
+            let uuids = spaceTabs.map(\.tabId)
+            let sourceFolderIds = currentFolderIds(of: uuids, spaceId: spaceId, tabManager: context.tabManager)
+            moveTabs(uuids, toFolder: nil, spaceId: spaceId, context: context)
+            // Chrome auto-removes a group once its last tab leaves it.
+            deleteEmptyFolders(sourceFolderIds, spaceId: spaceId, context: context)
+        }
         return [:]
     }
 
@@ -350,6 +356,11 @@ final class TabGroupsBridgeHandler: GapHandler {
 
     // MARK: - Identity translation
 
+    /// The known tabs of the `{windowPosition, index}` pairs of `message["tabs"]`.
+    private func tabAdapters(_ call: GapCall) -> [TabExtensionAdapter] {
+        call.registry.tabAdapters(atPositions: call.payload["tabs"] as? [[String: Any]] ?? [], extensionId: call.extensionId).compactMap { $0 }
+    }
+
     /// The Lilo tab behind each `{windowPosition, index}` pair of `message["tabs"]`, nil when unknown.
     private func tabUUIDs(_ call: GapCall, registry: ProfileExtensionRegistry) -> [UUID?] {
         let positions = call.payload["tabs"] as? [[String: Any]] ?? []
@@ -365,9 +376,10 @@ final class TabGroupsBridgeHandler: GapHandler {
         return id
     }
 
-    private func folder(forGroup groupId: Int, tabManager: TabManager) -> TabFolder? {
+    /// The group's folder when it is in one of `windows`, the caller's: the ids name folders of every profile and space.
+    private func folder(forGroup groupId: Int, tabManager: TabManager, windows: [WindowExtensionAdapter]) -> TabFolder? {
         guard let folderId = folderIdByGroupId[groupId] else { return nil }
-        return tabManager.folder(id: folderId)
+        return windows.lazy.compactMap(\.spaceId).compactMap { tabManager.folders(forSpace: $0).first { $0.id == folderId } }.first
     }
 
     /// Chrome `TabGroup` shape, with the position of its space's window in `windows` (the caller's `windows.getAll()`, -1 when

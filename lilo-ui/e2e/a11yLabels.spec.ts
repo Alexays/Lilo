@@ -2,8 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 import { bootChrome, sentCommands } from "./fakeHost";
 import { initialWorld, nestedFolderWorld, SPACE_1 } from "./fixtures";
 
-// Every visible control a screen reader can reach, without a name it could announce, or with a
-// role that needs a container it is missing (a tree item outside a tree, an option outside a list).
+// Every visible control a screen reader can reach, without a name it could announce, with a role
+// that needs a container it is missing (a tree item outside a tree, an option outside a list), or
+// inside a button, whose children WebKit hides from VoiceOver.
 function a11yProblems(page: Page): Promise<string[]> {
 	return page.evaluate(() => {
 		const selector = [
@@ -37,6 +38,7 @@ function a11yProblems(page: Page): Promise<string[]> {
 				const problems: string[] = [];
 				if (!nameOf(el)) problems.push(`unnamed: ${html}`);
 				if (owners[role] && !el.parentElement?.closest(owners[role])) problems.push(`no ${owners[role]}: ${html}`);
+				if (el.parentElement?.closest("button, [role=button]")) problems.push(`inside a button: ${html}`);
 				return problems;
 			});
 	});

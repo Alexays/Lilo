@@ -39,3 +39,19 @@ test("settings shell opens with sections and closes back to the app", async ({
 	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
 	await expect(page.locator(".sidebar-layout")).not.toHaveClass(/pushed/);
 });
+
+test("settings, downloads and the process manager take the focus when they open", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "openSettings" }));
+	await expect(page.locator(".section-nav-toolbar input")).toBeFocused();
+	await page.keyboard.press("Escape");
+	await expect(page.locator(".ui-shell-frame")).toHaveCount(0);
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "openDownloads" }));
+	await expect(page.locator(".downloads-filter input")).toBeFocused();
+	await page.keyboard.press("Escape");
+
+	await page.evaluate(() => window.__lilo!.receive({ event: "openProcessManager" }));
+	await expect(page.locator(".process-panel button").first()).toBeFocused();
+});

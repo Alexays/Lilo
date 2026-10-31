@@ -12,9 +12,6 @@ interface FakeElement {
 	hostname?: string;
 	classList: string[];
 	querySelectorAll(sel: string): FakeElement[];
-	appendChild?(node: unknown): void;
-	isConnected?: boolean;
-	chunks?: string[];
 }
 
 function el(id: string, classes: string[] = [], descendants: FakeElement[] = []): FakeElement {
@@ -36,7 +33,7 @@ function link(hostname: string): FakeElement {
 
 
 interface Harness {
-	styles: { chunks: string[] }[];
+	styles: { cssRules: string[] }[];
 	frame: () => void;
 	domContentLoaded: () => void;
 	observing: () => boolean;
@@ -53,36 +50,30 @@ function run(
 	host = "www.example.com",
 	sites: Record<string, string[]> = {}
 ): Harness {
-	const styles: { chunks: string[] }[] = [];
+	// The constructed sheets the script adopts.
+	const styles: FakeSheet[] = [];
+	class FakeSheet {
+		cssRules: string[] = [];
+		constructor() {
+			styles.push(this);
+		}
+		insertRule(rule: string, index: number) {
+			this.cssRules.splice(index, 0, rule);
+			return index;
+		}
+	}
 	let observerCallback: ((records: unknown[]) => void) | null = null;
 	let observing = false;
 	let frameCallback: (() => void) | null = null;
 	let onDOMContentLoaded: (() => void) | null = null;
 
-	const documentElement = {
-		...el("", [], rootChildren),
-		appendChild: (node: { isConnected: boolean }) => {
-			node.isConnected = true;
-		}
-	};
+	const documentElement = el("", [], rootChildren);
 	// `parsed` stands for the elements the parser has inserted so far; null means the DOM is complete.
 	const doc = {
 		readyState: parsed ? "loading" : "complete",
 		getElementsByTagName: () => parsed ?? [],
 		documentElement,
-		head: null,
-		createElement: () => {
-			const style = {
-				isConnected: false,
-				chunks: [] as string[],
-				appendChild(node: { text: string }) {
-					style.chunks.push(node.text);
-				}
-			};
-			styles.push(style);
-			return style;
-		},
-		createTextNode: (text: string) => ({ text }),
+		adoptedStyleSheets: [] as FakeSheet[],
 		addEventListener: (type: string, cb: () => void) => {
 			if (type === "DOMContentLoaded") onDOMContentLoaded = cb;
 		}
@@ -114,7 +105,7 @@ function run(
 		.replace("__LILO_KEYED_INDEX__", JSON.stringify(keyed.index))
 		.replace("__LILO_KEYED_GROUPS__", JSON.stringify(keyed.groups))
 		.replace("__LILO_KEYED_TABLE__", JSON.stringify(keyed.entries));
-	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", src);
+	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", src);
 	fn(
 		{ CSS: { escape: (s: string) => s } },
 		doc,
@@ -122,7 +113,8 @@ function run(
 		(cb: () => void) => {
 			frameCallback = cb;
 		},
-		{ host, hostname: host.replace(/:\d+$/, "") }
+		{ host, hostname: host.replace(/:\d+$/, "") },
+		FakeSheet
 	);
 
 	return {
@@ -138,7 +130,7 @@ function run(
 		},
 		observing: () => observing,
 		observe: (records) => observerCallback?.(records),
-		css: () => styles.map((s) => s.chunks.join("")).join(""),
+		css: () => styles.map((s) => s.cssRules.join("")).join(""),
 		flushed: () => Promise.resolve().then(() => {})
 	};
 }

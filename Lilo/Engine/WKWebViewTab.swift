@@ -46,6 +46,8 @@ final class WKWebViewTab: NSObject {
         func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoBack canGoBack: Bool)
         func tab(_ tab: WKWebViewTab, didUpdateCanGoForward canGoForward: Bool)
+        /// See `isNotSecure`.
+        func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool)
         /// The page's color as a CSS hex, nil when it has none.
         func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?)
         func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool)
@@ -85,11 +87,16 @@ final class WKWebViewTab: NSObject {
         /// The user asked to bookmark the current page (page context menu / Cmd+D).
         func tabRequestsBookmark(_ tab: WKWebViewTab)
         /// A non-web scheme (mailto:, tel:, slack:, ...) wants to open in an external app, pending user confirmation.
-        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?)
+        /// `origin` is the permission origin of the frame that asked, nil when it has none.
+        func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?)
         /// The loaded document's link icons, in document order. Every icon's `decide` must be called once.
         func tab(_ tab: WKWebViewTab, offersIcons icons: [LinkIcon])
         /// A followed link the window may show in a Peek instead: true when it took the link.
         func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool
+        /// A same-document navigation (fragment, history API) moved the page to another address.
+        func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL)
+        /// A find in page's result, Find Next and Find Previous included.
+        func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result)
         /// A peek's page going back to its opener tab's site: true when the tab took the navigation.
         func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool
     }
@@ -236,13 +243,18 @@ final class WKWebViewTab: NSObject {
     }
 
     /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming
-    /// a file:// or data: URL means nothing to a remote server.
+    /// a file:// or data: URL means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy.
     nonisolated static func downloadRequest(for url: URL, pageURL: URL?) -> URLRequest {
         var request = URLRequest(url: url)
-        if let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https" {
-            request.setValue(pageURL.absoluteString, forHTTPHeaderField: "Referer")
-            request.mainDocumentURL = pageURL
+        guard let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              var referrer = URLComponents(url: pageURL, resolvingAgainstBaseURL: false) else { return request }
+        request.mainDocumentURL = pageURL
+        if scheme == "https", url.scheme?.lowercased() != "https" { return request }
+        referrer.user = nil; referrer.password = nil; referrer.fragment = nil
+        if referrer.host?.lowercased() != url.host?.lowercased() || scheme != url.scheme?.lowercased() || pageURL.port != url.port {
+            referrer.path = "/"; referrer.query = nil
         }
+        request.setValue(referrer.string, forHTTPHeaderField: "Referer")
         return request
     }
     private let snapshotService: PageSnapshotService
@@ -277,16 +289,29 @@ final class WKWebViewTab: NSObject {
     private var isDarkAppearance: Bool?
     private var showsPageBackground = false
     private var pendingMainFrameURL: URL?
+    /// The pending main-frame navigation is the page's own, not one Lilo started (typed, bookmark, history, reload).
+    private var isPageNavigationPending = false
     /// The pending main-frame navigation sends a body: a retry by URL would turn it into a GET without it.
     private(set) var pendingMainFrameSendsBody = false
     /// The pending main-frame navigation reads the HTTP cache only (see loadCachedCopy).
     private var isLoadingCachedCopy = false
+    /// The committed https page's certificate is one the user let through despite its error.
+    private var usesCertificateException = false
+    /// An https page whose certificate the user let through, or that loaded part of its content over http.
+    private(set) var isNotSecure = false
+    /// An error shows for a load that failed before it committed, over the page it was leaving.
+    private var showsFailureOverPage = false
     /// The failed page to reload on the next network change; set while that wait is registered.
     private var networkChangeRetryURL: URL?
     private var lastNavigationEmissionState = NavigationEmissionState()
     /// True once any main-frame navigation has committed. Stays false for a tab whose only navigation
     /// became a download (e.g. a target="_blank" download link).
     private(set) var hasCommittedContent = false
+    /// The main frame document's address, same-document navigations included.
+    private var documentURL: URL?
+    /// The history visit of the current page whose title follows the page's, for a few changes while it loads and just after
+    /// (`renamableUntil`, nil while loading), as Chrome does for a title set by script.
+    var visitTitleUpdates: (url: String, changesLeft: Int, renamableUntil: ContinuousClock.Instant?)?
     /// Set for a tab a page opened (a link or `window.open`): only such a tab closes when its first navigation is a download.
     var isOpenedByPage = false
     /// Mirrors WebKit's suspended page: most WKWebView calls raise NSInternalInconsistencyException while
@@ -294,6 +319,8 @@ final class WKWebViewTab: NSObject {
     private(set) var isFrozen = false
     /// Set once beforeunload ran ahead of the teardown: the page leaves without asking, and only once.
     private var isLeaving = false
+    /// Set while a close the user asked for waits on the page's beforeunload handler: its prompt shows the tab.
+    private var isAskingToClose = false
     /// When an extension last got this tab's web view: WebKit's `scripting.executeScript` evaluates in it after an
     /// async frame-tree round trip, and raises, crashing the app, if the page was suspended meanwhile.
     var lentToExtensionAt: Date?
@@ -357,6 +384,9 @@ final class WKWebViewTab: NSObject {
     /// A page dialog raised while the tab was off screen, run with true once the tab is shown, false
     /// to dismiss it. The page is blocked until it is answered, and WebKit crashes on one never answered.
     private var queuedDialog: (@MainActor (Bool) -> Void)?
+    /// The site of the page that showed the last alert, confirm or prompt, and the one whose further dialogs the user stopped.
+    private var lastDialogOrigin: String?
+    private var suppressedDialogOrigin: String?
     /// Resource loads blocked by the content rule list on the current page (drives the "ads" badge).
     private(set) var trackersBlocked = 0
     private var trackerFlushScheduled = false
@@ -365,12 +395,14 @@ final class WKWebViewTab: NSObject {
 
     func ownsWebView(_ candidate: WKWebView) -> Bool { webView === candidate }
 
-    /// Asks WebKit whether the page may close now. False means a beforeunload handler is in the
-    /// way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
+    /// Asks WebKit whether the page may close now, for a close the user asked for. False means a beforeunload
+    /// handler is in the way: WebKit runs the confirm panel and calls webViewDidClose if the user leaves.
     func tryClose() -> Bool {
         // A suspended page runs no beforeunload handler, and WebKit refuses _tryClose on it.
         guard !isFrozen else { return true }
-        return WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
+        let closes = WebViewPrivateAccessors(webView).bool("_tryClose") ?? true
+        isAskingToClose = !closes
+        return closes
     }
     /// Chrome's transient activation: how long after the user's last click or key press a page may still open a window.
     private static let popupActivationWindow: TimeInterval = 5
@@ -427,8 +459,14 @@ final class WKWebViewTab: NSObject {
 
     var view: NSView { webView }
     var wkWebView: WKWebView { webView }
+    /// A navigation the page started shows its address once it commits, as in Chrome: the page cannot put another
+    /// site's address over its own content. A page that has shown nothing yet (a new popup) shows where it goes.
     var currentURL: URL? {
-        Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: pendingMainFrameURL)
+        if isPageNavigationPending, let committed = WebViewPrivateAccessors(webView).urlString("_committedURL").flatMap(URL.init(string:)),
+           !Self.isAboutBlank(committed) {
+            return committed
+        }
+        return Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: pendingMainFrameURL)
     }
     /// The target of an in-flight main-frame navigation that hasn't committed yet (the committed URL
     /// is still the old one). Nil once committed or when idle. Maps to Chrome's `tab.pendingUrl`.
@@ -439,7 +477,7 @@ final class WKWebViewTab: NSObject {
     var currentTitle: String? { webView.title }
     var isLoading: Bool { webView.isLoading }
     var estimatedProgress: Double { webView.estimatedProgress }
-    var canGoBack: Bool { webView.canGoBack }
+    var canGoBack: Bool { webView.canGoBack || showsFailureOverPage }
     var canGoForward: Bool { webView.canGoForward }
     var interactionState: Any? { webView.interactionState }
     var pageZoom: Double { Double(webView.pageZoom) }
@@ -536,6 +574,10 @@ final class WKWebViewTab: NSObject {
         _ = Self.activationMonitor
         let setIconLoadingDelegate = NSSelectorFromString("_setIconLoadingDelegate:")
         if webView.responds(to: setIconLoadingDelegate) { webView.perform(setIconLoadingDelegate, with: self) }
+        findController.onResult = { [weak self] result in
+            guard let self else { return }
+            delegate?.tab(self, didFind: result)
+        }
         bindNavigationStateObservers()
         captureUsageObserver.start()
     }
@@ -549,10 +591,11 @@ final class WKWebViewTab: NSObject {
         didReloadEmptyCommit = false
         StartupMetrics.markOnce("firstContentLoadRequested")
         if url.isFileURL {
-            // A plain URLRequest load silently no-ops for file URLs. An HTML page may read its own folder, for
-            // the assets beside it; any other file (an SVG, a text file) only itself.
+            // A plain URLRequest load silently no-ops for file URLs. An HTML page shows images, styles and scripts
+            // from any local folder, as in Chrome (`../style.css` in generated docs); WebKit still blocks its
+            // fetch and XHR of other files. Any other file (an SVG, a text file) reads only itself.
             let isPage = ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
-            webView.loadFileURL(url, allowingReadAccessTo: isPage ? url.deletingLastPathComponent() : url)
+            webView.loadFileURL(url, allowingReadAccessTo: isPage ? URL(fileURLWithPath: "/") : url)
             return
         }
         webView.load(URLRequest(url: url))
@@ -624,6 +667,14 @@ final class WKWebViewTab: NSObject {
 
     func goBack() {
         guard wake() else { return }
+        // The page the failed load was leaving is still there: Back returns to it, as leaving Chrome's error page does.
+        if showsFailureOverPage {
+            showsFailureOverPage = false
+            networkChangeRetryURL = nil
+            pendingMainFrameURL = webView.url
+            delegate?.tab(self, didNavigate: .finished(currentURL))
+            return
+        }
         webView.goBack()
     }
 
@@ -777,10 +828,12 @@ final class WKWebViewTab: NSObject {
             return
         }
         printInfo.isHorizontallyCentered = false; printInfo.isVerticallyCentered = false
+        webView.configuration.preferences.shouldPrintBackgrounds = PrintOptionsController.printsBackgrounds
         let framePrint = NSSelectorFromString("_printOperationWithPrintInfo:forFrame:")
         let op = frame.flatMap { webView.responds(to: framePrint) ? webView.perform(framePrint, with: printInfo, with: $0)?.takeUnretainedValue() as? NSPrintOperation : nil }
             ?? webView.printOperation(with: printInfo)
         op.showsPrintPanel = true; op.showsProgressPanel = true
+        op.printPanel.addAccessoryController(PrintOptionsController(webView: webView))
         guard let completion else {
             op.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
             return
@@ -880,16 +933,18 @@ final class WKWebViewTab: NSObject {
     /// Closes the page through its beforeunload, pagehide and unload handlers: `_close` alone fires no
     /// beforeunload, where a site may write state back, such as its sign-in.
     private func closePage() {
-        if !isLeaving { _ = tryClose() }
+        if !isLeaving {
+            isLeaving = true
+            _ = tryClose()
+        }
         let close = NSSelectorFromString("_close")
         if webView.responds(to: close) { webView.perform(close) }
     }
 
     func selectedTextForFind() async -> String? { await findController.selectedText() }
 
-    func findInPage(_ query: String, caseSensitive: Bool) async -> Bool {
-        await findController.find(query, caseSensitive: caseSensitive)
-    }
+    /// The result reaches the delegate's `tab(_:didFind:)`.
+    func findInPage(_ query: String, caseSensitive: Bool) { findController.find(query, caseSensitive: caseSensitive) }
 
     var canFindAgain: Bool { !findController.findAgainString.isEmpty }
     func findNext() { findController.findNext() }
@@ -902,8 +957,9 @@ final class WKWebViewTab: NSObject {
                 guard let url = change.newValue else { return }
                 self?.onMain { tab in
                     guard !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: tab.pendingMainFrameURL) else { return }
-                    // A failed provisional load clears the web view's URL: the pending one stays shown.
-                    let nextURL = url ?? tab.pendingMainFrameURL
+                    // A failed provisional load clears the web view's URL: the pending one stays shown. A navigation
+                    // the page started shows once it commits, a same-document one at once (see currentURL).
+                    let nextURL = tab.isPageNavigationPending ? tab.currentURL : url ?? tab.pendingMainFrameURL
                     guard tab.lastNavigationEmissionState.url != nextURL else { return }
                     tab.lastNavigationEmissionState.url = nextURL; tab.pendingMainFrameURL = nextURL
                     tab.delegate?.tab(tab, didUpdateURL: nextURL)
@@ -938,6 +994,9 @@ final class WKWebViewTab: NSObject {
             },
             observeNavigationState(\.canGoForward, state: \.canGoForward) { tab, v in
                 tab.delegate?.tab(tab, didUpdateCanGoForward: v)
+            },
+            webView.observe(\.hasOnlySecureContent, options: []) { [weak self] _, _ in
+                self?.onMain { $0.updateNotSecure() }
             },
             webView.observe(\.themeColor) { [weak self] _, _ in
                 self?.onMain { $0.emitPageColor() }
@@ -1232,6 +1291,7 @@ final class WKWebViewTab: NSObject {
             alreadyRetried: didAutoRetryProvisionalLoad,
             isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied
         )
+        showsFailureOverPage = hasCommittedContent && recovery != .retrySilently
         guard recovery != .surface, let failedURL = pendingMainFrameURL ?? currentURL else {
             handleNavigationFailure(error, phase: "provisional")
             return
@@ -1258,10 +1318,10 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    /// A committed page that lost its connection is not reloaded at once, which would drop what it shows,
-    /// but on the next network change.
+    /// A committed page that lost its connection keeps what it shows, as in Chrome, and is not reloaded at once,
+    /// which would drop it, but on the next network change.
     private func handleCommittedNavigationFailure(_ error: Error) {
-        handleNavigationFailure(error)
+        handleNavigationFailure(error, keepsPage: true)
         guard let url = pendingMainFrameURL ?? currentURL,
               Self.recoveryForNavigationFailure(error, sendsBody: pendingMainFrameSendsBody, alreadyRetried: true,
                                                 isNetworkPathSatisfied: NetworkPathStatus.shared.isSatisfied) != .surface
@@ -1292,7 +1352,7 @@ final class WKWebViewTab: NSObject {
         }
     }
 
-    private func handleNavigationFailure(_ error: Error, phase: StaticString = "committed") {
+    private func handleNavigationFailure(_ error: Error, phase: StaticString = "committed", keepsPage: Bool = false) {
         let failedURL = pendingMainFrameURL ?? currentURL
         let nsError = error as NSError
         let underlying = (nsError.userInfo[NSUnderlyingErrorKey] as? NSError)
@@ -1307,7 +1367,14 @@ final class WKWebViewTab: NSObject {
                 underlying=\(underlying, privacy: .public)
                 """)
         }
-        delegate?.tab(self, didNavigate: .failed(failedURL, error))
+        delegate?.tab(self, didNavigate: keepsPage ? .finished(currentURL) : .failed(failedURL, error))
+    }
+
+    private func updateNotSecure() {
+        let notSecure = webView.url?.scheme == "https" && (usesCertificateException || !webView.hasOnlySecureContent)
+        guard notSecure != isNotSecure else { return }
+        isNotSecure = notSecure
+        delegate?.tab(self, didUpdateNotSecure: notSecure)
     }
 
     /// Closes the open page-load interval of a recorded session, with how it ended.
@@ -1350,6 +1417,15 @@ final class WKWebViewTab: NSObject {
             ))
             return
         }
+        // A page a form sent is never sent again behind the user's back, as in Chrome: Try Again asks first.
+        if pendingMainFrameSendsBody {
+            handleNavigationFailure(NSError(
+                domain: "LiloEngine",
+                code: NSURLErrorCannotLoadFromNetwork,
+                userInfo: [NSLocalizedDescriptionKey: "This page stopped responding. It was not reloaded, which would send its form again.".localized]
+            ))
+            return
+        }
         lastContentTerminationAt = now
         // `reload()` silently no-ops without a committed back-forward item, leaving a blank view and no
         // failure delegate, so a tab that died before its first commit re-loads its known URL instead.
@@ -1372,6 +1448,8 @@ final class WKWebViewTab: NSObject {
 // MARK: - WKWebViewTab.Delegate
 
 extension WKWebViewTab.Delegate {
+    func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) {}
+    func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL) {}
     func tab(_ tab: WKWebViewTab, openAgentPopupWith configuration: WKWebViewConfiguration, url: URL?) -> WKWebView? { nil }
     func tab(_ tab: WKWebViewTab, openLinkInNewPrivateSpace url: URL) {}
     func tab(_ tab: WKWebViewTab, openLinkInNewWindow url: URL) {}
@@ -1384,6 +1462,7 @@ extension WKWebViewTab.Delegate {
         completion: @escaping @MainActor (_ answer: (URLSession.AuthChallengeDisposition, URLCredential?)?) -> Void
     ) { completion(nil) }
     func tab(_ tab: WKWebViewTab, didUpdateAudioPlaying isPlaying: Bool) {}
+    func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdatePageColor color: String?) {}
     func tab(_ tab: WKWebViewTab, didUpdateFormDirty isDirty: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCallControls controls: WKWebViewTab.CallControls) {}
@@ -1397,7 +1476,7 @@ extension WKWebViewTab.Delegate {
     func tabRequestsForeground(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {}
     func tabRequestsBookmark(_ tab: WKWebViewTab) {}
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?) {}
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {}
     func tab(_ tab: WKWebViewTab, offersIcons icons: [WKWebViewTab.LinkIcon]) { icons.forEach { $0.decide(nil) } }
     func tab(_ tab: WKWebViewTab, peeksLink url: URL, modifierFlags: NSEvent.ModifierFlags) -> Bool { false }
     func tab(_ tab: WKWebViewTab, returnsPeekToOpener request: URLRequest) -> Bool { false }
@@ -1434,7 +1513,20 @@ extension WKWebViewTab: WKNavigationDelegate {
                 bypassesContentBlockersOnce = false
                 if Self.supportsContentBlockersToggle { preferences.setValue(false, forKey: "contentBlockersEnabled") }
             }
-            let decide = { decisionHandler(self.policy(for: navigationAction), preferences) }
+            var decide = { decisionHandler(self.policy(for: navigationAction), preferences) }
+            // Sending a form again may repeat what it did, such as a purchase: the user says so first, as in Chrome.
+            if navigationAction.navigationType == .formResubmitted, navigationAction.targetFrame?.isMainFrame != false {
+                let send = decide
+                decide = {
+                    if self.agentDialogHandler?("a reload would send the page's form again: cancelled") == true {
+                        return decisionHandler(.cancel, preferences)
+                    }
+                    self.runWhenShown { shown in
+                        guard shown else { return decisionHandler(.cancel, preferences) }
+                        JSDialogPresenter.runFormResubmission(in: webView) { $0 ? send() : decisionHandler(.cancel, preferences) }
+                    }
+                }
+            }
             if let frameCookies = tabManager?.extensionRegistry?.frameCookies,
                frameCookies.waitsForCookies(of: navigationAction, in: webView, ready: decide) { return }
             decide()
@@ -1512,6 +1604,11 @@ extension WKWebViewTab: WKNavigationDelegate {
         // here would repoint this tab's pending URL (retry target, TLS host check) at the popup's page.
         if navigationAction.targetFrame?.isMainFrame == true,
            !Self.isSyntheticAboutBlank(webViewURL: url, pendingMainFrameURL: pendingMainFrameURL) {
+            // Lilo names the URL it loads before WebKit asks; a redirect belongs to the navigation it continues.
+            if WebViewPrivateAccessors(navigationAction).bool("_isRedirect") != true {
+                isPageNavigationPending = url != pendingMainFrameURL
+                    && ![.backForward, .reload, .formResubmitted].contains(navigationAction.navigationType)
+            }
             pendingMainFrameURL = url
             pendingMainFrameSendsBody = (navigationAction.request.httpMethod ?? "GET").uppercased() != "GET"
             isLoadingCachedCopy = navigationAction.request.cachePolicy == .returnCacheDataDontLoad
@@ -1526,9 +1623,15 @@ extension WKWebViewTab: WKNavigationDelegate {
             }
         }
 
+        // The source loads again with the user's cookies: only the user opens it, as in Chrome.
+        if url?.scheme == ViewSourceSchemeHandler.scheme, !isMainFrame || isPageNavigationPending { return .cancel }
+
         // Non-web schemes (slack://, mailto:, ...) route to the delegate, which confirms before launching so a page can't silently open other apps.
         if let url, let scheme = url.scheme?.lowercased(), !Self.webSchemes.contains(scheme) {
-            delegate?.tab(self, launchExternalURL: url, fromPage: webView.url)
+            // The frame that asked, as Chrome keys these decisions: a frame does not speak for the page embedding it.
+            // A load Lilo starts may come without one, whatever the header says.
+            let initiator = (navigationAction.sourceFrame as WKFrameInfo?)?.securityOrigin
+            delegate?.tab(self, launchExternalURL: url, fromOrigin: initiator.flatMap { $0.host.isEmpty ? nil : $0.permissionOriginKey })
             return .cancel
         }
 
@@ -1560,7 +1663,7 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didReceiveServerRedirectForProvisionalNavigation navigation: WKNavigation!) {
         onMain { tab in
             StartupMetrics.markOnce("firstContentServerRedirected")
-            if let url = tab.currentURL { tab.pendingMainFrameURL = url }
+            if let url = Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: tab.pendingMainFrameURL) { tab.pendingMainFrameURL = url }
         }
     }
 
@@ -1571,6 +1674,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.navigationSignpost = PerfSignposts.navigation.beginInterval("load", id: PerfSignposts.navigation.makeSignpostID(from: tab))
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
+            tab.showsFailureOverPage = false
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
             // A pending region selection is a selection of the outgoing page.
             tab.cancelRegionSelection()
@@ -1610,9 +1714,17 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.lastContentTerminationAt = nil
             // A hung process killed for a reload never says it answers again: the new one committing does.
             tab.isUnresponsive = false
+            tab.showsFailureOverPage = false
             tab.didAutoRetryProvisionalLoad = false
             tab.isLoadingCachedCopy = false
             tab.networkChangeRetryURL = nil
+            if tab.isPageNavigationPending {
+                tab.isPageNavigationPending = false
+                if tab.lastNavigationEmissionState.url != tab.currentURL {
+                    tab.lastNavigationEmissionState.url = tab.currentURL
+                    tab.delegate?.tab(tab, didUpdateURL: tab.currentURL)
+                }
+            }
             tab.pendingMainFrameURL = tab.currentURL
             if !tab.isPrivateBrowsing {
                 Self.logger.info("""
@@ -1620,6 +1732,13 @@ extension WKWebViewTab: WKNavigationDelegate {
                     ms=\(tab.navigationStartUptime.map { (DispatchTime.now().uptimeNanoseconds - $0) / 1_000_000 } ?? 0, privacy: .public)
                     """)
             }
+            tab.documentURL = webView.url
+            // Asked once per page: the exception holds for the connection, which WebKit challenges once.
+            tab.usesCertificateException = webView.url.flatMap { url -> Bool? in
+                guard url.scheme == "https", let host = url.host, let trust = webView.serverTrust else { return nil }
+                return tab.delegate?.tab(tab, shouldAllowInsecureServerTrust: trust, forHost: host.lowercased(), port: url.port ?? 443)
+            } ?? false
+            tab.updateNotSecure()
             tab.delegate?.tab(tab, didNavigate: .committed(tab.currentURL))
             tab.reportToScreenTime(webView.url)
             // A new page resets the blocked-tracker count; the send is skipped when it was already 0.
@@ -1660,9 +1779,12 @@ extension WKWebViewTab: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         onMain { tab in
             tab.endNavigationSignpost("fail")
+            // The error page names the address that failed, as in Chrome.
+            tab.isPageNavigationPending = false
             // A navigation taking over clears the flag in its policy check, so a cancellation left here is a cache miss.
             if tab.isLoadingCachedCopy, (error as NSError).code == NSURLErrorCancelled {
                 tab.isLoadingCachedCopy = false
+                tab.showsFailureOverPage = tab.hasCommittedContent
                 tab.handleNavigationFailure(NSError(domain: NSURLErrorDomain, code: NSURLErrorResourceUnavailable), phase: "provisional")
                 return
             }
@@ -1753,6 +1875,10 @@ extension WKWebViewTab: WKNavigationDelegate {
     /// `type` is `_WKSameDocumentNavigationType`: 0 anchor, 1 push, 2 replace, 3 pop. WebKit owns the
     /// integer tab id, so the event carries the tab's window position and index for JS to resolve.
     private func reportSameDocumentNavigation(type: Int) {
+        if let url = webView.url, url != documentURL {
+            documentURL = url
+            delegate?.tab(self, didNavigateWithinPageTo: url)
+        }
         guard let registry = tabManager?.extensionRegistry else { return }
         let event = type == 0 ? "onReferenceFragmentUpdated" : "onHistoryStateUpdated"
         // The window and index lookups below are skipped when no extension listens.
@@ -1855,14 +1981,11 @@ extension WKWebViewTab: WKNavigationDelegate {
                let trust = space.serverTrust {
                 StartupMetrics.markOnce("firstContentTLSChallengeReceived")
                 let challengedHost = space.host.lowercased()
-                let pendingHost = pendingMainFrameURL?.host?.lowercased()
-                let currentHost = currentURL?.host?.lowercased()
-                guard challengedHost == pendingHost || challengedHost == currentHost else {
-                    completionHandler(.performDefaultHandling, nil)
-                    StartupMetrics.markOnce("firstContentTLSChallengeHandled")
-                    return
+                // The page's own certificate is the one its error page explains and a new exception pins;
+                // an accepted exception holds for every request to its host, as an app's API calls need.
+                if challengedHost == pendingMainFrameURL?.host?.lowercased() || challengedHost == currentURL?.host?.lowercased() {
+                    lastServerTrust = trust
                 }
-                lastServerTrust = trust
                 if delegate?.tab(self, shouldAllowInsecureServerTrust: trust, forHost: challengedHost, port: space.port) == true {
                     completionHandler(.useCredential, URLCredential(trust: trust))
                 } else {
@@ -1884,8 +2007,10 @@ extension WKWebViewTab: WKNavigationDelegate {
                 let prompt = { [weak self] in
                     DispatchQueue.main.async { [weak self] in
                         MainActor.assumeIsolated {
+                            guard let self else { return completionHandler(.cancelAuthenticationChallenge, nil) }
                             HTTPAuthChallengeHandler().resolve(
-                                challenge, in: self?.webView.window, usesKeychain: self?.isPrivateBrowsing == false,
+                                challenge, keychainProfile: self.webView.configuration.websiteDataStore.identifier,
+                                whenShown: { show in self.runWhenShown { [weak self] in show($0 ? self?.webView.window : nil) } },
                                 completion: completionHandler
                             )
                         }
@@ -1897,7 +2022,7 @@ extension WKWebViewTab: WKNavigationDelegate {
                     if let answer { completionHandler(answer.0, answer.1) } else { prompt() }
                 }
             } else if method == NSURLAuthenticationMethodClientCertificate, !isAgentControlled {
-                ClientCertificateChallengeHandler.resolve(challenge, in: webView.window, completion: completionHandler)
+                ClientCertificateChallengeHandler.resolve(challenge, dataStore: webView.configuration.websiteDataStore, in: webView.window, completion: completionHandler)
             } else {
                 completionHandler(.performDefaultHandling, nil)
             }
@@ -2019,7 +2144,7 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
-            contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
+            contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             completionHandler(menu)
         }
     }
@@ -2072,9 +2197,15 @@ extension WKWebViewTab: WKUIDelegate {
         completionHandler: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         onMain { tab in
-            // Like browsers, a page nobody looks at leaves without asking: the prompt would wait unseen.
-            if tab.isLeaving || tab.agentDialogHandler?("beforeunload: left the page") == true || !tab.isOnScreen { return completionHandler(true) }
-            JSDialogPresenter.runBeforeUnload(in: webView, completion: completionHandler)
+            if tab.isLeaving || tab.agentDialogHandler?("beforeunload: left the page") == true { return completionHandler(true) }
+            let isClosing = tab.isAskingToClose
+            tab.isAskingToClose = false
+            if !tab.isOnScreen {
+                // A page nobody looks at leaves without asking, unless the user closes its tab: the tab shows to ask, as in Chrome.
+                guard isClosing else { return completionHandler(true) }
+                tab.delegate?.tabRequestsForeground(tab)
+            }
+            tab.runWhenShown { $0 ? JSDialogPresenter.runBeforeUnload(in: webView, completion: completionHandler) : completionHandler(true) }
         }
     }
 
@@ -2200,11 +2331,12 @@ extension WKWebViewTab: WKUIDelegate {
         completionHandler(frame)
     }
 
-    // Printed-page header/footer (WKUIDelegatePrivate): the page title and source URL.
+    // Printed-page header/footer (WKUIDelegatePrivate): the page title and date, then the source URL and page number, unless the
+    // print panel's option turns them off.
     @objc(_webViewHeaderHeight:)
-    nonisolated func webViewHeaderHeight(_ webView: WKWebView) -> CGFloat { Self.printEdgeHeight }
+    nonisolated func webViewHeaderHeight(_ webView: WKWebView) -> CGFloat { PrintOptionsController.printsHeadersAndFooters ? Self.printEdgeHeight : 0 }
     @objc(_webViewFooterHeight:)
-    nonisolated func webViewFooterHeight(_ webView: WKWebView) -> CGFloat { Self.printEdgeHeight }
+    nonisolated func webViewFooterHeight(_ webView: WKWebView) -> CGFloat { PrintOptionsController.printsHeadersAndFooters ? Self.printEdgeHeight : 0 }
 
     @objc(_webView:drawHeaderInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawHeaderInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
@@ -2212,7 +2344,8 @@ extension WKWebViewTab: WKUIDelegate {
     }
     @objc(_webView:drawFooterInRect:forPageWithTitle:URL:)
     nonisolated func webView(_ webView: WKWebView, drawFooterInRect rect: CGRect, forPageWithTitle title: String, url: URL) {
-        Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: nil)
+        let pageNumber = MainActor.assumeIsolated { NSPrintOperation.current.map { "\($0.currentPage)/\($0.pageRange.upperBound - 1)" } }
+        Self.drawPrintEdge(in: rect, leading: url.absoluteString, trailing: pageNumber)
     }
 
     nonisolated private static let printEdgeHeight: CGFloat = 18
@@ -2254,7 +2387,9 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable () -> Void) {
         if agentDialogHandler?("alert(\(message)) dismissed") == true { completionHandler(); return }
-        runWhenShown { $0 ? JSDialogPresenter.runAlert(in: webView, message: message, completion: completionHandler) : completionHandler() }
+        runPageDialog(dismiss: completionHandler) { suppress in
+            JSDialogPresenter.runAlert(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        }
     }
 
     func webView(_ webView: WKWebView,
@@ -2262,7 +2397,9 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (Bool) -> Void) {
         if agentDialogHandler?("confirm(\(message)) accepted") == true { completionHandler(true); return }
-        runWhenShown { $0 ? JSDialogPresenter.runConfirm(in: webView, message: message, completion: completionHandler) : completionHandler(false) }
+        runPageDialog(dismiss: { completionHandler(false) }, present: { suppress in
+            JSDialogPresenter.runConfirm(in: webView, frame: frame, message: message, suppress: suppress, completion: completionHandler)
+        })
     }
 
     func webView(_ webView: WKWebView,
@@ -2271,9 +2408,27 @@ extension WKWebViewTab: WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo,
                  completionHandler: @escaping @MainActor @Sendable (String?) -> Void) {
         if agentDialogHandler?("prompt(\(prompt)) answered with its default") == true { completionHandler(defaultText ?? ""); return }
-        runWhenShown { show in
-            guard show else { return completionHandler(nil) }
-            JSDialogPresenter.runPrompt(in: webView, prompt: prompt, defaultText: defaultText, completion: completionHandler)
+        runPageDialog(dismiss: { completionHandler(nil) }, present: { suppress in
+            JSDialogPresenter.runPrompt(
+                in: webView, frame: frame, prompt: prompt, defaultText: defaultText, suppress: suppress, completion: completionHandler
+            )
+        })
+    }
+
+    /// Runs a page's alert, confirm or prompt once its tab shows, or dismisses it at once when the user stopped the
+    /// page's dialogs. `present` gets a way to stop them from the page's second dialog on.
+    private func runPageDialog(
+        dismiss: @escaping @MainActor () -> Void,
+        present: @escaping @MainActor ((@MainActor @Sendable () -> Void)?) -> Void
+    ) {
+        let origin = webView.url.map { "\($0.scheme ?? "")://\($0.host() ?? ""):\($0.port ?? 0)" } ?? ""
+        guard origin != suppressedDialogOrigin else { return dismiss() }
+        runWhenShown { [weak self] show in
+            guard show, let self else { return dismiss() }
+            var suppress: (@MainActor @Sendable () -> Void)?
+            if origin == lastDialogOrigin { suppress = { [weak self] in self?.suppressedDialogOrigin = origin } }
+            lastDialogOrigin = origin
+            present(suppress)
         }
     }
 
@@ -2312,6 +2467,56 @@ extension WKWebViewTab: WKUIDelegate {
             }
         }
     }
+}
+
+// MARK: - PrintOptionsController
+
+/// The print panel's options, kept for every later print as in Safari.
+@MainActor
+final class PrintOptionsController: NSViewController, NSPrintPanelAccessorizing {
+    nonisolated static var printsHeadersAndFooters: Bool { UserDefaults.standard.object(forKey: "PrintHeadersAndFooters") as? Bool ?? true }
+    static var printsBackgrounds: Bool { UserDefaults.standard.bool(forKey: "PrintBackgrounds") }
+
+    private let webView: WKWebView
+    // Observed by the print panel, which redraws its preview when either changes.
+    @objc dynamic private var headersAndFooters = PrintOptionsController.printsHeadersAndFooters
+    @objc dynamic private var backgrounds = PrintOptionsController.printsBackgrounds
+
+    init(webView: WKWebView) {
+        self.webView = webView
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func loadView() {
+        let backgrounds = NSButton(checkboxWithTitle: "Print backgrounds".localized, target: self, action: #selector(toggleBackgrounds(_:)))
+        backgrounds.state = self.backgrounds ? .on : .off
+        let headers = NSButton(checkboxWithTitle: "Print headers and footers".localized, target: self, action: #selector(toggleHeadersAndFooters(_:)))
+        headers.state = headersAndFooters ? .on : .off
+        let stack = NSStackView(views: [backgrounds, headers])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.edgeInsets = NSEdgeInsets(top: 12, left: 20, bottom: 12, right: 20)
+        view = stack
+    }
+
+    @objc private func toggleBackgrounds(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: "PrintBackgrounds")
+        webView.configuration.preferences.shouldPrintBackgrounds = sender.state == .on
+        backgrounds = sender.state == .on
+    }
+
+    @objc private func toggleHeadersAndFooters(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: "PrintHeadersAndFooters")
+        headersAndFooters = sender.state == .on
+    }
+
+    func localizedSummaryItems() -> [[NSPrintPanel.AccessorySummaryKey: String]] { [] }
+
+    func keyPathsForValuesAffectingPreview() -> Set<String> { ["headersAndFooters", "backgrounds"] }
 }
 
 // MARK: - PrintCompletionProxy

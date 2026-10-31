@@ -65,7 +65,11 @@ final class ContextMenuBuilder: NSObject {
         return result.value(forKey: key) as? URL
     }
 
-    func build(_ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, extensionItems: [NSMenuItem], offersNewWindow: Bool = true, searchEngineName: String? = nil) {
+    /// `element` is the clicked `_WKContextMenuElementInfo`, whose hit test tells a text field or the selection.
+    func build(
+        _ menu: NSMenu, linkURL: URL?, imageURL: URL? = nil, element: NSObject? = nil, extensionItems: [NSMenuItem],
+        offersNewWindow: Bool = true, searchEngineName: String? = nil
+    ) {
         // WebKit's "Search with Google" hands the selection to the system's search service, which opens the default browser.
         if let searchEngineName, let item = menu.items.first(where: { $0.identifier?.rawValue.localizedCaseInsensitiveContains("SearchWeb") ?? false }) {
             item.title = String(format: "Search with %@".localized, searchEngineName)
@@ -76,6 +80,12 @@ final class ContextMenuBuilder: NSObject {
         // WebKit's native "Download Image"/"Download Linked File" items never fire WKDownloadDelegate,
         // so route them through Lilo's download pipeline (via `onDownload`).
         wireDownloadItems(in: menu, imageURL: imageURL, linkURL: linkURL)
+
+        // Read by KVC (private class), false when WebKit renames a property.
+        let hitTest = element.flatMap { $0.responds(to: NSSelectorFromString("hitTestResult")) ? $0.value(forKey: "hitTestResult") as? NSObject : nil }
+        let isTextTarget = ["isContentEditable", "isSelected"].contains { getter in
+            hitTest?.responds(to: NSSelectorFromString(getter)) == true && hitTest?.value(forKey: getter) as? Bool == true
+        }
 
         if let linkURL {
             // WebKit's own "Open Link in New Window" opens a popup-style window; Lilo's items open a
@@ -111,6 +121,8 @@ final class ContextMenuBuilder: NSObject {
             extensionItems.forEach { menu.addItem($0) }
         }
 
+        // As Chrome, the page's own items stay out of a link, media, selection or text field menu: a stray Back loses typed text.
+        guard linkURL == nil, imageURL == nil, !isTextTarget else { return menu.showItemImages() }
         menu.addItem(.separator())
         menu.addItem(makeMenuItem("Back", icon: .back, action: #selector(contextMenuBack), isEnabled: webView.canGoBack))
         menu.addItem(makeMenuItem("Forward", icon: .forward, action: #selector(contextMenuForward), isEnabled: webView.canGoForward))

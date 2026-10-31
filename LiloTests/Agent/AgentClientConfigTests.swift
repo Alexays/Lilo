@@ -96,6 +96,22 @@ final class AgentClientConfigTests: XCTestCase {
         XCTAssertEqual(servers["lilo"]?["command"] as? String, AgentClientConfig.helperPath)
     }
 
+    func testALinkedConfigStaysALinkWithItsPermissions() async throws {
+        try write(#"{"mcpServers": {"other": {"command": "/bin/other", "env": {"KEY": "secret"}}}}"#, to: "dotfiles/mcp.json")
+        let target = home.appending(path: "dotfiles/mcp.json")
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: target.path)
+        try FileManager.default.createDirectory(at: home.appending(path: ".cursor"), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: home.appending(path: ".cursor/mcp.json"), withDestinationURL: target)
+
+        _ = try await AgentClientConfig.connect(.cursor, home: home)
+
+        let link = home.appending(path: ".cursor/mcp.json").path
+        XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: link), target.path, "still the user's link")
+        let servers = try XCTUnwrap(try json("dotfiles/mcp.json")["mcpServers"] as? [String: Any])
+        XCTAssertEqual(Set(servers.keys), ["lilo", "other"])
+        XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: target.path)[.posixPermissions] as? Int, 0o600)
+    }
+
     func testCodexTableReplacedInPlace() async throws {
         try write("""
             # my settings

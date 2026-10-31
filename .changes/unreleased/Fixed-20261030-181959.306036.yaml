@@ -1,0 +1,3 @@
+kind: Fixed
+body: Revoking or blocking a site's camera, microphone or location in Settings stops what its open pages are using right away, as Chrome does.
+time: 2026-10-30T18:19:59.306036+01:00

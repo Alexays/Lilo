@@ -60,8 +60,9 @@ final class BuildIdentityTests: XCTestCase {
         addTeardownBlock { database.tearDown() }
         let settingsStore = SettingsStore(dbPool: database.pool)
         defer { withExtendedLifetime(settingsStore) {} }
+        let sitePermissions = SitePermissionStore(dbPool: database.pool)
         let handler = SettingsBridgeHandler(
-            settingsStore: settingsStore, sitePermissionStore: SitePermissionStore(dbPool: database.pool),
+            settingsStore: settingsStore, sitePermissionStoreProvider: { sitePermissions },
             zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
             dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
             forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())

@@ -40,6 +40,63 @@ final class TabClosingTests: XCTestCase {
         window.tabManager.sidebarTreeItems(forSpace: space.id).first { $0.kind == .tab && $0.itemId == id }
     }
 
+    /// A tab that went through `pages`, one load each, settled on the last.
+    private func openTab(_ window: MainWindowController, through pages: [String]) async throws -> Tab {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: pages[0])))
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: tab.id))
+        for (index, page) in pages.enumerated() {
+            if index > 0 { engine.loadURL(try XCTUnwrap(URL(string: page))) }
+            let loaded = await pollUntil(timeout: 10) { engine.wkWebView.url?.absoluteString == page && !engine.wkWebView.isLoading }
+            XCTAssertTrue(loaded, "\(page) loads")
+        }
+        return tab
+    }
+
+    /// The pages behind `id`'s current one, oldest first, once its engine shows `page`.
+    private func backPages(_ window: MainWindowController, _ id: UUID, showing page: String) async throws -> [String] {
+        let engine = try XCTUnwrap(window.tabManager.engineTab(for: id))
+        let shown = await pollUntil(timeout: 10) { engine.wkWebView.url?.absoluteString == page }
+        XCTAssertTrue(shown, "\(page) shows")
+        return engine.wkWebView.backForwardList.backList.map(\.url.absoluteString)
+    }
+
+    func testReopeningAClosedTabBringsBackItsHistory() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try await openTab(window, through: ["data:text/html,first", "data:text/html,second"])
+        window.createTabStateFirst(url: nil)
+
+        window.closeTabStateFirst(id: tab.id, askingPage: false)
+        let reopened = try XCTUnwrap(window.restoreClosedTabStateFirst())
+
+        let back = try await backPages(window, reopened.id, showing: "data:text/html,second")
+        XCTAssertEqual(back, ["data:text/html,first"])
+    }
+
+    func testADuplicateKeepsTheHistoryOfItsTab() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try await openTab(window, through: ["data:text/html,first", "data:text/html,second"])
+
+        window.duplicateTab(tab)
+
+        let duplicate = try XCTUnwrap(window.tabManager.activeOpenTabId)
+        XCTAssertNotEqual(duplicate, tab.id)
+        let back = try await backPages(window, duplicate, showing: "data:text/html,second")
+        XCTAssertEqual(back, ["data:text/html,first"])
+    }
+
+    func testADuplicateOfADiscardedTabKeepsItsHistory() async throws {
+        let (window, _) = try makeWindow()
+        let tab = try await openTab(window, through: ["data:text/html,first", "data:text/html,second"])
+        window.createTabStateFirst(url: nil)
+        window.tabManager.discardEngine(tab.id)
+
+        window.duplicateTab(try XCTUnwrap(window.tabManager.tab(for: tab.id)))
+
+        let duplicate = try XCTUnwrap(window.tabManager.activeOpenTabId)
+        let back = try await backPages(window, duplicate, showing: "data:text/html,second")
+        XCTAssertEqual(back, ["data:text/html,first"])
+    }
+
     func testRemovingAPinnedTabIsUndonePinnedInItsFolderAtItsPlace() async throws {
         let (window, space) = try makeWindow()
         let events = BridgeEventRecorder(window.bridgeRouter)

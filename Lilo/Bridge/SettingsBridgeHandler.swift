@@ -58,7 +58,7 @@ final class SettingsBridgeHandler: BridgeHandler {
     ]
 
     private weak var settingsStore: SettingsStore?
-    private let sitePermissionStore: SitePermissionStore
+    private let sitePermissionStoreProvider: @MainActor () -> SitePermissionStore?
     private let zoomStoreProvider: @MainActor () -> ZoomStore?
     private let historyStoreProvider: @MainActor () -> HistoryStore?
     private let extensionRegistryProvider: @MainActor () -> ProfileExtensionRegistry?
@@ -68,7 +68,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     private let forceLifecycleTrimHandler: @MainActor () -> Void
     private weak var bridgeRouter: BridgeRouter?
     var onContentBlockerToggled: ((Bool) -> Void)?
-    var onBlockerAllowlistChanged: (() -> Void)?
+    /// Rebuilds the blocker, then reloads the tab given, if any.
+    var onBlockerAllowlistChanged: ((_ reloadTabId: UUID?) -> Void)?
     /// The content blocker's lists and counts, for the settings page.
     var contentBlockerStatus: (() -> [String: Any])?
     /// Fetches and converts the filter lists now.
@@ -90,17 +91,24 @@ final class SettingsBridgeHandler: BridgeHandler {
     var terminalThemeImporter: (() async -> Bool)?
     /// A host's stored zoom was reset; open pages of that host fall back to the default zoom.
     var onZoomLevelReset: ((String) -> Void)?
+    /// An origin lost a permission type it may have been using.
+    var onSitePermissionRevoked: ((_ origin: String, _ type: String) -> Void)?
+    /// The profile's history was cleared since this date, or entirely (nil).
+    var onHistoryCleared: ((Date?) -> Void)?
     var onAutoDeviceSwitchingChanged: (() -> Void)?
+    var onFolderAutoLockChanged: (() -> Void)?
     /// What the device-setup row shows; nil when no window owns a device setup controller.
     var deviceSetupState: (() -> [String: Any])?
     var onForgetDeviceSetup: (() -> Void)?
     var onTogglePerfRecording: (() -> Void)?
     /// Settings records a shortcut for this action id, or stops recording (nil).
     var onRecordShortcut: ((String?) -> Void)?
+    /// Every browser window's router: each chrome keeps its own copy of the settings.
+    var windowRouters: (() -> [BridgeRouter])?
 
     init(
         settingsStore: SettingsStore,
-        sitePermissionStore: SitePermissionStore,
+        sitePermissionStoreProvider: @escaping @MainActor () -> SitePermissionStore?,
         zoomStoreProvider: @escaping @MainActor () -> ZoomStore?,
         historyStoreProvider: @escaping @MainActor () -> HistoryStore?,
         extensionRegistryProvider: @escaping @MainActor () -> ProfileExtensionRegistry?,
@@ -110,7 +118,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         forceLifecycleTrimHandler: @escaping @MainActor () -> Void,
         bridgeRouter: BridgeRouter
     ) {
-        self.settingsStore = settingsStore; self.sitePermissionStore = sitePermissionStore
+        self.settingsStore = settingsStore; self.sitePermissionStoreProvider = sitePermissionStoreProvider
         self.zoomStoreProvider = zoomStoreProvider
         self.historyStoreProvider = historyStoreProvider
         self.extensionRegistryProvider = extensionRegistryProvider
@@ -131,6 +139,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                     try await Task.detached {
                         if let cutoff { try historyStore.deleteEntries(since: cutoff) } else { try historyStore.clearAll() }
                     }.value
+                    onHistoryCleared?(cutoff)
                 } catch {
                     failure = String(format: "Could not clear browsing history: %@".localized, error.localizedDescription)
                 }
@@ -144,7 +153,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                     await dataStore.removeAllData(modifiedSince: since)
                     // Permissions carry no timestamp, so only an all-time clear drops them.
                     if cutoff == nil {
-                        sitePermissionStore.clearAll()
+                        sitePermissionStoreProvider()?.clearAll()
                         publishSitePermissions()
                     }
                 } else {
@@ -187,14 +196,14 @@ final class SettingsBridgeHandler: BridgeHandler {
         switch message.action {
 
         case "getSettings":
-            publishSettings(using: store)
+            bridgeRouter?.send(event: "settingsLoaded", data: ["settings": store.allSettings()])
 
         case "setSetting":
             if let key = message.string("key"), let value = message.string("value") {
                 if key == "pinnedExtensions" { extensionRegistryProvider()?.pinnedExtensionsChanged(from: store.get(key), to: value) }
                 store.set(key, value: value)
                 if key == "contentBlockerEnabled" { onContentBlockerToggled?(value == "true") }
-                if key == "contentBlockerAllowedDomains" { onBlockerAllowlistChanged?() }
+                if key == "contentBlockerAllowedDomains" { onBlockerAllowlistChanged?(nil) }
                 if key == "sendGPC" { onSendGPCChanged?(value == "true") }
                 if key == "preventCrossSiteTracking" { onTrackingPreventionChanged?(value == "true") }
                 if key == "httpsOnly" { onHTTPSOnlyChanged?(value == "true") }
@@ -203,6 +212,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "lifecyclePreset" { onLifecyclePresetChanged?(value) }
                 if key == "tabPosition" || key == "addressPlacement" { onTabLayoutChanged?() }
                 if key == DeviceSetupController.enabledKey { onAutoDeviceSwitchingChanged?() }
+                if key == "folderAutoLockMinutes" { onFolderAutoLockChanged?() }
                 // Mirror the UI language choice so native menus/dialogs follow it on next launch.
                 if key == "locale" { Localization.persistOverride(value) }
                 // apply() also caches the appearance for next-launch first paint.
@@ -328,7 +338,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 var list = store.contentBlockerAllowlist
                 if let idx = list.firstIndex(of: host) { list.remove(at: idx) } else { list.append(host) }
                 store.contentBlockerAllowlist = list
-                onBlockerAllowlistChanged?()
+                onBlockerAllowlistChanged?(message.uuid("reloadTabId"))
                 bridgeRouter?.send(event: "blockerAllowlistChanged", data: ["allowlist": list])
                 publishSettings(using: store)
             }
@@ -343,11 +353,16 @@ final class SettingsBridgeHandler: BridgeHandler {
             publishSitePermissions()
 
         case "revokeSitePermission":
-            if let id = message.uuid("id") { sitePermissionStore.revoke(id: id); publishSitePermissions(); bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized) }
+            if let id = message.uuid("id") {
+                if let revoked = sitePermissionStoreProvider()?.revoke(id: id) { onSitePermissionRevoked?(revoked.origin, revoked.type) }
+                publishSitePermissions()
+                bridgeRouter?.sendActionCompleted("settingsActionCompleted", action: "revokeSitePermission", message: "Site permission revoked".localized)
+            }
 
         case "setSitePermission":
             if let origin = message.string("origin"), let type = message.string("type") {
-                sitePermissionStore.upsert(origin: origin, type: type, granted: message.bool("allow"))
+                sitePermissionStoreProvider()?.upsert(origin: origin, type: type, granted: message.bool("allow"))
+                if !message.bool("allow") { onSitePermissionRevoked?(origin, type) }
                 publishSitePermissions()
             }
 
@@ -481,8 +496,11 @@ final class SettingsBridgeHandler: BridgeHandler {
         if let status = contentBlockerStatus?() { bridgeRouter?.send(event: "contentBlockerStatus", data: status) }
     }
 
+    /// A change reaches every window, or the others keep searching with the old engine, the old language.
     private func publishSettings(using store: SettingsStore) {
-        bridgeRouter?.send(event: "settingsLoaded", data: ["settings": store.allSettings()])
+        let data: [String: Any] = ["settings": store.allSettings()]
+        bridgeRouter?.send(event: "settingsLoaded", data: data)
+        for router in windowRouters?() ?? [] where router !== bridgeRouter { router.send(event: "settingsLoaded", data: data) }
     }
 
     /// Nil in builds without a Sparkle key (local and debug builds), which never update.
@@ -550,7 +568,8 @@ final class SettingsBridgeHandler: BridgeHandler {
     }
 
     private func publishSitePermissions() {
-        bridgeRouter?.sendSitePermissionsLoaded(from: sitePermissionStore)
+        guard let store = sitePermissionStoreProvider() else { return }
+        bridgeRouter?.sendSitePermissionsLoaded(from: store)
     }
 
     private func publishWebsiteData() async {

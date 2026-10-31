@@ -1,0 +1,3 @@
+kind: Fixed
+body: Video and audio that were playing without sound when a background tab froze, such as a muted live stream or a looping background video, play again when you return to the tab.
+time: 2026-10-30T19:21:17.640303+01:00

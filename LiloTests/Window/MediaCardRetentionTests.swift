@@ -36,6 +36,8 @@ final class MediaCardRetentionTests: XCTestCase {
         let other = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
         window.switchToSpace(other.id)
         XCTAssertTrue(context.browserState.liveEngine(forTab: tab.id) === engine, "a tab paused from the card keeps its engine")
+        // A tab still loading is never frozen.
+        _ = await pollUntil(timeout: 10) { !engine.isLoading }
         await scriptsSettled(engine)
         return engine
     }

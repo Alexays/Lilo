@@ -52,9 +52,12 @@ enum ChromiumReader {
                 var encryptedCount = 0, undecryptedCount = 0
                 bundle.cookies = try ImportFiles.withCopy(url) { db in
                     let version = Int(try String.fetchOne(db, sql: "SELECT value FROM meta WHERE key = 'version'") ?? "0") ?? 0
+                    // A partitioned (CHIPS) cookie would land as a first-party one, possibly over the site's own cookie of the same
+                    // name. Profiles from before CHIPS have no partition column.
+                    let partitioned = try db.columns(in: "cookies").contains { $0.name == "top_frame_site_key" }
                     return try Row.fetchAll(db, sql: """
                         SELECT host_key, name, value, encrypted_value, path, expires_utc, is_secure, is_httponly, samesite FROM cookies
-                        """).compactMap { row -> ImportedCookie? in
+                        """ + (partitioned ? " WHERE top_frame_site_key = ''" : "")).compactMap { row -> ImportedCookie? in
                         let host: String = row["host_key"]
                         let plain: String = row["value"] ?? ""
                         let encrypted: Data = row["encrypted_value"] ?? Data()

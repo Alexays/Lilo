@@ -56,7 +56,7 @@ struct GetCurrentTabIntent: AppIntent {
     func perform() async throws -> some IntentResult & ReturnsValue<URL?> {
         guard let controller = appDelegate?.mainWindowController,
               controller.context.spaceManager?.space(with: controller.tabManager.currentSpaceId)?.isPrivate == false else { return .result(value: nil) }
-        return .result(value: controller.tabManager.activeTab?.url)
+        return .result(value: controller.tabManager.visibleActiveTab?.url)
     }
 }
 

@@ -325,11 +325,10 @@ extension MainWindowController {
         }
         context.engineFactory.geolocationPermissionDecisionHandler = permissionDecisionHandler
         context.engineFactory.notificationPermissionDecisionHandler = permissionDecisionHandler
-        context.engineFactory.notificationAllowanceHandler = { [weak context] origin in
-            guard let window = context?.windows.activeWindow else {
-                return context?.sitePermissionStore?.decision(forOrigin: origin, type: "notifications") == true
-            }
-            return window.storedPermissionDecision(type: "notifications", origin: origin, isPrivate: false) == true
+        context.engineFactory.notificationDecisionHandler = { [weak context] webView, origin in
+            guard let context, let webView, let window = context.windows.window(for: webView) else { return nil }
+            return window.storedPermissionDecision(type: "notifications", origin: origin, tabId: window.tabManager.engineTab(forWebView: webView)?.id)
+                ?? (context.settingsStore.refusesPermissionRequests("notifications") ? false : nil)
         }
         setupTabShare()
         setupTabDock()
@@ -522,11 +521,15 @@ extension MainWindowController {
 
         let settingsHandler = SettingsBridgeHandler(
             settingsStore: settingsStore,
-            sitePermissionStore: context.sitePermissionStore,
+            sitePermissionStoreProvider: { [weak self] in self?.profileContext?.sitePermissions },
             zoomStoreProvider: { [weak self] in self?.profileContext?.zoom },
             historyStoreProvider: { [weak self] in self?.profileContext?.history },
             extensionRegistryProvider: { [weak self] in self?.profileContext?.extensions },
-            dataStoreProvider: { [weak tabManager] in tabManager?.dataStore },
+            // The profile's own store, never a private space's ephemeral one: the clear-data page acts on the profile.
+            dataStoreProvider: { [weak self] in
+                guard let self, let profileId = profileContext?.profileId else { return nil }
+                return context.profileManager.dataStore(for: profileId)
+            },
             lifecycleDiagnosticsProvider: { [weak self] in self?.context.browserState.lifecycleDiagnostics() },
             extensionDiagnosticsProvider: { [weak self] in self?.extensionDiagnosticsSnapshots() ?? [] },
             forceLifecycleTrimHandler: { [weak self] in self?.context.hiddenSpaceLifecycle.forceTrim() },
@@ -610,6 +613,23 @@ extension MainWindowController {
                 }
             ))
         }))
+        // As in Chrome, a revoked permission stops what the origin's pages in this profile use: capture, location watches.
+        settingsHandler.onSitePermissionRevoked = { [weak self] origin, type in
+            guard let self, let profileId = profileContext?.profileId else { return }
+            let dataStore = context.profileManager.dataStore(for: profileId).backingStore
+            if type == "location" { return context.engineFactory.revokeGeolocation(origin: origin, in: dataStore) }
+            for tabId in context.browserState.allTabIds() {
+                guard let webView = context.browserState.liveEngine(forTab: tabId)?.wkWebView, webView.configuration.websiteDataStore === dataStore,
+                      let url = webView.url, let scheme = url.scheme, let host = url.host,
+                      PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0) == origin else { continue }
+                if type.contains("camera"), webView.cameraCaptureState != .none { webView.setCameraCaptureState(.none) }
+                if type.contains("microphone"), webView.microphoneCaptureState != .none { webView.setMicrophoneCaptureState(.none) }
+            }
+        }
+        settingsHandler.onHistoryCleared = { [weak self] cutoff in
+            guard let self, let profileId = profileContext?.profileId, let spaceManager = context.spaceManager else { return }
+            context.recentlyClosed.removePages(closedSince: cutoff) { spaceManager.space(with: $0)?.profileId == profileId }
+        }
         settingsHandler.onZoomLevelReset = { [weak self] host in
             guard let self, let engine = tabManager.activeEngineTab,
                   engine.currentURL?.host?.lowercased() == host.lowercased() else { return }
@@ -618,10 +638,12 @@ extension MainWindowController {
         }
         let deviceSetup = context.deviceSetupController
         settingsHandler.onAutoDeviceSwitchingChanged = { [weak deviceSetup] in deviceSetup?.enabledDidChange() }
+        settingsHandler.onFolderAutoLockChanged = { [weak self] in self?.context.folderAutoLock.limitDidChange() }
         settingsHandler.deviceSetupState = { [weak deviceSetup] in deviceSetup?.bridgeState ?? [:] }
         settingsHandler.onForgetDeviceSetup = { [weak deviceSetup] in deviceSetup?.forgetCurrentSetup() }
         settingsHandler.onTogglePerfRecording = { [weak self] in self?.context.togglePerfRecording() }
         settingsHandler.onRecordShortcut = { [weak self] in self?.recordingShortcutId = $0 }
+        settingsHandler.windowRouters = { [weak self] in self?.context.windows.windows.compactMap(\.bridgeRouter) ?? [] }
         settingsHandler.onContentBlockerToggled = { [weak self] enabled in
             guard let self else { return }
             engineFactory.applyBlockerChange(enabled: enabled)
@@ -635,8 +657,11 @@ extension MainWindowController {
         settingsHandler.contentBlockerStatus = { [weak self] in self?.context.contentBlockerStatus ?? [:] }
         settingsHandler.onUpdateFilterLists = { [weak self] in await self?.context.updateFilterLists() }
         settingsHandler.agentControl = { [weak self] in self?.context.agentControl }
-        settingsHandler.onBlockerAllowlistChanged = { [weak self] in
-            Task { await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist) }
+        settingsHandler.onBlockerAllowlistChanged = { [weak self] reloadTabId in
+            Task {
+                await engineFactory.rebuildBlocker(allowlist: settingsStore.blockerAllowlist)
+                if let reloadTabId { self?.tabManager.engineTab(for: reloadTabId)?.reload() }
+            }
             Task { await self?.context.filterListService?.installBlockerExtension() }
         }
         settingsHandler.onSendGPCChanged = { enabled in
@@ -677,7 +702,8 @@ extension MainWindowController {
 
         let downloadHandler = DownloadBridgeHandler(
             downloadManager: context.downloadManager,
-            bridgeRouter: bridgeRouter
+            bridgeRouter: bridgeRouter,
+            storeProvider: { [weak self] in self?.profileContext?.downloads }
         )
         downloadHandler.onQuickLookRequested = { QLPreviewPanel.shared().makeKeyAndOrderFront(nil) }
         downloadHandler.onDragRequested = { [weak self] url in self?.beginDownloadFileDrag(fileURL: url) }

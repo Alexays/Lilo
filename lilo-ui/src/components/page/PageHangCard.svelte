@@ -11,7 +11,6 @@
     getHangSeconds,
     getShownPageHang,
     reloadHungPage,
-    reloadHungPageWithoutBlocker,
     waitForHungPage,
   } from "../../stores/pageHang.svelte";
   import { getSetting } from "../../stores/settings.svelte";
@@ -59,7 +58,7 @@
         <p class="message">{offerBlockerOff ? t("pageHang.repeatMessage") : t("pageHang.repeatMessagePlain")}</p>
         <div class="actions">
           {#if offerBlockerOff}
-            <UiButton variant="primary" onclick={() => reloadHungPageWithoutBlocker(tabId)}>{t("pageHang.reloadWithoutBlocker")}</UiButton>
+            <UiButton variant="primary" onclick={() => reloadHungPage(tabId, true)}>{t("pageHang.reloadWithoutBlocker")}</UiButton>
           {/if}
           <UiButton variant={offerBlockerOff ? "secondary" : "primary"} onclick={() => reloadHungPage(tabId)}>{t("pageHang.reload")}</UiButton>
         </div>

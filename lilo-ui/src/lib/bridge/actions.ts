@@ -205,7 +205,8 @@ export const settingsActions = {
 	revokeSitePermission: emitId("revokeSitePermission"),
 	setSitePermission: (origin: string, type: string, allow: boolean): void =>
 		emit("setSitePermission", { origin, type, allow }),
-	toggleBlockerAllowlist: (host: string): void => emit("toggleBlockerAllowlist", { host }),
+	toggleBlockerAllowlist: (host: string, reloadTabId?: string): void =>
+		emit("toggleBlockerAllowlist", { host, reloadTabId }),
 	clearBrowsingData: (kinds: BridgeBrowsingDataKind[], range: string): void =>
 		emit("clearBrowsingData", { kinds, range }),
 	loadBrowsingDataSizes: emitEmpty("getBrowsingDataSizes"),

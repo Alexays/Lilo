@@ -1,13 +1,14 @@
 import WebKit
 
 /// The cooperative half of a freeze, for `PageWorld`: reports a hidden visibility state (firing visibilitychange) so pages throttle
-/// themselves, and pauses media. Unfrozen, it defers to the real visibility state so native background throttling still works.
+/// themselves, and pauses media, playing again on resume the media it paused. Unfrozen, it defers to the real visibility state
+/// so native background throttling still works.
 @MainActor
 enum CooperativeFreezer {
     static let pageModule = #"""
     function () {
       if (window.top !== window) return;
-      let forced = false, visibility;
+      let forced = false, visibility, paused = [];
       const fire = () => { try { apply(dispatch, doc, [new NativeEvent('visibilitychange')]); } catch (e) {} };
       lilo.on('freeze', () => {
         // Swapped on the first freeze only: pages that never freeze keep WebKit's own getters.
@@ -17,9 +18,15 @@ enum CooperativeFreezer {
         });
         forced = true;
         fire();
-        try { document.querySelectorAll('video, audio').forEach(media => { try { media.pause(); } catch (e) {} }); } catch (e) {}
+        try { paused = [...document.querySelectorAll('video, audio')].filter(media => !media.paused); } catch (e) {}
+        paused.forEach(media => { try { media.pause(); } catch (e) {} });
       });
-      lilo.on('resume', () => { forced = false; fire(); });
+      lilo.on('resume', () => {
+        forced = false;
+        fire();
+        paused.forEach(media => { try { media.play().catch(() => {}); } catch (e) {} });
+        paused = [];
+      });
     }
     """#
 }
@@ -52,11 +59,12 @@ final class CompositeFreezer {
 
     func freeze(_ webView: WKWebView) {
         _ = Self.failsAsyncJavaScriptWhileSuspended
+        // Cooperative: tell the page it is hidden so it self-throttles (rAF/timers gate on visibility), and pause its media.
+        // Sent before the suspension so the page handles it while it can still run, and before the native pause so it still
+        // sees which media were playing, to play them again on resume.
+        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("freeze"), in: nil, in: PageWorld.bridgeWorld)
         // Native, definitive: stop audio so a frozen tab is silent regardless of page cooperation.
         webView.pauseAllMediaPlayback()
-        // Cooperative: tell the page it is hidden so it self-throttles (rAF/timers gate on visibility).
-        // Sent before the suspension so the page handles it while it can still run.
-        WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("freeze"), in: nil, in: PageWorld.bridgeWorld)
         // WebKit flips its suspended flag synchronously, before the async reply.
         WebViewPrivateAccessors(webView).invoke("_suspendPage:") { _ in }
         Self.suspendedWebViews.add(webView)

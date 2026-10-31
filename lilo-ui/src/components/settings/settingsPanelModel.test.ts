@@ -10,6 +10,7 @@ import {
   parseBlockerSites,
   parseLinkRules,
   searchSettings,
+  sitePermissionLabel,
   SETTINGS,
   SETTINGS_GROUP_ICONS,
   SETTINGS_SECTIONS,
@@ -152,4 +153,10 @@ test("the tab position sits under Appearance, found by what people call it", () 
   const resolve = (key: string) => catalog[key] ?? "";
 
   assert.ok(searchSettings("sidebar top", resolve).some((setting) => setting.id === "tabPosition"));
+});
+
+test("sitePermissionLabel names the link scheme an external app decision covers", () => {
+  const translate = (key: string, params?: Record<string, string | number>) => `${key}${params ? JSON.stringify(params) : ""}`;
+  assert.equal(sitePermissionLabel("camera", translate), "sitePermissions.camera");
+  assert.equal(sitePermissionLabel("external-scheme:zoommtg", translate), 'sitePermissions.externalScheme{"scheme":"zoommtg:"}');
 });

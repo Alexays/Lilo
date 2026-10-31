@@ -135,8 +135,16 @@ enum AgentClientConfig {
         var servers = config["mcpServers"] as? [String: Any] ?? [:]
         servers["lilo"] = ["command": helperPath]
         config["mcpServers"] = servers
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data(json(config).utf8).write(to: url, options: .atomic)
+        try write(Data(json(config).utf8), to: url)
+    }
+
+    /// Writes through a symlink, so a dotfiles link stays one, and keeps the file's permissions, which may guard keys.
+    private static func write(_ data: Data, to url: URL) throws {
+        let target = url.resolvingSymlinksInPath()
+        let mode = try? FileManager.default.attributesOfItem(atPath: target.path)[.posixPermissions]
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: target, options: .atomic)
+        if let mode { try FileManager.default.setAttributes([.posixPermissions: mode], ofItemAtPath: target.path) }
     }
 
     private static func readJSON(_ url: URL) -> [String: Any] {
@@ -154,8 +162,7 @@ enum AgentClientConfig {
             if !text.isEmpty, !text.hasSuffix("\n") { text += "\n" }
             text += (text.isEmpty ? "" : "\n") + table
         }
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try text.write(to: url, atomically: true, encoding: .utf8)
+        try write(Data(text.utf8), to: url)
     }
 
     /// From the table header to the next header or the end of the file.

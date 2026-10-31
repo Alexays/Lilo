@@ -84,22 +84,18 @@ export function waitForHungPage(tabId: string): void {
 	if (hang) hangs.set(tabId, { ...hang, hiddenUntil: Date.now() + HANG_WAIT_MS });
 }
 
-/** Reloads the active tab, whose hang the card shows. */
-export function reloadHungPage(tabId: string): void {
+/** Reloads the active tab, whose hang the card shows; `withoutBlocker` first adds the site to the
+ * content blocker's allowed sites and offers to undo it. */
+export function reloadHungPage(tabId: string, withoutBlocker?: boolean): void {
 	const hang = hangs.get(tabId);
 	if (!hang) return;
+	const { host } = hang;
 	reloadedSite = hang.site;
 	hangs.set(tabId, { ...hang, reloading: true });
-	tabActions.reload();
-}
-
-/** Adds the site to the content blocker's allowed sites, offers to undo it, and reloads. */
-export function reloadHungPageWithoutBlocker(tabId: string): void {
-	const host = hangs.get(tabId)?.host;
-	if (!host) return;
-	settingsActions.toggleBlockerAllowlist(host);
+	if (!withoutBlocker) return tabActions.reload();
+	// Native reloads the tab once the rules leaving the site out are in place: a reload before would hang it again.
+	settingsActions.toggleBlockerAllowlist(host, tabId);
 	showUndoToast(t("pageHang.blockerOff", { host }), () => settingsActions.toggleBlockerAllowlist(host));
-	reloadHungPage(tabId);
 }
 
 export function closeHungTab(tabId: string): void {

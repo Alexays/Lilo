@@ -38,6 +38,10 @@ final class WKEngineFactory {
     private var trackingPreventionEnabled = false
     /// Every website data store handed out, so a tracking prevention change reaches all of them.
     private let websiteDataStores = NSHashTable<WKWebsiteDataStore>.weakObjects()
+    /// Certificate exceptions the user accepted, per website data store: a profile's hold in all its windows, a
+    /// private Space's go with its store. Keyed "host:port", each value is the SHA-256 of the leaf certificate the
+    /// user saw, empty until the next challenge for that key records it.
+    private let insecureTrustExceptionsByStore = NSMapTable<WKWebsiteDataStore, NSMutableDictionary>.weakToStrongObjects()
 
     private var contentControllersByKey: [ContentControllerKey: WKUserContentController] = [:]
     /// Every content controller handed out, cached or since dropped from the cache: a web view keeps
@@ -74,9 +78,9 @@ final class WKEngineFactory {
     var notificationPermissionDecisionHandler: NotificationBridge.PermissionDecisionHandler? {
         didSet { notificationBridge.permissionDecisionHandler = notificationPermissionDecisionHandler }
     }
-    /// Returns true if the origin already has an "allow" decision for notifications; gates delivery.
-    var notificationAllowanceHandler: ((String) -> Bool)? {
-        didSet { notificationBridge.allowanceHandler = notificationAllowanceHandler }
+    /// A page's notification decision without asking (nil: undecided); only true lets one show.
+    var notificationDecisionHandler: ((WKWebView?, String) -> Bool?)? {
+        didSet { notificationBridge.decisionHandler = notificationDecisionHandler }
     }
     /// Told of each notification a page posts. Set by MainWindowController.
     var notificationShownHandler: ((WKWebView) -> Void)? {
@@ -136,7 +140,7 @@ final class WKEngineFactory {
     private lazy var notificationBridge: NotificationBridge = {
         let bridge = NotificationBridge()
         bridge.permissionDecisionHandler = notificationPermissionDecisionHandler
-        bridge.allowanceHandler = notificationAllowanceHandler
+        bridge.decisionHandler = notificationDecisionHandler
         bridge.shownHandler = notificationShownHandler
         bridge.tabIdResolver = { [weak self] in self?.tabIdByWebView.object(forKey: $0) as UUID? }
         return bridge
@@ -154,6 +158,10 @@ final class WKEngineFactory {
 
     /// Forwarded by the window controller whenever the visible engine view changes, so paused
     /// `watchPosition()` callers resume (and hidden ones release the GPS).
+    func revokeGeolocation(origin: String, in dataStore: WKWebsiteDataStore) {
+        geolocationBridge.revoke(origin: origin, in: dataStore)
+    }
+
     func reevaluateGeolocationWatchers() {
         geolocationBridge.reevaluateWatchers()
     }
@@ -357,7 +365,7 @@ final class WKEngineFactory {
                 Self.logger.fault("Non-UUID data store identifier \(identifier, privacy: .public); using the default persistent store")
                 return sharedDefaultDataStore
             }
-            let store = applyingTrackingPrevention(to: WKWebsiteDataStore(forIdentifier: uuid))
+            let store = applyingTrackingPrevention(to: Self.persistentDataStore(for: uuid))
             return WKEngineDataStore(backingStore: store, identifier: "persistent:\(identifier)")
         } else if persistent {
             return sharedDefaultDataStore
@@ -368,6 +376,33 @@ final class WKEngineFactory {
     }
 
     func defaultDataStore() -> WKEngineDataStore { sharedDefaultDataStore }
+
+    private static let persistentDataStores = NSMapTable<NSUUID, WKWebsiteDataStore>.strongToWeakObjects()
+
+    /// A profile's store, with a browser's storage quotas (60% of the disk per origin, 80% in all) where WebKit gives any other app
+    /// 15% and 20%. Every caller shares it: WebKit would open a second store on the same identifier, splitting its data.
+    static func persistentDataStore(for identifier: UUID) -> WKWebsiteDataStore {
+        if let store = persistentDataStores.object(forKey: identifier as NSUUID) { return store }
+        let alloc = NSSelectorFromString("alloc")
+        let initWithIdentifier = NSSelectorFromString("initWithIdentifier:"), initWithConfiguration = NSSelectorFromString("_initWithConfiguration:")
+        var store = WKWebsiteDataStore?.none
+        if let configurationClass = NSClassFromString("_WKWebsiteDataStoreConfiguration") as? NSObject.Type,
+           configurationClass.instancesRespond(to: initWithIdentifier),
+           configurationClass.instancesRespond(to: NSSelectorFromString("setOriginQuotaRatio:")),
+           configurationClass.instancesRespond(to: NSSelectorFromString("setTotalQuotaRatio:")),
+           WKWebsiteDataStore.instancesRespond(to: initWithConfiguration),
+           // alloc hands over its reference, which init returns: the result is taken unretained.
+           let configuration = configurationClass.perform(alloc).takeRetainedValue()
+               .perform(initWithIdentifier, with: identifier)?.takeUnretainedValue() as? NSObject {
+            configuration.setValue(0.6, forKey: "originQuotaRatio")
+            configuration.setValue(0.8, forKey: "totalQuotaRatio")
+            store = WKWebsiteDataStore.perform(alloc).takeRetainedValue()
+                .perform(initWithConfiguration, with: configuration)?.takeUnretainedValue() as? WKWebsiteDataStore
+        }
+        let resolved = store ?? WKWebsiteDataStore(forIdentifier: identifier)
+        persistentDataStores.setObject(resolved, forKey: identifier as NSUUID)
+        return resolved
+    }
 
     @discardableResult
     private func applyingTrackingPrevention(to store: WKWebsiteDataStore) -> WKWebsiteDataStore {
@@ -594,7 +629,7 @@ final class WKEngineFactory {
         filterScriptsHash = hash
         // Cosmetics are main frame only: the network rule list already catches subframe ads, and the
         // ~100 KB procedural table would otherwise be parsed again in every iframe. An isolated world
-        // keeps the injected <style> clear of the page's CSP.
+        // keeps the cosmetics' sheet clear of the page's CSP.
         let sources: [(String?, Bool, WKContentWorld)] = [
             (scripts.genericCosmetics, true, .defaultClient), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
         ]
@@ -1040,7 +1075,15 @@ final class WKEngineFactory {
 
     /// Private spaces release their ephemeral data store when the space closes; without this the cache
     /// keeps the controller and its handlers alive. Existing web views hold their own reference.
+    func insecureTrustExceptions(for store: WKWebsiteDataStore) -> NSMutableDictionary {
+        if let exceptions = insecureTrustExceptionsByStore.object(forKey: store) { return exceptions }
+        let exceptions = NSMutableDictionary()
+        insecureTrustExceptionsByStore.setObject(exceptions, forKey: store)
+        return exceptions
+    }
+
     func releaseContentController(for dataStore: WKEngineDataStore) {
+        insecureTrustExceptionsByStore.removeObject(forKey: dataStore.backingStore)
         let key = contentControllerKey(for: dataStore)
         contentControllersByKey.removeValue(forKey: key)
         for warmKey in warmKeyOrder where warmKey.content == key { warmWebViewsByKey.removeValue(forKey: warmKey) }

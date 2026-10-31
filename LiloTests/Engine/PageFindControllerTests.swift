@@ -71,8 +71,8 @@ final class PageFindControllerTests: XCTestCase {
     func testFindAgainMovesThroughMatchesAndDismissKeepsTheLastOneSelected() async throws {
         let tab = try await loadedTab()
         defer { tab.teardown() }
-        let found = await tab.findInPage("beta", caseSensitive: false)
-        XCTAssertTrue(found)
+        let found = await find("beta", in: tab)
+        XCTAssertEqual(found?.matchFound, true)
         let firstOffset = try await selectionOffset(in: tab)
         tab.findNext()
         let moved = await pollUntil(timeout: 5) { (try? await self.selectionOffset(in: tab)) != firstOffset }
@@ -85,6 +85,54 @@ final class PageFindControllerTests: XCTestCase {
         tab.dismissFind()
         let selected = try await tab.wkWebView.evaluateJavaScript("getSelection().toString()") as? String
         XCTAssertEqual(selected, "beta")
+    }
+
+    func testReportsTheSelectedMatchAmongAllOfThem() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        let first = await find("BETA", in: tab)
+        XCTAssertEqual(first, PageFindController.Result(query: "BETA", matchFound: true, matchIndex: 1, matchCount: 2))
+        let next = await findAgain(in: tab, backwards: false)
+        XCTAssertEqual(next, PageFindController.Result(query: "BETA", matchFound: true, matchIndex: 2, matchCount: 2))
+        let wrapped = await findAgain(in: tab, backwards: false)
+        XCTAssertEqual(wrapped?.matchIndex, 1)
+        let previous = await findAgain(in: tab, backwards: true)
+        XCTAssertEqual(previous?.matchIndex, 2)
+
+        let caseSensitive = await find("BETA", in: tab, caseSensitive: true)
+        XCTAssertEqual(caseSensitive, PageFindController.Result(query: "BETA", matchFound: false, matchCount: 0))
+    }
+
+    func testATrailingSpaceIsPartOfTheQuery() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        let result = await find("beta ", in: tab)
+        XCTAssertEqual(result?.matchCount, 1, "the last beta ends the paragraph")
+    }
+
+    func testANewSearchCountsFromTheTopWhereverTheSelectionIs() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        try await select("const r = document.createRange(); r.setStart(text.firstChild, 11); r.setEnd(text.firstChild, 16); getSelection().removeAllRanges(); getSelection().addRange(r)", in: tab)
+        let result = await find("beta", in: tab)
+        XCTAssertEqual(result?.matchIndex, 1)
+        let offset = try await selectionOffset(in: tab)
+        XCTAssertEqual(offset, 6, "the selected match is the one counted")
+    }
+
+    func testFindNextAfterDismissGoesOnWithTheLastSearch() async throws {
+        let tab = try await loadedTab()
+        defer { tab.teardown() }
+        NSPasteboard(name: .find).clearContents()
+        _ = await find("beta", in: tab)
+        let firstOffset = try await selectionOffset(in: tab)
+        tab.dismissFind()
+
+        XCTAssertTrue(tab.canFindAgain)
+        let next = await findAgain(in: tab, backwards: false)
+        XCTAssertEqual(next?.query, "beta")
+        let nextOffset = try await selectionOffset(in: tab)
+        XCTAssertNotEqual(nextOffset, firstOffset)
     }
 
     func testFindAgainWithoutASearchLooksForTheFindPasteboard() async throws {
@@ -102,12 +150,31 @@ final class PageFindControllerTests: XCTestCase {
             (try? await tab.wkWebView.evaluateJavaScript("getSelection().toString()")) as? String == "gamma"
         }
         XCTAssertTrue(found, "as in Safari after Command-E in another app")
+        XCTAssertEqual(spy.findResults.last?.query, "gamma")
+    }
+
+    private let spy = WKWebViewTabDelegateSpy()
+
+    /// Searches `query` and waits for its result.
+    private func find(_ query: String, in tab: WKWebViewTab, caseSensitive: Bool = false) async -> PageFindController.Result? {
+        let count = spy.findResults.count
+        tab.findInPage(query, caseSensitive: caseSensitive)
+        _ = await pollUntil(timeout: 5) { self.spy.findResults.count > count }
+        return spy.findResults.last
+    }
+
+    private func findAgain(in tab: WKWebViewTab, backwards: Bool) async -> PageFindController.Result? {
+        let count = spy.findResults.count
+        if backwards { tab.findPrevious() } else { tab.findNext() }
+        _ = await pollUntil(timeout: 5) { self.spy.findResults.count > count }
+        return spy.findResults.last
     }
 
     private func loadedTab(dataStore: WKWebsiteDataStore = .default()) async throws -> WKWebViewTab {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
         let tab = WKWebViewTab(configuration: configuration)
+        tab.delegate = spy
         tab.wkWebView.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
         tab.wkWebView.loadHTMLString(Self.page, baseURL: URL(string: "https://example.com/"))
         let loaded = await pollUntil(timeout: 5) {

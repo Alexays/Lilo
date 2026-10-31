@@ -1,0 +1,3 @@
+kind: Fixed
+body: A window showing a private Space no longer comes back as an extra window when Lilo relaunches.
+time: 2026-10-30T17:36:03.760088+01:00

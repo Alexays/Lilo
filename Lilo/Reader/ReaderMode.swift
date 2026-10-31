@@ -18,9 +18,34 @@ enum ReaderMode {
     /// Readability and the controls' listener live in their own world: the page sees neither.
     @MainActor static let world = WKContentWorld.world(name: "lilo-reader")
 
+    /// The text size, theme and width the controls last picked, the same on every site.
+    private static let preferencesKey = "ReaderPreferences"
+
+    /// `completion` gets whether the page now shows the article: false for a page that is not one.
     @MainActor
-    static func apply(to webView: WKWebView) {
-        guard !script.isEmpty else { return }
-        webView.evaluateJavaScript(script, in: nil, in: world) { _ in }
+    static func apply(to webView: WKWebView, completion: @escaping @MainActor (Bool) -> Void = { _ in }) {
+        guard !script.isEmpty else { return completion(false) }
+        let controller = webView.configuration.userContentController
+        // Tabs can share a content controller, which takes one handler per name.
+        controller.removeScriptMessageHandler(forName: PreferencesHandler.name, contentWorld: world)
+        controller.add(PreferencesHandler.shared, contentWorld: world, name: PreferencesHandler.name)
+        let preferences = UserDefaults.standard.dictionary(forKey: preferencesKey) ?? [:]
+        let json = (try? JSONSerialization.data(withJSONObject: preferences)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        webView.evaluateJavaScript("var liloReaderPrefs = \(json);\n" + script, in: nil, in: world) { completion((try? $0.get()) as? Bool == true) }
+    }
+
+    @MainActor
+    private final class PreferencesHandler: NSObject, WKScriptMessageHandler {
+        static let name = "liloReaderPrefs"
+        static let shared = PreferencesHandler()
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard let body = message.body as? [String: Any] else { return }
+            var preferences: [String: Any] = [:]
+            preferences["fontSize"] = body["fontSize"] as? Int
+            preferences["theme"] = body["theme"] as? String
+            preferences["width"] = body["width"] as? String
+            UserDefaults.standard.set(preferences, forKey: ReaderMode.preferencesKey)
+        }
     }
 }

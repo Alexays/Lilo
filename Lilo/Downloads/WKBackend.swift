@@ -37,6 +37,8 @@ final class WKBackend: NSObject {
     private var unquarantined: [Int64: (path: String, source: String)] = [:]
     /// Destinations proposed to downloads still deciding where to go (extension suggestion, save panel): WebKit writes nothing there yet.
     private var pendingDestinations: Set<String> = []
+    /// The download's URL and the page it came from, written to the finished file as Chrome and Safari do. Private Spaces' have none.
+    private var whereFroms: [Int64: [String]] = [:]
 
     private let flight = InFlightDownloads()
 
@@ -91,13 +93,16 @@ final class WKBackend: NSObject {
 
     func cancel(id: Int64) {
         guard let download = activeDownloads.first(where: { $0.value == id })?.key else { return }
-        download.cancel { _ in }
         stopObservingProgress(for: download)
         activeDownloads.removeValue(forKey: download)
-        flight.settle(id) { item in
-            DownloadQuarantine.stamp(path: item.destinationPath, source: item.url)
-            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
+        // WebKit leaves the bytes it wrote under the final name. Chrome deletes them; the row says the file is gone, so nothing
+        // later deletes another download that takes the name.
+        let path = flight.settle(id) { item in
+            item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date(); item.fileMissing = true
             return true
+        }?.destinationPath
+        download.cancel { _ in
+            if let path { try? FileManager.default.removeItem(atPath: path) }
         }
     }
 
@@ -165,10 +170,17 @@ final class WKBackend: NSObject {
     nonisolated static func resolveDestination(for suggestedFilename: String, in directory: URL, reserved: Set<String> = []) -> URL {
         let destination = directory.appendingPathComponent(suggestedFilename)
         var finalURL = destination
+        var name = destination.deletingPathExtension().lastPathComponent
+        var ext = destination.pathExtension
+        // As Chrome's FilePath::Extension: up to 4 characters before a compression suffix belong to the extension.
+        let inner = (name as NSString).pathExtension
+        if !inner.isEmpty, inner.count <= 4,
+           ["bz", "bz2", "gz", "lz", "lzma", "lzo", "xz", "z", "zst"].contains(ext.lowercased()) || "\(inner).\(ext)".lowercased() == "user.js" {
+            name = (name as NSString).deletingPathExtension
+            ext = "\(inner).\(ext)"
+        }
         var counter = 1
         while reserved.contains(finalURL.path) || FileManager.default.fileExists(atPath: finalURL.path) {
-            let name = destination.deletingPathExtension().lastPathComponent
-            let ext = destination.pathExtension
             let newName = ext.isEmpty ? "\(name) (\(counter))" : "\(name) (\(counter)).\(ext)"
             finalURL = destination.deletingLastPathComponent().appendingPathComponent(newName)
             counter += 1
@@ -217,6 +229,10 @@ extension WKBackend: WKDownloadDelegate {
             }
             activeDownloads[download] = id
             unquarantined[id] = (finalURL.path, item.url)
+            if let webView = download.webView, webView.configuration.websiteDataStore.isPersistent {
+                let page = webView.url.flatMap { ["http", "https"].contains($0.scheme) && $0.absoluteString != item.url ? $0.absoluteString : nil }
+                whereFroms[id] = [item.url] + (page.map { [$0] } ?? [])
+            }
             onTracked?(download, id)
             startObservingProgress(for: download)
             flight.begin(id, item)
@@ -233,6 +249,7 @@ extension WKBackend: WKDownloadDelegate {
             let settled = flight.settle(id) { item in
                 DownloadQuarantine.stamp(path: item.destinationPath, source: item.url)
                 item.state = .complete; item.endedAt = Date()
+                if let urls = whereFroms.removeValue(forKey: id) { DownloadQuarantine.recordOrigin(path: item.destinationPath, urls: urls) }
                 if item.totalBytes > 0 { item.bytesReceived = item.totalBytes }  // throttled progress may lag the final bytes; snap to 100%
                 return true
             }

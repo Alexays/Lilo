@@ -606,7 +606,7 @@ export function runSelectedResultKey(key: Exclude<ResultKey, "newTab">): boolean
 		tabActions.close(result.payload.tabId as string);
 		dropSelectedRow();
 	} else if (key === "remove") {
-		if (result.kind === "history") searchActions.deleteHistory(url, _query);
+		if (result.kind === "history") searchActions.deleteHistory(url, _pendingHistoryQuery);
 		else deleteOmniboxSuggestion(result);
 	} else if (key === "move") {
 		_queryBeforeMove = _query;

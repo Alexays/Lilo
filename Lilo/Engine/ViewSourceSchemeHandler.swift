@@ -42,7 +42,8 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
-        let userAgent = webView.customUserAgent
+        // The user agent the page itself was sent: `customUserAgent` is empty unless a site overrides it.
+        let userAgent = webView.responds(to: NSSelectorFromString("_userAgent")) ? webView.value(forKey: "_userAgent") as? String : webView.customUserAgent
         running[key] = Task { [weak self] in
             let html: String
             do {

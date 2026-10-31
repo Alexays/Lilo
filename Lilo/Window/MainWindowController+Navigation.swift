@@ -75,12 +75,26 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if let profile = profileContext, !tab.isPrivateBrowsing { context.engineFactory.reportProxyFailure(error, registry: profile.extensions) }
         case .started, .finished: break
         }
+        // As in Chrome: a search of the old document ends, closing the find bar unless it opened during the load.
+        if tab === tabManager.activeEngineTab {
+            let findBarOpen = chromeInteractiveZones.currentZones()["findBar"] != nil
+            switch event {
+            case .started: findBarOpenAtNavigationStart = findBarOpen
+            case .committed where findBarOpen:
+                bridgeRouter.send(event: "findPageCommitted", data: ["closeFindBar": findBarOpenAtNavigationStart])
+            default: break
+            }
+        }
 
+        let pageLoaded = tab.hasCommittedContent && !tab.isLoading
+        let isProvisional = if case .started = event { true } else { false }
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             let resolvedURL = eventURL ?? tab.currentURL ?? t.url
             t.url = resolvedURL
-            t.title = self.resolvedTabTitle(currentTitle: tab.currentTitle, url: resolvedURL, existingTitle: t.title)
-            if t.matchesHomeURL(resolvedURL) {
+            t.title = self.resolvedTabTitle(currentTitle: tab.currentTitle, url: resolvedURL, existingTitle: t.title, pageLoaded: pageLoaded)
+            // Until the new page commits, and until it loads when it has no title, the title is the previous page's.
+            let titleIsThePages = !isProvisional && (pageLoaded || !(tab.currentTitle ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            if titleIsThePages, t.matchesHomeURL(resolvedURL) {
                 t.homeTitle = t.title
             }
             t.isLoading = tab.isLoading
@@ -119,25 +133,42 @@ extension MainWindowController: WKWebViewTab.Delegate {
             enqueueVisibleTabUpdate(updatedTab)
         }
 
-        if case .finished = event {
-            // Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited). Check the visiting tab's
-            // own space, which may be a background one; a popup's visit counts as its opener's.
-            let visitingTab = updatedTab ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
-            let isPublicSpace = (visitingTab?.spaceId ?? littleWindows[tab.id]?.spaceId)
-                .flatMap { context.spaceManager?.space(with: $0) }.map { !$0.isPrivate } ?? false
-            let isProtected = visitingTab.flatMap { tabManager.protectingFolder(of: $0) } != nil
-            if isPublicSpace, !isProtected, let url = tab.currentURL, !url.absoluteString.isEmpty,
-               url.scheme == "https" || url.scheme == "http" {
-                // A page a terminal's link opened in a peek remembers which terminal: folder and branch.
-                let openedFrom = pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
-                    .flatMap { opener -> String? in
-                        guard opener.kind == .terminal else { return nil }
-                        let folder = opener.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
-                        return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-                    }
-                profileContext?.history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
+        switch event {
+        case .committed:
+            recordVisit(of: tab, state: updatedTab)
+        case .finished:
+            if tab.visitTitleUpdates?.url == tab.currentURL?.absoluteString {
+                tab.visitTitleUpdates?.renamableUntil = .now + .seconds(5)
             }
+        case .started, .failed:
+            break
         }
+    }
+
+    /// Records a visit of the tab's page, as Chrome does for every main-frame navigation that commits, same-document ones included.
+    /// Private-space, protected-folder and unresolvable-space visits leave no trace (no history, no onVisited).
+    private func recordVisit(of tab: WKWebViewTab, state: Tab?, renamableUntil: ContinuousClock.Instant? = nil) {
+        tab.visitTitleUpdates = nil
+        // Check the visiting tab's own space, which may be a background one; a popup's visit counts as its opener's.
+        let visitingTab = state ?? pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
+        let isPublicSpace = (visitingTab?.spaceId ?? littleWindows[tab.id]?.spaceId)
+            .flatMap { context.spaceManager?.space(with: $0) }.map { !$0.isPrivate } ?? false
+        let isProtected = visitingTab.flatMap { tabManager.protectingFolder(of: $0) } != nil
+        guard isPublicSpace, !isProtected, let history = profileContext?.history, let url = tab.currentURL, !url.absoluteString.isEmpty,
+              url.scheme == "https" || url.scheme == "http" else { return }
+        // A page a terminal's link opened in a peek remembers which terminal: folder and branch.
+        let openedFrom = pagePopups[tab.id].flatMap { tabManager.tab(for: $0.openerTabId) }
+            .flatMap { opener -> String? in
+                guard opener.kind == .terminal else { return nil }
+                let folder = opener.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+                return [folder, opener.gitBranch].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+            }
+        history.scheduleRecordVisit(url: url.absoluteString, title: tab.currentTitle ?? "", openedFrom: openedFrom)
+        tab.visitTitleUpdates = (url.absoluteString, 5, renamableUntil)
+    }
+
+    func tab(_ tab: WKWebViewTab, didNavigateWithinPageTo url: URL) {
+        recordVisit(of: tab, state: context.browserState.durableTab(for: tab.id)?.tab, renamableUntil: .now + .seconds(5))
     }
 
     // Even for non-visible tabs (other spaces / not-yet-registered): the favicon is persisted to the
@@ -146,18 +177,33 @@ extension MainWindowController: WKWebViewTab.Delegate {
         faviconCoordinator.extract(from: tab, icons: icons)
     }
 
+    func tab(_ tab: WKWebViewTab, didFind result: PageFindController.Result) {
+        guard tab === tabManager.activeEngineTab else { return }
+        var data: [String: Any] = ["query": result.query, "matchFound": result.matchFound]
+        if let index = result.matchIndex, let count = result.matchCount { (data["matchIndex"], data["matchCount"]) = (index, count) }
+        bridgeRouter.send(event: "findInPageResult", data: data)
+    }
+
     func tab(_ tab: WKWebViewTab, didUpdateTitle title: String?) {
+        let pageTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
-            t.title = self.resolvedTabTitle(currentTitle: title, url: tab.currentURL, existingTitle: t.title)
-            if t.matchesHomeURL(tab.currentURL ?? t.url) {
+            t.title = self.resolvedTabTitle(currentTitle: title, url: tab.currentURL, existingTitle: t.title, pageLoaded: !tab.isLoading)
+            if !pageTitle.isEmpty || !tab.isLoading, t.matchesHomeURL(tab.currentURL ?? t.url) {
                 t.homeTitle = t.title
             }
+        }
+        if !pageTitle.isEmpty, let visit = tab.visitTitleUpdates, visit.changesLeft > 0, visit.url == tab.currentURL?.absoluteString,
+           visit.renamableUntil.map({ ContinuousClock.now < $0 }) ?? true {
+            tab.visitTitleUpdates?.changesLeft -= 1
+            profileContext?.history.scheduleUpdateTitle(url: visit.url, title: pageTitle)
         }
         if let updatedTab { enqueueVisibleTabUpdate(updatedTab) }
         if tab.id == tabManager.activeOpenTabId { publishActiveTab() }
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateURL url: URL?) {
+        pagePopups[tab.id]?.refreshHost()
+        littleWindows[tab.id]?.refreshAddress()
         var shouldRefreshFavicon = false
         let updatedTab = updateRuntimeTab(id: tab.id) { t in
             let previousURL = t.url
@@ -196,23 +242,24 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, shouldAllowInsecureServerTrust trust: SecTrust, forHost host: String, port: Int) -> Bool {
         let key = "\(host.lowercased()):\(port)"
-        guard let expected = insecureTrustExceptions[key], let fingerprint = Self.leafCertificateFingerprint(trust) else { return false }
+        let exceptions = context.engineFactory.insecureTrustExceptions(for: tab.wkWebView.configuration.websiteDataStore)
+        guard let expected = exceptions[key] as? String, let fingerprint = Self.leafCertificateFingerprint(trust) else { return false }
         // Recorded without a certificate in hand: bind the exception to the first one presented.
         if expected.isEmpty {
-            insecureTrustExceptions[key] = fingerprint
+            exceptions[key] = fingerprint
             return true
         }
         return expected == fingerprint
     }
 
-    /// Records a user-approved certificate exception for `host` (on the failed URL's port, pinned to
-    /// the certificate that failed) and reloads so the page can load.
+    /// Records a user-approved certificate exception for `host` in the active tab's profile or private Space (on the
+    /// failed URL's port, pinned to the certificate that failed) and reloads so the page can load.
     func allowInsecureTrust(forHost host: String) {
         let normalized = host.lowercased()
-        guard !normalized.isEmpty, let activeTab = tabManager.activeTab else { return }
+        guard !normalized.isEmpty, let activeTab = tabManager.activeTab, let engineTab = tabManager.activeEngineTab else { return }
         let failedURL = URL(string: activeTab.navigationErrorURL) ?? activeTab.url
-        let trust = tabManager.activeEngineTab?.lastServerTrust
-        insecureTrustExceptions["\(normalized):\(failedURL?.port ?? 443)"] = trust.flatMap(Self.leafCertificateFingerprint) ?? ""
+        let exceptions = context.engineFactory.insecureTrustExceptions(for: engineTab.wkWebView.configuration.websiteDataStore)
+        exceptions["\(normalized):\(failedURL?.port ?? 443)"] = engineTab.lastServerTrust.flatMap(Self.leafCertificateFingerprint) ?? ""
         tabManager.reloadActiveTab()
     }
 
@@ -233,6 +280,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
         updateAndEmit(tab.id) { t in t.isLoading = isLoading }
+    }
+
+    func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {
+        pagePopups[tab.id]?.refreshHost()
+        updateAndEmit(tab.id) { t in t.isNotSecure = isNotSecure }
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double) {
@@ -276,11 +328,22 @@ extension MainWindowController: WKWebViewTab.Delegate {
             return
         }
         // A Little window's new tab is another Little window, not a tab of the window behind.
-        if littleWindows[tab.id] != nil {
-            openLittleWindow(url: url)
+        if let little = littleWindows[tab.id] {
+            openLittleWindow(url: url, opener: little)
             return
         }
-        guard let created = createTabStateFirst(url: url, activate: !inBackground, opener: tab.id) else { return }
+        // Right after the page, in its folder, as in Chrome; consecutive links of the page keep their order.
+        let previous = lastTabOpenedFromLink.flatMap { $0.openerId == tab.id ? sidebarItemBeside($0.tabId) : nil }
+        let beside = previous ?? sidebarItemBeside(tab.id)
+        guard let created = createTabStateFirst(
+            url: url,
+            activate: !inBackground,
+            opener: tab.id,
+            sidebarParentFolderId: beside?.parentFolderId,
+            sidebarSection: beside?.section,
+            sidebarIndex: beside.map { $0.sortOrder + 1 }
+        ) else { return }
+        lastTabOpenedFromLink = (tab.id, created.id)
         tabManager.engineTab(for: created.id)?.isOpenedByPage = true
         if inBackground { noteBackgroundTab(created.id) }
         guard let url else { return }
@@ -335,7 +398,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didStartDownload download: WKDownload) {
-        context.downloadManager.startDownload(download, privateSpaceId: privateSpaceId(of: tab))
+        if let store = downloadStore(of: tab) {
+            context.downloadManager.startDownload(download, in: store, privateSpaceId: privateSpaceId(of: tab))
+        } else {
+            download.cancel { _ in }
+        }
         // A target=_blank download link leaves a tab that never shows a page: close it (the download outlives the web view), deferred so
         // the web view is not torn down inside WebKit's didBecomeDownload callback. A tab the user typed the URL into stays, as in Chrome.
         guard !tab.hasCommittedContent else { return }
@@ -347,7 +414,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, requestPermission type: String, forOrigin origin: String, completion: @escaping (Bool) -> Void) {
-        if let storedDecision = storedPermissionDecision(type: type, origin: origin, isPrivate: tab.isPrivateBrowsing) {
+        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: tab.id) {
             completion(storedDecision)
             return
         }
@@ -355,9 +422,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
         let remember: (Bool) -> Void = { [weak self] granted in
             completion(granted)
-            guard let self, !tab.isPrivateBrowsing else { return }
-            context.sitePermissionStore.upsert(origin: origin, type: type, granted: granted)
-            bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+            self?.rememberPermission(origin: origin, type: type, granted: granted, tabId: tab.id)
         }
         if let little = littleWindows[tab.id] {
             return PagePopupController.askPermission(type, for: tab, in: little.window, completion: remember)
@@ -411,7 +476,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, storedPermissionDecisionFor type: String, origin: String) -> Bool? {
-        storedPermissionDecision(type: type, origin: origin, isPrivate: tab.isPrivateBrowsing)
+        storedPermissionDecision(type: type, origin: origin, tabId: tab.id)
     }
 
     func tab(_ tab: WKWebViewTab, allowsJavaScriptAt url: URL) -> Bool {
@@ -422,8 +487,12 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     /// The user's stored decision, unless an extension's chrome.contentSettings rule takes precedence
-    /// ("ask" prompts whatever the user chose before). Camera and microphone are decided together.
-    func storedPermissionDecision(type: String, origin: String, isPrivate: Bool) -> Bool? {
+    /// ("ask" prompts whatever the user chose before). Camera and microphone are decided together. A private space inherits
+    /// only the profile's blocks and keeps its own answers for its life.
+    func storedPermissionDecision(type: String, origin: String, tabId: UUID?) -> Bool? {
+        let space = permissionSpace(forTab: tabId)
+        let isPrivate = space?.isPrivate ?? false
+        let store = sitePermissions(of: space)
         let decisions: [Bool?] = (type == "camera and microphone" ? ["camera", "microphone"] : [type]).map { type in
             let rule = profileContext.flatMap { profile in
                 URL(string: origin).flatMap {
@@ -436,7 +505,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
             case "allow": return true
             case "block": return false
             case "ask": return nil
-            default: return context.sitePermissionStore.decision(forOrigin: origin, type: type)
+            default:
+                let stored = store?.decision(forOrigin: origin, type: type)
+                guard let space, isPrivate, stored != false else { return stored }
+                return context.privateSitePermissions[space.id]?["\(type) \(origin)"]
             }
         }
         if decisions.contains(false) { return false }
@@ -460,9 +532,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, saveData data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL) {
+        guard let store = downloadStore(of: tab) else { return }
         context.downloadManager.saveData(
             data, suggestedFilename: suggestedFilename, mimeType: mimeType, originatingURL: originatingURL,
-            webView: tab.wkWebView, privateSpaceId: privateSpaceId(of: tab)
+            webView: tab.wkWebView, in: store, privateSpaceId: privateSpaceId(of: tab)
         )
     }
 
@@ -472,6 +545,13 @@ extension MainWindowController: WKWebViewTab.Delegate {
         return tabManager.tab(for: tab.id)?.spaceId ?? tabManager.currentSpaceId
     }
 
+    /// The downloads of the tab's own profile, not the window's: a tab of a background Space may belong to another.
+    private func downloadStore(of tab: WKWebViewTab) -> DownloadStore? {
+        let profileId = (tabManager.tab(for: tab.id)?.spaceId).flatMap { context.spaceManager?.space(with: $0)?.profileId }
+        guard let profileId, profileId != profileContext?.profileId else { return profileContext?.downloads }
+        return try? context.profileContexts.context(for: profileId).downloads
+    }
+
     func tabRequestsBookmark(_ tab: WKWebViewTab) {
         // Bookmarks are tabs: a popup's page becomes the active tab first.
         pagePopups[tab.id]?.openAsTab()
@@ -479,15 +559,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
         bookmarkCurrentTab(nil)
     }
 
-    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromPage pageURL: URL?) {
-        let origin: String = {
-            guard let scheme = pageURL?.scheme, let host = pageURL?.host else { return "unknown" }
-            // URL.port is nil for default-port URLs; PermissionOriginKey treats 0 as "no port",
-            // so default-port pages produce the portless key their stored decisions use.
-            return PermissionOriginKey.build(scheme: scheme, host: host, port: pageURL?.port ?? 0)
-        }()
-        let type = "external-scheme"
-        if let decision = context.sitePermissionStore.decision(forOrigin: origin, type: type) {
+    func tab(_ tab: WKWebViewTab, launchExternalURL url: URL, fromOrigin origin: String?) {
+        let origin = origin ?? "unknown"
+        // Per scheme, as in Chrome: letting a site open Zoom does not let it open every other app.
+        let type = "external-scheme:\(url.scheme?.lowercased() ?? "")"
+        if let decision = profileContext?.sitePermissions.decision(forOrigin: origin, type: type) {
             if decision { NSWorkspace.shared.open(url) }
             return
         }
@@ -512,16 +588,44 @@ extension MainWindowController: WKWebViewTab.Delegate {
             guard let self else { return }
             let open = response == .alertFirstButtonReturn
             if alert.suppressionButton?.state == .on, origin != "unknown", !tab.isPrivateBrowsing {
-                context.sitePermissionStore.upsert(origin: origin, type: type, granted: open)
-                bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+                rememberPermission(origin: origin, type: type, granted: open, tabId: tab.id)
             }
             if open { NSWorkspace.shared.open(url) }
         }
     }
 
+    /// The user's answer, stored in the profile of the tab's space; a private space keeps it in memory.
+    func rememberPermission(origin: String, type: String, granted: Bool, tabId: UUID?) {
+        let space = permissionSpace(forTab: tabId)
+        if let space, space.isPrivate {
+            for type in type == "camera and microphone" ? ["camera", "microphone"] : [type] {
+                context.privateSitePermissions[space.id, default: [:]]["\(type) \(origin)"] = granted
+            }
+            return
+        }
+        guard let store = sitePermissions(of: space) else { return }
+        store.upsert(origin: origin, type: type, granted: granted)
+        bridgeRouter.sendSitePermissionsLoaded(from: store)
+    }
+
+    /// The space a tab's page asks from: the tab's own, else (a popup, a little window) the one the window shows.
+    private func permissionSpace(forTab tabId: UUID?) -> Space? {
+        let spaceId = tabId.flatMap(context.browserState.owningSpaceId(forTab:)) ?? tabManager.currentSpaceId
+        return spaceId.flatMap { context.spaceManager?.space(with: $0) }
+    }
+
+    private func sitePermissions(of space: Space?) -> SitePermissionStore? {
+        guard let space else { return profileContext?.sitePermissions }
+        return (try? context.profileContexts.context(for: space.profileId))?.sitePermissions
+    }
+
     func requestSitePermission(type: String, origin: String, webView: WKWebView?, completion: @escaping (Bool) -> Void) {
-        let isPrivate = webView.map { !$0.configuration.websiteDataStore.isPersistent } ?? false
-        if let storedDecision = storedPermissionDecision(type: type, origin: origin, isPrivate: isPrivate) {
+        let owner = tabId(owning: webView)
+        if type == "notifications", permissionSpace(forTab: owner)?.isPrivate == true {
+            // As in Chrome's incognito: denied without asking, after a random delay so a page cannot tell a private space by timing it.
+            return DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(.random(in: 1000...3000))) { completion(false) }
+        }
+        if let storedDecision = storedPermissionDecision(type: type, origin: origin, tabId: owner) {
             completion(storedDecision)
             return
         }
@@ -531,7 +635,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
 
         // The prompt lives in its tab's chrome, so an unattributable request has nowhere to show.
-        guard let tabId = tabId(owning: webView) else {
+        guard let tabId = owner else {
             completion(false)
             return
         }
@@ -598,10 +702,11 @@ extension MainWindowController: WKWebViewTab.Delegate {
 }
 
 extension MainWindowController {
-    func resolvedTabTitle(currentTitle: String?, url: URL?, existingTitle: String) -> String {
+    /// A page without a title of its own shows its address once loaded; while it loads, the previous title stays.
+    func resolvedTabTitle(currentTitle: String?, url: URL?, existingTitle: String, pageLoaded: Bool) -> String {
         let title = currentTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !title.isEmpty, url != nil || (!existingTitle.isEmpty && existingTitle != Tab.placeholderTitle) { return title }
-        return (existingTitle.isEmpty || existingTitle == Tab.placeholderTitle) ? Tab.fallbackTitle(for: url) : existingTitle
+        return (pageLoaded || existingTitle.isEmpty || existingTitle == Tab.placeholderTitle) ? Tab.fallbackTitle(for: url) : existingTitle
     }
 }
 

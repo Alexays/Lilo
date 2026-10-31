@@ -52,6 +52,13 @@ struct WebViewPrivateAccessors {
         return (unsafeBitCast(imp, to: ObjectMethod.self)(object, selector)?.takeUnretainedValue() as? URL)?.absoluteString
     }
 
+    /// Reads a private string-returning selector (e.g. `_MIMEType`).
+    func string(_ name: String) -> String? {
+        guard let (selector, imp) = method(name) else { return nil }
+        typealias ObjectMethod = @convention(c) (NSObject, Selector) -> Unmanaged<AnyObject>?
+        return unsafeBitCast(imp, to: ObjectMethod.self)(object, selector)?.takeUnretainedValue() as? String
+    }
+
     /// Invokes a private one-argument `(unsigned)` setter (e.g. `_setPageMuted:`). No-ops if absent.
     func setUInt(_ name: String, _ value: UInt) {
         guard let (selector, imp) = method(name) else { return }
@@ -119,6 +126,13 @@ struct WebViewPrivateAccessors {
             MainActor.assumeIsolated { completion(pasteboard.changeCount == changeCount ? nil : pasteboard.string(forType: .string)) }
         }
         return true
+    }
+
+    /// `_findString:options:maxCount:`, which reports to the web view's `_WKFindDelegate`. No-ops if absent.
+    func findString(_ string: String, options: UInt, maxCount: UInt) {
+        guard let (selector, imp) = method("_findString:options:maxCount:") else { return }
+        typealias FindMethod = @convention(c) (NSObject, Selector, NSString, UInt, UInt) -> Void
+        unsafeBitCast(imp, to: FindMethod.self)(object, selector, string as NSString, options, maxCount)
     }
 
     /// Invokes a private selector taking a `void (^)(BOOL)` completion (e.g. `_suspendPage:`).

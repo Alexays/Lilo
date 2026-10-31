@@ -54,6 +54,22 @@ final class ContextMenuBuilderTests: XCTestCase {
         XCTAssertFalse(titles.contains("Open Link in New Tab".localized))
     }
 
+    /// As Chrome, a link, media, selection or text field menu has no Back, Reload, page or PiP items.
+    func testPageItemsStayOutOfLinkMediaSelectionAndFieldMenus() {
+        let pageTitles = ["Back", "Forward", "Reload", "Bookmark This Page", "Picture in Picture"].map(\.localized)
+        func titles(linkURL: URL? = nil, imageURL: URL? = nil, element: NSObject? = nil) -> Set<String> {
+            let menu = NSMenu()
+            makeBuilder().build(menu, linkURL: linkURL, imageURL: imageURL, element: element, extensionItems: [])
+            return Set(menu.items.map(\.title)).intersection(pageTitles)
+        }
+        XCTAssertEqual(titles(), Set(pageTitles).subtracting(["Bookmark This Page".localized]), "a blank web view has no page URL")
+        XCTAssertEqual(titles(linkURL: URL(string: "https://example.com/a")), [])
+        XCTAssertEqual(titles(imageURL: URL(string: "https://example.com/a.mp4")), [])
+        XCTAssertEqual(titles(element: FakeElementInfo(editable: true, selected: false)), [])
+        XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: true)), [])
+        XCTAssertEqual(titles(element: FakeElementInfo(editable: false, selected: false)).count, 4)
+    }
+
     /// WebKit proposes the extensions' items itself: the menu shows them once, as Lilo's copies.
     func testBuildShowsAnExtensionsItemsOnce() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("menu-\(UUID().uuidString)")
@@ -191,4 +207,15 @@ final class ContextMenuBuilderTests: XCTestCase {
         item.map { _ = $0.target?.perform($0.action, with: $0) }
         XCTAssertEqual(downloaded, imageURL)
     }
+}
+
+/// `_WKContextMenuElementInfo` and its `_WKHitTestResult`, as far as the builder reads them.
+private final class FakeElementInfo: NSObject {
+    private final class HitTestResult: NSObject {
+        @objc let isContentEditable: Bool
+        @objc let isSelected: Bool
+        init(editable: Bool, selected: Bool) { isContentEditable = editable; isSelected = selected }
+    }
+    @objc let hitTestResult: NSObject
+    init(editable: Bool, selected: Bool) { hitTestResult = HitTestResult(editable: editable, selected: selected) }
 }

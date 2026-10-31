@@ -619,6 +619,8 @@ export interface BridgeCommandPayloadMap {
 	findNext: EmptyPayload;
 	findPrevious: EmptyPayload;
 	dismissFind: EmptyPayload;
+	/** A chrome bar closed: the keyboard goes back to the page. */
+	focusPage: EmptyPayload;
 	screenshotPage: { mode: "full" | "viewport" | "region" };
 	/** Opens the editor on a copied capture, which it holds from then on. */
 	editCapture: { captureId: string };
@@ -728,7 +730,8 @@ export interface BridgeCommandPayloadMap {
 	getSitePermissions: EmptyPayload;
 	revokeSitePermission: { id: string };
 	setSitePermission: { origin: string; type: string; allow: boolean };
-	toggleBlockerAllowlist: { host: string };
+	/** `reloadTabId` reloads that tab once the new rules are in place. */
+	toggleBlockerAllowlist: { host: string; reloadTabId?: string };
 	/** `siteData` clears every kind of site data, cookies and cache included, and with an all-time range the site permissions. */
 	clearBrowsingData: { kinds: BridgeBrowsingDataKind[]; range: string };
 	getBrowsingDataSizes: EmptyPayload;
@@ -908,7 +911,11 @@ export interface BridgeEventPayloadMap {
 	trackersBlockedChanged: { count: number };
 	toggleNewTab: EmptyPayload;
 	toggleFindBar: { query?: string };
-	findInPageResult: { query: string; matchFound: boolean };
+	// matchIndex (1-based) and matchCount come together, when the engine counts matches.
+	findInPageResult: { query: string; matchFound: boolean; matchIndex?: number; matchCount?: number };
+	// The active page committed a new document while the find bar was open: closeFindBar when it was already
+	// open as the navigation started.
+	findPageCommitted: { closeFindBar: boolean };
 	contentInteraction: { isMouseDown?: boolean };
 	zoomChanged: { level: number };
 	blockerAllowlistChanged: { allowlist: string[] };

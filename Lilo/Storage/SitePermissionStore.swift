@@ -125,13 +125,19 @@ final class SitePermissionStore {
         return permissions
     }
 
-    func revoke(id: UUID) {
+    /// Returns the origin and type the revoked decision was for.
+    @discardableResult
+    func revoke(id: UUID) -> (origin: String, type: String)? {
+        loadMirrorIfNeeded()
+        var revoked: (origin: String, type: String)?
         loggingPersistenceError("sitePermission.revoke") {
             _ = try dbPool.write { db in try SitePermissionRecord.deleteOne(db, id: id) }
             if let location = locationById.removeValue(forKey: id) {
                 decisionsByOrigin[location.origin]?[location.type] = nil
+                revoked = location
             }
         }
+        return revoked
     }
 
     func clearAll() {

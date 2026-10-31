@@ -25,8 +25,9 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let settingsStore = SettingsStore(dbPool: database.pool)
         let router = BridgeRouter(chromeWebView: WKWebView())
         let recorder = BridgeEventRecorder(router)
+        let sitePermissions = SitePermissionStore(dbPool: database.pool)
         let handler = SettingsBridgeHandler(
-            settingsStore: settingsStore, sitePermissionStore: SitePermissionStore(dbPool: database.pool),
+            settingsStore: settingsStore, sitePermissionStoreProvider: { sitePermissions },
             zoomStoreProvider: { nil }, historyStoreProvider: { history }, extensionRegistryProvider: { nil },
             dataStoreProvider: { dataStore }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
             forceLifecycleTrimHandler: {}, bridgeRouter: router
@@ -56,5 +57,53 @@ final class SettingsBrowsingDataTests: XCTestCase {
         let completed = try XCTUnwrap(recorder.events.last { $0.name == "settingsActionCompleted" }?.data)
         XCTAssertEqual(completed["action"] as? String, "clearBrowsingData")
         XCTAssertEqual(completed["level"] as? String, "info")
+    }
+
+    func testClearingFromAPrivateSpaceClearsTheProfile() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "Private", profileId: profileId, isPrivate: true)
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.close() }
+        let cookieStore = context.profileManager.dataStore(for: profileId).backingStore.httpCookieStore
+        await cookieStore.setCookie(try XCTUnwrap(HTTPCookie(properties: [
+            .domain: "example.com", .path: "/", .name: "sid", .value: "1", .expires: Date(timeIntervalSinceNow: 3600)
+        ])))
+
+        window.setupBridgeLate()
+        let handler = try XCTUnwrap(window.bridgeRouter.handlers["clearBrowsingData"])
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "clearBrowsingData", "payload": ["kinds": ["cookies"], "range": "all"]
+        ])))
+
+        let remaining = await cookieStore.allCookies()
+        XCTAssertEqual(remaining.map(\.name), [], "the profile's cookies outlive a clear made from its private space")
+    }
+
+    func testClearingHistoryForgetsTheProfilesRecentlyClosedPages() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let otherSpace = try context.spaceManager.createSpace(name: "O", profileId: try context.profileManager.createProfile(name: "O").id)
+        let window = makeTestWindow(context, showing: space.id)
+        window.setupBridgeLate()
+        let terminal = RecentlyClosedStack.Entry.Content.terminal(.init(cwd: "/"))
+        for (content, spaceId) in [
+            (.page(URL(string: "https://cleared.example/")!), space.id),
+            (terminal, space.id),
+            (.page(URL(string: "https://other-profile.example/")!), otherSpace.id)
+        ] as [(RecentlyClosedStack.Entry.Content, UUID)] {
+            context.recentlyClosed.push(content, spaceId: spaceId, parentFolderId: nil, section: nil, sortOrder: nil)
+        }
+        let handler = try XCTUnwrap(window.bridgeRouter.handlers["clearBrowsingData"] as? SettingsBridgeHandler)
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "clearBrowsingData", "payload": ["kinds": ["history"], "range": "hour"]
+        ])))
+
+        XCTAssertEqual(context.recentlyClosed.recentEntries.map(\.content), [.page(URL(string: "https://other-profile.example/")!), terminal])
     }
 }

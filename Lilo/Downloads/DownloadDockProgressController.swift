@@ -21,7 +21,7 @@ final class DownloadDockProgressController {
     /// Active downloads kept in memory (mirrors BottomBar.svelte's activeDownloads map): each observer
     /// callback carries the changed item, so the Dock derives count + aggregate progress from this dict
     /// rather than re-reading all of download history (incl. blobs) from SQLite on every progress tick.
-    private var active: [Int64: DownloadItem] = [:]
+    private var active: [DownloadKey: DownloadItem] = [:]
 
     private lazy var progressView = DockProgressView()
 
@@ -52,7 +52,7 @@ final class DownloadDockProgressController {
     }
 
     private func update(with item: DownloadItem) {
-        guard let id = item.id else { return }
+        guard let id = item.key else { return }
         switch item.state {
         case .inProgress, .paused: active[id] = item
         case .complete, .interrupted: active.removeValue(forKey: id)

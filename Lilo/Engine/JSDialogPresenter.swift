@@ -8,43 +8,85 @@ import WebKit
 enum JSDialogPresenter {
     static func runAlert(
         in webView: WKWebView,
+        frame: WKFrameInfo,
         message: String,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable () -> Void
     ) {
         DispatchQueue.main.async {
             guard let w = webView.window else { completion(); return }
-            let alert = NSAlert(); alert.messageText = message; alert.addButton(withTitle: "OK".localized)
-            alert.beginSheetModal(for: w) { _ in completion() }
+            let alert = pageAlert(in: webView, frame: frame, message: message)
+            alert.addButton(withTitle: "OK".localized)
+            begin(alert, on: w, suppress: suppress) { _ in completion() }
         }
     }
 
     static func runConfirm(
         in webView: WKWebView,
+        frame: WKFrameInfo,
         message: String,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable (Bool) -> Void
     ) {
         DispatchQueue.main.async {
             guard let w = webView.window else { completion(false); return }
-            let alert = NSAlert(); alert.messageText = message
+            let alert = pageAlert(in: webView, frame: frame, message: message)
             alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
-            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
+            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn) }
         }
     }
 
     static func runPrompt(
         in webView: WKWebView,
+        frame: WKFrameInfo,
         prompt: String,
         defaultText: String?,
+        suppress: (@MainActor @Sendable () -> Void)?,
         completion: @escaping @MainActor @Sendable (String?) -> Void
     ) {
         DispatchQueue.main.async {
             guard let w = webView.window else { completion(nil); return }
-            let alert = NSAlert(); alert.messageText = prompt
+            let alert = pageAlert(in: webView, frame: frame, message: prompt)
             alert.addButton(withTitle: "OK".localized); alert.addButton(withTitle: "Cancel".localized)
             let tf = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
             tf.stringValue = defaultText ?? ""; alert.accessoryView = tf
-            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn ? tf.stringValue : nil) }
+            begin(alert, on: w, suppress: suppress) { completion($0 == .alertFirstButtonReturn ? tf.stringValue : nil) }
             alert.window.makeFirstResponder(tf)
+        }
+    }
+
+    /// An alert titled with the site that asks, as Chrome words it, so a frame cannot pass for the page it is embedded in.
+    private static func pageAlert(in webView: WKWebView, frame: WKFrameInfo, message: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.informativeText = message
+        let page = webView.url
+        let origin = frame.securityOrigin
+        let isEmbedded = !frame.isMainFrame
+            && (origin.protocol != page?.scheme || origin.host != page?.host() || origin.port != page?.port ?? 0)
+        if let page, let host = page.host(), page.scheme == "https" || page.scheme == "http" {
+            let site = page.port.map { "\(host):\($0)" } ?? host
+            alert.messageText = String(format: (isEmbedded ? "An embedded page on %@ says" : "%@ says").localized, site)
+        } else {
+            alert.messageText = (isEmbedded ? "An embedded page on this page says" : "This page says").localized
+        }
+        return alert
+    }
+
+    /// Shows a page's alert as a sheet. With `suppress`, it offers to stop the page's further dialogs, as Chrome does
+    /// from a page's second one: a page looping on alert() would otherwise hold the window.
+    private static func begin(
+        _ alert: NSAlert,
+        on window: NSWindow,
+        suppress: (@MainActor @Sendable () -> Void)?,
+        completion: @escaping @MainActor @Sendable (NSApplication.ModalResponse) -> Void
+    ) {
+        if suppress != nil {
+            alert.showsSuppressionButton = true
+            alert.suppressionButton?.title = "Prevent this page from creating additional dialogs".localized
+        }
+        alert.beginSheetModal(for: window) { response in
+            if let suppress, alert.suppressionButton?.state == .on { suppress() }
+            completion(response)
         }
     }
 
@@ -60,6 +102,21 @@ enum JSDialogPresenter {
             alert.messageText = "Leave this page?".localized
             alert.informativeText = "Changes you made may not be saved.".localized
             alert.addButton(withTitle: "Leave".localized); alert.addButton(withTitle: "Stay".localized)
+            alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
+        }
+    }
+
+    /// Confirmation before a reload or history move sends a form's data again. completion(true) = send it.
+    static func runFormResubmission(
+        in webView: WKWebView,
+        completion: @escaping @MainActor @Sendable (Bool) -> Void
+    ) {
+        DispatchQueue.main.async {
+            guard let w = webView.window else { completion(false); return }
+            let alert = NSAlert()
+            alert.messageText = "Confirm Form Resubmission".localized
+            alert.informativeText = "This page used information you entered. Loading it again sends that information again, which may repeat an action such as a purchase.".localized
+            alert.addButton(withTitle: "Continue".localized); alert.addButton(withTitle: "Cancel".localized)
             alert.beginSheetModal(for: w) { completion($0 == .alertFirstButtonReturn) }
         }
     }

@@ -14,7 +14,8 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     static let messageHandlerName = "liloTabShare"
 
     /// Presents the chrome tab picker, offering sound when the page asked for it; nil (headless) falls back to the system picker.
-    var pickerPresenter: ((_ originHost: String, _ requester: WKWebView, _ wantsAudio: Bool) async -> TabSharePickerChoice)?
+    /// `selfTab` is the page's own tab: "exclude", "include" (`selfBrowserSurface`) or "prefer" (`preferCurrentTab`).
+    var pickerPresenter: ((_ originHost: String, _ requester: WKWebView, _ wantsAudio: Bool, _ selfTab: String) async -> TabSharePickerChoice)?
     /// Starts a frame-ferry session for the picked tab. Returns the shim reply payload
     /// (mode/token/width/height) or nil when the tab has no live engine.
     var sessionStarter: ((_ tabId: UUID, _ requester: WKWebView) -> [String: Any]?)?
@@ -50,7 +51,10 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
             guard pickingWebViews.insert(requesterId).inserted else { return (nil, "picker already open") }
             defer { pickingWebViews.remove(requesterId) }
             let maxSize = CGSize(width: body["maxWidth"] as? Double ?? 0, height: body["maxHeight"] as? Double ?? 0)
-            let reply = await pick(originHost: origin.host, requester: requester, wantsAudio: body["audio"] as? Bool == true, maxSize: maxSize)
+            let reply = await pick(
+                originHost: origin.host, requester: requester, wantsAudio: body["audio"] as? Bool == true, maxSize: maxSize,
+                selfTab: body["selfTab"] as? String ?? "exclude"
+            )
             if reply["mode"] as? String == "system", let id = body["id"] as? String {
                 // The page's user activation was spent on the async picker; app-injected JS carries
                 // a fresh one, and native getDisplayMedia also rejects a document without focus.
@@ -74,9 +78,9 @@ final class TabShareBridge: NSObject, WKScriptMessageHandlerWithReply {
     }
 
     /// `maxSize` is the largest frame the page asked for, zero on an axis it left open.
-    func pick(originHost: String, requester: WKWebView, wantsAudio: Bool = false, maxSize: CGSize = .zero) async -> [String: Any] {
+    func pick(originHost: String, requester: WKWebView, wantsAudio: Bool = false, maxSize: CGSize = .zero, selfTab: String = "exclude") async -> [String: Any] {
         guard let pickerPresenter else { return ["mode": "system"] }
-        switch await pickerPresenter(originHost, requester, wantsAudio) {
+        switch await pickerPresenter(originHost, requester, wantsAudio, selfTab) {
         case .system(let audio):
             // WebKit's own capture is sized in points, half the pixels of a Retina screen, at the frame rate the page asks.
             guard let screenStarter else { return ["mode": "system"] }
@@ -372,6 +376,11 @@ getDisplayMedia(constraints){
   if (isActiveGetter && !isActiveGetter.call(activation)) {
     return Promise.reject(new DOMException('getDisplayMedia() requires user activation.', 'NotAllowedError'));
   }
+  var preferSelf = !!(constraints && constraints.preferCurrentTab);
+  var selfSurface = constraints && constraints.selfBrowserSurface;
+  if (preferSelf && selfSurface === 'exclude') {
+    return Promise.reject(new TypeError("Failed to execute 'getDisplayMedia' on 'MediaDevices': Self-contradictory configuration (preferCurrentTab and selfBrowserSurface=exclude)."));
+  }
   var id = String(Math.random()).slice(2);
   nativePending[id] = { constraints: constraints };
   var wantsAudio = !!(constraints && constraints.audio);
@@ -381,6 +390,7 @@ getDisplayMedia(constraints){
   var actx = wantsAudio && AudioCtx ? new AudioCtx() : null;
   if (actx) actx.resume();
   return lilo.post('liloTabShare', { action: 'pick', id: id, audio: wantsAudio,
+                                     selfTab: preferSelf ? 'prefer' : selfSurface === 'include' ? 'include' : 'exclude',
                                      maxWidth: video ? limit(video.width) : 0, maxHeight: video ? limit(video.height) : 0 }).then(function(res){
     var pending = nativePending[id];
     delete nativePending[id];

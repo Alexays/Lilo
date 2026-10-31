@@ -44,6 +44,20 @@ test("the Esc hint says Back while Escape leaves a scope or a tab move", async (
 	await expect(escHint).toHaveText("EscClose");
 });
 
+test("Escape closing the command bar hands the keyboard back to the page", async ({ page }) => {
+	await bootChrome(page, initialWorld());
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	await input.fill("@beta");
+	await input.press("Escape");
+	expect((await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(false);
+
+	await input.press("Escape");
+
+	await expect(page.locator(".command-bar")).toBeHidden();
+	await expect.poll(async () => (await sentCommands(page)).some((c) => c.action === "focusPage")).toBe(true);
+});
+
 for (const prefix of [":", "<", ">"]) {
 	test(`Escape in the ${prefix} scope leaves the scope before closing`, async ({ page }) => {
 		await bootChrome(page, initialWorld());
@@ -208,6 +222,24 @@ test("the ghost completion shows only with the caret at the end, and only then d
 	await expect(ghost).toHaveText("github.com");
 	await input.press("Tab");
 	await expect(input).toHaveValue("github.com");
+});
+
+test("Backspace over the ghost completion removes the completion and keeps the typed text", async ({ page }) => {
+	const world = initialWorld();
+	world.tabsBySpace[SPACE_1].find((t) => t.id === "tab-beta")!.url = "https://github.com/";
+	await bootChrome(page, world);
+	await page.evaluate(() => window.__lilo!.receive({ event: "openCommandBar" }));
+	const input = page.locator(".command-bar-input");
+	const ghost = page.locator(".command-bar-autocomplete");
+	await input.pressSequentially("gi");
+	await expect(ghost).toHaveText("github.com");
+
+	await input.press("Backspace");
+	await expect(input).toHaveValue("gi");
+	await expect(ghost).toHaveCount(0);
+
+	await input.press("Backspace");
+	await expect(input).toHaveValue("g");
 });
 
 async function showClosedTerminal(page: Page, closedMinutesAgo: number) {

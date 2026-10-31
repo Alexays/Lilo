@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { on } from "../../lib/bridge";
+  import { on, postMessage } from "../../lib/bridge";
   import { onSidebarApplied } from "../../stores/sidebar.svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
@@ -14,6 +14,7 @@
   let status = $state<FindStatus>("idle");
   let hasSearched = $state(false);
   let caseSensitive = $state(false);
+  let match = $state<{ index: number; count: number }>();
   let inputEl: HTMLInputElement | undefined = $state();
   let lastSearchedQuery = "";
   let currentActiveSpaceId = "";
@@ -34,9 +35,20 @@
       focusInput();
     });
     const offResult = on("findInPageResult", (data) => {
-      if (typeof data.query !== "string" || data.query !== lastSearchedQuery) return;
+      if (!visible || typeof data.query !== "string" || data.query !== lastSearchedQuery) return;
       status = data.matchFound ? "found" : "not-found";
+      match = data.matchFound && data.matchIndex && data.matchCount ? { index: data.matchIndex, count: data.matchCount } : undefined;
       hasSearched = true;
+    });
+    // As in Chrome, a new document ends the search of the old one, which a find bar opened during the load only forgets.
+    const offCommitted = on("findPageCommitted", (data) => {
+      if (!visible) return;
+      if (data.closeFindBar) {
+        dismiss();
+      } else {
+        clearResult();
+        lastSearchedQuery = "";
+      }
     });
     const offInitialState = on("initialState", (data) => {
       updateContext(data.activeSpaceId, data.activeTabId);
@@ -49,6 +61,7 @@
     return () => {
       offToggle();
       offResult();
+      offCommitted();
       offInitialState();
       offSidebar();
     };
@@ -79,28 +92,33 @@
     });
   }
 
+  function clearResult() {
+    status = "idle";
+    hasSearched = false;
+    match = undefined;
+  }
+
+  // The query stays for the next opening, selected; the engine keeps it for Find Next with the bar closed.
   function dismiss() {
     clearTimeout(searchTimer);
     searchTimer = undefined;
     visible = false;
-    query = "";
-    status = "idle";
-    hasSearched = false;
+    clearResult();
     lastSearchedQuery = "";
     tabActions.dismissFind();
+    postMessage("focusPage");
   }
 
+  // Spaces are part of the query, as in Chrome: "cat " skips "category". Only a blank query searches nothing.
   function search() {
     clearTimeout(searchTimer);
     searchTimer = undefined;
-    const trimmed = query.trim();
-    if (trimmed) {
-      if (trimmed !== lastSearchedQuery) hasSearched = false;
-      lastSearchedQuery = trimmed;
-      tabActions.findInPage(trimmed, { caseSensitive });
+    if (query.trim()) {
+      if (query !== lastSearchedQuery) clearResult();
+      lastSearchedQuery = query;
+      tabActions.findInPage(query, { caseSensitive });
     } else {
-      status = "idle";
-      hasSearched = false;
+      clearResult();
       lastSearchedQuery = "";
       tabActions.dismissFind();
     }
@@ -184,7 +202,9 @@
       spellcheck="false"
     />
     <!-- Always mounted: a live region only announces changes made while it is in the DOM. -->
-    <span class="find-status" role="status">{#if status === "not-found"}{t("findBar.noResults")}{/if}</span>
+    <span class="find-status" class:not-found={status === "not-found"} role="status"
+      >{#if status === "not-found"}{t("findBar.noResults")}{:else if match}{t("findBar.matchCount", { current: match.index, total: match.count })}{/if}</span
+    >
     <button
       class="find-btn case-btn"
       class:active={caseSensitive}
@@ -272,16 +292,22 @@
   }
 
   .find-status {
-    color: var(--danger-text);
+    color: var(--text-secondary);
     font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
     line-height: 1;
     padding: 0 var(--density-1);
     white-space: nowrap;
   }
 
+  .find-status.not-found {
+    color: var(--danger-text);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* Out of the row, not out of the accessibility tree: a hidden live region announces nothing. */
   .find-status:empty {
-    display: none;
+    position: absolute;
   }
 
   /* Only the input gives way in a narrow window. */

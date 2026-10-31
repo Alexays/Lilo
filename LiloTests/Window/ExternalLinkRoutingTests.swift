@@ -48,6 +48,28 @@ final class ExternalLinkRoutingTests: XCTestCase {
         XCTAssertTrue(controller.littleWindows.isEmpty)
     }
 
+    func testALinkLeavesAPrivateSpaceForTheLastSharedOne() throws {
+        let secret = try browserContext.context.spaceManager.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
+        controller.switchToSpace(work.id)
+        controller.switchToSpace(secret.id)
+
+        let url = try open("https://example.com/")
+
+        XCTAssertEqual(controller.tabManager.currentSpaceId, work.id)
+        XCTAssertEqual(controller.tabManager.activeTab?.url, url)
+    }
+
+    func testALittleWindowFromAPrivateSpaceOpensOnTheLastSharedOne() throws {
+        let secret = try browserContext.context.spaceManager.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
+        controller.switchToSpace(secret.id)
+
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+
+        XCTAssertEqual(little.spaceId, home.id)
+        XCTAssertTrue(little.dataStore === browserContext.context.profileManager.dataStore(for: home.profileId))
+        XCTAssertTrue(little.engine.wkWebView.configuration.websiteDataStore.isPersistent)
+    }
+
     func testAHostRuleSendsTheHostAndItsSubdomainsToItsSpace() throws {
         try setRules([["match": "host", "pattern": "github.com", "destination": work.id.uuidString]])
 

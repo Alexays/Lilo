@@ -3,8 +3,8 @@ import WebKit
 import XCTest
 @testable import Lilo
 
-/// A page dialog never waits where nobody can see it: a tab off screen leaves without a beforeunload
-/// prompt, and holds its alert until the tab shows.
+/// A page dialog never waits where nobody can see it: a page off screen leaves without a beforeunload
+/// prompt unless the user closes its tab, and holds its alert or sign-in until the tab shows.
 @MainActor
 final class WKWebViewTabDialogTests: XCTestCase {
     private var browserContext: TemporaryBrowserContext!
@@ -82,5 +82,124 @@ final class WKWebViewTabDialogTests: XCTestCase {
         window.endSheet(try XCTUnwrap(window.attachedSheet))
         let answered = await pollUntil { (try? await engine.wkWebView.evaluateJavaScript("window.answered === true")) as? Bool == true }
         XCTAssertTrue(answered, "the page runs on once the alert is answered")
+    }
+
+    func testClosingABackgroundTabShowsItAndAsksBeforeLeaving() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<script>addEventListener('beforeunload', e => e.preventDefault())</script>", in: engine)
+        _ = try await engine.wkWebView.evaluateJavaScript("document.body.click(); true")
+        controller.createTabStateFirst(url: nil)
+        XCTAssertNil(engine.view.window)
+
+        controller.closeTabStateFirst(id: tab.id)
+
+        let asked = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(asked, "the page gets to ask before its tab closes")
+        XCTAssertEqual(controller.tabManager.activeOpenTabId, tab.id, "the tab shows with its question")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+        let closed = await pollUntil { self.controller.tabManager.tab(for: tab.id) == nil }
+        XCTAssertTrue(closed, "the tab closes once the user leaves")
+    }
+
+    func testAuthPromptOfABackgroundTabWaitsForTheTabToShow() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let server = try await TinyHTTPServer { _ in
+            ("401 Unauthorized", ["WWW-Authenticate: Basic realm=\"test\"", "Content-Type: text/html"], Data("<p>denied</p>".utf8))
+        }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/"), activate: false))
+
+        let marked = await pollUntil { self.controller.tabManager.tab(for: tab.id)?.awaitingInputSince != nil }
+        XCTAssertTrue(marked, "the sidebar marks the tab as waiting for the user")
+        XCTAssertNil(window.attachedSheet, "no sign-in prompt opens over another tab")
+
+        controller.activateTabStateFirst(id: tab.id)
+
+        let shown = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(shown, "the sign-in prompt shows with its tab")
+    }
+
+    func testCancellingTheAuthPromptShowsTheServersPage() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let server = try await TinyHTTPServer { _ in
+            ("401 Unauthorized", ["WWW-Authenticate: Basic realm=\"test\"", "Content-Type: text/html"], Data("<p>denied</p>".utf8))
+        }
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: URL(string: "http://127.0.0.1:\(server.port)/")))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        let asked = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(asked)
+        XCTAssertTrue(sheetTexts(window).contains("Authentication Required"), "\(sheetTexts(window))")
+
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertSecondButtonReturn)
+
+        let shown = await pollUntil {
+            (try? await engine.wkWebView.evaluateJavaScript("document.body?.innerText ?? ''")) as? String == "denied"
+        }
+        XCTAssertTrue(shown, "the server's own 401 page shows")
+    }
+
+    func testAlertSaysWhichSiteIsAsking() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<iframe src=\"data:text/html,<script>onmessage = () => alert('framed')</script>\"></iframe>", in: engine)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("setTimeout(() => alert('hi')); true")
+        let askedByPage = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(askedByPage)
+        let texts = sheetTexts(window)
+        XCTAssertTrue(texts.contains("example.com says"), "\(texts)")
+        XCTAssertTrue(texts.contains("hi"), "\(texts)")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+        let dismissed = await pollUntil { window.attachedSheet == nil }
+        XCTAssertTrue(dismissed)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("frames[0].postMessage(1, '*'); true")
+        let askedByFrame = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(askedByFrame)
+        XCTAssertTrue(sheetTexts(window).contains("An embedded page on example.com says"), "\(sheetTexts(window))")
+    }
+
+    func testRepeatedDialogsCanBeStopped() async throws {
+        let window = try XCTUnwrap(controller.window)
+        let tab = try XCTUnwrap(controller.createTabStateFirst(url: nil))
+        let engine = try XCTUnwrap(controller.tabManager.engineTab(for: tab.id))
+        await load("<p>page</p>", in: engine)
+
+        _ = try await engine.wkWebView.evaluateJavaScript("setTimeout(() => { window.count = 0; while (window.count < 1000) { window.count++; alert(window.count) } }); true")
+        let firstShown = await pollUntil { window.attachedSheet != nil }
+        XCTAssertTrue(firstShown)
+        XCTAssertNil(alertSuppressionButton(window), "the first dialog offers nothing more")
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+
+        let offered = await pollUntil { self.alertSuppressionButton(window) != nil }
+        XCTAssertTrue(offered, "the next one offers to stop them")
+        try XCTUnwrap(alertSuppressionButton(window)).state = .on
+        window.endSheet(try XCTUnwrap(window.attachedSheet), returnCode: .alertFirstButtonReturn)
+
+        let freed = await pollUntil { (try? await engine.wkWebView.evaluateJavaScript("window.count")) as? Int == 1000 }
+        XCTAssertTrue(freed, "the page's further dialogs are dismissed")
+        XCTAssertNil(window.attachedSheet)
+    }
+
+    /// Every text field's string in the window's sheet.
+    private func sheetTexts(_ window: NSWindow) -> [String] {
+        var views = [window.attachedSheet?.contentView].compactMap { $0 }
+        var texts: [String] = []
+        while let view = views.popLast() {
+            if let field = view as? NSTextField { texts.append(field.stringValue) }
+            views += view.subviews
+        }
+        return texts
+    }
+
+    private func alertSuppressionButton(_ window: NSWindow) -> NSButton? {
+        var views = [window.attachedSheet?.contentView].compactMap { $0 }
+        while let view = views.popLast() {
+            if let button = view as? NSButton, !button.isHidden, button.title.hasPrefix("Prevent this page") { return button }
+            views += view.subviews
+        }
+        return nil
     }
 }

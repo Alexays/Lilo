@@ -135,8 +135,15 @@ extension AgentControl {
     }
 
     private func grantProfile(_ profileId: UUID, to session: AgentSession) {
-        let grants = grantedProfiles.union([Self.grantKey(session, profileId)]).sorted()
-        if let data = try? JSONEncoder().encode(grants), let stored = String(bytes: data, encoding: .utf8) {
+        saveProfileGrants(grantedProfiles.union([Self.grantKey(session, profileId)]))
+    }
+
+    func forgetProfileGrants(of clientName: String) {
+        saveProfileGrants(grantedProfiles.filter { !$0.hasPrefix(clientName + "|") })
+    }
+
+    private func saveProfileGrants(_ grants: Set<String>) {
+        if let data = try? JSONEncoder().encode(grants.sorted()), let stored = String(bytes: data, encoding: .utf8) {
             context?.settingsStore?.set(Self.profileGrantsKey, value: stored)
         }
     }

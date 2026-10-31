@@ -20,7 +20,7 @@ test("the site-controls button opens the Site drawer, which sets a permission", 
 
 	const drawer = page.locator(".url-drawer.open");
 	await expect(drawer).toContainText("Camera");
-	await drawer.getByRole("radio", { name: "Block" }).click();
+	await drawer.getByRole("combobox", { name: "Camera" }).selectOption("blocked");
 
 	const set = (await sentCommands(page)).find((c) => c.action === "setSitePermission");
 	expect(set?.payload).toEqual({ origin: "https://example.com", type: "camera", allow: false });

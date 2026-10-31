@@ -1,0 +1,3 @@
+kind: Fixed
+body: A translated page keeps translating text it adds later, such as new posts in a feed or a new route, and leaves text inside code blocks and graphics untranslated.
+time: 2026-10-30T19:21:32.563173+01:00

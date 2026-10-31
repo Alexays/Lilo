@@ -273,7 +273,6 @@ extension MainWindowController {
         }
         pendingPermissionRequests.append(PendingPermissionRequest(
             id: id, tabId: tabId, type: type, origin: origin,
-            isPrivate: tabManager.engineTab(for: tabId)?.isPrivateBrowsing ?? false,
             completion: completion, timeoutWork: timeoutWork
         ))
         DispatchQueue.main.asyncAfter(deadline: .now() + permissionRequestTimeout, execute: timeoutWork)
@@ -312,13 +311,21 @@ extension MainWindowController {
         let request = pendingPermissionRequests.remove(at: index)
         request.timeoutWork.cancel()
         request.completion(granted)
-        if answeredByUser, !request.isPrivate {
-            context.sitePermissionStore.upsert(origin: request.origin, type: request.type, granted: granted)
-            bridgeRouter.sendSitePermissionsLoaded(from: context.sitePermissionStore)
+        if answeredByUser {
+            rememberPermission(origin: request.origin, type: request.type, granted: granted, tabId: request.tabId)
         } else if !answeredByUser {
             // Tab close or timeout: retract the prompt, nothing can answer it now.
             bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": id.uuidString])
         }
+    }
+
+    /// Where links from other apps and new Little windows go: the shown Space, or the last non-private
+    /// one this window showed, as a private Space's pages leave with it.
+    var externalLinkSpaceId: UUID? {
+        guard let current = tabManager.currentSpaceId, let spaces = context.spaceManager?.spaces,
+              spaces.first(where: { $0.id == current })?.isPrivate == true else { return tabManager.currentSpaceId }
+        let shared = spaces.filter { !$0.isPrivate }
+        return recentSpaceIds.first { id in shared.contains { $0.id == id } } ?? shared.first?.id ?? current
     }
 
     func openExternalURL(_ url: URL) {
@@ -338,7 +345,8 @@ extension MainWindowController {
             pendingExternalURLs.append(url)
             return
         }
-        if case .space(let spaceId) = destination, spaceId != tabManager.currentSpaceId { switchToSpace(spaceId) }
+        let spaceId = if case .space(let id) = destination { id } else { externalLinkSpaceId }
+        if let spaceId, spaceId != tabManager.currentSpaceId { switchToSpace(spaceId) }
         bridgeRouter.send(event: "closeCommandBarAfterNavigation")
         if tabManager.activeTab?.url == nil, let engine = tabManager.activeEngineTab {
             engine.loadURL(url)

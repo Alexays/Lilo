@@ -4,7 +4,8 @@
   import { prefersReducedMotion } from "../../lib/motion/reducedMotion";
   import { createFrameScheduler } from "../../lib/motion/frameScheduler";
   import { t } from "../../lib/i18n/state.svelte";
-  import { formatShortcut, parseInput, type CommandScope } from "../../lib/inputParser";
+  import { formatShortcut, parseInput, setTopLevelDomains, type CommandScope } from "../../lib/inputParser";
+  import { TOP_LEVEL_DOMAINS } from "../../lib/topLevelDomains.gen";
   import { cubicInOut } from "svelte/easing";
   import { fade, scale } from "svelte/transition";
   import {
@@ -38,6 +39,7 @@
     setSelectedIndex,
   } from "../../stores/commandBar.svelte";
   import { getAgentMood, isAgentsSpace } from "../../stores/agents.svelte";
+  import { postMessage } from "../../lib/bridge";
   import { isSidebarVisible } from "../../stores/ui.svelte";
   import { getSetting } from "../../stores/settings.svelte";
   import { getTabs } from "../../stores/tabs.svelte";
@@ -46,6 +48,8 @@
     buildTabFaviconLookup,
     resolveResultIcon,
   } from "./commandBarIcons";
+
+  setTopLevelDomains(TOP_LEVEL_DOMAINS);
 
   const SCOPE_HINTS: Array<{
     prefix: string;
@@ -336,6 +340,7 @@
           setCommandBarScope("all");
         } else {
           closeCommandBar();
+          postMessage("focusPage");
         }
         break;
       case "ArrowDown":
@@ -378,7 +383,7 @@
         break;
       case "Backspace":
       case "Delete":
-        if (e.key === "Delete" && !e.metaKey && completionShown) {
+        if (!e.metaKey && completionShown) {
           e.preventDefault();
           dismissAutofill();
           break;

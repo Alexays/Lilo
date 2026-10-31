@@ -20,15 +20,15 @@ final class TabShareBridgeTests: XCTestCase {
             return ["mode": "tab", "token": "t", "width": 640, "height": 360]
         }
 
-        bridge.pickerPresenter = { _, _, _ in .cancel }
+        bridge.pickerPresenter = { _, _, _, _ in .cancel }
         var reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "cancel")
 
-        bridge.pickerPresenter = { _, _, _ in .system(audio: false) }
+        bridge.pickerPresenter = { _, _, _, _ in .system(audio: false) }
         reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "system")
 
-        bridge.pickerPresenter = { _, _, _ in .tab(tabId) }
+        bridge.pickerPresenter = { _, _, _, _ in .tab(tabId) }
         reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertEqual(reply["token"] as? String, "t")
@@ -37,7 +37,7 @@ final class TabShareBridgeTests: XCTestCase {
 
     func testPickedTabWithoutLiveEngineCancels() async {
         let bridge = TabShareBridge()
-        bridge.pickerPresenter = { _, _, _ in .tab(UUID()) }
+        bridge.pickerPresenter = { _, _, _, _ in .tab(UUID()) }
         bridge.sessionStarter = { _, _ in nil }
         let reply = await bridge.pick(originHost: "a.example", requester: WKWebView(frame: .zero))
         XCTAssertEqual(reply["mode"] as? String, "cancel")
@@ -53,19 +53,19 @@ final class TabShareBridgeTests: XCTestCase {
         }
         let requester = WKWebView(frame: .zero)
 
-        bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
+        bridge.pickerPresenter = { _, _, _, _ in .system(audio: true) }
         var reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true, maxSize: CGSize(width: 1920, height: 1200))
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertEqual(sizes.first, CGSize(width: 1920, height: 1200), "the capture never goes past what the page asked for")
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: false)
         XCTAssertEqual(reply["mode"] as? String, "tab", "full resolution and frame rate, with or without sound")
 
-        bridge.pickerPresenter = { _, _, _ in .system(audio: false) }
+        bridge.pickerPresenter = { _, _, _, _ in .system(audio: false) }
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "tab")
         XCTAssertEqual(sounds, [true, false, false])
 
-        bridge.pickerPresenter = { _, _, _ in .system(audio: true) }
+        bridge.pickerPresenter = { _, _, _, _ in .system(audio: true) }
         bridge.screenStarter = { _, _, _ in nil }
         reply = await bridge.pick(originHost: "a.example", requester: requester, wantsAudio: true)
         XCTAssertEqual(reply["mode"] as? String, "cancel", "a cancelled system picker cancels the share")
@@ -93,6 +93,49 @@ final class TabShareBridgeTests: XCTestCase {
             """, contentWorld: .page) as? [Bool]
 
         XCTAssertEqual(sdp, [true, false], "the flag would hold a VP8 screen share at 5 fps and 1 Mbps")
+    }
+
+    func testThePickerOffersTheCallingTabOnlyWhenThePageAsks() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let window = makeTestWindow(context, showing: space.id)
+        defer { window.window?.close() }
+        var requests: [[String: Any]] = []
+        window.bridgeRouter.javaScriptSink = { _, arguments, completion in
+            let messages = arguments["messages"] as? [[String: Any]] ?? [arguments["message"] as? [String: Any]].compactMap { $0 }
+            requests += messages.filter { $0["event"] as? String == "tabSharePickerRequested" }
+            completion()
+        }
+        let other = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let caller = try XCTUnwrap(window.createTabStateFirst(url: nil))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: caller.id)).wkWebView
+        webView.loadHTMLString("<p>call</p>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil { !webView.isLoading && webView.url != nil }
+
+        func offered(_ options: String) async throws -> (shareable: Set<String>, suggested: [String]) {
+            requests = []
+            _ = try await webView.evaluateJavaScript("window.share = navigator.mediaDevices.getDisplayMedia({ video: true\(options) }).catch(() => {}); true")
+            await pollUntil { !requests.isEmpty }
+            let request = try XCTUnwrap(requests.first)
+            window.resolveTabSharePicker(requestId: try XCTUnwrap(request["requestId"] as? String), choice: .cancel)
+            _ = try await webView.callAsyncJavaScript("await window.share", contentWorld: .page)
+            return (Set(request["shareableTabIds"] as? [String] ?? []), request["suggestedTabIds"] as? [String] ?? [])
+        }
+
+        let plain = try await offered("")
+        XCTAssertFalse(plain.shareable.contains(caller.id.uuidString), "Chrome leaves the calling tab out by default")
+        XCTAssertTrue(plain.shareable.contains(other.id.uuidString))
+        let included = try await offered(", selfBrowserSurface: 'include'")
+        XCTAssertTrue(included.shareable.contains(caller.id.uuidString))
+        let preferred = try await offered(", preferCurrentTab: true")
+        XCTAssertEqual(preferred.suggested.first, caller.id.uuidString, "selected first")
+
+        let contradiction = try await webView.callAsyncJavaScript("""
+            try { await navigator.mediaDevices.getDisplayMedia({ video: true, preferCurrentTab: true, selfBrowserSurface: 'exclude' }); } catch (e) { return e.name; }
+            """, contentWorld: .page) as? String
+        XCTAssertEqual(contradiction, "TypeError")
     }
 }
 

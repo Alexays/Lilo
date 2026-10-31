@@ -48,6 +48,8 @@ final class BrowserStateStore {
     var displayedTabIds: Set<UUID> = []
     /// Tabs whose Document PiP window is open: its page runs in theirs.
     var pictureInPictureOpenerIds: Set<UUID> = []
+    /// Whether an origin may post notifications in a space's profile: an idle freeze spares its tabs, so a messaging app keeps receiving.
+    var allowsNotifications: (_ origin: String, _ spaceId: UUID) -> Bool = { _, _ in false }
     /// Live runtime of each shown space and how many windows show it; every one of them uses this host.
     private var liveHosts: [UUID: (host: EngineHost, viewers: Int)] = [:]
 
@@ -196,7 +198,7 @@ final class BrowserStateStore {
 
     @discardableResult
     func mutate(_ command: BrowserCommand) throws -> BrowserChangeSet {
-        // Moving a tab out of a locked folder would reveal it without the password.
+        // Moving a tab out of a locked folder would reveal it without the password; closing it would destroy it.
         if let (spaceId, tabIds) = Self.tabsMoved(by: command), let spaceTab = spaces[spaceId]?.spaceTab,
            let tabId = tabIds.first(where: { spaceTab.protectingFolder(of: $0)?.isLocked == true }) {
             throw BrowserMutationError.lockedTab(tabId)
@@ -208,10 +210,11 @@ final class BrowserStateStore {
             if tab.isClosed {
                 guard tab.isPinned || tab.isBookmarked else { throw BrowserMutationError.closedTab(tabId) }
             }
+            let previousTabId = snapshot.spaceTab.state.activeTabId
             let result = try mutateSpaceTab(spaceId: spaceId) { session in
                 session.activateTab(tabId)
             }
-            noteTabActivated(tabId)
+            noteTabActivated(tabId, leaving: previousTabId)
             return result
         case let .createTab(spaceId, tab, activate):
             return try mutateSpaceTab(spaceId: spaceId) { session in
@@ -514,7 +517,7 @@ final class BrowserStateStore {
     private static func tabsMoved(by command: BrowserCommand) -> (spaceId: UUID, tabIds: [UUID])? {
         switch command {
         case let .setPinned(spaceId, tabId, _), let .setBookmarked(spaceId, tabId, _),
-             let .moveTabToBookmarked(spaceId, tabId, _):
+             let .moveTabToBookmarked(spaceId, tabId, _), let .closeTab(spaceId, tabId):
             return (spaceId, [tabId])
         case let .moveTabToSpace(tabId, sourceSpaceId, _, _):
             return (sourceSpaceId, [tabId])
@@ -649,15 +652,18 @@ final class BrowserStateStore {
         return (oldTab, updatedTab)
     }
 
-    /// Stamp the activated tab's runtime `lastActiveAt`. Deliberately bypasses durable state so it
-    /// neither bumps durableRevision nor schedules a session save; applies the existing overlay first
-    /// so other runtime flags (audio/capture) are preserved rather than reset to defaults.
-    func noteTabActivated(_ tabId: UUID) {
-        guard let spaceId = owningSpaceId(forTab: tabId),
-              let durable = spaces[spaceId]?.spaceTab.tab(id: tabId) else { return }
-        var tab = runtimeOverlay.applied(to: durable)
-        tab.lastActiveAt = Date()
-        runtimeOverlay.setRuntimeState(from: tab)
+    /// Stamp the runtime `lastActiveAt` of the activated tab and of the tab it replaces, which stops being active now: idle time
+    /// counts from when a tab was left. Deliberately bypasses durable state so it neither bumps durableRevision nor schedules a
+    /// session save; applies the existing overlay first so other runtime flags (audio/capture) are preserved.
+    func noteTabActivated(_ tabId: UUID, leaving previousTabId: UUID? = nil) {
+        let now = Date()
+        for id in [previousTabId, tabId] {
+            guard let id, let spaceId = owningSpaceId(forTab: id),
+                  let durable = spaces[spaceId]?.spaceTab.tab(id: id) else { continue }
+            var tab = runtimeOverlay.applied(to: durable)
+            tab.lastActiveAt = now
+            runtimeOverlay.setRuntimeState(from: tab)
+        }
     }
 
     func cacheInactiveSpaceRuntime(
@@ -668,7 +674,10 @@ final class BrowserStateStore {
     ) {
         visibleSpaceIds.remove(id)
         let spaceTabs = runtime.tabs.filter { $0.spaceId == id }
-        for tab in spaceTabs {
+        let now = Date()
+        for var tab in spaceTabs {
+            // The space's shown tab is left now: its idle time starts here.
+            if tab.id == runtime.activeTabId { tab.lastActiveAt = now }
             runtimeOverlay.setRuntimeState(from: tab)
         }
         let tabIds = Set(spaceTabs.map(\.id))
@@ -712,8 +721,8 @@ final class BrowserStateStore {
     }
 
     /// Freeze (suspend in place, not discard) idle engines in hidden spaces whose runtime `lastActiveAt`
-    /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected)
-    /// or already frozen. A frozen engine stays in memory (instant resume) but stops spending CPU/energy.
+    /// is older than `freezeThreshold` and which aren't protected (audio/capture/restoration/inspected, loading,
+    /// allowed to notify) or already frozen. A frozen engine stays in memory (instant resume) but stops spending CPU/energy.
     func freezeIdleEngines(freezeThreshold: TimeInterval, now: Date = Date()) {
         guard freezeThreshold.isFinite else { return }
         let coordinator = TabLifecycleCoordinator(config: .default)   // grace periods are preset-invariant
@@ -731,8 +740,12 @@ final class BrowserStateStore {
                 if let split = snapshot.spaceTab.splitGroup(containing: visibleTabId) { protectedTabIds.formUnion(split.layout.paneIds) }
             }
             var lastActiveByTab: [UUID: Date] = [:]
-            for tab in tabs { if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last } }
-            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen {
+            for tab in tabs {
+                if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last }
+                guard snapshot.engines[tab.id] != nil, let url = tab.url, let scheme = url.scheme, let host = url.host else { continue }
+                if allowsNotifications(PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0), spaceId) { protectedTabIds.insert(tab.id) }
+            }
+            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isFrozen && !engine.isLoading {
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard now.timeIntervalSince(last) > freezeThreshold else { continue }
                 engine.freeze(now: now)
@@ -842,7 +855,7 @@ final class BrowserStateStore {
             var lastActiveByTab: [UUID: Date] = [:]
             for tab in tabs { if let last = tab.lastActiveAt { lastActiveByTab[tab.id] = last } }
             var changed = false
-            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) {
+            for (tabId, engine) in snapshot.engines where !protectedTabIds.contains(tabId) && !engine.isLoading {
                 let last = lastActiveByTab[tabId] ?? engine.createdAt
                 guard now.timeIntervalSince(last) > discardThreshold else { continue }
                 applyEngineDiscard(tabId: tabId, engine: engine, in: &snapshot, discardEngine: discardEngine)

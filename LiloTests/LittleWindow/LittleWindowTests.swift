@@ -78,6 +78,44 @@ final class LittleWindowTests: XCTestCase {
         XCTAssertTrue(controller.littleWindows.isEmpty)
     }
 
+    func testAPageOpeningANewTabGetsAnotherLittleWindowOnItsOwnSpace() async throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        try await load(little, try XCTUnwrap(URL(string: "https://example.com/")))
+        controller.switchToSpace(work.id)
+        let tabs = controller.tabManager.openTabs.count
+
+        let hasOpener = try await little.engine.wkWebView.evaluateJavaScript("const w = window.open('about:blank'); w.opener === window")
+
+        XCTAssertEqual(hasOpener as? Bool, true)
+        XCTAssertEqual(controller.tabManager.openTabs.count, tabs, "no tab in the window behind")
+        let opened = try XCTUnwrap(controller.littleWindows.values.first { $0 !== little })
+        XCTAssertEqual(opened.spaceId, home.id)
+        XCTAssertTrue(opened.dataStore === little.dataStore)
+    }
+
+    func testClosingTheBrowserWindowHandsItsLittleWindowsToAnother() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let other = makeTestWindow(browserContext.context, showing: work.id)
+        defer { other.littleWindows.values.forEach { $0.window.close() }; other.window?.close() }
+
+        controller.window?.close()
+
+        XCTAssertTrue(little.window.isVisible)
+        XCTAssertTrue(other.littleWindows[little.engine.id] === little)
+        XCTAssertTrue(little.owner === other)
+        XCTAssertTrue(little.engine.delegate === other, "the other window serves its page now")
+    }
+
+    func testTheLastBrowserWindowHidesWhileALittleWindowIsOpen() throws {
+        let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
+        let window = try XCTUnwrap(controller.window)
+        window.makeKeyAndOrderFront(nil)
+
+        XCTAssertFalse(controller.windowShouldClose(window), "closing it would quit the app")
+        XCTAssertFalse(window.isVisible)
+        XCTAssertTrue(little.window.isVisible)
+    }
+
     func testClosingTheWindowSendsItsPageToRecentlyClosed() async throws {
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
         let url = try XCTUnwrap(URL(string: "https://example.com/read"))

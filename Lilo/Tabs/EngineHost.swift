@@ -143,6 +143,14 @@ final class EngineHost {
         }
     }
 
+    /// The tab's back/forward list, scroll and form state: its live page's, else the one stashed when it was discarded.
+    func interactionState(for id: UUID) -> Any? {
+        if let engine = engines[id] { return engine.interactionState }
+        let state = savedInteractionStates[id]
+        if let archived = state as? ArchivedInteractionState { return InteractionStateCodec.decode(archived.data) }
+        return state
+    }
+
     func consumeSavedInteractionState(for id: UUID) -> Any? {
         defer { didMutate() }
         interactionStateLRU.removeAll { $0 == id }

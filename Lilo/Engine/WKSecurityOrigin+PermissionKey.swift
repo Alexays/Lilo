@@ -1,3 +1,4 @@
+import Network
 import WebKit
 
 // MARK: - Permission origin key
@@ -27,9 +28,21 @@ extension WKSecurityOrigin {
         PermissionOriginKey.build(scheme: self.`protocol`, host: host, port: port)
     }
 
-    /// A secure context in the spec's sense (https or loopback): the only origins allowed to ask
+    /// A secure context in the spec's sense (https, file or loopback): the only origins allowed to ask
     /// for powerful features such as location and notifications.
     var isPotentiallyTrustworthy: Bool {
-        self.`protocol` == "https" || host == "localhost" || host == "127.0.0.1" || host == "::1"
+        let host = host.lowercased()
+        return self.`protocol` == "https" || self.`protocol` == "file" || host == "localhost" || host.hasSuffix(".localhost")
+            || host == "::1" || host == "[::1]" || IPv4Address(host).map { $0.rawValue.first == 127 } == true
+    }
+}
+
+extension WKFrameInfo {
+    /// The origin a frame's request is asked and stored under: its page's, as browsers delegate a frame's request to the top.
+    var permissionOriginKey: String {
+        guard !isMainFrame, let url = webView?.url, let scheme = url.scheme, let host = url.host, !host.isEmpty else {
+            return securityOrigin.permissionOriginKey
+        }
+        return PermissionOriginKey.build(scheme: scheme, host: host, port: url.port ?? 0)
     }
 }

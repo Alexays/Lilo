@@ -16,7 +16,8 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
 
     private var sockets: [Int: Socket] = [:]
     private var nextId = 0
-    private lazy var session = URLSession(configuration: .ephemeral, delegate: self, delegateQueue: .main)
+    /// Each profile's session, through its proxy as the profile's pages are; rebuilt when that proxy changes, open sockets staying.
+    private var sessions: [UUID: URLSession] = [:]
     nonisolated(unsafe) private var observers: [Any] = []
 
     override init() {
@@ -38,6 +39,19 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
                 }
             }
         })
+        observers.append(NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
+            guard let registry = note.object as? ProfileExtensionRegistry else { return }
+            MainActor.assumeIsolated { self?.sessions.removeValue(forKey: registry.profileId)?.finishTasksAndInvalidate() }
+        })
+    }
+
+    private func session(for registry: ProfileExtensionRegistry) -> URLSession {
+        if let session = sessions[registry.profileId] { return session }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.proxyConfigurations = registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations ?? []
+        let session = URLSession(configuration: configuration, delegate: self, delegateQueue: .main)
+        sessions[registry.profileId] = session
+        return session
     }
 
     deinit {
@@ -55,7 +69,7 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
             request.setValue("\(context.baseURL.scheme ?? "")://\(context.baseURL.host ?? "")", forHTTPHeaderField: "Origin")
             let protocols = call.payload["protocols"] as? [String] ?? []
             if !protocols.isEmpty { request.setValue(protocols.joined(separator: ", "), forHTTPHeaderField: "Sec-WebSocket-Protocol") }
-            let task = session.webSocketTask(with: request)
+            let task = session(for: call.registry).webSocketTask(with: request)
             nextId += 1
             sockets[nextId] = Socket(task: task, extensionId: call.extensionId, registry: call.registry,
                                      worker: call.registry.gapEvents.workerInstance(of: call.extensionId))

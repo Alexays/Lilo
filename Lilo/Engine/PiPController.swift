@@ -71,7 +71,8 @@ final class PiPController {
         }
     }
 
-    /// An automatic entry passes `enterOnly`, so it never ends a PiP the user opened.
+    /// An automatic entry passes `enterOnly`, so it never ends a PiP the user opened, and takes only a video playing with sound:
+    /// the tab's audio may come from elsewhere, a muted or paused video is decoration.
     private static let toggleScript = """
     return (() => {
       const videos = Array.from(document.querySelectorAll('video'));
@@ -84,6 +85,7 @@ final class PiPController {
       const candidates = videos
         .filter((video) => {
           if (video.disablePictureInPicture) return false;
+          if (enterOnly && (video.paused || video.muted || video.volume === 0)) return false;
           if (typeof video.webkitSetPresentationMode === 'function' &&
               typeof video.webkitSupportsPresentationMode === 'function' &&
               video.webkitSupportsPresentationMode('picture-in-picture')) {

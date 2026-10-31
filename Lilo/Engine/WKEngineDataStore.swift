@@ -14,16 +14,28 @@ final class WKEngineDataStore {
     /// (half a second, minutes on a loaded Mac), and Lilo reports to it without a store profile, so it holds none of the store's.
     @MainActor static let siteDataTypes = WKWebsiteDataStore.allWebsiteDataTypes().subtracting([WKWebsiteDataTypeScreenTime])
 
+    /// HTTP sign-ins WebKit keeps for the session, private and so missing from `allWebsiteDataTypes()`; WebKit ignores a type it does not know.
+    private static let credentialsType = "_WKWebsiteDataTypeCredentials"
+
     @MainActor
     func removeAllData(modifiedSince date: Date) async {
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
+        let types = WKWebsiteDataStore.allWebsiteDataTypes().union([Self.credentialsType])
+        removeSavedHTTPCredentials(modifiedSince: date)
         await backingStore.removeData(ofTypes: types, modifiedSince: date)
     }
 
     @MainActor
     func removeCookies(modifiedSince date: Date) async {
+        removeSavedHTTPCredentials(modifiedSince: date)
         // WebKit's cookie date filter is coarse (per-origin record), the only time-scoped path available.
-        await backingStore.removeData(ofTypes: [WKWebsiteDataTypeCookies], modifiedSince: date)
+        await backingStore.removeData(ofTypes: [WKWebsiteDataTypeCookies, Self.credentialsType], modifiedSince: date)
+    }
+
+    /// Like Chrome, a sign-in goes with the cookies: a remembered HTTP password belongs to the profile, the store's identifier.
+    @MainActor
+    private func removeSavedHTTPCredentials(modifiedSince date: Date) {
+        guard let profileId = backingStore.identifier else { return }
+        HTTPAuthKeychain.deleteAll(profileId: profileId, modifiedSince: date)
     }
 
     @MainActor

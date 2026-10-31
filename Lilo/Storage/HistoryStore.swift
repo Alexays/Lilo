@@ -52,6 +52,8 @@ final class HistoryStore: @unchecked Sendable {
     private let dbPool: DatabasePool
     private let writeQueue = DispatchQueue(label: "Lilo.HistoryStore.write", qos: .utility)
     private var pendingVisitsByURL: [String: PendingVisit] = [:]
+    /// Titles pages set after their visit was written, by URL.
+    private var pendingTitlesByURL: [String: String] = [:]
     private var pendingFlushWorkItem: DispatchWorkItem?
     /// Lets `flushPendingWrites()` (run by every read, per omnibox keystroke) skip the queue hop when nothing is pending. Set before a
     /// visit is enqueued and again when it lands; cleared only inside the flush on the queue.
@@ -82,11 +84,28 @@ final class HistoryStore: @unchecked Sendable {
             // may have cleared the flag before the visit landed.
             self.hasPendingVisits.withLock { $0 = true }
             let existing = self.pendingVisitsByURL[normalizedURL]
+            let pendingTitle = self.pendingTitlesByURL.removeValue(forKey: normalizedURL)
             self.pendingVisitsByURL[normalizedURL] = PendingVisit(
                 url: normalizedURL,
-                title: title.isEmpty ? existing?.title ?? "" : title,
+                title: [title, existing?.title ?? "", pendingTitle ?? ""].first { !$0.isEmpty } ?? "",
                 visits: (existing?.visits ?? []) + [Visit(at: Date(), openedFrom: openedFrom)]
             )
+            self.scheduleFlushLocked()
+        }
+    }
+
+    /// Gives a visited page the title it set after loading, without counting a visit.
+    func scheduleUpdateTitle(url: String, title: String) {
+        let normalizedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedURL.isEmpty, !title.isEmpty else { return }
+        hasPendingVisits.withLock { $0 = true }
+        writeQueue.async {
+            self.hasPendingVisits.withLock { $0 = true }
+            if self.pendingVisitsByURL[normalizedURL] != nil {
+                self.pendingVisitsByURL[normalizedURL]?.title = title
+            } else {
+                self.pendingTitlesByURL[normalizedURL] = title
+            }
             self.scheduleFlushLocked()
         }
     }
@@ -505,20 +524,25 @@ final class HistoryStore: @unchecked Sendable {
         pendingFlushWorkItem = nil
 
         let visits = Array(pendingVisitsByURL.values)
-        guard !visits.isEmpty else {
+        let titles = pendingTitlesByURL
+        guard !visits.isEmpty || !titles.isEmpty else {
             hasPendingVisits.withLock { $0 = false }
             return
         }
 
         pendingVisitsByURL.removeAll()
+        pendingTitlesByURL.removeAll()
 
         do {
-            try writeVisits(visits)
+            try writeVisits(visits, titles: titles)
             // Cleared only after the commit, so a returned flush means every scheduled visit is queryable; a concurrent set landing in this
             // window is re-asserted by its queued block.
             hasPendingVisits.withLock { $0 = false }
         } catch {
             hasPendingVisits.withLock { $0 = true }
+            for (url, title) in titles where pendingTitlesByURL[url] == nil && pendingVisitsByURL[url] == nil {
+                pendingTitlesByURL[url] = title
+            }
             for visit in visits {
                 let existing = pendingVisitsByURL[visit.url]
                 pendingVisitsByURL[visit.url] = PendingVisit(
@@ -543,7 +567,7 @@ final class HistoryStore: @unchecked Sendable {
         )
         """
 
-    private func writeVisits(_ visits: [PendingVisit]) throws {
+    private func writeVisits(_ visits: [PendingVisit], titles: [String: String] = [:]) throws {
         let written = try dbPool.write { db in
             let statement = try db.cachedStatement(sql: """
                 INSERT INTO history (id, url, title, visitCount, lastVisitedAt, openedFrom, host) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -570,6 +594,10 @@ final class HistoryStore: @unchecked Sendable {
                 insertedVisitsSinceLastPrune += visit.visits.count
                 written.append(entry)
             }
+            let titleStatement = try db.cachedStatement(sql: "UPDATE history SET title = ? WHERE url = ?")
+            for (url, title) in titles {
+                try titleStatement.execute(arguments: [title, url])
+            }
 
             if insertedSinceLastPrune >= Defaults.pruneEveryInserts {
                 try db.execute(sql: Self.pruneSQL, arguments: [Self.maxRows - 1])
@@ -581,7 +609,7 @@ final class HistoryStore: @unchecked Sendable {
             }
             return written
         }
-        onChange?(.visited(written))
+        if !written.isEmpty { onChange?(.visited(written)) }
     }
 
     /// Keeps the newest `maxVisits` visits, then drops the pages left without any.

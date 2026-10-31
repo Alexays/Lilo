@@ -1,6 +1,7 @@
 import Foundation
 import GRDB
 import os
+import WebKit
 
 /// Manages Profile lifecycle with isolated persistent WebKit data stores,
 /// separate GRDB databases, and per-profile extension state.
@@ -112,6 +113,7 @@ final class ProfileManager {
             activateProfile(id: next.id)
         }
         BookmarkSpotlightIndexer.removeAll(profileId: id)
+        HTTPAuthKeychain.deleteAll(profileId: id, modifiedSince: .distantPast)
         // The row is gone and the UI is told either way; leftover files are not worth a failed delete.
         do { try dbManager.deleteProfileData(profileId: id) } catch {
             Self.logger.error("profile data removal failed for \(id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
@@ -122,6 +124,19 @@ final class ProfileManager {
             let extensionData = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("WebKit/\(bundleId)/WebExtensions/\(id.uuidString)", isDirectory: true)
             try? FileManager.default.removeItem(at: extensionData)
+        }
+        // Cookies, caches and site storage. WebKit refuses to remove a store still in use: its last references go with this turn,
+        // and the network process lets go of it a moment later.
+        Task {
+            // Up to a minute: a busy network process can hold the store well past the first seconds.
+            for delay in [1, 2, 4, 8, 16, 32] {
+                do { return try await WKWebsiteDataStore.remove(forIdentifier: id) } catch {
+                    guard delay < 32 else {
+                        return Self.logger.error("website data removal failed for \(id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                    }
+                    try? await Task.sleep(for: .seconds(delay))
+                }
+            }
         }
     }
 

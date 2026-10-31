@@ -135,7 +135,7 @@ final class ExtensionPageTabTests: XCTestCase {
         let (_, registry, extensionId, pageURL, _, _) = try await openExtensionPage()
         let context = try XCTUnwrap(registry.context(for: extensionId))
         let panel = try XCTUnwrap(registry.delegate.presentExtensionPanel(
-            url: pageURL, type: .popup, for: context, controller: registry.controller, size: NSSize(width: 360, height: 600)
+            url: pageURL, type: .popup, isPrivate: false, for: context, controller: registry.controller, size: NSSize(width: 360, height: 600)
         ))
         defer { panel.nsWindow?.close() }
         let router = browserContext.context.engineFactory.gapRouter
@@ -240,6 +240,72 @@ final class ExtensionPageTabTests: XCTestCase {
             arguments: ["id": id], contentWorld: .page
         ) as? [String]
         XCTAssertEqual(tabURL, [pageURL])
+    }
+
+    /// A space whose browser window shows another one is still a window of its own: `tabs.create` into it opens there.
+    func testTabsCreateOpensInTheRequestedWindowOfASpaceBehind() async throws {
+        let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let shownId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        let behind = try browserContext.context.spaceManager.createSpace(name: "T", profileId: try XCTUnwrap(window.profileContext?.profileId))
+        window.switchToSpace(behind.id)
+        window.switchToSpace(shownId)
+
+        _ = try await page.callAsyncJavaScript("""
+            const own = (await chrome.tabs.getCurrent()).windowId;
+            const other = (await chrome.windows.getAll()).find(({ id }) => id !== own);
+            await chrome.tabs.create({ windowId: other.id, url: 'page.html#behind', active: false });
+            """, contentWorld: .page)
+
+        let created = URL(string: pageURL.absoluteString + "#behind")
+        XCTAssertTrue(window.tabManager.tabs(forSpace: behind.id).contains { $0.url == created }, "the tab opens in the window asked for")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: shownId).contains { $0.url == created })
+    }
+
+    /// A space's browser window may since show a private space: an extension not allowed there never opens a tab in it.
+    func testTabsCreateNeverOpensInAPrivateSpaceForAnExtensionNotAllowedThere() async throws {
+        let (window, _, _, pageURL, tabId, _) = try await openExtensionPage()
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
+        window.newPrivateSpace(nil)
+        let privateId = try XCTUnwrap(window.tabManager.currentSpaceId)
+
+        _ = try await page.callAsyncJavaScript("await chrome.tabs.create({ url: 'page.html#opened' })", contentWorld: .page)
+
+        let created = URL(string: pageURL.absoluteString + "#opened")
+        XCTAssertFalse(window.tabManager.tabs(forSpace: privateId).contains { $0.url == created }, "no tab in the private space")
+        XCTAssertTrue(window.tabManager.tabs(forSpace: spaceId).contains { $0.url == created }, "the tab opens in the page's space")
+    }
+
+    /// `windows.create` loads a web page in the profile's store, whatever space is shown, unless it asks for `incognito`, which
+    /// only an extension allowed in private spaces gets: a private window, reported as one.
+    func testAWindowsCreatePopupIsPrivateOnlyWhenItAsksToBe() async throws {
+        let server = try await TinyHTTPServer(index: "<title>Sign in</title>")
+        let (window, registry, extensionId, _, tabId, _) = try await openExtensionPage(permissions: ["tabs"], hostPermissions: ["<all_urls>"])
+        let page = try XCTUnwrap(window.tabManager.engineTab(for: tabId)?.view as? WKWebView)
+        let other = makeTestWindow(browserContext.context, showing: try XCTUnwrap(window.tabManager.currentSpaceId))
+        other.newPrivateSpace(nil)
+        let before = Set(NSApp.windows.map(ObjectIdentifier.init))
+        defer { NSApp.windows.filter { !before.contains(ObjectIdentifier($0)) && $0.contentView is WKWebView }.forEach { $0.close() } }
+        let create = { (incognito: Bool) async throws -> (incognito: Bool?, privateStore: Bool?) in
+            let reply = try await page.callAsyncJavaScript(
+                "return await chrome.windows.create({ type: 'popup', url, incognito }).then((w) => w.incognito, (e) => 'fails ' + e.message)",
+                arguments: ["url": "http://127.0.0.1:\(server.port)/", "incognito": incognito], contentWorld: .page
+            )
+            let panel = registry.delegate.popupWindowAdapters.last?.activeTab?.engineTab
+            return (reply as? Bool, panel?.isPrivateBrowsing)
+        }
+
+        let normal = try await create(false)
+        let refused = try await create(true)
+        await registry.access.setPrivateAccess(extensionId: extensionId, allowed: true)
+        let incognito = try await create(true)
+
+        XCTAssertEqual(normal.incognito, false)
+        XCTAssertEqual(normal.privateStore, false, "a normal window never takes the private space's store")
+        XCTAssertNil(refused.incognito, "an extension not allowed in private spaces gets no private window")
+        XCTAssertEqual(incognito.incognito, true)
+        XCTAssertEqual(incognito.privateStore, true, "a private window keeps nothing")
     }
 
     func testTabsDiscardDropsABackgroundTabButNeverTheOneOnScreen() async throws {

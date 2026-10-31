@@ -248,6 +248,20 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         XCTAssertEqual(stored.first?.frame, first.window?.frame)
     }
 
+    func testAWindowOnAPrivateSpaceIsNotSaved() throws {
+        let context = browserContext.context
+        let secret = try context.spaceManager.createSpace(name: "Private", profileId: spaceS.profileId, isPrivate: true)
+        let first = makeWindow(), second = makeWindow()
+        context.windows.add(first)
+        context.windows.add(second)
+        first.switchToSpace(spaceS.id)
+        second.switchToSpace(secret.id)
+
+        context.saveWindowsNow()
+
+        XCTAssertEqual(try context.dbManager.globalPool.read(WindowStore.load).map(\.spaceId), [spaceS.id])
+    }
+
     /// Extensions see one window per space, shared by the browser windows showing it. A space whose browser window
     /// closes stays a window in the background, in another browser window.
     func testEachSpaceIsItsOwnExtensionWindow() throws {

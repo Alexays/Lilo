@@ -93,6 +93,21 @@ final class DocumentPictureInPictureTests: XCTestCase {
         XCTAssertEqual(host.popups.count, 1, "never two PiP windows")
     }
 
+    func testARefusedRequestKeepsTheOpenWindow() async throws {
+        let webView = await makeWebView()
+        _ = try await run(webView, "window.__pip = await documentPictureInPicture.requestWindow({ width: 300, height: 300 }); return 0;")
+        bridge.onPrepare = { _, _, _ in false }
+
+        let outcome = try await run(webView, """
+            const name = await documentPictureInPicture.requestWindow().then(() => 'resolved', e => e.name);
+            return [name, documentPictureInPicture.window === window.__pip, window.__pip.closed];
+            """) as? [Any]
+
+        XCTAssertEqual(outcome?[0] as? String, "NotAllowedError")
+        XCTAssertEqual(outcome?[1] as? Bool, true)
+        XCTAssertEqual(outcome?[2] as? Bool, false)
+    }
+
     func testARequestWithoutUserActivationSaysSo() async throws {
         let webView = await makeWebView()
 

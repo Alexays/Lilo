@@ -18,6 +18,7 @@ import {
   matchesSearch,
   type SettingModel,
   searchSettings,
+  sitePermissionLabel,
   type SiteSummary,
 } from "./settingsPanelModel";
 
@@ -44,7 +45,7 @@ const results = $derived.by((): SettingsSearchResults => {
     matchesSearch(
       [
         site.key,
-        ...site.permissions.map((permission) => t(`sitePermissions.${permission.type}`)),
+        ...site.permissions.map((permission) => sitePermissionLabel(permission.type, t)),
         site.zoomLevels.length > 0 ? t("settings.groups.zoom") : "",
         site.dataName ? t("settings.sites.dataSummary") : "",
       ].join(" "),

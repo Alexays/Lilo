@@ -160,7 +160,8 @@
   }
 
   .download-row:has(.row-main:focus-visible) {
-    box-shadow: 0 0 0 2px var(--accent-tint-18);
+    outline: var(--focus-outline);
+    outline-offset: -2px;
   }
 
   .download-row.error {

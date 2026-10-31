@@ -119,6 +119,41 @@ final class ProfileManagerTests: XCTestCase {
         XCTAssertEqual(engineFactory.test_warmPoolCount, 0, "the deleted profile's warm view and controller go")
     }
 
+    func testDeleteProfileLetsGoOfItsDataStoreSoWebKitCanRemoveIt() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let doomed = try context.profileManager.createProfile(name: "Doomed")
+        // Its extension controller shares the store too.
+        _ = try context.profileContexts.context(for: doomed.id)
+
+        try context.profileManager.deleteProfile(id: doomed.id)
+
+        XCTAssertNil(context.profileContexts.existingContext(for: doomed.id),
+                     "the deleted profile's extension controller keeps its store in use, so WebKit cannot remove its cookies and site storage")
+    }
+
+    func testDeleteProfileForgetsItsHTTPPasswords() throws {
+        let doomed = try manager.createProfile(name: "Doomed")
+        let space = URLProtectionSpace(
+            host: "intranet.example", port: 443, protocol: "https", realm: "Staff", authenticationMethod: NSURLAuthenticationMethodHTTPBasic
+        )
+        HTTPAuthKeychain.store(URLCredential(user: "ada", password: "secret", persistence: .forSession), for: space, profileId: doomed.id)
+        XCTAssertNotNil(HTTPAuthKeychain.storedCredential(for: space, profileId: doomed.id))
+
+        try manager.deleteProfile(id: doomed.id)
+
+        XCTAssertNil(HTTPAuthKeychain.storedCredential(for: space, profileId: doomed.id))
+    }
+
+    /// The store is built with a browser's storage quotas; the test host always gets those, so only its sharing is checked here.
+    func testExtensionsAndTabsShareTheProfilesDataStore() throws {
+        let profile = try manager.createProfile(name: "Shared")
+        let extensionStore = WKEngineFactory.persistentDataStore(for: profile.id)
+        XCTAssertTrue(manager.dataStore(for: profile.id).backingStore === extensionStore)
+        XCTAssertTrue(WKWebsiteDataStore(forIdentifier: profile.id) === extensionStore)
+    }
+
     func testActivateProfileCachesIdInUserDefaults() throws {
         let profile = try manager.createProfile(name: "Cached")
 

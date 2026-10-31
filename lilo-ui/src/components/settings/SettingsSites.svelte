@@ -4,7 +4,7 @@
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { closeSettingsSubpage } from "../../stores/panels.svelte";
   import { getSitePermissions, getWebsiteData, getZoomLevels } from "../../stores/settings.svelte";
-  import { buildSites } from "./settingsPanelModel";
+  import { buildSites, sitePermissionLabel } from "./settingsPanelModel";
   import SettingsSiteRow from "./SettingsSiteRow.svelte";
   import SettingsGroupIcon from "./SettingsGroupIcon.svelte";
   import UiBadge from "../ui/UiBadge.svelte";
@@ -34,7 +34,7 @@
       {#snippet icon()}<SettingsGroupIcon group="settings.groups.permissions" />{/snippet}
       {#each site.permissions as permission (permission.id)}
         <UiListRow
-          title={t(`sitePermissions.${permission.type}`)}
+          title={sitePermissionLabel(permission.type, t)}
           description={t("settings.sites.permissionUpdated", { origin: permission.origin, time: formatTimestamp(permission.updatedAt) })}
         >
           {#snippet action()}

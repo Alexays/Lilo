@@ -101,7 +101,7 @@
     class:sidebar-hidden={!isSidebarVisible()}
     use:reportInteractiveZone={{ id: "error-page" }}
   >
-    <div class="error-card">
+    <div class="error-card" role="alert">
       <div class="error-icon" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={errorIcon} /></svg>
       </div>

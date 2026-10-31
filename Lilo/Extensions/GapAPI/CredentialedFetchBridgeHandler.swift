@@ -15,13 +15,33 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
     /// Each request under way by its extension and request id, which an abort cancels, as Chrome stops the request.
     private var running: [String: Task<Answer, Never>] = [:]
 
-    private lazy var session: URLSession = {
+    /// Each profile's session, through its proxy as the profile's pages are; rebuilt when that proxy changes.
+    private var sessions: [UUID: URLSession] = [:]
+    nonisolated(unsafe) private var proxyObserver: Any?
+
+    override init() {
+        super.init()
+        proxyObserver = NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
+            guard let registry = note.object as? ProfileExtensionRegistry else { return }
+            MainActor.assumeIsolated { self?.sessions.removeValue(forKey: registry.profileId)?.finishTasksAndInvalidate() }
+        }
+    }
+
+    deinit {
+        if let proxyObserver { NotificationCenter.default.removeObserver(proxyObserver) }
+    }
+
+    private func session(for registry: ProfileExtensionRegistry) -> URLSession {
+        if let session = sessions[registry.profileId] { return session }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpCookieStorage = nil
         configuration.httpShouldSetCookies = false
         configuration.urlCache = nil
-        return URLSession(configuration: configuration)
-    }()
+        configuration.proxyConfigurations = registry.controller.configuration.defaultWebsiteDataStore?.proxyConfigurations ?? []
+        let session = URLSession(configuration: configuration)
+        sessions[registry.profileId] = session
+        return session
+    }
 
     func handle(_ call: GapCall) async -> Any? {
         let key = call.string("requestId").map { "\(call.extensionId)\u{1f}\($0)" }
@@ -62,7 +82,7 @@ final class CredentialedFetchBridgeHandler: NSObject, GapHandler, URLSessionTask
             let data: Data
             let response: HTTPURLResponse
             do {
-                let (received, answer) = try await session.data(for: request, delegate: self)
+                let (received, answer) = try await session(for: call.registry).data(for: request, delegate: self)
                 guard let http = answer as? HTTPURLResponse else { return BridgeError("Failed to fetch") }
                 (data, response) = (received, http)
             } catch {

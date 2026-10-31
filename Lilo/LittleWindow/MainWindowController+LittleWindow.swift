@@ -1,22 +1,26 @@
 import AppKit
+import WebKit
 
 extension MainWindowController {
-    /// Opens a Little window on this window's Space and its profile: `url`, or a blank page with the
-    /// address field focused.
+    /// Opens a Little window on the Space links from other apps open in, with its profile: `url`, or a
+    /// blank page with the address field focused. A page's new window gets its `opener`'s Space and store,
+    /// and with WebKit's `configuration` WebKit loads it and keeps `window.opener`.
     @discardableResult
-    func openLittleWindow(url: URL?) -> LittleWindowController? {
-        guard let spaceId = tabManager.currentSpaceId else { return nil }
-        let dataStore = tabManager.dataStore ?? context.engineFactory.defaultDataStore()
+    func openLittleWindow(url: URL?, opener: LittleWindowController? = nil, configuration: WKWebViewConfiguration? = nil) -> LittleWindowController? {
+        guard let spaceId = opener?.spaceId ?? externalLinkSpaceId, let space = context.spaceManager?.space(with: spaceId) else { return nil }
+        let dataStore = opener?.dataStore
+            ?? (spaceId == tabManager.currentSpaceId ? tabManager.dataStore : context.profileManager?.dataStore(for: space.profileId))
+            ?? context.engineFactory.defaultDataStore()
         let engine = context.engineFactory.createTab(configuration: .init(
             dataStore: dataStore,
             tabId: nil,
-            nativeConfiguration: nil,
-            profileId: tabManager.profileId
+            nativeConfiguration: configuration,
+            profileId: space.profileId
         ))
         configureEngineIfNeeded(engine)
         let little = LittleWindowController(engine: engine, spaceId: spaceId, dataStore: dataStore, owner: self)
         littleWindows[engine.id] = little
-        if let url { engine.loadURL(url) }
+        if let url, configuration == nil { engine.loadURL(url) }
         little.show()
         return little
     }

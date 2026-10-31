@@ -91,8 +91,9 @@ enum Migrations {
         try migrator.migrate(db)
     }
 
-    /// Create a per-profile database schema (history, extensions, downloads and tabs state).
-    static func migrateProfile(_ db: DatabasePool) throws {
+    /// Create a per-profile database schema (history, extensions, downloads and tabs state). `legacyGlobal`, given for a
+    /// profile that existed before, is the global database it takes its share of app-wide data from.
+    static func migrateProfile(_ db: DatabasePool, legacyGlobal: DatabasePool? = nil) throws {
         var migrator = DatabaseMigrator()
 
         migrator.registerMigration("v1") { db in
@@ -281,6 +282,30 @@ enum Migrations {
                 try update.execute(arguments: [HistoryStore.siteHost(of: row["url"]), row["rowid"] as Int64])
             }
             try db.create(index: "idx_history_host", on: "history", columns: ["host"])
+        }
+
+        // Site permissions are per profile; each existing profile keeps the app-wide decisions it browsed with.
+        migrator.registerMigration("v3") { db in
+            try db.create(table: "sitePermissions") { t in
+                t.primaryKey("id", .text).notNull()
+                t.column("origin", .text).notNull()
+                t.column("type", .text).notNull()
+                t.column("decision", .text).notNull()
+                t.column("updatedAt", .datetime).notNull()
+            }
+            try db.create(index: "idx_sitePermissions_origin_type", on: "sitePermissions", columns: ["origin", "type"], unique: true)
+            try db.create(index: "idx_sitePermissions_updatedAt", on: "sitePermissions", columns: ["updatedAt"])
+            guard let legacyGlobal else { return }
+            let rows = try legacyGlobal.read { try Row.fetchAll($0, sql: "SELECT id, origin, type, decision, updatedAt FROM sitePermissions") }
+            let insert = try db.makeStatement(sql: "INSERT INTO sitePermissions (id, origin, type, decision, updatedAt) VALUES (?, ?, ?, ?, ?)")
+            for row in rows {
+                try insert.execute(arguments: StatementArguments(Array(row.databaseValues)))
+            }
+        }
+
+        // An external app decision is per link scheme: one for every scheme cannot say which it was for, so it is asked again.
+        migrator.registerMigration("v4") { db in
+            try db.execute(sql: "DELETE FROM sitePermissions WHERE type = 'external-scheme'")
         }
 
         try migrator.migrate(db)

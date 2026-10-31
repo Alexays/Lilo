@@ -53,7 +53,7 @@
 
   var pending = [];
   var flushScheduled = false;
-  var style = null;
+  var sheet = null;
 
   // Same host probe as Scriptlets.js. An entry is a selector to hide, "@selector" for one excepted on
   // the site, or "@@" when generic cosmetics are off there.
@@ -122,13 +122,12 @@
     for (var i = 0; i < pending.length; i++) css += pending[i] + (pending[i].indexOf('{') < 0 ? '{display:none!important}\n' : '\n');
     pending = [];
     try {
-      if (!style || !style.isConnected) {
-        style = document.createElement('style');
-        (document.head || document.documentElement).appendChild(style);
-      }
+      // An adopted sheet is no node of the page's DOM nor an entry of its styleSheets; the page may drop it, so it is re-adopted.
+      sheet = sheet || new CSSStyleSheet();
+      if (document.adoptedStyleSheets.indexOf(sheet) < 0) document.adoptedStyleSheets = document.adoptedStyleSheets.concat(sheet);
       // uBO's cosmetics are user-origin CSS. A cascade layer ranks the same: its !important above every unlayered one of the
       // page (Didomi's later `body.didomi-popup-open{overflow:hidden!important}`), its plain declarations below.
-      style.appendChild(document.createTextNode('@layer lilo-cosmetics{' + css + '}\n'));
+      sheet.insertRule('@layer{' + css + '}', sheet.cssRules.length);
     } catch (e) {}
   }
   function scheduleFlush() {

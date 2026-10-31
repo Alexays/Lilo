@@ -457,6 +457,18 @@ extension MainWindowController {
         }
         bridgeRouter?.send(event: "contentInteraction", data: ["isMouseDown": true])
     }
+
+    /// Hands the keyboard back to what the content area shows (a shown peek, the terminal or the page)
+    /// when a chrome bar closes. A blank tab has no page to take it.
+    func focusPage() {
+        if let peek = pagePopups.values.first(where: { $0.peekView?.superview != nil }) {
+            focusContent(peek.engine.wkWebView)
+        } else if let terminal = activeTerminalView {
+            focusContent(terminal)
+        } else if tabManager.activeTab?.url != nil, let engine = tabManager.activeEngineTab {
+            focusContent(engine.view)
+        }
+    }
 }
 
 private extension NSEvent {

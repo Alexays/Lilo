@@ -1,0 +1,3 @@
+kind: Fixed
+body: Escape reaches the page before it stops a load, as in Chrome, so a dialog on a page still loading closes with it.
+time: 2026-10-30T19:04:25.586431+01:00

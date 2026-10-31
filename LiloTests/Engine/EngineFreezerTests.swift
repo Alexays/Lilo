@@ -1,3 +1,4 @@
+import AppKit
 import WebKit
 import XCTest
 @testable import Lilo
@@ -25,6 +26,34 @@ final class EngineFreezerTests: XCTestCase {
         _ = try? await webView.evaluateJavaScript(PageWorld.push("resume"), contentWorld: PageWorld.bridgeWorld)
         let resumed = try await webView.evaluateJavaScript(state) as? String
         XCTAssertEqual(resumed, "\(native ?? ""),2")
+    }
+
+    func testCooperativeFreezePlaysAgainOnResumeTheMediaItPaused() async throws {
+        let configuration = WKWebViewConfiguration()
+        PageWorld.install([CooperativeFreezer.pageModule], on: configuration.userContentController)
+        let tab = WKWebViewTab(configuration: configuration)
+        let webView = tab.wkWebView
+        // A page plays video only in a window it counts as visible, even under other apps' windows (as on CI).
+        tab.setWindowOcclusionDetection(false)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = tab.view
+        window.orderFront(nil)
+        defer {
+            window.orderOut(nil)
+            tab.teardown()
+        }
+        webView.loadHTMLString(PiPControllerTests.silentVideo + "<video id='idle' muted></video>", baseURL: URL(string: "https://video.example/"))
+        let playing = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("!v.paused")) as? Bool == true }
+        XCTAssertTrue(playing)
+        let paused = "[v.paused, idle.paused].join()"
+
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("freeze"), contentWorld: PageWorld.bridgeWorld)
+        let frozen = try await webView.evaluateJavaScript(paused) as? String
+        XCTAssertEqual(frozen, "true,true")
+        _ = try? await webView.evaluateJavaScript(PageWorld.push("resume"), contentWorld: PageWorld.bridgeWorld)
+        let resumed = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript(paused)) as? String == "false,true" }
+        XCTAssertTrue(resumed, "a silent loop plays again, and a video that was not playing stays paused")
     }
 
     func testFreezeResumeTogglesIsFrozenFlagIdempotently() {

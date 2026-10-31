@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { t } from "../../lib/i18n/state.svelte";
   import SectionNavPanel from "../ui/SectionNavPanel.svelte";
   import UiSearchField from "../ui/UiSearchField.svelte";
@@ -9,11 +10,19 @@
     closeSettingsShell,
     getSettingsQuery,
     getSettingsShellSection,
+    isSettingsShellOpen,
     setActiveSettingsSection,
     setSettingsQuery,
   } from "../../stores/panels.svelte";
 
   let { compact = false }: { compact?: boolean } = $props();
+  let searchEl: HTMLDivElement | undefined = $state();
+
+  // Cmd+, then typing searches: the field takes the focus each time Settings opens.
+  $effect(() => {
+    if (!isSettingsShellOpen() || compact) return;
+    void tick().then(() => searchEl?.querySelector("input")?.focus({ preventScroll: true }));
+  });
 
   const query = $derived(getSettingsQuery());
   const searching = $derived(query.trim().length > 0);
@@ -45,11 +54,19 @@
   {compact}
 >
   {#snippet toolbar()}
-    <UiSearchField
-      value={query}
-      placeholder={t("settings.searchPlaceholder")}
-      ariaLabel={t("settings.searchPlaceholder")}
-      onchange={setSettingsQuery}
-    />
+    <div class="settings-search" bind:this={searchEl}>
+      <UiSearchField
+        value={query}
+        placeholder={t("settings.searchPlaceholder")}
+        ariaLabel={t("settings.searchPlaceholder")}
+        onchange={setSettingsQuery}
+      />
+    </div>
   {/snippet}
 </SectionNavPanel>
+
+<style>
+  .settings-search {
+    display: contents;
+  }
+</style>

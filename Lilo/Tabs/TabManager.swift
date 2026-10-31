@@ -200,9 +200,12 @@ final class TabManager {
         registry.controller.didOpenTab(adapter)
     }
 
-    func loadPreparedTab(_ tab: Tab, nativeConfiguration: WKWebViewConfiguration?) {
-        guard nativeConfiguration == nil, let url = tab.url else { return }
-        engineHost.engine(for: tab.id)?.loadURL(url)
+    /// `interactionState`, when it holds a page, replaces the load with that page and its history.
+    func loadPreparedTab(_ tab: Tab, nativeConfiguration: WKWebViewConfiguration?, interactionState: Any? = nil) {
+        guard nativeConfiguration == nil, let url = tab.url, let engine = engineHost.engine(for: tab.id) else { return }
+        // An extension page loads fresh, as a woken one does: its history may name a stale extension host.
+        if let interactionState, engine.extensionHost == nil, engine.restoreInteractionState(interactionState) { return }
+        engine.loadURL(url)
     }
 
     func discardPreparedTabRuntime(for id: UUID) {
@@ -233,9 +236,10 @@ final class TabManager {
 
         // A locked folder's tab can be selected, never loaded: the window shows the lock placeholder.
         // A non-web tab has no engine to wake.
+        let previousTabId = activeTabId
         if tab.kind != .web || protectingFolder(of: tab)?.isLocked == true {
             activeTabId = id
-            browserStateStore?.noteTabActivated(id)
+            browserStateStore?.noteTabActivated(id, leaving: previousTabId)
             delegate?.tabManager(self, didActivateTab: id)
             // Extensions see the window's stand-in tab active instead.
             if let windowAdapter, let previousAdapter = windowAdapter.activeAdapter, let registry = extensionRegistry {
@@ -256,7 +260,7 @@ final class TabManager {
         activeTabId = id
         // Runtime-path activations (space-switch restore, non-command) must stamp lastActiveAt too,
         // else it stays nil and the tab is never idle-frozen/discarded.
-        browserStateStore?.noteTabActivated(id)
+        browserStateStore?.noteTabActivated(id, leaving: previousTabId)
 
         delegate?.tabManager(self, didActivateTab: id)
 
@@ -492,6 +496,8 @@ final class TabManager {
         // A state with no page (a blank tab, or a page whose first load failed) loads the tab's URL instead.
         let savedState = engineHost.consumeSavedInteractionState(for: id)
         if let savedState, requestedURL == nil, engine.extensionHost == nil, engine.restoreInteractionState(savedState) {
+            // A state saved before a crash can stop short of the tab's page: that page loads on top of its history.
+            if let url = tab.url, engine.wkWebView.backForwardList.currentItem?.url != url { engine.loadURL(url) }
             updateTab(id: id) { $0.isLoading = engine.isLoading }
         } else if let url = loadURL {
             engine.loadURL(url); updateTab(id: id) { $0.isLoading = true }

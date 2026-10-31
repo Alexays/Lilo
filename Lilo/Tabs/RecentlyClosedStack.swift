@@ -30,6 +30,9 @@ struct RecentlyClosedStack {
         let sortOrder: Int?
         /// Unique for this launch and kept while the entry stays, so chrome.sessions ids name it; the stack assigns it.
         var id = 0
+        var closedAt = Date()
+        /// A page's back/forward list, scroll and form state (WebKit's `interactionState`), held in memory only.
+        var interactionState: Data?
 
         // The id belongs to the launch: a saved entry gets a new one when restored.
         private enum CodingKeys: String, CodingKey { case content, spaceId, parentFolderId, section, sortOrder }
@@ -44,7 +47,8 @@ struct RecentlyClosedStack {
         spaceId: UUID,
         parentFolderId: UUID?,
         section: TabTreeItem.Section?,
-        sortOrder: Int?
+        sortOrder: Int?,
+        interactionState: Data? = nil
     ) {
         let entry = Entry(
             content: content,
@@ -52,7 +56,8 @@ struct RecentlyClosedStack {
             parentFolderId: parentFolderId,
             section: section,
             sortOrder: sortOrder,
-            id: nextId
+            id: nextId,
+            interactionState: interactionState
         )
         nextId += 1
         entries.append(entry)
@@ -88,6 +93,14 @@ struct RecentlyClosedStack {
 
     mutating func removeAll(inSpace spaceId: UUID) {
         entries.removeAll { $0.spaceId == spaceId }
+    }
+
+    /// Clearing history forgets the pages closed in its range (all of them without `cutoff`) of the spaces passing `isCleared`.
+    mutating func removePages(closedSince cutoff: Date?, inSpaces isCleared: (UUID) -> Bool) {
+        entries.removeAll { entry in
+            guard case .page = entry.content else { return false }
+            return entry.closedAt >= (cutoff ?? .distantPast) && isCleared(entry.spaceId)
+        }
     }
 
     /// Entries newest-first, for read-only surfaces such as chrome.sessions.getRecentlyClosed.

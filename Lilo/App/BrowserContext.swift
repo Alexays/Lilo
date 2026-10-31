@@ -100,7 +100,8 @@ final class BrowserContext {
     private(set) var settingsStore: SettingsStore!
     /// How long Lilo was quit before this launch; nil on a first launch or after a crash, whose relaunch picks up where it was.
     var launchAbsence: TimeInterval?
-    private(set) var sitePermissionStore: SitePermissionStore!
+    /// Site permission answers given in each private space, by "type origin", forgotten with the space.
+    var privateSitePermissions: [UUID: [String: Bool]] = [:]
     private(set) var profileManager: ProfileManager!
     private(set) var spaceManager: SpaceManager!
     private(set) var startupSnapshot: StartupSnapshot!
@@ -147,8 +148,8 @@ final class BrowserContext {
     private func installTabShareRouting() {
         let windows = windows
         let bridge = engineFactory.tabShareBridge
-        bridge.pickerPresenter = { origin, requester, wantsAudio in
-            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester, wantsAudio: wantsAudio) ?? .cancel
+        bridge.pickerPresenter = { origin, requester, wantsAudio, selfTab in
+            await windows.window(for: requester)?.presentTabSharePicker(origin: origin, requester: requester, wantsAudio: wantsAudio, selfTab: selfTab) ?? .cancel
         }
         bridge.sessionStarter = { tabId, requester in
             windows.window(for: requester)?.startTabShare(tabId: tabId, requester: requester)
@@ -277,7 +278,10 @@ final class BrowserContext {
                 self?.terminalHost.refreshGitStats()
             }
         }
-        sitePermissionStore = SitePermissionStore(dbPool: dbManager.globalPool)
+        browserState.allowsNotifications = { [weak self] origin, spaceId in
+            guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate else { return false }
+            return profileContexts.existingContext(for: space.profileId)?.sitePermissions.decision(forOrigin: origin, type: "notifications") == true
+        }
         profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
         try profileManager.loadProfiles(
             startupSnapshot.profiles,
@@ -507,9 +511,12 @@ final class BrowserContext {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
+    /// A window on a private space is left out: the space ends with the app, as an incognito window does.
     private func storedWindows() -> [StoredWindow] {
         windows.windows.compactMap { window in
-            window.window.map { StoredWindow(frame: $0.frame, spaceId: window.tabManager.currentSpaceId) }
+            let spaceId = window.tabManager.currentSpaceId
+            if let spaceId, spaceManager?.space(with: spaceId)?.isPrivate == true { return nil }
+            return window.window.map { StoredWindow(frame: $0.frame, spaceId: spaceId) }
         }
     }
 
@@ -684,6 +691,7 @@ extension BrowserContext {
         if space.isPrivate {
             profileManager.releaseEphemeralDataStore(for: space.id)
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
+            privateSitePermissions[space.id] = nil
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
         // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
@@ -758,7 +766,7 @@ extension BrowserContext {
     private func installDownloadGapEventObservers() {
         let tracker = DownloadGapEventTracker()
         downloadManager.addObserver { [weak self] item in
-            guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id) else { return }
+            guard let self, let id = item.id, !downloadManager.isPrivateDownload(id: id, profileId: item.profileId) else { return }
             // Ids are per profile database.
             let key = DownloadGapEventTracker.Key(profileId: item.profileId, id: id)
             // Bookkeeping runs for every download so an extension loaded later never sees a stale
@@ -795,8 +803,10 @@ extension BrowserContext {
         downloadManager.onErased = { [weak self] id, profileId in
             tracker.lastItems[DownloadGapEventTracker.Key(profileId: profileId, id: id)] = nil
             guard let self else { return }
-            windows.windows.forEach { $0.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)]) }
-            guard !downloadManager.isPrivateDownload(id: id), let profileId else { return }
+            for window in windows.windows where window.profileContext?.profileId == profileId {
+                window.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)])
+            }
+            guard !downloadManager.isPrivateDownload(id: id, profileId: profileId), let profileId else { return }
             profileContexts.existingContext(for: profileId)?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")
         }
     }

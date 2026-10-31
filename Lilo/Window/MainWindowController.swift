@@ -127,8 +127,6 @@ final class MainWindowController: NSWindowController {
         let tabId: UUID
         let type: String
         let origin: String
-        /// Answers from private tabs are not remembered.
-        let isPrivate: Bool
         let completion: (Bool) -> Void
         let timeoutWork: DispatchWorkItem
     }
@@ -175,9 +173,13 @@ final class MainWindowController: NSWindowController {
     var recentSpaceIds: [UUID] = []
     /// The tabs this window showed, most recent first, each with when it was left.
     var recentTabs: [(id: UUID, leftAt: Date?)] = []
+    /// The last tab a page opened from a link, while that page stays selected: the next one goes after it.
+    var lastTabOpenedFromLink: (openerId: UUID, tabId: UUID)?
     /// The modifiers held when the recent tabs switcher opened; nil while it is closed.
     var tabSwitcherModifiers: NSEvent.ModifierFlags?
     let chromeInteractiveZones = ChromeInteractiveZoneStore()
+    /// Whether the find bar was open as the active page's last navigation started: its commit then closes the bar.
+    var findBarOpenAtNavigationStart = false
     // Built by the startup steps (setupBridgeEarly, setupViews), once the window exists.
     var bridgeRouter: BridgeRouter!
     let chromeWebView: OverlayWebView
@@ -220,9 +222,6 @@ final class MainWindowController: NSWindowController {
     /// Tab whose activation the last `.activateTab` command already shipped to the chrome, so the
     /// runtime activation that follows it does not send a second patch.
     private var activationAnnouncedByCommand: UUID?
-    /// Certificate exceptions accepted this session, keyed "host:port". The value is the SHA-256
-    /// of the leaf certificate the user saw; empty until the next challenge for that key records it.
-    var insecureTrustExceptions: [String: String] = [:]
     /// Tabs currently showing reader mode; toggling reloads the page to exit.
     var readerModeTabs: Set<UUID> = []
     lazy var pageTranslator = PageTranslator()
@@ -664,6 +663,7 @@ final class MainWindowController: NSWindowController {
 extension MainWindowController: TabManager.Delegate {
     func tabManager(_ manager: TabManager, didActivateTab id: UUID) {
         noteRecentTab(id)
+        if id != lastTabOpenedFromLink?.openerId { lastTabOpenedFromLink = nil }
         defer {
             refreshPagePeeks()
             sidePanel.activeTabDidChange()
@@ -782,8 +782,8 @@ extension MainWindowController: NSWindowDelegate {
     /// brings it back. With nothing running, closing it quits.
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         let host = tabManager.terminalHost
-        // Shells outlive any window but the last one, which hides instead of quitting the app.
-        guard context.windows.windows.count == 1, host.liveTabIds.contains(where: host.isBusy) else { return true }
+        // Shells and Little windows outlive any window but the last one, which hides instead of quitting the app.
+        guard context.windows.windows.count == 1, !littleWindows.isEmpty || host.liveTabIds.contains(where: host.isBusy) else { return true }
         sender.orderOut(nil)
         return false
     }
@@ -868,8 +868,17 @@ extension MainWindowController: NSWindowDelegate {
         for tabId in Set(pendingPermissionRequests.map(\.tabId)) { denyPermissionRequests(forTab: tabId) }
         profileContext?.extensions.denyPermissionRequests(shownIn: self)
         pagePopups.values.forEach { $0.close() }
-        // Their pages are served by this window's delegate methods.
-        littleWindows.values.forEach { $0.window.close() }
+        // Their pages are served by a browser window's delegate methods: another one takes them over.
+        if let heir = context.windows.windows.first(where: { $0 !== self }) {
+            for (id, little) in littleWindows {
+                little.owner = heir
+                heir.littleWindows[id] = little
+                heir.configureEngineIfNeeded(little.engine)
+            }
+            littleWindows = [:]
+        } else {
+            littleWindows.values.forEach { $0.window.close() }
+        }
         sidePanel.closeAll()
         setWallpaperColorWatch(false)
         // Closing the last window quits the app, after this window has left the registry.

@@ -452,29 +452,38 @@ export const COMMAND_ACTIONS = [
 ] as const satisfies readonly CommandActionDefinition[];
 
 const URL_PATTERN =
-	/^(https?:\/\/|file:\/\/|about:|view-source:https?:\/\/|chrome-extension:\/\/)/i;
+	/^(https?:\/\/|file:\/\/|about:|view-source:https?:\/\/|chrome-extension:\/\/|mailto:|data:)/i;
 // An absolute filesystem path to a file, e.g. /Users/me/page.html. Requires at least one
 // sub-directory and a file extension so it isn't confused with a `/`-prefixed history search
 // (which is a single term, not a slash-separated path).
 const FILE_PATH_PATTERN = /^\/[^?#]*\/[^/?#]+\.[A-Za-z0-9]+$/;
-const DOMAIN_PATTERN =
-	/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+/;
-const LOCALHOST_PATTERN = /^localhost(:\d+)?/i;
-const IP_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
-// An IPv6 literal, bracketed as in a URL: [::1], [fe80::1]:8080.
-const IPV6_PATTERN = /^\[[0-9a-f:.]+\](:\d+)?(?=$|[/?#])/i;
-// Local names rarely serve https: mDNS (.local) and *.localhost hosts go over http, like localhost
-// and IP addresses (loopback, private and link-local ranges included).
-const LOCAL_DOMAIN_PATTERN = /^[^/:?#]+\.(local|localhost)(?=$|[:/?#])/i;
-const URL_RESOLVERS: ReadonlyArray<
-	readonly [RegExp, (input: string) => string]
-> = [
-	[URL_PATTERN, (input) => input],
-	[DOMAIN_PATTERN, (input) => `${LOCAL_DOMAIN_PATTERN.test(input) ? "http" : "https"}://${input}`],
-	[LOCALHOST_PATTERN, (input) => `http://${input}`],
-	[IP_PATTERN, (input) => `http://${input}`],
-	[IPV6_PATTERN, (input) => `http://${input}`],
-];
+// A dotted host name in any script, its last label (not a number), then an optional port and path.
+const DOMAIN_PATTERN = /^([^\s.:/?#@]+\.)+([^\s\d.:/?#@][^\s.:/?#@]*)\.?((:\d+)?([/?#].*)?)$/;
+let topLevelDomains: Set<string> | undefined;
+// Local hosts rarely serve https, so they go over http: localhost, mDNS (.local) and *.localhost names, IPv4
+// addresses (loopback, private and link-local ranges included) and bracketed IPv6 literals ([fe80::1]:8080).
+const LOCAL_HOST_PATTERN = /^(localhost|[^/:?#]+\.local(host)?|\d{1,3}(\.\d{1,3}){3}|\[[0-9a-f:.]+\])(:\d+)?(?=$|[/?#])/i;
+
+/**
+ * The command bar hands over the list from its own chunk, outside the chrome's first frame. Until then, a dotted
+ * name ending in letters counts as an address.
+ */
+export function setTopLevelDomains(list: string): void {
+	topLevelDomains = new Set(list.split(/\s/));
+}
+
+// As in Chrome, "node.js" is a search while "node.js/" or "intranet.corp:8443" is an address.
+function isWebAddress(input: string): boolean {
+	const match = DOMAIN_PATTERN.exec(input);
+	if (!match) return false;
+	if (match[3] || !topLevelDomains) return true;
+	try {
+		return topLevelDomains.has(new URL(`http://${match[2]}`).hostname);
+	} catch {
+		return false;
+	}
+}
+
 // Live engine registry, mirrored from the `searchEngines` setting. Defaults to built-ins so the omnibox works before settings load.
 let searchEngines: SearchEngine[] = BUILTIN_SEARCH_ENGINES.map((engine) => ({ ...engine }));
 
@@ -551,15 +560,14 @@ export function parseInput(
 		return createBase("search", "", scope);
 	}
 
-	if (scope === "all" && !query.includes(" ")) {
-		for (const [pattern, resolve] of URL_RESOLVERS) {
-			if (pattern.test(query)) {
-				return {
-					...createBase("url", query, scope),
-					url: resolve(query),
-				};
-			}
-		}
+	// A data: URL is often typed with spaces in it: <h1>Hello there</h1>.
+	if (scope === "all" && (!query.includes(" ") || /^data:/i.test(query))) {
+		const url = URL_PATTERN.test(query)
+			? query
+			: LOCAL_HOST_PATTERN.test(query)
+				? `http://${query}`
+				: isWebAddress(query) ? `https://${query}` : "";
+		if (url) return { ...createBase("url", query, scope), url };
 	}
 
 	// A bare single word ("zoom", "back") is a web search unless the `:` scope says

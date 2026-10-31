@@ -408,6 +408,7 @@ Main users:
 | `Lilo/Engine/WKWebViewTab.swift` | private UI and navigation delegate hooks, `_close` / `_tryClose`, diagnostics through `WebViewPrivateAccessors` |
 | `Lilo/Engine/WebViewPrivateAccessors.swift` | typed wrappers: process pids and state, page suspend/resume, muting, PiP state, scripts run without a user gesture (the chrome bridge) |
 | `Lilo/Engine/WKEngineFactory.swift` | shared process pool and prewarming, tracking prevention toggle and statistics clearing, user-script removal, match-pattern `WKUserScript` initializer (Web Store shim), private preferences |
+| `Lilo/Engine/PageFindController.swift` | `_WKFindDelegate` and `_findString:options:maxCount:` for the find bar's match count, `_hideFindUI` |
 | `Lilo/Engine/WKFeatureFlags.swift` | experimental and internal feature flags |
 | `Lilo/Engine/WebInspectorSupport.swift` | showing the Web Inspector and its panels |
 | `Lilo/Engine/PiPController.swift`, `CaptureUsageObserver.swift`, `ContextMenuBuilder.swift` | PiP toggle, display-capture state, context-menu hit-test URLs |

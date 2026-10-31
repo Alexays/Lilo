@@ -13,6 +13,7 @@ final class ProfileContext {
     let downloads: DownloadStore
     let favicons: FaviconStore
     let zoom = ZoomStore()
+    let sitePermissions: SitePermissionStore
     let extensions: ProfileExtensionRegistry
     let extensionSettings: ExtensionSettingsStore
     /// Built when a window first shows the profile; it saves whichever of its spaces windows display.
@@ -30,6 +31,7 @@ final class ProfileContext {
         downloads = DownloadStore(dbPool: pool, profileId: profileId)
         favicons = FaviconStore(dbPool: pool)
         zoom.useDatabase(pool)
+        sitePermissions = SitePermissionStore(dbPool: pool)
         extensionSettings = ExtensionSettingsStore(pool: pool, profileId: profileId)
         extensions = ProfileExtensionRegistry(
             profileId: profileId,

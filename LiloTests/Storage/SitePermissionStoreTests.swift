@@ -1,3 +1,4 @@
+import WebKit
 import XCTest
 import GRDB
 @testable import Lilo
@@ -59,6 +60,25 @@ final class SitePermissionStoreTests: XCTestCase {
             store.upsert(origin: stored.origin, type: stored.type, granted: true)
             XCTAssertEqual(store.decision(forOrigin: asked.origin, type: asked.type), true, "\(stored) asked as \(asked)")
         }
+    }
+
+    func testUpgradingDropsExternalAppDecisionsThatNamedNoScheme() throws {
+        let pool = try DatabasePool(path: NSTemporaryDirectory() + UUID().uuidString + ".db")
+        try Migrations.migrateProfile(pool)
+        try pool.write { db in
+            try db.execute(sql: "DELETE FROM grdb_migrations WHERE identifier = 'v4'")
+            for type in ["external-scheme", "external-scheme:zoommtg", "location"] {
+                try db.execute(
+                    sql: "INSERT INTO sitePermissions (id, origin, type, decision, updatedAt) VALUES (?, 'https://example.com', ?, 'allow', ?)",
+                    arguments: [UUID().uuidString, type, Date()]
+                )
+            }
+        }
+
+        try Migrations.migrateProfile(pool)
+
+        let types = SitePermissionStore(dbPool: pool).allPermissions().map(\.type).sorted()
+        XCTAssertEqual(types, ["external-scheme:zoommtg", "location"], "an app decision for every scheme is asked again, per scheme")
     }
 
     // MARK: - upsert
@@ -202,5 +222,33 @@ final class SitePermissionStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(granted, true)
+    }
+
+    // MARK: - Revocation from settings
+
+    func testSettingsTellWhichOriginLostWhichPermission() async throws {
+        let settingsDatabase = try TemporaryProfileDatabase(schema: .global)
+        addTeardownBlock { settingsDatabase.tearDown() }
+        let settingsStore = SettingsStore(dbPool: settingsDatabase.pool)
+        defer { withExtendedLifetime(settingsStore) {} }
+        let handler = SettingsBridgeHandler(
+            settingsStore: settingsStore, sitePermissionStoreProvider: { [store] in store },
+            zoomStoreProvider: { nil }, historyStoreProvider: { nil }, extensionRegistryProvider: { nil },
+            dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil }, extensionDiagnosticsProvider: { [] },
+            forceLifecycleTrimHandler: {}, bridgeRouter: BridgeRouter(chromeWebView: WKWebView())
+        )
+        var revoked: [String] = []
+        handler.onSitePermissionRevoked = { origin, type in revoked.append("\(type) \(origin)") }
+        store.upsert(origin: "https://maps.example", type: "location", granted: true)
+        let id = try XCTUnwrap(store.allPermissions().first?.id)
+        func send(_ action: String, _ payload: [String: Any]) async throws {
+            _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: ["action": action, "payload": payload])))
+        }
+
+        try await send("revokeSitePermission", ["id": id.uuidString])
+        try await send("setSitePermission", ["origin": "https://call.example", "type": "camera", "allow": false])
+        try await send("setSitePermission", ["origin": "https://call.example", "type": "microphone", "allow": true])
+
+        XCTAssertEqual(revoked, ["location https://maps.example", "camera https://call.example"])
     }
 }

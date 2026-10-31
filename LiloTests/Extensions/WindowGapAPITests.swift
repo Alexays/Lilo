@@ -117,7 +117,7 @@ final class WindowGapAPITests: XCTestCase {
     func testAPopupWindowIsOpenForContextsLoadedAfterIt() throws {
         let context = try XCTUnwrap(registry.context(for: extensionId))
         let panel = try XCTUnwrap(registry.delegate.presentExtensionPanel(
-            url: nil, type: .popup, for: context, controller: registry.controller, size: NSSize(width: 320, height: 240)
+            url: nil, type: .popup, isPrivate: false, for: context, controller: registry.controller, size: NSSize(width: 320, height: 240)
         ))
         defer { panel.nsWindow?.close() }
 
@@ -292,7 +292,7 @@ final class WindowGapAPITests: XCTestCase {
         let manual = await call("tabs", "setZoomSettings", ["tab": tab.position, "mode": "manual"])
         XCTAssertNil(manual.error)
 
-        window.zoomActiveTab(by: 0.1)
+        window.zoomActiveTab(in: true)
 
         XCTAssertEqual(engine.pageZoom, 1, accuracy: 0.001)
         let change = try XCTUnwrap(queued("tabs.onZoomChange").last)
@@ -308,7 +308,7 @@ final class WindowGapAPITests: XCTestCase {
 
         let disabled = await call("tabs", "setZoomSettings", ["tab": tab.position, "mode": "disabled"])
         XCTAssertNil(disabled.error)
-        window.zoomActiveTab(by: 0.1)
+        window.zoomActiveTab(in: true)
 
         XCTAssertEqual(engine.pageZoom, browserContext.context.settingsStore.defaultZoom, accuracy: 0.001)
     }

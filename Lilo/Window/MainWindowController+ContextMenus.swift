@@ -228,7 +228,7 @@ extension MainWindowController {
         // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
         func addCopyURL() {
             menu.addItem("Copy URL".localized, icon: .copyLink) {
-                guard let item = try? self.context.downloadManager.store?.fetch(id: Int64(downloadId)) else { return }
+                guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(item.url, forType: .string)
             }
@@ -254,7 +254,7 @@ extension MainWindowController {
                 add("Show in Finder", .showInFinder, "showInFinder")
                 if context.settingsStore?.terminalEnabled != false {
                     menu.addItem("Open in Terminal".localized, icon: .openInTerminal) {
-                        guard let item = try? self.context.downloadManager.store?.fetch(id: Int64(downloadId)) else { return }
+                        guard let item = try? self.profileContext?.downloads.fetch(id: Int64(downloadId)) else { return }
                         self.createTerminalTab(cwd: (item.destinationPath as NSString).deletingLastPathComponent)
                     }
                 }

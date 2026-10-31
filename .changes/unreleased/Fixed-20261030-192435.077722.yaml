@@ -1,0 +1,3 @@
+kind: Fixed
+body: '"Reload without blocker" on a page that stopped responding reloads it once the blocker is off for the site, instead of reloading it with the blocker still on.'
+time: 2026-10-30T19:24:35.077722+01:00

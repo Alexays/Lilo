@@ -222,11 +222,12 @@ struct TabLifecycleCoordinator {
             keep.formUnion(unvisited)
         }
         guard discardThreshold.isFinite else { return keep }
-        // Idle eviction: drop engines idle beyond the threshold, except the active tab and protected ones.
+        // Idle eviction: drop engines idle beyond the threshold, except the active tab, loading tabs and protected ones.
         let mandatory = idleDiscardProtectedEngineIds(
             tabs: tabs, availableEngineIds: availableEngineIds,
             restoringTabIds: restoringTabIds, now: now)
             .union(activeTabId.map { [$0] } ?? [])
+            .union(tabs.lazy.filter(\.isLoading).map(\.id))
         return keep.filter { id in
             if mandatory.contains(id) { return true }
             guard let last = lastActiveAt[id] else { return true }   // unknown idle time: keep

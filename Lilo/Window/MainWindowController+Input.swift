@@ -1,6 +1,7 @@
 // Keyboard shortcuts and menu actions.
 
 import AppKit
+import UniformTypeIdentifiers
 import WebKit
 
 extension MainWindowController {
@@ -61,18 +62,31 @@ extension MainWindowController {
             readerModeTabs.remove(id)
             tabManager.reloadActiveTab()
         } else {
-            ReaderMode.apply(to: engine.wkWebView)
-            readerModeTabs.insert(id)
+            ReaderMode.apply(to: engine.wkWebView) { [weak self] rendered in
+                if rendered { self?.readerModeTabs.insert(id) } else { NSSound.beep() }
+            }
         }
     }
-    @objc func openSettings(_ sender: Any?) { bridgeRouter.send(event: "openSettings") }
-    @objc func clearBrowsingData(_ sender: Any?) { bridgeRouter.send(event: "openClearBrowsingData") }
+    @objc func openSettings(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openSettings")
+    }
+    @objc func clearBrowsingData(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openClearBrowsingData")
+    }
     @objc func replayOnboarding(_ sender: Any?) { bridgeRouter.send(event: "startOnboarding") }
     @objc func openDesignSystem(_ sender: Any?) { bridgeRouter.send(event: "openDesignSystem") }
     @objc func openDiagnostics(_ sender: Any?) { bridgeRouter.send(event: "openDiagnostics") }
     @objc func togglePerfRecording(_ sender: Any?) { context.togglePerfRecording() }
-    @objc func openProcessManager(_ sender: Any?) { bridgeRouter.send(event: "openProcessManager") }
-    @objc func openDownloads(_ sender: Any?) { bridgeRouter.send(event: "openDownloads") }
+    @objc func openProcessManager(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openProcessManager")
+    }
+    @objc func openDownloads(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openDownloads")
+    }
     @objc func openFeatureFlags(_ sender: Any?) { bridgeRouter.send(event: "openConfig") }
     @objc func togglePictureInPicture(_ sender: Any?) { tabManager.activeEngineTab?.togglePictureInPicture() }
     @objc func openHistory(_ sender: Any?) {
@@ -80,7 +94,10 @@ extension MainWindowController {
         bridgeRouter.send(event: "openHistory")
     }
     @objc func addExtension(_ sender: Any?) { createTabStateFirst(url: URL(string: "https://chromewebstore.google.com")) }
-    @objc func manageExtensions(_ sender: Any?) { bridgeRouter.send(event: "openExtensions") }
+    @objc func manageExtensions(_ sender: Any?) {
+        focusChrome()
+        bridgeRouter.send(event: "openExtensions")
+    }
 
     @objc func toggleHitboxDebug(_ sender: NSMenuItem?) {
         let enabled = !UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey)
@@ -126,26 +143,32 @@ extension MainWindowController {
         bridgeRouter.send(event: didCopy ? "urlCopied" : "urlCopyFailed")
     }
 
-    @objc func printCurrentPage(_ sender: Any?) { tabManager.activeEngineTab?.printPage(in: window) }
+    @objc func printCurrentPage(_ sender: Any?) { focusedEngineTab?.printPage(in: window) }
 
     @objc func savePageAs(_ sender: Any?) {
-        guard let window, let webView = tabManager.activeEngineTab?.wkWebView, webView.url != nil else { return }
+        guard let window, let webView = focusedEngineTab?.wkWebView, let pageURL = webView.url else { return }
+        let page = WebViewPrivateAccessors(webView)
+        // A PDF, an image or any other document WebKit shows as is saves as the bytes it loaded, under its own name.
+        // A web page saves as a web archive: a paginated PDF of it is the print panel's.
+        let mimeType = page.string("_MIMEType") ?? "text/html"
+        let isWebPage = mimeType == "text/html" || mimeType == "application/xhtml+xml"
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.webArchive, .pdf]
-        panel.showsContentTypes = true
-        let title = (webView.title?.isEmpty == false ? webView.title : webView.url?.host()) ?? "Page"
+        panel.allowedContentTypes = [isWebPage ? .webArchive : UTType(mimeType: mimeType) ?? .data]
+        let fileName = pageURL.lastPathComponent
+        let title = !isWebPage && !fileName.isEmpty && fileName != "/" ? fileName
+            : (webView.title?.isEmpty == false ? webView.title : pageURL.host()) ?? "Page"
         panel.nameFieldStringValue = title.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let url = panel.url else { return }
-            let asPDF = panel.currentContentType == .pdf
             Task { @MainActor in
                 do {
-                    let data: Data
-                    if asPDF {
-                        data = try await webView.pdf()
-                    } else {
-                        data = try await withCheckedThrowingContinuation { continuation in
+                    let data: Data = try await withCheckedThrowingContinuation { continuation in
+                        if isWebPage {
                             webView.createWebArchiveData { continuation.resume(with: $0) }
+                        } else if !page.mainResourceData(completion: { data in
+                            continuation.resume(with: data.map(Result.success) ?? .failure(CocoaError(.fileReadUnknown)))
+                        }) {
+                            continuation.resume(throwing: CocoaError(.featureUnsupported))
                         }
                     }
                     try data.write(to: url, options: .atomic)
@@ -192,6 +215,7 @@ extension MainWindowController {
     @objc func toggleWebInspectorPageProfiling(_ sender: Any?) { tabManager.activeEngineTab?.toggleWebInspectorPageProfiling() }
 
     @objc func reloadCurrentPageFromOrigin(_ sender: Any?) {
+        if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { return engine.reloadFromOrigin() }
         if let host = tabManager.activeTab?.url?.host { context.faviconService.clear(for: host) }
         tabManager.reloadActiveTab(fromOrigin: true)
     }
@@ -201,8 +225,8 @@ extension MainWindowController {
     // Shared with the keyboard shortcuts below: menu items carry the key equivalents (so the combos
     // show in the menu), and these actions back both the menu and the chrome's own controls.
 
-    @objc func goBackInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goBack() }
-    @objc func goForwardInHistory(_ sender: Any?) { tabManager.activeEngineTab?.goForward() }
+    @objc func goBackInHistory(_ sender: Any?) { focusedEngineTab?.goBack() }
+    @objc func goForwardInHistory(_ sender: Any?) { focusedEngineTab?.goForward() }
 
     /// The active tab's previous or next page in a new tab, as Cmd- or middle-clicking Back and Forward does in Chrome and Safari.
     func openHistoryInNewTab(forward: Bool, inBackground: Bool) {
@@ -212,10 +236,12 @@ extension MainWindowController {
               let created = createTabStateFirst(url: item.url, activate: !inBackground, opener: engine.id) else { return }
         if inBackground { noteBackgroundTab(created.id) }
     }
-    @objc func reloadCurrentPage(_ sender: Any?) { tabManager.reloadActiveTab() }
-    @objc func stopLoadingCurrentPage(_ sender: Any?) { tabManager.activeEngineTab?.stopLoading() }
-    @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(by: 0.1) }
-    @objc func zoomOutCurrentPage(_ sender: Any?) { zoomActiveTab(by: -0.1) }
+    @objc func reloadCurrentPage(_ sender: Any?) {
+        if let engine = focusedEngineTab, engine !== tabManager.activeEngineTab { engine.reload() } else { tabManager.reloadActiveTab() }
+    }
+    @objc func stopLoadingCurrentPage(_ sender: Any?) { focusedEngineTab?.stopLoading() }
+    @objc func zoomInCurrentPage(_ sender: Any?) { zoomActiveTab(in: true) }
+    @objc func zoomOutCurrentPage(_ sender: Any?) { zoomActiveTab(in: false) }
     @objc func resetCurrentPageZoom(_ sender: Any?) { resetActiveTabZoom() }
     @objc func showFindBar(_ sender: Any?) { presentFindBar() }
     @objc func openLocation(_ sender: Any?) {
@@ -256,30 +282,35 @@ extension MainWindowController {
         createTabStateFirst(url: form?.url)
     }
     @objc func findNextMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: true) } else { tabManager.activeEngineTab?.findNext() }
+        if let terminal = activeTerminalView { terminal.findAgain(older: true) } else { focusedEngineTab?.findNext() }
     }
 
     @objc func findPreviousMatch(_ sender: Any?) {
-        if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { tabManager.activeEngineTab?.findPrevious() }
+        if let terminal = activeTerminalView { terminal.findAgain(older: false) } else { focusedEngineTab?.findPrevious() }
     }
 
     /// Searches for the page's selection without opening the find bar, so Find Next goes on from there.
     @objc func useSelectionForFind(_ sender: Any?) {
-        guard let engine = tabManager.activeEngineTab else { return }
+        guard let engine = focusedEngineTab else { return }
         Task { @MainActor in
             guard let text = await engine.selectedTextForFind() else { return }
-            _ = await engine.findInPage(text, caseSensitive: false)
+            engine.findInPage(text, caseSensitive: false)
         }
     }
 
-    /// Adjust the active tab's zoom by `delta`, clamped, persisted per host, and reflected in the chrome.
-    func zoomActiveTab(by delta: Double) {
+    /// Chrome's zoom levels, which zooming in and out steps through.
+    static let pageZoomLevels: [Double] = [0.25, 1 / 3, 0.5, 2 / 3, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]
+
+    /// Moves the shown page's zoom to the next level up or down, persisted per host and reflected in the chrome.
+    func zoomActiveTab(in zoomIn: Bool) {
         if let terminal = activeTerminalView {
-            bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: delta > 0 ? 1 : -1)])
+            bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: zoomIn ? 1 : -1)])
             return
         }
-        guard let engine = tabManager.activeEngineTab else { return }
-        applyUserZoom(min(3.0, max(0.5, engine.pageZoom + delta)), to: engine)
+        guard let engine = focusedEngineTab else { return }
+        let zoom = engine.pageZoom
+        let next = zoomIn ? Self.pageZoomLevels.first { $0 > zoom + 0.001 } : Self.pageZoomLevels.last { $0 < zoom - 0.001 }
+        if let next { applyUserZoom(next, to: engine) }
     }
 
     func resetActiveTabZoom() {
@@ -287,21 +318,20 @@ extension MainWindowController {
             bridgeRouter.send(event: "zoomChanged", data: ["level": terminal.setZoom(by: nil)])
             return
         }
-        guard let engine = tabManager.activeEngineTab else { return }
-        applyUserZoom(1.0, to: engine, isReset: true)
+        guard let engine = focusedEngineTab else { return }
+        applyUserZoom(context.settingsStore.defaultZoom, to: engine)
     }
 
     /// A zoom the user asked for, as the tab's extension zoom settings allow: a disabled tab ignores
-    /// it and a manual one only tells its extension. A per-origin reset forgets the host's level.
-    private func applyUserZoom(_ zoom: Double, to engine: WKWebViewTab, isReset: Bool = false) {
-        guard let host = tabManager.activeTab?.url?.host else { return }
+    /// it and a manual one only tells its extension.
+    private func applyUserZoom(_ zoom: Double, to engine: WKWebViewTab) {
         switch engine.zoomSettings.mode {
         case "disabled": return
         case "manual": return engine.reportZoomChange(from: engine.pageZoom, to: zoom)
         default: engine.setPageZoom(zoom)
         }
-        if !engine.isPrivateBrowsing, engine.zoomSettings.scope == "per-origin" {
-            if isReset { profileContext?.zoom.removeZoom(forHost: host) } else { profileContext?.zoom.setZoom(zoom, forHost: host) }
+        if engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
+            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore.defaultZoom, of: engine)
         }
         bridgeRouter.send(event: "zoomChanged", data: ["level": zoom])
         if let adapter = tabManager.tabAdapter(for: engine.id), let registry = tabManager.extensionRegistry, registry.hasLoadedExtensions {
@@ -315,7 +345,7 @@ extension MainWindowController {
             let selectedText = if let terminal = activeTerminalView {
                 terminal.session.withLockedTerminal { $0.selectionText }
             } else {
-                await tabManager.activeEngineTab?.selectedTextForFind()
+                await focusedEngineTab?.selectedTextForFind()
             }
             focusChrome()
             if let selectedText {
@@ -368,10 +398,16 @@ extension MainWindowController {
             bridgeRouter?.send(event: "cancelDrag")
             return true
         }
-        // Escape stops a loading page as in Chrome; the chrome's own Escape (command bar, find bar) comes first.
+        // Escape stops a loading page as in Chrome, once a focused page lets it go; the chrome's own Escape
+        // (command bar, find bar) comes first.
         if event.type == .keyDown, event.keyCode == 53,
            event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function]).isEmpty,
-           window?.firstResponder !== chromeWebView, let engine = tabManager.activeEngineTab, engine.isLoading {
+           window?.firstResponder !== chromeWebView, let engine = focusedEngineTab, engine.isLoading {
+            if event !== keyLeftToPage, window?.firstResponder is WKWebView {
+                keyLeftToPage = event
+                return false
+            }
+            keyLeftToPage = nil
             engine.stopLoading()
             return true
         }
@@ -525,9 +561,9 @@ extension MainWindowController: NSUserInterfaceValidations {
 
         if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
         if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { $0.peekView?.superview != nil } }
-        if action == #selector(goBackInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoBack == true }
-        if action == #selector(goForwardInHistory(_:)) { return tabManager.activeEngineTab?.wkWebView.canGoForward == true }
-        if action == #selector(stopLoadingCurrentPage(_:)) { return tabManager.activeTab?.isLoading == true }
+        if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.canGoBack == true }
+        if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }
+        if action == #selector(stopLoadingCurrentPage(_:)) { return focusedEngineTab?.isLoading == true }
         if action == #selector(showNextTab(_:)) || action == #selector(showPreviousTab(_:)) { return tabManager.currentTabs.count > 1 }
         if action == #selector(togglePerfRecording(_:)) {
             (item as? NSMenuItem)?.title = PerfRecorder.isRecording ? "Stop Performance Recording".localized : "Record Performance Session".localized
@@ -580,18 +616,19 @@ extension MainWindowController: NSUserInterfaceValidations {
         }
         if action == #selector(reloadCurrentPageFromOrigin(_:)) { return tabManager.activeTab?.url != nil }
         if action == #selector(findNextMatch(_:)) || action == #selector(findPreviousMatch(_:)) {
-            return activeTerminalView != nil || tabManager.activeEngineTab?.canFindAgain == true
+            return activeTerminalView != nil || focusedEngineTab?.canFindAgain == true
         }
         // A terminal or Changes tab has no page for these.
         if action == #selector(reloadCurrentPage(_:)) || action == #selector(togglePictureInPicture(_:)) { return tabManager.activeEngineTab != nil }
-        if action == #selector(printCurrentPage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(printCurrentPage(_:)) { return focusedEngineTab?.wkWebView.url != nil }
         if action == #selector(toggleReader(_:)) {
             let reading = tabManager.activeOpenTabId.map(readerModeTabs.contains) == true
             (item as? NSMenuItem)?.title = reading ? "Hide Reader".localized : "Show Reader".localized
             return tabManager.activeEngineTab?.wkWebView.url != nil
         }
         if action == #selector(shareCurrentPage(_:)) || action == #selector(showQRCode(_:)) { return shareableURL() != nil }
-        if action == #selector(savePageAs(_:)) || action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
+        if action == #selector(savePageAs(_:)) { return focusedEngineTab?.wkWebView.url != nil }
+        if action == #selector(translatePage(_:)) { return tabManager.activeEngineTab?.wkWebView.url != nil }
         if action == #selector(newSplitView(_:)) {
             return tabManager.activeTab != nil && (tabManager.activeSplit?.layout.paneIds.count ?? 0) < SplitLayout.maxPanes
         }

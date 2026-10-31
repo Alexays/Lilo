@@ -1,0 +1,3 @@
+kind: Fixed
+body: A content blocker filter without a type no longer blocks the page you open itself, only its frames and resources, as in uBlock Origin.
+time: 2026-10-30T19:28:57.978616+01:00

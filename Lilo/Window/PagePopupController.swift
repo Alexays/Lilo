@@ -46,7 +46,6 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         peekView?.onDismiss = { [weak self] in self?.requestClose() }
         if peekView == nil { showWindow(contentSize: contentSize, topLeft: topLeft, parent: parent) }
         observations = [
-            engine.wkWebView.observe(\.url) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshHost() } },
             engine.wkWebView.observe(\.estimatedProgress) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshProgress() } },
             engine.wkWebView.observe(\.isLoading) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshProgress() } }
         ]
@@ -113,10 +112,12 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         NSPoint(x: point.x, y: (NSScreen.screens.first?.frame.maxY ?? 0) - point.y)
     }
 
-    private func refreshHost() {
+    /// The engine's delegate calls it when the page's address or security changes: a navigation the page
+    /// starts shows its address once it commits, when the web view's own URL no longer changes.
+    func refreshHost() {
         let url = engine.currentURL
         let host = url?.host ?? ""
-        let insecure = url?.scheme == "http"
+        let insecure = url?.scheme == "http" || engine.isNotSecure
         window?.title = insecure ? "Not Secure".localized + " - " + host : host
         header.setHost(host, insecure: insecure)
     }

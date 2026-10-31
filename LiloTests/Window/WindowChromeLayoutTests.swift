@@ -174,6 +174,22 @@ final class WindowChromeLayoutTests: XCTestCase {
         XCTAssertEqual(TabLayout.cached.position, .bottom, "the next launch paints it first")
     }
 
+    func testASettingChangeReachesTheChromeOfEveryWindow() async throws {
+        let first = try makeSizedWindow()
+        let second = try makeSizedWindow()
+        first.setupBridgeLate()
+        let recorder = BridgeEventRecorder(second.bridgeRouter)
+        let handler = try XCTUnwrap(first.bridgeRouter.handlers["setSetting"])
+
+        _ = await handler.handle(message: try XCTUnwrap(BridgeMessage(dictionary: [
+            "action": "setSetting", "payload": ["key": "searchEngine", "value": "duckduckgo"]
+        ])))
+
+        await pollUntil { recorder.events.contains { $0.name == "settingsLoaded" } }
+        let settings = recorder.data("settingsLoaded").last?["settings"] as? [String: Any]
+        XCTAssertEqual(settings?["searchEngine"] as? String, "duckduckgo", "the other window searches with it too")
+    }
+
     func testBootstrapScriptCarriesTheCachedLayout() {
         let script = MainWindowController.buildBootstrapScript(
             sidebarWidth: 260,

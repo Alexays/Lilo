@@ -64,7 +64,7 @@ test("a tab row answers split, peek, copy, close and move; Option+Return splits 
 
 test("Shift+Return peeks a history row; Cmd+Backspace removes it from history, never closes a tab", async () => {
 	const { bar, receive, last } = await withBar();
-	bar.openCommandBar("/rust");
+	bar.openCommandBar("/rust ");
 	receive({ event: "historyResults", query: "rust", results: [
 		{ id: "1", title: "Rust", url: "https://rust.example/", visitCount: 2, lastVisitedAt: Date.now() },
 	] });
@@ -74,10 +74,16 @@ test("Shift+Return peeks a history row; Cmd+Backspace removes it from history, n
 	assert.equal(bar.runSelectedResultKey("move"), false);
 
 	assert.equal(bar.runSelectedResultKey("remove"), true);
-	assert.deepEqual(last("deleteHistoryEntry"), { url: "https://rust.example/", query: "/rust" });
+	const removal = last("deleteHistoryEntry") as { url: string; query: string };
+	assert.equal(removal.url, "https://rust.example/");
+	// The host answers with the query it was sent and the history left after the removal.
+	receive({ event: "historyResults", query: removal.query, results: [
+		{ id: "2", title: "Rust Book", url: "https://book.rust.example/", visitCount: 2, lastVisitedAt: Date.now() },
+	] });
+	assert.deepEqual(bar.getResults().filter((result: { kind: string }) => result.kind === "history").map((result: { url?: string }) => result.url), ["https://book.rust.example/"]);
 
 	assert.equal(bar.runSelectedResultKey("peek"), true);
-	assert.deepEqual(last("peekURL"), { url: "https://rust.example/" });
+	assert.deepEqual(last("peekURL"), { url: "https://book.rust.example/" });
 	assert.equal(bar.isCommandBarOpen(), false);
 });
 

@@ -1,0 +1,3 @@
+kind: Fixed
+body: After a crash, a tab no longer reopens on a page older than the one shown in the sidebar.
+time: 2026-10-30T17:44:27.569315+01:00

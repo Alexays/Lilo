@@ -108,10 +108,14 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionWindow)?, Error?) -> Void
     ) {
-        // With "Prefer a single window" on, a normal window's tabs open in the current space, whose window it returns;
-        // any other window is a floating panel of its own, so its id never names a window or space of the user's.
+        guard !configuration.shouldBePrivate || context.hasAccessToPrivateData else {
+            completionHandler(nil, Self.extensionError("Extension does not have permission for incognito mode")); return
+        }
+        // With "Prefer a single window" on, a normal window's tabs open in the current space, unless private, whose window it
+        // returns; any other window is a floating panel of its own, so its id never names a window or space of the user's.
         if configuration.windowType == .normal, !configuration.shouldBePrivate,
-           let windowController, windowController.prefersSingleWindow, let spaceWindow = windowController.tabManager.windowAdapter {
+           let windowController, windowController.prefersSingleWindow, let spaceWindow = windowController.tabManager.windowAdapter,
+           !spaceWindow.isPrivateWindow {
             let urls = configuration.tabURLs.isEmpty ? [windowController.profileContext?.extensions.activeNewTabOverrideURL] : configuration.tabURLs.map(Optional.some)
             for (index, url) in urls.enumerated() {
                 guard let tab = windowController.createTabStateFirst(url: url, activate: index == 0 && configuration.shouldBeFocused) else { continue }
@@ -123,6 +127,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         let windowAdapter = presentExtensionPanel(
             url: configuration.tabURLs.first,
             type: configuration.windowType,
+            isPrivate: configuration.shouldBePrivate,
             for: context,
             controller: controller,
             size: Self.popupSize(from: configuration.frame)
@@ -142,16 +147,22 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
     func presentExtensionPanel(
         url: URL?,
         type: WKWebExtension.WindowType,
+        isPrivate: Bool,
         for context: WKWebExtensionContext,
         controller: WKWebExtensionController,
         size: NSSize
     ) -> WindowExtensionAdapter? {
         guard let profileId = registry?.profileId else { return nil }
 
-        // The extension's configuration loads nothing but its own pages: a web page needs a tab's.
-        let engineTab = if url?.scheme?.lowercased() != "chrome-extension", let windowController {
+        // The extension's configuration loads nothing but its own pages: a web page needs a tab's, in the profile's
+        // store or, private, in a store of its own that goes with the panel.
+        let isWebPage = url?.scheme?.lowercased() != "chrome-extension"
+        let factory = windowController?.context.engineFactory
+        let privateStore = isPrivate && isWebPage ? factory?.createDataStore(persistent: false, identifier: nil) : nil
+        let engineTab = if isWebPage, let windowController {
             windowController.context.engineFactory.createTab(configuration: .init(
-                dataStore: windowController.tabManager.dataStore, tabId: nil, nativeConfiguration: nil, profileId: profileId
+                dataStore: privateStore ?? windowController.context.profileManager?.dataStore(for: profileId),
+                tabId: nil, nativeConfiguration: nil, profileId: profileId
             ))
         } else {
             WKWebViewTab(webView: WKWebView(frame: .zero, configuration: context.pageWebViewConfiguration ?? WKWebViewConfiguration()))
@@ -163,7 +174,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         panel.contentView = webView
         panel.isReleasedWhenClosed = false
 
-        let windowAdapter = WindowExtensionAdapter(nsWindow: panel, type: type)
+        let windowAdapter = WindowExtensionAdapter(nsWindow: panel, type: type, isPrivate: isPrivate)
         windowAdapter.tabManager = tabManager
         let tabAdapter = TabExtensionAdapter(engineTab: engineTab, extensionWindow: windowAdapter, profileId: profileId)
         tabAdapter.tabManager = tabManager
@@ -175,6 +186,7 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         popup.onClose = { [weak self, weak controller, weak popup] in
             guard let self, let popup else { return }
             self.windowPopups.removeAll { $0 === popup }
+            if let privateStore { factory?.releaseContentController(for: privateStore) }
             controller?.didCloseWindow(windowAdapter)
         }
         windowPopups.append(popup)
@@ -201,10 +213,20 @@ final class ExtensionControllerDelegate: NSObject, WKWebExtensionControllerDeleg
         for context: WKWebExtensionContext,
         completionHandler: @escaping ((any WKWebExtensionTab)?, Error?) -> Void
     ) {
-        // `windowId` names one of this profile's browser windows; a panel or unknown window falls back.
-        let requestedWindow = (configuration.window as? WindowExtensionAdapter)?.nsWindow?.windowController as? MainWindowController
-        guard let target = requestedWindow?.profileContext?.extensions === registry ? requestedWindow : windowController,
-              let spaceId = target.tabManager.currentSpaceId else {
+        // The tab opens in a space's window the context sees: the one asked for, else the focused one, else the one it saw last.
+        let visible = { (window: WindowExtensionAdapter?) in
+            window.flatMap { $0.spaceId != nil && (!$0.isPrivateWindow || context.hasAccessToPrivateData) ? $0 : nil }
+        }
+        let requested = visible(configuration.window as? WindowExtensionAdapter) ?? visible(windowAdapter)
+            ?? registry?.extensionWindows(for: context).first { $0.spaceId != nil }
+        // A space in the background is shown first, in the browser window that showed it last.
+        guard let spaceId = requested?.spaceId,
+              let target = windows?.windows.first(where: { $0.tabManager.currentSpaceId == spaceId })
+                ?? requested?.nsWindow?.windowController as? MainWindowController else {
+            completionHandler(nil, Self.extensionError("Window controller not available")); return
+        }
+        if target.tabManager.currentSpaceId != spaceId { target.switchToSpace(spaceId) }
+        guard target.tabManager.currentSpaceId == spaceId else {
             completionHandler(nil, Self.extensionError("Window controller not available")); return
         }
         let tabManager = target.tabManager
@@ -528,4 +550,6 @@ extension Notification.Name {
     static let extensionGapListenersChanged = Notification.Name("fr.arouillard.lilo.extensionGapListenersChanged")
     /// Object: the registry. userInfo: "extensionId", "profileId" (UUID) and "uninstalled" (Bool).
     static let extensionDidUnload = Notification.Name("fr.arouillard.lilo.extensionDidUnload")
+    /// Object: the registry, whose profile's data store has new `proxyConfigurations`.
+    static let extensionProxyDidChange = Notification.Name("fr.arouillard.lilo.extensionProxyDidChange")
 }

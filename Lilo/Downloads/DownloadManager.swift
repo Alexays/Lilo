@@ -12,24 +12,27 @@ typealias FilenameSuggestion = (filename: String, conflictAction: String)
 @MainActor
 final class DownloadManager {
     private static let logger = Logger(liloCategory: "DownloadManager")
+    /// The user agent pages get, which a retry sends in place of CFNetwork's. WebKit only builds it inside a web view.
+    private static let pageUserAgent: String? = {
+        let configuration = WKWebViewConfiguration()
+        configuration.applicationNameForUserAgent = WKEngineFactory.safariApplicationName
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        return webView.responds(to: NSSelectorFromString("_userAgent")) ? webView.value(forKey: "_userAgent") as? String : nil
+    }()
 
-    private let wkBackend = WKBackend()
-    private let urlSessionBackend = URLSessionBackend()
-    private(set) var store: DownloadStore?
+    /// The backends of one profile store. Row ids are per database, so each store gets its own: two profiles' downloads
+    /// may share an id.
+    @MainActor private struct Lane {
+        let wk = WKBackend()
+        let url = URLSessionBackend()
+    }
+    private var lanes: [ObjectIdentifier: Lane] = [:]
 
     /// Read at each download start, so a settings change applies to the next download.
-    var downloadsFolderProvider: () -> URL? = { nil } {
-        didSet {
-            wkBackend.downloadsFolderProvider = downloadsFolderProvider
-            urlSessionBackend.downloadsFolderProvider = downloadsFolderProvider
-        }
-    }
+    var downloadsFolderProvider: () -> URL? = { nil }
     var settingsFolder: URL? { downloadsFolderProvider() }
 
-    var chooseDestination: ((URL, WKWebView?, _ prompts: Bool) async -> URL?)? {
-        get { wkBackend.chooseDestination }
-        set { wkBackend.chooseDestination = newValue }
-    }
+    var chooseDestination: ((URL, WKWebView?, _ prompts: Bool) async -> URL?)?
 
     /// chrome.downloads.onDeterminingFilename for a browser download about to start, never asked for a private space's.
     var suggestFilename: ((DownloadItem) async -> FilenameSuggestion?)?
@@ -51,11 +54,11 @@ final class DownloadManager {
         var lastTime: Date
         var smoothedSpeed: Int64  // exponential moving average, bytes/sec
     }
-    private var speedSamples: [Int64: SpeedSample] = [:]
+    private var speedSamples: [DownloadKey: SpeedSample] = [:]
     /// Automatic resumes spent per download; a drop past the last delay waits for the user's Retry.
-    private var autoResumes: [Int64: Int] = [:]
+    private var autoResumes: [DownloadKey: Int] = [:]
     /// Interrupted downloads with an automatic resume ahead: their failure is not notified.
-    private var pendingAutoResumes: Set<Int64> = []
+    private var pendingAutoResumes: Set<DownloadKey> = []
     private static let autoResumeDelays: [Duration] = [.seconds(2), .seconds(10), .seconds(30)]
     private static let resumableNetworkErrorCodes: Set<Int> = [
         NSURLErrorNetworkConnectionLost, NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut,
@@ -66,7 +69,7 @@ final class DownloadManager {
     /// Private-space downloads awaiting their row, and the rows they got. The rows are erased when
     /// the space closes so private downloads leave no entry in the persistent list.
     private var pendingPrivateSpaceIds: [WKDownload: UUID] = [:]
-    private var privateDownloadIds: [UUID: [Int64]] = [:]
+    private var privateDownloadIds: [UUID: [DownloadKey]] = [:]
     /// Pending downloads of a private space that closed before they got a row: cancelled and erased once tracked.
     private var forgottenPendingDownloads: [WKDownload: UUID] = [:]
     /// Each private space's website data store, where its downloads resume and find their cookies.
@@ -74,29 +77,6 @@ final class DownloadManager {
 
     init(dockController: DownloadDockProgressController? = DownloadDockProgressController()) {
         self.dockController = dockController
-        wkBackend.onUpdated = { [weak self] item in self?.notifyObservers(item) }
-        urlSessionBackend.onUpdated = { [weak self] item in self?.notifyObservers(item) }
-        wkBackend.onResumableFailure = { [weak self] id, error in self?.resumeAfterNetworkDrop(id: id, error: error) }
-        urlSessionBackend.onResumableFailure = { [weak self] id, error in self?.resumeAfterNetworkDrop(id: id, error: error) }
-        wkBackend.onTracked = { [weak self] download, id in
-            guard let self else { return }
-            if let spaceId = pendingPrivateSpaceIds.removeValue(forKey: download) {
-                privateDownloadIds[spaceId, default: []].append(id)
-            } else if let spaceId = forgottenPendingDownloads.removeValue(forKey: download) {
-                privateDownloadIds[spaceId, default: []].append(id)
-                // Deferred: the backend finishes registering the download after this callback returns.
-                Task { @MainActor [weak self] in self?.forgetPrivateDownloads(inSpace: spaceId) }
-            }
-        }
-        wkBackend.suggestFilename = { [weak self] download, item in
-            guard let self, pendingPrivateSpaceIds[download] == nil, forgottenPendingDownloads[download] == nil else { return nil }
-            return await suggestFilename?(item)
-        }
-        // A private download that never got a row is not tracked: nothing else would let it go.
-        wkBackend.onDropped = { [weak self] download in
-            self?.pendingPrivateSpaceIds.removeValue(forKey: download)
-            self?.forgottenPendingDownloads.removeValue(forKey: download)
-        }
         dockController?.attach(to: self)
     }
 
@@ -114,23 +94,74 @@ final class DownloadManager {
     /// Profile databases already recovered this run: once attached, their in-progress rows are live downloads.
     private var recoveredDatabasePaths: Set<String> = []
 
-    /// Inject the profile store after profile activation.
-    func setStore(_ store: DownloadStore) {
-        self.store = store
-        wkBackend.store = store
-        urlSessionBackend.store = store
-        guard recoveredDatabasePaths.insert(store.dbPool.path).inserted else { return }
-        loggingPersistenceError("download.recoverFromCrash") { try store.recoverFromCrash() }
+    /// Readies a profile's store as its profile activates: the downloads its last run left in flight become interrupted.
+    func attach(_ store: DownloadStore) {
+        _ = lane(for: store)
+    }
+
+    private func lane(for store: DownloadStore) -> Lane {
+        let laneKey = ObjectIdentifier(store)
+        // Backends hold their store weakly: a lane that outlived its store is not reused for another at the same address.
+        if let lane = lanes[laneKey], lane.wk.store === store { return lane }
+        let lane = Lane()
+        lanes[laneKey] = lane
+        let profileId = store.profileId
+        lane.wk.store = store
+        lane.url.store = store
+        lane.wk.onUpdated = { [weak self] item in self?.notifyObservers(item) }
+        lane.url.onUpdated = { [weak self] item in
+            guard let self else { return }
+            // WKBackend records a browser download's origin itself; a private Space's is never recorded.
+            if item.state == .complete, let key = item.key, !privateDownloadIds.values.contains(where: { $0.contains(key) }) {
+                DownloadQuarantine.recordOrigin(path: item.destinationPath, urls: [item.url])
+            }
+            notifyObservers(item)
+        }
+        lane.wk.onResumableFailure = { [weak self, weak store] id, error in
+            if let store { self?.resumeAfterNetworkDrop(id: id, in: store, error: error) }
+        }
+        lane.url.onResumableFailure = lane.wk.onResumableFailure
+        lane.wk.downloadsFolderProvider = { [weak self] in self?.downloadsFolderProvider() }
+        lane.url.downloadsFolderProvider = lane.wk.downloadsFolderProvider
+        lane.wk.chooseDestination = { [weak self] proposed, webView, prompts in
+            guard let chooseDestination = self?.chooseDestination else { return proposed }
+            return await chooseDestination(proposed, webView, prompts)
+        }
+        lane.wk.onTracked = { [weak self] download, id in
+            guard let self else { return }
+            let key = DownloadKey(profileId: profileId, id: id)
+            if let spaceId = pendingPrivateSpaceIds.removeValue(forKey: download) {
+                privateDownloadIds[spaceId, default: []].append(key)
+            } else if let spaceId = forgottenPendingDownloads.removeValue(forKey: download) {
+                privateDownloadIds[spaceId, default: []].append(key)
+                // Deferred: the backend finishes registering the download after this callback returns.
+                Task { @MainActor [weak self] in self?.forgetPrivateDownloads(inSpace: spaceId) }
+            }
+        }
+        lane.wk.suggestFilename = { [weak self] download, item in
+            guard let self, pendingPrivateSpaceIds[download] == nil, forgottenPendingDownloads[download] == nil else { return nil }
+            return await suggestFilename?(item)
+        }
+        // A private download that never got a row is not tracked: nothing else would let it go.
+        lane.wk.onDropped = { [weak self] download in
+            self?.pendingPrivateSpaceIds.removeValue(forKey: download)
+            self?.forgottenPendingDownloads.removeValue(forKey: download)
+        }
+        if recoveredDatabasePaths.insert(store.dbPool.path).inserted {
+            loggingPersistenceError("download.recoverFromCrash") { try store.recoverFromCrash() }
+        }
+        return lane
     }
 
     // MARK: - Browser downloads (WKDownload)
 
-    func startDownload(_ download: WKDownload, privateSpaceId: UUID? = nil) {
+    /// The row goes to `store`, the downloading tab's profile store.
+    func startDownload(_ download: WKDownload, in store: DownloadStore, privateSpaceId: UUID? = nil) {
         if let privateSpaceId {
             pendingPrivateSpaceIds[download] = privateSpaceId
             download.webView.map { privateDataStores[privateSpaceId] = $0.configuration.websiteDataStore }
         }
-        wkBackend.startTracking(download)
+        lane(for: store).wk.startTracking(download)
     }
 
     /// Cancels the private space's in-flight downloads and erases its rows. Files already on disk stay.
@@ -140,25 +171,26 @@ final class DownloadManager {
             pendingPrivateSpaceIds.removeValue(forKey: download)
             forgottenPendingDownloads[download] = spaceId
         }
-        for id in privateDownloadIds[spaceId] ?? [] {
-            if wkBackend.isTracking(id: id) { wkBackend.cancel(id: id) }
-            loggingPersistenceError("download.erasePrivate[\(id)]") { try erase(id: id) }
+        for key in privateDownloadIds[spaceId] ?? [] {
+            guard let store = lanes.values.lazy.compactMap(\.wk.store).first(where: { $0.profileId == key.profileId }) else { continue }
+            loggingPersistenceError("download.erasePrivate[\(key.id)]") { try erase(id: key.id, in: store) }
         }
         privateDownloadIds[spaceId] = nil
         privateDataStores[spaceId] = nil
     }
 
     /// Private-space downloads are never exposed to extensions.
-    func isPrivateDownload(id: Int64) -> Bool {
-        privateDownloadIds.values.contains { $0.contains(id) }
+    func isPrivateDownload(id: Int64, profileId: UUID?) -> Bool {
+        let key = DownloadKey(profileId: profileId, id: id)
+        return privateDownloadIds.values.contains { $0.contains(key) }
     }
 
     // MARK: - Extension downloads (chrome.downloads.download)
 
     @discardableResult
     /// `destination` overrides the downloads folder and replaces any file there (see URLSessionBackend).
-    func startExtensionDownload(request: URLRequest, suggestedFilename: String, destination: URL? = nil) throws -> Int64 {
-        try urlSessionBackend.startDownload(request: request, suggestedFilename: suggestedFilename, destination: destination)
+    func startExtensionDownload(request: URLRequest, suggestedFilename: String, destination: URL? = nil, in store: DownloadStore) throws -> Int64 {
+        try lane(for: store).url.startDownload(request: request, suggestedFilename: suggestedFilename, destination: destination)
     }
 
     // MARK: - Blob / data saves (WKUIDelegatePrivate saveDataToFile)
@@ -168,8 +200,9 @@ final class DownloadManager {
     /// panel. The write runs off the main thread; the returned task finishes once the row is recorded.
     @discardableResult
     func saveData(
-        _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, privateSpaceId: UUID? = nil
+        _ data: Data, suggestedFilename: String, mimeType: String, originatingURL: URL, webView: WKWebView? = nil, in store: DownloadStore, privateSpaceId: UUID? = nil
     ) -> Task<Void, Never> {
+        attach(store)
         let folder = resolvedDownloadsFolder(settingsFolder)
         let name = suggestedFilename.isEmpty ? "download" : suggestedFilename
         let proposed = WKBackend.resolveDestination(for: name, in: folder)
@@ -179,7 +212,7 @@ final class DownloadManager {
         )
         item.mimeType = mimeType.isEmpty ? nil : mimeType
         item.source = "blob"
-        item.profileId = store?.profileId
+        item.profileId = store.profileId
         return Task { @MainActor [item] in
             var item = item
             let suggestion = privateSpaceId == nil ? await suggestFilename?(item) : nil
@@ -220,9 +253,9 @@ final class DownloadManager {
             // The file is already on disk; a lost row only hides it from the list, so notifyObservers
             // still runs and the completion notification fires either way.
             loggingPersistenceError("download.insert[\(destination.lastPathComponent)]") {
-                try store?.insert(&item)
+                try store.insert(&item)
             }
-            if let privateSpaceId, let id = item.id { privateDownloadIds[privateSpaceId, default: []].append(id) }
+            if let privateSpaceId, let key = item.key { privateDownloadIds[privateSpaceId, default: []].append(key) }
             notifyObservers(item)
         }
     }
@@ -230,7 +263,7 @@ final class DownloadManager {
     // MARK: - Lifecycle control
 
     var activeDownloadCount: Int {
-        wkBackend.trackedIds.count + urlSessionBackend.trackedIds.count
+        lanes.values.reduce(0) { $0 + $1.wk.trackedIds.count + $1.url.trackedIds.count }
     }
 
     /// Quit path: cancels every in-flight download producing resume data and persists it as
@@ -238,26 +271,27 @@ final class DownloadManager {
     func pauseAllForQuit() async {
         // Each pause waits on the backend producing resume data; run them concurrently so quitting
         // with N downloads in flight costs one wait, not N.
-        let pauses = wkBackend.trackedIds.map { id in
-            Task { @MainActor in await self.wkBackend.pause(id: id) }
-        } + urlSessionBackend.trackedIds.map { id in
-            Task { @MainActor in await self.urlSessionBackend.pause(id: id) }
+        let pauses = lanes.values.flatMap { lane in
+            lane.wk.trackedIds.map { id in Task { @MainActor in await lane.wk.pause(id: id) } }
+                + lane.url.trackedIds.map { id in Task { @MainActor in await lane.url.pause(id: id) } }
         }
         for pause in pauses { await pause.value }
     }
 
-    func pause(id: Int64) async {
-        if wkBackend.isTracking(id: id) { await wkBackend.pause(id: id) } else if urlSessionBackend.isTracking(id: id) { await urlSessionBackend.pause(id: id) }
+    func pause(id: Int64, in store: DownloadStore) async {
+        let lane = lane(for: store)
+        if lane.wk.isTracking(id: id) { await lane.wk.pause(id: id) } else if lane.url.isTracking(id: id) { await lane.url.pause(id: id) }
     }
 
-    func resume(id: Int64) async {
-        guard var item = try? store?.fetch(id: id), item.state == .paused else { return }
+    func resume(id: Int64, in store: DownloadStore) async {
+        guard var item = try? store.fetch(id: id), item.state == .paused else { return }
+        let lane = lane(for: store)
         var resumed = false
         if item.source == "wk" {
-            resumed = await wkBackend.resume(id: id, in: resumeHost(for: id))
+            resumed = await lane.wk.resume(id: id, in: resumeHost(for: DownloadKey(profileId: store.profileId, id: id)))
         } else if item.resumeData != nil {
             do {
-                try urlSessionBackend.resume(id: id)
+                try lane.url.resume(id: id)
                 resumed = true
             } catch {
                 Self.logger.error("download resume failed: \(error.localizedDescription, privacy: .public)")
@@ -266,28 +300,34 @@ final class DownloadManager {
         guard !resumed else { return }
         // A row left paused keeps offering a Resume that can never work.
         item.state = .interrupted; item.error = "Could not resume download"; item.endedAt = Date()
-        try? store?.update(item); notifyObservers(item)
+        try? store.update(item); notifyObservers(item)
     }
 
-    func cancel(id: Int64) async {
-        stop(id: id)
+    func cancel(id: Int64, in store: DownloadStore) async {
+        stop(id: id, in: store)
     }
 
     /// Ends a download still in flight or paused: its backend lets go of it and observers see it interrupted.
-    private func stop(id: Int64) {
-        if wkBackend.isTracking(id: id) { wkBackend.cancel(id: id) } else if urlSessionBackend.isTracking(id: id) { urlSessionBackend.cancel(id: id) } else {
-            guard var item = try? store?.fetch(id: id),
+    private func stop(id: Int64, in store: DownloadStore) {
+        let lane = lane(for: store)
+        if lane.wk.isTracking(id: id) { lane.wk.cancel(id: id) } else if lane.url.isTracking(id: id) { lane.url.cancel(id: id) } else {
+            guard var item = try? store.fetch(id: id),
                   item.state == .inProgress || item.state == .paused else { return }
             item.state = .interrupted; item.error = "Cancelled by user"; item.endedAt = Date()
-            loggingPersistenceError("download.cancel[\(id)]") { try store?.update(item) }
+            // A paused browser download keeps its partial bytes under the final name, as an in-flight one does.
+            if item.source == "wk" {
+                try? FileManager.default.removeItem(atPath: item.destinationPath)
+                item.fileMissing = true
+            }
+            loggingPersistenceError("download.cancel[\(id)]") { try store.update(item) }
             notifyObservers(item)
         }
     }
 
     // MARK: - File operations
 
-    func openFile(id: Int64) {
-        guard let item = try? store?.fetch(id: id) else { return }
+    func openFile(id: Int64, in store: DownloadStore) {
+        guard let item = try? store.fetch(id: id) else { return }
         let url = URL(fileURLWithPath: item.destinationPath)
         if DownloadQuarantine.isRisky(url), DownloadQuarantine.isQuarantined(url),
            !confirmOpenRiskyDownload(filename: item.filename) {
@@ -308,62 +348,68 @@ final class DownloadManager {
         return alert.runModal() == .alertFirstButtonReturn
     }
 
-    func showInFinder(id: Int64) {
-        guard let item = try? store?.fetch(id: id) else { return }; NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.destinationPath)])
+    func showInFinder(id: Int64, in store: DownloadStore) {
+        guard let item = try? store.fetch(id: id) else { return }; NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: item.destinationPath)])
     }
 
     func showDownloadsFolder() {
         NSWorkspace.shared.open(resolvedDownloadsFolder(settingsFolder))
     }
 
-    func removeFile(id: Int64) throws {
-        guard let item = try? store?.fetch(id: id) else { return }
+    func removeFile(id: Int64, in store: DownloadStore) throws {
+        guard let item = try? store.fetch(id: id) else { return }
         guard item.state == .complete || item.state == .interrupted else { return }
         let url = URL(fileURLWithPath: item.destinationPath)
         if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
-        try store?.markFileMissing(id: id)
-        if let updated = try? store?.fetch(id: id) { notifyObservers(updated) }
+        try store.markFileMissing(id: id)
+        if let updated = try? store.fetch(id: id) { notifyObservers(updated) }
     }
 
     /// A download erased while in flight or paused is stopped first, as in Chrome, so nothing keeps
     /// ticking or badging the Dock for a row that is gone.
-    func erase(id: Int64) throws {
-        stop(id: id)
-        pendingAutoResumes.remove(id); autoResumes[id] = nil
-        try store?.delete(id: id)
-        onErased?(id, store?.profileId)
+    func erase(id: Int64, in store: DownloadStore) throws {
+        stop(id: id, in: store)
+        // The partial bytes of a browser download that failed go with it, as Chrome's do.
+        if let item = try? store.fetch(id: id), item.source == "wk", item.state == .interrupted, !item.fileMissing {
+            try? FileManager.default.removeItem(atPath: item.destinationPath)
+        }
+        let key = DownloadKey(profileId: store.profileId, id: id)
+        pendingAutoResumes.remove(key); autoResumes[key] = nil
+        try store.delete(id: id)
+        onErased?(id, store.profileId)
     }
 
     /// As Chrome does, a download the network dropped resumes from its partial bytes a few times, each
     /// after a longer pause and once the network is up.
-    private func resumeAfterNetworkDrop(id: Int64, error: Error) {
+    private func resumeAfterNetworkDrop(id: Int64, in store: DownloadStore, error: Error) {
         let e = error as NSError
-        let attempt = autoResumes[id, default: 0]
+        let key = DownloadKey(profileId: store.profileId, id: id)
+        let attempt = autoResumes[key, default: 0]
         guard e.domain == NSURLErrorDomain, Self.resumableNetworkErrorCodes.contains(e.code),
               attempt < Self.autoResumeDelays.count else { return }
-        autoResumes[id] = attempt + 1
-        pendingAutoResumes.insert(id)
-        Task { @MainActor [weak self] in
+        autoResumes[key] = attempt + 1
+        pendingAutoResumes.insert(key)
+        Task { @MainActor [weak self, weak store] in
             try? await Task.sleep(for: Self.autoResumeDelays[attempt])
             NetworkPathStatus.shared.runWhenSatisfied {
-                Task { @MainActor [weak self] in
-                    guard let self, self.pendingAutoResumes.remove(id) != nil else { return }
-                    try? await self.retryDownload(id: id)
+                Task { @MainActor [weak self, weak store] in
+                    guard let self, let store, self.pendingAutoResumes.remove(key) != nil else { return }
+                    try? await self.retryDownload(id: id, in: store)
                 }
             }
         }
     }
 
     /// The website data store a download belongs to: its private space's, else its profile's. Nil once its private space's is gone.
-    private func dataStore(ofDownload id: Int64) -> WKWebsiteDataStore? {
-        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(id) })?.key { return privateDataStores[spaceId] }
-        return store?.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
+    private func dataStore(ofDownload key: DownloadKey) -> WKWebsiteDataStore? {
+        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key { return privateDataStores[spaceId] }
+        return key.profileId.map { WKWebsiteDataStore(forIdentifier: $0) } ?? .default()
     }
 
     /// `webView` when it browses with the download's data store: resumed in another, a download would carry another
     /// profile's or space's cookies, and a private one would land in the persistent store or the reverse.
-    private func resumeHost(for id: Int64) -> WKWebView? {
-        guard let webView, let expected = dataStore(ofDownload: id) else { return nil }
+    private func resumeHost(for key: DownloadKey) -> WKWebView? {
+        guard let webView, let expected = dataStore(ofDownload: key) else { return nil }
         let current = webView.configuration.websiteDataStore
         let matches = current === expected || current.isPersistent && expected.isPersistent && current.identifier == expected.identifier
         return matches ? webView : nil
@@ -372,32 +418,42 @@ final class DownloadManager {
     /// Retries an interrupted download. When the row still carries resumeData the download is
     /// resumed from the partial bytes into its original destination; otherwise it restarts
     /// fresh (a wk-source retry without a web view of its data store also falls back to a fresh start).
-    func retryDownload(id: Int64) async throws {
-        pendingAutoResumes.remove(id)
-        guard let item = try? store?.fetch(id: id),
+    func retryDownload(id: Int64, in store: DownloadStore) async throws {
+        let key = DownloadKey(profileId: store.profileId, id: id)
+        pendingAutoResumes.remove(key)
+        guard let item = try? store.fetch(id: id),
               item.state == .interrupted else { return }
+        let lane = lane(for: store)
         if item.resumeData != nil {
             if item.source == "wk" {
-                if await wkBackend.resume(id: id, in: resumeHost(for: id)) { return }
+                if await lane.wk.resume(id: id, in: resumeHost(for: key)) { return }
             } else {
-                try urlSessionBackend.resume(id: id)
+                try lane.url.resume(id: id)
                 return
             }
         }
         guard let url = URL(string: item.url) else { return }
+        // A browser download starting over drops its partial bytes, so it takes the original name again.
+        if item.source == "wk", !item.fileMissing {
+            try? FileManager.default.removeItem(atPath: item.destinationPath)
+            try? store.markFileMissing(id: id)
+        }
         var request = URLRequest(url: url)
         // A signed-in download needs the site's cookies, which live in WebKit's store and not in URLSession's.
-        if let cookieStore = dataStore(ofDownload: id)?.httpCookieStore {
+        if let cookieStore = dataStore(ofDownload: key)?.httpCookieStore {
             request.httpShouldHandleCookies = false
             request.allHTTPHeaderFields = HTTPCookie.requestHeaderFields(with: await cookieStore.cookies(for: url))
         }
-        let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename)
+        request.setValue(Self.pageUserAgent, forHTTPHeaderField: "User-Agent")
+        let retryId = try startExtensionDownload(request: request, suggestedFilename: item.filename, in: store)
         // The new row of a private download is forgotten with its space too.
-        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(id) })?.key { privateDownloadIds[spaceId]?.append(retryId) }
+        if let spaceId = privateDownloadIds.first(where: { $0.value.contains(key) })?.key {
+            privateDownloadIds[spaceId]?.append(DownloadKey(profileId: store.profileId, id: retryId))
+        }
     }
 
-    func fileIcon(id: Int64, size: Int) -> String? {
-        guard let item = try? store?.fetch(id: id) else { return nil }
+    func fileIcon(id: Int64, size: Int, in store: DownloadStore) -> String? {
+        guard let item = try? store.fetch(id: id) else { return nil }
         let url = URL(fileURLWithPath: item.destinationPath)
         let icon = NSWorkspace.shared.icon(forFile: url.path)
         let iconSize = CGFloat(size > 0 ? size : 32)
@@ -411,15 +467,15 @@ final class DownloadManager {
         return data.base64EncodedString()
     }
 
-    func prepareQuickLook(id: Int64) -> URL? {
-        guard let item = try? store?.fetch(id: id), item.state == .complete, !item.fileMissing else { return nil }
+    func prepareQuickLook(id: Int64, in store: DownloadStore) -> URL? {
+        guard let item = try? store.fetch(id: id), item.state == .complete, !item.fileMissing else { return nil }
         let url = URL(fileURLWithPath: item.destinationPath)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         quickLookItemURL = url; return url
     }
 
-    func fileURL(id: Int64) -> URL? {
-        guard let item = try? store?.fetch(id: id),
+    func fileURL(id: Int64, in store: DownloadStore) -> URL? {
+        guard let item = try? store.fetch(id: id),
               item.state == .complete, !item.fileMissing else { return nil }
         let url = URL(fileURLWithPath: item.destinationPath)
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
@@ -428,27 +484,27 @@ final class DownloadManager {
     // MARK: - Private (internal for testing)
 
     func updateSpeed(for item: DownloadItem, now: Date = Date()) {
-        guard let id = item.id else { return }
+        guard let key = item.key else { return }
         guard item.state == .inProgress else {
-            speedSamples.removeValue(forKey: id)
+            speedSamples.removeValue(forKey: key)
             return
         }
-        if var sample = speedSamples[id] {
+        if var sample = speedSamples[key] {
             let elapsed = now.timeIntervalSince(sample.lastTime)
             guard elapsed >= 0.3 else { return }
             let instant = max(0, Int64(Double(item.bytesReceived - sample.lastBytes) / elapsed))
             sample.smoothedSpeed = Int64(0.3 * Double(instant) + 0.7 * Double(sample.smoothedSpeed))
             sample.lastBytes = item.bytesReceived
             sample.lastTime = now
-            speedSamples[id] = sample
+            speedSamples[key] = sample
         } else {
-            speedSamples[id] = SpeedSample(lastBytes: item.bytesReceived, lastTime: now, smoothedSpeed: 0)
+            speedSamples[key] = SpeedSample(lastBytes: item.bytesReceived, lastTime: now, smoothedSpeed: 0)
         }
     }
 
     func augmentedBridgeData(for item: DownloadItem) -> [String: Any] {
         var data = item.bridgeData
-        guard let id = item.id, let sample = speedSamples[id], sample.smoothedSpeed > 0 else { return data }
+        guard let key = item.key, let sample = speedSamples[key], sample.smoothedSpeed > 0 else { return data }
         data["speedBytesPerSec"] = sample.smoothedSpeed
         if item.totalBytes > 0 {
             let remaining = item.totalBytes - item.bytesReceived
@@ -459,7 +515,7 @@ final class DownloadManager {
 
     private func sendDownloadNotification(for item: DownloadItem) {
         guard item.state == .complete || item.state == .interrupted, !item.fileMissing,
-              !pendingAutoResumes.contains(item.id ?? 0) else { return }
+              !(item.key.map { pendingAutoResumes.contains($0) } ?? false) else { return }
         // UNUserNotificationCenter.current() raises NSInternalInconsistencyException outside a
         // real .app bundle (swift test runs in xctest), which kills the whole test run.
         guard Bundle.main.bundleURL.pathExtension == "app" else { return }
@@ -474,7 +530,7 @@ final class DownloadManager {
             content.title = "Download Failed".localized; content.body = "\(item.filename): \(error)"
         }
 
-        let identifier = "download-\(item.id ?? 0)-\(item.state.rawValue)"
+        let identifier = "download-\(item.profileId?.uuidString ?? "")-\(item.id ?? 0)-\(item.state.rawValue)"
         UNUserNotificationCenter.requestAuthorizationAndAdd(
             UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         )

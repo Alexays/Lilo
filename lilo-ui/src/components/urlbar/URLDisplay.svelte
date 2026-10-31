@@ -480,11 +480,12 @@
       }
     } else {
       if (activeTabURL.startsWith("https:")) {
+        const notSecure = getActiveTab()?.isNotSecure ?? false;
         rows.push({
           label: t("urlBar.details.connection"),
-          value: t("urlBar.details.encrypted"),
-          tone: "success",
-          lock: true,
+          value: t(notSecure ? "urlBar.details.notSecure" : "urlBar.details.encrypted"),
+          tone: notSecure ? "danger" : "success",
+          lock: !notSecure,
           action: {
             label: t("urlBar.details.certificate"),
             run: (event) => {
@@ -908,24 +909,23 @@
   <div class="url-surface" class:drawer-open={drawerActive}>
     <div
       class="url-trigger"
-      role="button"
-      tabindex="0"
       draggable={draggableURL}
       ondragstart={dragURL}
       onclick={handleClick}
-      onfocus={focusDetails}
       onkeydown={(e) => {
-        // Enter and Space on a button inside the bar press that button, not the bar.
-        if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) {
-          e.preventDefault();
-          handleClick();
-        } else if (e.key === "Escape" && detailsOpen) {
+        if (e.key === "Escape" && detailsOpen) {
           e.stopPropagation();
           closeDetails();
         }
       }}
-      aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
     >
+      <!-- The bar's own button sits under its content, beside the other buttons: a button's
+           children are hidden from VoiceOver. Its click reaches the bar's handler. -->
+      <button
+        class="url-trigger-button"
+        onfocus={focusDetails}
+        aria-label={t("urlBar.addressBar", { url: showsLocation ? activeCwd : `${urlVisual.host}${urlVisual.path}` })}
+      ></button>
       {@render permissionsButton()}
 
       {#if showsLocation && !toastVisible}
@@ -1047,7 +1047,17 @@
     cursor: default;
   }
 
-  .url-trigger:focus-visible {
+  .url-trigger-button {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border: none;
+    border-radius: inherit;
+    background: none;
+    cursor: inherit;
+  }
+
+  .url-trigger-button:focus-visible {
     outline: var(--focus-outline);
     outline-offset: -2px;
   }

@@ -137,12 +137,15 @@ final class MenuValidationTests: XCTestCase {
     func testTheReaderItemSaysHideInReaderMode() async throws {
         let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
         let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
-        webView.loadHTMLString("<p>page</p>", baseURL: URL(string: "https://example.com/"))
-        await pollUntil(timeout: 5) { !webView.isLoading && webView.url != nil }
+        let paragraph = "<p>" + String(repeating: "A sentence long enough to read as an article, with commas, and more. ", count: 12) + "</p>"
+        webView.loadHTMLString("<article><h1>Title</h1>\(paragraph)\(paragraph)\(paragraph)</article>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url?.host() == "example.com" }
         let item = NSMenuItem(title: "", action: #selector(MainWindowController.toggleReader(_:)), keyEquivalent: "")
 
         window.toggleReader(nil)
 
+        let reading = await pollUntil(timeout: 5) { self.window.readerModeTabs.contains(tab.id) }
+        XCTAssertTrue(reading)
         XCTAssertTrue(window.validateUserInterfaceItem(item))
         XCTAssertEqual(item.title, "Hide Reader".localized)
 
@@ -150,6 +153,45 @@ final class MenuValidationTests: XCTestCase {
 
         XCTAssertTrue(window.validateUserInterfaceItem(item))
         XCTAssertEqual(item.title, "Show Reader".localized)
+    }
+
+    func testShowReaderLeavesAPageThatIsNotAnArticleOutOfReaderMode() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        webView.loadHTMLString("<input value=typed>", baseURL: URL(string: "https://example.com/"))
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url?.host() == "example.com" }
+        let item = NSMenuItem(title: "", action: #selector(MainWindowController.toggleReader(_:)), keyEquivalent: "")
+
+        window.toggleReader(nil)
+        // A script in the reader's world runs after the reader's: once it answers, the reader has.
+        _ = try await webView.evaluateJavaScript("1", in: nil, contentWorld: ReaderMode.world)
+
+        XCTAssertFalse(window.readerModeTabs.contains(tab.id))
+        XCTAssertTrue(window.validateUserInterfaceItem(item))
+        XCTAssertEqual(item.title, "Show Reader".localized)
+    }
+
+    func testSaveAsOffersAPDFUnderItsOwnNameAndType() async throws {
+        let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
+        let webView = try XCTUnwrap(window.tabManager.engineTab(for: tab.id)).wkWebView
+        let pdf = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100)).dataWithPDF(inside: NSRect(x: 0, y: 0, width: 200, height: 100))
+        let pdfURL = try XCTUnwrap(URL(string: "https://example.com/files/report.pdf"))
+        webView.load(pdf, mimeType: "application/pdf", characterEncodingName: "", baseURL: pdfURL)
+        await pollUntil(timeout: 5) { !webView.isLoading && webView.url == pdfURL }
+
+        window.savePageAs(nil)
+
+        let panel = try XCTUnwrap(window.window?.attachedSheet as? NSSavePanel)
+        XCTAssertEqual(panel.nameFieldStringValue, "report.pdf")
+        XCTAssertEqual(panel.allowedContentTypes, [.pdf])
+        // Saving would write to the panel's last folder, out of the test's reach: the bytes it writes are the main resource's.
+        window.window?.endSheet(panel, returnCode: .cancel)
+        let original: Data? = await withCheckedContinuation { continuation in
+            if !WebViewPrivateAccessors(webView).mainResourceData(completion: { continuation.resume(returning: $0) }) {
+                continuation.resume(returning: nil)
+            }
+        }
+        XCTAssertEqual(original, pdf)
     }
 
     func testTheReaderLeavesThePageNoGlobal() async throws {
@@ -204,6 +246,37 @@ final class MenuValidationTests: XCTestCase {
         XCTAssertTrue(window.pagePopups.isEmpty)
         XCTAssertTrue(window.tabManager.engineTab(for: popup.engine.id) === popup.engine)
         XCTAssertEqual(window.tabManager.activeOpenTabId, popup.engine.id)
+    }
+
+    /// Back and Forward act on the shown peek, never on the tab hidden under it.
+    func testPageActionsGoToTheShownPeek() async throws {
+        let first = try XCTUnwrap(URL(string: "data:text/html,<p>first</p>"))
+        let second = try XCTUnwrap(URL(string: "data:text/html,<p>second</p>"))
+        let opener = try XCTUnwrap(window.createTabStateFirst(url: first))
+        let tab = try XCTUnwrap(window.tabManager.engineTab(for: opener.id))
+        let tabLoaded = await pollUntil { tab.wkWebView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(tabLoaded)
+        window.openLinkPeek(first, from: opener.id)
+        let peek = try XCTUnwrap(window.pagePopups.values.first?.engine)
+        for url in [first, second] {
+            if peek.wkWebView.backForwardList.currentItem?.url != url { peek.loadURL(url) }
+            let committed = await pollUntil { peek.wkWebView.backForwardList.currentItem?.url == url }
+            XCTAssertTrue(committed, "\(url) never committed")
+        }
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.goBackInHistory(_:))), "the peek can go back, the tab cannot")
+
+        window.goBackInHistory(nil)
+
+        let wentBack = await pollUntil { peek.wkWebView.backForwardList.currentItem?.url == first }
+        XCTAssertTrue(wentBack)
+        XCTAssertFalse(isEnabled(#selector(MainWindowController.goBackInHistory(_:))))
+        XCTAssertTrue(isEnabled(#selector(MainWindowController.goForwardInHistory(_:))))
+        XCTAssertEqual(tab.wkWebView.backForwardList.backList.count, 0, "the tab under the peek never moved")
+
+        window.zoomInCurrentPage(nil)
+
+        XCTAssertGreaterThan(peek.pageZoom, 1)
+        XCTAssertEqual(tab.pageZoom, 1, "zoom acts on the peek, not the tab under it")
     }
 
     func testOpenAsTabOpensThePageOfAPopupWindow() throws {
