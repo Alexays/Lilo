@@ -842,6 +842,7 @@
         isRenaming={renamingFolderId === folder.id}
         {level}
         tabStop={folder.id === tabStopId}
+        containsActiveTab={folderHolds(folder.id, activeTabId)}
         onCollapse={(collapsed) =>
           folderActions.setCollapsed(folder.id, collapsed)}
         onRename={() => (renamingFolderId = folder.id)}

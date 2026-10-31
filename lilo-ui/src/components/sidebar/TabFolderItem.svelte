@@ -18,6 +18,8 @@
 		/** Depth in the sidebar tree, 1 at the root. */
 		level?: number;
 		tabStop?: boolean;
+		/** The active tab sits somewhere inside this folder: mark the row so a collapsed folder shows where you are. */
+		containsActiveTab?: boolean;
 	}
 
 	let {
@@ -31,6 +33,7 @@
 		isRenaming = false,
 		level = 1,
 		tabStop = true,
+		containsActiveTab = false,
 	}: Props = $props();
 
 	const panel = $derived(getLockPanel()?.folderId === folder.id ? getLockPanel() : null);
@@ -214,6 +217,7 @@
 	<div
 		class="folder-row"
 		class:collapsed={folder.isCollapsed}
+		class:contains-active={containsActiveTab}
 		role="treeitem"
 		aria-level={level}
 		aria-selected={false}
@@ -472,6 +476,21 @@
 	.folder-row:focus-visible {
 		outline: var(--focus-outline);
 		outline-offset: -2px;
+	}
+
+	/* The folder holding the active tab: a faint persistent wash in its own colour, well under the
+	   active tab's own fill, so a collapsed folder still shows where you are. */
+	.folder-row.contains-active {
+		background: color-mix(in srgb, var(--folder-accent) 10%, transparent);
+	}
+
+	.folder-row.contains-active:hover {
+		background: color-mix(in srgb, var(--folder-accent) 14%, color-mix(in srgb, var(--bg-selected) 20%, transparent));
+	}
+
+	.folder-row.contains-active .folder-title {
+		color: color-mix(in srgb, var(--text-primary) 82%, var(--folder-accent));
+		font-weight: var(--font-weight-medium);
 	}
 
 	/* A favicon's 16px box, pulled back over the shell's 1px border: the 18px glyph overflows it
