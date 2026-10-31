@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension's proxy now also carries that extension's own signed-in requests and its background WebSockets, which went out directly.
-time: 2026-10-30T17:48:58.830745+01:00

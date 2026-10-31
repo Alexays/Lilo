@@ -2242,6 +2242,14 @@
 			"chat": "Ekip sohbeti"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Her şeyi kenar çubuğuna getirin.",
+				"description": "Bağlantıları ve dosyaları tam istediğiniz yere bırakın; bir sayfanın iletişim kutuları artık kendi sekmesinde kalıyor.",
+				"dropTitle": "Ait olduğu yere bırakın.",
+				"dropDescription": "Başka bir uygulamadan bir bağlantıyı, adresi veya dosyayı kenar çubuğuna sürükleyin: iki sekmenin arasına, bir klasöre veya bir sekmenin üzerine.",
+				"dialogsTitle": "Sekmesinde kalan iletişim kutuları.",
+				"dialogsDescription": "Bir sayfanın uyarısı veya oturum açma penceresi yalnızca kendi sekmesini kaplar, böylece o beklerken Lilo'nun geri kalanı kullanılabilir kalır."
+			},
 			"v0130": {
 				"headline": "Lilo bayram havasında.",
 				"description": "Özel günlerde uygulama simgesi, her simge için ayrı çizilmiş şenlikli bir dokunuş kazanır.",

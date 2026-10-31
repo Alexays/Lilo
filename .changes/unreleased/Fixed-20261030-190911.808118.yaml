@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Closing a browser window keeps its Little windows open: another window takes them over, and the last one hides instead of quitting Lilo.'
-time: 2026-10-30T19:09:11.808118+01:00

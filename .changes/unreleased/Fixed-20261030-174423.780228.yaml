@@ -1,3 +1,0 @@
-kind: Fixed
-body: Quitting keeps the back and forward history of every tab whose page is still open, not only the current one.
-time: 2026-10-30T17:44:23.780228+01:00

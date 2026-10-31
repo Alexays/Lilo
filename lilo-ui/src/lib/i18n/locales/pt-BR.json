@@ -2242,6 +2242,14 @@
 			"chat": "Conversa da equipe"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Leve tudo para a barra lateral.",
+				"description": "Solte links e arquivos exatamente onde quiser, e as caixas de diálogo de uma página agora ficam na própria aba.",
+				"dropTitle": "Solte no lugar certo.",
+				"dropDescription": "Arraste um link, um endereço ou um arquivo de outro app para a barra lateral: entre duas abas, em uma pasta ou sobre uma aba.",
+				"dialogsTitle": "Caixas de diálogo que ficam na aba.",
+				"dialogsDescription": "O alerta ou login de uma página cobre só a aba dela, então o resto do Lilo continua utilizável enquanto ela espera."
+			},
 			"v0130": {
 				"headline": "O Lilo entra no clima das festas.",
 				"description": "O ícone do app ganha um toque festivo em datas especiais, desenhado para cada ícone.",

@@ -2231,6 +2231,14 @@
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
 		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
+			"v0140": {
+				"headline": "Glissez tout dans votre barre latérale.",
+				"description": "Déposez liens et fichiers exactement où vous voulez, et les dialogues d'une page restent désormais dans leur onglet.",
+				"dropTitle": "Déposez-le à sa place.",
+				"dropDescription": "Glissez un lien, une adresse ou un fichier d'une autre app sur la barre latérale : entre deux onglets, dans un dossier ou sur un onglet.",
+				"dialogsTitle": "Des dialogues qui restent dans leur onglet.",
+				"dialogsDescription": "L'alerte ou la connexion d'une page ne couvre que son onglet : le reste de Lilo reste utilisable pendant qu'elle attend."
+			},
 			"v0130": {
 				"headline": "Lilo se met aux couleurs des fêtes.",
 				"description": "L'icône de l'app prend une touche festive les jours de fête, dessinée pour chaque icône.",

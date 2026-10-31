@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Coming back to a site opens the connections its pages need while the page itself is still loading, as Chrome does: images and fonts from other servers show sooner.'
-time: 2026-10-31T09:26:39.026076+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: An extension with nothing to do no longer stays running while you switch between tabs, so it stops using energy in the background.
-time: 2026-10-30T19:42:44.093471+01:00

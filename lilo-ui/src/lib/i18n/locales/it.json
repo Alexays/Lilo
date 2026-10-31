@@ -2242,6 +2242,14 @@
 			"chat": "Chat del team"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Porta tutto nella barra laterale.",
+				"description": "Rilascia link e file proprio dove vuoi, e le finestre di dialogo di una pagina ora restano nella loro scheda.",
+				"dropTitle": "Rilascialo al suo posto.",
+				"dropDescription": "Trascina un link, un indirizzo o un file da un'altra app sulla barra laterale: tra due schede, in una cartella o su una scheda.",
+				"dialogsTitle": "Finestre di dialogo che restano nella loro scheda.",
+				"dialogsDescription": "L'avviso o l'accesso di una pagina copre solo la sua scheda, così il resto di Lilo resta utilizzabile mentre attende."
+			},
 			"v0130": {
 				"headline": "Lilo si veste a festa.",
 				"description": "L'icona dell'app si fa festiva nei giorni speciali, disegnata per ogni icona.",

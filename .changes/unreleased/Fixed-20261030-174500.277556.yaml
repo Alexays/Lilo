@@ -1,3 +1,0 @@
-kind: Fixed
-body: Cancelling the certificate choice for a site loads it without a certificate instead of stopping the load, and a certificate chosen in one profile or private space is no longer used in another.
-time: 2026-10-30T17:45:00.277556+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Downloading an image or a linked file from the context menu of a secure page no longer tells an insecure (http) address which site it came from.
-time: 2026-10-30T17:31:27.968602+01:00

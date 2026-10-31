@@ -1,3 +1,0 @@
-kind: Fixed
-body: Reloading a page a form sent asks before sending the form again, as Chrome does, and a page a form sent is no longer sent again on its own after it stops responding.
-time: 2026-10-30T19:39:15.893826+01:00

@@ -4,6 +4,145 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-10-31
+
+### Added
+
+- The print panel has Print backgrounds and Print headers and footers options, remembered for the next print, and printed footers number each page.
+- The find bar shows which match is selected among all of them, as in "3 of 12".
+- A page that announces the next page with speculation rules now gets it prefetched, as in Chrome, so it opens sooner.
+- Opening a local folder, such as file:///Users/, lists its files and subfolders with their size and date modified, sortable by column.
+- Dropping a link, an address or a file from another app on the sidebar opens it: between two tabs as a new tab there, in a folder at its end, on a tab in that tab.
+- A sleeping tab starts loading as soon as the pointer rests on it in the sidebar or the tab strip, so it is ready sooner after the click; it goes back to sleep if it is not opened.
+
+### Changed
+
+- A site's username and password prompt saves them only when you tick Remember this password. Saved ones belong to the profile and go when you clear its cookies or delete it.
+- Background tabs of sites allowed to show notifications, such as mail and chat apps, are no longer frozen when idle, so their notifications keep arriving.
+- Zooming in and out steps through the same levels as Chrome, from 25% to 500%, and works on pages without a site address, such as page source and local files.
+- In the top tab strip, the back button sits closer to the window buttons.
+- When the top tab strip runs out of room, the Space button shrinks to its icon before the tabs start scrolling.
+- Background tabs connected to a peer, such as a web chat or an online game, or holding a lock other tabs may wait on, are no longer frozen when idle.
+- Pages keep far more of what they load in the cache (up to 1 GB, as Safari, instead of 75 MB): coming back to a site downloads less.
+- Coming back to a site opens the connections its pages need while the page itself is still loading, as Chrome does: images and fonts from other servers show sooner.
+
+### Fixed
+
+- A Picture in Picture call window closes when its page crashes, instead of staying open and blank.
+- Find Next and Find Previous search for the text last used for find in any app, as in Safari, and are greyed out when there is nothing to find.
+- Pasting copied files in a terminal types their paths, as dropping them does.
+- Typing a download link into a new tab no longer closes that tab once the download starts.
+- Shortcuts typed with Shift on a symbol key, such as Shift-Command-2 to capture an area or Arc's Control-Shift-Equals for a split view, work.
+- Two downloads of files with the same name started together no longer write to the same file.
+- Resuming or retrying a download no longer uses the cookies of a private space or profile it was not started in.
+- Web apps get Lilo's shortcuts first, as in Chrome: Command-[ indents in Google Docs, Command-P opens files in VS Code for the web and Command-F opens a site's own search. Lilo runs the shortcut when the page does not use it; opening, closing and switching tabs, windows and spaces, and Command-L, stay with Lilo.
+- Shift-clicking a link no longer closes a window a page opened as a peek: only an earlier link peek closes.
+- Links to other apps (Zoom, Slack and the like) in a popup or Little window ask to open the app instead of doing nothing.
+- On a terminal tab, Command-[, Command-], Command-P and Command-S are no longer swallowed by page actions that do nothing there.
+- Command-clicking or middle-clicking a download link downloads the file instead of opening an empty tab.
+- Saving a file a page generates, such as a PDF from the viewer, now asks where to save it when that setting is on and applies extension filename suggestions.
+- Command-clicking or middle-clicking a link inside an embedded frame opens it in a new tab instead of changing the frame.
+- Embedded widgets (payment, sign-in, share) can open their window a few seconds after your click, as in Chrome; each click allows one such window.
+- A window a page opens in an agent's tab stays linked to that page, so sign-in popups and forms that post to a new window work for agents.
+- Signing in from a pinned or bookmarked tab through another site returns to the tab: once the peek comes back to the tab's own site, the tab takes the page.
+- The update card fits a narrow sidebar: the app icon steps aside and a long version no longer spills out of the card.
+- Restarting for an update now checks for a newer release right away, so a version published while the update waited arrives without waiting for the next scheduled check.
+- An extension that registers its content scripts again on install, like a meeting transcriber, no longer fails with a duplicate script error.
+- Importing from Chrome no longer turns cookies a site set inside other sites into its own cookies, which could sign you out of it.
+- A download whose name is taken keeps a double extension together, as in archive (1).tar.gz.
+- Downloading an image or a linked file from the context menu of a secure page no longer tells an insecure (http) address which site it came from.
+- A window showing a private Space no longer comes back as an extra window when Lilo relaunches.
+- Clearing browsing history also clears the pages under Recently Closed, so Reopen Closed Tab no longer brings them back.
+- A page's alert, confirm and prompt dialogs say which site is asking, and a frame embedded in the page is named as such.
+- A page that keeps opening alerts no longer traps its window: from its second dialog on, you can stop the page from showing more.
+- With a Peek open, Back, Forward, Reload, Stop, Find and Print act on the Peek instead of the tab hidden under it.
+- Deleting a profile now also deletes its cookies, sign-ins and site data from disk.
+- Reopen Closed Tab brings the page back with its back and forward history, as in Chrome.
+- Clearing browsing data from a private space now clears the profile's cookies, cache and site data, not only the private session's.
+- Duplicate Tab keeps the page's back and forward history instead of loading it fresh.
+- A tab opened from a link now sits right after its page, in the page's folder, with several links kept in the order they were opened.
+- Closing a background tab whose page has unsaved changes shows the tab and asks before leaving, instead of losing the changes.
+- Quitting keeps the back and forward history of every tab whose page is still open, not only the current one.
+- After a crash, a tab no longer reopens on a page older than the one shown in the sidebar.
+- Extensions that group tabs of a Space in the background now group them there, instead of leaving an empty group in the Space on screen.
+- Sites can store as much offline data in Lilo as in Safari, instead of hitting a storage limit four times lower.
+- Cancelling the certificate choice for a site loads it without a certificate instead of stopping the load, and a certificate chosen in one profile or private space is no longer used in another.
+- A tab an extension opens in a Space in the background now opens in that Space, and an extension not allowed in private Spaces never opens one in the private Space on screen.
+- A window an extension opens no longer shares the private Space on screen, and one it opens as incognito is now private.
+- An extension's proxy now also carries that extension's own signed-in requests and its background WebSockets, which went out directly.
+- Closing the command bar or the find bar with Escape, or loading an address in the current tab, gives the keyboard back to the page, so Space and the arrow keys scroll it again.
+- Settings, Downloads, Clear Browsing Data, Extensions and the Process Manager take the keyboard when opened from their shortcuts, so Escape, Tab and typing reach them instead of the page.
+- A download lands in the list of the profile it was made in, and each window lists only the downloads of the profile it shows, even with windows on different profiles.
+- Location and notifications work on local development sites such as app.localhost, any 127.x.x.x address and local files.
+- A download retried from the start, and View Source, send the browser's user agent instead of a system one, so sites that check it serve them as they serve the page.
+- A cross-origin frame, such as an ad, can no longer ask for your location unless its page allows it, and never for notifications; a frame's request is asked and remembered under the page's site.
+- Site permissions (camera, microphone, location, notifications, external apps) belong to each profile instead of being shared by all; existing decisions are kept in every profile.
+- Notification.permission reads "denied" on a site whose notifications are blocked, so its button to turn them on no longer shows for nothing.
+- A private space no longer gets the camera, microphone or location a site was allowed in normal browsing: it keeps only blocks, remembers its own answers until it closes, and never shows notifications.
+- Revoking or blocking a site's camera, microphone or location in Settings stops what its open pages are using right away, as Chrome does.
+- Cancelling a download, or removing a failed one from the list, deletes the partial file it left in the Downloads folder, and retrying it keeps the original file name.
+- Downloaded files show where they came from in the Finder's Get Info, as with Chrome and Safari, except for downloads from a private Space.
+- The tab bar above or below the page no longer scrolls back to the current tab when another tab's title or loading progress changes.
+- Escape reaches the page before it stops a load, as in Chrome, so a dialog on a page still loading closes with it.
+- Backspace in the command bar removes the suggested completion first, keeping the letters you typed.
+- Removing a history entry from the command bar's history scope takes its row off the list right away.
+- AppleScript and Shortcuts no longer see or close the tabs of a locked folder.
+- Links from other apps and new Little windows no longer open in a private space shown in the front window: they go to the last regular space.
+- A link a Little window opens in a new tab opens in another Little window, instead of a hidden tab of the window behind.
+- Closing a browser window keeps its Little windows open: another window takes them over, and the last one hides instead of quitting Lilo.
+- The address bar opens addresses with accented or non-Latin names, mailto: and data: links, and searches for names like node.js or package.json instead of trying to open them.
+- A page can share its own tab when it asks for it (preferCurrentTab or selfBrowserSurface), as in Chrome.
+- A refused Picture in Picture request from a page no longer closes the Picture in Picture window it already has open.
+- Removing an agent also removes the profiles it was allowed into: connected again, it has to ask for them again.
+- A setting changed in one window, such as the search engine or the language, now applies to every open window at once.
+- The Language setting says that menus and dialogs switch language when Lilo restarts.
+- Shortening the folder auto-lock delay applies to folders already unlocked.
+- Connecting an agent keeps a symlinked MCP configuration file a link, and keeps the file's permissions.
+- The keyboard focus ring of a download row is clearly visible.
+- A local HTML page shows images, styles and scripts from other folders, such as ../style.css in generated documentation.
+- A background tab freezes or sleeps once it has been left alone long enough, counted from when you left it rather than from when you opened it, and never while its page is still loading.
+- Video and audio that were playing without sound when a background tab froze, such as a muted live stream or a looping background video, play again when you return to the tab.
+- Leaving Lilo pops out a video in Picture in Picture only when it plays with sound, not a muted or paused video of a page whose sound comes from elsewhere.
+- Reader text size, theme and width are kept by Lilo for every site instead of in each site's storage, where the site could read them.
+- A translated page keeps translating text it adds later, such as new posts in a feed or a new route, and leaves text inside code blocks and graphics untranslated.
+- "Always allow" for opening an app now covers that app's links only, and the frame that asked rather than the whole page; earlier "Always allow" answers for apps are asked again.
+- Actual Size returns a page to your default zoom instead of 100%, and a site set to 100% keeps that level when your default zoom is different.
+- "Reload without blocker" on a page that stopped responding reloads it once the blocker is off for the site, instead of reloading it with the blocker still on.
+- A page's zoom in a private space stays as you set it when you switch tabs or browse the same site, kept in memory only and starting from your profile's levels.
+- A link dragged onto a page reaches the page: only a narrow strip at a pane's left or right edge offers a split view, and never for a link dragged out of a page.
+- Show Reader on a page that is not an article leaves the page as it is and beeps, instead of switching the menu to Hide Reader and reloading the page on the next press.
+- Save Page As on a PDF, an image or another file shown as is saves the original file under its own name, instead of a web archive or a re-rendered PDF.
+- When a page sends you to another address, the address bar keeps showing the page you are on until the new one appears, so a page can no longer show another site's address over its own content.
+- Content blocker filters ending in ^ also match a URL that ends there, so their blocks and the exceptions that repair sites apply again.
+- A content blocker filter without a type no longer blocks the page you open itself, only its frames and resources, as in uBlock Origin.
+- A page can no longer open the source view of another page; only you can, with View Page Source.
+- Right-clicking a link, an image or video, selected text or a text field no longer offers Back, Forward, Reload and the other page items, as in Chrome.
+- A page whose connection drops while it loads keeps showing what it loaded, instead of an error page over it.
+- VoiceOver reaches the address bar's buttons (site controls, ad blocker, screenshot, copy link) instead of reading the bar as one button.
+- VoiceOver announces an error page when a page fails to load.
+- Find in page no longer drops the spaces around a search, so "cat " skips "category".
+- Closing the find bar keeps the search, so Find Next goes on with it and the next Find opens with it selected.
+- Following a link or reloading closes the find bar, as in Chrome; one opened while the page loads stays, cleared for the new page.
+- Reloading a page a form sent asks before sending the form again, as Chrome does, and a page a form sent is no longer sent again on its own after it stops responding.
+- Back on an error page returns to the page you were on, instead of the one before it.
+- An extension with nothing to do no longer stays running while you switch between tabs, so it stops using energy in the background.
+- The address card says "Not secure" instead of "Encrypted" on a page you visited despite a certificate error, or that loaded part of its content without encryption.
+- A very long site address no longer spills out of the active tab over its neighbors in the tab strip.
+- An accepted certificate warning now holds in every window of its profile, until you quit, and for every request to that site, while a private Space keeps its own and forgets them when it closes.
+- A page without a title, such as a text file or an image, shows its address once loaded instead of the previous page's title, also as a pinned tab's home title.
+- History records a page as soon as it shows, and the pages a site opens without loading a new document (its routes, its anchors), as Chrome does.
+- A title a page sets just after loading, as web apps do, now names its history entry.
+- The Spaces menu of the tab strip, the command bar and the Spaces menu now show the agents' mascot for an Agents space, name its profile, and leave out the Agents spaces no agent uses, as the sidebar does.
+- Search with Google in a page's context menu now searches in a new Lilo tab with your default search engine, and names that engine, instead of opening another browser.
+- Closing Settings or another panel hides the sidebar again when it was hidden before the panel opened.
+- Deleting a folder, or a new agent clearing a past agent's folder, no longer leaves the page of a tab it held on screen.
+- A certificate error on a site that requires a secure connection (HSTS preload list, such as .app and .dev sites) no longer offers Visit Anyway, as in Chrome.
+- The Site drawer's camera and microphone choices fit the sidebar: each is a pop-up menu with Ask, Allow and Block.
+- The content blocker now hides page elements with styles a page can neither see nor remove, so ads a site forces back into view with its own styles stay hidden.
+- A page's alert, confirm, prompt or sign-in covers only its own tab: the sidebar, the address bar and other tabs stay usable, what was typed is kept while switching away, and closing or leaving the tab answers it.
+- Downloading an image or a linked file from the context menu now follows the page's referrer policy, as Chrome does: a page or frame that sends no referrer, or a link marked noreferrer, no longer tells the download's server where it came from.
+
+[0.14.0]: https://github.com/Alexays/Lilo/compare/v0.13.1...v0.14.0
 ## [0.13.1] - 2026-10-30
 
 ### Changed

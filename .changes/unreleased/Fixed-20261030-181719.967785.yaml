@@ -1,3 +1,0 @@
-kind: Fixed
-body: Notification.permission reads "denied" on a site whose notifications are blocked, so its button to turn them on no longer shows for nothing.
-time: 2026-10-30T18:17:19.967785+01:00

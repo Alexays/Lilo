@@ -1,3 +1,0 @@
-kind: Fixed
-body: Closing the command bar or the find bar with Escape, or loading an address in the current tab, gives the keyboard back to the page, so Space and the arrow keys scroll it again.
-time: 2026-10-30T17:49:57.376416+01:00

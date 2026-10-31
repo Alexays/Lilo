@@ -1,3 +1,0 @@
-kind: Fixed
-body: History records a page as soon as it shows, and the pages a site opens without loading a new document (its routes, its anchors), as Chrome does.
-time: 2026-10-30T20:11:28.711558+01:00

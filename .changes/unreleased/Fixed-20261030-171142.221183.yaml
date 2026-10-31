@@ -1,3 +1,0 @@
-kind: Fixed
-body: Command-clicking or middle-clicking a link inside an embedded frame opens it in a new tab instead of changing the frame.
-time: 2026-10-30T17:11:42.221183+01:00

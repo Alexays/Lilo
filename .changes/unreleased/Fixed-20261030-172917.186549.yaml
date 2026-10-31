@@ -1,3 +1,0 @@
-kind: Fixed
-body: Importing from Chrome no longer turns cookies a site set inside other sites into its own cookies, which could sign you out of it.
-time: 2026-10-30T17:29:17.186549+01:00

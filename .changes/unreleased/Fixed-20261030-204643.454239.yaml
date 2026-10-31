@@ -1,3 +1,0 @@
-kind: Fixed
-body: Closing Settings or another panel hides the sidebar again when it was hidden before the panel opened.
-time: 2026-10-30T20:46:43.454239+01:00

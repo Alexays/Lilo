@@ -1,3 +1,0 @@
-kind: Fixed
-body: A cross-origin frame, such as an ad, can no longer ask for your location unless its page allows it, and never for notifications; a frame's request is asked and remembered under the page's site.
-time: 2026-10-30T18:12:36.377809+01:00

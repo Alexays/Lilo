@@ -1,3 +1,0 @@
-kind: Fixed
-body: The tab bar above or below the page no longer scrolls back to the current tab when another tab's title or loading progress changes.
-time: 2026-10-30T19:01:11.773649+01:00

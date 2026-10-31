@@ -1,3 +1,0 @@
-kind: Fixed
-body: Cancelling a download, or removing a failed one from the list, deletes the partial file it left in the Downloads folder, and retrying it keeps the original file name.
-time: 2026-10-30T18:28:15.346009+01:00

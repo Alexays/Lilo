@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'A private space no longer gets the camera, microphone or location a site was allowed in normal browsing: it keeps only blocks, remembers its own answers until it closes, and never shows notifications.'
-time: 2026-10-30T18:18:17.070882+01:00

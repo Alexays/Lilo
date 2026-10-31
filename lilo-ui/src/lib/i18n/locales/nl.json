@@ -2242,6 +2242,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Sleep alles naar je zijbalk.",
+				"description": "Zet links en bestanden precies neer waar je ze wilt, en de dialogen van een pagina blijven nu in hun eigen tabblad.",
+				"dropTitle": "Zet het neer waar het hoort.",
+				"dropDescription": "Sleep een link, een adres of een bestand uit een andere app naar de zijbalk: tussen twee tabbladen, in een map of op een tabblad.",
+				"dialogsTitle": "Dialogen die in hun tabblad blijven.",
+				"dialogsDescription": "De melding of aanmelding van een pagina bedekt alleen het eigen tabblad, zodat de rest van Lilo bruikbaar blijft terwijl die wacht."
+			},
 			"v0130": {
 				"headline": "Lilo in feeststemming.",
 				"description": "Op speciale dagen krijgt het appsymbool een feestelijk tintje, voor elk symbool apart getekend.",

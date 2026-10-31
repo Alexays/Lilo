@@ -1,3 +1,0 @@
-kind: Fixed
-body: A background tab freezes or sleeps once it has been left alone long enough, counted from when you left it rather than from when you opened it, and never while its page is still loading.
-time: 2026-10-30T19:21:01.282942+01:00

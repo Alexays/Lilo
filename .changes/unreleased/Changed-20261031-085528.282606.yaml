@@ -1,3 +1,0 @@
-kind: Changed
-body: 'Pages keep far more of what they load in the cache (up to 1 GB, as Safari, instead of 75 MB): coming back to a site downloads less.'
-time: 2026-10-31T08:55:28.282606+01:00

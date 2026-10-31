@@ -1,3 +1,0 @@
-kind: Fixed
-body: Connecting an agent keeps a symlinked MCP configuration file a link, and keeps the file's permissions.
-time: 2026-10-30T19:15:50.56347+01:00

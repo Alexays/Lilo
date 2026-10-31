@@ -2231,6 +2231,14 @@
 		"kinds": { "Breaking": "Breaking changes", "Added": "Added", "Changed": "Improvements", "Fixed": "Fixes" },
 		"art": { "inbox": "Inbox", "chat": "Team chat" },
 		"releases": {
+			"v0140": {
+				"headline": "Bring anything into your sidebar.",
+				"description": "Drop links and files right where you want them, and a page's dialogs now stay in their own tab.",
+				"dropTitle": "Drop it where it goes.",
+				"dropDescription": "Drag a link, an address or a file from another app onto the sidebar: between two tabs, into a folder or onto a tab.",
+				"dialogsTitle": "Dialogs that stay in their tab.",
+				"dialogsDescription": "A page's alert or sign-in covers only its tab, so the rest of Lilo stays usable while it waits."
+			},
 			"v0130": {
 				"headline": "Lilo dresses up for the holidays.",
 				"description": "The app icon picks up a festive touch on special days, drawn for each icon.",

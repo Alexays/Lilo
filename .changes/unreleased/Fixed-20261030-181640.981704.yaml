@@ -1,3 +1,0 @@
-kind: Fixed
-body: Site permissions (camera, microphone, location, notifications, external apps) belong to each profile instead of being shared by all; existing decisions are kept in every profile.
-time: 2026-10-30T18:16:40.981704+01:00

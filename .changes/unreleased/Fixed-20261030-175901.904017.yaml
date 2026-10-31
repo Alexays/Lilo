@@ -1,3 +1,0 @@
-kind: Fixed
-body: A download retried from the start, and View Source, send the browser's user agent instead of a system one, so sites that check it serve them as they serve the page.
-time: 2026-10-30T17:59:01.904017+01:00

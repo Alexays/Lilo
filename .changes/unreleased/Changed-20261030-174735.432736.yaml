@@ -1,3 +1,0 @@
-kind: Changed
-body: A site's username and password prompt saves them only when you tick Remember this password. Saved ones belong to the profile and go when you clear its cookies or delete it.
-time: 2026-10-30T17:47:35.432736+01:00

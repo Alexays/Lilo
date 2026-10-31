@@ -1,3 +1,0 @@
-kind: Fixed
-body: The address card says "Not secure" instead of "Encrypted" on a page you visited despite a certificate error, or that loaded part of its content without encryption.
-time: 2026-10-30T19:43:52.148402+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: A page whose connection drops while it loads keeps showing what it loaded, instead of an error page over it.
-time: 2026-10-30T19:30:05.790101+01:00

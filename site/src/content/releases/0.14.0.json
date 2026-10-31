@@ -1,0 +1,41 @@
+{
+  "version": "0.14.0",
+  "title": {
+    "en": "Bring anything into your sidebar.",
+    "fr": "Glissez tout dans votre barre latérale."
+  },
+  "introduction": {
+    "en": "Drop links and files right where you want them, and a page's dialogs now stay in their own tab.",
+    "fr": "Déposez liens et fichiers exactement où vous voulez, et les dialogues d'une page restent désormais dans leur onglet."
+  },
+  "highlights": [
+    {
+      "id": "drop",
+      "title": {
+        "en": "Drop it where it goes.",
+        "fr": "Déposez-le à sa place."
+      },
+      "body": {
+        "en": "Drag a link, an address or a file from another app onto the sidebar: between two tabs, into a folder or onto a tab.",
+        "fr": "Glissez un lien, une adresse ou un fichier d'une autre app sur la barre latérale : entre deux onglets, dans un dossier ou sur un onglet."
+      },
+      "notes": [
+        "Dropping a link, an address or a file from another app on the sidebar opens it: between two tabs as a new tab there, in a folder at its end, on a tab in that tab."
+      ]
+    },
+    {
+      "id": "dialogs",
+      "title": {
+        "en": "Dialogs that stay in their tab.",
+        "fr": "Des dialogues qui restent dans leur onglet."
+      },
+      "body": {
+        "en": "A page's alert or sign-in covers only its tab, so the rest of Lilo stays usable while it waits.",
+        "fr": "L'alerte ou la connexion d'une page ne couvre que son onglet : le reste de Lilo reste utilisable pendant qu'elle attend."
+      },
+      "notes": [
+        "A page's alert, confirm, prompt or sign-in covers only its own tab: the sidebar, the address bar and other tabs stay usable, what was typed is kept while switching away, and closing or leaving the tab answers it."
+      ]
+    }
+  ]
+}

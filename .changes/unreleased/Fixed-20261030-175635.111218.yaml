@@ -1,3 +1,0 @@
-kind: Fixed
-body: A download lands in the list of the profile it was made in, and each window lists only the downloads of the profile it shows, even with windows on different profiles.
-time: 2026-10-30T17:56:35.111218+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Actual Size returns a page to your default zoom instead of 100%, and a site set to 100% keeps that level when your default zoom is different.
-time: 2026-10-30T19:24:18.386763+01:00

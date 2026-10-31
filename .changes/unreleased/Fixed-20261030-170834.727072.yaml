@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Web apps get Lilo''s shortcuts first, as in Chrome: Command-[ indents in Google Docs, Command-P opens files in VS Code for the web and Command-F opens a site''s own search. Lilo runs the shortcut when the page does not use it; opening, closing and switching tabs, windows and spaces, and Command-L, stay with Lilo.'
-time: 2026-10-30T17:08:34.727072+01:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: Resuming or retrying a download no longer uses the cookies of a private space or profile it was not started in.
-time: 2026-10-30T17:08:27.110604+01:00

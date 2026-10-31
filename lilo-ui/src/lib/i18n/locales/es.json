@@ -2242,6 +2242,14 @@
 			"chat": "Chat del equipo"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Lleva lo que quieras a tu barra lateral.",
+				"description": "Suelta enlaces y archivos justo donde los quieres, y los diálogos de una página ahora se quedan en su pestaña.",
+				"dropTitle": "Suéltalo en su sitio.",
+				"dropDescription": "Arrastra un enlace, una dirección o un archivo desde otra app a la barra lateral: entre dos pestañas, en una carpeta o sobre una pestaña.",
+				"dialogsTitle": "Diálogos que se quedan en su pestaña.",
+				"dialogsDescription": "La alerta o el inicio de sesión de una página solo cubre su pestaña, así que el resto de Lilo sigue disponible mientras espera."
+			},
 			"v0130": {
 				"headline": "Lilo se viste de fiesta.",
 				"description": "El icono de la app se pone festivo en fechas especiales, con un diseño para cada icono.",

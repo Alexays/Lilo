@@ -2264,6 +2264,14 @@
 			"chat": "Czat zespołu"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Przeciągnij wszystko na pasek boczny.",
+				"description": "Upuszczaj linki i pliki dokładnie tam, gdzie chcesz, a okna dialogowe strony zostają teraz w jej karcie.",
+				"dropTitle": "Upuść tam, gdzie trzeba.",
+				"dropDescription": "Przeciągnij link, adres lub plik z innej aplikacji na pasek boczny: między dwie karty, do folderu lub na kartę.",
+				"dialogsTitle": "Okna dialogowe, które zostają w karcie.",
+				"dialogsDescription": "Alert lub logowanie strony zakrywa tylko jej kartę, więc reszta Lilo pozostaje dostępna, gdy czeka."
+			},
 			"v0130": {
 				"headline": "Lilo w świątecznym nastroju.",
 				"description": "W wyjątkowe dni ikona aplikacji zyskuje świąteczny akcent, narysowany dla każdej ikony.",

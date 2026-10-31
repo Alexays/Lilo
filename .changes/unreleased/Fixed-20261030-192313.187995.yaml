@@ -1,3 +1,0 @@
-kind: Fixed
-body: '"Always allow" for opening an app now covers that app''s links only, and the frame that asked rather than the whole page; earlier "Always allow" answers for apps are asked again.'
-time: 2026-10-30T19:23:13.187995+01:00

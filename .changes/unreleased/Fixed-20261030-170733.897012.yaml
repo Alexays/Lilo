@@ -1,3 +1,0 @@
-kind: Fixed
-body: Two downloads of files with the same name started together no longer write to the same file.
-time: 2026-10-30T17:07:33.897012+01:00

@@ -1,4 +1,20 @@
 {
+	"0.14.0": {
+		"headlineKey": "whatsNew.releases.v0140.headline",
+		"descriptionKey": "whatsNew.releases.v0140.description",
+		"highlights": [
+			{
+				"illustration": "drop",
+				"titleKey": "whatsNew.releases.v0140.dropTitle",
+				"descriptionKey": "whatsNew.releases.v0140.dropDescription"
+			},
+			{
+				"illustration": "dialogs",
+				"titleKey": "whatsNew.releases.v0140.dialogsTitle",
+				"descriptionKey": "whatsNew.releases.v0140.dialogsDescription"
+			}
+		]
+	},
 	"0.13.0": {
 		"headlineKey": "whatsNew.releases.v0130.headline",
 		"descriptionKey": "whatsNew.releases.v0130.description",

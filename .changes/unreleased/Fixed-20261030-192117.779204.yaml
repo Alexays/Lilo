@@ -1,3 +1,0 @@
-kind: Fixed
-body: Leaving Lilo pops out a video in Picture in Picture only when it plays with sound, not a muted or paused video of a page whose sound comes from elsewhere.
-time: 2026-10-30T19:21:17.779204+01:00

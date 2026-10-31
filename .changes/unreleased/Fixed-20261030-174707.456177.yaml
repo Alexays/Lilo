@@ -1,3 +1,0 @@
-kind: Fixed
-body: A window an extension opens no longer shares the private Space on screen, and one it opens as incognito is now private.
-time: 2026-10-30T17:47:07.456177+01:00

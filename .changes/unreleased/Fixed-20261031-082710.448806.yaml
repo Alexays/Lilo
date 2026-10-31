@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Downloading an image or a linked file from the context menu now follows the page''s referrer policy, as Chrome does: a page or frame that sends no referrer, or a link marked noreferrer, no longer tells the download''s server where it came from.'
-time: 2026-10-31T08:27:10.448806+01:00

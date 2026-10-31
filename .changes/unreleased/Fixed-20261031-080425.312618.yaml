@@ -1,3 +1,0 @@
-kind: Fixed
-body: A certificate error on a site that requires a secure connection (HSTS preload list, such as .app and .dev sites) no longer offers Visit Anyway, as in Chrome.
-time: 2026-10-31T08:04:25.312618+01:00

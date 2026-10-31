@@ -1,3 +1,0 @@
-kind: Fixed
-body: An accepted certificate warning now holds in every window of its profile, until you quit, and for every request to that site, while a private Space keeps its own and forgets them when it closes.
-time: 2026-10-30T19:55:04.658184+01:00

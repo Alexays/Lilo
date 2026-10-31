@@ -1,3 +1,0 @@
-kind: Fixed
-body: 'Signing in from a pinned or bookmarked tab through another site returns to the tab: once the peek comes back to the tab''s own site, the tab takes the page.'
-time: 2026-10-30T17:16:41.766945+01:00

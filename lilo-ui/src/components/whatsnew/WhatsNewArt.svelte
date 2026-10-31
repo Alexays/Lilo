@@ -104,6 +104,26 @@
     <path d="M97 39v12m-5.2-9 10.4 6m-10.4 0 10.4-6" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" />
     <circle cx="97" cy="68" r="3.5" fill="var(--warning)" />
     <path d="M97 61.5v1.8m0 9.4v1.8m-6.5-6.5h1.8m9.4 0h1.8m-11.1-4.6 1.3 1.3m6.6 6.6 1.3 1.3m0-9.2-1.3 1.3m-6.6 6.6-1.3 1.3" stroke="var(--warning)" stroke-width="1.3" stroke-linecap="round" />
+  {:else if kind === "drop"}
+    <rect width="128" height="90" rx="10" fill="var(--accent-tint-14)" />
+    <rect x="12" y="12" width="44" height="66" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g fill="var(--separator)"><rect x="18" y="20" width="32" height="8" rx="3" /><rect x="18" y="50" width="32" height="8" rx="3" /><rect x="18" y="62" width="32" height="8" rx="3" /></g>
+    <path d="M18 39h32" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" /><circle cx="18" cy="39" r="2.5" fill="var(--accent)" />
+    <rect x="66" y="26" width="48" height="18" rx="5" fill="var(--bg-elevated)" stroke="var(--accent)" stroke-width="1.5" />
+    <g fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round"><path d="M75 37.5l-1.2 1.2a2.6 2.6 0 0 1-3.6-3.6l2.4-2.4a2.6 2.6 0 0 1 3.6 0m1.6-1.4 1.2-1.2a2.6 2.6 0 0 1 3.6 3.6l-2.4 2.4a2.6 2.6 0 0 1-3.6 0" /></g>
+    <rect x="86" y="33" width="22" height="4" rx="2" fill="var(--text-secondary)" />
+    <path d="M70 52q-8 6-12 -10" fill="none" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="3 3" />
+    <path d="M90 50l0 16l4-4 3 6 3-1.5-3-6h5.5z" fill="var(--bg-elevated)" stroke="var(--text-primary)" stroke-width="1.2" stroke-linejoin="round" />
+  {:else if kind === "dialogs"}
+    <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
+    <rect x="12" y="12" width="104" height="66" rx="7" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <rect x="18" y="18" width="26" height="54" rx="4" fill="var(--accent-tint-14)" />
+    <g fill="var(--separator)"><rect x="22" y="24" width="18" height="6" rx="3" /><rect x="22" y="44" width="18" height="6" rx="3" /><rect x="22" y="54" width="18" height="6" rx="3" /></g>
+    <rect x="22" y="34" width="18" height="6" rx="3" fill="var(--accent)" />
+    <rect x="50" y="18" width="60" height="54" rx="4" fill="color-mix(in srgb, var(--text-primary) 10%, var(--bg-elevated))" />
+    <rect x="58" y="30" width="44" height="30" rx="5" fill="var(--bg-elevated)" stroke="var(--separator)" />
+    <g stroke="var(--text-secondary)" stroke-width="1.3" stroke-linecap="round"><path d="M64 38h26m-26 6h18" /></g>
+    <rect x="84" y="50" width="14" height="6" rx="3" fill="var(--accent)" />
   {:else}
     <rect width="128" height="90" rx="10" fill="color-mix(in srgb, var(--success) 10%, var(--bg-elevated))" />
     <rect x="24" y="18" width="36" height="39" rx="6" fill="color-mix(in srgb, var(--success) 20%, var(--bg-elevated))" />

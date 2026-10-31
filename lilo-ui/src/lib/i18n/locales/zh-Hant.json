@@ -2242,6 +2242,14 @@
 			"chat": "團隊聊天"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "把一切拖進側邊欄。",
+				"description": "把連結和檔案放到你想要的位置，網頁的對話框現在只留在它自己的分頁裡。",
+				"dropTitle": "放到該放的地方。",
+				"dropDescription": "從其他 App 把連結、位址或檔案拖到側邊欄：放在兩個分頁之間、檔案夾中或某個分頁上。",
+				"dialogsTitle": "只留在分頁裡的對話框。",
+				"dialogsDescription": "網頁的提醒或登入只覆蓋它自己的分頁，等待時 Lilo 的其他部分仍可使用。"
+			},
 			"v0130": {
 				"headline": "Lilo 換上節日裝。",
 				"description": "特別的日子裡，App 圖像會換上節日裝扮，每款圖像都單獨繪製。",

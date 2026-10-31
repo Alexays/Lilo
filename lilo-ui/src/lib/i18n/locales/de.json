@@ -2242,6 +2242,14 @@
 			"chat": "Teamchat"
 		},
 		"releases": {
+			"v0140": {
+				"headline": "Zieh alles in deine Seitenleiste.",
+				"description": "Leg Links und Dateien genau dort ab, wo du sie willst, und die Dialoge einer Seite bleiben jetzt in ihrem Tab.",
+				"dropTitle": "Ablegen, wo es hingehört.",
+				"dropDescription": "Zieh einen Link, eine Adresse oder eine Datei aus einer anderen App auf die Seitenleiste: zwischen zwei Tabs, in einen Ordner oder auf einen Tab.",
+				"dialogsTitle": "Dialoge, die in ihrem Tab bleiben.",
+				"dialogsDescription": "Die Warnung oder Anmeldung einer Seite überdeckt nur ihren Tab, der Rest von Lilo bleibt nutzbar, während sie wartet."
+			},
 			"v0130": {
 				"headline": "Lilo macht sich festlich.",
 				"description": "An besonderen Tagen bekommt das App-Symbol eine festliche Note, für jedes Symbol eigens gezeichnet.",
