@@ -76,7 +76,7 @@ TEST_RETRY := $(if $(CI),-retry-tests-on-failure -test-iterations 2)
 TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl -n hw.ncpu)
 
 .PHONY: help site-release-import validate validate-ui swiftlint project-sync ui-build ui-watch ui-dev ui-lint ui-test e2e e2e-energy \
-	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
+	swift-test swift-test-slow blocker-coverage blocker-bench script-bench speedometer-bench page-bench preload-bench terminal-bench ext-bridge-build ext-bridge-test ext-smoke ext-nightly top-extensions top-manifests chrome-surface \
 	chrome-contracts chrome-smoke public-suffix-list app install install-debug xcode-build xcode-build-release \
 	run-ui-dev release release-notarize release-archive dmg dmg-background bridge-gen vt-build vt-build-source vt-zip bootstrap ui-preview check-commits startup-bench ext-bench energy-sample energy-compare energy-browsers perf-summary perf-compare perf-summary-test agent-call \
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
@@ -308,6 +308,20 @@ speedometer-bench: test-build
 		print("Speedometer 3.1, 5 iterations, rounds:", len(rows)); print("        plain  bridges  lilo"); \
 		[print(f"round  {r[0]:6.1f} {r[1]:8.1f} {r[2]:5.1f}") for r in rows]; m = [s.median(c) for c in zip(*rows)]; \
 		print(f"median {m[0]:6.1f} {m[1]:8.1f} {m[2]:5.1f}")' "$$out"
+
+## Report real pages loaded in a plain web view and with all Lilo injects (network; URLS="https://..." ROUNDS=6 TABLES=filter tables the app built; OUT=build/page-bench.txt)
+page-bench: test-build
+	@test -n "$(URLS)" || { echo "usage: make page-bench URLS=\"https://example.com/ ...\""; exit 1; }
+	@out="$(abspath $(or $(OUT),build/page-bench.txt))"; mkdir -p "$$(dirname "$$out")"; /bin/rm -f "$$out"; \
+	log=$$(mktemp); TEST_RUNNER_LILO_PAGE_BENCH="$$out" TEST_RUNNER_LILO_PAGE_BENCH_URLS="$(URLS)" TEST_RUNNER_LILO_PAGE_BENCH_ROUNDS=$(or $(ROUNDS),6) \
+		TEST_RUNNER_LILO_PAGE_BENCH_TABLES="$(or $(TABLES),$(HOME)/Library/Application Support/Lilo)" \
+		$(TEST) -only-testing:LiloTests/PageLoadBenchmarkTests > "$$log" 2>&1 || { cat "$$log"; /bin/rm -f "$$log"; exit 1; }; /bin/rm -f "$$log"; \
+	python3 -I -c 'import statistics as s, sys, collections as c; d = c.defaultdict(list); \
+		[d[(p[2], p[1])].append(list(map(int, p[3:]))) for p in (l.split() for l in open(sys.argv[1]))]; \
+		med = lambda h, v, i: s.median(r[i] for r in d[(h, v)]); \
+		print("%-24s %13s %13s %13s   plain -> lilo" % ("median ms", "fcp", "dcl", "load")); \
+		[print("%-24s " % h + " ".join("%6.0f->%-6.0f" % (med(h, "plain", i), med(h, "lilo", i)) for i in range(3))) \
+		 for h in dict.fromkeys(k[0] for k in d)]' "$$out"
 
 ## Report Enter to first paint of a page whose server pauses, with and without a top-hit preload (OUT=build/preload-bench.txt)
 preload-bench: test-build
