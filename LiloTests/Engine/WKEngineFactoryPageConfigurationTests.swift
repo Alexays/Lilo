@@ -20,6 +20,14 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
                        "WebKit's own Screen Time client would duplicate Lilo's STWebpageController")
     }
 
+    func testTabsUseSafarisCacheModel() throws {
+        let pool = try XCTUnwrap(WKEngineFactory.contentProcessPool)
+        let symbol = try XCTUnwrap(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextGetCacheModel"))
+        typealias GetCacheModel = @convention(c) (UnsafeRawPointer) -> UInt32
+        XCTAssertEqual(unsafeBitCast(symbol, to: GetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque()), 2,
+                       "an app's default cache model caps the HTTP disk cache at 75 MB")
+    }
+
     func testUserAgentAdvertisesTheRunningSafariVersion() {
         let factory = WKEngineFactory()
         let tab = factory.createTab(configuration: .init(dataStore: factory.defaultDataStore()))

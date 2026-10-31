@@ -418,7 +418,14 @@ final class WKEngineFactory {
         let configuration = configurationClass.init()
         guard configuration.responds(to: NSSelectorFromString("setPrewarmsProcessesAutomatically:")) else { return nil }
         configuration.setValue(true, forKey: "prewarmsProcessesAutomatically")
-        return poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
+        let pool = poolClass.perform(selector, with: configuration)?.takeUnretainedValue() as? NSObject
+        // Safari's cache model (kWKCacheModelPrimaryWebBrowser), app-wide: WebKit's default for an app caps the HTTP disk cache
+        // at 75 MB, so a few heavy sites evict the next one's scripts; this one allows 1 GB and a larger memory cache.
+        typealias SetCacheModel = @convention(c) (UnsafeRawPointer, UInt32) -> Void
+        if let pool, let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "WKContextSetCacheModel") {
+            unsafeBitCast(symbol, to: SetCacheModel.self)(Unmanaged.passUnretained(pool).toOpaque(), 2)
+        }
+        return pool
     }()
 
     /// Removes `old` and adds `new` across every live content controller.
