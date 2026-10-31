@@ -35,7 +35,7 @@ test("Escape closing the find bar hands the keyboard back to the page", async ({
 		await expect(findBar).toBeVisible({ timeout: 200 });
 	}).toPass();
 
-	await page.keyboard.press("Escape");
+	await page.getByRole("textbox", { name: "Rechercher dans la page" }).press("Escape");
 
 	await expect(findBar).toBeHidden();
 	expect((await sentCommands(page)).map((c) => c.action)).toContain("focusPage");

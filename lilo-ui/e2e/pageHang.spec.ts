@@ -64,8 +64,10 @@ test("hanging again after a reload offers reloading without the blocker", async 
 	await expect(card.locator("h1")).toHaveText("example.com froze again");
 	await card.getByRole("button", { name: "Reload without blocker" }).click();
 	await expect(page.locator(".undo-toast")).toBeVisible();
-	const actions = (await sentCommands(page))
-		.map((command) => command.action)
-		.filter((action) => action === "toggleBlockerAllowlist" || action === "reload");
-	expect(actions).toEqual(["reload", "toggleBlockerAllowlist", "reload"]);
+	// The host reloads the tab itself once the rules without the blocker are in place.
+	const commands = (await sentCommands(page)).filter(
+		(command) => command.action === "toggleBlockerAllowlist" || command.action === "reload",
+	);
+	expect(commands.map((command) => command.action)).toEqual(["reload", "toggleBlockerAllowlist"]);
+	expect(commands[1].payload).toEqual({ host: "example.com", reloadTabId: "tab-alpha" });
 });
