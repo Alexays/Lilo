@@ -111,6 +111,27 @@ final class WKEngineFactoryPageConfigurationTests: XCTestCase {
         XCTAssertTrue(prefetched, "the announced next page was prefetched")
     }
 
+    func testANavigationConnectsToTheOriginsTheSitesLastPageFetchedFrom() async throws {
+        let images = try await TinyHTTPServer { _ in ("200 OK", ["Content-Type: image/gif"], Data()) }
+        let site = try await TinyHTTPServer { request in
+            ("200 OK", ["Content-Type: text/html"],
+             Data((request.hasPrefix("GET / ") ? "<img src=http://127.0.0.1:\(images.port)/a.gif>" : "<p>no image</p>").utf8))
+        }
+        let factory = WKEngineFactory()
+        let tab = factory.createTab(configuration: .init(dataStore: factory.createDataStore(persistent: true, identifier: TestProfileIds.next().uuidString)))
+        defer { tab.teardown() }
+
+        tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(site.port)/"))))
+        _ = await pollUntil(timeout: 10) { images.connections > 0 }
+        // The tab learns the image's origin once the page has settled.
+        try await Task.sleep(for: .seconds(3))
+        let before = images.connections
+        tab.wkWebView.load(URLRequest(url: try XCTUnwrap(URL(string: "http://127.0.0.1:\(site.port)/again"))))
+
+        let preconnected = await pollUntil(timeout: 10) { images.connections > before }
+        XCTAssertTrue(preconnected, "a page of the site that fetches no image still connects to the image's origin")
+    }
+
     /// A page that asked Lilo something (here notification permission) and then navigates itself must
     /// not be held behind a beforeunload panel: the reply is not the user interacting with the page.
     func testANativeReplyLeavesThePageWithoutUserActivation() async throws {

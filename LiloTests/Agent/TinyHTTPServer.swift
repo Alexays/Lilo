@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import os
 import XCTest
 
 /// A local HTTP server: `respond` turns each raw request into a status line ("200 OK"), extra header
@@ -8,6 +9,9 @@ final class TinyHTTPServer: @unchecked Sendable {
     typealias Response = (status: String, headers: [String], body: Data)
     private let listener: NWListener
     let port: UInt16
+    /// Connections accepted, a preconnect's included: it sends no request.
+    var connections: Int { accepted.withLock { $0 } }
+    private let accepted: OSAllocatedUnfairLock<Int>
 
     /// Serves `/` as `index` and answers 404 for anything else.
     convenience init(index: String, contentType: String = "text/html", encoding: String.Encoding = .utf8) async throws {
@@ -22,7 +26,10 @@ final class TinyHTTPServer: @unchecked Sendable {
     init(respond: @escaping @Sendable (String) -> Response) async throws {
         let listener = try NWListener(using: .tcp, on: .any)
         self.listener = listener
+        let accepted = OSAllocatedUnfairLock(initialState: 0)
+        self.accepted = accepted
         listener.newConnectionHandler = { connection in
+            accepted.withLock { $0 += 1 }
             connection.start(queue: .global())
             connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, _, _ in
                 let response = respond(String(decoding: data ?? Data(), as: UTF8.self))

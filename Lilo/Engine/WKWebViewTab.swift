@@ -140,6 +140,9 @@ final class WKWebViewTab: NSObject {
     private let webView: WKWebView
     private var webInspectorRequestedAt: ContinuousClock.Instant?
     private var lastLoggedInteraction: (host: String, at: ContinuousClock.Instant)?
+    /// Per profile and site, the other origins its last page fetched from, most used first: a navigation to the site connects
+    /// to them at once instead of when its parser or scripts get to them, as Chrome's loading predictor. In memory only.
+    private static var learnedOrigins: [String: [URL]] = [:]
     private let findController: PageFindController
     let pip: PiPController
     private var permissionUsageState = WebPermissionUsageState.none {
@@ -698,6 +701,46 @@ final class WKWebViewTab: NSObject {
         let selector = NSSelectorFromString("_preconnectToServer:")
         guard webView.responds(to: selector) else { return }
         webView.perform(selector, with: url)
+    }
+
+    /// Forgets the origins learned for every site, as clearing history or the cache does.
+    static func forgetLearnedOrigins() {
+        learnedOrigins.removeAll()
+    }
+
+    /// Nil for a private tab, which neither learns nor uses them.
+    private var learnedOriginsKey: String? {
+        guard !isPrivateBrowsing, let url = webView.url, url.scheme == "https" || url.scheme == "http", let host = url.host() else { return nil }
+        let store = webView.configuration.websiteDataStore.identifier?.uuidString ?? "default"
+        return "\(store) \(CookiesBridgeHandler.registrableDomain(of: host))"
+    }
+
+    private func preconnectLearnedOrigins() {
+        guard let key = learnedOriginsKey else { return }
+        Self.learnedOrigins[key]?.forEach(preconnect(to:))
+    }
+
+    private func learnOrigins() {
+        guard let key = learnedOriginsKey else { return }
+        let page = webView.url
+        Task { [weak self] in
+            // A feed's images and a player load after the load event, and they are what the next visit waits on.
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, webView.url == page else { return }
+            let found = try? await webView.evaluateJavaScript("""
+                (() => { const counts = {};
+                  for (const entry of performance.getEntriesByType('resource')) {
+                    const origin = new URL(entry.name).origin;
+                    if (origin !== location.origin && origin.startsWith('http')) counts[origin] = (counts[origin] || 0) + 1;
+                  }
+                  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 6) })()
+                """, in: nil, contentWorld: PageWorld.bridgeWorld)
+            guard let origins = (found as? [String])?.compactMap(URL.init(string:)) else { return }
+            if Self.learnedOrigins[key] == nil, Self.learnedOrigins.count >= 256, let any = Self.learnedOrigins.keys.first {
+                Self.learnedOrigins[any] = nil
+            }
+            Self.learnedOrigins[key] = origins
+        }
     }
 
     /// Records a press on the page as user interaction for tracking prevention, once an hour per site.
@@ -1664,6 +1707,7 @@ extension WKWebViewTab: WKNavigationDelegate {
         onMain { tab in
             StartupMetrics.markOnce("firstContentServerRedirected")
             if let url = Self.visibleURL(webViewURL: webView.url, pendingMainFrameURL: tab.pendingMainFrameURL) { tab.pendingMainFrameURL = url }
+            tab.preconnectLearnedOrigins()
         }
     }
 
@@ -1675,6 +1719,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             StartupMetrics.markOnce("firstContentNavigationStarted")
             tab.lastServerTrust = nil
             tab.showsFailureOverPage = false
+            tab.preconnectLearnedOrigins()
             tab.delegate?.tab(tab, didNavigate: .started(tab.currentURL))
             // A pending region selection is a selection of the outgoing page.
             tab.cancelRegionSelection()
@@ -1764,6 +1809,7 @@ extension WKWebViewTab: WKNavigationDelegate {
             tab.delegate?.tab(tab, didNavigate: .finished(tab.currentURL))
             tab.showPageBackground()
             tab.emitPageColor(loaded: true)
+            tab.learnOrigins()
             StartupMetrics.markOnce("firstContentFinished")
         }
     }

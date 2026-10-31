@@ -133,6 +133,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         let cutoff = Self.historyCutoff(for: range)
         let since = cutoff ?? .distantPast
         var failure: String?
+        // The origins tabs learned tell which sites were visited, as history and the cache do.
+        if !kinds.isDisjoint(with: ["history", "cache"]) { WKWebViewTab.forgetLearnedOrigins() }
         if kinds.contains("history") {
             if let historyStore = historyStoreProvider() {
                 do {
