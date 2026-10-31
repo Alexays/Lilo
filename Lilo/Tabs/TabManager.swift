@@ -64,6 +64,8 @@ final class TabManager {
 
     /// The command bar's top hit loading out of sight for a blank tab: `load(_:inTab:)` swaps it in.
     private(set) var topHitPreload: (url: URL, tabId: UUID, engine: WKWebViewTab)?
+    /// The sleeping tab the pointer rested on, loading ahead of a click: it goes back to sleep unless it is shown.
+    private var warmedTab: (id: UUID, engine: WKWebViewTab)?
 
     init(engineFactory: WKEngineFactory, terminalHost: TerminalHost = TerminalHost(), changesHost: ChangesHost = ChangesHost()) {
         self.engineFactory = engineFactory
@@ -233,6 +235,7 @@ final class TabManager {
 
     func activateTabRuntime(id: UUID) {
         guard let tab = tab(for: id) else { return }
+        if warmedTab?.id == id { warmedTab = nil }
 
         // A locked folder's tab can be selected, never loaded: the window shows the lock placeholder.
         // A non-web tab has no engine to wake.
@@ -439,6 +442,26 @@ final class TabManager {
         ))
         preload.loadURL(url)
         topHitPreload = (url, tab.id, preload)
+    }
+
+    /// Wakes a sleeping tab the pointer rests on, so the page is on its way when the click lands (Chrome loads a bookmark
+    /// bar item on hover). One at a time: the previous one, never shown, goes back to sleep, as this one does after 20 s.
+    func warmTab(id: UUID) {
+        guard !engineFactory.suppressWarmPool, id != activeTabId, engineHost.engine(for: id) == nil,
+              let tab = tab(for: id), tab.url != nil, !tab.isClosed else { return }
+        sleepWarmedTab()
+        guard let engine = ensureLiveEngine(forTabId: id) else { return }
+        warmedTab = (id, engine)
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(20))
+            if self?.warmedTab?.engine === engine { self?.sleepWarmedTab() }
+        }
+    }
+
+    private func sleepWarmedTab() {
+        guard let (id, engine) = warmedTab else { return }
+        warmedTab = nil
+        if engineHost.engine(for: id) === engine { discardEngines([id]) }
     }
 
     /// A new engine for `url`, in its extension's configuration when it is an extension page, and the

@@ -378,6 +378,34 @@ final class TabsQueryTests: XCTestCase {
         XCTAssertNil(tabManager.activeTab)
     }
 
+    func testARestedOnSleepingTabLoadsUnseenAndSleepsAgainWhenAnotherIsRestedOn() {
+        let active = makeTab(url: URL(string: "https://example.com/active"))
+        let first = makeTab(url: URL(string: "https://example.com/first")), second = makeTab(url: URL(string: "https://example.com/second"))
+        installRuntimeTabs([active, first, second], activeTabId: active.id)
+
+        tabManager.warmTab(id: first.id)
+        XCTAssertNotNil(tabManager.engineTab(for: first.id), "the page is on its way before the click")
+        XCTAssertEqual(tabManager.activeTabId, active.id, "resting on a tab does not switch to it")
+
+        tabManager.warmTab(id: second.id)
+        XCTAssertNil(tabManager.engineTab(for: first.id), "a tab never opened goes back to sleep")
+        XCTAssertNotNil(tabManager.engineTab(for: second.id))
+    }
+
+    func testARestedOnTabThatIsOpenedStaysAwake() {
+        let active = makeTab(url: URL(string: "https://example.com/active"))
+        let first = makeTab(url: URL(string: "https://example.com/first")), second = makeTab(url: URL(string: "https://example.com/second"))
+        installRuntimeTabs([active, first, second], activeTabId: active.id)
+
+        tabManager.warmTab(id: first.id)
+        let engine = tabManager.engineTab(for: first.id)
+        tabManager.activateTabRuntime(id: first.id)
+        tabManager.warmTab(id: second.id)
+
+        XCTAssertNotNil(engine)
+        XCTAssertTrue(tabManager.engineTab(for: first.id) === engine, "the opened tab keeps the page it loaded")
+    }
+
     func testActivatingColdTabRecreatesEngineWithoutTabLifecycleState() {
         let tab = makeTab(url: URL(string: "https://example.com"))
         installTabs([tab])

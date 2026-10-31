@@ -604,6 +604,7 @@ export interface BridgeCommandPayloadMap {
 	restoreArchivedTabs: { ids: string[] };
 	clearArchivedTabs: EmptyPayload;
 	requestTabPreview: { tabId: string };
+	warmTab: { tabId: string };
 	navigate: { url: string; typed?: boolean };
 	goBack: EmptyPayload;
 	goForward: EmptyPayload;

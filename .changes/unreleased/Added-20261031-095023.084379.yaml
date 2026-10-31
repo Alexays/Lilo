@@ -1,0 +1,3 @@
+kind: Added
+body: A sleeping tab starts loading as soon as the pointer rests on it in the sidebar or the tab strip, so it is ready sooner after the click; it goes back to sleep if it is not opened.
+time: 2026-10-31T09:50:23.084379+01:00

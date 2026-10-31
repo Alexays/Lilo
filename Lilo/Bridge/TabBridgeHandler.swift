@@ -155,7 +155,8 @@ final class TabBridgeHandler: BridgeHandler {
         "removeTabFolderLock",
         "setTabFolderBiometrics",
         "commitSidebarDrop",
-        "requestTabPreview"
+        "requestTabPreview",
+        "warmTab"
     ]
 
     private weak var tabManager: TabManager?
@@ -410,6 +411,9 @@ final class TabBridgeHandler: BridgeHandler {
 
         case "requestTabPreview":
             if let tabId = message.uuid("tabId") { await publishTabPreview(for: tabId) }
+
+        case "warmTab":
+            if let tabId = message.uuid("tabId") { tabManager.warmTab(id: tabId) }
 
         case "zoomIn":
             windowController?.zoomActiveTab(in: true)

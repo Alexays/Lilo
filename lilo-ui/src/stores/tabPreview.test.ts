@@ -244,3 +244,28 @@ test("a terminal with nothing to answer hides as soon as the pointer leaves its 
 		mock.timers.reset();
 	}
 });
+
+test("resting on a tab asks to wake it before the preview; sweeping past does not", async () => {
+	const posted = stubBridgeWindow();
+	const loadStore = await freshStores();
+	const store = await loadStore("/src/stores/tabPreview.svelte.ts");
+	const warms = () => posted.filter((m) => m.action === "warmTab").map((m) => m.payload);
+
+	mock.timers.enable({ apis: ["setTimeout", "Date"], now: 0 });
+	try {
+		store.hoverTabPreview(target("tab-a"), anchor);
+		mock.timers.tick(100);
+		store.hoverTabPreview(target("tab-b"), anchor);
+		mock.timers.tick(149);
+		assert.deepEqual(warms(), [], "a row crossed on the way wakes nothing");
+		mock.timers.tick(1);
+		assert.deepEqual(warms(), [{ tabId: "tab-b" }]);
+
+		store.hoverTabPreview(target("tab-b"), anchor);
+		mock.timers.tick(10_000);
+		assert.equal(warms().length, 1, "staying on the row asks once");
+	} finally {
+		mock.timers.reset();
+		store.clearTabPreview();
+	}
+});

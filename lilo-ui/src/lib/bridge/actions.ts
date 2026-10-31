@@ -122,6 +122,7 @@ export const tabActions = {
 	restoreArchived: (ids: string[]): void => emit("restoreArchivedTabs", { ids }),
 	clearArchived: emitEmpty("clearArchivedTabs"),
 	requestPreview: (tabId: string): void => emit("requestTabPreview", { tabId }),
+	warm: (tabId: string): void => emit("warmTab", { tabId }),
 	findInPage: (query: string, options: { caseSensitive?: boolean } = {}): void =>
 		emit("findInPage", { query, ...options }),
 	findNext: emitEmpty("findNext"),

@@ -6,6 +6,8 @@ import { tabActions } from "../lib/bridge/actions";
 import type { BridgeTerminalPrompt } from "../lib/bridge/protocol";
 
 const TAB_PREVIEW_HOVER_DELAY_MS = 450;
+// A pointer resting this long on a tab wakes it, if it sleeps, ahead of the click; a sweep down the list crosses a row faster.
+const TAB_WARM_HOVER_DELAY_MS = 150;
 const TAB_PREVIEW_CACHE_TTL_MS = 30_000;
 // A cached image older than this is shown instantly but refreshed in the background, and the
 // visible card refreshes on this cadence so live pages stay live.
@@ -67,6 +69,7 @@ let hovered: {
 	delayElapsed: boolean;
 } | null = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+let warmTimer: ReturnType<typeof setTimeout> | null = null;
 let inFlight: { tabId: string; url: string; at: number } | null = null;
 
 on("tabPreviewReady", (data) => {
@@ -156,6 +159,10 @@ export function hoverTabPreview(
 	clearTabPreview();
 	refreshIntervalMs = TAB_PREVIEW_REFRESH_MS;
 	hovered = { target, anchor, delayElapsed: false };
+	warmTimer = setTimeout(() => {
+		warmTimer = null;
+		tabActions.warm(target.id);
+	}, TAB_WARM_HOVER_DELAY_MS);
 	hoverTimer = setTimeout(() => {
 		hoverTimer = null;
 		if (hovered) hovered.delayElapsed = true;
@@ -185,6 +192,10 @@ export function clearTabPreview(): void {
 	if (hoverTimer !== null) {
 		clearTimeout(hoverTimer);
 		hoverTimer = null;
+	}
+	if (warmTimer !== null) {
+		clearTimeout(warmTimer);
+		warmTimer = null;
 	}
 	if (refreshTimer !== null) {
 		clearTimeout(refreshTimer);
