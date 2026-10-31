@@ -4,6 +4,7 @@ import type {
 	BridgeCallAction,
 	BridgeCommandName,
 	BridgeControlTabOrder,
+	BridgeLinkDropTarget,
 	BridgeMediaAction,
 	ImportSelection,
 	OptionalPayloadCommandName,
@@ -113,6 +114,8 @@ export const tabActions = {
 		emit("splitTab", { tabId, side, targetTabId }),
 	splitURL: (url: string, side: SplitDropSide, targetTabId?: string): void =>
 		emit("splitURL", { url, side, targetTabId }),
+	openDroppedLinks: (urls: string[], target: BridgeLinkDropTarget): void =>
+		emit("openDroppedLinks", { urls, ...target }),
 	/** Opens `url` in a Peek over the active tab. */
 	peekURL: (url: string): void => emit("peekURL", { url }),
 	closeSplitView: emitEmpty("closeSplitView"),

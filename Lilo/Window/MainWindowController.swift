@@ -558,6 +558,15 @@ final class MainWindowController: NSWindowController {
         window.delegate = self
         chromeWebView.eventRouter = chromeInput.router
         chromeInput.router.routesDragToChrome = { [weak self] in self?.splitPanes.isLinkDrag($0) ?? false }
+        chromeInput.router.chromeDragChanged = { [weak self] sender in
+            // The chrome's drop events cannot read a dropped file's path, so the links come from the pasteboard, and go
+            // as the drag leaves. Text goes as is: the chrome tells an address from other text as its address bar does.
+            let pasteboard = sender?.draggingPasteboard
+            // Finder hands file reference URLs (file:///.file/id=...): the tab shows and loads the file's path instead.
+            let urls = (pasteboard?.readObjects(forClasses: [NSURL.self]) as? [NSURL] ?? []).map { $0.filePathURL ?? $0 as URL }
+            let text = urls.isEmpty ? pasteboard?.string(forType: .string).flatMap { $0.count <= 2048 ? $0 : nil } : nil
+            self?.bridgeRouter?.send(event: "linkDrag", data: ["urls": urls.map(\.absoluteString), "text": text ?? ""])
+        }
         tabManager.browserStateStore = context.browserState
         tabManager.delegate = self
         tabManager.engineDelegate = self

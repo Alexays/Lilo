@@ -19,6 +19,7 @@
   import TabSharePicker from "./page/TabSharePicker.svelte";
   import TabPreviewCard from "./sidebar/TabPreviewCard.svelte";
   import TabSwitcher from "./sidebar/TabSwitcher.svelte";
+  import SidebarLinkDrop from "./sidebar/SidebarLinkDrop.svelte";
   import WhatsNewHost from "./whatsnew/WhatsNewHost.svelte";
   import { isDesignSystemShellOpen } from "../stores/panels.svelte";
   import { isSidebarVisible } from "../stores/ui.svelte";
@@ -56,6 +57,7 @@
 <TabSharePicker />
 <TabPreviewCard />
 <TabSwitcher />
+<SidebarLinkDrop />
 <ErrorPage />
 <ContentPlaceholder />
 <PageHangCard />

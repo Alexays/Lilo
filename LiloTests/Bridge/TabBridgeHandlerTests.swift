@@ -280,4 +280,59 @@ final class TabBridgeHandlerTests: XCTestCase {
             "https://nowhere.test/",
         ])
     }
+
+    // MARK: - openDroppedLinks
+
+    func test_openDroppedLinks_opensNewTabsInOrderAtTheDropOrLoadsTheTabDroppedOn() async throws {
+        let browserContext = try await TemporaryBrowserContext()
+        defer { browserContext.tearDown() }
+        let context = browserContext.context
+        let profileId = try context.profileManager.createProfile(name: "P").id
+        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let windowController = makeTestWindow(context, showing: space.id)
+        let handler = TabBridgeHandler(
+            tabManager: windowController.tabManager,
+            windowController: windowController,
+            stateCommandHandler: windowController.applyBrowserCommand
+        )
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let pages = try ["one", "two", "three", "four"].map { name in
+            let url = folder.appendingPathComponent("\(name) page.html")
+            try "<p>\(name)</p>".write(to: url, atomically: true, encoding: .utf8)
+            return url
+        }
+        _ = try XCTUnwrap(windowController.createTabStateFirst(url: nil))
+        _ = try XCTUnwrap(windowController.createTabStateFirst(url: nil))
+        func order(_ section: TabTreeItem.Section) -> [UUID] {
+            context.browserState.browserSpaceChange(spaceId: space.id)?.sidebar.rootNodeIds(in: section) ?? []
+        }
+        let (above, below) = (order(.unpinned)[0], order(.unpinned)[1])
+
+        _ = await handler.handle(message: bridgeMessage(action: "openDroppedLinks", payload: [
+            "urls": [pages[0].absoluteString, pages[1].absoluteString],
+            "section": "unpinned", "parentFolderId": NSNull(), "fallbackIndex": 1,
+            "insertBeforeId": below.uuidString, "insertAfterId": above.uuidString,
+        ]))
+        let unpinned = order(.unpinned)
+        XCTAssertEqual(unpinned.count, 4)
+        XCTAssertEqual([unpinned[0], unpinned[3]], [above, below])
+        XCTAssertEqual(unpinned[1...2].map { windowController.tabManager.tab(for: $0)?.url }, [pages[0], pages[1]])
+        XCTAssertEqual(windowController.tabManager.activeTabId, unpinned[1])
+
+        _ = await handler.handle(message: bridgeMessage(action: "openDroppedLinks", payload: [
+            "urls": [pages[2].absoluteString], "section": "bookmarked", "parentFolderId": NSNull(), "fallbackIndex": 0,
+        ]))
+        let bookmarked = order(.bookmarked)
+        XCTAssertEqual(bookmarked.map { windowController.tabManager.tab(for: $0)?.url }, [pages[2]])
+
+        _ = await handler.handle(message: bridgeMessage(action: "openDroppedLinks", payload: [
+            "urls": [pages[3].absoluteString], "tabId": below.uuidString,
+        ]))
+        XCTAssertEqual(windowController.tabManager.activeTabId, below)
+        let loaded = await pollUntil { windowController.tabManager.engineTab(for: below)?.currentURL == pages[3] }
+        XCTAssertTrue(loaded)
+        XCTAssertEqual(order(.unpinned).count, 4)
+    }
 }
