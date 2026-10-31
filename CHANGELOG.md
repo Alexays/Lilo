@@ -4,6 +4,13 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.1] - 2026-10-31
+
+### Fixed
+
+- A sleeping tab woken by resting the pointer on it no longer shows a loading spinner in the sidebar until it is opened.
+
+[0.14.1]: https://github.com/Alexays/Lilo/compare/v0.14.0...v0.14.1
 ## [0.14.0] - 2026-10-31
 
 ### Added
