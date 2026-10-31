@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · **Português (Brasil)** · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**Sua internet, em flor.**
+**O navegador para Mac no estilo do Arc, em WebKit e não Chromium.**
 
-Leve no seu Mac, rápido na web e privado por padrão. Gratuito e de código aberto.
+Suas extensões do Chrome, abas de terminal ao lado das suas páginas e um servidor MCP integrado para seus agentes de IA. Grátis, de código aberto e sem conta.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Baixar para macOS](https://img.shields.io/badge/Baixar%20para%20macOS-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 ou posterior
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Licença: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Status: beta público](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#instalação)
 
 [Site](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Instalação](#instalação) ·
-[Compilar a partir do código-fonte](#compilar-a-partir-do-código-fonte) ·
+[Vindo do Arc](#vindo-do-arc) ·
 [Documentação](../README.md) ·
 [Contribuir](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Leve no seu Mac, rápido na web e privado por padrão. Gratuito e de código abe
   <source media="(prefers-color-scheme: dark)" srcset="../assets/lilo-dark.png">
   <img src="../assets/lilo-light.png" alt="Lilo com o espaço Trabalho aberto: barra lateral com sites fixados, pastas e abas, ao lado de uma página web e uma aba de terminal" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · **Português (Brasil)** · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -39,6 +43,17 @@ espaços, abas fixadas e pastas em poucos cliques.
 > [ROADMAP.md](../../ROADMAP.md) lista as prioridades e o que está fora do escopo do projeto.
 
 Entre na [comunidade do Discord](https://discord.gg/NyJRAapk76) para compartilhar sugestões e obter ajuda com o Lilo.
+
+## Vindo do Arc
+
+O Arc será encerrado em 22 de dezembro de 2026. O Lilo mantém o jeito de navegar com uma barra lateral e importa o que você tem no Arc direto do seu Mac, sem alterar nada nele:
+
+- **Espaços, abas e telas divididas**: cada espaço do Arc vira um espaço do Lilo com seu ícone e sua cor, suas abas fixadas e abertas, pastas e telas divididas. Os favoritos viram abas salvas.
+- **Histórico e logins**: suas páginas recentes preenchem a barra de comandos, e os cookies são copiados para você continuar conectado.
+- **Extensões**: as da Chrome Web Store são reinstaladas pela loja. Você escolhe quais.
+- **Atalhos**: comece pela predefinição do Arc e depois mude os que quiser.
+
+O que muda é o motor: WebKit no lugar do Chromium. Com as mesmas abas, o Chrome gasta cerca de 3 vezes a energia do Lilo ([medido](../ENERGY.md)), e algumas APIs de extensões do Chrome ainda diferem ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [A página de alternativa ao Arc](https://getlilo.app/arc-alternative/) compara os dois, recurso por recurso.
 
 ## Por que Lilo
 

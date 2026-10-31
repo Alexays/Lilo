@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · **한국어** · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**나의 인터넷이 피어나는 곳.**
+**Arc 스타일의 Mac 브라우저. Chromium이 아닌 WebKit 기반입니다.**
 
-Mac에서는 가볍게, 웹에서는 빠르게. 개인정보 보호가 기본입니다. 무료이며 오픈 소스입니다.
+쓰던 Chrome 확장 프로그램, 페이지 옆의 터미널 탭, AI 에이전트를 위한 내장 MCP 서버까지. 무료, 오픈 소스, 계정 불필요.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![macOS용 다운로드](https://img.shields.io/badge/macOS%EC%9A%A9%20%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 이상
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![라이선스: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![상태: 공개 베타](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#설치)
 
 [웹사이트](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[설치](#설치) ·
-[소스에서 빌드](#소스에서-빌드) ·
+[Arc에서 옮겨 오기](#arc에서-옮겨-오기) ·
 [문서](../../docs/README.md) ·
 [기여하기](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Mac에서는 가볍게, 웹에서는 빠르게. 개인정보 보호가 기본입
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="업무 스페이스가 열린 Lilo: 고정된 사이트, 폴더, 탭이 있는 사이드바 옆에 웹페이지와 터미널 탭이 표시됨" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · **한국어** · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -39,6 +43,17 @@ AI 에이전트가 내장 MCP 서버를 통해 전용 스페이스에서 브라�
 > [ROADMAP.md](../../ROADMAP.md)에서 우선순위와 개발하지 않을 항목을 확인할 수 있습니다.
 
 [Discord 커뮤니티](https://discord.gg/NyJRAapk76)에서 의견을 나누고 Lilo 사용에 도움을 받으세요.
+
+## Arc에서 옮겨 오기
+
+Arc는 2026년 12월 22일에 서비스를 종료합니다. Lilo는 사이드바 중심의 브라우징 방식을 그대로 유지하고, Arc에 있는 내용을 Mac에서 바로 가져옵니다. Arc에는 아무것도 바꾸지 않습니다.
+
+- **스페이스, 탭, 분할 화면**: 각 Arc 스페이스는 아이콘과 색상, 고정 탭과 열린 탭, 폴더, 분할 화면을 그대로 가진 Lilo 스페이스가 됩니다. 즐겨찾기는 북마크 탭이 됩니다.
+- **방문 기록과 로그인**: 최근 페이지가 명령 막대에 나타나고, 쿠키도 복사되어 로그인 상태가 유지됩니다.
+- **확장 프로그램**: Chrome 웹 스토어의 확장 프로그램은 스토어에서 다시 설치됩니다. 무엇을 설치할지는 직접 고릅니다.
+- **단축키**: Arc 프리셋에서 시작한 뒤 원하는 단축키를 바꿀 수 있습니다.
+
+달라지는 것은 엔진입니다. Chromium 대신 WebKit을 씁니다. 같은 탭을 열었을 때 Chrome은 Lilo보다 약 3배 많은 전력을 쓰며([측정 결과](../ENERGY.md)), 일부 Chrome 확장 프로그램 API는 아직 다릅니다([COMPATIBILITY.md](../../COMPATIBILITY.md)). [Arc 대안 페이지](https://getlilo.app/arc-alternative/)에서 기능별로 비교해 두었습니다.
 
 ## Lilo를 선택하는 이유
 

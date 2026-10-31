@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · **繁體中文** · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**讓你的網路生活，綻放。**
+**類 Arc 的 Mac 瀏覽器，建立在 WebKit 上，而非 Chromium。**
 
-為 Mac 減輕負擔，讓上網更快，預設保護隱私。免費且開放原始碼。
+支援你的 Chrome 擴充功能，終端機分頁就在網頁旁邊，還內建 MCP 伺服器供你的 AI 代理使用。免費、開源、不需帳號。
 
-[![持續整合](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![下載 macOS 版](https://img.shields.io/badge/%E4%B8%8B%E8%BC%89%20macOS%20%E7%89%88-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 或更新版本
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![授權：MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![狀態：公開測試版](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#安裝)
 
 [網站](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[安裝](#安裝) ·
-[從原始碼編譯](#從原始碼編譯) ·
+[從 Arc 轉移](#從-arc-轉移) ·
 [文件](../README.md) ·
 [參與貢獻](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@
   <source media="(prefers-color-scheme: dark)" srcset="../assets/lilo-dark.png">
   <img src="../assets/lilo-light.png" alt="Lilo 開啟「工作」空間：側邊欄顯示釘選網站、資料夾與分頁，旁邊是網頁及終端機分頁" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · **繁體中文** · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -37,6 +41,17 @@ Arc，只要點按幾下，就能匯入空間、釘選分頁與資料夾。
 > [ROADMAP.md](../../ROADMAP.md) 列出優先事項與不在計畫內的目標。
 
 加入 [Discord 社群](https://discord.gg/NyJRAapk76)，分享意見並取得 Lilo 使用協助。
+
+## 從 Arc 轉移
+
+Arc 將於 2026 年 12 月 22 日停止服務。Lilo 保留了側邊欄式的瀏覽方式，並直接從你的 Mac 匯入 Arc 中的內容，不會更動 Arc 的任何資料：
+
+- **空間、分頁和分割畫面**：每個 Arc 空間都會成為一個 Lilo 空間，保留圖示和顏色、釘選和開啟的分頁、檔案夾以及分割畫面。我的最愛會變成書籤分頁。
+- **瀏覽記錄和登入狀態**：最近造訪的網頁會出現在指令列中，Cookie 也會被複製，讓你保持登入。
+- **擴充功能**：來自 Chrome 線上應用程式商店的擴充功能會從商店重新安裝，由你選擇要哪些。
+- **快速鍵**：從 Arc 預設開始，再依需要修改任何快速鍵。
+
+改變的是引擎：以 WebKit 取代 Chromium。開啟相同的分頁時，Chrome 的耗電約為 Lilo 的 3 倍（[實測](../ENERGY.md)），少數 Chrome 擴充功能 API 仍有差異（[COMPATIBILITY.md](../../COMPATIBILITY.md)）。[Arc 替代方案頁面](https://getlilo.app/arc-alternative/)逐項比較了兩者。
 
 ## 為什麼選擇 Lilo
 

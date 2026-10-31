@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · **日本語** · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**あなたのインターネットが、花ひらく。**
+**Arc スタイルの Mac ブラウザ。Chromium ではなく WebKit で動作します。**
 
-Mac には軽く、Web では速く。プライバシーは最初から。無料のオープンソースブラウザです。
+Chrome 拡張機能がそのまま使え、ページの隣にターミナルタブを置け、AI エージェント向けの MCP サーバーを内蔵。無料、オープンソース、アカウント不要。
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![macOS 版をダウンロード](https://img.shields.io/badge/macOS%20%E7%89%88%E3%82%92%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 以降
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![ライセンス：MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![ステータス：公開ベータ版](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#インストール)
 
 [Web サイト](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[インストール](#インストール) ·
-[ソースからビルド](#ソースからビルド) ·
+[Arc から移行する](#arc-から移行する) ·
 [ドキュメント](../../docs/README.md) ·
 [貢献する](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Mac には軽く、Web では速く。プライバシーは最初から。無料
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="仕事用スペースを開いた Lilo：固定したサイト、フォルダ、タブのあるサイドバーと、その隣の Web ページおよびターミナルタブ" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · **日本語** · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -37,6 +41,17 @@ Arc から移るなら、スペース、固定タブ、フォルダを数回の�
 > 優先事項と対象外の項目は [ROADMAP.md](../../ROADMAP.md) に記載しています。
 
 [Discord コミュニティ](https://discord.gg/NyJRAapk76)で、フィードバックの共有や Lilo の使い方の相談ができます。
+
+## Arc から移行する
+
+Arc は 2026 年 12 月 22 日にサービスを終了します。Lilo はサイドバー中心のブラウジングをそのまま受け継ぎ、Arc の内容を Mac から直接読み込みます。Arc 側は何も変更しません。
+
+- **スペース、タブ、分割表示**：Arc の各スペースは、アイコンと色、固定タブと開いているタブ、フォルダ、分割表示をそのまま持つ Lilo のスペースになります。お気に入りはブックマークタブになります。
+- **履歴とログイン**：最近のページがコマンドバーに並び、Cookie もコピーされるのでログインしたままです。
+- **拡張機能**：Chrome ウェブストアの拡張機能はストアから再インストールされます。どれを入れるかは選べます。
+- **ショートカット**：Arc のプリセットから始めて、どれでも割り当て直せます。
+
+変わるのはエンジンです。Chromium ではなく WebKit を使います。同じタブを開いた場合、Chrome は Lilo の約 3 倍の電力を消費し（[計測結果](../ENERGY.md)）、一部の Chrome 拡張機能 API にはまだ違いがあります（[COMPATIBILITY.md](../../COMPATIBILITY.md)）。[Arc の代替ページ](https://getlilo.app/arc-alternative/)で機能ごとに比較しています。
 
 ## Lilo を選ぶ理由
 

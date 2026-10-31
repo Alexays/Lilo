@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · **Polski** · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**Twój internet rozkwita.**
+**Przeglądarka na Maca w stylu Arc, na WebKit, a nie Chromium.**
 
-Lekka dla Maca, szybka w sieci, prywatna od początku. Darmowa i z otwartym kodem.
+Twoje rozszerzenia Chrome, karty terminala obok stron i wbudowany serwer MCP dla twoich agentów AI. Za darmo, open source, bez konta.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Pobierz na macOS](https://img.shields.io/badge/Pobierz%20na%20macOS-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 lub nowszy
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Licencja: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Status: publiczna beta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#instalacja)
 
 [Witryna](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Instalacja](#instalacja) ·
-[Kompilowanie ze źródeł](#kompilowanie-ze-źródeł) ·
+[Przesiadka z Arc](#przesiadka-z-arc) ·
 [Dokumentacja](../../docs/README.md) ·
 [Współtworzenie](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Lekka dla Maca, szybka w sieci, prywatna od początku. Darmowa i z otwartym kode
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="Lilo z otwartą przestrzenią Praca: pasek boczny z przypiętymi witrynami, folderami i kartami, obok strony internetowej i karty terminala" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · **Polski** · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -38,6 +42,17 @@ i foldery kilkoma kliknięciami.
 > [ROADMAP.md](../../ROADMAP.md) zawiera priorytety i rzeczy poza zakresem projektu.
 
 Dołącz do [społeczności na Discordzie](https://discord.gg/NyJRAapk76), aby podzielić się opinią i uzyskać pomoc z Lilo.
+
+## Przesiadka z Arc
+
+Arc kończy działanie 22 grudnia 2026 roku. Lilo zachowuje przeglądanie z paskiem bocznym i importuje to, co masz w Arc, prosto z twojego Maca, niczego w nim nie zmieniając:
+
+- **Przestrzenie, karty i widoki dzielone**: każda przestrzeń Arc staje się przestrzenią Lilo z ikoną i kolorem, przypiętymi i otwartymi kartami, folderami i widokami dzielonymi. Ulubione stają się kartami zakładek.
+- **Historia i logowania**: ostatnie strony pojawiają się na pasku poleceń, a pliki cookie są kopiowane, więc pozostajesz zalogowany.
+- **Rozszerzenia**: te z Chrome Web Store instalują się ponownie ze sklepu. Ty wybierasz które.
+- **Skróty**: zacznij od ustawień Arc, a potem zmień dowolne z nich.
+
+Zmienia się silnik: WebKit zamiast Chromium. Przy tych samych kartach Chrome zużywa około 3 razy więcej energii niż Lilo ([pomiary](../ENERGY.md)), a kilka API rozszerzeń Chrome wciąż się różni ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [Strona o alternatywie dla Arc](https://getlilo.app/arc-alternative/) porównuje je funkcja po funkcji.
 
 ## Dlaczego Lilo
 

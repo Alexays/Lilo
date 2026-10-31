@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · **Español** · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**Tu internet, en flor.**
+**El navegador para Mac al estilo de Arc, sobre WebKit y no Chromium.**
 
-Ligero en tu Mac, rápido en la web y privado por defecto. Gratis y de código abierto.
+Tus extensiones de Chrome, pestañas de terminal junto a tus páginas y un servidor MCP integrado para tus agentes de IA. Gratis, de código abierto y sin cuenta.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Descargar para macOS](https://img.shields.io/badge/Descargar%20para%20macOS-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 o posterior
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Estado: beta pública](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#instalación)
 
 [Sitio web](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Instalación](#instalación) ·
-[Compilar desde el código fuente](#compilar-desde-el-código-fuente) ·
+[Si vienes de Arc](#si-vienes-de-arc) ·
 [Documentación](../README.md) ·
 [Contribuir](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Ligero en tu Mac, rápido en la web y privado por defecto. Gratis y de código a
   <source media="(prefers-color-scheme: dark)" srcset="../assets/lilo-dark.png">
   <img src="../assets/lilo-light.png" alt="Lilo con el espacio Trabajo abierto: barra lateral con sitios fijados, carpetas y pestañas, junto a una página web y una pestaña de terminal" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · **Español** · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -39,6 +43,17 @@ espacios, pestañas fijadas y carpetas en unos pocos clics.
 > [ROADMAP.md](../../ROADMAP.md) recoge las prioridades y lo que queda fuera del alcance del proyecto.
 
 Únete a la [comunidad de Discord](https://discord.gg/NyJRAapk76) para compartir comentarios y recibir ayuda con Lilo.
+
+## Si vienes de Arc
+
+Arc cierra el 22 de diciembre de 2026. Lilo conserva su forma de navegar con una barra lateral e importa lo que tienes en Arc directamente desde tu Mac, sin cambiar nada en él:
+
+- **Espacios, pestañas y vistas divididas**: cada espacio de Arc se convierte en un espacio de Lilo con su icono y su color, sus pestañas fijadas y abiertas, sus carpetas y sus vistas divididas. Los favoritos pasan a ser pestañas guardadas.
+- **Historial y sesiones**: tus páginas recientes llenan la barra de comandos y las cookies se copian para que sigas con la sesión iniciada.
+- **Extensiones**: las de la Chrome Web Store se vuelven a instalar desde la tienda. Tú eliges cuáles.
+- **Atajos**: parte del preajuste de Arc y luego cambia los que quieras.
+
+Lo que cambia es el motor: WebKit en lugar de Chromium. Con las mismas pestañas, Chrome consume unas 3 veces la energía de Lilo ([medido](../ENERGY.md)) y algunas API de extensiones de Chrome aún difieren ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [La página de alternativa a Arc](https://getlilo.app/arc-alternative/) compara ambos, función por función.
 
 ## Por qué Lilo
 

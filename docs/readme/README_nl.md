@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · **Nederlands**
-
 # Lilo
 
-**Jouw internet, in bloei.**
+**De Mac-browser in de stijl van Arc, op WebKit en niet op Chromium.**
 
-Licht voor je Mac, snel op het web, standaard privé. Gratis en open source.
+Je Chrome-extensies, terminaltabbladen naast je pagina's en een ingebouwde MCP-server voor je AI-agents. Gratis, open source, zonder account.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Download voor macOS](https://img.shields.io/badge/Download%20voor%20macOS-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 of nieuwer
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Licentie: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Status: openbare bèta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#installeren)
 
 [Website](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Installeren](#installeren) ·
-[Bouwen vanuit broncode](#bouwen-vanuit-broncode) ·
+[Overstappen van Arc](#overstappen-van-arc) ·
 [Documentatie](../README.md) ·
 [Bijdragen](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Licht voor je Mac, snel op het web, standaard privé. Gratis en open source.
   <source media="(prefers-color-scheme: dark)" srcset="../assets/lilo-dark.png">
   <img src="../assets/lilo-light.png" alt="Lilo met de ruimte Werk geopend: navigatiekolom met vastgemaakte websites, mappen en tabbladen, naast een webpagina en een terminaltabblad" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · **Nederlands**</sub>
 
 </div>
 
@@ -38,6 +42,17 @@ vastgemaakte tabbladen en mappen in een paar klikken.
 > [ROADMAP.md](../../ROADMAP.md) beschrijft de prioriteiten en wat buiten de plannen valt.
 
 Sluit je aan bij de [Discord-community](https://discord.gg/NyJRAapk76) om feedback te geven en hulp bij Lilo te krijgen.
+
+## Overstappen van Arc
+
+Arc stopt op 22 december 2026. Lilo houdt vast aan browsen vanuit een zijbalk en importeert wat je in Arc hebt rechtstreeks vanaf je Mac, zonder er iets in te veranderen:
+
+- **Spaces, tabbladen en gesplitste weergaven**: elke Arc-space wordt een Lilo-space met zijn icoon en kleur, vastgezette en geopende tabbladen, mappen en gesplitste weergaven. Favorieten worden bladwijzertabbladen.
+- **Geschiedenis en aanmeldingen**: je recente pagina's verschijnen in de opdrachtbalk en cookies worden gekopieerd, zodat je aangemeld blijft.
+- **Extensies**: die uit de Chrome Web Store worden opnieuw uit de store geïnstalleerd. Jij kiest welke.
+- **Sneltoetsen**: begin met de Arc-voorinstelling en wijs daarna toe wat je wilt.
+
+Wat verandert is de engine: WebKit in plaats van Chromium. Met dezelfde tabbladen verbruikt Chrome ongeveer 3 keer zoveel energie als Lilo ([gemeten](../ENERGY.md)), en een paar API's voor Chrome-extensies verschillen nog ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [De pagina over het Arc-alternatief](https://getlilo.app/arc-alternative/) vergelijkt ze functie voor functie.
 
 ## Waarom Lilo
 

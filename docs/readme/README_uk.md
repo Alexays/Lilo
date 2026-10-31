@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · **Українська** · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**Ваш інтернет розквітає.**
+**Браузер для Mac у стилі Arc, на WebKit, а не на Chromium.**
 
-Легкий для Mac, швидкий у мережі, приватний від початку. Безкоштовний і з відкритим кодом.
+Ваші розширення Chrome, вкладки терміналу поруч зі сторінками та вбудований MCP-сервер для ваших ШІ-агентів. Безплатно, з відкритим кодом, без облікового запису.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Завантажити для macOS](https://img.shields.io/badge/%D0%97%D0%B0%D0%B2%D0%B0%D0%BD%D1%82%D0%B0%D0%B6%D0%B8%D1%82%D0%B8%20%D0%B4%D0%BB%D1%8F%20macOS-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 або новіша
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Ліцензія: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Стан: публічна бета-версія](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#інсталяція)
 
 [Вебсайт](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Інсталяція](#інсталяція) ·
-[Збирання з вихідного коду](#збирання-з-вихідного-коду) ·
+[Перехід з Arc](#перехід-з-arc) ·
 [Документація](../../docs/README.md) ·
 [Долучитися](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="Lilo з відкритим простором «Робота»: бічна панель із закріпленими сайтами, папками й вкладками поруч із вебсторінкою та вкладкою термінала" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · **Українська** · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -38,6 +42,17 @@ Lilo — браузер для Mac для тих, хто звик працюва
 > [ROADMAP.md](../../ROADMAP.md) містить пріоритети та те, що не входить у плани.
 
 Приєднуйтеся до [спільноти в Discord](https://discord.gg/NyJRAapk76), щоб поділитися відгуком або отримати допомогу з Lilo.
+
+## Перехід з Arc
+
+Arc припиняє роботу 22 грудня 2026 року. Lilo зберігає роботу з бічною панеллю та імпортує все, що у вас є в Arc, просто з вашого Mac, нічого в ньому не змінюючи:
+
+- **Простори, вкладки та розділений екран**: кожен простір Arc стає простором Lilo зі своєю іконкою та кольором, закріпленими й відкритими вкладками, папками та розділеним екраном. Обране стає вкладками-закладками.
+- **Історія та входи в облікові записи**: нещодавні сторінки з'являються в командному рядку, а cookie копіюються, щоб ви залишалися в облікових записах.
+- **Розширення**: розширення з Chrome Web Store заново встановлюються з магазину. Ви обираєте які.
+- **Клавіатурні скорочення**: почніть із набору Arc, а потім перепризначте будь-які.
+
+Змінюється рушій: WebKit замість Chromium. З тими самими вкладками Chrome споживає приблизно втричі більше енергії, ніж Lilo ([виміри](../ENERGY.md)), а кілька API розширень Chrome поки відрізняються ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [Сторінка про альтернативу Arc](https://getlilo.app/arc-alternative/) порівнює їх за кожною функцією.
 
 ## Чому Lilo
 

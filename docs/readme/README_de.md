@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · **Deutsch** · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)
-
 # Lilo
 
-**Dein Internet blüht auf.**
+**Der Mac-Browser im Stil von Arc, auf WebKit statt Chromium.**
 
-Leicht auf deinem Mac, schnell im Web, von Anfang an privat. Kostenlos und Open Source.
+Deine Chrome-Erweiterungen, Terminal-Tabs neben deinen Seiten und ein eingebauter MCP-Server für deine KI-Agenten. Kostenlos, Open Source, ohne Konto.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![Für macOS laden](https://img.shields.io/badge/F%C3%BCr%20macOS%20laden-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 oder neuer
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Status: öffentliche Beta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#installation)
 
 [Website](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Installieren](#installation) ·
-[Aus dem Quellcode bauen](#aus-dem-quellcode-bauen) ·
+[Umstieg von Arc](#umstieg-von-arc) ·
 [Dokumentation](../../docs/README.md) ·
 [Mitwirken](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Leicht auf deinem Mac, schnell im Web, von Anfang an privat. Kostenlos und Open 
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="Lilo mit geöffnetem Space „Arbeit“: Seitenleiste mit angehefteten Websites, Ordnern und Tabs neben einer Webseite und einem Terminal-Tab" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · **Deutsch** · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · [Türkçe](README_tr.md) · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -39,6 +43,17 @@ wechselst, importiert Lilo deine Spaces, angehefteten Tabs und Ordner mit wenige
 > [ROADMAP.md](../../ROADMAP.md) nennt die Prioritäten und die Dinge, die bewusst nicht geplant sind.
 
 Tritt der [Discord-Community](https://discord.gg/NyJRAapk76) bei, um Feedback zu teilen und Hilfe zu Lilo zu erhalten.
+
+## Umstieg von Arc
+
+Arc wird am 22. Dezember 2026 eingestellt. Lilo behält das Surfen mit der Seitenleiste bei und übernimmt, was du in Arc hast, direkt von deinem Mac, ohne dort etwas zu ändern:
+
+- **Spaces, Tabs und geteilte Ansichten**: Jeder Arc-Space wird ein Lilo-Space mit Symbol und Farbe, angehefteten und offenen Tabs, Ordnern und geteilten Ansichten. Favoriten werden zu Lesezeichen-Tabs.
+- **Verlauf und Anmeldungen**: Deine letzten Seiten erscheinen in der Befehlsleiste, und Cookies werden kopiert, damit du angemeldet bleibst.
+- **Erweiterungen**: Die aus dem Chrome Web Store werden aus dem Store neu installiert. Du wählst, welche.
+- **Tastenkürzel**: Starte mit der Arc-Vorlage und belege danach beliebige neu.
+
+Was sich ändert, ist die Engine: WebKit statt Chromium. Mit denselben Tabs verbraucht Chrome etwa 3-mal so viel Energie wie Lilo ([gemessen](../ENERGY.md)), und einige APIs für Chrome-Erweiterungen unterscheiden sich noch ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [Die Seite zur Arc-Alternative](https://getlilo.app/arc-alternative/) vergleicht beide Funktion für Funktion.
 
 ## Warum Lilo
 

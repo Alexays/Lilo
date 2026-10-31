@@ -1,21 +1,23 @@
 <div align="center">
 
-[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · **Türkçe** · [Nederlands](README_nl.md)
-
 # Lilo
 
-**İnternetiniz çiçek açsın.**
+**Arc tarzı Mac tarayıcısı; Chromium değil, WebKit üzerinde.**
 
-Mac'inizde hafif, web'de hızlı. Gizliliğiniz daha ilk andan korunur. Ücretsiz ve açık kaynak.
+Chrome uzantılarınız, sayfalarınızın yanında terminal sekmeleri ve yapay zekâ ajanlarınız için yerleşik bir MCP sunucusu. Ücretsiz, açık kaynak, hesap gerektirmez.
 
-[![CI](https://github.com/Alexays/Lilo/actions/workflows/build.yml/badge.svg)](https://github.com/Alexays/Lilo/actions/workflows/build.yml)
+[![macOS için indir](https://img.shields.io/badge/macOS%20i%C3%A7in%20indir-6a4be0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Alexays/Lilo/releases/latest/download/Lilo.dmg)
+
+`brew install --cask alexays/tap/lilo` · macOS 26 veya üstü
+
+[![Release](https://img.shields.io/github/v/release/Alexays/Lilo?color=e07a4b)](https://github.com/Alexays/Lilo/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Alexays/Lilo/total?color=6a4be0)](https://github.com/Alexays/Lilo/releases)
+[![Stars](https://img.shields.io/github/stars/Alexays/Lilo?color=6a4be0)](https://github.com/Alexays/Lilo/stargazers)
 [![Lisans: MIT](https://img.shields.io/badge/License-MIT-6a4be0.svg)](../../LICENSE)
-[![Durum: herkese açık beta](https://img.shields.io/badge/status-public%20beta-e07a4b.svg)](#kurulum)
 
 [Web sitesi](https://getlilo.app) ·
 [Discord](https://discord.gg/NyJRAapk76) ·
-[Kurulum](#kurulum) ·
-[Kaynaktan derleme](#kaynaktan-derleme) ·
+[Arc'tan geçiş](#arctan-geçiş) ·
 [Belgeler](../../docs/README.md) ·
 [Katkıda bulunma](../../CONTRIBUTING.md)
 
@@ -23,6 +25,8 @@ Mac'inizde hafif, web'de hızlı. Gizliliğiniz daha ilk andan korunur. Ücretsi
   <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/lilo-dark.png">
   <img src="../../docs/assets/lilo-light.png" alt="İş Alanı açıkken Lilo: web sayfası ve terminal sekmesinin yanında sabitlenmiş siteler, klasörler ve sekmeler içeren kenar çubuğu" width="900">
 </picture>
+
+<sub>[English](../../README.md) · [Français](README_fr.md) · [Español](README_es.md) · [简体中文](README_zh-Hans.md) · [Português (Brasil)](README_pt-BR.md) · [Русский](README_ru.md) · [Українська](README_uk.md) · [Deutsch](README_de.md) · [日本語](README_ja.md) · [Italiano](README_it.md) · [한국어](README_ko.md) · [繁體中文](README_zh-Hant.md) · [Polski](README_pl.md) · **Türkçe** · [Nederlands](README_nl.md)</sub>
 
 </div>
 
@@ -39,6 +43,17 @@ Alanlarınızı, sabitlenmiş sekmelerinizi ve klasörlerinizi birkaç tıklamay
 > Öncelikler ve kapsam dışı hedefler [ROADMAP.md](../../ROADMAP.md) dosyasında listelenir.
 
 Geri bildirim paylaşmak ve Lilo için yardım almak üzere [Discord topluluğuna](https://discord.gg/NyJRAapk76) katılın.
+
+## Arc'tan geçiş
+
+Arc, 22 Aralık 2026'da kapanıyor. Lilo, kenar çubuğuyla gezinme alışkanlığını korur ve Arc'taki her şeyi doğrudan Mac'inizden içe aktarır; Arc'ta hiçbir şeyi değiştirmez:
+
+- **Alanlar, sekmeler ve bölünmüş görünümler**: her Arc alanı; simgesi ve rengi, sabitlenmiş ve açık sekmeleri, klasörleri ve bölünmüş görünümleriyle bir Lilo alanı olur. Favoriler yer imi sekmelerine dönüşür.
+- **Geçmiş ve oturumlar**: son sayfalarınız komut çubuğunda görünür, çerezler de kopyalanır; böylece oturumunuz açık kalır.
+- **Uzantılar**: Chrome Web Mağazası'ndan gelenler mağazadan yeniden yüklenir. Hangilerini seçeceğinize siz karar verirsiniz.
+- **Kısayollar**: Arc hazır ayarıyla başlayın, sonra istediğinizi değiştirin.
+
+Değişen şey motor: Chromium yerine WebKit. Aynı sekmelerle Chrome, Lilo'nun yaklaşık 3 katı enerji harcar ([ölçüm](../ENERGY.md)) ve bazı Chrome uzantı API'leri hâlâ farklıdır ([COMPATIBILITY.md](../../COMPATIBILITY.md)). [Arc alternatifi sayfası](https://getlilo.app/arc-alternative/) ikisini özellik özellik karşılaştırır.
 
 ## Neden Lilo
 
