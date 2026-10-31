@@ -236,17 +236,68 @@ final class WKWebViewTab: NSObject {
         }
     )
 
+    /// The clicked element of the open context menu, until one of its download items uses it.
+    private var contextMenuElement: NSObject?
+    private enum ReferrerProbe { case pending, answered(String?), abandoned }
+    /// Context-menu downloads' referrer probes by the fragment marking their request. One stays until its request comes, so
+    /// a request coming after its download started is still cancelled rather than opened.
+    private var referrerProbes: [String: ReferrerProbe] = [:]
+    /// Opens the URL in a new window from the clicked frame, as a link would: the request WebKit asks a policy for carries
+    /// the referrer the frame's policy gives (header, meta, a `rel=noreferrer` link), which Chrome sends for these downloads.
+    /// The clicked element's own `referrerpolicy` stays out, as Chrome ignores it here.
+    private static let referrerProbeScript = """
+        const probe = document.createElement('a')
+        probe.href = url
+        probe.target = '_blank'
+        const links = link ? [...document.querySelectorAll('a[href], area[href]')].filter(element => element.href === link) : []
+        if ((links.find(element => element.matches(':hover')) ?? links[0])?.relList.contains('noreferrer')) probe.rel = 'noreferrer'
+        probe.click()
+        """
+
     /// WebKit's native download context-menu items never fire WKDownloadDelegate, so ContextMenuBuilder
     /// routes them here to reach the same pipeline as navigation-initiated downloads.
     private func startContextMenuDownload(from url: URL) {
-        webView.startDownload(using: Self.downloadRequest(for: url, pageURL: webView.url)) { [weak self] download in
+        let element = contextMenuElement
+        contextMenuElement = nil
+        let frame = ContextMenuBuilder.frameInfo(from: element)
+        let fallback = Self.downloadRequest(for: url, pageURL: frame?.request.url ?? webView.url)
+        let token = UUID().uuidString
+        guard let frame, var marked = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return startDownload(fallback) }
+        marked.fragment = token
+        guard let probeURL = marked.string else { return startDownload(fallback) }
+        referrerProbes[token] = .pending
+        // Runs once, on the script's reply or after a hung page's timeout; the probe's policy request comes before the reply.
+        let finish: @MainActor @Sendable () -> Void = { [weak self] in
+            guard let self, let probe = referrerProbes[token] else { return }
+            var request = fallback
+            switch probe {
+            case .pending: referrerProbes[token] = .abandoned
+            case .answered(let referrer): referrerProbes[token] = nil; request.setValue(referrer, forHTTPHeaderField: "Referer")
+            case .abandoned: return
+            }
+            startDownload(request)
+        }
+        let arguments = ["url": probeURL, "link": ContextMenuBuilder.linkURL(from: element)?.absoluteString ?? ""]
+        Task { [weak self] in
+            _ = try? await self?.webView.callAsyncJavaScript(Self.referrerProbeScript, arguments: arguments, in: frame, contentWorld: PageWorld.bridgeWorld)
+            finish()
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            finish()
+        }
+    }
+
+    private func startDownload(_ request: URLRequest) {
+        webView.startDownload(using: request) { [weak self] download in
             guard let self else { return }
             self.delegate?.tab(self, didStartDownload: download)
         }
     }
 
-    /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming
-    /// a file:// or data: URL means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy.
+    /// Hotlink-protected CDNs 403 a Referer-less request. Only set for an http(s) page: a Referer naming a file:// or data: URL
+    /// means nothing to a remote server. The value follows strict-origin-when-cross-origin, the web's default policy, for a
+    /// frame the referrer probe cannot run in or that does not answer it in time.
     nonisolated static func downloadRequest(for url: URL, pageURL: URL?) -> URLRequest {
         var request = URLRequest(url: url)
         guard let pageURL, let scheme = pageURL.scheme?.lowercased(), scheme == "http" || scheme == "https",
@@ -1538,6 +1589,14 @@ extension WKWebViewTab: WKNavigationDelegate {
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
     ) {
         MainActor.assumeIsolated {
+            if !referrerProbes.isEmpty, let token = navigationAction.request.url?.fragment, let probe = referrerProbes[token] {
+                if case .pending = probe {
+                    referrerProbes[token] = .answered(navigationAction.request.value(forHTTPHeaderField: "Referer"))
+                } else {
+                    referrerProbes[token] = nil
+                }
+                return decisionHandler(.cancel, preferences)
+            }
             // The configuration's default policies are frozen at creation, so the live settings are applied here.
             preferences.preferredHTTPSNavigationPolicy =
                 WKEngineFactory.httpsOnlyEnabled ? .userMediatedFallbackToHTTP : .automaticFallbackToHTTP
@@ -2192,6 +2251,7 @@ extension WKWebViewTab: WKUIDelegate {
         nonisolated(unsafe) let menu = menu
         nonisolated(unsafe) let element = element
         MainActor.assumeIsolated {
+            contextMenuElement = element
             contextMenuBuilder.build(menu, linkURL: ContextMenuBuilder.linkURL(from: element), imageURL: ContextMenuBuilder.imageURL(from: element) ?? ContextMenuBuilder.mediaURL(from: element), element: element, extensionItems: extensionContextMenuItemsProvider?() ?? [], offersNewWindow: !(delegate?.prefersSingleWindow ?? false), searchEngineName: delegate?.searchEngineName)
             completionHandler(menu)
         }

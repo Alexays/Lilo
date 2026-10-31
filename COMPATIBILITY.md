@@ -265,3 +265,9 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
 - **Symptom:** a tab keeps the icon its page loaded with when the page then swaps its `<link rel=icon>` (an unread badge, a build status).
 - **Root cause:** WebKit offers a document's link icons to the app once, when the document loads, and never again for a `<link rel=icon>` added or changed afterwards (checked on macOS 27). Chrome follows those changes.
 - **Lilo's handling:** None; following them would take a script watching every page's `<head>` in an isolated world, an icon load of Lilo's own outside WebKit's, and a per-tab icon apart from the per-site one Lilo caches.
+
+### Referrer of a context-menu download
+
+- **Symptom:** "Download Image" or "Download Linked File" from a frame sandboxed without `allow-popups` sends the frame's origin (none from https to http) whatever the frame's referrer policy; with "Prevent cross-site tracking" on, or in a private space, a download to another site sends at most the page's origin even under `unsafe-url`.
+- **Root cause:** WebKit's own download items send no Referer, so Lilo has WebKit open the address in a new window from the clicked frame, as a link would, and takes the Referer from that request's policy decision before cancelling it; a sandboxed frame without `allow-popups` cannot open one. WebKit's tracking prevention trims every cross-site Referer to its origin in the network process, a download's included. Chrome applies the frame's policy in both cases.
+- **Lilo's handling:** the sandboxed frame gets strict-origin-when-cross-origin from its address; the cross-site trim is WebKit's, as for every request.

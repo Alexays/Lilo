@@ -9,6 +9,7 @@ final class WKWebViewTabDelegateSpy: WKWebViewTab.Delegate {
     private(set) var commits = 0
     private(set) var findResults: [PageFindController.Result] = []
     private(set) var events: [WKWebViewTab.WebNavigationEvent] = []
+    private(set) var newTabs: [URL?] = []
     private(set) var externalLaunches: [(url: URL, origin: String?)] = []
     var onUpdateURL: ((URL?) -> Void)?
 
@@ -25,7 +26,7 @@ final class WKWebViewTabDelegateSpy: WKWebViewTab.Delegate {
     func tab(_ tab: WKWebViewTab, didUpdateProgress progress: Double) {}
     func tab(_ tab: WKWebViewTab, didUpdateCanGoBack canGoBack: Bool) {}
     func tab(_ tab: WKWebViewTab, didUpdateCanGoForward canGoForward: Bool) {}
-    func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool) {}
+    func tab(_ tab: WKWebViewTab, didCreateNewTab url: URL?, inBackground: Bool) { newTabs.append(url) }
     func tabDidRequestClose(_ tab: WKWebViewTab) {}
     func tab(_ tab: WKWebViewTab, didStartDownload download: WKDownload) {}
     func tab(

@@ -45,6 +45,7 @@
 		0F5AB6F06E1B9308169D5699 /* FolderAutoLockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C70B5C0116D385738F1BB1 /* FolderAutoLockTests.swift */; };
 		1063BD5E0861594D88CFFA3E /* NotificationsBridgeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04E0966448D618E19E820E08 /* NotificationsBridgeHandlerTests.swift */; };
 		109C2298CC26BA175AA2CAFB /* TabBridgeSchema.gen.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC03E7BCBD29A3CA31E6BB3B /* TabBridgeSchema.gen.swift */; };
+		1183D139C654F426AC44554B /* WKWebViewTabDownloadReferrerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10101FD8B39CCC3941A061E0 /* WKWebViewTabDownloadReferrerTests.swift */; };
 		121B95F8323320F06E381214 /* TemporaryBrowserContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 431ABDDD13D3442436E79EA8 /* TemporaryBrowserContext.swift */; };
 		1264B7F28050437AB896696C /* DeviceSetupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B24DC9C85408005BBB82542 /* DeviceSetupController.swift */; };
 		12AA98B915E149E3558411C0 /* TabShareFrameSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3475C5B4C29550ABE4591B26 /* TabShareFrameSchemeHandler.swift */; };
@@ -791,6 +792,7 @@
 		0FD180FCC551B79222A54AE0 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		0FD2CCE891FAD6B6EE01D505 /* DownloadStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadStore.swift; sourceTree = "<group>"; };
 		0FE7D786B57EA99CAF5C3AE0 /* InstanceIDBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstanceIDBridgeHandler.swift; sourceTree = "<group>"; };
+		10101FD8B39CCC3941A061E0 /* WKWebViewTabDownloadReferrerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewTabDownloadReferrerTests.swift; sourceTree = "<group>"; };
 		104DADCADD6B7B7671BDAE0F /* PowerBridgeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PowerBridgeHandler.swift; sourceTree = "<group>"; };
 		109B659A3E52D5C364945814 /* BrowserLifecycleDiagnosticsBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserLifecycleDiagnosticsBuilder.swift; sourceTree = "<group>"; };
 		112A7F6D9131240AA2BD0EB4 /* ManagementBridgeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagementBridgeHandlerTests.swift; sourceTree = "<group>"; };
@@ -2420,6 +2422,7 @@
 				901559A00A2624CB7008C9C8 /* WKEngineFactoryWarmSpawnTests.swift */,
 				682D3D1F1970F982CF1B53DE /* WKWebViewTabCommitTests.swift */,
 				C94999EE51194B9498EE4D42 /* WKWebViewTabDialogTests.swift */,
+				10101FD8B39CCC3941A061E0 /* WKWebViewTabDownloadReferrerTests.swift */,
 				C989F8C73AF90F446FE6EB8C /* WKWebViewTabFileAccessTests.swift */,
 				24395920E5020A85C239D981 /* WKWebViewTabLoggingTests.swift */,
 				2B88189CA5154455C4382892 /* WKWebViewTabNavigationPolicyTests.swift */,
@@ -3541,6 +3544,7 @@
 				9F25E508E4E60060142B1564 /* WKWebViewTabCommitTests.swift in Sources */,
 				292C0F63A400DED65617B83B /* WKWebViewTabDelegateSpy.swift in Sources */,
 				7AF2C33D32037C5570EECB05 /* WKWebViewTabDialogTests.swift in Sources */,
+				1183D139C654F426AC44554B /* WKWebViewTabDownloadReferrerTests.swift in Sources */,
 				58B9E18E2805822BF212FFBD /* WKWebViewTabFileAccessTests.swift in Sources */,
 				B2A7CD0EC82D30EA10A1E0D7 /* WKWebViewTabLoggingTests.swift in Sources */,
 				49F6074A63CE8742F624B993 /* WKWebViewTabNavigationPolicyTests.swift in Sources */,
