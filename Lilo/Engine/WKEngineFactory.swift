@@ -628,10 +628,10 @@ final class WKEngineFactory {
         guard hash != filterScriptsHash else { return }
         filterScriptsHash = hash
         // Cosmetics are main frame only: the network rule list already catches subframe ads, and the
-        // ~100 KB procedural table would otherwise be parsed again in every iframe. An isolated world
-        // keeps the cosmetics' sheet clear of the page's CSP.
+        // ~100 KB procedural table would otherwise be parsed again in every iframe. The bridge world holds
+        // the cosmetics' sheet handler, and keeps their fallback sheet clear of the page's CSP.
         let sources: [(String?, Bool, WKContentWorld)] = [
-            (scripts.genericCosmetics, true, .defaultClient), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
+            (scripts.genericCosmetics, true, PageWorld.bridgeWorld), (scripts.procedural, true, .page), (scripts.scriptlets, false, .page)
         ]
         let allowlist = Self.allowlistLiteral(blockerAllowlist)
         filterUserScripts = sources.compactMap { source, mainFrameOnly, world in
@@ -919,6 +919,9 @@ final class WKEngineFactory {
         contentController.add(formDirtyBridge, contentWorld: world, name: FormDirtyBridge.messageHandlerName)
         contentController.add(callControlsBridge, contentWorld: world, name: CallControlsBridge.messageHandlerName)
         contentController.addScriptMessageHandler(tabShareBridge, contentWorld: world, name: TabShareBridge.messageHandlerName)
+        if CosmeticStyleSheets.isSupported {
+            contentController.add(CosmeticStyleSheets.shared, contentWorld: world, name: CosmeticStyleSheets.messageHandlerName)
+        }
         installUserScripts(on: contentController)
         if contentBlockerEnabled { contentRuleLists.forEach(contentController.add) }
         contentControllersByKey[key] = contentController

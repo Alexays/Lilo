@@ -40,6 +40,7 @@ interface Harness {
 	observe: (records: { type: string; target?: FakeElement; addedNodes?: FakeElement[] }[]) => void;
 	css: () => string;
 	flushed: () => Promise<void>;
+	pageShow: (persisted: boolean) => void;
 }
 
 function run(
@@ -48,7 +49,8 @@ function run(
 	parsed: FakeElement[] | null = null,
 	allowlist: string[] = [],
 	host = "www.example.com",
-	sites: Record<string, string[]> = {}
+	sites: Record<string, string[]> = {},
+	posted: string[] | null = null
 ): Harness {
 	// The constructed sheets the script adopts.
 	const styles: FakeSheet[] = [];
@@ -66,6 +68,7 @@ function run(
 	let observing = false;
 	let frameCallback: (() => void) | null = null;
 	let onDOMContentLoaded: (() => void) | null = null;
+	let onPageShow: ((event: { persisted: boolean }) => void) | null = null;
 
 	const documentElement = el("", [], rootChildren);
 	// `parsed` stands for the elements the parser has inserted so far; null means the DOM is complete.
@@ -107,7 +110,14 @@ function run(
 		.replace("__LILO_KEYED_TABLE__", JSON.stringify(keyed.entries));
 	const fn = new Function("self", "document", "MutationObserver", "requestAnimationFrame", "location", "CSSStyleSheet", src);
 	fn(
-		{ CSS: { escape: (s: string) => s } },
+		{
+			CSS: { escape: (s: string) => s },
+			// The user style sheet handler, registered when WebKit has the SPI.
+			webkit: posted && { messageHandlers: { liloCosmetics: { postMessage: (css: string) => posted.push(css) } } },
+			addEventListener: (type: string, cb: (event: { persisted: boolean }) => void) => {
+				if (type === "pageshow") onPageShow = cb;
+			}
+		},
 		doc,
 		FakeMutationObserver,
 		(cb: () => void) => {
@@ -131,7 +141,8 @@ function run(
 		observing: () => observing,
 		observe: (records) => observerCallback?.(records),
 		css: () => styles.map((s) => s.cssRules.join("")).join(""),
-		flushed: () => Promise.resolve().then(() => {})
+		flushed: () => Promise.resolve().then(() => {}),
+		pageShow: (persisted) => onPageShow?.({ persisted })
 	};
 }
 
@@ -312,6 +323,20 @@ describe("generic cosmetics", () => {
 		h.observe([{ type: "attributes", target: el("top-ad") }]);
 		await h.flushed();
 		assert.ok(h.css().includes("aside#top-ad{display:none!important}"));
+	});
+
+	test("with the user style sheet handler, each batch is posted once and nothing is adopted", async () => {
+		const posted: string[] = [];
+		const h = run({ classes: ["late-ad"] }, [], null, [], "www.example.com", { "example.com": [".site-ad"] }, posted);
+		assert.deepEqual(posted, [".site-ad{display:none!important}\n"]);
+		h.observe([{ type: "childList", addedNodes: [el("", ["late-ad"]), el("", ["late-ad"])] }]);
+		await h.flushed();
+		assert.deepEqual(posted, [".site-ad{display:none!important}\n", ".late-ad{display:none!important}\n"]);
+		assert.equal(h.styles.length, 0);
+		h.pageShow(false);
+		assert.equal(posted.length, 2);
+		h.pageShow(true);
+		assert.equal(posted[2], ".site-ad{display:none!important}\n.late-ad{display:none!important}\n", "back from the cache, all again");
 	});
 
 	test("an empty table installs nothing", () => {

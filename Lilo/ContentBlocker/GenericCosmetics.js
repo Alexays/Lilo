@@ -54,6 +54,11 @@
   var pending = [];
   var flushScheduled = false;
   var sheet = null;
+  // CosmeticStyleSheets.swift, registered when WebKit can add a user style sheet to one page.
+  var userSheets = self.webkit && self.webkit.messageHandlers && self.webkit.messageHandlers.liloCosmetics;
+  // Leaving the page took its sheets away: back from the back/forward cache, every rule posted goes again.
+  var posted = '';
+  if (userSheets) self.addEventListener('pageshow', function (event) { if (event.persisted && posted) userSheets.postMessage(posted); });
 
   // Same host probe as Scriptlets.js. An entry is a selector to hide, "@selector" for one excepted on
   // the site, or "@@" when generic cosmetics are off there.
@@ -122,6 +127,8 @@
     for (var i = 0; i < pending.length; i++) css += pending[i] + (pending[i].indexOf('{') < 0 ? '{display:none!important}\n' : '\n');
     pending = [];
     try {
+      // A user sheet, as uBO's on Chrome: out of the page's reach, and its !important outranks every one of the page's.
+      if (userSheets) { posted += css; userSheets.postMessage(css); return; }
       // An adopted sheet is no node of the page's DOM nor an entry of its styleSheets; the page may drop it, so it is re-adopted.
       sheet = sheet || new CSSStyleSheet();
       if (document.adoptedStyleSheets.indexOf(sheet) < 0) document.adoptedStyleSheets = document.adoptedStyleSheets.concat(sheet);

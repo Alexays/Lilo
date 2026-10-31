@@ -926,6 +926,7 @@ final class WKWebViewTab: NSObject {
     /// Stop media, halt loading, detach the view and close the page through its handlers. Ends the engine for good.
     func teardown() {
         NotificationCenter.default.post(name: .webViewTabWillTearDown, object: self)
+        CosmeticStyleSheets.shared.removeSheets(of: webView)
         documentPiPCloser?()
         cancelPendingDocumentPiP()
         let wasUnresponsive = isUnresponsive
@@ -1728,6 +1729,7 @@ extension WKWebViewTab: WKNavigationDelegate {
 
     nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         onMain { tab in
+            CosmeticStyleSheets.shared.removeSheets(of: webView)
             // When a response forces a process swap (COOP) before the web view committed anything, WebKit can
             // commit the navigation in the old process and again, as an empty document, in the new one.
             if let navigation, navigation === tab.lastCommittedNavigation, !tab.didReloadEmptyCommit,

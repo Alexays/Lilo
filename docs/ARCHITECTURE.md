@@ -412,6 +412,7 @@ Main users:
 | `Lilo/Engine/WKFeatureFlags.swift` | experimental and internal feature flags |
 | `Lilo/Engine/WebInspectorSupport.swift` | showing the Web Inspector and its panels |
 | `Lilo/Engine/PiPController.swift`, `CaptureUsageObserver.swift`, `ContextMenuBuilder.swift` | PiP toggle, display-capture state, context-menu hit-test URLs |
+| `Lilo/ContentBlocker/CosmeticStyleSheets.swift` | `_WKUserStyleSheet` scoped to one web view and `_addUserStyleSheet:` / `_removeUserStyleSheet:` for cosmetic filtering |
 | `Lilo/TabShare/TabShareFrameSchemeHandler.swift` | registering `lilo-capture://` as a secure scheme |
 | `Lilo/Extensions/Core/ProfileExtensionRegistry.swift` | background web view launch for extension service workers |
 | `Lilo/Extensions/Core/BackgroundSupervisor.swift` | in-place restart of an extension service worker WebKit wrongly believes loaded |
