@@ -31,13 +31,18 @@ final class EngineFreezerTests: XCTestCase {
     func testCooperativeFreezePlaysAgainOnResumeTheMediaItPaused() async throws {
         let configuration = WKWebViewConfiguration()
         PageWorld.install([CooperativeFreezer.pageModule], on: configuration.userContentController)
-        let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 400, height: 300), configuration: configuration)
-        // A page plays video only in a window.
-        let window = NSWindow(contentRect: webView.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        let tab = WKWebViewTab(configuration: configuration)
+        let webView = tab.wkWebView
+        // A page plays video only in a window it counts as visible, even under other apps' windows (as on CI).
+        tab.setWindowOcclusionDetection(false)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
-        window.contentView = webView
+        window.contentView = tab.view
         window.orderFront(nil)
-        defer { window.orderOut(nil) }
+        defer {
+            window.orderOut(nil)
+            tab.teardown()
+        }
         webView.loadHTMLString(PiPControllerTests.silentVideo + "<video id='idle' muted></video>", baseURL: URL(string: "https://video.example/"))
         let playing = await pollUntil(timeout: 5) { (try? await webView.evaluateJavaScript("!v.paused")) as? Bool == true }
         XCTAssertTrue(playing)

@@ -12,6 +12,8 @@ final class WKWebViewTabPrintTests: XCTestCase {
         addTeardownBlock { try? FileManager.default.removeItem(at: url) }
         let printInfo = try XCTUnwrap(NSPrintInfo.shared.copy() as? NSPrintInfo)
         printInfo.jobDisposition = .save
+        // A4, whatever the machine's default paper: the page count depends on it.
+        printInfo.paperSize = NSSize(width: 595, height: 842)
         printInfo.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = url
         let operation = tab.wkWebView.printOperation(with: printInfo)
         operation.showsPrintPanel = false
