@@ -137,6 +137,15 @@ Lilo presents itself as Chrome where extensions expect it (`ChromeMasquerade`), 
   polyfill would switch those apps onto a path with missing pieces (handles that do not survive
   IndexedDB, directory writes), which is worse than the fallback.
 
+### Protocol handlers (`navigator.registerProtocolHandler`)
+
+- **Status:** Not implemented, on purpose
+- **WebKit support:** None on macOS - `'registerProtocolHandler' in navigator` is false in a WKWebView
+  (checked on macOS 27); Chrome lets a site handle a scheme, such as Gmail for `mailto:` links
+- **Impact:** sites feature-detect it and skip the offer. A `mailto:` or other non-web link opens the
+  app macOS assigns to the scheme, after Lilo asks. Pages see Lilo as Safari, which lacks the API
+  too: adding it would tell Lilo apart from Safari, and a page-visible trace flags Lilo as a bot.
+
 ### Passkeys / WebAuthn
 
 - **Status:** Basic `navigator.credentials.create()` / `.get({publicKey})` and security keys work
