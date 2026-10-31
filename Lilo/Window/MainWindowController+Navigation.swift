@@ -106,6 +106,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 if case .started = event { t.estimatedProgress = 0 }
                 (t.hasNavigationError, t.navigationErrorCode) = (false, 0)
                 (t.navigationErrorDomain, t.navigationErrorDescription, t.navigationErrorURL) = ("", "", "")
+                t.navigationErrorUsesHSTS = false
             case .failed(let url, let error):
                 let nsError = error as NSError
                 let isError = !WKWebViewTab.shouldIgnoreNavigationFailure(error)
@@ -115,6 +116,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
                 t.navigationErrorDescription = isError
                     ? Self.certificateRejectionReason(nsError, trust: tab.lastServerTrust) ?? nsError.localizedDescription : ""
                 t.navigationErrorURL = isError ? (url ?? resolvedURL)?.absoluteString ?? "" : ""
+                t.navigationErrorUsesHSTS = isError && nsError.domain == NSURLErrorDomain && (-1204 ... -1200).contains(nsError.code)
+                    && (url ?? resolvedURL).map(Self.isKnownHSTSHost) == true
             }
         }
         // Side effect, kept out of the mutate closure above: the closure must stay a pure
@@ -256,7 +259,10 @@ extension MainWindowController: WKWebViewTab.Delegate {
     /// failed URL's port, pinned to the certificate that failed) and reloads so the page can load.
     func allowInsecureTrust(forHost host: String) {
         let normalized = host.lowercased()
-        guard !normalized.isEmpty, let activeTab = tabManager.activeTab, let engineTab = tabManager.activeEngineTab else { return }
+        var hostURL = URLComponents()
+        (hostURL.scheme, hostURL.host) = ("https", normalized)
+        // As in Chrome, a host that requires HTTPS (HSTS) gets no exception, whatever the error page asks.
+        guard !normalized.isEmpty, hostURL.url.map(Self.isKnownHSTSHost) == false, let activeTab = tabManager.activeTab, let engineTab = tabManager.activeEngineTab else { return }
         let failedURL = URL(string: activeTab.navigationErrorURL) ?? activeTab.url
         let exceptions = context.engineFactory.insecureTrustExceptions(for: engineTab.wkWebView.configuration.websiteDataStore)
         exceptions["\(normalized):\(failedURL?.port ?? 443)"] = engineTab.lastServerTrust.flatMap(Self.leafCertificateFingerprint) ?? ""
@@ -267,6 +273,17 @@ extension MainWindowController: WKWebViewTab.Delegate {
         guard let leaf = (SecTrustCopyCertificateChain(trust) as? [SecCertificate])?.first else { return nil }
         return SHA256.hash(data: SecCertificateCopyData(leaf) as Data).map { String(format: "%02x", $0) }.joined()
     }
+
+    /// `Boolean _CFNetworkIsKnownHSTSHostWithSession(CFURLRef, CFURLStorageSessionRef)`, as WebKit's CFNetworkSPI.h declares it.
+    private typealias IsKnownHSTSHost = @convention(c) (CFURL, OpaquePointer?) -> DarwinBoolean
+
+    /// CFNetwork's HSTS lookup; private, so false when missing. Without a storage session it answers the preload
+    /// list, not the hosts a profile's pages set HSTS for: those live in WebKit's network process.
+    private static let isKnownHSTSHost: (URL) -> Bool = {
+        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFNetworkIsKnownHSTSHostWithSession") else { return { _ in false } }
+        let lookup = unsafeBitCast(symbol, to: IsKnownHSTSHost.self)
+        return { lookup($0 as CFURL, nil).boolValue }
+    }()
 
     /// macOS's reason for rejecting a failed navigation's certificate, naming the certificates it blames.
     static func certificateRejectionReason(_ error: NSError, trust: SecTrust?) -> String? {

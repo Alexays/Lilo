@@ -78,6 +78,8 @@
   const canShowSavedCopy = $derived(error != null && SAVED_COPY_CODES.has(error.code));
 
   const isCertError = $derived(error != null && CERT_ERROR_CODES.has(error.code));
+  // As in Chrome, a host that requires HTTPS (HSTS) gets no way past its certificate error.
+  const canVisitAnyway = $derived(isCertError && !activeTab?.navigationErrorUsesHSTS);
   // WebKitErrorFrameLoadBlockedByContentBlocker: trying again only gets blocked again.
   const isBlockedByContentBlocker = $derived(error?.code === 104);
   const errorHost = $derived.by(() => {
@@ -123,7 +125,7 @@
         {#if canShowSavedCopy}
           <UiButton onclick={() => tabActions.showCachedCopy()}>{t("errorPage.showSavedCopy")}</UiButton>
         {/if}
-        {#if isCertError && errorHost}
+        {#if canVisitAnyway && errorHost}
           <!-- Deliberately understated: proceeding past a cert error is the unsafe choice. -->
           <UiButton variant="ghost" onclick={visitAnyway}>{t("errorPage.visitAnyway")}</UiButton>
         {/if}

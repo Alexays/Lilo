@@ -35,6 +35,7 @@ export interface BridgeTabSnapshot {
 	navigationErrorDomain: string;
 	navigationErrorDescription: string;
 	navigationErrorURL: string;
+	navigationErrorUsesHSTS?: boolean;
 	isNotSecure?: boolean;
 	kind?: string;
 	cwd?: string;
@@ -86,6 +87,7 @@ export function coerceTabSnapshot(data: TabLike): BridgeTabSnapshot {
 		navigationErrorDomain: data.navigationErrorDomain ?? "",
 		navigationErrorDescription: data.navigationErrorDescription ?? "",
 		navigationErrorURL: data.navigationErrorURL ?? "",
+		navigationErrorUsesHSTS: data.navigationErrorUsesHSTS ?? false,
 		isNotSecure: data.isNotSecure ?? false,
 		kind: data.kind ?? "web",
 		cwd: data.cwd ?? "",
@@ -137,6 +139,7 @@ export function coerceTabPatch(data: TabLike): Partial<BridgeTabSnapshot> {
 	if (data.navigationErrorDomain !== undefined) out.navigationErrorDomain = data.navigationErrorDomain;
 	if (data.navigationErrorDescription !== undefined) out.navigationErrorDescription = data.navigationErrorDescription;
 	if (data.navigationErrorURL !== undefined) out.navigationErrorURL = data.navigationErrorURL;
+	if (data.navigationErrorUsesHSTS !== undefined) out.navigationErrorUsesHSTS = data.navigationErrorUsesHSTS;
 	if (data.isNotSecure !== undefined) out.isNotSecure = data.isNotSecure;
 	if (data.kind !== undefined) out.kind = data.kind;
 	if (data.cwd !== undefined) out.cwd = data.cwd;

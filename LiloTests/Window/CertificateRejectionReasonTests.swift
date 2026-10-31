@@ -89,4 +89,25 @@ final class CertificateExceptionTests: XCTestCase {
         let regular = try engine(showing: "https://example.com/", in: work, of: window)
         XCTAssertFalse(window.tab(regular, shouldAllowInsecureServerTrust: trust, forHost: "example.com", port: 443))
     }
+
+    /// The HSTS preload list covers all of `.app`: its certificate errors offer no exception.
+    func testACertificateErrorOnAnHSTSHostOffersNoException() throws {
+        try XCTSkipIf(dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFNetworkIsKnownHSTSHostWithSession") == nil, "no CFNetwork HSTS lookup")
+        let context = browserContext.context
+        let space = try context.spaceManager.createSpace(name: "Work", profileId: try context.profileManager.createProfile(name: "A").id)
+        let window = makeTestWindow(context, showing: space.id)
+        let tab = try engine(showing: "https://example.com/", in: space, of: window)
+        let untrusted = NSError(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted)
+
+        window.tab(tab, didNavigate: .failed(URL(string: "https://example.com/"), untrusted))
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorUsesHSTS, false)
+        window.tab(tab, didNavigate: .failed(URL(string: "https://shop.example.app/"), untrusted))
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorUsesHSTS, true)
+        window.tab(tab, didNavigate: .failed(URL(string: "https://shop.example.app/"), NSError(domain: NSURLErrorDomain, code: NSURLErrorTimedOut)))
+        XCTAssertEqual(window.tabManager.activeTab?.navigationErrorUsesHSTS, false)
+
+        window.tab(tab, didNavigate: .failed(URL(string: "https://shop.example.app/"), untrusted))
+        window.allowInsecureTrust(forHost: "shop.example.app")
+        XCTAssertFalse(window.tab(tab, shouldAllowInsecureServerTrust: try selfSignedTrust(), forHost: "shop.example.app", port: 443))
+    }
 }
