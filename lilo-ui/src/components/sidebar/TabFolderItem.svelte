@@ -481,15 +481,10 @@
 	/* The folder holding the active tab: a faint persistent wash in its own colour, well under the
 	   active tab's own fill, so a collapsed folder still shows where you are. */
 	.folder-row.contains-active {
-		background: color-mix(in srgb, var(--folder-accent) 10%, transparent);
-	}
-
-	.folder-row.contains-active:hover {
-		background: color-mix(in srgb, var(--folder-accent) 14%, color-mix(in srgb, var(--bg-selected) 20%, transparent));
+		background: color-mix(in srgb, var(--folder-accent) 11%, transparent);
 	}
 
 	.folder-row.contains-active .folder-title {
-		color: color-mix(in srgb, var(--text-primary) 82%, var(--folder-accent));
 		font-weight: var(--font-weight-medium);
 	}
 
