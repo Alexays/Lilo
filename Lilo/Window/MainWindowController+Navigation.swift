@@ -97,7 +97,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             if titleIsThePages, t.matchesHomeURL(resolvedURL) {
                 t.homeTitle = t.title
             }
-            t.isLoading = tab.isLoading
+            t.isLoading = tab.isLoading && tabManager.warmedTab?.engine !== tab
             t.canGoBack = tab.canGoBack
             t.canGoForward = tab.canGoForward
 
@@ -296,7 +296,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateLoading isLoading: Bool) {
-        updateAndEmit(tab.id) { t in t.isLoading = isLoading }
+        updateAndEmit(tab.id) { t in t.isLoading = isLoading && self.tabManager.warmedTab?.engine !== tab }
     }
 
     func tab(_ tab: WKWebViewTab, didUpdateNotSecure isNotSecure: Bool) {

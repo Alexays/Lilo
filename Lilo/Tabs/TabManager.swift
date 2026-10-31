@@ -65,7 +65,8 @@ final class TabManager {
     /// The command bar's top hit loading out of sight for a blank tab: `load(_:inTab:)` swaps it in.
     private(set) var topHitPreload: (url: URL, tabId: UUID, engine: WKWebViewTab)?
     /// The sleeping tab the pointer rested on, loading ahead of a click: it goes back to sleep unless it is shown.
-    private var warmedTab: (id: UUID, engine: WKWebViewTab)?
+    /// Loads unseen: its row shows no loading until it is opened.
+    private(set) var warmedTab: (id: UUID, engine: WKWebViewTab)?
 
     init(engineFactory: WKEngineFactory, terminalHost: TerminalHost = TerminalHost(), changesHost: ChangesHost = ChangesHost()) {
         self.engineFactory = engineFactory
@@ -235,7 +236,10 @@ final class TabManager {
 
     func activateTabRuntime(id: UUID) {
         guard let tab = tab(for: id) else { return }
-        if warmedTab?.id == id { warmedTab = nil }
+        if let (warmedId, engine) = warmedTab, warmedId == id {
+            warmedTab = nil
+            if let shown = updateTab(id: id, mutate: { $0.isLoading = engine.isLoading }) { delegate?.tabManager(self, didUpdateTab: shown) }
+        }
 
         // A locked folder's tab can be selected, never loaded: the window shows the lock placeholder.
         // A non-web tab has no engine to wake.
@@ -452,6 +456,7 @@ final class TabManager {
         sleepWarmedTab()
         guard let engine = ensureLiveEngine(forTabId: id) else { return }
         warmedTab = (id, engine)
+        if let unseen = updateTab(id: id, mutate: { $0.isLoading = false }) { delegate?.tabManager(self, didUpdateTab: unseen) }
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(20))
             if self?.warmedTab?.engine === engine { self?.sleepWarmedTab() }

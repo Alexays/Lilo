@@ -386,6 +386,7 @@ final class TabsQueryTests: XCTestCase {
         tabManager.warmTab(id: first.id)
         XCTAssertNotNil(tabManager.engineTab(for: first.id), "the page is on its way before the click")
         XCTAssertEqual(tabManager.activeTabId, active.id, "resting on a tab does not switch to it")
+        XCTAssertEqual(tabManager.currentTabs.first { $0.id == first.id }?.isLoading, false, "its row shows no loading")
 
         tabManager.warmTab(id: second.id)
         XCTAssertNil(tabManager.engineTab(for: first.id), "a tab never opened goes back to sleep")
@@ -404,6 +405,7 @@ final class TabsQueryTests: XCTestCase {
 
         XCTAssertNotNil(engine)
         XCTAssertTrue(tabManager.engineTab(for: first.id) === engine, "the opened tab keeps the page it loaded")
+        XCTAssertEqual(tabManager.currentTabs.first { $0.id == first.id }?.isLoading, engine?.isLoading, "opened, its row shows its loading")
     }
 
     func testActivatingColdTabRecreatesEngineWithoutTabLifecycleState() {
