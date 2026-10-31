@@ -1421,6 +1421,7 @@
 		"microphone": "麦克风",
 		"location": "位置",
 		"notifications": "通知",
+		"ask": "询问",
 		"allow": "允许",
 		"block": "阻止",
 		"reset": "还原"

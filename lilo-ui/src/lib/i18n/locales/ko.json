@@ -1421,6 +1421,7 @@
 		"microphone": "마이크",
 		"location": "위치",
 		"notifications": "알림",
+		"ask": "묻기",
 		"allow": "허용",
 		"block": "차단",
 		"reset": "재설정"

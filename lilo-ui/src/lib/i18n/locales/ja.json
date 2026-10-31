@@ -1421,6 +1421,7 @@
 		"microphone": "マイク",
 		"location": "位置情報",
 		"notifications": "通知",
+		"ask": "確認する",
 		"allow": "許可",
 		"block": "ブロック",
 		"reset": "リセット"

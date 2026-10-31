@@ -1421,6 +1421,7 @@
 		"microphone": "Microphone",
 		"location": "Location",
 		"notifications": "Notifications",
+		"ask": "Ask",
 		"allow": "Allow",
 		"block": "Block",
 		"reset": "Reset"

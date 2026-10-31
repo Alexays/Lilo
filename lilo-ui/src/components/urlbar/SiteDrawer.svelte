@@ -8,7 +8,7 @@
   import { getSitePermissions, getZoomLevels } from "../../stores/settings.svelte";
   import { getActiveTab } from "../../stores/tabs.svelte";
   import { getPageZoom, setSiteDrawerOpen } from "../../stores/urlBarDrawer.svelte";
-  import UiSegmented from "../ui/UiSegmented.svelte";
+  import UiSelect from "../ui/UiSelect.svelte";
   import URLDrawerRow from "./URLDrawerRow.svelte";
 
   let { host, origin }: { host: string; origin: string } = $props();
@@ -38,14 +38,18 @@
 {#each permissionRows as row (row.type)}
   <URLDrawerRow icon={row.type} label={t(`sitePermissions.${row.type}`)}>
     {#snippet trailing()}
-      <UiSegmented
-        value={row.state === "ask" ? "" : row.state}
+      <UiSelect
+        value={row.state}
         options={[
+          { value: "ask", label: t("sitePermissions.ask") },
           { value: "allowed", label: t("sitePermissions.allow") },
           { value: "blocked", label: t("sitePermissions.block") },
         ]}
         ariaLabel={t(`sitePermissions.${row.type}`)}
-        onchange={(value) => settingsActions.setSitePermission(origin, row.type, value === "allowed")}
+        onchange={(value) => {
+          if (value !== "ask") settingsActions.setSitePermission(origin, row.type, value === "allowed");
+          else if (row.id) settingsActions.revokeSitePermission(row.id);
+        }}
       />
     {/snippet}
   </URLDrawerRow>
