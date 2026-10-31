@@ -137,7 +137,7 @@ final class ProfileManagerTests: XCTestCase {
         try context.profileManager.deleteProfile(id: doomed.id)
 
         // WebKit removes a store from disk only once nothing holds it; when its network process lets go is up to WebKit.
-        let released = await pollUntil(timeout: 5) { store == nil }
+        let released = await pollUntil(timeout: 30) { store == nil }
         XCTAssertTrue(released, "the deleted profile's store stays in use, so WebKit cannot remove its cookies and site storage")
     }
 
