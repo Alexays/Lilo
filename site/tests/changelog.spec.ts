@@ -1,38 +1,6 @@
-import { createHash } from "node:crypto";
-
 import { expect, test } from "@playwright/test";
 
-test("recordings finish and restart their frames on cached replay", async ({
-  page,
-}) => {
-  await page.goto("/changelog/#v0.7.0");
-  const player = page.locator(".release-recording");
-  const button = player.locator(".recording-toggle");
-  const image = player.locator("img:visible");
-  await player.scrollIntoViewIfNeeded();
-  const poster = await image.getAttribute("src");
-
-  const pixels = async () =>
-    createHash("sha256")
-      .update(await image.screenshot())
-      .digest("hex");
-
-  await button.click();
-  await expect(image).toHaveJSProperty("complete", true);
-  const firstFrame = await pixels();
-  await expect.poll(pixels, { timeout: 3000 }).not.toBe(firstFrame);
-  await expect(button).toHaveAttribute("aria-pressed", "false", {
-    timeout: 8000,
-  });
-  await expect(image).toHaveJSProperty(
-    "src",
-    new URL(poster ?? "", page.url()).href
-  );
-  await button.click();
-  await expect.poll(pixels, { timeout: 700 }).toBe(firstFrame);
-  await expect.poll(pixels, { timeout: 3000 }).not.toBe(firstFrame);
-  await button.click();
-});
+test.use({ channel: "chrome" });
 
 for (const language of ["en", "fr"] as const) {
   const path = language === "fr" ? "/fr/changelog/" : "/changelog/";
@@ -41,7 +9,7 @@ for (const language of ["en", "fr"] as const) {
     page,
   }) => {
     await page.goto(`${path}#v0.7.0`);
-    const release = page.locator("#v0\\.7\\.0");
+    const release = page.locator('[id="v0.7.0"]');
     await expect(release.locator(".release-highlight")).toHaveCount(3);
     const summary = release.locator("summary");
     await summary.focus();
@@ -50,7 +18,7 @@ for (const language of ["en", "fr"] as const) {
     await expect(release.locator(".release-body")).toContainText("chrome.mdns");
     await page.keyboard.press("Space");
     await expect(release.locator(".release-body")).toBeHidden();
-    await expect(page.locator("#v0\\.6\\.0 .release-body")).toBeVisible();
+    await expect(page.locator('[id="v0.14.1"] .release-body')).toBeVisible();
     const demo = release.locator(".recording-action");
     await demo.focus();
     await page.keyboard.press("Enter");
@@ -60,26 +28,30 @@ for (const language of ["en", "fr"] as const) {
     await expect(page.locator("#browser-demo")).toBeVisible();
   });
 
-  test(`release captures follow the chosen appearance (${language})`, async ({
+  test(`changing appearance preserves the native media and keeps it paused (${language})`, async ({
     page,
   }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto(`${path}#v0.7.0`);
-    const capture = page.locator(".capture");
-    await capture.scrollIntoViewIfNeeded();
-    await expect(capture.locator(".capture-dark")).toBeVisible();
-    await expect(capture.locator(".capture-light")).toBeHidden();
+    const video = page.locator('[id="v0.7.0"] video');
+    await video.scrollIntoViewIfNeeded();
+    const poster = await video.getAttribute("poster");
+    const source = await video.locator("source").getAttribute("src");
+    expect(poster).toBeTruthy();
+    expect(source).toBeTruthy();
     await page
       .getByRole("button", {
         exact: true,
         name: language === "fr" ? "Mode sombre" : "Dark mode",
       })
       .click();
-    await expect(capture.locator(".capture-light")).toBeVisible();
-    await expect(capture.locator(".capture-dark")).toBeHidden();
+    await expect(video).toHaveAttribute("poster", poster ?? "");
+    await expect(video.locator("source")).toHaveAttribute("src", source ?? "");
+    await expect(video).toHaveJSProperty("paused", true);
+    await expect(video).toHaveJSProperty("currentTime", 0);
   });
 
-  test(`release highlights fit mobile and work without JavaScript (${language})`, async ({
+  test(`release highlights, MP4 controls and stills fit mobile without JavaScript (${language})`, async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -91,18 +63,18 @@ for (const language of ["en", "fr"] as const) {
     try {
       const page = await context.newPage();
       await page.goto(`${path}#v0.7.0`);
-      const release = page.locator("#v0\\.7\\.0");
+      const release = page.locator('[id="v0.7.0"]');
       await expect(release.locator(".release-highlight")).toHaveCount(3);
-      await expect(release.locator(".recording-toggle")).toBeHidden();
-      const image = release.locator(".capture-dark");
+      const video = release.locator("video[controls]");
+      await video.scrollIntoViewIfNeeded();
+      await expect(video).toBeVisible();
+      await expect(video).toHaveAttribute("preload", "none");
+      await expect(video).toHaveAttribute("poster", /\.png$/u);
+      const image = page.locator('[id="v0.6.0"] .release-media img');
       await image.scrollIntoViewIfNeeded();
       await expect(image).toBeVisible();
       await expect(image).toHaveJSProperty("complete", true);
-      expect(
-        await image.evaluate((element) =>
-          element instanceof HTMLImageElement ? element.naturalWidth : 0
-        )
-      ).toBeGreaterThan(0);
+      await expect(image).toHaveJSProperty("naturalWidth", 1920);
 
       const bounds = await release.evaluate((element) => ({
         pageWidth: document.documentElement.scrollWidth,
@@ -114,7 +86,7 @@ for (const language of ["en", "fr"] as const) {
       expect(bounds.pageWidth).toBe(bounds.width);
       await release.locator("summary").click();
       await expect(release.locator(".release-body")).toBeVisible();
-      await expect(page.locator("#v0\\.6\\.0 .release-body")).toBeVisible();
+      await expect(page.locator('[id="v0.14.1"] .release-body')).toBeVisible();
       await expect(release.locator(".recording-action")).toHaveAttribute(
         "href",
         `${language === "fr" ? "/fr/" : "/"}#browser-demo`
@@ -124,76 +96,38 @@ for (const language of ["en", "fr"] as const) {
     }
   });
 
-  test(`recordings respect Reduce Motion and stop outside the viewport (${language})`, async ({
+  test(`MP4 playback is keyboard controlled under Reduce Motion and stops offscreen (${language})`, async ({
     page,
   }) => {
     const requests: string[] = [];
     page.on("request", (request) => requests.push(request.url()));
     await page.goto(`${path}#v0.7.0`);
-    const player = page.locator(".release-recording");
-    await player.scrollIntoViewIfNeeded();
-    const button = player.locator(".recording-toggle");
-    const image = player.locator("img:visible");
-    const animation = await image.getAttribute("data-recording");
-    const poster = await image.getAttribute("src");
-    expect(animation).toBeTruthy();
-    expect(poster).toBeTruthy();
-    await expect(button).toHaveAttribute("aria-pressed", "false");
-    await expect(button).toHaveAccessibleName(
-      language === "fr" ? "Lire l'animation" : "Play walkthrough"
-    );
-    expect(requests).not.toContain(new URL(animation ?? "", page.url()).href);
-    await button.focus();
-    await page.keyboard.press("Enter");
-    await expect(button).toHaveAttribute("aria-pressed", "true");
-    await expect(button).toHaveAccessibleName(
-      language === "fr" ? "Arrêter" : "Stop"
-    );
-    await expect(image).toHaveAttribute("src", animation ?? "");
-    await button.click();
-    await expect(button).toHaveAttribute("aria-pressed", "false");
-    await expect(image).toHaveJSProperty(
-      "src",
-      new URL(poster ?? "", page.url()).href
-    );
-    await button.click();
-    await expect(button).toHaveAttribute("aria-pressed", "true");
-    await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
-    await expect(button).toHaveAttribute("aria-pressed", "false");
-    await expect(image).toHaveJSProperty(
-      "src",
-      new URL(poster ?? "", page.url()).href
-    );
+    const video = page.locator('[id="v0.7.0"] video');
+    await video.scrollIntoViewIfNeeded();
+    const source = await video.locator("source").getAttribute("src");
+    expect(source).toBeTruthy();
+    expect(requests).not.toContain(new URL(source ?? "", page.url()).href);
+    await expect(video).toHaveJSProperty("paused", true);
+    await expect(video).toHaveJSProperty("autoplay", false);
+    await video.focus();
+    await page.keyboard.press("Space");
+    await expect
+      .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+      .toBeGreaterThan(0.2);
+    await expect(video).toHaveJSProperty("muted", false);
+    await page.locator("footer").scrollIntoViewIfNeeded();
+    await expect(video).toHaveJSProperty("paused", true);
   });
 
-  test(`recordings play once in view and stop when the appearance changes (${language})`, async ({
+  test(`films stay still until requested with motion allowed (${language})`, async ({
     page,
   }) => {
-    await page.emulateMedia({
-      colorScheme: "dark",
-      reducedMotion: "no-preference",
-    });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto(`${path}#v0.7.0`);
-    const player = page.locator(".release-recording");
-    const button = player.locator(".recording-toggle");
-    await player.scrollIntoViewIfNeeded();
-    await expect(button).toHaveAttribute("aria-pressed", "true");
-    await page
-      .getByRole("button", {
-        exact: true,
-        name: language === "fr" ? "Mode sombre" : "Dark mode",
-      })
-      .click();
-    await expect(button).toHaveAttribute("aria-pressed", "false");
-    await expect(player.locator(".capture-light")).toBeVisible();
-    await player.scrollIntoViewIfNeeded();
-    await page.evaluate(async () => {
-      const settled = Promise.withResolvers<undefined>();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => settled.resolve(undefined));
-      });
-      await settled.promise;
-    });
-    await expect(button).toHaveAttribute("aria-pressed", "false");
+    const video = page.locator('[id="v0.7.0"] video');
+    await video.scrollIntoViewIfNeeded();
+    await expect(video).toHaveJSProperty("autoplay", false);
+    await expect(video).toHaveJSProperty("paused", true);
+    await expect(video).toHaveJSProperty("currentTime", 0);
   });
 }

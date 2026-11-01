@@ -64,7 +64,7 @@ jobs:
           node-version-file: '.nvmrc'
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: make release-media-check release-media-test
-      - run: make site-e2e SITE_E2E_ARGS=tests/release-media.spec.ts
+      - run: make site-e2e SITE_E2E_ARGS='tests/changelog.spec.ts tests/release-media.spec.ts'
 
   ui:
     name: UI (lint, test, build, end-to-end)
