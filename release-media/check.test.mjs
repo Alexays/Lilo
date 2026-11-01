@@ -64,6 +64,70 @@ test("publication requires approval and a passing receipt for the exact native f
   await writeFile(path.join(assets, "quality.json"), json(quality));
   assert.match(run().toString(), /Approved 0\.11\.0/u);
 
+  const motion = quality.motion;
+  for (const change of [
+    { movingFrameRatio: 0 },
+    { longestStillSeconds: 3 },
+    { largestLumaChange: 30 },
+  ]) {
+    quality.motion = { ...motion, ...change };
+    await writeFile(path.join(assets, "quality.json"), json(quality));
+    assert.throws(run, /needs a passing quality check/u);
+  }
+  quality.motion = motion;
+  await writeFile(path.join(assets, "quality.json"), json(quality));
+
   await writeFile(path.join(assets, "spaces.mp4"), "changed encoded bytes");
   assert.throws(run, /Rendered media changed/u);
+
+  await t.test("a 60 fps slideshow with valid H.264 and AAC is refused", async () => {
+    const film = path.join(assets, "spaces.mp4");
+    execFileSync(
+      "ffmpeg",
+      [
+        "-v",
+        "error",
+        "-y",
+        "-loop",
+        "1",
+        "-i",
+        path.join(assets, "spaces.png"),
+        "-i",
+        path.join(root, "public/audio/switch.wav"),
+        "-t",
+        "1",
+        "-r",
+        "60",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "ultrafast",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-ar",
+        "48000",
+        "-af",
+        "apad",
+        film,
+      ],
+      { stdio: "pipe" },
+    );
+    render.approved = false;
+    render.frames = 60;
+    render.posterFrame = 0;
+    render.hashes["spaces.mp4"] = createHash("sha256")
+      .update(await readFile(film))
+      .digest("hex");
+    for (const file of Object.keys(render.recipeHashes))
+      render.recipeHashes[file] = createHash("sha256")
+        .update(await readFile(path.join(folder, file)))
+        .digest("hex");
+    await writeFile(path.join(assets, "render.json"), json(render));
+    assert.throws(
+      () => execFileSync(process.execPath, [path.join(folder, "check.mjs")], { stdio: "pipe" }),
+      /Motion quality failed/u,
+    );
+  });
 });

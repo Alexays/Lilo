@@ -12,7 +12,7 @@ if (
 )
   throw Error("Unknown release media version");
 const recipeHashes = {};
-for (const file of ["src/Root.tsx", "src/Backlog.tsx", "package-lock.json"])
+for (const file of ["src/Root.tsx", "src/Backlog.tsx", "src/Motion.tsx", "package-lock.json"])
   recipeHashes[file] = createHash("sha256")
     .update(await readFile(path.join(root, file)))
     .digest("hex");
@@ -61,7 +61,7 @@ try {
     };
     const started = performance.now();
     const posterFrame =
-      entry.kind === "video" ? Math.round(composition.durationInFrames * 0.65) : 0;
+      entry.kind === "video" ? Math.round(composition.durationInFrames * 0.88) : 0;
     if (entry.kind === "video") {
       await renderMedia({
         ...common,

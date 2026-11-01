@@ -5,23 +5,24 @@
   "feature": "pinned-tabs",
   "appVersion": "0.14.1",
   "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit": "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0",
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 420,
-  "posterFrame": 273,
-  "renderMilliseconds": 6232.653666000013,
+  "frames": 330,
+  "posterFrame": 290,
+  "renderMilliseconds": 5780.127082999999,
   "hashes": {
-    "pinned-tabs.png": "f82b0d80ab8b4dadc4e30128df12f35b89a94e58990604764612f4b3c3cc7907",
-    "pinned-tabs.mp4": "4bc513df04f8277eeffa6bef4c8bc0d86cf77a10dea6b589a1e8e079972355b4"
+    "pinned-tabs.png": "0f96e43a0be9862e9c2e21f876b534d26cbee160f998ef1f24bd45d65297421c",
+    "pinned-tabs.mp4": "39e361c9109b40f3949e65b03c715c5f5c91dc2fafae5bd2046b460c85163243"
   },
   "recipeHashes": {
-    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
-    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
+    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
+    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
     "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
   },
-  "nativeReceiptSha256": "cfea6dd8b8d850ecc6c8d6b74f06c2645e9c74ce434d61af99adef3c2a30bd36",
+  "nativeReceiptSha256": "07c3d28cc8a4923e99a2e0b19e7d457a1a15f10bc938894dbaffa394a5aacd2e",
   "approved": false,
   "publication": "blocked"
 }

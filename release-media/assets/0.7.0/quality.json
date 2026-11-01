@@ -3,12 +3,18 @@
   "kind": "video",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "787d0e931909f485f911d16e841809efaefb1464fd0a35ec5938422548e29840",
+  "renderSha256": "58c85dbf68f01241aa9ca29467dbf1da8277f0f59c65fa1166c0e2e863386e96",
   "publication": "blocked",
   "decode": true,
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "audioPeakDb": -10.5,
-  "posterSSIM": 0.998272
+  "audioPeakDb": -12.7,
+  "posterSSIM": 0.995841,
+  "motion": {
+    "measuredFrames": 359,
+    "movingFrameRatio": 0.25069637883008355,
+    "longestStillSeconds": 1.0333333333333334,
+    "largestLumaChange": 2.67574
+  }
 }

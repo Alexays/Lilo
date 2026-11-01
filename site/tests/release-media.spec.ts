@@ -114,7 +114,7 @@ for (const version of [
 ]) {
   test(`the ${version} film decodes its actual native footage`, async ({
     page,
-  }) => {
+  }, testInfo) => {
     await page.goto(`/changelog/#v${version}`);
     const video = page.locator(`[id="v${version}"] video`);
     await video.scrollIntoViewIfNeeded();
@@ -129,7 +129,34 @@ for (const version of [
         v.error?.code ?? 0,
       ])
     ).toEqual([1920, 1080, 0]);
+
+    const before = await video.evaluate((v: HTMLVideoElement) => ({
+      dropped: v.getVideoPlaybackQuality().droppedVideoFrames,
+      frames: v.getVideoPlaybackQuality().totalVideoFrames,
+      time: v.currentTime,
+    }));
+
+    const started = Date.now();
+    await expect
+      .poll(() => video.evaluate((v: HTMLVideoElement) => v.currentTime))
+      .toBeGreaterThanOrEqual(before.time + 1.5);
+
+    const after = await video.evaluate((v: HTMLVideoElement) => ({
+      dropped: v.getVideoPlaybackQuality().droppedVideoFrames,
+      frames: v.getVideoPlaybackQuality().totalVideoFrames,
+    }));
+
+    const playback = {
+      dropped: after.dropped - before.dropped,
+      elapsed: (Date.now() - started) / 1000,
+      frames: after.frames - before.frames,
+    };
+
+    expect(playback.frames).toBeGreaterThanOrEqual(80);
+    expect(playback.dropped / playback.frames).toBeLessThan(0.03);
+    expect(playback.elapsed).toBeLessThan(2.5);
     await video.evaluate((v: HTMLVideoElement) => v.pause());
+    await page.screenshot({ path: testInfo.outputPath("film.png") });
   });
 }
 

@@ -18,17 +18,17 @@
     },
     {
       "file" : "archive.png",
-      "height" : 968,
+      "height" : 840,
       "pixelsPerPoint" : 8,
       "rectPoints" : [
-        182,
-        185,
-        256,
-        121
+        190,
+        193,
+        240,
+        105
       ],
-      "sha256" : "9491fad7bc405fbfb79b09c30c4586f55b11b8913c179e22a4a750d62b1c76f5",
+      "sha256" : "001acabe1f41df5762ef0cdbcd7664d68b8be6750e72f857470a51d3d494b682",
       "tool" : "WKWebView.takeSnapshot",
-      "width" : 2048
+      "width" : 1920
     },
     {
       "file" : "restored.png",
@@ -45,13 +45,14 @@
       "width" : 1584
     }
   ],
-  "capturedAt" : "2026-11-01T11:02:04Z",
+  "capturedAt" : "2026-11-01T12:13:20Z",
   "checks" : {
+    "insertionY" : 161.109375,
     "restoredNativeArchiveEntry" : true
   },
   "feature" : "archive",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
   "release" : "0.10.0",
   "schemaVersion" : 1
 }

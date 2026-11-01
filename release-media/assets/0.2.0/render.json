@@ -5,23 +5,24 @@
   "feature": "tab-edges",
   "appVersion": "0.14.1",
   "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit": "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 510,
-  "posterFrame": 332,
-  "renderMilliseconds": 7784.093249999998,
+  "frames": 432,
+  "posterFrame": 380,
+  "renderMilliseconds": 9556.756708,
   "hashes": {
-    "tab-edges.png": "18ba0c1374370ef6b9e1e4e979f9b6f699b68b470c2c1556f087015b7c7ba3de",
-    "tab-edges.mp4": "c52dc99419a4fc14ddc92b9fe2d4bc88cf1f5cebd0496f6b8cf53443ecfd74ae"
+    "tab-edges.png": "73d937c583c8d356a2ea3bb5ed97e6d9cc6a99f30122bceff7014248f555ecd7",
+    "tab-edges.mp4": "e0b5d31d57ead7dda689c8a1b5596e7569e505b3bb394b81ade9eee6c6cdbfa6"
   },
   "recipeHashes": {
-    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
-    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
+    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
+    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
     "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
   },
-  "nativeReceiptSha256": "2999b60ffa4055ae646ae6c334161d6ed289adbf8461ba29de5743486e6e3e41",
+  "nativeReceiptSha256": "b4f247f968e28089ffaf5a8e8ff3f66f33cd06a761bd4bcf1db540b0495deb1a",
   "approved": false,
   "publication": "blocked"
 }

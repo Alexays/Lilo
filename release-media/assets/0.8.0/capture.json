@@ -4,17 +4,17 @@
   "assets" : [
     {
       "file" : "picker.png",
-      "height" : 944,
-      "pixelsPerPoint" : 3,
+      "height" : 2520,
+      "pixelsPerPoint" : 8,
       "rectPoints" : [
         430,
         56,
         680,
         315
       ],
-      "sha256" : "70ba5c153ca2a0adead6461dcda019907ed6cc2ac1d7b8eb19b71d98ced532d7",
+      "sha256" : "3e305f44902782e6c111498b76578e05369b291832fdba65a2654237f7df574b",
       "tool" : "WKWebView.takeSnapshot",
-      "width" : 2040
+      "width" : 5440
     },
     {
       "file" : "search-empty.png",
@@ -31,18 +31,102 @@
       "width" : 5136
     },
     {
+      "file" : "search-0.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "79f16e032a805fb6e4f2447b44b3e229a9e7548fe20ddf13fb74609302da637e",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "search-1.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "6a67fe489704057fa4489c4237f90a34afb83407fb7551c031dc03033b173d63",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "search-2.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "cac7078b95e763db3011b891890659f571186f25a9ef65f68e5ec399e7d72582",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "search-3.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "bc91c01e1845c1088406f8fc815564a8a126776c9ceaafba534f308c0dc09c58",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "search-4.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "21c01c5f250a03e5d71caeebb030eb0d50f571cc1f4478ae363fdf5a549e4f00",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "search-5.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "1d3db55c8bafd186bd31ce90883b40b0627eb8704ba62a450b1cd7890e9c2eb5",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
       "file" : "filtered.png",
-      "height" : 876,
-      "pixelsPerPoint" : 3,
+      "height" : 2336,
+      "pixelsPerPoint" : 8,
       "rectPoints" : [
         430,
         56,
         680,
         292
       ],
-      "sha256" : "1963171ce5248683ae62572e167fdc7020023c97fba90cbe8b8b47e991a22bac",
+      "sha256" : "e1e417d977d6f0c906dab27fe8a7b90b886f3aee2f202e74f003ee62a57d55cd",
       "tool" : "WKWebView.takeSnapshot",
-      "width" : 2040
+      "width" : 5440
     },
     {
       "file" : "search.png",
@@ -101,7 +185,7 @@
       "width" : 1984
     }
   ],
-  "capturedAt" : "2026-11-01T10:54:54Z",
+  "capturedAt" : "2026-11-01T11:55:14Z",
   "checks" : {
     "nativeShareSourceChanged" : true,
     "pickerSearch" : "Field",
@@ -111,7 +195,7 @@
   },
   "feature" : "tab-share",
   "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
-  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit" : "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0",
   "release" : "0.8.0",
   "schemaVersion" : 1
 }

@@ -87,6 +87,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: release-media-review release-media-stage
 .PHONY: release-media-fix
 .PHONY: release-media-test
+.PHONY: release-media-inspect
 
 ## List the targets
 help:
@@ -252,6 +253,10 @@ release-media-check:
 ## Verify publication refuses unapproved, stale or changed media without external build tools
 release-media-test:
 	@node --test release-media/check.test.mjs
+
+## Extract compact-layout frames from the actual encoded films (RELEASE=x.y.z narrows the inspection)
+release-media-inspect:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/inspect.mjs
 
 ## Refuse publication while release media has not passed review
 release-media-publish-check:

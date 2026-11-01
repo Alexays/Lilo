@@ -10,6 +10,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         }
         let capture = try await ReleaseMediaCapture(version: "review", feature: "review")
         defer { capture.close() }
+        var playbackQuality: [String: Any] = [:]
         try await capture.page()
         capture.controller.bridgeRouter.send(event: "openWhatsNew", data: ["version": version, "automatic": false])
         try await capture.wait("actual native What's New opens with the selected release") { await capture.exists(".whats-new .release-media") }
@@ -22,9 +23,14 @@ final class ReleaseMediaCaptureTests: XCTestCase {
             try await capture.wait("native MP4 playback advances with sound") {
                 (try? await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video');return v.currentTime>.2&&v.controls&&!v.muted&&v.audioTracks.length>0})()")) as? Bool == true
             }
-            _ = try await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video');v.pause();v.currentTime=Math.min(4.5,v.duration/2)})();undefined")
+            try await capture.wait("native MP4 playback stays smooth") {
+                (try? await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video'),q=v.getVideoPlaybackQuality();return v.currentTime>=1.8&&(q.totalVideoFrames-q.droppedVideoFrames)/v.currentTime>=54&&q.droppedVideoFrames/Math.max(1,q.totalVideoFrames)<.03})()")) as? Bool == true
+            }
+            let quality = try await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video'),q=v.getVideoPlaybackQuality();return {seconds:v.currentTime,totalFrames:q.totalVideoFrames,droppedFrames:q.droppedVideoFrames,presentedFps:(q.totalVideoFrames-q.droppedVideoFrames)/v.currentTime}})()")
+            playbackQuality = quality as? [String: Any] ?? [:]
+            _ = try await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video');v.pause();v.currentTime=v.duration*.88})();undefined")
             try await capture.wait("native MP4 seeking completes") {
-                (try? await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video');return !v.seeking&&Math.abs(v.currentTime-Math.min(4.5,v.duration/2))<.05})()")) as? Bool == true
+                (try? await capture.chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video');return !v.seeking&&Math.abs(v.currentTime-v.duration*.88)<.05})()")) as? Bool == true
             }
         } else {
             try await capture.wait("native release still loads losslessly") {
@@ -32,7 +38,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
             }
         }
         try await capture.window("whats-new-\(version)")
-        try capture.finish(checks: ["actualNativeWhatsNew": true, "reviewedRelease": version, "actualBinaryVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? ""])
+        try capture.finish(checks: ["actualNativeWhatsNew": true, "reviewedRelease": version, "actualBinaryVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? "", "playbackQuality": playbackQuality])
     }
     func testSpacesMaterialAndColor() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.11.0", feature: "spaces")
@@ -103,10 +109,13 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.page(title: "Studio notes")
         for position in TabPosition.allCases {
             capture.controller.setTabPosition(position)
-            try await capture.wait("native tab layout is \(position)") { capture.controller.tabLayout.position == position }
+            try await capture.wait("native and rendered tab layouts are \(position)") {
+                guard capture.controller.tabLayout.position == position else { return false }
+                return (try? await capture.chrome.evaluateJavaScript("document.documentElement.dataset.tabPosition")) as? String == position.rawValue
+            }
             try await capture.window(position.rawValue)
         }
-        try capture.finish(checks: ["nativeTabPositions": TabPosition.allCases.map(\.rawValue)])
+        try capture.finish(checks: ["nativeTabPositions": TabPosition.allCases.map(\.rawValue), "renderedLayoutsVerified": true])
     }
 
     func testSettingsPageStill() async throws {
@@ -152,13 +161,20 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         }
         capture.controller.openHistory(nil)
         try await capture.wait("native History opens") { await capture.exists(".history-search input") }
+        try await capture.wait("native history groups are loaded") { await capture.exists(".row.site") }
         try await capture.region(".ui-shell-frame", name: "history", scale: 3, margin: 0)
+        try await capture.click(".row.site")
+        try await capture.region(".nested-rows", name: "rows", margin: 0, crop: CGSize(width: 300, height: 120))
         try await capture.region(".history-search input", name: "search-empty", margin: 6)
-        try await capture.input(".history-search input", value: "Studio")
+        for (index, query) in ["", "S", "St", "Stu", "Stud", "Studi", "Studio"].enumerated() {
+            try await capture.input(".history-search input", value: query)
+            try await capture.region(".history-search input", name: "search-\(index)", margin: 6)
+        }
         try await capture.wait("native history filters the real store") {
             (try? await capture.chrome.evaluateJavaScript("document.querySelector('.days')?.textContent.includes('Studio notes') && !document.querySelector('.days')?.textContent.includes('Field guide')")) as? Bool == true
         }
         try await capture.region(".ui-shell-frame", name: "filtered", scale: 3, margin: 0)
+        try await capture.region(".day .card", name: "filtered-rows", margin: 0, crop: CGSize(width: 300, height: 120))
         try await capture.region(".history-search input", name: "search", margin: 6)
         try capture.finish(checks: ["nativeHistoryStoreVisits": 4, "query": "Studio", "filteredOut": "Field guide"])
     }
@@ -172,15 +188,17 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         capture.controller.sendArchivedTabs()
         try await capture.wait("native archive button appears") { await capture.exists(".archive-button") }
         try await capture.region(".tab-item, .new-tab-line", name: "before", scale: 6, margin: 8)
+        let rawInsertionY = try await capture.chrome.evaluateJavaScript("document.querySelector('.new-tab-line').getBoundingClientRect().y")
+        let insertionY = try XCTUnwrap(rawInsertionY as? Double)
         try await capture.click(".archive-button")
         try await capture.wait("native archive menu opens") { await capture.exists(".menu-row:not(.show-all)") }
-        try await capture.region(".strip-popover", name: "archive", margin: 8)
+        try await capture.region(".strip-popover", name: "archive", margin: 0)
         try await capture.click(".menu-row:not(.show-all)")
         try await capture.wait("real native archive entry was restored") { !capture.context.tabArchive.entries.contains(where: { $0.id == entry.id }) }
         let restored = try XCTUnwrap(capture.controller.tabManager.openTabs.first { $0.url == entry.url })
         try await capture.loadPage(in: restored, title: entry.title, url: entry.url)
         try await capture.region(".tab-item, .new-tab-line", name: "restored", scale: 6, margin: 8)
-        try capture.finish(checks: ["restoredNativeArchiveEntry": true])
+        try capture.finish(checks: ["restoredNativeArchiveEntry": true, "insertionY": insertionY])
     }
 
     func testSiteColorsStill() async throws {
@@ -221,13 +239,16 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         let pick = Task { await capture.controller.presentTabSharePicker(origin: "https://example.com", requester: requester, allowsSystem: false) }
         defer { pick.cancel() }
         try await capture.wait("actual native tab picker opens") { await capture.exists(".tab-share-panel") }
-        try await capture.region(".tab-share-panel", name: "picker", scale: 3, margin: 0)
+        try await capture.region(".tab-share-panel", name: "picker", margin: 0)
         try await capture.region(".tab-share-search", name: "search-empty", margin: 0)
-        try await capture.input(".tab-share-search input", value: "Field")
+        for (index, query) in ["", "F", "Fi", "Fie", "Fiel", "Field"].enumerated() {
+            try await capture.input(".tab-share-search input", value: query)
+            try await capture.region(".tab-share-search", name: "search-\(index)", margin: 0)
+        }
         try await capture.wait("actual native picker filters tabs") {
             (try? await capture.chrome.evaluateJavaScript("document.querySelectorAll('.tab-share-card').length===1 && document.querySelector('.tab-share-card-title')?.textContent==='Field guide'")) as? Bool == true
         }
-        try await capture.region(".tab-share-panel", name: "filtered", scale: 3, margin: 0)
+        try await capture.region(".tab-share-panel", name: "filtered", margin: 0)
         try await capture.region(".tab-share-search", name: "search", margin: 0)
         try await capture.region(".tab-share-card", name: "match", margin: 0)
         try await capture.click(".tab-share-btn.primary")
@@ -257,7 +278,10 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.region(".pinned-section", name: "pinned", margin: 0)
         _ = try await capture.chrome.evaluateJavaScript("document.querySelector('.pinned-section .tab-title').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}));undefined")
         try await capture.wait("native rename input opens") { await capture.exists(".tab-title-input") }
-        try await capture.input(".tab-title-input", value: "Studio")
+        for (index, title) in ["", "S", "St", "Stu", "Stud", "Studi", "Studio"].enumerated() {
+            try await capture.input(".tab-title-input", value: title)
+            try await capture.region(".pinned-section", name: "rename-\(index)", margin: 0)
+        }
         try await capture.region(".pinned-section", name: "renaming", margin: 0)
         _ = try await capture.chrome.evaluateJavaScript("document.querySelector('.tab-title-input').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));undefined")
         try await capture.wait("native rename is saved") { capture.controller.tabManager.tab(for: tab.id)?.customTitle == "Studio" }
@@ -269,13 +293,17 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         let capture = try await ReleaseMediaCapture(version: "0.14.0", feature: "drop")
         defer { capture.close() }
         try await capture.page(title: "Studio notes")
-        try await capture.page(title: "Field guide")
+        let source = try await capture.page(title: "Field guide")
+        let sourceEngine = try XCTUnwrap(capture.controller.tabManager.engineTab(for: source.id))
+        _ = try await sourceEngine.wkWebView.evaluateJavaScript("document.querySelector('a').textContent='New idea';document.querySelector('a').href='https://example.com/new-idea';undefined")
+        try await capture.region("a", name: "link", margin: 8, in: sourceEngine.wkWebView)
         try await capture.region(".tab-item, .new-tab-line", name: "before", scale: 6, margin: 8)
         capture.controller.bridgeRouter.send(event: "linkDrag", data: ["urls": ["https://example.com/new-idea"], "text": ""])
         try await capture.settled()
         _ = try await capture.chrome.evaluateJavaScript("""
             window.fixtureDrag=new DataTransfer();window.fixtureDrag.setData('text/uri-list','https://example.com/new-idea');
             const r=document.querySelectorAll('.tab-list .tab-item')[1].getBoundingClientRect();
+            window.fixtureInsertionY=r.y;
             window.fixtureDragPoint={x:r.x+r.width/2,y:r.y+1};
             window.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:window.fixtureDrag,clientX:window.fixtureDragPoint.x,clientY:window.fixtureDragPoint.y}));undefined;
             """)
@@ -288,6 +316,10 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         let dropped = try XCTUnwrap(capture.controller.tabManager.openTabs.first { $0.url?.absoluteString == "https://example.com/new-idea" })
         try await capture.loadPage(in: dropped, title: "New idea", url: URL(string: "https://example.com/new-idea")!)
         try await capture.region(".tab-item, .new-tab-line", name: "dropped", scale: 6, margin: 8)
-        try capture.finish(checks: ["syntheticExternalDragPayload": true, "actualNativeDropIndicator": true, "actualBrowserCommandOpenedLink": true])
+        let rawPoint = try await capture.chrome.evaluateJavaScript("window.fixtureDragPoint")
+        let point = try XCTUnwrap(rawPoint as? [String: Double])
+        let rawInsertionY = try await capture.chrome.evaluateJavaScript("window.fixtureInsertionY")
+        let insertionY = try XCTUnwrap(rawInsertionY as? Double)
+        try capture.finish(checks: ["syntheticExternalDragPayload": true, "actualNativeDropIndicator": true, "actualBrowserCommandOpenedLink": true, "insertionPoint": point, "insertionY": insertionY])
     }
 }

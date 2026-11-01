@@ -5,23 +5,24 @@
   "feature": "archive",
   "appVersion": "0.14.1",
   "appBuild": "31",
-  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "productSourceCommit": "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e",
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 420,
-  "posterFrame": 273,
-  "renderMilliseconds": 6056.169083999997,
+  "frames": 300,
+  "posterFrame": 264,
+  "renderMilliseconds": 5504.832041999998,
   "hashes": {
-    "archive.png": "7c4ee29f750c6dfaee32373d9fc75f26d049285bde532d22001feaacd4e355a5",
-    "archive.mp4": "2f35fadbbacf58837431cd39562271da0526117f850a57ee859607ab5286fd4d"
+    "archive.png": "1ebd9e34bf130cf5de1cf1b19a580ab05f25b7a0681421aa581332b184d0c6ee",
+    "archive.mp4": "dc29a0f77fc1eeeca15e5031401de3befda0ea6c23f34917653ca207ec47b8cf"
   },
   "recipeHashes": {
-    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
-    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
+    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
+    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
     "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
   },
-  "nativeReceiptSha256": "19f57e08acf3fbfcf8aefa12a702f77210d7c98b0243bcf88952b1bba5120a65",
+  "nativeReceiptSha256": "9b5a114b77ef62b312f0d5f2c7e5e142d23ee3792cf89cc4ed9d8dc97130a7db",
   "approved": false,
   "publication": "blocked"
 }

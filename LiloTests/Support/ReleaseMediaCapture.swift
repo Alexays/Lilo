@@ -32,6 +32,7 @@ final class ReleaseMediaCapture {
         output = URL(fileURLWithPath: directory).appendingPathComponent(version)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try? FileManager.default.removeItem(at: output.appendingPathComponent("capture.json"))
+        try? FileManager.default.removeItem(at: output.appendingPathComponent("failure.json"))
         fixture = try await TemporaryBrowserContext()
         let context = fixture.context
         NSApp.setActivationPolicy(.regular)
@@ -119,7 +120,7 @@ final class ReleaseMediaCapture {
         let passed = await pollUntil(timeout: timeout, condition)
         XCTAssertTrue(passed, message)
         if !passed {
-            let detail = try? await chrome.evaluateJavaScript("({url:location.href,visibility:document.visibilityState,ready:document.readyState,width:innerWidth,height:innerHeight,booting:document.documentElement.hasAttribute('data-booting'),text:document.body.innerText.slice(0,500)})")
+            let detail = try? await chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video'),q=v?.getVideoPlaybackQuality();return {url:location.href,visibility:document.visibilityState,ready:document.readyState,width:innerWidth,height:innerHeight,booting:document.documentElement.hasAttribute('data-booting'),text:document.body.innerText.slice(0,500),video:v?{time:v.currentTime,duration:v.duration,frames:q.totalVideoFrames,dropped:q.droppedVideoFrames,paused:v.paused,ready:v.readyState}:null}})()")
             let session = CGSessionCopyCurrentDictionary() as? [String: Any]
             let record: [String: Any] = ["message": message, "chrome": detail ?? [:], "windowVisible": controller.window?.isVisible ?? false,
                                          "sessionLocked": session?["CGSSessionScreenIsLocked"] as? Bool ?? false]
@@ -167,8 +168,8 @@ final class ReleaseMediaCapture {
         return tab
     }
 
-    func settled() async throws {
-        _ = try await chrome.callAsyncJavaScript("""
+    func settled(in webView: WKWebView? = nil) async throws {
+        _ = try await (webView ?? chrome).callAsyncJavaScript("""
             await document.fonts.ready;
             await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));
             await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));
@@ -176,20 +177,22 @@ final class ReleaseMediaCapture {
             """, arguments: [:], in: nil, contentWorld: .page)
     }
 
-    func region(_ selector: String, name: String, scale: CGFloat = 8, margin: CGFloat = 14) async throws {
-        try await settled()
-        let raw = try await chrome.callAsyncJavaScript("""
+    func region(_ selector: String, name: String, scale: CGFloat = 8, margin: CGFloat = 14, in webView: WKWebView? = nil, crop: CGSize? = nil) async throws {
+        let view = webView ?? chrome
+        try await settled(in: view)
+        let raw = try await view.callAsyncJavaScript("""
             const rs=[...document.querySelectorAll(selector)].map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height);
             if(!rs.length) throw Error('Missing visible native capture region: '+selector);
             const x=Math.min(...rs.map(r=>r.x)), y=Math.min(...rs.map(r=>r.y));
             return [x,y,Math.max(...rs.map(r=>r.right))-x,Math.max(...rs.map(r=>r.bottom))-y];
             """, arguments: ["selector": selector], in: nil, contentWorld: .page)
         let r = try XCTUnwrap(raw as? [Double])
-        let rect = CGRect(x: r[0], y: r[1], width: r[2], height: r[3]).insetBy(dx: -margin, dy: -margin).intersection(chrome.bounds).integral
+        var rect = CGRect(x: r[0], y: r[1], width: r[2], height: r[3]).insetBy(dx: -margin, dy: -margin).intersection(view.bounds).integral
+        if let crop { rect.size = CGSize(width: min(rect.width, crop.width), height: min(rect.height, crop.height)) }
         let config = WKSnapshotConfiguration()
         config.rect = rect
-        config.snapshotWidth = NSNumber(value: rect.width * scale / (chrome.window?.backingScaleFactor ?? 1))
-        let image = try await chrome.takeSnapshot(configuration: config)
+        config.snapshotWidth = NSNumber(value: rect.width * scale / (view.window?.backingScaleFactor ?? 1))
+        let image = try await view.takeSnapshot(configuration: config)
         let bitmap = try XCTUnwrap(image.tiffRepresentation.flatMap(NSBitmapImageRep.init(data:)))
         XCTAssertEqual(bitmap.pixelsWide, Int(rect.width * scale))
         try save(bitmap, name: name, tool: "WKWebView.takeSnapshot", points: rect, scale: scale)
@@ -197,6 +200,9 @@ final class ReleaseMediaCapture {
 
     func window(_ name: String) async throws {
         try await settled()
+        try await wait("native window layout has settled") {
+            self.controller.contentContainerView.layer?.animation(forKey: "sidebarSlide") == nil
+        }
         let nativeWindow = try XCTUnwrap(controller.window)
         let content = try await SCShareableContent.currentProcess
         let target = try XCTUnwrap(content.windows.first { $0.windowID == CGWindowID(nativeWindow.windowNumber) })

@@ -25,6 +25,15 @@ if (
 )
   throw Error("Every published release needs an explicit video, screenshot or none decision.");
 const sha = (data) => createHash("sha256").update(data).digest("hex");
+const passesMotion = (motion, frames) =>
+  motion?.measuredFrames === frames - 1 &&
+  Number.isFinite(motion.movingFrameRatio) &&
+  motion.movingFrameRatio >= 0.2 &&
+  motion.movingFrameRatio <= 1 &&
+  Number.isFinite(motion.longestStillSeconds) &&
+  motion.longestStillSeconds <= 1.75 &&
+  Number.isFinite(motion.largestLumaChange) &&
+  motion.largestLumaChange <= 15;
 const scratch = await mkdtemp(path.join(tmpdir(), "lilo-media-check-"));
 try {
   for (const [version, entry] of Object.entries(catalog.releases)) {
@@ -69,7 +78,7 @@ try {
       throw Error(`Stale or incorrect render: ${version}`);
     if (sha(sourceBytes) !== render.nativeReceiptSha256)
       throw Error(`Stale native capture receipt: ${version}`);
-    for (const file of ["src/Root.tsx", "src/Backlog.tsx", "package-lock.json"])
+    for (const file of ["src/Root.tsx", "src/Backlog.tsx", "src/Motion.tsx", "package-lock.json"])
       if (
         render.approved !== true &&
         sha(await readFile(path.join(root, file))) !== render.recipeHashes?.[file]
@@ -103,7 +112,8 @@ try {
         quality.renderSha256 !== report.renderSha256 ||
         quality.sourceHashes !== true ||
         quality.renderHashes !== true ||
-        (entry.kind === "video" && quality.decode !== true)
+        (entry.kind === "video" &&
+          (quality.decode !== true || !passesMotion(quality.motion, render.frames)))
       )
         throw Error(`Release blocked: ${version} needs a passing quality check for this render.`);
       console.log(`Approved ${version}: ${entry.kind} ${entry.feature}`);
@@ -134,12 +144,13 @@ try {
         throw Error(`Incorrect MP4 or sound format: ${version}`);
       if (Math.abs(Number(probe.format.duration) - render.frames / render.fps) > 0.1)
         throw Error(`Incorrect film duration: ${version}`);
-      await run("ffmpeg", ["-v", "error", "-i", film, "-f", "null", "-"]);
       const { stderr: levels } = await run("ffmpeg", [
         "-hide_banner",
+        "-xerror",
         "-i",
         film,
-        "-vn",
+        "-vf",
+        "scale=240:135,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG",
         "-af",
         "volumedetect",
         "-f",
@@ -149,6 +160,23 @@ try {
       const peak = Number(/max_volume: (-?[\d.]+) dB/.exec(levels)?.[1]);
       if (!Number.isFinite(peak) || peak > -0.5 || peak < -45)
         throw Error(`Silent or clipping sound: ${version}`);
+      const deltas = [...levels.matchAll(/lavfi.signalstats.YAVG=([\d.e+-]+)/g)].map((m) =>
+        Number(m[1]),
+      );
+      let quiet = 0,
+        longest = 0;
+      for (const delta of deltas) {
+        quiet = delta < 0.04 ? quiet + 1 : 0;
+        longest = Math.max(longest, quiet);
+      }
+      const motion = {
+        measuredFrames: deltas.length,
+        movingFrameRatio: deltas.filter((d) => d >= 0.04).length / deltas.length,
+        longestStillSeconds: longest / render.fps,
+        largestLumaChange: Math.max(...deltas),
+      };
+      if (!passesMotion(motion, render.frames))
+        throw Error(`Motion quality failed for ${version}: ${JSON.stringify(motion)}`);
       const frame = path.join(scratch, `${version}.png`);
       await run("ffmpeg", [
         "-v",
@@ -183,6 +211,7 @@ try {
         fps: 60,
         audioPeakDb: peak,
         posterSSIM: similarity,
+        motion,
       });
     }
     await writeFile(path.join(folder, "quality.json"), JSON.stringify(report, null, 2) + "\n");
