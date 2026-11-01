@@ -312,16 +312,9 @@ export class DndEngineStore {
 		// projected; its own slot is still in the DOM until the first projection lands.
 		const draggedId = this.drag?.source.item.id;
 		const items: DndItemRect[] = [];
-		let slot: DndZoneSnapshot["slot"];
 		for (const item of zone.getItems?.() ?? []) {
+			if (isShadowItem(item) || item.id === draggedId) continue;
 			const element = this.itemElements.get(item.id);
-			if (isShadowItem(item) || item.id === draggedId) {
-				if (element && !slot) {
-					const rect = element.getBoundingClientRect();
-					slot = { index: items.length, size: zone.axis === "horizontal" ? rect.width : rect.height };
-				}
-				continue;
-			}
 			if (element) items.push({ id: item.id, rect: settledRect(element, offsets) });
 		}
 		return {
@@ -329,7 +322,6 @@ export class DndEngineStore {
 			axis: zone.axis,
 			rect: settledRect(zone.element, offsets),
 			items,
-			slot,
 			home: zone.id === this.drag?.source.zoneId ? this.drag.home : undefined,
 		};
 	}

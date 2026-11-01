@@ -27,9 +27,6 @@ function resolveLinearTarget(
 	zone: DndZoneSnapshot,
 ): DndResolvedTarget {
 	const coordinate = axisCoordinate(point, zone.axis);
-	if (isOverHome(coordinate, zone)) {
-		return { zoneId: zone.id, index: zone.home!, axis: zone.axis };
-	}
 
 	for (let index = 0; index < zone.items.length; index += 1) {
 		if (coordinate < itemMidpoint(zone.items[index], zone.axis)) {
@@ -96,17 +93,6 @@ function itemMidpoint(item: DndItemRect, axis: DndZoneSnapshot["axis"]): number 
 		: item.rect.top + item.rect.height / 2;
 }
 
-// Whether the point is over the place the dragged row started from, now held by the rows the
-// placeholder pushed aside: by midpoints alone it would take crossing half a row to get back.
-function isOverHome(coordinate: number, { home = -1, slot, items, axis }: DndZoneSnapshot): boolean {
-	if (!slot || home < 0 || slot.index === home) return false;
-	const x = axis === "horizontal";
-	const start = slot.index < home
-		? (x ? items[home - 1].rect.right : items[home - 1].rect.bottom) - slot.size
-		: x ? items[home].rect.left : items[home].rect.top;
-	return coordinate >= start && coordinate < start + slot.size;
-}
-
 export function applyTargetHysteresis(
 	point: DndPoint,
 	zone: DndZoneSnapshot,
@@ -119,6 +105,7 @@ export function applyTargetHysteresis(
 	if (next.zoneId !== previous.zoneId) return next;
 	if (next.index === previous.index) return next;
 	if (Math.abs(next.index - previous.index) > 1) return next;
+	// The way back to the row a drag started from is not held: its middle alone puts the row back.
 	if (next.index === zone.home) return next;
 
 	const boundaryItem = zone.items[Math.min(next.index, previous.index)];
