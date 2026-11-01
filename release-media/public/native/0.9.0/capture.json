@@ -1,0 +1,73 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "history.png",
+      "height" : 2352,
+      "pixelsPerPoint" : 3,
+      "rectPoints" : [
+        268,
+        8,
+        1004,
+        784
+      ],
+      "sha256" : "3341a7d636a320e49fbc6f9cd4d5f16d9f367ad09aded24838f54d67e141ccf7",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 3012
+    },
+    {
+      "file" : "search-empty.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "7f71da97b55c13e4da9f654bc3659e37ccca7f9fb23f66ae5b920d7cc741a1d7",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    },
+    {
+      "file" : "filtered.png",
+      "height" : 2352,
+      "pixelsPerPoint" : 3,
+      "rectPoints" : [
+        268,
+        8,
+        1004,
+        784
+      ],
+      "sha256" : "a5e6e5affb98577157fdb3015d0f60f071b07475bd9493e4ab1af392f609c0f4",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 3012
+    },
+    {
+      "file" : "search.png",
+      "height" : 256,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        36,
+        76,
+        192,
+        32
+      ],
+      "sha256" : "6ce76399218209b4cd962962556317953d85a365709f45baefdf6d17c32cf9ca",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1536
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:45Z",
+  "checks" : {
+    "filteredOut" : "Field guide",
+    "nativeHistoryStoreVisits" : 4,
+    "query" : "Studio"
+  },
+  "feature" : "history",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.9.0",
+  "schemaVersion" : 1
+}

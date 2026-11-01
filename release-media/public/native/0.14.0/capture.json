@@ -1,0 +1,59 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "before.png",
+      "height" : 630,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        105
+      ],
+      "sha256" : "7fefc2199aec8305b9c526727b6b21bccf61f089ef65919725f465637d8e3a74",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    },
+    {
+      "file" : "target.png",
+      "height" : 630,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        105
+      ],
+      "sha256" : "c7ed77f0320e97a0392ac0fb932b71435166fb4b8bf43590bdc8ffac43d17fbd",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    },
+    {
+      "file" : "dropped.png",
+      "height" : 810,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        135
+      ],
+      "sha256" : "878f119759e615c04a839d56a715461dce7a505e7ceee87156504a1fcf85fcf6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    }
+  ],
+  "capturedAt" : "2026-11-01T11:01:42Z",
+  "checks" : {
+    "actualBrowserCommandOpenedLink" : true,
+    "actualNativeDropIndicator" : true,
+    "syntheticExternalDragPayload" : true
+  },
+  "feature" : "drop",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.14.0",
+  "schemaVersion" : 1
+}

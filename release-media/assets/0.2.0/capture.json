@@ -1,0 +1,76 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "left.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "1722d540ba54b2f9c0ee13e61109f4fca56ee1168bffae6450c41d81ceff562b",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "right.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "a6d988baec104020dc6816479d87965843133431587727c07c34ff3a9d4dfe69",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "top.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "2fa4feac51c5944e19739f388dd6c65d293fdc69623150a7636bf8150ddac72b",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "bottom.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "9344b9c1988cb77116881159562688cf371d24eb4c927dc095c33f96cd5b14ea",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:53Z",
+  "checks" : {
+    "nativeTabPositions" : [
+      "left",
+      "right",
+      "top",
+      "bottom"
+    ]
+  },
+  "feature" : "tab-edges",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.2.0",
+  "schemaVersion" : 1
+}

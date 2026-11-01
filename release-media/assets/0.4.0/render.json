@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "release": "0.4.0",
+  "kind": "screenshot",
+  "feature": "updates",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 1,
+  "frames": 1,
+  "posterFrame": 0,
+  "renderMilliseconds": 300.3877499999944,
+  "hashes": {
+    "updates.png": "aaed32323edfc858eec8ca7e24390ad93fdd3f068a77e2e6eecfb6fc500f036a"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "d9829f569890884d83263205a2cf8e228d3bc5a504d794dd2da9a03dc0d2f79c",
+  "approved": false,
+  "publication": "blocked"
+}

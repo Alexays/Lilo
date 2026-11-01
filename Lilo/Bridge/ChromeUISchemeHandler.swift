@@ -37,6 +37,10 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         let path = Self.assetPath(for: url)
+        if path.hasPrefix("release-media/") {
+            serveReleaseMedia(path: path, task: urlSchemeTask, url: url)
+            return
+        }
         if path.hasPrefix(Self.fileIconPrefix) {
             let data = Self.fileIconPNG(path: path)
             urlSchemeTask.didReceive(URLResponse(
@@ -103,6 +107,53 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+
+    private func serveReleaseMedia(path: String, task: WKURLSchemeTask, url: URL) {
+        guard path.range(of: #"^release-media/[0-9]+\.[0-9]+\.[0-9]+/[a-z0-9-]+\.(png|mp4)$"#, options: .regularExpression) != nil else {
+            task.didFailWithError(URLError(.fileDoesNotExist)); return
+        }
+        let parts = path.split(separator: "/")
+        guard let file = Bundle.main.url(forResource: String(parts[2]), withExtension: nil, subdirectory: "release-media/\(parts[1])"),
+              let data = try? Data(contentsOf: file, options: .mappedIfSafe) else {
+            task.didFailWithError(URLError(.fileDoesNotExist)); return
+        }
+        let requested = task.request.value(forHTTPHeaderField: "Range")
+        let range = Self.mediaByteRange(requested, length: data.count)
+        var headers = ["Content-Type": path.hasSuffix(".mp4") ? "video/mp4" : "image/png", "Accept-Ranges": "bytes"]
+        let status: Int
+        if let range {
+            status = requested == nil ? 200 : 206
+            headers["Content-Length"] = String(range.count)
+            if requested != nil { headers["Content-Range"] = "bytes \(range.lowerBound)-\(range.upperBound - 1)/\(data.count)" }
+        } else {
+            status = 416
+            headers["Content-Length"] = "0"
+            headers["Content-Range"] = "bytes */\(data.count)"
+        }
+        guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: headers) else {
+            task.didFailWithError(URLError(.badServerResponse)); return
+        }
+        task.didReceive(response)
+        if let range { task.didReceive(data.subdata(in: range)) }
+        task.didFinish()
+    }
+
+    /// WebKit asks for byte ranges to inspect and seek an MP4 without loading the whole film.
+    static func mediaByteRange(_ header: String?, length: Int) -> Range<Int>? {
+        guard length > 0 else { return nil }
+        guard let header else { return 0..<length }
+        guard header.hasPrefix("bytes=") else { return nil }
+        let parts = header.dropFirst(6).split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return nil }
+        if parts[0].isEmpty {
+            guard let suffix = Int(parts[1]), suffix > 0 else { return nil }
+            return max(0, length - suffix)..<length
+        }
+        guard let start = Int(parts[0]), start >= 0, start < length else { return nil }
+        if parts[1].isEmpty { return start..<length }
+        guard let end = Int(parts[1]), end >= start else { return nil }
+        return start..<(min(end, length - 1) + 1)
+    }
 
     /// The Finder icon for `file-icon/<extension>`, rendered once per extension.
     private static func fileIconPNG(path: String) -> Data {

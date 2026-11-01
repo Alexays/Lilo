@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "release": "0.14.0",
+  "kind": "video",
+  "feature": "drop",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "frames": 420,
+  "posterFrame": 273,
+  "renderMilliseconds": 8238.712583,
+  "hashes": {
+    "drop.png": "eb95548883e84e15c8ccfb937cae98d69929495fcb5decd88516ad76875bc5e2",
+    "drop.mp4": "1c717320ab828992fd8f40ed368f1767082a648704ceb2968fd5f95fb4eef4d6"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "1ad26e31d52f2be4365d8bd5b12dcb0e2db4e5a3d3a4f3ca985525a16d7a1069",
+  "approved": false,
+  "publication": "blocked"
+}

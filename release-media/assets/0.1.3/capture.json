@@ -1,0 +1,59 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "pinned.png",
+      "height" : 264,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        0,
+        128,
+        264,
+        33
+      ],
+      "sha256" : "a4da88027918a738a456b496192a1273eab4e2b30cc7d03a958136441eb42738",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2112
+    },
+    {
+      "file" : "renaming.png",
+      "height" : 264,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        0,
+        128,
+        264,
+        33
+      ],
+      "sha256" : "714be31f3e8f4a48ba7a83382e71c347ceff8b7825a5748e732af4bf37616943",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2112
+    },
+    {
+      "file" : "renamed.png",
+      "height" : 264,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        0,
+        128,
+        264,
+        33
+      ],
+      "sha256" : "fc37b80a5060c6711eb41e0c87ccf68caf27a9536ef9482c08a9181c270a048e",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2112
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:46Z",
+  "checks" : {
+    "customTitle" : "Studio",
+    "nativePinnedTab" : true,
+    "realRenameInput" : true
+  },
+  "feature" : "pinned-tabs",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.1.3",
+  "schemaVersion" : 1
+}

@@ -1,0 +1,157 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "solid-window.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "5eb24e66d7ad1b36a8a2aad49c392f6357596c7bbe219b5eeedf537ecde85302",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "solid-editor.png",
+      "height" : 2752,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        532,
+        149,
+        332,
+        344
+      ],
+      "sha256" : "dd182a4af1ff36d35913df4de643bd2b0de1f2e66e7d1e6e2c3acf4fd4b07e79",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2656
+    },
+    {
+      "file" : "solid-controls.png",
+      "height" : 240,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        601,
+        312,
+        194,
+        30
+      ],
+      "sha256" : "f7035efa7557a367a5e2865cf4a98bbab34112324499e19077946781b094d2e6",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1552
+    },
+    {
+      "file" : "glass-editor.png",
+      "height" : 2752,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        532,
+        149,
+        332,
+        344
+      ],
+      "sha256" : "a3e828438c76cc662e6b2ea443c7f147e182f267775e2374888379b864918d9f",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2656
+    },
+    {
+      "file" : "glass-controls.png",
+      "height" : 240,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        601,
+        312,
+        194,
+        30
+      ],
+      "sha256" : "e4e649426409adb50b8fa2e14ef753cda1f553abe8f2f041c22bd572ee2b61d9",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1552
+    },
+    {
+      "file" : "glass-window.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "e5db121bc7a44e1b1c9bb7cadf7c479cf7e4ff858fe1908b2317d5b40ad0a3ce",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "grain-editor.png",
+      "height" : 2752,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        432,
+        149,
+        333,
+        344
+      ],
+      "sha256" : "24b0f302deac3dd5aab6566d69e9909dce3380f21d08f1c0cedace0c7beb8cca",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2664
+    },
+    {
+      "file" : "grain-controls.png",
+      "height" : 240,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        502,
+        312,
+        194,
+        30
+      ],
+      "sha256" : "6ebafff24b5b0be87ca7f98ff2f2ea5e1d382ce51d6d9bd2ef41cca21461ca6b",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1552
+    },
+    {
+      "file" : "grain-window.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "405c4429222874a391ae8b1d70c8b3003b9c5ff4905b67ac38c3493030dd575c",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "glass-space.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "9da4770e09b58eeb9a1e51d286df21ef126f11bbe386c51483c734381a3b882b",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:51Z",
+  "checks" : {
+    "savedMaterial" : "grain",
+    "secondSpaceMaterial" : "glass",
+    "separateSpaceIds" : true
+  },
+  "feature" : "spaces",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.11.0",
+  "schemaVersion" : 1
+}

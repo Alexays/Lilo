@@ -1,6 +1,6 @@
 # getlilo.app
 
-Lilo's website uses Astro to build static pages for Cloudflare Workers. It needs Node 22.23.4 or later and Python 3. All commands run from the repository root through Make.
+Lilo's website uses Astro to build static pages for Cloudflare Workers. It needs Node 22.23.4 or later and Python 3. All commands run from the repository root through Make. Release media and its publication gate are documented in [release-media](../release-media/README.md).
 
 Coding agents must also follow the website's [Astro project rules](AGENTS.md).
 
@@ -47,7 +47,11 @@ The build runs `generate.py` after Astro to derive a Markdown copy of each page,
 
 The changelog reads the generated root `CHANGELOG.md`. Optional stories in `src/content/releases/<version>.json` add a translated introduction and up to three highlights. Each highlight lists the exact English release notes it describes; the build rejects missing translations, unknown versions and notes from another release. Use the existing story as an example, and edit the copy with Humanizer.
 
-A story without `capture` shows its highlights with no recording. Stories with one choose a capture `source`: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
+Current changelog media comes exclusively from the shared [native media catalog](../release-media/README.md), which chooses a film, screenshot or no media independently of story copy.
+
+### Archived WebP pilot
+
+The following capture commands and archives are retained for the earlier pilot. They no longer select media in the changelog. A story's legacy `capture` field chooses a source: `demo` (the default) or `native`. A demo capture records opening, closing and reopening a link in the website demo and checks that the source tab stays selected. It uses local sample pages, isolated language/appearance contexts and blocked external requests:
 
 ```sh
 make site-release-capture RELEASE=x.y.z
@@ -101,9 +105,9 @@ The imported history in `.changes/v0.1.5.md` contains several earlier versions. 
 
 ## Deployment
 
-Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; no Worker script or Astro server adapter is needed. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
+Cloudflare Workers Builds uses `site` as its root directory and `npm run deploy` as its deploy command. Astro builds the website and Svelte demo together, then deploys `dist/`; a small Worker serves byte ranges for release MP4s, while pages and other files remain static. No Astro server adapter is used. The full repository must be available for the shared UI sources, but only the website's dependencies are needed to build it. `wrangler.toml` keeps the existing custom domain, headers, redirects and 404 behavior.
 
-Set the build watch paths to `site/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
+Set the build watch paths to `site/**`, `release-media/**`, `lilo-ui/**`, `Lilo/Resources/AppIcons/**`, `Lilo/App/KeyboardShortcuts.swift`, `Lilo/App/MainMenu.swift`, `Lilo/Terminal/TerminalTheme.swift`, `Makefile`, `CHANGELOG.md`, and `Xcode/Configs/Base.xcconfig` so shared interface, icon, shortcut, theme and release changes also rebuild the website. The site's `.nvmrc` selects Node 22.23.4. Workers Builds settings live in the Cloudflare dashboard.
 
 For a manual deployment, authenticate with Cloudflare first, then run:
 

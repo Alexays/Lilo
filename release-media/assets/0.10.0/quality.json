@@ -1,0 +1,14 @@
+{
+  "release": "0.10.0",
+  "kind": "video",
+  "sourceHashes": true,
+  "renderHashes": true,
+  "renderSha256": "a3d76a0b833d94522cd8969a5e111559bada6d0d503b686a11e74565f7cc9ce4",
+  "publication": "blocked",
+  "decode": true,
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "audioPeakDb": -11.6,
+  "posterSSIM": 0.999185
+}

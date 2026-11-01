@@ -1,0 +1,117 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "picker.png",
+      "height" : 944,
+      "pixelsPerPoint" : 3,
+      "rectPoints" : [
+        430,
+        56,
+        680,
+        315
+      ],
+      "sha256" : "70ba5c153ca2a0adead6461dcda019907ed6cc2ac1d7b8eb19b71d98ced532d7",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2040
+    },
+    {
+      "file" : "search-empty.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "79f16e032a805fb6e4f2447b44b3e229a9e7548fe20ddf13fb74609302da637e",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "filtered.png",
+      "height" : 876,
+      "pixelsPerPoint" : 3,
+      "rectPoints" : [
+        430,
+        56,
+        680,
+        292
+      ],
+      "sha256" : "1963171ce5248683ae62572e167fdc7020023c97fba90cbe8b8b47e991a22bac",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2040
+    },
+    {
+      "file" : "search.png",
+      "height" : 232,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        120,
+        642,
+        29
+      ],
+      "sha256" : "1d3db55c8bafd186bd31ce90883b40b0627eb8704ba62a450b1cd7890e9c2eb5",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 5136
+    },
+    {
+      "file" : "match.png",
+      "height" : 984,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        449,
+        162,
+        155,
+        123
+      ],
+      "sha256" : "9315b8adc00c88aa91ef189bdde46cf3c88f2ca08b364cfc6bfbe41c6a18ca20",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1240
+    },
+    {
+      "file" : "sharing.png",
+      "height" : 520,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        10,
+        669,
+        248,
+        65
+      ],
+      "sha256" : "fb0b6a2a12d958c53d3ccc21f41f34bc02ae8ddd54690a5888452d1607172920",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1984
+    },
+    {
+      "file" : "switched.png",
+      "height" : 520,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        10,
+        669,
+        248,
+        65
+      ],
+      "sha256" : "1c009abf8767ce100efeae895222a0839d99bac827928f02fe786d86e79ffae8",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1984
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:54Z",
+  "checks" : {
+    "nativeShareSourceChanged" : true,
+    "pickerSearch" : "Field",
+    "realMediaSessionHandlers" : true,
+    "shareTokenPreserved" : true,
+    "syntheticDeviceUsage" : true
+  },
+  "feature" : "tab-share",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.8.0",
+  "schemaVersion" : 1
+}

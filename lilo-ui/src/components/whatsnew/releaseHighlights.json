@@ -45,11 +45,6 @@
 				"illustration": "material",
 				"titleKey": "whatsNew.releases.v0110.materialTitle",
 				"descriptionKey": "whatsNew.releases.v0110.materialDescription"
-			},
-			{
-				"illustration": "colors",
-				"titleKey": "whatsNew.releases.v0110.colorsTitle",
-				"descriptionKey": "whatsNew.releases.v0110.colorsDescription"
 			}
 		]
 	},
@@ -58,14 +53,14 @@
 		"descriptionKey": "whatsNew.releases.v0100.description",
 		"highlights": [
 			{
-				"illustration": "fresh",
-				"titleKey": "whatsNew.releases.v0100.freshTitle",
-				"descriptionKey": "whatsNew.releases.v0100.freshDescription"
-			},
-			{
 				"illustration": "archive",
 				"titleKey": "whatsNew.releases.v0100.archiveTitle",
 				"descriptionKey": "whatsNew.releases.v0100.archiveDescription"
+			},
+			{
+				"illustration": "fresh",
+				"titleKey": "whatsNew.releases.v0100.freshTitle",
+				"descriptionKey": "whatsNew.releases.v0100.freshDescription"
 			}
 		]
 	}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "release": "0.1.0",
+  "kind": "screenshot",
+  "feature": "browser",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 1,
+  "frames": 1,
+  "posterFrame": 0,
+  "renderMilliseconds": 364.086249999993,
+  "hashes": {
+    "browser.png": "05b2dd31dd1cf17aeede71511e555e2bf23995a775a16ce6215c7cf55a1f0480"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "2361e71e81bf5a318774d02bcd2fb401526ca8c9ca132f702fff56d70a373333",
+  "approved": false,
+  "publication": "blocked"
+}

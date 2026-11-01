@@ -15,12 +15,13 @@
   import { reportInteractiveZone } from "../../lib/actions/interactiveZone";
   import { getLocale, t } from "../../lib/i18n/state.svelte";
   import { acknowledgeWhatsNew, type WhatsNewRequest } from "../../stores/whatsNew.svelte";
-  import WhatsNewArt from "./WhatsNewArt.svelte";
+  import ReleaseMedia from "./ReleaseMedia.svelte";
 
   let { request, onclose }: { request: WhatsNewRequest; onclose: () => void } = $props();
   const titleId = $props.id();
   let release = $state.raw<ReleaseNotes | null>(null);
   const groups = $derived(request.version === release?.version ? release.groups : []);
+  const media = $derived(request.version === release?.version ? release.media : null);
   const count = $derived(groups.reduce((sum, group) => sum + group.entries.length, 0));
   const editorial = $derived(count ? release?.editorial?.[getLocale()] ?? release?.editorial?.en : null);
   const date = $derived(request.version === release?.version && release.date
@@ -39,7 +40,7 @@
       const loaded = await releaseResource;
       if (cancelled) return;
       release = loaded;
-      if (request.automatic && count === 0) { onclose(); return; }
+      if (request.automatic && count === 0 && !media) { onclose(); return; }
       await tick();
       if (cancelled) return;
       opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -65,13 +66,18 @@
 
   function handleKeydown(event: KeyboardEvent): void {
     event.stopPropagation();
+    if (document.fullscreenElement) return;
     if (event.key === "Escape") { event.preventDefault(); close(); return; }
     if (event.key !== "Tab") return;
-    const controls = [...dialog.querySelectorAll<HTMLElement>("button:not([disabled]), summary")];
-    const index = controls.indexOf(document.activeElement as HTMLElement);
-    const next = event.shiftKey ? (index <= 0 ? controls.length - 1 : index - 1) : (index + 1) % controls.length;
-    event.preventDefault();
-    controls[next]?.focus();
+    const controls = [...dialog.querySelectorAll<HTMLElement>("button:not([disabled]), summary, video[controls], a[href]")]
+      .filter((element) => element.getClientRects().length > 0);
+    const current = document.activeElement;
+    // Let native media controls handle their own Tab stops; wrap only the dialog's outer edges.
+    if (event.shiftKey && (current === controls[0] || current === heading)) {
+      event.preventDefault(); controls.at(-1)?.focus();
+    } else if (!event.shiftKey && current === controls.at(-1)) {
+      event.preventDefault(); controls[0]?.focus();
+    }
   }
 </script>
 
@@ -101,11 +107,12 @@
           <p class="release-intro">{editorial?.description ?? t("whatsNew.description")}</p>
         </header>
 
+        {#if media}<ReleaseMedia {media} label={editorial?.highlights[0]?.title ?? t("whatsNew.title")} />{/if}
+
         {#if editorial}
           <div class="release-highlights">
             {#each editorial.highlights as highlight, index (index)}
               <article class="release-highlight">
-                <WhatsNewArt kind={highlight.illustration} />
                 <div>
                   <h3>{highlight.title}</h3>
                   <p>{highlight.description}</p>
@@ -116,7 +123,7 @@
         {/if}
 
         {#if count}
-          <details class="release-notes" open={!editorial}>
+          <details class="release-notes" open={!editorial && !media}>
             <summary>{t("whatsNew.allChanges")} <span>· {t("whatsNew.changes", { count })}</span></summary>
             <div class="release-notes-content">
               <p class="release-source">{t("whatsNew.originalNotes")}</p>
@@ -126,7 +133,7 @@
               {/each}
             </div>
           </details>
-        {:else}
+        {:else if !media}
           <p class="release-unavailable">{t("whatsNew.unavailable")}</p>
         {/if}
       </div>
@@ -200,7 +207,7 @@
   .release-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
   h2 { margin: var(--space-16) 0 var(--space-8); font-size: var(--font-size-3xl); line-height: 1.2; font-weight: var(--font-weight-semibold); letter-spacing: -0.45px; outline: none; overflow-wrap: anywhere; }
   .release-intro { margin: 0; color: var(--text-secondary); font-size: var(--font-size-md); line-height: 1.5; }
-  .release-highlight { display: grid; grid-template-columns: minmax(72px, 25%) minmax(0, 1fr); align-items: center; gap: var(--space-16); padding: var(--space-16) 0; border-top: 1px solid var(--separator); }
+  .release-highlight { padding: var(--space-16) 0; border-top: 1px solid var(--separator); }
   h3 { margin: 0 0 var(--space-6); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); line-height: 1.3; }
   .release-highlight p { margin: 0; color: var(--text-secondary); font-size: var(--font-size-sm); line-height: 1.5; }
   .release-notes { border-top: 1px solid var(--separator); padding-top: var(--space-12); font-size: var(--font-size-sm); }

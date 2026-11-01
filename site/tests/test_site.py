@@ -175,38 +175,48 @@ class SiteTests(unittest.TestCase):
                 highlights = [node for node in nodes(release) if "release-highlight" in node.classes]
                 self.assertEqual(len(highlights), 3)
                 self.assertTrue(all(node.attrs.get("lang") == language for node in highlights))
-                capture = next(node for node in nodes(highlights[0]) if "capture" in node.classes)
-                images = [node for node in nodes(capture) if node.tag == "img"]
-                self.assertEqual(len(images), 2)
-                for image in images:
-                    self.assertTrue(image.attrs.get("alt"))
-                    self.assertGreater(int(image.attrs["width"]), 0)
-                    self.assertGreater(int(image.attrs["height"]), 0)
-                    self.assertEqual(image.attrs.get("loading"), "lazy")
+                capture = next(node for node in nodes(release) if "release-media" in node.classes)
+                player = next(node for node in nodes(capture) if node.tag == "video")
+                self.assertTrue(player.attrs.get("aria-label"))
+                self.assertEqual(player.attrs.get("preload"), "none")
                 disclosure = next(node for node in nodes(release) if node.tag == "details")
                 self.assertNotIn("open", disclosure.attrs)
                 self.assertIn("A call card in the sidebar", inline_text(disclosure))
                 self.assertIn("chrome.mdns", (DIST / page).with_suffix(".md").read_text())
-                demo_link = next(node for node in nodes(highlights[0]) if node.tag == "a")
+                peek = next(node for node in highlights if node.attrs.get("id") == "v0.7.0-peek")
+                demo_link = next(node for node in nodes(peek) if node.tag == "a")
                 self.assertEqual(demo_link.attrs["href"], ("/fr/" if language == "fr" else "/") + "#browser-demo")
 
-    def test_release_recording_has_local_animation_controls_and_a_contextual_action(self):
+    def test_backlog_has_exactly_the_selected_media_and_real_mp4_controls(self):
+        catalog = json.loads((Path(__file__).resolve().parents[2] / "release-media/backlog.json").read_text())
         for page in ["changelog/index.html", "fr/changelog/index.html"]:
             with self.subTest(page=page):
                 parsed = tree(DIST / page)
-                recording = [node for node in parsed if "release-recording" in node.classes]
-                self.assertEqual(len(recording), 1)
-                player = recording[0]
-                button = next(node for node in nodes(player) if node.tag == "button")
-                self.assertEqual(button.attrs.get("aria-pressed"), "false")
-                self.assertTrue(button.attrs.get("aria-label"))
-                self.assertTrue(any(node.tag == "svg" for node in nodes(button)))
-                self.assertFalse(any(node.tag in ["time", "figcaption", "a"] for node in nodes(player)))
-                for image in (node for node in nodes(player) if node.tag == "img"):
-                    animation = image.attrs.get("data-recording", "")
-                    self.assertTrue(animation.endswith(".webp"))
-                    self.assertTrue((DIST / animation.lstrip("/")).is_file())
-                    self.assertNotEqual(image.attrs["src"], animation)
+                self.assertFalse(any("release-recording" in node.classes for node in parsed))
+                for version, decision in catalog["releases"].items():
+                    release = next(node for node in parsed if node.attrs.get("id") == "v" + version)
+                    media = [node for node in nodes(release) if "release-media" in node.classes]
+                    self.assertEqual(len(media), 0 if decision["kind"] == "none" else 1, version)
+                    if not media:
+                        continue
+                    disclosure = next(node for node in nodes(release) if node.tag == "details")
+                    self.assertNotIn("open", disclosure.attrs)
+                    content = list(nodes(media[0]))
+                    if decision["kind"] == "video":
+                        video = next(node for node in content if node.tag == "video")
+                        self.assertIn("controls", video.attrs)
+                        self.assertIn("playsinline", video.attrs)
+                        self.assertNotIn("autoplay", video.attrs)
+                        self.assertNotIn("muted", video.attrs)
+                        self.assertEqual(video.attrs["preload"], "none")
+                        source = next(node for node in content if node.tag == "source")
+                        self.assertEqual(source.attrs["type"], "video/mp4")
+                        self.assertTrue((DIST / source.attrs["src"].lstrip("/")).is_file())
+                    else:
+                        image = next(node for node in content if node.tag == "img")
+                        self.assertTrue(image.attrs.get("alt"))
+                        self.assertTrue(image.attrs["src"].endswith(".png"))
+                        self.assertTrue((DIST / image.attrs["src"].lstrip("/")).is_file())
                 highlight = next(node for node in parsed if node.attrs.get("id") == "v0.7.0-peek")
                 action = next(node for node in nodes(highlight) if "recording-action" in node.classes)
                 self.assertEqual(action.parent, highlight)

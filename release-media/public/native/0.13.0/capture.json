@@ -1,0 +1,129 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "halloween.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "a43a11744946960e68d1c3ce204c28f37f9defc1002ab45237642a75efd191e3",
+      "tool" : "actual compiled native bundle AppIcons\/halloween\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "christmas.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "c83fe5fe95292990f6668586299956bae0ed616b5f30dbacc83a699469163807",
+      "tool" : "actual compiled native bundle AppIcons\/christmas\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "newyear.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "b0c71e6ad00917764cfaee32d7576f9ee9a046b5fd2b2fb6ffac9b14fc9d915e",
+      "tool" : "actual compiled native bundle AppIcons\/newyear\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "valentine.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "7e6f9e64f81204802ea520400af09372176f01b62942086396f78c37423a8098",
+      "tool" : "actual compiled native bundle AppIcons\/valentine\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "lunar.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "0e19af1c88f7671f06ddcc59386fd5037c6eb7d9a38018bd24338ce2b862e651",
+      "tool" : "actual compiled native bundle AppIcons\/lunar\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "easter.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "c8b58789b59209186c44eade92b53d07414d80fd32674c7bb0a7e30a10d4804e",
+      "tool" : "actual compiled native bundle AppIcons\/easter\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "summer.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "25e84cb13b17bfa318ecf8f2f750b223331b42ee77c433cefe9c069610298a76",
+      "tool" : "actual compiled native bundle AppIcons\/summer\/classic.png",
+      "width" : 1024
+    },
+    {
+      "file" : "birthday.png",
+      "height" : 1024,
+      "pixelsPerPoint" : 1,
+      "rectPoints" : [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "sha256" : "ab32b921c9b63d9602920a22c32c68cb044c965819b3e638ad3840eb044c60bd",
+      "tool" : "actual compiled native bundle AppIcons\/birthday\/classic.png",
+      "width" : 1024
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:45Z",
+  "checks" : {
+    "animationNeeded" : false,
+    "medium" : "screenshot",
+    "nativeSeasonalArtworkCount" : 8
+  },
+  "feature" : "seasons",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.13.0",
+  "schemaVersion" : 1
+}

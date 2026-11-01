@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "release": "0.6.0",
+  "kind": "screenshot",
+  "feature": "unread",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 1,
+  "frames": 1,
+  "posterFrame": 0,
+  "renderMilliseconds": 294.55954100000235,
+  "hashes": {
+    "unread.png": "16520803fc223a53f2388da4b4a20e76679ac825a233226f4f466a901a15aa17"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "a1077868bba153691dd5f8cd1e43554b88bf79cb36192468c4d7b48d7e7e637c",
+  "approved": false,
+  "publication": "blocked"
+}

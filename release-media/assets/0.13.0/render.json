@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "release": "0.13.0",
+  "kind": "screenshot",
+  "feature": "seasons",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 1,
+  "frames": 1,
+  "posterFrame": 0,
+  "renderMilliseconds": 381.6854999999996,
+  "hashes": {
+    "seasons.png": "3f032e0ae72b1475d8ac019fe5f44b79323b267e21a5a05aebb3317048b8363c"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "7c4cd8b8ad33c6eb3b7c176f7c93e1717028b8643ea7725f3fb38ca640827869",
+  "approved": false,
+  "publication": "blocked"
+}

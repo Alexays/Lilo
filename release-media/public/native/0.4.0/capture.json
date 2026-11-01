@@ -1,0 +1,30 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "updates.png",
+      "height" : 520,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        0,
+        677,
+        268,
+        65
+      ],
+      "sha256" : "09c01044ebd268ce60beb2d724ac9da6bda1976b0e4e6807b91b7a6eab9d744d",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2144
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:57Z",
+  "checks" : {
+    "fixtureInput" : "Synthetic updateReady event; no real update downloaded or installed",
+    "medium" : "screenshot"
+  },
+  "feature" : "updates",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.4.0",
+  "schemaVersion" : 1
+}

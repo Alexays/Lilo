@@ -1,13 +1,16 @@
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
+import { mediaForRelease } from "../release-media/catalog";
 import { SUPPORTED_LOCALES } from "./src/lib/i18n/translate";
 import { localizeReleaseEditorial, parseReleaseNotes, releaseHighlightsForVersion } from "./src/components/whatsnew/releaseNotes";
 
 function bundledRelease(): string {
-	const version = (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	const version = process.env.LILO_RELEASE_MEDIA_PREVIEW_VERSION || (JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as { version: string }).version;
+	if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("Invalid release preview version");
 	let markdown = "";
 	try { markdown = readFileSync(new URL(`../.changes/v${version}.md`, import.meta.url), "utf8"); } catch { /* Development builds may not have prepared notes. */ }
 	const release = parseReleaseNotes(markdown, version);
+	release.media = mediaForRelease(version);
 	const registry = JSON.parse(readFileSync(new URL("./src/components/whatsnew/releaseHighlights.json", import.meta.url), "utf8"));
 	const editorial = releaseHighlightsForVersion(registry, version);
 	release.editorial = {};

@@ -2264,7 +2264,7 @@
 			},
 			"v0110": {
 				"headline": "Her Space size göre.",
-				"description": "Cam, gren ve sitelerinizi, duvar kâğıdınızı ya da günün saatini takip eden renkler.",
+				"description": "Her alan için cam, gren veya düz renk seçin.",
 				"materialTitle": "Cam, gren ya da düz.",
 				"materialDescription": "Her Space'in malzemesini Görünüm'deki pencere önizlemesinde seçin: rengine boyanmış Liquid Glass ya da ince bir film greni.",
 				"colorsTitle": "Sizi takip eden renkler.",

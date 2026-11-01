@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "release": "0.12.0",
+  "kind": "screenshot",
+  "feature": "site-colors",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 1,
+  "frames": 1,
+  "posterFrame": 0,
+  "renderMilliseconds": 440.1235830000005,
+  "hashes": {
+    "site-colors.png": "23ed4eea4a38fc78d8bc1a79e2a507dd05b16ada6837073b36c5d2ebeb2411ed"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "3d88fc49f2ec003be59a3812ffc3b973967428622422bdc5ec394d74e7a9d780",
+  "approved": false,
+  "publication": "blocked"
+}

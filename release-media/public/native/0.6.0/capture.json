@@ -1,0 +1,30 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "unread.png",
+      "height" : 810,
+      "pixelsPerPoint" : 6,
+      "rectPoints" : [
+        2,
+        123,
+        264,
+        135
+      ],
+      "sha256" : "af34190ec86425afd3b5bd061fa2ab0004efcfadc4346545304e7dc1ea60a2a9",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 1584
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:55Z",
+  "checks" : {
+    "medium" : "screenshot",
+    "unreadSource" : "Actual generic title unread detection on owned fixture pages"
+  },
+  "feature" : "unread",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.6.0",
+  "schemaVersion" : 1
+}

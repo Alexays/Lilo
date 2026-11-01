@@ -1,0 +1,31 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "site-colors.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "8bf448a88525427c75efdc2571903e61578fd6ccc6756d6168cc18a5dba423ab",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    }
+  ],
+  "capturedAt" : "2026-11-01T10:54:48Z",
+  "checks" : {
+    "addressPlacement" : "page",
+    "medium" : "screenshot",
+    "ownedSiteThemeColor" : "#553f69"
+  },
+  "feature" : "site-colors",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "release" : "0.12.0",
+  "schemaVersion" : 1
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "release": "0.9.0",
+  "kind": "video",
+  "feature": "history",
+  "appVersion": "0.14.1",
+  "appBuild": "31",
+  "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
+  "width": 1920,
+  "height": 1080,
+  "fps": 60,
+  "frames": 420,
+  "posterFrame": 273,
+  "renderMilliseconds": 6859.5347910000055,
+  "hashes": {
+    "history.png": "758413a6acc22325c97b2c0a434680b169404d240616cf8eb6162dfd879d6648",
+    "history.mp4": "677370cd01f304d95a8ea044d1c15e9930395b7932e9e9f2530c5df707e76dee"
+  },
+  "recipeHashes": {
+    "src/Root.tsx": "f920f460c56c188ba0ca5dbdf8401b106881189c72311c514c3eabbf1543157f",
+    "src/Backlog.tsx": "e6e2b55c3c1f20e16d60f871c0a7300634db9cd90f9e9db92a44517b18fceb42",
+    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+  },
+  "nativeReceiptSha256": "56431fcca99fb6576b7a9a3f2877b662183864f01cf343eb861222bed22e92ae",
+  "approved": false,
+  "publication": "blocked"
+}

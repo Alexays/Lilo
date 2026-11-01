@@ -27,6 +27,7 @@ XCODEGEN := $(CURDIR)/build/xcodegen-$(XCODEGEN_VERSION)/bin/xcodegen
 # What validate's UI and bridge builds read, and the stamps they leave once built from them.
 UI_SOURCES := $(shell find $(UI_DIR)/src) $(addprefix $(UI_DIR)/,index.html package-lock.json svelte.config.js tsconfig.json vite.config.ts) \
 	$(UI_DIR)/releaseNotesPlugin.ts $(wildcard .changes/v*.md) scripts/embed_chrome_ui.py scripts/generate_native_strings.py
+UI_SOURCES += $(UI_DIR)/package.json release-media/catalog.ts release-media/backlog.json release-media/stage-native.mjs $(wildcard release-media/assets/*/*.png release-media/assets/*/*.mp4)
 BRIDGE_SOURCES := $(shell find $(BRIDGE_DIR)/src $(BRIDGE_DIR)/scripts) $(addprefix $(BRIDGE_DIR)/,esbuild.mjs package-lock.json tsconfig.json)
 UI_STAMP := build/.ui-build.stamp
 BRIDGE_STAMP := build/.ext-bridge-build.stamp
@@ -82,6 +83,10 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 	logs logs-stream site-dev site-dev-stop site-preview site-native-preview site-generate site-check site-fix site-test site-e2e site-release-capture site-capture-server site-capture-deps site-lock site-audit site-add-svelte site-playground-deps site-demo-icons site-deploy site-deploy-check emoji-data password-manager-icons \
 	hooks-install hooks-test lint-commit-message lint-commits \
 	changie change release-status release-version release-discord release-test
+.PHONY: release-media-capture release-media-import release-media-render release-media-lock release-media-check release-media-publish-check
+.PHONY: release-media-review release-media-stage
+.PHONY: release-media-fix
+.PHONY: release-media-test
 
 ## List the targets
 help:
@@ -212,9 +217,55 @@ release-test: $(CHANGIE)
 
 ## Build the embedded Svelte UI bundle and the Swift sources generated from lilo-ui
 ui-build: $(UI_DEPS)
+	@$(MAKE) --no-print-directory release-media-stage
 	@npm --prefix $(UI_DIR) run build
 	@python3 scripts/embed_chrome_ui.py
 	@python3 scripts/generate_native_strings.py
+
+## Capture genuine native sources for the release-media backlog (RELEASE=x.y.z narrows the capture)
+release-media-capture:
+	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+
+## Import verified native release sources (RELEASE=x.y.z narrows the import)
+release-media-import:
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/import.mjs
+
+## Update the pinned Remotion dependency lockfile
+release-media-lock:
+	@npm --prefix release-media install --package-lock-only
+
+## Format the authored release-media scripts and literal compositions
+release-media-fix: $(SITE_DEPS)
+	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' 'release-media/src/*.tsx' release-media/package.json release-media/backlog.json
+
+release-media/node_modules/.package-lock.json: release-media/package.json release-media/package-lock.json
+	@npm --prefix release-media ci
+
+## Render selected native release films and stills (RELEASE=x.y.z narrows the render)
+release-media-render: release-media/node_modules/.package-lock.json
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/render.mjs
+
+## Verify every backlog decision, native source hash, encoded film, sound and compression quality
+release-media-check:
+	@node release-media/check.mjs
+
+## Verify publication refuses unapproved, stale or changed media without external build tools
+release-media-test:
+	@node --test release-media/check.test.mjs
+
+## Refuse publication while release media has not passed review
+release-media-publish-check:
+	@node release-media/check.mjs --publish
+
+## Stage only the installed release's binary media for the native bundle
+release-media-stage:
+	@node release-media/stage-native.mjs
+
+## Review a historical release's actual bundled What's New and MP4 playback in native Lilo
+release-media-review:
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	@LILO_RELEASE_MEDIA_PREVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory ui-build
+	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/reviews/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_REVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests/testReviewBundledWhatsNewMedia TEST_WORKERS=1
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
@@ -425,7 +476,7 @@ release: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release
 
 ## Build the UI bundle and notarize the release artifacts
-release-notarize: vt-build $(UI_STAMP) $(BRIDGE_STAMP)
+release-notarize: release-media-publish-check vt-build $(UI_STAMP) $(BRIDGE_STAMP)
 	@scripts/build-app.sh release notarize
 
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
@@ -541,7 +592,7 @@ logs-stream:
 
 ## Serve getlilo.app with Astro and live reload on localhost:8787
 site-dev: $(SITE_DEPS)
-	@npm --prefix site run dev
+	@npm --prefix site run dev -- --port $(or $(SITE_DEV_PORT),8787)
 
 ## Stop Astro when it has started its dev server in the background
 site-dev-stop: $(SITE_DEPS)
