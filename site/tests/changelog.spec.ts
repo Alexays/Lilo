@@ -45,6 +45,7 @@ for (const language of ["en", "fr"] as const) {
         name: language === "fr" ? "Mode sombre" : "Dark mode",
       })
       .click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await expect(video).toHaveAttribute("poster", poster ?? "");
     await expect(video.locator("source")).toHaveAttribute("src", source ?? "");
     await expect(video).toHaveJSProperty("paused", true);

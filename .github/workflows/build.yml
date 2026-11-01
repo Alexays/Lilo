@@ -64,7 +64,14 @@ jobs:
           node-version-file: '.nvmrc'
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: make release-media-check release-media-test
-      - run: make site-e2e SITE_E2E_ARGS='tests/changelog.spec.ts tests/release-media.spec.ts'
+      # Measure playback without competing software decoders on the hosted runner.
+      - run: make site-e2e SITE_E2E_ARGS='tests/changelog.spec.ts tests/release-media.spec.ts --workers=1'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: release-media-traces
+          path: site/test-results/
+          if-no-files-found: ignore
 
   ui:
     name: UI (lint, test, build, end-to-end)
