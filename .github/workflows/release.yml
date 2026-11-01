@@ -76,8 +76,6 @@ jobs:
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
           key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('release-media/backlog.json', 'release-media/catalog.ts', '.changes/v*.md', 'lilo-ui/package.json', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
-      - name: Stage the installed release's media
-        run: make release-media-stage
       # Before any secret is in reach: no install script runs. The bridge bundles are committed, and checked against
       # bridge-src by CI on main.
       - name: Build the UI

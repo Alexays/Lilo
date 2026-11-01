@@ -487,7 +487,7 @@ release-notarize: release-media-publish-check vt-build $(UI_STAMP) $(BRIDGE_STAM
 # CI's release path: the UI is built or restored beforehand and the committed bridge bundles are checked
 # against bridge-src on main, so neither needs npm here.
 ## Archive and export the release app from the UI already built (CI)
-release-archive: vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
+release-archive: release-media-stage vt-build $(CHROME_UI_ASSETS) $(NATIVE_STRINGS)
 	@scripts/build-app.sh release
 
 # dmgbuild writes the window layout into .DS_Store itself, so no Finder or AppleScript is involved.
