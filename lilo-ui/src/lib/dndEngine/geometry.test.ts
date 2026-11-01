@@ -108,6 +108,26 @@ test("resolveTargetFromPoint resolves vertical insertion from row midpoints", ()
 	});
 });
 
+test("resolveTargetFromPoint puts the placeholder back on the row the pointer returns to", () => {
+	// "d" was dragged up: its placeholder sits at index 2 and pushed "c" onto d's original row.
+	const zone: DndZoneSnapshot = {
+		id: "tabs",
+		axis: "vertical",
+		rect: rect(0, 0, 240, 150),
+		items: [
+			{ id: "a", rect: rect(0, 0, 240, 30) },
+			{ id: "b", rect: rect(0, 30, 240, 30) },
+			{ id: "c", rect: rect(0, 90, 240, 30) },
+			{ id: "e", rect: rect(0, 120, 240, 30) },
+		],
+		slot: { index: 2, size: 30 },
+	};
+
+	assert.equal(resolveTargetFromPoint({ x: 20, y: 75 }, zone)?.index, 2);
+	assert.equal(resolveTargetFromPoint({ x: 20, y: 96 }, zone)?.index, 3);
+	assert.equal(resolveTargetFromPoint({ x: 20, y: 52 }, zone)?.index, 1);
+});
+
 test("resolveTargetFromPoint resolves grid insertion by row order", () => {
 	const zone: DndZoneSnapshot = {
 		id: "bookmarks",

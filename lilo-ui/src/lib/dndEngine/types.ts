@@ -48,6 +48,8 @@ export type DndZoneSnapshot = {
 	axis: DndAxis;
 	rect: DndRect;
 	items: DndItemRect[];
+	// Where the dragged row's placeholder sits in `items` order, and its extent along the axis.
+	slot?: { index: number; size: number };
 };
 
 export type DndResolvedTarget = {

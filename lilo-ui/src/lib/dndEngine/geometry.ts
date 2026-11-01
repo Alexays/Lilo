@@ -29,7 +29,7 @@ function resolveLinearTarget(
 	const coordinate = axisCoordinate(point, zone.axis);
 
 	for (let index = 0; index < zone.items.length; index += 1) {
-		if (coordinate < itemMidpoint(zone.items[index], zone.axis)) {
+		if (coordinate < boundaryAt(zone, index)) {
 			return { zoneId: zone.id, index, axis: zone.axis };
 		}
 	}
@@ -87,10 +87,16 @@ function axisCoordinate(point: DndPoint, axis: DndZoneSnapshot["axis"]): number 
 	return axis === "horizontal" ? point.x : point.y;
 }
 
-function itemMidpoint(item: DndItemRect, axis: DndZoneSnapshot["axis"]): number {
-	return axis === "horizontal"
-		? item.rect.left + item.rect.width / 2
-		: item.rect.top + item.rect.height / 2;
+// An item's midpoint, measured as if the placeholder slot were collapsed: the rows it pushed
+// aside would otherwise put their midpoints over the slot's old place, so aiming back at the
+// row a drag started from would keep the placeholder one row off.
+function boundaryAt(zone: DndZoneSnapshot, index: number): number {
+	const { rect } = zone.items[index];
+	const midpoint = zone.axis === "horizontal"
+		? rect.left + rect.width / 2
+		: rect.top + rect.height / 2;
+	if (!zone.slot) return midpoint;
+	return index < zone.slot.index ? midpoint + zone.slot.size / 2 : midpoint - zone.slot.size / 2;
 }
 
 export function applyTargetHysteresis(
@@ -106,11 +112,11 @@ export function applyTargetHysteresis(
 	if (next.index === previous.index) return next;
 	if (Math.abs(next.index - previous.index) > 1) return next;
 
-	const boundaryItem = zone.items[Math.min(next.index, previous.index)];
-	if (!boundaryItem) return next;
+	const boundaryIndex = Math.min(next.index, previous.index);
+	if (!zone.items[boundaryIndex]) return next;
 
 	const coordinate = axisCoordinate(point, zone.axis);
-	const boundary = itemMidpoint(boundaryItem, zone.axis);
+	const boundary = boundaryAt(zone, boundaryIndex);
 	if (next.index > previous.index && coordinate < boundary + margin) {
 		return previous;
 	}
