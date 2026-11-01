@@ -10,7 +10,7 @@ import type {
 	DndZoneSnapshot,
 } from "./types";
 import { applyTargetHysteresis, isPointInsideRect, resolveTargetFromPoint } from "./geometry";
-import { isShadowItem } from "./projection";
+import { isShadowItem, removeShadowItems } from "./projection";
 
 export type DndZoneParams = {
 	id: string;
@@ -45,6 +45,7 @@ type DndDragSource = {
 
 export type DndActiveDrag = {
 	source: DndDragSource;
+	home?: number;
 	startPoint: DndPoint;
 	currentPoint: DndPoint;
 	target: DndResolvedTarget | null;
@@ -166,8 +167,11 @@ export class DndEngineStore {
 	startDrag(source: DndDragSource, startPoint: DndPoint): void {
 		this.layoutSnapshot = null;
 		this.layoutSnapshotStale = true;
+		const home = removeShadowItems(this.zones.get(source.zoneId)?.getItems?.() ?? [])
+			.findIndex((item) => item.id === source.item.id);
 		this.drag = {
 			source,
+			home: home < 0 ? undefined : home,
 			startPoint,
 			currentPoint: startPoint,
 			target: null,
@@ -306,25 +310,30 @@ export class DndEngineStore {
 	}
 
 	private snapshotForZone(zone: DndZoneRegistration, offsets: AnimationOffsets = null): DndZoneSnapshot {
+		// Indices address the list with the dragged row lifted out, which is how it is
+		// projected; its own slot is still in the DOM until the first projection lands.
+		const draggedId = this.drag?.source.item.id;
+		const items: DndItemRect[] = [];
+		let slot: DndZoneSnapshot["slot"];
+		for (const item of zone.getItems?.() ?? []) {
+			const element = this.itemElements.get(item.id);
+			if (isShadowItem(item) || item.id === draggedId) {
+				if (element && !slot) {
+					const rect = element.getBoundingClientRect();
+					slot = { index: items.length, size: zone.axis === "horizontal" ? rect.width : rect.height };
+				}
+				continue;
+			}
+			if (element) items.push({ id: item.id, rect: settledRect(element, offsets) });
+		}
 		return {
 			id: zone.id,
 			axis: zone.axis,
 			rect: settledRect(zone.element, offsets),
-			items: this.itemRectsForZone(zone, offsets),
+			items,
+			slot,
+			home: zone.id === this.drag?.source.zoneId ? this.drag.home : undefined,
 		};
-	}
-
-	private itemRectsForZone(zone: DndZoneRegistration, offsets: AnimationOffsets): DndItemRect[] {
-		// Indices address the list with the dragged row lifted out, which is how it is
-		// projected; its own slot is still in the DOM until the first projection lands.
-		const draggedId = this.drag?.source.item.id;
-		const rects: DndItemRect[] = [];
-		for (const item of zone.getItems?.() ?? []) {
-			if (isShadowItem(item) || item.id === draggedId) continue;
-			const element = this.itemElements.get(item.id);
-			if (element) rects.push({ id: item.id, rect: settledRect(element, offsets) });
-		}
-		return rects;
 	}
 }
 
