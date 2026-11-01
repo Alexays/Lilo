@@ -14,8 +14,8 @@
   },
   "devDependencies": {
     "@types/node": "26.6.6",
-    "chrome-types": "0.1.457",
-    "esbuild": "0.24.2",
+    "chrome-types": "0.1.461",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3"
   }
 }
