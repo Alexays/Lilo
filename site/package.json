@@ -24,7 +24,7 @@
     "astro": "7.4.2",
     "just-bash": "3.6.0",
     "marked": "18.1.1",
-    "svelte": "5.57.2",
+    "svelte": "5.57.3",
     "zod": "4.6.7"
   },
   "devDependencies": {
