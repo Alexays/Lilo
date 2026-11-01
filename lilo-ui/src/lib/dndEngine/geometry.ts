@@ -27,9 +27,12 @@ function resolveLinearTarget(
 	zone: DndZoneSnapshot,
 ): DndResolvedTarget {
 	const coordinate = axisCoordinate(point, zone.axis);
+	if (isOverHome(coordinate, zone)) {
+		return { zoneId: zone.id, index: zone.home!, axis: zone.axis };
+	}
 
 	for (let index = 0; index < zone.items.length; index += 1) {
-		if (coordinate < boundaryAt(zone, index)) {
+		if (coordinate < itemMidpoint(zone.items[index], zone.axis)) {
 			return { zoneId: zone.id, index, axis: zone.axis };
 		}
 	}
@@ -87,16 +90,21 @@ function axisCoordinate(point: DndPoint, axis: DndZoneSnapshot["axis"]): number 
 	return axis === "horizontal" ? point.x : point.y;
 }
 
-// An item's midpoint, measured as if the placeholder slot were collapsed: the rows it pushed
-// aside would otherwise put their midpoints over the slot's old place, so aiming back at the
-// row a drag started from would keep the placeholder one row off.
-function boundaryAt(zone: DndZoneSnapshot, index: number): number {
-	const { rect } = zone.items[index];
-	const midpoint = zone.axis === "horizontal"
-		? rect.left + rect.width / 2
-		: rect.top + rect.height / 2;
-	if (!zone.slot) return midpoint;
-	return index < zone.slot.index ? midpoint + zone.slot.size / 2 : midpoint - zone.slot.size / 2;
+function itemMidpoint(item: DndItemRect, axis: DndZoneSnapshot["axis"]): number {
+	return axis === "horizontal"
+		? item.rect.left + item.rect.width / 2
+		: item.rect.top + item.rect.height / 2;
+}
+
+// Whether the point is over the place the dragged row started from, now held by the rows the
+// placeholder pushed aside: by midpoints alone it would take crossing half a row to get back.
+function isOverHome(coordinate: number, zone: DndZoneSnapshot): boolean {
+	const { home, slot, items } = zone;
+	if (home === undefined || !slot || slot.index === home) return false;
+	const start = slot.index < home
+		? (zone.axis === "horizontal" ? items[home - 1].rect.right : items[home - 1].rect.bottom) - slot.size
+		: (zone.axis === "horizontal" ? items[home].rect.left : items[home].rect.top);
+	return coordinate >= start && coordinate < start + slot.size;
 }
 
 export function applyTargetHysteresis(
@@ -111,12 +119,13 @@ export function applyTargetHysteresis(
 	if (next.zoneId !== previous.zoneId) return next;
 	if (next.index === previous.index) return next;
 	if (Math.abs(next.index - previous.index) > 1) return next;
+	if (next.index === zone.home) return next;
 
-	const boundaryIndex = Math.min(next.index, previous.index);
-	if (!zone.items[boundaryIndex]) return next;
+	const boundaryItem = zone.items[Math.min(next.index, previous.index)];
+	if (!boundaryItem) return next;
 
 	const coordinate = axisCoordinate(point, zone.axis);
-	const boundary = boundaryAt(zone, boundaryIndex);
+	const boundary = itemMidpoint(boundaryItem, zone.axis);
 	if (next.index > previous.index && coordinate < boundary + margin) {
 		return previous;
 	}

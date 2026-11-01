@@ -50,6 +50,8 @@ export type DndZoneSnapshot = {
 	items: DndItemRect[];
 	// Where the dragged row's placeholder sits in `items` order, and its extent along the axis.
 	slot?: { index: number; size: number };
+	// In the zone a drag started from, the dragged row's index there before it was lifted.
+	home?: number;
 };
 
 export type DndResolvedTarget = {

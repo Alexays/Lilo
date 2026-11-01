@@ -10,7 +10,7 @@ import type {
 	DndZoneSnapshot,
 } from "./types";
 import { applyTargetHysteresis, isPointInsideRect, resolveTargetFromPoint } from "./geometry";
-import { isShadowItem } from "./projection";
+import { isShadowItem, removeShadowItems } from "./projection";
 
 export type DndZoneParams = {
 	id: string;
@@ -45,6 +45,7 @@ type DndDragSource = {
 
 export type DndActiveDrag = {
 	source: DndDragSource;
+	home?: number;
 	startPoint: DndPoint;
 	currentPoint: DndPoint;
 	target: DndResolvedTarget | null;
@@ -166,8 +167,11 @@ export class DndEngineStore {
 	startDrag(source: DndDragSource, startPoint: DndPoint): void {
 		this.layoutSnapshot = null;
 		this.layoutSnapshotStale = true;
+		const home = removeShadowItems(this.zones.get(source.zoneId)?.getItems?.() ?? [])
+			.findIndex((item) => item.id === source.item.id);
 		this.drag = {
 			source,
+			home: home < 0 ? undefined : home,
 			startPoint,
 			currentPoint: startPoint,
 			target: null,
@@ -328,6 +332,7 @@ export class DndEngineStore {
 			rect: settledRect(zone.element, offsets),
 			items,
 			slot,
+			home: zone.id === this.drag?.source.zoneId ? this.drag.home : undefined,
 		};
 	}
 }
