@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test.use({ channel: "chrome" });
+// Continuous trace screenshots distort the video frame budget on software decoders.
+test.use({
+  channel: "chrome",
+  trace: { mode: "retain-on-failure", screenshots: false },
+});
 
 test("the deployed media route supports bounded byte ranges and invalid ranges", async ({
   request,
