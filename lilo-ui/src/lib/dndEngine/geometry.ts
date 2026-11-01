@@ -98,12 +98,12 @@ function itemMidpoint(item: DndItemRect, axis: DndZoneSnapshot["axis"]): number 
 
 // Whether the point is over the place the dragged row started from, now held by the rows the
 // placeholder pushed aside: by midpoints alone it would take crossing half a row to get back.
-function isOverHome(coordinate: number, zone: DndZoneSnapshot): boolean {
-	const { home, slot, items } = zone;
-	if (home === undefined || !slot || slot.index === home) return false;
+function isOverHome(coordinate: number, { home = -1, slot, items, axis }: DndZoneSnapshot): boolean {
+	if (!slot || home < 0 || slot.index === home) return false;
+	const x = axis === "horizontal";
 	const start = slot.index < home
-		? (zone.axis === "horizontal" ? items[home - 1].rect.right : items[home - 1].rect.bottom) - slot.size
-		: (zone.axis === "horizontal" ? items[home].rect.left : items[home].rect.top);
+		? (x ? items[home - 1].rect.right : items[home - 1].rect.bottom) - slot.size
+		: x ? items[home].rect.left : items[home].rect.top;
 	return coordinate >= start && coordinate < start + slot.size;
 }
 
