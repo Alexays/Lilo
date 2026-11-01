@@ -108,9 +108,9 @@ test("resolveTargetFromPoint resolves vertical insertion from row midpoints", ()
 	});
 });
 
-test("resolveTargetFromPoint puts the placeholder back on the row a drag started from", () => {
+test("applyTargetHysteresis does not hold the way back to the row a drag started from", () => {
 	// "d" was dragged up: its placeholder sits at index 2 and pushed "c" onto d's original row.
-	const up: DndZoneSnapshot = {
+	const zone: DndZoneSnapshot = {
 		id: "tabs",
 		axis: "vertical",
 		rect: rect(0, 0, 240, 150),
@@ -120,29 +120,14 @@ test("resolveTargetFromPoint puts the placeholder back on the row a drag started
 			{ id: "c", rect: rect(0, 90, 240, 30) },
 			{ id: "e", rect: rect(0, 120, 240, 30) },
 		],
-		slot: { index: 2, size: 30 },
 		home: 3,
 	};
 	const atSlot = { zoneId: "tabs", index: 2, axis: "vertical" } as const;
+	const point = { x: 20, y: 106 };
+	const next = resolveTargetFromPoint(point, zone);
 
-	assert.equal(resolveTargetFromPoint({ x: 20, y: 75 }, up)?.index, 2);
-	assert.equal(resolveTargetFromPoint({ x: 20, y: 52 }, up)?.index, 2);
-	assert.equal(applyTargetHysteresis({ x: 20, y: 96 }, up, resolveTargetFromPoint({ x: 20, y: 96 }, up), atSlot)?.index, 3);
-
-	// "b" was dragged down: its placeholder sits at index 2 and pulled "c" up onto b's original row.
-	const down: DndZoneSnapshot = {
-		...up,
-		items: [
-			{ id: "a", rect: rect(0, 0, 240, 30) },
-			{ id: "c", rect: rect(0, 30, 240, 30) },
-			{ id: "d", rect: rect(0, 90, 240, 30) },
-			{ id: "e", rect: rect(0, 120, 240, 30) },
-		],
-		home: 1,
-	};
-
-	assert.equal(applyTargetHysteresis({ x: 20, y: 55 }, down, resolveTargetFromPoint({ x: 20, y: 55 }, down), atSlot)?.index, 1);
-	assert.equal(resolveTargetFromPoint({ x: 20, y: 96 }, down)?.index, 2);
+	assert.equal(applyTargetHysteresis(point, zone, next, atSlot)?.index, 3);
+	assert.equal(applyTargetHysteresis(point, { ...zone, home: undefined }, next, atSlot)?.index, 2);
 });
 
 test("resolveTargetFromPoint resolves grid insertion by row order", () => {
