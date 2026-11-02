@@ -72,10 +72,11 @@ extension BrowserContext {
         let info = Bundle.main.infoDictionary ?? [:]
         var model = [CChar](repeating: 0, count: 64)
         var size = model.count
-        sysctlbyname("hw.model", &model, &size, nil, 0)
+        unsafe sysctlbyname("hw.model", &model, &size, nil, 0)
         return [
             "liloVersion": info["CFBundleShortVersionString"] as? String ?? "",
             "liloBuild": info["CFBundleVersion"] as? String ?? "",
+            "webKit": WKEngineFactory.webKitDescription,
             "macOS": ProcessInfo.processInfo.operatingSystemVersionString,
             "macModel": String(cString: model),
             "cores": ProcessInfo.processInfo.activeProcessorCount,

@@ -7,10 +7,11 @@ import WebKit
 final class SearchQueryBridgeHandler: GapHandler {
     let gapActions: Set<String> = ["search.url"]
 
+    private static let google = (name: "Google", urlTemplate: "https://www.google.com/search?q=%s")
     /// Mirrors BUILTIN_SEARCH_ENGINES in lilo-ui/src/lib/searchEngineModel.ts, the fallback when
     /// the `searchEngines` setting is unset or invalid.
     private static let builtinEngines = [
-        "google": (name: "Google", urlTemplate: "https://www.google.com/search?q=%s"),
+        "google": google,
         "duckduckgo": (name: "DuckDuckGo", urlTemplate: "https://duckduckgo.com/?q=%s"),
         "bing": (name: "Bing", urlTemplate: "https://www.bing.com/search?q=%s"),
         "brave": (name: "Brave Search", urlTemplate: "https://search.brave.com/search?q=%s")
@@ -32,7 +33,7 @@ final class SearchQueryBridgeHandler: GapHandler {
         return custom.first { $0.id == engineId }?.engine
             ?? builtinEngines[engineId]
             ?? custom.first?.engine
-            ?? builtinEngines["google"]!
+            ?? google
     }
 
     /// The results page of the user's default search engine for `text`.

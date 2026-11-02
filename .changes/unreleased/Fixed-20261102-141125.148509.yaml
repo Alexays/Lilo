@@ -1,0 +1,3 @@
+kind: Fixed
+body: Two sites on one host but different ports, such as two local servers, now each show their own favicon.
+time: 2026-11-02T14:11:25.148509+01:00

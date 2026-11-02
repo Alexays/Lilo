@@ -800,17 +800,19 @@ final class FilterListConverterTests: XCTestCase {
         XCTAssertEqual(generic.cssRules.count, 1)
     }
 
-    /// A complex selector waits for a class or id the hidden element carries; without one it stays native.
-    func testComplexGenericSelectorsAreKeyedByTheHiddenElementsToken() {
+    /// A complex selector waits for a class or id the hidden element carries, else one an earlier compound needs; without one
+    /// it stays native.
+    func testComplexGenericSelectorsAreKeyedByATokenThePageNeeds() {
         let generic = FilterListConverter.genericCosmetics(from: [
             "div.wrapper > .ad-box[data-x]", "#sidebar .promo:not(.keep)", "aside#top-ad", "[data-ad-slot]",
-            ".a, .b", "div > span", #"div[title="(x"] .promo"#, #"div[title="].fake"]"#
+            ".a, .b", "div > span", #"div[title="(x"] .promo"#, #"div[title="].fake"]"#,
+            "#bar ~ *", ".wrap > div[style]", ":not(#bar) ~ *"
         ], exceptions: [], cap: 100)
         XCTAssertEqual(generic.keyed, [".ad-box": ["div.wrapper > .ad-box[data-x]"],
                                        ".promo": ["#sidebar .promo:not(.keep)", #"div[title="(x"] .promo"#],
-                                       "#top-ad": ["aside#top-ad"]])
+                                       "#top-ad": ["aside#top-ad"], "#bar": ["#bar ~ *"], ".wrap": [".wrap > div[style]"]])
         XCTAssertEqual(generic.cssRules.compactMap { ($0["action"] as? [String: Any])?["selector"] as? String },
-                       ["[data-ad-slot]", ".a, .b", "div > span", #"div[title="].fake"]"#])
+                       ["[data-ad-slot]", ".a, .b", "div > span", #"div[title="].fake"]"#, ":not(#bar) ~ *"])
     }
 
     /// As uBO, only `$document`, `$all` or a bare `||host^` block the page itself: other rules keep to its frames and resources.

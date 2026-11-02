@@ -18,10 +18,10 @@
     return Math.abs(minutes) < 60 ? format.format(minutes, "minute") : format.format(Math.round(minutes / 60), "hour");
   }
 
-  // Keyed by the URL's own hostname, as native reads it: no port, "www." kept.
+  // Keyed as native keys it: the URL's host with its port, "www." kept.
   function favicon(url: string): string | undefined {
     try {
-      return getArchivedFavicons()[new URL(url).hostname];
+      return getArchivedFavicons()[new URL(url).host];
     } catch {
       return undefined;
     }

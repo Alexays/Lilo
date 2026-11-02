@@ -12,22 +12,22 @@ extension WKWebView {
     /// Clears stuck :hover by re-hit-testing at `windowPoint` (WebKit maps the exit to a buttonless move). `_simulateMouseExit:` has no
     /// firstResponder/visibleRect guard, unlike the move path, so it fires even when this view is first responder.
     func liloSimulateMouseExit(atWindowPoint windowPoint: NSPoint) {
-        guard let window,
-              let event = NSEvent.enterExitEvent(
+        guard let window = unsafe window,
+              let event = unsafe NSEvent.enterExitEvent(
                 with: .mouseExited, location: windowPoint, modifierFlags: [],
                 timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
                 context: nil, eventNumber: 0, trackingNumber: 0, userData: nil)
         else { return }
         let sel = #selector(WKMouseSimSPI._simulateMouseExit(_:))
         guard responds(to: sel) else { return }
-        unsafeBitCast(self, to: WKMouseSimSPI.self)._simulateMouseExit(event)
+        unsafe unsafeBitCast(self, to: WKMouseSimSPI.self)._simulateMouseExit(event)
     }
 
     /// Drive the page's hover/cursor from a real move event via the genuine `_impl` path.
     func liloSimulateMouseMove(_ event: NSEvent) {
         let sel = #selector(WKMouseSimSPI._simulateMouseMove(_:))
         guard responds(to: sel) else { return }
-        unsafeBitCast(self, to: WKMouseSimSPI.self)._simulateMouseMove(event)
+        unsafe unsafeBitCast(self, to: WKMouseSimSPI.self)._simulateMouseMove(event)
     }
 
     /// Clears all stale :hover by re-hit-testing a point outside the viewport: an edge point rounds back onto an edge-spanning element,
@@ -86,7 +86,7 @@ final class OverlayWebView: WKWebView {
             if let maximizeWindow {
                 maximizeWindow()
             } else {
-                window?.zoom(nil)
+                unsafe window?.zoom(nil)
             }
             return
         }
@@ -98,7 +98,7 @@ final class OverlayWebView: WKWebView {
             if let performWindowDrag {
                 performWindowDrag(dragStartEvent)
             } else {
-                window?.performDrag(with: dragStartEvent)
+                unsafe window?.performDrag(with: dragStartEvent)
             }
             return
         }
@@ -133,7 +133,7 @@ final class OverlayWebView: WKWebView {
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         // `point` is in the superview's coordinates, and this view is flipped while its superview is not.
-        if let eventRouter, eventRouter.target(forWindowPoint: superview?.convert(point, to: nil) ?? point) != .chrome {
+        if let eventRouter, unsafe eventRouter.target(forWindowPoint: superview?.convert(point, to: nil) ?? point) != .chrome {
             return nil
         }
         return super.hitTest(point)

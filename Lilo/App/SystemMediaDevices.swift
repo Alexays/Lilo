@@ -5,7 +5,7 @@ import CoreAudio
 /// change signals. Audio defaults are system-wide (CoreAudio); the camera has no system default,
 /// so the preferred camera is Lilo's own (`userPreferredCamera`), which WebKit follows.
 @MainActor
-final class SystemMediaDevices: NSObject {
+@safe final class SystemMediaDevices: NSObject {
     enum Change {
         case defaultChanged(MediaDeviceRole)
         case devicesChanged
@@ -13,12 +13,12 @@ final class SystemMediaDevices: NSObject {
 
     var onChange: ((Change) -> Void)?
 
-    private var audioListeners: [(AudioObjectPropertyAddress, AudioObjectPropertyListenerBlock)] = []
+    private var audioListeners: [(AudioObjectPropertyAddress, AudioObjectPropertyListenerBlock)] = unsafe []
     private var notificationTokens: [NSObjectProtocol] = []
     private var observesPreferredCamera = false
 
     func start() {
-        guard audioListeners.isEmpty else { return }
+        guard unsafe audioListeners.isEmpty else { return }
         let watched: [(AudioObjectPropertySelector, Change)] = [
             (kAudioHardwarePropertyDefaultInputDevice, .defaultChanged(.input)),
             (kAudioHardwarePropertyDefaultOutputDevice, .defaultChanged(.output)),
@@ -29,8 +29,8 @@ final class SystemMediaDevices: NSObject {
             let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
                 MainActor.assumeIsolated { self?.onChange?(change) }
             }
-            if AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block) == noErr {
-                audioListeners.append((address, block))
+            if unsafe AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block) == noErr {
+                unsafe audioListeners.append((address, block))
             }
         }
         for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {
@@ -39,16 +39,16 @@ final class SystemMediaDevices: NSObject {
             })
         }
         // A class property, so only string-key KVO on the class object reaches it (as WebKit does).
-        (AVCaptureDevice.self as AnyObject).addObserver(self, forKeyPath: "systemPreferredCamera", options: [.new], context: nil)
+        unsafe (AVCaptureDevice.self as AnyObject).addObserver(self, forKeyPath: "systemPreferredCamera", options: [.new], context: nil)
         observesPreferredCamera = true
     }
 
     func stop() {
-        for (address, block) in audioListeners {
+        for unsafe (address, block) in unsafe audioListeners {
             var address = address
-            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
+            unsafe AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, .main, block)
         }
-        audioListeners.removeAll()
+        unsafe audioListeners.removeAll()
         notificationTokens.forEach(NotificationCenter.default.removeObserver)
         notificationTokens.removeAll()
         if observesPreferredCamera {
@@ -76,7 +76,7 @@ final class SystemMediaDevices: NSObject {
             var deviceId = AudioObjectID(0)
             var size = UInt32(MemoryLayout<AudioObjectID>.size)
             var address = Self.systemAddress(Self.defaultSelector(role))
-            guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &deviceId) == noErr else { return nil }
+            guard unsafe AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &deviceId) == noErr else { return nil }
             return Self.audioRef(deviceId)
         }
     }
@@ -93,7 +93,7 @@ final class SystemMediaDevices: NSObject {
             guard var deviceId = Self.audioDeviceIds(for: role).first(where: { Self.audioRef($0)?.uid == uid }) else { return false }
             var address = Self.systemAddress(Self.defaultSelector(role))
             let size = UInt32(MemoryLayout<AudioObjectID>.size)
-            return AudioObjectSetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, size, &deviceId) == noErr
+            return unsafe AudioObjectSetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, size, &deviceId) == noErr
         }
     }
 
@@ -117,14 +117,14 @@ final class SystemMediaDevices: NSObject {
     private static func audioDeviceIds(for role: MediaDeviceRole) -> [AudioObjectID] {
         var address = systemAddress(kAudioHardwarePropertyDevices)
         var size: UInt32 = 0
-        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size) == noErr else { return [] }
+        guard unsafe AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size) == noErr else { return [] }
         var ids = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
-        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &ids) == noErr else { return [] }
+        guard unsafe AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &ids) == noErr else { return [] }
         let scope = role == .input ? kAudioObjectPropertyScopeInput : kAudioObjectPropertyScopeOutput
         return ids.filter { id in
             var streams = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams, mScope: scope, mElement: kAudioObjectPropertyElementMain)
             var streamsSize: UInt32 = 0
-            return AudioObjectGetPropertyDataSize(id, &streams, 0, nil, &streamsSize) == noErr && streamsSize > 0
+            return unsafe AudioObjectGetPropertyDataSize(id, &streams, 0, nil, &streamsSize) == noErr && streamsSize > 0
         }
     }
 
@@ -136,8 +136,8 @@ final class SystemMediaDevices: NSObject {
     private static func audioString(_ id: AudioObjectID, _ selector: AudioObjectPropertySelector) -> String? {
         var address = systemAddress(selector)
         var value: Unmanaged<CFString>?
-        var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
-        guard AudioObjectGetPropertyData(id, &address, 0, nil, &size, &value) == noErr, let value else { return nil }
-        return value.takeRetainedValue() as String
+        var size = unsafe UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+        guard unsafe AudioObjectGetPropertyData(id, &address, 0, nil, &size, &value) == noErr, let value = unsafe value else { return nil }
+        return unsafe value.takeRetainedValue() as String
     }
 }

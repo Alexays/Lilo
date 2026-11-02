@@ -30,14 +30,15 @@ extension MainWindowController {
     }
 
     func restoreSession() async {
-        let wasUncleanShutdown = !context.settingsStore.sessionCleanShutdown
+        guard let settingsStore = context.settingsStore else { return }
+        let wasUncleanShutdown = !settingsStore.sessionCleanShutdown
         // Arm the sentinel for this run; applicationWillTerminate re-sets it only on a clean quit, so a crash leaves it false.
-        context.settingsStore.sessionCleanShutdown = false
+        settingsStore.sessionCleanShutdown = false
         // Every path below returns early; the UI's own request may have arrived before the decision.
         defer {
             bridgeRouter.send(event: "onboardingState", data: [
-                "show": context.settingsStore.shouldShowOnboarding, "step": context.settingsStore.onboardingStep,
-                "usage": context.settingsStore.get("onboardingUsage") ?? "browse"
+                "show": settingsStore.shouldShowOnboarding, "step": settingsStore.onboardingStep,
+                "usage": settingsStore.get("onboardingUsage") ?? "browse"
             ])
             if wasUncleanShutdown {
                 bridgeRouter.send(event: "crashRecoveryDetected")
@@ -54,13 +55,13 @@ extension MainWindowController {
                     return
                 }
 
-                context.settingsStore.resolveOnboarding(freshInstall: true)
+                settingsStore.resolveOnboarding(freshInstall: true)
                 try restoreSpaceContext(ensureHomeSpace(for: preferredProfileId))
                 finishSessionRestore(appliedWindowChrome: true, deferNonCriticalUIUntilChromeNavigation: true)
                 return
             }
 
-            context.settingsStore.resolveOnboarding(freshInstall: false)
+            settingsStore.resolveOnboarding(freshInstall: false)
             if tabManager.currentSpaceId == initialSpace.id {
                 settleLaunchSpace()
                 finishSessionRestore(deferNonCriticalUIUntilChromeNavigation: true)
@@ -79,7 +80,7 @@ extension MainWindowController {
     /// Opens the launch's Space on no tab when it starts fresh, then archives what went idle meanwhile, so the chrome's
     /// first paint already shows the Space without them.
     func settleLaunchSpace(now: Date = Date()) {
-        guard let spaceId = tabManager.currentSpaceId, let space = context.spaceManager.space(with: spaceId) else { return }
+        guard let spaceId = tabManager.currentSpaceId, let space = context.spaceManager?.space(with: spaceId) else { return }
         if context.startsFresh(space), var snapshot = context.browserState.space(id: spaceId) {
             snapshot.spaceTab.deactivate()
             context.browserState.storeSpace(id: spaceId, snapshot: snapshot)
@@ -91,7 +92,7 @@ extension MainWindowController {
 
     /// Shows the space a window was opened on, then what it was opened for.
     func openOnSpace(_ spaceId: UUID, opening: Opening) {
-        if let space = context.spaceManager.space(with: spaceId) ?? context.spaceManager.spaces.first {
+        if let space = context.spaceManager?.space(with: spaceId) ?? context.spaceManager?.spaces.first {
             try? restoreSpaceContext(space)
         }
         finishSessionRestore(appliedWindowChrome: true, deferNonCriticalUIUntilChromeNavigation: true)
@@ -107,7 +108,7 @@ extension MainWindowController {
     /// `droppedAt` is the screen point (top-left origin) a dragged tab was dropped at, the new window's top-left.
     @discardableResult
     func moveTabToNewWindow(_ tabId: UUID, droppedAt point: NSPoint? = nil) -> MainWindowController? {
-        guard !context.settingsStore.singleWindow, let spaceId = tabManager.currentSpaceId, let index = tabManager.tabIndex(for: tabId) else { return nil }
+        guard context.settingsStore?.singleWindow != true, let spaceId = tabManager.currentSpaceId, let index = tabManager.tabIndex(for: tabId) else { return nil }
         if tabManager.activeOpenTabId == tabId, let neighbour = tabManager.adjacentOpenTabId(around: index, excluding: tabId) {
             activateTabStateFirst(id: neighbour)
         }
@@ -119,9 +120,10 @@ extension MainWindowController {
     }
 
     func preferredProfileIdForRestore() -> UUID? {
-        context.profileManager.restoreLastActiveProfileId()
-            ?? context.profileManager.defaultProfile?.id
-            ?? context.profileManager.profiles.first?.id
+        guard let profileManager = context.profileManager else { return nil }
+        return profileManager.restoreLastActiveProfileId()
+            ?? profileManager.defaultProfile?.id
+            ?? profileManager.profiles.first?.id
     }
 
     func restoreSpaceContext(_ space: Space) throws {
@@ -171,7 +173,7 @@ extension MainWindowController {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         let selector = NSSelectorFromString("_preconnectToServer:")
         guard webView.responds(to: selector) else { return }
-        webView.perform(selector, with: url)
+        unsafe webView.perform(selector, with: url)
         StartupMetrics.markOnce("firstContentPreconnected")
     }
 
@@ -248,7 +250,7 @@ extension MainWindowController {
         context.downloadManager.attach(profileContext.downloads)
         // The chrome asks for its first list itself; a later profile replaces the one it shows.
         if switchesProfile {
-            bridgeRouter?.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: profileContext.downloads, manager: context.downloadManager))
+            bridgeRouter.send(event: "downloadsSnapshot", data: DownloadBridgeHandler.snapshot(of: profileContext.downloads, manager: context.downloadManager))
         }
         if profileContext.sessionPersistence == nil {
             profileContext.sessionPersistence = makeSessionPersistence(for: profileContext)
@@ -289,7 +291,7 @@ extension MainWindowController {
                 guard let context else { return [] }
                 return context.windows.windows.compactMap { window in
                     guard let spaceId = window.tabManager.currentSpaceId,
-                          let space = context.spaceManager.space(with: spaceId),
+                          let space = context.spaceManager?.space(with: spaceId),
                           space.profileId == profileId, !space.isPrivate else { return nil }
                     return spaceId
                 }
@@ -419,8 +421,8 @@ extension MainWindowController {
               context.hiddenSpacePreloadProfileIds.insert(profileId).inserted else { return }
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(3))
-            guard let self, let pool = try? context.dbManager?.pool(for: profileId) else { return }
-            let spaceIds = context.spaceManager.spaces(for: profileId)
+            guard let self, let pool = try? context.dbManager?.pool(for: profileId), let spaceManager = context.spaceManager else { return }
+            let spaceIds = spaceManager.spaces(for: profileId)
                 .filter { !$0.isPrivate && context.browserState.space(id: $0.id) == nil }
                 .map(\.id)
             guard !spaceIds.isEmpty else { return }
@@ -435,7 +437,7 @@ extension MainWindowController {
             }.value
             for entry in loaded {
                 guard context.browserState.space(id: entry.spaceId) == nil,
-                      let space = context.spaceManager.space(with: entry.spaceId), space.profileId == profileId,
+                      let space = spaceManager.space(with: entry.spaceId), space.profileId == profileId,
                       SpaceTabStateStore.writeGenerations.withLock({ $0[entry.spaceId] ?? 0 }) == entry.generation else { continue }
                 context.browserState.storeSpace(
                     id: space.id,
@@ -582,13 +584,13 @@ extension MainWindowController {
         if synchronous {
             loggingPersistenceError("interactionStates.\(spaceId.uuidString)") {
                 // Don't wipe previously-persisted rows when archiving happened to yield nothing.
-                let entries = InteractionStateCodec.encodeAll(capturedStates, spaceId: spaceId)
+                let entries = unsafe InteractionStateCodec.encodeAll(capturedStates, spaceId: spaceId)
                 guard !entries.isEmpty else { return }
                 try InteractionStateStore(dbPool: pool).replace(spaceId: spaceId, entries: entries)
             }
         } else {
             pool.asyncWrite({ db in
-                let entries = InteractionStateCodec.encodeAll(capturedStates, spaceId: spaceId)
+                let entries = unsafe InteractionStateCodec.encodeAll(capturedStates, spaceId: spaceId)
                 guard !entries.isEmpty else { return }
                 try InteractionStateStore.writeReplaceOn(db: db, databasePath: databasePath, spaceId: spaceId, entries: entries)
             }, completion: loggingPersistenceFailure("interactionStates.\(spaceId.uuidString)"))
@@ -612,7 +614,8 @@ extension MainWindowController {
         } catch let error as SpaceTabStateStoreError {
             Self.logger.error("space tab state unreadable for \(space.id.uuidString, privacy: .public), quarantining: \(String(describing: error), privacy: .public)")
             loggingPersistenceError("spaceTabStates.quarantine[\(space.id.uuidString)]") {
-                let pool = try context.dbManager.pool(for: space.profileId)
+                guard let dbManager = context.dbManager else { throw BrowserContextError.notBootstrapped }
+                let pool = try dbManager.pool(for: space.profileId)
                 try SpaceTabStateStore(dbPool: pool).quarantine(spaceId: space.id)
             }
             bridgeRouter.send(event: "sessionRestoreDegraded", data: ["spaceName": space.name])
@@ -627,7 +630,8 @@ extension MainWindowController {
             return try sessionPersistence.restoreSpaceTabState(forSpace: space.id)
         }
 
-        let tabPool = try context.dbManager.pool(for: space.profileId)
+        guard let dbManager = context.dbManager else { throw BrowserContextError.notBootstrapped }
+        let tabPool = try dbManager.pool(for: space.profileId)
         return try SpaceTabStateStore(dbPool: tabPool).load(spaceId: space.id)
             ?? SpaceTabState(activeTabId: nil, activationHistory: [], tree: .empty)
     }

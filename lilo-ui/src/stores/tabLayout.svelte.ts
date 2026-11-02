@@ -15,6 +15,7 @@ function defaultAddress(position: TabPosition): AddressPlacement {
 }
 
 let applied = false;
+let latestApply = 0;
 // Well past the morph's own length (--motion-duration-slow).
 const MORPH_DEADLINE_MS = 1000;
 
@@ -30,14 +31,22 @@ function apply(position: TabPosition, address: AddressPlacement): void {
 	// A new edge morphs the tabs there (global.css names them), while the native page slides alongside.
 	const morph = applied && position !== _position && typeof document !== "undefined" && "startViewTransition" in document && !prefersReducedMotion();
 	applied = true;
+	const thisApply = ++latestApply;
 	if (!morph) return update();
 	const transition = document.startViewTransition(async () => {
+		// A global outro inside the old tabs keeps them in the page a while: only the new ones may carry the name.
+		const leaving = isVerticalLayout() === (position === "top" || position === "bottom") ? document.querySelector<HTMLElement>("#chrome-root > .sidebar, .tab-strip-host") : null;
 		update();
 		await tick();
+		if (leaving) leaving.style.viewTransitionName = "none";
 	});
 	// Lilo's WebKit can leave a morph unfinished: its frozen snapshot would cover the chrome and take its clicks.
 	const deadline = setTimeout(() => transition.skipTransition(), MORPH_DEADLINE_MS);
-	void transition.finished.finally(() => clearTimeout(deadline));
+	void transition.finished.finally(() => {
+		clearTimeout(deadline);
+		// A skipped morph may never run its update: the tabs would stay on the edge the page just left.
+		if (thisApply === latestApply) update();
+	});
 }
 
 export function applyTabLayoutInitialState(data: Pick<BridgeInitialStatePayload, "tabPosition" | "addressPlacement" | "toolbarVisible">): void {

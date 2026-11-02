@@ -7,7 +7,7 @@ final class WhatsNewState {
     private var checkedAutomatic = false
     private var reservedVersion: String?
 
-    init(defaults: UserDefaults = .lilo) { self.defaults = defaults }
+    init(defaults: UserDefaults = unsafe .lilo) { self.defaults = defaults }
 
     func reserveAutomatic(version: String, freshInstall: Bool) -> Bool {
         guard !checkedAutomatic else { return false }

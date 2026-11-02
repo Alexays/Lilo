@@ -500,7 +500,8 @@
 				"check": "立即檢查",
 				"lastChecked": "檢查於 {time}",
 				"unavailable": "此版本不會自行更新。",
-				"developerTools": "Lilo 本身的開發工具現已移至「開發」選單。"
+				"developerTools": "Lilo 本身的開發工具現已移至「開發」選單。",
+				"webKitFork": "WebKit {version}（Lilo 分支）"
 			},
 			"autoUpdate": {
 				"title": "自動安裝更新",
@@ -1687,7 +1688,7 @@
 			"subtitle": "只需要知道這些。",
 			"go": "出發吧",
 			"search": "按 ⌘T 搜尋或輸入網址。",
-			"tabs": "分頁位於左側，隨時都看得見。",
+			"tabs": "分頁位於你選的那一側，隨時都看得見。",
 			"split": "將分頁拖到網頁邊緣，即可並排顯示兩個網頁。"
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "即使沒有顯示「開發」選單，快速鍵仍可使用。",
 			"inspector": "按 ⌥⌘I 開啟目前網頁的網頁檢閱器。",
 			"localhost": "將 localhost 拖到網頁邊緣，即可與文件並排顯示。",
-			"agents": "代理程式會在左側「代理程式」空間中開啟分頁。"
+			"agents": "代理程式會在「代理程式」空間中開啟分頁。"
 		},
 		"arrival": {
 			"title": "歡迎使用 Lilo。",
@@ -1878,6 +1879,7 @@
 		"What’s New": "最新內容",
 		"Report an Issue…": "回報問題…",
 		"Your internet, in bloom.": "讓你的網路生活，綻放。",
+		"WebKit %@, Lilo fork": "WebKit %@（Lilo 分支）",
 		"Recently Visited": "最近造訪",
 		"No History": "沒有歷史記錄",
 		"%@ wants to connect to a serial port": "%@ 想要連接序列埠",

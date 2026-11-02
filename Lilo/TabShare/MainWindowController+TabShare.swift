@@ -29,7 +29,7 @@ extension MainWindowController {
     private func releaseShareSourceView(engineId: UUID) {
         let engine = tabManager.engineTab(for: engineId) ?? context.browserState.liveEngine(forTab: engineId)
         guard let engine, !engine.hasActiveCapture,
-              engine.view.superview === contentContainerView,
+              unsafe engine.view.superview === contentContainerView,
               tabManager.activeOpenTabId != engineId else { return }
         engine.view.removeFromSuperview()
     }
@@ -38,7 +38,7 @@ extension MainWindowController {
     func shareTabInstead(token: String, tabId: UUID) {
         guard let owner = context.windows.windows.first(where: { $0.tabShareSessions.hasSession(token: token) }),
               let engine = owner.liveEngineForSharing(tabId: tabId) else { return }
-        if engine.view.window == nil { owner.attachBelowContent(engine) }
+        if unsafe engine.view.window == nil { owner.attachBelowContent(engine) }
         owner.tabShareSessions.switchSource(token: token, to: engine)
     }
 
@@ -50,14 +50,14 @@ extension MainWindowController {
         guard let engine = liveEngineForSharing(tabId: tabId) else { return nil }
         // A backgrounded tab's view is detached and stops rendering: re-attach it below the
         // active view at full content size so it lays out and renders like a visible tab.
-        if engine.view.window == nil { attachBelowContent(engine) }
+        if unsafe engine.view.window == nil { attachBelowContent(engine) }
         return tabShareSessions.start(engine: engine, requester: requester)
     }
 
     /// Re-attaches the shared tab's view under the active view after a space switch: parking
     /// detaches every engine view of the leaving space, share-retained ones included.
     func reattachSharedTabViewIfNeeded() {
-        for engine in tabShareSessions.sharedEngines where engine.view.window == nil { attachBelowContent(engine) }
+        for engine in tabShareSessions.sharedEngines where unsafe engine.view.window == nil { attachBelowContent(engine) }
     }
 
     fileprivate func attachBelowContent(_ engine: WKWebViewTab) {
@@ -116,7 +116,7 @@ extension MainWindowController {
             let excludable = requester.map { WebViewPrivateAccessors($0).pid("_gpuProcessIdentifier") != nil } ?? false
             data["audio"] = [
                 "system": excludable ? SystemAudioAccess.current.rawValue : "unsupported",
-                "systemOn": context.settingsStore.get(Self.systemAudioSetting) != "false"
+                "systemOn": context.settingsStore?.get(Self.systemAudioSetting) != "false"
             ]
         }
         return await withTaskCancellationHandler {
@@ -141,7 +141,7 @@ extension MainWindowController {
     func resolveTabSharePicker(requestId: String, choice: TabSharePickerChoice) {
         guard let pending = pendingTabSharePickerRequests.removeValue(forKey: requestId) else { return }
         if pending.wantsAudio, case .system(let audio) = choice {
-            context.settingsStore.set(Self.systemAudioSetting, value: String(audio))
+            context.settingsStore?.set(Self.systemAudioSetting, value: String(audio))
         }
         pending.continuation.resume(returning: choice)
     }

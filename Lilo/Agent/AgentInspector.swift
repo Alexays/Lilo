@@ -102,9 +102,9 @@ final class AgentInspector {
         let inspectorSelector = NSSelectorFromString("_inspector")
         let frontendSelector = NSSelectorFromString("inspectorWebView")
         guard let webView, WebInspectorSupport.isConnected(for: webView), webView.responds(to: inspectorSelector),
-              let inspector = webView.perform(inspectorSelector)?.takeUnretainedValue() as? NSObject,
+              let inspector = unsafe webView.perform(inspectorSelector)?.takeUnretainedValue() as? NSObject,
               inspector.responds(to: frontendSelector) else { return false }
-        return inspector.perform(frontendSelector)?.takeUnretainedValue() === frontend
+        return unsafe inspector.perform(frontendSelector)?.takeUnretainedValue() === frontend
     }
 
     /// Lets network_mock rules answer with `path`: one file, or every file under it when it ends with a slash.
@@ -147,13 +147,13 @@ final class AgentInspector {
         get {
             guard let webView, webView.responds(to: Self.scaleSelector) else { return 0 }
             typealias Getter = @convention(c) (AnyObject, Selector) -> CGFloat
-            return unsafeBitCast(webView.method(for: Self.scaleSelector), to: Getter.self)(webView, Self.scaleSelector)
+            return unsafe unsafeBitCast(webView.method(for: Self.scaleSelector), to: Getter.self)(webView, Self.scaleSelector)
         }
         set {
             guard let webView, webView.responds(to: Self.setScaleSelector) else { return }
             // A CGFloat argument: perform(_:with:) would pass an object pointer instead.
             typealias Setter = @convention(c) (AnyObject, Selector, CGFloat) -> Void
-            unsafeBitCast(webView.method(for: Self.setScaleSelector), to: Setter.self)(webView, Self.setScaleSelector, newValue)
+            unsafe unsafeBitCast(webView.method(for: Self.setScaleSelector), to: Setter.self)(webView, Self.setScaleSelector, newValue)
         }
     }
 

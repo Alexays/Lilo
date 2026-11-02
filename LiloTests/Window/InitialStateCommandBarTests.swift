@@ -20,9 +20,9 @@ final class InitialStateCommandBarTests: XCTestCase {
 
     private func launchOnABlankTab(onboarding: Bool) throws -> BridgeEventRecorder {
         let context = browserContext.context
-        context.settingsStore.resolveOnboarding(freshInstall: onboarding)
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        context.settingsStore!.resolveOnboarding(freshInstall: onboarding)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: false)
         let window = makeTestWindow(context, showing: space.id)
         XCTAssertNotNil(window.createTabStateFirst(url: nil))
         let events = BridgeEventRecorder(window.bridgeRouter)

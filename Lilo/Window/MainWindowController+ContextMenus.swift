@@ -143,11 +143,11 @@ extension MainWindowController {
         // An item without an action is greyed out.
         let duplicate = menu.addItem("Duplicate Tab".localized, icon: .duplicate) { self.duplicateTab(tab) }
         if tab.url == nil { duplicate.action = nil }
-        if !tab.isClosed, !self.context.settingsStore.singleWindow {
+        if !tab.isClosed, self.context.settingsStore?.singleWindow != true {
             menu.addItem("Move to New Window".localized, icon: .newWindow) { self.moveTabToNewWindow(uuid) }
         }
         if tab.kind == .web, let url = tab.url, case let host = HistoryStore.siteHost(of: url.absoluteString), !host.isEmpty {
-            menu.addItem(String(format: "Show History for %@".localized, host), icon: .history) {
+            unsafe menu.addItem(String(format: "Show History for %@".localized, host), icon: .history) {
                 self.focusChrome()
                 self.bridgeRouter.send(event: "openHistory", data: ["host": host])
             }
@@ -223,7 +223,7 @@ extension MainWindowController {
     func showDownloadContextMenu(downloadId: Int, anchorRect: NSRect?, state: String, fileMissing: Bool) {
         let menu = NSMenu()
         func add(_ title: String, _ icon: MenuIcon, _ action: String) {
-            menu.addItem(title.localized, icon: icon) { self.bridgeRouter?.send(event: "downloadMenuAction", data: ["id": downloadId, "action": action]) }
+            menu.addItem(title.localized, icon: icon) { self.bridgeRouter.send(event: "downloadMenuAction", data: ["id": downloadId, "action": action]) }
         }
         // Copied here: the chrome may only write the pasteboard during a user gesture, and a bridge push is none.
         func addCopyURL() {
@@ -272,7 +272,7 @@ extension MainWindowController {
     func showHistoryRowMenu(key: String, url: String, host: String, anchorRect: NSRect?) {
         let menu = NSMenu()
         func add(_ title: String, _ icon: MenuIcon, _ action: String) {
-            menu.addItem(title, icon: icon) { self.bridgeRouter?.send(event: "historyRowMenuAction", data: ["key": key, "action": action]) }
+            menu.addItem(title, icon: icon) { self.bridgeRouter.send(event: "historyRowMenuAction", data: ["key": key, "action": action]) }
         }
         add("Open".localized, .open, "open")
         add("Open in New Tab".localized, .openInNewTab, "openInNewTab")
@@ -283,7 +283,7 @@ extension MainWindowController {
         }
         menu.addItem(.separator())
         add("Delete".localized, .delete, "delete")
-        if !host.isEmpty { add(String(format: "Delete All from %@…".localized, host), .clearBrowsingData, "deleteSite") }
+        if !host.isEmpty { unsafe add(String(format: "Delete All from %@…".localized, host), .clearBrowsingData, "deleteSite") }
         presentContextMenu(menu, anchorRect: anchorRect)
     }
 
@@ -382,7 +382,7 @@ extension MainWindowController {
     private func confirmDeleteFolder(_ folder: TabFolder, tabs: Int) -> Bool {
         guard window?.isVisible == true else { return true }
         let alert = NSAlert()
-        alert.messageText = tabs == 0
+        alert.messageText = unsafe tabs == 0
             ? String(format: "Delete %@?".localized, folder.name)
             : String(format: "Delete %@ and %@?".localized, folder.name, tabs == 1 ? "1 tab".localized : String(format: "%d tabs".localized, tabs))
         alert.informativeText = folder.isSplit
@@ -401,13 +401,13 @@ extension MainWindowController {
     }
 
     func changeFolderPassword(_ folder: TabFolder) async {
-        let reason = String(format: "Change the password of %@".localized, folder.name)
+        let reason = unsafe String(format: "Change the password of %@".localized, folder.name)
         guard await FolderLockAuth.authenticate(.deviceOwnerAuthentication, reason: reason) else { return }
         beginFolderLockSetup(folder.id)
     }
 
     func removeFolderLock(_ folder: TabFolder) async {
-        let reason = String(format: "Remove the lock of %@".localized, folder.name)
+        let reason = unsafe String(format: "Remove the lock of %@".localized, folder.name)
         guard await FolderLockAuth.authenticate(.deviceOwnerAuthentication, reason: reason) else { return }
         FolderLockKeychain.remove(folderId: folder.id)
         applyContextMenuStateCommands([.setFolderLock(spaceId: folder.spaceId, folderId: folder.id, lock: nil)])
@@ -443,11 +443,11 @@ extension MainWindowController {
         menu.addItem(.separator())
         menu.addItem("Edit Space".localized, icon: .edit) { self.bridgeRouter.send(event: "openSpaceEditor", data: ["id": targetSpaceId.uuidString]) }
         menu.addItem("New Space".localized, icon: .newSpace) { self.bridgeRouter.send(event: "openAddSpaceEditor") }
-        if context.spaceManager.spaces.count > 1 {
+        if let spaceManager = context.spaceManager, spaceManager.spaces.count > 1 {
             menu.addItem("Delete Space…".localized, icon: .delete) {
-                guard let space = self.context.spaceManager.space(with: targetSpaceId) else { return }
+                guard let space = spaceManager.space(with: targetSpaceId) else { return }
                 let alert = NSAlert()
-                alert.messageText = String(format: "Delete %@?".localized, space.name)
+                alert.messageText = unsafe String(format: "Delete %@?".localized, space.name)
                 alert.informativeText = "The space and all its tabs are deleted permanently.".localized
                 alert.alertStyle = .warning
                 alert.addButton(withTitle: "Delete".localized)
@@ -505,9 +505,9 @@ extension MainWindowController {
         let busy = closing.filter { $0.kind == .terminal && tabManager.terminalHost.isBusy($0.id) }.map(\.id)
         guard !busy.isEmpty, let window else { return closeAll() }
         let alert = NSAlert()
-        alert.messageText = String(format: "Close %d terminals?".localized, busy.count)
+        alert.messageText = unsafe String(format: "Close %d terminals?".localized, busy.count)
         let commands = busy.compactMap(tabManager.terminalHost.runningCommand)
-        alert.informativeText = commands.count == busy.count
+        alert.informativeText = unsafe commands.count == busy.count
             ? String(format: "These commands will be stopped: %@.".localized, commands.joined(separator: ", "))
             : "Commands are still running in them and will be stopped.".localized
         alert.addButton(withTitle: "Close".localized)

@@ -45,6 +45,7 @@ type DndDragSource = {
 
 export type DndActiveDrag = {
 	source: DndDragSource;
+	home?: number;
 	startPoint: DndPoint;
 	currentPoint: DndPoint;
 	target: DndResolvedTarget | null;
@@ -168,6 +169,7 @@ export class DndEngineStore {
 		this.layoutSnapshotStale = true;
 		this.drag = {
 			source,
+			home: this.zones.get(source.zoneId)?.getItems?.().findIndex((item) => item.id === source.item.id),
 			startPoint,
 			currentPoint: startPoint,
 			target: null,
@@ -306,25 +308,22 @@ export class DndEngineStore {
 	}
 
 	private snapshotForZone(zone: DndZoneRegistration, offsets: AnimationOffsets = null): DndZoneSnapshot {
+		// Indices address the list with the dragged row lifted out, which is how it is
+		// projected; its own slot is still in the DOM until the first projection lands.
+		const draggedId = this.drag?.source.item.id;
+		const items: DndItemRect[] = [];
+		for (const item of zone.getItems?.() ?? []) {
+			if (isShadowItem(item) || item.id === draggedId) continue;
+			const element = this.itemElements.get(item.id);
+			if (element) items.push({ id: item.id, rect: settledRect(element, offsets) });
+		}
 		return {
 			id: zone.id,
 			axis: zone.axis,
 			rect: settledRect(zone.element, offsets),
-			items: this.itemRectsForZone(zone, offsets),
+			items,
+			home: zone.id === this.drag?.source.zoneId ? this.drag.home : undefined,
 		};
-	}
-
-	private itemRectsForZone(zone: DndZoneRegistration, offsets: AnimationOffsets): DndItemRect[] {
-		// Indices address the list with the dragged row lifted out, which is how it is
-		// projected; its own slot is still in the DOM until the first projection lands.
-		const draggedId = this.drag?.source.item.id;
-		const rects: DndItemRect[] = [];
-		for (const item of zone.getItems?.() ?? []) {
-			if (isShadowItem(item) || item.id === draggedId) continue;
-			const element = this.itemElements.get(item.id);
-			if (element) rects.push({ id: item.id, rect: settledRect(element, offsets) });
-		}
-		return rects;
 	}
 }
 

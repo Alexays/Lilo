@@ -84,7 +84,7 @@ final class ScreenshotBridgeHandler: BridgeHandler {
             case .success:
                 onSaved(url.path)
             case .failure(let error):
-                onError(String(format: "Could not save the screenshot: %@".localized, error.localizedDescription))
+                unsafe onError(String(format: "Could not save the screenshot: %@".localized, error.localizedDescription))
                 return nil
             }
             message.string("id").map(discardCapture)

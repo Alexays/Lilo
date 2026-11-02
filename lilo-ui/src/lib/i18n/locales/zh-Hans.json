@@ -500,7 +500,8 @@
 				"check": "立即检查",
 				"lastChecked": "检查于 {time}",
 				"unavailable": "此版本不支持自动更新。",
-				"developerTools": "Lilo 自身的开发工具现位于“开发”菜单中。"
+				"developerTools": "Lilo 自身的开发工具现位于“开发”菜单中。",
+				"webKitFork": "WebKit {version}（Lilo 分支）"
 			},
 			"autoUpdate": {
 				"title": "自动安装更新",
@@ -1687,7 +1688,7 @@
 			"subtitle": "掌握这些就够了。",
 			"go": "出发",
 			"search": "按 ⌘T 搜索或输入地址。",
-			"tabs": "标签页位于左侧，随时可见。",
+			"tabs": "标签页位于你选的那一侧，随时可见。",
 			"split": "将标签页拖到网页边缘，即可并排查看两个网页。"
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "即使不显示“开发”菜单，快捷键也可使用。",
 			"inspector": "按 ⌥⌘I 打开当前网页的网页检查器。",
 			"localhost": "将 localhost 网页拖到网页边缘，即可与文档并排查看。",
-			"agents": "智能体会在左侧“智能体”空间中打开标签页。"
+			"agents": "智能体会在“智能体”空间中打开标签页。"
 		},
 		"arrival": {
 			"title": "欢迎使用 Lilo。",
@@ -1878,6 +1879,7 @@
 		"What’s New": "更新内容",
 		"Report an Issue…": "报告问题…",
 		"Your internet, in bloom.": "让你的互联网，焕然绽放。",
+		"WebKit %@, Lilo fork": "WebKit %@（Lilo 分支）",
 		"Recently Visited": "最近访问",
 		"No History": "没有历史记录",
 		"%@ wants to connect to a serial port": "%@ 想要连接串口",

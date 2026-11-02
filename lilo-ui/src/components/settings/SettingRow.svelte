@@ -130,10 +130,13 @@
     if (passwordManagers.length > 0) return new Intl.ListFormat(getLocale(), { type: "conjunction" }).format(passwordManagers);
     if (id === "appUpdates") {
       if (versionClicks >= 7) return t("settings.items.appUpdates.developerTools");
-      if (updater && !updater.available) return t("settings.items.appUpdates.unavailable");
-      if (!updater?.lastCheck) return t(settingDescriptionKey(id));
+      // The engine follows the update status, so a report can say which WebKit ran, the system's or Lilo's fork.
+      const version = updater?.webKitVersion;
+      const engine = version ? ` · ${updater.webKitFork ? t("settings.items.appUpdates.webKitFork", { version }) : `WebKit ${version}`}` : "";
+      if (updater && !updater.available) return t("settings.items.appUpdates.unavailable") + engine;
+      if (!updater?.lastCheck) return t(settingDescriptionKey(id)) + engine;
       const time = new Intl.DateTimeFormat(getLocale(), { dateStyle: "medium", timeStyle: "short" }).format(updater.lastCheck * 1000);
-      return t("settings.items.appUpdates.lastChecked", { time });
+      return t("settings.items.appUpdates.lastChecked", { time }) + engine;
     }
     if (id === "checkExtensionUpdates") {
       if (updateCheck.checking) return t("settings.extensionUpdates.checking");

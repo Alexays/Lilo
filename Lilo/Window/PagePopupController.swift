@@ -72,7 +72,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         window.delegate = self
 
         // The header lives in the title bar view: content under a transparent title bar never gets its clicks.
-        if let titlebar = window.standardWindowButton(.closeButton)?.superview {
+        if let titlebar = unsafe window.standardWindowButton(.closeButton)?.superview {
             header.frame = titlebar.bounds
             header.autoresizingMask = [.width, .height]
             titlebar.addSubview(header, positioned: .above, relativeTo: nil)
@@ -145,7 +145,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
             "camera and microphone": "%@ wants to use your camera and microphone".localized
         ]
         let alert = NSAlert()
-        alert.messageText = String(format: messages[type] ?? "%@ wants to use your camera or microphone".localized, host)
+        alert.messageText = unsafe String(format: messages[type] ?? "%@ wants to use your camera or microphone".localized, host)
         alert.addButton(withTitle: "Allow".localized)
         alert.addButton(withTitle: "Deny".localized)
         alert.beginSheetModal(for: window) { response in completion(response == .alertFirstButtonReturn) }
@@ -196,7 +196,7 @@ final class PagePopupController: NSObject, NSWindowDelegate {
         }
         isDetached = true
         let engine = engine
-        guard let peekView, peekView.superview != nil else {
+        guard let peekView, unsafe peekView.superview != nil else {
             // Deferred so the caller's stack unwinds before releasing the WKWebView.
             DispatchQueue.main.async { engine.teardown() }
             return
@@ -524,13 +524,13 @@ final class PagePeekView: NSView {
         if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
         keyMonitor = nil
         clickMonitor = nil
-        guard window != nil else { return }
+        guard unsafe window != nil else { return }
         // A monitor, as the chrome lies outside this view; the click still goes on to what it hit.
         clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             let eventWindow = event.window
             let location = event.locationInWindow
             MainActor.assumeIsolated {
-                guard let self, eventWindow === self.window,
+                guard let self, unsafe eventWindow === self.window,
                       !self.card.frame.contains(self.convert(location, from: nil)) else { return }
                 self.onDismiss?()
             }
@@ -540,8 +540,8 @@ final class PagePeekView: NSView {
             guard event.keyCode == 53 else { return event }
             let eventWindow = event.window
             let dismissed = MainActor.assumeIsolated {
-                guard let self, eventWindow === self.window,
-                      (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
+                guard let self, unsafe eventWindow === self.window,
+                      unsafe (self.window?.firstResponder as? NSTextInputClient)?.hasMarkedText() != true else { return false }
                 self.onDismiss?()
                 return true
             }

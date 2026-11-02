@@ -20,8 +20,8 @@ final class TabClosingTests: XCTestCase {
 
     private func makeWindow() throws -> (MainWindowController, Space) {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         return (makeTestWindow(context, showing: space.id), space)
     }
 

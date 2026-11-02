@@ -137,7 +137,7 @@ final class GeolocationBridge: NSObject, WKScriptMessageHandler {
     /// Continuous GPS runs only for `watchPosition()` callers whose web view is in the hierarchy, so hidden tabs stop holding the
     /// radio; `reevaluateWatchers()` resumes them when shown.
     private var hasVisibleWatchRequest: Bool {
-        pendingRequests.contains { $0.isWatch && $0.webView.map { $0.window != nil && !$0.isHiddenOrHasHiddenAncestor } == true }
+        pendingRequests.contains { $0.isWatch && $0.webView.map { unsafe $0.window != nil && !$0.isHiddenOrHasHiddenAncestor } == true }
     }
 
     /// Re-arms or pauses continuous updates after tab visibility changed. The hide side is also

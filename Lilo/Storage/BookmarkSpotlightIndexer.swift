@@ -1,4 +1,4 @@
-@preconcurrency import CoreSpotlight
+@preconcurrency @unsafe import CoreSpotlight
 import CryptoKit
 import Foundation
 import GRDB
@@ -46,7 +46,7 @@ final class BookmarkSpotlightIndexer: Sendable {
 
     static func removeAll(profileId: UUID) {
         let domain = Self.domain(for: profileId)
-        UserDefaults.lilo.removeObject(forKey: hashKey(for: domain))
+        unsafe UserDefaults.lilo.removeObject(forKey: hashKey(for: domain))
         CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [domain])
     }
 
@@ -64,7 +64,7 @@ final class BookmarkSpotlightIndexer: Sendable {
         }
         let hash = Data(SHA256.hash(data: Data(digestInput.utf8)))
         let key = hashKey(for: domain)
-        guard UserDefaults.lilo.data(forKey: key) != hash else {
+        guard unsafe UserDefaults.lilo.data(forKey: key) != hash else {
             PerfSignposts.energy.emitEvent("spotlightSkipped")
             return
         }
@@ -83,7 +83,7 @@ final class BookmarkSpotlightIndexer: Sendable {
             // A failed call leaves the hash unrecorded, so the next launch or write retries.
             let record: @Sendable (Error?) -> Void = { indexError in
                 PerfSignposts.energy.endInterval("spotlightReindex", signpost, "\(items.count) items")
-                if deleteError == nil, indexError == nil { UserDefaults.lilo.set(hash, forKey: key) }
+                if deleteError == nil, indexError == nil { unsafe UserDefaults.lilo.set(hash, forKey: key) }
             }
             if items.isEmpty { record(nil) } else { index.indexSearchableItems(items, completionHandler: record) }
         }

@@ -288,7 +288,7 @@ final class DownloadsGapAPITests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileIds = try ["A", "B"].map { try context.profileManager.createProfile(name: $0).id }
+        let profileIds = try ["A", "B"].map { try context.profileManager!.createProfile(name: $0).id }
         context.profileContexts.pinnedProfileIds = Set(profileIds)
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("download-events-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

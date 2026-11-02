@@ -16,8 +16,8 @@ final class TemporaryBrowserContext {
 
     /// A window showing a space of a new profile, extensions set up, and that profile's registry.
     func makeExtensionWindow() throws -> (MainWindowController, ProfileExtensionRegistry) {
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let registry = try context.profileContexts.context(for: profileId).extensions
         let window = makeTestWindow(context, showing: space.id, size: NSSize(width: 1000, height: 800))
         window.setupExtensions()
@@ -39,7 +39,6 @@ final class TemporaryBrowserContext {
 @MainActor
 func makeTestWindow(_ context: BrowserContext, showing spaceId: UUID, size: NSSize = NSSize(width: 800, height: 600)) -> MainWindowController {
     let window = MainWindowController(context: context)
-    window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
     window.contentContainerView = NSView(frame: NSRect(origin: .zero, size: size))
     context.windows.add(window)
     window.switchToSpace(spaceId)

@@ -14,9 +14,9 @@ final class ExternalLinkRoutingTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        home = try context.spaceManager.createSpace(name: "Home", profileId: profileId)
-        work = try context.spaceManager.createSpace(name: "Work", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        home = try context.spaceManager!.createSpace(name: "Home", profileId: profileId)
+        work = try context.spaceManager!.createSpace(name: "Work", profileId: profileId)
         controller = makeTestWindow(context, showing: home.id, size: NSSize(width: 1000, height: 800))
         controller.didCompleteSessionRestore = true
     }
@@ -31,7 +31,7 @@ final class ExternalLinkRoutingTests: XCTestCase {
 
     private func setRules(_ rules: [[String: String]]) throws {
         let json = try XCTUnwrap(String(data: JSONSerialization.data(withJSONObject: rules), encoding: .utf8))
-        browserContext.context.settingsStore.set("externalLinkRules", value: json)
+        browserContext.context.settingsStore!.set("externalLinkRules", value: json)
     }
 
     private func open(_ string: String) throws -> URL {
@@ -49,7 +49,7 @@ final class ExternalLinkRoutingTests: XCTestCase {
     }
 
     func testALinkLeavesAPrivateSpaceForTheLastSharedOne() throws {
-        let secret = try browserContext.context.spaceManager.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
+        let secret = try browserContext.context.spaceManager!.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
         controller.switchToSpace(work.id)
         controller.switchToSpace(secret.id)
 
@@ -60,13 +60,13 @@ final class ExternalLinkRoutingTests: XCTestCase {
     }
 
     func testALittleWindowFromAPrivateSpaceOpensOnTheLastSharedOne() throws {
-        let secret = try browserContext.context.spaceManager.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
+        let secret = try browserContext.context.spaceManager!.createSpace(name: "Secret", profileId: home.profileId, isPrivate: true)
         controller.switchToSpace(secret.id)
 
         let little = try XCTUnwrap(controller.openLittleWindow(url: nil))
 
         XCTAssertEqual(little.spaceId, home.id)
-        XCTAssertTrue(little.dataStore === browserContext.context.profileManager.dataStore(for: home.profileId))
+        XCTAssertTrue(little.dataStore === browserContext.context.profileManager!.dataStore(for: home.profileId))
         XCTAssertTrue(little.engine.wkWebView.configuration.websiteDataStore.isPersistent)
     }
 
@@ -102,7 +102,7 @@ final class ExternalLinkRoutingTests: XCTestCase {
 
     func testARuleToADeletedSpaceFallsBackToTheDefault() throws {
         try setRules([["match": "host", "pattern": "example.com", "destination": UUID().uuidString]])
-        browserContext.context.settingsStore.set("externalLinkDefault", value: work.id.uuidString)
+        browserContext.context.settingsStore!.set("externalLinkDefault", value: work.id.uuidString)
 
         _ = try open("https://example.com/")
 
@@ -120,7 +120,7 @@ final class ExternalLinkRoutingTests: XCTestCase {
     }
 
     func testTheDefaultCanBeTheLittleWindow() throws {
-        browserContext.context.settingsStore.set("externalLinkDefault", value: "little")
+        browserContext.context.settingsStore!.set("externalLinkDefault", value: "little")
 
         _ = try open("https://example.com/")
 

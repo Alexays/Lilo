@@ -500,7 +500,8 @@
 				"check": "Jetzt suchen",
 				"lastChecked": "Geprüft {time}",
 				"unavailable": "Diese Version aktualisiert sich nicht selbst.",
-				"developerTools": "Lilos eigene Entwicklerwerkzeuge befinden sich jetzt im Menü „Entwickler“."
+				"developerTools": "Lilos eigene Entwicklerwerkzeuge befinden sich jetzt im Menü „Entwickler“.",
+				"webKitFork": "WebKit {version}, Lilo-Fork"
 			},
 			"autoUpdate": {
 				"title": "Updates automatisch installieren",
@@ -1687,7 +1688,7 @@
 			"subtitle": "Mehr brauchst du nicht.",
 			"go": "Los geht’s",
 			"search": "Drücke ⌘T zum Suchen oder zur Eingabe einer Adresse.",
-			"tabs": "Deine Tabs sind links, immer im Blick.",
+			"tabs": "Deine Tabs bleiben im Blick, am Rand deiner Wahl.",
 			"split": "Ziehe einen Tab an den Seitenrand, um zwei Seiten nebeneinander anzuzeigen."
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "Die Kurzbefehle funktionieren auch ohne das Menü „Entwickler“.",
 			"inspector": "Drücke ⌥⌘I, um die Webinformationen der Seite zu öffnen.",
 			"localhost": "Ziehe deinen localhost an den Seitenrand, um ihn neben der Dokumentation anzuzeigen.",
-			"agents": "Deine Agenten öffnen ihre Tabs im Space „Agenten“ auf der linken Seite."
+			"agents": "Deine Agenten öffnen ihre Tabs im Space „Agenten“."
 		},
 		"arrival": {
 			"title": "Willkommen bei Lilo.",
@@ -1878,6 +1879,7 @@
 		"What’s New": "Neuigkeiten",
 		"Report an Issue…": "Problem melden…",
 		"Your internet, in bloom.": "Dein Internet blüht auf.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo-Fork",
 		"Recently Visited": "Zuletzt besucht",
 		"No History": "Kein Verlauf",
 		"%@ wants to connect to a serial port": "%@ möchte eine Verbindung zu einem seriellen Anschluss herstellen",

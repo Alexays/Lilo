@@ -99,7 +99,7 @@ final class FilterListService {
             urls += ["easylist-annoyances", "easylist-newsletters", "easylist-notifications", "easylist-social"]
                 .map { thirdParty + $0 + ".txt" }
         }
-        return urls.map { URL(string: $0)! }
+        return urls.compactMap(URL.init(string:))
     }
 
     /// Caps the content rules, css-display-none rules included; the engine compiles them in several lists.
@@ -119,7 +119,7 @@ final class FilterListService {
     private static let partialRefreshAcceptAge: TimeInterval = 3 * refreshInterval
     /// Bumped whenever the conversion changes: a cache in another format is reconverted at launch
     /// instead of serving the old conversion until the next scheduled refresh.
-    private nonisolated static let cacheFormat = "9"
+    private nonisolated static let cacheFormat = "10"
 
     /// Names the conversion format and the lists it was made from: a cache stamped otherwise is redone.
     nonisolated static func cacheStamp(for sources: [URL]) -> String {
@@ -397,9 +397,9 @@ final class FilterListService {
             var status = Status(updated: Date(), sourceHash: sourceHash, lists: listCount)
             var hasher = SHA256()
             for var output in [json, cosmeticJSON, sitesJSON, scriptletsJSON, proceduralJSON, extensionRulesJSON] {
-                output.withUTF8 { hasher.update(bufferPointer: UnsafeRawBufferPointer($0)) }
+                output.withUTF8 { unsafe hasher.update(bufferPointer: UnsafeRawBufferPointer($0)) }
             }
-            status.outputHash = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+            status.outputHash = hasher.finalize().map { unsafe String(format: "%02x", $0) }.joined()
             let scripts = WKEngineFactory.makeFilterScripts(cosmetic: cosmeticJSON, sites: sitesJSON, scriptlets: scriptletsJSON, procedural: proceduralJSON)
             return Conversion(
                 rules: json, rulesTag: WKEngineFactory.stableHash8(json), cosmetic: cosmeticJSON,

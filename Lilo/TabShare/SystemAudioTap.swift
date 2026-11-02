@@ -5,7 +5,7 @@ import os
 /// Captures what the Mac plays, mixed to mono Float32, except Lilo and its WebKit GPU process, which renders every page's
 /// audio: a call's remote voices never come back into the share. ScreenCaptureKit's `excludesCurrentProcessAudio` only
 /// drops Lilo's own process, so it would echo; a Core Audio process tap can exclude the GPU process by pid.
-final class SystemAudioTap: @unchecked Sendable {
+@safe final class SystemAudioTap: @unchecked Sendable {
     /// The rate at start, which the share's reply announces; blocks carry their own once the output device changes.
     private(set) var sampleRate: Double = 0
     private let gpuPid: @MainActor () -> pid_t?
@@ -18,7 +18,7 @@ final class SystemAudioTap: @unchecked Sendable {
     private var tap = AudioObjectID(kAudioObjectUnknown)
     private var device = AudioObjectID(kAudioObjectUnknown)
     private var ioProc: AudioDeviceIOProcID?
-    private var listeners: [(selector: AudioObjectPropertySelector, block: AudioObjectPropertyListenerBlock)] = []
+    private var listeners: [(selector: AudioObjectPropertySelector, block: AudioObjectPropertyListenerBlock)] = unsafe []
     /// While false the tap delivers silence: the GPU process is unknown, or a process came or went and the exclusion is
     /// being re-resolved. A dropout beats an echo.
     private let isExclusionCurrent = OSAllocatedUnfairLock(initialState: false)
@@ -38,7 +38,7 @@ final class SystemAudioTap: @unchecked Sendable {
         description.isPrivate = true
         description.muteBehavior = .unmuted
         isExclusionCurrent.withLock { $0 = pid != nil }
-        guard AudioHardwareCreateProcessTap(description, &tap) == noErr else { return nil }
+        guard unsafe AudioHardwareCreateProcessTap(description, &tap) == noErr else { return nil }
         guard let rate = startDevice() else {
             AudioHardwareDestroyProcessTap(tap)
             return nil
@@ -65,11 +65,11 @@ final class SystemAudioTap: @unchecked Sendable {
 
     func stop() {
         controlQueue.sync {
-            for listener in listeners {
-                var address = AudioObjectPropertyAddress(mSelector: listener.selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-                AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, listener.block)
+            for unsafe listener in unsafe listeners {
+                var address = unsafe AudioObjectPropertyAddress(mSelector: listener.selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+                unsafe AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, listener.block)
             }
-            listeners = []
+            unsafe listeners = unsafe []
             stopDevice()
             if tap != kAudioObjectUnknown { AudioHardwareDestroyProcessTap(tap) }
             tap = AudioObjectID(kAudioObjectUnknown)
@@ -79,8 +79,8 @@ final class SystemAudioTap: @unchecked Sendable {
     private func listen(_ selector: AudioObjectPropertySelector, _ handler: @escaping () -> Void) {
         let block: AudioObjectPropertyListenerBlock = { _, _ in handler() }
         var address = AudioObjectPropertyAddress(mSelector: selector, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, block)
-        listeners.append((selector, block))
+        unsafe AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, block)
+        unsafe listeners.append((selector, block))
     }
 
     /// Builds the aggregate device reading the tap, clocked by the current output device, and starts it. Returns the rate.
@@ -88,16 +88,16 @@ final class SystemAudioTap: @unchecked Sendable {
         var format = AudioStreamBasicDescription()
         var size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
         var formatAddress = AudioObjectPropertyAddress(mSelector: kAudioTapPropertyFormat, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-        AudioObjectGetPropertyData(tap, &formatAddress, 0, nil, &size, &format)
+        unsafe AudioObjectGetPropertyData(tap, &formatAddress, 0, nil, &size, &format)
         let rate = format.mSampleRate
         var output = AudioObjectID(kAudioObjectUnknown)
         var outputUID = "" as CFString
         var outputAddress = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultSystemOutputDevice, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
         size = UInt32(MemoryLayout<AudioObjectID>.size)
-        AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &outputAddress, 0, nil, &size, &output)
+        unsafe AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &outputAddress, 0, nil, &size, &output)
         outputAddress.mSelector = kAudioDevicePropertyDeviceUID
         size = UInt32(MemoryLayout<CFString>.size)
-        AudioObjectGetPropertyData(output, &outputAddress, 0, nil, &size, &outputUID)
+        unsafe AudioObjectGetPropertyData(output, &outputAddress, 0, nil, &size, &outputUID)
         let aggregate: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Lilo screen share audio",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
@@ -110,20 +110,20 @@ final class SystemAudioTap: @unchecked Sendable {
         ioQueue.sync { gathered = Data() }
         // 20 ms per block: an IO cycle is ~10 ms, and each block costs a hop to the main thread and a page fetch.
         let blockBytes = Int(rate) / 50 * MemoryLayout<Float32>.size
-        guard rate > 0, AudioHardwareCreateAggregateDevice(aggregate as CFDictionary, &device) == noErr,
-              AudioDeviceCreateIOProcIDWithBlock(&ioProc, device, ioQueue, { [weak self] _, input, _, _, _ in
-                  guard let self, let buffer = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input)).first,
-                        let bytes = buffer.mData, buffer.mDataByteSize > 0 else { return }
-                  let count = Int(buffer.mDataByteSize)
+        guard rate > 0, unsafe AudioHardwareCreateAggregateDevice(aggregate as CFDictionary, &device) == noErr,
+              unsafe AudioDeviceCreateIOProcIDWithBlock(&ioProc, device, ioQueue, { [weak self] _, input, _, _, _ in
+                  guard let self, let buffer = unsafe UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input)).first,
+                        let bytes = unsafe buffer.mData, unsafe buffer.mDataByteSize > 0 else { return }
+                  let count = unsafe Int(buffer.mDataByteSize)
                   if isExclusionCurrent.withLock({ $0 }) {
-                      gathered.append(bytes.assumingMemoryBound(to: UInt8.self), count: count)
+                      unsafe gathered.append(bytes.assumingMemoryBound(to: UInt8.self), count: count)
                   } else {
                       gathered.append(Data(count: count))
                   }
                   guard gathered.count >= blockBytes else { return }
                   onBlock(gathered, rate)
                   gathered = Data()
-              }) == noErr, AudioDeviceStart(device, ioProc) == noErr else {
+              }) == noErr, unsafe AudioDeviceStart(device, ioProc) == noErr else {
             stopDevice()
             return nil
         }
@@ -131,10 +131,10 @@ final class SystemAudioTap: @unchecked Sendable {
     }
 
     private func stopDevice() {
-        if let ioProc {
-            AudioDeviceStop(device, ioProc)
-            AudioDeviceDestroyIOProcID(device, ioProc)
-            self.ioProc = nil
+        if let ioProc = unsafe ioProc {
+            unsafe AudioDeviceStop(device, ioProc)
+            unsafe AudioDeviceDestroyIOProcID(device, ioProc)
+            unsafe self.ioProc = nil
         }
         if device != kAudioObjectUnknown { AudioHardwareDestroyAggregateDevice(device) }
         device = AudioObjectID(kAudioObjectUnknown)
@@ -147,12 +147,12 @@ final class SystemAudioTap: @unchecked Sendable {
             description.processes = objects
             var address = AudioObjectPropertyAddress(mSelector: kAudioTapPropertyDescription, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
             var tapDescription = description
-            if AudioObjectSetPropertyData(tap, &address, 0, nil, UInt32(MemoryLayout<CATapDescription>.size), &tapDescription) != noErr {
+            if unsafe AudioObjectSetPropertyData(tap, &address, 0, nil, UInt32(MemoryLayout<CATapDescription>.size), &tapDescription) != noErr {
                 // A running tap can refuse a new description: rebuild it around the new exclusion, silent if that fails.
                 stopDevice()
                 AudioHardwareDestroyProcessTap(tap)
                 tap = AudioObjectID(kAudioObjectUnknown)
-                guard AudioHardwareCreateProcessTap(description, &tap) == noErr, startDevice() != nil else { return }
+                guard unsafe AudioHardwareCreateProcessTap(description, &tap) == noErr, startDevice() != nil else { return }
             }
         }
         isExclusionCurrent.withLock { $0 = true }
@@ -164,7 +164,7 @@ final class SystemAudioTap: @unchecked Sendable {
             var object = AudioObjectID(kAudioObjectUnknown)
             var size = UInt32(MemoryLayout<AudioObjectID>.size)
             var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyTranslatePIDToProcessObject, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-            AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, UInt32(MemoryLayout<pid_t>.size), &pid, &size, &object)
+            unsafe AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, UInt32(MemoryLayout<pid_t>.size), &pid, &size, &object)
             return object == kAudioObjectUnknown ? nil : object
         }
     }
@@ -177,12 +177,12 @@ enum SystemAudioAccess: String {
     case granted, denied, undetermined
 
     nonisolated(unsafe) private static let service = "kTCCServiceAudioCapture" as CFString
-    nonisolated(unsafe) private static let tcc = dlopen("/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC", RTLD_NOW)
+    nonisolated(unsafe) private static let tcc = unsafe dlopen("/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC", RTLD_NOW)
 
     static var current: SystemAudioAccess {
         typealias Preflight = @convention(c) (CFString, CFDictionary?) -> Int
-        guard let symbol = dlsym(tcc, "TCCAccessPreflight") else { return .undetermined }
-        switch unsafeBitCast(symbol, to: Preflight.self)(service, nil) {
+        guard let symbol = unsafe dlsym(tcc, "TCCAccessPreflight") else { return .undetermined }
+        switch unsafe unsafeBitCast(symbol, to: Preflight.self)(service, nil) {
         case 0: return .granted
         case 1: return .denied
         default: return .undetermined
@@ -196,9 +196,9 @@ enum SystemAudioAccess: String {
         case .denied: return false
         case .undetermined:
             typealias Request = @convention(c) (CFString, CFDictionary?, @escaping @convention(block) (Bool) -> Void) -> Void
-            guard let symbol = dlsym(tcc, "TCCAccessRequest") else { return true }
+            guard let symbol = unsafe dlsym(tcc, "TCCAccessRequest") else { return true }
             return await withCheckedContinuation { continuation in
-                unsafeBitCast(symbol, to: Request.self)(service, nil) { continuation.resume(returning: $0) }
+                unsafe unsafeBitCast(symbol, to: Request.self)(service, nil) { continuation.resume(returning: $0) }
             }
         }
     }

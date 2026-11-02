@@ -32,7 +32,7 @@ final class TerminalRenderer {
         let text = MTLRenderPipelineDescriptor()
         text.vertexFunction = library.makeFunction(name: "textVertex")
         text.fragmentFunction = library.makeFunction(name: "textFragment")
-        let attachment = text.colorAttachments[0]!
+        guard let attachment = text.colorAttachments[0] else { return nil }
         attachment.pixelFormat = TerminalRenderer.pixelFormat
         attachment.isBlendingEnabled = true
         attachment.sourceRGBBlendFactor = .one
@@ -82,14 +82,18 @@ final class TerminalRenderer {
         frameIndex = (frameIndex + 1) % Self.framesInFlight
         if contentChanged { currentSlots = 0 }
         let cellCount = max(1, frame.cols * (frame.rows + 2))
-        let backgrounds = buffer(&backgroundBuffers, bytes: cellCount * MemoryLayout<UInt32>.stride)
         let capacity = max(64, frame.instanceCount)
-        let instances = buffer(&instanceBuffers, bytes: capacity * MemoryLayout<GlyphInstance>.stride)
+        guard let backgrounds = buffer(&backgroundBuffers, bytes: cellCount * MemoryLayout<UInt32>.stride),
+              let instances = buffer(&instanceBuffers, bytes: capacity * MemoryLayout<GlyphInstance>.stride) else {
+            inFlight.signal()
+            return
+        }
         if currentSlots & (1 << frameIndex) == 0 {
             frame.backgrounds.withUnsafeBytes { source in
-                backgrounds.contents().copyMemory(from: source.baseAddress!, byteCount: min(source.count, backgrounds.length))
+                guard let base = source.baseAddress else { return }
+                unsafe backgrounds.contents().copyMemory(from: base, byteCount: min(source.count, backgrounds.length))
             }
-            instanceCounts[frameIndex] = frame.copyInstances(
+            instanceCounts[frameIndex] = unsafe frame.copyInstances(
                 to: instances.contents().bindMemory(to: GlyphInstance.self, capacity: capacity), capacity: capacity
             )
             currentSlots |= 1 << frameIndex
@@ -108,7 +112,7 @@ final class TerminalRenderer {
         if let encoder = commands.makeRenderCommandEncoder(descriptor: pass) {
             encoder.setRenderPipelineState(backgroundPipeline)
             encoder.setFragmentBuffer(backgrounds, offset: 0, index: 0)
-            encoder.setFragmentBytes(&uniforms, length: MemoryLayout<TerminalUniforms>.stride, index: 1)
+            unsafe encoder.setFragmentBytes(&uniforms, length: MemoryLayout<TerminalUniforms>.stride, index: 1)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             if instanceCount > 0 {
                 // Rows only: the left padding keeps the command marks, the top and bottom never
@@ -118,7 +122,7 @@ final class TerminalRenderer {
                 encoder.setScissorRect(MTLScissorRect(x: 0, y: top, width: texture.width, height: max(height, 0)))
                 encoder.setRenderPipelineState(textPipeline)
                 encoder.setVertexBuffer(instances, offset: 0, index: 0)
-                encoder.setVertexBytes(&uniforms, length: MemoryLayout<TerminalUniforms>.stride, index: 1)
+                unsafe encoder.setVertexBytes(&uniforms, length: MemoryLayout<TerminalUniforms>.stride, index: 1)
                 encoder.setFragmentTexture(frame.atlas.grayTexture, index: 0)
                 encoder.setFragmentTexture(frame.atlas.colorTexture, index: 1)
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4, instanceCount: instanceCount)
@@ -132,9 +136,11 @@ final class TerminalRenderer {
     }
 
     /// The current frame's buffer, regrown (to the next power of two) only when the frame outgrows it.
-    private func buffer(_ buffers: inout [MTLBuffer?], bytes: Int) -> MTLBuffer {
+    private func buffer(_ buffers: inout [MTLBuffer?], bytes: Int) -> MTLBuffer? {
         if let existing = buffers[frameIndex], existing.length >= bytes { return existing }
-        let grown = device.makeBuffer(length: max(4096, 1 << (Int.bitWidth - (bytes - 1).leadingZeroBitCount)), options: [.storageModeShared, .cpuCacheModeWriteCombined])!
+        guard let grown = device.makeBuffer(
+            length: max(4096, 1 << (Int.bitWidth - (bytes - 1).leadingZeroBitCount)), options: [.storageModeShared, .cpuCacheModeWriteCombined]
+        ) else { return nil }
         buffers[frameIndex] = grown
         return grown
     }

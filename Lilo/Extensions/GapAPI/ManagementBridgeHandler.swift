@@ -106,9 +106,9 @@ final class ManagementBridgeHandler: GapHandler {
         if confirm {
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = String(format: "Remove %@?".localized, name)
+            alert.messageText = unsafe String(format: "Remove %@?".localized, name)
             if id != caller, let callerName = registry.context(for: caller)?.webExtension.displayName {
-                alert.informativeText = String(format: "Requested by the extension %@.".localized, callerName)
+                alert.informativeText = unsafe String(format: "Requested by the extension %@.".localized, callerName)
             }
             alert.addButton(withTitle: "Remove".localized)
             alert.addButton(withTitle: "Cancel".localized)

@@ -31,7 +31,7 @@ final class SystemBridgeHandler: GapHandler {
     init(registriesProvider: @escaping () -> [ProfileExtensionRegistry]) {
         self.registriesProvider = registriesProvider
         let center = NotificationCenter.default, workspace = NSWorkspace.shared.notificationCenter
-        observers = [
+        unsafe observers = [
             (center, center.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.emit("system.display", "onDisplayChanged", args: []) }
             }),
@@ -55,7 +55,7 @@ final class SystemBridgeHandler: GapHandler {
     }
 
     deinit {
-        for (center, token) in observers { center.removeObserver(token) }
+        for (center, token) in unsafe observers { center.removeObserver(token) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -88,7 +88,7 @@ final class SystemBridgeHandler: GapHandler {
     private static func cpuInfo() -> [String: Any] {
         var translated: Int32 = 0
         var size = MemoryLayout<Int32>.size
-        let isTranslated = sysctlbyname("sysctl.proc_translated", &translated, &size, nil, 0) == 0 && translated == 1
+        let isTranslated = unsafe sysctlbyname("sysctl.proc_translated", &translated, &size, nil, 0) == 0 && translated == 1
         #if arch(arm64)
         let archName = "arm64"
         let features: [String] = []
@@ -113,14 +113,14 @@ final class SystemBridgeHandler: GapHandler {
     /// Cumulative ticks per processor, nice time counted as user time as in Chrome.
     private static func processorTimes() -> [[String: Any]] {
         let host = mach_host_self()
-        defer { mach_port_deallocate(mach_task_self_, host) }
+        defer { unsafe mach_port_deallocate(mach_task_self_, host) }
         var count = natural_t(0)
         var info: processor_info_array_t?
         var infoCount = mach_msg_type_number_t(0)
-        guard host_processor_info(host, PROCESSOR_CPU_LOAD_INFO, &count, &info, &infoCount) == KERN_SUCCESS, let info else { return [] }
-        defer { vm_deallocate(mach_task_self_, vm_address_t(bitPattern: info), vm_size_t(infoCount) * vm_size_t(MemoryLayout<integer_t>.stride)) }
+        guard unsafe host_processor_info(host, PROCESSOR_CPU_LOAD_INFO, &count, &info, &infoCount) == KERN_SUCCESS, let info = unsafe info else { return [] }
+        defer { unsafe vm_deallocate(mach_task_self_, vm_address_t(bitPattern: info), vm_size_t(infoCount) * vm_size_t(MemoryLayout<integer_t>.stride)) }
         return (0..<Int(count)).map { processor in
-            let ticks = { (state: Int32) in Double(UInt32(bitPattern: info[processor * Int(CPU_STATE_MAX) + Int(state)])) }
+            let ticks = { (state: Int32) in unsafe Double(UInt32(bitPattern: info[processor * Int(CPU_STATE_MAX) + Int(state)])) }
             let user = ticks(CPU_STATE_USER) + ticks(CPU_STATE_NICE), kernel = ticks(CPU_STATE_SYSTEM), idle = ticks(CPU_STATE_IDLE)
             return ["usage": ["user": user, "kernel": kernel, "idle": idle, "total": user + kernel + idle]]
         }
@@ -129,11 +129,11 @@ final class SystemBridgeHandler: GapHandler {
     /// Chrome's figure: free pages that are not speculative, plus the file-backed cache.
     private static func availableMemory() -> Double {
         let host = mach_host_self()
-        defer { mach_port_deallocate(mach_task_self_, host) }
+        defer { unsafe mach_port_deallocate(mach_task_self_, host) }
         var stats = vm_statistics64()
         var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride)
         let result = withUnsafeMutablePointer(to: &stats) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { host_statistics64(host, HOST_VM_INFO64, $0, &count) }
+            unsafe $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { unsafe host_statistics64(host, HOST_VM_INFO64, $0, &count) }
         }
         guard result == KERN_SUCCESS else { return 0 }
         let free = stats.free_count >= stats.speculative_count ? stats.free_count - stats.speculative_count : 0
@@ -142,10 +142,10 @@ final class SystemBridgeHandler: GapHandler {
 
     private static func sysctlString(_ name: String) -> String? {
         var size = 0
-        guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
+        guard unsafe sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
         var buffer = [CChar](repeating: 0, count: size)
-        guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
-        return buffer.withUnsafeBufferPointer { String(cString: $0.baseAddress!) }
+        guard unsafe sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
+        return buffer.withUnsafeBufferPointer { unsafe $0.baseAddress.map { unsafe String(cString: $0) } }
     }
 
     // MARK: - Storage
@@ -172,6 +172,8 @@ final class SystemBridgeHandler: GapHandler {
         let joined = { (parts: [String]) in parts.filter { !$0.isEmpty }.joined(separator: " ") }
         var uniqueId = joined([vendor, model, text(kDADiskDescriptionDeviceRevisionKey)])
         if let uuid = description[kDADiskDescriptionVolumeUUIDKey as String] as CFTypeRef?, CFGetTypeID(uuid) == CFUUIDGetTypeID() {
+            // Checked by its type id; as? cannot cast to CF types.
+            // swiftlint:disable:next force_cast
             uniqueId = CFUUIDCreateString(nil, (uuid as! CFUUID)) as String
         }
         guard !uniqueId.isEmpty else { return nil }

@@ -44,7 +44,7 @@ enum ExtensionBackgroundPreparer {
         hasher.update(data: Data(buildStamp.utf8))
         hasher.update(data: Data(preludeSource.utf8))
         hasher.update(data: Data((compatSource.map { "\0" + $0 } ?? "").utf8))
-        let inputs = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        let inputs = hasher.finalize().map { unsafe String(format: "%02x", $0) }.joined()
         let stampURL = extensionURL.appendingPathComponent(metadataDirectory, isDirectory: true).appendingPathComponent(preparedStampPath)
         if let stamp = try? String(contentsOf: stampURL, encoding: .utf8) {
             let lines = stamp.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -540,7 +540,7 @@ enum ExtensionBackgroundPreparer {
         // A web page that could load either file would hold the key: such an extension goes without the relay.
         if compatSource.contains(frameKeyPlaceholder), !servesToWebPages(manifest, frameKeyPath), !servesToWebPages(manifest, contentCompatPath) {
             // Fresh on each preparation: a key shipped in the extension's own `_lilo/` is never used.
-            let key = SymmetricKey(size: .bits256).withUnsafeBytes { $0.map { String(format: "%02x", $0) }.joined() }
+            let key = unsafe SymmetricKey(size: .bits256).withUnsafeBytes { unsafe $0.map { unsafe String(format: "%02x", $0) }.joined() }
             try writeIfChanged(Data(key.utf8), to: keyURL)
             source = compatSource.replacingOccurrences(of: frameKeyPlaceholder, with: key)
         } else if FileManager.default.fileExists(atPath: keyURL.path) {

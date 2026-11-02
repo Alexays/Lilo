@@ -23,7 +23,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
     func testAWideSidebarNarrowsInTheSmallestWindowAndComesBack() throws {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         let nsWindow = try XCTUnwrap(window.window)
         nsWindow.setContentSize(NSSize(width: 1200, height: 800))
@@ -229,7 +229,7 @@ final class WindowChromeLayoutTests: XCTestCase {
 
     private func makeSizedWindow() throws -> MainWindowController {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         try XCTUnwrap(window.window).setContentSize(NSSize(width: 1200, height: 800))
         return window

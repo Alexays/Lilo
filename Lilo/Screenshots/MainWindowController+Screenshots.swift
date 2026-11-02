@@ -10,7 +10,7 @@ extension MainWindowController {
         let pixels = image?.snapshotPixels
         let png = await Task.detached(priority: .userInitiated) { pixels.flatMap(ScreenshotImageCodec.pngData) }.value
         guard let png else {
-            bridgeRouter?.send(event: "screenshotError", data: ["message": "Could not capture the page.".localized])
+            bridgeRouter.send(event: "screenshotError", data: ["message": "Could not capture the page.".localized])
             return
         }
         NSPasteboard.general.clearContents()
@@ -21,7 +21,7 @@ extension MainWindowController {
         let dateStr = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
         let filename = "screenshot-\(url?.host ?? "page")-\(dateStr).png"
         copiedCaptures[copy.id] = (copy.url, filename)
-        bridgeRouter?.send(event: "captureCopied", data: [
+        bridgeRouter.send(event: "captureCopied", data: [
             "captureId": copy.id,
             "thumbURL": copy.url.absoluteString,
             "filename": filename
@@ -33,7 +33,7 @@ extension MainWindowController {
         guard let capture = copiedCaptures.removeValue(forKey: captureId) else { return }
         if let previous = screenshotCaptureId, previous != captureId { ChromeUISchemeHandler.discardScreenshot(id: previous) }
         screenshotCaptureId = captureId
-        bridgeRouter?.send(event: "screenshotCaptured", data: [
+        bridgeRouter.send(event: "screenshotCaptured", data: [
             "id": captureId,
             "url": capture.image.absoluteString,
             "filename": capture.filename

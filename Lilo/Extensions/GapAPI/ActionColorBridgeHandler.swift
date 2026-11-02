@@ -20,14 +20,14 @@ final class ActionColorBridgeHandler: GapHandler {
     nonisolated(unsafe) private var unloadObserver: Any?
 
     init() {
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated { _ = self?.tabColors.removeValue(forKey: "\(profileId)/\(extensionId)") }
         }
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {

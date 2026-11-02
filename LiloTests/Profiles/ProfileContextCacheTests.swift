@@ -42,6 +42,23 @@ final class ProfileContextCacheTests: XCTestCase {
         XCTAssertNil(registryB, "an evicted registry must deallocate, or its controller and workers stay resident")
     }
 
+    /// A hidden call keeps its profile's extensions loaded: unloading them under a loading page kills its process.
+    func testProfileInUseSurvivesEvictionUntilItsPagesAreGone() throws {
+        let cache = makeCache()
+        let a = TestProfileIds.next(), b = TestProfileIds.next(), c = TestProfileIds.next()
+        var inUse: Set<UUID> = [a]
+        cache.isInUse = { inUse.contains($0) }
+        let original = try cache.context(for: a)
+        _ = try cache.context(for: b)
+        _ = try cache.context(for: c)
+        XCTAssertTrue(cache.existingContext(for: a) === original)
+        XCTAssertNil(cache.existingContext(for: b))
+
+        inUse = []
+        _ = try cache.context(for: b)
+        XCTAssertNil(cache.existingContext(for: a))
+    }
+
     func testRoundTripWithinCapReusesContext() throws {
         let cache = makeCache()
         let a = TestProfileIds.next(), b = TestProfileIds.next()

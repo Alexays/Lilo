@@ -48,7 +48,7 @@ struct InteractionStateStore: Sendable {
         // Data.hashValue covers only a prefix of the bytes; archived blobs share their header.
         let hashes = entries.mapValues { data in
             var hasher = Hasher()
-            data.withUnsafeBytes { hasher.combine(bytes: $0) }
+            unsafe data.withUnsafeBytes { unsafe hasher.combine(bytes: $0) }
             return hasher.finalize()
         }
         let previous = lastPersistedHashes.withLock { $0[databasePath]?[spaceId] }

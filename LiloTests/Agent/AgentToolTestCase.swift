@@ -26,10 +26,9 @@ class AgentToolTestCase: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         // Transparent, off screen and never key: nothing shows to whoever runs the tests, and their
         // keyboard stays theirs. A titled window ordered in is pulled on screen, so it moves out after.
         let nsWindow = try XCTUnwrap(window.window)
@@ -42,7 +41,7 @@ class AgentToolTestCase: XCTestCase {
         context.windows.add(window)
         window.switchToSpace(space.id)
         window.createTabStateFirst(url: URL(string: "about:blank"))
-        context.settingsStore.set("agentAllowedClients", value: Self.allowedClientsJSON)
+        context.settingsStore!.set("agentAllowedClients", value: Self.allowedClientsJSON)
         // A disconnect ends the session at once, as when no bridge reconnects.
         AgentControl.reconnectGrace = .zero
         AgentTools.settleQuiet = (dom: .milliseconds(20), network: .milliseconds(50))
@@ -90,7 +89,7 @@ class AgentToolTestCase: XCTestCase {
 
     /// The Agents space of the agents' own profile, where agents work by default, once the first one opened a tab.
     var agentsSpaceId: UUID? {
-        context.settingsStore.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:)).flatMap { control.agentsSpace(in: $0)?.id }
+        context.settingsStore!.get(AgentControl.agentsProfileKey).flatMap(UUID.init(uuidString:)).flatMap { control.agentsSpace(in: $0)?.id }
     }
 
     /// Switches `client` to the user's profile P, allowing it as the user would.

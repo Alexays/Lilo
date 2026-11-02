@@ -18,11 +18,10 @@ final class CaptureBridgeHandlerTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         registry = try context.profileContexts.context(for: profileId).extensions
         window = MainWindowController(context: context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         // Transparent and off screen, as AgentToolTestCase: the captured tab must render to be snapshotted.
         let nsWindow = try XCTUnwrap(window.window)
         nsWindow.alphaValue = 0

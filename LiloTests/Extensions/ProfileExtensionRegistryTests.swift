@@ -638,8 +638,8 @@ final class ProfileExtensionRegistryTests: XCTestCase {
         try await registry.load(from: try createPermissionsExtension(named: "Prompted"))
         let context = try XCTUnwrap(registry.loadedExtensions.first?.context)
         let homeSpace = try XCTUnwrap(window.tabManager.currentSpaceId)
-        let otherProfile = try browserContext.context.profileManager.createProfile(name: "Q").id
-        let otherSpace = try browserContext.context.spaceManager.createSpace(name: "T", profileId: otherProfile).id
+        let otherProfile = try browserContext.context.profileManager!.createProfile(name: "Q").id
+        let otherSpace = try browserContext.context.spaceManager!.createSpace(name: "T", profileId: otherProfile).id
         func prompt() async throws -> (id: String, answer: Task<Bool, Never>) {
             let answer = Task { await registry.delegate.promptForPermissions(["tabs"], origins: [], for: context) }
             let shown = await pollUntil(timeout: 5) { registry.pendingPermissionRequests.count == 1 }

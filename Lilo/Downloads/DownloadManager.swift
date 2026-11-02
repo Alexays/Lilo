@@ -341,7 +341,7 @@ final class DownloadManager {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Open this download?".localized
-        alert.informativeText = String(
+        alert.informativeText = unsafe String(
             format: "%@ was downloaded from the internet. Open it anyway?".localized, filename)
         alert.addButton(withTitle: "Open".localized)
         alert.addButton(withTitle: "Cancel".localized)
@@ -461,7 +461,7 @@ final class DownloadManager {
             for: NSRect(origin: .zero, size: CGSize(width: iconSize, height: iconSize)),
             context: nil, hints: nil
         ),
-        let cgImage = rep.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let cgImage = unsafe rep.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
         let bitmap = NSBitmapImageRep(cgImage: cgImage)
         guard let data = bitmap.representation(using: .png, properties: [:]) else { return nil }
         return data.base64EncodedString()

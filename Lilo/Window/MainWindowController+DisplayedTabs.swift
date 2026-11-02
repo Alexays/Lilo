@@ -74,7 +74,7 @@ extension MainWindowController {
 
     func showContentPlaceholder(for tabId: UUID?, lockedFolderId: UUID? = nil) {
         placeholderTabId = tabId
-        bridgeRouter?.send(event: "contentPlaceholder", data: [
+        bridgeRouter.send(event: "contentPlaceholder", data: [
             "tabId": tabId?.uuidString ?? "",
             "lockedFolderId": lockedFolderId?.uuidString ?? ""
         ])

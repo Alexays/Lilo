@@ -42,14 +42,14 @@ enum ClientCertificateChallengeHandler {
         var query: [CFString: Any] = [kSecClass: kSecClassIdentity, kSecReturnRef: true, kSecMatchLimit: kSecMatchLimitAll]
         if let issuers = challenge.protectionSpace.distinguishedNames, !issuers.isEmpty { query[kSecMatchIssuers] = issuers }
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+        guard unsafe SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let identities = result as? [SecIdentity], !identities.isEmpty,
               let panel = SFChooseIdentityPanel.shared() else { return completion(.performDefaultHandling, nil) }
 
         choices.waiting[host] = [completion]
-        let message = String(format: "%@ asks for a certificate to identify you.".localized, host)
+        let message = unsafe String(format: "%@ asks for a certificate to identify you.".localized, host)
         let finish: @MainActor (Bool) -> Void = { chose in
-            let identity = chose ? panel.identity()?.takeUnretainedValue() : nil
+            let identity = unsafe chose ? panel.identity()?.takeUnretainedValue() : nil
             choices.chosen[host] = .some(identity)
             let credential = identity.map { URLCredential(identity: $0, certificates: nil, persistence: .forSession) }
             for completion in choices.waiting.removeValue(forKey: host) ?? [] {
@@ -58,7 +58,7 @@ enum ClientCertificateChallengeHandler {
         }
         guard let window else { return finish(panel.runModal(forIdentities: identities, message: message) == NSApplication.ModalResponse.OK.rawValue) }
         let end = SheetEnd(finish)
-        panel.beginSheet(
+        unsafe panel.beginSheet(
             for: window, modalDelegate: end, didEnd: #selector(SheetEnd.panelDidEnd(_:returnCode:contextInfo:)),
             contextInfo: Unmanaged.passRetained(end).toOpaque(), identities: identities, message: message
         )
@@ -71,7 +71,7 @@ enum ClientCertificateChallengeHandler {
         init(_ finish: @escaping @MainActor (Bool) -> Void) { self.finish = finish }
 
         @objc func panelDidEnd(_ sheet: NSWindow, returnCode: Int, contextInfo: UnsafeMutableRawPointer) {
-            Unmanaged<SheetEnd>.fromOpaque(contextInfo).release()
+            unsafe Unmanaged<SheetEnd>.fromOpaque(contextInfo).release()
             finish(returnCode == NSApplication.ModalResponse.OK.rawValue)
         }
     }

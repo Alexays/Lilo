@@ -5,7 +5,7 @@ import XCTest
 final class AgentIsolationTests: AgentToolTestCase {
     /// A tab of a private space of the user's showing `marker`, and the number an agent would call it by.
     private func privateTab(showing marker: String) async throws -> (tab: Tab, number: Int) {
-        let privateSpace = try context.spaceManager.createSpace(name: "Private", profileId: space.profileId, isPrivate: true)
+        let privateSpace = try context.spaceManager!.createSpace(name: "Private", profileId: space.profileId, isPrivate: true)
         window.switchToSpace(privateSpace.id)
         let encoded = try XCTUnwrap("<p>\(marker)</p>".addingPercentEncoding(withAllowedCharacters: .alphanumerics))
         let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "data:text/html,\(encoded)")))

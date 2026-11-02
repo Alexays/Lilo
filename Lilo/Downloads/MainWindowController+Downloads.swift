@@ -17,7 +17,7 @@ extension MainWindowController {
             panel.directoryURL = proposed.deletingLastPathComponent()
             panel.nameFieldStringValue = proposed.lastPathComponent
             // On the window of the page that downloads, not whichever window is key.
-            guard let window = webView?.window ?? NSApp.keyWindow else { return panel.runModal() == .OK ? panel.url : nil }
+            guard let window = unsafe webView?.window ?? NSApp.keyWindow else { return panel.runModal() == .OK ? panel.url : nil }
             return await panel.beginSheetModal(for: window) == .OK ? panel.url : nil
         }
         context.downloadManager.suggestFilename = { [weak context] item in
@@ -49,26 +49,26 @@ extension MainWindowController: QLPreviewPanelDataSource {
         chromeWebView.beginDraggingSession(with: [draggingItem], event: event, source: self)
     }
 
-    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool { true }
-    override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel?) -> Bool { true }
+    override func beginPreviewPanelControl(_ panel: QLPreviewPanel?) {
         MainActor.assumeIsolated {
-            panel.dataSource = self
+            unsafe panel?.dataSource = self
         }
     }
 
-    override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+    override func endPreviewPanelControl(_ panel: QLPreviewPanel?) {
         MainActor.assumeIsolated {
-            panel.dataSource = nil
+            unsafe panel?.dataSource = nil
         }
     }
 
-    nonisolated func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
+    nonisolated func numberOfPreviewItems(in panel: QLPreviewPanel?) -> Int {
         MainActor.assumeIsolated {
             context.downloadManager.quickLookItemURL != nil ? 1 : 0
         }
     }
 
-    nonisolated func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
+    nonisolated func previewPanel(_ panel: QLPreviewPanel?, previewItemAt index: Int) -> (any QLPreviewItem)? {
         MainActor.assumeIsolated {
             context.downloadManager.quickLookItemURL as NSURL?
         }

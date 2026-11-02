@@ -24,7 +24,7 @@ final class InstanceIDBridgeHandler: GapHandler {
             if let id = stored?["id"] as? String { return id }
             // Chrome's: 8 random bytes, the first 4 bits 0111, in base64url without padding.
             var bytes = [UInt8](repeating: 0, count: 8)
-            guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else { return BridgeError("Unknown error occurred.") }
+            guard unsafe SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else { return BridgeError("Unknown error occurred.") }
             bytes[0] = 0x70 | (bytes[0] & 0x0F)
             let id = Data(bytes).base64EncodedString()
                 .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")

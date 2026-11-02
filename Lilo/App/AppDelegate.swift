@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var readyUpdate: (version: String, install: () -> Void)?
 
     static func main() {
+        WebKitFork.execIfCovered()
         StartupMetrics.mark("main")
         // A write to a peer that went away (socket, pipe, child) must fail with EPIPE, not kill
         // Lilo. Children start with SIGPIPE at its default: Process and the terminal spawn reset it.
@@ -47,9 +48,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // The launchd default soft limit of 256 open files is far too small for a browser
         // session (SQLite stores, sockets, caches); raise it to the allowed maximum.
         var limit = rlimit()
-        if getrlimit(RLIMIT_NOFILE, &limit) == 0 {
+        if unsafe getrlimit(RLIMIT_NOFILE, &limit) == 0 {
             limit.rlim_cur = min(rlim_t(OPEN_MAX), limit.rlim_max)
-            setrlimit(RLIMIT_NOFILE, &limit)
+            unsafe setrlimit(RLIMIT_NOFILE, &limit)
         }
         let app = NSApplication.shared
         let delegate = AppDelegate()
@@ -163,12 +164,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// The first window restores the session; the others reopen once the database is open, behind it.
     private func restoreAdditionalWindows() async {
-        guard (try? await browserContext.bootstrap()) != nil else { return }
-        let stored = browserContext.startupSnapshot.windows
+        guard (try? await browserContext.bootstrap()) != nil, let stored = browserContext.startupSnapshot?.windows,
+              let spaceManager = browserContext.spaceManager else { return }
         guard stored.count > 1 else { return }
         let primary = mainWindowController
         for window in stored.dropFirst() {
-            guard let spaceId = window.spaceId ?? browserContext.spaceManager.spaces.first?.id else { continue }
+            guard let spaceId = window.spaceId ?? spaceManager.spaces.first?.id else { continue }
             let controller = MainWindowController(context: browserContext, launch: .space(spaceId, frame: window.frame, opening: .nothing))
             browserContext.windows.add(controller)
             controller.showWindow(nil)
@@ -235,15 +236,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if !commands.isEmpty {
             let named = commands.filter { !$0.isEmpty }
             var list = named.prefix(3).joined(separator: ", ")
-            if named.count > 3 { list += String(format: " and %d more".localized, named.count - 3) }
-            let count = commands.count == 1
+            if named.count > 3 { unsafe list += String(format: " and %d more".localized, named.count - 3) }
+            let count = unsafe commands.count == 1
                 ? "A terminal is still running a command".localized
                 : String(format: "%d terminals are still running a command".localized, commands.count)
             let stopped = commands.count == 1 ? "It will be stopped.".localized : "They will be stopped.".localized
             lines.append((list.isEmpty ? count : "\(count) (\(list))") + ". " + stopped)
         }
         if downloads > 0 {
-            lines.append(downloads == 1
+            unsafe lines.append(downloads == 1
                 ? "A download is in progress and will be paused until Lilo opens again.".localized
                 : String(format: "%d downloads are in progress and will be paused until Lilo opens again.".localized, downloads))
         }
@@ -365,7 +366,7 @@ extension AppDelegate: SPUUpdaterDelegate {
         // Sparkle calls its delegate, and runs the block, on the main thread.
         nonisolated(unsafe) let install = immediateInstallationBlock
         MainActor.assumeIsolated {
-            readyUpdate = (item.displayVersionString, install)
+            readyUpdate = unsafe (item.displayVersionString, install)
             browserContext.windows.windows.forEach { $0.sendUpdateReady() }
         }
         return true

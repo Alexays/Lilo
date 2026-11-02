@@ -48,7 +48,7 @@ final class FontSettingsBridgeHandler: GapHandler {
 
     init(settingsProvider: @escaping (ProfileExtensionRegistry) -> ExtensionSettingsStore?) {
         self.settingsProvider = settingsProvider
-        observers = [Notification.Name.extensionRuntimeLoaded, .extensionDidUnload].map { name in
+        unsafe observers = [Notification.Name.extensionRuntimeLoaded, .extensionDidUnload].map { name in
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 guard let registry = note.object as? ProfileExtensionRegistry else { return }
                 MainActor.assumeIsolated { self?.refresh(registry) }
@@ -57,7 +57,7 @@ final class FontSettingsBridgeHandler: GapHandler {
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -68,8 +68,9 @@ final class FontSettingsBridgeHandler: GapHandler {
         if method == "getFontList" {
             let manager = NSFontManager.shared
             return manager.availableFontFamilies
-                .map { ["fontId": $0, "displayName": manager.localizedName(forFamily: $0, face: nil)] }
-                .sorted { $0["displayName"]!.localizedStandardCompare($1["displayName"]!) == .orderedAscending }
+                .map { (id: $0, name: manager.localizedName(forFamily: $0, face: nil)) }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+                .map { ["fontId": $0.id, "displayName": $0.name] }
         }
 
         if method.hasSuffix("Font") {
@@ -125,15 +126,15 @@ final class FontSettingsBridgeHandler: GapHandler {
     func overrides(for registry: ProfileExtensionRegistry) -> Overrides {
         guard let settings = settingsProvider(registry) else { return Overrides() }
         let loadedIds = registry.loadedExtensions.map(\.id)
-        func value<T>(_ key: String) -> T? {
-            settings.controller(of: key, among: loadedIds).flatMap { settings.value(key, extensionId: $0) as? T }
+        func value<T>(_ key: String?) -> T? {
+            key.flatMap { key in settings.controller(of: key, among: loadedIds).flatMap { settings.value(key, extensionId: $0) as? T } }
         }
         return Overrides(
             standardFamily: value("\(Self.fontPrefix)standard.Zyyy"),
             fixedFamily: value("\(Self.fontPrefix)fixed.Zyyy"),
-            defaultSize: value(Self.sizes["DefaultFontSize"]!.key),
-            defaultFixedSize: value(Self.sizes["DefaultFixedFontSize"]!.key),
-            minimumSize: value(Self.sizes["MinimumFontSize"]!.key)
+            defaultSize: value(Self.sizes["DefaultFontSize"]?.key),
+            defaultFixedSize: value(Self.sizes["DefaultFixedFontSize"]?.key),
+            minimumSize: value(Self.sizes["MinimumFontSize"]?.key)
         )
     }
 
@@ -168,9 +169,9 @@ final class FontSettingsBridgeHandler: GapHandler {
                 event = "onFontChanged"
                 details = ["fontId": now[key]?.base ?? (script == "Zyyy" ? defaultFont : ""), "genericFamily": family, "script": script]
             } else {
-                let size = Self.sizes.values.first { $0.key == key }!
+                guard let size = Self.sizes.values.first(where: { $0.key == key }) else { continue }
                 event = size.event
-                details = ["pixelSize": now[key]!.base]
+                details = ["pixelSize": now[key]?.base ?? size.defaultValue()]
             }
             for id in listeners {
                 details["levelOfControl"] = settings.levelOfControl(of: key, for: id, among: loadedIds)

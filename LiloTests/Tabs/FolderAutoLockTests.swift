@@ -33,7 +33,7 @@ final class FolderAutoLockTests: XCTestCase {
 
         try storeUnlockedFolder(in: context)
         // An idle test machine must not trip the limit and lock straight away.
-        context.settingsStore.set("folderAutoLockMinutes", value: "100000")
+        context.settingsStore!.set("folderAutoLockMinutes", value: "100000")
         context.folderAutoLock.folderWasUnlocked()
         XCTAssertNotNil(context.folderAutoLock.idleTimer)
 
@@ -43,12 +43,12 @@ final class FolderAutoLockTests: XCTestCase {
 
     func testAShorterLimitAppliesToTheFoldersAlreadyUnlocked() async throws {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         defer { window.window?.close() }
         window.setupBridgeLate()
         try storeUnlockedFolder(in: context)
-        context.settingsStore.set("folderAutoLockMinutes", value: "100000")
+        context.settingsStore!.set("folderAutoLockMinutes", value: "100000")
         context.folderAutoLock.folderWasUnlocked()
 
         let handler = try XCTUnwrap(window.bridgeRouter.handlers["setSetting"])

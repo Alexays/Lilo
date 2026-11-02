@@ -20,7 +20,7 @@ final class DockMenuTests: XCTestCase {
 
     func testNewTabBringsBackAWindowClosedWhileATerminalRan() throws {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         let nsWindow = try XCTUnwrap(window.window)
         defer { nsWindow.close() }
