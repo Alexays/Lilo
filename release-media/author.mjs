@@ -1,7 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { fixtures, sha, releaseSections, root as mediaRoot } from "./pipeline.mjs";
 
 // Specific product capabilities, ordered by how much a demonstrated interaction explains.
@@ -206,5 +205,4 @@ async function main() {
   console.log(`Verified automatic media selection for ${Object.keys(decisions).length} release(s)`);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  await main();
+if (import.meta.main) await main();

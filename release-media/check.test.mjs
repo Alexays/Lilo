@@ -37,6 +37,10 @@ test("publication fails closed against the measured HyperFrames film and its sou
     },
   );
   await cp(path.join(root, "public/audio"), path.join(folder, "public/audio"), { recursive: true });
+  await cp(
+    path.join(root, "hyperframes/archive/ending.html"),
+    path.join(folder, "hyperframes/archive/ending.html"),
+  );
   for (const file of ["check.mjs", "pipeline.mjs"])
     await cp(path.join(root, file), path.join(folder, file));
   for (const file of [
@@ -44,7 +48,6 @@ test("publication fails closed against the measured HyperFrames film and its sou
     "png-cutouts.mjs",
     "package-lock.json",
     "hyperframes/assets",
-    "hyperframes/archive/ending.html",
     "hyperframes/archive/shared.css",
     "hyperframes/archive/shared.js",
   ])
@@ -257,6 +260,13 @@ test("publication fails closed against the measured HyperFrames film and its sou
     withChangedFile(
       path.join(folder, "hyperframes/archive", version, "index.html"),
       (bytes) => Buffer.concat([bytes, Buffer.from("\n<!-- changed composition -->\n")]),
+      () => assert.throws(run, /HyperFrames recipe changed/u),
+    ),
+  );
+  await t.test("changing the shared ending invalidates a film that uses it", () =>
+    withChangedFile(
+      path.join(folder, "hyperframes/archive/ending.html"),
+      (bytes) => Buffer.concat([bytes, Buffer.from("\n<!-- changed shared ending -->\n")]),
       () => assert.throws(run, /HyperFrames recipe changed/u),
     ),
   );

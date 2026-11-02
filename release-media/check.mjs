@@ -20,7 +20,12 @@ const catalog = await json(path.join(root, "backlog.json"));
 if (catalog.publication !== "quality-gated")
   throw Error("Release blocked: media publication is disabled.");
 const markdown = await readFile(path.join(root, "../CHANGELOG.md"), "utf8");
-const releases = releaseSections(markdown);
+const releases = new Map(
+  [...releaseSections(markdown)].map(([version, section]) => [
+    version,
+    section.slice(section.indexOf("\n") + 1),
+  ]),
+);
 if (!same([...releases.keys()].sort(), Object.keys(catalog.releases).sort()))
   throw Error("Every published release needs a video, screenshot or none decision.");
 const passesMotion = (m, frames) =>
