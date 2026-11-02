@@ -500,7 +500,8 @@
 				"check": "지금 확인",
 				"lastChecked": "확인: {time}",
 				"unavailable": "이 빌드는 자동으로 업데이트되지 않습니다.",
-				"developerTools": "Lilo 자체 개발 도구는 이제 개발자용 메뉴에 있습니다."
+				"developerTools": "Lilo 자체 개발 도구는 이제 개발자용 메뉴에 있습니다.",
+				"webKitFork": "WebKit {version}, Lilo 포크"
 			},
 			"autoUpdate": {
 				"title": "업데이트 자동 설치",
@@ -1878,6 +1879,7 @@
 		"What’s New": "새로운 기능",
 		"Report an Issue…": "문제 신고…",
 		"Your internet, in bloom.": "나의 인터넷이 피어나는 곳.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo 포크",
 		"Recently Visited": "최근 방문",
 		"No History": "방문 기록 없음",
 		"%@ wants to connect to a serial port": "%@에서 직렬 포트에 연결하려고 합니다",

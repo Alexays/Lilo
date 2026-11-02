@@ -500,7 +500,8 @@
 				"check": "立即檢查",
 				"lastChecked": "檢查於 {time}",
 				"unavailable": "此版本不會自行更新。",
-				"developerTools": "Lilo 本身的開發工具現已移至「開發」選單。"
+				"developerTools": "Lilo 本身的開發工具現已移至「開發」選單。",
+				"webKitFork": "WebKit {version}（Lilo 分支）"
 			},
 			"autoUpdate": {
 				"title": "自動安裝更新",
@@ -1878,6 +1879,7 @@
 		"What’s New": "最新內容",
 		"Report an Issue…": "回報問題…",
 		"Your internet, in bloom.": "讓你的網路生活，綻放。",
+		"WebKit %@, Lilo fork": "WebKit %@（Lilo 分支）",
 		"Recently Visited": "最近造訪",
 		"No History": "沒有歷史記錄",
 		"%@ wants to connect to a serial port": "%@ 想要連接序列埠",

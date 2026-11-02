@@ -1198,6 +1198,9 @@ export interface BridgeAgentClientsSnapshot {
 
 export interface BridgeUpdaterStatus {
 	version: string;
+	/** CFBundleVersion of the WebKit pages run on; `webKitFork` when it is Lilo's fork embedded in the app. */
+	webKitVersion: string;
+	webKitFork: boolean;
 	/** False in builds that never check for updates (local and debug builds). */
 	available: boolean;
 	automatic: boolean;

@@ -500,7 +500,8 @@
 				"check": "Перевірити зараз",
 				"lastChecked": "Перевірено {time}",
 				"unavailable": "Ця збірка не оновлюється самостійно.",
-				"developerTools": "Власні інструменти розробника Lilo тепер у меню «Розробка»."
+				"developerTools": "Власні інструменти розробника Lilo тепер у меню «Розробка».",
+				"webKitFork": "WebKit {version}, форк Lilo"
 			},
 			"autoUpdate": {
 				"title": "Автоматично інсталювати оновлення",
@@ -1898,6 +1899,7 @@
 		"What’s New": "Що нового",
 		"Report an Issue…": "Повідомити про проблему…",
 		"Your internet, in bloom.": "Ваш інтернет розквітає.",
+		"WebKit %@, Lilo fork": "WebKit %@, форк Lilo",
 		"Recently Visited": "Недавно відвідані",
 		"No History": "Немає історії",
 		"%@ wants to connect to a serial port": "%@ хоче під’єднатися до послідовного порту",

@@ -514,6 +514,8 @@ final class SettingsBridgeHandler: BridgeHandler {
         let updater = updaterController?.updater
         bridgeRouter?.send(event: "updaterStatus", data: [
             "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "",
+            "webKitVersion": Bundle(for: WKWebView.self).object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "",
+            "webKitFork": WKEngineFactory.isForkedWebKit,
             "available": updater != nil,
             "automatic": updater.map { $0.automaticallyChecksForUpdates && $0.automaticallyDownloadsUpdates } ?? false,
             "lastCheck": updater?.lastUpdateCheckDate?.timeIntervalSince1970 ?? NSNull()

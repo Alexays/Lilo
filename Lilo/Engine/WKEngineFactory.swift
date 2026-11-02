@@ -821,6 +821,15 @@ final class WKEngineFactory {
         return "Version/\(version) Safari/605.1.15"
     }()
 
+    /// The WebKit pages run on, as "WebKit <build>", "(Lilo fork)" added when it is the fork embedded in the app.
+    static let webKitDescription: String = {
+        let bundle = Bundle(for: WKWebView.self)
+        let build = "WebKit \(bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "")"
+        return isForkedWebKit ? "\(build) (Lilo fork)" : build
+    }()
+
+    static let isForkedWebKit = !Bundle(for: WKWebView.self).bundlePath.hasPrefix("/System/")
+
     private func configuredWebViewConfiguration(
         from configuration: Configuration,
         usesNativeConfiguration: Bool

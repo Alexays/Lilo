@@ -500,7 +500,8 @@
 				"check": "Проверить",
 				"lastChecked": "Проверено {time}",
 				"unavailable": "Эта сборка не обновляется автоматически.",
-				"developerTools": "Инструменты разработчика самого Lilo теперь в меню «Разработка»."
+				"developerTools": "Инструменты разработчика самого Lilo теперь в меню «Разработка».",
+				"webKitFork": "WebKit {version}, форк Lilo"
 			},
 			"autoUpdate": {
 				"title": "Устанавливать обновления автоматически",
@@ -1898,6 +1899,7 @@
 		"What’s New": "Что нового",
 		"Report an Issue…": "Сообщить о проблеме…",
 		"Your internet, in bloom.": "Ваш интернет расцветает.",
+		"WebKit %@, Lilo fork": "WebKit %@, форк Lilo",
 		"Recently Visited": "Недавно посещённые",
 		"No History": "Истории нет",
 		"%@ wants to connect to a serial port": "%@ запрашивает подключение к последовательному порту",

@@ -500,7 +500,8 @@
 				"check": "Controleer nu",
 				"lastChecked": "Gecontroleerd {time}",
 				"unavailable": "Deze versie werkt zichzelf niet bij.",
-				"developerTools": "De eigen ontwikkeltools van Lilo staan nu in het Ontwikkel-menu."
+				"developerTools": "De eigen ontwikkeltools van Lilo staan nu in het Ontwikkel-menu.",
+				"webKitFork": "WebKit {version}, Lilo-fork"
 			},
 			"autoUpdate": {
 				"title": "Installeer updates automatisch",
@@ -1878,6 +1879,7 @@
 		"What’s New": "Nieuw in Lilo",
 		"Report an Issue…": "Meld een probleem…",
 		"Your internet, in bloom.": "Jouw internet, in bloei.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo-fork",
 		"Recently Visited": "Recent bezocht",
 		"No History": "Geen geschiedenis",
 		"%@ wants to connect to a serial port": "%@ wil verbinding maken met een seriële poort",

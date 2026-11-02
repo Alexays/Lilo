@@ -259,7 +259,12 @@ extension MainWindowController {
     }
     @objc func openHelp(_ sender: Any?) { createTabStateFirst(url: URL(string: "https://github.com/Alexays/Lilo#readme")) }
     @objc func reportIssue(_ sender: Any?) {
-        createTabStateFirst(url: URL(string: "https://github.com/Alexays/Lilo/issues/new?template=bug_report.yml"))
+        var form = URLComponents(string: "https://github.com/Alexays/Lilo/issues/new")
+        form?.queryItems = [
+            URLQueryItem(name: "template", value: "bug_report.yml"),
+            URLQueryItem(name: "webkit-version", value: WKEngineFactory.webKitDescription)
+        ]
+        createTabStateFirst(url: form?.url)
     }
     /// The bug report form, filled in about the active page freezing; the user reviews it and sends it, or not.
     func reportUnresponsivePage() {
@@ -271,6 +276,7 @@ extension MainWindowController {
             URLQueryItem(name: "template", value: "bug_report.yml"),
             URLQueryItem(name: "title", value: "[Bug] \(page?.host() ?? "A page") keeps freezing"),
             URLQueryItem(name: "lilo-version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String),
+            URLQueryItem(name: "webkit-version", value: WKEngineFactory.webKitDescription),
             URLQueryItem(name: "macos-version", value: "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"),
             URLQueryItem(name: "actual", value: """
                 The page stopped responding twice in a row.

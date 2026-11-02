@@ -1,5 +1,6 @@
 import AppKit
 import Sparkle
+import WebKit
 
 extension AppDelegate {
     // MARK: - Main Menu
@@ -240,6 +241,9 @@ extension AppDelegate {
         credits.append(NSAttributedString(string: "getlilo.app", attributes: [.font: font, .link: URL(string: "https://getlilo.app")!]))
         credits.append(NSAttributedString(string: " · ", attributes: [.font: font]))
         credits.append(NSAttributedString(string: "GitHub", attributes: [.font: font, .link: URL(string: "https://github.com/Alexays/Lilo")!]))
+        let webKitVersion = Bundle(for: WKWebView.self).object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        let engine = WKEngineFactory.isForkedWebKit ? String(format: "WebKit %@, Lilo fork".localized, webKitVersion) : "WebKit \(webKitVersion)"
+        credits.append(NSAttributedString(string: "\n" + engine, attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         credits.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: credits.length))

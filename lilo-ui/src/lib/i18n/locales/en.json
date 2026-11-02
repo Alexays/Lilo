@@ -500,7 +500,8 @@
 				"check": "Check now",
 				"lastChecked": "Checked {time}",
 				"unavailable": "This build does not update itself.",
-				"developerTools": "Lilo's own developer tools are now in the Develop menu."
+				"developerTools": "Lilo's own developer tools are now in the Develop menu.",
+				"webKitFork": "WebKit {version}, Lilo fork"
 			},
 			"autoUpdate": {
 				"title": "Install updates automatically",
@@ -1878,6 +1879,7 @@
 		"What’s New": "What’s New",
 		"Report an Issue…": "Report an Issue…",
 		"Your internet, in bloom.": "Your internet, in bloom.",
+		"WebKit %@, Lilo fork": "WebKit %@, Lilo fork",
 		"Recently Visited": "Recently Visited",
 		"No History": "No History",
 		"%@ wants to connect to a serial port": "%@ wants to connect to a serial port",

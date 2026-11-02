@@ -500,7 +500,8 @@
 				"check": "立即检查",
 				"lastChecked": "检查于 {time}",
 				"unavailable": "此版本不支持自动更新。",
-				"developerTools": "Lilo 自身的开发工具现位于“开发”菜单中。"
+				"developerTools": "Lilo 自身的开发工具现位于“开发”菜单中。",
+				"webKitFork": "WebKit {version}（Lilo 分支）"
 			},
 			"autoUpdate": {
 				"title": "自动安装更新",
@@ -1878,6 +1879,7 @@
 		"What’s New": "更新内容",
 		"Report an Issue…": "报告问题…",
 		"Your internet, in bloom.": "让你的互联网，焕然绽放。",
+		"WebKit %@, Lilo fork": "WebKit %@（Lilo 分支）",
 		"Recently Visited": "最近访问",
 		"No History": "没有历史记录",
 		"%@ wants to connect to a serial port": "%@ 想要连接串口",

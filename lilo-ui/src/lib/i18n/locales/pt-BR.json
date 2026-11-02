@@ -500,7 +500,8 @@
 				"check": "Buscar agora",
 				"lastChecked": "Verificado {time}",
 				"unavailable": "Esta versão não é atualizada automaticamente.",
-				"developerTools": "As ferramentas de desenvolvimento do Lilo agora estão no menu Desenvolvedor."
+				"developerTools": "As ferramentas de desenvolvimento do Lilo agora estão no menu Desenvolvedor.",
+				"webKitFork": "WebKit {version}, fork do Lilo"
 			},
 			"autoUpdate": {
 				"title": "Instalar atualizações automaticamente",
@@ -1878,6 +1879,7 @@
 		"What’s New": "Novidades",
 		"Report an Issue…": "Relatar um problema…",
 		"Your internet, in bloom.": "Sua internet, em flor.",
+		"WebKit %@, Lilo fork": "WebKit %@, fork do Lilo",
 		"Recently Visited": "Visitadas recentemente",
 		"No History": "Nenhum histórico",
 		"%@ wants to connect to a serial port": "%@ quer se conectar a uma porta serial",

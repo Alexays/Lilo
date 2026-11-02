@@ -76,6 +76,7 @@ extension BrowserContext {
         return [
             "liloVersion": info["CFBundleShortVersionString"] as? String ?? "",
             "liloBuild": info["CFBundleVersion"] as? String ?? "",
+            "webKit": WKEngineFactory.webKitDescription,
             "macOS": ProcessInfo.processInfo.operatingSystemVersionString,
             "macModel": String(cString: model),
             "cores": ProcessInfo.processInfo.activeProcessorCount,
