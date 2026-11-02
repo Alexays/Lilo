@@ -26,7 +26,7 @@ extension MainWindowController {
             if let decision = context.profileContexts.existingContext(for: registry.profileId)?.sitePermissions.decision(forOrigin: origin, type: type) {
                 return decision ? "allow" : "block"
             }
-            return context.settingsStore.refusesPermissionRequests(type) ? "block" : nil
+            return context.settingsStore?.refusesPermissionRequests(type) != false ? "block" : nil
         }
         context.engineFactory.sessionsContextProvider = { [weak context] registry in
             guard let context, let window = context.windows.window(showingProfileOf: registry) else { return nil }
@@ -97,7 +97,7 @@ extension MainWindowController {
         // Another profile's prompts here are denied and closed, so its extensions never wait on a profile the window left.
         for profile in context.profileContexts.allContexts where profile.extensions !== registry {
             for id in profile.extensions.denyPermissionRequests(shownIn: self) {
-                bridgeRouter?.send(event: "permissionRequestClosed", data: ["requestId": id])
+                bridgeRouter.send(event: "permissionRequestClosed", data: ["requestId": id])
             }
         }
 
@@ -112,7 +112,6 @@ extension MainWindowController {
     /// Ships the full id list plus only the rows that changed since the last send; a row whose icon is
     /// unchanged leaves `iconDataURL` out and the chrome keeps the one it holds.
     func sendExtensionsChangedEvent() {
-        guard let bridgeRouter else { return }
         let registry = profileContext?.extensions
         let rows = registry?.extensionBridgePayloads(activeTab: tabManager.activeOpenTabId.flatMap { tabManager.tabAdapter(for: $0) }) ?? []
         var ids: [String] = []
@@ -157,7 +156,7 @@ extension MainWindowController {
             for item in actionItems { menu.addItem(item) }
             menu.addItem(.separator())
         }
-        let send = { (action: String) in self.bridgeRouter?.send(event: "extensionMenuAction", data: ["id": extensionId, "action": action]) }
+        let send = { (action: String) in self.bridgeRouter.send(event: "extensionMenuAction", data: ["id": extensionId, "action": action]) }
         if let pinned {
             menu.addItem((pinned ? "Unpin from Address Bar" : "Pin to Address Bar").localized, icon: pinned ? .unpin : .pin) { send("togglePin") }
         }
@@ -183,7 +182,7 @@ extension MainWindowController {
         origins: [String],
         type: String
     ) {
-        bridgeRouter?.send(event: "extensionPermissionRequested", data: [
+        bridgeRouter.send(event: "extensionPermissionRequested", data: [
             "requestId": requestId,
             "extensionId": extensionId,
             "extensionName": extensionName,
@@ -224,7 +223,7 @@ extension MainWindowController {
                 // tab, where it keeps drawing its PiP window.
                 floatingTabPanel.dismiss(hosting: engine.id)
                 if tabDock.engineId == engine.id { tabDock.undock() }
-                if engine.view.superview == nil, tabManager.activeOpenTabId != engine.id {
+                if unsafe engine.view.superview == nil, tabManager.activeOpenTabId != engine.id {
                     engine.fitView(in: contentContainerView.bounds)
                     contentContainerView.addSubview(engine.view, positioned: .below, relativeTo: nil)
                 }

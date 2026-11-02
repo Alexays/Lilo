@@ -225,11 +225,12 @@ enum ArcSidebar {
             var color: String?
             if let red = tone?["red"] as? Double, let green = tone?["green"] as? Double, let blue = tone?["blue"] as? Double {
                 // Extended sRGB components can leave 0...1.
-                color = String(format: "#%02x%02x%02x", Int(min(max(red, 0), 1) * 255), Int(min(max(green, 0), 1) * 255), Int(min(max(blue, 0), 1) * 255))
+                color = unsafe String(format: "#%02x%02x%02x", Int(min(max(red, 0), 1) * 255), Int(min(max(green, 0), 1) * 255), Int(min(max(blue, 0), 1) * 255))
             }
             let title = space["title"] as? String ?? "Arc"
-            names[title, default: 0] += 1
-            return ImportedSpace(name: names[title] == 1 ? title : "\(title) \(names[title]!)", icon: icon, color: color,
+            let count = names[title, default: 0] + 1
+            names[title] = count
+            return ImportedSpace(name: count == 1 ? title : "\(title) \(count)", icon: icon, color: color,
                                  pinned: container("pinned"), unpinned: container("unpinned"))
         }
         return (favorites, spaces)

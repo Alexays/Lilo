@@ -34,9 +34,9 @@ final class TabDockControllerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let callSpace = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
-        let otherSpace = try context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let callSpace = try context.spaceManager!.createSpace(name: "Call", profileId: profileId)
+        let otherSpace = try context.spaceManager!.createSpace(name: "Other", profileId: profileId)
         let window = makeTestWindow(context, showing: callSpace.id)
         window.setupTabDock()
         let call = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example/")))
@@ -191,8 +191,8 @@ final class TabDockControllerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "Call", profileId: profileId)
         let window = makeTestWindow(context, showing: space.id)
         let call = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://call.example/")))
         let engine = try XCTUnwrap(window.tabManager.engineTab(for: call.id))

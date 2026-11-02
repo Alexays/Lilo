@@ -10,7 +10,7 @@ extension BrowserContext {
             mediaActivityPending = false
             var sent: [ObjectIdentifier: NSDictionary] = [:]
             for window in windows.windows {
-                guard let router = window.bridgeRouter else { continue }
+                let router = window.bridgeRouter
                 let key = ObjectIdentifier(window)
                 let data: [String: Any] = ["tabs": window.mediaSummaries(), "calls": window.callSummaries()]
                 let bridged = data as NSDictionary

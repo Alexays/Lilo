@@ -101,6 +101,7 @@ test("a morph to a new edge that never finishes is skipped, so the chrome is nev
 	const dataset = stubRoot();
 	const doc = (globalThis as unknown as { document: Record<string, unknown> }).document;
 	let skipped = 0;
+	doc.querySelector = () => null;
 	doc.startViewTransition = (update: () => Promise<void>) => {
 		void update();
 		return { finished: new Promise(() => {}), skipTransition: () => skipped++ };
@@ -118,6 +119,27 @@ test("a morph to a new edge that never finishes is skipped, so the chrome is nev
 
 	assert.equal(skipped, 1);
 	assert.equal(dataset.tabPosition, "top");
+});
+
+test("only the new tabs carry the morph's name, while the old ones play out their outro", async () => {
+	stubBridgeWindow({ document: true });
+	stubRoot();
+	const doc = (globalThis as unknown as { document: Record<string, unknown> }).document;
+	const old = { style: { viewTransitionName: "" } };
+	doc.querySelector = () => old;
+	doc.startViewTransition = (update: () => Promise<void>) => ({ finished: update(), skipTransition() {} });
+	(globalThis as { matchMedia?: unknown }).matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+	const store = await (await freshStores())("/src/stores/tabLayout.svelte.ts");
+	store.initTabLayoutStore();
+	store.applyTabLayoutInitialState({ tabPosition: "top" });
+
+	receive({ event: "tabLayoutChanged", position: "bottom", address: "page" });
+	await new Promise((resolve) => setTimeout(resolve));
+	assert.equal(old.style.viewTransitionName, "", "the strip stays and keeps its name");
+
+	receive({ event: "tabLayoutChanged", position: "left", address: "tabs" });
+	await new Promise((resolve) => setTimeout(resolve));
+	assert.equal(old.style.viewTransitionName, "none");
 });
 
 test("choosing a position or an address stores the setting", async () => {

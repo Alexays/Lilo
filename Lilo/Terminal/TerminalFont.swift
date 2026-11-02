@@ -29,9 +29,9 @@ final class TerminalFont {
 
         var character: UniChar = 0x4D // "M"
         var glyph = CGGlyph()
-        CTFontGetGlyphsForCharacters(regular, &character, &glyph, 1)
+        unsafe CTFontGetGlyphsForCharacters(regular, &character, &glyph, 1)
         var advance = CGSize.zero
-        CTFontGetAdvancesForGlyphs(regular, .horizontal, &glyph, &advance, 1)
+        unsafe CTFontGetAdvancesForGlyphs(regular, .horizontal, &glyph, &advance, 1)
         let ascent = CTFontGetAscent(regular)
         let descent = CTFontGetDescent(regular)
         let leading = CTFontGetLeading(regular)

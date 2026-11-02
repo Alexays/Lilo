@@ -500,7 +500,8 @@
 				"check": "今すぐ確認",
 				"lastChecked": "確認：{time}",
 				"unavailable": "このビルドは自動更新に対応していません。",
-				"developerTools": "Lilo 自体の開発者ツールは「開発」メニューに移動しました。"
+				"developerTools": "Lilo 自体の開発者ツールは「開発」メニューに移動しました。",
+				"webKitFork": "WebKit {version}（Lilo フォーク）"
 			},
 			"autoUpdate": {
 				"title": "アップデートを自動インストール",
@@ -1687,7 +1688,7 @@
 			"subtitle": "これだけで始められます。",
 			"go": "さあ、始めましょう",
 			"search": "⌘T で検索やアドレスの入力ができます。",
-			"tabs": "タブは左側にあり、いつでも見られます。",
+			"tabs": "タブは選んだ端に表示され、いつでも見られます。",
 			"split": "タブをページの端にドラッグすると、2つのページを並べて表示できます。"
 		},
 		"devTips": {
@@ -1695,7 +1696,7 @@
 			"subtitle": "「開発」メニューがなくてもショートカットを使えます。",
 			"inspector": "⌥⌘I でページの Web インスペクタを開けます。",
 			"localhost": "localhost のタブをページの端にドラッグすると、ドキュメントと並べて表示できます。",
-			"agents": "エージェントは左側のエージェントスペースにタブを開きます。"
+			"agents": "エージェントはエージェントスペースにタブを開きます。"
 		},
 		"arrival": {
 			"title": "Lilo へようこそ。",
@@ -1878,6 +1879,7 @@
 		"What’s New": "新機能",
 		"Report an Issue…": "問題を報告…",
 		"Your internet, in bloom.": "あなたのインターネットが、花ひらく。",
+		"WebKit %@, Lilo fork": "WebKit %@（Lilo フォーク）",
 		"Recently Visited": "最近アクセスしたページ",
 		"No History": "履歴なし",
 		"%@ wants to connect to a serial port": "%@ がシリアルポートへの接続を求めています",

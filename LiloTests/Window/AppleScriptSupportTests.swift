@@ -17,12 +17,11 @@ final class AppleScriptSupportTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let regular = try context.spaceManager.createSpace(name: "R", profileId: profileId)
-        let secret = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: true)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let regular = try context.spaceManager!.createSpace(name: "R", profileId: profileId)
+        let secret = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: true)
         let window = MainWindowController(context: context)
         defer { window.window?.close() }
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         context.windows.add(window)
         let nsWindow = try XCTUnwrap(window.window)
@@ -42,11 +41,10 @@ final class AppleScriptSupportTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "R", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "R", profileId: profileId)
         let window = MainWindowController(context: context)
         defer { window.window?.close() }
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         context.windows.add(window)
         let nsWindow = try XCTUnwrap(window.window)

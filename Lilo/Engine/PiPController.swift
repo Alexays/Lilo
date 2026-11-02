@@ -44,7 +44,7 @@ final class PiPController {
         guard didAutoEnter else { return }
         didAutoEnter = false
         if webView.responds(to: Self.closeAllPresentations) {
-            webView.perform(Self.closeAllPresentations)
+            unsafe webView.perform(Self.closeAllPresentations)
         } else if isActive {
             _ = toggleNatively()
         }
@@ -55,7 +55,7 @@ final class PiPController {
 
     private func toggleNatively() -> Bool {
         guard webView.responds(to: Self.nativeToggle) else { return false }
-        webView.perform(Self.nativeToggle)
+        unsafe webView.perform(Self.nativeToggle)
         return true
     }
 

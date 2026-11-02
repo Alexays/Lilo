@@ -98,7 +98,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let number = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": number, "url": site.absoluteString])
         _ = await client.callTool("javascript_tool", ["tabId": number, "action": "javascript_exec", "text": "localStorage.setItem('agent', 'x')"])
-        let agentStore = context.profileManager.dataStore(for: try control.agentsProfileId()).backingStore
+        let agentStore = context.profileManager!.dataStore(for: try control.agentsProfileId()).backingStore
         // The page's write reaches the store on its own: one still on its way would land after the wipe.
         let written = await pollUntil { await !agentStore.dataRecords(ofTypes: [WKWebsiteDataTypeLocalStorage]).isEmpty }
         XCTAssertTrue(written)
@@ -110,7 +110,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let left = await agentStore.dataRecords(
             ofTypes: WKWebsiteDataStore.testDataTypes.subtracting([WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache])
         )
-        let userRecords = await context.profileManager.dataStore(for: space.profileId).backingStore.dataRecords(ofTypes: WKWebsiteDataStore.testDataTypes)
+        let userRecords = await context.profileManager!.dataStore(for: space.profileId).backingStore.dataRecords(ofTypes: WKWebsiteDataStore.testDataTypes)
         XCTAssertEqual(left.map(\.displayName), [])
         XCTAssertFalse(userRecords.isEmpty, "the user's profile is never reset")
     }
@@ -255,7 +255,7 @@ final class AgentFoldersTests: AgentToolTestCase {
     func testReleaseOfAHiddenAgentSpaceClearsAgentState() async throws {
         let number = try await newAgentTab()
         let engine = try engine(forTab: number)
-        let other = try context.spaceManager.createSpace(name: "Other", profileId: space.profileId)
+        let other = try context.spaceManager!.createSpace(name: "Other", profileId: space.profileId)
         window.switchToSpace(other.id)
 
         client.close()
@@ -491,12 +491,12 @@ final class AgentFoldersTests: AgentToolTestCase {
         let created = await other.callTool("tabs_create_mcp")
         let theirs = try XCTUnwrap(created.text.split(separator: " ").last.flatMap { Int($0) })
 
-        let mineSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: mine)).flatMap(context.spaceManager.space(with:)))
-        let theirSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: theirs)).flatMap(context.spaceManager.space(with:)))
+        let mineSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: mine)).flatMap(context.spaceManager!.space(with:)))
+        let theirSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: theirs)).flatMap(context.spaceManager!.space(with:)))
         XCTAssertEqual(mineSpace.profileId, try control.agentsProfileId())
         XCTAssertEqual(theirSpace.profileId, space.profileId)
         XCTAssertNotEqual(theirSpace.id, space.id, "never in the user's own space")
-        XCTAssertEqual(Set(context.settingsStore.agentsSpaceIds), [mineSpace.id, theirSpace.id])
+        XCTAssertEqual(Set(context.settingsStore!.agentsSpaceIds), [mineSpace.id, theirSpace.id])
         let text = await client.callTool("get_page_text", ["tabId": mine])
         XCTAssertFalse(text.isError, "the other agent's switch left this one alone: \(text.text)")
         XCTAssertTrue(text.text.contains("Mine"), text.text)
@@ -513,7 +513,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let reply = await switchToUserProfile()
 
         XCTAssertFalse(reply.isError, reply.text)
-        let moved = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: mine)).flatMap(context.spaceManager.space(with:)))
+        let moved = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: mine)).flatMap(context.spaceManager!.space(with:)))
         XCTAssertEqual(moved.profileId, space.profileId)
         XCTAssertEqual(context.browserState.owningSpaceId(forTab: try tabId(of: theirs)), agentsSpaceId, "the other agent's tab stays")
         XCTAssertTrue(try engine(forTab: theirs) === theirEngine, "and keeps its page")
@@ -528,9 +528,9 @@ final class AgentFoldersTests: AgentToolTestCase {
         await switchToUserProfile()
         let userAgentsSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: number)))
 
-        try control.returnAgents(from: try XCTUnwrap(context.spaceManager.space(with: userAgentsSpace)))
+        try control.returnAgents(from: try XCTUnwrap(context.spaceManager!.space(with: userAgentsSpace)))
 
-        XCTAssertNil(context.spaceManager.space(with: userAgentsSpace))
+        XCTAssertNil(context.spaceManager!.space(with: userAgentsSpace))
         XCTAssertEqual(context.browserState.owningSpaceId(forTab: try tabId(of: number)), agentsSpaceId)
         let list = await client.callTool("list_profiles")
         let profiles = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(list.text.utf8)) as? [[String: Any]])
@@ -551,7 +551,7 @@ final class AgentFoldersTests: AgentToolTestCase {
     func testAgentsWorkInTheirOwnSpaceAndEphemeralProfile() async throws {
         let id = try tabId(of: try await newAgentTab())
 
-        let agentsSpace = try XCTUnwrap(context.spaceManager.space(with: agentsSpaceId))
+        let agentsSpace = try XCTUnwrap(context.spaceManager!.space(with: agentsSpaceId))
         XCTAssertEqual(context.browserState.owningSpaceId(forTab: id), agentsSpace.id)
         XCTAssertNotEqual(agentsSpace.id, space.id, "never in the user's space")
         XCTAssertEqual(agentsSpace.profileId, try control.agentsProfileId())
@@ -573,7 +573,7 @@ final class AgentFoldersTests: AgentToolTestCase {
 
     func testSwitchingToAUserProfileAsksOnceThenMovesTheTabs() async throws {
         let number = try await agentTab(showing: "<title>Moved</title>")
-        let userProfile = try XCTUnwrap(context.profileManager.profiles.first { $0.id == space.profileId })
+        let userProfile = try XCTUnwrap(context.profileManager!.profiles.first { $0.id == space.profileId })
 
         let switching = Task { [client] in await client!.callTool("switch_profile", ["profile": userProfile.name]) }
         await pollUntil(timeout: 5) { !self.control.pendingConsentAnswers.isEmpty }
@@ -581,7 +581,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let reply = await switching.value
 
         XCTAssertFalse(reply.isError, reply.text)
-        let moved = context.browserState.owningSpaceId(forTab: try tabId(of: number)).flatMap(context.spaceManager.space(with:))
+        let moved = context.browserState.owningSpaceId(forTab: try tabId(of: number)).flatMap(context.spaceManager!.space(with:))
         XCTAssertEqual(moved?.profileId, userProfile.id)
         let text = await client.callTool("get_page_text", ["tabId": number])
         XCTAssertFalse(text.isError, "the tab came back in the new profile: \(text.text)")
@@ -597,7 +597,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let number = try await newAgentTab()
         _ = await client.callTool("navigate", ["tabId": number, "url": "127.0.0.1:\(server.port)/"])
         _ = await client.callTool("javascript_tool", ["tabId": number, "action": "javascript_exec", "text": "localStorage.setItem('left', 'behind'); document.cookie = 'k=v; max-age=3600'"])
-        let store = context.profileManager.dataStore(for: try control.agentsProfileId())
+        let store = context.profileManager!.dataStore(for: try control.agentsProfileId())
         // The page's writes reach the store on their own time: a write landing after the wipe would outlive it.
         let written = await pollUntil(timeout: 10) {
             let types = await store.backingStore.dataRecords(ofTypes: WKWebsiteDataStore.testDataTypes).reduce(into: Set<String>()) { $0.formUnion($1.dataTypes) }
@@ -624,7 +624,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         await switchToUserProfile()
         _ = await client.callTool("navigate", ["tabId": number, "url": "127.0.0.1:\(server.port)/"])
         _ = await client.callTool("javascript_tool", ["tabId": number, "action": "javascript_exec", "text": "localStorage.setItem('mine', 'keep')"])
-        let userStore = context.profileManager.dataStore(for: space.profileId).backingStore
+        let userStore = context.profileManager!.dataStore(for: space.profileId).backingStore
         let written = await pollUntil { await !userStore.dataRecords(ofTypes: [WKWebsiteDataTypeLocalStorage]).isEmpty }
         XCTAssertTrue(written)
         let userAgentsSpace = try XCTUnwrap(context.browserState.owningSpaceId(forTab: try tabId(of: number)))
@@ -632,7 +632,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         let wiped = await control.wipeAgentsProfile()
 
         XCTAssertTrue(wiped, "an agent in a user profile does not hold the agents' one")
-        XCTAssertNotNil(context.spaceManager.space(with: userAgentsSpace))
+        XCTAssertNotNil(context.spaceManager!.space(with: userAgentsSpace))
         XCTAssertEqual(context.browserState.owningSpaceId(forTab: try tabId(of: number)), userAgentsSpace)
         let left = await userStore.dataRecords(ofTypes: [WKWebsiteDataTypeLocalStorage])
         XCTAssertFalse(left.isEmpty, "the user's profile is never wiped")
@@ -660,16 +660,16 @@ final class AgentFoldersTests: AgentToolTestCase {
 
         let cookie = await client.callTool("javascript_tool", ["tabId": isolated, "action": "javascript_exec", "text": "document.cookie"])
         let listed = try await availableTabs()
-        let isolatedSpace = try XCTUnwrap(context.spaceManager.spaces.first { $0.isPrivate })
+        let isolatedSpace = try XCTUnwrap(context.spaceManager!.spaces.first { $0.isPrivate })
         let isPrivate = try engine(forTab: isolated).isPrivateBrowsing
         client.close()
-        await pollUntil(timeout: 5) { self.context.spaceManager.space(with: isolatedSpace.id) == nil }
+        await pollUntil(timeout: 5) { self.context.spaceManager!.space(with: isolatedSpace.id) == nil }
 
         XCTAssertEqual(cookie.text, #""""#)
         XCTAssertTrue(isPrivate)
         XCTAssertEqual(listed.first { $0["tabId"] as? Int == isolated }?["isolated"] as? Bool, true)
         XCTAssertNil(listed.first { $0["tabId"] as? Int == normal }?["isolated"])
-        XCTAssertNil(context.spaceManager.space(with: isolatedSpace.id), "the private space goes with the agent")
+        XCTAssertNil(context.spaceManager!.space(with: isolatedSpace.id), "the private space goes with the agent")
     }
 
     func testClosingTheLastIsolatedTabDropsItsSpace() async throws {
@@ -677,15 +677,15 @@ final class AgentFoldersTests: AgentToolTestCase {
         let second = await client.callTool("tabs_create_mcp", ["isolated": true])
         let tabIds = try [first, second].map { try XCTUnwrap($0.text.split(separator: " ").last.flatMap { Int($0) }, $0.text) }
         for tabId in tabIds { _ = await client.callTool("navigate", ["tabId": tabId, "url": "data:text/html,<p>page</p>"]) }
-        let isolatedSpace = try XCTUnwrap(context.spaceManager.spaces.first { $0.isPrivate })
+        let isolatedSpace = try XCTUnwrap(context.spaceManager!.spaces.first { $0.isPrivate })
 
         _ = await client.callTool("tabs_close_mcp", ["tabId": tabIds[0]])
-        let keptWithATab = context.spaceManager.space(with: isolatedSpace.id) != nil
+        let keptWithATab = context.spaceManager!.space(with: isolatedSpace.id) != nil
         let closed = await client.callTool("tabs_close_mcp", ["tabId": tabIds[1]])
 
         XCTAssertFalse(closed.isError, closed.text)
         XCTAssertTrue(keptWithATab, "the space stays while one of its tabs is open")
-        XCTAssertNil(context.spaceManager.space(with: isolatedSpace.id), "an empty private space goes at once")
+        XCTAssertNil(context.spaceManager!.space(with: isolatedSpace.id), "an empty private space goes at once")
     }
 
     func testAgentLeavingGivesSleepBack() async throws {
@@ -702,11 +702,11 @@ final class AgentFoldersTests: AgentToolTestCase {
         _ = try await newAgentTab()
         let id = try XCTUnwrap(agentsSpaceId)
 
-        _ = try context.spaceManager.createSpace(name: "Later", profileId: space.profileId)
-        let other = try XCTUnwrap(context.spaceManager.spaces.first { $0.id != id && !$0.isPrivate })
-        try context.spaceManager.moveSpace(id: other.id, toIndex: .max)
+        _ = try context.spaceManager!.createSpace(name: "Later", profileId: space.profileId)
+        let other = try XCTUnwrap(context.spaceManager!.spaces.first { $0.id != id && !$0.isPrivate })
+        try context.spaceManager!.moveSpace(id: other.id, toIndex: .max)
 
-        XCTAssertEqual(context.spaceManager.spaces.last { !$0.isPrivate }?.id, id)
+        XCTAssertEqual(context.spaceManager!.spaces.last { !$0.isPrivate }?.id, id)
     }
 
     private func disconnect() async throws {
@@ -749,7 +749,7 @@ final class AgentFoldersTests: AgentToolTestCase {
         XCTAssertFalse(isOpen(id, in: spaceId))
         XCTAssertFalse(context.browserState.structuralProjection(forSpace: spaceId)?.tabs.contains { !$0.isClosed } ?? false, "no blank tab left behind")
         XCTAssertNotEqual(window.tabManager.currentSpaceId, spaceId)
-        XCTAssertNotNil(context.spaceManager.space(with: spaceId), "hidden, not deleted: it keeps its profile")
+        XCTAssertNotNil(context.spaceManager!.space(with: spaceId), "hidden, not deleted: it keeps its profile")
     }
 
     func testFaviconLoadedWhileTheSpaceIsHiddenShowsOnceTheWindowShowsIt() async throws {

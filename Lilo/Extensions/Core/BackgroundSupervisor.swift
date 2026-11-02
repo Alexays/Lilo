@@ -290,7 +290,7 @@ final class BackgroundSupervisor {
     static func backgroundWebView(of context: WKWebExtensionContext) -> WKWebView? {
         let selector = NSSelectorFromString("_backgroundWebView")
         guard context.responds(to: selector) else { return nil }
-        return context.perform(selector)?.takeUnretainedValue() as? WKWebView
+        return unsafe context.perform(selector)?.takeUnretainedValue() as? WKWebView
     }
 
     /// Starts a fresh worker in the same context by killing the background web view's process, the one signal that makes WebKit drop it;
@@ -302,7 +302,7 @@ final class BackgroundSupervisor {
               webView.responds(to: kill) else { return false }
         Self.logger.notice("background restart in place for \(extensionId, privacy: .public)")
         loadStartedAt[extensionId] = Date()
-        webView.perform(kill)
+        unsafe webView.perform(kill)
         var waits = 0
         while Self.backgroundWebView(of: context) != nil, waits < 20 {
             try? await Task.sleep(for: .milliseconds(50))

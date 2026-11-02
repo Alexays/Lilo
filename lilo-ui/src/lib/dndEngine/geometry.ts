@@ -105,6 +105,8 @@ export function applyTargetHysteresis(
 	if (next.zoneId !== previous.zoneId) return next;
 	if (next.index === previous.index) return next;
 	if (Math.abs(next.index - previous.index) > 1) return next;
+	// The way back to the row a drag started from is not held: its middle alone puts the row back.
+	if (next.index === zone.home) return next;
 
 	const boundaryItem = zone.items[Math.min(next.index, previous.index)];
 	if (!boundaryItem) return next;

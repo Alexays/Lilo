@@ -13,9 +13,9 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        spaceS = try context.spaceManager.createSpace(name: "S", profileId: profileId)
-        spaceT = try context.spaceManager.createSpace(name: "T", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        spaceS = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
+        spaceT = try context.spaceManager!.createSpace(name: "T", profileId: profileId)
     }
 
     override func tearDown() {
@@ -26,7 +26,6 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
     private func makeWindow() -> MainWindowController {
         let window = MainWindowController(context: browserContext.context)
-        window.bridgeRouter = BridgeRouter(chromeWebView: window.chromeWebView)
         window.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         return window
     }
@@ -182,7 +181,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         first.switchToSpace(spaceS.id)
         second.switchToSpace(spaceS.id)
 
-        try browserContext.context.spaceManager.deleteSpace(id: spaceS.id)
+        try browserContext.context.spaceManager!.deleteSpace(id: spaceS.id)
 
         XCTAssertEqual(first.tabManager.currentSpaceId, spaceT.id)
         XCTAssertEqual(second.tabManager.currentSpaceId, spaceT.id)
@@ -226,7 +225,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         context.windows.add(window)
         window.switchToSpace(spaceS.id)
         context.isTerminating = true
-        context.dbManager.closeForShutdown()
+        context.dbManager!.closeForShutdown()
 
         window.windowWillClose(Notification(name: NSWindow.willCloseNotification))
 
@@ -243,14 +242,14 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
         browserContext.context.saveWindowsNow()
 
-        let stored = try browserContext.context.dbManager.globalPool.read(WindowStore.load)
+        let stored = try browserContext.context.dbManager!.globalPool.read(WindowStore.load)
         XCTAssertEqual(stored.map(\.spaceId), [spaceS.id, spaceT.id])
         XCTAssertEqual(stored.first?.frame, first.window?.frame)
     }
 
     func testAWindowOnAPrivateSpaceIsNotSaved() throws {
         let context = browserContext.context
-        let secret = try context.spaceManager.createSpace(name: "Private", profileId: spaceS.profileId, isPrivate: true)
+        let secret = try context.spaceManager!.createSpace(name: "Private", profileId: spaceS.profileId, isPrivate: true)
         let first = makeWindow(), second = makeWindow()
         context.windows.add(first)
         context.windows.add(second)
@@ -259,7 +258,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
         context.saveWindowsNow()
 
-        XCTAssertEqual(try context.dbManager.globalPool.read(WindowStore.load).map(\.spaceId), [spaceS.id])
+        XCTAssertEqual(try context.dbManager!.globalPool.read(WindowStore.load).map(\.spaceId), [spaceS.id])
     }
 
     /// Extensions see one window per space, shared by the browser windows showing it. A space whose browser window
@@ -294,7 +293,6 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         let moving = try XCTUnwrap(source.createTabStateFirst(url: URL(string: "https://moving.example")))
 
         let opened = try XCTUnwrap(source.moveTabToNewWindow(moving.id))
-        opened.bridgeRouter = BridgeRouter(chromeWebView: opened.chromeWebView)
         opened.contentContainerView = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         opened.openOnSpace(spaceS.id, opening: .tab(moving.id))
 
@@ -385,7 +383,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
     func testAPrivateTabNeverTitlesTheWindow() throws {
         let window = makeWindow()
         browserContext.context.windows.add(window)
-        let privateSpace = try browserContext.context.spaceManager.createSpace(name: "P", profileId: spaceS.profileId, isPrivate: true)
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "P", profileId: spaceS.profileId, isPrivate: true)
         for space in [spaceS.id, privateSpace.id] {
             window.switchToSpace(space)
             let tab = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "https://example.com")))
@@ -407,7 +405,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         browserContext.context.windows.add(first)
         browserContext.context.windows.add(second)
         first.switchToSpace(spaceS.id)
-        let privateSpace = try browserContext.context.spaceManager.createSpace(name: "P", profileId: spaceS.profileId, isPrivate: true)
+        let privateSpace = try browserContext.context.spaceManager!.createSpace(name: "P", profileId: spaceS.profileId, isPrivate: true)
         second.switchToSpace(privateSpace.id)
 
         first.newPrivateSpace(nil)
@@ -426,7 +424,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
         XCTAssertTrue(window.handleKeyboardShortcut(event))
 
-        let privateSpace = try XCTUnwrap(browserContext.context.spaceManager.spaces.first(where: \.isPrivate))
+        let privateSpace = try XCTUnwrap(browserContext.context.spaceManager!.spaces.first(where: \.isPrivate))
         XCTAssertEqual(window.tabManager.currentSpaceId, privateSpace.id)
         XCTAssertEqual(window.tabManager.openTabs.count, 1)
         XCTAssertEqual(window.tabManager.activeOpenTabId, window.tabManager.openTabs.first?.id)
@@ -462,8 +460,8 @@ final class SharedSpaceRuntimeTests: XCTestCase {
     /// Spaces S, T, then the Agents space, which stays last and hidden while no agent works there.
     private func makeAgentsSpace() throws -> Space {
         let context = browserContext.context
-        let agents = try context.spaceManager.createSpace(name: "Agents", profileId: spaceS.profileId)
-        context.settingsStore.set(AgentControl.agentsSpaceKey, value: agents.id.uuidString)
+        let agents = try context.spaceManager!.createSpace(name: "Agents", profileId: spaceS.profileId)
+        context.settingsStore!.set(AgentControl.agentsSpaceKey, value: agents.id.uuidString)
         return agents
     }
 
@@ -477,7 +475,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
         window.closeCurrentTab(nil)
 
-        XCTAssertFalse(browserContext.context.spaceManager.spaces.contains(where: \.isPrivate))
+        XCTAssertFalse(browserContext.context.spaceManager!.spaces.contains(where: \.isPrivate))
         XCTAssertEqual(window.tabManager.currentSpaceId, spaceS.id)
         XCTAssertNotEqual(window.tabManager.currentSpaceId, agents.id)
     }
@@ -494,7 +492,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
 
         first.closeCurrentTab(nil)
 
-        XCTAssertFalse(browserContext.context.spaceManager.spaces.contains(where: \.isPrivate))
+        XCTAssertFalse(browserContext.context.spaceManager!.spaces.contains(where: \.isPrivate))
         XCTAssertEqual(first.tabManager.currentSpaceId, spaceS.id)
         XCTAssertEqual(second.tabManager.currentSpaceId, spaceT.id)
     }
@@ -527,7 +525,7 @@ final class SharedSpaceRuntimeTests: XCTestCase {
     /// Review I8: moving a space shown in two windows to another profile keeps both windows on it.
     func testMovingASharedSpaceToAnotherProfileKeepsBothWindowsOnIt() async throws {
         let (first, second) = twoWindowsOnS()
-        let target = try browserContext.context.profileManager.createProfile(name: "Q").id
+        let target = try browserContext.context.profileManager!.createProfile(name: "Q").id
 
         try await first.moveSpaceToProfile(id: spaceS.id, targetProfileId: target, name: nil, icon: nil, color: nil)
 
@@ -542,8 +540,8 @@ final class SharedSpaceRuntimeTests: XCTestCase {
         let first = makeWindow(), second = makeWindow()
         browserContext.context.windows.add(first)
         browserContext.context.windows.add(second)
-        let otherProfile = try browserContext.context.profileManager.createProfile(name: "Other").id
-        let otherSpace = try browserContext.context.spaceManager.createSpace(name: "O", profileId: otherProfile)
+        let otherProfile = try browserContext.context.profileManager!.createProfile(name: "Other").id
+        let otherSpace = try browserContext.context.spaceManager!.createSpace(name: "O", profileId: otherProfile)
         second.switchToSpace(otherSpace.id)
         first.switchToSpace(spaceS.id)
         first.switchToSpace(spaceT.id)

@@ -50,7 +50,7 @@ final class PublicSuffixTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: dir) }
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
-        let profileId = try browserContext.context.profileManager.createProfile(name: "P").id
+        let profileId = try browserContext.context.profileManager!.createProfile(name: "P").id
         let registry = try browserContext.context.profileContexts.context(for: profileId).extensions
         try await registry.load(from: dir)
         let context = try XCTUnwrap(registry.loadedExtensions.first.flatMap { registry.context(for: $0.id) })

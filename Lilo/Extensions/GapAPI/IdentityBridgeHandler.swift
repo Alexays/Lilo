@@ -119,11 +119,11 @@ private final class AuthNavDelegate: NSObject, WKNavigationDelegate, @unchecked 
         decisionHandler(.allow)
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         if !didComplete { onLoad?() }
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
         guard !didComplete else { return }
         didComplete = true; completion(.failure(error))
     }
@@ -182,14 +182,18 @@ final class IdentityBridgeHandler: GapHandler {
         guard call.bool("interactive") else { throw IdentityError.notGranted }
         guard let clientId = oauth2?["client_id"] as? String, !clientId.isEmpty else { throw IdentityError.missingClientId }
 
-        var authorize = URLComponents(string: "https://accounts.google.com/o/oauth2/v2/auth")!
+        var authorize = URLComponents()
+        authorize.scheme = "https"
+        authorize.host = "accounts.google.com"
+        authorize.path = "/o/oauth2/v2/auth"
         authorize.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "response_type", value: "token"),
             URLQueryItem(name: "redirect_uri", value: "https://\(call.extensionId.lowercased()).chromiumapp.org/"),
             URLQueryItem(name: "scope", value: scopes.joined(separator: " "))
         ]
-        let redirect = try await runAuthFlow(authorize.url!, extensionId: call.extensionId, dataStore: dataStore)
+        guard let authorizeURL = authorize.url else { throw IdentityError.authorizationFailed("Invalid authorization URL") }
+        let redirect = try await runAuthFlow(authorizeURL, extensionId: call.extensionId, dataStore: dataStore)
         // The implicit grant answers in the fragment.
         var answer = URLComponents()
         answer.percentEncodedQuery = URLComponents(string: redirect)?.percentEncodedFragment
@@ -249,7 +253,7 @@ final class IdentityBridgeHandler: GapHandler {
             kSecAttrService as String: Self.keychainService, kSecAttrAccount as String: account,
             kSecReturnData as String: true, kSecReturnAttributes as String: true]
         var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        let status = unsafe SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess else {
             if status == errSecItemNotFound { return nil }
             throw keychainError(status, context: "Failed to retrieve token")
@@ -285,7 +289,7 @@ final class IdentityBridgeHandler: GapHandler {
             kSecAttrService as String: Self.keychainService, kSecMatchLimit as String: kSecMatchLimitAll,
             kSecReturnAttributes as String: true]
         var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        let status = unsafe SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess else {
             if status == errSecItemNotFound { return }
             throw keychainError(status, context: "Failed to list tokens")
@@ -299,7 +303,7 @@ final class IdentityBridgeHandler: GapHandler {
                 var data: AnyObject?
                 var read = item
                 read[kSecReturnData as String] = true
-                guard SecItemCopyMatching(read as CFDictionary, &data) == errSecSuccess, data as? Data == Data(token.utf8) else { continue }
+                guard unsafe SecItemCopyMatching(read as CFDictionary, &data) == errSecSuccess, data as? Data == Data(token.utf8) else { continue }
             }
             SecItemDelete(item as CFDictionary)
         }

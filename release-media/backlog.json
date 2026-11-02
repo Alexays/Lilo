@@ -2,6 +2,14 @@
   "schemaVersion": 1,
   "publication": "quality-gated",
   "releases": {
+    "0.14.3": {
+      "kind": "none",
+      "reason": "Page-loading performance and existing layout fixes add no new visual interaction to demonstrate."
+    },
+    "0.14.2": {
+      "kind": "none",
+      "reason": "Sidebar drag placement and profile call reliability fixes add no new visual interaction to demonstrate."
+    },
     "0.14.1": {
       "kind": "none",
       "reason": "A single compatibility bug fix; no new feature or meaningful visual state to demonstrate."

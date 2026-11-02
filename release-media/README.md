@@ -1,6 +1,6 @@
 # Release media
 
-HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 31 releases: eight interaction films, six screenshots and seventeen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader’s language and label the retained English-language illustrations.
+HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 33 releases: eight interaction films, six screenshots and nineteen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader’s language and label the retained English-language illustrations.
 
 ## Native sources and authoring
 

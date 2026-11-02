@@ -12,11 +12,11 @@ final class PageZoomTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
-        profileId = try browserContext.context.profileManager.createProfile(name: "P").id
+        profileId = try browserContext.context.profileManager!.createProfile(name: "P").id
     }
 
     override func tearDown() {
-        browserContext.context.settingsStore.defaultZoom = 1
+        browserContext.context.settingsStore!.defaultZoom = 1
         browserContext.tearDown()
         browserContext = nil
         super.tearDown()
@@ -27,7 +27,7 @@ final class PageZoomTests: XCTestCase {
     }
 
     private func makeWindow(isPrivate: Bool = false) throws -> MainWindowController {
-        let space = try browserContext.context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: isPrivate)
+        let space = try browserContext.context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: isPrivate)
         return makeTestWindow(browserContext.context, showing: space.id)
     }
 
@@ -72,7 +72,7 @@ final class PageZoomTests: XCTestCase {
     }
 
     func testActualSizeIsTheDefaultZoomAndOnlyOtherLevelsAreKept() async throws {
-        browserContext.context.settingsStore.defaultZoom = 1.25
+        browserContext.context.settingsStore!.defaultZoom = 1.25
         let window = try makeWindow()
         let engine = try await load("https://example.com/", in: window)
         XCTAssertEqual(engine.pageZoom, 1.25, accuracy: 0.001)

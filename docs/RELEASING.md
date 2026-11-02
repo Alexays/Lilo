@@ -229,7 +229,7 @@ Both wrap `scripts/build-app.sh`; signing and notarization are configured via th
 
 ## Browser passkey entitlement
 
-`com.apple.developer.web-browser.public-key-credential` lets Lilo create and use passkeys for any site. It is a restricted entitlement: Apple grants it per app ID (`fr.arouillard.lilo`, team `7FCQYGT54V`), and a build carrying it must embed a Developer ID provisioning profile that includes it, or macOS refuses to launch the app. It is off by default, so ad-hoc, development and fork builds never carry it.
+`com.apple.developer.web-browser.public-key-credential` lets Lilo create and use passkeys for any site. It is a restricted entitlement: Apple grants it per app ID (`fr.arouillard.lilo`, team `7FCQYGT54V`), and a build carrying it must embed a Developer ID provisioning profile that includes it, or macOS refuses to launch the app. It is off by default, so ad-hoc, development and fork builds never carry it. The Account Holder requests it through the [macOS Browsers Passkeys](https://developer.apple.com/contact/request/macos-browsers-passkeys/) form.
 
 Once Apple grants it:
 

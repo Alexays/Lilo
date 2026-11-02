@@ -51,11 +51,11 @@ struct TabLayout: Equatable {
 
     /// The launch-time copy, read before the database so the first paint has the right layout.
     static var cached: TabLayout {
-        TabLayout(storedPosition: UserDefaults.lilo.string(forKey: positionCacheKey), storedAddress: UserDefaults.lilo.string(forKey: addressCacheKey))
+        unsafe TabLayout(storedPosition: UserDefaults.lilo.string(forKey: positionCacheKey), storedAddress: UserDefaults.lilo.string(forKey: addressCacheKey))
     }
 
     func cache() {
-        UserDefaults.lilo.set(position.rawValue, forKey: Self.positionCacheKey)
-        UserDefaults.lilo.set(address.rawValue, forKey: Self.addressCacheKey)
+        unsafe UserDefaults.lilo.set(position.rawValue, forKey: Self.positionCacheKey)
+        unsafe UserDefaults.lilo.set(address.rawValue, forKey: Self.addressCacheKey)
     }
 }

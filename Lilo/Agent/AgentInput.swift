@@ -56,7 +56,7 @@ enum AgentInput {
     /// Positive `deltaY` scrolls the page down, positive `deltaX` scrolls it right.
     static func scroll(_ webView: WKWebView, at point: CGPoint, deltaX: CGFloat, deltaY: CGFloat, showsCursor: Bool = true) {
         if showsCursor { AgentCursorView.show(in: webView, at: point, animated: true) }
-        guard let window = webView.window,
+        guard let window = unsafe webView.window,
               let cgEvent = CGEvent(
                 scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
                 wheel1: Int32(-deltaY.rounded()), wheel2: Int32(-deltaX.rounded()), wheel3: 0
@@ -161,7 +161,7 @@ enum AgentInput {
                 pressKey(webView, characters: press.characters, ignoringModifiers: press.ignoringModifiers,
                          keyCode: press.keyCode, modifiers: press.modifiers)
             }
-            if unhandled, webView.responds(to: menuCommand) { webView.perform(menuCommand, with: nil) }
+            if unhandled, webView.responds(to: menuCommand) { unsafe webView.perform(menuCommand, with: nil) }
         }
     }
 
@@ -271,7 +271,7 @@ enum AgentInput {
         }
         await withCheckedContinuation { (handled: CheckedContinuation<Void, Never>) in
             let done: @convention(block) () -> Void = { handled.resume() }
-            webView.perform(selector, with: done)
+            unsafe webView.perform(selector, with: done)
         }
     }
 
@@ -301,7 +301,7 @@ enum AgentInput {
         types: [NSEvent.EventType] = [.keyDown, .keyUp]
     ) {
         for type in types {
-            guard let event = NSEvent.keyEvent(
+            guard let event = unsafe NSEvent.keyEvent(
                 with: type, location: .zero, modifierFlags: modifiers, timestamp: ProcessInfo.processInfo.systemUptime,
                 windowNumber: webView.window?.windowNumber ?? 0, context: nil, characters: characters,
                 charactersIgnoringModifiers: ignoringModifiers, isARepeat: false, keyCode: keyCode
@@ -312,14 +312,14 @@ enum AgentInput {
 
     private static func windowPoint(_ webView: WKWebView, _ point: CGPoint) -> CGPoint {
         let local = CGPoint(x: point.x, y: webView.isFlipped ? point.y : webView.bounds.height - point.y)
-        return webView.window == nil ? local : webView.convert(local, to: nil)
+        return unsafe webView.window == nil ? local : webView.convert(local, to: nil)
     }
 
     private static func mouse(
         _ type: NSEvent.EventType, _ webView: WKWebView, _ point: CGPoint,
         clickCount: Int = 1, modifiers: NSEvent.ModifierFlags = []
     ) -> NSEvent? {
-        NSEvent.mouseEvent(
+        unsafe NSEvent.mouseEvent(
             with: type, location: windowPoint(webView, point), modifierFlags: modifiers,
             timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: webView.window?.windowNumber ?? 0,
             context: nil, eventNumber: 0, clickCount: type == .mouseMoved || type == .leftMouseDragged ? 0 : clickCount,
@@ -332,14 +332,14 @@ enum AgentInput {
         // WebKit reads an event's `buttons` from `NSEvent.pressedMouseButtons`, the hardware state: unless the
         // button reads as held there, a sent press or drag reaches the page with no button down.
         let held = switch event.type {
-        case .leftMouseDown, .leftMouseDragged: heldButtons[0]
-        case .rightMouseDown: heldButtons[1]
-        case .otherMouseDown: heldButtons[2]
-        default: nil as IMP?
+        case .leftMouseDown, .leftMouseDragged: unsafe heldButtons[0]
+        case .rightMouseDown: unsafe heldButtons[1]
+        case .otherMouseDown: unsafe heldButtons[2]
+        default: unsafe nil as IMP?
         }
-        let method = class_getClassMethod(NSEvent.self, #selector(getter: NSEvent.pressedMouseButtons))
-        let original = held.flatMap { held in method.map { method_setImplementation($0, held) } }
-        defer { if let method, let original { method_setImplementation(method, original) } }
+        let method = unsafe class_getClassMethod(NSEvent.self, #selector(getter: NSEvent.pressedMouseButtons))
+        let original = unsafe held.flatMap { held in unsafe method.map { unsafe method_setImplementation($0, held) } }
+        defer { if let method = unsafe method, let original = unsafe original { unsafe method_setImplementation(method, original) } }
         switch event.type {
         case .leftMouseDown: webView.mouseDown(with: event)
         case .leftMouseUp: webView.mouseUp(with: event)
@@ -360,8 +360,8 @@ enum AgentInput {
     }
 
     /// `NSEvent.pressedMouseButtons` answering the left, right or middle button held.
-    private static let heldButtons = [1, 2, 4].map { mask in
-        imp_implementationWithBlock({ (_: AnyObject) in mask } as @convention(block) (AnyObject) -> Int)
+    private static let heldButtons = unsafe [1, 2, 4].map { mask in
+        unsafe imp_implementationWithBlock({ (_: AnyObject) in mask } as @convention(block) (AnyObject) -> Int)
     }
 
     private static let namedKeys: [String: (characters: String, keyCode: UInt16)] = {

@@ -27,7 +27,7 @@ enum HTTPAuthKeychain {
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+        guard unsafe SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
               let data = result as? Data,
               let stored = try? JSONDecoder().decode(StoredCredential.self, from: data) else {
             return nil
@@ -69,7 +69,7 @@ enum HTTPAuthKeychain {
             kSecMatchLimit as String: kSecMatchLimitAll, kSecReturnAttributes as String: true
         ]
         var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess else { return }
+        guard unsafe SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess else { return }
         let prefix = "\(profileId.uuidString)\u{1f}"
         for item in result as? [[String: Any]] ?? [] {
             guard let account = item[kSecAttrAccount as String] as? String,

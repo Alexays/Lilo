@@ -15,10 +15,9 @@ final class WKWebViewTabDialogTests: XCTestCase {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         controller = MainWindowController(context: context)
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         // Transparent, off screen and never key, so nothing shows to whoever runs the tests.
         let window = try XCTUnwrap(controller.window)
         window.alphaValue = 0
@@ -72,7 +71,7 @@ final class WKWebViewTabDialogTests: XCTestCase {
         await load("<script>addEventListener('beforeunload', e => e.preventDefault())</script>", in: engine)
         // A script run by the app counts as a user gesture: WebKit asks only a page the user used.
         _ = try await engine.wkWebView.evaluateJavaScript("document.body.click(); true")
-        controller.switchToSpace(try browserContext.context.spaceManager.createSpace(name: "Other", profileId: profileId).id)
+        controller.switchToSpace(try browserContext.context.spaceManager!.createSpace(name: "Other", profileId: profileId).id)
         XCTAssertNil(engine.view.window)
 
         _ = try await engine.wkWebView.evaluateJavaScript("setTimeout(() => location.href = 'about:blank'); true")

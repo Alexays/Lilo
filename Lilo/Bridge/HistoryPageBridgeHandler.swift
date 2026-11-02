@@ -34,7 +34,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {
         self.profileContextProvider = profileContextProvider
         self.bridgeRouter = bridgeRouter
-        changeObserver = NotificationCenter.default.addObserver(forName: .historyChanged, object: nil, queue: .main) { [weak self] note in
+        unsafe changeObserver = NotificationCenter.default.addObserver(forName: .historyChanged, object: nil, queue: .main) { [weak self] note in
             let profileId = note.object as? UUID
             MainActor.assumeIsolated {
                 guard let self, self.pageOpen, profileId == self.profileContextProvider()?.profileId else { return }
@@ -44,7 +44,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     }
 
     deinit {
-        if let changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
+        if let changeObserver = unsafe changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
     }
 
     func handle(message: BridgeMessage) async -> Any? {
@@ -73,7 +73,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
                     // Favicons are keyed by the page's own host; the chrome looks them up by site.
                     var siteByHost: [String: String] = [:]
                     for row in page.rows {
-                        guard let host = URL(string: row.url)?.host?.lowercased(), !sentHosts.contains(row.host) else { continue }
+                        guard let host = URL(string: row.url)?.faviconKey, !sentHosts.contains(row.host) else { continue }
                         siteByHost[host] = row.host
                     }
                     let entries = try favicons.entries(forHosts: Set(siteByHost.keys))

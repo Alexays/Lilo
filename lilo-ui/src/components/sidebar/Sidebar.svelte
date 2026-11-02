@@ -59,8 +59,11 @@
     setSpacePagerElement(spaceContentEl);
   });
 
+  // The tab strip unmounts the sidebar with a panel still open: the lock goes with it.
   $effect(() => {
-    chromeActions.setSidebarCollapseLocked(isOverlayPanelOpen);
+    if (!isOverlayPanelOpen) return;
+    chromeActions.setSidebarCollapseLocked(true);
+    return () => chromeActions.setSidebarCollapseLocked(false);
   });
 
   // Before the sidebar goes inert, note what had the focus; once the panel closes the focus goes

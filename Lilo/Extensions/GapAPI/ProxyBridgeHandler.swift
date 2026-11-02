@@ -45,7 +45,7 @@ final class ProxyBridgeHandler: GapHandler {
     init(settingsProvider: @escaping (ProfileExtensionRegistry) -> ExtensionSettingsStore?) {
         self.settingsProvider = settingsProvider
         // A setting applies only while its extension is loaded.
-        observers = [Notification.Name.extensionRuntimeLoaded, .extensionDidUnload].map { name in
+        unsafe observers = [Notification.Name.extensionRuntimeLoaded, .extensionDidUnload].map { name in
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 guard let registry = note.object as? ProfileExtensionRegistry else { return }
                 MainActor.assumeIsolated { self?.apply(registry) }
@@ -54,7 +54,7 @@ final class ProxyBridgeHandler: GapHandler {
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -248,7 +248,7 @@ final class ProxyBridgeHandler: GapHandler {
             guard !host.isEmpty else { throw BridgeError("Invalid 'rules.???.host' entry. Hostname cannot be empty.") }
             let requested = server["scheme"] as? String ?? ""
             let scheme = defaultPorts[requested] == nil ? "http" : requested
-            servers[field] = ["scheme": scheme, "host": host, "port": (server["port"] as? Int) ?? defaultPorts[scheme]!]
+            servers[field] = ["scheme": scheme, "host": host, "port": (server["port"] as? Int) ?? defaultPorts[scheme] ?? 80]
         }
         if servers["singleProxy"] != nil, let other = ruleFields.dropFirst().first(where: { servers[$0] != nil }) {
             throw BridgeError("Proxy rule for singleProxy and \(other) cannot be set at the same time.")

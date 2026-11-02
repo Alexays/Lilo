@@ -85,7 +85,7 @@ final class TabShareSessionController {
         // The view's size in pixels, not points: a Retina tab sized in points would be sent at half
         // its resolution, and its text would read blurry on the other side of the call.
         let bounds = engine.view.bounds
-        let backingScale = engine.view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1
+        let backingScale = unsafe engine.view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1
         let sourceSize = bounds.width > 100 && bounds.height > 100
             ? NSSize(width: bounds.width * backingScale, height: bounds.height * backingScale)
             : NSSize(width: Self.maxFrameWidth, height: Self.maxFrameWidth * 9 / 16)
@@ -278,7 +278,7 @@ final class TabShareSessionController {
         // snapshotWidth is in points and the snapshot renders at the display's backing scale, so a
         // Retina screen would return four times the pixels the cap allows. Ask for the point width
         // that lands on the intended pixel width.
-        let backingScale = webView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1
+        let backingScale = unsafe webView.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1
         config.snapshotWidth = NSNumber(value: Double(current.encoder.width) / backingScale)
         webView.takeSnapshot(with: config) { [weak self] image, _ in
             guard let self, self.sessions[current.token] === current else { return }

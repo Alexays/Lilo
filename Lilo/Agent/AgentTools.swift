@@ -213,7 +213,7 @@ enum AgentTools {
             guard let seen = try await page(engine, "waitFor", options) as? String else {
                 let what = selector ?? "\"\(text ?? "")\""
                 let goal = ["hidden": "still shows", "enabled": "is still missing or disabled"][state] ?? "does not show"
-                throw AgentToolError("\(what) \(goal) after \(String(format: "%g", seconds)) s")
+                throw AgentToolError(unsafe "\(what) \(goal) after \(String(format: "%g", seconds)) s")
             }
             return [.text(seen)]
         case "get_page_text":

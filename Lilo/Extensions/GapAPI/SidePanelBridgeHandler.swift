@@ -27,7 +27,7 @@ final class SidePanelBridgeHandler: GapHandler {
     nonisolated(unsafe) private var unloadObserver: Any?
 
     init() {
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             let uninstalled = note.userInfo?["uninstalled"] as? Bool == true
             let registry = note.object as? ProfileExtensionRegistry
@@ -35,12 +35,12 @@ final class SidePanelBridgeHandler: GapHandler {
                 self?.options.removeValue(forKey: "\(profileId).\(extensionId)")
                 registry?.delegate.windows?.windows.forEach { $0.sidePanel.extensionDidUnload(extensionId) }
             }
-            if uninstalled { UserDefaults.lilo.removeObject(forKey: "sidePanel.\(profileId).\(extensionId)") }
+            if uninstalled { unsafe UserDefaults.lilo.removeObject(forKey: "sidePanel.\(profileId).\(extensionId)") }
         }
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -106,9 +106,9 @@ final class SidePanelBridgeHandler: GapHandler {
 
         case "sidePanel.setPanelBehavior":
             guard call.payload["openPanelOnActionClick"] != nil else { return nil }
-            var stored = UserDefaults.lilo.dictionary(forKey: behaviorKey) ?? [:]
+            var stored = unsafe UserDefaults.lilo.dictionary(forKey: behaviorKey) ?? [:]
             stored["openPanelOnActionClick"] = call.bool("openPanelOnActionClick")
-            UserDefaults.lilo.set(stored, forKey: behaviorKey)
+            unsafe UserDefaults.lilo.set(stored, forKey: behaviorKey)
             return nil
 
         case "sidePanel.getPanelBehavior":
@@ -165,7 +165,7 @@ final class SidePanelBridgeHandler: GapHandler {
     }
 
     private func opensOnActionClick(_ extensionId: String, registry: ProfileExtensionRegistry) -> Bool {
-        UserDefaults.lilo.dictionary(forKey: "sidePanel.\(registry.profileId).\(extensionId)")?["openPanelOnActionClick"] as? Bool ?? false
+        unsafe UserDefaults.lilo.dictionary(forKey: "sidePanel.\(registry.profileId).\(extensionId)")?["openPanelOnActionClick"] as? Bool ?? false
     }
 
     // MARK: - Targets

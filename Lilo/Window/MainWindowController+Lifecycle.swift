@@ -42,25 +42,23 @@ extension MainWindowController {
         if let spaceId = tabManager.currentSpaceId { persistInteractionStates(forSpace: spaceId) }
     }
 
-    /// The bridge is nil when the initial application (or a power-state change that races startup)
-    /// fires before `setupBridgeEarly()` creates it; the optional send keeps that path crash-safe.
     func sendPowerMode(_ constrained: Bool) {
-        bridgeRouter?.send(event: "powerModeChanged", data: ["constrained": constrained])
+        bridgeRouter.send(event: "powerModeChanged", data: ["constrained": constrained])
     }
 
     /// System Settings > Accessibility > Display > Reduce transparency: the chrome drops backdrop blur.
     func sendReduceTransparency() {
-        bridgeRouter?.send(event: "reduceTransparencyChanged",
+        bridgeRouter.send(event: "reduceTransparencyChanged",
                            data: ["reduce": NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency])
     }
 
     /// The keys of every action, so the chrome's tooltips and command bar show the ones that work.
     func sendShortcutKeys() {
-        bridgeRouter?.send(event: "shortcutKeys", data: ["keys": KeyboardShortcuts.displayedKeys])
+        bridgeRouter.send(event: "shortcutKeys", data: ["keys": KeyboardShortcuts.displayedKeys])
     }
 
     func sendUpdateReady() {
-        bridgeRouter?.send(event: "updateReady", data: ["version": (NSApp.delegate as? AppDelegate)?.readyUpdate?.version ?? NSNull()])
+        bridgeRouter.send(event: "updateReady", data: ["version": (NSApp.delegate as? AppDelegate)?.readyUpdate?.version ?? NSNull()])
     }
 }
 

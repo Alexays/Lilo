@@ -22,14 +22,14 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
 
     override init() {
         super.init()
-        observers.append(NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe observers.append(NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated {
                 guard let self else { return }
                 for (id, socket) in self.sockets where socket.extensionId == extensionId { self.drop(id, code: .goingAway) }
             }
         })
-        observers.append(NotificationCenter.default.addObserver(forName: .extensionWorkerDidStart, object: nil, queue: .main) { [weak self] note in
+        unsafe observers.append(NotificationCenter.default.addObserver(forName: .extensionWorkerDidStart, object: nil, queue: .main) { [weak self] note in
             guard let events = note.object as? GapEvents, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -39,7 +39,7 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
                 }
             }
         })
-        observers.append(NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
+        unsafe observers.append(NotificationCenter.default.addObserver(forName: .extensionProxyDidChange, object: nil, queue: .main) { [weak self] note in
             guard let registry = note.object as? ProfileExtensionRegistry else { return }
             MainActor.assumeIsolated { self?.sessions.removeValue(forKey: registry.profileId)?.finishTasksAndInvalidate() }
         })
@@ -55,7 +55,7 @@ final class WebSocketBridgeHandler: NSObject, GapHandler, URLSessionWebSocketDel
     }
 
     deinit {
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {

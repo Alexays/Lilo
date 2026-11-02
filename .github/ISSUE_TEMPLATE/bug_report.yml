@@ -34,6 +34,12 @@ body:
     validations:
       required: true
   - type: input
+    id: webkit-version
+    attributes:
+      label: WebKit version
+      description: Filled in when the report starts from Lilo (Help > Report an Issue). Under Settings, next to the Lilo version.
+      placeholder: "WebKit 22625.1.29.11.28 (Lilo fork)"
+  - type: input
     id: macos-version
     attributes:
       label: macOS version

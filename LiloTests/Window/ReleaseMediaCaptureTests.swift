@@ -43,6 +43,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     func testSpacesMaterialAndColor() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.11.0", feature: "spaces")
         defer { capture.close() }
+        let spaceManager = try XCTUnwrap(capture.context.spaceManager)
         try await capture.page()
         try await capture.window("solid-window")
         capture.controller.editCurrentSpace(nil)
@@ -62,7 +63,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
             try await capture.region(".materials", name: "\(material.lowercased())-controls", margin: 0)
             try await capture.click(".footer-actions button", text: "Save")
             try await capture.wait("\(material) is saved through the native Space bridge") {
-                capture.context.spaceManager.space(with: capture.space.id)?.material == material.lowercased()
+                spaceManager.space(with: capture.space.id)?.material == material.lowercased()
             }
             try await capture.window("\(material.lowercased())-window")
             if material == "Glass" {
@@ -76,7 +77,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
                 }
             }
         }
-        let second = try capture.context.spaceManager.createSpace(name: "Studio", icon: "🎨", color: "#c48d78", material: "glass", profileId: capture.space.profileId)
+        let second = try spaceManager.createSpace(name: "Studio", icon: "🎨", color: "#c48d78", material: "glass", profileId: capture.space.profileId)
         capture.controller.switchToSpace(second.id)
         try await capture.page(title: "Room to create", color: "#6e493f")
         try await capture.window("glass-space")
@@ -198,7 +199,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     func testSiteColorsStill() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.12.0", feature: "site-colors")
         defer { capture.close() }
-        capture.context.settingsStore.set("addressPlacement", value: "page")
+        try XCTUnwrap(capture.context.settingsStore).set("addressPlacement", value: "page")
         capture.controller.applyStoredTabLayoutEverywhere()
         try await capture.page(title: "A calmer workspace", color: "#553f69")
         try await capture.window("site-colors")
@@ -208,7 +209,8 @@ final class ReleaseMediaCaptureTests: XCTestCase {
     func testAddressBarAnnouncement() async throws {
         let capture = try await ReleaseMediaCapture(version: "0.8.0-announcement", feature: "address-bar")
         defer { capture.close() }
-        capture.context.settingsStore.set("addressPlacement", value: "page")
+        let settingsStore = try XCTUnwrap(capture.context.settingsStore)
+        settingsStore.set("addressPlacement", value: "page")
         capture.controller.applyStoredTabLayoutEverywhere()
         let tab = try await capture.page(title: "Field guide", color: "#553f69")
         let engine = try XCTUnwrap(capture.controller.tabManager.engineTab(for: tab.id))
@@ -226,7 +228,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.region(selector, name: "setting-visible", margin: 10)
         try await capture.click(".ui-segmented[aria-label='Address'] button", text: "Hidden")
         try await capture.wait("Hidden persists through the real Settings bridge") {
-            capture.context.settingsStore.tabLayout.address == .hidden && capture.controller.tabLayout.address == .hidden
+            settingsStore.tabLayout.address == .hidden && capture.controller.tabLayout.address == .hidden
         }
         try await capture.region(selector, name: "setting-hidden", margin: 10)
         try await capture.click(".section-nav-panel .panel-close")

@@ -90,7 +90,7 @@ final class ProcessManagerBridgeHandler: BridgeHandler {
             // forkpty made the shell a session leader: the commands it runs share its session.
             let count = Int(proc_listallpids(nil, 0))
             var all = [pid_t](repeating: 0, count: count + 64)
-            let listed = Int(proc_listallpids(&all, Int32(all.count * MemoryLayout<pid_t>.size)))
+            let listed = unsafe Int(proc_listallpids(&all, Int32(all.count * MemoryLayout<pid_t>.size)))
             pids = all.prefix(max(0, listed)).filter { $0 > 0 && getsid($0) == shell }.map(Int.init)
             sharing = 1
         } else if let process = browserStateStore?.webContentProcess(forTab: tabId) {
@@ -193,10 +193,10 @@ final class ProcessManagerBridgeHandler: BridgeHandler {
         }
 
         if killProcess(Int32(process.pid)) == 0 {
-            bridgeRouter?.sendActionCompleted("processManagerActionCompleted", action: message.action, message: String(format: "Termination requested for PID %@".localized, String(process.pid)))
+            unsafe bridgeRouter?.sendActionCompleted("processManagerActionCompleted", action: message.action, message: String(format: "Termination requested for PID %@".localized, String(process.pid)))
             publishSnapshotSoon()
         } else {
-            bridgeRouter?.sendActionCompleted(
+            unsafe bridgeRouter?.sendActionCompleted(
                 "processManagerActionCompleted",
                 action: message.action,
                 message: String(format: "Unable to terminate PID %@: %@".localized, String(process.pid), String(cString: strerror(errno))),

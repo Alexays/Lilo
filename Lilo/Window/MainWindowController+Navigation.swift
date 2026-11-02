@@ -65,7 +65,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             profileContext?.extensions.access.tabDidCommitNavigation(tab.id, url: committedURL)
             // An agent tab stays at the zoom the agent measures with, whatever this window's profile keeps for the site.
             if !tab.isAgentControlled {
-                profileContext?.zoom.applyZoom(to: tab, forURL: committedURL, default: context.settingsStore.defaultZoom)
+                profileContext?.zoom.applyZoom(to: tab, forURL: committedURL, default: context.settingsStore?.defaultZoom ?? 1)
             }
             if let scheme = committedURL?.scheme, let host = committedURL?.host {
                 denyPermissionRequests(forTab: tab.id, notFromOrigin: PermissionOriginKey.build(scheme: scheme, host: host, port: committedURL?.port ?? 0))
@@ -271,7 +271,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
 
     static func leafCertificateFingerprint(_ trust: SecTrust) -> String? {
         guard let leaf = (SecTrustCopyCertificateChain(trust) as? [SecCertificate])?.first else { return nil }
-        return SHA256.hash(data: SecCertificateCopyData(leaf) as Data).map { String(format: "%02x", $0) }.joined()
+        return SHA256.hash(data: SecCertificateCopyData(leaf) as Data).map { unsafe String(format: "%02x", $0) }.joined()
     }
 
     /// `Boolean _CFNetworkIsKnownHSTSHostWithSession(CFURLRef, CFURLStorageSessionRef)`, as WebKit's CFNetworkSPI.h declares it.
@@ -280,8 +280,8 @@ extension MainWindowController: WKWebViewTab.Delegate {
     /// CFNetwork's HSTS lookup; private, so false when missing. Without a storage session it answers the preload
     /// list, not the hosts a profile's pages set HSTS for: those live in WebKit's network process.
     private static let isKnownHSTSHost: (URL) -> Bool = {
-        guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFNetworkIsKnownHSTSHostWithSession") else { return { _ in false } }
-        let lookup = unsafeBitCast(symbol, to: IsKnownHSTSHost.self)
+        guard let symbol = unsafe dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFNetworkIsKnownHSTSHostWithSession") else { return { _ in false } }
+        let lookup = unsafe unsafeBitCast(symbol, to: IsKnownHSTSHost.self)
         return { lookup($0 as CFURL, nil).boolValue }
     }()
 
@@ -291,7 +291,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         // Local checks only: this runs on the main thread, and the network process has already fetched what it could.
         SecTrustSetNetworkFetchAllowed(trust, false)
         var reason: CFError?
-        guard !SecTrustEvaluateWithError(trust, &reason), let reason else { return nil }
+        guard unsafe !SecTrustEvaluateWithError(trust, &reason), let reason else { return nil }
         return (reason as Error).localizedDescription
     }
 
@@ -407,7 +407,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         guard let spaceId = tabManager.currentSpaceId else { return }
         context.openWindow(on: spaceId, opening: .urls([url]))
     }
-    var prefersSingleWindow: Bool { context.settingsStore.singleWindow }
+    var prefersSingleWindow: Bool { context.settingsStore?.singleWindow == true }
     func tabDidRequestClose(_ tab: WKWebViewTab) {
         if tab.id == sidePanel.engineId { return sidePanel.closePanel() }
         if let little = littleWindows[tab.id] { return little.window.close() }
@@ -435,7 +435,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             completion(storedDecision)
             return
         }
-        if context.settingsStore.refusesPermissionRequests(type) { return completion(false) }
+        if context.settingsStore?.refusesPermissionRequests(type) != false { return completion(false) }
 
         let remember: (Bool) -> Void = { [weak self] granted in
             completion(granted)
@@ -586,7 +586,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
         }
         // The prompt is a sheet on the window showing the page; a background tab or a hidden peek has no surface to ask from.
         let sheetWindow = if let popup = pagePopups[tab.id] {
-            popup.window ?? (popup.peekView?.superview != nil ? window : nil)
+            unsafe popup.window ?? (popup.peekView?.superview != nil ? window : nil)
         } else {
             littleWindows[tab.id]?.window ?? (isVisibleTab(tab.id) ? window : nil)
         }
@@ -594,9 +594,9 @@ extension MainWindowController: WKWebViewTab.Delegate {
         let appName = NSWorkspace.shared.urlForApplication(toOpen: url)?.deletingPathExtension().lastPathComponent
         let alert = NSAlert()
         alert.alertStyle = .informational
-        alert.messageText = appName.map { String(format: "Open this link in %@?".localized, $0) }
+        alert.messageText = appName.map { unsafe String(format: "Open this link in %@?".localized, $0) }
             ?? "Open this link in another app?".localized
-        alert.informativeText = String(format: "%@ wants to open an external app.".localized, origin)
+        alert.informativeText = unsafe String(format: "%@ wants to open an external app.".localized, origin)
         alert.showsSuppressionButton = !tab.isPrivateBrowsing
         alert.suppressionButton?.title = "Always allow for this site".localized
         alert.addButton(withTitle: "Open".localized)
@@ -646,7 +646,7 @@ extension MainWindowController: WKWebViewTab.Delegate {
             completion(storedDecision)
             return
         }
-        if context.settingsStore.refusesPermissionRequests(type) { return completion(false) }
+        if context.settingsStore?.refusesPermissionRequests(type) != false { return completion(false) }
         if (webView?.uiDelegate as? WKWebViewTab)?.agentDialogHandler?("\(type) permission for \(origin) denied: agent tabs never ask the user") == true {
             return completion(false)
         }
@@ -740,7 +740,7 @@ extension MainWindowController: WKNavigationDelegate {
         decisionHandler(isOwnUI ? .allow : .cancel)
     }
 
-    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation?) {
         guard webView == chromeWebView else { return }
         StartupMetrics.mark("chromeNavigationStarted")
         Task { @MainActor [weak self] in
@@ -748,11 +748,11 @@ extension MainWindowController: WKNavigationDelegate {
         }
     }
 
-    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation?) {
         guard webView == chromeWebView else { return }; StartupMetrics.mark("chromeNavigationCommitted")
     }
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         guard webView == chromeWebView else { return }; StartupMetrics.mark("chromeNavigationFinished")
     }
 
@@ -779,7 +779,7 @@ extension MainWindowController: WKNavigationDelegate {
         whatsNewUIReady = false
         didReceiveChromeReady = false
         hasDispatchedChromeInitialState = false
-        bridgeRouter?.resetInFlightCall()
+        bridgeRouter.resetInFlightCall()
         chromeWebView.load(URLRequest(url: chromeUIDevServerURL() ?? ChromeUISchemeHandler.indexURL))
     }
 
@@ -807,7 +807,7 @@ extension MainWindowController: WKNavigationDelegate {
         }
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
         guard webView == chromeWebView else { return }
         Self.logger.fault("chrome navigation failed (provisional): \(error.localizedDescription, privacy: .public)")
         // A replaced load reports as cancelled; anything else leaves the window blank.
@@ -815,7 +815,7 @@ extension MainWindowController: WKNavigationDelegate {
         presentChromeRecoveryAlert()
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
         guard webView == chromeWebView else { return }
         Self.logger.fault("chrome navigation failed: \(error.localizedDescription, privacy: .public)")
     }

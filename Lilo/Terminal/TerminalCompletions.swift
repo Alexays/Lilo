@@ -129,7 +129,7 @@ actor TerminalCompletions {
             for name in entries where !name.hasPrefix(".") && !names.contains(name) {
                 let path = directory + "/" + name
                 var info = stat()
-                if stat(path, &info) == 0, info.st_mode & S_IFMT == S_IFREG, access(path, X_OK) == 0 {
+                if unsafe stat(path, &info) == 0, info.st_mode & S_IFMT == S_IFREG, unsafe access(path, X_OK) == 0 {
                     names.insert(name)
                 }
             }
@@ -174,7 +174,7 @@ actor TerminalCompletions {
                 let reader = output.fileHandleForReading.fileDescriptor
                 _ = fcntl(reader, F_SETFL, O_NONBLOCK)
                 var buffer = [UInt8](repeating: 0, count: 65_536)
-                let count = Darwin.read(reader, &buffer, buffer.count)
+                let count = unsafe Darwin.read(reader, &buffer, buffer.count)
                 continuation.resume(returning: count > 0 ? String(bytes: buffer[..<count], encoding: .utf8) ?? "" : "")
             }
         }

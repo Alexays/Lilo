@@ -95,7 +95,7 @@ final class AgentCapture: NSObject {
         self.webView = webView
         super.init()
         if webView.responds(to: Self.setDelegate) {
-            webView.perform(Self.setDelegate, with: self)
+            unsafe webView.perform(Self.setDelegate, with: self)
             usesResourceLoadDelegate = true
         }
         // The URL changes as a navigation starts, often still in the old document: the end of the load
@@ -112,7 +112,7 @@ final class AgentCapture: NSObject {
     func stop() {
         observations.forEach { $0.invalidate() }
         observations = []
-        if usesResourceLoadDelegate { webView?.perform(Self.setDelegate, with: nil) }
+        if usesResourceLoadDelegate { unsafe webView?.perform(Self.setDelegate, with: nil) }
         if let webView { WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("console", ["stop"]), in: nil, in: PageWorld.bridgeWorld) }
     }
 
@@ -122,7 +122,7 @@ final class AgentCapture: NSObject {
         let page = await withCheckedContinuation { continuation in
             WebViewPrivateAccessors(webView).evaluateWithoutUserGesture(PageWorld.push("console", ["read"]), in: nil, in: PageWorld.bridgeWorld) {
                 nonisolated(unsafe) let entries = $0 as? [[String: Any]] ?? []
-                continuation.resume(returning: entries)
+                unsafe continuation.resume(returning: entries)
             }
         }
         let time = { (entry: [String: Any]) in (entry["time"] as? NSNumber)?.doubleValue ?? 0 }

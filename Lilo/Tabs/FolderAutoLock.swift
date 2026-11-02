@@ -54,7 +54,7 @@ final class FolderAutoLock {
         idleTimer = nil
         // Folders locked by hand since leave nothing for the timer to guard.
         guard !context.browserState.unlockedFolders().isEmpty else { return }
-        let anyInput = CGEventType(rawValue: ~0)!
+        guard let anyInput = CGEventType(rawValue: ~0) else { return }
         let idle = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyInput)
         let limit = TimeInterval((context.settingsStore?.folderAutoLockMinutes ?? 15) * 60)
         guard idle < limit else { return lockAll() }

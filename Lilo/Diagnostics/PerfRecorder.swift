@@ -189,7 +189,7 @@ enum PerfRecorder {
                 switch byte {
                 case UInt8(ascii: "\""): write("\\\"")
                 case UInt8(ascii: "\\"): write("\\\\")
-                case 0..<0x20: write(String(format: "\\u%04x", byte))
+                case 0..<0x20: unsafe write(String(format: "\\u%04x", byte))
                 default: out.append(byte)
                 }
             }
@@ -219,8 +219,9 @@ enum PerfRecorder {
         for sample in samples where localPids[sample.process.pid] == nil {
             let local = localPids.count + 1
             localPids[sample.process.pid] = local
-            roleCounts[sample.process.role, default: 0] += 1
-            processNames.append((local, "\(sample.process.role) \(roleCounts[sample.process.role]!)"))
+            let count = roleCounts[sample.process.role, default: 0] + 1
+            roleCounts[sample.process.role] = count
+            processNames.append((local, "\(sample.process.role) \(count)"))
         }
         for (pid, name) in processNames {
             writeHead("M", "__metadata", "process_name", pid: pid, tid: 0, ts: "0")

@@ -177,14 +177,14 @@ final class AgentApprovalTests: AgentToolTestCase {
         XCTAssertTrue(control.pendingConsentAnswers.isEmpty, "not asked again")
         XCTAssertEqual(control.alwaysAllowedSites, ["127.0.0.1"])
 
-        context.settingsStore.set(AgentControl.alwaysAllowedSitesKey, value: "[]")
+        context.settingsStore!.set(AgentControl.alwaysAllowedSitesKey, value: "[]")
         let third = Task { try await click("Place order", tab: tab) }
         control.answerConsent(try await pendingQuestion(), granted: false)
         _ = try await third.value
     }
 
     func testTurnedOffNothingIsAsked() async throws {
-        context.settingsStore.set(AgentControl.asksBeforeActionsKey, value: "false")
+        context.settingsStore!.set(AgentControl.asksBeforeActionsKey, value: "false")
         let tab = try await shopTab()
 
         let reply = try await click("Place order", tab: tab)

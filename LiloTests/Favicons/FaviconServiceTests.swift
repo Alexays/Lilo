@@ -91,6 +91,20 @@ final class FaviconServiceTests: XCTestCase {
         XCTAssertNil(tabs[2].faviconDataURL)
     }
 
+    func testRehydrateKeepsEachPortOfAHostApart() {
+        let service = FaviconService()
+        service.seed(host: "localhost:8080", dataURL: "data:image/png;base64,QUJD", dominantColor: nil, profileId: nil)
+        var tabs = [
+            Tab(id: UUID(), url: URL(string: "http://localhost:8080/"), title: "First"),
+            Tab(id: UUID(), url: URL(string: "http://localhost:15672/"), title: "Second")
+        ]
+
+        service.rehydrateRestoredTabs(&tabs)
+
+        XCTAssertEqual(tabs[0].faviconDataURL, "data:image/png;base64,QUJD")
+        XCTAssertNil(tabs[1].faviconDataURL)
+    }
+
     func testRehydrateKeepsBlobDominantColorOverCachedOne() {
         let service = FaviconService()
         service.seed(host: "example.com", dataURL: "data:image/png;base64,QUJD", dominantColor: "#112233", profileId: nil)

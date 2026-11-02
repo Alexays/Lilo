@@ -86,7 +86,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
 
     /// The window's frame color under the cards, its content surface on the file list.
     override func updateLayer() {
-        let frame = window?.backgroundColor ?? .windowBackgroundColor
+        let frame = unsafe window?.backgroundColor ?? .windowBackgroundColor
         layer?.backgroundColor = frame.cgColor
         listCard.layer?.backgroundColor = frame.contentSurfaceColor.cgColor
     }
@@ -270,7 +270,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         super.viewDidMoveToWindow()
         if let occlusionObserver { NotificationCenter.default.removeObserver(occlusionObserver) }
         occlusionObserver = nil
-        guard let window else {
+        guard let window = unsafe window else {
             watcher = nil
             return
         }
@@ -285,7 +285,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
 
     /// Off screen, hidden or covered, nothing watches the disk; back in view the view catches up at once.
     private func updateWatching() {
-        let visible = window?.occlusionState.contains(.visible) == true
+        let visible = unsafe window?.occlusionState.contains(.visible) == true
         guard visible != (watcher != nil) else { return }
         watcher = visible ? RepositoryWatcher(root: repository) { [weak self] in self?.reload() } : nil
         if visible { reload() }
@@ -459,7 +459,7 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         let directories = GitDiff.gitDirectories(of: path)
         isLinkedWorktree = directories.own != directories.common
         collapsedFolders = []
-        if window?.occlusionState.contains(.visible) == true { watcher = RepositoryWatcher(root: path) { [weak self] in self?.reload() } }
+        if unsafe window?.occlusionState.contains(.visible) == true { watcher = RepositoryWatcher(root: path) { [weak self] in self?.reload() } }
         refreshRepositoryLabel()
         restart()
     }
@@ -515,18 +515,18 @@ final class ChangesView: NSView, NSTableViewDataSource, NSTableViewDelegate {
             emptyButton.title = "Compare with Branch Base".localized
         } else {
             emptyTitle.stringValue = "No changes on this branch".localized
-            emptyDetail.stringValue = String(format: "Nothing differs from %@.".localized, diff?.base ?? "main")
+            emptyDetail.stringValue = unsafe String(format: "Nothing differs from %@.".localized, diff?.base ?? "main")
             emptyButton.title = "Show Uncommitted Changes".localized
         }
 
         var against: String?
         if let base = diff?.base, let mergeBase = diff?.mergeBase {
-            against = String(format: "against %@ from %@, uncommitted included".localized, base, mergeBase)
+            against = unsafe String(format: "against %@ from %@, uncommitted included".localized, base, mergeBase)
         }
         modeControl.toolTip = against
         countsChip.toolTip = against
         guard let diff, !isEmpty else { return }
-        countLabel.stringValue = files.count == 1 ? "1 file".localized : String(format: "%@ files".localized, files.count.formatted())
+        countLabel.stringValue = unsafe files.count == 1 ? "1 file".localized : String(format: "%@ files".localized, files.count.formatted())
         countsChip.set(added: diff.added, removed: diff.removed)
     }
 
@@ -1033,7 +1033,7 @@ final class ChangesDiffView: NSView {
     }
 
     private func foldedText(_ file: GitDiff.File) -> String {
-        file.isBinary ? "Binary file, not shown".localized
+        unsafe file.isBinary ? "Binary file, not shown".localized
             : Self.isGenerated(file.path) ? String(format: "Generated file, %d lines folded. Click to show.".localized, file.lines.count)
             : String(format: "%d lines folded. Click to show.".localized, file.lines.count)
     }
@@ -1206,7 +1206,7 @@ final class ChangesDiffView: NSView {
         if !folder.isEmpty { path.append(NSAttributedString(string: folder + "/", attributes: Self.attributes(font, Self.palette.secondary))) }
         path.append(NSAttributedString(string: (file.path as NSString).lastPathComponent, attributes: Self.attributes(boldFont, Self.palette.text)))
         if let oldPath = file.oldPath {
-            path.append(NSAttributedString(string: "  " + String(format: "renamed from %@".localized, oldPath), attributes: Self.attributes(font, Self.palette.numbers)))
+            unsafe path.append(NSAttributedString(string: "  " + String(format: "renamed from %@".localized, oldPath), attributes: Self.attributes(font, Self.palette.numbers)))
         }
         let pathLine = CTLineCreateWithAttributedString(path)
         context.textPosition = CGPoint(x: rect.minX + Self.headerTextX, y: rect.minY + 3.5 + boldFont.ascender)
@@ -1338,9 +1338,9 @@ final class ChangesDiffView: NSView {
                     let line = diff.lines[Int(side)]
                     let text = displayText(line, diff: diff)
                     switch line.kind {
-                    case .added: return String(format: "Added line %d: %@".localized, Int(line.newNumber), text)
-                    case .removed: return String(format: "Removed line %d: %@".localized, Int(line.oldNumber), text)
-                    default: return String(format: "Line %d: %@".localized, Int(line.newNumber), text)
+                    case .added: return unsafe String(format: "Added line %d: %@".localized, Int(line.newNumber), text)
+                    case .removed: return unsafe String(format: "Removed line %d: %@".localized, Int(line.oldNumber), text)
+                    default: return unsafe String(format: "Line %d: %@".localized, Int(line.newNumber), text)
                     }
                 }.joined(separator: ", ")
                 element = ChangesAccessibilityElement()
@@ -1361,7 +1361,7 @@ final class ChangesDiffView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        window?.makeFirstResponder(self)
+        unsafe window?.makeFirstResponder(self)
         guard !rows.isEmpty else { return }
         let index = row(at: event)
         if rows[index].kind == .file || rows[index].kind == .collapsed {
@@ -1489,9 +1489,9 @@ extension GitDiff.File {
         case .modified: parts.append("Modified".localized)
         case .added: parts.append("New File".localized)
         case .deleted: parts.append("Deleted".localized)
-        case .renamed: parts.append(oldPath.map { String(format: "renamed from %@".localized, $0) } ?? "Renamed".localized)
+        case .renamed: parts.append(oldPath.map { unsafe String(format: "renamed from %@".localized, $0) } ?? "Renamed".localized)
         }
-        parts.append(String(format: "%d added, %d removed".localized, added, removed))
+        unsafe parts.append(String(format: "%d added, %d removed".localized, added, removed))
         return parts.joined(separator: ", ")
     }
 }
@@ -1568,7 +1568,7 @@ private final class ChangesSegmentedControl: NSView {
             needsDisplay = true
             for (index, segment) in (segments ?? []).enumerated() {
                 segment.setAccessibilityValue(index == selectedSegment)
-                if index == selectedSegment { NSAccessibility.post(element: segment, notification: .valueChanged) }
+                if index == selectedSegment { unsafe NSAccessibility.post(element: segment, notification: .valueChanged) }
             }
         }
     }
@@ -1668,7 +1668,7 @@ private final class ChangesCountsChip: NSView {
         text = value
         invalidateIntrinsicContentSize()
         needsDisplay = true
-        superview?.needsLayout = true
+        unsafe superview?.needsLayout = true
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -1751,7 +1751,7 @@ private final class ChangesListCell: NSView {
 
     override func accessibilityLabel() -> String? {
         guard case let .folder(path, count, _) = content else { return nil }
-        return path + ", " + (count == 1 ? "1 file".localized : String(format: "%@ files".localized, count.formatted()))
+        return unsafe path + ", " + (count == 1 ? "1 file".localized : String(format: "%@ files".localized, count.formatted()))
     }
 
     override func accessibilityValue() -> Any? {
@@ -1849,7 +1849,7 @@ private final class ChangesListCell: NSView {
 /// Watches a repository's files with FSEvents, filtering them on a private queue, and calls back
 /// on the main thread once a burst of relevant changes settles. Git's own bookkeeping counts only
 /// when it moves HEAD, a ref or the index, which a linked worktree keeps outside its folder.
-final class RepositoryWatcher {
+@safe final class RepositoryWatcher {
     private let stream: FSEventStreamRef
 
     /// What the queue reads; the stream retains it, so a callback still running outlives the watcher.
@@ -1896,9 +1896,9 @@ final class RepositoryWatcher {
 
     init?(root: String, onChange: @escaping @MainActor @Sendable () -> Void) {
         let real = { (path: String) -> String in
-            guard let resolved = realpath(path, nil) else { return path }
-            defer { free(resolved) }
-            return String(cString: resolved)
+            guard let resolved = unsafe realpath(path, nil) else { return path }
+            defer { unsafe free(resolved) }
+            return unsafe String(cString: resolved)
         }
         let directories = GitDiff.gitDirectories(of: root)
         let root = real(root) + "/"
@@ -1917,20 +1917,20 @@ final class RepositoryWatcher {
         }
         let filter = Filter(own: own, common: common, nested: nested, root: root, onChange: onChange)
 
-        var context = FSEventStreamContext(
+        var context = unsafe FSEventStreamContext(
             version: 0, info: Unmanaged.passUnretained(filter).toOpaque(),
-            retain: { info in info.map { UnsafeRawPointer(Unmanaged<Filter>.fromOpaque($0).retain().toOpaque()) } },
-            release: { info in info.map { Unmanaged<Filter>.fromOpaque($0).release() } },
+            retain: { info in unsafe info.map { unsafe UnsafeRawPointer(Unmanaged<Filter>.fromOpaque($0).retain().toOpaque()) } },
+            release: { info in unsafe info.map { unsafe Unmanaged<Filter>.fromOpaque($0).release() } },
             copyDescription: nil
         )
         let callback: FSEventStreamCallback = { _, info, count, paths, flags, _ in
-            guard let info else { return }
-            let filter = Unmanaged<Filter>.fromOpaque(info).takeUnretainedValue()
-            let paths = Unmanaged<CFArray>.fromOpaque(paths).takeUnretainedValue() as? [String] ?? []
+            guard let info = unsafe info else { return }
+            let filter = unsafe Unmanaged<Filter>.fromOpaque(info).takeUnretainedValue()
+            let paths = unsafe Unmanaged<CFArray>.fromOpaque(paths).takeUnretainedValue() as? [String] ?? []
             // A folder created outside the known ignored ones (a first .build/) may be ignored too.
             let createdFolder = FSEventStreamEventFlags(kFSEventStreamEventFlagItemCreated | kFSEventStreamEventFlagItemIsDir)
             let newFolder = paths.indices.prefix(count).contains { index in
-                flags[index] & createdFolder == createdFolder && !paths[index].hasPrefix(filter.common) && filter.matters(paths[index])
+                unsafe flags[index] & createdFolder == createdFolder && !paths[index].hasPrefix(filter.common) && filter.matters(paths[index])
             }
             if newFolder { filter.readIgnored() }
             let relevant = paths.prefix(count).contains(where: filter.matters)
@@ -1939,19 +1939,19 @@ final class RepositoryWatcher {
             let onChange = filter.onChange
             DispatchQueue.main.async { MainActor.assumeIsolated { onChange() } }
         }
-        guard let stream = FSEventStreamCreate(
+        guard let stream = unsafe FSEventStreamCreate(
             nil, callback, &context, watched as CFArray, FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 1,
             FSEventStreamCreateFlags(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagUseCFTypes)
         ) else { return nil }
-        self.stream = stream
-        FSEventStreamSetDispatchQueue(stream, filter.queue)
-        FSEventStreamStart(stream)
+        unsafe self.stream = unsafe stream
+        unsafe FSEventStreamSetDispatchQueue(stream, filter.queue)
+        unsafe FSEventStreamStart(stream)
         filter.queue.async { filter.readIgnored() }
     }
 
     deinit {
-        FSEventStreamStop(stream)
-        FSEventStreamInvalidate(stream)
-        FSEventStreamRelease(stream)
+        unsafe FSEventStreamStop(stream)
+        unsafe FSEventStreamInvalidate(stream)
+        unsafe FSEventStreamRelease(stream)
     }
 }

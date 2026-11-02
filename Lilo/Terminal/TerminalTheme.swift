@@ -151,7 +151,7 @@ struct TerminalTheme: Codable, Equatable, Sendable {
 
     /// An iTerm2 `.itermcolors` property list.
     static func iTerm(_ data: Data, id: String, name: String) -> TerminalTheme? {
-        guard let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return nil }
+        guard let plist = unsafe try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] else { return nil }
         func color(_ key: String) -> VTColor? {
             guard let entry = plist[key] as? [String: Any],
                   let red = entry["Red Component"] as? Double,
@@ -245,7 +245,7 @@ extension VTColor: Codable {
     }
 
     var hexString: String {
-        String(format: "#%02X%02X%02X", r, g, b)
+        unsafe String(format: "#%02X%02X%02X", r, g, b)
     }
 
     /// WCAG relative luminance, 0 (black) to 1 (white).

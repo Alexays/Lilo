@@ -19,7 +19,7 @@ final class LinkTabPlacementTests: XCTestCase {
 
     func testLinksOpenInOrderAfterTheirPageInItsFolder() throws {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         let folder = TabFolder(spaceId: space.id, name: "Work")
         try window.applyBrowserCommand(.createFolder(spaceId: space.id, folder: folder, section: .unpinned))

@@ -33,7 +33,7 @@ final class IdleBridgeHandler: GapHandler {
 
     init(registriesProvider: (() -> [ProfileExtensionRegistry])? = nil) {
         self.registriesProvider = registriesProvider
-        screenSaverObservers = [("com.apple.screensaver.didstart", true), ("com.apple.screensaver.didstop", false)].map { name, running in
+        unsafe screenSaverObservers = [("com.apple.screensaver.didstart", true), ("com.apple.screensaver.didstop", false)].map { name, running in
             DistributedNotificationCenter.default().addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     self?.screenSaverRunning = running
@@ -44,7 +44,7 @@ final class IdleBridgeHandler: GapHandler {
         guard registriesProvider != nil else { return }
         // The poller runs only while an extension holding the idle permission listens to onStateChanged:
         // a load or a listener change is when that may start or stop.
-        observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged].map { name in
+        unsafe observers = [Notification.Name.extensionRuntimeLoaded, .extensionGapListenersChanged].map { name in
             NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated {
                     self?.update()
@@ -54,12 +54,12 @@ final class IdleBridgeHandler: GapHandler {
     }
 
     deinit {
-        pollTimer?.invalidate()
-        observers.forEach { NotificationCenter.default.removeObserver($0) }
-        (lockObservers + screenSaverObservers).forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        unsafe pollTimer?.invalidate()
+        unsafe observers.forEach { NotificationCenter.default.removeObserver($0) }
+        unsafe (lockObservers + screenSaverObservers).forEach { DistributedNotificationCenter.default().removeObserver($0) }
     }
 
-    var isPolling: Bool { pollTimer != nil || !lockObservers.isEmpty }
+    var isPolling: Bool { unsafe pollTimer != nil || !lockObservers.isEmpty }
 
     func handle(_ call: GapCall) async -> Any? {
         let listener = Listener(registry: ObjectIdentifier(call.registry), extensionId: call.extensionId)
@@ -91,17 +91,17 @@ final class IdleBridgeHandler: GapHandler {
     /// Tells each listener its state when it changed, then waits for the next possible change: an active
     /// listener's threshold, any input while one is idle, the unlock while locked. Stops while nobody listens.
     private func update(locked knownLock: Bool? = nil) {
-        pollTimer?.invalidate()
-        pollTimer = nil
+        unsafe pollTimer?.invalidate()
+        unsafe pollTimer = nil
         let audience = audience
         guard !audience.isEmpty else {
-            lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
-            lockObservers = []
+            unsafe lockObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+            unsafe lockObservers = []
             lastStates = [:]
             return
         }
-        if lockObservers.isEmpty {
-            lockObservers = [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)].map { name, isLock in
+        if unsafe lockObservers.isEmpty {
+            unsafe lockObservers = [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)].map { name, isLock in
                 DistributedNotificationCenter.default().addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
                     MainActor.assumeIsolated { self?.update(locked: isLock) }
                 }
@@ -132,7 +132,7 @@ final class IdleBridgeHandler: GapHandler {
         }
         timer.tolerance = 1
         RunLoop.main.add(timer, forMode: .common)
-        pollTimer = timer
+        unsafe pollTimer = timer
     }
 
     /// Chrome rejects detection intervals below 15s; clamp so a 0/negative value can't make
@@ -149,17 +149,14 @@ final class IdleBridgeHandler: GapHandler {
     }
 
     private func idleSeconds() -> Double {
-        let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"))
+        let service = unsafe IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOHIDSystem"))
         guard service != IO_OBJECT_NULL else { return 0 }
         defer { IOObjectRelease(service) }
-        guard let cfProp = IORegistryEntryCreateCFProperty(
+        guard let cfProp = unsafe IORegistryEntryCreateCFProperty(
             service, "HIDIdleTime" as CFString, kCFAllocatorDefault, 0
         ) else { return 0 }
-        let property = cfProp.takeRetainedValue()
-        guard CFGetTypeID(property) == CFNumberGetTypeID() else { return 0 }
-        let idleTime = property as! CFNumber
-        var nanoseconds: Int64 = 0
-        CFNumberGetValue(idleTime, .sInt64Type, &nanoseconds)
-        return Double(nanoseconds) / 1_000_000_000
+        let property = unsafe cfProp.takeRetainedValue()
+        guard let nanoseconds = property as? NSNumber else { return 0 }
+        return Double(nanoseconds.int64Value) / 1_000_000_000
     }
 }
