@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fixtures, sha } from "./pipeline.mjs";
+import { fixtures, sha, root as mediaRoot } from "./pipeline.mjs";
 
 // Specific product capabilities, ordered by how much a demonstrated interaction explains.
 const capabilities = [
@@ -152,9 +152,7 @@ function releaseSections(markdown) {
 }
 
 async function main() {
-  const root =
-    process.env.LILO_RELEASE_MEDIA_ROOT ??
-    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const root = path.resolve(mediaRoot, "..");
   const file = path.join(root, "release-media/backlog.json");
   const catalog = JSON.parse(await readFile(file, "utf8"));
   const releases = releaseSections(await readFile(path.join(root, "CHANGELOG.md"), "utf8"));
@@ -202,18 +200,17 @@ async function main() {
       chooseMedia(pendingVersion, notes, catalog);
     }
   }
-  if (!process.argv.includes("--check"))
-    await writeFile(
-      file,
-      JSON.stringify(
-        {
-          ...catalog,
-          releases: { ...catalog.releases, ...decisions },
-        },
-        null,
-        2,
-      ) + "\n",
-    );
+  await writeFile(
+    file,
+    JSON.stringify(
+      {
+        ...catalog,
+        releases: { ...catalog.releases, ...decisions },
+      },
+      null,
+      2,
+    ) + "\n",
+  );
   console.log(`Verified automatic media selection for ${Object.keys(decisions).length} release(s)`);
 }
 

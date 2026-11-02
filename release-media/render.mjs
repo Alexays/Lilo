@@ -101,7 +101,7 @@ for (const [version, entry] of selected(catalog)) {
     entry.kind === "video"
       ? await json(path.join(recipeDirectory(entry), "metadata.json"))
       : { duration: 1, posterFrame: 0 };
-  const duration = metadata.duration ?? metadata.durationSeconds;
+  const duration = metadata.duration;
   if (!(duration > 0 && duration <= 40)) throw Error(`Invalid storyboard duration: ${version}`);
   if (entry.kind === "video") {
     await cp(recipeDirectory(entry), project, { recursive: true });

@@ -1,7 +1,5 @@
 {
-  "durationSeconds": 15,
-  "fps": 60,
-  "frames": 900,
+  "duration": 15,
   "posterFrame": 840,
   "caption": "Find your way back."
 }

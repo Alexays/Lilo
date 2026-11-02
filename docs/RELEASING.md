@@ -58,15 +58,11 @@ fails closed rather than silently using an older feature, a fabricated interface
 fallback for a required video. This keeps publishing unattended after the feature is merged
 without asking the release job to invent unverified browser behavior.
 
-For a local pass:
+For a local pass, use the same command as tagged CI:
 
 ```bash
-make release-media-author
-make release-media-capture RELEASE=x.y.z
-make release-media-import RELEASE=x.y.z
-make release-media-render RELEASE=x.y.z
-make release-media-check release-media-test release-media-inspect
-make release-media-publish-check RELEASE=x.y.z
+make release-media-ci RELEASE=x.y.z
+make release-media-test
 ```
 
 `make release-media-ci RELEASE=x.y.z` runs that selection, fresh native capture/import, rendering

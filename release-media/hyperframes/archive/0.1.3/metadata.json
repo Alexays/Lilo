@@ -1,7 +1,5 @@
 {
-  "durationSeconds": 12,
-  "fps": 60,
-  "frames": 720,
+  "duration": 12,
   "posterFrame": 660,
   "caption": "A name that stays."
 }

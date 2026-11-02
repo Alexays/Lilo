@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -160,6 +160,11 @@ test("CI media queries are read-only and reject an unknown prepared version", as
   try {
     await mkdir(path.join(root, "release-media"));
     await mkdir(path.join(root, ".changes"));
+    for (const file of ["author.mjs", "pipeline.mjs"])
+      await cp(
+        fileURLToPath(new URL(file, import.meta.url)),
+        path.join(root, "release-media", file),
+      );
     const file = path.join(root, "release-media/backlog.json");
     const before = JSON.stringify(catalog);
     await writeFile(file, before);
@@ -174,22 +179,19 @@ test("CI media queries are read-only and reject an unknown prepared version", as
     const query = (version, flag) =>
       spawnSync(
         process.execPath,
-        [fileURLToPath(new URL("./author.mjs", import.meta.url)), ...(flag ? [flag] : [])],
+        [path.join(root, "release-media/author.mjs"), ...(flag ? [flag] : [])],
         {
           encoding: "utf8",
           env: {
             ...process.env,
-            LILO_RELEASE_MEDIA_ROOT: root,
             LILO_RELEASE_MEDIA_VERSION: version,
           },
         },
       );
-    for (const [flag, expected] of [["--fixture", "0.8.0\n"]]) {
-      const result = query("0.15.0", flag);
-      assert.equal(result.status, 0, result.stderr);
-      assert.equal(result.stdout, expected);
-      assert.equal(await readFile(file, "utf8"), before);
-    }
+    const result = query("0.15.0", "--fixture");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "0.8.0\n");
+    assert.equal(await readFile(file, "utf8"), before);
     await writeFile(
       path.join(root, ".changes/v0.15.1.md"),
       "## [0.15.1]\n\n### Fixed\n\n- A sleeping tab wakes correctly.\n",

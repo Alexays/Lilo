@@ -14,7 +14,6 @@ final class ReleaseMediaCapture {
     let version: String
     let feature: String
     private let backdrop: NSWindow
-    private let activationPolicy = NSApp.activationPolicy()
     private let cachedLayout = (position: UserDefaults.lilo.string(forKey: "cachedTabPosition"),
                                 address: UserDefaults.lilo.string(forKey: "cachedAddressPlacement"))
     private var assets: [[String: Any]] = []
@@ -39,7 +38,6 @@ final class ReleaseMediaCapture {
         try? FileManager.default.removeItem(at: output.appendingPathComponent("failure.json"))
         fixture = try await TemporaryBrowserContext()
         let context = fixture.context
-        NSApp.setActivationPolicy(.regular)
         context.settingsStore.set("onboardingCompleted", value: "true")
         context.settingsStore.set("theme", value: "dark")
         context.settingsStore.set("tabPosition", value: "left")
@@ -95,7 +93,6 @@ final class ReleaseMediaCapture {
         backdrop.close()
         UserDefaults.lilo.set(cachedLayout.position, forKey: "cachedTabPosition")
         UserDefaults.lilo.set(cachedLayout.address, forKey: "cachedAddressPlacement")
-        NSApp.setActivationPolicy(activationPolicy)
     }
 
     @discardableResult
@@ -127,6 +124,10 @@ final class ReleaseMediaCapture {
             let detail = try? await chrome.evaluateJavaScript("(()=>{const v=document.querySelector('.whats-new video'),q=v?.getVideoPlaybackQuality();return {url:location.href,visibility:document.visibilityState,ready:document.readyState,width:innerWidth,height:innerHeight,booting:document.documentElement.hasAttribute('data-booting'),text:document.body.innerText.slice(0,500),video:v?{time:v.currentTime,duration:v.duration,frames:q.totalVideoFrames,dropped:q.droppedVideoFrames,paused:v.paused,ready:v.readyState}:null}})()")
             let session = CGSessionCopyCurrentDictionary() as? [String: Any]
             let record: [String: Any] = ["message": message, "chrome": detail ?? [:], "windowVisible": controller.window?.isVisible ?? false,
+                                         "windowUnoccluded": controller.window?.occlusionState.contains(.visible) ?? false,
+                                         "windowOnActiveSpace": controller.window?.isOnActiveSpace ?? false,
+                                         "windowIsKey": controller.window?.isKeyWindow ?? false,
+                                         "appActive": NSApp.isActive,
                                          "sessionLocked": session?["CGSSessionScreenIsLocked"] as? Bool ?? false]
             try? JSONSerialization.data(withJSONObject: record, options: [.prettyPrinted, .sortedKeys]).write(to: output.appendingPathComponent("failure.json"))
             throw NSError(domain: "ReleaseMedia", code: 1, userInfo: [NSLocalizedDescriptionKey: message])

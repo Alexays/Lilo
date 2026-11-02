@@ -22,7 +22,7 @@ Use Make:
 5. Review encoded frames at 342px, play the English/French changelog at desktop/mobile widths, and check native What’s New using `make release-media-review RELEASE=x.y.z`. Restore `make ui-build` after the native preview.
 6. `make validate` and the release-media CI job must pass.
 
-`make release-media-ci RELEASE=x.y.z` runs selection, fresh native capture, import, render, inspection and publication checks. Tagged CI captures the exact source commit and app version before signing; deployment uses that run’s validated website artifact. A failed audit, missing capability, broken capture, stale hash or failed media check blocks publication. Preserve a catalog publication kill switch; never re-enable it merely to make a workflow green.
+`make release-media-ci RELEASE=x.y.z` runs selection, fresh native capture, import, render, inspection, bundled What’s New playback and publication checks. Tagged CI captures the exact source commit and app version before signing; deployment uses that run’s validated website artifact. A failed audit, missing capability, broken capture, stale hash or failed media check blocks publication. Preserve a catalog publication kill switch; never re-enable it merely to make a workflow green.
 
 Films use lossless PNG capture and 1080p60 H.264/AAC. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion and audio. Encoded checks verify frame count, decode, sound, bounded motion, native/recipe/output hashes, cutout RGB preservation and poster similarity. Announcement reading holds may last up to three seconds; signal checks complement visual review rather than judging artistic quality.
 

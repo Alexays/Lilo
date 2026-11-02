@@ -36,13 +36,13 @@ test("publication fails closed against the measured HyperFrames film and its sou
       recursive: true,
     },
   );
+  await cp(path.join(root, "public/audio"), path.join(folder, "public/audio"), { recursive: true });
   for (const file of ["check.mjs", "pipeline.mjs"])
     await cp(path.join(root, file), path.join(folder, file));
   for (const file of [
     "render.mjs",
     "png-cutouts.mjs",
     "package-lock.json",
-    "public/audio",
     "hyperframes/assets",
     "hyperframes/archive/ending.html",
     "hyperframes/archive/shared.css",
@@ -142,13 +142,41 @@ test("publication fails closed against the measured HyperFrames film and its sou
     await rejectJson(name, qualityFile, (q) => {
       q.audio[field] = value;
     });
-  await rejectJson(
-    "a soundtrack requiring attribution is refused",
-    renderFile,
-    (value) => {
-      value.music.attributionRequired = true;
-    },
-    /soundtrack must not require attribution/u,
+  const licenseFile = path.join(folder, "public/audio/music.license.json");
+  await t.test("a soundtrack requiring attribution is refused", () =>
+    withChangedFile(
+      licenseFile,
+      (bytes) => {
+        const license = JSON.parse(bytes);
+        license.attributionRequired = true;
+        return json(license);
+      },
+      async () => {
+        const licenseHash = createHash("sha256")
+          .update(await readFile(licenseFile))
+          .digest("hex");
+        await withChangedFile(
+          renderFile,
+          (bytes) => {
+            const value = JSON.parse(bytes);
+            value.recipeHashes["public/audio/music.license.json"] = licenseHash;
+            return json(value);
+          },
+          () =>
+            withChangedFile(
+              qualityFile,
+              async (bytes) => {
+                const quality = JSON.parse(bytes);
+                quality.renderSha256 = createHash("sha256")
+                  .update(await readFile(renderFile))
+                  .digest("hex");
+                return json(quality);
+              },
+              () => assert.throws(run, /soundtrack must not require attribution/u),
+            ),
+        );
+      },
+    ),
   );
   await rejectJson(
     "a previous rendering engine cannot be published",

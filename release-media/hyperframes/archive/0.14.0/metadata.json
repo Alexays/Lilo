@@ -1,7 +1,5 @@
 {
-  "durationSeconds": 13,
-  "fps": 60,
-  "frames": 780,
+  "duration": 13,
   "posterFrame": 720,
   "caption": "From link to tab."
 }
