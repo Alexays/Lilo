@@ -63,11 +63,12 @@ final class ReleaseMediaCapture {
                                           y: screen.visibleFrame.midY - window.frame.height / 2))
         }
         window.level = .floating
+        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         backdrop = NSWindow(contentRect: window.frame.insetBy(dx: -60, dy: -60), styleMask: [.borderless], backing: .buffered, defer: false)
         backdrop.isReleasedWhenClosed = false
         backdrop.level = .floating
         backdrop.contentView = CaptureBackdrop(frame: NSRect(origin: .zero, size: backdrop.frame.size))
-        backdrop.orderFront(nil)
+        window.addChildWindow(backdrop, ordered: .below)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
         NSApp.activate()
