@@ -23,7 +23,7 @@ The 26-second full announcement lives in `hyperframes/0.8.0`. The share-only var
 
 Native cutouts preserve captured RGB bytes and canvas dimensions. Only alpha changes outside the interface. Complete windows retain their actual page content. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion, and audio.
 
-Films use 1920 by 1080 pixels at 60 fps, H.264 CRF16, and stereo AAC at 48 kHz and 192 kbps. Encoded checks verify frame count, full decode, source and recipe hashes, cutout pixels, loudness, true peak, bounded frame changes, and poster SSIM of at least 0.98. Reading holds may last up to three seconds. Compact visual review remains necessary.
+Films render at 1920 by 1080 pixels and 60 fps, then ship at 1280 by 720 and 30 fps as H.264 CRF 28 with stereo AAC at 48 kHz and 128 kbps, small enough for the website to serve whole. Encoded checks verify frame count, full decode, source and recipe hashes, cutout pixels, loudness, true peak, bounded frame changes, and poster SSIM of at least 0.98. Reading holds may last up to three seconds. Compact visual review remains necessary.
 
 Each `quality.json` binds to the exact `render.json`, source receipts, recipes, and output hashes. Changing a selected composition or the shared renderer invalidates the receipt. An unrelated fixture does not. A fresh checkout needs fresh staging inputs before encoded quality generation. Publication verification uses Node alone and remains an explicit target. No ordinary release or deployment command invokes it.
 

@@ -144,7 +144,7 @@ test("publication fails closed against the measured HyperFrames film and its sou
     ["insufficient measured frames", "measuredFrames", 0],
     ["too little motion", "movingFrameRatio", 0],
     ["a long static hold", "longestStillSeconds", 3.1],
-    ["a large frame jump", "largestLumaChange", 46],
+    ["a large frame jump", "largestLumaChange", 91],
   ])
     await rejectJson(name, qualityFile, (q) => {
       q.motion[field] = value;

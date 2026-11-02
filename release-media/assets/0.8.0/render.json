@@ -9,17 +9,17 @@
     "directory": "hyperframes/0.8.0",
     "variant": null
   },
-  "width": 1920,
-  "height": 1080,
-  "fps": 60,
-  "frames": 1560,
-  "posterFrame": 1440,
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "frames": 780,
+  "posterFrame": 720,
   "hashes": {
     "tab-share.png": "3e36ede8fd9dd50a1cb6a4b177decc719bfe9e95d0aed489c45b4ac30f36d329",
-    "tab-share.mp4": "aa16aba87dba2611a438190372217cac3ae9e18488dbf31b2c22c77913f176ed"
+    "tab-share.mp4": "a5774ce39debffa77be7898142acdaee51c432f6bee839088030f1f050cc2ad0"
   },
   "recipeHashes": {
-    "render.mjs": "1b3df5d8961f68c4f8c568e60c0332dc639a713e460a55c8f73f561241b93c7b",
+    "render.mjs": "f6b66d43166bd586616badca705f01437ef140d927eab860a03dd3516717a4aa",
     "pipeline.mjs": "3934aa082e12d01b73888f26bea0c7650833143ee6ecebfda44d255c49d4c087",
     "png-cutouts.mjs": "935897dc70dbb38d56763718c2045b85ddaf65d19c9d1bb2f2007397554954e6",
     "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
