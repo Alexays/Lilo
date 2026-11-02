@@ -119,7 +119,9 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
               let data = try? Data(contentsOf: file, options: .mappedIfSafe) else {
             task.didFailWithError(URLError(.fileDoesNotExist)); return
         }
+        // RFC 9110: a Range header that is not a single byte range is ignored, and the whole file served.
         let requested = task.request.value(forHTTPHeaderField: "Range")
+            .flatMap { $0.range(of: #"^bytes=[0-9]*-[0-9]*$"#, options: .regularExpression) != nil ? $0 : nil }
         let range = Self.mediaByteRange(requested, length: data.count)
         var headers = ["Content-Type": path.hasSuffix(".mp4") ? "video/mp4" : "image/png", "Accept-Ranges": "bytes"]
         let status: Int
@@ -136,7 +138,7 @@ final class ChromeUISchemeHandler: NSObject, WKURLSchemeHandler {
             task.didFailWithError(URLError(.badServerResponse)); return
         }
         task.didReceive(response)
-        if let range { task.didReceive(data.subdata(in: range)) }
+        if let range { task.didReceive(data[range]) }
         task.didFinish()
     }
 
