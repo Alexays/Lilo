@@ -48,7 +48,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
         if !window.setFrameUsingName(Self.frameName) { window.center() }
 
         // The header lives in the title bar view: content under a transparent title bar never gets its clicks.
-        if let titlebar = window.standardWindowButton(.closeButton)?.superview {
+        if let titlebar = unsafe window.standardWindowButton(.closeButton)?.superview {
             header.frame = titlebar.bounds
             header.autoresizingMask = [.width, .height]
             titlebar.addSubview(header, positioned: .above, relativeTo: nil)
@@ -65,7 +65,7 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
             openInSpace(spaceId)
         }
         header.onShowSpaces = { [weak self] button in self?.showSpacesMenu(from: button) }
-        header.openButton.title = String(format: "Open in %@".localized, spaceLabel(spaceId))
+        header.openButton.title = unsafe String(format: "Open in %@".localized, spaceLabel(spaceId))
         observations = [
             engine.wkWebView.observe(\.title) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshTitle() } },
             engine.wkWebView.observe(\.estimatedProgress) { [weak self] _, _ in MainActor.assumeIsolated { self?.refreshProgress() } },
@@ -103,10 +103,10 @@ final class LittleWindowController: NSObject, NSWindowDelegate, NSTextFieldDeleg
     private func showSpacesMenu(from button: NSButton) {
         let menu = NSMenu()
         let others = owner?.switchableSpaces.filter { $0.id != spaceId && !$0.isPrivate } ?? []
-        let agentsSpaceIds = owner?.context.settingsStore.agentsSpaceIds ?? []
+        let agentsSpaceIds = owner?.context.settingsStore?.agentsSpaceIds ?? []
         for space in others {
             let isAgents = agentsSpaceIds.contains(space.id)
-            let item = menu.addItem(String(format: "Open in %@".localized, isAgents ? space.name : "\(space.icon) \(space.name)")) { [weak self] in self?.openInSpace(space.id) }
+            let item = unsafe menu.addItem(String(format: "Open in %@".localized, isAgents ? space.name : "\(space.icon) \(space.name)")) { [weak self] in self?.openInSpace(space.id) }
             if isAgents { item.image = AgentCursorView.menuImage }
         }
         if others.isEmpty { menu.addItem(withTitle: "No Other Spaces".localized, action: nil, keyEquivalent: "") }

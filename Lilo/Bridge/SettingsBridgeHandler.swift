@@ -143,7 +143,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                     }.value
                     onHistoryCleared?(cutoff)
                 } catch {
-                    failure = String(format: "Could not clear browsing history: %@".localized, error.localizedDescription)
+                    failure = unsafe String(format: "Could not clear browsing history: %@".localized, error.localizedDescription)
                 }
             } else {
                 failure = "No history store available".localized
@@ -222,7 +222,7 @@ final class SettingsBridgeHandler: BridgeHandler {
                 if key == "appIcon" { AppIconPreference.apply(value) }
                 if key == AppIconPreference.seasonalKey { AppIconPreference.setSeasonal(value != "false") }
                 if key == AppDelegate.showDevelopMenuKey {
-                    UserDefaults.lilo.set(value == "true", forKey: key)
+                    unsafe UserDefaults.lilo.set(value == "true", forKey: key)
                     NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.isHidden = value != "true"
                 }
                 if key == "littleWindowHotKey" { (NSApp.delegate as? AppDelegate)?.applyLittleWindowHotKey() }
@@ -281,7 +281,7 @@ final class SettingsBridgeHandler: BridgeHandler {
             delegate.browserContext.windows.windows.forEach { $0.sendUpdateReady() }
 
         case "unlockDeveloperTools":
-            UserDefaults.lilo.set(true, forKey: AppDelegate.developerToolsKey)
+            unsafe UserDefaults.lilo.set(true, forKey: AppDelegate.developerToolsKey)
             for item in NSApp.mainMenu?.item(withTag: AppDelegate.developMenuTag)?.submenu?.items ?? [] where item.tag == AppDelegate.developerToolsTag {
                 item.isHidden = false
             }
@@ -552,7 +552,7 @@ final class SettingsBridgeHandler: BridgeHandler {
         if let cached = appIconDataURLs[app] { return cached }
         let rect = NSRect(x: 0, y: 0, width: 64, height: 64)
         guard let png = NSWorkspace.shared.icon(forFile: app.path).bestRepresentation(for: rect, context: nil, hints: nil)
-            .flatMap({ $0.cgImage(forProposedRect: nil, context: nil, hints: nil) })
+            .flatMap({ unsafe $0.cgImage(forProposedRect: nil, context: nil, hints: nil) })
             .flatMap({ NSBitmapImageRep(cgImage: $0).representation(using: .png, properties: [:]) }) else { return nil }
         let url = "data:image/png;base64," + png.base64EncodedString()
         appIconDataURLs[app] = url

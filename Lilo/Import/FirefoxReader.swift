@@ -106,10 +106,11 @@ enum FirefoxReader {
         // A session is a few MB at most; a zero or absurd size means a corrupt file.
         guard size > 0, size <= 256 * 1024 * 1024 else { throw ImportError.malformed("jsonlz4") }
         var output = Data(count: size)
-        let written = output.withUnsafeMutableBytes { out in
-            data.dropFirst(12).withUnsafeBytes { input in
-                compression_decode_buffer(out.bindMemory(to: UInt8.self).baseAddress!, size,
-                                          input.bindMemory(to: UInt8.self).baseAddress!, input.count, nil, COMPRESSION_LZ4_RAW)
+        let written = unsafe output.withUnsafeMutableBytes { out in
+            unsafe data.dropFirst(12).withUnsafeBytes { input in
+                guard let destination = unsafe out.bindMemory(to: UInt8.self).baseAddress,
+                      let source = unsafe input.bindMemory(to: UInt8.self).baseAddress else { return 0 }
+                return unsafe compression_decode_buffer(destination, size, source, input.count, nil, COMPRESSION_LZ4_RAW)
             }
         }
         guard written == size else { throw ImportError.malformed("jsonlz4") }

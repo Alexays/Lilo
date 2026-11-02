@@ -34,7 +34,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     init(profileContextProvider: @escaping () -> ProfileContext?, bridgeRouter: BridgeRouter) {
         self.profileContextProvider = profileContextProvider
         self.bridgeRouter = bridgeRouter
-        changeObserver = NotificationCenter.default.addObserver(forName: .historyChanged, object: nil, queue: .main) { [weak self] note in
+        unsafe changeObserver = NotificationCenter.default.addObserver(forName: .historyChanged, object: nil, queue: .main) { [weak self] note in
             let profileId = note.object as? UUID
             MainActor.assumeIsolated {
                 guard let self, self.pageOpen, profileId == self.profileContextProvider()?.profileId else { return }
@@ -44,7 +44,7 @@ final class HistoryPageBridgeHandler: BridgeHandler {
     }
 
     deinit {
-        if let changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
+        if let changeObserver = unsafe changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
     }
 
     func handle(message: BridgeMessage) async -> Any? {

@@ -156,7 +156,7 @@ extension AppDelegate {
         tabMenu.add("Show Next Tab".localized, #selector(MainWindowController.showNextTab(_:)), icon: .nextTab, shortcut: "tab.next")
         let goToTabMenu = submenu("Go to Tab".localized, in: tabMenu, icon: .goToTab)
         for ordinal in 1...9 {
-            let title = ordinal == 9 ? "Last Tab".localized : String(format: "Tab %d".localized, ordinal)
+            let title = unsafe ordinal == 9 ? "Last Tab".localized : String(format: "Tab %d".localized, ordinal)
             let item = goToTabMenu.add(title, #selector(MainWindowController.selectTabFromMenu(_:)), shortcut: "tab.select\(ordinal)")
             item.tag = ordinal
             item.symbolName = ordinal == 9 ? "arrow.right.to.line" : "\(ordinal).square"
@@ -179,7 +179,7 @@ extension AppDelegate {
 
         let developMenu = submenu("Develop".localized, in: mainMenu)
         mainMenu.items.last?.tag = Self.developMenuTag
-        mainMenu.items.last?.isHidden = UserDefaults.lilo.object(forKey: Self.showDevelopMenuKey) as? Bool == false
+        mainMenu.items.last?.isHidden = unsafe UserDefaults.lilo.object(forKey: Self.showDevelopMenuKey) as? Bool == false
         developMenu.add("Show Web Inspector".localized, #selector(MainWindowController.showWebInspector(_:)), icon: .webInspector, shortcut: "devtools.inspector")
         developMenu.add("Inspect Element".localized, #selector(MainWindowController.inspectElement(_:)), icon: .inspectElement, shortcut: "devtools.inspectElement")
         developMenu.add("Show Console".localized, #selector(MainWindowController.showWebInspectorConsole(_:)), icon: .console, shortcut: "devtools.console")
@@ -201,7 +201,7 @@ extension AppDelegate {
         let designSystemItem = developMenu.add("Design System".localized, #selector(MainWindowController.openDesignSystem(_:)), icon: .designSystem)
         let chromeDevtoolsItem = developMenu.add("Open Chrome Devtools".localized, #selector(MainWindowController.showChromeWebInspector(_:)), icon: .chromeDevtools)
         let hitboxDebugItem = developMenu.add("Show Hitbox Debug Overlay".localized, #selector(MainWindowController.toggleHitboxDebug(_:)), icon: .hitboxOverlay)
-        hitboxDebugItem.state = UserDefaults.lilo.bool(forKey: MainWindowController.hitboxDebugDefaultsKey) ? .on : .off
+        hitboxDebugItem.state = unsafe UserDefaults.lilo.bool(forKey: MainWindowController.hitboxDebugDefaultsKey) ? .on : .off
         for item in [separator, designSystemItem, chromeDevtoolsItem, hitboxDebugItem] {
             item.tag = Self.developerToolsTag
             item.isHidden = !developerTools
@@ -242,7 +242,7 @@ extension AppDelegate {
         credits.append(NSAttributedString(string: " · ", attributes: [.font: font]))
         credits.append(NSAttributedString(string: "GitHub", attributes: [.font: font, .link: URL(string: "https://github.com/Alexays/Lilo")!]))
         let webKitVersion = Bundle(for: WKWebView.self).object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
-        let engine = WKEngineFactory.isForkedWebKit ? String(format: "WebKit %@, Lilo fork".localized, webKitVersion) : "WebKit \(webKitVersion)"
+        let engine = unsafe WKEngineFactory.isForkedWebKit ? String(format: "WebKit %@, Lilo fork".localized, webKitVersion) : "WebKit \(webKitVersion)"
         credits.append(NSAttributedString(string: "\n" + engine, attributes: [.font: font, .foregroundColor: NSColor.secondaryLabelColor]))
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center

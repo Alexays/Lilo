@@ -15,7 +15,7 @@ extension MainWindowController {
         icon: String?,
         color: String?
     ) async throws {
-        guard let spaceManager = context.spaceManager,
+        guard let spaceManager = context.spaceManager, let coordinator = context.sessionPersistenceCoordinator,
               let sourceSpace = spaceManager.space(with: spaceId) else { return }
 
         if sourceSpace.profileId == targetProfileId {
@@ -46,7 +46,7 @@ extension MainWindowController {
         // Persist into the target profile BEFORE any source-side removal: if this write fails the
         // space is untouched (still in the source, in memory and on disk), so nothing is lost.
         do {
-            try context.sessionPersistenceCoordinator.persistSpaceTabState(state, spaceId: spaceId, inProfile: targetProfileId)
+            try coordinator.persistSpaceTabState(state, spaceId: spaceId, inProfile: targetProfileId)
         } catch {
             Self.logger.error("move space \(spaceId.uuidString, privacy: .public) to profile \(targetProfileId.uuidString, privacy: .public) failed to persist: \(error.localizedDescription, privacy: .public)")
             // Resync the chrome so any optimistic move in the UI snaps back to the source profile.
@@ -58,7 +58,7 @@ extension MainWindowController {
         // The move is already durable target-side; a failed source-row cleanup only leaves a stale
         // row behind, so it must not abort the move.
         loggingPersistenceError("spaceTabStates.moveCleanup[\(spaceId.uuidString)]") {
-            try context.sessionPersistenceCoordinator.deleteSpaceTabState(forSpace: spaceId, inProfile: sourceProfileId)
+            try coordinator.deleteSpaceTabState(forSpace: spaceId, inProfile: sourceProfileId)
         }
 
         try spaceManager.updateSpace(id: spaceId) { space in
@@ -104,9 +104,9 @@ extension MainWindowController {
         targetProfileId: UUID?
     ) throws {
         let profileId = targetProfileId
-            ?? context.profileManager.activeProfileId
-            ?? context.profileManager.defaultProfile?.id
-            ?? context.profileManager.profiles.first?.id
+            ?? context.profileManager?.activeProfileId
+            ?? context.profileManager?.defaultProfile?.id
+            ?? context.profileManager?.profiles.first?.id
 
         guard let profileId, let spaceManager = context.spaceManager else { return }
 
@@ -131,7 +131,7 @@ extension MainWindowController {
     }
 
     func deleteSpace(id: UUID) throws {
-        guard let spaceManager = context.spaceManager,
+        guard let spaceManager = context.spaceManager, let coordinator = context.sessionPersistenceCoordinator,
               let space = spaceManager.space(with: id) else { return }
         // The window has no empty state, so the last space is never deleted.
         guard spaceManager.spaces.count > 1 else {
@@ -144,7 +144,7 @@ extension MainWindowController {
         context.profileContexts.existingContext(for: sourceProfileId)?.extensions.notifySpaceRemoved(id)
         tabManager.terminalHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
         tabManager.changesHost.prune { tabId in tabManager.tab(for: tabId).map { !$0.isClosed } ?? false }
-        try context.sessionPersistenceCoordinator.deleteSpaceTabState(forSpace: id, inProfile: sourceProfileId)
+        try coordinator.deleteSpaceTabState(forSpace: id, inProfile: sourceProfileId)
         try spaceManager.deleteSpace(id: id)
         InteractionStateCodec.archives.withLockUnchecked { $0[id] = nil }
         // A write queued before the delete would archive the space again: clear once more behind it.
@@ -184,7 +184,7 @@ extension MainWindowController {
     }
 
     func moveToSpace(_ kind: TabTreeItem.Kind, id: UUID, targetSpaceId: UUID) throws {
-        guard let spaceManager = context.spaceManager,
+        guard let spaceManager = context.spaceManager, let coordinator = context.sessionPersistenceCoordinator,
               let sourceSpaceId = tabManager.currentSpaceId,
               let sourceSpace = spaceManager.space(with: sourceSpaceId),
               let targetSpace = spaceManager.space(with: targetSpaceId) else {
@@ -282,13 +282,13 @@ extension MainWindowController {
         // persists the normal side.
         if sourceSpace.isPrivate || targetSpace.isPrivate {
             if !sourceSpace.isPrivate {
-                try context.sessionPersistenceCoordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
+                try coordinator.persistSpaceTabState(sourceState.state, spaceId: sourceSpaceId, inProfile: sourceSpace.profileId)
             }
             if !targetSpace.isPrivate {
-                try context.sessionPersistenceCoordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
+                try coordinator.persistSpaceTabState(targetState.state, spaceId: targetSpaceId, inProfile: targetSpace.profileId)
             }
         } else {
-            try context.sessionPersistenceCoordinator.persistMovedSpaceTabStates(
+            try coordinator.persistMovedSpaceTabStates(
                 sourceState,
                 sourceProfileId: sourceSpace.profileId,
                 targetState,
@@ -308,7 +308,7 @@ extension MainWindowController {
 // Relayed by the window registry, which is the single SpaceManager and ProfileManager delegate.
 extension MainWindowController {
     func spaceWasCreated(_ space: Space) {
-        bridgeRouter?.send(event: "spaceCreated", data: space.bridgeData)
+        bridgeRouter.send(event: "spaceCreated", data: space.bridgeData)
     }
 
     /// Leaves a deleted space this window shows; its tabs are gone, so nothing is parked.
@@ -319,15 +319,15 @@ extension MainWindowController {
             tabManager.currentSpaceId = nil
             updateDisplayedTabs([])
         }
-        bridgeRouter?.send(event: "spaceDeleted", data: ["id": space.id.uuidString, "activeSpaceId": tabManager.currentSpaceId?.uuidString ?? "", "spaces": manager.spaces.map(\.bridgeData)])
+        bridgeRouter.send(event: "spaceDeleted", data: ["id": space.id.uuidString, "activeSpaceId": tabManager.currentSpaceId?.uuidString ?? "", "spaces": manager.spaces.map(\.bridgeData)])
     }
 
     func spaceWasUpdated(_ space: Space) {
-        bridgeRouter?.send(event: "spaceUpdated", data: space.bridgeData)
+        bridgeRouter.send(event: "spaceUpdated", data: space.bridgeData)
     }
 
     func spacesWereReordered(_ spaces: [Space]) {
-        bridgeRouter?.send(event: "spacesReordered", data: ["spaces": spaces.map(\.bridgeData)])
+        bridgeRouter.send(event: "spacesReordered", data: ["spaces": spaces.map(\.bridgeData)])
     }
 
     /// Takes this window off `oldSpaceId`: the last window to leave parks its runtime into the store,

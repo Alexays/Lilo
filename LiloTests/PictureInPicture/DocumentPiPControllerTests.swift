@@ -257,8 +257,8 @@ final class DocumentPiPControllerTests: XCTestCase {
     private func makeWindowTab(_ html: String) async throws -> (TemporaryBrowserContext, MainWindowController, WKWebViewTab) {
         let browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "Call", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "Call", profileId: profileId)
         let window = makeTestWindow(context, showing: space.id)
         window.setupTabDock()
         let call = try XCTUnwrap(window.createTabStateFirst(url: nil))
@@ -376,7 +376,7 @@ final class DocumentPiPControllerTests: XCTestCase {
     func testACallTabParkedByASpaceSwitchCanStillAnswerTheAutomaticOpening() async throws {
         let (browserContext, window, engine) = try await makeWindowTab("")
         let profileId = try XCTUnwrap(window.tabManager.profileId)
-        let other = try browserContext.context.spaceManager.createSpace(name: "Other", profileId: profileId)
+        let other = try browserContext.context.spaceManager!.createSpace(name: "Other", profileId: profileId)
         window.switchToSpace(other.id)
         XCTAssertNil(browserContext.context.windows.windowAndEngine(for: engine.wkWebView), "parked: no window shows it")
         window.awaitingDocumentPiP = engine

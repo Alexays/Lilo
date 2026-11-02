@@ -49,7 +49,7 @@ extension MainWindowController {
             popup.requestClose()
         } else if changesPeek != nil {
             dismissChangesPeek()
-        } else if let peek = pagePopups.values.first(where: { $0.peekView?.superview != nil }) {
+        } else if let peek = pagePopups.values.first(where: { unsafe $0.peekView?.superview != nil }) {
             peek.requestClose()
         } else if let id = tabManager.activeOpenTabId {
             closeTabStateFirst(id: id)
@@ -100,8 +100,8 @@ extension MainWindowController {
     }
 
     @objc func toggleHitboxDebug(_ sender: NSMenuItem?) {
-        let enabled = !UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey)
-        UserDefaults.lilo.set(enabled, forKey: Self.hitboxDebugDefaultsKey)
+        let enabled = unsafe !UserDefaults.lilo.bool(forKey: Self.hitboxDebugDefaultsKey)
+        unsafe UserDefaults.lilo.set(enabled, forKey: Self.hitboxDebugDefaultsKey)
         sender?.state = enabled ? .on : .off
         chromeInput.setDebugOverlayShown(enabled)
     }
@@ -131,7 +131,7 @@ extension MainWindowController {
 
     /// Copies the shown peek's page when there is one, else the active tab's.
     @objc func copyCurrentURL(_ sender: Any?) {
-        let peekURL = pagePopups.values.first { $0.peekView?.superview != nil }?.engine.currentURL
+        let peekURL = pagePopups.values.first { unsafe $0.peekView?.superview != nil }?.engine.currentURL
         guard let url = (peekURL ?? tabManager.visibleActiveTab?.url)?.absoluteString,
               !url.isEmpty else {
             bridgeRouter.send(event: "urlCopyFailed")
@@ -181,7 +181,7 @@ extension MainWindowController {
 
     @objc func translatePage(_ sender: Any?) {
         guard let webView = tabManager.activeEngineTab?.wkWebView else { return }
-        if pageTranslator.hostView.superview == nil { window?.contentView?.addSubview(pageTranslator.hostView) }
+        if unsafe pageTranslator.hostView.superview == nil { window?.contentView?.addSubview(pageTranslator.hostView) }
         Task { await pageTranslator.toggle(in: webView) }
     }
 
@@ -325,7 +325,7 @@ extension MainWindowController {
             return
         }
         guard let engine = focusedEngineTab else { return }
-        applyUserZoom(context.settingsStore.defaultZoom, to: engine)
+        applyUserZoom(context.settingsStore?.defaultZoom ?? 1, to: engine)
     }
 
     /// A zoom the user asked for, as the tab's extension zoom settings allow: a disabled tab ignores
@@ -337,7 +337,7 @@ extension MainWindowController {
         default: engine.setPageZoom(zoom)
         }
         if engine.zoomSettings.scope == "per-origin", let host = engine.currentURL?.host {
-            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore.defaultZoom, of: engine)
+            profileContext?.zoom.setZoom(zoom, forHost: host, default: context.settingsStore?.defaultZoom ?? 1, of: engine)
         }
         bridgeRouter.send(event: "zoomChanged", data: ["level": zoom])
         if let adapter = tabManager.tabAdapter(for: engine.id), let registry = tabManager.extensionRegistry, registry.hasLoadedExtensions {
@@ -380,7 +380,7 @@ extension MainWindowController {
             let down = event.modifierFlags.contains(.command)
             if down != lastCommandKeyDown {
                 lastCommandKeyDown = down
-                bridgeRouter?.send(event: "commandKeyChanged", data: ["down": down])
+                bridgeRouter.send(event: "commandKeyChanged", data: ["down": down])
             }
         }
         if event.type == .keyDown, let id = recordingShortcutId {
@@ -401,7 +401,7 @@ extension MainWindowController {
         // wherever key focus is.
         if event.type == .keyDown, event.keyCode == 53, chromeInput.coordinator.isCapturing,
            chromeInput.coordinator.effectiveCaptureTarget == .chrome {
-            bridgeRouter?.send(event: "cancelDrag")
+            bridgeRouter.send(event: "cancelDrag")
             return true
         }
         // Escape stops a loading page as in Chrome, once a focused page lets it go; the chrome's own Escape
@@ -495,7 +495,7 @@ extension MainWindowController {
             } else if id.hasPrefix("space.select"), let ordinal = Int(id.dropFirst(12)) {
                 switchToSpace(ordinal: ordinal)
             } else if let item = KeyboardShortcuts.menuItem(id, missedBy: event), let action = item.action {
-                item.menu?.update()
+                unsafe item.menu?.update()
                 return item.isEnabled && NSApp.sendAction(action, to: item.target, from: item)
             } else {
                 return false
@@ -516,7 +516,7 @@ extension MainWindowController {
         } else if let combo = KeyboardShortcuts.combo(for: event) {
             recordingShortcutId = nil
             if let owner = KeyboardShortcuts.owner(of: combo), owner.id != id {
-                bridgeRouter?.send(event: "shortcutConflict", data: [
+                bridgeRouter.send(event: "shortcutConflict", data: [
                     "id": id, "combo": combo, "keys": KeyboardShortcuts.display(combo), "owner": owner.title
                 ])
                 return
@@ -527,7 +527,7 @@ extension MainWindowController {
             NSSound.beep()
             return
         }
-        bridgeRouter?.send(event: "shortcutsLoaded", data: KeyboardShortcuts.bridgePayload)
+        bridgeRouter.send(event: "shortcutsLoaded", data: KeyboardShortcuts.bridgePayload)
     }
 
     @discardableResult
@@ -566,7 +566,7 @@ extension MainWindowController: NSUserInterfaceValidations {
         if isShowingWhatsNew && action != #selector(showWhatsNew(_:)) { return false }
 
         if action == #selector(closeCurrentTab(_:)) { return tabManager.activeTab != nil }
-        if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { $0.peekView?.superview != nil } }
+        if action == #selector(openPageAsTab(_:)) { return pagePopups.values.contains { unsafe $0.peekView?.superview != nil } }
         if action == #selector(goBackInHistory(_:)) { return focusedEngineTab?.canGoBack == true }
         if action == #selector(goForwardInHistory(_:)) { return focusedEngineTab?.wkWebView.canGoForward == true }
         if action == #selector(stopLoadingCurrentPage(_:)) { return focusedEngineTab?.isLoading == true }

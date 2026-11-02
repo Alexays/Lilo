@@ -59,7 +59,7 @@ enum BrowserProcessSnapshotBuilder {
 
         let kindOrder = BrowserProcessKind.allCases
         return processesByKey.values.sorted {
-            $0.kind == $1.kind ? $0.pid < $1.pid : kindOrder.firstIndex(of: $0.kind)! < kindOrder.firstIndex(of: $1.kind)!
+            $0.kind == $1.kind ? $0.pid < $1.pid : (kindOrder.firstIndex(of: $0.kind) ?? 0) < (kindOrder.firstIndex(of: $1.kind) ?? 0)
         }
     }
 

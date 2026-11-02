@@ -104,7 +104,7 @@ final class ChromeBridgeHandler: BridgeHandler {
         case "traceSpaceSwipe":
             // The field extraction rides inside trace's autoclosure: skipped entirely when tracing
             // is off (these fire per swipe frame).
-            StartupMetrics.trace("swipe-ui", """
+            StartupMetrics.trace("swipe-ui", unsafe """
                 stage=\(message.string("stage", default: "unknown")) source=\(message.string("source", default: "ui")) \
                 active=\(message.string("activeSpaceId", default: "")) focused=\(message.string("focusedSpaceId", default: "")) \
                 target=\(message.string("targetId", default: "")) transition=\(message.string("transitionId", default: "")) \

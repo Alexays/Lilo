@@ -34,8 +34,8 @@ final class CookiesBridgeHandler: GapHandler {
     private typealias IsDomainTopLevel = @convention(c) (CFString) -> DarwinBoolean
 
     /// CFNetwork's public suffix lookup, the one WebKit uses; private, so it may be missing.
-    private static let isDomainTopLevel: IsDomainTopLevel? = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFHostIsDomainTopLevel")
-        .map { unsafeBitCast($0, to: IsDomainTopLevel.self) }
+    private static let isDomainTopLevel: IsDomainTopLevel? = unsafe dlsym(UnsafeMutableRawPointer(bitPattern: -2), "_CFHostIsDomainTopLevel")
+        .map { unsafe unsafeBitCast($0, to: IsDomainTopLevel.self) }
 
     /// The host's public suffix plus one label (eTLD+1); an IP address is its own. Without the system
     /// lookup, a host falls back to its last two labels.

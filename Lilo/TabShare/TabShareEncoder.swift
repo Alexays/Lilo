@@ -22,7 +22,7 @@ final class TabShareEncoder: @unchecked Sendable {
     let width: Int
     let height: Int
     private let session: VTCompressionSession?
-    private let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+    private let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
     private var lastPixels: CFData?
     private var frameIndex: Int64 = 0
 
@@ -33,7 +33,7 @@ final class TabShareEncoder: @unchecked Sendable {
         self.width = width
         self.height = height
         var session: VTCompressionSession?
-        VTCompressionSessionCreate(
+        unsafe VTCompressionSessionCreate(
             allocator: nil, width: Int32(width), height: Int32(height), codecType: kCMVideoCodecType_H264,
             encoderSpecification: [kVTVideoEncoderSpecification_EnableLowLatencyRateControl: true] as CFDictionary,
             imageBufferAttributes: [
@@ -66,9 +66,9 @@ final class TabShareEncoder: @unchecked Sendable {
         if !forceKey, let pixels, let lastPixels, CFEqual(pixels, lastPixels) { return .unchanged }
 
         var pixelBuffer: CVPixelBuffer?
-        guard CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pixelBuffer) == kCVReturnSuccess, let pixelBuffer else { return .failed }
+        guard unsafe CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pixelBuffer) == kCVReturnSuccess, let pixelBuffer else { return .failed }
         CVPixelBufferLockBaseAddress(pixelBuffer, [])
-        let context = CGContext(
+        let context = unsafe CGContext(
             data: CVPixelBufferGetBaseAddress(pixelBuffer), width: width, height: height, bitsPerComponent: 8,
             bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
@@ -118,7 +118,7 @@ final class TabShareEncoder: @unchecked Sendable {
               let atoms = CMFormatDescriptionGetExtension(format, extensionKey: kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms) as? [String: Any],
               let avcC = atoms["avcC"] as? Data, avcC.count > 3 else { return .failed }
         // avc1.PPCCLL: profile, constraint flags and level, straight from the avcC header.
-        let codec = "avc1." + avcC[avcC.startIndex + 1...avcC.startIndex + 3].map { String(format: "%02X", $0) }.joined()
+        let codec = "avc1." + avcC[avcC.startIndex + 1...avcC.startIndex + 3].map { unsafe String(format: "%02X", $0) }.joined()
         return .chunk(Chunk(data: data, config: (codec, avcC)))
     }
 }

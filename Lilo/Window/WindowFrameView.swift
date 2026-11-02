@@ -119,7 +119,7 @@ final class WindowFrameView: NSView {
     /// rasterized corner bites stay at 1x and blur on retina (and on display moves).
     override func viewDidChangeBackingProperties() {
         super.viewDidChangeBackingProperties()
-        let scale = window?.backingScaleFactor ?? 2
+        let scale = unsafe window?.backingScaleFactor ?? 2
         cornerLayers.forEach { $0.contentsScale = scale }
     }
 
@@ -216,7 +216,7 @@ final class WindowFrameView: NSView {
             pixels[index + 1] = UInt8(0.42 * 255)
         }
         guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
-        return CGImage(
+        return unsafe CGImage(
             width: side, height: side, bitsPerComponent: 8, bitsPerPixel: 16, bytesPerRow: side * 2,
             space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
             provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent

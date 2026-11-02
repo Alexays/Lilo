@@ -274,7 +274,7 @@ final class FaviconService {
     }
 
     nonisolated static func dominantColor(of cgImage: CGImage) -> String? {
-        guard let context = CGContext(
+        guard let context = unsafe CGContext(
             data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 8 * 4,
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
@@ -285,27 +285,27 @@ final class FaviconService {
         context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: 8, height: 8))
 
-        guard let pixelData = context.data else { return nil }
-        let pixels = pixelData.bindMemory(to: UInt8.self, capacity: 8 * 8 * 4)
+        guard let pixelData = unsafe context.data else { return nil }
+        let pixels = unsafe pixelData.bindMemory(to: UInt8.self, capacity: 8 * 8 * 4)
 
         var bestSat: CGFloat = 0
         var bestR: UInt8 = 0, bestG: UInt8 = 0, bestB: UInt8 = 0
 
         for i in 0..<64 {
             let o = i * 4
-            let a = pixels[o + 3]
+            let a = unsafe pixels[o + 3]
             guard a > 20 else { continue }
             let af = CGFloat(a) / 255.0
-            let r = min(CGFloat(pixels[o]) / 255.0 / af, 1.0)
-            let g = min(CGFloat(pixels[o + 1]) / 255.0 / af, 1.0)
-            let b = min(CGFloat(pixels[o + 2]) / 255.0 / af, 1.0)
+            let r = unsafe min(CGFloat(pixels[o]) / 255.0 / af, 1.0)
+            let g = unsafe min(CGFloat(pixels[o + 1]) / 255.0 / af, 1.0)
+            let b = unsafe min(CGFloat(pixels[o + 2]) / 255.0 / af, 1.0)
             let maxC = max(r, g, b), minC = min(r, g, b)
             let sat = maxC == 0 ? 0 : (maxC - minC) / maxC
             if sat > bestSat { bestSat = sat; bestR = UInt8(r * 255); bestG = UInt8(g * 255); bestB = UInt8(b * 255) }
         }
 
         if bestSat > 0.12 {
-            return String(format: "#%02X%02X%02X", bestR, bestG, bestB)
+            return unsafe String(format: "#%02X%02X%02X", bestR, bestG, bestB)
         }
 
         // Achromatic fallback: darkest non-near-white pixel
@@ -313,16 +313,16 @@ final class FaviconService {
         var fbR: UInt8 = 0, fbG: UInt8 = 0, fbB: UInt8 = 0
         for i in 0..<64 {
             let o = i * 4
-            let r = CGFloat(pixels[o]) / 255.0
-            let g = CGFloat(pixels[o + 1]) / 255.0
-            let b = CGFloat(pixels[o + 2]) / 255.0
+            let r = unsafe CGFloat(pixels[o]) / 255.0
+            let g = unsafe CGFloat(pixels[o + 1]) / 255.0
+            let b = unsafe CGFloat(pixels[o + 2]) / 255.0
             let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
             guard lum < 0.85 else { continue }
             let dist = abs(lum - 0.5)
             if dist > bestDist { bestDist = dist; fbR = UInt8(r * 255); fbG = UInt8(g * 255); fbB = UInt8(b * 255) }
         }
         guard bestDist >= 0 else { return nil }
-        return String(format: "#%02X%02X%02X", fbR, fbG, fbB)
+        return unsafe String(format: "#%02X%02X%02X", fbR, fbG, fbB)
     }
 }
 

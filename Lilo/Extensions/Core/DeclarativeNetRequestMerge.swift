@@ -16,13 +16,13 @@ enum DeclarativeNetRequestMerge {
     static let install: Void = {
         let selector = NSSelectorFromString("translateRules:errorStrings:")
         guard let translator = NSClassFromString("_WKWebExtensionDeclarativeNetRequestTranslator"),
-              let method = class_getClassMethod(translator, selector) else { return }
+              let method = unsafe class_getClassMethod(translator, selector) else { return }
         typealias Translate = @convention(c) (AnyObject, Selector, NSDictionary, UnsafeMutableRawPointer?) -> NSArray?
-        let original = unsafeBitCast(method_getImplementation(method), to: Translate.self)
+        let original = unsafe unsafeBitCast(method_getImplementation(method), to: Translate.self)
         let translate: @convention(block) (AnyObject, NSDictionary, UnsafeMutableRawPointer?) -> NSArray? = { translator, rules, errors in
-            original(translator, selector, rules, errors).map(merged)
+            unsafe original(translator, selector, rules, errors).map(merged)
         }
-        method_setImplementation(method, imp_implementationWithBlock(translate))
+        unsafe method_setImplementation(method, imp_implementationWithBlock(translate))
     }()
 
     /// WebKit content blocker rules, in order, with the rules of a run of one order-free action that differ only by one

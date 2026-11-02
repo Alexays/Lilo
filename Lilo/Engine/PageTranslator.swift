@@ -2,7 +2,7 @@ import AppKit
 import NaturalLanguage
 import OSLog
 import SwiftUI
-@preconcurrency import Translation
+@preconcurrency @unsafe import Translation
 import WebKit
 
 /// Translates a page's text nodes in place with the on-device Translation framework; a second

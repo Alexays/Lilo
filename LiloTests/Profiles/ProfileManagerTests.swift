@@ -123,11 +123,11 @@ final class ProfileManagerTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let doomed = try context.profileManager.createProfile(name: "Doomed")
+        let doomed = try context.profileManager!.createProfile(name: "Doomed")
         // Its extension controller shares the store too.
         _ = try context.profileContexts.context(for: doomed.id)
 
-        try context.profileManager.deleteProfile(id: doomed.id)
+        try context.profileManager!.deleteProfile(id: doomed.id)
 
         XCTAssertNil(context.profileContexts.existingContext(for: doomed.id),
                      "the deleted profile's extension controller keeps its store in use, so WebKit cannot remove its cookies and site storage")

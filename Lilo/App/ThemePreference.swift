@@ -21,10 +21,10 @@ enum ThemePreference: String {
 
     @MainActor func apply() {
         NSApp.appearance = appearance
-        UserDefaults.lilo.set(rawValue, forKey: Self.cacheKey)
+        unsafe UserDefaults.lilo.set(rawValue, forKey: Self.cacheKey)
     }
 
     @MainActor static func applyCachedAtLaunch() {
-        ThemePreference(stored: UserDefaults.lilo.string(forKey: cacheKey)).apply()
+        unsafe ThemePreference(stored: UserDefaults.lilo.string(forKey: cacheKey)).apply()
     }
 }

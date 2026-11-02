@@ -42,7 +42,7 @@ struct ExtensionInstallReview: Sendable, Equatable {
             let shown = hostPermissions.filter { !$0.isEmpty }.map(Self.hostDisplay).filter { seen.insert($0).inserted }
             if !shown.isEmpty {
                 let list = shown.prefix(6).joined(separator: ", ")
-                lines.append(shown.count > 6
+                unsafe lines.append(shown.count > 6
                     ? String(format: "Read and change your data on: %@ and %d more".localized, list, shown.count - 6)
                     : String(format: "Read and change your data on: %@".localized, list))
             }
@@ -79,7 +79,7 @@ struct ExtensionInstallReview: Sendable, Equatable {
             }
         }
         if !unknown.isEmpty {
-            lines.append(String(format: "Use other browser features: %@".localized, unknown.joined(separator: ", ")))
+            unsafe lines.append(String(format: "Use other browser features: %@".localized, unknown.joined(separator: ", ")))
         }
         return lines
     }
@@ -95,7 +95,7 @@ struct ExtensionInstallReview: Sendable, Equatable {
     func confirmInstall() -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = String(format: "Install %@?".localized, name)
+        alert.messageText = unsafe String(format: "Install %@?".localized, name)
         alert.informativeText = message
         alert.addButton(withTitle: "Install".localized)
         alert.addButton(withTitle: "Cancel".localized)
@@ -108,9 +108,9 @@ struct ExtensionInstallReview: Sendable, Equatable {
     func confirmPermissionIncrease() -> Bool {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = String(format: "%@ needs new permissions".localized, name)
+        alert.messageText = unsafe String(format: "%@ needs new permissions".localized, name)
         let warnings = Self.humanReadableWarnings(permissions: permissions, hostPermissions: hostPermissions)
-        alert.informativeText = ([String(format: "The update to version %@ also asks to:".localized, version)] + warnings.map { "- \($0)" })
+        alert.informativeText = unsafe ([String(format: "The update to version %@ also asks to:".localized, version)] + warnings.map { "- \($0)" })
             .joined(separator: "\n")
         alert.addButton(withTitle: "Accept and Enable".localized)
         alert.addButton(withTitle: "Keep Disabled".localized)
@@ -548,7 +548,7 @@ enum ExtensionArchiveSafety {
     private static func signedPayload(signedHeaderData: Data, archive: Data) -> Data {
         var message = Data("CRX3 SignedData\u{0}".utf8) // 16-byte context, trailing NUL included
         var length = UInt32(signedHeaderData.count).littleEndian
-        withUnsafeBytes(of: &length) { message.append(contentsOf: $0) }
+        withUnsafeBytes(of: &length) { unsafe message.append(contentsOf: $0) }
         message.append(signedHeaderData)
         message.append(archive)
         return message
@@ -564,10 +564,10 @@ enum ExtensionArchiveSafety {
             ? .rsaSignatureMessagePKCS1v15SHA256
             : .ecdsaSignatureMessageX962SHA256
         var error: Unmanaged<CFError>?
-        guard let key = SecKeyCreateWithData(keyBytes as CFData, attributes as CFDictionary, &error) else {
+        guard let key = unsafe SecKeyCreateWithData(keyBytes as CFData, attributes as CFDictionary, &error) else {
             return false
         }
-        return SecKeyVerifySignature(key, algorithm, message as CFData, proof.signature as CFData, &error)
+        return unsafe SecKeyVerifySignature(key, algorithm, message as CFData, proof.signature as CFData, &error)
     }
 
     private static func parseCRXHeader(_ header: Data) -> (proofs: [CRXProof], signedHeaderData: Data?) {

@@ -55,7 +55,7 @@ final class WindowChromeColorTests: XCTestCase {
 
     func testANewColorReachesEveryPaneOfTheSplit() throws {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         window.contentContainerView.wantsLayer = true
         window.didCompleteSessionRestore = true
@@ -112,14 +112,13 @@ final class WindowChromeColorTests: XCTestCase {
             NSApp.appearance = savedAppearance
         }
         keys.forEach(UserDefaults.lilo.removeObject(forKey:))
-        browserContext.context.settingsStore.windowBackgroundColor = "#d8e4f0"
+        browserContext.context.settingsStore!.windowBackgroundColor = "#d8e4f0"
 
         // Lilo was only ever used in light mode; macOS is dark now.
         NSApp.appearance = NSAppearance(named: .darkAqua)
         let relaunch = BrowserContext(appSupportDirectory: browserContext.context.appSupportDirectory, makeProfileId: { TestProfileIds.next() })
         try await relaunch.bootstrap()
         let controller = MainWindowController(context: relaunch)
-        controller.bridgeRouter = BridgeRouter(chromeWebView: controller.chromeWebView)
         controller.contentContainerView = NSView()
         controller.contentContainerView.wantsLayer = true
         controller.window?.contentView?.addSubview(controller.contentContainerView)

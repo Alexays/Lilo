@@ -141,8 +141,8 @@ enum AgentInteractionTools {
                 throw AgentToolError("width and height go from 100 to 16384")
             }
             engine.agentViewport = NSSize(width: width, height: height)
-            engine.fitView(in: engine.view.superview?.bounds ?? engine.view.frame)
-            (engine.view.superview as? ContentContainerView)?.updateStage(under: engine.view, fixedSize: true)
+            unsafe engine.fitView(in: engine.view.superview?.bounds ?? engine.view.frame)
+            unsafe (engine.view.superview as? ContentContainerView)?.updateStage(under: engine.view, fixedSize: true)
             return [.text("Resized the viewport to \(Int(width))x\(Int(height)), kept until the tab leaves your group" + zoomNote(engine))]
         case "read_console_messages":
             let (tab, _) = try control.agentTab(arguments["tabId"], session: session)
@@ -425,7 +425,7 @@ enum AgentInteractionTools {
                 Task { @MainActor in
                     tools.isStopped = true
                     let kill = NSSelectorFromString("_killWebContentProcessAndResetState")
-                    if webView.responds(to: kill) { webView.perform(kill) }
+                    if webView.responds(to: kill) { unsafe webView.perform(kill) }
                 }
             }
             return "\(value as? String ?? "undefined")\n(\(tools.calls) tool calls)"
@@ -467,7 +467,7 @@ enum AgentInteractionTools {
             Task {
                 do {
                     let content = try await AgentCallSent.$current.withValue(sent) {
-                        try await AgentTools.call(name, arguments: input, session: session, control: control)
+                        unsafe try await AgentTools.call(name, arguments: input, session: session, control: control)
                     }
                     replyHandler(content.compactMap { if case .text(let text) = $0 { text } else { nil } }.joined(separator: "\n"), nil)
                 } catch {
@@ -582,7 +582,7 @@ enum AgentInteractionTools {
         guard width >= 1, height >= 1 else { return nil }
         if image.width == width, image.height == height { return image }
         guard let space = CGColorSpace(name: CGColorSpace.sRGB),
-              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+              let context = unsafe CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
         context.interpolationQuality = .high
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))

@@ -31,8 +31,8 @@ final class ExtensionNativeMessaging {
             extensionId: context.uniqueIdentifier
         ) { result in
             switch result {
-            case .success(let reply): replyHandler(reply, nil)
-            case .failure(let error): replyHandler(nil, error)
+            case .success(let reply): unsafe replyHandler(reply, nil)
+            case .failure(let error): unsafe replyHandler(nil, error)
             }
         }
     }

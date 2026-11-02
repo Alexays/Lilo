@@ -128,7 +128,7 @@ final class AgentConsentTests: AgentToolTestCase {
         let router = BridgeRouter(chromeWebView: window.chromeWebView)
         let recorder = BridgeEventRecorder(router)
         let handler = SettingsBridgeHandler(
-            settingsStore: context.settingsStore, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
+            settingsStore: context.settingsStore!, sitePermissionStoreProvider: { nil }, zoomStoreProvider: { nil },
             historyStoreProvider: { nil }, extensionRegistryProvider: { nil }, dataStoreProvider: { nil }, lifecycleDiagnosticsProvider: { nil },
             extensionDiagnosticsProvider: { [] }, forceLifecycleTrimHandler: {}, bridgeRouter: router
         )
@@ -143,7 +143,7 @@ final class AgentConsentTests: AgentToolTestCase {
     }
 
     func testAnApprovedNameFromAnotherProgramIsAskedAgain() async throws {
-        context.settingsStore.set("agentAllowedClients", value: #"{"claude-code": ["/usr/local/bin/claude"]}"#)
+        context.settingsStore!.set("agentAllowedClients", value: #"{"claude-code": ["/usr/local/bin/claude"]}"#)
         let impostor = try AgentTestClient(path: socketURL)
         _ = await impostor.initialize(name: "claude-code")
 
@@ -165,12 +165,12 @@ final class AgentConsentTests: AgentToolTestCase {
     func testRevokingAClientDisconnectsItAndKeepsTheOthers() async throws {
         XCTAssertFalse(control.sessions.isEmpty)
         let profileId = UUID().uuidString
-        context.settingsStore.set("agentProfileGrants", value: #"["Codex|codex|\#(profileId)","Test Agent|test|\#(profileId)"]"#)
+        context.settingsStore!.set("agentProfileGrants", value: #"["Codex|codex|\#(profileId)","Test Agent|test|\#(profileId)"]"#)
         control.revoke("Test Agent")
 
         let disconnected = await pollUntil(timeout: 5) { !self.control.sessions.contains { $0.clientName == "Test Agent" } }
         XCTAssertTrue(disconnected)
         XCTAssertEqual(control.allowedClients.keys.sorted(), ["Codex", "claude-code"])
-        XCTAssertEqual(context.settingsStore.get("agentProfileGrants"), #"["Codex|codex|\#(profileId)"]"#, "its profiles are asked again too")
+        XCTAssertEqual(context.settingsStore!.get("agentProfileGrants"), #"["Codex|codex|\#(profileId)"]"#, "its profiles are asked again too")
     }
 }

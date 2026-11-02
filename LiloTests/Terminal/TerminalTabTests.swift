@@ -268,7 +268,7 @@ final class TerminalTabTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: try context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: try context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         window.didCompleteSessionRestore = true
         _ = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank")))
@@ -367,8 +367,8 @@ final class TerminalReopenTests: XCTestCase {
 
     func testReopeningAClosedTerminalOpensANewOneInItsFolder() throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let window = makeTestWindow(context, showing: space.id)
         window.createTabStateFirst(url: URL(string: "https://example.com"))
         let terminal = try XCTUnwrap(window.createTerminalTab(activate: false, cwd: "/tmp", resumeCommand: "claude"))
@@ -387,8 +387,8 @@ final class TerminalReopenTests: XCTestCase {
 
     func testTheCommandBarReopensAClosedTerminalByItsPlaceInTheList() throws {
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let window = makeTestWindow(context, showing: space.id)
         window.createTabStateFirst(url: URL(string: "https://example.com"))
         let older = try XCTUnwrap(window.createTerminalTab(activate: false, cwd: "/tmp"))
@@ -411,8 +411,8 @@ final class TerminalReopenTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         context.terminalHost.snapshotDirectory = directory
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId)
         let entry = { (cwd: String, closedAt: Date) in
             RecentlyClosedStack.Entry(
                 content: .terminal(.init(cwd: cwd, closedAt: closedAt)), spaceId: space.id, parentFolderId: nil, section: nil, sortOrder: nil

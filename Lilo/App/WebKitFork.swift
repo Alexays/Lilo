@@ -19,6 +19,6 @@ enum WebKitFork {
               let fork = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent("LiloFork").path
         else { return }
         // Only returns when the exec fails (an Intel Mac, the fork being Apple silicon only): Lilo then goes on as it is.
-        execv(fork, CommandLine.unsafeArgv)
+        unsafe execv(fork, CommandLine.unsafeArgv)
     }
 }

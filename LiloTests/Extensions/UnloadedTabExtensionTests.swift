@@ -77,7 +77,7 @@ final class UnloadedTabExtensionTests: XCTestCase {
 
     /// A space the window has shown, with an active tab and a background one, both on the test page and never loaded.
     private func makeSpaceWithTwoTabs(_ window: MainWindowController, _ registry: ProfileExtensionRegistry) throws -> (UUID, Tab, Tab) {
-        let space = try browserContext.context.spaceManager.createSpace(name: "Other", profileId: registry.profileId)
+        let space = try browserContext.context.spaceManager!.createSpace(name: "Other", profileId: registry.profileId)
         let home = try XCTUnwrap(window.tabManager.currentSpaceId)
         window.switchToSpace(space.id)
         window.switchToSpace(home)

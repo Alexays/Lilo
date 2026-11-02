@@ -80,31 +80,34 @@ final class BrowserContext {
     private(set) lazy var whatsNew = WhatsNewState()
     /// Created on first use: no folder can be unlocked before then, so nothing needs relocking.
     private(set) lazy var folderAutoLock = FolderAutoLock(context: self)
+    private var deviceSetup: DeviceSetupController?
     /// One per app: the system device and display observers must not repeat per window. Created by the
     /// first window, after bootstrap; its state reaches every window's settings page.
-    private(set) lazy var deviceSetupController: DeviceSetupController = {
+    func deviceSetupController(settingsStore: SettingsStore) -> DeviceSetupController {
+        if let deviceSetup { return deviceSetup }
         let controller = DeviceSetupController(settingsStore: settingsStore)
         controller.onStateChange = { [weak self, unowned controller] in
             guard let self else { return }
             let state = controller.bridgeState
-            for window in windows.windows { window.bridgeRouter?.send(event: "deviceSetupLoaded", data: state) }
+            for window in windows.windows { window.bridgeRouter.send(event: "deviceSetupLoaded", data: state) }
         }
+        deviceSetup = controller
         return controller
-    }()
+    }
     lazy var agentControl = AgentControl(context: self)
     let appSupportDirectory: String
     private let makeProfileId: @MainActor () -> UUID
 
-    // Set by bootstrap(), which every window awaits before reading them.
-    private(set) var dbManager: DatabaseManager!
-    private(set) var settingsStore: SettingsStore!
+    // Set by bootstrap(), which finishes after the first window shows: nil until then.
+    private(set) var dbManager: DatabaseManager?
+    private(set) var settingsStore: SettingsStore?
     /// How long Lilo was quit before this launch; nil on a first launch or after a crash, whose relaunch picks up where it was.
     var launchAbsence: TimeInterval?
     /// Site permission answers given in each private space, by "type origin", forgotten with the space.
     var privateSitePermissions: [UUID: [String: Bool]] = [:]
-    private(set) var profileManager: ProfileManager!
-    private(set) var spaceManager: SpaceManager!
-    private(set) var startupSnapshot: StartupSnapshot!
+    private(set) var profileManager: ProfileManager?
+    private(set) var spaceManager: SpaceManager?
+    private(set) var startupSnapshot: StartupSnapshot?
     /// Keeps the content blocker's rules current from remote filter lists (EasyList). See FilterListService.
     private(set) var filterListService: FilterListService?
     /// One degraded-database alert per subject (profile id or "settings") per launch.
@@ -237,9 +240,15 @@ final class BrowserContext {
         let bootstrap = try await StartupBackgroundWork.runBlocking {
             try Self.makeDatabaseBootstrap(appSupportDirectory: appSupportDirectory)
         }
-        dbManager = bootstrap.dbManager
-        startupSnapshot = bootstrap.startupSnapshot
-        settingsStore = SettingsStore(dbPool: dbManager.globalPool)
+        let dbManager = bootstrap.dbManager, startupSnapshot = bootstrap.startupSnapshot
+        let settingsStore = SettingsStore(dbPool: dbManager.globalPool)
+        self.dbManager = dbManager
+        sessionPersistenceCoordinator = SessionPersistenceCoordinator(
+            dbManager: dbManager,
+            liveStore: { [weak self] in self?.profileContexts.existingContext(for: $0)?.sessionPersistence }
+        )
+        self.startupSnapshot = startupSnapshot
+        self.settingsStore = settingsStore
         if settingsStore.sessionCleanShutdown { launchAbsence = settingsStore.lastQuitAt.map { Date().timeIntervalSince($0) } }
         engineFactory.setTrackingPrevention(settingsStore.preventCrossSiteTracking)
         if let loadError = settingsStore.initialLoadError {
@@ -267,7 +276,7 @@ final class BrowserContext {
             let holding = (self?.agentControl.sessions ?? []).filter { state.working.contains($0.id) }
             let agents = Set(holding.map { AgentControl.displayName($0.clientName) }).sorted()
             for window in self?.windows.windows ?? [] {
-                window.bridgeRouter?.send(event: "keepAwakeChanged", data: [
+                window.bridgeRouter.send(event: "keepAwakeChanged", data: [
                     "keepsAwake": state.keepsAwake, "agents": agents,
                     "tabIds": state.working.map(\.uuidString),
                     "holdsLidClosed": state.holdsLidClosed, "helperStatus": state.helperStatus
@@ -285,13 +294,15 @@ final class BrowserContext {
             guard let self, let space = spaceManager?.space(with: spaceId), !space.isPrivate else { return false }
             return profileContexts.existingContext(for: space.profileId)?.sitePermissions.decision(forOrigin: origin, type: "notifications") == true
         }
-        profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
+        let profileManager = ProfileManager(dbManager: dbManager, engineFactory: engineFactory, makeProfileId: makeProfileId)
+        self.profileManager = profileManager
         try profileManager.loadProfiles(
             startupSnapshot.profiles,
             lastActiveProfileId: startupSnapshot.lastActiveProfileId
         )
         profileManager.delegate = self
-        spaceManager = SpaceManager(dbPool: dbManager.globalPool)
+        let spaceManager = SpaceManager(dbPool: dbManager.globalPool)
+        self.spaceManager = spaceManager
         spaceManager.loadSpaces(startupSnapshot.spaces)
         spaceManager.delegate = self
         restoreTabArchive()
@@ -305,6 +316,7 @@ final class BrowserContext {
     /// At launch, and when the blocker is turned on in a session that launched with it off (nothing
     /// was compiled and the list service never started then).
     func startContentBlocker() async {
+        guard let settingsStore else { return }
         let enabled = settingsStore.contentBlockerEnabled
         // With a usable FilterListService cache the bundled list would be compiled only to be
         // replaced moments later by the cached external rules; the bundled compile is the
@@ -318,9 +330,9 @@ final class BrowserContext {
         guard enabled, filterListService == nil else { return }
         let service = FilterListService(
             engineFactory: engineFactory,
-            allowlistProvider: { [weak self] in self?.settingsStore.blockerAllowlist ?? BlockerAllowlist() }
+            allowlistProvider: { [weak self] in self?.settingsStore?.blockerAllowlist ?? BlockerAllowlist() }
         )
-        service.listSelection = { [weak self] in self?.settingsStore.filterListSelection ?? .init() }
+        service.listSelection = { [weak self] in self?.settingsStore?.filterListSelection ?? .init() }
         service.onBlockerExtensionChanged = { [weak self] in self?.reloadBlockerExtension() }
         filterListService = service
         service.start()
@@ -329,7 +341,7 @@ final class BrowserContext {
     /// The content blocker's built-in extension, while the blocker runs and once written.
     var blockerExtensionURL: URL? {
         let url = FilterListService.blockerExtensionURL
-        guard settingsStore.contentBlockerEnabled,
+        guard settingsStore?.contentBlockerEnabled == true,
               FileManager.default.fileExists(atPath: url.appendingPathComponent("manifest.json").path) else { return nil }
         return url
     }
@@ -355,10 +367,8 @@ final class BrowserContext {
         await filterListService?.refreshNow()
     }
 
-    private(set) lazy var sessionPersistenceCoordinator = SessionPersistenceCoordinator(
-        dbManager: dbManager,
-        liveStore: { [weak self] in self?.profileContexts.existingContext(for: $0)?.sessionPersistence }
-    )
+    /// Set by bootstrap, with the database.
+    private(set) var sessionPersistenceCoordinator: SessionPersistenceCoordinator?
 
     /// Writes every persistent space's tab tree into its own profile's database; private spaces leave nothing.
     func saveSpaceStatesBeforeQuit() {
@@ -371,7 +381,7 @@ final class BrowserContext {
         }
         for (profileId, states) in statesByProfile {
             do {
-                try sessionPersistenceCoordinator.persistSpaceTabStates(states, inProfile: profileId)
+                try sessionPersistenceCoordinator?.persistSpaceTabStates(states, inProfile: profileId)
             } catch {
                 Self.logger.error("quit state save failed for profile \(profileId.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
@@ -537,6 +547,7 @@ final class BrowserContext {
 
     /// Opens a profile's pool, surfacing a failure to the user once per launch.
     func poolReportingFailure(for profileId: UUID) throws -> DatabasePool {
+        guard let dbManager else { throw BrowserContextError.notBootstrapped }
         do {
             return try dbManager.pool(for: profileId)
         } catch {
@@ -573,7 +584,7 @@ final class BrowserContext {
 
     func notifyProfileDatabaseFailure(profileId: UUID, error: Error) {
         let name = profileManager?.profiles.first(where: { $0.id == profileId })?.name ?? profileId.uuidString
-        showDegradedDatabaseAlert(
+        unsafe showDegradedDatabaseAlert(
             subject: profileId.uuidString,
             message: String(format: "Lilo can't open the database for the profile \"%@\"".localized, name),
             informative: "Its tabs, history and downloads are unavailable this session.".localized,
@@ -584,7 +595,7 @@ final class BrowserContext {
     func showFatalDatabaseAlert(_ error: Error) {
         let alert = NSAlert()
         alert.messageText = "Lilo can't open its database".localized
-        alert.informativeText = String(
+        alert.informativeText = unsafe String(
             format: "A database error occurred and automatic recovery failed. Please report this issue.\n\nError: %@".localized,
             error.localizedDescription
         )
@@ -692,13 +703,13 @@ extension BrowserContext {
         recentlyClosed.removeAll(inSpace: space.id)
         tabArchive.entries.removeAll { $0.spaceId == space.id }
         if space.isPrivate {
-            profileManager.releaseEphemeralDataStore(for: space.id)
+            profileManager?.releaseEphemeralDataStore(for: space.id)
             downloadManager.forgetPrivateDownloads(inSpace: space.id)
             privateSitePermissions[space.id] = nil
         }
         windows.windows.forEach { $0.spaceWasDeleted(space, by: manager) }
         // Each window goes back to the user space it last showed; an Agents space only when nothing else is left.
-        let agentsSpaceIds = settingsStore.agentsSpaceIds
+        let agentsSpaceIds = settingsStore?.agentsSpaceIds ?? []
         let userSpaceIds = Set(manager.spaces.filter { !$0.isPrivate && !agentsSpaceIds.contains($0.id) }.map(\.id))
         for window in showingWindows {
             let replacement = window.recentSpaceIds.first(where: userSpaceIds.contains)
@@ -723,7 +734,7 @@ extension BrowserContext {
     /// had to move.
     @discardableResult
     private func keepAgentsSpacesLast(_ manager: SpaceManager) -> Bool {
-        let agentsSpaceIds = settingsStore.agentsSpaceIds
+        let agentsSpaceIds = settingsStore?.agentsSpaceIds ?? []
         guard let lastUserSpace = manager.spaces.lastIndex(where: { !$0.isPrivate && !agentsSpaceIds.contains($0.id) }),
               let misplaced = manager.spaces[..<lastUserSpace].first(where: { agentsSpaceIds.contains($0.id) }) else { return false }
         // One at a time: each move reports back here, which moves the next.
@@ -807,7 +818,7 @@ extension BrowserContext {
             tracker.lastItems[DownloadGapEventTracker.Key(profileId: profileId, id: id)] = nil
             guard let self else { return }
             for window in windows.windows where window.profileContext?.profileId == profileId {
-                window.bridgeRouter?.send(event: "downloadErased", data: ["id": Int(id)])
+                window.bridgeRouter.send(event: "downloadErased", data: ["id": Int(id)])
             }
             guard !downloadManager.isPrivateDownload(id: id, profileId: profileId), let profileId else { return }
             profileContexts.existingContext(for: profileId)?.extensions.emitGapEvent("downloads", "onErased", args: [Int(id)], requiredPermission: "downloads")

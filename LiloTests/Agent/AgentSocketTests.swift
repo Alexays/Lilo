@@ -11,7 +11,7 @@ final class AgentSocketTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         browserContext = try await TemporaryBrowserContext()
-        browserContext.context.settingsStore.set("agentAllowedClients", value: AgentToolTestCase.allowedClientsJSON)
+        browserContext.context.settingsStore!.set("agentAllowedClients", value: AgentToolTestCase.allowedClientsJSON)
         control = AgentControl(context: browserContext.context, socketURL: socketURL)
         control.setEnabled(true)
     }

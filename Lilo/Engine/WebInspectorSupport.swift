@@ -25,7 +25,7 @@ enum WebInspectorSupport {
     static func connect(for webView: WKWebView) -> WKWebView? {
         let selector = NSSelectorFromString("inspectorWebView")
         guard callVoid("connect", onInspectorFor: webView), let inspector = inspector(for: webView), inspector.responds(to: selector) else { return nil }
-        return inspector.perform(selector)?.takeUnretainedValue() as? WKWebView
+        return unsafe inspector.perform(selector)?.takeUnretainedValue() as? WKWebView
     }
     static func close(for webView: WKWebView) -> Bool { callVoid("close", onInspectorFor: webView) }
     static func isConnected(for webView: WKWebView) -> Bool { callBool("isConnected", onInspectorFor: webView) ?? false }
@@ -36,13 +36,13 @@ enum WebInspectorSupport {
     private static func inspector(for webView: WKWebView) -> NSObject? {
         let sel = NSSelectorFromString("_inspector")
         guard webView.responds(to: sel) else { return nil }
-        return webView.perform(sel)?.takeUnretainedValue() as? NSObject
+        return unsafe webView.perform(sel)?.takeUnretainedValue() as? NSObject
     }
 
     private static func callVoid(_ selectorName: String, onInspectorFor webView: WKWebView) -> Bool {
         let selector = NSSelectorFromString(selectorName)
         guard let inspector = inspector(for: webView), inspector.responds(to: selector) else { return false }
-        _ = inspector.perform(selector)
+        _ = unsafe inspector.perform(selector)
         return true
     }
 

@@ -89,7 +89,7 @@ final class TabDockController {
         view.autoresizingMask = []
         view.isHidden = false
         scaledHost.addSubview(view)
-        if container.superview !== contentView {
+        if unsafe container.superview !== contentView {
             contentView.addSubview(container, positioned: .above, relativeTo: sibling)
         }
         applySlot()
@@ -112,7 +112,7 @@ final class TabDockController {
         view.autoresizingMask = []
         view.isHidden = false
         scaledHost.addSubview(view)
-        if container.superview !== contentView {
+        if unsafe container.superview !== contentView {
             contentView.addSubview(container, positioned: .above, relativeTo: sibling)
         }
         applySlot()
@@ -121,7 +121,7 @@ final class TabDockController {
     /// Re-adopts the docked engine's view after a space switch: parking detaches every engine
     /// view of the leaving space, the dock's included.
     func reattachIfNeeded() {
-        guard let engine, engine.view.superview !== scaledHost else { return }
+        guard let engine, unsafe engine.view.superview !== scaledHost else { return }
         engine.view.isHidden = false
         scaledHost.addSubview(engine.view)
         applySlot()
@@ -134,7 +134,7 @@ final class TabDockController {
             pictureInPictureView = nil
             pictureInPictureOpenerId = nil
             hadSlot = false
-            if view.superview === scaledHost { view.removeFromSuperview() }
+            if unsafe view.superview === scaledHost { view.removeFromSuperview() }
             container.isHidden = true
             onDockCleared?()
             return nil

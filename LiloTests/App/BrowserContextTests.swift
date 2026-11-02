@@ -66,6 +66,6 @@ final class BrowserContextTests: XCTestCase {
         try await context.bootstrap()
         context.saveWindowsNow()
 
-        XCTAssertEqual(context.startupSnapshot.windows, stored)
+        XCTAssertEqual(context.startupSnapshot!.windows, stored)
     }
 }

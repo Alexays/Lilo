@@ -16,14 +16,14 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
 
     nonisolated func webView(_ webView: WKWebView, start urlSchemeTask: any WKURLSchemeTask) {
         nonisolated(unsafe) let urlSchemeTask = urlSchemeTask
-        MainActor.assumeIsolated { start(urlSchemeTask, in: webView) }
+        MainActor.assumeIsolated { unsafe start(urlSchemeTask, in: webView) }
     }
 
     // Stop arrives on the main thread before any later answer, so cancelling here guarantees a
     // stopped task is never answered (WKURLSchemeTask raises on that).
     nonisolated func webView(_ webView: WKWebView, stop urlSchemeTask: any WKURLSchemeTask) {
         nonisolated(unsafe) let urlSchemeTask = urlSchemeTask
-        MainActor.assumeIsolated { running.removeValue(forKey: ObjectIdentifier(urlSchemeTask))?.cancel() }
+        MainActor.assumeIsolated { unsafe running.removeValue(forKey: ObjectIdentifier(urlSchemeTask))?.cancel() }
     }
 
     private func start(_ task: any WKURLSchemeTask, in webView: WKWebView) {
@@ -58,6 +58,8 @@ final class ViewSourceSchemeHandler: NSObject, WKURLSchemeHandler {
 
     private func respond(to task: any WKURLSchemeTask, url: URL?, html: String) {
         let data = Data(html.utf8)
+        // A bare scheme always parses.
+        // swiftlint:disable:next force_unwrapping
         let response = URLResponse(url: url ?? URL(string: "\(Self.scheme):")!, mimeType: "text/html",
                                    expectedContentLength: data.count, textEncodingName: "utf-8")
         task.didReceive(response)

@@ -487,12 +487,11 @@ final class BrowserStateStore {
     }
 
     func activateSpace(id: UUID, loadSnapshot: () -> SpaceSnapshot) -> SpaceSnapshot {
-        if spaces[id] == nil {
-            spaces[id] = normalizedSnapshot(loadSnapshot(), spaceId: id)
-        }
+        var snapshot = spaces[id] ?? normalizedSnapshot(loadSnapshot(), spaceId: id)
         visibleSpaceIds.insert(id)
-        spaces[id]?.lastAccessedAt = Date()
-        return spaces[id]!
+        snapshot.lastAccessedAt = Date()
+        spaces[id] = snapshot
+        return snapshot
     }
 
     @discardableResult
@@ -1129,7 +1128,7 @@ extension BrowserStateStore {
         ids.sort { lhs, rhs in
             withUnsafeBytes(of: lhs.uuid) { lhsBytes in
                 withUnsafeBytes(of: rhs.uuid) { rhsBytes in
-                    memcmp(lhsBytes.baseAddress, rhsBytes.baseAddress, lhsBytes.count) < 0
+                    unsafe memcmp(lhsBytes.baseAddress, rhsBytes.baseAddress, lhsBytes.count) < 0
                 }
             }
         }

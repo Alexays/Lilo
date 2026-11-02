@@ -108,8 +108,8 @@ final class MenuIconTests: XCTestCase {
     func testSidebarTabAndFolderMenus() throws {
         let context = browserContext.context
         let spaceId = try XCTUnwrap(window.tabManager.currentSpaceId)
-        try context.spaceManager.createSpace(name: "Other", profileId: try XCTUnwrap(context.spaceManager.space(with: spaceId)?.profileId))
-        context.settingsStore.set(AgentControl.agentsSpaceKey, value: spaceId.uuidString)
+        try context.spaceManager!.createSpace(name: "Other", profileId: try XCTUnwrap(context.spaceManager!.space(with: spaceId)?.profileId))
+        context.settingsStore!.set(AgentControl.agentsSpaceKey, value: spaceId.uuidString)
         let folder = TabFolder(spaceId: spaceId, name: "Work")
         window.applyContextMenuStateCommands([.createFolder(spaceId: spaceId, folder: folder, section: .unpinned)])
         let inFolder = try XCTUnwrap(window.createTabStateFirst(url: URL(string: "about:blank"), activate: false, sidebarParentFolderId: folder.id, sidebarSection: .unpinned, sidebarIndex: 0))

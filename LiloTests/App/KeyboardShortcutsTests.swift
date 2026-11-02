@@ -103,8 +103,8 @@ final class KeyboardShortcutsTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: false)
         let window = makeTestWindow(context, showing: space.id)
         let terminal = try XCTUnwrap(window.createTerminalTab(activate: true))
         defer { window.tabManager.terminalHost.forget(terminal.id) }
@@ -265,8 +265,8 @@ final class KeyboardShortcutsTests: XCTestCase {
         let browserContext = try await TemporaryBrowserContext()
         defer { browserContext.tearDown() }
         let context = browserContext.context
-        let profileId = try context.profileManager.createProfile(name: "P").id
-        let space = try context.spaceManager.createSpace(name: "S", profileId: profileId, isPrivate: false)
+        let profileId = try context.profileManager!.createProfile(name: "P").id
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: profileId, isPrivate: false)
         let window = makeTestWindow(context, showing: space.id)
         KeyboardShortcuts.applyPreset("arc", store: nil)
         let events = BridgeEventRecorder(window.bridgeRouter)

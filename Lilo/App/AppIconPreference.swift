@@ -16,12 +16,12 @@ enum AppIconPreference {
     @MainActor private static var swapTimer: Timer?
 
     @MainActor static func apply(_ name: String) {
-        UserDefaults.lilo.set(variants.contains(name) ? name : "classic", forKey: cacheKey)
+        unsafe UserDefaults.lilo.set(variants.contains(name) ? name : "classic", forKey: cacheKey)
         refresh()
     }
 
     @MainActor static func setSeasonal(_ enabled: Bool) {
-        UserDefaults.lilo.set(enabled, forKey: seasonalKey)
+        unsafe UserDefaults.lilo.set(enabled, forKey: seasonalKey)
         refresh()
     }
 
@@ -59,8 +59,8 @@ enum AppIconPreference {
 
     /// The image due now; nil is the bundle's own icon.
     private static func currentURL() -> URL? {
-        let variant = UserDefaults.lilo.string(forKey: cacheKey) ?? "classic"
-        let seasonal = UserDefaults.lilo.object(forKey: seasonalKey) as? Bool ?? true
+        let variant = unsafe UserDefaults.lilo.string(forKey: cacheKey) ?? "classic"
+        let seasonal = unsafe UserDefaults.lilo.object(forKey: seasonalKey) as? Bool ?? true
         let season = seasonal ? season(on: Date()) : nil
         if season == nil && variant == "classic" { return nil }
         return Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: season.map { "AppIcons/\($0)" } ?? "AppIcons")
@@ -68,8 +68,8 @@ enum AppIconPreference {
 
     @MainActor private static func refresh() {
         let url = currentURL()
-        guard url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? "" else { return }
-        UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
+        guard unsafe url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? "" else { return }
+        unsafe UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
         let image = url.flatMap(NSImage.init(contentsOf:))
         // The download progress view owns the Dock tile while downloads run.
         let animate = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -91,7 +91,7 @@ enum AppIconPreference {
             ? Bundle.main.image(forResource: "AppIcon")
             : Bundle.main.url(forResource: variant, withExtension: "png", subdirectory: "AppIcons").flatMap(NSImage.init(contentsOf:))
         guard let image else { return nil }
-        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 128, pixelsHigh: 128, bitsPerSample: 8, samplesPerPixel: 4,
+        let rep = unsafe NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 128, pixelsHigh: 128, bitsPerSample: 8, samplesPerPixel: 4,
                                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
         guard let rep else { return nil }
         NSGraphicsContext.saveGraphicsState()
@@ -139,9 +139,9 @@ enum AppIconPreference {
         if let image { NSApp.applicationIconImage = image }
         // The bundle's custom icon (its `Icon\r` file) survives relaunches; only a reinstall wipes it, and
         // rewriting it makes Finder and the Dock refresh.
-        if url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? ""
+        if unsafe url?.path ?? "" != UserDefaults.lilo.string(forKey: bundleIconKey) ?? ""
             || image != nil && !FileManager.default.fileExists(atPath: Bundle.main.bundlePath + "/Icon\r") {
-            UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
+            unsafe UserDefaults.lilo.set(url?.path ?? "", forKey: bundleIconKey)
             NSWorkspace.shared.setIcon(image, forFile: Bundle.main.bundlePath, options: [])
         }
     }

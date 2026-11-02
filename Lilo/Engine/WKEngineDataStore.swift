@@ -59,11 +59,11 @@ final class WKEngineDataStore {
         let types = Self.siteDataTypes
         // 1 is _WKWebsiteDataStoreFetchOptionComputeSizes. The records are summed where they arrive: they are not Sendable.
         return await withCheckedContinuation { continuation in
-            unsafeBitCast(backingStore.method(for: fetch), to: FetchRecords.self)(backingStore, fetch, types as NSSet, 1) { records in
+            unsafe unsafeBitCast(backingStore.method(for: fetch), to: FetchRecords.self)(backingStore, fetch, types as NSSet, 1) { records in
                 var sizes: [String: Int64] = [:]
                 for case let record as WKWebsiteDataRecord in records {
                     guard let size = record.value(forKey: "_dataSize") as? NSObject, size.responds(to: sizeOf) else { continue }
-                    let sizeOfTypes = unsafeBitCast(size.method(for: sizeOf), to: SizeOfTypes.self)
+                    let sizeOfTypes = unsafe unsafeBitCast(size.method(for: sizeOf), to: SizeOfTypes.self)
                     for type in record.dataTypes {
                         sizes[type, default: 0] += Int64(sizeOfTypes(size, sizeOf, [type] as NSSet))
                     }

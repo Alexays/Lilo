@@ -5,7 +5,7 @@ import Foundation
 enum Localization {
     private static let overrideKey = "lilo.locale"
 
-    static let locale = resolveLocale(
+    static let locale = unsafe resolveLocale(
         override: UserDefaults.lilo.string(forKey: overrideKey), preferredLanguages: Locale.preferredLanguages
     )
 
@@ -33,12 +33,12 @@ enum Localization {
 
     /// Records the language picked in the web UI so native surfaces match it on the next launch.
     static func persistOverride(_ value: String) {
-        UserDefaults.lilo.set(value, forKey: overrideKey)
+        unsafe UserDefaults.lilo.set(value, forKey: overrideKey)
         // AppKit's own strings (Services, open and save panels, Sparkle) follow the app's AppleLanguages.
         if NativeStrings.locales.contains(value) {
-            UserDefaults.lilo.set([value], forKey: "AppleLanguages")
+            unsafe UserDefaults.lilo.set([value], forKey: "AppleLanguages")
         } else {
-            UserDefaults.lilo.removeObject(forKey: "AppleLanguages")
+            unsafe UserDefaults.lilo.removeObject(forKey: "AppleLanguages")
         }
     }
 }

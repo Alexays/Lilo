@@ -125,7 +125,7 @@ final class AgentCursorView: NSView {
         let previousPill = pill.layer.map { $0.presentation()?.position ?? $0.position }
         blob.setFrameOrigin(CGPoint(x: point.x + 11, y: point.y + 15))
         pill.setFrameOrigin(CGPoint(x: point.x + 36, y: point.y + 17))
-        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
+        guard unsafe window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
               let layer = blob.layer, let previous, let pillLayer = pill.layer, let previousPill else { return }
         let dx = layer.position.x - previous.x
         let distance = hypot(dx, layer.position.y - previous.y)
@@ -162,7 +162,7 @@ final class AgentCursorView: NSView {
         super.viewDidMoveToWindow()
         blinkTimer?.invalidate()
         blinkTimer = nil
-        guard window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        guard unsafe window != nil, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
         blinkTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 let blink = CAKeyframeAnimation(keyPath: "transform.scale.y")
@@ -353,7 +353,7 @@ final class AgentFrameView: NSView {
         layer?.borderColor = agentColor.cgColor
         layer?.cornerRadius = WindowFrameView.contentCornerRadius
         layer?.shadowColor = agentColor.cgColor
-        badge.stringValue = String(format: "%@ controls this tab".localized, agentName)
+        badge.stringValue = unsafe String(format: "%@ controls this tab".localized, agentName)
         badge.font = .systemFont(ofSize: 11, weight: .semibold)
         badge.textColor = .white
         badge.sizeToFit()
@@ -386,7 +386,7 @@ final class AgentFrameView: NSView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         fitShownPart()
-        guard window != nil, let page = superview, let container = page.superview else { return }
+        guard unsafe window != nil, let page = unsafe superview, let container = unsafe page.superview else { return }
         for view in [page, container] {
             view.postsFrameChangedNotifications = true
             NotificationCenter.default.addObserver(self, selector: #selector(fitShownPart), name: NSView.frameDidChangeNotification, object: view)
@@ -394,7 +394,7 @@ final class AgentFrameView: NSView {
     }
 
     @objc private func fitShownPart() {
-        guard let page = superview, let container = page.superview else { return }
+        guard let page = unsafe superview, let container = unsafe page.superview else { return }
         let shown = page.bounds.intersection(page.convert(container.bounds, from: container))
         guard !shown.isEmpty, let layer, let pageLayer = page.layer else { return }
         frame = shown

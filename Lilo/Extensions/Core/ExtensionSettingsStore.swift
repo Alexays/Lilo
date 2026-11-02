@@ -13,7 +13,7 @@ final class ExtensionSettingsStore {
 
     init(pool: DatabasePool, profileId: UUID) {
         self.pool = pool
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard note.userInfo?["uninstalled"] as? Bool == true, note.userInfo?["profileId"] as? UUID == profileId,
                   let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated { self?.removeAll(extensionId: extensionId) }
@@ -21,7 +21,7 @@ final class ExtensionSettingsStore {
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     private func loaded() -> [String: [String: Any]] {

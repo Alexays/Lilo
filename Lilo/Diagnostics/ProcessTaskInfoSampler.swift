@@ -5,7 +5,7 @@ import Darwin
 enum ProcessTaskInfoSampler {
     static func taskInfo(pid: Int) -> proc_taskinfo? {
         var info = proc_taskinfo()
-        let size = proc_pidinfo(
+        let size = unsafe proc_pidinfo(
             Int32(pid),
             PROC_PIDTASKINFO,
             0,
@@ -20,7 +20,7 @@ enum ProcessTaskInfoSampler {
     static func physicalFootprint(pid: Int) -> UInt64? {
         var info = rusage_info_v4()
         let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(Int32(pid), RUSAGE_INFO_V4, $0) }
+            unsafe $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { unsafe proc_pid_rusage(Int32(pid), RUSAGE_INFO_V4, $0) }
         }
         return result == 0 ? info.ri_phys_footprint : nil
     }
@@ -34,7 +34,7 @@ enum ProcessTaskInfoSampler {
     static func usage(pid: Int32) -> rusage_info_v6? {
         var info = rusage_info_v6()
         let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { proc_pid_rusage(pid, RUSAGE_INFO_V6, $0) }
+            unsafe $0.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { unsafe proc_pid_rusage(pid, RUSAGE_INFO_V6, $0) }
         }
         return result == 0 ? info : nil
     }
@@ -46,7 +46,7 @@ enum ProcessTaskInfoSampler {
 
     private static let timebase: mach_timebase_info_data_t = {
         var timebase = mach_timebase_info_data_t()
-        mach_timebase_info(&timebase)
+        unsafe mach_timebase_info(&timebase)
         return timebase
     }()
 }

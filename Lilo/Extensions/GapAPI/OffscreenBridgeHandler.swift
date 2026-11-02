@@ -25,14 +25,14 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
     override init() {
         super.init()
         // A disabled, unloaded or uninstalled extension's document closes with it.
-        unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
+        unsafe unloadObserver = NotificationCenter.default.addObserver(forName: .extensionDidUnload, object: nil, queue: .main) { [weak self] note in
             guard let profileId = note.userInfo?["profileId"] as? UUID, let extensionId = note.userInfo?["extensionId"] as? String else { return }
             MainActor.assumeIsolated { self?.closeDocument("\(profileId)/\(extensionId)") }
         }
     }
 
     deinit {
-        unloadObserver.map { NotificationCenter.default.removeObserver($0) }
+        unsafe unloadObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     func handle(_ call: GapCall) async -> Any? {
@@ -91,15 +91,15 @@ final class OffscreenBridgeHandler: NSObject, GapHandler, WKNavigationDelegate {
 
     // MARK: - WKNavigationDelegate
 
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
         finishLoad(of: webView, error: nil)
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
         finishLoad(of: webView, error: error)
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
         finishLoad(of: webView, error: error)
     }
 

@@ -28,7 +28,7 @@ final class SidePanelController: NSObject {
     private var panel: SidePanelView?
     private var loadObservation: NSKeyValueObservation?
     private lazy var divider = makeDivider()
-    private var width = max(CGFloat(UserDefaults.lilo.double(forKey: SidePanelController.widthKey)), SidePanelController.minimumWidth)
+    private var width = unsafe max(CGFloat(UserDefaults.lilo.double(forKey: SidePanelController.widthKey)), SidePanelController.minimumWidth)
 
     init(window: MainWindowController) {
         self.window = window
@@ -218,7 +218,7 @@ final class SidePanelController: NSObject {
             divider.removeFromSuperview()
         }
         window.updateContentContainerFrame(animated: false)
-        window.bridgeRouter?.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth])
+        window.bridgeRouter.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth])
     }
 
     private func present(_ entry: Entry, url: URL, context: WKWebExtensionContext) {
@@ -267,7 +267,7 @@ final class SidePanelController: NSObject {
     func fitToWindow() {
         let reserved = reservedWidth
         layoutPanel()
-        if reservedWidth != reserved { window.bridgeRouter?.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth]) }
+        if reservedWidth != reserved { window.bridgeRouter.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth]) }
     }
 
     private func layoutPanel() {
@@ -319,8 +319,8 @@ final class SidePanelController: NSObject {
         divider.onDragEnd = { [weak self] in
             guard let self else { return }
             width = max(Self.minimumWidth, panelWidth)
-            UserDefaults.lilo.set(Double(width), forKey: Self.widthKey)
-            window.bridgeRouter?.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth])
+            unsafe UserDefaults.lilo.set(Double(width), forKey: Self.widthKey)
+            window.bridgeRouter.send(event: "sidePanelWidthChanged", data: ["width": reservedWidth])
         }
         return divider
     }

@@ -30,7 +30,7 @@ extension TerminalView {
 
     /// Terminal shortcuts that would otherwise reach the menus. Only the focused terminal takes them.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard event.type == .keyDown, window?.firstResponder === self else { return super.performKeyEquivalent(with: event) }
+        guard event.type == .keyDown, unsafe window?.firstResponder === self else { return super.performKeyEquivalent(with: event) }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function])
         // AppKit turns Control-Return into a context menu request; the running program gets the key instead.
         if flags.contains(.control), !flags.contains(.command), event.keyCode == 36 || event.keyCode == 76 {
@@ -136,7 +136,7 @@ extension TerminalView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        window?.makeFirstResponder(self)
+        unsafe window?.makeFirstResponder(self)
         guard let location = location(at: event.locationInWindow) else { return }
         if event.modifierFlags.contains(.command), let target = link(at: location.cell) {
             updateHoveredLink(at: event.locationInWindow, command: false)
@@ -277,7 +277,7 @@ extension TerminalView {
                 var column = 0
                 return line.text.map { character in
                     // Wide characters (CJK, emoji) take two columns.
-                    let scalar = character.unicodeScalars.first!
+                    let scalar = character.unicodeScalars.first ?? " "
                     let columns = scalar.properties.isEmojiPresentation ? 2 : max(1, Int(wcwidth(wchar_t(scalar.value))))
                     defer { column += columns }
                     return (character, line.top + column / width, column % width, columns, home)
@@ -326,7 +326,8 @@ extension TerminalView {
         while start > 0, !characters[start - 1].isWhitespace { start -= 1 }
         while end + 1 < characters.count, !characters[end + 1].isWhitespace { end += 1 }
         // Joining rows can glue the word of the next row to a path: the clicked line alone is the fallback.
-        let home = glyphs.firstIndex { $0.home }!...glyphs.lastIndex { $0.home }!
+        guard let homeStart = glyphs.firstIndex(where: \.home), let homeEnd = glyphs.lastIndex(where: \.home) else { return nil }
+        let home = homeStart...homeEnd
         let token = start...end
         let quotes: Set<Character> = ["'", "\"", "(", ")", "[", "]", ","]
         // A path that ends a sentence carries its punctuation.
@@ -390,7 +391,7 @@ extension TerminalView {
 
     override func flagsChanged(with event: NSEvent) {
         super.flagsChanged(with: event)
-        guard let window else { return }
+        guard let window = unsafe window else { return }
         updateHoveredLink(at: window.mouseLocationOutsideOfEventStream, command: event.modifierFlags.contains(.command))
     }
 
@@ -478,7 +479,7 @@ extension TerminalView {
                   let bytes = session.withLockedTerminal({ $0.encodePaste(text, allowUnsafe: true) }) else { return }
             writePaste(bytes)
         }
-        if let window { alert.beginSheetModal(for: window, completionHandler: confirm) } else { confirm(alert.runModal()) }
+        if let window = unsafe window { alert.beginSheetModal(for: window, completionHandler: confirm) } else { confirm(alert.runModal()) }
     }
 
     // MARK: - Drag and drop
@@ -489,7 +490,7 @@ extension TerminalView {
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         guard let text = Self.text(from: sender.draggingPasteboard) else { return false }
-        window?.makeFirstResponder(self)
+        unsafe window?.makeFirstResponder(self)
         insert(text)
         return true
     }
@@ -587,7 +588,7 @@ extension TerminalView: @preconcurrency NSTextInputClient {
 
     /// The cursor cell in screen coordinates, so candidate windows open next to the text.
     func firstRect(forCharacterRange range: NSRange, actualRange: NSRangePointer?) -> NSRect {
-        guard let window else { return .zero }
+        guard let window = unsafe window else { return .zero }
         return window.convertToScreen(convert(cursorRect(), to: nil))
     }
 

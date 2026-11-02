@@ -92,7 +92,7 @@ extension MainWindowController {
             let item: NSMenuItem
             if agentsSpaceIds.contains(space.id) {
                 // Each profile agents work in has its own Agents space: its profile tells them apart.
-                let profile = space.profileId == agentsProfileId ? nil : context.profileManager.profiles.first { $0.id == space.profileId }
+                let profile = space.profileId == agentsProfileId ? nil : context.profileManager?.profiles.first { $0.id == space.profileId }
                 item = NSMenuItem(title: profile.map { "\(space.name) · \($0.name)" } ?? space.name, action: #selector(switchToSpaceFromMenu(_:)), keyEquivalent: "")
                 item.image = AgentCursorView.menuImage
             } else {
@@ -123,7 +123,7 @@ extension MainWindowController {
     /// The other Spaces a tab of the current Space can move to: the keyboard path for a drop on a Space. Never an
     /// Agents space: its tabs are the agents'.
     func addMoveToSpaceItems(to menu: NSMenu, tabId id: UUID) {
-        let agentsSpaceIds = context.settingsStore.agentsSpaceIds
+        let agentsSpaceIds = context.settingsStore?.agentsSpaceIds ?? []
         for space in switchableSpaces where space.id != tabManager.currentSpaceId && !agentsSpaceIds.contains(space.id) {
             menu.addItem("\(space.icon)  \(space.name)") { [weak self] in
                 guard let self else { return }
@@ -201,7 +201,7 @@ extension MainWindowController {
             }
             open.image = NSWorkspace.shared.icon(forFile: download.destinationPath)
             open.image?.size = NSSize(width: 16, height: 16)
-            let reveal = menu.addItem(String(format: "Show %@ in Finder".localized, download.filename)) { manager.showInFinder(id: id, in: store) }
+            let reveal = unsafe menu.addItem(String(format: "Show %@ in Finder".localized, download.filename)) { manager.showInFinder(id: id, in: store) }
             reveal.keyEquivalentModifierMask = .option
             reveal.isAlternate = true
         }

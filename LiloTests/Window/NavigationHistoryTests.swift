@@ -20,7 +20,7 @@ final class NavigationHistoryTests: XCTestCase {
     /// A window's active tab and its web view, in a public space.
     private func makeTab() throws -> (MainWindowController, WKWebViewTab) {
         let context = browserContext.context
-        let space = try context.spaceManager.createSpace(name: "S", profileId: context.profileManager.createProfile(name: "P").id)
+        let space = try context.spaceManager!.createSpace(name: "S", profileId: context.profileManager!.createProfile(name: "P").id)
         let window = makeTestWindow(context, showing: space.id)
         let tab = try XCTUnwrap(window.createTabStateFirst(url: nil))
         return (window, try XCTUnwrap(window.tabManager.engineTab(for: tab.id)))

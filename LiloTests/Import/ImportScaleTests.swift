@@ -19,8 +19,8 @@ final class ImportScaleTests: XCTestCase {
         home = FileManager.default.temporaryDirectory.appendingPathComponent("import-scale-\(UUID().uuidString)")
         browserContext = try await TemporaryBrowserContext()
         let context = browserContext.context
-        profileId = try context.profileManager.createProfile(name: "P").id
-        activeSpaceId = try context.spaceManager.createSpace(name: "Start", profileId: profileId).id
+        profileId = try context.profileManager!.createProfile(name: "P").id
+        activeSpaceId = try context.spaceManager!.createSpace(name: "Start", profileId: profileId).id
         window = makeTestWindow(context, showing: activeSpaceId)
         window.bridgeRouter.javaScriptSink = { [unowned self] _, arguments, completion in
             let messages = arguments["messages"] as? [[String: Any]] ?? (arguments["message"] as? [String: Any]).map { [$0] } ?? []
@@ -33,9 +33,9 @@ final class ImportScaleTests: XCTestCase {
         // The window's debounced saves (its frame, its Space's tabs) land seconds later, in an import's count if left.
         context.saveWindowsNow()
         window.profileContext?.sessionPersistence?.saveNow()
-        try await context.dbManager.pool(for: profileId).barrierWriteWithoutTransaction { _ in }
-        context.dbManager.globalPool.add(transactionObserver: commits, extent: .observerLifetime)
-        try context.dbManager.pool(for: profileId).add(transactionObserver: commits, extent: .observerLifetime)
+        try await context.dbManager!.pool(for: profileId).barrierWriteWithoutTransaction { _ in }
+        context.dbManager!.globalPool.add(transactionObserver: commits, extent: .observerLifetime)
+        try context.dbManager!.pool(for: profileId).add(transactionObserver: commits, extent: .observerLifetime)
         // The window's own startup events must not count as the import's.
         try await Task.sleep(nanoseconds: 200_000_000)
     }
@@ -63,10 +63,10 @@ final class ImportScaleTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(arc.tabCount, 2000)
         let context = browserContext.context
         for space in arc.spaces {
-            let lilo = try XCTUnwrap(context.spaceManager.spaces.first { $0.name == space.name }, space.name)
+            let lilo = try XCTUnwrap(context.spaceManager!.spaces.first { $0.name == space.name }, space.name)
             XCTAssertEqual(lilo.icon, space.icon, space.name)
             XCTAssertEqual(lilo.color, space.color, space.name)
-            let state = try XCTUnwrap(try SpaceTabStateStore(dbPool: context.dbManager.pool(for: lilo.profileId)).load(spaceId: lilo.id))
+            let state = try XCTUnwrap(try SpaceTabStateStore(dbPool: context.dbManager!.pool(for: lilo.profileId)).load(spaceId: lilo.id))
             XCTAssertNil(state.activeTabId, "nothing is loaded by the import")
             XCTAssertEqual(Self.outline(state.tree.pinned), space.pinnedOutline, "folder nesting, order and contents in \(space.name)")
             XCTAssertEqual(state.tree.unpinned.map(Self.title), space.unpinnedRoots, space.name)
@@ -91,16 +91,16 @@ final class ImportScaleTests: XCTestCase {
         let live = try XCTUnwrap(context.browserState.space(id: activeSpaceId)?.spaceTab.state.tree)
         XCTAssertEqual(live.bookmarked, [], "favorites go with the Arc spaces, not the active space")
         for profile in Self.arcProfiles.dropFirst() {
-            let lilo = try XCTUnwrap(context.spaceManager.spaces.first { $0.name == Self.arcProfileNames[profile] })
-            XCTAssertEqual(try SpaceTabStateStore(dbPool: context.dbManager.pool(for: lilo.profileId)).load(spaceId: lilo.id)?.tree.bookmarked,
+            let lilo = try XCTUnwrap(context.spaceManager!.spaces.first { $0.name == Self.arcProfileNames[profile] })
+            XCTAssertEqual(try SpaceTabStateStore(dbPool: context.dbManager!.pool(for: lilo.profileId)).load(spaceId: lilo.id)?.tree.bookmarked,
                            [], "nor the space named after \(profile)")
         }
 
-        let spaces = context.spaceManager.spaces.count
+        let spaces = context.spaceManager!.spaces.count
         let states = try storedStates()
         let second = await measure("arc rerun", selections, sources)
         XCTAssertEqual(second.summary.filter { $0.kind == .tabs }.map(\.imported), [0, 0, 0])
-        XCTAssertEqual(context.spaceManager.spaces.count, spaces, "a rerun reuses every space")
+        XCTAssertEqual(context.spaceManager!.spaces.count, spaces, "a rerun reuses every space")
         XCTAssertEqual(try storedStates(), states, "a rerun adds nothing twice")
         XCTAssertEqual(context.browserState.space(id: activeSpaceId)?.spaceTab.state.tree.bookmarked.count, live.bookmarked.count)
     }
@@ -223,7 +223,7 @@ final class ImportScaleTests: XCTestCase {
         let processCPU = clock_gettime_nsec_np(CLOCK_PROCESS_CPUTIME_ID) - processStart
         // The live Space takes its share through its session save, two seconds later: made now, it counts as this run's.
         window.profileContext?.sessionPersistence?.saveNow()
-        try? await browserContext.context.dbManager.pool(for: profileId).barrierWriteWithoutTransaction { _ in }
+        try? await browserContext.context.dbManager!.pool(for: profileId).barrierWriteWithoutTransaction { _ in }
         // Lets the bridge flush what the last turn queued.
         try? await Task.sleep(nanoseconds: 50_000_000)
         ticker.invalidate()
@@ -243,16 +243,16 @@ final class ImportScaleTests: XCTestCase {
     /// The production sink of `MainWindowController.setupBridgeLate`, on this test's window and context.
     private func importer() -> BrowserImporter {
         let context = browserContext.context
-        let spaceManager: SpaceManager = context.spaceManager
+        let spaceManager: SpaceManager = context.spaceManager!
         return BrowserImporter(sink: .init(
             activeProfileId: { [unowned self] in profileId },
             activeSpaceId: { [unowned self] in window.tabManager.currentSpaceId },
             tree: { context.browserState.space(id: $0)?.spaceTab.state.tree },
             apply: { [unowned self] in _ = try window.applyBrowserCommand($0) },
-            findProfile: { name in context.profileManager.profiles.first { $0.name == name }?.id },
+            findProfile: { name in context.profileManager!.profiles.first { $0.name == name }?.id },
             createProfile: { [unowned self] name in
-                let id = try context.profileManager.createProfile(name: name).id
-                try context.dbManager.pool(for: id).add(transactionObserver: commits, extent: .observerLifetime)
+                let id = try context.profileManager!.createProfile(name: name).id
+                try context.dbManager!.pool(for: id).add(transactionObserver: commits, extent: .observerLifetime)
                 return id
             },
             findSpace: { name, profileId in spaceManager.spaces(for: profileId).first { $0.name == name }?.id },
@@ -261,13 +261,13 @@ final class ImportScaleTests: XCTestCase {
                 return try spaceManager.createSpace(name: name, icon: icon, color: color, profileId: profileId).id
             },
             loadSpaceState: { spaceId, profileId in
-                try? SpaceTabStateStore(dbPool: context.dbManager.pool(for: profileId)).load(spaceId: spaceId)
+                try? SpaceTabStateStore(dbPool: context.dbManager!.pool(for: profileId)).load(spaceId: spaceId)
             },
             saveSpaceStates: { states, profileId in
-                try SpaceTabStateStore(dbPool: try context.dbManager.pool(for: profileId)).saveMany(states)
+                try SpaceTabStateStore(dbPool: try context.dbManager!.pool(for: profileId)).saveMany(states)
             },
-            historyStore: { HistoryStore(dbPool: try context.dbManager.pool(for: $0)) },
-            faviconStore: { FaviconStore(dbPool: try context.dbManager.pool(for: $0)) },
+            historyStore: { HistoryStore(dbPool: try context.dbManager!.pool(for: $0)) },
+            faviconStore: { FaviconStore(dbPool: try context.dbManager!.pool(for: $0)) },
             setCookies: { _, _ in },
             installExtension: { _, _ in },
             pinnedExtensions: { [] },
@@ -282,8 +282,8 @@ final class ImportScaleTests: XCTestCase {
     private func storedStates() throws -> [UUID: SpaceTabState] {
         let context = browserContext.context
         var states: [UUID: SpaceTabState] = [:]
-        for space in context.spaceManager.spaces {
-            states[space.id] = try SpaceTabStateStore(dbPool: context.dbManager.pool(for: space.profileId)).load(spaceId: space.id)
+        for space in context.spaceManager!.spaces {
+            states[space.id] = try SpaceTabStateStore(dbPool: context.dbManager!.pool(for: space.profileId)).load(spaceId: space.id)
         }
         return states
     }
