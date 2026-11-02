@@ -2240,10 +2240,6 @@
 			"Changed": "Mejoras",
 			"Fixed": "Correcciones"
 		},
-		"art": {
-			"inbox": "Bandeja de entrada",
-			"chat": "Chat del equipo"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Lleva lo que quieras a tu barra lateral.",
@@ -2269,9 +2265,7 @@
 				"headline": "Cada Space, a tu manera.",
 				"description": "Elige vidrio, grano o un color sólido para cada espacio.",
 				"materialTitle": "Cristal, grano o sólido.",
-				"materialDescription": "Elige el material de cada Space en la vista previa de su ventana, en Apariencia: Liquid Glass teñido de su color o un grano fino.",
-				"colorsTitle": "Colores que te siguen.",
-				"colorsDescription": "Toma el color del sitio abierto o de tu fondo, o deja que tu color se vuelva más cálido al atardecer."
+				"materialDescription": "Elige el material de cada Space en la vista previa de su ventana, en Apariencia: Liquid Glass teñido de su color o un grano fino."
 			},
 			"v0100": {
 				"headline": "Empieza de nuevo sin perder nada.",

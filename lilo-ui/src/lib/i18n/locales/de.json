@@ -2240,10 +2240,6 @@
 			"Changed": "Verbesserungen",
 			"Fixed": "Fehlerbehebungen"
 		},
-		"art": {
-			"inbox": "Posteingang",
-			"chat": "Teamchat"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Zieh alles in deine Seitenleiste.",
@@ -2269,9 +2265,7 @@
 				"headline": "Jeder Space ganz nach deinem Geschmack.",
 				"description": "Wähle Glas, Körnung oder eine einfarbige Oberfläche für jeden Space.",
 				"materialTitle": "Glas, Körnung oder einfarbig.",
-				"materialDescription": "Wähle das Material jedes Space in der Fenstervorschau unter Erscheinungsbild: Liquid Glass in seiner Farbe oder feine Filmkörnung.",
-				"colorsTitle": "Farben, die dir folgen.",
-				"colorsDescription": "Übernimm die Farbe der geöffneten Website oder deines Hintergrundbilds, oder lass deine Farbe am Abend wärmer werden."
+				"materialDescription": "Wähle das Material jedes Space in der Fenstervorschau unter Erscheinungsbild: Liquid Glass in seiner Farbe oder feine Filmkörnung."
 			},
 			"v0100": {
 				"headline": "Neu anfangen, nichts verlieren.",

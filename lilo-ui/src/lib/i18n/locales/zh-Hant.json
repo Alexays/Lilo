@@ -2240,10 +2240,6 @@
 			"Changed": "改進",
 			"Fixed": "修正"
 		},
-		"art": {
-			"inbox": "收件匣",
-			"chat": "團隊聊天"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "把一切拖進側邊欄。",
@@ -2269,9 +2265,7 @@
 				"headline": "每個 Space 都有自己的風格。",
 				"description": "為每個空間選擇玻璃、顆粒或純色材質。",
 				"materialTitle": "玻璃、顆粒或純色。",
-				"materialDescription": "在「外觀」的視窗預覽中為每個 Space 選擇材質：以其顏色著色的 Liquid Glass，或細膩的底片顆粒。",
-				"colorsTitle": "隨你而變的顏色。",
-				"colorsDescription": "採用目前網站或背景圖片的顏色，或讓你的顏色在傍晚變暖。"
+				"materialDescription": "在「外觀」的視窗預覽中為每個 Space 選擇材質：以其顏色著色的 Liquid Glass，或細膩的底片顆粒。"
 			},
 			"v0100": {
 				"headline": "重新開始，不遺失任何內容。",

@@ -2232,7 +2232,6 @@
 		"reopen": "À retrouver dans Aide → Nouveautés.",
 		"continue": "Reprendre la navigation",
 		"kinds": { "Breaking": "Changements majeurs", "Added": "Nouveautés", "Changed": "Améliorations", "Fixed": "Corrections" },
-		"art": { "inbox": "Réception", "chat": "Messages" },
 		"releases": {
 			"v0140": {
 				"headline": "Glissez tout dans votre barre latérale.",
@@ -2256,11 +2255,9 @@
 			},
 			"v0110": {
 				"headline": "À chaque Space son style.",
-				"description": "Choisissez du verre, du grain ou de l’uni pour chaque Space.",
+				"description": "Choisissez du verre, du grain ou de l'uni pour chaque Space.",
 				"materialTitle": "Verre, grain ou uni.",
-				"materialDescription": "Choisissez la matière de chaque Space sur l'aperçu de sa fenêtre, dans Apparence : du Liquid Glass teinté de sa couleur, ou un grain fin.",
-				"colorsTitle": "Des couleurs qui vous suivent.",
-				"colorsDescription": "Prenez la couleur du site ouvert ou de votre fond d'écran, ou laissez votre couleur se réchauffer le soir."
+				"materialDescription": "Choisissez la matière de chaque Space sur l'aperçu de sa fenêtre, dans Apparence : du Liquid Glass teinté de sa couleur, ou un grain fin."
 			},
 			"v0100": {
 				"headline": "Un nouveau départ, rien de perdu.",

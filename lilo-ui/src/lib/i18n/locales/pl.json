@@ -2262,10 +2262,6 @@
 			"Changed": "Usprawnienia",
 			"Fixed": "Poprawki"
 		},
-		"art": {
-			"inbox": "Skrzynka odbiorcza",
-			"chat": "Czat zespołu"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Przeciągnij wszystko na pasek boczny.",
@@ -2291,9 +2287,7 @@
 				"headline": "Każdy Space po twojemu.",
 				"description": "Wybierz szkło, ziarno lub jednolitą powierzchnię dla każdej przestrzeni.",
 				"materialTitle": "Szkło, ziarno lub jednolity.",
-				"materialDescription": "Wybierz materiał każdego Space w podglądzie jego okna w Wyglądzie: Liquid Glass zabarwione jego kolorem lub drobne ziarno.",
-				"colorsTitle": "Kolory, które za tobą podążają.",
-				"colorsDescription": "Przyjmij kolor otwartej strony lub tapety albo pozwól, by twój kolor ocieplał się wieczorem."
+				"materialDescription": "Wybierz materiał każdego Space w podglądzie jego okna w Wyglądzie: Liquid Glass zabarwione jego kolorem lub drobne ziarno."
 			},
 			"v0100": {
 				"headline": "Nowy start bez utraty czegokolwiek.",

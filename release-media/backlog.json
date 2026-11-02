@@ -38,7 +38,7 @@
         "Lilo's app icon dresses up for Halloween, Christmas, New Year, Valentine's Day, Lunar New Year, Easter, the summer solstice and its own birthday, in a version drawn for each icon. Turn it off in Settings > Appearance > Seasonal icon."
       ],
       "alt": {
-        "en": "Lilo’s app icons dressed for the holidays.",
+        "en": "Lilo's app icons dressed for the holidays.",
         "fr": "Les icônes de Lilo aux couleurs des fêtes."
       }
     },
@@ -50,8 +50,8 @@
         "The bar above the page, or the tabs on top, takes the site's color, gradients and images included, and slides with the page as one card. The window keeps a border all around, the traffic lights stay in the same place in every layout, and with the sidebar on the left its toggle sits just before the back arrow."
       ],
       "alt": {
-        "en": "The address toolbar takes the page’s color.",
-        "fr": "La barre d’adresse prend la couleur de la page."
+        "en": "The address toolbar takes the page's color.",
+        "fr": "La barre d'adresse prend la couleur de la page."
       }
     },
     "0.11.1": {
@@ -67,7 +67,7 @@
       ],
       "alt": {
         "en": "Choose glass, grain or solid for each Space.",
-        "fr": "Choisissez du verre, du grain ou de l’uni pour chaque Space."
+        "fr": "Choisissez du verre, du grain ou de l'uni pour chaque Space."
       }
     },
     "0.10.1": {
@@ -120,7 +120,7 @@
       ],
       "alt": {
         "en": "Keep call controls close while you browse.",
-        "fr": "Gardez les commandes d’appel à portée de main."
+        "fr": "Gardez les commandes d'appel à portée de main."
       }
     },
     "0.6.0": {
@@ -198,7 +198,7 @@
     "0.2.0": {
       "kind": "video",
       "feature": "tab-edges",
-      "reason": "Moving tabs between the window’s four edges is a major spatial interaction.",
+      "reason": "Moving tabs between the window's four edges is a major spatial interaction.",
       "notes": [
         "Put your tabs on any edge of the window: left, right, top or bottom, with the address with the tabs or above the page. Pick it in Settings, during the setup, from the command bar, or by holding the sidebar's top and dragging it to an edge."
       ],

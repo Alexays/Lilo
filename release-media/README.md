@@ -1,6 +1,6 @@
 # Release media
 
-HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What’s New. The archive covers 33 releases: eight interaction films, six screenshots and nineteen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader’s language and label the retained English-language illustrations.
+HyperFrames produces the MP4 announcements and PNG screenshots shared by the public changelog and native What's New. The archive covers 33 releases: eight interaction films, six screenshots and nineteen text-only maintenance releases. Each media decision names exact source notes in `backlog.json`. Visible captions use the reader's language and label the retained English-language illustrations.
 
 ## Native sources and authoring
 
@@ -31,6 +31,6 @@ Each `quality.json` binds to the exact `render.json`, source receipts, recipes a
 
 ## Sound
 
-The soundtrack is **Week 37–Schmoovin** by Abstraction/Tallbeard Studios, licensed CC0. Attribution is optional; films have no music credit overlay. The original audio, creator’s waiver, source URL and checksums are committed under `public/audio/music.*`. The workflow uses committed assets and needs no music account or download.
+The soundtrack is **Week 37 - Schmoovin** by Abstraction/Tallbeard Studios, licensed CC0. Attribution is optional; films have no music credit overlay. The original audio, creator's waiver, source URL and checksums are committed under `public/audio/music.*`. The workflow uses committed assets and needs no music account or download.
 
 Editorial click/transition sounds retain their CC0 provenance in `public/audio/README.md`. They explain visible actions and are not represented as sounds made by Lilo itself. License notices for dependencies and referenced motion techniques remain in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -2240,10 +2240,6 @@
 			"Changed": "Verbeteringen",
 			"Fixed": "Oplossingen"
 		},
-		"art": {
-			"inbox": "Inkomend",
-			"chat": "Teamchat"
-		},
 		"releases": {
 			"v0140": {
 				"headline": "Sleep alles naar je zijbalk.",
@@ -2269,9 +2265,7 @@
 				"headline": "Elke Space helemaal van jou.",
 				"description": "Kies glas, korrel of een effen kleur voor elke ruimte.",
 				"materialTitle": "Glas, korrel of effen.",
-				"materialDescription": "Kies het materiaal van elke Space in de venstervoorvertoning onder Weergave: Liquid Glass in zijn kleur, of een fijne filmkorrel.",
-				"colorsTitle": "Kleuren die je volgen.",
-				"colorsDescription": "Neem de kleur van de geopende site of van je achtergrond, of laat je kleur 's avonds warmer worden."
+				"materialDescription": "Kies het materiaal van elke Space in de venstervoorvertoning onder Weergave: Liquid Glass in zijn kleur, of een fijne filmkorrel."
 			},
 			"v0100": {
 				"headline": "Opnieuw beginnen, niets kwijt.",
