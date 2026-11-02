@@ -91,6 +91,37 @@ test("nonvisual performance changes need no artificial media", () => {
       assert.equal(chooseMedia("0.15.0", `### ${kind}\n\n- ${note}\n`, catalog).kind, "none");
 });
 
+for (const note of [
+  "Opening a new window uses less CPU.",
+  "Rendering a web page uses less memory.",
+  "The sidebar consumes less memory.",
+  "The preview pane requires fewer CPU cycles.",
+])
+  test(`routine Changed optimization stays text-only: ${note}`, () => {
+    assert.equal(chooseMedia("0.15.0", `### Changed\n\n- ${note}\n`, catalog).kind, "none");
+  });
+
+test("Added and Breaking interface changes cannot use the Changed optimization exemption", () => {
+  for (const kind of ["Added", "Breaking"])
+    assert.throws(
+      () => chooseMedia("0.15.0", `### ${kind}\n\n- A preview pane uses less memory.\n`, catalog),
+      /blocked.*no genuine native capture/,
+    );
+});
+
+test("resource reductions do not hide an additional interface behavior", () => {
+  for (const kind of ["Added", "Changed", "Breaking"])
+    for (const note of [
+      "A split view shows two documents and uses less memory.",
+      "A preview pane shows cached documents. It uses less CPU.",
+      "A separate window compares documents while consuming less memory.",
+    ])
+      assert.throws(
+        () => chooseMedia("0.15.0", `### ${kind}\n\n- ${note}\n`, catalog),
+        /blocked.*no genuine native capture/,
+      );
+});
+
 test("a rendering-tool name cannot hide an unsupported product interface", () => {
   assert.throws(
     () =>

@@ -60,9 +60,17 @@ function bullets(markdown) {
   return result;
 }
 
-function internalChange(text) {
+function internalChange({ kind, text }) {
   if (
     /^(?:\[release tooling\]|Release highlights use\b|Release media\b|Changelog (?:media|videos?)\b)/i.test(
+      text,
+    )
+  )
+    return true;
+  if (
+    kind === "Changed" &&
+    !/\b(?:and|but|while|which|that)\b/i.test(text) &&
+    /^[^.!?;:\n]+\b(?:uses?|consumes?|needs?|requires?) (?:less|fewer) (?:CPU(?: time| cycles)?|memory)\.?$/i.test(
       text,
     )
   )
@@ -101,7 +109,7 @@ export function chooseMedia(version, markdown, catalog) {
   const changes = bullets(markdown).filter((note) =>
     ["Added", "Changed", "Breaking"].includes(note.kind),
   );
-  const visual = changes.filter((note) => !internalChange(note.text));
+  const visual = changes.filter((note) => !internalChange(note));
   const unsupported = visual.find(
     (note) =>
       !capabilities.some(([, pattern]) => pattern.test(note.text)) &&
