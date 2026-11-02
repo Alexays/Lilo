@@ -194,7 +194,6 @@ try {
       console.log(`Quality-gated ${version}: ${entry.kind} ${entry.feature}`);
       continue;
     }
-    await rm(path.join(folder, "quality.json"), { force: true });
     const project = path.join(root, "../build/release-media/projects", version);
     const report = {
       release: version,
@@ -206,7 +205,9 @@ try {
       strictCompositionCheck: true,
       cutoutsVerified: false,
     };
-    const composition = await json(path.join(project, "check.json"));
+    const composition = await json(path.join(project, "check.json")).catch(() => {
+      throw Error(`Render ${version} first: make release-media-render RELEASE=${version}`);
+    });
     if (
       composition.ok !== true ||
       composition.strict !== true ||
