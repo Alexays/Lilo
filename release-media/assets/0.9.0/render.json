@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "engine": "hyperframes",
   "release": "0.9.0",
   "kind": "video",
   "feature": "history",
@@ -9,20 +10,239 @@
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 288,
-  "posterFrame": 253,
-  "renderMilliseconds": 5742.673458000001,
+  "frames": 900,
+  "posterFrame": 840,
+  "renderMilliseconds": 40724.321916,
   "hashes": {
-    "history.png": "ae77fdf205fa899c6e9b394ab281d3b609b75fa6d96eccaa88d72599b591da43",
-    "history.mp4": "1584eb091934e74f7e8b396bf3b800fcad5559f2b1c3590013fa8572b01ed6e9"
+    "history.png": "cdbe2f274efb77415a9b2ea83fbf3ef79341c70d92cafa225106ab99008439c4",
+    "history.mp4": "02ad63b223825747ba856acb0a8d0226b6d984819fa73d13109566ca92275334"
   },
   "recipeHashes": {
-    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
-    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
-    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
-    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+    "render.mjs": "b18a7057e55ae806beef77787e954e21847e36948c3c9d0d1d8b4594f22b2037",
+    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
+    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
+    "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
+    "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
+    "hyperframes/archive/0.9.0/compositions/ending.html": "e32f0e17b06173d9f4377d9de5d7fd9f5f8863e11a61f48ca2b71cf2378ceb73",
+    "hyperframes/archive/0.9.0/compositions/feature.html": "13f926e47e5dccf98de88e87bca3ba9a668e204ac74ca1e4184bf3d8ccb31bbd",
+    "hyperframes/archive/0.9.0/index.html": "03adf173a0818ea539fbd0acf10a94b5f65d86dba0bdcea198ab490acbf4b2f3",
+    "hyperframes/archive/0.9.0/metadata.json": "06e48e5499d867b2d3fc90147dba8d784d60b96089a91c998965f3c0958c5930",
+    "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
+    "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
   },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.9.0/capture.json",
+      "sha256": "8181492d828b12396f218f41890906cb6ed4aef219e17d6c30af40c45f4d234f",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "8c534c42e97bfcdd9a2d2cead5f58eb687b3b0f0"
+    }
+  ],
   "nativeReceiptSha256": "8181492d828b12396f218f41890906cb6ed4aef219e17d6c30af40c45f4d234f",
-  "approved": false,
-  "publication": "blocked"
+  "cutouts": [
+    {
+      "file": "search-0.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "43d071719e2f627806ebe482f5d837b19c98d7d7229ba75c9c85d5175ad43e06",
+      "afterRgbSha256": "43d071719e2f627806ebe482f5d837b19c98d7d7229ba75c9c85d5175ad43e06",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-0.png"
+    },
+    {
+      "file": "search-1.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "7a4c70a9dabe768304ab67ee15015e280250d42f0a0e0f097d0844f058240eed",
+      "afterRgbSha256": "7a4c70a9dabe768304ab67ee15015e280250d42f0a0e0f097d0844f058240eed",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-1.png"
+    },
+    {
+      "file": "search-2.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "b17f1402acc1ad293d8fdc8801e1f3474063b78ca4c4e97be112cc3b1f7c85b0",
+      "afterRgbSha256": "b17f1402acc1ad293d8fdc8801e1f3474063b78ca4c4e97be112cc3b1f7c85b0",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-2.png"
+    },
+    {
+      "file": "search-3.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "fd9668d7dad38df81624a7292b9ecb72075e9bc0d219b98007076a0bdd57ecca",
+      "afterRgbSha256": "fd9668d7dad38df81624a7292b9ecb72075e9bc0d219b98007076a0bdd57ecca",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-3.png"
+    },
+    {
+      "file": "search-4.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "d3ec7a609912ad48f3c589f42ff704871e28e464a4c828fedfc8ae8ed285db5f",
+      "afterRgbSha256": "d3ec7a609912ad48f3c589f42ff704871e28e464a4c828fedfc8ae8ed285db5f",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-4.png"
+    },
+    {
+      "file": "search-5.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "8ce4b545e9084f804cd7ffbd67a4043ed757f70d4e581696957fc49fb4ae0a3b",
+      "afterRgbSha256": "8ce4b545e9084f804cd7ffbd67a4043ed757f70d4e581696957fc49fb4ae0a3b",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-5.png"
+    },
+    {
+      "file": "search-6.png",
+      "width": 1536,
+      "height": 256,
+      "shape": {
+        "rect": [
+          48,
+          48,
+          1440,
+          160
+        ],
+        "radius": 48
+      },
+      "beforeRgbSha256": "7ea57affd73d1ac2a49692a3d8d691938821c9a3c8c48e0c8cb1c74df1fa561e",
+      "afterRgbSha256": "7ea57affd73d1ac2a49692a3d8d691938821c9a3c8c48e0c8cb1c74df1fa561e",
+      "beforeAlphaSha256": "c97fce784428a2e10cd6d4ef97ccc756f2e4c1b146a9b9dc5415d4e3e245b70a",
+      "afterAlphaSha256": "9697625ee516c87090609cb57d856e7f7cb9756907c523935c6f239eb44a0120",
+      "transparentPixels": 164664,
+      "partialPixels": 288,
+      "opaquePixels": 228264,
+      "source": "public/native/0.9.0/search-6.png"
+    },
+    {
+      "file": "filtered-rows.png",
+      "width": 2400,
+      "height": 672,
+      "shape": {
+        "rect": [
+          0,
+          0,
+          2400,
+          672
+        ],
+        "radius": 112
+      },
+      "beforeRgbSha256": "e0fdf4e09c4f43c29d2cf7ca510907cb9868c4d5c9215d70fea2d3a84a973688",
+      "afterRgbSha256": "e0fdf4e09c4f43c29d2cf7ca510907cb9868c4d5c9215d70fea2d3a84a973688",
+      "beforeAlphaSha256": "d9f0bbb1c5e85e124aa314a0db604221be80f04d6a30dec20cd259534a9431bd",
+      "afterAlphaSha256": "145a2b9ccf3b1b3a068e0cd979d26c6e887d7bf53d783533a8ddfdc74a637a07",
+      "transparentPixels": 10448,
+      "partialPixels": 684,
+      "opaquePixels": 1601668,
+      "source": "public/native/0.9.0/filtered-rows.png"
+    }
+  ],
+  "publication": "quality-gated",
+  "strictCompositionCheck": true,
+  "music": {
+    "file": "music.ogg",
+    "title": "Week 37 - Schmoovin",
+    "artist": "Abstraction / Tallbeard Studios",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attributionRequired": false,
+    "commercialUse": true,
+    "modificationAllowed": true,
+    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
+    "sourceArchive": "music-loop-bundle-2026-q3.zip",
+    "archiveUploadId": 19538393,
+    "sourceTrack": "Week 37 - Schmoovin.ogg",
+    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "licenseFile": "music.LICENSE.txt",
+    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "verifiedAt": "2026-11-02",
+    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
+  }
 }

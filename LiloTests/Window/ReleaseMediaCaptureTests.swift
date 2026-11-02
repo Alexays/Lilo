@@ -134,7 +134,7 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         let capture = try await ReleaseMediaCapture(version: "0.4.0", feature: "updates")
         defer { capture.close() }
         try await capture.page()
-        capture.controller.bridgeRouter.send(event: "updateReady", data: ["version": "0.4.0"])
+        capture.controller.bridgeRouter.send(event: "updateReady", data: ["version": capture.version])
         try await capture.wait("actual downloaded-update card appears") { await capture.exists(".update-card") }
         try await capture.region(".update-dock", name: "updates", margin: 10)
         try capture.finish(checks: ["fixtureInput": "Synthetic updateReady event; no real update downloaded or installed", "medium": "screenshot"])
@@ -209,6 +209,48 @@ final class ReleaseMediaCaptureTests: XCTestCase {
         try await capture.page(title: "A calmer workspace", color: "#553f69")
         try await capture.window("site-colors")
         try capture.finish(checks: ["addressPlacement": "page", "ownedSiteThemeColor": "#553f69", "medium": "screenshot"])
+    }
+
+    func testAddressBarAnnouncement() async throws {
+        let capture = try await ReleaseMediaCapture(version: "0.8.0-announcement", feature: "address-bar")
+        defer { capture.close() }
+        capture.context.settingsStore.set("addressPlacement", value: "page")
+        capture.controller.applyStoredTabLayoutEverywhere()
+        let tab = try await capture.page(title: "Field guide", color: "#553f69")
+        let engine = try XCTUnwrap(capture.controller.tabManager.engineTab(for: tab.id))
+        try await capture.wait("native page toolbar is visible") {
+            let address = try? await capture.chrome.evaluateJavaScript("document.documentElement.dataset.address")
+            return capture.controller.tabLayout.address == .page && address as? String == "page"
+        }
+        try await capture.window("address-visible")
+        let visibleHeight = capture.controller.contentContainerView.frame.height
+        capture.controller.openSettings(nil)
+        try await capture.wait("native Settings navigation opens") { await capture.exists(".section-nav-button") }
+        try await capture.click(".section-nav-button", text: "Appearance")
+        let selector = ".ui-list-row:has(.ui-segmented[aria-label='Address'])"
+        try await capture.wait("Appearance contains the real address setting") { await capture.exists(selector) }
+        try await capture.region(selector, name: "setting-visible", margin: 10)
+        try await capture.click(".ui-segmented[aria-label='Address'] button", text: "Hidden")
+        try await capture.wait("Hidden persists through the real Settings bridge") {
+            capture.context.settingsStore.tabLayout.address == .hidden && capture.controller.tabLayout.address == .hidden
+        }
+        try await capture.region(selector, name: "setting-hidden", margin: 10)
+        try await capture.click(".section-nav-panel .panel-close")
+        try await capture.wait("native address is hidden and the page remains loaded") {
+            let address = try? await capture.chrome.evaluateJavaScript("document.documentElement.dataset.address")
+            let title = try? await engine.wkWebView.evaluateJavaScript("document.title")
+            return address as? String == "hidden" && title as? String == "Field guide"
+        }
+        try await capture.window("address-hidden")
+        let hiddenHeight = capture.controller.contentContainerView.frame.height
+        XCTAssertGreaterThan(hiddenHeight, visibleHeight)
+        capture.controller.focusChrome()
+        capture.controller.bridgeRouter.send(event: "openCommandBar", data: ["newTab": false])
+        try await capture.wait("command bar remains available with the address hidden") { await capture.exists(".command-bar") }
+        try await capture.region(".command-bar", name: "command-bar", scale: 4, margin: 0)
+        try capture.finish(checks: ["actualSettingsBridge": true, "addressPlacementBefore": "page", "addressPlacementAfter": "hidden",
+                                    "pageTitle": "Field guide", "pageHeightBefore": visibleHeight, "pageHeightAfter": hiddenHeight,
+                                    "commandBarWithAddressHidden": true])
     }
 
     func testCallControlsWhileBrowsing() async throws {

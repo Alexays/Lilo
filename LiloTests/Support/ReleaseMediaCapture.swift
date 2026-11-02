@@ -23,13 +23,17 @@ final class ReleaseMediaCapture {
 
     init(version: String, feature: String) async throws {
         let env = ProcessInfo.processInfo.environment
+        let requested = env["LILO_RELEASE_MEDIA_VERSION", default: ""]
+        let fixtureVersion = env["LILO_RELEASE_MEDIA_FIXTURE_VERSION"] ?? requested
         guard let directory = env["LILO_RELEASE_MEDIA_OUT"],
-              env["LILO_RELEASE_MEDIA_VERSION", default: ""].isEmpty || env["LILO_RELEASE_MEDIA_VERSION"] == version else {
+              fixtureVersion.isEmpty || fixtureVersion == version || "\(fixtureVersion)-announcement" == version else {
             throw XCTSkip("Opt-in native release media capture")
         }
-        self.version = version
+        let addressCapture = version == "0.8.0-announcement"
+        self.version = requested.isEmpty ? (addressCapture ? "0.8.0" : version) : requested
         self.feature = feature
-        output = URL(fileURLWithPath: directory).appendingPathComponent(version)
+        let releaseOutput = URL(fileURLWithPath: directory).appendingPathComponent(self.version)
+        output = addressCapture ? releaseOutput.appendingPathComponent("address-bar") : releaseOutput
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try? FileManager.default.removeItem(at: output.appendingPathComponent("capture.json"))
         try? FileManager.default.removeItem(at: output.appendingPathComponent("failure.json"))

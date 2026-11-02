@@ -1,20 +1,41 @@
 {
   "release": "0.11.0",
   "kind": "video",
+  "passed": true,
+  "renderSha256": "8f8b9ad343cbdad8885c00011527c1d208495c89ebd544ec52b66d783600f24f",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "8f0bc0214868bf8db6e4dfeafe38538f2e953cb11861e65b519b744164f972eb",
-  "publication": "blocked",
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "solid-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    },
+    {
+      "file": "glass-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    },
+    {
+      "file": "grain-controls.png",
+      "rgbPreserved": true,
+      "transparentPixels": 12028
+    }
+  ],
   "decode": true,
-  "width": 1920,
-  "height": 1080,
   "fps": 60,
-  "audioPeakDb": -15.5,
-  "posterSSIM": 0.994401,
+  "frames": 1080,
+  "audio": {
+    "integratedLoudnessLUFS": -16,
+    "truePeakDbFS": -2.5
+  },
   "motion": {
-    "measuredFrames": 395,
-    "movingFrameRatio": 0.3240506329113924,
-    "longestStillSeconds": 1.5833333333333333,
-    "largestLumaChange": 14.6517
-  }
+    "measuredFrames": 1079,
+    "movingFrameRatio": 0.3707136237256719,
+    "longestStillSeconds": 2.5833333333333335,
+    "largestLumaChange": 8.21494
+  },
+  "posterSSIM": 0.999005
 }

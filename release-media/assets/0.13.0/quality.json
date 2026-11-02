@@ -1,8 +1,11 @@
 {
   "release": "0.13.0",
   "kind": "screenshot",
+  "passed": true,
+  "renderSha256": "d4cf65bc7c2d99b3a34626f7c8c36cd011ad3b47c2aa2ebc0bb8241a2b62ff96",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "2643f6a25c3da70c8988014b1d1005aeec124e13dd5d775270ecd1e904f701bf",
-  "publication": "blocked"
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": []
 }

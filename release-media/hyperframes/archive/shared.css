@@ -1,0 +1,20 @@
+@font-face { font-family: LiloInter; src: url('assets/fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: block; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #eeedf2; }
+body { font-family: LiloInter, sans-serif; -webkit-font-smoothing: antialiased; }
+#main { position: relative; width: 1920px; height: 1080px; overflow: hidden; color: #26232f; }
+#world { position: absolute; inset: 0; background: #eeedf2; }
+.headline-clip { position: absolute; left: 150px; top: 70px; width: 1640px; height: 200px; }
+.headline { margin: 0; font-size: 132px; line-height: 1.08; font-weight: 660; letter-spacing: -6px; }
+.native { position: relative; width: 100%; height: 100%; }
+.pixels { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.cursor-clip { position: absolute; inset: 0; pointer-events: none; }
+.cursor { position: absolute; left: 0; top: 0; width: 64px; height: 86px; }
+.cursor svg { display: block; position: absolute; left: -5px; top: -5px; transform-origin: 5px 5px; }
+.ending-clip { position: absolute; inset: 0; pointer-events: none; z-index: 100; }
+#end-wipe { position: absolute; inset: 0; background: #eeedf2; }
+#end-lockup { position: absolute; left: 300px; top: 240px; width: 1320px; height: 240px; display: flex; justify-content: center; align-items: center; gap: 58px; }
+#end-mark { width: 204px; height: 204px; display: block; }
+#end-brand { margin: 0; font-size: 182px; font-weight: 650; line-height: 1.1; letter-spacing: -9px; }
+#end-version { position: absolute; left: 150px; top: 510px; width: 1620px; margin: 0; text-align: center; font-size: 96px; line-height: 1.1; color: #776692; font-weight: 500; letter-spacing: -4px; }
+#end-caption { position: absolute; left: 140px; top: 730px; width: 1640px; margin: 0; text-align: center; font-size: 112px; line-height: 1.1; font-weight: 640; letter-spacing: -5px; }

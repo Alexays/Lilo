@@ -1,20 +1,91 @@
 {
   "release": "0.8.0",
   "kind": "video",
+  "passed": true,
+  "renderSha256": "90d6dd7f386ab97bbd2a52585110d97e5367bccefa1fab5c20cc996bbbcfa012",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "ea0168868e09fe766210ca67c49b46ab6f679a5b64d1ec0686896203bf0e52ba",
-  "publication": "blocked",
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "picker.png",
+      "rgbPreserved": true,
+      "transparentPixels": 13692
+    },
+    {
+      "file": "match.png",
+      "rgbPreserved": true,
+      "transparentPixels": 5268
+    },
+    {
+      "file": "sharing.png",
+      "rgbPreserved": true,
+      "transparentPixels": 1848
+    },
+    {
+      "file": "switched.png",
+      "rgbPreserved": true,
+      "transparentPixels": 1848
+    },
+    {
+      "file": "search-0.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-1.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-2.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-3.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-4.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "search-5.png",
+      "rgbPreserved": true,
+      "transparentPixels": 924
+    },
+    {
+      "file": "share-button.png",
+      "rgbPreserved": true,
+      "transparentPixels": 74264
+    },
+    {
+      "file": "setting-before.png",
+      "rgbPreserved": true,
+      "transparentPixels": 273428
+    },
+    {
+      "file": "setting-after.png",
+      "rgbPreserved": true,
+      "transparentPixels": 273428
+    }
+  ],
   "decode": true,
-  "width": 1920,
-  "height": 1080,
   "fps": 60,
-  "audioPeakDb": -12.6,
-  "posterSSIM": 0.997323,
+  "frames": 1560,
+  "audio": {
+    "integratedLoudnessLUFS": -16.1,
+    "truePeakDbFS": -2.5
+  },
   "motion": {
-    "measuredFrames": 395,
-    "movingFrameRatio": 0.3949367088607595,
-    "longestStillSeconds": 1.5,
-    "largestLumaChange": 5.07071
-  }
+    "measuredFrames": 1559,
+    "movingFrameRatio": 0.37459910198845414,
+    "longestStillSeconds": 2.85,
+    "largestLumaChange": 38.0682
+  },
+  "posterSSIM": 0.999007
 }

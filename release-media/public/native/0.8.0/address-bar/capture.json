@@ -1,0 +1,91 @@
+{
+  "appBuild" : "31",
+  "appVersion" : "0.14.1",
+  "assets" : [
+    {
+      "file" : "address-visible.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "9e80f11b70e859a0e7ca566e46737fa22a43e68baaefb6e042b4d0739b06c9c4",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "setting-visible.png",
+      "height" : 600,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        292,
+        693,
+        920,
+        75
+      ],
+      "sha256" : "79972982c56060056ccb1dfb029eb963579bc74c8961500b67aee5844156846f",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 7360
+    },
+    {
+      "file" : "setting-hidden.png",
+      "height" : 600,
+      "pixelsPerPoint" : 8,
+      "rectPoints" : [
+        292,
+        657,
+        920,
+        75
+      ],
+      "sha256" : "9c4b5ac9a550abe000e190f89a3c7fa0bb75cec36797d3345292312110571079",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 7360
+    },
+    {
+      "file" : "address-hidden.png",
+      "height" : 1600,
+      "pixelsPerPoint" : 2,
+      "rectPoints" : [
+        116,
+        108,
+        1280,
+        800
+      ],
+      "sha256" : "3d23a18630a2f29a63bea761538cde79b9fc77319e38f3feb95a59d48f52ae8f",
+      "tool" : "ScreenCaptureKit desktop-independent native window",
+      "width" : 2560
+    },
+    {
+      "file" : "command-bar.png",
+      "height" : 1236,
+      "pixelsPerPoint" : 4,
+      "rectPoints" : [
+        460,
+        64,
+        620,
+        309
+      ],
+      "sha256" : "0d7d64d0ed28155ffa508be5a410c256b04be361924240f74ae9a4b239f7487a",
+      "tool" : "WKWebView.takeSnapshot",
+      "width" : 2480
+    }
+  ],
+  "capturedAt" : "2026-11-02T08:04:45Z",
+  "checks" : {
+    "actualSettingsBridge" : true,
+    "addressPlacementAfter" : "hidden",
+    "addressPlacementBefore" : "page",
+    "commandBarWithAddressHidden" : true,
+    "pageHeightAfter" : 784,
+    "pageHeightBefore" : 748,
+    "pageTitle" : "Field guide"
+  },
+  "feature" : "address-bar",
+  "fixture" : "Disposable profile, synthetic example.com content and owned gradient backdrop; no personal data",
+  "productSourceCommit" : "afd2b5a0cf88de0155ae5cdf124a4ac97a4a91dc",
+  "release" : "0.8.0-announcement",
+  "schemaVersion" : 1
+}

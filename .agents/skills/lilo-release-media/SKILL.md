@@ -1,27 +1,31 @@
 ---
 name: lilo-release-media
-description: Choose and produce release media from genuine native Lilo captures, using video, a screenshot, or no media according to the change.
+description: Author and quality-gate HyperFrames announcements or screenshots from genuine native Lilo captures.
 ---
 
 # Lilo release media
 
-Read the exact release notes and changed implementation before choosing a subject. Routine fixes get `none`; finished visual states such as seasonal icons get a screenshot; a new interaction worth demonstrating gets a short film. Pick one important subject per release. Record the decision and its exact source note in `release-media/backlog.json`.
+Use the exact release notes and changed implementation to choose the story. An interaction gets a HyperFrames film; a finished visual state gets a screenshot; routine fixes stay text-only. Never substitute a screenshot for a failed required film. `make release-media-author` checks known capture capabilities and exact source notes, including pending changes. Unknown visual work fails closed: add its native capture and storyboard in the feature pull request, so release preparation needs no editorial work after merge.
 
-Use the compiled native app with a disposable profile, owned fixture pages and no real user data. Extend the concrete native cases in `LiloTests/Window/ReleaseMediaCaptureTests.swift` and the literal JSX compositions in `release-media/src/`. Never recreate browser controls in React or the website demo. Preserve old sources and their actual app version separately from the release being illustrated.
+Capture the compiled native app with a disposable profile, owned example.com pages and synthetic call handlers. Extend concrete cases in `LiloTests/Window/ReleaseMediaCaptureTests.swift`. Keep actual app version/build/source commit in every receipt, separately from the release being illustrated. Never recreate browser controls or use the website demo as evidence.
 
-Run through Make:
+Author literal editable HTML scenes under `release-media/hyperframes/`, with one paused GSAP timeline per composition, registered after synchronous construction. Use local assets, stable timed clip IDs, explicit durations and native state changes. No timers, unseeded randomness or network-fetched UI. Follow the approved 0.8.0 film for readable typography, deliberate transitions and pointer actions. Its share-only variant avoids announcing the address-bar feature in an unrelated release.
 
-1. `make ui-build project-sync`
-2. `make release-media-capture RELEASE=x.y.z` — assert the native feature's result before writing a receipt.
-3. `make release-media-import RELEASE=x.y.z`
-4. `make release-media-render RELEASE=x.y.z` — lossless PNG, or 1080p60 H.264/AAC MP4 with purposeful, licensed sound.
-5. `make release-media-check release-media-test release-media-inspect`
-6. Inspect the encoded frames at 342px and play the films in the actual English and French changelog at desktop/mobile widths. Use `make release-media-review RELEASE=x.y.z` for native What’s New playback, seeking, sound and still-image validation. Restore `make ui-build` afterward.
+Use real source geometry for pointer targets and transparent PNG cutouts. Preserve captured RGB bytes and canvas sizes; change only alpha outside the native interface. Keep the UI’s own surfaces and complete window/page content. Check physical pixel density before enlargement. No CSS blur or 3D tilt on native UI. Titles settle while the product acts; do not add idle motion to satisfy a gate.
 
-Crop to the feature; check native pixel density before enlarging it. Prefer native states and deliberate framing over a long recording of setup. Keep copy outside the media. Support keyboard controls, sound, replay and explicit play; do no work while offscreen. A screenshot never substitutes for a failed required film.
+Use Make:
 
-60 fps alone does not make a film fluid. Write the action first: approach the control, press, show the native response, then let the result settle. Use eased camera moves and masked native-pixel reveals; keep one subject moving at a time. Capture intermediate native input values for typing. Record geometry after native layout settles, and use it for pointer targets and row insertions. Never snap between differently framed screenshots or fill the timeline with long frozen holds. End on a clean, readable state and choose that state for the poster.
+1. `make release-media-author`
+2. `make release-media-capture RELEASE=x.y.z FIXTURE=a.b.c`
+3. `make release-media-import release-media-render RELEASE=x.y.z`
+4. `make release-media-check release-media-test release-media-inspect`
+5. Review encoded frames at 342px, play the English/French changelog at desktop/mobile widths, and check native What’s New using `make release-media-review RELEASE=x.y.z`. Restore `make ui-build` after the native preview.
+6. `make validate` and the release-media CI job must pass.
 
-The encoded-motion gate requires at least 20% changing frames, no near-still run over 1.75 seconds, and bounded changes between adjacent frames. These technical limits catch slideshow and hard-cut regressions; visual review still decides whether the movement explains the feature. The motion references and their license are documented in `release-media/README.md` and `THIRD_PARTY_NOTICES.md`.
+`make release-media-ci RELEASE=x.y.z` runs selection, fresh native capture, import, render, inspection and publication checks. Tagged CI captures the exact source commit and app version before signing; deployment uses that run’s validated website artifact. A failed audit, missing capability, broken capture, stale hash or failed media check blocks publication. Preserve a catalog publication kill switch; never re-enable it merely to make a workflow green.
 
-`make validate` and the release-media CI job must pass. The publication flag stays blocked until the requested quality review is resolved; never change it merely to make the release workflow green.
+Films use lossless PNG capture and 1080p60 H.264/AAC. Strict HyperFrames checks cover structure, runtime, layout, contrast, motion and audio. Encoded checks verify frame count, decode, sound, bounded motion, native/recipe/output hashes, cutout RGB preservation and poster similarity. Announcement reading holds may last up to three seconds; signal checks complement visual review rather than judging artistic quality.
+
+Use the committed CC0 soundtrack and licensed editorial Foley. Music rights and hashes live in `release-media/public/audio/music.license.json`; attribution is optional, so no music credit overlay is needed. Never remove a required credit from a different track. Keep sound controls, explicit play, keyboard access and offscreen pause in both compact players.
+
+See `release-media/README.md` and `docs/RELEASING.md` for production commands and Alexays’s one-time Cloudflare release-environment setup.

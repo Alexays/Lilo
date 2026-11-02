@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "engine": "hyperframes",
   "release": "0.2.0",
   "kind": "video",
   "feature": "tab-edges",
@@ -9,20 +10,62 @@
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 432,
-  "posterFrame": 380,
-  "renderMilliseconds": 9556.756708,
+  "frames": 900,
+  "posterFrame": 840,
+  "renderMilliseconds": 40790.340041999996,
   "hashes": {
-    "tab-edges.png": "73d937c583c8d356a2ea3bb5ed97e6d9cc6a99f30122bceff7014248f555ecd7",
-    "tab-edges.mp4": "e0b5d31d57ead7dda689c8a1b5596e7569e505b3bb394b81ade9eee6c6cdbfa6"
+    "tab-edges.png": "5bfa1af69530aff9a621cdea2c26833383b63c84d048d2ea34c95ba5efd0e85b",
+    "tab-edges.mp4": "f147e3bbc9d87f3461f70e3cb5f091dd4c5f09951f102ddd41f0b860b6f40482"
   },
   "recipeHashes": {
-    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
-    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
-    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
-    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+    "render.mjs": "b18a7057e55ae806beef77787e954e21847e36948c3c9d0d1d8b4594f22b2037",
+    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
+    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
+    "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
+    "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
+    "hyperframes/archive/0.2.0/compositions/ending.html": "dc44e63fb4b8d43373aa5e369aacb4881c5a4f24bec5070f88f38a392c167b2f",
+    "hyperframes/archive/0.2.0/compositions/feature.html": "231b8aa02caec3f42cb5906a0bdeae60c8c088e8baf7447b83cd208211e4245e",
+    "hyperframes/archive/0.2.0/index.html": "5a4fa4338d60c03a03f2db30a0d62c6325cd05f0c5958110bad84400b715ccaf",
+    "hyperframes/archive/0.2.0/metadata.json": "2e82a8fb974ac48da0d8e27b6cc14bb6f5b3e78820f72208d7957839a8ce728d",
+    "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
+    "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
   },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.2.0/capture.json",
+      "sha256": "b4f247f968e28089ffaf5a8e8ff3f66f33cd06a761bd4bcf1db540b0495deb1a",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "e1b599c3a0984ef1edbab898cbc2ee6e5c76273e"
+    }
+  ],
   "nativeReceiptSha256": "b4f247f968e28089ffaf5a8e8ff3f66f33cd06a761bd4bcf1db540b0495deb1a",
-  "approved": false,
-  "publication": "blocked"
+  "cutouts": [],
+  "publication": "quality-gated",
+  "strictCompositionCheck": true,
+  "music": {
+    "file": "music.ogg",
+    "title": "Week 37 - Schmoovin",
+    "artist": "Abstraction / Tallbeard Studios",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attributionRequired": false,
+    "commercialUse": true,
+    "modificationAllowed": true,
+    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
+    "sourceArchive": "music-loop-bundle-2026-q3.zip",
+    "archiveUploadId": 19538393,
+    "sourceTrack": "Week 37 - Schmoovin.ogg",
+    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "licenseFile": "music.LICENSE.txt",
+    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "verifiedAt": "2026-11-02",
+    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
+  }
 }

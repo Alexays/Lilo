@@ -1,0 +1,61 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; color: #26232f; }
+    #room-world { position: absolute; inset: 0; background: #eeedf2; }
+    #room-title-clip { position: absolute; left: 158px; top: 102px; width: 1650px; height: 300px; overflow: hidden; }
+    #room-title { margin: 0; font-size: 140px; font-weight: 660; line-height: 1.02; letter-spacing: -7px; }
+    #room-setting-label-clip { position: absolute; left: 260px; top: 420px; width: 1460px; height: 116px; overflow: hidden; }
+    #room-setting-label { margin: 0; font-size: 78px; font-weight: 500; letter-spacing: -3px; line-height: 1.1; color: #625b70; }
+    #room-setting-clip { position: absolute; left: 260px; top: 580px; width: 1400px; height: 183px; }
+    #room-setting { position: relative; width: 100%; height: 100%; }
+    #room-setting-before, #room-setting-after { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #room-pointer-clip { position: absolute; inset: 0; pointer-events: none; }
+    #room-pointer { position: absolute; left: 0; top: 0; width: 64px; height: 86px; }
+    #room-pointer-glyph { display: block; transform-origin: 5px 5px; }
+    #room-window-clip { position: absolute; left: 128px; top: 20px; width: 1664px; height: 1040px; }
+    #room-window { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 18px; transform-origin: 50% 0; }
+    #room-window-before, #room-window-after { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #room-clear-clip { position: absolute; left: 128px; top: 20px; width: 1664px; height: 1040px; pointer-events: none; }
+    #room-clear { position: absolute; left: 0; top: 0; width: 1664px; height: 1040px; background: #eeedf2; transform-origin: 0 100%; }
+  </style>
+  <div id="root" data-composition-id="room" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="room-world" aria-hidden="true"></div>
+    <div id="room-title-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="1"><h2 id="room-title">More room<br />for the page.</h2></div>
+    <div id="room-setting-label-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="2"><p id="room-setting-label">Settings → Appearance</p></div>
+    <div id="room-setting-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="3"><div id="room-setting">
+      <img id="room-setting-before" src="assets/native/setting-before.png" alt="Native Lilo address bar setting before hiding" />
+      <img id="room-setting-after" src="assets/native/setting-after.png" alt="Native Lilo address bar setting after choosing Hide" />
+    </div></div>
+    <div id="room-pointer-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="4"><div id="room-pointer"><svg id="room-pointer-glyph" width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+    <div id="room-window-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="5"><div id="room-window">
+      <img id="room-window-before" src="assets/native/room-before.png" alt="Native Lilo window with address bar shown" />
+      <img id="room-window-after" src="assets/native/room-after.png" alt="Same native Lilo window with address bar hidden and more page space" />
+    </div></div>
+    <div id="room-clear-clip" class="clip" data-start="0" data-duration="8.4" data-track-index="6"><div id="room-clear"></div></div>
+  </div>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo('#room-world', { clipPath: 'inset(0 0 0 100%)' }, { clipPath: 'inset(0 0 0 0%)', duration: .4, ease: 'power3.inOut' }, 0)
+        .fromTo('#room-title', { x: 1700 }, { x: 0, duration: .8, ease: 'expo.out' }, .1)
+        .fromTo('#room-setting-label', { opacity: 0 }, { opacity: 1, duration: .3 }, 1.1)
+        .fromTo('#room-setting', { opacity: 0, y: 45 }, { opacity: 1, y: 0, duration: .6, ease: 'power4.out' }, 1.1)
+        .set('#room-setting-after', { opacity: 0 }, 0)
+        .fromTo('#room-pointer', { opacity: 0, x: 1720, y: 900 }, { opacity: 1, x: 1510, y: 675, duration: .65, ease: 'power2.inOut' }, 1.8)
+        .fromTo('#room-pointer-glyph', { scale: 1 }, { scale: .88, duration: .08, ease: 'power2.out' }, 2.65)
+        .set('#room-setting-before', { opacity: 0 }, 2.65)
+        .set('#room-setting-after', { opacity: 1 }, 2.65)
+        .to('#room-pointer-glyph', { scale: 1, duration: .16, ease: 'power2.out' }, 2.73)
+        .to('#room-pointer', { opacity: 0, duration: .18 }, 2.94)
+        .to('#room-title', { y: -700, opacity: 0, duration: .55, ease: 'power3.in' }, 3.1)
+        .to('#room-setting-label', { y: -700, opacity: 0, duration: .5, ease: 'power3.in' }, 3.15)
+        .to('#room-setting', { y: -900, duration: .55, ease: 'power3.in' }, 3.2)
+        .fromTo('#room-window', { y: 1140, scale: 1.5 }, { y: 0, scale: 1.5, duration: .85, ease: 'power4.out' }, 3.15)
+        .fromTo('#room-window-after', { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: .65, ease: 'power2.inOut' }, 4.25)
+        .to('#room-window', { scale: 1, duration: .75, ease: 'power2.inOut' }, 5.5)
+        .fromTo('#room-clear', { scaleY: 0 }, { scaleY: 1, duration: .6, ease: 'power3.inOut' }, 7.2)
+        .to({}, { duration: 8.4 }, 0);
+      window.__timelines.room = tl;
+    })();
+  </script>
+</template>

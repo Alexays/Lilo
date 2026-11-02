@@ -56,21 +56,26 @@ jobs:
   release-media:
     name: Release media quality
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: make release-media-check release-media-test
+      - run: make release-media-audit
+      - name: Author and render the native changelog archive
+        run: make release-media-author release-media-render release-media-check release-media-test release-media-inspect
       # Measure playback without competing software decoders on the hosted runner.
       - run: make site-e2e SITE_E2E_ARGS='tests/changelog.spec.ts tests/release-media.spec.ts --workers=1'
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: failure()
+        if: always()
         with:
-          name: release-media-traces
-          path: site/test-results/
+          name: release-media-review-${{ github.sha }}
+          path: |
+            release-media/assets/
+            build/release-media/inspection/
+            site/test-results/
           if-no-files-found: ignore
 
   ui:
@@ -217,7 +222,7 @@ jobs:
           path: |
             Lilo/Generated/ChromeUIAssets.swift
             Lilo/Generated/NativeStrings.swift
-          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('release-media/backlog.json', 'release-media/catalog.ts', '.changes/v*.md', 'lilo-ui/package.json', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
+          key: ui-${{ steps.ui-lock.outputs.hash }}-${{ hashFiles('release-media/backlog.json', 'release-media/catalog.ts', 'release-media/assets/**/*.png', 'release-media/assets/**/*.mp4', '.changes/v*.md', 'lilo-ui/package.json', 'lilo-ui/releaseNotesPlugin.ts', 'lilo-ui/src/**', 'lilo-ui/index.html', 'lilo-ui/svelte.config.js', 'lilo-ui/tsconfig.json', 'lilo-ui/vite.config.ts', 'scripts/embed_chrome_ui.py', 'scripts/generate_native_strings.py') }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'

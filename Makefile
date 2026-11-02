@@ -87,7 +87,7 @@ TEST_WORKERS = $(shell sysctl -n hw.perflevel0.physicalcpu 2>/dev/null || sysctl
 .PHONY: release-media-review release-media-stage
 .PHONY: release-media-fix
 .PHONY: release-media-test
-.PHONY: release-media-inspect
+.PHONY: site-deploy-verified release-media-inspect release-media-hyperframes release-media-audit release-media-author release-tag-check release-media-ci release-media-package
 
 ## List the targets
 help:
@@ -203,9 +203,7 @@ release-status: $(CHANGIE)
 release-version: $(CHANGIE)
 	@python3 scripts/release.py version --changie '$(CHANGIE)'
 	@release=$$('$(CHANGIE)' latest --remove-prefix); \
-	if [ -f "site/src/content/releases/$$release.json" ]; then \
-		$(MAKE) --no-print-directory site-release-capture RELEASE="$$release"; \
-	fi
+	$(MAKE) --no-print-directory release-media-ci RELEASE="$$release"
 	@$(MAKE) --no-print-directory site-generate
 
 ## Announce a published GitHub release on Discord (needs GITHUB_EVENT_PATH and DISCORD_WEBHOOK_URL)
@@ -225,42 +223,47 @@ ui-build: $(UI_DEPS)
 
 ## Capture genuine native sources for the release-media backlog (RELEASE=x.y.z narrows the capture)
 release-media-capture:
-	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
+	@LILO_RELEASE_MEDIA_CAPTURE_ONLY=1 TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/native' TEST_RUNNER_LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_FIXTURE_VERSION='$(or $(FIXTURE),$(RELEASE))' TEST_RUNNER_LILO_RELEASE_MEDIA_COMMIT="$$(git rev-parse HEAD)" $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests TEST_WORKERS=1
 
 ## Import verified native release sources (RELEASE=x.y.z narrows the import)
 release-media-import:
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/import.mjs
 
-## Update the pinned Remotion dependency lockfile
+## Update the pinned HyperFrames dependency lockfile
 release-media-lock:
-	@npm --prefix release-media install --package-lock-only
+	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media install --package-lock-only --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+
+## Fetch the original CC0 soundtrack with no attribution requirement
+release-media-music:
+	@python3 release-media/public/audio/music.fetch.py
 
 ## Format the authored release-media scripts and literal compositions
 release-media-fix: $(SITE_DEPS)
-	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' 'release-media/src/*.tsx' release-media/package.json release-media/backlog.json
+	@site/node_modules/.bin/oxfmt --write 'release-media/*.mjs' 'release-media/*.ts' 'release-media/hyperframes/archive/*.js' release-media/package.json release-media/backlog.json
 
-release-media/node_modules/.package-lock.json: release-media/package.json release-media/package-lock.json
-	@npm --prefix release-media ci
+release-media/node_modules/.lilo-installed: release-media/package.json release-media/package-lock.json
+	@PUPPETEER_SKIP_DOWNLOAD=1 npm --prefix release-media ci --ignore-scripts --cache '$(CURDIR)/build/npm-release-media'
+	@touch $@
 
 ## Render selected native release films and stills (RELEASE=x.y.z narrows the render)
-release-media-render: release-media/node_modules/.package-lock.json
+release-media-render: release-media/node_modules/.lilo-installed
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/render.mjs
 
 ## Verify every backlog decision, native source hash, encoded film, sound and compression quality
 release-media-check:
-	@node release-media/check.mjs
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs
 
-## Verify publication refuses unapproved, stale or changed media without external build tools
+## Verify publication refuses failed, stale or changed media without external build tools
 release-media-test:
-	@node --test release-media/check.test.mjs
+	@node --test release-media/*.test.mjs
 
 ## Extract compact-layout frames from the actual encoded films (RELEASE=x.y.z narrows the inspection)
 release-media-inspect:
 	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/inspect.mjs
 
-## Refuse publication while release media has not passed review
+## Refuse publication unless release media passes its current quality gates
 release-media-publish-check:
-	@node release-media/check.mjs --publish
+	@LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/check.mjs --publish
 
 ## Stage only the installed release's binary media for the native bundle
 release-media-stage:
@@ -271,6 +274,40 @@ release-media-review:
 	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
 	@LILO_RELEASE_MEDIA_PREVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory ui-build
 	@TEST_RUNNER_LILO_RELEASE_MEDIA_OUT='$(CURDIR)/build/release-media/reviews/$(RELEASE)' TEST_RUNNER_LILO_RELEASE_MEDIA_REVIEW_VERSION='$(RELEASE)' $(MAKE) --no-print-directory swift-test SWIFT_TEST_FILTER=LiloTests/ReleaseMediaCaptureTests/testReviewBundledWhatsNewMedia TEST_WORKERS=1
+
+## Run the pinned production HyperFrames authoring tools (HF_ARGS='help')
+release-media-hyperframes: release-media/node_modules/.lilo-installed
+	@cd release-media && DO_NOT_TRACK=1 ./node_modules/.bin/hyperframes $(HF_ARGS)
+
+## Require a clean production dependency audit
+release-media-audit: release-media/node_modules/.lilo-installed
+	@npm --prefix release-media audit --audit-level=moderate --cache '$(CURDIR)/build/npm-release-media'
+
+## Select a meaningful native visual story from exact release notes
+release-media-author: $(CHANGIE)
+	@CHANGIE='$(CHANGIE)' LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs
+
+## Verify this tag is a prepared release
+release-tag-check: $(CHANGIE)
+	@python3 scripts/release.py tag --tag '$(TAG)' --changie '$(CHANGIE)'
+
+## Capture, render and quality-gate this release before packaging
+release-media-ci: release-media-author release-media-audit
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	@set -eu; kind=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --kind); \
+	if [ "$$kind" != none ]; then \
+		fixture=$$(LILO_RELEASE_MEDIA_VERSION='$(RELEASE)' node release-media/author.mjs --fixture); \
+		$(MAKE) --no-print-directory release-media-capture RELEASE='$(RELEASE)' FIXTURE="$$fixture" && \
+		$(MAKE) --no-print-directory release-media-import release-media-render release-media-check release-media-inspect RELEASE='$(RELEASE)'; \
+	fi
+	@$(MAKE) --no-print-directory release-media-publish-check RELEASE='$(RELEASE)'
+
+## Package the validated site and shared release media for the release workflow
+release-media-package:
+	@test -n '$(RELEASE)' || { echo 'RELEASE=x.y.z is required' >&2; exit 2; }
+	@$(MAKE) --no-print-directory release-media-publish-check RELEASE=
+	@test -f site/dist/index.html || { echo 'Validated site/dist artifact is required' >&2; exit 1; }
+	@python3 -c 'import pathlib,zipfile; r=pathlib.Path("."); out=r/"build/release-media/Lilo-changelog-$(RELEASE).zip"; out.parent.mkdir(parents=True,exist_ok=True); dirs=[r/"site/dist",r/"release-media/assets",r/"release-media/public",r/"release-media/hyperframes"]; files=[p for d in dirs for p in d.rglob("*") if p.is_file()]+[p for p in (r/"release-media").glob("*") if p.is_file()]; z=zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED); [z.write(p,p.as_posix()) for p in files]; z.close(); print(out)'
 
 # Built once when missing so a fresh clone compiles; ui-build, which validate's UI stamp runs on any
 # UI source change, refreshes both.
@@ -677,6 +714,12 @@ site-demo-icons:
 ## Check the Cloudflare deployment without publishing
 site-deploy-check: site-generate
 	@npm --prefix site run deploy:check
+
+## Deploy the validated CI website artifact without rebuilding its media
+site-deploy-verified: $(SITE_DEPS)
+	@$(MAKE) --no-print-directory release-media-publish-check RELEASE=
+	@test -f site/dist/index.html || { echo 'Validated site/dist artifact is required' >&2; exit 1; }
+	@cd site && ./node_modules/.bin/wrangler deploy
 
 ## Deploy getlilo.app to Cloudflare (requires authentication)
 site-deploy: $(SITE_DEPS)

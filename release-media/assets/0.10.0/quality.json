@@ -1,20 +1,31 @@
 {
   "release": "0.10.0",
   "kind": "video",
+  "passed": true,
+  "renderSha256": "c924ad4714d5f9e23994b635d5b49ea1dc6b8087f8830d618c4274695a2105b5",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "4b09507c6020ef4dedbd2154ff75962444bf101372f7ecb7245da4aaba5afb39",
-  "publication": "blocked",
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "archive.png",
+      "rgbPreserved": true,
+      "transparentPixels": 13692
+    }
+  ],
   "decode": true,
-  "width": 1920,
-  "height": 1080,
   "fps": 60,
-  "audioPeakDb": -13.8,
-  "posterSSIM": 0.997655,
+  "frames": 780,
+  "audio": {
+    "integratedLoudnessLUFS": -16,
+    "truePeakDbFS": -2.5
+  },
   "motion": {
-    "measuredFrames": 299,
-    "movingFrameRatio": 0.2809364548494983,
-    "longestStillSeconds": 1.6,
-    "largestLumaChange": 8.78503
-  }
+    "measuredFrames": 779,
+    "movingFrameRatio": 0.34403080872913994,
+    "longestStillSeconds": 2.683333333333333,
+    "largestLumaChange": 17.7082
+  },
+  "posterSSIM": 0.99905
 }

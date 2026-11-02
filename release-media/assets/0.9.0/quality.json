@@ -1,20 +1,66 @@
 {
   "release": "0.9.0",
   "kind": "video",
+  "passed": true,
+  "renderSha256": "015b1bd0bc20425f6571def11f5ac25aeb3aa74890fe144207da5d911a37d0a2",
   "sourceHashes": true,
   "renderHashes": true,
-  "renderSha256": "01bd033fe0cd1c2d0fe885d3393f3dca51bf1e579a055f37f9f9bcf82555b622",
-  "publication": "blocked",
+  "strictCompositionCheck": true,
+  "cutoutsVerified": true,
+  "cutouts": [
+    {
+      "file": "search-0.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-1.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-2.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-3.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-4.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-5.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "search-6.png",
+      "rgbPreserved": true,
+      "transparentPixels": 164664
+    },
+    {
+      "file": "filtered-rows.png",
+      "rgbPreserved": true,
+      "transparentPixels": 10448
+    }
+  ],
   "decode": true,
-  "width": 1920,
-  "height": 1080,
   "fps": 60,
-  "audioPeakDb": -14,
-  "posterSSIM": 0.997831,
+  "frames": 900,
+  "audio": {
+    "integratedLoudnessLUFS": -15.9,
+    "truePeakDbFS": -2.1
+  },
   "motion": {
-    "measuredFrames": 287,
-    "movingFrameRatio": 0.30313588850174217,
-    "longestStillSeconds": 1.5333333333333334,
-    "largestLumaChange": 1.3991
-  }
+    "measuredFrames": 899,
+    "movingFrameRatio": 0.2936596218020022,
+    "longestStillSeconds": 2.6166666666666667,
+    "largestLumaChange": 11.3336
+  },
+  "posterSSIM": 0.999016
 }

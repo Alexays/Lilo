@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "engine": "hyperframes",
   "release": "0.12.0",
   "kind": "screenshot",
   "feature": "site-colors",
@@ -8,20 +9,38 @@
   "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f",
   "width": 1920,
   "height": 1080,
-  "fps": 1,
+  "fps": 60,
   "frames": 1,
   "posterFrame": 0,
-  "renderMilliseconds": 383.35470799999985,
+  "renderMilliseconds": 2081.1092500000013,
   "hashes": {
-    "site-colors.png": "23ed4eea4a38fc78d8bc1a79e2a507dd05b16ada6837073b36c5d2ebeb2411ed"
+    "site-colors.png": "b89dc41f74b1dabb25ef2c77583e6d03f88bd4f6d164ee3a166eafb55763a6ea"
   },
   "recipeHashes": {
-    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
-    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
-    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
-    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+    "render.mjs": "b18a7057e55ae806beef77787e954e21847e36948c3c9d0d1d8b4594f22b2037",
+    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
+    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
+    "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
+    "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49"
   },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.12.0/capture.json",
+      "sha256": "3d88fc49f2ec003be59a3812ffc3b973967428622422bdc5ec394d74e7a9d780",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f"
+    }
+  ],
   "nativeReceiptSha256": "3d88fc49f2ec003be59a3812ffc3b973967428622422bdc5ec394d74e7a9d780",
-  "approved": false,
-  "publication": "blocked"
+  "cutouts": [],
+  "publication": "quality-gated",
+  "strictCompositionCheck": true,
+  "music": null
 }

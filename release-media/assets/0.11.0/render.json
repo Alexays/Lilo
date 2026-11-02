@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "engine": "hyperframes",
   "release": "0.11.0",
   "kind": "video",
   "feature": "spaces",
@@ -9,20 +10,129 @@
   "width": 1920,
   "height": 1080,
   "fps": 60,
-  "frames": 396,
-  "posterFrame": 348,
-  "renderMilliseconds": 12464.614459,
+  "frames": 1080,
+  "posterFrame": 1020,
+  "renderMilliseconds": 50433.021209,
   "hashes": {
-    "spaces.png": "39897200900d0532b59e0695cd8d7b586ed4753f4df2f596c35e07dd4f805741",
-    "spaces.mp4": "9352c952daadda8c21b8c6f7a9d07f105f9471afd569280490831c802f1dfbea"
+    "spaces.png": "02321f3cd1af6d2f70508d9c5a2c9c26fb571ab9dc729755e6a4a871272862ec",
+    "spaces.mp4": "823d8fb5287cc37af0651d7ca85e190bc1091e5b00c9a38167b12329ba49b776"
   },
   "recipeHashes": {
-    "src/Root.tsx": "c561f065beda68b2b447f020fe610adf2eb23221dde71467a0afda4aa45180b1",
-    "src/Backlog.tsx": "0c5b347f678fc00d89ddf1c6cf3fc1a31690fd3930aaec04d692f757b206ed63",
-    "src/Motion.tsx": "44065db6108f97008eb6c3bed47eba7c4be0c610a644f0c34e83ecb266c05244",
-    "package-lock.json": "7163adc3fab471895549b947eee365b5c60f2f2b9b00dea4cb7eb17942fac795"
+    "render.mjs": "b18a7057e55ae806beef77787e954e21847e36948c3c9d0d1d8b4594f22b2037",
+    "pipeline.mjs": "a810af5d2e7eb463ba75609230a8e76ea41602ebee610853aa483499b8e27036",
+    "png-cutouts.mjs": "22ce17c38c045debaeb6c775cb61c27ae5c220af1cb280e9d189db75e394ba0f",
+    "package-lock.json": "de957a82e09d2e84ed973bfd323e247bec6b8423d5567a233483330f29e99a48",
+    "public/audio/music.ogg": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "public/audio/music.license.json": "a3e033734f1fb188ca9cb3b161938343e57d4e0aa289f5605486b8f15be8b2d8",
+    "public/audio/music.LICENSE.txt": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "public/audio/mouse-click.wav": "887a9259203cafa24ad90274029d574ba29438bcdc87e6f384e4472f85736348",
+    "public/audio/switch.wav": "0d07c6daac595425c820d92966bbc35cbd6590f4bde8a59199743b9bf45da77e",
+    "hyperframes/assets/inter.woff2": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+    "hyperframes/assets/logo.svg": "9345636a0774cc6d4439f5e90303d7f172c9f089c3dabcbe436e3f0d63f1ce49",
+    "hyperframes/archive/0.11.0/compositions/ending.html": "8b9a6701d5b4949a6b869a28308dd29d94ba373583529f25366ef688a5f9433a",
+    "hyperframes/archive/0.11.0/compositions/feature.html": "ebe1adc9b352ad4bf42cc5d92ffb85acbc31135cffc2040faff14e5dd63b4fbc",
+    "hyperframes/archive/0.11.0/index.html": "56e907b11f5e41106275675220e476159afdb6c8310bbe4ecf69fe5b4ea244bc",
+    "hyperframes/archive/0.11.0/metadata.json": "58dbdfb7c44a771aaa3a251e0bd718b4073d20b75c53c4f4e17b91c19179ce16",
+    "hyperframes/archive/shared.css": "36cbfda538846c5d2a96ed082be6297f2a015e6cb824f46f3eefff66ae84b2d2",
+    "hyperframes/archive/shared.js": "71b6e4139f3dc008e640b269b5a7b24ab525366b6edc0ab519b33d8c783ec114"
   },
+  "nativeReceipts": [
+    {
+      "path": "public/native/0.11.0/capture.json",
+      "sha256": "0f124dc358045754477edfae5f2cd81564f92e08a0d2f8abff5bf57348593ef9",
+      "appVersion": "0.14.1",
+      "appBuild": "31",
+      "productSourceCommit": "19c79b7e9c47300558ee99bb5c4f756cc220817f"
+    }
+  ],
   "nativeReceiptSha256": "0f124dc358045754477edfae5f2cd81564f92e08a0d2f8abff5bf57348593ef9",
-  "approved": false,
-  "publication": "blocked"
+  "cutouts": [
+    {
+      "file": "solid-controls.png",
+      "width": 1552,
+      "height": 240,
+      "shape": {
+        "rect": [
+          0,
+          0,
+          1552,
+          240
+        ],
+        "radius": 120
+      },
+      "beforeRgbSha256": "577d71f56e431d54ce1bd199a1ce53bd2b7123a142221040c4637e15a541ca55",
+      "afterRgbSha256": "577d71f56e431d54ce1bd199a1ce53bd2b7123a142221040c4637e15a541ca55",
+      "beforeAlphaSha256": "110735c8fae4b533a087f57fd0c35d6eef3bf2d614813434716fb4eed259388d",
+      "afterAlphaSha256": "f8ef2b05b0239c7bf35819eb58196a76cbdcba694439806128a42cab29f27c0b",
+      "transparentPixels": 12028,
+      "partialPixels": 744,
+      "opaquePixels": 359708,
+      "source": "public/native/0.11.0/solid-controls.png"
+    },
+    {
+      "file": "glass-controls.png",
+      "width": 1552,
+      "height": 240,
+      "shape": {
+        "rect": [
+          0,
+          0,
+          1552,
+          240
+        ],
+        "radius": 120
+      },
+      "beforeRgbSha256": "e741269c87e18023863c818d6b943fe641640e57f0ab1c42743d191fcedc4ed6",
+      "afterRgbSha256": "e741269c87e18023863c818d6b943fe641640e57f0ab1c42743d191fcedc4ed6",
+      "beforeAlphaSha256": "110735c8fae4b533a087f57fd0c35d6eef3bf2d614813434716fb4eed259388d",
+      "afterAlphaSha256": "f8ef2b05b0239c7bf35819eb58196a76cbdcba694439806128a42cab29f27c0b",
+      "transparentPixels": 12028,
+      "partialPixels": 744,
+      "opaquePixels": 359708,
+      "source": "public/native/0.11.0/glass-controls.png"
+    },
+    {
+      "file": "grain-controls.png",
+      "width": 1552,
+      "height": 240,
+      "shape": {
+        "rect": [
+          0,
+          0,
+          1552,
+          240
+        ],
+        "radius": 120
+      },
+      "beforeRgbSha256": "1103c4951fa17903276437bdb9af9f6a90bc19e45ebabb0b03255da98663be56",
+      "afterRgbSha256": "1103c4951fa17903276437bdb9af9f6a90bc19e45ebabb0b03255da98663be56",
+      "beforeAlphaSha256": "110735c8fae4b533a087f57fd0c35d6eef3bf2d614813434716fb4eed259388d",
+      "afterAlphaSha256": "f8ef2b05b0239c7bf35819eb58196a76cbdcba694439806128a42cab29f27c0b",
+      "transparentPixels": 12028,
+      "partialPixels": 744,
+      "opaquePixels": 359708,
+      "source": "public/native/0.11.0/grain-controls.png"
+    }
+  ],
+  "publication": "quality-gated",
+  "strictCompositionCheck": true,
+  "music": {
+    "file": "music.ogg",
+    "title": "Week 37 - Schmoovin",
+    "artist": "Abstraction / Tallbeard Studios",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attributionRequired": false,
+    "commercialUse": true,
+    "modificationAllowed": true,
+    "sourceUrl": "https://tallbeard.itch.io/music-loop-bundle",
+    "sourceArchive": "music-loop-bundle-2026-q3.zip",
+    "archiveUploadId": 19538393,
+    "sourceTrack": "Week 37 - Schmoovin.ogg",
+    "sha256": "076d06a68ce9dc8f7d2401afa05e247ad3849ac4d425c3b28f995c15bfdab007",
+    "licenseFile": "music.LICENSE.txt",
+    "licenseSha256": "d02e059adb401d50167b2e04d12ef9236fbcef0b4e3b7157bd5ebfab8a82b8f4",
+    "verifiedAt": "2026-11-02",
+    "acquisition": "Creator-provided free download, without an account or payment. Only this track and the bundled license are retained."
+  }
 }

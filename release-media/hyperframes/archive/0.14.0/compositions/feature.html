@@ -1,0 +1,40 @@
+<template>
+  <style>#root{position:absolute;inset:0;overflow:hidden;color:#26232f}</style>
+  <div id="root" data-composition-id="feature" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="world" aria-hidden="true"></div>
+      <div id="drop-title-clip" class="clip headline-clip" data-start="0" data-duration="9.85" data-track-index="1"><h1 id="drop-title" class="headline">Drop it into place.</h1></div><div id="tab-title-clip" class="clip headline-clip" data-start="0" data-duration="9.85" data-track-index="2"><h1 id="tab-title" class="headline">From link to tab.</h1></div><div id="drop-list-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="3" style="position:absolute;left:240px;top:340px;width:1440px;height:572.73px"><div id="drop-list" class="native"><img id="drop-before" class="pixels" src="assets/native/before.png" alt="Native Lilo before" /><img id="drop-target" class="pixels" src="assets/native/target.png" alt="Native Lilo target" /></div></div><div id="drag-link-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="5" style="position:absolute;left:1330px;top:270px;width:430px;height:179.56px"><div id="drag-link" class="native"><img id="drag-link-pixels" class="pixels" src="assets/native/link.png" alt="Native Lilo link" /></div></div><div id="drop-result-clip" class="clip" data-start="0" data-duration="9.85" data-track-index="4" style="position:absolute;left:240px;top:340px;width:1440px;height:736.3636363636364px"><div id="drop-result" class="native" style="overflow:hidden;border-radius:28px">
+        <div id="drop-above" class="pixels" role="img" aria-label="Native strip above dropped link" style="background-image:url('assets/native/dropped.png');background-size:100% 100%;clip-path:inset(0 0 528.4943181818182px 0)"></div>
+        <div id="drop-inserted" class="pixels" role="img" aria-label="Native New idea tab inserted by the real drop command" style="background-image:url('assets/native/dropped.png');background-size:100% 100%;"></div>
+        <div id="drop-below" class="pixels" role="img" aria-label="Existing native rows moving below the new tab" style="background-image:url('assets/native/dropped.png');background-size:100% 100%;clip-path:inset(371.5056818181818px 0 0 0)"></div>
+      </div></div><div id="drop-pointer-clip" class="clip cursor-clip" data-start="0" data-duration="9.85" data-track-index="30"><div id="drop-pointer" class="cursor"><svg width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+  </div>
+  <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo('#drop-title', { opacity: .3, y: 20 }, { opacity: 1, y: 0, duration: .65, ease: 'power4.out' }, 0)
+          .fromTo('#drop-list', { y: 50, scale: .96 }, { y: 0, scale: 1, duration: .8, ease: 'expo.out' }, 0)
+          .set('#drop-target', { opacity: 0 }, 0)
+          .set('#drop-result', { opacity: 0 }, 0)
+          .fromTo('#drag-link', { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: .6, ease: 'power4.out' }, .9)
+          .fromTo('#drop-pointer', { opacity: 0, x: 1750, y: 720 }, { opacity: 1, x: 1410, y: 320, duration: .65, ease: 'power2.inOut' }, 1.2)
+          .to('#drag-link', { x: -450, y: 233.3, duration: 1.4, ease: 'power2.inOut' }, 2.1)
+          .to('#drop-pointer', { x: 960, y: 553.3, duration: 1.4, ease: 'power2.inOut' }, 2.1)
+          .set('#drop-before', { opacity: 0 }, 3.0).set('#drop-target', { opacity: 1 }, 3.0)
+          .to('#drag-link', { opacity: 0, duration: .2 }, 3.6)
+          .to('#drop-pointer', { opacity: 0, duration: .2 }, 3.85)
+          .to('#drop-list', { opacity: 0, duration: .01 }, 3.65)
+          .set('#drop-result', { opacity: 1 }, 3.65)
+          .fromTo('#drop-result', { y: 0 }, { y: -50, duration: .6, ease: 'power2.inOut' }, 3.65)
+          .fromTo('#drop-inserted', { clipPath: 'inset(207.8693181818182px 0 528.4943181818182px 0)' }, { clipPath: 'inset(207.8693181818182px 0 364.8579545454546px 0)', duration: .6, ease: 'power2.inOut' }, 3.65)
+          .fromTo('#drop-below', { y: -163.63636363636363 }, { y: 0, duration: .6, ease: 'power2.inOut' }, 3.65)
+          .to('#drop-title', { opacity: 0, duration: .2 }, 4.9)
+          .fromTo('#tab-title', { opacity: 0 }, { opacity: 1, duration: .35 }, 5.15)
+          .to('#drop-result', { opacity: 0, y: -115, duration: .6, ease: 'power3.in' }, 7.8);
+        pressPointer(tl, '#drop-pointer', 2); pressPointer(tl, '#drop-pointer', 3.6);
+        tl.to('.headline', { opacity: 0, duration: .2 }, 9.3);
+        tl.to({}, { duration: 9.85 }, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.feature = tl;
+      })();
+    </script>
+</template>

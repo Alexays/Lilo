@@ -1,0 +1,65 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; color: #26232f; }
+    #find-world { position: absolute; inset: 0; background: #eeedf2; }
+    #find-title-clip { position: absolute; left: 158px; top: 86px; width: 1580px; height: 184px; overflow: hidden; }
+    #find-title { margin: 0; font-size: 152px; line-height: 1.04; font-weight: 660; letter-spacing: -7px; }
+    #find-picker-clip { position: absolute; left: 200px; top: 298px; width: 1520px; height: 704px; }
+    #find-picker, #find-picker-pixels { display: block; width: 100%; height: 100%; }
+    #find-search-clip { position: absolute; left: 240px; top: 326px; width: 1440px; height: 166px; }
+    #find-search { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 26px; }
+    .find-query { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+    #find-result-clip { position: absolute; left: 238px; top: 516px; width: 650px; height: 516px; }
+    #find-result, #find-result-pixels { display: block; width: 100%; height: 100%; }
+    #find-share-clip { position: absolute; left: 1248px; top: 710px; width: 440px; height: 220px; }
+    #find-share, #find-share-pixels { display: block; width: 100%; height: 100%; }
+    #find-pointer-clip { position: absolute; inset: 0; pointer-events: none; }
+    #find-pointer { position: absolute; left: 0; top: 0; width: 64px; height: 86px; }
+    #find-pointer-glyph { display: block; transform-origin: 5px 5px; }
+    #find-flood-clip { position: absolute; inset: 0; pointer-events: none; }
+    #find-flood { position: absolute; left: 1268px; top: 730px; width: 400px; height: 180px; border-radius: 32px; background: #aa9bd6; transform-origin: 50% 50%; }
+  </style>
+  <div id="root" data-composition-id="find" data-width="1920" data-height="1080" data-motion-blur="off">
+    <div id="find-world" aria-hidden="true"></div>
+    <div id="find-title-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="1"><h2 id="find-title">Pick it.</h2></div>
+    <div id="find-picker-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="2"><div id="find-picker"><img id="find-picker-pixels" src="assets/native/picker.png" alt="Native Lilo share picker with previews and suggestions" /></div></div>
+    <div id="find-search-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="3"><div id="find-search">
+      <img id="find-query-0" class="find-query" src="assets/native/search-0.png" alt="Native empty tab search" />
+      <img id="find-query-1" class="find-query" src="assets/native/search-1.png" alt="Native search: F" />
+      <img id="find-query-2" class="find-query" src="assets/native/search-2.png" alt="Native search: Fi" />
+      <img id="find-query-3" class="find-query" src="assets/native/search-3.png" alt="Native search: Fie" />
+      <img id="find-query-4" class="find-query" src="assets/native/search-4.png" alt="Native search: Fiel" />
+      <img id="find-query-5" class="find-query" src="assets/native/search-5.png" alt="Native search: Field" />
+    </div></div>
+    <div id="find-result-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="4"><div id="find-result"><img id="find-result-pixels" src="assets/native/match.png" alt="Selected native Field guide tab preview" /></div></div>
+    <div id="find-share-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="5"><div id="find-share"><img id="find-share-pixels" src="assets/native/share-button.png" alt="Native Share button" /></div></div>
+    <div id="find-pointer-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="6"><div id="find-pointer"><svg id="find-pointer-glyph" width="64" height="86" viewBox="0 0 26 36" aria-hidden="true"><path d="M2 2v28l7.1-7.1 5.3 11.2 5-2.4-5.4-10.9H24L2 2Z" fill="#fff" stroke="#18151f" stroke-width="1.8" stroke-linejoin="round" /></svg></div></div>
+    <div id="find-flood-clip" class="clip" data-start="0" data-duration="5.6" data-track-index="7" data-layout-allow-overflow><div id="find-flood"></div></div>
+  </div>
+  <script>
+    (() => {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo('#find-world', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: .2, ease: 'power2.inOut' }, 0)
+        .fromTo('#find-title', { xPercent: 110 }, { xPercent: 0, duration: .65, ease: 'expo.out' }, .05)
+        .fromTo('#find-picker', { x: 1800 }, { x: 0, duration: .75, ease: 'expo.out' }, 0)
+        .to('#find-picker', { opacity: 0, scale: .94, y: 25, duration: .45, ease: 'power2.in' }, 1)
+        .fromTo('#find-search', { opacity: 0, scale: .74, y: 58 }, { opacity: 1, scale: 1, y: 0, duration: .55, ease: 'power4.out' }, 1)
+        .fromTo('#find-query-0', { opacity: 1 }, { opacity: 1, duration: .01 }, 0)
+        .set(['#find-query-1', '#find-query-2', '#find-query-3', '#find-query-4', '#find-query-5'], { opacity: 0 }, 0);
+      [1, 2, 3, 4, 5].forEach((index) => {
+        const time = 1.85 + (index - 1) * .15;
+        tl.set(`#find-query-${index - 1}`, { opacity: 0 }, time).set(`#find-query-${index}`, { opacity: 1 }, time);
+      });
+      tl.fromTo('#find-result', { opacity: 0, x: -90, scale: .9 }, { opacity: 1, x: 0, scale: 1, duration: .6, ease: 'power4.out' }, 2.7)
+        .fromTo('#find-share', { opacity: 0, y: 48, scale: .96 }, { opacity: 1, y: 0, scale: 1, duration: .45, ease: 'power4.out' }, 3.45)
+        .fromTo('#find-pointer', { opacity: 0, x: 1720, y: 960 }, { opacity: 1, x: 1463, y: 815, duration: .65, ease: 'power2.inOut' }, 3.65)
+        .fromTo('#find-pointer-glyph', { scale: 1 }, { scale: .88, duration: .08, ease: 'power2.out' }, 4.5)
+        .to('#find-pointer-glyph', { scale: 1, duration: .16, ease: 'power2.out' }, 4.58)
+        .to('#find-pointer', { opacity: 0, duration: .15 }, 4.72)
+        .fromTo('#find-flood', { opacity: 0, scale: 1 }, { opacity: 1, scale: 1, duration: .01 }, 4.74)
+        .to('#find-flood', { scale: 14, borderRadius: 0, duration: .7, ease: 'power3.inOut' }, 4.75)
+        .to({}, { duration: 5.6 }, 0);
+      window.__timelines.find = tl;
+    })();
+  </script>
+</template>

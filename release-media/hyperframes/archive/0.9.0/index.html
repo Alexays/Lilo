@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, initial-scale=1" />
+    <title>Lilo 0.9.0 — Find your way back.</title>
+    <link rel="stylesheet" href="shared.css" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <script src="shared.js"></script>
+  </head>
+  <body>
+    <main id="main" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080" data-fps="60" data-motion-blur="off" aria-label="Lilo 0.9.0 release announcement">
+      <div id="feature" class="clip" data-composition-id="feature" data-composition-src="compositions/feature.html" data-start="0" data-duration="11.95" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="position:absolute;inset:0;z-index:1"></div>
+      <div id="ending" class="clip" data-composition-id="ending" data-composition-src="compositions/ending.html" data-start="11.4" data-duration="3.6" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="position:absolute;inset:0;z-index:2"></div>
+      <audio id="score" class="clip" src="assets/audio/score.wav" data-start="0" data-duration="15" data-track-index="50" data-volume="1"></audio>
+<audio id="effect-0" class="clip" src="assets/audio/mouse-click.wav" data-start="1.8" data-duration="0.22" data-track-index="51" data-volume="0.3" data-fade-out="0.025"></audio>
+<audio id="effect-1" class="clip" src="assets/audio/mouse-click.wav" data-start="2.6" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-2" class="clip" src="assets/audio/mouse-click.wav" data-start="2.76" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-3" class="clip" src="assets/audio/mouse-click.wav" data-start="2.92" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-4" class="clip" src="assets/audio/mouse-click.wav" data-start="3.08" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-5" class="clip" src="assets/audio/mouse-click.wav" data-start="3.24" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-6" class="clip" src="assets/audio/mouse-click.wav" data-start="3.4" data-duration="0.11" data-track-index="51" data-volume="0.065" data-fade-out="0.025"></audio>
+<audio id="effect-7" class="clip" src="assets/audio/switch.wav" data-start="4.5" data-duration="0.33" data-track-index="51" data-volume="0.18" data-fade-out="0.025"></audio>
+<audio id="effect-8" class="clip" src="assets/audio/switch.wav" data-start="7.75" data-duration="0.33" data-track-index="51" data-volume="0.2" data-fade-out="0.025"></audio>
+    </main>
+    <script>
+      (() => {
+        const tl = gsap.timeline({paused:true});
+        tl.to({}, {duration:15}, 0);
+        window.__timelines = window.__timelines || {};
+        window.__timelines.main = tl;
+      })();
+    </script>
+  </body>
+</html>
