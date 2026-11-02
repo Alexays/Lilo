@@ -4,6 +4,19 @@ What changes in each Lilo release, for people using it. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.3] - 2026-11-02
+
+### Changed
+
+- Pages load faster with an ad-blocking extension: its site exceptions no longer slow down every request of every page, which mattered most on apps like Gmail and Drive.
+- The built-in ad blocker no longer slows down pages with many elements: a few of its hiding rules that tested every element of every page now apply only to the pages they target.
+
+### Fixed
+
+- Hiding the tabs works again after moving them to the top with Settings open.
+- Tabs morph to their new edge again when extensions are installed, instead of jumping there.
+
+[0.14.3]: https://github.com/Alexays/Lilo/compare/v0.14.2...v0.14.3
 ## [0.14.2] - 2026-11-02
 
 ### Fixed
