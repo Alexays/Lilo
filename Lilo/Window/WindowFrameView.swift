@@ -191,7 +191,8 @@ final class WindowFrameView: NSView {
     private func makeGrainLayer() -> CALayer {
         let grain = CALayer()
         if let tile = Self.grainTile() {
-            grain.backgroundColor = NSColor(patternImage: NSImage(cgImage: tile, size: NSSize(width: tile.width, height: tile.height))).cgColor
+            // Half a point per noise pixel: one per Retina pixel, as fine as the chrome's SVG grain.
+            grain.backgroundColor = NSColor(patternImage: NSImage(cgImage: tile, size: NSSize(width: tile.width / 2, height: tile.height / 2))).cgColor
         }
         // Blended like the chrome sidebar's `background-blend-mode: overlay`, so both read as one surface.
         grain.compositingFilter = "overlayBlendMode"
@@ -206,7 +207,7 @@ final class WindowFrameView: NSView {
 
     /// Gray noise matching the chrome's `grain.svg`: contrast 2.4 around mid-gray, at 42% alpha (premultiplied).
     private static func grainTile() -> CGImage? {
-        let side = 160
+        let side = 320
         var pixels = [UInt8](repeating: 0, count: side * side * 2)
         for index in stride(from: 0, to: pixels.count, by: 2) {
             let noise = (Double.random(in: 0...1) + .random(in: 0...1) + .random(in: 0...1)) / 3

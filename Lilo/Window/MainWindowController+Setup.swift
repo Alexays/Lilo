@@ -182,9 +182,9 @@ extension MainWindowController {
         guard resolvedColor != lastAppliedWindowChromeColor else { return }
 
         // Over glass the glass itself carries the Space's tint; the frame adds only a hint, so the desktop shows through.
-        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.15)
+        let frameColor = glassView == nil ? resolvedColor : resolvedColor.withAlphaComponent(0.06)
         window?.backgroundColor = glassView == nil ? resolvedColor : .clear
-        glassView?.tintColor = resolvedColor.withAlphaComponent(0.4)
+        glassView?.tintColor = resolvedColor.withAlphaComponent(0.2)
         let surfaceColor = resolvedColor.contentSurfaceColor
         // The popups, peeks and Little windows of this Space wear its color in their title bar and under their page.
         for popup in pagePopups.values where context.browserState.owningSpaceId(forTab: popup.openerTabId) == tabManager.currentSpaceId {
@@ -227,9 +227,9 @@ extension MainWindowController {
         if glassView == nil {
             window?.backgroundColor = color
         } else {
-            glassView?.tintColor = color.withAlphaComponent(0.4)
+            glassView?.tintColor = color.withAlphaComponent(0.2)
         }
-        windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.15), animated: false)
+        windowFrameView?.setFrameColor(glassView == nil ? color : color.withAlphaComponent(0.06), animated: false)
         lastAppliedWindowChromeColor = nil
     }
 
